@@ -675,7 +675,6 @@ OptionMenu "OpenGLOptions"
 OptionMenu "TrueColorOptions"
 {
 	Title "$TCMNU_TITLE"
-	Option "$TCMNU_MULTITHREADED",			"r_multithreaded", "OnOff"
 	StaticText " "
 	//Option "$TCMNU_TRUECOLOR",				"swtruecolor", "OnOff"
 	Option "$TCMNU_MINFILTER",				"r_minfilter", "OnOff"
@@ -705,6 +704,7 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_WATERFADE",				"underwater_fade_scalar", 0.0, 1.0, 0.05, 2
 	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
+	Option "$DSPLYMNU_MULTITHREADED",			"r_multithreaded", "OnOff"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"

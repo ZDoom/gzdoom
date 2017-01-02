@@ -203,6 +203,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	mfloorclip = openings + ds->sprbottomclip - ds->x1;
 	mceilingclip = openings + ds->sprtopclip - ds->x1;
 
+	float *MaskedSWall, MaskedScaleY, rw_scalestep;
+
 	// [RH] Draw fog partition
 	if (ds->bFogBoundary)
 	{
@@ -217,11 +219,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	float *MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
-	float MaskedScaleY = ds->yscale;
+	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+	MaskedScaleY = ds->yscale;
 	maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-	float rw_scalestep = ds->iscalestep;
+	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
 		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));

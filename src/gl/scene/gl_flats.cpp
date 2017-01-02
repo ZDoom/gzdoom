@@ -320,9 +320,8 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
 
-	for (int i = 0; i < sector->linecount; i++)
+	for (auto ln : sector->Lines)
 	{
-		line_t *ln = sector->lines[i];
 		float x = ln->v1->fX();
 		float y = ln->v1->fY();
 		if (x < minx) minx = x;

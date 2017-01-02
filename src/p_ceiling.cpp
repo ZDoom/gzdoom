@@ -242,7 +242,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 	
 	// new door thinker
 	DCeiling *ceiling = new DCeiling (sec, speed, speed2, silent & ~4);
-	vertex_t *spot = sec->lines[0]->v1;
+	vertex_t *spot = sec->Lines[0]->v1;
 
 	switch (type)
 	{

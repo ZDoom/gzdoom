@@ -660,6 +660,20 @@ protected:
 	PArray();
 };
 
+class PResizableArray : public PArray
+{
+	DECLARE_CLASS(PResizableArray, PArray);
+	HAS_OBJECT_POINTERS;
+public:
+	PResizableArray(PType *etype);
+
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+protected:
+	PResizableArray();
+};
+
 class PDynArray : public PCompoundType
 {
 	DECLARE_CLASS(PDynArray, PCompoundType);
@@ -919,6 +933,7 @@ extern FTypeTable TypeTable;
 // Returns a type from the TypeTable. Will create one if it isn't present.
 PMap *NewMap(PType *keytype, PType *valuetype);
 PArray *NewArray(PType *type, unsigned int count);
+PResizableArray *NewResizableArray(PType *type);
 PDynArray *NewDynArray(PType *type);
 PPointer *NewPointer(PType *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);

@@ -273,8 +273,7 @@ struct Sector native
 	native int 			prevsec;
 	native int	 		nextsec;
 
-	native readonly int16 		linecount;
-	//line_t **lines; // this is defined internally to avoid exposing some overly complicated type to the parser
+	//TStaticPointedArray<line_t *> Lines; // this is defined internally to avoid exposing some overly complicated type to the parser
 
 	native readonly Sector		heightsec;
 

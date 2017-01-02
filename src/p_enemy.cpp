@@ -161,10 +161,8 @@ static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AA
 	bool checkabove = !sec->PortalBlocksSound(sector_t::ceiling);
 	bool checkbelow = !sec->PortalBlocksSound(sector_t::floor);
 
-	for (int i = 0; i < sec->linecount; i++)
+	for (auto check : sec->Lines)
 	{
-		line_t *check = sec->lines[i];
-
 		// check sector portals
 		// I wish there was a better method to do this than randomly looking through the portal at a few places...
 		if (checkabove)

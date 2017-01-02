@@ -326,6 +326,8 @@ public:
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
 	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
+	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
+	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PResizableArray))); } // can only exist in pointer form.
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 	void EmitStatement(VMFunctionBuilder *build);
@@ -422,6 +424,13 @@ public:
 	FxConstant(int val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeSInt32;
+		value.Int = val;
+		isresolved = true;
+	}
+
+	FxConstant(unsigned int val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
+	{
+		ValueType = value.Type = TypeUInt32;
 		value.Int = val;
 		isresolved = true;
 	}
@@ -1427,6 +1436,7 @@ class FxArrayElement : public FxExpression
 public:
 	FxExpression *Array;
 	FxExpression *index;
+	unsigned SizeAddr;
 	bool AddressRequested;
 	bool AddressWritable;
 	bool arrayispointer = false;

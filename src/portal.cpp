@@ -801,9 +801,8 @@ static bool CollectSectors(int groupid, sector_t *origin)
 	{
 		sector_t *sec = list[i];
 
-		for (int j = 0; j < sec->linecount; j++)
+		for (auto line : sec->Lines)
 		{
-			line_t *line = sec->lines[j];
 			sector_t *other = line->frontsector == sec ? line->backsector : line->frontsector;
 			if (other != NULL && other != sec && other->PortalGroup != groupid)
 			{
@@ -1096,9 +1095,9 @@ void P_CreateLinkedPortals()
 		// set a flag on each line connecting to a plane portal sector. This is used to reduce the amount of checks in P_CheckSight.
 		if (sectors[i].PortalIsLinked(sector_t::floor) || sectors[i].PortalIsLinked(sector_t::ceiling))
 		{
-			for (int j = 0; j < sectors[i].linecount; j++)
+			for(auto ln : sectors[i].Lines)
 			{
-				sectors[i].lines[j]->flags |= ML_PORTALCONNECT;
+				ln->flags |= ML_PORTALCONNECT;
 			}
 		}
 		if (sectors[i].PortalIsLinked(sector_t::ceiling) && sectors[i].PortalIsLinked(sector_t::floor))

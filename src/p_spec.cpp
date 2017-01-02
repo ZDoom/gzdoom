@@ -1038,10 +1038,8 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	}
 	if (Sector)
 	{
-		line_t * refline = NULL;
-		for (short i = 0; i < Sector->linecount; i++)
+		for(auto refline : Sector->Lines)
 		{
-			refline = Sector->lines[i];
 			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
 			{
 				// We found the setup linedef for this skybox, so let's use it for our init.

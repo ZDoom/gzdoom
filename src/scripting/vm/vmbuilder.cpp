@@ -857,14 +857,15 @@ void FFunctionBuildList::Build()
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
 		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());
-		for(unsigned i=0;i<item.Func->Variants[0].Proto->ArgumentTypes.Size();i++)
+		for (unsigned i = 0; i < item.Func->Variants[0].Proto->ArgumentTypes.Size(); i++)
 		{
 			auto type = item.Func->Variants[0].Proto->ArgumentTypes[i];
 			auto name = item.Func->Variants[0].ArgNames[i];
 			auto flags = item.Func->Variants[0].ArgFlags[i];
 			// this won't get resolved and won't get emitted. It is only needed so that the code generator can retrieve the necessary info about this argument to do its work.
-			auto local = new FxLocalVariableDeclaration(type, name, nullptr, flags, FScriptPosition());	
-			local->RegNum = buildit.Registers[type->GetRegType()].Get(type->GetRegCount());
+			auto local = new FxLocalVariableDeclaration(type, name, nullptr, flags, FScriptPosition());
+			if (!(flags & VARF_Out)) local->RegNum = buildit.Registers[type->GetRegType()].Get(type->GetRegCount());
+			else local->RegNum = buildit.Registers[REGT_POINTER].Get(1);
 			ctx.FunctionArgs.Push(local);
 		}
 

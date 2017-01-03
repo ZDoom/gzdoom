@@ -337,7 +337,7 @@ object ExplosiveBarrel
 // Floor lamp
 pointlight LAMP
 {
-    color 1.0 1.0 0.8
+    color 0.6 1.0 0.6
     size 84
     offset 0 44 0
 	attenuate 1
@@ -351,7 +351,7 @@ object Column
 // Short tech lamp
 pulselight SMALLLAMP
 {
-    color 0.8 0.8 1.0
+    color 1.0 1.0 0.7
     size 84
     secondarySize 87
     interval 0.4
@@ -367,7 +367,7 @@ object TechLamp2
 // Tall tech lamp
 pulselight BIGLAMP
 {
-    color 0.8 0.8 1.0
+    color 1.0 1.0 0.7
     size 96
     secondarySize 99
     interval 0.4
@@ -542,6 +542,22 @@ object SoulSphere
     frame SOUL { light SOULSPHERE }
 }
 
+// Soul Sphere
+pulselight MEGASPHERE
+{
+    color 0.4 1.0 0.4
+    size 60
+    secondarySize 63
+    interval 2.0
+    offset 0 16 0
+	attenuate 1
+}
+
+object MegaSphere
+{
+    frame MEGA { light MEGASPHERE }
+}
+
 // Invulnerability Sphere
 pulselight INVULN
 {
@@ -607,22 +623,6 @@ object BlurSphere
     frame PINSB { light BLURSPHERE3 }
     frame PINSC { light BLURSPHERE4 }
     frame PINSD { light BLURSPHERE5 }
-}
-
-// Health Potion
-pulselight HEALTHPOTION
-{
-    color 0.0 0.0 0.6
-    size 24
-    secondarySize 27
-    interval 2.0
-	attenuate 1
-    offset 0 10 0
-}
-
-object HealthBonus
-{
-    frame BON1 { light HEALTHPOTION }
 }
 
 // Armour Helmet

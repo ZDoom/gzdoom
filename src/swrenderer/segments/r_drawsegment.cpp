@@ -125,6 +125,9 @@ namespace swrenderer
 
 	void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 	{
+		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
+		fixed_t *maskedtexturecol = nullptr;
+	
 		FTexture	*tex;
 		int			i;
 		sector_t	tempsec;		// killough 4/13/98
@@ -188,7 +191,6 @@ namespace swrenderer
 		mfloorclip = openings + ds->sprbottomclip - ds->x1;
 		mceilingclip = openings + ds->sprtopclip - ds->x1;
 
-		float *MaskedSWall, MaskedScaleY, rw_scalestep;
 
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
@@ -206,7 +208,7 @@ namespace swrenderer
 
 		MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 		MaskedScaleY = ds->yscale;
-		fixed_t *maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
+		maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 

@@ -68,6 +68,7 @@ namespace swrenderer
 		bool calclighting;
 		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
+		float light = 0;
 
 		if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 			return;
@@ -243,7 +244,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		float light = lightleft + (x1 - savecoord.sx1) * lightstep;
+		light = lightleft + (x1 - savecoord.sx1) * lightstep;
 		if (fixedlightlev >= 0)
 			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		else if (fixedcolormap != NULL)

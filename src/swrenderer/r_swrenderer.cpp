@@ -482,14 +482,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	realfixedcolormap = savecm;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back)
+sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
 {
-	return R_FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, back);
+	return R_FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
 }
 

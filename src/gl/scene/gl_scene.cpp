@@ -1005,7 +1005,7 @@ struct FGLInterface : public FRenderer
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
-	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) override;
+	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) override;
 	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
@@ -1362,7 +1362,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 //
 //==========================================================================
 
-sector_t *FGLInterface::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back)
+sector_t *FGLInterface::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
 {
 	if (floorlightlevel != NULL)
 	{
@@ -1372,7 +1372,7 @@ sector_t *FGLInterface::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlig
 	{
 		*ceilinglightlevel = sec->GetCeilingLight ();
 	}
-	return gl_FakeFlat(sec, tempsec, back);
+	return gl_FakeFlat(sec, tempsec, false);
 }
 
 //===========================================================================

@@ -38,15 +38,15 @@ namespace swrenderer
 	class SWRenderLine
 	{
 	public:
-		void R_AddLine(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector);
 
 	private:
-		bool R_StoreWallRange(int start, int stop);
-		void R_NewWall(bool needlights);
-		void R_RenderSegLoop(int x1, int x2);
+		bool RenderWallSegment(int x1, int x2);
+		void SetWallVariables(bool needlights);
+		void RenderWallSegmentTextures(int x1, int x2);
 
-		bool IsFogBoundary(sector_t *front, sector_t *back);
-		bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector);
+		bool IsFogBoundary(sector_t *front, sector_t *back) const;
+		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;
 
 		subsector_t *InSubsector;
 		sector_t *frontsector;

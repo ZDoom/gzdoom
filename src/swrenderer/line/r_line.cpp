@@ -51,7 +51,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void SWRenderLine::R_AddLine(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector)
+	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector)
 	{
 		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 		bool			solid;
@@ -205,7 +205,7 @@ namespace swrenderer
 				// Window.
 				solid = false;
 			}
-			else if (R_SkyboxCompare(frontsector, backsector))
+			else if (SkyboxCompare(frontsector, backsector))
 			{
 				solid = false;
 			}
@@ -288,7 +288,7 @@ namespace swrenderer
 		static SWRenderLine *self = this;
 		bool visible = R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
 		{
-			return self->R_StoreWallRange(x1, x2);
+			return self->RenderWallSegment(x1, x2);
 		});
 
 		if (visible)
@@ -297,7 +297,7 @@ namespace swrenderer
 		}
 	}
 
-	bool SWRenderLine::R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
+	bool SWRenderLine::SkyboxCompare(sector_t *frontsector, sector_t *backsector) const
 	{
 		FSectorPortal *frontc = frontsector->GetPortal(sector_t::ceiling);
 		FSectorPortal *frontf = frontsector->GetPortal(sector_t::floor);
@@ -315,7 +315,7 @@ namespace swrenderer
 	}
 
 	// A wall segment will be drawn between start and stop pixels (inclusive).
-	bool SWRenderLine::R_StoreWallRange(int start, int stop)
+	bool SWRenderLine::RenderWallSegment(int start, int stop)
 	{
 		int i;
 		bool maskedtexture = false;
@@ -330,7 +330,7 @@ namespace swrenderer
 		if (!rw_prepped)
 		{
 			rw_prepped = true;
-			R_NewWall(true);
+			SetWallVariables(true);
 		}
 
 		rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -547,7 +547,7 @@ namespace swrenderer
 			}
 		}
 
-		R_RenderSegLoop(start, stop);
+		RenderWallSegmentTextures(start, stop);
 
 		if (fake3D & 7) {
 			return !(fake3D & FAKE3D_FAKEMASK);
@@ -610,7 +610,7 @@ namespace swrenderer
 		return !(fake3D & FAKE3D_FAKEMASK);
 	}
 
-	void SWRenderLine::R_NewWall(bool needlights)
+	void SWRenderLine::SetWallVariables(bool needlights)
 	{
 		double rowoffset;
 		double yrepeat;
@@ -936,7 +936,7 @@ namespace swrenderer
 		}
 	}
 
-	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back)
+	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const
 	{
 		return r_fogboundary && fixedcolormap == NULL && front->ColorMap->Fade &&
 			front->ColorMap->Fade != back->ColorMap->Fade &&
@@ -945,7 +945,7 @@ namespace swrenderer
 
 	// Draws zero, one, or two textures for walls.
 	// Can draw or mark the starting pixel of floor and ceiling textures.
-	void SWRenderLine::R_RenderSegLoop(int x1, int x2)
+	void SWRenderLine::RenderWallSegmentTextures(int x1, int x2)
 	{
 		int x;
 		double xscale;

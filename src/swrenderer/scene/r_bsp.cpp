@@ -430,7 +430,7 @@ void R_FakeDrawLoop(subsector_t *sub)
 	{
 		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			render_line.R_AddLine (line, InSubsector, frontsector, nullptr);
+			render_line.Render(line, InSubsector, frontsector, nullptr);
 		}
 		line++;
 	}
@@ -764,14 +764,14 @@ void R_Subsector (subsector_t *sub)
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
 					}
-					render_line.R_AddLine(line, InSubsector, frontsector, &tempsec); // fake
+					render_line.Render(line, InSubsector, frontsector, &tempsec); // fake
 				}
 				fakeFloor = NULL;
 				fake3D = 0;
 				floorplane = backupfp;
 				ceilingplane = backupcp;
 			}
-			render_line.R_AddLine(line, InSubsector, frontsector, nullptr); // now real
+			render_line.Render(line, InSubsector, frontsector, nullptr); // now real
 		}
 		line++;
 	}

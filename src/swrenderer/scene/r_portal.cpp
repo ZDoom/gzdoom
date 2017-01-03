@@ -62,6 +62,9 @@ CVAR(Bool, r_skyboxes, true, 0)
 
 namespace swrenderer
 {
+	int WindowLeft, WindowRight;
+	uint16_t MirrorFlags;
+
 	PortalDrawseg *CurrentPortal = nullptr;
 	int CurrentPortalUniq = 0;
 	bool CurrentPortalInSkybox = false;

@@ -46,9 +46,6 @@ enum
 	FAKED_AboveCeiling
 };
 
-extern int			WindowLeft, WindowRight;
-extern WORD			MirrorFlags;
-
 void R_RenderScene();
 void R_RenderBSPNode (void *node);
 

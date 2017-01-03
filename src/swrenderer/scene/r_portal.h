@@ -17,6 +17,9 @@
 
 namespace swrenderer
 {
+	extern int WindowLeft, WindowRight;
+	extern uint16_t MirrorFlags;
+
 	extern PortalDrawseg* CurrentPortal;
 	extern int CurrentPortalUniq;
 	extern bool CurrentPortalInSkybox;

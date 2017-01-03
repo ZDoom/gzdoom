@@ -34,6 +34,7 @@
 #include "swrenderer/scene/r_things.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_portal.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_fogboundary.h"

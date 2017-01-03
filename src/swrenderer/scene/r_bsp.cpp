@@ -71,9 +71,6 @@ bool			r_fakingunderwater;
 
 static BYTE		FakeSide;
 
-int WindowLeft, WindowRight;
-WORD MirrorFlags;
-
 visplane_t *floorplane;
 visplane_t *ceilingplane;
 

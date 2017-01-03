@@ -56,7 +56,6 @@
 #include "d_netinf.h"
 #include "p_effect.h"
 #include "r_bsp.h"
-#include "r_segs.h"
 #include "r_3dfloors.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
@@ -107,8 +106,6 @@ struct FCoverageBuffer
 	Span *FreeSpans;
 	unsigned int NumLists;
 };
-
-extern double globaluclip, globaldclip;
 
 //
 // Sprite rotation 0 is facing the viewer,

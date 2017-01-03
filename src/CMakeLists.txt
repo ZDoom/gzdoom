@@ -847,7 +847,6 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/drawers/r_thread.cpp
 	swrenderer/scene/r_3dfloors.cpp
 	swrenderer/scene/r_bsp.cpp
-	swrenderer/scene/r_segs.cpp
 	swrenderer/scene/r_things.cpp
 	swrenderer/scene/r_portal.cpp
 	swrenderer/line/r_line.cpp

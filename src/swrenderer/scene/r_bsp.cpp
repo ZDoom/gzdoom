@@ -49,7 +49,6 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "r_bsp.h"
-#include "r_segs.h"
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"
@@ -62,11 +61,6 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-sector_t*		frontsector;
-sector_t*		backsector;
-
-// killough 4/7/98: indicates doors closed wrt automap bugfix:
-int				doorclosed;
 
 bool			r_fakingunderwater;
 
@@ -75,8 +69,16 @@ static BYTE		FakeSide;
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
 
+visplane_t *floorplane;
+visplane_t *ceilingplane;
 
-subsector_t *InSubsector;
+// Clip values are the solid pixel bounding the range.
+//	floorclip starts out SCREENHEIGHT and is just outside the range
+//	ceilingclip starts out 0 and is just inside the range
+//
+short floorclip[MAXWIDTH];
+short ceilingclip[MAXWIDTH];
+
 
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.
@@ -289,265 +291,6 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	return sec;
 }
 
-
-bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
-{
-	FSectorPortal *frontc = frontsector->GetPortal(sector_t::ceiling);
-	FSectorPortal *frontf = frontsector->GetPortal(sector_t::floor);
-	FSectorPortal *backc = backsector->GetPortal(sector_t::ceiling);
-	FSectorPortal *backf = backsector->GetPortal(sector_t::floor);
-
-	// return true if any of the planes has a linedef-based portal (unless both sides have the same one.
-	// Ideally this should also check thing based portals but the omission of this check had been abused to hell and back for those.
-	// (Note: This may require a compatibility option if some maps ran into this for line based portals as well.)
-	if (!frontc->MergeAllowed()) return (frontc != backc);
-	if (!frontf->MergeAllowed()) return (frontf != backf);
-	if (!backc->MergeAllowed()) return true;
-	if (!backf->MergeAllowed()) return true;
-	return false;
-}
-
-//
-// R_AddLine
-// Clips the given segment
-// and adds any visible pieces to the line list.
-//
-
-void R_AddLine (seg_t *line)
-{
-	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
-	bool			solid;
-	DVector2		pt1, pt2;
-
-	curline = line;
-
-	// [RH] Color if not texturing line
-	dc_color = (((int)(line - segs) * 8) + 4) & 255;
-
-	pt1 = line->v1->fPos() - ViewPos;
-	pt2 = line->v2->fPos() - ViewPos;
-
-	// Reject lines not facing viewer
-	if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
-		return;
-
-	if (WallC.Init(pt1, pt2, 32.0 / (1 << 12)))
-		return;
-
-	if (WallC.sx1 >= WindowRight || WallC.sx2 <= WindowLeft)
-		return;
-
-	if (line->linedef == NULL)
-	{
-		if (R_CheckClipWallSegment (WallC.sx1, WallC.sx2))
-		{
-			InSubsector->flags |= SSECF_DRAWN;
-		}
-		return;
-	}
-
-	// reject lines that aren't seen from the portal (if any)
-	// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, ViewPos))
-		return;
-
-	vertex_t *v1, *v2;
-	v1 = line->linedef->v1;
-	v2 = line->linedef->v2;
-
-	if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
-	{ // The seg is the entire wall.
-		WallT.InitFromWallCoords(&WallC);
-	}
-	else
-	{ // The seg is only part of the wall.
-		if (line->linedef->sidedef[0] != line->sidedef)
-		{
-			swapvalues (v1, v2);
-		}
-		WallT.InitFromLine(v1->fPos() - ViewPos, v2->fPos() - ViewPos);
-	}
-
-	if (!(fake3D & FAKE3D_FAKEBACK))
-	{
-		backsector = line->backsector;
-	}
-	rw_frontcz1 = frontsector->ceilingplane.ZatPoint(line->v1);
-	rw_frontfz1 = frontsector->floorplane.ZatPoint(line->v1);
-	rw_frontcz2 = frontsector->ceilingplane.ZatPoint(line->v2);
-	rw_frontfz2 = frontsector->floorplane.ZatPoint(line->v2);
-
-	rw_mustmarkfloor = rw_mustmarkceiling = false;
-	rw_havehigh = rw_havelow = false;
-
-	// Single sided line?
-	if (backsector == NULL)
-	{
-		solid = true;
-	}
-	else
-	{
-		// kg3D - its fake, no transfer_heights
-		if (!(fake3D & FAKE3D_FAKEBACK))
-		{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-			backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
-		}
-		doorclosed = 0;		// killough 4/16/98
-
-		rw_backcz1 = backsector->ceilingplane.ZatPoint(line->v1);
-		rw_backfz1 = backsector->floorplane.ZatPoint(line->v1);
-		rw_backcz2 = backsector->ceilingplane.ZatPoint(line->v2);
-		rw_backfz2 = backsector->floorplane.ZatPoint(line->v2);
-
-		if (fake3D & FAKE3D_FAKEBACK)
-		{
-			if (rw_frontfz1 >= rw_backfz1 && rw_frontfz2 >= rw_backfz2)
-			{
-				fake3D |= FAKE3D_CLIPBOTFRONT;
-			}
-			if (rw_frontcz1 <= rw_backcz1 && rw_frontcz2 <= rw_backcz2)
-			{
-				fake3D |= FAKE3D_CLIPTOPFRONT;
-			}
-		}
-
-		// Cannot make these walls solid, because it can result in
-		// sprite clipping problems for sprites near the wall
-		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
-		{
-			rw_havehigh = true;
-			R_CreateWallSegmentYSloped (wallupper, backsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
-		}
-		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
-		{
-			rw_havelow = true;
-			R_CreateWallSegmentYSloped (walllower, backsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
-		}
-
-		// Portal
-		if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0])
-		{
-			solid = true;
-		}
-		// Closed door.
-		else if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
-				 (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
-		{
-			solid = true;
-		}
-		else if (
-		// properly render skies (consider door "open" if both ceilings are sky):
-		(backsector->GetTexture(sector_t::ceiling) != skyflatnum || frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
-
-		// if door is closed because back is shut:
-		&& rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2
-
-		// preserve a kind of transparent door/lift special effect:
-		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->GetTexture(side_t::top).isValid())
-		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->GetTexture(side_t::bottom).isValid()))
-		{
-		// killough 1/18/98 -- This function is used to fix the automap bug which
-		// showed lines behind closed doors simply because the door had a dropoff.
-		//
-		// It assumes that Doom has already ruled out a door being closed because
-		// of front-back closure (e.g. front floor is taller than back ceiling).
-
-		// This fixes the automap floor height bug -- killough 1/18/98:
-		// killough 4/7/98: optimize: save result in doorclosed for use in r_segs.c
-			doorclosed = true;
-			solid = true;
-		}
-		else if (frontsector->ceilingplane != backsector->ceilingplane ||
-			frontsector->floorplane != backsector->floorplane)
-		{
-		// Window.
-			solid = false;
-		}
-		else if (R_SkyboxCompare(frontsector, backsector))
-		{
-			solid = false;
-		}
-		else if (backsector->lightlevel != frontsector->lightlevel
-			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
-			|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
-			|| curline->sidedef->GetTexture(side_t::mid).isValid()
-
-			// killough 3/7/98: Take flats offsets into account:
-			|| backsector->planes[sector_t::floor].xform != frontsector->planes[sector_t::floor].xform
-			|| backsector->planes[sector_t::ceiling].xform != frontsector->planes[sector_t::ceiling].xform
-
-			|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
-			|| backsector->GetPlaneLight(sector_t::ceiling) != frontsector->GetPlaneLight(sector_t::ceiling)
-			|| backsector->GetVisFlags(sector_t::floor) != frontsector->GetVisFlags(sector_t::floor)
-			|| backsector->GetVisFlags(sector_t::ceiling) != frontsector->GetVisFlags(sector_t::ceiling)
-
-			// [RH] Also consider colormaps
-			|| backsector->ColorMap != frontsector->ColorMap
-
-
-
-			// kg3D - and fake lights
-			|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
-			|| (backsector->e && backsector->e->XFloor.lightlist.Size())
-			)
-		{
-			solid = false;
-		}
-		else
-		{
-			// Reject empty lines used for triggers and special events.
-			// Identical floor and ceiling on both sides, identical light levels
-			// on both sides, and no middle texture.
-
-			// When using GL nodes, do a clipping test for these lines so we can
-			// mark their subsectors as visible for automap texturing.
-			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
-			{
-				if (R_CheckClipWallSegment(WallC.sx1, WallC.sx2))
-				{
-					InSubsector->flags |= SSECF_DRAWN;
-				}
-			}
-			return;
-		}
-	}
-
-	rw_prepped = false;
-
-	if (line->linedef->special == Line_Horizon)
-	{
-		// Be aware: Line_Horizon does not work properly with sloped planes
-		fillshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-		fillshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-	}
-	else
-	{
-		rw_ceilstat = R_CreateWallSegmentYSloped (walltop, frontsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
-		rw_floorstat = R_CreateWallSegmentYSloped (wallbottom, frontsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
-
-		// [RH] treat off-screen walls as solid
-#if 0	// Maybe later...
-		if (!solid)
-		{
-			if (rw_ceilstat == 12 && line->sidedef->GetTexture(side_t::top) != 0)
-			{
-				rw_mustmarkceiling = true;
-				solid = true;
-			}
-			if (rw_floorstat == 3 && line->sidedef->GetTexture(side_t::bottom) != 0)
-			{
-				rw_mustmarkfloor = true;
-				solid = true;
-			}
-		}
-#endif
-	}
-
-	if (R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, R_StoreWallRange))
-	{
-		InSubsector->flags |= SSECF_DRAWN;
-	}
-}
 
 
 // Checks BSP node/subtree bounding box.

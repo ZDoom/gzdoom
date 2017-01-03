@@ -23,6 +23,18 @@ namespace swrenderer
 		void InitFromLine(const DVector2 &left, const DVector2 &right);
 	};
 
+	void R_AddLine(seg_t *line);
+	bool R_StoreWallRange(int start, int stop);
+	void R_NewWall(bool needlights);
+	void R_RenderSegLoop(int x1, int x2);
+
+	bool IsFogBoundary(sector_t *front, sector_t *back);
+	bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector);
+
+	extern subsector_t *InSubsector;
+	extern sector_t *frontsector;
+	extern sector_t *backsector;
+
 	extern seg_t *curline;
 	extern side_t *sidedef;
 	extern line_t *linedef;

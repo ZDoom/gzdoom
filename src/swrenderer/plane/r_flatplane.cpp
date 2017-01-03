@@ -18,7 +18,6 @@
 #include "g_level.h"
 #include "swrenderer/scene/r_bsp.h"
 #include "r_flatplane.h"
-#include "swrenderer/scene/r_segs.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"

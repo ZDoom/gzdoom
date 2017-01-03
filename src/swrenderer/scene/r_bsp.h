@@ -32,6 +32,8 @@ EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 namespace swrenderer
 {
 
+struct visplane_t;
+
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow
 // the texture calculations.
@@ -44,11 +46,6 @@ enum
 	FAKED_AboveCeiling
 };
 
-extern subsector_t *InSubsector;
-
-extern sector_t*	frontsector;
-extern sector_t*	backsector;
-
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
 
@@ -56,6 +53,11 @@ void R_RenderBSPNode (void *node);
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
+
+extern visplane_t *floorplane;
+extern visplane_t *ceilingplane;
+extern short floorclip[MAXWIDTH];
+extern short ceilingclip[MAXWIDTH];
 
 }
 

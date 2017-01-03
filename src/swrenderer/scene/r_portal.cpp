@@ -33,7 +33,6 @@
 #include "r_utility.h"
 #include "r_things.h"
 #include "r_3dfloors.h"
-#include "r_segs.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"

@@ -42,7 +42,6 @@
 #include "segments/r_drawsegment.h"
 #include "segments/r_portalsegment.h"
 #include "segments/r_clipsegment.h"
-#include "scene/r_segs.h"
 #include "scene/r_3dfloors.h"
 #include "scene/r_portal.h"
 #include "r_sky.h"

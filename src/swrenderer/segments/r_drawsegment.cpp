@@ -36,7 +36,7 @@
 #include "swrenderer/scene/r_bsp.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
-#include "swrenderer/plane/r_fogboundary.h"
+#include "swrenderer/line/r_fogboundary.h"
 #include "swrenderer/segments/r_drawsegment.h"
 
 namespace swrenderer

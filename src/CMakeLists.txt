@@ -852,6 +852,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/line/r_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp
+	swrenderer/line/r_fogboundary.cpp
 	swrenderer/segments/r_clipsegment.cpp
 	swrenderer/segments/r_drawsegment.cpp
 	swrenderer/segments/r_portalsegment.cpp
@@ -865,7 +866,6 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/plane/r_skyplane.cpp
 	swrenderer/plane/r_flatplane.cpp
 	swrenderer/plane/r_slopeplane.cpp
-	swrenderer/plane/r_fogboundary.cpp
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp

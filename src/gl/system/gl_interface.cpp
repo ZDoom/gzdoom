@@ -168,7 +168,7 @@ void gl_LoadExtensions()
 	}
 	
 	// The minimum requirement for the modern render path are GL 3.0 + uniform buffers
-	if (gl_version < 3.0f || (gl_version < 3.1f && !CheckExtension("GL_ARB_uniform_buffer_object")))
+	if (gl_version < 3.0f || (gl_version < 3.1f && !CheckExtension("GL_ARB_uniform_buffer_object") && strstr(gl.vendorstring, "X.Org") == nullptr))
 	{
 		gl.legacyMode = true;
 		gl.lightmethod = LM_LEGACY;

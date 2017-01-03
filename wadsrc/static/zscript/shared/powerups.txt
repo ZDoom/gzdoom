@@ -169,7 +169,7 @@ class PlayerSpeedTrail : Actor
 	}
 }
 
-class PowerMinotaur : Powerup native
+class PowerMinotaur : Powerup
 {
 	Default
 	{
@@ -197,19 +197,71 @@ class PowerTargeter : Powerup native
 	}
 }
 
-class PowerFrightener : Powerup native
+//===========================================================================
+//
+// Frightener
+//
+//===========================================================================
+
+class PowerFrightener : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 	}
+	
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+
+		if (Owner== null || Owner.player == null)
+			return;
+
+		Owner.player.cheats |= CF_FRIGHTENING;
+	}
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+
+		if (Owner== null || Owner.player == null)
+			return;
+
+		Owner.player.cheats &= ~CF_FRIGHTENING;
+	}
 }
 
-class PowerBuddha : Powerup native
+//===========================================================================
+//
+// Buddha
+//
+//===========================================================================
+
+class PowerBuddha : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
+	}
+
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+
+		if (Owner== null || Owner.player == null)
+			return;
+
+		Owner.player.cheats |= CF_BUDDHA;
+	}
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+
+		if (Owner== null || Owner.player == null)
+			return;
+
+		Owner.player.cheats &= ~CF_BUDDHA;
 	}
 }
 

@@ -1290,10 +1290,6 @@ void APowerSpeed::DoEffect ()
 	}
 }
 
-// Minotaur (aka Dark Servant) powerup ---------------------------------------
-
-IMPLEMENT_CLASS(APowerMinotaur, false, false)
-
 // Targeter powerup ---------------------------------------------------------
 
 IMPLEMENT_CLASS(APowerTargeter, false, false)
@@ -1407,78 +1403,6 @@ void APowerTargeter::PositionAccuracy ()
 		player->GetPSprite(PSP_TARGETLEFT)->x = (160-3) - ((100 - player->mo->accuracy));
 		player->GetPSprite(PSP_TARGETRIGHT)->x = (160-3)+ ((100 - player->mo->accuracy));
 	}
-}
-
-// Frightener Powerup --------------------------------
-
-IMPLEMENT_CLASS(APowerFrightener, false, false)
-
-//===========================================================================
-//
-// APowerFrightener :: InitEffect
-//
-//===========================================================================
-
-void APowerFrightener::InitEffect ()
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	Owner->player->cheats |= CF_FRIGHTENING;
-}
-
-//===========================================================================
-//
-// APowerFrightener :: EndEffect
-//
-//===========================================================================
-
-void APowerFrightener::EndEffect ()
-{
-	Super::EndEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	Owner->player->cheats &= ~CF_FRIGHTENING;
-}
-
-// Buddha Powerup --------------------------------
-
-IMPLEMENT_CLASS(APowerBuddha, false, false)
-
-//===========================================================================
-//
-// APowerBuddha :: InitEffect
-//
-//===========================================================================
-
-void APowerBuddha::InitEffect ()
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	Owner->player->cheats |= CF_BUDDHA;
-}
-
-//===========================================================================
-//
-// APowerBuddha :: EndEffect
-//
-//===========================================================================
-
-void APowerBuddha::EndEffect ()
-{
-	Super::EndEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	Owner->player->cheats &= ~CF_BUDDHA;
 }
 
 // Morph powerup ------------------------------------------------------

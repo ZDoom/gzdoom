@@ -246,8 +246,7 @@ namespace swrenderer
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
 
-			InSubsector = nullptr;
-			R_RenderBSPNode(nodes + numnodes - 1);
+			R_RenderScene();
 			R_3D_ResetClip(); // reset clips (floor/ceiling)
 			R_DrawPlanes();
 
@@ -466,8 +465,7 @@ namespace swrenderer
 		memcpy(ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len * sizeof(*ceilingclip));
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
-		InSubsector = nullptr;
-		R_RenderBSPNode(nodes + numnodes - 1);
+		R_RenderScene();
 		R_3D_ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 

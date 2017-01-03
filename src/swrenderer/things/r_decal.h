@@ -20,6 +20,7 @@ namespace swrenderer
 {
 	struct drawseg_t;
 
-	void R_RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade);
-	void R_RenderDecal(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, int pass);
+	void R_RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC);
+	void R_RenderDecal(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, int pass);
+	void R_DecalColumn(int x, float maskedScaleY);
 }

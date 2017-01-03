@@ -51,14 +51,13 @@ namespace swrenderer
 		short spanend[MAXHEIGHT];
 	}
 
-	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip, int wallshade)
+	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that
 		// we need to use a new colormap.
 
-		double lightstep = rw_lightstep;
-		double light = rw_light + rw_lightstep*(x2 - x1 - 1);
+		float light = lightleft + lightstep*(x2 - x1 - 1);
 		int x = x2 - 1;
 		int t2 = uclip[x];
 		int b2 = dclip[x];
@@ -82,7 +81,7 @@ namespace swrenderer
 			const int xr = x + 1;
 			int stop;
 
-			light -= rw_lightstep;
+			light -= lightstep;
 			lcolormap = GETPALOOKUP(light, wallshade);
 			if (lcolormap != rcolormap)
 			{

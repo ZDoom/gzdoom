@@ -51,71 +51,15 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	subsector_t *InSubsector;
-	sector_t *frontsector;
-	sector_t *backsector;
-
-	seg_t *curline;
-	side_t *sidedef;
-	line_t *linedef;
-
-	FWallCoords WallC;
-	FWallTmapVals WallT;
-
-	double rw_backcz1;
-	double rw_backcz2;
-	double rw_backfz1;
-	double rw_backfz2;
-	double rw_frontcz1;
-	double rw_frontcz2;
-	double rw_frontfz1;
-	double rw_frontfz2;
-
-	fixed_t rw_offset_top;
-	fixed_t rw_offset_mid;
-	fixed_t rw_offset_bottom;
-
-	int rw_ceilstat, rw_floorstat;
-	bool rw_mustmarkfloor, rw_mustmarkceiling;
-	bool rw_prepped;
-	bool rw_markportal;
-	bool rw_havehigh;
-	bool rw_havelow;
-
-	float rw_light;
-	float rw_lightstep;
-	float rw_lightleft;
-
-	fixed_t rw_offset;
-	double rw_midtexturemid;
-	double rw_toptexturemid;
-	double rw_bottomtexturemid;
-	double rw_midtexturescalex;
-	double rw_midtexturescaley;
-	double rw_toptexturescalex;
-	double rw_toptexturescaley;
-	double rw_bottomtexturescalex;
-	double rw_bottomtexturescaley;
-
-	FTexture *rw_pic;
-
-	bool markfloor; // False if the back side is the same plane.
-	bool markceiling;
-	FTexture *toptexture;
-	FTexture *bottomtexture;
-	FTexture *midtexture;
-
-	namespace
-	{
-		bool doorclosed;
-		int wallshade;
-	}
-
-	void R_AddLine(seg_t *line)
+	void SWRenderLine::R_AddLine(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector)
 	{
 		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 		bool			solid;
 		DVector2		pt1, pt2;
+
+		InSubsector = subsector;
+		frontsector = sector;
+		backsector = fakebacksector;
 
 		curline = line;
 
@@ -188,7 +132,7 @@ namespace swrenderer
 			// kg3D - its fake, no transfer_heights
 			if (!(fake3D & FAKE3D_FAKEBACK))
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-				backsector = R_FakeFlat(backsector, &tempsec, NULL, NULL, true);
+				backsector = R_FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
 			}
 			doorclosed = false;		// killough 4/16/98
 
@@ -341,13 +285,19 @@ namespace swrenderer
 #endif
 		}
 
-		if (R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, R_StoreWallRange))
+		static SWRenderLine *self = this;
+		bool visible = R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
+		{
+			return self->R_StoreWallRange(x1, x2);
+		});
+
+		if (visible)
 		{
 			InSubsector->flags |= SSECF_DRAWN;
 		}
 	}
 
-	bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
+	bool SWRenderLine::R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
 	{
 		FSectorPortal *frontc = frontsector->GetPortal(sector_t::ceiling);
 		FSectorPortal *frontf = frontsector->GetPortal(sector_t::floor);
@@ -365,7 +315,7 @@ namespace swrenderer
 	}
 
 	// A wall segment will be drawn between start and stop pixels (inclusive).
-	bool R_StoreWallRange(int start, int stop)
+	bool SWRenderLine::R_StoreWallRange(int start, int stop)
 	{
 		int i;
 		bool maskedtexture = false;
@@ -625,7 +575,7 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!rw_markportal)
 		{
-			R_RenderDecals(curline->sidedef, draw_segment, wallshade);
+			R_RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC);
 		}
 
 		if (rw_markportal)
@@ -660,7 +610,7 @@ namespace swrenderer
 		return !(fake3D & FAKE3D_FAKEMASK);
 	}
 
-	void R_NewWall(bool needlights)
+	void SWRenderLine::R_NewWall(bool needlights)
 	{
 		double rowoffset;
 		double yrepeat;
@@ -968,7 +918,7 @@ namespace swrenderer
 				bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 				1.;
 
-			PrepWall(swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
+			PrepWall(swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
 
 			if (fixedcolormap == NULL && fixedlightlev < 0)
 			{
@@ -986,7 +936,7 @@ namespace swrenderer
 		}
 	}
 
-	bool IsFogBoundary(sector_t *front, sector_t *back)
+	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back)
 	{
 		return r_fogboundary && fixedcolormap == NULL && front->ColorMap->Fade &&
 			front->ColorMap->Fade != back->ColorMap->Fade &&
@@ -995,7 +945,7 @@ namespace swrenderer
 
 	// Draws zero, one, or two textures for walls.
 	// Can draw or mark the starting pixel of floor and ceiling textures.
-	void R_RenderSegLoop(int x1, int x2)
+	void SWRenderLine::R_RenderSegLoop(int x1, int x2)
 	{
 		int x;
 		double xscale;
@@ -1094,7 +1044,7 @@ namespace swrenderer
 				yscale = rw_pic->Scale.Y * rw_midtexturescaley;
 				if (xscale != lwallscale)
 				{
-					PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
+					PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 					lwallscale = xscale;
 				}
 				if (midtexture->bWorldPanning)
@@ -1109,7 +1059,7 @@ namespace swrenderer
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, light_list);
+				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
@@ -1130,7 +1080,7 @@ namespace swrenderer
 					yscale = rw_pic->Scale.Y * rw_toptexturescaley;
 					if (xscale != lwallscale)
 					{
-						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
+						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
 					if (toptexture->bWorldPanning)
@@ -1145,7 +1095,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, light_list);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
 				}
 				memcpy(ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1169,7 +1119,7 @@ namespace swrenderer
 					yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
 					if (xscale != lwallscale)
 					{
-						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
+						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
 					if (bottomtexture->bWorldPanning)
@@ -1184,7 +1134,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, light_list);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
 				}
 				memcpy(floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
 			}

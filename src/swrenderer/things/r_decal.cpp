@@ -44,11 +44,11 @@
 
 namespace swrenderer
 {
-	void R_RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade)
+	void R_RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			R_RenderDecal(sidedef, decal, draw_segment, wallshade, 0);
+			R_RenderDecal(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, 0);
 		}
 	}
 
@@ -56,7 +56,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void R_RenderDecal(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, int pass)
+	void R_RenderDecal(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -150,6 +150,7 @@ namespace swrenderer
 		if (x1 >= clipper->x2 || x2 <= clipper->x1)
 			goto done;
 
+		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(&WallC);
 
 		// Get the top and bottom clipping arrays
@@ -217,7 +218,7 @@ namespace swrenderer
 			goto done;
 		}
 
-		PrepWall(swall, lwall, WallSpriteTile->GetWidth(), x1, x2);
+		PrepWall(swall, lwall, WallSpriteTile->GetWidth(), x1, x2, WallT);
 
 		if (flipx)
 		{
@@ -242,7 +243,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		rw_light = rw_lightleft + (x1 - savecoord.sx1) * rw_lightstep;
+		float light = lightleft + (x1 - savecoord.sx1) * lightstep;
 		if (fixedlightlev >= 0)
 			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		else if (fixedcolormap != NULL)
@@ -283,9 +284,10 @@ namespace swrenderer
 				{
 					if (calclighting)
 					{ // calculate lighting
-						R_SetColorMapLight(usecolormap, rw_light, wallshade);
+						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					R_WallSpriteColumn(x, maskedScaleY);
+					R_DecalColumn(x, maskedScaleY);
+					light += lightstep;
 					x++;
 				}
 			}
@@ -303,5 +305,23 @@ namespace swrenderer
 		R_FinishSetPatchStyle();
 	done:
 		WallC = savecoord;
+	}
+
+	void R_DecalColumn(int x, float maskedScaleY)
+	{
+		using namespace drawerargs;
+
+		dc_x = x;
+
+		float iscale = swall[dc_x] * maskedScaleY;
+		dc_iscale = FLOAT2FIXED(iscale);
+		spryscale = 1 / iscale;
+		if (sprflipvert)
+			sprtopscreen = CenterY + dc_texturemid * spryscale;
+		else
+			sprtopscreen = CenterY - dc_texturemid * spryscale;
+
+		dc_texturefrac = 0;
+		R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
 	}
 }

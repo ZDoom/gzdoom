@@ -59,8 +59,13 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	using namespace drawerargs;
+	namespace
+	{
+		subsector_t *InSubsector;
+		sector_t *frontsector;
 
+		SWRenderLine render_line;
+	}
 
 bool			r_fakingunderwater;
 
@@ -93,9 +98,7 @@ short ceilingclip[MAXWIDTH];
 // killough 4/11/98, 4/13/98: fix bugs, add 'back' parameter
 //
 
-sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
-					 int *floorlightlevel, int *ceilinglightlevel,
-					 bool back)
+sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2)
 {
 	// [RH] allow per-plane lighting
 	if (floorlightlevel != NULL)
@@ -182,13 +185,13 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// are underwater but not in a water sector themselves.
 		// Only works if you cannot see the top surface of any deep water
 		// sectors at the same time.
-		if (back && !r_fakingunderwater && curline->frontsector->heightsec == NULL)
+		if (backline && !r_fakingunderwater && backline->frontsector->heightsec == NULL)
 		{
-			if (rw_frontcz1 <= s->floorplane.ZatPoint(curline->v1) &&
-				rw_frontcz2 <= s->floorplane.ZatPoint(curline->v2))
+			if (frontcz1 <= s->floorplane.ZatPoint(backline->v1) &&
+				frontcz2 <= s->floorplane.ZatPoint(backline->v2))
 			{
 				// Check that the window is actually visible
-				for (int z = WallC.sx1; z < WallC.sx2; ++z)
+				for (int z = backx1; z < backx2; ++z)
 				{
 					if (floorclip[z] > ceilingclip[z])
 					{
@@ -211,7 +214,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		}
 
 		// killough 11/98: prevent sudden light changes from non-water sectors:
-		if ((underwater && !back) || doorunderwater)
+		if ((underwater && !backline) || doorunderwater)
 		{					// head-below-floor hack
 			tempsec->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
 			tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
@@ -427,7 +430,7 @@ void R_FakeDrawLoop(subsector_t *sub)
 	{
 		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			R_AddLine (line);
+			render_line.R_AddLine (line, InSubsector, frontsector, nullptr);
 		}
 		line++;
 	}
@@ -489,8 +492,7 @@ void R_Subsector (subsector_t *sub)
 	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
-						   &ceilinglightlevel, false);	// killough 4/11/98
+	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel, &ceilinglightlevel, nullptr, 0, 0, 0, 0);
 
 	fll = floorlightlevel;
 	cll = ceilinglightlevel;
@@ -757,20 +759,19 @@ void R_Subsector (subsector_t *sub)
 					tempsec = *fakeFloor->model;
 					tempsec.floorplane = *fakeFloor->top.plane;
 					tempsec.ceilingplane = *fakeFloor->bottom.plane;
-					backsector = &tempsec;
 					if (fakeFloor->validcount != validcount)
 					{
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
 					}
-					R_AddLine(line); // fake
+					render_line.R_AddLine(line, InSubsector, frontsector, &tempsec); // fake
 				}
 				fakeFloor = NULL;
 				fake3D = 0;
 				floorplane = backupfp;
 				ceilingplane = backupcp;
 			}
-			R_AddLine (line); // now real
+			render_line.R_AddLine(line, InSubsector, frontsector, nullptr); // now real
 		}
 		line++;
 	}
@@ -778,6 +779,12 @@ void R_Subsector (subsector_t *sub)
 	{
 		InSubsector = NULL;
 	}
+}
+
+void R_RenderScene()
+{
+	InSubsector = nullptr;
+	R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 }
 
 //

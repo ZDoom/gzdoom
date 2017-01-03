@@ -35,59 +35,74 @@ namespace swrenderer
 		void InitFromLine(const DVector2 &left, const DVector2 &right);
 	};
 
-	void R_AddLine(seg_t *line);
-	bool R_StoreWallRange(int start, int stop);
-	void R_NewWall(bool needlights);
-	void R_RenderSegLoop(int x1, int x2);
+	class SWRenderLine
+	{
+	public:
+		void R_AddLine(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector);
 
-	bool IsFogBoundary(sector_t *front, sector_t *back);
-	bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector);
+	private:
+		bool R_StoreWallRange(int start, int stop);
+		void R_NewWall(bool needlights);
+		void R_RenderSegLoop(int x1, int x2);
 
-	extern subsector_t *InSubsector;
-	extern sector_t *frontsector;
-	extern sector_t *backsector;
+		bool IsFogBoundary(sector_t *front, sector_t *back);
+		bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector);
 
-	extern seg_t *curline;
-	extern side_t *sidedef;
-	extern line_t *linedef;
+		subsector_t *InSubsector;
+		sector_t *frontsector;
+		sector_t *backsector;
 
-	extern FWallCoords WallC;
-	extern FWallTmapVals WallT;
+		seg_t *curline;
+		side_t *sidedef;
+		line_t *linedef;
 
-	extern double rw_backcz1;
-	extern double rw_backcz2;
-	extern double rw_backfz1;
-	extern double rw_backfz2;
-	extern double rw_frontcz1;
-	extern double rw_frontcz2;
-	extern double rw_frontfz1;
-	extern double rw_frontfz2;
+		FWallCoords WallC;
+		FWallTmapVals WallT;
 
-	extern fixed_t rw_offset_top;
-	extern fixed_t rw_offset_mid;
-	extern fixed_t rw_offset_bottom;
+		double rw_backcz1;
+		double rw_backcz2;
+		double rw_backfz1;
+		double rw_backfz2;
+		double rw_frontcz1;
+		double rw_frontcz2;
+		double rw_frontfz1;
+		double rw_frontfz2;
 
-	extern int rw_ceilstat, rw_floorstat;
-	extern bool rw_mustmarkfloor, rw_mustmarkceiling;
-	extern bool rw_prepped;
-	extern bool rw_markportal;
-	extern bool rw_havehigh;
-	extern bool rw_havelow;
+		fixed_t rw_offset_top;
+		fixed_t rw_offset_mid;
+		fixed_t rw_offset_bottom;
 
-	extern float rw_light;
-	extern float rw_lightstep;
-	extern float rw_lightleft;
+		int rw_ceilstat, rw_floorstat;
+		bool rw_mustmarkfloor, rw_mustmarkceiling;
+		bool rw_prepped;
+		bool rw_markportal;
+		bool rw_havehigh;
+		bool rw_havelow;
 
-	extern fixed_t rw_offset;
-	extern double rw_midtexturemid;
-	extern double rw_toptexturemid;
-	extern double rw_bottomtexturemid;
-	extern double rw_midtexturescalex;
-	extern double rw_midtexturescaley;
-	extern double rw_toptexturescalex;
-	extern double rw_toptexturescaley;
-	extern double rw_bottomtexturescalex;
-	extern double rw_bottomtexturescaley;
+		float rw_light;
+		float rw_lightstep;
+		float rw_lightleft;
 
-	extern FTexture *rw_pic;
+		fixed_t rw_offset;
+		double rw_midtexturemid;
+		double rw_toptexturemid;
+		double rw_bottomtexturemid;
+		double rw_midtexturescalex;
+		double rw_midtexturescaley;
+		double rw_toptexturescalex;
+		double rw_toptexturescaley;
+		double rw_bottomtexturescalex;
+		double rw_bottomtexturescaley;
+
+		FTexture *rw_pic;
+
+		bool doorclosed;
+		int wallshade;
+
+		bool markfloor; // False if the back side is the same plane.
+		bool markceiling;
+		FTexture *toptexture;
+		FTexture *bottomtexture;
+		FTexture *midtexture;
+	};
 }

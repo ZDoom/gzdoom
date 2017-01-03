@@ -123,8 +123,7 @@ namespace swrenderer
 		else
 		{	// This used to use camera->Sector but due to interpolation that can be incorrect
 			// when the interpolated viewpoint is in a different sector than the camera.
-			sec = R_FakeFlat(viewsector, &tempsec, &floorlight,
-				&ceilinglight, false);
+			sec = R_FakeFlat(viewsector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
 
 			// [RH] set basecolormap
 			basecolormap = sec->ColorMap;

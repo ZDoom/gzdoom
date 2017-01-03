@@ -153,7 +153,7 @@ namespace swrenderer
 		}
 	}
 
-	void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2)
+	void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
@@ -191,7 +191,7 @@ namespace swrenderer
 		}
 	}
 
-	void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2)
+	void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);

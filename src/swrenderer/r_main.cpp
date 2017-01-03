@@ -597,8 +597,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
-	InSubsector = NULL;
-	R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
+	R_RenderScene();
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();

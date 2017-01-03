@@ -51,6 +51,19 @@ namespace swrenderer
 	namespace
 	{
 		size_t MaxDrawSegs;
+
+		sector_t *frontsector;
+		sector_t *backsector;
+
+		seg_t *curline;
+
+		FWallCoords WallC;
+		FWallTmapVals WallT;
+
+		float rw_light;
+		float rw_lightstep;
+		fixed_t rw_offset;
+		FTexture *rw_pic;
 	}
 
 	void R_FreeDrawSegs()
@@ -145,7 +158,7 @@ namespace swrenderer
 		}
 
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
-		sec = R_FakeFlat(frontsector, &tempsec, nullptr, nullptr, false);
+		sec = R_FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 
@@ -179,7 +192,7 @@ namespace swrenderer
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
 		{
-			R_DrawFogBoundary(x1, x2, mceilingclip, mfloorclip, wallshade);
+			R_DrawFogBoundary(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep);
 			if (ds->maskedtexturecol == -1)
 			{
 				goto clearfog;
@@ -397,7 +410,7 @@ namespace swrenderer
 
 			rw_offset = 0;
 			rw_pic = tex;
-			R_DrawDrawSeg(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade);
+			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep);
 		}
 
 	clearfog:
@@ -522,8 +535,8 @@ namespace swrenderer
 				walllower[i] = mfloorclip[i];
 		}
 
-		PrepLWall(lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
-		R_DrawDrawSeg(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade);
+		PrepLWall(lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
+		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep);
 		R_FinishSetPatchStyle();
 	}
 

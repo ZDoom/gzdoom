@@ -141,8 +141,9 @@ namespace swrenderer
 		x2 = MIN<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
+		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(&spr->wallc);
-		PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2);
+		PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
 		iyscale = 1 / spr->yscale;
 		dc_texturemid = (spr->gzt - ViewPos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
@@ -168,9 +169,9 @@ namespace swrenderer
 
 		int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
 		GlobVis = r_WallVisibility;
-		rw_lightleft = float(GlobVis / spr->wallc.sz1);
-		rw_lightstep = float((GlobVis / spr->wallc.sz2 - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
-		rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
+		float lightleft = float(GlobVis / spr->wallc.sz1);
+		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
+		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		if (fixedlightlev >= 0)
 			R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		else if (fixedcolormap != NULL)
@@ -215,10 +216,11 @@ namespace swrenderer
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, shade);
+					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!R_ClipSpriteColumnWithPortals(spr))
 					R_WallSpriteColumn(x, maskedScaleY);
+				light += lightstep;
 				x++;
 			}
 		}
@@ -241,6 +243,5 @@ namespace swrenderer
 
 		dc_texturefrac = 0;
 		R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
-		rw_light += rw_lightstep;
 	}
 }

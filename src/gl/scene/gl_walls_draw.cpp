@@ -195,7 +195,7 @@ void GLWall::RenderWall(int textured)
 	gl_RenderState.ApplyLightIndex(dynlightindex);
 	if (gl.buffermethod != BM_DEFERRED)
 	{
-		MakeVertices(!(textured&RWF_NOSPLIT));
+		MakeVertices(!!(textured&RWF_NOSPLIT));
 	}
 	else if (vertcount == 0)
 	{

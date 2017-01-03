@@ -114,7 +114,7 @@ void DrawerCommandQueue::Finish()
 
 	// Do one thread ourselves:
 
-	DrawerThread thread;
+	static DrawerThread thread;
 	thread.core = 0;
 	thread.num_cores = (int)(queue->threads.size() + 1);
 

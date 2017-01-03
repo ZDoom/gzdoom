@@ -202,17 +202,7 @@ public:
 		if (queue->threaded_render == 0 || !r_multithreaded)
 		{
 			T command(std::forward<Types>(args)...);
-			VectoredTryCatch(&command,
-			[](void *data)
-			{
-				T *c = (T*)data;
-				c->Execute(&Instance()->single_core_thread);
-			},
-			[](void *data, const char *reason, bool fatal)
-			{
-				T *c = (T*)data;
-				ReportDrawerError(c, false, reason, fatal);
-			});
+			command.Execute(&Instance()->single_core_thread);
 		}
 		else
 		{

@@ -550,8 +550,8 @@ public:
 	////////
 	TStaticArray()
 	{
-		Count = 0;
-		Array = NULL;
+		this->Count = 0;
+		this->Array = NULL;
 	}
 	// This is not supposed to be copyable.
 	TStaticArray(const TStaticArray<T> &other) = delete;
@@ -562,13 +562,13 @@ public:
 	}
 	void Clear()
 	{
-		if (Array) delete[] Array;
+		if (this->Array) delete[] this->Array;
 	}
 	void Alloc(unsigned int amount)
 	{
 		Clear();
-		Array = new T[amount];
-		Count = Amount;
+		this->Array = new T[amount];
+		this->Count = amount;
 	}
 };
 

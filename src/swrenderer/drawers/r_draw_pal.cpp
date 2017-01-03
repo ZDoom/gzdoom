@@ -112,9 +112,9 @@ namespace swrenderer
 
 	uint8_t PalWall1Command::AddLights(const TriLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
 	{
-		uint32_t lit_r = GPalette.BaseColors[fg].r;
-		uint32_t lit_g = GPalette.BaseColors[fg].g;
-		uint32_t lit_b = GPalette.BaseColors[fg].b;
+		uint32_t lit_r = 0;
+		uint32_t lit_g = 0;
+		uint32_t lit_b = 0;
 
 		uint32_t material_r = GPalette.BaseColors[material].r;
 		uint32_t material_g = GPalette.BaseColors[material].g;
@@ -144,14 +144,14 @@ namespace swrenderer
 			float point_attenuation = lights[i].y * rcp_dist * distance_attenuation;
 			uint32_t attenuation = (uint32_t)(lights[i].y == 0.0f ? simple_attenuation : point_attenuation);
 
-			lit_r += (light_color_r * material_r * attenuation) >> 16;
-			lit_g += (light_color_g * material_g * attenuation) >> 16;
-			lit_b += (light_color_b * material_b * attenuation) >> 16;
+			lit_r += (light_color_r * attenuation) >> 8;
+			lit_g += (light_color_g * attenuation) >> 8;
+			lit_b += (light_color_b * attenuation) >> 8;
 		}
 
-		lit_r = MIN<uint32_t>(lit_r, 255);
-		lit_g = MIN<uint32_t>(lit_g, 255);
-		lit_b = MIN<uint32_t>(lit_b, 255);
+		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
 
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
@@ -1722,9 +1722,9 @@ namespace swrenderer
 
 	uint8_t PalSpanCommand::AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
 	{
-		uint32_t lit_r = GPalette.BaseColors[fg].r;
-		uint32_t lit_g = GPalette.BaseColors[fg].g;
-		uint32_t lit_b = GPalette.BaseColors[fg].b;
+		uint32_t lit_r = 0;
+		uint32_t lit_g = 0;
+		uint32_t lit_b = 0;
 
 		uint32_t material_r = GPalette.BaseColors[material].r;
 		uint32_t material_g = GPalette.BaseColors[material].g;
@@ -1754,14 +1754,14 @@ namespace swrenderer
 			float point_attenuation = lights[i].z * rcp_dist * distance_attenuation;
 			uint32_t attenuation = (uint32_t)(lights[i].z == 0.0f ? simple_attenuation : point_attenuation);
 
-			lit_r += (light_color_r * material_r * attenuation) >> 16;
-			lit_g += (light_color_g * material_g * attenuation) >> 16;
-			lit_b += (light_color_b * material_b * attenuation) >> 16;
+			lit_r += (light_color_r * attenuation) >> 8;
+			lit_g += (light_color_g * attenuation) >> 8;
+			lit_b += (light_color_b * attenuation) >> 8;
 		}
 
-		lit_r = MIN<uint32_t>(lit_r, 255);
-		lit_g = MIN<uint32_t>(lit_g, 255);
-		lit_b = MIN<uint32_t>(lit_b, 255);
+		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
 
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}

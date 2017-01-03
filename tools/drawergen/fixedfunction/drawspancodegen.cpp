@@ -237,7 +237,7 @@ SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 	else
 		c = shade_bgra_advanced(fg, light, shade_constants);
 
-	stack_lit_color.store(c);
+	stack_lit_color.store(SSAVec4i(0));
 	stack_light_index.store(SSAInt(0));
 
 	SSAForBlock block;
@@ -269,14 +269,14 @@ SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 		SSAFloat point_attenuation = light_z * rcp_dist * distance_attenuation;
 
 		SSAInt attenuation = SSAInt((light_z == SSAFloat(0.0f)).select(simple_attenuation, point_attenuation), true);
-		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
+		SSAVec4i contribution = (light_color * attenuation) >> 8;
 
 		stack_lit_color.store(lit_color + contribution);
 		stack_light_index.store(light_index + 1);
 	}
 	block.end_block();
 
-	return stack_lit_color.load();
+	return c + ((stack_lit_color.load() * fg) >> 8);
 }
 
 SSAVec4i DrawSpanCodegen::Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant)

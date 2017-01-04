@@ -390,7 +390,7 @@ static void R_ShutdownRenderer()
 {
 	R_DeinitSprites();
 	R_DeinitPlanes();
-	fakeActive = 0;
+	Clip3DFloors::Instance()->Cleanup();
 	// Free openings
 	if (openings != NULL)
 	{
@@ -540,8 +540,9 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	MaskedCycles.Reset();
 	WallScanCycles.Reset();
 
-	fakeActive = 0; // kg3D - reset fake floor indicator
-	R_3D_ResetClip(); // reset clips (floor/ceiling)
+	Clip3DFloors *clip3d = Clip3DFloors::Instance();
+	clip3d->fakeActive = false; // kg3D - reset fake floor indicator
+	clip3d->ResetClip(); // reset clips (floor/ceiling)
 
 	R_SetupBuffer ();
 	R_SetupFrame (actor);
@@ -585,7 +586,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	RenderBSP::Instance()->RenderScene();
-	R_3D_ResetClip(); // reset clips (floor/ceiling)
+	Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
 

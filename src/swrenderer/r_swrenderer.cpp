@@ -345,15 +345,7 @@ void FSoftwareRenderer::OnModeSet ()
 
 void FSoftwareRenderer::ErrorCleanup ()
 {
-	fakeActive = 0;
-	fake3D = 0;
-	while (CurrentSkybox)
-	{
-		R_3D_DeleteHeights();
-		R_3D_LeaveSkybox();
-	}
-	R_3D_ResetClip();
-	R_3D_DeleteHeights();
+	Clip3DFloors::Instance()->Cleanup();
 }
 
 //===========================================================================

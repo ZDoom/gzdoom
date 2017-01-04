@@ -241,7 +241,8 @@ namespace swrenderer
 			// kg3D - hack, store alpha in sky
 			// i know there is ->alpha, but this also allows to identify fake plane
 			// and ->alpha is for stacked sectors
-			if (fake3D & (FAKE3D_FAKEFLOOR | FAKE3D_FAKECEILING)) sky = 0x80000000 | fakeAlpha;
+			Clip3DFloors *clip3d = Clip3DFloors::Instance();
+			if (clip3d->fake3D & (FAKE3D_FAKEFLOOR | FAKE3D_FAKECEILING)) sky = 0x80000000 | clip3d->fakeAlpha;
 			else sky = 0;	// not skyflatnum so it can't be a sky
 			portal = nullptr;
 			alpha = OPAQUE;
@@ -299,7 +300,7 @@ namespace swrenderer
 					sky == check->sky &&
 					CurrentPortalUniq == check->CurrentPortalUniq &&
 					MirrorFlags == check->MirrorFlags &&
-					CurrentSkybox == check->CurrentSkybox &&
+					Clip3DFloors::Instance()->CurrentSkybox == check->CurrentSkybox &&
 					ViewPos == check->viewpos
 					)
 				{
@@ -326,7 +327,7 @@ namespace swrenderer
 		check->Additive = additive;
 		check->CurrentPortalUniq = CurrentPortalUniq;
 		check->MirrorFlags = MirrorFlags;
-		check->CurrentSkybox = CurrentSkybox;
+		check->CurrentSkybox = Clip3DFloors::Instance()->CurrentSkybox;
 
 		fillshort(check->top, viewwidth, 0x7fff);
 
@@ -426,7 +427,7 @@ namespace swrenderer
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
 				// kg3D - draw only correct planes
-				if (pl->CurrentPortalUniq != CurrentPortalUniq || pl->CurrentSkybox != CurrentSkybox)
+				if (pl->CurrentPortalUniq != CurrentPortalUniq || pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox)
 					continue;
 				// kg3D - draw only real planes now
 				if (pl->sky >= 0) {
@@ -452,7 +453,7 @@ namespace swrenderer
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
-				if (pl->CurrentSkybox != CurrentSkybox || pl->CurrentPortalUniq != CurrentPortalUniq)
+				if (pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox || pl->CurrentPortalUniq != CurrentPortalUniq)
 					continue;
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)

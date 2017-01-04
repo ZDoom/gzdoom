@@ -1315,12 +1315,14 @@ void R_DrawSprite (vissprite_t *spr)
 	F3DFloor *rover;
 	FDynamicColormap *mybasecolormap;
 
+	Clip3DFloors *clip3d = Clip3DFloors::Instance();
+
 	// [RH] Check for particles
 	if (!spr->bIsVoxel && spr->pic == NULL)
 	{
 		// kg3D - reject invisible parts
-		if ((fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= sclipBottom) return;
-		if ((fake3D & FAKE3D_CLIPTOP)    && spr->gpos.Z >= sclipTop) return;
+		if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= clip3d->sclipBottom) return;
+		if ((clip3d->fake3D & FAKE3D_CLIPTOP)    && spr->gpos.Z >= clip3d->sclipTop) return;
 		R_DrawParticle (spr);
 		return;
 	}
@@ -1337,25 +1339,25 @@ void R_DrawSprite (vissprite_t *spr)
 		return;
 
 	// kg3D - reject invisible parts
-	if ((fake3D & FAKE3D_CLIPBOTTOM) && spr->gzt <= sclipBottom) return;
-	if ((fake3D & FAKE3D_CLIPTOP)    && spr->gzb >= sclipTop) return;
+	if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gzt <= clip3d->sclipBottom) return;
+	if ((clip3d->fake3D & FAKE3D_CLIPTOP)    && spr->gzb >= clip3d->sclipTop) return;
 
 	// kg3D - correct colors now
 	if (!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size()) 
 	{
-		if (!(fake3D & FAKE3D_CLIPTOP))
+		if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 		{
-			sclipTop = spr->sector->ceilingplane.ZatPoint(ViewPos);
+			clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(ViewPos);
 		}
 		sector_t *sec = NULL;
 		for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 		{
-			if (sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0()) 
+			if (clip3d->sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
 			{
 				rover = spr->sector->e->XFloor.lightlist[i].caster;
 				if (rover) 
 				{
-					if (rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->Zat0())
+					if (rover->flags & FF_DOUBLESHADOW && clip3d->sclipTop <= rover->bottom.plane->Zat0())
 					{
 						break;
 					}
@@ -1501,15 +1503,15 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 
-	if (fake3D & FAKE3D_CLIPBOTTOM)
+	if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 	{
 		if (!spr->bIsVoxel)
 		{
-			double hz = sclipBottom;
+			double hz = clip3d->sclipBottom;
 			if (spr->fakefloor)
 			{
 				double floorz = spr->fakefloor->top.plane->Zat0();
-				if (ViewPos.Z > floorz && floorz == sclipBottom )
+				if (ViewPos.Z > floorz && floorz == clip3d->sclipBottom )
 				{
 					hz = spr->fakefloor->bottom.plane->Zat0();
 				}
@@ -1520,17 +1522,17 @@ void R_DrawSprite (vissprite_t *spr)
 				botclip = MAX<short>(0, h);
 			}
 		}
-		hzb = MAX(hzb, sclipBottom);
+		hzb = MAX(hzb, clip3d->sclipBottom);
 	}
-	if (fake3D & FAKE3D_CLIPTOP)
+	if (clip3d->fake3D & FAKE3D_CLIPTOP)
 	{
 		if (!spr->bIsVoxel)
 		{
-			double hz = sclipTop;
+			double hz = clip3d->sclipTop;
 			if (spr->fakeceiling != NULL)
 			{
 				double ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
-				if (ViewPos.Z < ceilingZ && ceilingZ == sclipTop)
+				if (ViewPos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
 				{
 					hz = spr->fakeceiling->top.plane->Zat0();
 				}
@@ -1541,30 +1543,8 @@ void R_DrawSprite (vissprite_t *spr)
 				topclip = short(MIN(h, viewheight));
 			}
 		}
-		hzt = MIN(hzt, sclipTop);
+		hzt = MIN(hzt, clip3d->sclipTop);
 	}
-
-#if 0
-	// [RH] Sprites that were split by a drawseg should also be clipped
-	// by the sector's floor and ceiling. (Not sure how/if to handle this
-	// with fake floors, since those already do clipping.)
-	if (spr->bSplitSprite &&
-		(spr->heightsec == NULL || (spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
-	{
-		fixed_t h = spr->sector->floorplane.ZatPoint (spr->gx, spr->gy);
-		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
-		if (h < botclip)
-		{
-			botclip = MAX<short> (0, h);
-		}
-		h = spr->sector->ceilingplane.ZatPoint (spr->gx, spr->gy);
-		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
-		if (h > topclip)
-		{
-			topclip = short(MIN(h, viewheight));
-		}
-	}
-#endif
 
 	if (topclip >= botclip)
 	{
@@ -1752,7 +1732,7 @@ void R_DrawMaskedSingle (bool renew)
 
 	if (renew)
 	{
-		fake3D |= FAKE3D_REFRESHCLIP;
+		Clip3DFloors::Instance()->fake3D |= FAKE3D_REFRESHCLIP;
 	}
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 	{
@@ -1775,7 +1755,8 @@ void R_DrawMasked (void)
 	R_CollectPortals();
 	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
-	if (height_top == NULL)
+	Clip3DFloors *clip3d = Clip3DFloors::Instance();
+	if (clip3d->height_top == NULL)
 	{ // kg3D - no visible 3D floors, normal rendering
 		R_DrawMaskedSingle(false);
 	}
@@ -1784,44 +1765,44 @@ void R_DrawMasked (void)
 		HeightLevel *hl;
 
 		// ceilings
-		for (hl = height_cur; hl != NULL && hl->height >= ViewPos.Z; hl = hl->prev)
+		for (hl = clip3d->height_cur; hl != NULL && hl->height >= ViewPos.Z; hl = hl->prev)
 		{
 			if (hl->next)
 			{
-				fake3D = FAKE3D_CLIPBOTTOM | FAKE3D_CLIPTOP;
-				sclipTop = hl->next->height;
+				clip3d->fake3D = FAKE3D_CLIPBOTTOM | FAKE3D_CLIPTOP;
+				clip3d->sclipTop = hl->next->height;
 			}
 			else
 			{
-				fake3D = FAKE3D_CLIPBOTTOM;
+				clip3d->fake3D = FAKE3D_CLIPBOTTOM;
 			}
-			sclipBottom = hl->height;
+			clip3d->sclipBottom = hl->height;
 			R_DrawMaskedSingle(true);
 			R_DrawHeightPlanes(hl->height);
 		}
 
 		// floors
-		fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
-		sclipTop = height_top->height;
+		clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
+		clip3d->sclipTop = clip3d->height_top->height;
 		R_DrawMaskedSingle(true);
-		hl = height_top;
-		for (hl = height_top; hl != NULL && hl->height < ViewPos.Z; hl = hl->next)
+		hl = clip3d->height_top;
+		for (hl = clip3d->height_top; hl != NULL && hl->height < ViewPos.Z; hl = hl->next)
 		{
 			R_DrawHeightPlanes(hl->height);
 			if (hl->next)
 			{
-				fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;
-				sclipTop = hl->next->height;
+				clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;
+				clip3d->sclipTop = hl->next->height;
 			}
 			else
 			{
-				fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPBOTTOM;
+				clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPBOTTOM;
 			}
-			sclipBottom = hl->height;
+			clip3d->sclipBottom = hl->height;
 			R_DrawMaskedSingle(true);
 		}
-		R_3D_DeleteHeights();
-		fake3D = 0;
+		clip3d->DeleteHeights();
+		clip3d->fake3D = 0;
 	}
 	R_DrawPlayerSprites();
 }

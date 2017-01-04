@@ -112,7 +112,9 @@ namespace swrenderer
 			WallT.InitFromLine(v1->fPos() - ViewPos, v2->fPos() - ViewPos);
 		}
 
-		if (!(fake3D & FAKE3D_FAKEBACK))
+		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+
+		if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 		{
 			backsector = line->backsector;
 		}
@@ -132,7 +134,7 @@ namespace swrenderer
 		else
 		{
 			// kg3D - its fake, no transfer_heights
-			if (!(fake3D & FAKE3D_FAKEBACK))
+			if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
 				backsector = RenderBSP::Instance()->FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
 			}
@@ -143,15 +145,15 @@ namespace swrenderer
 			rw_backcz2 = backsector->ceilingplane.ZatPoint(line->v2);
 			rw_backfz2 = backsector->floorplane.ZatPoint(line->v2);
 
-			if (fake3D & FAKE3D_FAKEBACK)
+			if (clip3d->fake3D & FAKE3D_FAKEBACK)
 			{
 				if (rw_frontfz1 >= rw_backfz1 && rw_frontfz2 >= rw_backfz2)
 				{
-					fake3D |= FAKE3D_CLIPBOTFRONT;
+					clip3d->fake3D |= FAKE3D_CLIPBOTFRONT;
 				}
 				if (rw_frontcz1 <= rw_backcz1 && rw_frontcz2 <= rw_backcz2)
 				{
-					fake3D |= FAKE3D_CLIPTOPFRONT;
+					clip3d->fake3D |= FAKE3D_CLIPTOPFRONT;
 				}
 			}
 
@@ -355,7 +357,9 @@ namespace swrenderer
 		draw_segment->curline = curline;
 		draw_segment->bFogBoundary = false;
 		draw_segment->bFakeBoundary = false;
-		if (fake3D & 7) draw_segment->fake = 1;
+
+		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
 		else draw_segment->fake = 0;
 
 		draw_segment->sprtopclip = draw_segment->sprbottomclip = draw_segment->maskedtexturecol = draw_segment->bkup = draw_segment->swall = -1;
@@ -551,8 +555,8 @@ namespace swrenderer
 
 		RenderWallSegmentTextures(start, stop);
 
-		if (fake3D & 7) {
-			return (fake3D & FAKE3D_FAKEMASK) == 0;
+		if (clip3d->fake3D & FAKE3D_FAKEMASK) {
+			return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
 		}
 
 		// save sprite clipping info
@@ -609,7 +613,7 @@ namespace swrenderer
 			WallPortals.Push(pds);
 		}
 
-		return (fake3D & FAKE3D_FAKEMASK) == 0;
+		return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
 	}
 
 	void SWRenderLine::SetWallVariables(bool needlights)
@@ -974,12 +978,14 @@ namespace swrenderer
 			}
 		}
 
+		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+
 		// mark ceiling areas
 		if (markceiling)
 		{
 			for (x = x1; x < x2; ++x)
 			{
-				short top = (fakeFloor && fake3D & 2) ? fakeFloor->ceilingclip[x] : ceilingclip[x];
+				short top = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKECEILING) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
 				short bottom = MIN(walltop[x], floorclip[x]);
 				if (top < bottom)
 				{
@@ -995,7 +1001,7 @@ namespace swrenderer
 			for (x = x1; x < x2; ++x)
 			{
 				short top = MAX(wallbottom[x], ceilingclip[x]);
-				short bottom = (fakeFloor && fake3D & 1) ? fakeFloor->floorclip[x] : floorclip[x];
+				short bottom = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKEFLOOR) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
 					assert(bottom <= viewheight);
@@ -1006,11 +1012,11 @@ namespace swrenderer
 		}
 
 		// kg3D - fake planes clipping
-		if (fake3D & FAKE3D_REFRESHCLIP)
+		if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
 		{
-			if (fake3D & FAKE3D_CLIPBOTFRONT)
+			if (clip3d->fake3D & FAKE3D_CLIPBOTFRONT)
 			{
-				memcpy(fakeFloor->floorclip + x1, wallbottom + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->floorclip + x1, wallbottom + x1, (x2 - x1) * sizeof(short));
 			}
 			else
 			{
@@ -1018,11 +1024,11 @@ namespace swrenderer
 				{
 					walllower[x] = MIN(MAX(walllower[x], ceilingclip[x]), wallbottom[x]);
 				}
-				memcpy(fakeFloor->floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
 			}
-			if (fake3D & FAKE3D_CLIPTOPFRONT)
+			if (clip3d->fake3D & FAKE3D_CLIPTOPFRONT)
 			{
-				memcpy(fakeFloor->ceilingclip + x1, walltop + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->ceilingclip + x1, walltop + x1, (x2 - x1) * sizeof(short));
 			}
 			else
 			{
@@ -1030,10 +1036,10 @@ namespace swrenderer
 				{
 					wallupper[x] = MAX(MIN(wallupper[x], floorclip[x]), walltop[x]);
 				}
-				memcpy(fakeFloor->ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
 			}
 		}
-		if (fake3D & 7) return;
+		if (clip3d->fake3D & FAKE3D_FAKEMASK) return;
 
 		FLightNode *light_list = (curline && curline->sidedef) ? curline->sidedef->lighthead : nullptr;
 

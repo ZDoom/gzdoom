@@ -117,7 +117,7 @@ namespace swrenderer
 		if (visplanes[MAXVISPLANES] == nullptr)
 			return;
 
-		R_3D_EnterSkybox();
+		Clip3DFloors::Instance()->EnterSkybox();
 		CurrentPortalInSkybox = true;
 
 		int savedextralight = extralight;
@@ -252,7 +252,7 @@ namespace swrenderer
 			visplaneStack.Push(pl);
 
 			RenderBSP::Instance()->RenderScene();
-			R_3D_ResetClip(); // reset clips (floor/ceiling)
+			Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 			R_DrawPlanes();
 
 			port->mFlags &= ~PORTSF_INSKYBOX;
@@ -303,9 +303,9 @@ namespace swrenderer
 		R_SetViewAngle();
 
 		CurrentPortalInSkybox = false;
-		R_3D_LeaveSkybox();
+		Clip3DFloors::Instance()->LeaveSkybox();
 
-		if (fakeActive) return;
+		if (Clip3DFloors::Instance()->fakeActive) return;
 
 		for (*freehead = visplanes[MAXVISPLANES], visplanes[MAXVISPLANES] = nullptr; *freehead; )
 			freehead = &(*freehead)->next;
@@ -463,7 +463,7 @@ namespace swrenderer
 		}
 
 		// some portals have height differences, account for this here
-		R_3D_EnterSkybox(); // push 3D floor height map
+		Clip3DFloors::Instance()->EnterSkybox(); // push 3D floor height map
 		CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
 
 		// first pass, set clipping
@@ -473,7 +473,7 @@ namespace swrenderer
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
 		RenderBSP::Instance()->RenderScene();
-		R_3D_ResetClip(); // reset clips (floor/ceiling)
+		Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 
 		PlaneCycles.Clock();
@@ -501,7 +501,7 @@ namespace swrenderer
 
 		NetUpdate();
 
-		R_3D_LeaveSkybox(); // pop 3D floor height map
+		Clip3DFloors::Instance()->LeaveSkybox(); // pop 3D floor height map
 		CurrentPortalUniq = prevuniq2;
 
 		// draw a red line around a portal if it's being highlighted

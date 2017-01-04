@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include "r_defs.h"
 #include "swrenderer/line/r_line.h"
+#include "swrenderer/scene/r_3dfloors.h"
 
 namespace swrenderer
 {

@@ -1,5 +1,5 @@
-#ifndef SOFT_FAKE3D_H
-#define SOFT_FAKE3D_H
+
+#pragma once
 
 #include "p_3dfloors.h"
 
@@ -7,70 +7,77 @@ EXTERN_CVAR(Int, r_3dfloors);
 
 namespace swrenderer
 {
+	struct HeightLevel
+	{
+		double height;
+		struct HeightLevel *prev;
+		struct HeightLevel *next;
+	};
 
-// special types
+	struct HeightStack
+	{
+		HeightLevel *height_top;
+		HeightLevel *height_cur;
+		int height_max;
+	};
 
-struct HeightLevel
-{
-	double height;
-	struct HeightLevel *prev;
-	struct HeightLevel *next;
-};
+	struct ClipStack
+	{
+		short floorclip[MAXWIDTH];
+		short ceilingclip[MAXWIDTH];
+		F3DFloor *ffloor;
+		ClipStack *next;
+	};
 
-struct HeightStack
-{
-	HeightLevel *height_top;
-	HeightLevel *height_cur;
-	int height_max;
-};
+	enum Fake3DOpaque
+	{
+		// BSP stage:
+		FAKE3D_FAKEFLOOR    = 1,  // fake floor, mark seg as FAKE
+		FAKE3D_FAKECEILING  = 2,  // fake ceiling, mark seg as FAKE
+		FAKE3D_FAKEBACK     = 4,  // RenderLine with fake backsector, mark seg as FAKE
+		FAKE3D_FAKEMASK     = 7,
+		FAKE3D_CLIPBOTFRONT = 8,  // use front sector clipping info (bottom)
+		FAKE3D_CLIPTOPFRONT = 16, // use front sector clipping info (top)
+	};
 
-struct ClipStack
-{
-	short floorclip[MAXWIDTH];
-	short ceilingclip[MAXWIDTH];
-	F3DFloor *ffloor;
-	ClipStack *next;
-};
+	enum Fake3DTranslucent
+	{
+		// sorting stage:
+		FAKE3D_CLIPBOTTOM   = 1,  // clip bottom
+		FAKE3D_CLIPTOP      = 2,  // clip top
+		FAKE3D_REFRESHCLIP  = 4,  // refresh clip info
+		FAKE3D_DOWN2UP      = 8,  // rendering from down to up (floors)
+	};
 
-// external varialbes
+	class Clip3DFloors
+	{
+	public:
+		static Clip3DFloors *Instance();
 
-// fake3D flags:
-enum
-{
-	// BSP stage:
-	FAKE3D_FAKEFLOOR		= 1,	// fake floor, mark seg as FAKE
-	FAKE3D_FAKECEILING		= 2,	// fake ceiling, mark seg as FAKE
-	FAKE3D_FAKEBACK			= 4,	// R_AddLine with fake backsector, mark seg as FAKE
-	FAKE3D_FAKEMASK			= 7,
-	FAKE3D_CLIPBOTFRONT		= 8,	// use front sector clipping info (bottom)
-	FAKE3D_CLIPTOPFRONT		= 16,	// use front sector clipping info (top)
+		void Cleanup();
 
-	// sorting stage:
-	FAKE3D_CLIPBOTTOM		= 1,	// clip bottom
-	FAKE3D_CLIPTOP			= 2,	// clip top
-	FAKE3D_REFRESHCLIP		= 4,	// refresh clip info
-	FAKE3D_DOWN2UP			= 8,	// rendering from down to up (floors)
-};
+		void DeleteHeights();
+		void AddHeight(secplane_t *add, sector_t *sec);
+		void NewClip();
+		void ResetClip();
+		void EnterSkybox();
+		void LeaveSkybox();
 
-extern int fake3D;
-extern F3DFloor *fakeFloor;
-extern fixed_t fakeAlpha;
-extern int fakeActive;
-extern double sclipBottom;
-extern double sclipTop;
-extern HeightLevel *height_top;
-extern HeightLevel *height_cur;
-extern int CurrentMirror;
-extern int CurrentSkybox;
+		int fake3D = 0;
 
-// functions
-void R_3D_DeleteHeights();
-void R_3D_AddHeight(secplane_t *add, sector_t *sec);
-void R_3D_NewClip();
-void R_3D_ResetClip();
-void R_3D_EnterSkybox();
-void R_3D_LeaveSkybox();
+		F3DFloor *fakeFloor = nullptr;
+		fixed_t fakeAlpha = 0;
+		bool fakeActive = false;
+		double sclipBottom = 0;
+		double sclipTop = 0;
+		HeightLevel *height_top = nullptr;
+		HeightLevel *height_cur = nullptr;
+		int CurrentSkybox = 0;
 
+	private:
+		int height_max = -1;
+		TArray<HeightStack> toplist;
+		ClipStack *clip_top = nullptr;
+		ClipStack *clip_cur = nullptr;
+	};
 }
-
-#endif

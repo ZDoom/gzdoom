@@ -577,13 +577,14 @@ namespace swrenderer
 			double frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2);
 			double top = MAX(frontcz1, frontcz2);
 			double bot = MIN(frontfz1, frontfz2);
-			if (fake3D & FAKE3D_CLIPTOP)
+			Clip3DFloors *clip3d = Clip3DFloors::Instance();
+			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				top = MIN(top, sclipTop);
+				top = MIN(top, clip3d->sclipTop);
 			}
-			if (fake3D & FAKE3D_CLIPBOTTOM)
+			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				bot = MAX(bot, sclipBottom);
+				bot = MAX(bot, clip3d->sclipBottom);
 			}
 			ProcessWallNP2(frontsector, curline, WallC, x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, wallshade, xoffset, light, lightstep, true);
 		}

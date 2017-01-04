@@ -8,7 +8,7 @@ IWad
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
 	Compatibility = "Shorttex"
-	MustContain = "WADSMUSH"
+	MustContain = "SMOOSHED"
 	BannerColors = "a8 00 00", "a8 a8 a8"
 }
 

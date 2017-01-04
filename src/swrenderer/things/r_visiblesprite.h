@@ -14,6 +14,7 @@
 #pragma once
 
 #include "swrenderer/line/r_line.h"
+#include "swrenderer/scene/r_bsp.h"
 
 struct particle_t;
 struct FVoxel;
@@ -76,7 +77,7 @@ namespace swrenderer
 		uint8_t bWallSprite : 1; // [RH] This is a wall sprite
 		uint8_t bSplitSprite : 1; // [RH] Sprite was split by a drawseg
 		uint8_t bInMirror : 1; // [RH] Sprite is "inside" a mirror
-		uint8_t FakeFlatStat; // [RH] which side of fake/floor ceiling sprite is on
+		WaterFakeSide FakeFlatStat; // [RH] which side of fake/floor ceiling sprite is on
 		short renderflags;
 		uint32_t Translation; // [RH] for color translation
 		visstyle_t Style;

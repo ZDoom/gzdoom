@@ -118,7 +118,7 @@ namespace swrenderer
 		vis->Style.RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;
-		vis->FakeFlatStat = 0;
+		vis->FakeFlatStat = WaterFakeSide::Center;
 		vis->Style.Alpha = float(thing->Alpha);
 		vis->fakefloor = NULL;
 		vis->fakeceiling = NULL;

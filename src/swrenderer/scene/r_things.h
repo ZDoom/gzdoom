@@ -24,6 +24,7 @@
 #define __R_THINGS__
 
 #include "swrenderer/things/r_visiblesprite.h"
+#include "swrenderer/scene/r_bsp.h"
 
 struct particle_t;
 struct FVoxel;
@@ -63,7 +64,7 @@ void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = fals
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
-void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
+void R_AddSprites (sector_t *sec, int lightlevel, WaterFakeSide fakeside);
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();

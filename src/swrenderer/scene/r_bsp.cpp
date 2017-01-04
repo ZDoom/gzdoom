@@ -85,7 +85,7 @@ namespace swrenderer
 			*ceilinglightlevel = sec->GetCeilingLight();
 		}
 
-		FakeSide = FAKED_Center;
+		FakeSide = WaterFakeSide::Center;
 
 		const sector_t *s = sec->GetHeightSec();
 		if (s != NULL)
@@ -125,7 +125,7 @@ namespace swrenderer
 								*ceilinglightlevel = s->GetCeilingLight();
 							}
 						}
-						FakeSide = FAKED_BelowFloor;
+						FakeSide = WaterFakeSide::BelowFloor;
 						return tempsec;
 					}
 					return sec;
@@ -224,7 +224,7 @@ namespace swrenderer
 						*ceilinglightlevel = s->GetCeilingLight();
 					}
 				}
-				FakeSide = FAKED_BelowFloor;
+				FakeSide = WaterFakeSide::BelowFloor;
 			}
 			else if (heightsec && heightsec->ceilingplane.PointOnSide(ViewPos) <= 0 &&
 				orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
@@ -261,7 +261,7 @@ namespace swrenderer
 						*ceilinglightlevel = s->GetCeilingLight();
 					}
 				}
-				FakeSide = FAKED_AboveCeiling;
+				FakeSide = WaterFakeSide::AboveCeiling;
 			}
 			sec = tempsec;					// Use other sector
 		}

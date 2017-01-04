@@ -602,7 +602,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 // R_ProjectSprite
 // Generates a vissprite for a thing if it might be visible.
 //
-void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector)
+void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector)
 {
 	double 			tr_x;
 	double 			tr_y;
@@ -817,12 +817,12 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	if (heightsec != NULL)	// only clip things which are in special sectors
 	{
-		if (fakeside == FAKED_AboveCeiling)
+		if (fakeside == WaterFakeSide::AboveCeiling)
 		{
 			if (gzt < heightsec->ceilingplane.ZatPoint(pos))
 				return;
 		}
-		else if (fakeside == FAKED_BelowFloor)
+		else if (fakeside == WaterFakeSide::BelowFloor)
 		{
 			if (gzb >= heightsec->floorplane.ZatPoint(pos))
 				return;
@@ -1035,7 +1035,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 //
 // killough 9/18/98: add lightlevel as parameter, fixing underwater lighting
 // [RH] Save which side of heightsec sprite is on here.
-void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
+void R_AddSprites (sector_t *sec, int lightlevel, WaterFakeSide fakeside)
 {
 	F3DFloor *fakeceiling = NULL;
 	F3DFloor *fakefloor = NULL;
@@ -1447,12 +1447,12 @@ void R_DrawSprite (vissprite_t *spr)
 
 	if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
-		if (spr->FakeFlatStat != FAKED_AboveCeiling)
+		if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 		{
 			double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
 			int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
 
-			if (spr->FakeFlatStat == FAKED_BelowFloor)
+			if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 			{ // seen below floor: clip top
 				if (!spr->bIsVoxel && h > topclip)
 				{
@@ -1469,12 +1469,12 @@ void R_DrawSprite (vissprite_t *spr)
 				hzb = MAX(hzb, hz);
 			}
 		}
-		if (spr->FakeFlatStat != FAKED_BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
+		if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 		{
 			double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
 			int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
 
-			if (spr->FakeFlatStat == FAKED_AboveCeiling)
+			if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 			{ // seen above ceiling: clip bottom
 				if (!spr->bIsVoxel && h < botclip)
 				{

@@ -28,11 +28,11 @@ namespace swrenderer
 	// the texture calculations.
 	#define TOO_CLOSE_Z (3072.0 / (1<<12))
 
-	enum
+	enum class WaterFakeSide
 	{
-		FAKED_Center,
-		FAKED_BelowFloor,
-		FAKED_AboveCeiling
+		Center,
+		BelowFloor,
+		AboveCeiling
 	};
 
 	class RenderBSP
@@ -57,10 +57,10 @@ namespace swrenderer
 		void AddPolyobjs(subsector_t *sub);
 		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane);
 
-		subsector_t *InSubsector;
-		sector_t *frontsector;
-		uint8_t FakeSide;
-		bool r_fakingunderwater;
+		subsector_t *InSubsector = nullptr;
+		sector_t *frontsector = nullptr;
+		WaterFakeSide FakeSide = WaterFakeSide::Center;
+		bool r_fakingunderwater = false;
 
 		SWRenderLine renderline;
 	};

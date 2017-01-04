@@ -56,7 +56,7 @@
 
 namespace swrenderer
 {
-	void R_ProjectParticle(particle_t *particle, const sector_t *sector, int shade, int fakeside)
+	void R_ProjectParticle(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -134,7 +134,7 @@ namespace swrenderer
 
 		if (heightsec)	// only clip things which are in special sectors
 		{
-			if (fakeside == FAKED_AboveCeiling)
+			if (fakeside == WaterFakeSide::AboveCeiling)
 			{
 				topplane = &sector->ceilingplane;
 				botplane = &heightsec->ceilingplane;
@@ -142,7 +142,7 @@ namespace swrenderer
 				botpic = heightsec->GetTexture(sector_t::ceiling);
 				map = heightsec->ColorMap;
 			}
-			else if (fakeside == FAKED_BelowFloor)
+			else if (fakeside == WaterFakeSide::BelowFloor)
 			{
 				topplane = &heightsec->floorplane;
 				botplane = &sector->floorplane;

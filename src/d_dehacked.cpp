@@ -238,6 +238,7 @@ TArray<PClassActor *> TouchedActors;
 
 char *UnchangedSpriteNames;
 int NumUnchangedSprites;
+bool changedStates;
 
 // Sprite<->Class map for ADehackedPickup::DetermineType
 static struct DehSpriteMap
@@ -988,6 +989,7 @@ static int PatchThing (int thingy)
 				{
 					statedef.MakeStateDefines(type);
 					patchedStates = true;
+					changedStates = true;
 				}
 
 				if (!strnicmp (Line1, "Initial", 7))
@@ -1460,6 +1462,7 @@ static int PatchFrame (int frameNum)
 		else if (keylen == 10 && stricmp (Line1, "Next frame") == 0)
 		{
 			info->NextState = FindState (val);
+			changedStates = true;
 		}
 		else if (keylen == 16 && stricmp (Line1, "Sprite subnumber") == 0)
 		{
@@ -3049,6 +3052,17 @@ void FinishDehPatch ()
 		DPrintf (DMSG_NOTIFY, "%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 
+	// To avoid errors, flag all potentially touched states for use in weapons.
+	if (changedStates)
+	{
+		for (auto &s : StateMap)
+		{
+			for (auto i = 0; i < s.StateSpan; i++)
+			{
+				s.State[i].UseFlags |= SUF_WEAPON;
+			}
+		}
+	}
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	StateMap.Clear();
 	StateMap.ShrinkToFit();

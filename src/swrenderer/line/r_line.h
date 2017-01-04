@@ -15,6 +15,8 @@
 
 namespace swrenderer
 {
+	struct visplane_t;
+
 	struct FWallCoords
 	{
 		FVector2	tleft;		// coords at left of wall in view space				rx1,ry1
@@ -38,7 +40,7 @@ namespace swrenderer
 	class SWRenderLine
 	{
 	public:
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane);
 
 	private:
 		bool RenderWallSegment(int x1, int x2);
@@ -51,6 +53,8 @@ namespace swrenderer
 		subsector_t *InSubsector;
 		sector_t *frontsector;
 		sector_t *backsector;
+		visplane_t *floorplane;
+		visplane_t *ceilingplane;
 
 		seg_t *curline;
 		side_t *sidedef;

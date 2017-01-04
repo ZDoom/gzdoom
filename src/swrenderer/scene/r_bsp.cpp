@@ -63,16 +63,12 @@ namespace swrenderer
 	{
 		subsector_t *InSubsector;
 		sector_t *frontsector;
+		uint8_t FakeSide;
 
 		SWRenderLine render_line;
 	}
 
 bool			r_fakingunderwater;
-
-static BYTE		FakeSide;
-
-visplane_t *floorplane;
-visplane_t *ceilingplane;
 
 // Clip values are the solid pixel bounding the range.
 //	floorclip starts out SCREENHEIGHT and is just outside the range
@@ -415,7 +411,7 @@ static void R_AddPolyobjs(subsector_t *sub)
 }
 
 // kg3D - add fake segs, never rendered
-void R_FakeDrawLoop(subsector_t *sub)
+void R_FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane)
 {
 	int 		 count;
 	seg_t*		 line;
@@ -427,7 +423,7 @@ void R_FakeDrawLoop(subsector_t *sub)
 	{
 		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			render_line.Render(line, InSubsector, frontsector, nullptr);
+			render_line.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane);
 		}
 		line++;
 	}
@@ -517,7 +513,7 @@ void R_Subsector (subsector_t *sub)
 
 	portal = frontsector->ValidatePortal(sector_t::ceiling);
 
-	ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
+	visplane_t *ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 		portal != NULL ||
 		(frontsector->heightsec && 
@@ -557,7 +553,7 @@ void R_Subsector (subsector_t *sub)
 	// killough 10/98: add support for skies transferred from sidedefs
 	portal = frontsector->ValidatePortal(sector_t::floor);
 
-	floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
+	visplane_t *floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		portal != NULL ||
 		(frontsector->heightsec &&
@@ -636,7 +632,7 @@ void R_Subsector (subsector_t *sub)
 				if (floorplane)
 					R_AddPlaneLights(floorplane, frontsector->lighthead);
 
-				R_FakeDrawLoop(sub);
+				R_FakeDrawLoop(sub, floorplane, ceilingplane);
 				fake3D = 0;
 				frontsector = sub->sector;
 			}
@@ -700,7 +696,7 @@ void R_Subsector (subsector_t *sub)
 				if (ceilingplane)
 					R_AddPlaneLights(ceilingplane, frontsector->lighthead);
 
-				R_FakeDrawLoop(sub);
+				R_FakeDrawLoop(sub, floorplane, ceilingplane);
 				fake3D = 0;
 				frontsector = sub->sector;
 			}
@@ -719,8 +715,7 @@ void R_Subsector (subsector_t *sub)
 	// lightlevels on floor & ceiling lightlevels in the surrounding area.
 	// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
 	// it, otherwise they are lit by the floor.
-	R_AddSprites (sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ?
-		ceilinglightlevel : floorlightlevel, FakeSide);
+	R_AddSprites (sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles
 	if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
@@ -761,14 +756,14 @@ void R_Subsector (subsector_t *sub)
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
 					}
-					render_line.Render(line, InSubsector, frontsector, &tempsec); // fake
+					render_line.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane); // fake
 				}
 				fakeFloor = NULL;
 				fake3D = 0;
 				floorplane = backupfp;
 				ceilingplane = backupcp;
 			}
-			render_line.Render(line, InSubsector, frontsector, nullptr); // now real
+			render_line.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane); // now real
 		}
 		line++;
 	}

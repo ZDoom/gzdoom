@@ -52,8 +52,6 @@ void R_RenderBSPNode (void *node);
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2);
 
-extern visplane_t *floorplane;
-extern visplane_t *ceilingplane;
 extern short floorclip[MAXWIDTH];
 extern short ceilingclip[MAXWIDTH];
 

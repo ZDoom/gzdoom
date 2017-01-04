@@ -2,6 +2,18 @@
 
 IWad
 {
+	Name = "DOOM: Wadsmoosh"
+	Autoname = "doom.doom2.wadsmoosh"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01", "WADSMUSH"
+	BannerColors = "a8 00 00", "a8 a8 a8"
+}
+
+IWad
+{
 	Name = "Delaweare"
 	Autoname = "delaweare"
 	Game = "Doom"
@@ -369,6 +381,7 @@ IWad
 
 Names
 {	
+	"doom_complete.pk3"
 	"bfgdoom2.wad"
 	"doom2bfg.wad"
 	"doom2f.wad"

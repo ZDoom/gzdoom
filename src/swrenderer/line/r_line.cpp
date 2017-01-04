@@ -550,7 +550,7 @@ namespace swrenderer
 		RenderWallSegmentTextures(start, stop);
 
 		if (fake3D & 7) {
-			return !(fake3D & FAKE3D_FAKEMASK);
+			return (fake3D & FAKE3D_FAKEMASK) == 0;
 		}
 
 		// save sprite clipping info
@@ -607,7 +607,7 @@ namespace swrenderer
 			WallPortals.Push(pds);
 		}
 
-		return !(fake3D & FAKE3D_FAKEMASK);
+		return (fake3D & FAKE3D_FAKEMASK) == 0;
 	}
 
 	void SWRenderLine::SetWallVariables(bool needlights)

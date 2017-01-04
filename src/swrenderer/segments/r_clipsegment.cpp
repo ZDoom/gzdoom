@@ -144,9 +144,9 @@ namespace swrenderer
 			}
 
 			// There is a fragment above *start.
-			if (!callback(first, start->first) && solid)
+			if (callback(first, start->first) && solid)
 			{
-				start->first = first;
+				start->first = first; // Adjust the clip size for solid walls
 			}
 		}
 

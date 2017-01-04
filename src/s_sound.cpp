@@ -1852,6 +1852,15 @@ void S_PauseSound (bool notmusic, bool notsfx)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DObject, S_PauseSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notmusic);
+	PARAM_BOOL(notsfx);
+	S_PauseSound(notmusic, notsfx);
+	return 0;
+}
+
 //==========================================================================
 //
 // S_ResumeSound
@@ -1871,6 +1880,14 @@ void S_ResumeSound (bool notsfx)
 		SoundPaused = false;
 		GSnd->SetSfxPaused (false, 0);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notsfx);
+	S_ResumeSound(notsfx);
+	return 0;
 }
 
 //==========================================================================

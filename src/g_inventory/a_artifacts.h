@@ -160,11 +160,6 @@ public:
 
 #define PSF_NOTRAIL		1
 
-class APowerMinotaur : public APowerup
-{
-	DECLARE_CLASS (APowerMinotaur, APowerup)
-};
-
 class APowerTargeter : public APowerup
 {
 	DECLARE_CLASS (APowerTargeter, APowerup)
@@ -176,31 +171,6 @@ protected:
 	virtual void Travelled () override;
 	virtual void AttachToOwner(AActor *other) override;
 	virtual bool HandlePickup(AInventory *item) override;
-};
-
-class APowerFrightener : public APowerup
-{
-	DECLARE_CLASS (APowerFrightener, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-};
-
-class APowerBuddha : public APowerup
-{
-	DECLARE_CLASS (APowerBuddha, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-};
-
-class APowerTimeFreezer : public APowerup
-{
-	DECLARE_CLASS( APowerTimeFreezer, APowerup )
-protected:
-	virtual void InitEffect() override;
-	virtual void DoEffect() override;
-	virtual void EndEffect() override;
 };
 
 class APowerMorph : public APowerup

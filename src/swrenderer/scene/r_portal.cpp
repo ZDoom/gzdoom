@@ -204,6 +204,8 @@ namespace swrenderer
 			WindowLeft = pl->left;
 			WindowRight = pl->right;
 
+			auto ceilingclip = RenderBSP::Instance()->ceilingclip;
+			auto floorclip = RenderBSP::Instance()->floorclip;
 			for (i = pl->left; i < pl->right; i++)
 			{
 				if (pl->top[i] == 0x7fff)
@@ -249,7 +251,7 @@ namespace swrenderer
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
 
-			R_RenderScene();
+			RenderBSP::Instance()->RenderScene();
 			R_3D_ResetClip(); // reset clips (floor/ceiling)
 			R_DrawPlanes();
 
@@ -464,11 +466,13 @@ namespace swrenderer
 		R_3D_EnterSkybox(); // push 3D floor height map
 		CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
 
-									   // first pass, set clipping
+		// first pass, set clipping
+		auto ceilingclip = RenderBSP::Instance()->ceilingclip;
+		auto floorclip = RenderBSP::Instance()->floorclip;
 		memcpy(ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len * sizeof(*ceilingclip));
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
-		R_RenderScene();
+		RenderBSP::Instance()->RenderScene();
 		R_3D_ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 

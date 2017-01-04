@@ -474,12 +474,7 @@ namespace swrenderer
 		if (pl->left >= pl->right)
 			return;
 
-		if (r_drawflat) // no texture mapping
-		{
-			drawerargs::ds_color += 4;
-			R_DrawColoredPlane(pl);
-		}
-		else if (pl->picnum == skyflatnum) // sky flat
+		if (pl->picnum == skyflatnum) // sky flat
 		{
 			R_DrawSkyPlane(pl);
 		}
@@ -506,7 +501,7 @@ namespace swrenderer
 
 			basecolormap = pl->colormap;
 
-			if (r_drawflat || (!pl->height.isSlope() && !tilt))
+			if (!pl->height.isSlope() && !tilt)
 			{
 				R_DrawNormalPlane(pl, xscale, yscale, alpha, additive, masked);
 			}

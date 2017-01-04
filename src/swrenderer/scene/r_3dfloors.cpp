@@ -98,8 +98,8 @@ void R_3D_NewClip()
 
 	curr = (ClipStack*)M_Malloc(sizeof(ClipStack));
 	curr->next = 0;
-	memcpy(curr->floorclip, floorclip, sizeof(short) * MAXWIDTH);
-	memcpy(curr->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+	memcpy(curr->floorclip, RenderBSP::Instance()->floorclip, sizeof(short) * MAXWIDTH);
+	memcpy(curr->ceilingclip, RenderBSP::Instance()->ceilingclip, sizeof(short) * MAXWIDTH);
 	curr->ffloor = fakeFloor;
 	assert(fakeFloor->floorclip == NULL);
 	assert(fakeFloor->ceilingclip == NULL);

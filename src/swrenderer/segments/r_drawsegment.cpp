@@ -162,7 +162,7 @@ namespace swrenderer
 		}
 
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
-		sec = R_FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+		sec = RenderBSP::Instance()->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 

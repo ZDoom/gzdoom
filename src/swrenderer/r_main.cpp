@@ -103,9 +103,7 @@ static void R_ShutdownRenderer();
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern short *openings;
-extern bool r_fakingunderwater;
 extern int fuzzviewheight;
-extern subsector_t *InSubsector;
 
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
@@ -555,24 +553,13 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	R_ClearSprites ();
 
 	// opening / clipping determination
-	// [RH] clip ceiling to console bottom
-	fillshort(floorclip, viewwidth, viewheight);
-	fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
+	RenderBSP::Instance()->ClearClip();
 	R_FreeOpenings();
 
 	NetUpdate ();
 
-	// [RH] Show off segs if r_drawflat is 1
-	if (r_drawflat)
-	{
-		colfunc = &SWPixelFormatDrawers::FillColumn;
-		spanfunc = &SWPixelFormatDrawers::FillSpan;
-	}
-	else
-	{
-		colfunc = basecolfunc;
-		spanfunc = &SWPixelFormatDrawers::DrawSpan;
-	}
+	colfunc = basecolfunc;
+	spanfunc = &SWPixelFormatDrawers::DrawSpan;
 
 	WindowLeft = 0;
 	WindowRight = viewwidth;
@@ -583,7 +570,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	r_dontmaplines = dontmaplines;
 	
 	// [RH] Hack to make windows into underwater areas possible
-	r_fakingunderwater = false;
+	RenderBSP::Instance()->ResetFakingUnderwater();
 
 	// [RH] Setup particles for this frame
 	P_FindParticleSubsectors ();
@@ -597,7 +584,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
-	R_RenderScene();
+	RenderBSP::Instance()->RenderScene();
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();

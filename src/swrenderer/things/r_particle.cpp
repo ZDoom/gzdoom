@@ -114,6 +114,8 @@ namespace swrenderer
 		// entered, we don't need to clip it to drawsegs like a normal sprite.
 
 		// Clip particles behind walls.
+		auto ceilingclip = RenderBSP::Instance()->ceilingclip;
+		auto floorclip = RenderBSP::Instance()->floorclip;
 		if (y1 <  ceilingclip[x1])		y1 = ceilingclip[x1];
 		if (y1 <  ceilingclip[x2 - 1])	y1 = ceilingclip[x2 - 1];
 		if (y2 >= floorclip[x1])		y2 = floorclip[x1] - 1;

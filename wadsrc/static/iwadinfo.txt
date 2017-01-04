@@ -278,6 +278,18 @@ IWad
 
 IWad
 {
+	Name = "DOOM: Complete: WadSmoosh"
+	Autoname = "doom.doom2.wadsmoosh"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "SMOOSHED", "ANIMDEFS", "LANGUAGE", "MAPINFO", "ENDOOM", "M_DOOM", "TITLEPIC", "TEXTURES"
+	BannerColors = "a8 00 00", "a8 a8 a8"
+}
+
+IWad
+{
 	Name = "The Ultimate DOOM"
 	Autoname = "doom.doom1.ultimate"
 	Game = "Doom"
@@ -369,6 +381,7 @@ IWad
 
 Names
 {	
+	"doom_complete.pk3"
 	"bfgdoom2.wad"
 	"doom2bfg.wad"
 	"doom2f.wad"

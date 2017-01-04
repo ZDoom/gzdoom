@@ -2,18 +2,6 @@
 
 IWad
 {
-	Name = "DOOM: Complete: WadSmoosh"
-	Autoname = "doom.doom2.wadsmoosh"
-	Game = "Doom"
-	Config = "Doom"
-	Mapinfo = "mapinfo/doom2.txt"
-	Compatibility = "Shorttex"
-	MustContain = "SMOOSHED"
-	BannerColors = "a8 00 00", "a8 a8 a8"
-}
-
-IWad
-{
 	Name = "Delaweare"
 	Autoname = "delaweare"
 	Game = "Doom"
@@ -286,6 +274,18 @@ IWad
 		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1", "E4M2",
 		          "DMENUPIC", "M_ACPT", "M_CAN", "M_EXITO", "M_CHG"
 	BannerColors = "54 54 54", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "DOOM: Complete: WadSmoosh"
+	Autoname = "doom.doom2.wadsmoosh"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "SMOOSHED", "ANIMDEFS", "LANGUAGE", "MAPINFO", "ENDOOM", "M_DOOM", "TITLEPIC", "TEXTURES"
+	BannerColors = "a8 00 00", "a8 a8 a8"
 }
 
 IWad

@@ -1890,16 +1890,16 @@ static int PatchMisc (int dummy)
 					"Minotaur",
 					NULL
 				};
-				static const PClass * const *types[] =
+				static const char *const types[] =
 				{
-					&RUNTIME_CLASS_CASTLESS(APowerInvulnerable),
-					&RUNTIME_CLASS_CASTLESS(APowerStrength),
-					&RUNTIME_CLASS_CASTLESS(APowerInvisibility),
-					&RUNTIME_CLASS_CASTLESS(APowerIronFeet),
-					&RUNTIME_CLASS_CASTLESS(APowerLightAmp),
-					&RUNTIME_CLASS_CASTLESS(APowerWeaponLevel2),
-					&RUNTIME_CLASS_CASTLESS(APowerSpeed),
-					&RUNTIME_CLASS_CASTLESS(APowerMinotaur)
+					"PowerInvulnerable",
+					"PowerStrength",
+					"PowerInvisibility",
+					"PowerIronFeet",
+					"PowerLightAmp",
+					"PowerWeaponLevel2",
+					"PowerSpeed",
+					"PowerMinotaur"
 				};
 				int i;
 
@@ -1925,7 +1925,7 @@ static int PatchMisc (int dummy)
 					}
 					else if (a > 0)
 					{
-						static_cast<APowerup *>(GetDefaultByType (*types[i]))->BlendColor = PalEntry(
+						static_cast<APowerup *>(GetDefaultByName (types[i]))->BlendColor = PalEntry(
 							BYTE(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
@@ -1933,7 +1933,7 @@ static int PatchMisc (int dummy)
 					}
 					else
 					{
-						static_cast<APowerup *>(GetDefaultByType (*types[i]))->BlendColor = 0;
+						static_cast<APowerup *>(GetDefaultByName (types[i]))->BlendColor = 0;
 					}
 				}
 			}

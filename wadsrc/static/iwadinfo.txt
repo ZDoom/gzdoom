@@ -2,13 +2,13 @@
 
 IWad
 {
-	Name = "DOOM: Wadsmoosh"
+	Name = "DOOM: Complete: WadSmoosh"
 	Autoname = "doom.doom2.wadsmoosh"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
 	Compatibility = "Shorttex"
-	MustContain = "MAP01", "WADSMUSH"
+	MustContain = "WADSMUSH"
 	BannerColors = "a8 00 00", "a8 a8 a8"
 }
 

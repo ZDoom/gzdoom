@@ -102,7 +102,6 @@ static void R_ShutdownRenderer();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern short *openings;
 extern int fuzzviewheight;
 
 
@@ -391,13 +390,7 @@ static void R_ShutdownRenderer()
 	R_DeinitSprites();
 	R_DeinitPlanes();
 	Clip3DFloors::Instance()->Cleanup();
-	// Free openings
-	if (openings != NULL)
-	{
-		M_Free (openings);
-		openings = NULL;
-	}
-
+	R_DeinitOpenings();
 	R_FreeDrawSegs();
 }
 

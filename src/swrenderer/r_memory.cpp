@@ -61,4 +61,13 @@ namespace swrenderer
 	{
 		lastopening = 0;
 	}
+
+	void R_DeinitOpenings()
+	{
+		if (openings != nullptr)
+		{
+			M_Free(openings);
+			openings = nullptr;
+		}
+	}
 }

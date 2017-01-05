@@ -250,6 +250,8 @@ namespace swrenderer
 
 		// New visplane algorithm uses hash table -- killough
 		hash = isskybox ? MAXVISPLANES : visplane_hash(picnum.GetIndex(), lightlevel, height);
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		for (check = visplanes[hash]; check; check = check->next)	// killough
 		{
@@ -260,9 +262,9 @@ namespace swrenderer
 					if (portal->mType != PORTS_SKYVIEWPOINT)
 					{ // This skybox is really a stacked sector, so we need to
 					  // check even more.
-						if (check->extralight == stacked_extralight &&
-							check->visibility == stacked_visibility &&
-							check->viewpos == stacked_viewpos &&
+						if (check->extralight == renderportal->stacked_extralight &&
+							check->visibility == renderportal->stacked_visibility &&
+							check->viewpos == renderportal->stacked_viewpos &&
 							(
 								// headache inducing logic... :(
 								(portal->mType != PORTS_STACKEDSECTORTHING) ||
@@ -277,7 +279,7 @@ namespace swrenderer
 										*xform == check->xform
 										)
 										) &&
-									check->viewangle == stacked_angle
+									check->viewangle == renderportal->stacked_angle
 									)
 								)
 							)
@@ -298,8 +300,8 @@ namespace swrenderer
 					basecolormap == check->colormap &&	// [RH] Add more checks
 					*xform == check->xform &&
 					sky == check->sky &&
-					CurrentPortalUniq == check->CurrentPortalUniq &&
-					MirrorFlags == check->MirrorFlags &&
+					renderportal->CurrentPortalUniq == check->CurrentPortalUniq &&
+					renderportal->MirrorFlags == check->MirrorFlags &&
 					Clip3DFloors::Instance()->CurrentSkybox == check->CurrentSkybox &&
 					ViewPos == check->viewpos
 					)
@@ -319,14 +321,14 @@ namespace swrenderer
 		check->portal = portal;
 		check->left = viewwidth;			// Was SCREENWIDTH -- killough 11/98
 		check->right = 0;
-		check->extralight = stacked_extralight;
-		check->visibility = stacked_visibility;
-		check->viewpos = stacked_viewpos;
-		check->viewangle = stacked_angle;
+		check->extralight = renderportal->stacked_extralight;
+		check->visibility = renderportal->stacked_visibility;
+		check->viewpos = renderportal->stacked_viewpos;
+		check->viewangle = renderportal->stacked_angle;
 		check->Alpha = alpha;
 		check->Additive = additive;
-		check->CurrentPortalUniq = CurrentPortalUniq;
-		check->MirrorFlags = MirrorFlags;
+		check->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		check->MirrorFlags = renderportal->MirrorFlags;
 		check->CurrentSkybox = Clip3DFloors::Instance()->CurrentSkybox;
 
 		fillshort(check->top, viewwidth, 0x7fff);
@@ -421,13 +423,15 @@ namespace swrenderer
 		int vpcount = 0;
 
 		drawerargs::ds_color = 3;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		for (i = 0; i < MAXVISPLANES; i++)
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
 				// kg3D - draw only correct planes
-				if (pl->CurrentPortalUniq != CurrentPortalUniq || pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox)
+				if (pl->CurrentPortalUniq != renderportal->CurrentPortalUniq || pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox)
 					continue;
 				// kg3D - draw only real planes now
 				if (pl->sky >= 0) {
@@ -448,19 +452,21 @@ namespace swrenderer
 
 		DVector3 oViewPos = ViewPos;
 		DAngle oViewAngle = ViewAngle;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		for (i = 0; i < MAXVISPLANES; i++)
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
-				if (pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox || pl->CurrentPortalUniq != CurrentPortalUniq)
+				if (pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox || pl->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 					continue;
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)
 				{
 					ViewPos = pl->viewpos;
 					ViewAngle = pl->viewangle;
-					MirrorFlags = pl->MirrorFlags;
+					renderportal->MirrorFlags = pl->MirrorFlags;
 
 					R_DrawSinglePlane(pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 				}

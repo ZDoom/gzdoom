@@ -143,7 +143,8 @@ namespace swrenderer
 		plane_su *= 4294967296.f;
 		plane_sv *= 4294967296.f;
 
-		if (MirrorFlags & RF_XFLIP)
+		RenderPortal *renderportal = RenderPortal::Instance();
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			plane_su[0] = -plane_su[0];
 			plane_sv[0] = -plane_sv[0];

@@ -314,6 +314,8 @@ namespace swrenderer
 	void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
 	{
 		using namespace drawerargs;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		uint32_t height = frontskytex->GetHeight();
 
@@ -327,7 +329,7 @@ namespace swrenderer
 			uint32_t uv_step = (uint32_t)(v_step * 0x01000000);
 
 			int x = start_x + i;
-			if (MirrorFlags & RF_XFLIP)
+			if (renderportal->MirrorFlags & RF_XFLIP)
 				x = (viewwidth - x);
 
 			uint32_t ang, angle1, angle2;
@@ -431,8 +433,10 @@ namespace swrenderer
 		{
 			swall[x] = swal;
 		}
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		if (MirrorFlags & RF_XFLIP)
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			for (x = pl->left; x < pl->right; ++x)
 			{

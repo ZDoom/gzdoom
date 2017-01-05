@@ -93,7 +93,8 @@ namespace swrenderer
 		ystep = -sin(planeang) / FocalLengthX;
 
 		// [RH] flip for mirrors
-		if (MirrorFlags & RF_XFLIP)
+		RenderPortal *renderportal = RenderPortal::Instance();
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			xstep = -xstep;
 			ystep = -ystep;

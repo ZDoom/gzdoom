@@ -66,9 +66,11 @@ namespace swrenderer
 		vissprite_t*		vis;
 		sector_t*			heightsec = NULL;
 		FSWColormap*			map;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		// [ZZ] Particle not visible through the portal plane
-		if (CurrentPortal && !!P_PointOnLineSide(particle->Pos, CurrentPortal->dst))
+		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
 			return;
 
 		// transform the origin point
@@ -84,7 +86,7 @@ namespace swrenderer
 		tx = tr_x * ViewSin - tr_y * ViewCos;
 
 		// Flip for mirrors
-		if (MirrorFlags & RF_XFLIP)
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			tx = viewwidth - tx - 1;
 		}
@@ -99,8 +101,8 @@ namespace swrenderer
 		// calculate edges of the shape
 		double psize = particle->size / 8.0;
 
-		x1 = MAX<int>(WindowLeft, centerx + xs_RoundToInt((tx - psize) * xscale));
-		x2 = MIN<int>(WindowRight, centerx + xs_RoundToInt((tx + psize) * xscale));
+		x1 = MAX<int>(renderportal->WindowLeft, centerx + xs_RoundToInt((tx - psize) * xscale));
+		x2 = MIN<int>(renderportal->WindowRight, centerx + xs_RoundToInt((tx + psize) * xscale));
 
 		if (x1 >= x2)
 			return;
@@ -175,7 +177,7 @@ namespace swrenderer
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
-		vis->CurrentPortalUniq = CurrentPortalUniq;
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;
 		vis->xscale = FLOAT2FIXED(xscale);
 		vis->yscale = (float)xscale;

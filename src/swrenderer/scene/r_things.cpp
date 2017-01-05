@@ -427,14 +427,16 @@ static inline void R_CollectPortals()
 
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 {
+	RenderPortal *renderportal = RenderPortal::Instance();
+	
 	// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
-	if (CurrentPortalInSkybox)
+	if (renderportal->CurrentPortalInSkybox)
 		return false;
 
 	for (drawseg_t *seg : portaldrawsegs)
 	{
 		// ignore segs from other portals
-		if (seg->CurrentPortalUniq != CurrentPortalUniq)
+		if (seg->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 			continue;
 
 		// (all checks that are already done in R_CollectPortals have been removed for performance reasons.)
@@ -636,10 +638,12 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 	{
 		return;
 	}
+	
+	RenderPortal *renderportal = RenderPortal::Instance();
 
 	// [ZZ] Or less definitely not visible (hue)
 	// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), CurrentPortal->dst))
+	if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
@@ -776,7 +780,7 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 	tx = tr_x * ViewSin - tr_y * ViewCos;
 
 	// [RH] Flip for mirrors
-	if (MirrorFlags & RF_XFLIP)
+	if (renderportal->MirrorFlags & RF_XFLIP)
 	{
 		tx = -tx;
 	}
@@ -847,7 +851,7 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 		}
 
 		// [RH] Flip for mirrors
-		renderflags ^= MirrorFlags & RF_XFLIP;
+		renderflags ^= renderportal->MirrorFlags & RF_XFLIP;
 
 		// calculate edges of the shape
 		const double thingxscalemul = spriteScale.X / tex->Scale.X;
@@ -857,14 +861,14 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 		x1 = centerx + xs_RoundToInt(dtx1);
 
 		// off the right side?
-		if (x1 >= WindowRight)
+		if (x1 >= renderportal->WindowRight)
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
 		x2 = centerx + xs_RoundToInt(tx * xscale);
 
 		// off the left side or too small?
-		if ((x2 < WindowLeft || x2 <= x1))
+		if ((x2 < renderportal->WindowLeft || x2 <= x1))
 			return;
 
 		xscale = spriteScale.X * xscale / tex->Scale.X;
@@ -875,14 +879,14 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 		// store information in a vissprite
 		vis = R_NewVisSprite();
 
-		vis->CurrentPortalUniq = CurrentPortalUniq;
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
 		vis->yscale = float(InvZtoScale * yscale / tz);
 		vis->idepth = float(1 / tz);
 		vis->floorclip = thing->Floorclip / yscale;
 		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
-		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
-		vis->x2 = x2 > WindowRight ? WindowRight : x2;
+		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
+		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
 		vis->Angle = thing->Angles.Yaw;
 
 		if (renderflags & RF_XFLIP)
@@ -902,11 +906,11 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 	{
 		vis = R_NewVisSprite();
 
-		vis->CurrentPortalUniq = CurrentPortalUniq;
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
 		vis->yscale = (float)yscale;
-		vis->x1 = WindowLeft;
-		vis->x2 = WindowRight;
+		vis->x1 = renderportal->WindowLeft;
+		vis->x2 = renderportal->WindowRight;
 		vis->idepth = 1 / MINZ;
 		vis->floorclip = thing->Floorclip;
 
@@ -946,7 +950,7 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
 	vis->Style.ColormapNum = 0;
-	vis->bInMirror = MirrorFlags & RF_XFLIP;
+	vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 	vis->bSplitSprite = false;
 
 	if (voxel != NULL)
@@ -1604,15 +1608,20 @@ void R_DrawSprite (vissprite_t *spr)
 				neardepth = ds->sz2, fardepth = ds->sz1;
 			}
 		}
+		
+		
 		// Check if sprite is in front of draw seg:
 		if ((!spr->bWallSprite && neardepth > spr->depth) || ((spr->bWallSprite || fardepth > spr->depth) &&
 			(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
 			(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
 		{
+			RenderPortal *renderportal = RenderPortal::Instance();
+			
 			// seg is behind sprite, so draw the mid texture if it has one
-			if (ds->CurrentPortalUniq == CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
+			if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
 				(ds->maskedtexturecol != -1 || ds->bFogBoundary))
 				R_RenderMaskedSegRange (ds, r1, r2);
+				
 			continue;
 		}
 
@@ -1711,13 +1720,11 @@ void R_DrawMaskedSingle (bool renew)
 	drawseg_t *ds;
 	int i;
 
-#if 0
-	R_SplitVisSprites ();
-#endif
+	RenderPortal *renderportal = RenderPortal::Instance();
 
 	for (i = vsprcount; i > 0; i--)
 	{
-		if (spritesorter[i-1]->CurrentPortalUniq != CurrentPortalUniq)
+		if (spritesorter[i-1]->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 			continue; // probably another time
 		R_DrawSprite (spritesorter[i-1]);
 	}
@@ -1737,7 +1744,7 @@ void R_DrawMaskedSingle (bool renew)
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 	{
 		// [ZZ] the same as above
-		if (ds->CurrentPortalUniq != CurrentPortalUniq)
+		if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 			continue;
 		// kg3D - no fake segs
 		if (ds->fake) continue;

@@ -17,20 +17,46 @@
 
 namespace swrenderer
 {
-	extern int WindowLeft, WindowRight;
-	extern uint16_t MirrorFlags;
+	struct visplane_t;
 
-	extern PortalDrawseg* CurrentPortal;
-	extern int CurrentPortalUniq;
-	extern bool CurrentPortalInSkybox;
+	class RenderPortal
+	{
+	public:
+		static RenderPortal *Instance();
+		
+		void SetMainPortal();
+		void CopyStackedViewParameters();
+	
+		void RenderPlanePortals();
+		void RenderLinePortals();
+	
+		int WindowLeft = 0;
+		int WindowRight = 0;
+		uint16_t MirrorFlags = 0;
 
-	extern int stacked_extralight;
-	extern double stacked_visibility;
-	extern DVector3 stacked_viewpos;
-	extern DAngle stacked_angle;
+		PortalDrawseg* CurrentPortal = nullptr;
+		int CurrentPortalUniq = 0;
+		bool CurrentPortalInSkybox = false;
 
-	void R_DrawPortals();
-	void R_DrawWallPortals();
-	void R_EnterPortal(PortalDrawseg* pds, int depth);
-	void R_HighlightPortal(PortalDrawseg* pds);
+		// These are copies of the main parameters used when drawing stacked sectors.
+		// When you change the main parameters, you should copy them here too *unless*
+		// you are changing them to draw a stacked sector. Otherwise, stacked sectors
+		// won't draw in skyboxes properly.
+		int stacked_extralight = 0;
+		double stacked_visibility = 0.0;
+		DVector3 stacked_viewpos;
+		DAngle stacked_angle;
+		
+		int numskyboxes = 0; // For ADD_STAT(skyboxes)
+
+	private:
+		void RenderLinePortal(PortalDrawseg* pds, int depth);
+		void RenderLinePortalHighlight(PortalDrawseg* pds);
+		
+		TArray<size_t> interestingStack;
+		TArray<ptrdiff_t> drawsegStack;
+		TArray<ptrdiff_t> visspriteStack;
+		TArray<DVector3> viewposStack;
+		TArray<visplane_t *> visplaneStack;
+	};
 }

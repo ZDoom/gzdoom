@@ -396,20 +396,6 @@ static void R_ShutdownRenderer()
 
 //==========================================================================
 //
-// R_CopyStackedViewParameters
-//
-//==========================================================================
-
-void R_CopyStackedViewParameters()
-{
-	stacked_viewpos = ViewPos;
-	stacked_angle = ViewAngle;
-	stacked_extralight = extralight;
-	stacked_visibility = R_GetVisibility();
-}
-
-//==========================================================================
-//
 // R_SetupColormap
 //
 // Sets up special fixed colormaps
@@ -555,11 +541,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	colfunc = basecolfunc;
 	spanfunc = &SWPixelFormatDrawers::DrawSpan;
 
-	WindowLeft = 0;
-	WindowRight = viewwidth;
-	MirrorFlags = 0;
-	CurrentPortal = NULL;
-	CurrentPortalUniq = 0;
+	RenderPortal::Instance()->SetMainPortal();
 
 	r_dontmaplines = dontmaplines;
 	
@@ -589,10 +571,10 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	{
 		PlaneCycles.Clock();
 		R_DrawPlanes();
-		R_DrawPortals();
+		RenderPortal::Instance()->RenderPlanePortals();
 		PlaneCycles.Unclock();
 
-		R_DrawWallPortals();
+		RenderPortal::Instance()->RenderLinePortals();
 
 		NetUpdate ();
 		

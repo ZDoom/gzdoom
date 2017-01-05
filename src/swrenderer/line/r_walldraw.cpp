@@ -442,11 +442,13 @@ namespace swrenderer
 
 		assert(WallC.sx1 <= x1);
 		assert(WallC.sx2 >= x2);
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
 		// kg3D - fake floors instead of zdoom light list
 		for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 		{
-			int j = R_CreateWallSegmentYSloped(most3, frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, MirrorFlags & RF_XFLIP);
+			int j = R_CreateWallSegmentYSloped(most3, frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			if (j != 3)
 			{
 				for (int j = x1; j < x2; ++j)

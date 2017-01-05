@@ -134,8 +134,6 @@ void R_MultiresInit (void);
 
 
 
-extern void R_CopyStackedViewParameters();
-
 extern double globaluclip, globaldclip;
 
 }

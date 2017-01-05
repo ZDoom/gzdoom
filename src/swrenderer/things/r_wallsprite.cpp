@@ -86,8 +86,10 @@ namespace swrenderer
 		// Is it off-screen?
 		if (wallc.Init(left, right, TOO_CLOSE_Z))
 			return;
+			
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		if (wallc.sx1 >= WindowRight || wallc.sx2 <= WindowLeft)
+		if (wallc.sx1 >= renderportal->WindowRight || wallc.sx2 <= renderportal->WindowLeft)
 			return;
 
 		// Sprite sorting should probably treat these as walls, not sprites,
@@ -100,9 +102,9 @@ namespace swrenderer
 		gzb = pos.Z + scale.Y * scaled_bo;
 
 		vis = R_NewVisSprite();
-		vis->CurrentPortalUniq = CurrentPortalUniq;
-		vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
-		vis->x2 = wallc.sx2 >= WindowRight ? WindowRight : wallc.sx2;
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
+		vis->x2 = wallc.sx2 >= renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
 		vis->yscale = (float)scale.Y;
 		vis->idepth = float(1 / tz);
 		vis->depth = (float)tz;
@@ -122,7 +124,7 @@ namespace swrenderer
 		vis->Style.Alpha = float(thing->Alpha);
 		vis->fakefloor = NULL;
 		vis->fakeceiling = NULL;
-		vis->bInMirror = MirrorFlags & RF_XFLIP;
+		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		vis->pic = pic;
 		vis->bIsVoxel = false;
 		vis->bWallSprite = true;

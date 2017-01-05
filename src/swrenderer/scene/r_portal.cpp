@@ -62,31 +62,12 @@ CVAR(Bool, r_skyboxes, true, 0)
 
 namespace swrenderer
 {
-	int WindowLeft, WindowRight;
-	uint16_t MirrorFlags;
-
-	PortalDrawseg *CurrentPortal = nullptr;
-	int CurrentPortalUniq = 0;
-	bool CurrentPortalInSkybox = false;
-
-	// These are copies of the main parameters used when drawing stacked sectors.
-	// When you change the main parameters, you should copy them here too *unless*
-	// you are changing them to draw a stacked sector. Otherwise, stacked sectors
-	// won't draw in skyboxes properly.
-	int stacked_extralight;
-	double stacked_visibility;
-	DVector3 stacked_viewpos;
-	DAngle stacked_angle;
-
-	namespace
+	RenderPortal *RenderPortal::Instance()
 	{
-		int numskyboxes; // For ADD_STAT(skyboxes)
+		static RenderPortal renderportal;
+		return &renderportal;
 	}
 
-	//==========================================================================
-	//
-	// R_DrawPortals
-	//
 	// Draws any recorded sky boxes and then frees them.
 	//
 	// The process:
@@ -102,16 +83,8 @@ namespace swrenderer
 	//   8. Repeat for any other sky boxes.
 	//   9. Put the camera back where it was to begin with.
 	//
-	//==========================================================================
-
-	void R_DrawPortals()
+	void RenderPortal::RenderPlanePortals()
 	{
-		static TArray<size_t> interestingStack;
-		static TArray<ptrdiff_t> drawsegStack;
-		static TArray<ptrdiff_t> visspriteStack;
-		static TArray<DVector3> viewposStack;
-		static TArray<visplane_t *> visplaneStack;
-
 		numskyboxes = 0;
 
 		if (visplanes[MAXVISPLANES] == nullptr)
@@ -164,7 +137,7 @@ namespace swrenderer
 				ViewPos = sky->InterpolatedPosition(r_TicFracF);
 				ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
 
-				R_CopyStackedViewParameters();
+				CopyStackedViewParameters();
 				break;
 			}
 
@@ -311,21 +284,21 @@ namespace swrenderer
 			freehead = &(*freehead)->next;
 	}
 
-	void R_DrawWallPortals()
+	void RenderPortal::RenderLinePortals()
 	{
 		// [RH] Walk through mirrors
 		// [ZZ] Merged with portals
 		size_t lastportal = WallPortals.Size();
 		for (unsigned int i = 0; i < lastportal; i++)
 		{
-			R_EnterPortal(&WallPortals[i], 0);
+			RenderLinePortal(&WallPortals[i], 0);
 		}
 
 		CurrentPortal = nullptr;
 		CurrentPortalUniq = 0;
 	}
 
-	void R_EnterPortal(PortalDrawseg* pds, int depth)
+	void RenderPortal::RenderLinePortal(PortalDrawseg* pds, int depth)
 	{
 		// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
 		if (depth >= r_portal_recursions)
@@ -364,7 +337,7 @@ namespace swrenderer
 			}
 
 			if (r_highlight_portals)
-				R_HighlightPortal(pds);
+				RenderLinePortalHighlight(pds);
 
 			return;
 		}
@@ -441,7 +414,7 @@ namespace swrenderer
 		ViewTanSin = FocalTangent * ViewSin;
 		ViewTanCos = FocalTangent * ViewCos;
 
-		R_CopyStackedViewParameters();
+		CopyStackedViewParameters();
 
 		validcount++;
 		PortalDrawseg* prevpds = CurrentPortal;
@@ -478,7 +451,7 @@ namespace swrenderer
 
 		PlaneCycles.Clock();
 		R_DrawPlanes();
-		R_DrawPortals();
+		RenderPlanePortals();
 		PlaneCycles.Unclock();
 
 		double vzp = ViewPos.Z;
@@ -488,7 +461,7 @@ namespace swrenderer
 		unsigned int portalsAtEnd = WallPortals.Size();
 		for (; portalsAtStart < portalsAtEnd; portalsAtStart++)
 		{
-			R_EnterPortal(&WallPortals[portalsAtStart], depth + 1);
+			RenderLinePortal(&WallPortals[portalsAtStart], depth + 1);
 		}
 		int prevuniq2 = CurrentPortalUniq;
 		CurrentPortalUniq = prevuniq;
@@ -506,7 +479,7 @@ namespace swrenderer
 
 		// draw a red line around a portal if it's being highlighted
 		if (r_highlight_portals)
-			R_HighlightPortal(pds);
+			RenderLinePortalHighlight(pds);
 
 		CurrentPortal = prevpds;
 		MirrorFlags = prevmf;
@@ -516,7 +489,7 @@ namespace swrenderer
 		ViewPath[1] = savedpath[1];
 	}
 
-	void R_HighlightPortal(PortalDrawseg* pds)
+	void RenderPortal::RenderLinePortalHighlight(PortalDrawseg* pds)
 	{
 		// [ZZ] NO OVERFLOW CHECKS HERE
 		//      I believe it won't break. if it does, blame me. :(
@@ -555,11 +528,28 @@ namespace swrenderer
 			else *(pixels + Ybottom * RenderTarget->GetPitch() + x) = color;
 		}
 	}
+	
+	void RenderPortal::CopyStackedViewParameters()
+	{
+		stacked_viewpos = ViewPos;
+		stacked_angle = ViewAngle;
+		stacked_extralight = extralight;
+		stacked_visibility = R_GetVisibility();
+	}
+	
+	void RenderPortal::SetMainPortal()
+	{
+		WindowLeft = 0;
+		WindowRight = viewwidth;
+		MirrorFlags = 0;
+		CurrentPortal = nullptr;
+		CurrentPortalUniq = 0;
+	}
 }
 
 ADD_STAT(skyboxes)
 {
 	FString out;
-	out.Format("%d skybox planes", swrenderer::numskyboxes);
+	out.Format("%d skybox planes", swrenderer::RenderPortal::Instance()->numskyboxes);
 	return out;
 }

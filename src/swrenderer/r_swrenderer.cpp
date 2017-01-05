@@ -38,9 +38,10 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "scene/r_bsp.h"
 #include "r_swrenderer.h"
+#include "scene/r_bsp.h"
 #include "scene/r_3dfloors.h"
+#include "scene/r_portal.h"
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 #include "drawers/r_draw_rgba.h"
@@ -395,7 +396,7 @@ void FSoftwareRenderer::SetupFrame(player_t *player)
 
 void FSoftwareRenderer::CopyStackedViewParameters() 
 {
-	R_CopyStackedViewParameters();
+	RenderPortal::Instance()->CopyStackedViewParameters();
 }
 
 //==========================================================================

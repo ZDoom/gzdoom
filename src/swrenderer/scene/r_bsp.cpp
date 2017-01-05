@@ -333,7 +333,7 @@ namespace swrenderer
 		ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
 		ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
 
-		if (MirrorFlags & RF_XFLIP)
+		if (RenderPortal::Instance()->MirrorFlags & RF_XFLIP)
 		{
 			double t = -rx1;
 			rx1 = -rx2;

@@ -109,13 +109,15 @@ namespace swrenderer
 	{
 		short most[MAXWIDTH];
 
-		R_CreateWallSegmentYSloped(most, curline->frontsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+		RenderPortal *renderportal = RenderPortal::Instance();
+		
+		R_CreateWallSegmentYSloped(most, curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (wallupper[i] < most[i])
 				wallupper[i] = most[i];
 		}
-		R_CreateWallSegmentYSloped(most, curline->frontsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+		R_CreateWallSegmentYSloped(most, curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (walllower[i] > most[i])

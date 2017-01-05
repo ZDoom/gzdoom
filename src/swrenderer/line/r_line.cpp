@@ -78,7 +78,9 @@ namespace swrenderer
 		if (WallC.Init(pt1, pt2, 32.0 / (1 << 12)))
 			return;
 
-		if (WallC.sx1 >= WindowRight || WallC.sx2 <= WindowLeft)
+		RenderPortal *renderportal = RenderPortal::Instance();
+
+		if (WallC.sx1 >= renderportal->WindowRight || WallC.sx2 <= renderportal->WindowLeft)
 			return;
 
 		if (line->linedef == NULL)
@@ -92,7 +94,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, ViewPos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, ViewPos))
 			return;
 
 		vertex_t *v1, *v2;
@@ -162,12 +164,12 @@ namespace swrenderer
 			if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 			{
 				rw_havehigh = true;
-				R_CreateWallSegmentYSloped(wallupper, backsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+				R_CreateWallSegmentYSloped(wallupper, backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			}
 			if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 			{
 				rw_havelow = true;
-				R_CreateWallSegmentYSloped(walllower, backsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+				R_CreateWallSegmentYSloped(walllower, backsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			}
 
 			// Portal
@@ -268,8 +270,8 @@ namespace swrenderer
 		}
 		else
 		{
-			rw_ceilstat = R_CreateWallSegmentYSloped(walltop, frontsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
-			rw_floorstat = R_CreateWallSegmentYSloped(wallbottom, frontsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+			rw_ceilstat = R_CreateWallSegmentYSloped(walltop, frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+			rw_floorstat = R_CreateWallSegmentYSloped(wallbottom, frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 
 			// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...
@@ -339,8 +341,10 @@ namespace swrenderer
 
 		rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 		rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		draw_segment->CurrentPortalUniq = CurrentPortalUniq;
+		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->sx1 = WallC.sx1;
 		draw_segment->sx2 = WallC.sx2;
 		draw_segment->sz1 = WallC.sz1;
@@ -715,7 +719,8 @@ namespace swrenderer
 				  // wall but nothing to draw for it.
 				  // Recalculate walltop so that the wall is clipped by the back sector's
 				  // ceiling instead of the front sector's ceiling.
-					R_CreateWallSegmentYSloped(walltop, backsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+				  	RenderPortal *renderportal = RenderPortal::Instance();
+					R_CreateWallSegmentYSloped(walltop, backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 				}
 				// Putting sky ceilings on the front and back of a line alters the way unpegged
 				// positioning works.
@@ -1166,8 +1171,10 @@ namespace swrenderer
 
 		tleft.Y = float(pt1.X * ViewTanCos + pt1.Y * ViewTanSin);
 		tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		if (MirrorFlags & RF_XFLIP)
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			float t = -tleft.X;
 			tleft.X = -tright.X;
@@ -1222,8 +1229,10 @@ namespace swrenderer
 	{
 		const FVector2 *left = &wallc->tleft;
 		const FVector2 *right = &wallc->tright;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		if (MirrorFlags & RF_XFLIP)
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			swapvalues(left, right);
 		}
@@ -1241,8 +1250,10 @@ namespace swrenderer
 		double fullx2 = right.X * ViewSin - right.Y * ViewCos;
 		double fully1 = left.X * ViewTanCos + left.Y * ViewTanSin;
 		double fully2 = right.X * ViewTanCos + right.Y * ViewTanSin;
+		
+		RenderPortal *renderportal = RenderPortal::Instance();
 
-		if (MirrorFlags & RF_XFLIP)
+		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			fullx1 = -fullx1;
 			fullx2 = -fullx2;

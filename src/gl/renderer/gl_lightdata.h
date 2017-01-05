@@ -35,7 +35,7 @@ inline bool gl_isWhite(PalEntry color)
 	return color.r + color.g + color.b == 3*0xff;
 }
 
-extern DWORD gl_fixedcolormap;
+extern int gl_fixedcolormap;
 
 inline bool gl_isFullbright(PalEntry color, int lightlevel)
 {

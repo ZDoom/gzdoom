@@ -3088,7 +3088,7 @@ line_t**				linebuffer;
 static void P_GroupLines (bool buildmap)
 {
 	cycle_t times[16];
-	int*				linesDoneInEachSector;
+	unsigned int*		linesDoneInEachSector;
 	int 				i;
 	int 				total;
 	line_t* 			li;
@@ -3156,7 +3156,7 @@ static void P_GroupLines (bool buildmap)
 	times[3].Clock();
 	linebuffer = new line_t *[total];
 	line_t **lineb_p = linebuffer;
-	linesDoneInEachSector = new int[numsectors];
+	linesDoneInEachSector = new unsigned int[numsectors];
 	memset (linesDoneInEachSector, 0, sizeof(int)*numsectors);
 
 	for (sector = sectors, i = 0; i < numsectors; i++, sector++)

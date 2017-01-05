@@ -448,7 +448,7 @@ void FGLRenderBuffers::CreateExposureLevels(int width, int height)
 
 void FGLRenderBuffers::CreateEyeBuffers(int eye)
 {
-	if (mEyeFBs.Size() > eye)
+	if (mEyeFBs.Size() > unsigned(eye))
 		return;
 
 	GLint activeTex, textureBinding, frameBufferBinding;
@@ -457,7 +457,7 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
 
-	while (mEyeFBs.Size() <= eye)
+	while (mEyeFBs.Size() <= unsigned(eye))
 	{
 		GLuint texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
 		mEyeTextures.Push(texture);

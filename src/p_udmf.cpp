@@ -1695,7 +1695,7 @@ public:
 			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
 
-		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1 && fogdensity == -1)
+		if (lightcolor == uint32(-1) && fadecolor == uint32(-1) && desaturation == -1 && fogdensity == -1)
 		{
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -1714,8 +1714,8 @@ public:
 		}
 		else
 		{
-			if (lightcolor == -1) lightcolor = PalEntry(255,255,255);
-			if (fadecolor == -1)
+			if (uint32(-1) == lightcolor) lightcolor = PalEntry(255,255,255);
+			if (uint32(-1) == fadecolor)
 			{
 				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 					fadecolor = level.outsidefog;

@@ -167,8 +167,8 @@ void gl_LoadExtensions()
 		gl.flags |= RFL_SAMPLER_OBJECTS;
 	}
 	
-	// The minimum requirement for the modern render path are GL 3.0 + uniform buffers
-	if (gl_version < 3.0f || (gl_version < 3.1f && !CheckExtension("GL_ARB_uniform_buffer_object") && strstr(gl.vendorstring, "X.Org") == nullptr))
+	// The minimum requirement for the modern render path are GL 3.0 + uniform buffers. Also exclude the Linux Mesa driver at GL 3.0 because it errors out on shader compilation.
+	if (gl_version < 3.0f || (gl_version < 3.1f && (!CheckExtension("GL_ARB_uniform_buffer_object") || strstr(gl.vendorstring, "X.Org") != nullptr)))
 	{
 		gl.legacyMode = true;
 		gl.lightmethod = LM_LEGACY;

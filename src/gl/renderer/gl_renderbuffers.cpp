@@ -482,7 +482,7 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	glBindTexture(GL_TEXTURE_2D, handle);
 	FGLDebug::LabelObject(GL_TEXTURE, handle, name);
 
-	GLenum dataformat, datatype;
+	GLenum dataformat = 0, datatype = 0;
 	switch (format)
 	{
 	case GL_RGBA8:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_BYTE; break;

@@ -6,6 +6,7 @@
 class FPresentShaderBase
 {
 public:
+	virtual ~FPresentShaderBase() {}
 	virtual void Bind() = 0;
 
 	FBufferedUniform1f InvGamma;

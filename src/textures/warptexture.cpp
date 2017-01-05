@@ -42,7 +42,7 @@
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
-: GenTime (0), SourcePic (source), Pixels (0), Spans (0), Speed (1.f)
+: GenTime (0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
 {
 	CopyInfo(source);
 	if (warptype == 2) SetupMultipliers(256, 128); 

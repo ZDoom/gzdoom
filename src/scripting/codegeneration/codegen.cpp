@@ -8926,15 +8926,20 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 
 bool FxSwitchStatement::CheckReturn()
 {
-	//A switch statement returns when it contains no breaks and ends with a return
+	bool founddefault = false;
+	//A switch statement returns when it contains a no breaks, a default case, and ends with a return
 	for (auto line : Content)
 	{
 		if (line->ExprType == EFX_JumpStatement)
 		{
 			return false;	// Break means that the end of the statement will be reached, Continue cannot happen in the last statement of the last block.
 		}
+		else if (line->ExprType == EFX_CaseStatement)
+		{
+			if (static_cast<FxCaseStatement*>(line)->Condition == nullptr) founddefault = true;
+		}
 	}
-	return Content.Size() > 0 && Content.Last()->CheckReturn();
+	return founddefault && Content.Size() > 0 && Content.Last()->CheckReturn();
 }
 
 //==========================================================================

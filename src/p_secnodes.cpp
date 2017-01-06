@@ -32,7 +32,7 @@
 // Maintain a freelist of msecnode_t's to reduce memory allocs and frees.
 //=============================================================================
 
-msecnode_t *headsecnode = NULL;
+msecnode_t *headsecnode = nullptr;
 FMemArena secnodearena;
 
 //=============================================================================
@@ -55,7 +55,6 @@ msecnode_t *P_GetSecnode()
 	}
 	else
 	{
-		node = 
 		node = (msecnode_t *)secnodearena.Alloc(sizeof(*node));
 	}
 	return node;
@@ -87,9 +86,10 @@ void P_PutSecnode(msecnode_t *node)
 //
 //=============================================================================
 
-msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist)
+template<class nodetype, class linktype>
+nodetype *P_AddSecnode(linktype *s, AActor *thing, nodetype *nextnode, nodetype *&sec_thinglist)
 {
-	msecnode_t *node;
+	nodetype *node;
 
 	if (s == 0)
 	{
@@ -110,21 +110,21 @@ msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecn
 	// Couldn't find an existing node for this sector. Add one at the head
 	// of the list.
 
-	node = P_GetSecnode();
+	node = (nodetype*)P_GetSecnode();
 
 	// killough 4/4/98, 4/7/98: mark new nodes unvisited.
 	node->visited = 0;
 
 	node->m_sector = s; 			// sector
 	node->m_thing = thing; 		// mobj
-	node->m_tprev = NULL;			// prev node on Thing thread
+	node->m_tprev = nullptr;			// prev node on Thing thread
 	node->m_tnext = nextnode;		// next node on Thing thread
 	if (nextnode)
 		nextnode->m_tprev = node;	// set back link on Thing
 
 	// Add new node at head of sector thread starting at s->touching_thinglist
 
-	node->m_sprev = NULL;			// prev node on sector thread
+	node->m_sprev = nullptr;			// prev node on sector thread
 	node->m_snext = sec_thinglist; // next node on sector thread
 	if (sec_thinglist)
 		node->m_snext->m_sprev = node;
@@ -132,22 +132,26 @@ msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecn
 	return node;
 }
 
+template msecnode_t *P_AddSecnode<msecnode_t, sector_t>(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist);
+template portnode_t *P_AddSecnode<portnode_t, FLinePortal>(FLinePortal *s, AActor *thing, portnode_t *nextnode, portnode_t *&sec_thinglist);
+
 //=============================================================================
 //
 // P_DelSecnode
 //
 // Deletes a sector node from the list of
 // sectors this object appears in. Returns a pointer to the next node
-// on the linked list, or NULL.
+// on the linked list, or nullptr.
 //
 //=============================================================================
 
-msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
+template<class nodetype, class linktype>
+nodetype *P_DelSecnode(nodetype *node, nodetype *linktype::*listhead)
 {
-	msecnode_t* tp;  // prev node on thing thread
-	msecnode_t* tn;  // next node on thing thread
-	msecnode_t* sp;  // prev node on sector thread
-	msecnode_t* sn;  // next node on sector thread
+	nodetype* tp;  // prev node on thing thread
+	nodetype* tn;  // next node on thing thread
+	nodetype* sp;  // prev node on sector thread
+	nodetype* sn;  // next node on sector thread
 
 	if (node)
 	{
@@ -175,11 +179,14 @@ msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
 
 		// Return this node to the freelist
 
-		P_PutSecnode(node);
+		P_PutSecnode((msecnode_t*)node);
 		return tn;
 	}
-	return NULL;
+	return nullptr;
 } 														// phares 3/13/98
+
+template msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead);
+template portnode_t *P_DelSecnode(portnode_t *node, portnode_t *FLinePortal::*listhead);
 
 //=============================================================================
 //
@@ -194,6 +201,13 @@ void P_DelSeclist(msecnode_t *node, msecnode_t *sector_t::*sechead)
 	while (node)
 		node = P_DelSecnode(node, sechead);
 }
+
+void P_DelSeclist(portnode_t *node, portnode_t *FLinePortal::*sechead)
+{
+	while (node)
+		node = P_DelSecnode(node, sechead);
+}
+
 
 //=============================================================================
 // phares 3/14/98
@@ -210,13 +224,13 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector
 
 	// First, clear out the existing m_thing fields. As each node is
 	// added or verified as needed, m_thing will be set properly. When
-	// finished, delete all nodes where m_thing is still NULL. These
+	// finished, delete all nodes where m_thing is still nullptr. These
 	// represent the sectors the Thing has vacated.
 
 	node = sector_list;
 	while (node)
 	{
-		node->m_thing = NULL;
+		node->m_thing = nullptr;
 		node = node->m_tnext;
 	}
 
@@ -254,12 +268,12 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector
 	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->*seclisthead);
 
 	// Now delete any nodes that won't be used. These are the ones where
-	// m_thing is still NULL.
+	// m_thing is still nullptr.
 
 	node = sector_list;
 	while (node)
 	{
-		if (node->m_thing == NULL)
+		if (node->m_thing == nullptr)
 		{
 			if (node == sector_list)
 				sector_list = node->m_tnext;
@@ -308,7 +322,7 @@ portnode_t *P_DelPortalnode(portnode_t *node)
 		if (sp)
 			sp->m_snext = sn;
 		else
-			node->m_portal->lineportal_thinglist = sn;
+			node->m_sector->lineportal_thinglist = sn;
 		if (sn)
 			sn->m_sprev = sp;
 
@@ -316,7 +330,7 @@ portnode_t *P_DelPortalnode(portnode_t *node)
 		P_PutSecnode(reinterpret_cast<msecnode_t *>(node));
 		return tn;
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -340,23 +354,22 @@ portnode_t *P_AddPortalnode(FLinePortal *s, AActor *thing, portnode_t *nextnode)
 	// killough 4/4/98, 4/7/98: mark new nodes unvisited.
 	node->visited = 0;
 
-	node->m_portal = s; 			// portal
+	node->m_sector = s; 			// portal
 	node->m_thing = thing; 			// mobj
-	node->m_tprev = NULL;			// prev node on Thing thread
+	node->m_tprev = nullptr;			// prev node on Thing thread
 	node->m_tnext = nextnode;		// next node on Thing thread
 	if (nextnode)
 		nextnode->m_tprev = node;	// set back link on Thing
 
 									// Add new node at head of portal thread starting at s->touching_thinglist
 
-	node->m_sprev = NULL;			// prev node on portal thread
+	node->m_sprev = nullptr;			// prev node on portal thread
 	node->m_snext = s->lineportal_thinglist; // next node on portal thread
 	if (s->lineportal_thinglist)
 		node->m_snext->m_sprev = node;
 	s->lineportal_thinglist = node;
 	return node;
 }
-
 
 //==========================================================================
 //
@@ -420,18 +433,12 @@ void AActor::UpdateRenderSectorList()
 
 void AActor::ClearRenderSectorList()
 {
-	msecnode_t *node = touching_sectorportallist;
-	while (node)
-		node = P_DelSecnode(node, &sector_t::sectorportal_thinglist);
-	touching_sectorportallist = NULL;
+	P_DelSeclist(touching_sectorportallist, &sector_t::sectorportal_thinglist);
+	touching_sectorportallist = nullptr;
 }
 
 void AActor::ClearRenderLineList()
 {
-	portnode_t *node = touching_lineportallist;
-	while (node)
-		node = P_DelPortalnode(node);
-	touching_lineportallist = NULL;
+	P_DelSeclist(touching_lineportallist, &FLinePortal::lineportal_thinglist);
+	touching_lineportallist = nullptr;
 }
-
-

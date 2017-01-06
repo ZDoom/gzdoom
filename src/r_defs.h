@@ -1373,7 +1373,7 @@ struct msecnode_t
 // use the same memory layout as msecnode_t so both can be used from the same freelist.
 struct portnode_t
 {
-	FLinePortal			*m_portal;	// a portal containing this object
+	FLinePortal			*m_sector;	// a portal containing this object (no, this isn't a sector, but if we want to use templates it needs the same variable names as msecnode_t.)
 	AActor				*m_thing;	// this object
 	struct portnode_t	*m_tprev;	// prev msecnode_t for this thing
 	struct portnode_t	*m_tnext;	// next msecnode_t for this thing

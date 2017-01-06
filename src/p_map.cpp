@@ -6734,7 +6734,7 @@ portnode_t *P_DelPortalnode(portnode_t *node)
 		if (sp)
 			sp->m_snext = sn;
 		else
-			node->m_portal->render_thinglist = sn;
+			node->m_portal->lineportal_thinglist = sn;
 		if (sn)
 			sn->m_sprev = sp;
 
@@ -6776,10 +6776,10 @@ portnode_t *P_AddPortalnode(FLinePortal *s, AActor *thing, portnode_t *nextnode)
 									// Add new node at head of portal thread starting at s->touching_thinglist
 
 	node->m_sprev = NULL;			// prev node on portal thread
-	node->m_snext = s->render_thinglist; // next node on portal thread
-	if (s->render_thinglist)
+	node->m_snext = s->lineportal_thinglist; // next node on portal thread
+	if (s->lineportal_thinglist)
 		node->m_snext->m_sprev = node;
-	s->render_thinglist = node;
+	s->lineportal_thinglist = node;
 	return node;
 }
 
@@ -6811,7 +6811,7 @@ void AActor::UpdateRenderSectorList()
 					if (p.mType == PORTT_VISUAL) continue;
 					if (bb.inRange(p.mOrigin) && bb.BoxOnLineSide(p.mOrigin))
 					{
-						render_portallist = P_AddPortalnode(&p, this, render_portallist);
+						touching_lineportallist = P_AddPortalnode(&p, this, touching_lineportallist);
 					}
 				}
 			}
@@ -6827,7 +6827,7 @@ void AActor::UpdateRenderSectorList()
 			lasth = planeh;
 			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::ceiling);
 			sec = P_PointInSector(newpos);
-			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
+			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}
 		sec = Sector;
 		lasth = FLT_MAX;
@@ -6839,25 +6839,25 @@ void AActor::UpdateRenderSectorList()
 			lasth = planeh;
 			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::floor);
 			sec = P_PointInSector(newpos);
-			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
+			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}
 	}
 }
 
 void AActor::ClearRenderSectorList()
 {
-	msecnode_t *node = render_sectorlist;
+	msecnode_t *node = touching_sectorportallist;
 	while (node)
-		node = P_DelSecnode(node, &sector_t::render_thinglist);
-	render_sectorlist = NULL;
+		node = P_DelSecnode(node, &sector_t::sectorportal_thinglist);
+	touching_sectorportallist = NULL;
 }
 
 void AActor::ClearRenderLineList()
 {
-	portnode_t *node = render_portallist;
+	portnode_t *node = touching_lineportallist;
 	while (node)
 		node = P_DelPortalnode(node);
-	render_portallist = NULL;
+	touching_lineportallist = NULL;
 }
 
 

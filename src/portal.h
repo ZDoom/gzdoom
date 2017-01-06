@@ -191,7 +191,7 @@ struct FLinePortal
 	DAngle mAngleDiff;
 	double mSinRot;
 	double mCosRot;
-	portnode_t *render_thinglist;
+	portnode_t *lineportal_thinglist;
 };
 
 extern TArray<FLinePortal> linePortals;

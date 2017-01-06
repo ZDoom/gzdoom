@@ -281,7 +281,7 @@ struct Sector native
 	native uint			bottommap, midmap, topmap;
 
 	//struct msecnode_t *touching_thinglist;
-	//struct msecnode_t *render_thinglist;
+	//struct msecnode_t *sectorportal_thinglist;
 
 	native double 		gravity;	
 	native Name 		damagetype;

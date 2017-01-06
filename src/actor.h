@@ -1148,8 +1148,8 @@ public:
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
-	struct msecnode_t	*render_sectorlist;		// same for cross-sectorportal rendering
-	struct portnode_t	*render_portallist;		// and for cross-lineportal
+	struct msecnode_t	*touching_sectorportallist;		// same for cross-sectorportal rendering
+	struct portnode_t	*touching_lineportallist;		// and for cross-lineportal
 	struct msecnode_t	*touching_rendersectors; // this is the list of sectors that this thing interesects with it's max(radius, renderradius).
 	int validcount;
 

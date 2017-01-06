@@ -24,6 +24,7 @@
 #include "r_state.h"
 #include "p_maputl.h"
 #include "p_blockmap.h"
+#include "memarena.h"
 
 //=============================================================================
 // phares 3/21/98
@@ -32,6 +33,7 @@
 //=============================================================================
 
 msecnode_t *headsecnode = NULL;
+FMemArena secnodearena;
 
 //=============================================================================
 //
@@ -53,7 +55,8 @@ msecnode_t *P_GetSecnode()
 	}
 	else
 	{
-		node = (msecnode_t *)M_Malloc(sizeof(*node));
+		node = 
+		node = (msecnode_t *)secnodearena.Alloc(sizeof(*node));
 	}
 	return node;
 }

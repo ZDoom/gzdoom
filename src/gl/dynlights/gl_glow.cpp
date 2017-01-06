@@ -125,7 +125,7 @@ int gl_CheckSpriteGlow(sector_t *sector, int lightlevel, const DVector3 &pos)
 			}
 		}
 	}
-	else if (uint32(-1) != c)
+	else if (c != ~0u)
 	{
 		bottomglowcolor[0] = c.r / 255.f;
 		bottomglowcolor[1] = c.g / 255.f;
@@ -171,7 +171,7 @@ bool gl_GetWallGlow(sector_t *sector, float *topglowcolor, float *bottomglowcolo
 			}
 		}
 	}
-	else if (uint32(-1) != c)
+	else if (c != ~0u)
 	{
 		topglowcolor[0] = c.r / 255.f;
 		topglowcolor[1] = c.g / 255.f;
@@ -195,7 +195,7 @@ bool gl_GetWallGlow(sector_t *sector, float *topglowcolor, float *bottomglowcolo
 			}
 		}
 	}
-	else if (uint32(-1) != c)
+	else if (c != ~0u)
 	{
 		bottomglowcolor[0] = c.r / 255.f;
 		bottomglowcolor[1] = c.g / 255.f;

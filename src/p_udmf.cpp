@@ -1297,7 +1297,7 @@ public:
 		sec->SetAlpha(sector_t::ceiling, 1.);
 		sec->thinglist = nullptr;
 		sec->touching_thinglist = nullptr;		// phares 3/14/98
-		sec->render_thinglist = nullptr;
+		sec->sectorportal_thinglist = nullptr;
 		sec->touching_renderthings = nullptr;
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out

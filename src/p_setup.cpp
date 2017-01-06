@@ -1508,7 +1508,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = nullptr;
 		ss->touching_thinglist = nullptr;		// phares 3/14/98
-		ss->render_thinglist = nullptr;
+		ss->sectorportal_thinglist = nullptr;
 		ss->touching_renderthings = nullptr;
 		ss->seqType = defSeqType;
 		ss->SeqName = NAME_None;

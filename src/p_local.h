@@ -48,10 +48,6 @@ struct FTranslatedLineTarget;
 
 #define BONUSADD		6
 
-// mapblocks are used to check movement
-// against lines and things
-#define MAPBLOCKUNITS	128
-
 // Inspired by Maes
 extern int bmapnegx;
 extern int bmapnegy;

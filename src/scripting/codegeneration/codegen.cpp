@@ -3980,7 +3980,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		int cast;
+		int cast = 0;
 		strng = ExpEmit(build, REGT_STRING);
 		if (op1.Konst)
 		{

@@ -1106,6 +1106,7 @@ set (PCH_SOURCES
 	p_pusher.cpp
 	p_saveg.cpp
 	p_scroll.cpp
+	p_secnodes.cpp
 	p_sectors.cpp
 	p_setup.cpp
 	p_sight.cpp

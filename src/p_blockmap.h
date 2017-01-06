@@ -31,6 +31,13 @@ extern double			bmaporgx;
 extern double			bmaporgy;		// origin of block map
 extern FBlockNode**		blocklinks; 	// for thing chains
 
+										// mapblocks are used to check movement
+										// against lines and things
+enum
+{
+	MAPBLOCKUNITS = 128
+};
+
 inline int GetBlockX(double xpos)
 {
 	return int((xpos - bmaporgx) / MAPBLOCKUNITS);

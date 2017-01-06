@@ -309,78 +309,162 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	visstyle_t vis;
 
-	vis.RenderStyle=playermo->RenderStyle;
-	vis.Alpha=playermo->Alpha;
-	vis.colormap = NULL;
-	if (playermo->Inventory) 
-	{
-		playermo->Inventory->AlterWeaponSprite(&vis);
-		if (vis.colormap >= SpecialColormaps[0].Colormap && 
-			vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap && 
-			gl_fixedcolormap == CM_DEFAULT)
-		{
-			// this only happens for Strife's inverted weapon sprite
-			vis.RenderStyle.Flags |= STYLEF_InvertSource;
-		}
-	}
-	if (vis.RenderStyle.AsDWORD == 0)
-	{
-		// This is RenderStyle None.
-		return;
-	}
-
-	// Set the render parameters
-
-	int OverrideShader = -1;
-	float trans = 0.f;
-	if (vis.RenderStyle.BlendOp >= STYLEOP_Fuzz && vis.RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
-	{
-		vis.RenderStyle.CheckFuzz();
-		if (vis.RenderStyle.BlendOp == STYLEOP_Fuzz)
-		{
-			if (gl_fuzztype != 0)
-			{
-				// Todo: implement shader selection here
-				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
-				trans = 0.99f;	// trans may not be 1 here
-			}
-			else
-			{
-				vis.RenderStyle.BlendOp = STYLEOP_Shadow;
-			}
-		}
-	}
-
-	gl_SetRenderStyle(vis.RenderStyle, false, false);
-
-	if (vis.RenderStyle.Flags & STYLEF_TransSoulsAlpha)
-	{
-		trans = transsouls;
-	}
-	else if (vis.RenderStyle.Flags & STYLEF_Alpha1)
-	{
-		trans = 1.f;
-	}
-	else if (trans == 0.f)
-	{
-		trans = vis.Alpha;
-	}
-
-	// now draw the different layers of the weapon
-	gl_RenderState.EnableBrightmap(true);
-	gl_RenderState.SetObjectColor(ThingColor);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
 	int oldlightmode = glset.lightmode;
 	if (glset.lightmode == 8) glset.lightmode = 2;
 
+	bool foundOne = false;
+	AActor *owner = player->mo;
+	if (owner == nullptr) return;
+
+	// now draw the different layers of the weapon
 	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (psp->GetState() != nullptr) 
 		{
+			vis.colormap = NULL;
+			if (playermo->Inventory)
+			{
+				playermo->Inventory->AlterWeaponSprite(&vis);
+				if (vis.colormap >= SpecialColormaps[0].Colormap &&
+					vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap &&
+					gl_fixedcolormap == CM_DEFAULT)
+				{
+					// this only happens for Strife's inverted weapon sprite
+					vis.RenderStyle.Flags |= STYLEF_InvertSource;
+				}
+			}
+			if (vis.RenderStyle.AsDWORD == 0)
+			{
+				// This is RenderStyle None.
+				continue;
+			}
+			foundOne = true;
+			//====================================================================================================
+			// [MC] Set the render style 
+			float trans = owner->Alpha;
+
+			if (psp->Flags & PSPF_RENDERSTYLE)
+			{
+				const int rs = clamp<int>(psp->RenderStyle, 0, STYLE_Count);
+
+				if (psp->Flags & PSPF_FORCESTYLE)
+				{
+					vis.RenderStyle = LegacyRenderStyles[rs];
+				}
+				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+				{
+					vis.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
+				}
+				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+				{
+					vis.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+					vis.RenderStyle.CheckFuzz();
+				}
+				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+				{
+					vis.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
+				}
+				else
+				{
+					vis.RenderStyle = LegacyRenderStyles[rs];
+				}
+			}
+			else
+			{
+				vis.RenderStyle = owner->RenderStyle;
+			}
+
+			// Set the alpha based on if using the overlay's own or not. Also adjust
+			// and override the alpha if not forced.
+
+
+			if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+			{
+				trans = MIN<float>(owner->Alpha, 0.99f);
+			}
+			else if (vis.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
+			{
+				trans = transsouls;
+			}
+			else if ((psp->Flags & PSPF_FORCEALPHA) && !(vis.RenderStyle == LegacyRenderStyles[STYLE_Stencil]))
+			{
+				trans = float(psp->alpha);
+			}
+			else if (vis.RenderStyle.Flags & STYLEF_Alpha1)
+			{
+				trans = 1.f;
+			}
+			else if (psp->Flags & PSPF_ALPHA)
+			{
+				if (vis.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+				{
+					FRenderStyle style = vis.RenderStyle;
+					style.CheckFuzz();
+					switch (style.BlendOp)
+					{
+					default:
+					{
+						trans = float(psp->alpha * owner->Alpha);
+						break;
+					}
+					case STYLEOP_Fuzz:
+					case STYLEOP_Sub:
+						trans = clamp<float>(owner->Alpha, 0.f, 0.99f);
+						break;
+					}
+
+				}
+				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+				{
+					vis.Alpha = float(owner->Alpha);
+				}
+				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+				{
+					trans = float(psp->alpha * owner->Alpha);
+				}
+				else
+				{
+					vis.Alpha = float(owner->Alpha);
+				}
+			}
+			else
+			{
+				trans = float(owner->Alpha);
+			}
+
+			// Set the render parameters
+
+			int OverrideShader = -1;
+			
+			if (vis.RenderStyle.BlendOp >= STYLEOP_Fuzz && vis.RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
+			{
+				vis.RenderStyle.CheckFuzz();
+				if (vis.RenderStyle.BlendOp == STYLEOP_Fuzz)
+				{
+					if (gl_fuzztype != 0)
+					{
+						// Todo: implement shader selection here
+						vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+						OverrideShader = gl_fuzztype + 4;
+					}
+					else
+					{
+						vis.RenderStyle.BlendOp = STYLEOP_Shadow;
+					}
+				}
+			}
+
+			gl_RenderState.EnableBrightmap(true);
+			gl_RenderState.SetObjectColor(ThingColor);
+			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+			gl_SetRenderStyle(vis.RenderStyle, false, false);
+
 			FColormap cmc = cm;
 			int ll = lightlevel;
 			if (isBright(psp)) 
@@ -440,6 +524,9 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			DrawPSprite(player, psp, sx, sy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));
 		}
 	}
+
+	if (!foundOne)	return;
+
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetDynLight(0, 0, 0);
 	gl_RenderState.EnableBrightmap(false);

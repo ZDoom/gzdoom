@@ -193,7 +193,7 @@ namespace swrenderer
 		vis->startfrac = 255 & (particle->color >> 24);
 		vis->pic = NULL;
 		vis->bIsVoxel = false;
-		vis->renderflags = particle->trans;
+		vis->renderflags = (short)(particle->alpha * 255.0f + 0.5f);
 		vis->FakeFlatStat = fakeside;
 		vis->floorclip = 0;
 		vis->Style.ColormapNum = 0;

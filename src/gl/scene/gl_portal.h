@@ -101,6 +101,7 @@ public:
 private:
 	void DrawPortalStencil();
 
+	DVector3 savedviewpath[2];
 	DVector3 savedViewPos;
 	DVector3 savedViewActorPos;
 	DAngle savedAngle;

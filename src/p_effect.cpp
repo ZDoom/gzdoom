@@ -62,7 +62,7 @@ CVAR (Bool, r_particles, true, 0);
 
 FRandom pr_railtrail("RailTrail");
 
-#define FADEFROMTTL(a)	(255/(a))
+#define FADEFROMTTL(a)	(1.f/(a))
 
 // [RH] particle globals
 WORD			NumParticles;
@@ -269,11 +269,10 @@ void P_ThinkParticles ()
 			continue;
 		}
 		
-		BYTE oldtrans;
-		oldtrans = particle->trans;
-		particle->trans -= particle->fade;
+		auto oldtrans = particle->alpha;
+		particle->alpha -= particle->fadestep;
 		particle->size += particle->sizestep;
-		if (oldtrans < particle->trans || --particle->ttl <= 0 || (particle->size <= 0))
+		if (oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
 			memset (particle, 0, sizeof(particle_t));
 			if (prev)
@@ -331,9 +330,9 @@ void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &a
 		particle->Vel = vel;
 		particle->Acc = accel;
 		particle->color = ParticleColor(color);
-		particle->trans = BYTE(startalpha*255);
-		if (fadestep < 0) particle->fade = FADEFROMTTL(lifetime);
-		else particle->fade = int(fadestep * 255);
+		particle->alpha = float(startalpha);
+		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
+		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
 		particle->bright = !!(flags & PS_FULLBRIGHT);
 		particle->size = size;
@@ -392,9 +391,9 @@ particle_t *JitterParticle (int ttl, double drift)
 		for (i = 3; i; i--)
 			particle->Acc[i] = ((1./16384) * (M_Random () - 128) * drift);
 
-		particle->trans = 255;	// fully opaque
+		particle->alpha = 1.f;	// fully opaque
 		particle->ttl = ttl;
-		particle->fade = FADEFROMTTL(ttl);
+		particle->fadestep = FADEFROMTTL(ttl);
 	}
 	return particle;
 }
@@ -622,8 +621,8 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 			break;
 
 		p->ttl = 12;
-		p->fade = FADEFROMTTL(12);
-		p->trans = 255;
+		p->fadestep = FADEFROMTTL(12);
+		p->alpha = 1.f;
 		p->size = 4;
 		p->color = M_Random() & 0x80 ? color1 : color2;
 		p->Vel.Z = M_Random() * zvel;
@@ -763,9 +762,9 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 			int spiralduration = (duration == 0) ? 35 : duration;
 
-			p->trans = 255;
+			p->alpha = 1.f;
 			p->ttl = duration;
-			p->fade = FADEFROMTTL(spiralduration);
+			p->fadestep = FADEFROMTTL(spiralduration);
 			p->size = 3;
 			p->bright = fullbright;
 

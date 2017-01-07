@@ -677,6 +677,11 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (thruportal == 1) thingorigin += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - ViewActorPos.X) < 2 && fabs(thingorigin.Y - ViewActorPos.Y) < 2) return;
 	}
+	// Thing is invisible if close to the camera.
+	if (thing->renderflags & RF_MAYBEINVISIBLE)
+	{
+		if (fabs(thingpos.X - ViewPos.X) < 32 && fabs(thingpos.Y - ViewPos.Y) < 32) return;
+	}
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)
@@ -692,6 +697,10 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 				}
 			}
 		}
+	}
+	if (thing == camera)
+	{
+		int a = 0;
 	}
 
 	// don't draw first frame of a player missile
@@ -1051,7 +1060,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	player_t *player=&players[consoleplayer];
 	
-	if (particle->trans==0) return;
+	if (particle->alpha==0) return;
 
 	lightlevel = gl_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 		sector->GetCeilingLight() : sector->GetFloorLight());
@@ -1091,7 +1100,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		Colormap.ClearColor();
 	}
 
-	trans=particle->trans/255.0f;
+	trans=particle->alpha;
 	RenderStyle = STYLE_Translucent;
 	OverrideShader = 0;
 
@@ -1202,6 +1211,14 @@ void gl_RenderActorsInPortal(FGLLinePortal *glport)
 					DVector3 savedpos = th->Pos();
 					DVector3 newpos = savedpos;
 					sector_t fakesector;
+
+					if (!r_showviewer && th == camera)
+					{
+						if (fabs(savedpos.X - ViewActorPos.X) < 2 && fabs(savedpos.Y - ViewActorPos.Y) < 2)
+						{
+							continue;
+						}
+					}
 
 					P_TranslatePortalXY(line, newpos.X, newpos.Y);
 					P_TranslatePortalZ(line, newpos.Z);

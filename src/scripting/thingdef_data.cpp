@@ -711,6 +711,26 @@ static int fieldcmp(const void * a, const void * b)
 void InitThingdef()
 {
 	// Create all global variables here because this cannot be done on the script side and really isn't worth adding support for.
+	// Also create all special fields here that cannot be declared by script syntax.
+
+	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
+	secplanestruct->Size = sizeof(secplane_t);
+	secplanestruct->Align = alignof(secplane_t);
+	auto sectorstruct = NewNativeStruct("Sector", nullptr);
+	sectorstruct->Size = sizeof(sector_t);
+	sectorstruct->Align = alignof(sector_t);
+
+
+	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
+	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
+	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(NewNativeStruct("line", nullptr), false)), false), myoffsetof(sector_t, Lines), VARF_Native);
+
+	// add the sector planes. These are value items of native structs so they have to be done here.
+	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native);
+	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native);
+
+
+
 
 	// expose the global validcount variable.
 	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
@@ -725,10 +745,12 @@ void InitThingdef()
 	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
 	GlobalSymbols.AddSymbol(levelf);
 
+	// Add the sector array to LevelLocals.
+	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
+
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
 	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
-
 	GlobalSymbols.AddSymbol(dehf);
 
 	// set up a variable for the global players array.
@@ -738,17 +760,6 @@ void InitThingdef()
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	GlobalSymbols.AddSymbol(playerf);
-
-	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
-	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
-	pstruct = NewNativeStruct("Sector", nullptr);
-	pstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(NewNativeStruct("line", nullptr), false)), false), myoffsetof(sector_t, Lines), VARF_Native);
-
-	// Add the sector array to LevelLocals.
-	pstruct->Size = sizeof(sector_t);
-	pstruct->Align = alignof(sector_t);
-	parray = NewArray(pstruct, MAXPLAYERS);
-	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(pstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);

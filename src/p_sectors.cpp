@@ -1307,6 +1307,84 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	return baselight;
 }
 
+DEFINE_ACTION_FUNCTION(_Secplane, isSlope)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	ACTION_RETURN_BOOL(!self->normal.XY().isZero());
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, PointOnSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_INT(self->PointOnSide(DVector3(x, y, z)));
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, ZatPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	ACTION_RETURN_FLOAT(self->ZatPoint(x, y));
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, ZatPointDist)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(d);
+	ACTION_RETURN_FLOAT((d + self->normal.X*x + self->normal.Y*y) * self->negiC);
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, isEqual)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_POINTER(other, secplane_t);
+	ACTION_RETURN_BOOL(*self == *other);
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, ChangeHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(hdiff);
+	self->ChangeHeight(hdiff);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, GetChangedHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(hdiff);
+	ACTION_RETURN_FLOAT(self->GetChangedHeight(hdiff));
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, HeightDiff)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(oldd);
+	if (numparam == 2)
+	{
+		ACTION_RETURN_FLOAT(self->HeightDiff(oldd));
+	}
+	else
+	{
+		PARAM_FLOAT(newd);
+		ACTION_RETURN_FLOAT(self->HeightDiff(oldd, newd));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_Secplane, PointToDist)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_FLOAT(self->PointToDist(DVector2(x, y), z));
+}
+
 
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
@@ -1366,3 +1444,7 @@ DEFINE_FIELD_X(Line, line_t, backsector)
 DEFINE_FIELD_X(Line, line_t, validcount)
 DEFINE_FIELD_X(Line, line_t, locknumber)
 DEFINE_FIELD_X(Line, line_t, portalindex)
+
+DEFINE_FIELD_X(Secplane, secplane_t, normal)
+DEFINE_FIELD_X(Secplane, secplane_t, D)
+DEFINE_FIELD_X(Secplane, secplane_t, negiC)

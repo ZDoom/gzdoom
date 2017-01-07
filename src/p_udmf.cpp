@@ -1834,7 +1834,7 @@ public:
 					{
 						sides[side] = ParsedSides[mapside];
 						sides[side].linedef = &lines[line];
-						sides[side].sector = &sectors[intptr_t(sides[side].sector)];
+						sides[side].sector = &level.sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
 
 						P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
@@ -2019,13 +2019,12 @@ public:
 		memcpy(vertexdatas, &ParsedVertexDatas[0], numvertexdatas * sizeof(*vertexdatas));
 
 		// Create the real sectors
-		numsectors = ParsedSectors.Size();
-		sectors = new sector_t[numsectors];
-		memcpy(sectors, &ParsedSectors[0], numsectors * sizeof(*sectors));
-		sectors[0].e = new extsector_t[numsectors];
-		for(int i = 0; i < numsectors; i++)
+		level.sectors.Alloc(ParsedSectors.Size());
+		memcpy(&level.sectors[0], &ParsedSectors[0], level.sectors.Size() * sizeof(sector_t));
+		level.sectors[0].e = new extsector_t[level.sectors.Size()];
+		for(unsigned i = 0; i < level.sectors.Size(); i++)
 		{
-			sectors[i].e = &sectors[0].e[i];
+			level.sectors[i].e = &level.sectors[0].e[i];
 		}
 
 		// Create the real linedefs and decompress the sidedefs

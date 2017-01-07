@@ -444,7 +444,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 		// hit crossed a water plane
 		if (CheckSectorPlane(hsec, true))
 		{
-			Results->CrossedWater = &sectors[CurSector->sectornum];
+			Results->CrossedWater = &level.sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}
@@ -572,7 +572,7 @@ cont:
 	if (Results->HitType != TRACE_HitNone)
 	{
 		// We hit something, so figure out where exactly
-		Results->Sector = &sectors[CurSector->sectornum];
+		Results->Sector = &level.sectors[CurSector->sectornum];
 
 		if (Results->HitType != TRACE_HitWall &&
 			!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
@@ -698,7 +698,7 @@ bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 
 		// the trace hit a 3D floor before the thing.
 		// Calculate an intersection and abort.
-		Results->Sector = &sectors[CurSector->sectornum];
+		Results->Sector = &level.sectors[CurSector->sectornum];
 		if (!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
 		{
 			Results->HitType = TRACE_HitNone;
@@ -850,7 +850,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	}
 
 	// check for intersection with floor/ceiling
-	Results->Sector = &sectors[CurSector->sectornum];
+	Results->Sector = &level.sectors[CurSector->sectornum];
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
@@ -864,7 +864,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 		if (CheckSectorPlane(CurSector->heightsec, true))
 		{
-			Results->CrossedWater = &sectors[CurSector->sectornum];
+			Results->CrossedWater = &level.sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}

@@ -236,10 +236,27 @@ struct Line native
 	native readonly uint			portalindex;
 }
 
+struct SecPlane native
+{
+	native Vector3 Normal;
+	native double D;
+	native double negiC;
+	
+	native bool isSlope();
+	native int PointOnSide(Vector3 pos);
+	native double ZatPoint (Vector2 v);
+	native double ZatPointDist(Vector2 v, double dist);
+	native bool isEqual(Secplane other);
+	native void ChangeHeight(double hdiff);
+	native double GetChangedHeight(double hdiff);
+	native double HeightDiff(double oldd, double newd = 0.0);
+	native double PointToDist(const DVector2 &xy, double z);
+}
+
 struct Sector native
 {
-	//secplane_t	floorplane, ceilingplane;
-	//FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
+	//secplane_t	floorplane, ceilingplane;	// defined internally
+	//FDynamicColormap *ColorMap;
 
 	native Actor 		SoundTarget;
 

@@ -37,6 +37,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
+#include "g_level.h"
 #include "gstrings.h"
 
 #include "i_system.h"
@@ -432,7 +433,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->isSecret())
 	{
 		sector->ClearSecret();
-		P_GiveSecret(player->mo, true, true, int(sector - sectors));
+		P_GiveSecret(player->mo, true, true, sector->Index());
 	}
 }
 
@@ -472,7 +473,7 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 	while ((secnum = itr.Next()) >= 0)
 	{
 		AActor *actor, *next;
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 
 		// Do for actors in this sector.
 		for (actor = sec->thinglist; actor != NULL; actor = next)
@@ -629,13 +630,10 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	if (gamestate == GS_LEVEL)
 	{
-		int i;
-
-		for (i = 0; i < numsectors; i++)
+		for (auto &sec : level.sectors)
 		{
-			sector_t *hsec = sectors[i].GetHeightSec();
-			if (hsec &&
-				!(sectors[i].heightsec->MoreFlags & SECF_UNDERWATER))
+			sector_t *hsec = sec.GetHeightSec();
+			if (hsec && !(hsec->MoreFlags & SECF_UNDERWATER))
 			{
 				if (self)
 				{
@@ -693,13 +691,13 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	{
 		FSectorTagIterator itr(target);
 		while ((secnum = itr.Next()) >= 0)
-			sectors[secnum].ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
+			level.sectors[secnum].ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 	}
 	else
 	{
 		FSectorTagIterator itr(target);
 		while ((secnum = itr.Next()) >= 0)
-			sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
+			level.sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
 	ChangeStatNum (STAT_LIGHTTRANSFER);
 }
@@ -715,7 +713,7 @@ void DLightTransfer::Tick ()
 	}
 }
 
-void DLightTransfer::DoTransfer (int level, int target, bool floor)
+void DLightTransfer::DoTransfer (int llevel, int target, bool floor)
 {
 	int secnum;
 
@@ -723,13 +721,13 @@ void DLightTransfer::DoTransfer (int level, int target, bool floor)
 	{
 		FSectorTagIterator itr(target);
 		while ((secnum = itr.Next()) >= 0)
-			sectors[secnum].SetPlaneLight(sector_t::floor, level);
+			level.sectors[secnum].SetPlaneLight(sector_t::floor, llevel);
 	}
 	else
 	{
 		FSectorTagIterator itr(target);
 		while ((secnum = itr.Next()) >= 0)
-			sectors[secnum].SetPlaneLight(sector_t::ceiling, level);
+			level.sectors[secnum].SetPlaneLight(sector_t::ceiling, llevel);
 	}
 }
 
@@ -957,7 +955,7 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 	FSectorTagIterator itr(sectortag);
 	while ((s = itr.Next()) >= 0)
 	{
-		SetPortal(&sectors[s], plane, pnum, alpha);
+		SetPortal(&level.sectors[s], plane, pnum, alpha);
 	}
 
 	for (int j=0;j<numlines;j++)
@@ -978,7 +976,7 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 				FSectorTagIterator itr(lines[j].args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					SetPortal(&sectors[s], plane, pnum, alpha);
+					SetPortal(&level.sectors[s], plane, pnum, alpha);
 				}
 			}
 		}
@@ -1159,7 +1157,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, int(sector - sectors), 0);
+		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, sector->Index(), 0);
 		keepspecial = true;
 		break;
 
@@ -1217,14 +1215,14 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, int(sector-sectors), 0);
+			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, sector->Index(), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
 					sector->special <= Carry_East35)
 		{ // Heretic scroll special
 			// Only east scrollers also scroll the texture
 			P_CreateScroller(EScroll::sc_floor,
-				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, int(sector-sectors), 0);
+				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, sector->Index(), 0);
 		}
 		keepspecial = true;
 		break;
@@ -1240,20 +1238,14 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 void P_SpawnSpecials (void)
 {
-	sector_t *sector;
-	int i;
-
 	P_SetupPortals();
 
-	//	Init special SECTORs.
-	sector = sectors;
-
-	for (i = 0; i < numsectors; i++, sector++)
+	for (auto &sec : level.sectors)
 	{
-		if (sector->special == 0)
+		if (sec.special == 0)
 			continue;
 
-		P_InitSectorSpecial(sector, sector->special);
+		P_InitSectorSpecial(&sec, sec.special);
 	}
 
 #ifndef NO_EDATA
@@ -1274,7 +1266,7 @@ void P_SpawnSpecials (void)
 		P_SpawnSkybox(pt2);
 	}
 
-	for (i = 0; i < numlines; i++)
+	for (int i = 0; i < numlines; i++)
 	{
 		switch (lines[i].special)
 		{
@@ -1313,9 +1305,9 @@ void P_SpawnSpecials (void)
 				FSectorTagIterator itr(lines[i].args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					sectors[s].heightsec = sec;
-					sec->e->FakeFloor.Sectors.Push(&sectors[s]);
-					sectors[s].AdjustFloorClip();
+					level.sectors[s].heightsec = sec;
+					sec->e->FakeFloor.Sectors.Push(&level.sectors[s]);
+					level.sectors[s].AdjustFloorClip();
 				}
 				break;
 			}
@@ -1388,7 +1380,7 @@ void P_SpawnSpecials (void)
 					double grav = lines[i].Delta().Length() / 100.;
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
-						sectors[s].gravity = grav;
+						level.sectors[s].gravity = grav;
 				}
 				break;
 
@@ -1401,7 +1393,7 @@ void P_SpawnSpecials (void)
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
-						sector_t *sec = &sectors[s];
+						sector_t *sec = &level.sectors[s];
 						sec->damageamount = damage;
 						sec->damagetype = NAME_None;
 						if (sec->damageamount < 20)
@@ -1441,7 +1433,7 @@ void P_SpawnSpecials (void)
 				{
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
-						 sectors[s].sky = (i + 1) | PL_SKYFLAT; 
+						level.sectors[s].sky = (i + 1) | PL_SKYFLAT;
 					break;
 				}
 			}
@@ -1561,19 +1553,19 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 		// drag on CPU. New code adjusts friction of sector only once
 		// at level startup, and then uses this friction value.
 
-		sectors[s].friction = friction;
-		sectors[s].movefactor = movefactor;
+		level.sectors[s].friction = friction;
+		level.sectors[s].movefactor = movefactor;
 		if (alterFlag)
 		{
 			// When used inside a script, the sectors' friction flags
 			// can be enabled and disabled at will.
 			if (friction == ORIG_FRICTION)
 			{
-				sectors[s].Flags &= ~SECF_FRICTION;
+				level.sectors[s].Flags &= ~SECF_FRICTION;
 			}
 			else
 			{
-				sectors[s].Flags |= SECF_FRICTION;
+				level.sectors[s].Flags |= SECF_FRICTION;
 			}
 		}
 	}

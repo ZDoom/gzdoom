@@ -1423,7 +1423,7 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 	{
 		secplane_t plane;
 
-		Sector = &sectors[secnum];
+		Sector = &level.sectors[secnum];
 		if (bCeiling)
 		{
 			plane = Sector->ceilingplane;
@@ -3263,7 +3263,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 	while ((secnum = it.Next()) >= 0)
 	{
 		int pos = floorOrCeiling? sector_t::ceiling : sector_t::floor;
-		sectors[secnum].SetTexture(pos, flat);
+		level.sectors[secnum].SetTexture(pos, flat);
 	}
 }
 
@@ -3351,14 +3351,12 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 
-		for (int i = 0; i < numsectors; ++i)
+		for (auto &sec : level.sectors)
 		{
-			sector_t *sec = &sectors[i];
-
-			if (!(flags & NOT_FLOOR) && sec->GetTexture(sector_t::floor) == picnum1) 
-				sec->SetTexture(sector_t::floor, picnum2);
-			if (!(flags & NOT_CEILING) && sec->GetTexture(sector_t::ceiling) == picnum1)	
-				sec->SetTexture(sector_t::ceiling, picnum2);
+			if (!(flags & NOT_FLOOR) && sec.GetTexture(sector_t::floor) == picnum1) 
+				sec.SetTexture(sector_t::floor, picnum2);
+			if (!(flags & NOT_CEILING) && sec.GetTexture(sector_t::ceiling) == picnum1)	
+				sec.SetTexture(sector_t::ceiling, picnum2);
 		}
 	}
 }
@@ -5150,7 +5148,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 					int s;
 					while ((s = it.Next()) >= 0)
 					{
-						SN_StartSequence(&sectors[s], args[2], seqname, 0);
+						SN_StartSequence(&level.sectors[s], args[2], seqname, 0);
 					}
 				}
 			}
@@ -5922,7 +5920,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				int s;
 				while ((s = it.Next()) >= 0)
 				{
-					sector_t *sec = &sectors[s];
+					sector_t *sec = &level.sectors[s];
 
 					sec->damageamount = args[1];
 					sec->damagetype = argCount >= 3 ? FName(FBehavior::StaticLookupString(args[2])) : FName(NAME_None);
@@ -5942,7 +5940,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					int s;
 					while ((s = it.Next()) >= 0)
 					{
-						sectors[s].terrainnum[args[1]] = terrain;
+						level.sectors[s].terrainnum[args[1]] = terrain;
 					}
 				}
 			}
@@ -6083,8 +6081,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int s;
 			while ((s = it.Next()) >= 0)
 			{
-				sectors[s].planes[which].GlowColor = color;
-				sectors[s].planes[which].GlowHeight = height;
+				level.sectors[s].planes[which].GlowColor = color;
+				level.sectors[s].planes[which].GlowHeight = height;
 			}
 			break;
 		}
@@ -6096,8 +6094,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int d = clamp(args[1]/2, 0, 255);
 			while ((s = it.Next()) >= 0)
 			{
-				auto f = sectors[s].ColorMap->Fade;
-				sectors[s].ColorMap = GetSpecialLights(sectors[s].ColorMap->Color, PalEntry(d, f.r, f.g, f.b), sectors[s].ColorMap->Desaturate);
+				auto &sec = level.sectors[s];
+				auto f = sec.ColorMap->Fade;
+				sec.ColorMap = GetSpecialLights(sec.ColorMap->Color, PalEntry(d, f.r, f.g, f.b), sec.ColorMap->Desaturate);
 			}
 			break;
 		}
@@ -6227,7 +6226,7 @@ int DLevelScript::RunScript ()
 		FSectorTagIterator it(statedata);
 		while ((secnum = it.Next()) >= 0)
 		{
-			if (sectors[secnum].floordata || sectors[secnum].ceilingdata)
+			if (level.sectors[secnum].floordata || level.sectors[secnum].ceilingdata)
 				return resultValue;
 		}
 
@@ -8838,17 +8837,17 @@ scriptwait:
 				if (tag != 0)
 					secnum = P_FindFirstSectorFromTag (tag);
 				else
-					secnum = int(P_PointInSector (x, y) - sectors);
+					secnum = P_PointInSector (x, y)->sectornum;
 
 				if (secnum >= 0)
 				{
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
-						z = sectors[secnum].floorplane.ZatPoint (x, y);
+						z = level.sectors[secnum].floorplane.ZatPoint (x, y);
 					}
 					else
 					{
-						z = sectors[secnum].ceilingplane.ZatPoint (x, y);
+						z = level.sectors[secnum].ceilingplane.ZatPoint (x, y);
 					}
 				}
 				sp -= 2;
@@ -8863,7 +8862,7 @@ scriptwait:
 
 				if (secnum >= 0)
 				{
-					z = sectors[secnum].lightlevel;
+					z = level.sectors[secnum].lightlevel;
 				}
 				STACK(1) = z;
 			}

@@ -2163,7 +2163,7 @@ FUNC(LS_Sector_ChangeSound)
 	FSectorTagIterator itr(arg0);
 	while ((secNum = itr.Next()) >= 0)
 	{
-		sectors[secNum].seqType = arg1;
+		level.sectors[secNum].seqType = arg1;
 		rtn = true;
 	}
 	return rtn;
@@ -2185,7 +2185,7 @@ FUNC(LS_Sector_ChangeFlags)
 	arg2 &= ~SECF_NOMODIFY;
 	while ((secNum = itr.Next()) >= 0)
 	{
-		sectors[secNum].Flags = (sectors[secNum].Flags | arg1) & ~arg2;
+		level.sectors[secNum].Flags = (level.sectors[secNum].Flags | arg1) & ~arg2;
 		rtn = true;
 	}
 	return rtn;
@@ -2231,8 +2231,8 @@ FUNC(LS_Sector_SetTranslucent)
 		FSectorTagIterator itr(arg0);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			sectors[secnum].SetAlpha(arg1, clamp(arg2, 0, 255) / 255.);
-			sectors[secnum].ChangeFlags(arg1, ~PLANEF_ADDITIVE, arg3? PLANEF_ADDITIVE:0);
+			level.sectors[secnum].SetAlpha(arg1, clamp(arg2, 0, 255) / 255.);
+			level.sectors[secnum].ChangeFlags(arg1, ~PLANEF_ADDITIVE, arg3? PLANEF_ADDITIVE:0);
 		}
 		return true;
 	}
@@ -2247,7 +2247,7 @@ FUNC(LS_Sector_SetLink)
 		int control = P_FindFirstSectorFromTag(arg0);
 		if (control >= 0)
 		{
-			return P_AddSectorLinks(&sectors[control], arg1, arg2, arg3);
+			return P_AddSectorLinks(&level.sectors[control], arg1, arg2, arg3);
 		}
 	}
 	return false;
@@ -2367,10 +2367,10 @@ FUNC(LS_Sector_SetDamage)
 				arg3 = 1;
 			}
 		}
-		sectors[secnum].damageamount = (short)arg1;
-		sectors[secnum].damagetype = MODtoDamageType(arg2);
-		sectors[secnum].damageinterval = (short)arg3;
-		sectors[secnum].leakydamage = (short)arg4;
+		level.sectors[secnum].damageamount = (short)arg1;
+		level.sectors[secnum].damagetype = MODtoDamageType(arg2);
+		level.sectors[secnum].damageinterval = (short)arg3;
+		level.sectors[secnum].leakydamage = (short)arg4;
 	}
 	return true;
 }
@@ -2387,7 +2387,7 @@ FUNC(LS_Sector_SetGravity)
 	FSectorTagIterator itr(arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
-		sectors[secnum].gravity = gravity;
+		level.sectors[secnum].gravity = gravity;
 
 	return true;
 }
@@ -2399,7 +2399,7 @@ FUNC(LS_Sector_SetColor)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].SetColor(arg1, arg2, arg3, arg4);
+		level.sectors[secnum].SetColor(arg1, arg2, arg3, arg4);
 	}
 
 	return true;
@@ -2412,7 +2412,7 @@ FUNC(LS_Sector_SetFade)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].SetFade(arg1, arg2, arg3);
+		level.sectors[secnum].SetFade(arg1, arg2, arg3);
 	}
 	return true;
 }
@@ -2427,8 +2427,8 @@ FUNC(LS_Sector_SetCeilingPanning)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].SetXOffset(sector_t::ceiling, xofs);
-		sectors[secnum].SetYOffset(sector_t::ceiling, yofs);
+		level.sectors[secnum].SetXOffset(sector_t::ceiling, xofs);
+		level.sectors[secnum].SetYOffset(sector_t::ceiling, yofs);
 	}
 	return true;
 }
@@ -2443,8 +2443,8 @@ FUNC(LS_Sector_SetFloorPanning)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].SetXOffset(sector_t::floor, xofs);
-		sectors[secnum].SetYOffset(sector_t::floor, yofs);
+		level.sectors[secnum].SetXOffset(sector_t::floor, xofs);
+		level.sectors[secnum].SetYOffset(sector_t::floor, yofs);
 	}
 	return true;
 }
@@ -2465,9 +2465,9 @@ FUNC(LS_Sector_SetFloorScale)
 	while ((secnum = itr.Next()) >= 0)
 	{
 		if (xscale)
-			sectors[secnum].SetXScale(sector_t::floor, xscale);
+			level.sectors[secnum].SetXScale(sector_t::floor, xscale);
 		if (yscale)
-			sectors[secnum].SetYScale(sector_t::floor, yscale);
+			level.sectors[secnum].SetYScale(sector_t::floor, yscale);
 	}
 	return true;
 }
@@ -2488,9 +2488,9 @@ FUNC(LS_Sector_SetCeilingScale)
 	while ((secnum = itr.Next()) >= 0)
 	{
 		if (xscale)
-			sectors[secnum].SetXScale(sector_t::ceiling, xscale);
+			level.sectors[secnum].SetXScale(sector_t::ceiling, xscale);
 		if (yscale)
-			sectors[secnum].SetYScale(sector_t::ceiling, yscale);
+			level.sectors[secnum].SetYScale(sector_t::ceiling, yscale);
 	}
 	return true;
 }
@@ -2510,9 +2510,9 @@ FUNC(LS_Sector_SetFloorScale2)
 	while ((secnum = itr.Next()) >= 0)
 	{
 		if (arg1)
-			sectors[secnum].SetXScale(sector_t::floor, xscale);
+			level.sectors[secnum].SetXScale(sector_t::floor, xscale);
 		if (arg2)
-			sectors[secnum].SetYScale(sector_t::floor, yscale);
+			level.sectors[secnum].SetYScale(sector_t::floor, yscale);
 	}
 	return true;
 }
@@ -2532,9 +2532,9 @@ FUNC(LS_Sector_SetCeilingScale2)
 	while ((secnum = itr.Next()) >= 0)
 	{
 		if (arg1)
-			sectors[secnum].SetXScale(sector_t::ceiling, xscale);
+			level.sectors[secnum].SetXScale(sector_t::ceiling, xscale);
 		if (arg2)
-			sectors[secnum].SetYScale(sector_t::ceiling, yscale);
+			level.sectors[secnum].SetYScale(sector_t::ceiling, yscale);
 	}
 	return true;
 }
@@ -2549,8 +2549,8 @@ FUNC(LS_Sector_SetRotation)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].SetAngle(sector_t::floor, floor);
-		sectors[secnum].SetAngle(sector_t::ceiling, ceiling);
+		level.sectors[secnum].SetAngle(sector_t::floor, floor);
+		level.sectors[secnum].SetAngle(sector_t::ceiling, ceiling);
 	}
 	return true;
 }
@@ -3151,7 +3151,7 @@ FUNC(LS_ClearForceField)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 		rtn = true;
 
 		sec->RemoveForceField();

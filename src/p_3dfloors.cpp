@@ -224,7 +224,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 	FSectorTagIterator itr(tag);
 	while ((s = itr.Next()) >= 0)
 	{
-		ss = &sectors[s];
+		ss = &level.sectors[s];
 
 		if (param == 0)
 		{
@@ -888,9 +888,9 @@ void P_Spawn3DFloors (void)
 		line->args[0] = line->args[1] = line->args[2] = line->args[3] = line->args[4] = 0;
 	}
 	// kg3D - do it in software
-	for (i = 0; i < numsectors; i++)
+	for (auto &sec : level.sectors)
 	{
-		P_Recalculate3DFloors(&sectors[i]);
+		P_Recalculate3DFloors(&sec);
 	}
 }
 
@@ -984,7 +984,7 @@ CCMD (dump3df)
 	if (argv.argc() > 1) 
 	{
 		int sec = strtol(argv[1], NULL, 10);
-		sector_t *sector = &sectors[sec];
+		sector_t *sector = &level.sectors[sec];
 		TArray<F3DFloor*> & ffloors=sector->e->XFloor.ffloors;
 
 		for (unsigned int i = 0; i < ffloors.Size(); i++)

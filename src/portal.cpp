@@ -980,18 +980,18 @@ void P_CreateLinkedPortals()
 	id = 1;
 	if (orgs.Size() != 0)
 	{
-		for (int i = 0; i < numsectors; i++)
+		for (auto &sec : level.sectors)
 		{
 			for (int j = 0; j < 2; j++)
 			{
-				if (sectors[i].GetPortalType(j) == PORTS_LINKEDPORTAL)
+				if (sec.GetPortalType(j) == PORTS_LINKEDPORTAL)
 				{
-					secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
+					secplane_t &plane = j == 0 ? sec.floorplane : sec.ceilingplane;
 					if (plane.isSlope())
 					{
 						// The engine cannot deal with portals on a sloped plane.
-						sectors[i].ClearPortal(j);
-						Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", i);
+						sec.ClearPortal(j);
+						Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", sec.sectornum);
 					}
 				}
 			}
@@ -1015,14 +1015,14 @@ void P_CreateLinkedPortals()
 
 	Displacements.Create(id);
 	// Check for leftover sectors that connect to a portal
-	for (int i = 0; i<numsectors; i++)
+	for (auto &sec : level.sectors)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			if (sectors[i].GetPortalType(j) == PORTS_LINKEDPORTAL && sectors[i].PortalGroup == 0)
+			if (sec.GetPortalType(j) == PORTS_LINKEDPORTAL && sec.PortalGroup == 0)
 			{
-				auto p = sectors[i].GetPortal(j);
-				CollectSectors(p->mOrigin->PortalGroup, &sectors[i]);
+				auto p = sec.GetPortal(j);
+				CollectSectors(p->mOrigin->PortalGroup, &sec);
 			}
 		}
 	}
@@ -1048,10 +1048,10 @@ void P_CreateLinkedPortals()
 				(dispxy.pos.X != -dispyx.pos.X || dispxy.pos.Y != -dispyx.pos.Y))
 			{
 				int sec1 = -1, sec2 = -1;
-				for (int i = 0; i < numsectors && (sec1 == -1 || sec2 == -1); i++)
+				for (unsigned i = 0; i < level.sectors.Size() && (sec1 == -1 || sec2 == -1); i++)
 				{
-					if (sec1 == -1 && sectors[i].PortalGroup == x)  sec1 = i;
-					if (sec2 == -1 && sectors[i].PortalGroup == y)  sec2 = i;
+					if (sec1 == -1 && level.sectors[i].PortalGroup == x)  sec1 = i;
+					if (sec2 == -1 && level.sectors[i].PortalGroup == y)  sec2 = i;
 				}
 				Printf("Link offset mismatch between sectors %d and %d\n", sec1, sec2);
 				bogus = true;
@@ -1065,13 +1065,13 @@ void P_CreateLinkedPortals()
 				}
 			}
 			// and now print a message for everything that still wasn't processed.
-			for (int i = 0; i < numsectors; i++)
+			for (auto &sec : level.sectors)
 			{
-				if (sectors[i].PortalGroup == 0)
+				if (sec.PortalGroup == 0)
 				{
-					Printf("Unable to assign sector %d to any group. Possibly self-referencing\n", i);
+					Printf("Unable to assign sector %d to any group. Possibly self-referencing\n", sec.sectornum);
 				}
-				else if (sectors[i].PortalGroup == -1) sectors[i].PortalGroup = 0;
+				else if (sec.PortalGroup == -1) sec.PortalGroup = 0;
 			}
 		}
 	}
@@ -1088,41 +1088,41 @@ void P_CreateLinkedPortals()
 		rejectmatrix = NULL;
 	}
 	// finally we must flag all planes which are obstructed by the sector's own ceiling or floor.
-	for (int i = 0; i < numsectors; i++)
+	for (auto &sec : level.sectors)
 	{
-		sectors[i].CheckPortalPlane(sector_t::floor);
-		sectors[i].CheckPortalPlane(sector_t::ceiling);
+		sec.CheckPortalPlane(sector_t::floor);
+		sec.CheckPortalPlane(sector_t::ceiling);
 		// set a flag on each line connecting to a plane portal sector. This is used to reduce the amount of checks in P_CheckSight.
-		if (sectors[i].PortalIsLinked(sector_t::floor) || sectors[i].PortalIsLinked(sector_t::ceiling))
+		if (sec.PortalIsLinked(sector_t::floor) || sec.PortalIsLinked(sector_t::ceiling))
 		{
-			for(auto ln : sectors[i].Lines)
+			for(auto ln : sec.Lines)
 			{
 				ln->flags |= ML_PORTALCONNECT;
 			}
 		}
-		if (sectors[i].PortalIsLinked(sector_t::ceiling) && sectors[i].PortalIsLinked(sector_t::floor))
+		if (sec.PortalIsLinked(sector_t::ceiling) && sec.PortalIsLinked(sector_t::floor))
 		{
-			double cz = sectors[i].GetPortalPlaneZ(sector_t::ceiling);
-			double fz = sectors[i].GetPortalPlaneZ(sector_t::floor);
+			double cz = sec.GetPortalPlaneZ(sector_t::ceiling);
+			double fz = sec.GetPortalPlaneZ(sector_t::floor);
 			if (cz < fz)
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
-				Printf("Error in sector %d: Ceiling portal at z=%f is below floor portal at z=%f\n", i, cz, fz);
-				double cp = -sectors[i].ceilingplane.fD();
-				double fp = sectors[i].floorplane.fD();
+				Printf("Error in sector %d: Ceiling portal at z=%f is below floor portal at z=%f\n", sec.sectornum, cz, fz);
+				double cp = -sec.ceilingplane.fD();
+				double fp = sec.floorplane.fD();
 				if (cp < fp || fz == fp)
 				{
-					sectors[i].ClearPortal(sector_t::ceiling);
+					sec.ClearPortal(sector_t::ceiling);
 				}
 				else
 				{
-					sectors[i].ClearPortal(sector_t::floor);
+					sec.ClearPortal(sector_t::floor);
 				}
 			}
 		}
 		// mark all sector planes that check out ok for everything.
-		if (sectors[i].PortalIsLinked(sector_t::floor)) sectors[i].planes[sector_t::floor].Flags |= PLANEF_LINKED;
-		if (sectors[i].PortalIsLinked(sector_t::ceiling)) sectors[i].planes[sector_t::ceiling].Flags |= PLANEF_LINKED;
+		if (sec.PortalIsLinked(sector_t::floor)) sec.planes[sector_t::floor].Flags |= PLANEF_LINKED;
+		if (sec.PortalIsLinked(sector_t::ceiling)) sec.planes[sector_t::ceiling].Flags |= PLANEF_LINKED;
 	}
 	if (linkedPortals.Size() > 0)
 	{

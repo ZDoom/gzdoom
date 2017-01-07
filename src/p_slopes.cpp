@@ -125,7 +125,7 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 		return;
 	}
 
-	source = &sectors[secnum];
+	source = &level.sectors[secnum];
 
 	if (copyCeil)
 	{
@@ -301,19 +301,18 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 
 	if (vt_found)
 	{
-		for (int i = 0; i < numsectors; i++)
+		for (auto &sec : level.sectors)
 		{
-			sector_t *sec = &sectors[i];
-			if (sec->Lines.Size() != 3) continue;	// only works with triangular sectors
+			if (sec.Lines.Size() != 3) continue;	// only works with triangular sectors
 
 			DVector3 vt1, vt2, vt3, cross;
 			DVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 
-			vi1 = int(sec->Lines[0]->v1 - vertexes);
-			vi2 = int(sec->Lines[0]->v2 - vertexes);
-			vi3 = (sec->Lines[1]->v1 == sec->Lines[0]->v1 || sec->Lines[1]->v1 == sec->Lines[0]->v2)?
-				int(sec->Lines[1]->v2 - vertexes) : int(sec->Lines[1]->v1 - vertexes);
+			vi1 = int(sec.Lines[0]->v1 - vertexes);
+			vi2 = int(sec.Lines[0]->v2 - vertexes);
+			vi3 = (sec.Lines[1]->v1 == sec.Lines[0]->v1 || sec.Lines[1]->v1 == sec.Lines[0]->v2)?
+				int(sec.Lines[1]->v2 - vertexes) : int(sec.Lines[1]->v1 - vertexes);
 
 			vt1 = DVector3(vertexes[vi1].fPos(), 0);
 			vt2 = DVector3(vertexes[vi2].fPos(), 0);
@@ -326,11 +325,11 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				double *h3 = vt_heights[j].CheckKey(vi3);
 				if (h1 == NULL && h2 == NULL && h3 == NULL) continue;
 
-				vt1.Z = h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+				vt1.Z = h1? *h1 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
+				vt2.Z = h2? *h2 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
+				vt3.Z = h3? *h3 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
 
-				if (P_PointOnLineSidePrecise(vertexes[vi3].fX(), vertexes[vi3].fY(), sec->Lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(vertexes[vi3].fX(), vertexes[vi3].fY(), sec.Lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;
@@ -358,7 +357,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 					cross = -cross;
 				}
 
-				secplane_t *plane = j==0? &sec->floorplane : &sec->ceilingplane;
+				secplane_t *plane = j==0? &sec.floorplane : &sec.ceilingplane;
 
 				double dist = -cross[0] * vertexes[vi3].fX() - cross[1] * vertexes[vi3].fY() - cross[2] * vt3.Z;
 				plane->set(cross[0], cross[1], cross[2], dist);

@@ -122,8 +122,8 @@ int 			numsegs;
 seg_t*			segs;
 glsegextra_t*	glsegextras;
 
-int 			numsectors;
-sector_t*		sectors;
+//int 			numsectors;
+//sector_t*		sectors;
 TArray<sector_t>	loadsectors;
 
 int 			numsubsectors;
@@ -808,11 +808,11 @@ void P_FloodZones ()
 	int z = 0, i;
 	ReverbContainer *reverb;
 
-	for (i = 0; i < numsectors; ++i)
+	for (auto &sec : level.sectors)
 	{
-		if (sectors[i].ZoneNumber == 0xFFFF)
+		if (sec.ZoneNumber == 0xFFFF)
 		{
-			P_FloodZone (&sectors[i], z++);
+			P_FloodZone (&sec, z++);
 		}
 	}
 	Zones.Resize(z);
@@ -1463,7 +1463,6 @@ void P_LoadSubsectors (MapData * map)
 
 void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 {
-	int 				i;
 	char				*msp;
 	mapsector_t			*ms;
 	sector_t*			ss;
@@ -1471,8 +1470,9 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	FDynamicColormap	*fogMap, *normMap;
 	int					lumplen = map->Size(ML_SECTORS);
 
-	numsectors = lumplen / sizeof(mapsector_t);
-	sectors = new sector_t[numsectors];		
+	unsigned numsectors = lumplen / sizeof(mapsector_t);
+	level.sectors.Alloc(numsectors);
+	auto sectors = &level.sectors[0];
 	memset (sectors, 0, numsectors*sizeof(sector_t));
 
 	if (level.flags & LEVEL_SNDSEQTOTALCTRL)
@@ -1490,7 +1490,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	// Extended properties
 	sectors[0].e = new extsector_t[numsectors];
 
-	for (i = 0; i < numsectors; i++, ss++, ms++)
+	for (unsigned i = 0; i < numsectors; i++, ss++, ms++)
 	{
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
@@ -2529,22 +2529,21 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 			if (colorgood | foggood)
 			{
-				int s;
 				FDynamicColormap *colormap = NULL;
 
-				for (s = 0; s < numsectors; s++)
+				for (unsigned s = 0; s < level.sectors.Size(); s++)
 				{
 					if (tagManager.SectorHasTag(s, tag))
 					{
-						if (!colorgood) color = sectors[s].ColorMap->Color;
-						if (!foggood) fog = sectors[s].ColorMap->Fade;
+						if (!colorgood) color = level.sectors[s].ColorMap->Color;
+						if (!foggood) fog = level.sectors[s].ColorMap->Fade;
 						if (colormap == NULL ||
 							colormap->Color != color ||
 							colormap->Fade != fog)
 						{
 							colormap = GetSpecialLights (color, fog, 0);
 						}
-						sectors[s].ColorMap = colormap;
+						level.sectors[s].ColorMap = colormap;
 					}
 				}
 			}
@@ -2638,14 +2637,14 @@ void P_LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		// killough 4/11/98: refined to allow colormaps to work as wall
 		// textures if invalid as colormaps but valid as textures.
 
-		if ((unsigned)LittleShort(msd->sector)>=(unsigned)numsectors)
+		if ((unsigned)LittleShort(msd->sector)>=level.sectors.Size())
 		{
 			Printf (PRINT_HIGH, "Sidedef %d has a bad sector\n", i);
 			sd->sector = sec = NULL;
 		}
 		else
 		{
-			sd->sector = sec = &sectors[LittleShort(msd->sector)];
+			sd->sector = sec = &level.sectors[LittleShort(msd->sector)];
 		}
 
 		intmapsidedef_t imsd;
@@ -3089,28 +3088,26 @@ static void P_GroupLines (bool buildmap)
 {
 	cycle_t times[16];
 	unsigned int*		linesDoneInEachSector;
-	int 				i;
 	int 				total;
-	line_t* 			li;
 	sector_t*			sector;
 	FBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
 	unsigned int		jj;
 
-	for (i = 0; i < (int)countof(times); ++i)
+	for (unsigned i = 0; i < countof(times); ++i)
 	{
 		times[i].Reset();
 	}
 
 	// look up sector number for each subsector
 	times[0].Clock();
-	for (i = 0; i < numsubsectors; i++)
+	for (int i = 0; i < numsubsectors; i++)
 	{
 		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
 	}
 	if (glsegextras != NULL)
 	{
-		for (i = 0; i < numsubsectors; i++)
+		for (int i = 0; i < numsubsectors; i++)
 		{
 			for (jj = 0; jj < subsectors[i].numlines; ++jj)
 			{
@@ -3123,8 +3120,9 @@ static void P_GroupLines (bool buildmap)
 	// count number of lines in each sector
 	times[1].Clock();
 	total = 0;
-	for (i = 0, li = lines; i < numlines; i++, li++)
+	for (int i = 0; i < numlines; i++)
 	{
+		auto li = &lines[i];
 		if (li->frontsector == NULL)
 		{
 			if (!flaggedNoFronts)
@@ -3156,10 +3154,12 @@ static void P_GroupLines (bool buildmap)
 	times[3].Clock();
 	linebuffer = new line_t *[total];
 	line_t **lineb_p = linebuffer;
+	auto numsectors = level.sectors.Size();
 	linesDoneInEachSector = new unsigned int[numsectors];
 	memset (linesDoneInEachSector, 0, sizeof(int)*numsectors);
 
-	for (sector = sectors, i = 0; i < numsectors; i++, sector++)
+	sector = &level.sectors[0];
+	for (unsigned i = 0; i < numsectors; i++, sector++)
 	{
 		if (sector->Lines.Count == 0)
 		{
@@ -3174,19 +3174,21 @@ static void P_GroupLines (bool buildmap)
 		}
 	}
 
-	for (i = numlines, li = lines; i > 0; --i, ++li)
+	for (int i = 0; i < numlines; i++)
 	{
+		auto li = &lines[i];
 		if (li->frontsector != NULL)
 		{
-			li->frontsector->Lines[linesDoneInEachSector[li->frontsector - sectors]++] = li;
+			li->frontsector->Lines[linesDoneInEachSector[li->frontsector->Index()]++] = li;
 		}
 		if (li->backsector != NULL && li->backsector != li->frontsector)
 		{
-			li->backsector->Lines[linesDoneInEachSector[li->backsector - sectors]++] = li;
+			li->backsector->Lines[linesDoneInEachSector[li->backsector->Index()]++] = li;
 		}
 	}
-
-	for (i = 0, sector = sectors; i < numsectors; ++i, ++sector)
+	
+	sector = &level.sectors[0];
+	for (unsigned i = 0; i < numsectors; ++i, ++sector)
 	{
 		if (linesDoneInEachSector[i] != sector->Lines.Size())
 		{
@@ -3235,7 +3237,7 @@ static void P_GroupLines (bool buildmap)
 	if (showloadtimes)
 	{
 		Printf ("---Group Lines Times---\n");
-		for (i = 0; i < 7; ++i)
+		for (int i = 0; i < 7; ++i)
 		{
 			Printf (" time %d:%9.4f ms\n", i, times[i].TimeMS());
 		}
@@ -3247,7 +3249,7 @@ static void P_GroupLines (bool buildmap)
 //
 void P_LoadReject (MapData * map, bool junk)
 {
-	const int neededsize = (numsectors * numsectors + 7) >> 3;
+	const int neededsize = (level.sectors.Size() * level.sectors.Size() + 7) >> 3;
 	int rejectsize;
 
 	if (strnicmp (map->MapLumps[ML_REJECT].Name, "REJECT", 8) != 0)
@@ -3385,10 +3387,10 @@ static void P_PrecacheLevel()
 		if (cls != NULL) actorhitlist[cls] = true;
 	}
 
-	for (i = numsectors - 1; i >= 0; i--)
+	for (i = level.sectors.Size() - 1; i >= 0; i--)
 	{
-		hitlist[sectors[i].GetTexture(sector_t::floor).GetIndex()] |= FTextureManager::HIT_Flat;
-		hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
+		hitlist[level.sectors[i].GetTexture(sector_t::floor).GetIndex()] |= FTextureManager::HIT_Flat;
+		hitlist[level.sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
 	}
 
 	for (i = numsides - 1; i >= 0; i--)
@@ -3458,13 +3460,12 @@ void P_FreeLevelData ()
 		delete[] glsegextras;
 		glsegextras = NULL;
 	}
-	if (sectors != NULL)
+	if (level.sectors.Size() > 0)
 	{
-		delete[] sectors[0].e;
-		delete[] sectors;
-		sectors = NULL;
+		delete[] level.sectors[0].e;
 	}
-	numsectors = 0;
+	level.sectors.Clear();
+
 	if (gamenodes != NULL && gamenodes != nodes)
 	{
 		delete[] gamenodes;
@@ -4069,10 +4070,10 @@ void P_SetupLevel (const char *lumpname, int position)
 	P_SpawnSpecials ();
 
 	// disable reflective planes on sloped sectors.
-	for (auto i = 0; i < numsectors; i++)
+	for (auto &sec : level.sectors)
 	{
-		if (sectors[i].floorplane.isSlope()) sectors[i].reflect[sector_t::floor] = 0;
-		if (sectors[i].ceilingplane.isSlope()) sectors[i].reflect[sector_t::ceiling] = 0;
+		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
+		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
 	}
 
 	// This must be done BEFORE the PolyObj Spawn!!!
@@ -4192,8 +4193,8 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
 
-	loadsectors.Resize(numsectors);
-	memcpy(&loadsectors[0], sectors, numsectors * sizeof(sector_t));
+	loadsectors.Resize(level.sectors.Size());
+	memcpy(&loadsectors[0], &level.sectors[0], loadsectors.Size() * sizeof(sector_t));
 	loadlines.Resize(numlines);
 	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
 	loadsides.Resize(numsides);

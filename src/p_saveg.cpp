@@ -281,7 +281,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 		{
 			if (level.Scrolls.Size() == 0)
 			{
-				level.Scrolls.Resize(numsectors);
+				level.Scrolls.Resize(level.sectors.Size());
 				memset(&level.Scrolls[0], 0, sizeof(level.Scrolls[0])*level.Scrolls.Size());
 				level.Scrolls[p.sectornum] = scroll;
 			}
@@ -900,7 +900,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		arc.Array("checksum", chk, 16);
 		if (arc.GetSize("linedefs") != (unsigned)numlines ||
 			arc.GetSize("sidedefs") != (unsigned)numsides ||
-			arc.GetSize("sectors") != (unsigned)numsectors ||
+			arc.GetSize("sectors") != level.sectors.Size() ||
 			arc.GetSize("polyobjs") != (unsigned)po_NumPolyobjs ||
 			memcmp(chk, level.md5, 16))
 		{
@@ -954,7 +954,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc.Array("linedefs", lines, &loadlines[0], numlines);
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
-	arc.Array("sectors", sectors, &loadsectors[0], numsectors);
+	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
 	arc("sectorportals", sectorPortals);
@@ -972,9 +972,9 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	if (arc.isReading())
 	{
-		for (int i = 0; i < numsectors; i++)
+		for (auto &sec : level.sectors)
 		{
-			P_Recalculate3DFloors(&sectors[i]);
+			P_Recalculate3DFloors(&sec);
 		}
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{

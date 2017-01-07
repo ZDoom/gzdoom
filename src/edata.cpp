@@ -753,27 +753,26 @@ void ProcessEDSector(sector_t *sec, int recordnum)
 
 void ProcessEDSectors()
 {
-	int i;
-
 	InitED();
 	if (EDSectors.CountUsed() == 0) return;	// don't waste time if there's no records.
 
 	// collect all Extradata sector records up front so we do not need to search the complete line array for each sector separately.
+	auto numsectors = level.sectors.Size();
 	int *sectorrecord = new int[numsectors];
 	memset(sectorrecord, -1, numsectors * sizeof(int));
-	for (i = 0; i < numlines; i++)
+	for (int i = 0; i < numlines; i++)
 	{
 		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDSector)
 		{
-			sectorrecord[lines[i].frontsector - sectors] = lines[i].args[0];
+			sectorrecord[lines[i].frontsector->Index()] = lines[i].args[0];
 			lines[i].special = 0;
 		}
 	}
-	for (i = 0; i < numsectors; i++)
+	for (unsigned i = 0; i < numsectors; i++)
 	{
 		if (sectorrecord[i] >= 0)
 		{
-			ProcessEDSector(&sectors[i], sectorrecord[i]);
+			ProcessEDSector(&level.sectors[i], sectorrecord[i]);
 		}
 	}
 	delete[] sectorrecord;

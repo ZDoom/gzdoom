@@ -530,9 +530,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SECTORFLOOROFFSET:
 				{
-					if (CompatParams[i+1] < numsectors)
+					if ((unsigned)CompatParams[i+1] < level.sectors.Size())
 					{
-						sector_t *sec = &sectors[CompatParams[i+1]];
+						sector_t *sec = &level.sectors[CompatParams[i+1]];
 						const double delta = CompatParams[i + 2] / 65536.0;
 						sec->floorplane.ChangeHeight(delta);
 						sec->ChangePlaneTexZ(sector_t::floor, delta);
@@ -542,10 +542,10 @@ void SetCompatibilityParams()
 				}
 				case CP_SETSECTORSPECIAL:
 				{
-					const int index = CompatParams[i + 1];
-					if (index < numsectors)
+					const unsigned index = CompatParams[i + 1];
+					if (index < level.sectors.Size())
 					{
-						sectors[index].special = CompatParams[i + 2];
+						level.sectors[index].special = CompatParams[i + 2];
 					}
 					i += 3;
 					break;
@@ -575,7 +575,7 @@ void SetCompatibilityParams()
 				}	
 				case CP_SETTAG:
 				{
-					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
+					if ((unsigned)CompatParams[i + 1] < level.sectors.Size())
 					{
 						// this assumes that the sector does not have any tags yet!
 						if (CompatParams[i + 2] == 0)

@@ -2061,7 +2061,7 @@ void P_MovePlayer (player_t *player)
 			msecnode_t *n = player->mo->touching_sectorlist;
 			while (n != NULL)
 			{
-				fprintf (debugfile, "%td ", n->m_sector-sectors);
+				fprintf (debugfile, "%d ", n->m_sector->sectornum);
 				n = n->m_tnext;
 			}
 			fprintf (debugfile, "]\n");

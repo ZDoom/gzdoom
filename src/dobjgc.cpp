@@ -346,13 +346,13 @@ static void MarkRoot()
 	// Mark sound sequences.
 	DSeqNode::StaticMarkHead();
 	// Mark sectors.
-	if (SectorMarker == NULL && sectors != NULL)
+	if (SectorMarker == nullptr && level.sectors.Size() > 0)
 	{
 		SectorMarker = new DSectorMarker;
 	}
-	else if (sectors == NULL)
+	else if (level.sectors.Size() == 0)
 	{
-		SectorMarker = NULL;
+		SectorMarker = nullptr;
 	}
 	else
 	{
@@ -677,26 +677,25 @@ size_t DSectorMarker::PropagateMark()
 	int i;
 	int marked = 0;
 	bool moretodo = false;
+	int numsectors = level.sectors.Size();
 
-	if (sectors != NULL)
+	for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
 	{
-		for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
-		{
-			sector_t *sec = &sectors[SecNum + i];
-			GC::Mark(sec->SoundTarget);
-			GC::Mark(sec->SecActTarget);
-			GC::Mark(sec->floordata);
-			GC::Mark(sec->ceilingdata);
-			GC::Mark(sec->lightingdata);
-			for(int j=0;j<4;j++) GC::Mark(sec->interpolations[j]);
-		}
-		marked += i * sizeof(sector_t);
-		if (SecNum + i < numsectors)
-		{
-			SecNum += i;
-			moretodo = true;
-		}
+		sector_t *sec = &level.sectors[SecNum + i];
+		GC::Mark(sec->SoundTarget);
+		GC::Mark(sec->SecActTarget);
+		GC::Mark(sec->floordata);
+		GC::Mark(sec->ceilingdata);
+		GC::Mark(sec->lightingdata);
+		for(int j=0;j<4;j++) GC::Mark(sec->interpolations[j]);
 	}
+	marked += i * sizeof(sector_t);
+	if (SecNum + i < numsectors)
+	{
+		SecNum += i;
+		moretodo = true;
+	}
+
 	if (!moretodo && polyobjs != NULL)
 	{
 		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < po_NumPolyobjs; ++i)

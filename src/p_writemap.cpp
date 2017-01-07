@@ -152,7 +152,7 @@ static int WriteSIDEDEFS (FILE *file)
 	{
 		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffset(side_t::mid)));
 		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffset(side_t::mid)));
-		msd.sector = LittleShort(short(sides[i].sector - sectors));
+		msd.sector = LittleShort(short(sides[i].sector - &level.sectors[0]));
 		uppercopy (msd.toptexture, GetTextureName (sides[i].GetTexture(side_t::top)));
 		uppercopy (msd.bottomtexture, GetTextureName (sides[i].GetTexture(side_t::bottom)));
 		uppercopy (msd.midtexture, GetTextureName (sides[i].GetTexture(side_t::mid)));
@@ -194,18 +194,18 @@ static int WriteSECTORS (FILE *file)
 {
 	mapsector_t ms;
 
-	for (int i = 0; i < numsectors; ++i)
+	for (unsigned i = 0; i < level.sectors.Size(); ++i)
 	{
-		ms.floorheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::floor)));
-		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::ceiling)));
-		uppercopy (ms.floorpic, GetTextureName (sectors[i].GetTexture(sector_t::floor)));
-		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].GetTexture(sector_t::ceiling)));
-		ms.lightlevel = LittleShort((short)sectors[i].lightlevel);
-		ms.special = LittleShort(sectors[i].special);
-		ms.tag = LittleShort(tagManager.GetFirstSectorTag(&sectors[i]));
+		ms.floorheight = LittleShort(short(level.sectors[i].GetPlaneTexZ(sector_t::floor)));
+		ms.ceilingheight = LittleShort(short(level.sectors[i].GetPlaneTexZ(sector_t::ceiling)));
+		uppercopy (ms.floorpic, GetTextureName (level.sectors[i].GetTexture(sector_t::floor)));
+		uppercopy (ms.ceilingpic, GetTextureName (level.sectors[i].GetTexture(sector_t::ceiling)));
+		ms.lightlevel = LittleShort((short)level.sectors[i].lightlevel);
+		ms.special = LittleShort(level.sectors[i].special);
+		ms.tag = LittleShort(tagManager.GetFirstSectorTag(&level.sectors[i]));
 		fwrite (&ms, sizeof(ms), 1, file);
 	}
-	return numsectors * sizeof(ms);
+	return level.sectors.Size() * sizeof(ms);
 }
 
 static int WriteREJECT (FILE *file)

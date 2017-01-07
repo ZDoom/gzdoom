@@ -337,18 +337,17 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, c
 
 static void CollectPortalSectors(FPortalMap &collection)
 {
-	for (int i=0;i<numsectors;i++)
+	for (auto &sec : level.sectors)
 	{
-		sector_t *sec = &sectors[i];
 		for (int j = 0; j < 2; j++)
 		{
-			int ptype = sec->GetPortalType(j);
+			int ptype = sec.GetPortalType(j);
 			if (ptype== PORTS_STACKEDSECTORTHING || ptype == PORTS_PORTAL || ptype == PORTS_LINKEDPORTAL)	// only offset-displacing portal types
 			{
-				FPortalID id = { sec->GetPortalDisplacement(j) };
+				FPortalID id = { sec.GetPortalDisplacement(j) };
 
 				FPortalSectors &sss = collection[id];
-				FPortalSector ss = { sec, j };
+				FPortalSector ss = { &sec, j };
 				sss.Push(ss);
 			}
 		}

@@ -441,7 +441,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 
 		// get the sector on the second side of activating linedef
 		sec = line->sidedef[1]->sector;
-		secnum = int(sec-sectors);
+		secnum = sec->sectornum;
 
 		// if door already has a thinker, use it
 		if (sec->PlaneMoving(sector_t::ceiling))
@@ -493,7 +493,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		FSectorTagIterator it(tag);
 		while ((secnum = it.Next()) >= 0)
 		{
-			sec = &sectors[secnum];
+			sec = &level.sectors[secnum];
 			// if the ceiling is already moving, don't start the door action
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
@@ -782,7 +782,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sec = &sectors[secnum];
+		sec = &level.sectors[secnum];
 		if (sec->ceilingdata != NULL)
 		{
 			continue;

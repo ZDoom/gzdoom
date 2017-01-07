@@ -192,7 +192,7 @@ void DPusher::Tick ()
 	if (!var_pushers)
 		return;
 
-	sec = sectors + m_Affectee;
+	sec = &level.sectors[m_Affectee];
 
 	// Be sure the special sector type is still turned on. If so, proceed.
 	// Else, bail out; the sector type has been changed on us.
@@ -339,7 +339,7 @@ AActor *P_GetPushThing (int s)
 	AActor* thing;
 	sector_t* sec;
 
-	sec = sectors + s;
+	sec = &level.sectors[s];
 	thing = sec->thinglist;
 
 	while (thing &&
@@ -406,8 +406,7 @@ void P_SpawnPushers ()
 					if (thing->GetClass()->TypeName == NAME_PointPusher ||
 						thing->GetClass()->TypeName == NAME_PointPuller)
 					{
-						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
-									 0, thing, int(thing->Sector - sectors));
+						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}
 				}
 			}
@@ -447,7 +446,7 @@ void AdjustPusher (int tag, int magnitude, int angle, bool wind)
 		unsigned int i;
 		for (i = 0; i < numcollected; i++)
 		{
-			if (Collection[i].RefNum == sectors[secnum].sectornum)
+			if (Collection[i].RefNum == secnum)
 				break;
 		}
 		if (i == numcollected)

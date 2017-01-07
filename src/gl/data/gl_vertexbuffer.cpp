@@ -394,27 +394,25 @@ void FFlatVertexBuffer::CreateFlatVBO()
 {
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
-		for(int i=0; i<numsectors;i++)
+		for(auto &sec : level.sectors)
 		{
-			CreateVertices(h, &sectors[i], sectors[i].GetSecPlane(h), h == sector_t::floor);
+			CreateVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor);
 		}
 	}
 
 	// We need to do a final check for Vavoom water and FF_FIX sectors.
 	// No new vertices are needed here. The planes come from the actual sector
-	for(int i=0; i<numsectors;i++)
+	for (auto &sec : level.sectors)
 	{
-		for(unsigned j=0;j<sectors[i].e->XFloor.ffloors.Size(); j++)
+		for(auto ff : sec.e->XFloor.ffloors)
 		{
-			F3DFloor *ff = sectors[i].e->XFloor.ffloors[j];
-
-			if (ff->top.model == &sectors[i])
+			if (ff->top.model == &sec)
 			{
-				ff->top.vindex = sectors[i].vboindex[ff->top.isceiling];
+				ff->top.vindex = sec.vboindex[ff->top.isceiling];
 			}
-			if (ff->bottom.model == &sectors[i])
+			if (ff->bottom.model == &sec)
 			{
-				ff->bottom.vindex = sectors[i].vboindex[ff->top.isceiling];
+				ff->bottom.vindex = sec.vboindex[ff->top.isceiling];
 			}
 		}
 	}

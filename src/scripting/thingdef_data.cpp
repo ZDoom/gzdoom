@@ -744,6 +744,12 @@ void InitThingdef()
 	pstruct = NewNativeStruct("Sector", nullptr);
 	pstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(NewNativeStruct("line", nullptr), false)), false), myoffsetof(sector_t, Lines), VARF_Native);
 
+	// Add the sector array to LevelLocals.
+	pstruct->Size = sizeof(sector_t);
+	pstruct->Align = alignof(sector_t);
+	parray = NewArray(pstruct, MAXPLAYERS);
+	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(pstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
+
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
 	GlobalSymbols.AddSymbol(playerf);

@@ -257,11 +257,11 @@ static void PrepareSectorData()
 		ss->render_sector->subsectorcount++;
 	}
 
-	for (i=0; i<numsectors; i++) 
+	for (auto &sec : level.sectors) 
 	{
-		sectors[i].subsectors = subsectorbuffer;
-		subsectorbuffer += sectors[i].subsectorcount;
-		sectors[i].subsectorcount = 0;
+		sec.subsectors = subsectorbuffer;
+		subsectorbuffer += sec.subsectorcount;
+		sec.subsectorcount = 0;
 	}
 	
 	for(i=0, ss = subsectors; i<numsubsectors; i++, ss++)
@@ -306,13 +306,6 @@ static void PrepareTransparentDoors(sector_t * sector)
 	unsigned int nobtextures=0;
 	unsigned int selfref=0;
 	sector_t * nextsec=NULL;
-
-#ifdef _DEBUG
-	if (sector-sectors==34)
-	{
-		int a = 0;
-	}
-#endif
 
 	P_Recalculate3DFloors(sector);
 	if (sector->subsectorcount==0) return;
@@ -388,7 +381,7 @@ static void PrepareTransparentDoors(sector_t * sector)
 
 static void AddToVertex(const sector_t * sec, TArray<int> & list)
 {
-	int secno = int(sec-sectors);
+	int secno = int(sec-&level.sectors[0]);
 
 	for(unsigned i=0;i<list.Size();i++)
 	{
@@ -448,7 +441,7 @@ static void InitVertexData()
 			vertexes[i].heightlist = new float[cnt*2];
 			for(int j=0;j<cnt;j++)
 			{
-				vertexes[i].sectors[j] = &sectors[vt_sectorlists[i][j]];
+				vertexes[i].sectors[j] = &level.sectors[vt_sectorlists[i][j]];
 			}
 		}
 		else
@@ -590,20 +583,18 @@ extern int restart;
 
 void gl_PreprocessLevel()
 {
-	int i;
-
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();
 	int *checkmap = new int[numvertexes];
 	memset(checkmap, -1, sizeof(int)*numvertexes);
-	for(i=0;i<numsectors;i++) 
+	for(auto &sec : level.sectors) 
 	{
-		sectors[i].sectornum = i;
-		PrepareTransparentDoors(&sectors[i]);
+		int i = sec.sectornum;
+		PrepareTransparentDoors(&sec);
 
 		// This ignores vertices only used for seg splitting because those aren't needed here
-		for(auto l : sectors[i].Lines)
+		for(auto l : sec.Lines)
 		{
 			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
 
@@ -613,14 +604,14 @@ void gl_PreprocessLevel()
 			if (checkmap[vtnum1] < i)
 			{
 				checkmap[vtnum1] = i;
-				sectors[i].e->vertices.Push(&vertexes[vtnum1]);
+				sec.e->vertices.Push(&vertexes[vtnum1]);
 				vertexes[vtnum1].dirty = true;
 			}
 
 			if (checkmap[vtnum2] < i)
 			{
 				checkmap[vtnum2] = i;
-				sectors[i].e->vertices.Push(&vertexes[vtnum2]);
+				sec.e->vertices.Push(&vertexes[vtnum2]);
 				vertexes[vtnum2].dirty = true;
 			}
 		}
@@ -683,10 +674,10 @@ void gl_CleanLevelData()
 		delete [] sides[0].segs;
 		sides[0].segs = NULL;
 	}
-	if (sectors && sectors[0].subsectors) 
+	if (level.sectors.Size() > 0 && level.sectors[0].subsectors) 
 	{
-		delete [] sectors[0].subsectors;
-		sectors[0].subsectors = NULL;
+		delete [] level.sectors[0].subsectors;
+		level.sectors[0].subsectors = nullptr;
 	}
 	for (int i=0;i<numsubsectors;i++)
 	{

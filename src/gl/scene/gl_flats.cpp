@@ -582,7 +582,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 #endif
 
 	// Get the real sector for this one.
-	sector = &sectors[frontsector->sectornum];
+	sector = &level.sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
 

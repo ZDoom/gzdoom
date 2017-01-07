@@ -333,7 +333,7 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 			TThinkerIterator<AActor> it2(NAME_TeleportDest);
 			while ((searcher = it2.Next()) != NULL)
 			{
-				if (searcher->Sector == sectors + secnum)
+				if (searcher->Sector == &level.sectors[secnum])
 				{
 					return searcher;
 				}
@@ -729,7 +729,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 	while ((secnum = itr.Next()) >= 0)
 	{
 		msecnode_t *node;
-		const sector_t * const sec = &sectors[secnum];
+		const sector_t * const sec = &level.sectors[secnum];
 
 		for (node = sec->touching_thinglist; node; )
 		{

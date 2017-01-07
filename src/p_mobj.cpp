@@ -3961,9 +3961,9 @@ void AActor::Tick ()
 				sector_t *sec = node->m_sector;
 				DVector2 scrollv;
 
-				if (level.Scrolls.Size() > unsigned(sec-sectors))
+				if (level.Scrolls.Size() > unsigned(sec-&level.sectors[0]))
 				{
-					scrollv = level.Scrolls[sec - sectors];
+					scrollv = level.Scrolls[sec - &level.sectors[0]];
 				}
 				else
 				{
@@ -5251,9 +5251,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			{
 				if (th->LastHeard == oldactor) th->LastHeard = NULL;
 			}
-			for(int i = 0; i < numsectors; i++)
+			for(auto &sec : level.sectors)
 			{
-				if (sectors[i].SoundTarget == oldactor) sectors[i].SoundTarget = NULL;
+				if (sec.SoundTarget == oldactor) sec.SoundTarget = nullptr;
 			}
 
 			DObject::StaticPointerSubstitution (oldactor, p->mo);

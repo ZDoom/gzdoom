@@ -1435,8 +1435,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	else
 	{
 		// Need these for aligning the textures
-		realfront = &sectors[frontsector->sectornum];
-		realback = backsector ? &sectors[backsector->sectornum] : NULL;
+		realfront = &level.sectors[frontsector->sectornum];
+		realback = backsector ? &level.sectors[backsector->sectornum] : NULL;
 		segfront = frontsector;
 		segback = backsector;
 	}

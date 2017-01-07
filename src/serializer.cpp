@@ -1463,12 +1463,12 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&va
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, sectors);
+	return SerializePointer(arc, key, value, defval, &level.sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval)
 {
-	return SerializePointer<const sector_t>(arc, key, value, defval, sectors);
+	return SerializePointer<const sector_t>(arc, key, value, defval, &level.sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)

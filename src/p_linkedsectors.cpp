@@ -322,9 +322,9 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self!
-			if (control != &sectors[sec])
+			if (control != &level.sectors[sec])
 			{
-				AddSingleSector(scrollplane, &sectors[sec], movetype);
+				AddSingleSector(scrollplane, &level.sectors[sec], movetype);
 			}
 		}
 	}

@@ -154,9 +154,9 @@ int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sector_t * s = &sectors[secnum];
+		sector_t * s = &level.sectors[secnum];
 		if (!s->floorplane.isSlope()) s->reflect[sector_t::floor] = arg1/255.f;
-		if (!s->ceilingplane.isSlope()) sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
+		if (!s->ceilingplane.isSlope()) level.sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
 	}
 
 	return true;
@@ -532,14 +532,12 @@ void gl_InitData()
 
 CCMD(dumpgeometry)
 {
-	for(int i=0;i<numsectors;i++)
+	for(auto &sector : level.sectors)
 	{
-		sector_t * sector = &sectors[i];
-
-		Printf(PRINT_LOG, "Sector %d\n",i);
-		for(int j=0;j<sector->subsectorcount;j++)
+		Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
+		for(int j=0;j<sector.subsectorcount;j++)
 		{
-			subsector_t * sub = sector->subsectors[j];
+			subsector_t * sub = sector.subsectors[j];
 
 			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub-subsectors), sub->sector->sectornum, sub->hacked&1? "hacked":"");
 			for(DWORD k=0;k<sub->numlines;k++)
@@ -563,7 +561,7 @@ CCMD(dumpgeometry)
 					Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
 				}
 				else if (seg->backsector)
-				{
+			{
 					Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
 				}
 

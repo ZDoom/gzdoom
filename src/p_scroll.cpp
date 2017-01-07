@@ -168,8 +168,8 @@ void DScroller::Tick ()
 
 	if (m_Control != -1)
 	{	// compute scroll amounts based on a sector's height changes
-		double height = sectors[m_Control].CenterFloor () +
-						 sectors[m_Control].CenterCeiling ();
+		double height = level.sectors[m_Control].CenterFloor () +
+			level.sectors[m_Control].CenterCeiling ();
 		double delta = height - m_LastHeight;
 		m_LastHeight = height;
 		dx *= delta;
@@ -208,15 +208,15 @@ void DScroller::Tick ()
 			break;
 
 		case EScroll::sc_floor:						// killough 3/7/98: Scroll floor texture
-			RotationComp(&sectors[m_Affectee], sector_t::floor, dx, dy, tdx, tdy);
-			sectors[m_Affectee].AddXOffset(sector_t::floor, tdx);
-			sectors[m_Affectee].AddYOffset(sector_t::floor, tdy);
+			RotationComp(&level.sectors[m_Affectee], sector_t::floor, dx, dy, tdx, tdy);
+			level.sectors[m_Affectee].AddXOffset(sector_t::floor, tdx);
+			level.sectors[m_Affectee].AddYOffset(sector_t::floor, tdy);
 			break;
 
 		case EScroll::sc_ceiling:					// killough 3/7/98: Scroll ceiling texture
-			RotationComp(&sectors[m_Affectee], sector_t::ceiling, dx, dy, tdx, tdy);
-			sectors[m_Affectee].AddXOffset(sector_t::ceiling, tdx);
-			sectors[m_Affectee].AddYOffset(sector_t::ceiling, tdy);
+			RotationComp(&level.sectors[m_Affectee], sector_t::ceiling, dx, dy, tdx, tdy);
+			level.sectors[m_Affectee].AddXOffset(sector_t::ceiling, tdx);
+			level.sectors[m_Affectee].AddYOffset(sector_t::ceiling, tdy);
 			break;
 
 		// [RH] Don't actually carry anything here. That happens later.
@@ -262,8 +262,10 @@ DScroller::DScroller (EScroll type, double dx, double dy,
 	m_vdx = m_vdy = 0;
 	m_LastHeight = 0;
 	if ((m_Control = control) != -1)
+	{
 		m_LastHeight =
-			sectors[control].CenterFloor () + sectors[control].CenterCeiling ();
+			level.sectors[control].CenterFloor() + level.sectors[control].CenterCeiling();
+	}
 	m_Affectee = affectee;
 	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
 
@@ -291,11 +293,11 @@ DScroller::DScroller (EScroll type, double dx, double dy,
 		break;
 
 	case EScroll::sc_floor:
-		m_Interpolations[0] = sectors[affectee].SetInterpolation(sector_t::FloorScroll, false);
+		m_Interpolations[0] = level.sectors[affectee].SetInterpolation(sector_t::FloorScroll, false);
 		break;
 
 	case EScroll::sc_ceiling:
-		m_Interpolations[0] = sectors[affectee].SetInterpolation(sector_t::CeilingScroll, false);
+		m_Interpolations[0] = level.sectors[affectee].SetInterpolation(sector_t::CeilingScroll, false);
 		break;
 
 	default:
@@ -346,7 +348,7 @@ DScroller::DScroller (double dx, double dy, const line_t *l,
 	m_Parts = scrollpos;
 	m_LastHeight = 0;
 	if ((m_Control = control) != -1)
-		m_LastHeight = sectors[control].CenterFloor() + sectors[control].CenterCeiling();
+		m_LastHeight = level.sectors[control].CenterFloor() + level.sectors[control].CenterCeiling();
 	m_Affectee = int(l->sidedef[0] - sides);
 	sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
 	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
@@ -439,7 +441,7 @@ void P_SpawnScrollers(void)
 			{
 				// if 1, then displacement
 				// if 2, then accelerative (also if 3)
-				control = int(l->sidedef[0]->sector - sectors);
+				control = int(l->sidedef[0]->sector - &level.sectors[0]);
 				if (l->args[1] & 2)
 					accel = 1;
 			}
@@ -476,7 +478,7 @@ void P_SpawnScrollers(void)
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
-					new DScroller(EScroll::sc_ceiling, -dx, dy, control, int(line->frontsector - sectors), accel);
+					new DScroller(EScroll::sc_ceiling, -dx, dy, control, int(line->frontsector - &level.sectors[0]), accel);
 				}
 			}
 			break;
@@ -496,7 +498,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
-						new DScroller (EScroll::sc_floor, -dx, dy, control, int(line->frontsector-sectors), accel);
+						new DScroller(EScroll::sc_floor, -dx, dy, control, int(line->frontsector - &level.sectors[0]), accel);
 					}
 				}
 			}
@@ -514,7 +516,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
-						new DScroller (EScroll::sc_carry, dx, dy, control, int(line->frontsector-sectors), accel);
+						new DScroller (EScroll::sc_carry, dx, dy, control, int(line->frontsector-&level.sectors[0]), accel);
 					}
 				}
 			}

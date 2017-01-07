@@ -479,19 +479,16 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 	}
 
 	// Go through sectors.
-	if (sectors != NULL)
+	for (auto &sec : level.sectors)
 	{
-		for (i = 0; i < numsectors; ++i)
-		{
 #define SECTOR_CHECK(f,t) \
-	if (sectors[i].f.p == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); changed++; }
-			SECTOR_CHECK( SoundTarget, AActor );
-			SECTOR_CHECK( SecActTarget, ASectorAction );
-			SECTOR_CHECK( floordata, DSectorEffect );
-			SECTOR_CHECK( ceilingdata, DSectorEffect );
-			SECTOR_CHECK( lightingdata, DSectorEffect );
+if (sec.f.p == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); changed++; }
+		SECTOR_CHECK( SoundTarget, AActor );
+		SECTOR_CHECK( SecActTarget, ASectorAction );
+		SECTOR_CHECK( floordata, DSectorEffect );
+		SECTOR_CHECK( ceilingdata, DSectorEffect );
+		SECTOR_CHECK( lightingdata, DSectorEffect );
 #undef SECTOR_CHECK
-		}
 	}
 
 	// Go through bot stuff.

@@ -400,6 +400,8 @@ struct FLevelLocals
 	FString		NextSecretMap;		// map to go to when used secret exit
 	EMapType	maptype;
 
+	TStaticArray<sector_t> sectors;
+
 	DWORD		flags;
 	DWORD		flags2;
 	DWORD		flags3;

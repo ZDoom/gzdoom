@@ -563,10 +563,13 @@ public:
 	void Clear()
 	{
 		if (this->Array) delete[] this->Array;
+		this->Count = 0;
+		this->Array = NULL;
 	}
 	void Alloc(unsigned int amount)
 	{
-		Clear();
+		// intentionally first deletes and then reallocates.
+		if (this->Array) delete[] this->Array;
 		this->Array = new T[amount];
 		this->Count = amount;
 	}

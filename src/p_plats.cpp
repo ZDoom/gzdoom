@@ -243,7 +243,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 	FSectorTagIterator itr(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &sectors[secnum];
+		sec = &level.sectors[secnum];
 
 		if (sec->PlaneMoving(sector_t::floor))
 		{

@@ -895,7 +895,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		Colormap=rendersector->ColorMap;
 		if (fullbright)
 		{
-			if (rendersector == &sectors[rendersector->sectornum] || in_area != area_below)	
+			if (rendersector == &level.sectors[rendersector->sectornum] || in_area != area_below)	
 				// under water areas keep their color for fullbright objects
 			{
 				// Only make the light white but keep everything else (fog, desaturation and Boom colormap.)

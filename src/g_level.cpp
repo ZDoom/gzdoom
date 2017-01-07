@@ -1841,8 +1841,8 @@ void FLevelLocals::AddScroller (int secnum)
 	}
 	if (Scrolls.Size() == 0)
 	{
-		Scrolls.Resize(numsectors);
-		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*numsectors);
+		Scrolls.Resize(sectors.Size());
+		memset(&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
 	}
 }
 

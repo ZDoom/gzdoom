@@ -142,7 +142,7 @@ void P_AdjustLine (line_t *line);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *numsprites);
-static void LoadSectors (sectortype *bsectors);
+static void LoadSectors (sectortype *bsectors, int count);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
 static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
 static vertex_t *FindVertex (SDWORD x, SDWORD y);
@@ -225,15 +225,14 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 		return false;
 	}
 
-	numsectors = numsec;
-	LoadSectors ((sectortype *)(data + 22));
-	LoadWalls ((walltype *)(data + 24 + numsectors*sizeof(sectortype)), numwalls,
+	LoadSectors ((sectortype *)(data + 22), numsec);
+	LoadWalls ((walltype *)(data + 24 + numsec*sizeof(sectortype)), numwalls,
 		(sectortype *)(data + 22));
 
-	numsprites = *(WORD *)(data + 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype));
+	numsprites = *(WORD *)(data + 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype));
 	*sprites = new FMapThing[numsprites + 1];
 	CreateStartSpot ((SDWORD *)(data + 4), *sprites);
-	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)),
+	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)),
 		NULL, numsprites, (sectortype *)(data + 22), *sprites + 1);
 
 	return true;
@@ -274,7 +273,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	visibility = LittleLong(*(DWORD *)(infoBlock + 18));
 	parallaxType = infoBlock[26];
 	numRevisions = LittleLong(*(DWORD *)(infoBlock + 27));
-	numsectors = LittleShort(*(WORD *)(infoBlock + 31));
+	int numsectors = LittleShort(*(WORD *)(infoBlock + 31));
 	numWalls = LittleShort(*(WORD *)(infoBlock + 33));
 	numsprites = LittleShort(*(WORD *)(infoBlock + 35));
 	Printf("Visibility: %d\n", visibility);
@@ -364,7 +363,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 
 	// Now convert to Doom format, since we've extracted all the standard
 	// BUILD info from the map we need. (Sprites are ignored.)
-	LoadSectors (bsec);
+	LoadSectors (bsec, numsectors);
 	LoadWalls (bwal, numWalls, bsec);
 	*mapthings = new FMapThing[numsprites];
 	*numspr = LoadSprites (bspr, xspr, numsprites, bsec, *mapthings);
@@ -383,25 +382,26 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 //
 //==========================================================================
 
-static void LoadSectors (sectortype *bsec)
+static void LoadSectors (sectortype *bsec, int count)
 {
 	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto, 0);
 	sector_t *sec;
 	char tnam[9];
 
-	sec = sectors = new sector_t[numsectors];
-	memset (sectors, 0, sizeof(sector_t)*numsectors);
+	level.sectors.Alloc(count);
+	sec = &level.sectors[0];
+	memset (sec, 0, sizeof(sector_t)*count);
 
-	sectors[0].e = new extsector_t[numsectors];
+	sec->e = new extsector_t[count];
 
-	for (int i = 0; i < numsectors; ++i, ++bsec, ++sec)
+	for (int i = 0; i < count; ++i, ++bsec, ++sec)
 	{
 		bsec->wallptr = WORD(bsec->wallptr);
 		bsec->wallnum = WORD(bsec->wallnum);
 		bsec->ceilingstat = WORD(bsec->ceilingstat);
 		bsec->floorstat = WORD(bsec->floorstat);
 
-		sec->e = &sectors[0].e[i];
+		sec->e = &sec->e[i];
 		double floorheight = -LittleLong(bsec->floorZ) / 256.;
 		sec->SetPlaneTexZ(sector_t::floor, floorheight);
 		sec->floorplane.SetAtHeight(floorheight, sector_t::floor);
@@ -496,13 +496,13 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	numvertexes = 0;
 
 	// First mark each sidedef with the sector it belongs to
-	for (i = 0; i < numsectors; ++i)
+	for (unsigned i = 0; i < level.sectors.Size(); i++)
 	{
 		if (bsec[i].wallptr >= 0)
 		{
 			for (j = 0; j < bsec[i].wallnum; ++j)
 			{
-				sides[j + bsec[i].wallptr].sector = sectors + i;
+				sides[j + bsec[i].wallptr].sector = &level.sectors[i];
 			}
 		}
 	}
@@ -581,7 +581,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		lines[j].flags |= ML_WRAP_MIDTEX;
 		if (walls[i].nextsector >= 0)
 		{
-			lines[j].backsector = sectors + walls[i].nextsector;
+			lines[j].backsector = &level.sectors[walls[i].nextsector];
 			lines[j].flags |= ML_TWOSIDED;
 		}
 		else
@@ -629,7 +629,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	}
 
 	// Finish setting sector properties that depend on walls
-	for (i = 0; i < numsectors; ++i, ++bsec)
+	for (auto &sec : level.sectors)
 	{
 		SlopeWork slope;
 
@@ -646,13 +646,13 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{ // floor is sloped
 			slope.heinum = -LittleShort(bsec->floorheinum);
 			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->floorZ;
-			CalcPlane (slope, sectors[i].floorplane);
+			CalcPlane (slope, sec.floorplane);
 		}
 		if ((bsec->ceilingstat & 2) && (bsec->ceilingheinum != 0))
 		{ // ceiling is sloped
 			slope.heinum = -LittleShort(bsec->ceilingheinum);
 			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingZ;
-			CalcPlane (slope, sectors[i].ceilingplane);
+			CalcPlane (slope, sec.ceilingplane);
 		}
 		int linenum = int(intptr_t(sides[bsec->wallptr].linedef));
 		int sidenum = int(intptr_t(lines[linenum].sidedef[1]));

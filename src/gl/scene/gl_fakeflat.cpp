@@ -210,7 +210,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	}
 
 #ifdef _DEBUG
-	if (sec-sectors==560)
+	if (sec->sectornum==560)
 	{
 		int a = 0;
 	}

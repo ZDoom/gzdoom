@@ -47,7 +47,7 @@ FTagManager tagManager;
 
 static inline int sectindex(const sector_t *sector)
 {
-	return (int)(intptr_t)(sector - sectors);
+	return (int)(intptr_t)(sector - &level.sectors[0]);
 }
 
 static inline int lineindex(const line_t *line)
@@ -334,11 +334,11 @@ int FSectorTagIterator::Next()
 	else
 	{
 		// with the tag manager, searching for tag 0 has to be different, because it won't create entries for untagged sectors.
-		while (start < numsectors && tagManager.SectorHasTags(start))
+		while (start < (int)level.sectors.Size() && tagManager.SectorHasTags(start))
 		{
 			start++;
 		}
-		if (start == numsectors) return -1;
+		if (start == (int)level.sectors.Size()) return -1;
 		ret = start;
 		start++;
 	}
@@ -355,7 +355,7 @@ int FSectorTagIterator::NextCompat(bool compat, int start)
 {
 	if (!compat) return Next();
 
-	for (int i = start + 1; i < numsectors; i++)
+	for (unsigned i = start + 1; i < level.sectors.Size(); i++)
 	{
 		if (tagManager.SectorHasTag(i, searchtag)) return i;
 	}

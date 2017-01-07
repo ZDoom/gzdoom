@@ -2781,14 +2781,13 @@ void AM_drawKeys ()
 void AM_drawThings ()
 {
 	AMColor color;
-	int		 i;
 	AActor*	 t;
 	mpoint_t p;
 	DAngle	 angle;
 
-	for (i=0;i<numsectors;i++)
+	for (auto &sec : level.sectors)
 	{
-		t = sectors[i].thinglist;
+		t = sec.thinglist;
 		while (t)
 		{
 			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP))

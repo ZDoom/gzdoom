@@ -350,7 +350,7 @@ void P_RunEffects ()
 {
 	if (players[consoleplayer].camera == NULL) return;
 
-	int	pnum = int(players[consoleplayer].camera->Sector - sectors) * numsectors;
+	int	pnum = int(players[consoleplayer].camera->Sector - &level.sectors[0]) * level.sectors.Size();
 
 	AActor *actor;
 	TThinkerIterator<AActor> iterator;
@@ -360,7 +360,7 @@ void P_RunEffects ()
 		if (actor->effects)
 		{
 			// Only run the effect if the actor is potentially visible
-			int rnum = pnum + int(actor->Sector - sectors);
+			int rnum = pnum + int(actor->Sector - &level.sectors[0]);
 			if (rejectmatrix == NULL || !(rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
 				P_RunEffect (actor, actor->effects);
 		}

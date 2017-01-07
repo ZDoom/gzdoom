@@ -122,10 +122,10 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 
 	// Bit arrays that mark whether a line or sector is to be attached.
 	BYTE *found_lines = new BYTE[(numlines+7)/8];
-	BYTE *found_sectors = new BYTE[(numsectors+7)/8];
+	BYTE *found_sectors = new BYTE[(level.sectors.Size()+7)/8];
 
 	memset(found_lines, 0, sizeof (BYTE) * ((numlines+7)/8));
-	memset(found_sectors, 0, sizeof (BYTE) * ((numsectors+7)/8));
+	memset(found_sectors, 0, sizeof (BYTE) * ((level.sectors.Size()+7)/8));
 
 	// mark all lines and sectors that are already attached to this one
 	// and clear the arrays. The old data will be re-added automatically
@@ -138,7 +138,7 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 
 	for (unsigned i=0; i < scrollplane.AttachedSectors.Size(); i++)
 	{
-		int sec = int(scrollplane.AttachedSectors[i] - sectors);
+		int sec = scrollplane.AttachedSectors[i]->sectornum;
 		found_sectors[sec>>3] |= 1 << (sec&7);
 	}
 
@@ -167,7 +167,7 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 		int sec;
 		while ((sec = it.Next()) >= 0)
 		{
-			for (auto ln : sectors[sec].Lines)
+			for (auto ln : level.sectors[sec].Lines)
 			{
 				if (lineid != 0 && !tagManager.LineHasID(ln, lineid)) continue;
 
@@ -189,21 +189,21 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 		{
 			scrollplane.AttachedLines.Push(&lines[i]);
 
-			v = int(lines[i].frontsector - sectors);
-			assert(v < numsectors);
+			v = lines[i].frontsector->sectornum;
+			assert(v < (int)level.sectors.Size());
 			found_sectors[v>>3] |= 1 << (v&7);
 
-			v = int(lines[i].backsector - sectors);
-			assert(v < numsectors);
+			v = lines[i].backsector->sectornum;
+			assert(v < (int)level.sectors.Size());
 			found_sectors[v>>3] |= 1 << (v&7);
 		}
 	}
 
-	for (int i=0; i < numsectors; i++)
+	for (unsigned i=0; i < level.sectors.Size(); i++)
 	{
 		if (found_sectors[i>>3] & (1 << (i&7)))
 		{
-			scrollplane.AttachedSectors.Push(&sectors[i]);
+			scrollplane.AttachedSectors.Push(&level.sectors[i]);
 		}
 	}
 

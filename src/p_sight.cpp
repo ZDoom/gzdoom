@@ -821,7 +821,7 @@ bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 
 	const sector_t *s1 = t1->Sector;
 	const sector_t *s2 = t2->Sector;
-	int pnum = int(s1 - sectors) * numsectors + int(s2 - sectors);
+	int pnum = int(s1 - &level.sectors[0]) * level.sectors.Size() + int(s2 - &level.sectors[0]);
 
 //
 // check for trivial rejection

@@ -324,7 +324,7 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		new DFlicker (&sectors[secnum], upper, lower);
+		new DFlicker (&level.sectors[secnum], upper, lower);
 	}
 }
 
@@ -501,7 +501,7 @@ void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 		if (sec->lightingdata)
 			continue;
 		
@@ -515,7 +515,7 @@ void EV_StartLightStrobing (int tag, int utics, int ltics)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 		if (sec->lightingdata)
 			continue;
 		
@@ -537,7 +537,7 @@ void EV_TurnTagLightsOff (int tag)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sector = sectors + secnum;
+		sector_t *sector = &level.sectors[secnum];
 		int min = sector->lightlevel;
 
 		for (auto ln : sector->Lines)
@@ -566,7 +566,7 @@ void EV_LightTurnOn (int tag, int bright)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sector = sectors + secnum;
+		sector_t *sector = &level.sectors[secnum];
 		int tbright = bright; //jff 5/17/98 search for maximum PER sector
 
 		// bright = -1 means to search ([RH] Not 0)
@@ -619,7 +619,7 @@ void EV_LightTurnOnPartway (int tag, double frac)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *temp, *sector = &sectors[secnum];
+		sector_t *temp, *sector = &level.sectors[secnum];
 		int bright = 0, min = sector->lightlevel;
 
 		for (auto ln : sector->Lines)
@@ -655,7 +655,7 @@ void EV_LightChange (int tag, int value)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sectors[secnum].SetLightLevel(sectors[secnum].lightlevel + value);
+		level.sectors[secnum].SetLightLevel(level.sectors[secnum].lightlevel + value);
 	}
 }
 
@@ -821,7 +821,7 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 		if (sec->lightingdata)
 			continue;
 		
@@ -841,7 +841,7 @@ void EV_StartLightFading (int tag, int value, int tics)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sec = &sectors[secnum];
+		sector_t *sec = &level.sectors[secnum];
 		if (sec->lightingdata)
 			continue;
 

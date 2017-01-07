@@ -185,19 +185,19 @@ void DFloor::Tick ()
 				sector_t *sec = m_Sector;
 				sec->stairlock = -1;				// thinker done, promote lock to -1
 
-				while (sec->prevsec != -1 && sectors[sec->prevsec].stairlock != -2)
-					sec = &sectors[sec->prevsec];	// search for a non-done thinker
+				while (sec->prevsec != -1 && level.sectors[sec->prevsec].stairlock != -2)
+					sec = &level.sectors[sec->prevsec];	// search for a non-done thinker
 				if (sec->prevsec == -1)				// if all thinkers previous are done
 				{
 					sec = m_Sector;			// search forward
-					while (sec->nextsec != -1 && sectors[sec->nextsec].stairlock != -2) 
-						sec = &sectors[sec->nextsec];
+					while (sec->nextsec != -1 && level.sectors[sec->nextsec].stairlock != -2)
+						sec = &level.sectors[sec->nextsec];
 					if (sec->nextsec == -1)			// if all thinkers ahead are done too
 					{
 						while (sec->prevsec != -1)	// clear all locks
 						{
 							sec->stairlock = 0;
-							sec = &sectors[sec->prevsec];
+							sec = &level.sectors[sec->prevsec];
 						}
 						sec->stairlock = 0;
 					}
@@ -528,7 +528,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	FSectorTagIterator it(tag, line);
 	while ((secnum = it.Next()) >= 0)
 	{
-		rtn |= P_CreateFloor(&sectors[secnum], floortype, line, speed, height, crush, change, hexencrush, hereticlower);
+		rtn |= P_CreateFloor(&level.sectors[secnum], floortype, line, speed, height, crush, change, hexencrush, hereticlower);
 	}
 	return rtn;
 }
@@ -547,7 +547,7 @@ bool EV_FloorCrushStop (int tag)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *sec = sectors + secnum;
+		sector_t *sec = &level.sectors[secnum];
 
 		if (sec->floordata && sec->floordata->IsKindOf (RUNTIME_CLASS(DFloor)) &&
 			barrier_cast<DFloor *>(sec->floordata)->m_Type == DFloor::floorRaiseAndCrush)
@@ -602,7 +602,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	bool compatible = tag != 0 && (i_compatflags & COMPATF_STAIRINDEX);
 	while ((secnum = itr.NextCompat(compatible, secnum)) >= 0)
 	{
-		sec = &sectors[secnum];
+		sec = &level.sectors[secnum];
 
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		//jff 2/26/98 add special lockout condition to wait for entire
@@ -664,7 +664,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 					}
 					
 				}
-				newsecnum = (int)(tsec - sectors);
+				newsecnum = tsec->sectornum;
 			}
 			else
 			{
@@ -674,14 +674,14 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 						continue;
 
 					tsec = line->frontsector;
-					newsecnum = (int)(tsec-sectors);
+					newsecnum = tsec->sectornum;
 
 					if (secnum != newsecnum)
 						continue;
 
 					tsec = line->backsector;
 					if (!tsec) continue;	//jff 5/7/98 if no backside, continue
-					newsecnum = (int)(tsec - sectors);
+					newsecnum = tsec->sectornum;
 
 					if (!igntxt && tsec->GetTexture(sector_t::floor) != texture)
 						continue;
@@ -746,7 +746,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		} while (ok);
 		// [RH] make sure the first sector doesn't point to a previous one, otherwise
 		// it can infinite loop when the first sector stops moving.
-		sectors[osecnum].prevsec = -1;	
+		level.sectors[osecnum].prevsec = -1;
 	}
 	return rtn;
 }
@@ -773,7 +773,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 	FSectorTagIterator itr(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		s1 = &sectors[secnum];					// s1 is pillar's sector
+		s1 = &level.sectors[secnum];					// s1 is pillar's sector
 
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (s1->PlaneMoving(sector_t::floor))
@@ -990,7 +990,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 	// act on all sectors with the same tag as the triggering linedef
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &sectors[secnum];
+		sec = &level.sectors[secnum];
 		// If either floor or ceiling is already activated, skip it
 		if (sec->PlaneMoving(sector_t::floor) || sec->ceilingdata) //jff 2/22/98
 			continue; // the loop used to break at the end if tag were 0, but would miss that step if "continue" occured [FDARI]
@@ -1083,7 +1083,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sec = &sectors[secnum];
+		sec = &level.sectors[secnum];
               
 		rtn = true;
 
@@ -1298,7 +1298,7 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 
 	while ((sectorIndex = itr.Next()) >= 0)
 	{
-		sector = &sectors[sectorIndex];
+		sector = &level.sectors[sectorIndex];
 		if ((!ceiling && sector->PlaneMoving(sector_t::floor)) || 
 			(ceiling && sector->PlaneMoving(sector_t::ceiling)))
 		{ // Already busy with another thinker

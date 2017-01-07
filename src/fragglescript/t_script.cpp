@@ -489,7 +489,7 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
 			FSectorTagIterator itr(script->wait_data);
 			while ((secnum = itr.Next()) >= 0)
 			{
-				sector_t *sec = &sectors[secnum];
+				sector_t *sec = &level.sectors[secnum];
 				if(sec->floordata || sec->ceilingdata || sec->lightingdata)
 					return false;        // not finished
 			}

@@ -288,7 +288,9 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedAngle = ViewAngle;
 	savedviewactor=GLRenderer->mViewActor;
 	savedviewarea=in_area;
-	savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+	savedviewpath[0] = ViewPath[0];
+	savedviewpath[1] = ViewPath[1];
+	savedvisibility = camera ? camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 
 
 	PrevPortal = GLRenderer->mCurrentPortal;
@@ -350,13 +352,15 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
+		ViewPath[0] = savedviewpath[0];
+		ViewPath[1] = savedviewpath[1];
 		ViewPos = savedViewPos;
 		r_showviewer = savedshowviewer;
 		ViewActorPos = savedViewActorPos;
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
-		if (camera != nullptr) camera->renderflags = (camera->renderflags & ~RF_INVISIBLE) | savedvisibility;
+		if (camera != nullptr) camera->renderflags = (camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 		GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
@@ -1011,6 +1015,23 @@ void GLLineToLinePortal::DrawContents()
 	P_TranslatePortalXY(origin, ViewActorPos.X, ViewActorPos.Y);
 	P_TranslatePortalAngle(origin, ViewAngle);
 	P_TranslatePortalZ(origin, ViewPos.Z);
+	P_TranslatePortalXY(origin, ViewPath[0].X, ViewPath[0].Y);
+	P_TranslatePortalXY(origin, ViewPath[1].X, ViewPath[1].Y);
+	if (!r_showviewer && camera != nullptr && P_PointOnLineSidePrecise(ViewPath[0], glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(ViewPath[1], glport->lines[0]->mDestination))
+	{
+		double distp = (ViewPath[0] - ViewPath[1]).Length();
+		if (distp > EQUAL_EPSILON)
+		{
+			double dist1 = (ViewPos - ViewPath[0]).Length();
+			double dist2 = (ViewPos - ViewPath[1]).Length();
+
+			if (dist1 + dist2 < distp + 1)
+			{
+				camera->renderflags |= RF_MAYBEINVISIBLE;
+			}
+		}
+	}
+
 
 	SaveMapSection();
 

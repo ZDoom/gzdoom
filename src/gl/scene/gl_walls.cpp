@@ -1245,7 +1245,7 @@ void GLWall::ClipFFloors(seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
 {
 	TArray<F3DFloor *> & frontffloors = frontsector->e->XFloor.ffloors;
 
-	int flags = ffloor->flags & (FF_SWIMMABLE | FF_TRANSLUCENT);
+	const unsigned int flags = ffloor->flags & (FF_SWIMMABLE | FF_TRANSLUCENT);
 
 	for (unsigned int i = 0; i < frontffloors.Size(); i++)
 	{

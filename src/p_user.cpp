@@ -95,9 +95,19 @@ static int PredictionLerptics;
 
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(APlayerPawn)];
-static TArray<sector_t *> PredictionTouchingSectorsBackup;
 static TArray<AActor *> PredictionSectorListBackup;
-static TArray<msecnode_t *> PredictionSector_sprev_Backup;
+
+static TArray<sector_t *> PredictionTouchingSectorsBackup;
+static TArray<msecnode_t *> PredictionTouchingSectors_sprev_Backup;
+
+static TArray<sector_t *> PredictionRenderSectorsBackup;
+static TArray<msecnode_t *> PredictionRenderSectors_sprev_Backup;
+
+static TArray<sector_t *> PredictionPortalSectorsBackup;
+static TArray<msecnode_t *> PredictionPortalSectors_sprev_Backup;
+
+static TArray<FLinePortal *> PredictionPortalLinesBackup;
+static TArray<portnode_t *> PredictionPortalLines_sprev_Backup;
 
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
@@ -2776,6 +2786,100 @@ bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &re
 	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
 }
 
+template<class nodetype, class linktype>
+void BackupNodeList(AActor *act, nodetype *head, nodetype *linktype::*otherlist, TArray<nodetype*, nodetype*> &prevbackup, TArray<linktype *, linktype *> &otherbackup)
+{
+	// The ordering of the touching_sectorlist needs to remain unchanged
+	// Also store a copy of all previous sector_thinglist nodes
+	prevbackup.Clear();
+	otherbackup.Clear();
+
+	for (auto mnode = head; mnode != nullptr; mnode = mnode->m_tnext)
+	{
+		otherbackup.Push(mnode->m_sector);
+
+		for (auto snode = mnode->m_sector->*otherlist; snode; snode = snode->m_snext)
+		{
+			if (snode->m_thing == act)
+			{
+				prevbackup.Push(snode->m_sprev);
+				break;
+			}
+		}
+	}
+}
+
+template<class nodetype, class linktype>
+nodetype *RestoreNodeList(AActor *act, nodetype *head, nodetype *linktype::*otherlist, TArray<nodetype*, nodetype*> &prevbackup, TArray<linktype *, linktype *> &otherbackup)
+{
+	// Destroy old refrences
+	nodetype *node = head;
+	while (node)
+	{
+		node->m_thing = NULL;
+		node = node->m_tnext;
+	}
+
+	// Make the sector_list match the player's touching_sectorlist before it got predicted.
+	P_DelSeclist(head, otherlist);
+	head = NULL;
+	for (auto i = otherbackup.Size(); i-- > 0;)
+	{
+		head = P_AddSecnode(otherbackup[i], act, head, otherbackup[i]->*otherlist);
+	}
+	//act->touching_sectorlist = ctx.sector_list;	// Attach to thing
+	//ctx.sector_list = NULL;		// clear for next time
+
+	// In the old code this block never executed because of the commented-out NULL assignment above. Needs to be checked
+	node = head;
+	while (node)
+	{
+		if (node->m_thing == NULL)
+		{
+			if (node == head)
+				head = node->m_tnext;
+			node = P_DelSecnode(node, otherlist);
+		}
+		else
+		{
+			node = node->m_tnext;
+		}
+	}
+
+	nodetype *snode;
+
+	// Restore sector thinglist order
+	for (auto i = otherbackup.Size(); i-- > 0;)
+	{
+		// If we were already the head node, then nothing needs to change
+		if (prevbackup[i] == NULL)
+			continue;
+
+		for (snode = otherbackup[i]->*otherlist; snode; snode = snode->m_snext)
+		{
+			if (snode->m_thing == act)
+			{
+				if (snode->m_sprev)
+					snode->m_sprev->m_snext = snode->m_snext;
+				else
+					snode->m_sector->*otherlist = snode->m_snext;
+				if (snode->m_snext)
+					snode->m_snext->m_sprev = snode->m_sprev;
+
+				snode->m_sprev = prevbackup[i];
+
+				// At the moment, we don't exist in the list anymore, but we do know what our previous node is, so we set its current m_snext->m_sprev to us.
+				if (snode->m_sprev->m_snext)
+					snode->m_sprev->m_snext->m_sprev = snode;
+				snode->m_snext = snode->m_sprev->m_snext;
+				snode->m_sprev->m_snext = snode;
+				break;
+			}
+		}
+	}
+	return head;
+}
+
 void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
@@ -2810,28 +2914,10 @@ void P_PredictPlayer (player_t *player)
 	act->flags2 &= ~MF2_PUSHWALL;
 	player->cheats |= CF_PREDICTING;
 
-	// The ordering of the touching_sectorlist needs to remain unchanged
-	// Also store a copy of all previous sector_thinglist nodes
-	msecnode_t *mnode = act->touching_sectorlist;
-	msecnode_t *snode;
-	PredictionSector_sprev_Backup.Clear();
-	PredictionTouchingSectorsBackup.Clear ();
-
-	while (mnode != NULL)
-	{
-		PredictionTouchingSectorsBackup.Push (mnode->m_sector);
-
-		for (snode = mnode->m_sector->touching_thinglist; snode; snode = snode->m_snext)
-		{
-			if (snode->m_thing == act)
-			{
-				PredictionSector_sprev_Backup.Push(snode->m_sprev);
-				break;
-			}
-		}
-
-		mnode = mnode->m_tnext;
-	}
+	BackupNodeList(act, act->touching_sectorlist, &sector_t::touching_thinglist, PredictionTouchingSectors_sprev_Backup, PredictionTouchingSectorsBackup);
+	BackupNodeList(act, act->touching_rendersectors, &sector_t::touching_renderthings, PredictionRenderSectors_sprev_Backup, PredictionRenderSectorsBackup);
+	BackupNodeList(act, act->touching_sectorportallist, &sector_t::sectorportal_thinglist, PredictionPortalSectors_sprev_Backup, PredictionPortalSectorsBackup);
+	BackupNodeList(act, act->touching_lineportallist, &FLinePortal::lineportal_thinglist, PredictionPortalLines_sprev_Backup, PredictionPortalLinesBackup);
 
 	// Keep an ordered list off all actors in the linked sector.
 	PredictionSectorListBackup.Clear();
@@ -2941,6 +3027,12 @@ void P_UnPredictPlayer ()
 		player->camera = savedcamera;
 
 		FLinkContext ctx;
+		// Unlink from all list, includeing those which are not being handled by UnlinkFromWorld.
+		auto sectorportal_list = act->touching_sectorportallist;
+		auto lineportal_list = act->touching_lineportallist;
+		act->touching_sectorportallist = nullptr;
+		act->touching_lineportallist = nullptr;
+
 		act->UnlinkFromWorld(&ctx);
 		memcpy(&act->snext, PredictionActorBackup, sizeof(APlayerPawn) - ((BYTE *)&act->snext - (BYTE *)act));
 
@@ -2969,71 +3061,10 @@ void P_UnPredictPlayer ()
 				*link = me;
 			}
 
-			// Destroy old refrences
-			msecnode_t *node = ctx.sector_list;
-			while (node)
-			{
-				node->m_thing = NULL;
-				node = node->m_tnext;
-			}
-
-			// Make the sector_list match the player's touching_sectorlist before it got predicted.
-			P_DelSeclist(ctx.sector_list, &sector_t::touching_thinglist);
-			ctx.sector_list = NULL;
-			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
-			{
-				ctx.sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, ctx.sector_list, PredictionTouchingSectorsBackup[i]->touching_thinglist);
-			}
-			act->touching_sectorlist = ctx.sector_list;	// Attach to thing
-			ctx.sector_list = NULL;		// clear for next time
-
-			// Huh???
-			node = ctx.sector_list;
-			while (node)
-			{
-				if (node->m_thing == NULL)
-				{
-					if (node == ctx.sector_list)
-						ctx.sector_list = node->m_tnext;
-					node = P_DelSecnode(node, &sector_t::touching_thinglist);
-				}
-				else
-				{
-					node = node->m_tnext;
-				}
-			}
-
-			msecnode_t *snode;
-
-			// Restore sector thinglist order
-			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
-			{
-				// If we were already the head node, then nothing needs to change
-				if (PredictionSector_sprev_Backup[i] == NULL)
-					continue;
-
-				for (snode = PredictionTouchingSectorsBackup[i]->touching_thinglist; snode; snode = snode->m_snext)
-				{
-					if (snode->m_thing == act)
-					{
-						if (snode->m_sprev)
-							snode->m_sprev->m_snext = snode->m_snext;
-						else
-							snode->m_sector->touching_thinglist = snode->m_snext;
-						if (snode->m_snext)
-							snode->m_snext->m_sprev = snode->m_sprev;
-
-						snode->m_sprev = PredictionSector_sprev_Backup[i];
-
-						// At the moment, we don't exist in the list anymore, but we do know what our previous node is, so we set its current m_snext->m_sprev to us.
-						if (snode->m_sprev->m_snext)
-							snode->m_sprev->m_snext->m_sprev = snode;
-						snode->m_snext = snode->m_sprev->m_snext;
-						snode->m_sprev->m_snext = snode;
-						break;
-					}
-				}
-			}
+			act->touching_sectorlist = RestoreNodeList(act, ctx.sector_list, &sector_t::touching_thinglist, PredictionTouchingSectors_sprev_Backup, PredictionTouchingSectorsBackup);
+			act->touching_rendersectors = RestoreNodeList(act, ctx.render_list, &sector_t::touching_renderthings, PredictionRenderSectors_sprev_Backup, PredictionRenderSectorsBackup);
+			act->touching_sectorportallist = RestoreNodeList(act, sectorportal_list, &sector_t::sectorportal_thinglist, PredictionPortalSectors_sprev_Backup, PredictionPortalSectorsBackup);
+			act->touching_lineportallist = RestoreNodeList(act, lineportal_list, &FLinePortal::lineportal_thinglist, PredictionPortalLines_sprev_Backup, PredictionPortalLinesBackup);
 		}
 
 		// Now fix the pointers in the blocknode chain

@@ -302,9 +302,9 @@ static void PrepareSectorData()
 static void PrepareTransparentDoors(sector_t * sector)
 {
 	bool solidwall=false;
-	int notextures=0;
-	int nobtextures=0;
-	int selfref=0;
+	unsigned int notextures=0;
+	unsigned int nobtextures=0;
+	unsigned int selfref=0;
 	sector_t * nextsec=NULL;
 
 #ifdef _DEBUG

@@ -285,7 +285,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (translation <= 0) translation = -translation;
 	else
 	{
-		alphatrans = (gl.legacyMode && translation == TRANSLATION(TRANSLATION_Standard, 8));
+		alphatrans = (gl.legacyMode && DWORD(translation) == TRANSLATION(TRANSLATION_Standard, 8));
 		translation = GLTranslationPalette::GetInternalTranslation(translation);
 	}
 

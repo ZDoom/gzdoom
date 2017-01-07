@@ -38,19 +38,17 @@ class APlayerPawn;
 struct line_t;
 struct sector_t;
 struct msecnode_t;
+struct portnode_t;
 struct secplane_t;
 struct FCheckPosition;
 struct FTranslatedLineTarget;
+struct FLinePortal;
 
 #include <stdlib.h>
 
 #define STEEPSLOPE		(46342/65536.)	// [RH] Minimum floorplane.c value for walking
 
 #define BONUSADD		6
-
-// mapblocks are used to check movement
-// against lines and things
-#define MAPBLOCKUNITS	128
 
 // Inspired by Maes
 extern int bmapnegx;
@@ -393,8 +391,14 @@ int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 						FName damageType, int flags, int fulldamagedistance=0);
 
 void	P_DelSeclist(msecnode_t *, msecnode_t *sector_t::*seclisthead);
-msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist);
-msecnode_t*	P_DelSecnode(msecnode_t *, msecnode_t *sector_t::*head);
+void	P_DelSeclist(portnode_t *, portnode_t *FLinePortal::*seclisthead);
+
+template<class nodetype, class linktype>
+nodetype *P_AddSecnode(linktype *s, AActor *thing, nodetype *nextnode, nodetype *&sec_thinglist);
+
+template<class nodetype, class linktype>
+nodetype* P_DelSecnode(nodetype *, nodetype *linktype::*head);
+
 msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector_list, msecnode_t *sector_t::*seclisthead);
 double	P_GetMoveFactor(const AActor *mo, double *frictionp);	// phares  3/6/98
 double		P_GetFriction(const AActor *mo, double *frictionfactor);

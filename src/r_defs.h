@@ -1048,7 +1048,7 @@ public:
 	// list of mobjs that are at least partially in the sector
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
-	struct msecnode_t *render_thinglist;				// for cross-portal rendering.
+	struct msecnode_t *sectorportal_thinglist;				// for cross-portal rendering.
 	struct msecnode_t *touching_renderthings; // this is used to allow wide things to be rendered not only from their main sector.
 
 	double gravity;			// [RH] Sector gravity (1.0 is normal)
@@ -1371,7 +1371,7 @@ struct msecnode_t
 // use the same memory layout as msecnode_t so both can be used from the same freelist.
 struct portnode_t
 {
-	FLinePortal			*m_portal;	// a portal containing this object
+	FLinePortal			*m_sector;	// a portal containing this object (no, this isn't a sector, but if we want to use templates it needs the same variable names as msecnode_t.)
 	AActor				*m_thing;	// this object
 	struct portnode_t	*m_tprev;	// prev msecnode_t for this thing
 	struct portnode_t	*m_tnext;	// next msecnode_t for this thing

@@ -1297,7 +1297,7 @@ public:
 		sec->SetAlpha(sector_t::ceiling, 1.);
 		sec->thinglist = nullptr;
 		sec->touching_thinglist = nullptr;		// phares 3/14/98
-		sec->render_thinglist = nullptr;
+		sec->sectorportal_thinglist = nullptr;
 		sec->touching_renderthings = nullptr;
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
@@ -1695,7 +1695,7 @@ public:
 			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
 
-		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1 && fogdensity == -1)
+		if (lightcolor == ~0u && fadecolor == ~0u && desaturation == -1 && fogdensity == -1)
 		{
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -1714,8 +1714,8 @@ public:
 		}
 		else
 		{
-			if (lightcolor == -1) lightcolor = PalEntry(255,255,255);
-			if (fadecolor == -1)
+			if (lightcolor == ~0u) lightcolor = PalEntry(255,255,255);
+			if (fadecolor == ~0u)
 			{
 				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 					fadecolor = level.outsidefog;

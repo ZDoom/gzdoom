@@ -323,7 +323,7 @@ void FGLRenderer::UpdateCameraExposure()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	// Find the average value:
-	for (int i = 0; i + 1 < mBuffers->ExposureLevels.Size(); i++)
+	for (unsigned int i = 0; i + 1 < mBuffers->ExposureLevels.Size(); i++)
 	{
 		const auto &level = mBuffers->ExposureLevels[i];
 		const auto &next = mBuffers->ExposureLevels[i + 1];

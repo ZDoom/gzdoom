@@ -88,7 +88,7 @@ extern int viewpitch;
 extern bool NoInterpolateView;
 extern bool r_showviewer;
 
-DWORD			gl_fixedcolormap;
+int			gl_fixedcolormap;
 area_t			in_area;
 TArray<BYTE> currentmapsection;
 int camtexcount;

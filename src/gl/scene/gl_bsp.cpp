@@ -383,7 +383,7 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 		GLRenderer->ProcessSprite(thing, sector, false);
 	}
 	
-	for (msecnode_t *node = sec->render_thinglist; node; node = node->m_snext)
+	for (msecnode_t *node = sec->sectorportal_thinglist; node; node = node->m_snext)
 	{
 		AActor *thing = node->m_thing;
 		FIntCVar *cvar = thing->GetClass()->distancecheck;

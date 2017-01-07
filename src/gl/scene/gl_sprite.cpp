@@ -1189,7 +1189,7 @@ void gl_RenderActorsInPortal(FGLLinePortal *glport)
 			if (port2 != nullptr && port->mDestination == port2->mOrigin && port->mOrigin == port2->mDestination)
 			{
 
-				for (portnode_t *node = port->render_thinglist; node != nullptr; node = node->m_snext)
+				for (portnode_t *node = port->lineportal_thinglist; node != nullptr; node = node->m_snext)
 				{
 					AActor *th = node->m_thing;
 

@@ -1060,7 +1060,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	player_t *player=&players[consoleplayer];
 	
-	if (particle->trans==0) return;
+	if (particle->alpha==0) return;
 
 	lightlevel = gl_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 		sector->GetCeilingLight() : sector->GetFloorLight());
@@ -1100,7 +1100,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		Colormap.ClearColor();
 	}
 
-	trans=particle->trans/255.0f;
+	trans=particle->alpha;
 	RenderStyle = STYLE_Translucent;
 	OverrideShader = 0;
 

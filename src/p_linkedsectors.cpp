@@ -86,6 +86,13 @@ bool sector_t::IsLinked(sector_t *other, bool ceiling) const
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, isLinked)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(other, sector_t);
+	PARAM_BOOL(ceiling);
+	ACTION_RETURN_BOOL(self->IsLinked(other, ceiling));
+}
 
 //============================================================================
 //

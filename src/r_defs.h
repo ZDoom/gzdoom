@@ -92,10 +92,7 @@ typedef double vtype;
 
 struct vertex_t
 {
-private:
 	DVector2 p;
-
-public:
 
 	void set(fixed_t x, fixed_t y)
 	{
@@ -136,7 +133,7 @@ public:
 
 	DVector2 fPos()
 	{
-		return { p.X, p.Y };
+		return p;
 	}
 
 	angle_t viewangle;	// precalculated angle for clipping

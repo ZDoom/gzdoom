@@ -45,11 +45,6 @@ FTagManager tagManager;
 //
 //-----------------------------------------------------------------------------
 
-static inline int sectindex(const sector_t *sector)
-{
-	return (int)(intptr_t)(sector - &level.sectors[0]);
-}
-
 static inline int lineindex(const line_t *line)
 {
 	return (int)(intptr_t)(line - lines);
@@ -194,7 +189,7 @@ void FTagManager::HashTags()
 
 bool FTagManager::SectorHasTags(const sector_t *sector) const
 {
-	int i = sectindex(sector);
+	int i = sector->Index();
 	return SectorHasTags(i);
 }
 
@@ -206,7 +201,7 @@ bool FTagManager::SectorHasTags(const sector_t *sector) const
 
 int FTagManager::GetFirstSectorTag(const sector_t *sect) const
 {
-	int i = sectindex(sect);
+	int i = sect->Index();
 	return SectorHasTags(i) ? allTags[startForSector[i]].tag : 0;
 }
 
@@ -238,7 +233,7 @@ bool FTagManager::SectorHasTag(int i, int tag) const
 
 bool FTagManager::SectorHasTag(const sector_t *sector, int tag) const
 {
-	return SectorHasTag(sectindex(sector), tag);
+	return SectorHasTag(sector->Index(), tag);
 }
 
 //-----------------------------------------------------------------------------

@@ -764,7 +764,7 @@ void ProcessEDSectors()
 	{
 		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDSector)
 		{
-			sectorrecord[lines[i].frontsector - &level.sectors[0]] = lines[i].args[0];
+			sectorrecord[lines[i].frontsector->Index()] = lines[i].args[0];
 			lines[i].special = 0;
 		}
 	}

@@ -3179,11 +3179,11 @@ static void P_GroupLines (bool buildmap)
 		auto li = &lines[i];
 		if (li->frontsector != NULL)
 		{
-			li->frontsector->Lines[linesDoneInEachSector[li->frontsector - &level.sectors[0]]++] = li;
+			li->frontsector->Lines[linesDoneInEachSector[li->frontsector->Index()]++] = li;
 		}
 		if (li->backsector != NULL && li->backsector != li->frontsector)
 		{
-			li->backsector->Lines[linesDoneInEachSector[li->backsector - &level.sectors[0]]++] = li;
+			li->backsector->Lines[linesDoneInEachSector[li->backsector->Index()]++] = li;
 		}
 	}
 	

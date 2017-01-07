@@ -381,7 +381,7 @@ static void PrepareTransparentDoors(sector_t * sector)
 
 static void AddToVertex(const sector_t * sec, TArray<int> & list)
 {
-	int secno = int(sec-&level.sectors[0]);
+	int secno = sec->Index();
 
 	for(unsigned i=0;i<list.Size();i++)
 	{

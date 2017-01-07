@@ -441,7 +441,7 @@ void P_SpawnScrollers(void)
 			{
 				// if 1, then displacement
 				// if 2, then accelerative (also if 3)
-				control = int(l->sidedef[0]->sector - &level.sectors[0]);
+				control = l->sidedef[0]->sector->Index();
 				if (l->args[1] & 2)
 					accel = 1;
 			}
@@ -478,7 +478,7 @@ void P_SpawnScrollers(void)
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
-					new DScroller(EScroll::sc_ceiling, -dx, dy, control, int(line->frontsector - &level.sectors[0]), accel);
+					new DScroller(EScroll::sc_ceiling, -dx, dy, control, line->frontsector->Index(), accel);
 				}
 			}
 			break;
@@ -498,7 +498,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
-						new DScroller(EScroll::sc_floor, -dx, dy, control, int(line->frontsector - &level.sectors[0]), accel);
+						new DScroller(EScroll::sc_floor, -dx, dy, control, line->frontsector->Index(), accel);
 					}
 				}
 			}
@@ -516,7 +516,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
-						new DScroller (EScroll::sc_carry, dx, dy, control, int(line->frontsector-&level.sectors[0]), accel);
+						new DScroller (EScroll::sc_carry, dx, dy, control, line->frontsector->Index(), accel);
 					}
 				}
 			}

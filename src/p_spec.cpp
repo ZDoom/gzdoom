@@ -433,7 +433,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->isSecret())
 	{
 		sector->ClearSecret();
-		P_GiveSecret(player->mo, true, true, int(sector - &level.sectors[0]));
+		P_GiveSecret(player->mo, true, true, sector->Index());
 	}
 }
 
@@ -1157,7 +1157,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, int(sector - &level.sectors[0]), 0);
+		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, sector->Index(), 0);
 		keepspecial = true;
 		break;
 
@@ -1215,14 +1215,14 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, int(sector-&level.sectors[0]), 0);
+			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, sector->Index(), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
 					sector->special <= Carry_East35)
 		{ // Heretic scroll special
 			// Only east scrollers also scroll the texture
 			P_CreateScroller(EScroll::sc_floor,
-				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, int(sector-&level.sectors[0]), 0);
+				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, sector->Index(), 0);
 		}
 		keepspecial = true;
 		break;

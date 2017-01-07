@@ -23,7 +23,6 @@
 #ifndef __R_DEFS_H__
 #define __R_DEFS_H__
 
-#include <forward_list>
 #include "doomdef.h"
 #include "templates.h"
 #include "memarena.h"
@@ -660,6 +659,7 @@ public:
 	double FindLowestCeilingPoint(vertex_t **v) const;
 	double FindHighestFloorPoint(vertex_t **v) const;
 	void RemoveForceField();
+	int Index() const { return int(this - &level.sectors[0]); }
 
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);

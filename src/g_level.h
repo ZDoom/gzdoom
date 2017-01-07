@@ -448,7 +448,6 @@ struct FLevelLocals
 	bool		IsFreelookAllowed() const;
 };
 
-
 struct cluster_info_t
 {
 	int			cluster;

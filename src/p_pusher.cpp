@@ -406,8 +406,7 @@ void P_SpawnPushers ()
 					if (thing->GetClass()->TypeName == NAME_PointPusher ||
 						thing->GetClass()->TypeName == NAME_PointPuller)
 					{
-						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
-									 0, thing, int(thing->Sector - &level.sectors[0]));
+						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}
 				}
 			}

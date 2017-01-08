@@ -220,7 +220,7 @@ class Ripper : Actor
 		Stop;
 	}
 	
-	int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
 	{
 		if (target is "Ironlich")
 		{ // Less damage to Ironlich bosses

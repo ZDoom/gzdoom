@@ -2336,6 +2336,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
 		}
 
+		PClass *clstype = static_cast<PClass *>(c->Type());
 		if (varflags & VARF_Virtual)
 		{
 			if (sym->Variants[0].Implementation == nullptr)
@@ -2349,7 +2350,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			}
 			if (forclass)
 			{
-				PClass *clstype = static_cast<PClass *>(c->Type());
 				int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
 				// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
 				if (varflags & VARF_Override)
@@ -2381,6 +2381,14 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			else
 			{
 				Error(p, "Virtual functions can only be defined for classes");
+			}
+		}
+		else if (forclass)
+		{
+			int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
+			if (vindex != -1)
+			{
+				Error(f, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
 			}
 		}
 	}

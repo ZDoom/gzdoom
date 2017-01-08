@@ -185,6 +185,11 @@ struct F3DFloor native
 {
 }
 
+struct Vertex native
+{
+	native readonly Vector2 p;
+}
+
 struct Line native
 {
 	enum ELineFlags
@@ -250,7 +255,18 @@ struct SecPlane native
 	native void ChangeHeight(double hdiff);
 	native double GetChangedHeight(double hdiff);
 	native double HeightDiff(double oldd, double newd = 0.0);
-	native double PointToDist(const DVector2 &xy, double z);
+	native double PointToDist(Vector2 xy, double z);
+}
+
+// This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
+struct SecSpecial
+{
+	Name damagetype;
+	int damageamount;
+	short special;
+	short damageinterval;
+	short leakydamage;
+	int Flags;
 }
 
 struct Sector native
@@ -345,6 +361,14 @@ struct Sector native
 		SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
 		SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
 	}
+	
+	enum EMoveResult 
+	{ 
+		MOVE_OK, 
+		MOVE_CRUSHED, 
+		MOVE_PASTDEST
+	};
+	
 	native uint			Flags;
 
 	native SectorAction		SecActTarget;
@@ -362,6 +386,101 @@ struct Sector native
 	native static Sector PointInSector(Vector2 pt);
 	native void SetColor(color c, int desat = 0);
 	native void SetFade(color c);
+
+	native bool PlaneMoving(int pos);
+	native int GetFloorLight();
+	native int GetCeilingLight();
+	native Sector GetHeightSec();
+	native void TransferSpecial(Sector model);
+	native void GetSpecial(out SecSpecial spec);
+	native void SetSpecial( SecSpecial spec);
+	native int GetTerrain(int pos);
+	native void CheckPortalPlane(int plane);
+	native double, Sector HighestCeilingAt(Vector2 a);
+	native double, Sector LowestFloorAt(Vector2 a);
+	native double, double GetFriction(int plane);
+
+	native void SetXOffset(int pos, double o);
+	native void AddXOffset(int pos, double o);
+	native double GetXOffset(int pos);
+	native void SetYOffset(int pos, double o);
+	native void AddYOffset(int pos, double o);
+	native double GetYOffset(int pos, bool addbase = true);
+	native void SetXScale(int pos, double o);
+	native double GetXScale(int pos);
+	native void SetYScale(int pos, double o);
+	native double GetYScale(int pos);
+	native void SetAngle(int pos, double o);
+	native double GetAngle(int pos, bool addbase = true);
+	native void SetBase(int pos, double y, double o);
+	native void SetAlpha(int pos, double o);
+	native double GetAlpha(int pos);
+	native int GetFlags(int pos);
+	native int GetVisFlags(int pos);
+	native void ChangeFlags(int pos, int And, int Or);
+	native int GetPlaneLight(int pos);
+	native void SetPlaneLight(int pos, int level);
+	native TextureID GetTexture(int pos);
+	native void SetTexture(int pos, TextureID tex, bool floorclip = true);
+	native double GetPlaneTexZ(int pos);
+	native void SetPlaneTexZ(int pos, double val, bool dirtify = false);	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
+	native void ChangeLightLevel(int newval);
+	native void SetLightLevel(int newval);
+	native int GetLightLevel();
+	native void AdjustFloorClip();
+	native bool IsLinked(Sector other, bool ceiling);
+
+	native bool PortalBlocksView(int plane);
+	native bool PortalBlocksSight(int plane);
+	native bool PortalBlocksMovement(int plane);
+	native bool PortalBlocksSound(int plane);
+	native bool PortalIsLinked(int plane);
+	native void ClearPortal(int plane);
+	native double GetPortalPlaneZ(int plane);
+	native Vector2 GetPortalDisplacement(int plane);
+	native int GetPortalType(int plane);
+	native int GetOppositePortalGroup(int plane);
+	native double CenterFloor();
+	native double CenterCeiling();
+
+	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
+	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
+
+	native Sector NextSpecialSector(int type, Sector prev);
+	native double, Vertex FindLowestFloorSurrounding();
+	native double, Vertex FindHighestFloorSurrounding();
+	native double, Vertex FindNextHighestFloor();
+	native double, Vertex FindNextLowestFloor();
+	native double, Vertex FindLowestCeilingSurrounding();
+	native double, Vertex FindHighestCeilingSurrounding();
+	native double, Vertex FindNextLowestCeiling();	
+	native double, Vertex FindNextHighestCeiling();
+
+	native double FindShortestTextureAround();
+	native double FindShortestUpperAround();
+	native Sector FindModelFloorSector(double floordestheight);
+	native Sector FindModelCeilingSector(double floordestheight);
+	native int FindMinSurroundingLight(int max);
+	native double, Vertex FindLowestCeilingPoint();
+	native double, Vertex FindHighestFloorPoint();
+
+
+	 bool isSecret()
+	 {
+		 return !!(Flags & SECF_SECRET);
+	 }
+
+	 bool wasSecret()
+	 {
+		 return !!(Flags & SECF_WASSECRET);
+	 }
+
+	 void ClearSecret()
+	 {
+		 Flags &= ~SECF_SECRET;
+	 }
+
+	
 }
 
 struct Wads

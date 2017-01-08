@@ -57,6 +57,14 @@ sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, NextSpecialSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(type);
+	PARAM_POINTER(nogood, sector_t);
+	ACTION_RETURN_POINTER(self->NextSpecialSector(type, nogood));
+}
+
 //
 // P_FindLowestFloorSurrounding()
 // FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS
@@ -96,8 +104,16 @@ double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 	return floor;
 }
 
-
-
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestFloorSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+	
 //
 // P_FindHighestFloorSurrounding()
 // FIND HIGHEST FLOOR HEIGHT IN SURROUNDING SECTORS
@@ -135,6 +151,16 @@ double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 	if (v != NULL)
 		*v = spot;
 	return floor;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestFloorSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
 }
 
 
@@ -190,6 +216,16 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 	return height;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextHighestFloor(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
 
 //
 // P_FindNextLowestFloor()
@@ -242,6 +278,17 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 	return height;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextLowestFloor(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
+
 //
 // P_FindNextLowestCeiling()
 //
@@ -292,6 +339,17 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 		*v = spot;
 	return height;
 }
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextLowestCeiling(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
 
 //
 // P_FindNextHighestCeiling()
@@ -344,6 +402,17 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 	return height;
 }
 
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextHighestCeiling(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
 //
 // FIND LOWEST CEILING IN THE SURROUNDING SECTORS
 //
@@ -380,6 +449,16 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 	if (v != NULL)
 		*v = spot;
 	return height;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestCeilingSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
 }
 
 
@@ -421,6 +500,17 @@ double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 	return height;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestCeilingSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
+
 //
 // P_FindShortestTextureAround()
 //
@@ -461,6 +551,13 @@ double sector_t::FindShortestTextureAround () const
 	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindShortestTextureAround)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	double h = self->FindShortestTextureAround();
+	ACTION_RETURN_FLOAT(h);
+}
+
 
 //
 // P_FindShortestUpperAround()
@@ -487,6 +584,12 @@ double sector_t::FindShortestUpperAround () const
 	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindShortestUpperAround)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	double h = self->FindShortestUpperAround();
+	ACTION_RETURN_FLOAT(h);
+}
 
 //
 // P_FindModelFloorSector()
@@ -517,6 +620,14 @@ sector_t *sector_t::FindModelFloorSector (double floordestheight) const
 		}
 	}
 	return NULL;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindModelFloorSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(fdh);
+	auto h = self->FindModelFloorSector(fdh);
+	ACTION_RETURN_POINTER(h);
 }
 
 
@@ -552,6 +663,14 @@ sector_t *sector_t::FindModelCeilingSector (double floordestheight) const
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindModelCeilingSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(fdh);
+	auto h = self->FindModelCeilingSector(fdh);
+	ACTION_RETURN_POINTER(h);
+}
+
 //
 // Find minimum light from an adjacent sector
 //
@@ -568,6 +687,14 @@ int sector_t::FindMinSurroundingLight (int min) const
 		}
 	}
 	return min;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindMinSurroundingLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(min);
+	auto h = self->FindMinSurroundingLight(min);
+	ACTION_RETURN_INT(h);
 }
 
 //
@@ -609,6 +736,16 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 	return height;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestFloorPoint(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
 //
 // Find the lowest point on the ceiling of the sector
 //
@@ -648,6 +785,20 @@ double sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	return height;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestCeilingPoint(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	return numret;
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 void sector_t::SetColor(int r, int g, int b, int desat)
 {
@@ -665,6 +816,11 @@ DEFINE_ACTION_FUNCTION(_Sector, SetColor)
 	P_RecalculateAttachedLights(self);
 	return 0;
 }
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 void sector_t::SetFade(int r, int g, int b)
 {
@@ -746,6 +902,11 @@ void sector_t::ClosestPoint(const DVector2 &in, DVector2 &out) const
 }
 
 
+//=====================================================================================
+//
+//
+//=====================================================================================
+
 bool sector_t::PlaneMoving(int pos)
 {
 	if (pos == floor)
@@ -754,6 +915,17 @@ bool sector_t::PlaneMoving(int pos)
 		return (ceilingdata != NULL || (planes[ceiling].Flags & PLANEF_BLOCKED));
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, PlaneMoving)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_BOOL(self->PlaneMoving(pos));
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 int sector_t::GetFloorLight () const
 {
@@ -767,6 +939,17 @@ int sector_t::GetFloorLight () const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, GetFloorLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(self->GetFloorLight());
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
+
 int sector_t::GetCeilingLight () const
 {
 	if (GetFlags(ceiling) & PLANEF_ABSLIGHTING)
@@ -779,6 +962,16 @@ int sector_t::GetCeilingLight () const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, GetCeilingLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(self->GetCeilingLight());
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 FSectorPortal *sector_t::ValidatePortal(int which)
 {
@@ -789,8 +982,12 @@ FSectorPortal *sector_t::ValidatePortal(int which)
 	return port;
 }
 
+//=====================================================================================
+//
+//
+//=====================================================================================
 
-sector_t *sector_t::GetHeightSec() const 
+sector_t *sector_t::GetHeightSec() const
 {
 	if (heightsec == NULL)
 	{
@@ -814,6 +1011,16 @@ sector_t *sector_t::GetHeightSec() const
 	return heightsec;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, GetHeightSec)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_POINTER(self->GetHeightSec());
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 void sector_t::GetSpecial(secspecial_t *spec)
 {
@@ -825,6 +1032,19 @@ void sector_t::GetSpecial(secspecial_t *spec)
 	spec->Flags = Flags & SECF_SPECIALFLAGS;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, GetSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, secspecial_t);
+	self->GetSpecial(spec);
+	return 0;
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
+
 void sector_t::SetSpecial(const secspecial_t *spec)
 {
 	special = spec->special;
@@ -834,6 +1054,20 @@ void sector_t::SetSpecial(const secspecial_t *spec)
 	leakydamage = spec->leakydamage;
 	Flags = (Flags & ~SECF_SPECIALFLAGS) | (spec->Flags & SECF_SPECIALFLAGS);
 }
+
+DEFINE_ACTION_FUNCTION(_Sector, SetSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, secspecial_t);
+	self->SetSpecial(spec);
+	return 0;
+}
+
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 void sector_t::TransferSpecial(sector_t *model)
 {
@@ -845,10 +1079,35 @@ void sector_t::TransferSpecial(sector_t *model)
 	Flags = (Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, TransferSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, sector_t);
+	self->TransferSpecial(spec);
+	return 0;
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
+
 int sector_t::GetTerrain(int pos) const
 {
 	return terrainnum[pos] >= 0 ? terrainnum[pos] : TerrainTypes[GetTexture(pos)];
 }
+
+DEFINE_ACTION_FUNCTION(_Sector, GetTerrain)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(self->GetTerrain(pos));
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 void sector_t::CheckPortalPlane(int plane)
 {
@@ -859,6 +1118,14 @@ void sector_t::CheckPortalPlane(int plane)
 		int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ? planeh > portalh : planeh < portalh);
 		planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, CheckPortalPlane)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(plane);
+	self->CheckPortalPlane(plane);
+	return 0;
 }
 
 //===========================================================================
@@ -884,6 +1151,18 @@ double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 	return check->ceilingplane.ZatPoint(pos);
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, HighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = self->HighestCeilingAt(DVector2(x, y), &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s, ATAG_GENERIC);
+	return numret;
+}
+
 //===========================================================================
 //
 // Finds the lowest floor at the given position, all portals considered
@@ -907,6 +1186,22 @@ double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 	return check->floorplane.ZatPoint(pos);
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = self->LowestFloorAt(DVector2(x, y), &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s, ATAG_GENERIC);
+	return numret;
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags, sector_t **resultsec, F3DFloor **resultffloor)
 {
@@ -979,6 +1274,11 @@ DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
 	}
 	return numret;
 }
+
+//=====================================================================================
+//
+//
+//=====================================================================================
 
 double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, double steph, sector_t **resultsec, F3DFloor **resultffloor)
 {
@@ -1080,6 +1380,17 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	}
 }
 
+ DEFINE_ACTION_FUNCTION(_Sector, GetFriction)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(plane);
+	 double mf;
+	 double h = self->GetFriction(plane, &mf);
+	 if (numret > 0) ret[0].SetFloat(h);
+	 if (numret > 1) ret[1].SetFloat(mf);
+	 return numret;
+ }
+
  //===========================================================================
  //
  // 
@@ -1107,6 +1418,32 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 return 0;
  }
 
+ //===========================================================================
+ //
+ // phares 3/12/98: End of friction effects
+ //
+ //===========================================================================
+
+ void sector_t::AdjustFloorClip() const
+ {
+	 msecnode_t *node;
+
+	 for (node = touching_thinglist; node; node = node->m_snext)
+	 {
+		 if (node->m_thing->flags2 & MF2_FLOORCLIP)
+		 {
+			 node->m_thing->AdjustFloorClip();
+		 }
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, AdjustFloorClip)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 self->AdjustFloorClip();
+	 return 0;
+ }
+
 
  DEFINE_ACTION_FUNCTION(_Sector, PointInSector)
  {
@@ -1114,6 +1451,325 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 PARAM_FLOAT(x);
 	 PARAM_FLOAT(y);
 	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXOffset(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, AddXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->AddXOffset(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetXOffset(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXOffset(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, AddYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->AddXOffset(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_BOOL_DEF(addbase);
+	 ACTION_RETURN_FLOAT(self->GetYOffset(pos, addbase));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXScale(pos, o);
+	 return 0;
+ }
+
+ 
+ DEFINE_ACTION_FUNCTION(_Sector, GetXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetXScale(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXScale(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetYScale(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetAngle)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_ANGLE(o);
+	 self->SetAngle(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetAngle)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_BOOL_DEF(addbase);
+	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees);
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetBase)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 PARAM_ANGLE(a);
+	 self->SetBase(pos, o, a);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetAlpha)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetAlpha(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetAlpha)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetAlpha(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetFlags(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetVisFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetVisFlags(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, ChangeFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(a);
+	 PARAM_INT(o);
+	 self->ChangeFlags(pos, a, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetPlaneLight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(o);
+	 self->SetPlaneLight(pos, o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetPlaneLight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetPlaneLight(pos));
+ }
+
+ class FSetTextureID : public FTextureID
+ {
+ public:
+	 FSetTextureID(int v) : FTextureID(v) {}
+ };
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(o);
+	 PARAM_BOOL_DEF(adj);
+	 self->SetTexture(pos, FSetTextureID(o), adj);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetTexture(pos).GetIndex());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetPlaneTexZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 PARAM_BOOL_DEF(dirty);
+	 self->SetPlaneTexZ(pos, o, dirty);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetPlaneTexZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetPlaneTexZ(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(o);
+	 self->SetLightLevel(o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, ChangeLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(o);
+	 self->ChangeLightLevel(o);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_INT(self->GetLightLevel());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, ClearSpecial)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 self->ClearSpecial();
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksView)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksView(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksSight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksSight(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksMovement)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksMovement(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksSound)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksSound(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, PortalIsLinked)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalIsLinked(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, ClearPortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 self->ClearPortal(pos);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetPortalPlaneZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetPortalPlaneZ(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetPortalDisplacement)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_VEC2(self->GetPortalDisplacement(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetPortalType)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetPortalType(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, GetOppositePortalGroup)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetOppositePortalGroup(pos));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, CenterFloor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_FLOAT(self->CenterFloor());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, CenterCeiling)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_FLOAT(self->CenterCeiling());
  }
 
 //===========================================================================
@@ -1448,3 +2104,5 @@ DEFINE_FIELD_X(Line, line_t, portalindex)
 DEFINE_FIELD_X(Secplane, secplane_t, normal)
 DEFINE_FIELD_X(Secplane, secplane_t, D)
 DEFINE_FIELD_X(Secplane, secplane_t, negiC)
+
+DEFINE_FIELD_X(Vertex, vertex_t, p)

@@ -1589,23 +1589,3 @@ double FrictionToMoveFactor(double friction)
 
 	return movefactor;
 }
-
-
-//
-// phares 3/12/98: End of friction effects
-//
-////////////////////////////////////////////////////////////////////////////
-
-void sector_t::AdjustFloorClip () const
-{
-	msecnode_t *node;
-
-	for (node = touching_thinglist; node; node = node->m_snext)
-	{
-		if (node->m_thing->flags2 & MF2_FLOORCLIP)
-		{
-			node->m_thing->AdjustFloorClip();
-		}
-	}
-}
-

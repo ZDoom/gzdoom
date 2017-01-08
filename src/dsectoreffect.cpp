@@ -278,6 +278,19 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 	return EMoveResult::ok;
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, MoveFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT(dest);
+	PARAM_INT(crush);
+	PARAM_INT(dir);
+	PARAM_BOOL(hex);
+	PARAM_BOOL_DEF(inst);
+	ACTION_RETURN_INT((int)self->MoveFloor(speed, dest, crush, dir, hex, inst));
+}
+
+
 EMoveResult sector_t::MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush)
 {
 	bool	 	flag;
@@ -390,4 +403,15 @@ EMoveResult sector_t::MoveCeiling(double speed, double dest, int crush, int dire
 		break;
 	}
 	return EMoveResult::ok;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, MoveCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT(dest);
+	PARAM_INT(crush);
+	PARAM_INT(dir);
+	PARAM_BOOL(hex);
+	ACTION_RETURN_INT((int)self->MoveCeiling(speed, dest, crush, dir, hex));
 }

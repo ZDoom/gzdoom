@@ -72,6 +72,7 @@
 #include "a_armor.h"
 #include "a_ammo.h"
 #include "a_health.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -7539,6 +7540,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	return 0;
 }
 
+double AActor::GetBobOffset(double ticfrac) const
+{
+	if (!(flags2 & MF2_FLOATBOB))
+	{
+		return 0;
+	}
+	return BobSin(FloatBobPhase + level.maptime + ticfrac);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT_DEF(frac);
+	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
+}
+
 
 
 
@@ -7637,13 +7654,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetDefaultByType)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(cls, AActor);
 	ACTION_RETURN_OBJECT(cls == nullptr? nullptr : GetDefaultByType(cls));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_DEF(frac);
-	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
 }
 
 // This combines all 3 variations of the internal function

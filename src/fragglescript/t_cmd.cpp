@@ -48,6 +48,7 @@
 #include "g_level.h"
 #include "r_renderer.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //

@@ -32,6 +32,7 @@
 #include "p_3dmidtex.h"
 #include "p_spec.h"
 #include "r_data/r_interpolate.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //

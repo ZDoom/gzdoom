@@ -52,6 +52,7 @@
 #include "d_player.h"
 #include "serializer.h"
 #include "v_text.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 

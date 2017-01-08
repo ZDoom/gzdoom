@@ -86,6 +86,7 @@
 #include "a_armor.h"
 #include "a_ammo.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 extern FILE *Logfile;
 
@@ -3332,16 +3333,14 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
-		for (int i = 0; i < numsides; ++i)
+		for (auto &side : level.sides)
 		{
-			side_t *wal = &sides[i];
-
 			for(int j=0;j<3;j++)
 			{
 				static BYTE bits[]={NOT_TOP, NOT_MIDDLE, NOT_BOTTOM};
-				if (!(flags & bits[j]) && wal->GetTexture(j) == picnum1)
+				if (!(flags & bits[j]) && side.GetTexture(j) == picnum1)
 				{
-					wal->SetTexture(j, picnum2);
+					side.SetTexture(j, picnum2);
 				}
 			}
 		}
@@ -4428,14 +4427,14 @@ int DLevelScript::SideFromID(int id, int side)
 	{
 		if (activationline == NULL) return -1;
 		if (activationline->sidedef[side] == NULL) return -1;
-		return activationline->sidedef[side]->Index;
+		return activationline->sidedef[side]->UDMFIndex;
 	}
 	else
 	{
 		int line = P_FindFirstLineFromID(id);
 		if (line == -1) return -1;
 		if (level.lines[line].sidedef[side] == NULL) return -1;
-		return level.lines[line].sidedef[side]->Index;
+		return level.lines[line].sidedef[side]->UDMFIndex;
 	}
 }
 

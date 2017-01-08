@@ -30,6 +30,7 @@
 #include "d_net.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR (Bool, ticker);
 EXTERN_CVAR (Bool, noisedebug);

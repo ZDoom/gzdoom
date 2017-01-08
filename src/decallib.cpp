@@ -49,6 +49,7 @@
 #include "colormatcher.h"
 #include "b_bot.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 FDecalLib DecalLibrary;
 

@@ -49,6 +49,7 @@
 #include "dsectoreffect.h"
 #include "serializer.h"
 #include "virtual.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //

@@ -30,7 +30,7 @@
 #include "r_defs.h"
 #include "r_sky.h"
 #include "g_level.h"
-
+#include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"

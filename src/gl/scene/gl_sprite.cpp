@@ -36,6 +36,7 @@
 #include "r_utility.h"
 #include "a_pickups.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"

@@ -63,6 +63,7 @@
 #include "r_utility.h"
 #include "a_keys.h"
 #include "intermission/intermission.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)

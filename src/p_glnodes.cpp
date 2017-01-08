@@ -67,6 +67,7 @@
 #include "m_misc.h"
 #include "r_utility.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
@@ -129,6 +130,7 @@ struct gl5_mapnode_t
 
 static int CheckForMissingSegs()
 {
+	auto numsides = level.sides.Size();
 	double *added_seglen = new double[numsides];
 	int missing = 0;
 
@@ -141,13 +143,13 @@ static int CheckForMissingSegs()
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
 			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
-			added_seglen[seg->sidedef - sides] += vec1.Length();
+			added_seglen[seg->sidedef->Index()] += vec1.Length();
 		}
 	}
 
-	for(int i=0;i<numsides;i++)
+	for(unsigned i=0;i<numsides;i++)
 	{
-		double linelen = sides[i].linedef->Delta().Length();
+		double linelen = level.sides[i].linedef->Delta().Length();
 		missing += (added_seglen[i] < linelen - 1.);
 	}
 
@@ -1001,7 +1003,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			FNodeBuilder::FLevel leveldata =
 			{
 				vertexes, numvertexes,
-				sides, numsides,
+				&level.sides[0], (int)level.sides.Size(),
 				&level.lines[0], (int)level.lines.Size(),
 				0, 0, 0, 0
 			};

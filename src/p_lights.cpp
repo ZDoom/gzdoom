@@ -32,6 +32,7 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "p_maputl.h"
+#include "g_levellocals.h"
 
 // State.
 #include "r_state.h"

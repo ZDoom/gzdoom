@@ -67,6 +67,7 @@
 #include "d_player.h"
 #include "gstrings.h"
 #include "c_consolebuffer.h"
+#include "g_levellocals.h"
 
 #include "gi.h"
 

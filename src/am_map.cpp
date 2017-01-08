@@ -70,6 +70,7 @@
 #include "po_man.h"
 #include "a_keys.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 
 //=============================================================================

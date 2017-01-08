@@ -30,6 +30,7 @@
 #include "serializer.h"
 #include "v_text.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 
 // MACROS ------------------------------------------------------------------

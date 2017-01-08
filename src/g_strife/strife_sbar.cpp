@@ -19,6 +19,7 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 // Number of tics to move the popscreen up and down.
 #define POP_TIME (TICRATE/8)

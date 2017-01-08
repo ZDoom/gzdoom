@@ -656,7 +656,7 @@ public:
 	double FindLowestCeilingPoint(vertex_t **v) const;
 	double FindHighestFloorPoint(vertex_t **v) const;
 	void RemoveForceField();
-	int Index() const { return int(this - &level.sectors[0]); }
+	int Index() const;
 
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
@@ -1158,7 +1158,7 @@ struct side_t
 	WORD		TexelLength;
 	SWORD		Light;
 	BYTE		Flags;
-	int			Index;		// needed to access custom UDMF fields which are stored in loading order.
+	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 
 	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
@@ -1266,6 +1266,8 @@ struct side_t
 	vertex_t *V1() const;
 	vertex_t *V2() const;
 
+	int Index() const;
+
 	//For GL
 	FLightNode * lighthead;				// all blended lights that may affect this wall
 
@@ -1338,10 +1340,7 @@ struct line_t
 		return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
 	}
 
-	int Index() const
-	{
-		return int(this - &level.lines[0]);
-	}
+	int Index() const;
 };
 
 // phares 3/14/98

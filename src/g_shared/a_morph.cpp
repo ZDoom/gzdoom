@@ -16,6 +16,7 @@
 #include "d_player.h"
 #include "a_armor.h"
 #include "r_data/sprites.h"
+#include "g_levellocals.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 

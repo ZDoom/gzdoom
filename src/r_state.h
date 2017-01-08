@@ -56,9 +56,6 @@ extern subsector_t* 	subsectors;
 extern int				numnodes;
 extern node_t*			nodes;
 
-extern int				numsides;
-extern side_t*			sides;
-
 extern TArray<zone_t>	Zones;
 
 extern node_t * 		gamenodes;

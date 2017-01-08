@@ -47,6 +47,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Int, vid_renderer)
 

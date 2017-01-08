@@ -49,6 +49,7 @@
 #include "v_palette.h"
 #include "p_acs.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 
 struct FEDOptions : public FOptionalMapinfoData

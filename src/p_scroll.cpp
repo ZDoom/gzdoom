@@ -29,6 +29,7 @@
 #include "serializer.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
+#include "g_levellocals.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -191,19 +192,19 @@ void DScroller::Tick ()
 		case EScroll::sc_side:					// killough 3/7/98: Scroll wall texture
 			if (m_Parts & EScrollPos::scw_top)
 			{
-				sides[m_Affectee].AddTextureXOffset(side_t::top, dx);
-				sides[m_Affectee].AddTextureYOffset(side_t::top, dy);
+				level.sides[m_Affectee].AddTextureXOffset(side_t::top, dx);
+				level.sides[m_Affectee].AddTextureYOffset(side_t::top, dy);
 			}
-			if (m_Parts & EScrollPos::scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
-				!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
+			if (m_Parts & EScrollPos::scw_mid && (level.sides[m_Affectee].linedef->backsector == NULL ||
+				!(level.sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 			{
-				sides[m_Affectee].AddTextureXOffset(side_t::mid, dx);
-				sides[m_Affectee].AddTextureYOffset(side_t::mid, dy);
+				level.sides[m_Affectee].AddTextureXOffset(side_t::mid, dx);
+				level.sides[m_Affectee].AddTextureYOffset(side_t::mid, dy);
 			}
 			if (m_Parts & EScrollPos::scw_bottom)
 			{
-				sides[m_Affectee].AddTextureXOffset(side_t::bottom, dx);
-				sides[m_Affectee].AddTextureYOffset(side_t::bottom, dy);
+				level.sides[m_Affectee].AddTextureXOffset(side_t::bottom, dx);
+				level.sides[m_Affectee].AddTextureYOffset(side_t::bottom, dy);
 			}
 			break;
 
@@ -276,19 +277,19 @@ DScroller::DScroller (EScroll type, double dx, double dy,
 		break;
 
 	case EScroll::sc_side:
-		sides[affectee].Flags |= WALLF_NOAUTODECALS;
+		level.sides[affectee].Flags |= WALLF_NOAUTODECALS;
 		if (m_Parts & EScrollPos::scw_top)
 		{
-			m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
+			m_Interpolations[0] = level.sides[m_Affectee].SetInterpolation(side_t::top);
 		}
-		if (m_Parts & EScrollPos::scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
-			!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
+		if (m_Parts & EScrollPos::scw_mid && (level.sides[m_Affectee].linedef->backsector == nullptr ||
+			!(level.sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 		{
-			m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
+			m_Interpolations[1] = level.sides[m_Affectee].SetInterpolation(side_t::mid);
 		}
 		if (m_Parts & EScrollPos::scw_bottom)
 		{
-			m_Interpolations[2] = sides[m_Affectee].SetInterpolation(side_t::bottom);
+			m_Interpolations[2] = level.sides[m_Affectee].SetInterpolation(side_t::bottom);
 		}
 		break;
 
@@ -349,22 +350,22 @@ DScroller::DScroller (double dx, double dy, const line_t *l,
 	m_LastHeight = 0;
 	if ((m_Control = control) != -1)
 		m_LastHeight = level.sectors[control].CenterFloor() + level.sectors[control].CenterCeiling();
-	m_Affectee = int(l->sidedef[0] - sides);
-	sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
+	m_Affectee = l->sidedef[0]->Index();
+	level.sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
 	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
 
 	if (m_Parts & EScrollPos::scw_top)
 	{
-		m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
+		m_Interpolations[0] = level.sides[m_Affectee].SetInterpolation(side_t::top);
 	}
-	if (m_Parts & EScrollPos::scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
-		!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
+	if (m_Parts & EScrollPos::scw_mid && (level.sides[m_Affectee].linedef->backsector == NULL ||
+		!(level.sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 	{
-		m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
+		m_Interpolations[1] = level.sides[m_Affectee].SetInterpolation(side_t::mid);
 	}
 	if (m_Parts & EScrollPos::scw_bottom)
 	{
-		m_Interpolations[2] = sides[m_Affectee].SetInterpolation(side_t::bottom);
+		m_Interpolations[2] = level.sides[m_Affectee].SetInterpolation(side_t::bottom);
 	}
 }
 
@@ -536,41 +537,41 @@ void P_SpawnScrollers(void)
 
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
-			s = int(level.lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, -sides[s].GetTextureXOffset(side_t::mid),
-				sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
+			s = level.lines[i].sidedef[0]->Index();
+			new DScroller (EScroll::sc_side, -level.sides[s].GetTextureXOffset(side_t::mid),
+				level.sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
-			s = int(level.lines[i].sidedef[0] - sides);
+			s = level.lines[i].sidedef[0]->Index();
 			new DScroller (EScroll::sc_side, l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
-			s = int(level.lines[i].sidedef[0] - sides);
+			s = level.lines[i].sidedef[0]->Index();
 			new DScroller (EScroll::sc_side, -l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
-			s = int(level.lines[i].sidedef[0] - sides);
+			s = level.lines[i].sidedef[0]->Index();
 			new DScroller (EScroll::sc_side, 0, l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
-			s = int(level.lines[i].sidedef[0] - sides);
+			s = level.lines[i].sidedef[0]->Index();
 			new DScroller (EScroll::sc_side, 0, -l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
-			s = int(level.lines[i].sidedef[0] - sides);
+			s = level.lines[i].sidedef[0]->Index();
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) / 64.;
 				dy = (l->args[4] - l->args[3]) / 64.;
@@ -607,8 +608,8 @@ void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos W
 		{
 			int wallnum = scroller->GetWallNum ();
 
-			if (wallnum >= 0 && tagManager.LineHasID(sides[wallnum].linedef, id) &&
-				int(sides[wallnum].linedef->sidedef[sidechoice] - sides) == wallnum &&
+			if (wallnum >= 0 && tagManager.LineHasID(level.sides[wallnum].linedef, id) &&
+				level.sides[wallnum].linedef->sidedef[sidechoice]->Index() == wallnum &&
 				Where == scroller->GetScrollParts())
 			{
 				scroller->Destroy ();
@@ -627,8 +628,8 @@ void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos W
 			while ( (collect.Obj = iterator.Next ()) )
 			{
 				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
-					tagManager.LineHasID(sides[collect.RefNum].linedef, id) &&
-					int(sides[collect.RefNum].linedef->sidedef[sidechoice] - sides) == collect.RefNum &&
+					tagManager.LineHasID(level.sides[collect.RefNum].linedef, id) &&
+					level.sides[collect.RefNum].linedef->sidedef[sidechoice]->Index() == collect.RefNum &&
 					Where == ((DScroller *)collect.Obj)->GetScrollParts())
 				{
 					((DScroller *)collect.Obj)->SetRate (dx, dy);
@@ -646,7 +647,7 @@ void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos W
 		{
 			if (level.lines[linenum].sidedef[sidechoice] != NULL)
 			{
-				int sidenum = int(level.lines[linenum].sidedef[sidechoice] - sides);
+				int sidenum = level.lines[linenum].sidedef[sidechoice]->Index();
 				unsigned int i;
 				for (i = 0; i < numcollected; i++)
 				{

@@ -40,6 +40,7 @@
 #include "gi.h"
 #include "p_setup.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
@@ -459,8 +460,8 @@ static void InitVertexData()
 
 static void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2)
 {
-	line_t *ln = sides[sdnum].linedef;
-	if (ln->sidedef[0] == &sides[sdnum]) 
+	line_t *ln = level.sides[sdnum].linedef;
+	if (ln->sidedef[0] == &level.sides[sdnum])
 	{
 		*v1 = ln->v1->fPos();
 		*v2 = ln->v2->fPos();
@@ -487,6 +488,7 @@ static int segcmp(const void *a, const void *b)
 
 static void PrepareSegs()
 {
+	auto numsides = level.sides.Size();
 	int *segcount = new int[numsides];
 	int realsegs = 0;
 
@@ -534,7 +536,7 @@ static void PrepareSegs()
 		seg_t *seg = &segs[i];
 
 		if (seg->sidedef == NULL) continue;	// miniseg
-		int sidenum = int(seg->sidedef - sides);
+		int sidenum = seg->sidedef->Index();
 
 		realsegs++;
 		segcount[sidenum]++;
@@ -548,13 +550,13 @@ static void PrepareSegs()
 	}
 
 	// allocate memory
-	sides[0].segs = new seg_t*[realsegs];
-	sides[0].numsegs = 0;
+	level.sides[0].segs = new seg_t*[realsegs];
+	level.sides[0].numsegs = 0;
 
 	for(int i = 1; i < numsides; i++)
 	{
-		sides[i].segs = sides[i-1].segs + segcount[i-1];
-		sides[i].numsegs = 0;
+		level.sides[i].segs = level.sides[i-1].segs + segcount[i-1];
+		level.sides[i].numsegs = 0;
 	}
 	delete [] segcount;
 
@@ -568,7 +570,7 @@ static void PrepareSegs()
 	// sort the segs
 	for(int i = 0; i < numsides; i++)
 	{
-		if (sides[i].numsegs > 1) qsort(sides[i].segs, sides[i].numsegs, sizeof(seg_t*), segcmp);
+		if (level.sides[i].numsegs > 1) qsort(level.sides[i].segs, level.sides[i].numsegs, sizeof(seg_t*), segcmp);
 	}
 }
 
@@ -667,10 +669,10 @@ void gl_CleanLevelData()
 		}
 	}
 
-	if (sides && sides[0].segs)
+	if (level.sides.Size() > 0 && level.sides[0].segs)
 	{
-		delete [] sides[0].segs;
-		sides[0].segs = NULL;
+		delete [] level.sides[0].segs;
+		level.sides[0].segs = NULL;
 	}
 	if (level.sectors.Size() > 0 && level.sectors[0].subsectors) 
 	{

@@ -52,6 +52,7 @@
 #include "p_tags.h"
 #include "r_state.h"
 #include "w_wad.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 

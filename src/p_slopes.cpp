@@ -38,6 +38,7 @@
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 //===========================================================================
 //

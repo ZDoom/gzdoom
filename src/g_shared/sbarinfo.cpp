@@ -60,6 +60,7 @@
 #include "version.h"
 #include "cmdlib.h"
 #include "a_ammo.h"
+#include "g_levellocals.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

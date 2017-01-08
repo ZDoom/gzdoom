@@ -44,6 +44,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 #include "xlat/xlat.h"
 
 // define names for the TriggerType field of the general linedefs

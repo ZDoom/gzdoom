@@ -32,6 +32,7 @@
 #include "p_maputl.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1429,11 +1430,11 @@ static void InitBlockMap (void)
 
 static void InitSideLists ()
 {
-	for (int i = 0; i < numsides; ++i)
+	for (unsigned i = 0; i < level.sides.Size(); ++i)
 	{
-		if (sides[i].linedef != NULL &&
-			(sides[i].linedef->special == Polyobj_StartLine ||
-			 sides[i].linedef->special == Polyobj_ExplicitLine))
+		if (level.sides[i].linedef != NULL &&
+			(level.sides[i].linedef->special == Polyobj_StartLine ||
+				level.sides[i].linedef->special == Polyobj_ExplicitLine))
 		{
 			KnownPolySides.Push (i);
 		}
@@ -1499,8 +1500,8 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 		DWORD sidenum = sidetemp[vnum[vnumat++]].b.first;
 		while (sidenum != NO_SIDE)
 		{
-			po->Sidedefs.Push(&sides[sidenum]);
-			AddPolyVert(vnum, DWORD(sides[sidenum].V2() - vertexes));
+			po->Sidedefs.Push(&level.sides[sidenum]);
+			AddPolyVert(vnum, DWORD(level.sides[sidenum].V2() - vertexes));
 			sidenum = sidetemp[sidenum].b.next;
 		}
 	}
@@ -1534,7 +1535,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 		po->bBlocked = false;
 		po->bHasPortals = 0;
 
-		side_t *sd = &sides[i];
+		side_t *sd = &level.sides[i];
 		
 		if (sd->linedef->special == Polyobj_StartLine &&
 			sd->linedef->args[0] == tag)
@@ -1570,14 +1571,14 @@ static void SpawnPolyobj (int index, int tag, int type)
 			i = KnownPolySides[ii];
 
 			if (i >= 0 &&
-				sides[i].linedef->special == Polyobj_ExplicitLine &&
-				sides[i].linedef->args[0] == tag)
+				level.sides[i].linedef->special == Polyobj_ExplicitLine &&
+				level.sides[i].linedef->args[0] == tag)
 			{
-				if (!sides[i].linedef->args[1])
+				if (!level.sides[i].linedef->args[1])
 				{
-					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, sides[i].linedef->Index());
+					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, level.sides[i].linedef->Index());
 				}
-				po->Sidedefs.Push (&sides[i]);
+				po->Sidedefs.Push (&level.sides[i]);
 			}
 		}
 		qsort(&po->Sidedefs[0], po->Sidedefs.Size(), sizeof(po->Sidedefs[0]), posicmp);

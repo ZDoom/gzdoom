@@ -48,6 +48,7 @@
 #include "w_wad.h"
 #include "p_tags.h"
 #include "p_terrain.h"
+#include "g_levellocals.h"
 
 //===========================================================================
 //
@@ -1136,7 +1137,7 @@ public:
 		sdt->midtexture = "-";
 		sd->SetTextureXScale(1.);
 		sd->SetTextureYScale(1.);
-		sd->Index = index;
+		sd->UDMFIndex = index;
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1815,11 +1816,11 @@ public:
 			}
 		}
 		unsigned numlines = ParsedLines.Size();
-		numsides = sidecount;
+		level.sides.Alloc(sidecount);
 		level.lines.Alloc(numlines);
-		sides = new side_t[numsides];
 		int line, side;
 		auto lines = &level.lines[0];
+		auto sides = &level.sides[0];
 
 		for(line = 0, side = 0; line < (int)numlines; line++)
 		{
@@ -1854,11 +1855,10 @@ public:
 			P_AdjustLine(&lines[line]);
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
-		assert(side <= numsides);
-		if (side < numsides)
+		assert((unsigned)side <= level.sides.Size());
+		if ((unsigned)side > level.sides.Size())
 		{
-			Printf("Map had %d invalid side references\n", numsides - side);
-			numsides = side;
+			Printf("Map had %d invalid side references\n", (int)level.sides.Size() - side);
 		}
 	}
 

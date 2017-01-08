@@ -61,6 +61,7 @@
 #include "r_data/colormaps.h"
 #include "fragglescript/t_fs.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 // Remaps EE sector change types to Generic_Floor values. According to the Eternity Wiki:
 /*

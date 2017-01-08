@@ -60,6 +60,7 @@
 #include "r_utility.h"
 #include "p_local.h"
 #include "menu/menu.h"
+#include "g_levellocals.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response

@@ -38,6 +38,7 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 /*
 == InterpolationPoint: node along a camera's path

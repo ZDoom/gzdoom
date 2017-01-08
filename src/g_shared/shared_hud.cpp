@@ -55,6 +55,7 @@
 #include "d_player.h"
 #include "r_utility.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 #include <time.h>
 

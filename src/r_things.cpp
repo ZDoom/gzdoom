@@ -64,6 +64,7 @@
 #include "r_data/voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
+#include "g_levellocals.h"
 #include "r_thread.h"
 
 EXTERN_CVAR(Bool, st_scale)

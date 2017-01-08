@@ -38,6 +38,7 @@
 #include "p_local.h"
 #include "g_level.h"
 #include "r_sky.h"
+#include "g_levellocals.h"
 
 // externally settable lighting properties
 static float distfogtable[2][256];	// light to fog conversion table for black fog

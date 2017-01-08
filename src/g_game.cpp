@@ -91,6 +91,7 @@
 #include <zlib.h>
 
 #include "g_hub.h"
+#include "g_levellocals.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");

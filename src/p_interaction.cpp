@@ -60,6 +60,7 @@
 #include "a_morph.h"
 #include "virtual.h"
 #include "a_health.h"
+#include "g_levellocals.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");

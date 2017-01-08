@@ -51,6 +51,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);

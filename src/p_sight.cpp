@@ -29,6 +29,7 @@
 #include "r_state.h"
 
 #include "stats.h"
+#include "g_levellocals.h"
 
 static FRandom pr_botchecksight ("BotCheckSight");
 static FRandom pr_checksight ("CheckSight");

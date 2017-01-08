@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 enum
 {

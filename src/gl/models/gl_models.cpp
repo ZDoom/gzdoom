@@ -37,6 +37,7 @@
 #include "g_level.h"
 #include "r_state.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 //#include "resources/voxels.h"
 //#include "gl/gl_intern.h"
 

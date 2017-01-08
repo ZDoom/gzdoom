@@ -74,6 +74,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "p_saveg.h"
+#include "g_levellocals.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -136,9 +137,6 @@ subsector_t*	subsectors;
 int 			numnodes;
 node_t* 		nodes;
 
-int 			numsides;
-side_t* 		sides;
-
 TArray<zone_t>	Zones;
 
 node_t * 		gamenodes;
@@ -194,7 +192,7 @@ TArray<FPlayerStart> deathmatchstarts (16);
 FPlayerStart		playerstarts[MAXPLAYERS];
 TArray<FPlayerStart> AllPlayerStarts;
 
-static void P_AllocateSideDefs (int count);
+static void P_AllocateSideDefs (MapData *map, int count);
 
 
 //===========================================================================
@@ -1336,9 +1334,9 @@ void P_LoadSegs (MapData * map)
 			ldef = &level.lines[linedef];
 			li->linedef = ldef;
 			side = LittleShort(ml->side);
-			if ((unsigned)(ldef->sidedef[side] - sides) >= level.lines.Size())
+			if ((unsigned)(ldef->sidedef[side]->Index()) >= level.sides.Size())
 			{
-				throw badseg(2, i, int(ldef->sidedef[side] - sides));
+				throw badseg(2, i, ldef->sidedef[side]->Index());
 			}
 			li->sidedef = ldef->sidedef[side];
 			li->frontsector = ldef->sidedef[side]->sector;
@@ -1368,7 +1366,7 @@ void P_LoadSegs (MapData * map)
 			break;
 
 		case 2:
-			Printf ("The linedef for seg %d references a nonexistant sidedef %d (max %d).\n", bad.badsegnum, bad.baddata, numsides);
+			Printf ("The linedef for seg %d references a nonexistant sidedef %d (max %d).\n", bad.badsegnum, bad.baddata, level.sides.Size());
 			break;
 		}
 		Printf ("The BSP will be rebuilt.\n");
@@ -1978,7 +1976,7 @@ void P_SaveLineSpecial (line_t *ld)
 	if (ld->sidedef[0] == NULL)
 		return;
 
-	DWORD sidenum = DWORD(ld->sidedef[0]-sides);
+	DWORD sidenum = ld->sidedef[0]->Index();
 	// killough 4/4/98: support special sidedef interpretation below
 	// [RH] Save Static_Init only if it's interested in the textures
 	if	(ld->special != Static_Init || ld->args[1] == Init_Color)
@@ -2069,7 +2067,7 @@ void P_FinishLoadingLineDefs ()
 {
 	for (auto &line : level.lines)
 	{
-		P_FinishLoadingLineDef(&line, sidetemp[line.sidedef[0]-sides].a.alpha);
+		P_FinishLoadingLineDef(&line, sidetemp[line.sidedef[0]->Index()].a.alpha);
 	}
 }
 
@@ -2079,10 +2077,10 @@ static void P_SetSideNum (side_t **sidenum_p, WORD sidenum)
 	{
 		*sidenum_p = NULL;
 	}
-	else if (sidecount < numsides)
+	else if (sidecount < (int)level.sides.Size())
 	{
 		sidetemp[sidecount].a.map = sidenum;
-		*sidenum_p = &sides[sidecount++];
+		*sidenum_p = &level.sides[sidecount++];
 	}
 	else
 	{
@@ -2148,7 +2146,7 @@ void P_LoadLineDefs (MapData * map)
 		}
 	}
 
-	P_AllocateSideDefs (sidecount);
+	P_AllocateSideDefs (map, sidecount);
 
 	mld = (maplinedef_t *)mldf;
 	ld = &level.lines[0];
@@ -2241,7 +2239,7 @@ void P_LoadLineDefs2 (MapData * map)
 		ForceNodeBuild = true;
 	}
 
-	P_AllocateSideDefs (sidecount);
+	P_AllocateSideDefs (map, sidecount);
 
 	mld = (maplinedef2_t *)mldf;
 	ld = &level.lines[0];
@@ -2291,18 +2289,13 @@ void P_LoadLineDefs2 (MapData * map)
 //
 // P_LoadSideDefs
 //
-// killough 4/4/98: split into two functions
-void P_LoadSideDefs (MapData * map)
-{
-	numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
-}
 
-static void P_AllocateSideDefs (int count)
+static void P_AllocateSideDefs (MapData *map, int count)
 {
 	int i;
 
-	sides = new side_t[count];
-	memset (sides, 0, count*sizeof(side_t));
+	level.sides.Alloc(count);
+	memset(&level.sides[0], 0, count * sizeof(side_t));
 
 	sidetemp = new sidei_t[MAX(count,numvertexes)];
 	for (i = 0; i < count; i++)
@@ -2311,6 +2304,7 @@ static void P_AllocateSideDefs (int count)
 		sidetemp[i].a.alpha = SHRT_MIN;
 		sidetemp[i].a.map = NO_SIDE;
 	}
+	auto numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
 	if (count < numsides)
 	{
 		Printf ("Map has %d unused sidedefs\n", numsides - count);
@@ -2331,6 +2325,7 @@ static void P_LoopSidedefs (bool firstloop)
 	{
 		delete[] sidetemp;
 	}
+	int numsides = level.sides.Size();
 	sidetemp = new sidei_t[MAX(numvertexes, numsides)];
 
 	for (i = 0; i < numvertexes; ++i)
@@ -2347,8 +2342,8 @@ static void P_LoopSidedefs (bool firstloop)
 	{
 		// For each vertex, build a list of sidedefs that use that vertex
 		// as their left edge.
-		line_t *line = sides[i].linedef;
-		int lineside = (line->sidedef[0] != &sides[i]);
+		line_t *line = level.sides[i].linedef;
+		int lineside = (line->sidedef[0] != &level.sides[i]);
 		int vert = int((lineside ? line->v2 : line->v1) - vertexes);
 		
 		sidetemp[i].b.lineside = lineside;
@@ -2356,8 +2351,8 @@ static void P_LoopSidedefs (bool firstloop)
 		sidetemp[vert].b.first = i;
 
 		// Set each side so that it is the only member of its loop
-		sides[i].LeftSide = NO_SIDE;
-		sides[i].RightSide = NO_SIDE;
+		level.sides[i].LeftSide = NO_SIDE;
+		level.sides[i].RightSide = NO_SIDE;
 	}
 
 	// For each side, find the side that is to its right and set the
@@ -2366,7 +2361,7 @@ static void P_LoopSidedefs (bool firstloop)
 	for (i = 0; i < numsides; ++i)
 	{
 		DWORD right;
-		line_t *line = sides[i].linedef;
+		line_t *line = level.sides[i].linedef;
 
 		// If the side's line only exists in a single sector,
 		// then consider that line to be a self-contained loop
@@ -2382,7 +2377,7 @@ static void P_LoopSidedefs (bool firstloop)
 				continue;
 			}
 
-			right = DWORD(rightside - sides);
+			right = rightside->Index();
 		}
 		else
 		{
@@ -2411,7 +2406,7 @@ static void P_LoopSidedefs (bool firstloop)
 				line_t *leftline, *rightline;
 				DAngle ang1, ang2, ang;
 
-				leftline = sides[i].linedef;
+				leftline = level.sides[i].linedef;
 				ang1 = leftline->Delta().Angle();
 				if (!sidetemp[i].b.lineside)
 				{
@@ -2420,9 +2415,9 @@ static void P_LoopSidedefs (bool firstloop)
 
 				while (right != NO_SIDE)
 				{
-					if (sides[right].LeftSide == NO_SIDE)
+					if (level.sides[right].LeftSide == NO_SIDE)
 					{
-						rightline = sides[right].linedef;
+						rightline = level.sides[right].linedef;
 						if (rightline->frontsector != rightline->backsector)
 						{
 							ang2 = rightline->Delta().Angle();
@@ -2447,8 +2442,8 @@ static void P_LoopSidedefs (bool firstloop)
 		}
 		assert((unsigned)i<(unsigned)numsides);
 		assert(right<(unsigned)numsides);
-		sides[i].RightSide = right;
-		sides[right].LeftSide = i;
+		level.sides[i].RightSide = right;
+		level.sides[right].LeftSide = i;
 	}
 
 	// We keep the sidedef init info around until after polyobjects are initialized,
@@ -2604,14 +2599,13 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 void P_LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 {
-	int  i;
 	char * msdf = new char[map->Size(ML_SIDEDEFS)];
 	map->Read(ML_SIDEDEFS, msdf);
 
-	for (i = 0; i < numsides; i++)
+	for (unsigned i = 0; i < level.sides.Size(); i++)
 	{
 		mapsidedef_t *msd = ((mapsidedef_t*)msdf) + sidetemp[i].a.map;
-		side_t *sd = sides + i;
+		side_t *sd = &level.sides[i];
 		sector_t *sec;
 
 		// [RH] The Doom renderer ignored the patch y locations when
@@ -2628,7 +2622,7 @@ void P_LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		sd->SetTextureYScale(1.);
 		sd->linedef = NULL;
 		sd->Flags = 0;
-		sd->Index = i;
+		sd->UDMFIndex = i;
 
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall
@@ -3390,11 +3384,11 @@ static void P_PrecacheLevel()
 		hitlist[level.sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
 	}
 
-	for (i = numsides - 1; i >= 0; i--)
+	for (i = level.sides.Size() - 1; i >= 0; i--)
 	{
-		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] |= FTextureManager::HIT_Wall;
-		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] |= FTextureManager::HIT_Wall;
-		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= FTextureManager::HIT_Wall;
+		hitlist[level.sides[i].GetTexture(side_t::top).GetIndex()] |= FTextureManager::HIT_Wall;
+		hitlist[level.sides[i].GetTexture(side_t::mid).GetIndex()] |= FTextureManager::HIT_Wall;
+		hitlist[level.sides[i].GetTexture(side_t::bottom).GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
 	// Sky texture is always present.
@@ -3464,6 +3458,7 @@ void P_FreeLevelData ()
 	}
 	level.sectors.Clear();
 	level.lines.Clear();
+	level.sides.Clear();
 
 	if (gamenodes != NULL && gamenodes != nodes)
 	{
@@ -3492,12 +3487,6 @@ void P_FreeLevelData ()
 	numsubsectors = numgamesubsectors = 0;
 	nodes = gamenodes = NULL;
 	numnodes = numgamenodes = 0;
-	if (sides != NULL)
-	{
-		delete[] sides;
-		sides = NULL;
-	}
-	numsides = 0;
 
 	if (blockmaplump != NULL)
 	{
@@ -3754,7 +3743,6 @@ void P_SetupLevel (const char *lumpname, int position)
 			times[1].Unclock();
 
 			times[2].Clock();
-			P_LoadSideDefs (map);
 			times[2].Unclock();
 
 			times[3].Clock();
@@ -3919,7 +3907,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		FNodeBuilder::FLevel leveldata =
 		{
 			vertexes, numvertexes,
-			sides, numsides,
+			&level.sides[0], (int)level.sides.Size(),
 			&level.lines[0], (int)level.lines.Size(),
 			0, 0, 0, 0
 		};

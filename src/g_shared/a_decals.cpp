@@ -47,6 +47,7 @@
 #include "serializer.h"
 #include "doomdata.h"
 #include "r_state.h"
+#include "g_levellocals.h"
 
 static double DecalWidth, DecalLeft, DecalRight;
 static double SpreadZ;
@@ -415,7 +416,7 @@ void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor 
 		double x = v1->fX();
 		double y = v1->fY();
 
-		feelwall = &sides[feelwall->LeftSide];
+		feelwall = &level.sides[feelwall->LeftSide];
 		GetWallStuff (feelwall, v1, ldx, ldy);
 		double wallsize = Length (ldx, ldy);
 		r += DecalLeft;
@@ -455,7 +456,7 @@ void DBaseDecal::SpreadRight (double r, side_t *feelwall, double wallsize, F3DFl
 
 	while (r > wallsize && feelwall->RightSide != NO_SIDE)
 	{
-		feelwall = &sides[feelwall->RightSide];
+		feelwall = &level.sides[feelwall->RightSide];
 
 		side_t *nextwall = NextWall (feelwall);
 		if (nextwall != NULL && nextwall->LeftSide != NO_SIDE)

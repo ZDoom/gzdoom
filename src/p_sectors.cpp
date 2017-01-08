@@ -35,6 +35,7 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 
 // [RH]
@@ -1925,10 +1926,10 @@ void subsector_t::BuildPolyBSP()
 	assert((BSP == NULL || BSP->bDirty) && "BSP computed more than once");
 
 	// Set up level information for the node builder.
-	PolyNodeLevel.Sides = sides;
-	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Sides = &level.sides[0];
+	PolyNodeLevel.NumSides = level.sides.Size();
 	PolyNodeLevel.Lines = &level.lines[0];
-	PolyNodeLevel.NumLines = numlines;
+	PolyNodeLevel.NumLines = numlines; // is this correct???
 
 	// Feed segs to the nodebuilder and build the nodes.
 	PolyNodeBuilder.Clear();

@@ -88,6 +88,7 @@
 #include "gi.h"
 
 #include "g_hub.h"
+#include "g_levellocals.h"
 
 #include <string.h>
 

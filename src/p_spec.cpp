@@ -70,6 +70,7 @@
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_blockmap.h"
+#include "g_levellocals.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif

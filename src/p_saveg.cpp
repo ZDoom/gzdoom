@@ -62,10 +62,11 @@
 #include "r_sky.h"
 #include "r_renderer.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 static TStaticArray<sector_t>	loadsectors;
 static TStaticArray<line_t>		loadlines;
-static TArray<side_t>		loadsides;
+static TStaticArray<side_t>		loadsides;
 
 
 //==========================================================================
@@ -903,7 +904,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		BYTE chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
 		if (arc.GetSize("linedefs") != level.lines.Size() ||
-			arc.GetSize("sidedefs") != (unsigned)numsides ||
+			arc.GetSize("sidedefs") != level.sides.Size() ||
 			arc.GetSize("sectors") != level.sectors.Size() ||
 			arc.GetSize("polyobjs") != (unsigned)po_NumPolyobjs ||
 			memcmp(chk, level.md5, 16))
@@ -957,7 +958,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	FBehavior::StaticSerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc.Array("linedefs", &level.lines[0], &loadlines[0], level.lines.Size());
-	arc.Array("sidedefs", sides, &loadsides[0], numsides);
+	arc.Array("sidedefs", &level.sides[0], &loadsides[0], level.sides.Size());
 	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
@@ -998,8 +999,7 @@ void P_BackupMapData()
 {
 	loadsectors = level.sectors;
 	loadlines = level.lines;
-	loadsides.Resize(numsides);
-	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
+	loadsides = level.sides;
 }
 
 void P_FreeMapDataBackup()

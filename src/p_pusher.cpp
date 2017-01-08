@@ -32,6 +32,7 @@
 #include "p_maputl.h"
 #include "p_local.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 

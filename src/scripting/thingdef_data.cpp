@@ -49,6 +49,7 @@
 #include "gstrings.h"
 #include "zstring.h"
 #include "d_event.h"
+#include "g_levellocals.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;

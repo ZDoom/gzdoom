@@ -820,11 +820,6 @@ bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
-	if (t2->player)
-	{
-		int a = 0;
-	}
-
 	const sector_t *s1 = t1->Sector;
 	const sector_t *s2 = t2->Sector;
 	int pnum = int(s1 - sectors) * numsectors + int(s2 - sectors);

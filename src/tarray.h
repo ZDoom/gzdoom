@@ -576,7 +576,7 @@ public:
 	TStaticArray &operator=(const TStaticArray &other)
 	{
 		Alloc(other.Size());
-		memcpy(Array, other.Array, Count * sizeof(T));
+		memcpy(this->Array, other.Array, this->Count * sizeof(T));
 		return *this;
 	}
 };

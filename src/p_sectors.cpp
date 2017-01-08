@@ -1779,11 +1779,52 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	if (ndx >= level.sectors.Size())
 	{
 		// This qualifies as an array out of bounds exception. Normally it can only happen when a sector copy is concerned which scripts should not be able to create.
-		va_list ap;
-		throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid sector", ap);
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid sector");
 	}
 	ACTION_RETURN_INT(ndx);
  }
+
+ //===========================================================================
+ //
+ //  line_t exports
+ //
+ //===========================================================================
+
+ DEFINE_ACTION_FUNCTION(_Line, isLinePortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isLinePortal());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, isVisualPortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isVisualPortal());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalDestination)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_POINTER(self->getPortalDestination());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalAlignment)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalAlignment());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.lines.Size())
+	 {
+		 ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid line");
+	 }
+	 ACTION_RETURN_INT(ndx);
+ }
+
 
 //===========================================================================
 //

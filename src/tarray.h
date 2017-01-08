@@ -573,6 +573,12 @@ public:
 		this->Array = new T[amount];
 		this->Count = amount;
 	}
+	TStaticArray &operator=(const TStaticArray &other)
+	{
+		Alloc(other.Size());
+		memcpy(Array, other.Array, Count * sizeof(T));
+		return *this;
+	}
 };
 
 

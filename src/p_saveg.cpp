@@ -63,6 +63,10 @@
 #include "r_renderer.h"
 #include "serializer.h"
 
+static TStaticArray<sector_t>	loadsectors;
+static TArray<line_t>		loadlines;
+static TArray<side_t>		loadsides;
+
 
 //==========================================================================
 //
@@ -988,4 +992,20 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 }
 
+// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 
+void P_BackupMapData()
+{
+	loadsectors = level.sectors;
+	loadlines.Resize(numlines);
+	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
+	loadsides.Resize(numsides);
+	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
+}
+
+void P_FreeMapDataBackup()
+{
+	loadsectors.Clear();
+	loadlines.Clear();
+	loadsides.Clear();
+}

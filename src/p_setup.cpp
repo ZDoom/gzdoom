@@ -73,6 +73,7 @@
 #include "p_blockmap.h"
 #include "r_utility.h"
 #include "p_spec.h"
+#include "p_saveg.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -122,10 +123,6 @@ int 			numsegs;
 seg_t*			segs;
 glsegextra_t*	glsegextras;
 
-//int 			numsectors;
-//sector_t*		sectors;
-TArray<sector_t>	loadsectors;
-
 int 			numsubsectors;
 subsector_t*	subsectors;
 
@@ -134,11 +131,9 @@ node_t* 		nodes;
 
 int 			numlines;
 line_t* 		lines;
-TArray<line_t>	loadlines;
 
 int 			numsides;
 side_t* 		sides;
-TArray<side_t>	loadsides;
 
 TArray<zone_t>	Zones;
 
@@ -3431,6 +3426,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	P_FreeMapDataBackup();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
@@ -4193,12 +4189,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
 
-	loadsectors.Resize(level.sectors.Size());
-	memcpy(&loadsectors[0], &level.sectors[0], loadsectors.Size() * sizeof(sector_t));
-	loadlines.Resize(numlines);
-	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
-	loadsides.Resize(numsides);
-	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
+	P_BackupMapData();
 
 	if (glsegextras != NULL)
 	{

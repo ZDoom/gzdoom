@@ -790,6 +790,7 @@ sightcounts[2]++;
 
 	bool traverseres = P_SightTraverseIntercepts ( );
 	if (itres == -1) return false;	// if the iterator had an early out there was no line of sight. The traverser was only called to collect more portals.
+	if (seeingthing->Sector->PortalGroup != portalgroup) return false;	// We are in a different group than the seeingthing, so this trace cannot determine visibility alone.
 	return traverseres;
 }
 
@@ -817,6 +818,11 @@ bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 	if (t1 == NULL || t2 == NULL)
 	{
 		return false;
+	}
+
+	if (t2->player)
+	{
+		int a = 0;
 	}
 
 	const sector_t *s1 = t1->Sector;

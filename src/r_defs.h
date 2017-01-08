@@ -131,10 +131,12 @@ struct vertex_t
 		return FLOAT2FIXED(p.Y);
 	}
 
-	DVector2 fPos()
+	DVector2 fPos() const
 	{
 		return p;
 	}
+
+	int Index() const;
 
 	angle_t viewangle;	// precalculated angle for clipping
 	int angletime;		// recalculation time for view angle

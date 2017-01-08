@@ -122,8 +122,6 @@ inline bool P_LoadBuildMap(BYTE *mapdata, size_t len, FMapThing **things, int *n
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
 //
-int 			numvertexes;
-vertex_t*		vertexes;
 int 			numvertexdatas;
 vertexdata_t*		vertexdatas;
 
@@ -833,11 +831,9 @@ void P_FloodZones ()
 
 void P_LoadVertexes (MapData * map)
 {
-	int i;
-
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
-	numvertexes = map->Size(ML_VERTEXES) / sizeof(mapvertex_t);
+	unsigned numvertexes = map->Size(ML_VERTEXES) / sizeof(mapvertex_t);
 	numvertexdatas = 0;
 
 	if (numvertexes == 0)
@@ -846,18 +842,18 @@ void P_LoadVertexes (MapData * map)
 	}
 
 	// Allocate memory for buffer.
-	vertexes = new vertex_t[numvertexes];		
+	level.vertexes.Alloc(numvertexes);
 	vertexdatas = NULL;
 
 	map->Seek(ML_VERTEXES);
 		
 	// Copy and convert vertex coordinates, internal representation as fixed.
-	for (i = 0; i < numvertexes; i++)
+	for (auto &v : level.vertexes)
 	{
-		SWORD x, y;
+		int16_t x, y;
 
 		(*map->file) >> x >> y;
-		vertexes[i].set(double(x), double(y));
+		v.set(double(x), double(y));
 	}
 }
 
@@ -878,8 +874,8 @@ void P_LoadZSegs (FileReaderBase &data)
 
 		data >> v1 >> v2 >> line >> side;
 
-		segs[i].v1 = &vertexes[v1];
-		segs[i].v2 = &vertexes[v2];
+		segs[i].v1 = &level.vertexes[v1];
+		segs[i].v2 = &level.vertexes[v2];
 		segs[i].linedef = ldef = &level.lines[line];
 		segs[i].sidedef = ldef->sidedef[side];
 		segs[i].frontsector = ldef->sidedef[side]->sector;
@@ -928,7 +924,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			data >> side;
 
 			seg = subsectors[i].firstline + j;
-			seg->v1 = &vertexes[v1];
+			seg->v1 = &level.vertexes[v1];
 			if (j == 0)
 			{
 				seg[subsectors[i].numlines - 1].v2 = seg->v1;
@@ -975,23 +971,26 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	DWORD orgVerts, newVerts;
-	vertex_t *newvertarray;
+	TStaticArray<vertex_t> newvertarray;
 	unsigned int i;
 
 	data >> orgVerts >> newVerts;
-	if (orgVerts > (DWORD)numvertexes)
+	if (orgVerts > level.vertexes.Size())
 	{ // These nodes are based on a map with more vertex data than we have.
 	  // We can't use them.
 		throw CRecoverableError("Incorrect number of vertexes in nodes.\n");
 	}
-	if (orgVerts + newVerts == (DWORD)numvertexes)
+	bool fix;
+	if (orgVerts + newVerts == level.vertexes.Size())
 	{
-		newvertarray = vertexes;
+		newvertarray = std::move(level.vertexes);
+		fix = false;
 	}
 	else
 	{
-		newvertarray = new vertex_t[orgVerts + newVerts];
-		memcpy (newvertarray, vertexes, orgVerts * sizeof(vertex_t));
+		newvertarray.Alloc(orgVerts + newVerts);
+		memcpy (&newvertarray[0], &level.vertexes[0], orgVerts * sizeof(vertex_t));
+		fix = true;
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
@@ -999,16 +998,14 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 		data >> x >> y;
 		newvertarray[i + orgVerts].set(x, y);
 	}
-	if (vertexes != newvertarray)
+	if (fix)
 	{
 		for (auto &line : level.lines)
 		{
-			line.v1 = line.v1 - vertexes + newvertarray;
-			line.v2 = line.v2 - vertexes + newvertarray;
+			line.v1 = line.v1 - &level.vertexes[0] + &newvertarray[0];
+			line.v2 = line.v2 - &level.vertexes[0] + &newvertarray[0];
 		}
-		delete[] vertexes;
-		vertexes = newvertarray;
-		numvertexes = orgVerts + newVerts;
+		level.vertexes = std::move(newvertarray);
 	}
 
 	// Read the subsectors
@@ -1212,6 +1209,7 @@ void P_LoadSegs (MapData * map)
 {
 	int  i;
 	BYTE *data;
+	int numvertexes = level.vertexes.Size();
 	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	//int ptp_angle;		// phares 10/4/98
@@ -1250,7 +1248,7 @@ void P_LoadSegs (MapData * map)
 
 	for (auto &line : level.lines)
 	{
-		vertchanged[line.v1 - vertexes] = vertchanged[line.v2 - vertexes] = 1;
+		vertchanged[line.v1->Index()] = vertchanged[line.v2->Index()] = 1;
 	}
 
 	try
@@ -1271,8 +1269,8 @@ void P_LoadSegs (MapData * map)
 				throw badseg(0, i, MAX(vnum1, vnum2));
 			}
 
-			li->v1 = &vertexes[vnum1];
-			li->v2 = &vertexes[vnum2];
+			li->v1 = &level.vertexes[vnum1];
+			li->v2 = &level.vertexes[vnum2];
 
 			segangle = (WORD)LittleShort(ml->angle);
 
@@ -2111,17 +2109,16 @@ void P_LoadLineDefs (MapData * map)
 	for (skipped = sidecount = i = 0; i < numlines; )
 	{
 		mld = ((maplinedef_t*)mldf) + i;
-		int v1 = LittleShort(mld->v1);
-		int v2 = LittleShort(mld->v2);
+		unsigned v1 = LittleShort(mld->v1);
+		unsigned v2 = LittleShort(mld->v2);
 
-		if (v1 >= numvertexes || v2 >= numvertexes)
+		if (v1 >= level.vertexes.Size() || v2 >= level.vertexes.Size())
 		{
 			delete [] mldf;
-			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1, v2, numvertexes);
+			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %u vertices.", i+skipped, v1, v2, level.vertexes.Size());
 		}
 		else if (v1 == v2 ||
-			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
-			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
+			(level.vertexes[v1].fX() == level.vertexes[v2].fX() && level.vertexes[v1].fY() == level.vertexes[v2].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2172,8 +2169,8 @@ void P_LoadLineDefs (MapData * map)
 		}
 #endif
 
-		ld->v1 = &vertexes[LittleShort(mld->v1)];
-		ld->v2 = &vertexes[LittleShort(mld->v2)];
+		ld->v1 = &level.vertexes[LittleShort(mld->v1)];
+		ld->v2 = &level.vertexes[LittleShort(mld->v2)];
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -2210,8 +2207,8 @@ void P_LoadLineDefs2 (MapData * map)
 		mld = ((maplinedef2_t*)mldf) + i;
 
 		if (mld->v1 == mld->v2 ||
-			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
-			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
+			(level.vertexes[LittleShort(mld->v1)].fX() == level.vertexes[LittleShort(mld->v2)].fX() &&
+			 level.vertexes[LittleShort(mld->v1)].fY() == level.vertexes[LittleShort(mld->v2)].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2256,8 +2253,8 @@ void P_LoadLineDefs2 (MapData * map)
 		ld->flags = LittleShort(mld->flags);
 		ld->special = mld->special;
 
-		ld->v1 = &vertexes[LittleShort(mld->v1)];
-		ld->v2 = &vertexes[LittleShort(mld->v2)];
+		ld->v1 = &level.vertexes[LittleShort(mld->v1)];
+		ld->v2 = &level.vertexes[LittleShort(mld->v2)];
 		ld->alpha = 1.;	// [RH] Opaque by default
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
@@ -2297,7 +2294,7 @@ static void P_AllocateSideDefs (MapData *map, int count)
 	level.sides.Alloc(count);
 	memset(&level.sides[0], 0, count * sizeof(side_t));
 
-	sidetemp = new sidei_t[MAX(count,numvertexes)];
+	sidetemp = new sidei_t[MAX<int>(count, level.vertexes.Size())];
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
@@ -2326,9 +2323,9 @@ static void P_LoopSidedefs (bool firstloop)
 		delete[] sidetemp;
 	}
 	int numsides = level.sides.Size();
-	sidetemp = new sidei_t[MAX(numvertexes, numsides)];
+	sidetemp = new sidei_t[MAX<int>(level.vertexes.Size(), numsides)];
 
-	for (i = 0; i < numvertexes; ++i)
+	for (i = 0; i < (int)level.vertexes.Size(); ++i)
 	{
 		sidetemp[i].b.first = NO_SIDE;
 		sidetemp[i].b.next = NO_SIDE;
@@ -2344,7 +2341,7 @@ static void P_LoopSidedefs (bool firstloop)
 		// as their left edge.
 		line_t *line = level.sides[i].linedef;
 		int lineside = (line->sidedef[0] != &level.sides[i]);
-		int vert = int((lineside ? line->v2 : line->v1) - vertexes);
+		int vert = lineside ? line->v2->Index() : line->v1->Index();
 		
 		sidetemp[i].b.lineside = lineside;
 		sidetemp[i].b.next = sidetemp[vert].b.first;
@@ -2383,11 +2380,11 @@ static void P_LoopSidedefs (bool firstloop)
 		{
 			if (sidetemp[i].b.lineside)
 			{
-				right = int(line->v1 - vertexes);
+				right = line->v1->Index();
 			}
 			else
 			{
-				right = int(line->v2 - vertexes);
+				right = line->v2->Index();
 			}
 
 			right = sidetemp[right].b.first;
@@ -2764,22 +2761,21 @@ static void P_CreateBlockMap ()
 	int bmapwidth, bmapheight;
 	double dminx, dmaxx, dminy, dmaxy;
 	int minx, maxx, miny, maxy;
-	int i;
 	int line;
 
-	if (numvertexes <= 0)
+	if (level.vertexes.Size() == 0)
 		return;
 
 	// Find map extents for the blockmap
-	dminx = dmaxx = vertexes[0].fX();
-	dminy = dmaxy = vertexes[0].fY();
+	dminx = dmaxx = level.vertexes[0].fX();
+	dminy = dmaxy = level.vertexes[0].fY();
 
-	for (i = 1; i < numvertexes; ++i)
+	for (auto &vert : level.vertexes)
 	{
-			 if (vertexes[i].fX() < dminx) dminx = vertexes[i].fX();
-		else if (vertexes[i].fX() > dmaxx) dmaxx = vertexes[i].fX();
-			 if (vertexes[i].fY() < dminy) dminy = vertexes[i].fY();
-		else if (vertexes[i].fY() > dmaxy) dmaxy = vertexes[i].fY();
+			 if (vert.fX() < dminx) dminx = vert.fX();
+		else if (vert.fX() > dmaxx) dmaxx = vert.fX();
+			 if (vert.fY() < dminy) dminy = vert.fY();
+		else if (vert.fY() > dmaxy) dmaxy = vert.fY();
 	}
 
 	minx = int(dminx);
@@ -3435,12 +3431,6 @@ void P_FreeLevelData ()
 		wminfo.maxfrags = 0;
 		
 	FBehavior::StaticUnloadModules ();
-	if (vertexes != NULL)
-	{
-		delete[] vertexes;
-		vertexes = NULL;
-	}
-	numvertexes = 0;
 	if (segs != NULL)
 	{
 		delete[] segs;
@@ -3459,6 +3449,7 @@ void P_FreeLevelData ()
 	level.sectors.Clear();
 	level.lines.Clear();
 	level.sides.Clear();
+	level.vertexes.Clear();
 
 	if (gamenodes != NULL && gamenodes != nodes)
 	{
@@ -3906,7 +3897,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
 		{
-			vertexes, numvertexes,
+			&level.vertexes[0], (int)level.vertexes.Size(),
 			&level.sides[0], (int)level.sides.Size(),
 			&level.lines[0], (int)level.lines.Size(),
 			0, 0, 0, 0
@@ -3916,11 +3907,10 @@ void P_SetupLevel (const char *lumpname, int position)
 		// In case a sync critical game mode is started, also build GL nodes to avoid problems
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
-		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, glsegextras, numsegs,
 			subsectors, numsubsectors,
-			vertexes, numvertexes);
+			level.vertexes);
 		endTime = I_FPSTime ();
 		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 		oldvertextable = builder.GetOldVertexTable();

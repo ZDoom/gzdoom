@@ -42,8 +42,6 @@ extern "C" int			viewheight;
 extern TArray<spritedef_t> sprites;
 extern DWORD NumStdSprites;
 
-extern int				numvertexes;
-extern vertex_t*		vertexes;
 extern int				numvertexdatas;
 extern vertexdata_t*		vertexdatas;
 

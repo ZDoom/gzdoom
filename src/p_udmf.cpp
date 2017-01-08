@@ -1790,12 +1790,12 @@ public:
 			intptr_t v1i = intptr_t(ParsedLines[i].v1);
 			intptr_t v2i = intptr_t(ParsedLines[i].v2);
 
-			if (v1i >= numvertexes || v2i >= numvertexes || v1i < 0 || v2i < 0)
+			if (v1i >= level.vertexes.Size() || v2i >= level.vertexes.Size() || v1i < 0 || v2i < 0)
 			{
-				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %d vertices.", i+skipped, v1i, v2i, numvertexes);
+				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %u vertices.", i+skipped, v1i, v2i, level.vertexes.Size());
 			}
 			else if (v1i == v2i ||
-				(vertexes[v1i].fX() == vertexes[v2i].fX() && vertexes[v1i].fY() == vertexes[v2i].fY()))
+				(level.vertexes[v1i].fX() == level.vertexes[v2i].fX() && level.vertexes[v1i].fY() == level.vertexes[v2i].fY()))
 			{
 				Printf ("Removing 0-length line %d\n", i+skipped);
 				ParsedLines.Delete(i);
@@ -1804,8 +1804,8 @@ public:
 			}
 			else
 			{
-				ParsedLines[i].v1 = &vertexes[v1i];
-				ParsedLines[i].v2 = &vertexes[v2i];
+				ParsedLines[i].v1 = &level.vertexes[v1i];
+				ParsedLines[i].v2 = &level.vertexes[v2i];
 
 				if (ParsedLines[i].sidedef[0] != NULL)
 					sidecount++;
@@ -2011,9 +2011,8 @@ public:
 		if (ParsedSides.Size() == 0)	I_Error("Map has no sidedefs.\n");
 
 		// Create the real vertices
-		numvertexes = ParsedVertices.Size();
-		vertexes = new vertex_t[numvertexes];
-		memcpy(vertexes, &ParsedVertices[0], numvertexes * sizeof(*vertexes));
+		level.vertexes.Alloc(ParsedVertices.Size());
+		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
 
 		// Create the real vertex datas
 		numvertexdatas = ParsedVertexDatas.Size();

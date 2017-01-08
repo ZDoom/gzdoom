@@ -730,6 +730,10 @@ void InitThingdef()
 	sidestruct->Size = sizeof(side_t);
 	sidestruct->Align = alignof(side_t);
 
+	auto vertstruct = NewNativeStruct("Vertex", nullptr);
+	vertstruct->Size = sizeof(vertex_t);
+	vertstruct->Align = alignof(vertex_t);
+
 
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
@@ -759,6 +763,7 @@ void InitThingdef()
 	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
 	lstruct->AddNativeField("lines", NewPointer(NewResizableArray(linestruct), false), myoffsetof(FLevelLocals, lines), VARF_Native);
 	lstruct->AddNativeField("sides", NewPointer(NewResizableArray(sidestruct), false), myoffsetof(FLevelLocals, sides), VARF_Native);
+	lstruct->AddNativeField("vertexes", NewPointer(NewResizableArray(vertstruct), false), myoffsetof(FLevelLocals, vertexes), VARF_Native|VARF_ReadOnly);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);

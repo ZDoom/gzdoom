@@ -403,7 +403,7 @@ static void InitVertexData()
 
 	int i,j,k;
 
-	vt_sectorlists = new TArray<int>[numvertexes];
+	vt_sectorlists = new TArray<int>[level.vertexes.Size()];
 
 
 	for(auto &line : level.lines)
@@ -420,32 +420,33 @@ static void InitVertexData()
 				{
 					extsector_t::xfloor &x = sec->e->XFloor;
 
-					AddToVertex(sec, vt_sectorlists[v-vertexes]);
-					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v-vertexes]);
+					AddToVertex(sec, vt_sectorlists[v->Index()]);
+					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v->Index()]);
 				}
 			}
 		}
 	}
 
-	for(i=0;i<numvertexes;i++)
+	for(i=0;i<level.vertexes.Size();i++)
 	{
+		auto vert = level.vertexes[i];
 		int cnt = vt_sectorlists[i].Size();
 
-		vertexes[i].dirty = true;
-		vertexes[i].numheights=0;
+		vert.dirty = true;
+		vert.numheights=0;
 		if (cnt>1)
 		{
-			vertexes[i].numsectors= cnt;
-			vertexes[i].sectors=new sector_t*[cnt];
-			vertexes[i].heightlist = new float[cnt*2];
+			vert.numsectors= cnt;
+			vert.sectors=new sector_t*[cnt];
+			vert.heightlist = new float[cnt*2];
 			for(int j=0;j<cnt;j++)
 			{
-				vertexes[i].sectors[j] = &level.sectors[vt_sectorlists[i][j]];
+				vert.sectors[j] = &level.sectors[vt_sectorlists[i][j]];
 			}
 		}
 		else
 		{
-			vertexes[i].numsectors=0;
+			vert.numsectors=0;
 		}
 	}
 
@@ -493,9 +494,9 @@ static void PrepareSegs()
 	int realsegs = 0;
 
 	// Get floatng point coordinates of vertices
-	for(int i = 0; i < numvertexes; i++)
+	for(auto &v : level.vertexes)
 	{
-		vertexes[i].dirty = true;
+		v.dirty = true;
 	}
 
 	// count the segs
@@ -586,8 +587,8 @@ void gl_PreprocessLevel()
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();
-	int *checkmap = new int[numvertexes];
-	memset(checkmap, -1, sizeof(int)*numvertexes);
+	int *checkmap = new int[level.vertexes.Size()];
+	memset(checkmap, -1, sizeof(int)*level.vertexes.Size());
 	for(auto &sec : level.sectors) 
 	{
 		int i = sec.sectornum;
@@ -598,21 +599,21 @@ void gl_PreprocessLevel()
 		{
 			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
 
-			int vtnum1 = int(l->v1 - vertexes);
-			int vtnum2 = int(l->v2 - vertexes);
+			int vtnum1 = l->v1->Index();
+			int vtnum2 = l->v2->Index();
 
 			if (checkmap[vtnum1] < i)
 			{
 				checkmap[vtnum1] = i;
-				sec.e->vertices.Push(&vertexes[vtnum1]);
-				vertexes[vtnum1].dirty = true;
+				sec.e->vertices.Push(&level.vertexes[vtnum1]);
+				level.vertexes[vtnum1].dirty = true;
 			}
 
 			if (checkmap[vtnum2] < i)
 			{
 				checkmap[vtnum2] = i;
-				sec.e->vertices.Push(&vertexes[vtnum2]);
-				vertexes[vtnum2].dirty = true;
+				sec.e->vertices.Push(&level.vertexes[vtnum2]);
+				level.vertexes[vtnum2].dirty = true;
 			}
 		}
 	}
@@ -652,20 +653,17 @@ void gl_CleanLevelData()
 		mo=next;
 	}
 
-	if (vertexes != NULL)
+	for(auto &v : level.vertexes) if (v.numsectors > 0)
 	{
-		for(int i = 0; i < numvertexes; i++) if (vertexes[i].numsectors > 0)
+		if (v.sectors != nullptr)
 		{
-			if (vertexes[i].sectors != NULL)
-			{
-				delete [] vertexes[i].sectors;
-				vertexes[i].sectors = NULL;
-			}
-			if (vertexes[i].heightlist != NULL)
-			{
-				delete [] vertexes[i].heightlist;
-				vertexes[i].heightlist = NULL;
-			}
+			delete [] v.sectors;
+			v.sectors = nullptr;
+		}
+		if (v.heightlist != nullptr)
+		{
+			delete [] v.heightlist;
+			v.heightlist = nullptr;
 		}
 	}
 

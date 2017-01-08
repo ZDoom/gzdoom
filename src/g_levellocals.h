@@ -27,6 +27,7 @@ struct FLevelLocals
 	FString		NextSecretMap;		// map to go to when used secret exit
 	EMapType	maptype;
 
+	TStaticArray<vertex_t> vertexes;
 	TStaticArray<sector_t> sectors;
 	TStaticArray<line_t> lines;
 	TStaticArray<side_t> sides;
@@ -78,6 +79,11 @@ struct FLevelLocals
 };
 
 extern FLevelLocals level;
+
+inline int vertex_t::Index() const
+{
+	return int(this - &level.vertexes[0]);
+}
 
 inline int side_t::Index() const
 {

@@ -1479,7 +1479,7 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 	assert(sidetemp != NULL);
 
 	vnum.Clear();
-	vnum.Push(DWORD(side->V1() - vertexes));
+	vnum.Push(DWORD(side->V1()->Index()));
 	vnumat = 0;
 
 	while (vnum.Size() != vnumat)
@@ -1488,7 +1488,7 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 		while (sidenum != NO_SIDE)
 		{
 			po->Sidedefs.Push(&level.sides[sidenum]);
-			AddPolyVert(vnum, DWORD(level.sides[sidenum].V2() - vertexes));
+			AddPolyVert(vnum, DWORD(level.sides[sidenum].V2()->Index()));
 			sidenum = sidetemp[sidenum].b.next;
 		}
 	}

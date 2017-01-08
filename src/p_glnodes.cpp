@@ -224,7 +224,7 @@ static bool LoadGLVertexes(FileReader * lump)
 	BYTE *gldata;
 	int                 i;
 
-	firstglvertex = numvertexes;
+	firstglvertex = level.vertexes.Size();
 	
 	int gllen=lump->GetLength();
 
@@ -249,23 +249,23 @@ static bool LoadGLVertexes(FileReader * lump)
 	}
 	else format5=false;
 
-	mapglvertex_t*	mgl;
+	mapglvertex_t*	mgl = (mapglvertex_t *)(gldata + GL_VERT_OFFSET);
+	unsigned numvertexes = firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
 
-	vertex_t * oldvertexes = vertexes;
-	numvertexes += (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
-	vertexes	 = new vertex_t[numvertexes];
-	mgl			 = (mapglvertex_t *) (gldata + GL_VERT_OFFSET);	
+	TStaticArray<vertex_t> oldvertexes = std::move(level.vertexes);
+	level.vertexes.Alloc(numvertexes);
 
-	memcpy(vertexes, oldvertexes, firstglvertex * sizeof(vertex_t));
+	memcpy(&level.vertexes[0], &oldvertexes[0], firstglvertex * sizeof(vertex_t));
 	for(auto &line : level.lines)
 	{
-		line.v1 = vertexes + (line.v1 - oldvertexes);
-		line.v2 = vertexes + (line.v2 - oldvertexes);
+		// Remap vertex pointers in linedefs
+		line.v1 = &level.vertexes[line.v1 - &oldvertexes[0]];
+		line.v2 = &level.vertexes[line.v2 - &oldvertexes[0]];
 	}
 
-	for (i = firstglvertex; i < numvertexes; i++)
+	for (i = firstglvertex; i < (int)numvertexes; i++)
 	{
-		vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
+		level.vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
 		mgl++;
 	}
 	delete[] gldata;
@@ -324,8 +324,8 @@ static bool LoadGLSegs(FileReader * lump)
 			glseg_t * ml = (glseg_t*)data;
 			for(i = 0; i < numsegs; i++)
 			{							// check for gl-vertices
-				segs[i].v1 = &vertexes[checkGLVertex(LittleShort(ml->v1))];
-				segs[i].v2 = &vertexes[checkGLVertex(LittleShort(ml->v2))];
+				segs[i].v1 = &level.vertexes[checkGLVertex(LittleShort(ml->v1))];
+				segs[i].v2 = &level.vertexes[checkGLVertex(LittleShort(ml->v2))];
 				
 				glsegextras[i].PartnerSeg = ml->partner == 0xFFFF ? DWORD_MAX : LittleShort(ml->partner);
 				if(ml->linedef != 0xffff)
@@ -377,8 +377,8 @@ static bool LoadGLSegs(FileReader * lump)
 			glseg3_t * ml = (glseg3_t*)(data+ (format5? 0:4));
 			for(i = 0; i < numsegs; i++)
 			{							// check for gl-vertices
-				segs[i].v1 = &vertexes[checkGLVertex3(LittleLong(ml->v1))];
-				segs[i].v2 = &vertexes[checkGLVertex3(LittleLong(ml->v2))];
+				segs[i].v1 = &level.vertexes[checkGLVertex3(LittleLong(ml->v1))];
+				segs[i].v2 = &level.vertexes[checkGLVertex3(LittleLong(ml->v2))];
 				
 				glsegextras[i].PartnerSeg = LittleLong(ml->partner);
 	
@@ -1002,18 +1002,18 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			P_GetPolySpots (map, polyspots, anchors);
 			FNodeBuilder::FLevel leveldata =
 			{
-				vertexes, numvertexes,
+				&level.vertexes[0], (int)level.vertexes.Size(),
 				&level.sides[0], (int)level.sides.Size(),
 				&level.lines[0], (int)level.lines.Size(),
 				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
-			delete[] vertexes;
+			
 			builder.Extract (nodes, numnodes,
 				segs, glsegextras, numsegs,
 				subsectors, numsubsectors,
-				vertexes, numvertexes);
+				level.vertexes);
 			endTime = I_FPSTime ();
 			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 			buildtime = endTime - startTime;
@@ -1095,11 +1095,11 @@ static void CreateCachedNodes(MapData *map)
 	MemFile ZNodes;
 
 	WriteLong(ZNodes, 0);
-	WriteLong(ZNodes, numvertexes);
-	for(int i=0;i<numvertexes;i++)
+	WriteLong(ZNodes, level.vertexes.Size());
+	for(auto &vert : level.vertexes)
 	{
-		WriteLong(ZNodes, vertexes[i].fixX());
-		WriteLong(ZNodes, vertexes[i].fixY());
+		WriteLong(ZNodes, vert.fixX());
+		WriteLong(ZNodes, vert.fixY());
 	}
 
 	WriteLong(ZNodes, numsubsectors);
@@ -1111,7 +1111,7 @@ static void CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, numsegs);
 	for(int i=0;i<numsegs;i++)
 	{
-		WriteLong(ZNodes, DWORD(segs[i].v1 - vertexes));
+		WriteLong(ZNodes, segs[i].v1->Index());
 		if (glsegextras != NULL) WriteLong(ZNodes, DWORD(glsegextras[i].PartnerSeg));
 		else WriteLong(ZNodes, 0);
 		if (segs[i].linedef)
@@ -1178,7 +1178,7 @@ static void CreateCachedNodes(MapData *map)
 	map->GetChecksum(compressed+8);
 	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1 - vertexes)), LittleLong(DWORD(level.lines[i].v2 - vertexes)) };
+		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1->Index())), LittleLong(DWORD(level.lines[i].v2->Index())) };
 		memcpy(compressed + 8 + 16 + 8 * i, ndx, 8);
 	}
 	memcpy(compressed + offset - 4, "ZGL3", 4);
@@ -1266,8 +1266,8 @@ static bool CheckCachedNodes(MapData *map)
 	for(auto &line : level.lines)
 	{
 		int i = line.Index();
-		line.v1 = &vertexes[LittleLong(verts[i*2])];
-		line.v2 = &vertexes[LittleLong(verts[i*2+1])];
+		line.v1 = &level.vertexes[LittleLong(verts[i*2])];
+		line.v2 = &level.vertexes[LittleLong(verts[i*2+1])];
 	}
 	delete [] verts;
 

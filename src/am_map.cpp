@@ -1029,17 +1029,17 @@ static void AM_findMinMaxBoundaries ()
 	min_x = min_y = FLT_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (int i = 0; i < numvertexes; i++)
+	for (auto &vert : level.vertexes)
 	{
-		if (vertexes[i].fX() < min_x)
-			min_x = vertexes[i].fX();
-		else if (vertexes[i].fX() > max_x)
-			max_x = vertexes[i].fX();
+		if (vert.fX() < min_x)
+			min_x = vert.fX();
+		else if (vert.fX() > max_x)
+			max_x = vert.fX();
     
-		if (vertexes[i].fY() < min_y)
-			min_y = vertexes[i].fY();
-		else if (vertexes[i].fY() > max_y)
-			max_y = vertexes[i].fY();
+		if (vert.fY() < min_y)
+			min_y = vert.fY();
+		else if (vert.fY() > max_y)
+			max_y = vert.fY();
 	}
   
 	max_w = max_x - min_x;

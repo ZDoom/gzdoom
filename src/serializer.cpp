@@ -1484,7 +1484,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&va
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, vertexes);
+	return SerializePointer(arc, key, value, defval, &level.vertexes[0]);
 }
 
 //==========================================================================

@@ -55,12 +55,12 @@
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	seg_t *&outSegs, glsegextra_t *&outSegExtras, int &segCount,
 	subsector_t *&outSubs, int &subCount,
-	vertex_t *&outVerts, int &vertCount)
+	TStaticArray<vertex_t> &outVerts)
 {
 	int i;
 
-	vertCount = Vertices.Size ();
-	outVerts = new vertex_t[vertCount];
+	int vertCount = Vertices.Size ();
+	outVerts.Alloc(vertCount);
 
 	for (i = 0; i < vertCount; ++i)
 	{
@@ -109,7 +109,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 		for (i = 0; i < subCount; ++i)
 		{
-			DWORD numsegs = CloseSubsector (segs, i, outVerts);
+			DWORD numsegs = CloseSubsector (segs, i, &outVerts[0]);
 			outSubs[i].numlines = numsegs;
 			outSubs[i].firstline = (seg_t *)(size_t)(segs.Size() - numsegs);
 		}
@@ -145,8 +145,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 			D(Printf(PRINT_LOG, "Seg %d: v1(%d) -> v2(%d)\n", i, org->v1, org->v2));
 
-			out->v1 = outVerts + org->v1;
-			out->v2 = outVerts + org->v2;
+			out->v1 = &outVerts[org->v1];
+			out->v2 = &outVerts[org->v2];
 			out->backsector = org->backsector;
 			out->frontsector = org->frontsector;
 			out->linedef = Level.Lines + org->linedef;
@@ -162,8 +162,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
-		Level.Lines[i].v1 = outVerts + (size_t)Level.Lines[i].v1;
-		Level.Lines[i].v2 = outVerts + (size_t)Level.Lines[i].v2;
+		Level.Lines[i].v1 = &outVerts[(size_t)Level.Lines[i].v1];
+		Level.Lines[i].v2 = &outVerts[(size_t)Level.Lines[i].v2];
 	}
 }
 

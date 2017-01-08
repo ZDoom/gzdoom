@@ -711,7 +711,7 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (Lines.Size() == 0) *v = &vertexes[0];
+			if (Lines.Size() == 0) *v = &level.vertexes[0];
 			else *v = Lines[0]->v1;
 		}
 		return -floorplane.fD();
@@ -760,7 +760,7 @@ double sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (Lines.Size() == 0) *v = &vertexes[0];
+			if (Lines.Size() == 0) *v = &level.vertexes[0];
 			else *v = Lines[0]->v1;
 		}
 		return ceilingplane.fD();
@@ -1963,6 +1963,12 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
  DEFINE_ACTION_FUNCTION(_Side, Index)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_INT(self->Index());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Vertex, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(vertex_t);
 	 ACTION_RETURN_INT(self->Index());
  }
 

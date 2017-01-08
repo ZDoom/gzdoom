@@ -358,6 +358,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 			str = &encoded[0];
 			if (arc.BeginArray(key))
 			{
+				auto numvertexes = level.vertexes.Size();
 				arc(nullptr, numvertexes)
 					(nullptr, numsubsectors)
 					.StringPtr(nullptr, str)
@@ -376,7 +377,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == numvertexes && num_subs == numsubsectors && hasglnodes)
+			if (num_verts == level.vertexes.Size() && num_subs == numsubsectors && hasglnodes)
 			{
 				success = true;
 				int sub = 0;

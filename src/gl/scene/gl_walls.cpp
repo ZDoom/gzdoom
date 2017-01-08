@@ -1547,7 +1547,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			zbottom[1] = zfloor[1];
 			PutPortal(PORTALTYPE_LINETOLINE);
 		}
-		else if (seg->linedef->portaltransferred > 0)
+		else if (seg->linedef->GetTransferredPortal())
 		{
 			SkyLine(frontsector, seg->linedef);
 		}

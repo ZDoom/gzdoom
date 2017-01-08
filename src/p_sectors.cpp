@@ -1772,6 +1772,19 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_FLOAT(self->CenterCeiling());
  }
 
+ DEFINE_ACTION_FUNCTION(_Sector, Index)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	unsigned ndx = self->Index();
+	if (ndx >= level.sectors.Size())
+	{
+		// This qualifies as an array out of bounds exception. Normally it can only happen when a sector copy is concerned which scripts should not be able to create.
+		va_list ap;
+		throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid sector", ap);
+	}
+	ACTION_RETURN_INT(ndx);
+ }
+
 //===========================================================================
 //
 // 
@@ -2100,6 +2113,7 @@ DEFINE_FIELD_X(Line, line_t, backsector)
 DEFINE_FIELD_X(Line, line_t, validcount)
 DEFINE_FIELD_X(Line, line_t, locknumber)
 DEFINE_FIELD_X(Line, line_t, portalindex)
+DEFINE_FIELD_X(Line, line_t, portaltransferred)
 
 DEFINE_FIELD_X(Secplane, secplane_t, normal)
 DEFINE_FIELD_X(Secplane, secplane_t, D)

@@ -226,7 +226,7 @@ struct Line native
 	};
 
 
-	//native readonly vertex		v1, v2;		// vertices, from v1 to v2
+	native readonly vertex			v1, v2;		// vertices, from v1 to v2
 	native readonly Vector2			delta;		// precalculated v2 - v1 for side checking
 	native uint						flags;
 	native uint						activation;	// activation type
@@ -239,6 +239,7 @@ struct Line native
 	native int 						validcount;	// if == validcount, already checked
 	native int						locknumber;	// [Dusk] lock number for special
 	native readonly uint			portalindex;
+	native readonly uint			portaltransferred;
 }
 
 struct SecPlane native
@@ -378,6 +379,7 @@ struct Sector native
 
 	native readonly int			sectornum;
 
+	native int Index();
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);

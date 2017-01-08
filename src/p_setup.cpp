@@ -2156,6 +2156,7 @@ void P_LoadLineDefs (MapData * map)
 	{
 		ld->alpha = 1.;	// [RH] Opaque by default
 		ld->portalindex = UINT_MAX;
+		ld->portaltransferred = UINT_MAX;
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
@@ -2249,6 +2250,7 @@ void P_LoadLineDefs2 (MapData * map)
 		int j;
 
 		ld->portalindex = UINT_MAX;
+		ld->portaltransferred = UINT_MAX;
 
 		for (j = 0; j < 5; j++)
 			ld->args[j] = mld->args[j];

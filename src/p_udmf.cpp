@@ -1824,6 +1824,9 @@ public:
 		{
 			short tempalpha[2] = { SHRT_MIN, SHRT_MIN };
 
+			lines[line].portalindex = UINT_MAX;
+			lines[line].portaltransferred = UINT_MAX;
+
 			lines[line] = ParsedLines[line];
 
 			for(int sd = 0; sd < 2; sd++)

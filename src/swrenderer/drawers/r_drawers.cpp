@@ -29,6 +29,8 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if !defined(NO_DRAWERGEN)
+
 extern "C"
 {
 	void DrawColumn_SSE2(const DrawColumnArgs *, const WorkerThreadData *);
@@ -150,11 +152,13 @@ extern "C"
 	void TriFill32_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFill32_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
 Drawers::Drawers()
 {
+#if !defined(NO_DRAWERGEN)
 	DrawColumn = DrawColumn_SSE2;
 	DrawColumnAdd = DrawColumnAdd_SSE2;
 	DrawColumnShaded = DrawColumnShaded_SSE2;
@@ -245,6 +249,7 @@ Drawers::Drawers()
 	TriFill32.push_back(TriFill32_12_SSE2);
 	TriFill32.push_back(TriFill32_13_SSE2);
 	TriFill32.push_back(TriFill32_14_SSE2);
+#endif
 }
 
 Drawers *Drawers::Instance()

@@ -40,17 +40,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-inline vertex_t *side_t::V1() const
-{
-	return this == linedef->sidedef[0]? linedef->v1 : linedef->v2;
-}
-
-inline vertex_t *side_t::V2() const
-{
-	return this == linedef->sidedef[0]? linedef->v2 : linedef->v1;
-}
-
-
 class DRotatePoly : public DPolyAction
 {
 	DECLARE_CLASS (DRotatePoly, DPolyAction)
@@ -148,8 +137,6 @@ static void FreePolyNode();
 static void ReleaseAllPolyNodes();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern seg_t *segs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

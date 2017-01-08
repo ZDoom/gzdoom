@@ -726,6 +726,10 @@ void InitThingdef()
 	linestruct->Size = sizeof(line_t);
 	linestruct->Align = alignof(line_t);
 
+	auto sidestruct = NewNativeStruct("Side", nullptr);
+	sidestruct->Size = sizeof(side_t);
+	sidestruct->Align = alignof(side_t);
+
 
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
@@ -754,6 +758,7 @@ void InitThingdef()
 	// Add the sector array to LevelLocals.
 	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
 	lstruct->AddNativeField("lines", NewPointer(NewResizableArray(linestruct), false), myoffsetof(FLevelLocals, lines), VARF_Native);
+	lstruct->AddNativeField("sides", NewPointer(NewResizableArray(sidestruct), false), myoffsetof(FLevelLocals, sides), VARF_Native);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);

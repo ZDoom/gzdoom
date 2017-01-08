@@ -190,6 +190,56 @@ struct Vertex native
 	native readonly Vector2 p;
 }
 
+struct Side
+{
+	enum ETexpart
+	{
+		top=0,
+		mid=1,
+		bottom=2
+	};
+	
+	enum EWallFlags
+	{
+		WALLF_ABSLIGHTING	 = 1,	// Light is absolute instead of relative
+		WALLF_NOAUTODECALS	 = 2,	// Do not attach impact decals to this wall
+		WALLF_NOFAKECONTRAST = 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
+		WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
+		WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
+		WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
+		WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
+		WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
+	};
+
+	native Sector	sector;			// Sector the SideDef is facing.
+	//DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
+	native Line		linedef;
+	native int16	Light;
+	native uint8	Flags;
+
+	native TextureID GetTexture(int which);
+	native void SetTexture(int which, TextureID tex);
+	native void SetTextureXOffset(int which, double offset);
+	native double GetTextureXOffset(int which);
+	native void AddTextureXOffset(int which, double delta);
+	native void SetTextureYOffset(int which, double offset);
+	native double GetTextureYOffset(int which);
+	native void AddTextureYOffset(int which, double delta);
+	native void SetTextureXScale(int which, double scale);
+	native double GetTextureXScale(int which);
+	native void MultiplyTextureXScale(int which, double delta);
+	native void SetTextureYScale(int which, double scale);
+	native double GetTextureYScale(int which);
+	native void MultiplyTextureYScale(int which, double delta);
+	//native DInterpolation *SetInterpolation(int position);
+	//native void StopInterpolation(int position);
+
+	native Vertex V1();
+	native Vertex V2();
+
+	native int Index();
+};
+
 struct Line native
 {
 	enum ELineFlags
@@ -302,6 +352,12 @@ struct Sector native
 	//SectorEffect ceilingdata;	
 	//SectorEffect lightingdata;
 
+	enum EPlane
+	{
+		floor,
+		ceiling
+	};
+	
 	enum EInterpolationType
 	{
 		CeilingMove,

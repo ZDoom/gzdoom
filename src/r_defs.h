@@ -1343,6 +1343,16 @@ struct line_t
 	int Index() const;
 };
 
+inline vertex_t *side_t::V1() const
+{
+	return this == linedef->sidedef[0] ? linedef->v1 : linedef->v2;
+}
+
+inline vertex_t *side_t::V2() const
+{
+	return this == linedef->sidedef[0] ? linedef->v2 : linedef->v1;
+}
+
 // phares 3/14/98
 //
 // Sector list node showing all sectors an object appears in.

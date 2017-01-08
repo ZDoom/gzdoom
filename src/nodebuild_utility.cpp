@@ -50,6 +50,7 @@
 #include "i_system.h"
 #include "po_man.h"
 #include "r_state.h"
+#include "g_levellocals.h"
 #include "math/cmath.h"
 
 static const int PO_LINE_START = 1;

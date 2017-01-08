@@ -1826,6 +1826,145 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_INT(ndx);
  }
 
+ //===========================================================================
+ //
+ // 
+ //
+ //===========================================================================
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_INT(self->GetTexture(which).GetIndex());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_INT(tex);
+	 self->SetTexture(which, FSetTextureID(tex));
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, AddTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXOffset(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, AddTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYOffset(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXScale(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYScale(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, V1)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V1());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, V2)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V2());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_INT(self->Index());
+ }
 
 //===========================================================================
 //
@@ -2156,6 +2295,11 @@ DEFINE_FIELD_X(Line, line_t, validcount)
 DEFINE_FIELD_X(Line, line_t, locknumber)
 DEFINE_FIELD_X(Line, line_t, portalindex)
 DEFINE_FIELD_X(Line, line_t, portaltransferred)
+
+DEFINE_FIELD_X(Side, side_t, sector)
+DEFINE_FIELD_X(Side, side_t, linedef)
+DEFINE_FIELD_X(Side, side_t, Light)
+DEFINE_FIELD_X(Side, side_t, Flags)
 
 DEFINE_FIELD_X(Secplane, secplane_t, normal)
 DEFINE_FIELD_X(Secplane, secplane_t, D)

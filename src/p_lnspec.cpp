@@ -591,6 +591,13 @@ FUNC(LS_Stairs_BuildUpDoom)
 						   arg2, SPEED(arg1), TICS(arg3), arg4, 0, 0);
 }
 
+FUNC(LS_Stairs_BuildUpDoomCrush)
+// Stairs_BuildUpDoom (tag, speed, height, delay, reset)
+{
+	return EV_BuildStairs(arg0, DFloor::buildUp, ln,
+		arg2, SPEED(arg1), TICS(arg3), arg4, 0, DFloor::stairCrush);
+}
+
 FUNC(LS_Stairs_BuildDownDoom)
 // Stair_BuildDownDoom (tag, speed, height, delay, reset)
 {

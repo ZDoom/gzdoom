@@ -503,7 +503,8 @@ public:
 	enum EStairType
 	{
 		stairUseSpecials = 1,
-		stairSync = 2
+		stairSync = 2,
+		stairCrush = 4,
 	};
 
 	DFloor (sector_t *sec);

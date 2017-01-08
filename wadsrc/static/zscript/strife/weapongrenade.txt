@@ -241,7 +241,7 @@ class PhosphorousFire : Actor
 		Stop;
 	}
 	
-	int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
 	{
 		if (target.bNoBlood)
 		{

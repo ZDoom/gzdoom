@@ -28,7 +28,7 @@ class FadeSetter : Actor
 		RenderStyle "None";
 	}
 	
-	void PostBeginPlay()
+	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
 		CurSector.SetFade(color(args[0], args[1], args[2]));

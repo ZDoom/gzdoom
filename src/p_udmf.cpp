@@ -792,6 +792,7 @@ public:
 		memset(ld, 0, sizeof(*ld));
 		ld->alpha = 1.;
 		ld->portalindex = UINT_MAX;
+		ld->portaltransferred = UINT_MAX;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -1823,9 +1824,6 @@ public:
 		for(line = 0, side = 0; line < (int)numlines; line++)
 		{
 			short tempalpha[2] = { SHRT_MIN, SHRT_MIN };
-
-			lines[line].portalindex = UINT_MAX;
-			lines[line].portaltransferred = UINT_MAX;
 
 			lines[line] = ParsedLines[line];
 

@@ -273,7 +273,7 @@ void P_ThinkParticles ()
 		auto oldtrans = particle->alpha;
 		particle->alpha -= particle->fadestep;
 		particle->size += particle->sizestep;
-		if (oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
+		if (particle->alpha <= 0 || oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
 			memset (particle, 0, sizeof(particle_t));
 			if (prev)

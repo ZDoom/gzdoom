@@ -1838,7 +1838,7 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 bool P_AlignFlat (int linenum, int side, int fc)
 {
-	line_t *line = lines + linenum;
+	line_t *line = &level.lines[linenum];
 	sector_t *sec = side ? line->backsector : line->frontsector;
 
 	if (!sec)
@@ -1873,7 +1873,7 @@ void subsector_t::BuildPolyBSP()
 	// Set up level information for the node builder.
 	PolyNodeLevel.Sides = sides;
 	PolyNodeLevel.NumSides = numsides;
-	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.Lines = &level.lines[0];
 	PolyNodeLevel.NumLines = numlines;
 
 	// Feed segs to the nodebuilder and build the nodes.

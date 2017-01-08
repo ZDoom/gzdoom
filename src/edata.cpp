@@ -705,7 +705,7 @@ void ProcessEDLinedef(line_t *ld, int recordnum)
 	ld->flags = (ld->flags&~fmask) | eld->flags;
 	ld->setAlpha(eld->alpha);
 	memcpy(ld->args, eld->args, sizeof(ld->args));
-	tagManager.AddLineID(int(ld - lines), eld->tag);
+	tagManager.AddLineID(ld->Index(), eld->tag);
 }
 
 void ProcessEDSector(sector_t *sec, int recordnum)
@@ -760,12 +760,12 @@ void ProcessEDSectors()
 	auto numsectors = level.sectors.Size();
 	int *sectorrecord = new int[numsectors];
 	memset(sectorrecord, -1, numsectors * sizeof(int));
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDSector)
+		if (line.special == Static_Init && line.args[1] == Init_EDSector)
 		{
-			sectorrecord[lines[i].frontsector->Index()] = lines[i].args[0];
-			lines[i].special = 0;
+			sectorrecord[line.frontsector->Index()] = line.args[0];
+			line.special = 0;
 		}
 	}
 	for (unsigned i = 0; i < numsectors; i++)

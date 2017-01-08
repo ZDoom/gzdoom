@@ -380,24 +380,23 @@ DScroller::DScroller (double dx, double dy, const line_t *l,
 
 void P_SpawnScrollers(void)
 {
-	int i;
-	line_t *l = lines;
+	line_t *l = &level.lines[0];
 	TArray<int> copyscrollers;
 
-	for (i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Sector_CopyScroller)
+		if (line.special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (!tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
+			if (!tagManager.SectorHasTag(line.frontsector, line.args[0]))
 			{
-				copyscrollers.Push(i);
+				copyscrollers.Push(line.Index());
 			}
-			lines[i].special = 0;
+			line.special = 0;
 		}
 	}
 
-	for (i = 0; i < numlines; i++, l++)
+	for (unsigned i = 0; i < level.lines.Size(); i++, l++)
 	{
 		double dx;	// direction and speed of scrolling
 		double dy;
@@ -474,7 +473,7 @@ void P_SpawnScrollers(void)
 			}
 			for (unsigned j = 0; j < copyscrollers.Size(); j++)
 			{
-				line_t *line = &lines[copyscrollers[j]];
+				line_t *line = &level.lines[copyscrollers[j]];
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
@@ -494,7 +493,7 @@ void P_SpawnScrollers(void)
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
-					line_t *line = &lines[copyscrollers[j]];
+					line_t *line = &level.lines[copyscrollers[j]];
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
@@ -512,7 +511,7 @@ void P_SpawnScrollers(void)
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
-					line_t *line = &lines[copyscrollers[j]];
+					line_t *line = &level.lines[copyscrollers[j]];
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
@@ -530,48 +529,48 @@ void P_SpawnScrollers(void)
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != i)
-					new DScroller(dx, dy, lines + s, control, accel);
+					new DScroller(dx, dy, &level.lines[s], control, accel);
 			}
 			break;
 		}
 
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			new DScroller (EScroll::sc_side, -sides[s].GetTextureXOffset(side_t::mid),
 				sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			new DScroller (EScroll::sc_side, l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			new DScroller (EScroll::sc_side, -l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			new DScroller (EScroll::sc_side, 0, l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			new DScroller (EScroll::sc_side, 0, -l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
-			s = int(lines[i].sidedef[0] - sides);
+			s = int(level.lines[i].sidedef[0] - sides);
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) / 64.;
 				dy = (l->args[4] - l->args[3]) / 64.;
@@ -645,9 +644,9 @@ void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos W
 		FLineIdIterator itr(id);
 		while ((linenum = itr.Next()) >= 0)
 		{
-			if (lines[linenum].sidedef[sidechoice] != NULL)
+			if (level.lines[linenum].sidedef[sidechoice] != NULL)
 			{
-				int sidenum = int(lines[linenum].sidedef[sidechoice] - sides);
+				int sidenum = int(level.lines[linenum].sidedef[sidechoice] - sides);
 				unsigned int i;
 				for (i = 0; i < numcollected; i++)
 				{

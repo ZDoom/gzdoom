@@ -401,6 +401,7 @@ struct FLevelLocals
 	EMapType	maptype;
 
 	TStaticArray<sector_t> sectors;
+	TStaticArray<line_t> lines;
 
 	DWORD		flags;
 	DWORD		flags2;

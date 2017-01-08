@@ -358,11 +358,10 @@ AActor *P_GetPushThing (int s)
 
 void P_SpawnPushers ()
 {
-	int i;
-	line_t *l = lines;
+	line_t *l = &level.lines[0];
 	int s;
 
-	for (i = 0; i < numlines; i++, l++)
+	for (unsigned i = 0; i < level.lines.Size(); i++, l++)
 	{
 		switch (l->special)
 		{

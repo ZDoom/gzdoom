@@ -89,7 +89,6 @@ void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 
 extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
-extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *numthings);
 
 extern void P_TranslateTeleportThings (void);
 
@@ -107,7 +106,15 @@ CVAR (Bool, showloadtimes, false, 0);
 
 static void P_Shutdown ();
 
-bool P_IsBuildMap(MapData *map);
+inline bool P_IsBuildMap(MapData *map)
+{
+	return false;
+}
+
+inline bool P_LoadBuildMap(BYTE *mapdata, size_t len, FMapThing **things, int *numthings)
+{
+	return false;
+}
 
 
 //
@@ -128,9 +135,6 @@ subsector_t*	subsectors;
 
 int 			numnodes;
 node_t* 		nodes;
-
-int 			numlines;
-line_t* 		lines;
 
 int 			numsides;
 side_t* 		sides;
@@ -589,11 +593,11 @@ static void SetTexture (side_t *side, int position, const char *name, FMissingTe
 		{
 			// Print an error that lists all references to this sidedef.
 			// We must scan the linedefs manually for all references to this sidedef.
-			for(int i = 0; i < numlines; i++)
+			for(unsigned i = 0; i < level.lines.Size(); i++)
 			{
 				for(int j = 0; j < 2; j++)
 				{
-					if (lines[i].sidedef[j] == side)
+					if (level.lines[i].sidedef[j] == side)
 					{
 						Printf(TEXTCOLOR_RED"Unknown %s texture '"
 							TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
@@ -878,7 +882,7 @@ void P_LoadZSegs (FileReaderBase &data)
 
 		segs[i].v1 = &vertexes[v1];
 		segs[i].v2 = &vertexes[v2];
-		segs[i].linedef = ldef = &lines[line];
+		segs[i].linedef = ldef = &level.lines[line];
 		segs[i].sidedef = ldef->sidedef[side];
 		segs[i].frontsector = ldef->sidedef[side]->sector;
 		if (ldef->flags & ML_TWOSIDED && ldef->sidedef[side^1] != NULL)
@@ -940,7 +944,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				line_t *ldef;
 
-				seg->linedef = ldef = &lines[line];
+				seg->linedef = ldef = &level.lines[line];
 				seg->sidedef = ldef->sidedef[side];
 				seg->frontsector = ldef->sidedef[side]->sector;
 				if (ldef->flags & ML_TWOSIDED && ldef->sidedef[side^1] != NULL)
@@ -999,10 +1003,10 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	if (vertexes != newvertarray)
 	{
-		for (i = 0; i < (DWORD)numlines; ++i)
+		for (auto &line : level.lines)
 		{
-			lines[i].v1 = lines[i].v1 - vertexes + newvertarray;
-			lines[i].v2 = lines[i].v2 - vertexes + newvertarray;
+			line.v1 = line.v1 - vertexes + newvertarray;
+			line.v2 = line.v2 - vertexes + newvertarray;
 		}
 		delete[] vertexes;
 		vertexes = newvertarray;
@@ -1212,7 +1216,6 @@ void P_LoadSegs (MapData * map)
 	BYTE *data;
 	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
 	DWORD segangle;
-	line_t* line;		// phares 10/4/98
 	//int ptp_angle;		// phares 10/4/98
 	//int delta_angle;	// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
@@ -1247,10 +1250,9 @@ void P_LoadSegs (MapData * map)
 	// Mark those used by linedefs. A marked vertex is one that is not a
 	// candidate for movement further down.
 
-	line = lines;
-	for (i = 0; i < numlines ; i++, line++)
+	for (auto &line : level.lines)
 	{
-		vertchanged[line->v1 - vertexes] = vertchanged[line->v2 - vertexes] = 1;
+		vertchanged[line.v1 - vertexes] = vertchanged[line.v2 - vertexes] = 1;
 	}
 
 	try
@@ -1327,14 +1329,14 @@ void P_LoadSegs (MapData * map)
 			}
 
 			linedef = LittleShort(ml->linedef);
-			if ((unsigned)linedef >= (unsigned)numlines)
+			if ((unsigned)linedef >= level.lines.Size())
 			{
 				throw badseg(1, i, linedef);
 			}
-			ldef = &lines[linedef];
+			ldef = &level.lines[linedef];
 			li->linedef = ldef;
 			side = LittleShort(ml->side);
-			if ((unsigned)(ldef->sidedef[side] - sides) >= (unsigned)numsides)
+			if ((unsigned)(ldef->sidedef[side] - sides) >= level.lines.Size())
 			{
 				throw badseg(2, i, int(ldef->sidedef[side] - sides));
 			}
@@ -1362,7 +1364,7 @@ void P_LoadSegs (MapData * map)
 			break;
 
 		case 1:
-			Printf ("Seg %d references a nonexistant linedef %d (max %d).\n", bad.badsegnum, bad.baddata, numlines);
+			Printf ("Seg %d references a nonexistant linedef %d (max %u).\n", bad.badsegnum, bad.baddata, level.lines.Size());
 			break;
 
 		case 2:
@@ -1998,7 +2000,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
 	double dx = (ld->v2->fX() - ld->v1->fX());
 	double dy = (ld->v2->fY() - ld->v1->fY());
-	int linenum = int(ld-lines);
+	int linenum = ld->Index();
 
 	if (ld->frontsector == NULL)
 	{
@@ -2022,8 +2024,6 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	switch (ld->special)
 	{						// killough 4/11/98: handle special types
-		int j;
-
 	case TranslucentLine:			// killough 4/11/98: translucent 2s textures
 		// [RH] Second arg controls how opaque it is.
 		if (alpha == SHRT_MIN)
@@ -2048,14 +2048,14 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		}
 		else
 		{
-			for (j = 0; j < numlines; j++)
+			for (unsigned j = 0; j < level.lines.Size(); j++)
 			{
 				if (tagManager.LineHasID(j, ld->args[0]))
 				{
-					lines[j].alpha = dalpha;
+					level.lines[j].alpha = dalpha;
 					if (additive)
 					{
-						lines[j].flags |= ML_ADDTRANS;
+						level.lines[j].flags |= ML_ADDTRANS;
 					}
 				}
 			}
@@ -2067,9 +2067,9 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 // killough 4/4/98: delay using sidedefs until they are loaded
 void P_FinishLoadingLineDefs ()
 {
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		P_FinishLoadingLineDef(&lines[i], sidetemp[lines[i].sidedef[0]-sides].a.alpha);
+		P_FinishLoadingLineDef(&line, sidetemp[line.sidedef[0]-sides].a.alpha);
 	}
 }
 
@@ -2098,10 +2098,10 @@ void P_LoadLineDefs (MapData * map)
 	char * mldf;
 	maplinedef_t *mld;
 		
-	numlines = lumplen / sizeof(maplinedef_t);
-	lines = new line_t[numlines];
+	int numlines = lumplen / sizeof(maplinedef_t);
+	level.lines.Alloc(numlines);
 	linemap.Resize(numlines);
-	memset (lines, 0, numlines*sizeof(line_t));
+	memset (&level.lines[0], 0, numlines*sizeof(line_t));
 
 	mldf = new char[lumplen];
 	map->Read(ML_LINEDEFS, mldf);
@@ -2151,7 +2151,7 @@ void P_LoadLineDefs (MapData * map)
 	P_AllocateSideDefs (sidecount);
 
 	mld = (maplinedef_t *)mldf;
-	ld = lines;
+	ld = &level.lines[0];
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		ld->alpha = 1.;	// [RH] Opaque by default
@@ -2197,10 +2197,10 @@ void P_LoadLineDefs2 (MapData * map)
 	char * mldf;
 	maplinedef2_t *mld;
 		
-	numlines = lumplen / sizeof(maplinedef2_t);
-	lines = new line_t[numlines];
+	int numlines = lumplen / sizeof(maplinedef2_t);
+	level.lines.Alloc(numlines);
 	linemap.Resize(numlines);
-	memset (lines, 0, numlines*sizeof(line_t));
+	memset (&level.lines[0], 0, numlines*sizeof(line_t));
 
 	mldf = new char[lumplen];
 	map->Read(ML_LINEDEFS, mldf);
@@ -2243,7 +2243,7 @@ void P_LoadLineDefs2 (MapData * map)
 	P_AllocateSideDefs (sidecount);
 
 	mld = (maplinedef2_t *)mldf;
-	ld = lines;
+	ld = &level.lines[0];
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		int j;
@@ -2376,7 +2376,7 @@ static void P_LoopSidedefs (bool firstloop)
 			if (NULL == rightside)
 			{
 				// There is no right side!
-				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[line->Index()]);
 				continue;
 			}
 
@@ -2398,7 +2398,7 @@ static void P_LoopSidedefs (bool firstloop)
 			if (right == NO_SIDE)
 			{ 
 				// There is no right side!
-				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[line->Index()]);
 				continue;
 			}
 
@@ -2803,12 +2803,12 @@ static void P_CreateBlockMap ()
 
 	BlockLists = new TArray<int>[bmapwidth * bmapheight];
 
-	for (line = 0; line < numlines; ++line)
+	for (line = 0; line < (int)level.lines.Size(); ++line)
 	{
-		int x1 = int(lines[line].v1->fX());
-		int y1 = int(lines[line].v1->fY());
-		int x2 = int(lines[line].v2->fX());
-		int y2 = int(lines[line].v2->fY());
+		int x1 = int(level.lines[line].v1->fX());
+		int y1 = int(level.lines[line].v1->fY());
+		int x2 = int(level.lines[line].v2->fX());
+		int y2 = int(level.lines[line].v2->fY());
 		int dx = x2 - x1;
 		int dy = y2 - y1;
 		int bx = (x1 - minx) >> BLOCKBITS;
@@ -2991,7 +2991,7 @@ static bool P_VerifyBlockMap(int count)
 			// scan the list for out-of-range linedef indicies in list
 			for(tmplist = list; *tmplist != -1; tmplist++)
 			{
-				if(*tmplist < 0 || *tmplist >= numlines)
+				if((unsigned)*tmplist >= level.lines.Size())
 				{
 					Printf(PRINT_HIGH, "P_VerifyBlockMap: index >= numlines\n");
 					return false;
@@ -3115,9 +3115,9 @@ static void P_GroupLines (bool buildmap)
 	// count number of lines in each sector
 	times[1].Clock();
 	total = 0;
-	for (int i = 0; i < numlines; i++)
+	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		auto li = &lines[i];
+		auto li = &level.lines[i];
 		if (li->frontsector == NULL)
 		{
 			if (!flaggedNoFronts)
@@ -3169,9 +3169,9 @@ static void P_GroupLines (bool buildmap)
 		}
 	}
 
-	for (int i = 0; i < numlines; i++)
+	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		auto li = &lines[i];
+		auto li = &level.lines[i];
 		if (li->frontsector != NULL)
 		{
 			li->frontsector->Lines[linesDoneInEachSector[li->frontsector->Index()]++] = li;
@@ -3461,6 +3461,7 @@ void P_FreeLevelData ()
 		delete[] level.sectors[0].e;
 	}
 	level.sectors.Clear();
+	level.lines.Clear();
 
 	if (gamenodes != NULL && gamenodes != nodes)
 	{
@@ -3489,12 +3490,6 @@ void P_FreeLevelData ()
 	numsubsectors = numgamesubsectors = 0;
 	nodes = gamenodes = NULL;
 	numnodes = numgamenodes = 0;
-	if (lines != NULL)
-	{
-		delete[] lines;
-		lines = NULL;
-	}
-	numlines = 0;
 	if (sides != NULL)
 	{
 		delete[] sides;
@@ -3923,7 +3918,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			vertexes, numvertexes,
 			sides, numsides,
-			lines, numlines,
+			&level.lines[0], (int)level.lines.Size(),
 			0, 0, 0, 0
 		};
 		leveldata.FindMapBounds ();

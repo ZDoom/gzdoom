@@ -2604,7 +2604,7 @@ FUNC(LS_Line_SetTextureOffset)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		side_t *side = lines[line].sidedef[arg3];
+		side_t *side = level.lines[line].sidedef[arg3];
 		if (side != NULL)
 		{
 
@@ -2659,7 +2659,7 @@ FUNC(LS_Line_SetTextureScale)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		side_t *side = lines[line].sidedef[arg3];
+		side_t *side = level.lines[line].sidedef[arg3];
 		if (side != NULL)
 		{
 			if ((arg4&8)==0)
@@ -2733,7 +2733,7 @@ FUNC(LS_Line_SetBlocking)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		lines[line].flags = (lines[line].flags & ~clearflags) | setflags;
+		level.lines[line].flags = (level.lines[line].flags & ~clearflags) | setflags;
 	}
 	return true;
 }
@@ -3028,14 +3028,14 @@ FUNC(LS_TranslucentLine)
 	int linenum;
 	while ((linenum = itr.Next()) >= 0)
 	{
-		lines[linenum].alpha = clamp(arg1, 0, 255) / 255.;
+		level.lines[linenum].alpha = clamp(arg1, 0, 255) / 255.;
 		if (arg2 == 0)
 		{
-			lines[linenum].flags &= ~ML_ADDTRANS;
+			level.lines[linenum].flags &= ~ML_ADDTRANS;
 		}
 		else if (arg2 == 1)
 		{
-			lines[linenum].flags |= ML_ADDTRANS;
+			level.lines[linenum].flags |= ML_ADDTRANS;
 		}
 		else
 		{

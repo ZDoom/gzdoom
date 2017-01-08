@@ -482,7 +482,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 
 	for (list = blockmaplump + offset + 1; *list != -1; list++)
 	{
-		if (!P_SightCheckLine (&lines[*list]))
+		if (!P_SightCheckLine (&level.lines[*list]))
 		{
 			if (!portalfound) return 0;
 			else res = -1;

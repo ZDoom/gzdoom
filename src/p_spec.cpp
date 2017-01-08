@@ -189,7 +189,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
-		Printf ("Line special %d activated on line %i\n", special, int(line - lines));
+		Printf ("Line special %d activated on line %i\n", special, line->Index());
 	}
 	return true;
 }
@@ -361,7 +361,7 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 	// end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
-		Printf("Line special %d predicted on line %i\n", special, int(line - lines));
+		Printf("Line special %d predicted on line %i\n", special, line->Index());
 	}
 	return true;
 }
@@ -790,14 +790,14 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags
 	FLineIdIterator itr(target);
 	while ((linenum = itr.Next()) >= 0)
 	{
-		if (flags & WLF_SIDE1 && lines[linenum].sidedef[0] != NULL)
+		if (flags & WLF_SIDE1 && level.lines[linenum].sidedef[0] != NULL)
 		{
-			lines[linenum].sidedef[0]->Flags |= wallflags;
+			level.lines[linenum].sidedef[0]->Flags |= wallflags;
 		}
 
-		if (flags & WLF_SIDE2 && lines[linenum].sidedef[1] != NULL)
+		if (flags & WLF_SIDE2 && level.lines[linenum].sidedef[1] != NULL)
 		{
-			lines[linenum].sidedef[1]->Flags |= wallflags;
+			level.lines[linenum].sidedef[1]->Flags |= wallflags;
 		}
 	}
 	ChangeStatNum(STAT_LIGHTTRANSFER);
@@ -821,7 +821,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, BYTE flags)
 	FLineIdIterator itr(target);
 	while ((linenum = itr.Next()) >= 0)
 	{
-		line_t *line = &lines[linenum];
+		line_t *line = &level.lines[linenum];
 
 		if (flags & WLF_SIDE1 && line->sidedef[0] != NULL)
 		{
@@ -958,42 +958,42 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 		SetPortal(&level.sectors[s], plane, pnum, alpha);
 	}
 
-	for (int j=0;j<numlines;j++)
+	for (auto &line : level.lines)
 	{
 		// Check if this portal needs to be copied to other sectors
 		// This must be done here to ensure that it gets done only after the portal is set up
-		if (lines[j].special == Sector_SetPortal &&
-			lines[j].args[1] == 1 &&
-			(lines[j].args[2] == plane || lines[j].args[2] == 3) &&
-			lines[j].args[3] == sectortag)
+		if (line.special == Sector_SetPortal &&
+			line.args[1] == 1 &&
+			(line.args[2] == plane || line.args[2] == 3) &&
+			line.args[3] == sectortag)
 		{
-			if (lines[j].args[0] == 0)
+			if (line.args[0] == 0)
 			{
-				SetPortal(lines[j].frontsector, plane, pnum, alpha);
+				SetPortal(line.frontsector, plane, pnum, alpha);
 			}
 			else
 			{
-				FSectorTagIterator itr(lines[j].args[0]);
+				FSectorTagIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					SetPortal(&level.sectors[s], plane, pnum, alpha);
 				}
 			}
 		}
-		if (tolines && lines[j].special == Sector_SetPortal &&
-			lines[j].args[1] == 5 &&
-			lines[j].args[3] == sectortag)
+		if (tolines && line.special == Sector_SetPortal &&
+			line.args[1] == 5 &&
+			line.args[3] == sectortag)
 		{
-			if (lines[j].args[0] == 0)
+			if (line.args[0] == 0)
 			{
-				lines[j].portaltransferred = pnum;
+				line.portaltransferred = pnum;
 			}
 			else
 			{
-				FLineIdIterator itr(lines[j].args[0]);
+				FLineIdIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					lines[s].portaltransferred = pnum;
+					level.lines[s].portaltransferred = pnum;
 				}
 			}
 		}
@@ -1004,20 +1004,20 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked)
 {
 	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
-	for (int i=0;i<numlines;i++)
+	for (auto &oline : level.lines)
 	{
 		// We must look for the reference line with a linear search unless we want to waste the line ID for it
 		// which is not a good idea.
-		if (lines[i].special == Sector_SetPortal &&
-			lines[i].args[0] == sectortag &&
-			lines[i].args[1] == linked &&
-			lines[i].args[2] == plane &&
-			lines[i].args[3] == 1)
+		if (oline.special == Sector_SetPortal &&
+			oline.args[0] == sectortag &&
+			oline.args[1] == linked &&
+			oline.args[2] == plane &&
+			oline.args[3] == 1)
 		{
 			// beware of overflows.
 			DVector2 pos1 = line->v1->fPos() + line->Delta() / 2;
-			DVector2 pos2 = lines[i].v1->fPos() + lines[i].Delta() / 2;
-			unsigned pnum = P_GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, lines[i].frontsector, pos2 - pos1);
+			DVector2 pos2 = oline.v1->fPos() + oline.Delta() / 2;
+			unsigned pnum = P_GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, oline.frontsector, pos2 - pos1);
 			CopyPortal(sectortag, plane, pnum, bytealpha / 255., false);
 			return;
 		}
@@ -1266,9 +1266,9 @@ void P_SpawnSpecials (void)
 		P_SpawnSkybox(pt2);
 	}
 
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		switch (lines[i].special)
+		switch (line.special)
 		{
 			int s;
 			sector_t *sec;
@@ -1277,16 +1277,16 @@ void P_SpawnSpecials (void)
 		// support for drawn heights coming from different sector
 		case Transfer_Heights:
 			{
-				sec = lines[i].frontsector;
-				if (lines[i].args[1] & 2)
+				sec = line.frontsector;
+				if (line.args[1] & 2)
 				{
 					sec->MoreFlags |= SECF_FAKEFLOORONLY;
 				}
-				if (lines[i].args[1] & 4)
+				if (line.args[1] & 4)
 				{
 					sec->MoreFlags |= SECF_CLIPFAKEPLANES;
 				}
-				if (lines[i].args[1] & 8)
+				if (line.args[1] & 8)
 				{
 					sec->MoreFlags |= SECF_UNDERWATER;
 				}
@@ -1294,15 +1294,15 @@ void P_SpawnSpecials (void)
 				{
 					sec->MoreFlags |= SECF_FORCEDUNDERWATER;
 				}
-				if (lines[i].args[1] & 16)
+				if (line.args[1] & 16)
 				{
 					sec->MoreFlags |= SECF_IGNOREHEIGHTSEC;
 				}
-				if (lines[i].args[1] & 32)
+				if (line.args[1] & 32)
 				{
 					sec->MoreFlags |= SECF_NOFAKELIGHT;
 				}
-				FSectorTagIterator itr(lines[i].args[0]);
+				FSectorTagIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					level.sectors[s].heightsec = sec;
@@ -1315,29 +1315,29 @@ void P_SpawnSpecials (void)
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			new DLightTransfer (lines[i].frontsector, lines[i].args[0], true);
+			new DLightTransfer (line.frontsector, line.args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			new DLightTransfer (lines[i].frontsector, lines[i].args[0], false);
+			new DLightTransfer (line.frontsector, line.args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			new DWallLightTransfer (lines[i].frontsector, lines[i].args[0], lines[i].args[1]);
+			new DWallLightTransfer (line.frontsector, line.args[0], line.args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:
-			P_Attach3dMidtexLinesToSector(lines[i].frontsector, lines[i].args[0], lines[i].args[1], !!lines[i].args[2]);
+			P_Attach3dMidtexLinesToSector(line.frontsector, line.args[0], line.args[1], !!line.args[2]);
 			break;
 
 		case Sector_SetLink:
-			if (lines[i].args[0] == 0)
+			if (line.args[0] == 0)
 			{
-				P_AddSectorLinks(lines[i].frontsector, lines[i].args[1], lines[i].args[2], lines[i].args[3]);
+				P_AddSectorLinks(line.frontsector, line.args[1], line.args[2], line.args[3]);
 			}
 			break;
 
@@ -1355,30 +1355,29 @@ void P_SpawnSpecials (void)
 			// arg 2 = 0:floor, 1:ceiling, 2:both
 			// arg 3 = 0: anchor, 1: reference line
 			// arg 4 = for the anchor only: alpha
-			if ((lines[i].args[1] == 0 || lines[i].args[1] == 6) && lines[i].args[3] == 0)
+			if ((line.args[1] == 0 || line.args[1] == 6) && line.args[3] == 0)
 			{
-				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4], lines[i].args[1]);
+				P_SpawnPortal(&line, line.args[0], line.args[2], line.args[4], line.args[1]);
 			}
-			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
+			else if (line.args[1] == 3 || line.args[1] == 4)
 			{
-				line_t *line = &lines[i];
-				unsigned pnum = P_GetPortal(line->args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line->args[2], line->frontsector, NULL, { 0,0 });
-				CopyPortal(line->args[0], line->args[2], pnum, 0, true);
+				unsigned pnum = P_GetPortal(line.args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line.args[2], line.frontsector, NULL, { 0,0 });
+				CopyPortal(line.args[0], line.args[2], pnum, 0, true);
 			}
 			break;
 
 		case Line_SetPortal:
-			P_SpawnLinePortal(&lines[i]);
+			P_SpawnLinePortal(&line);
 			break;
 
 		// [RH] ZDoom Static_Init settings
 		case Static_Init:
-			switch (lines[i].args[1])
+			switch (line.args[1])
 			{
 			case Init_Gravity:
 				{
-					double grav = lines[i].Delta().Length() / 100.;
-					FSectorTagIterator itr(lines[i].args[0]);
+					double grav = line.Delta().Length() / 100.;
+					FSectorTagIterator itr(line.args[0]);
 					while ((s = itr.Next()) >= 0)
 						level.sectors[s].gravity = grav;
 				}
@@ -1389,8 +1388,8 @@ void P_SpawnSpecials (void)
 
 			case Init_Damage:
 				{
-					int damage = int(lines[i].Delta().Length());
-					FSectorTagIterator itr(lines[i].args[0]);
+					int damage = int(line.Delta().Length());
+					FSectorTagIterator itr(line.args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
 						sector_t *sec = &level.sectors[s];
@@ -1416,8 +1415,8 @@ void P_SpawnSpecials (void)
 				break;
 
 			case Init_SectorLink:
-				if (lines[i].args[3] == 0)
-					P_AddSectorLinksByID(lines[i].frontsector, lines[i].args[0], lines[i].args[2]);
+				if (line.args[3] == 0)
+					P_AddSectorLinksByID(line.frontsector, line.args[0], line.args[2]);
 				break;
 
 			// killough 10/98:
@@ -1431,9 +1430,9 @@ void P_SpawnSpecials (void)
 
 			case Init_TransferSky:
 				{
-					FSectorTagIterator itr(lines[i].args[0]);
+					FSectorTagIterator itr(line.args[0]);
 					while ((s = itr.Next()) >= 0)
-						level.sectors[s].sky = (i + 1) | PL_SKYFLAT;
+						level.sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
 					break;
 				}
 			}
@@ -1499,10 +1498,9 @@ void P_SpawnSpecials (void)
 
 static void P_SpawnFriction(void)
 {
-	int i;
-	line_t *l = lines;
+	line_t *l = &level.lines[0];
 
-	for (i = 0 ; i < numlines ; i++,l++)
+	for (unsigned i = 0 ; i < level.lines.Size() ; i++,l++)
 	{
 		if (l->special == Sector_SetFriction)
 		{

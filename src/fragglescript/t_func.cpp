@@ -2171,7 +2171,7 @@ void FParser::SF_SetLineBlocking(void)
 			int i;
 			while ((i = itr.Next()) >= 0)
 			{
-				lines[i].flags = (lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
+				level.lines[i].flags = (level.lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
 			}
 		}
 	}
@@ -2194,7 +2194,7 @@ void FParser::SF_SetLineMonsterBlocking(void)
 		int i;
 		while ((i = itr.Next()) >= 0)
 		{
-			lines[i].flags = (lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
+			level.lines[i].flags = (level.lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
 		}
 	}
 }
@@ -2251,11 +2251,11 @@ void FParser::SF_SetLineTexture(void)
 			while ((i = itr.Next()) >= 0)
 			{
 				// bad sidedef, Hexen just SEGV'd here!
-				if (lines[i].sidedef[side] != NULL)
+				if (level.lines[i].sidedef[side] != NULL)
 				{
 					if (position >= 0 && position <= 2)
 					{
-						lines[i].sidedef[side]->SetTexture(position, texturenum);
+						level.lines[i].sidedef[side]->SetTexture(position, texturenum);
 					}
 				}
 			}
@@ -2270,7 +2270,7 @@ void FParser::SF_SetLineTexture(void)
 			FLineIdIterator itr(tag);
 			while ((i = itr.Next()) >= 0)
 			{ 
-				side_t *sided = lines[i].sidedef[side];
+				side_t *sided = level.lines[i].sidedef[side];
 				if(sided != NULL)
 				{ 
 					if(sections & 1) sided->SetTexture(side_t::top, picnum);
@@ -3363,19 +3363,19 @@ void FParser::SF_ObjState()
 void FParser::SF_LineFlag()
 {
 	line_t*  line;
-	int      linenum;
+	unsigned linenum;
 	int      flagnum;
 	
 	if (CheckArgs(2))
 	{
 		linenum = intvalue(t_argv[0]);
-		if(linenum < 0 || linenum > numlines)
+		if(linenum >= level.lines.Size())
 		{
 			script_error("LineFlag: Invalid line number.\n");
 			return;
 		}
 		
-		line = lines + linenum;
+		line = &level.lines[linenum];
 		
 		flagnum = intvalue(t_argv[1]);
 		if(flagnum < 0 || (flagnum > 8 && flagnum!=15))
@@ -3987,9 +3987,9 @@ void FParser::SF_SetLineTrigger()
 			mld.special = spec;
 			mld.tag = tag;
 			mld.flags = 0;
-			int f = lines[i].flags;
-			P_TranslateLineDef(&lines[i], &mld);
-			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
+			int f = level.lines[i].flags;
+			P_TranslateLineDef(&level.lines[i], &mld);
+			level.lines[i].flags = (level.lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
 				(f & ~(ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY));
 
 		}

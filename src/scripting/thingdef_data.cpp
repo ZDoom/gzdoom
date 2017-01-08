@@ -716,18 +716,23 @@ void InitThingdef()
 	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
 	secplanestruct->Size = sizeof(secplane_t);
 	secplanestruct->Align = alignof(secplane_t);
+
 	auto sectorstruct = NewNativeStruct("Sector", nullptr);
 	sectorstruct->Size = sizeof(sector_t);
 	sectorstruct->Align = alignof(sector_t);
 
+	auto linestruct = NewNativeStruct("Line", nullptr);
+	linestruct->Size = sizeof(line_t);
+	linestruct->Align = alignof(line_t);
+
 
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
-	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(NewNativeStruct("line", nullptr), false)), false), myoffsetof(sector_t, Lines), VARF_Native);
+	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
 
-	// add the sector planes. These are value items of native structs so they have to be done here.
-	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native);
-	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native);
+	// add the sector planes. These are value items of native structs so they have to be done here. Write access should be through functions only to allow later optimization inside the renderer.
+	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native|VARF_ReadOnly);
+	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native|VARF_ReadOnly);
 
 
 
@@ -747,6 +752,7 @@ void InitThingdef()
 
 	// Add the sector array to LevelLocals.
 	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
+	lstruct->AddNativeField("lines", NewPointer(NewResizableArray(linestruct), false), myoffsetof(FLevelLocals, lines), VARF_Native);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);

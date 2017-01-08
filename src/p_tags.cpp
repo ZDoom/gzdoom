@@ -47,7 +47,7 @@ FTagManager tagManager;
 
 static inline int lineindex(const line_t *line)
 {
-	return (int)(intptr_t)(line - lines);
+	return level.lines.Size();
 }
 
 //-----------------------------------------------------------------------------

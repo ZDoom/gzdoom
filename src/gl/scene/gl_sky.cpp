@@ -51,7 +51,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 	memset(this, 0, sizeof(*this));
 	if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT - 1)))
 	{
-		const line_t *l = &lines[(sky1&(PL_SKYFLAT - 1)) - 1];
+		const line_t *l = &level.lines[(sky1&(PL_SKYFLAT - 1)) - 1];
 		const side_t *s = l->sidedef[0];
 		int pos;
 

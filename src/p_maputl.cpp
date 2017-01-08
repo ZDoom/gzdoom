@@ -330,7 +330,7 @@ bool AActor::FixMapthingPos()
 
 		for (list = blockmaplump + blockmap[blocky*bmapwidth + blockx] + 1; *list != -1; ++list)
 		{
-			line_t *ldef = &lines[*list];
+			line_t *ldef = &level.lines[*list];
 
 			if (ldef->frontsector == ldef->backsector)
 			{ // Skip two-sided lines inside a single sector
@@ -367,10 +367,10 @@ bool AActor::FixMapthingPos()
 
 			if (distance < radius)
 			{
-				DPrintf(DMSG_NOTIFY, "%s at (%f,%f) lies on %s line %td, distance = %f\n",
+				DPrintf(DMSG_NOTIFY, "%s at (%f,%f) lies on %s line %d, distance = %f\n",
 					this->GetClass()->TypeName.GetChars(), X(), Y(),
 					ldef->Delta().X == 0 ? "vertical" : ldef->Delta().Y == 0 ? "horizontal" : "diagonal",
-					ldef - lines, distance);
+					ldef->Index(), distance);
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
@@ -709,7 +709,7 @@ line_t *FBlockLinesIterator::Next()
 		{
 			while (*list != -1)
 			{
-				line_t *ld = &lines[*list];
+				line_t *ld = &level.lines[*list];
 
 				list++;
 				if (ld->validcount != validcount)

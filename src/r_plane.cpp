@@ -1347,7 +1347,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 		else
 		{	// MBF's linedef-controlled skies
 			// Sky Linedef
-			const line_t *l = &lines[(pl->sky & ~PL_SKYFLAT)-1];
+			const line_t *l = &level.lines[(pl->sky & ~PL_SKYFLAT)-1];
 
 			// Sky transferred from first sidedef
 			const side_t *s = l->sidedef[0];

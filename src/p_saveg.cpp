@@ -64,7 +64,7 @@
 #include "serializer.h"
 
 static TStaticArray<sector_t>	loadsectors;
-static TArray<line_t>		loadlines;
+static TStaticArray<line_t>		loadlines;
 static TArray<side_t>		loadsides;
 
 
@@ -902,7 +902,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
 		BYTE chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
-		if (arc.GetSize("linedefs") != (unsigned)numlines ||
+		if (arc.GetSize("linedefs") != level.lines.Size() ||
 			arc.GetSize("sidedefs") != (unsigned)numsides ||
 			arc.GetSize("sectors") != level.sectors.Size() ||
 			arc.GetSize("polyobjs") != (unsigned)po_NumPolyobjs ||
@@ -956,7 +956,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	FBehavior::StaticSerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
-	arc.Array("linedefs", lines, &loadlines[0], numlines);
+	arc.Array("linedefs", &level.lines[0], &loadlines[0], level.lines.Size());
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
 	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
 	arc("zones", Zones);
@@ -997,8 +997,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 void P_BackupMapData()
 {
 	loadsectors = level.sectors;
-	loadlines.Resize(numlines);
-	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
+	loadlines = level.lines;
 	loadsides.Resize(numsides);
 	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
 }

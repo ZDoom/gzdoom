@@ -1575,7 +1575,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			{
 				if (!sides[i].linedef->args[1])
 				{
-					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, int(sides[i].linedef - lines));
+					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, sides[i].linedef->Index());
 				}
 				po->Sidedefs.Push (&sides[i]);
 			}
@@ -1776,11 +1776,11 @@ void PO_Init (void)
 		}
 	}
 	// clear all polyobj specials so that they do not obstruct using other lines.
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Polyobj_ExplicitLine || lines[i].special == Polyobj_StartLine)
+		if (line.special == Polyobj_ExplicitLine || line.special == Polyobj_StartLine)
 		{
-			lines[i].special = 0;
+			line.special = 0;
 		}
 	}
 }

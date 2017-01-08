@@ -52,7 +52,7 @@ static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 	FLineIdIterator itr(lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
-		const line_t *line = &lines[linenum];
+		const line_t *line = &level.lines[linenum];
 		sector_t *sec;
 		secplane_t *plane;
 		
@@ -516,14 +516,14 @@ static void P_AlignPlane(sector_t *sec, line_t *line, int which)
 
 void P_SetSlopes ()
 {
-	int i, s;
+	int s;
 
-	for (i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Plane_Align)
+		if (line.special == Plane_Align)
 		{
-			lines[i].special = 0;
-			if (lines[i].backsector != NULL)
+			line.special = 0;
+			if (line.backsector != nullptr)
 			{
 				// args[0] is for floor, args[1] is for ceiling
 				//
@@ -531,15 +531,15 @@ void P_SetSlopes ()
 				// then args[0], bits 2-3 are for ceiling.
 				for (s = 0; s < 2; s++)
 				{
-					int bits = lines[i].args[s] & 3;
+					int bits = line.args[s] & 3;
 
 					if (s == 1 && bits == 0)
-						bits = (lines[i].args[0] >> 2) & 3;
+						bits = (line.args[0] >> 2) & 3;
 
 					if (bits == 1)			// align front side to back
-						P_AlignPlane (lines[i].frontsector, lines + i, s);
+						P_AlignPlane (line.frontsector, &line, s);
 					else if (bits == 2)		// align back side to front
-						P_AlignPlane (lines[i].backsector, lines + i, s);
+						P_AlignPlane (line.backsector, &line, s);
 				}
 			}
 		}
@@ -554,9 +554,9 @@ void P_SetSlopes ()
 
 void P_CopySlopes()
 {
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Plane_Copy)
+		if (line.special == Plane_Copy)
 		{
 			// The args are used for the tags of sectors to copy:
 			// args[0]: front floor
@@ -564,31 +564,31 @@ void P_CopySlopes()
 			// args[2]: back floor
 			// args[3]: back ceiling
 			// args[4]: copy slopes from one side of the line to the other.
-			lines[i].special = 0;
-			for (int s = 0; s < (lines[i].backsector ? 4 : 2); s++)
+			line.special = 0;
+			for (int s = 0; s < (line.backsector ? 4 : 2); s++)
 			{
-				if (lines[i].args[s])
-					P_CopyPlane(lines[i].args[s], 
-					(s & 2 ? lines[i].backsector : lines[i].frontsector), s & 1);
+				if (line.args[s])
+					P_CopyPlane(line.args[s], 
+					(s & 2 ? line.backsector : line.frontsector), s & 1);
 			}
 
-			if (lines[i].backsector != NULL)
+			if (line.backsector != NULL)
 			{
-				if ((lines[i].args[4] & 3) == 1)
+				if ((line.args[4] & 3) == 1)
 				{
-					lines[i].backsector->floorplane = lines[i].frontsector->floorplane;
+					line.backsector->floorplane = line.frontsector->floorplane;
 				}
-				else if ((lines[i].args[4] & 3) == 2)
+				else if ((line.args[4] & 3) == 2)
 				{
-					lines[i].frontsector->floorplane = lines[i].backsector->floorplane;
+					line.frontsector->floorplane = line.backsector->floorplane;
 				}
-				if ((lines[i].args[4] & 12) == 4)
+				if ((line.args[4] & 12) == 4)
 				{
-					lines[i].backsector->ceilingplane = lines[i].frontsector->ceilingplane;
+					line.backsector->ceilingplane = line.frontsector->ceilingplane;
 				}
-				else if ((lines[i].args[4] & 12) == 8)
+				else if ((line.args[4] & 12) == 8)
 				{
-					lines[i].frontsector->ceilingplane = lines[i].backsector->ceilingplane;
+					line.frontsector->ceilingplane = line.backsector->ceilingplane;
 				}
 			}
 		}

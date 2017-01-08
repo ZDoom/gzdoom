@@ -255,10 +255,10 @@ static bool LoadGLVertexes(FileReader * lump)
 	mgl			 = (mapglvertex_t *) (gldata + GL_VERT_OFFSET);	
 
 	memcpy(vertexes, oldvertexes, firstglvertex * sizeof(vertex_t));
-	for(i=0;i<numlines;i++)
+	for(auto &line : level.lines)
 	{
-		lines[i].v1 = vertexes + (lines[i].v1 - oldvertexes);
-		lines[i].v2 = vertexes + (lines[i].v2 - oldvertexes);
+		line.v1 = vertexes + (line.v1 - oldvertexes);
+		line.v2 = vertexes + (line.v2 - oldvertexes);
 	}
 
 	for (i = firstglvertex; i < numvertexes; i++)
@@ -328,7 +328,7 @@ static bool LoadGLSegs(FileReader * lump)
 				glsegextras[i].PartnerSeg = ml->partner == 0xFFFF ? DWORD_MAX : LittleShort(ml->partner);
 				if(ml->linedef != 0xffff)
 				{
-					ldef = &lines[LittleShort(ml->linedef)];
+					ldef = &level.lines[LittleShort(ml->linedef)];
 					segs[i].linedef = ldef;
 	
 					
@@ -382,7 +382,7 @@ static bool LoadGLSegs(FileReader * lump)
 	
 				if(ml->linedef != 0xffff) // skip minisegs 
 				{
-					ldef = &lines[LittleLong(ml->linedef)];
+					ldef = &level.lines[LittleLong(ml->linedef)];
 					segs[i].linedef = ldef;
 	
 					
@@ -1002,7 +1002,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			{
 				vertexes, numvertexes,
 				sides, numsides,
-				lines, numlines,
+				&level.lines[0], (int)level.lines.Size(),
 				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
@@ -1114,7 +1114,7 @@ static void CreateCachedNodes(MapData *map)
 		else WriteLong(ZNodes, 0);
 		if (segs[i].linedef)
 		{
-			WriteLong(ZNodes, DWORD(segs[i].linedef - lines));
+			WriteLong(ZNodes, DWORD(segs[i].linedef->Index()));
 			WriteByte(ZNodes, segs[i].sidedef == segs[i].linedef->sidedef[0]? 0:1);
 		}
 		else
@@ -1156,7 +1156,7 @@ static void CreateCachedNodes(MapData *map)
 
 	uLongf outlen = ZNodes.Size();
 	BYTE *compressed;
-	int offset = numlines * 8 + 12 + 16;
+	int offset = level.lines.Size() * 8 + 12 + 16;
 	int r;
 	do
 	{
@@ -1171,13 +1171,13 @@ static void CreateCachedNodes(MapData *map)
 	while (r == Z_BUF_ERROR);
 
 	memcpy(compressed, "CACH", 4);
-	DWORD len = LittleLong(numlines);
+	DWORD len = LittleLong(level.lines.Size());
 	memcpy(compressed+4, &len, 4);
 	map->GetChecksum(compressed+8);
-	for(int i=0;i<numlines;i++)
+	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		DWORD ndx[2] = {LittleLong(DWORD(lines[i].v1 - vertexes)), LittleLong(DWORD(lines[i].v2 - vertexes)) };
-		memcpy(compressed+8+16+8*i, ndx, 8);
+		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1 - vertexes)), LittleLong(DWORD(level.lines[i].v2 - vertexes)) };
+		memcpy(compressed + 8 + 16 + 8 * i, ndx, 8);
 	}
 	memcpy(compressed + offset - 4, "ZGL3", 4);
 
@@ -1219,7 +1219,7 @@ static bool CheckCachedNodes(MapData *map)
 
 	if (fread(&numlin, 4, 1, f) != 1) goto errorout; 
 	numlin = LittleLong(numlin);
-	if ((int)numlin != numlines) goto errorout;
+	if (numlin != level.lines.Size()) goto errorout;
 
 	if (fread(md5, 1, 16, f) != 16) goto errorout;
 	map->GetChecksum(md5map);
@@ -1261,10 +1261,11 @@ static bool CheckCachedNodes(MapData *map)
 		goto errorout;
 	}
 
-	for(int i=0;i<numlines;i++)
+	for(auto &line : level.lines)
 	{
-		lines[i].v1 = &vertexes[LittleLong(verts[i*2])];
-		lines[i].v2 = &vertexes[LittleLong(verts[i*2+1])];
+		int i = line.Index();
+		line.v1 = &vertexes[LittleLong(verts[i*2])];
+		line.v2 = &vertexes[LittleLong(verts[i*2+1])];
 	}
 	delete [] verts;
 

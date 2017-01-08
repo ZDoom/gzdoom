@@ -405,17 +405,15 @@ static void InitVertexData()
 	vt_sectorlists = new TArray<int>[numvertexes];
 
 
-	for(i=0;i<numlines;i++)
+	for(auto &line : level.lines)
 	{
-		line_t * line = &lines[i];
-
 		for(j=0;j<2;j++)
 		{
-			vertex_t * v = j==0? line->v1 : line->v2;
+			vertex_t * v = j==0? line.v1 : line.v2;
 
 			for(k=0;k<2;k++)
 			{
-				sector_t * sec = k==0? line->frontsector : line->backsector;
+				sector_t * sec = k==0? line.frontsector : line.backsector;
 
 				if (sec)
 				{
@@ -712,7 +710,7 @@ CCMD(listmapsections)
 		{
 			if (subsectors[j].mapsection == i)
 			{
-				Printf("Mapsection %d, sector %d, line %d\n", i, subsectors[j].render_sector->sectornum, int(subsectors[j].firstline->linedef-lines));
+				Printf("Mapsection %d, sector %d, line %d\n", i, subsectors[j].render_sector->Index(), subsectors[j].firstline->linedef->Index());
 				break;
 			}
 		}

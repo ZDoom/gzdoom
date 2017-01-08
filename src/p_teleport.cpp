@@ -447,10 +447,10 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 	FLineIdIterator itr(id);
 	while ((i = itr.Next()) >= 0)
 	{
-		if (line-lines == i)
+		if (line->Index() == i)
 			continue;
 
-		if ((l=lines+i) != line && l->backsector)
+		if ((l=&level.lines[i]) != line && l->backsector)
 		{
 			// Get the thing's position along the source linedef
 			double pos;

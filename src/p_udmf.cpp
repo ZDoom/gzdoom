@@ -1813,13 +1813,14 @@ public:
 				i++;
 			}
 		}
-		numlines = ParsedLines.Size();
+		unsigned numlines = ParsedLines.Size();
 		numsides = sidecount;
-		lines = new line_t[numlines];
+		level.lines.Alloc(numlines);
 		sides = new side_t[numsides];
 		int line, side;
+		auto lines = &level.lines[0];
 
-		for(line = 0, side = 0; line < numlines; line++)
+		for(line = 0, side = 0; line < (int)numlines; line++)
 		{
 			short tempalpha[2] = { SHRT_MIN, SHRT_MIN };
 

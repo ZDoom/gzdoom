@@ -56,9 +56,6 @@ extern subsector_t* 	subsectors;
 extern int				numnodes;
 extern node_t*			nodes;
 
-extern int				numlines;
-extern line_t*			lines;
-
 extern int				numsides;
 extern side_t*			sides;
 

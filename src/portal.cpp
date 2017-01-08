@@ -115,7 +115,7 @@ static void BuildBlockmap()
 
 			while (*list != -1)
 			{
-				line_t *ld = &lines[*list++];
+				line_t *ld = &level.lines[*list++];
 				FLinePortal *port = ld->getPortal();
 				if (port && port->mType != PORTT_VISUAL)
 				{
@@ -209,9 +209,9 @@ static line_t *FindDestination(line_t *src, int tag)
 
 		while ((lineno = it.Next()) >= 0)
 		{
-			if (&lines[lineno] != src)
+			if (&level.lines[lineno] != src)
 			{
-				return &lines[lineno];
+				return &level.lines[lineno];
 			}
 		}
 	}
@@ -290,7 +290,7 @@ void P_SpawnLinePortal(line_t* line)
 			if (port->mType == PORTT_INTERACTIVE && port->mAlign != PORG_ABSOLUTE)
 			{
 				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
-				Printf(TEXTCOLOR_RED "Warning: z-offsetting not allowed for interactive portals. Changing line %d to teleport-portal!\n", int(line - lines));
+				Printf(TEXTCOLOR_RED "Warning: z-offsetting not allowed for interactive portals. Changing line %d to teleport-portal!\n", line->Index());
 				port->mType = PORTT_TELEPORT;
 			}
 		}
@@ -305,26 +305,26 @@ void P_SpawnLinePortal(line_t* line)
 
 		int mytag = tagManager.GetFirstLineID(line);
 
-		for (int i = 0; i < numlines; i++)
+		for (auto &ln : level.lines)
 		{
-			if (tagManager.GetFirstLineID(&lines[i]) == mytag && lines[i].args[0] == 1 && lines[i].special == Line_SetPortal)
+			if (tagManager.GetFirstLineID(&ln) == mytag && ln.args[0] == 1 && ln.special == Line_SetPortal)
 			{
 				line->portalindex = linePortals.Reserve(1);
 				FLinePortal *port = &linePortals.Last();
 
 				memset(port, 0, sizeof(FLinePortal));
 				port->mOrigin = line;
-				port->mDestination = &lines[i];
+				port->mDestination = &ln;
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
 
 				// we need to create the backlink here, too.
-				lines[i].portalindex = linePortals.Reserve(1);
+				ln.portalindex = linePortals.Reserve(1);
 				port = &linePortals.Last();
 
 				memset(port, 0, sizeof(FLinePortal));
-				port->mOrigin = &lines[i];
+				port->mOrigin = &ln;
 				port->mDestination = line;
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
@@ -473,7 +473,7 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 	bool res = false;
 	while ((lineno = it.Next()) >= 0)
 	{
-		res |= ChangePortalLine(&lines[lineno], destid);
+		res |= ChangePortalLine(&level.lines[lineno], destid);
 	}
 	return res;
 }
@@ -868,13 +868,13 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	int othergroup = portal->mDestination->frontsector->PortalGroup;
 	if (thisgroup == othergroup)
 	{
-		Printf("Portal between lines %d and %d has both sides in same group\n", int(portal->mOrigin-lines), int(portal->mDestination-lines));
+		Printf("Portal between lines %d and %d has both sides in same group\n", portal->mOrigin->Index(), portal->mDestination->Index());
 		portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
 		return;
 	}
 	if (thisgroup <= 0 || thisgroup >= Displacements.size || othergroup <= 0 || othergroup >= Displacements.size)
 	{
-		Printf("Portal between lines %d and %d has invalid group\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
+		Printf("Portal between lines %d and %d has invalid group\n", portal->mOrigin->Index(), portal->mDestination->Index());
 		portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
 		return;
 	}
@@ -889,7 +889,7 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	{
 		if (disp.pos != portal->mDisplacement)
 		{
-			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
+			Printf("Portal between lines %d and %d has displacement mismatch\n", portal->mOrigin->Index(), portal->mDestination->Index());
 			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
 			return;
 		}
@@ -1057,11 +1057,11 @@ void P_CreateLinkedPortals()
 				bogus = true;
 			}
 			// mark everything that connects to a one-sided line
-			for (int i = 0; i < numlines; i++)
+			for (auto &line : level.lines)
 			{
-				if (lines[i].backsector == NULL && lines[i].frontsector->PortalGroup == 0)
+				if (line.backsector == nullptr && line.frontsector->PortalGroup == 0)
 				{
-					CollectSectors(-1, lines[i].frontsector);
+					CollectSectors(-1, line.frontsector);
 				}
 			}
 			// and now print a message for everything that still wasn't processed.

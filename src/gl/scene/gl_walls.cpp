@@ -326,7 +326,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	//::SplitWall.Clock();
 
 #ifdef _DEBUG
-	if (seg->linedef-lines==1)
+	if (seg->linedef->Index() == 1)
 	{
 		int a = 0;
 	}
@@ -1414,7 +1414,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * segback;
 
 #ifdef _DEBUG
-	if (seg->linedef - lines < 4)
+	if (seg->linedef->Index() == 1)
 	{
 		int a = 0;
 	}

@@ -1337,6 +1337,11 @@ struct line_t
 	{
 		return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
 	}
+
+	int Index() const
+	{
+		return int(this - &level.lines[0]);
+	}
 };
 
 // phares 3/14/98

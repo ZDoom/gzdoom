@@ -930,7 +930,8 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg[-1].v2 = seg->v1;
 			}
-			seg->PartnerSeg = &segs[partner];
+			
+			seg->PartnerSeg = partner == 0xffffffffu? nullptr : &segs[partner];
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;

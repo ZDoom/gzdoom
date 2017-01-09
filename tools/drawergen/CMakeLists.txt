@@ -27,7 +27,8 @@ if( NOT WIN32 )
 	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen ipo
 		irreader transformutils instrumentation profiledata runtimedyld
 		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
-		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
+		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen
+		armasmprinter arminfo armdesc armutils armcodegen )
 
 	# Example LLVM_DIR folder: C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
 	find_package(LLVM REQUIRED CONFIG)

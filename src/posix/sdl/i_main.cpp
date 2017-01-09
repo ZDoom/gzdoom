@@ -52,6 +52,7 @@
 #include "version.h"
 #include "w_wad.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 #include "r_state.h"
 #include "cmdlib.h"
 #include "r_utility.h"

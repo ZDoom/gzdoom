@@ -394,7 +394,6 @@ class UDMFParser : public UDMFParserBase
 	TArray<intmapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
-	TArray<vertexdata_t> ParsedVertexDatas;
 
 	FDynamicColormap	*fogMap, *normMap;
 	FMissingTextureTracker &missingTex;
@@ -1996,7 +1995,7 @@ public:
 				vertexdata_t vd;
 				ParseVertex(&vt, &vd);
 				ParsedVertices.Push(vt);
-				ParsedVertexDatas.Push(vd);
+				vertexdatas.Push(vd);
 			}
 			else
 			{
@@ -2013,11 +2012,6 @@ public:
 		// Create the real vertices
 		level.vertexes.Alloc(ParsedVertices.Size());
 		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
-
-		// Create the real vertex datas
-		numvertexdatas = ParsedVertexDatas.Size();
-		vertexdatas = new vertexdata_t[numvertexdatas];
-		memcpy(vertexdatas, &ParsedVertexDatas[0], numvertexdatas * sizeof(*vertexdatas));
 
 		// Create the real sectors
 		level.sectors.Alloc(ParsedSectors.Size());

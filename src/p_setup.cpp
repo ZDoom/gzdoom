@@ -122,8 +122,7 @@ inline bool P_LoadBuildMap(BYTE *mapdata, size_t len, FMapThing **things, int *n
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
 //
-int 			numvertexdatas;
-vertexdata_t*		vertexdatas;
+TArray<vertexdata_t> vertexdatas;
 
 int 			numsegs;
 seg_t*			segs;
@@ -833,7 +832,6 @@ void P_LoadVertexes (MapData * map)
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
 	unsigned numvertexes = map->Size(ML_VERTEXES) / sizeof(mapvertex_t);
-	numvertexdatas = 0;
 
 	if (numvertexes == 0)
 	{
@@ -842,7 +840,7 @@ void P_LoadVertexes (MapData * map)
 
 	// Allocate memory for buffer.
 	level.vertexes.Alloc(numvertexes);
-	vertexdatas = NULL;
+	vertexdatas.Clear();
 
 	map->Seek(ML_VERTEXES);
 		

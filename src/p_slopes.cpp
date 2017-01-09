@@ -278,7 +278,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 		}
 	}
 
-	for(int i = 0; i < numvertexdatas; i++)
+	for(unsigned i = 0; i < vertexdatas.Size(); i++)
 	{
 		int ii = oldvertextable == NULL ? i : oldvertextable[i];
 
@@ -296,9 +296,8 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 	}
 
 	// If vertexdata_t is ever extended for non-slope usage, this will obviously have to be deferred or removed.
-	delete[] vertexdatas;
-	vertexdatas = NULL;
-	numvertexdatas = 0;
+	vertexdatas.Clear();
+	vertexdatas.ShrinkToFit();
 
 	if (vt_found)
 	{

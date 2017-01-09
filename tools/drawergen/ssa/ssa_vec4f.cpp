@@ -81,9 +81,13 @@ SSAVec4f::SSAVec4f(llvm::Value *v)
 SSAVec4f::SSAVec4f(SSAVec4i i32)
 : v(0)
 {
+#ifdef ARM_TARGET
+	v = SSAScope::builder().CreateSIToFP(i32.v, llvm_type(), SSAScope::hint());
+#else
 	//llvm::VectorType *m128type = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4);
 	//return builder->CreateSIToFP(i32.v, m128type);
 	v = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_cvtdq2ps), i32.v, SSAScope::hint());
+#endif
 }
 
 llvm::Type *SSAVec4f::llvm_type()

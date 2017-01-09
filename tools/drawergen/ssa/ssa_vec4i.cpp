@@ -93,7 +93,11 @@ SSAVec4i::SSAVec4i(SSAInt i0, SSAInt i1, SSAInt i2, SSAInt i3)
 SSAVec4i::SSAVec4i(SSAVec4f f32)
 : v(0)
 {
+#ifdef ARM_TARGET
+	v = SSAScope::builder().CreateFPToSI(f32.v, llvm_type(), SSAScope::hint());
+#else
 	v = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_cvttps2dq), f32.v, SSAScope::hint());
+#endif
 }
 */
 

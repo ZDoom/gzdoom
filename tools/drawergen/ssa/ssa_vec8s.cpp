@@ -62,8 +62,14 @@ SSAVec8s::SSAVec8s(llvm::Value *v)
 SSAVec8s::SSAVec8s(SSAVec4i i0, SSAVec4i i1)
 : v(0)
 {
+#ifdef ARM_TARGET
+	llvm::Value *int16x4_i0 = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::arm_neon_vqmovns, i0.v, SSAScope::hint());
+	llvm::Value *int16x4_i1 = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::arm_neon_vqmovns, i1.v, SSAScope::hint());
+	return shuffle(from_llvm(int16x4_i0), from_llvm(int16x4_i1), 0, 1, 2, 3, 4, 5, 6, 7);
+#else
 	llvm::Value *values[2] = { i0.v, i1.v };
 	v = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_packssdw_128), values, SSAScope::hint());
+#endif
 }
 
 llvm::Type *SSAVec8s::llvm_type()

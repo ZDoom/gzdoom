@@ -194,7 +194,7 @@ namespace swrenderer
 
 		short *mfloorclip = openings + ds->sprbottomclip - ds->x1;
 		short *mceilingclip = openings + ds->sprtopclip - ds->x1;
-
+		double spryscale;
 
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
@@ -213,7 +213,7 @@ namespace swrenderer
 		MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 		MaskedScaleY = ds->yscale;
 		maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
-		double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
+		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 
 		if (fixedlightlev >= 0)

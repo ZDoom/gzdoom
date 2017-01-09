@@ -115,7 +115,7 @@ namespace swrenderer
 			}
 		}
 
-		WallSpriteTile = TexMan(decal->PicNum, true);
+		FTexture *WallSpriteTile = TexMan(decal->PicNum, true);
 		flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
 		if (WallSpriteTile == NULL || WallSpriteTile->UseType == FTexture::TEX_Null)
@@ -290,7 +290,7 @@ namespace swrenderer
 					{ // calculate lighting
 						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					R_DecalColumn(x, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					R_DecalColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -311,7 +311,7 @@ namespace swrenderer
 		WallC = savecoord;
 	}
 
-	void R_DecalColumn(int x, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void R_DecalColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

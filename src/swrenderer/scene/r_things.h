@@ -38,8 +38,6 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 namespace swrenderer
 {
 
-extern FTexture			*WallSpriteTile;
-
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
 

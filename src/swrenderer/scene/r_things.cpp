@@ -79,17 +79,6 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-FTexture		*WallSpriteTile;
-
-//
-// INITIALIZATION FUNCTIONS
-//
-
-
-//
-
-// GAME FUNCTIONS
-//
 bool			DrewAVoxel;
 
 static vissprite_t **spritesorter;

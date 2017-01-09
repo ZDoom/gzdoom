@@ -185,7 +185,7 @@ namespace swrenderer
 			calclighting = true;
 
 		// Draw it
-		WallSpriteTile = spr->pic;
+		FTexture *WallSpriteTile = spr->pic;
 		if (spr->renderflags & RF_YFLIP)
 		{
 			sprflipvert = true;
@@ -222,7 +222,7 @@ namespace swrenderer
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(x, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					R_WallSpriteColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
@@ -230,7 +230,7 @@ namespace swrenderer
 		R_FinishSetPatchStyle();
 	}
 
-	void R_WallSpriteColumn(int x, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void R_WallSpriteColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

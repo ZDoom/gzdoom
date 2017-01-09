@@ -54,6 +54,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 

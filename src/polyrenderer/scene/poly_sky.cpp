@@ -27,6 +27,7 @@
 #include "poly_sky.h"
 #include "poly_portal.h"
 #include "r_sky.h" // for skyflatnum
+#include "g_levellocals.h"
 
 PolySkyDome::PolySkyDome()
 {

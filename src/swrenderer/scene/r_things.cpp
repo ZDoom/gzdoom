@@ -67,6 +67,7 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/r_memory.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_drawvoxels)

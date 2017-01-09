@@ -54,6 +54,7 @@
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/r_memory.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_drawplayersprites)

@@ -41,6 +41,7 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/r_memory.h"
+#include "g_levellocals.h"
 
 CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Int, r_skymode)
@@ -115,7 +116,7 @@ namespace swrenderer
 			else
 			{	// MBF's linedef-controlled skies
 				// Sky Linedef
-				const line_t *l = &lines[(pl->sky & ~PL_SKYFLAT) - 1];
+				const line_t *l = &level.lines[(pl->sky & ~PL_SKYFLAT) - 1];
 
 				// Sky transferred from first sidedef
 				const side_t *s = l->sidedef[0];

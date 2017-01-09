@@ -38,10 +38,6 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 namespace swrenderer
 {
 
-extern double			pspritexscale;
-extern double			pspritexiscale;
-extern double			pspriteyscale;
-
 extern FTexture			*WallSpriteTile;
 
 extern int spriteshade;

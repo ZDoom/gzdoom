@@ -74,6 +74,17 @@ namespace swrenderer
 
 		TArray<vispsp_t> vispsprites;
 		unsigned int vispspindex;
+
+		double pspritexscale;
+		double pspritexiscale;
+		double pspriteyscale;
+	}
+
+	void R_SetupPlayerSpriteScale()
+	{
+		pspritexscale = centerxwide / 160.0;
+		pspriteyscale = pspritexscale * YaspectMul;
+		pspritexiscale = 1 / pspritexscale;
 	}
 
 	void R_DrawPlayerSprites()

@@ -68,6 +68,7 @@
 #include "version.h"
 #include "c_console.h"
 #include "r_memory.h"
+#include "swrenderer/things/r_playersprite.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
@@ -345,9 +346,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	WallTMapScale2 = IYaspectMul / CenterX;
 
 	// psprite scales
-	pspritexscale = centerxwide / 160.0;
-	pspriteyscale = pspritexscale * YaspectMul;
-	pspritexiscale = 1 / pspritexscale;
+	R_SetupPlayerSpriteScale();
 
 	// thing clipping
 	fillshort (screenheightarray, viewwidth, (short)viewheight);

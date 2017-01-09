@@ -139,18 +139,22 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		sy += wy;
 	}
 
+	double pspritexscale = centerxwide / 160.0;
+	double pspriteyscale = pspritexscale * swrenderer::YaspectMul;
+	double pspritexiscale = 1 / pspritexscale;
+
 	// calculate edges of the shape
 	double tx = sx - BaseXCenter;
 
 	tx -= tex->GetScaledLeftOffset();
-	int x1 = xs_RoundToInt(swrenderer::CenterX + tx * swrenderer::pspritexscale);
+	int x1 = xs_RoundToInt(swrenderer::CenterX + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
 	tx += tex->GetScaledWidth();
-	int x2 = xs_RoundToInt(swrenderer::CenterX + tx * swrenderer::pspritexscale);
+	int x2 = xs_RoundToInt(swrenderer::CenterX + tx * pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
@@ -183,19 +187,19 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	int clipped_x1 = MAX(x1, 0);
 	int clipped_x2 = MIN(x2, viewwidth);
-	double xscale = swrenderer::pspritexscale / tex->Scale.X;
-	double yscale = swrenderer::pspriteyscale / tex->Scale.Y;
+	double xscale = pspritexscale / tex->Scale.X;
+	double yscale = pspriteyscale / tex->Scale.Y;
 	uint32_t translation = 0; // [RH] Use default colors
 
 	double xiscale, startfrac;
 	if (flip)
 	{
-		xiscale = -swrenderer::pspritexiscale * tex->Scale.X;
+		xiscale = -pspritexiscale * tex->Scale.X;
 		startfrac = 1;
 	}
 	else
 	{
-		xiscale = swrenderer::pspritexiscale * tex->Scale.X;
+		xiscale = pspritexiscale * tex->Scale.X;
 		startfrac = 0;
 	}
 

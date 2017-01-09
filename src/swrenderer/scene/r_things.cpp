@@ -85,9 +85,6 @@ namespace swrenderer
 // This is not the same as the angle,
 //	which increases counter clockwise (protractor).
 //
-double 			pspritexscale;
-double	 		pspritexiscale;
-double			pspriteyscale;
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 

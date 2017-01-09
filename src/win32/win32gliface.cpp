@@ -352,6 +352,11 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 {
 	Win32GLFrameBuffer *fb;
 
+	if (fs)
+	{
+		I_ClosestResolution(&width, &height, 32);
+	}
+
 	m_DisplayWidth = width;
 	m_DisplayHeight = height;
 	m_DisplayBits = 32;

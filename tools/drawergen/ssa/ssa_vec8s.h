@@ -41,8 +41,6 @@ public:
 	static SSAVec8s shuffle(const SSAVec8s &i0, const SSAVec8s &i1, int index0, int index1, int index2, int index3, int index4, int index5, int index6, int index7);
 	static SSAVec8s extendhi(SSAVec16ub a);
 	static SSAVec8s extendlo(SSAVec16ub a);
-	//static SSAVec8s min_sse2(SSAVec8s a, SSAVec8s b);
-	//static SSAVec8s max_sse2(SSAVec8s a, SSAVec8s b);
 	static SSAVec8s mulhi(SSAVec8s a, SSAVec8s b);
 	static SSAVec8s from_llvm(llvm::Value *v) { return SSAVec8s(v); }
 	static llvm::Type *llvm_type();

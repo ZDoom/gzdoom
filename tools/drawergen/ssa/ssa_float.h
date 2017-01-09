@@ -36,17 +36,7 @@ public:
 	explicit SSAFloat(llvm::Value *v);
 	static SSAFloat from_llvm(llvm::Value *v) { return SSAFloat(v); }
 	static llvm::Type *llvm_type();
-	static SSAFloat sqrt(SSAFloat f);
-	static SSAFloat fastsqrt(SSAFloat f);
 	static SSAFloat rsqrt(SSAFloat f);
-	static SSAFloat sin(SSAFloat val);
-	static SSAFloat cos(SSAFloat val);
-	static SSAFloat pow(SSAFloat val, SSAFloat power);
-	static SSAFloat exp(SSAFloat val);
-	static SSAFloat log(SSAFloat val);
-	static SSAFloat fma(SSAFloat a, SSAFloat b, SSAFloat c);
-	//static SSAFloat round(SSAFloat val);
-	static SSAFloat floor(SSAFloat val);
 	static SSAFloat MIN(SSAFloat a, SSAFloat b);
 	static SSAFloat MAX(SSAFloat a, SSAFloat b);
 	static SSAFloat clamp(SSAFloat a, SSAFloat b, SSAFloat c);

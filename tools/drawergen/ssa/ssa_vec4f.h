@@ -43,14 +43,6 @@ public:
 	SSAFloat operator[](int index) const;
 	static SSAVec4f insert_element(SSAVec4f vec4f, SSAFloat value, int index);
 	static SSAVec4f bitcast(SSAVec4i i32);
-	static SSAVec4f sqrt(SSAVec4f f);
-	static SSAVec4f rcp(SSAVec4f f);
-	static SSAVec4f sin(SSAVec4f val);
-	static SSAVec4f cos(SSAVec4f val);
-	static SSAVec4f pow(SSAVec4f val, SSAVec4f power);
-	static SSAVec4f exp(SSAVec4f val);
-	static SSAVec4f log(SSAVec4f val);
-	static SSAVec4f fma(SSAVec4f a, SSAVec4f b, SSAVec4f c);
 	static void transpose(SSAVec4f &row0, SSAVec4f &row1, SSAVec4f &row2, SSAVec4f &row3);
 	static SSAVec4f shuffle(const SSAVec4f &f0, int index0, int index1, int index2, int index3);
 	static SSAVec4f shuffle(const SSAVec4f &f0, const SSAVec4f &f1, int index0, int index1, int index2, int index3);

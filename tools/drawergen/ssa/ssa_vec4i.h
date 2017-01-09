@@ -55,7 +55,6 @@ public:
 	static void extend(SSAVec16ub a, SSAVec4i &out0, SSAVec4i &out1, SSAVec4i &out2, SSAVec4i &out3);
 	static SSAVec4i combinehi(SSAVec8s v0, SSAVec8s v1);
 	static SSAVec4i combinelo(SSAVec8s v0, SSAVec8s v1);
-	static SSAVec4i sqrt(SSAVec4i f);
 	static SSAVec4i from_llvm(llvm::Value *v) { return SSAVec4i(v); }
 	static llvm::Type *llvm_type();
 

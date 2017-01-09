@@ -54,92 +54,11 @@ llvm::Type *SSAFloat::llvm_type()
 	return llvm::Type::getFloatTy(SSAScope::context());
 }
 
-SSAFloat SSAFloat::sqrt(SSAFloat f)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::sqrt, params), f.v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::fastsqrt(SSAFloat f)
-{
-	return f * rsqrt(f);
-}
-
 SSAFloat SSAFloat::rsqrt(SSAFloat f)
 {
 	llvm::Value *f_ss = SSAScope::builder().CreateInsertElement(llvm::UndefValue::get(SSAVec4f::llvm_type()), f.v, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, (uint64_t)0)));
 	f_ss = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse_rsqrt_ss), f_ss, SSAScope::hint());
 	return SSAFloat::from_llvm(SSAScope::builder().CreateExtractElement(f_ss, SSAInt(0).v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::sin(SSAFloat val)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::sin, params), val.v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::cos(SSAFloat val)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::cos, params), val.v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::pow(SSAFloat val, SSAFloat power)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	//params.push_back(SSAFloat::llvm_type());
-	std::vector<llvm::Value*> args;
-	args.push_back(val.v);
-	args.push_back(power.v);
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::pow, params), args, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::exp(SSAFloat val)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::exp, params), val.v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::log(SSAFloat val)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::log, params), val.v, SSAScope::hint()));
-}
-
-SSAFloat SSAFloat::fma(SSAFloat a, SSAFloat b, SSAFloat c)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	//params.push_back(SSAFloat::llvm_type());
-	//params.push_back(SSAFloat::llvm_type());
-	std::vector<llvm::Value*> args;
-	args.push_back(a.v);
-	args.push_back(b.v);
-	args.push_back(c.v);
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::fma, params), args, SSAScope::hint()));
-}
-
-/* This intrinsic isn't always available..
-SSAFloat SSAFloat::round(SSAFloat val)
-{
-	
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::round, params), val.v, SSAScope::hint()));
-}
-*/
-
-SSAFloat SSAFloat::floor(SSAFloat val)
-{
-	std::vector<llvm::Type *> params;
-	params.push_back(SSAFloat::llvm_type());
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::floor, params), val.v, SSAScope::hint()));
 }
 
 SSAFloat SSAFloat::MIN(SSAFloat a, SSAFloat b)

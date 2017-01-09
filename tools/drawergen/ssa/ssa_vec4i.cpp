@@ -89,11 +89,13 @@ SSAVec4i::SSAVec4i(SSAInt i0, SSAInt i1, SSAInt i2, SSAInt i3)
 #endif
 }
 
+/*
 SSAVec4i::SSAVec4i(SSAVec4f f32)
 : v(0)
 {
 	v = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_cvttps2dq), f32.v, SSAScope::hint());
 }
+*/
 
 SSAInt SSAVec4i::operator[](SSAInt index) const
 {
@@ -198,11 +200,6 @@ SSAVec4i SSAVec4i::combinelo(SSAVec8s a, SSAVec8s b)
 	return SSAVec4i::bitcast(SSAVec8s::shuffle(a, b, 0, 8+0, 1, 8+1, 2, 8+2, 3, 8+3)); // _mm_unpacklo_epi16
 }
 
-SSAVec4i SSAVec4i::sqrt(SSAVec4i f)
-{
-	return SSAVec4i::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_sqrt_pd), f.v, SSAScope::hint()));
-}
-
 SSAVec4i operator+(const SSAVec4i &a, const SSAVec4i &b)
 {
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));
@@ -265,9 +262,7 @@ SSAVec4i operator/(const SSAVec4i &a, int b)
 
 SSAVec4i operator<<(const SSAVec4i &a, int bits)
 {
-	//return SSAScope::builder().CreateShl(a.v, bits);
-	llvm::Value *values[2] = { a.v, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, (uint64_t)bits)) };
-	return SSAVec4i::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_pslli_d), values, SSAScope::hint()));
+	return SSAInt::from_llvm(SSAScope::builder().CreateShl(a.v, bits, SSAScope::hint()));
 }
 
 SSAVec4i operator>>(const SSAVec4i &a, int bits)

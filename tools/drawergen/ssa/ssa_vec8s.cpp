@@ -106,26 +106,6 @@ SSAVec8s SSAVec8s::extendlo(SSAVec16ub a)
 	return SSAVec8s::bitcast(SSAVec16ub::shuffle(a, SSAVec16ub((unsigned char)0), 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
 }
 
-/*
-SSAVec8s SSAVec8s::min_sse2(SSAVec8s a, SSAVec8s b)
-{
-	llvm::Value *values[2] = { a.v, b.v };
-	return SSAVec8s::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_pmins_w), values, SSAScope::hint()));
-}
-
-SSAVec8s SSAVec8s::max_sse2(SSAVec8s a, SSAVec8s b)
-{
-	llvm::Value *values[2] = { a.v, b.v };
-	return SSAVec8s::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_pmaxs_w), values, SSAScope::hint()));
-}
-*/
-
-SSAVec8s SSAVec8s::mulhi(SSAVec8s a, SSAVec8s b)
-{
-	llvm::Value *values[2] = { a.v, b.v };
-	return SSAVec8s::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_pmulh_w), values, SSAScope::hint()));
-}
-
 SSAVec8s operator+(const SSAVec8s &a, const SSAVec8s &b)
 {
 	return SSAVec8s::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));
@@ -188,9 +168,7 @@ SSAVec8s operator/(const SSAVec8s &a, short b)
 
 SSAVec8s operator<<(const SSAVec8s &a, int bits)
 {
-	//return SSAScope::builder().CreateShl(a.v, bits);
-	llvm::Value *values[2] = { a.v, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, (uint64_t)bits)) };
-	return SSAVec8s::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_pslli_d), values, SSAScope::hint()));
+	return SSAVec8s::from_llvm(SSAScope::builder().CreateShl(a.v, bits, SSAScope::hint()));
 }
 
 SSAVec8s operator>>(const SSAVec8s &a, int bits)

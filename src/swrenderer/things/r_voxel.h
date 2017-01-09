@@ -1,5 +1,6 @@
 /*
 **  Voxel rendering
+**  Copyright (c) 1998-2016 Randy Heit
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
@@ -33,4 +34,28 @@ namespace swrenderer
 	kvxslab_t *R_GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
 	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);
 	kvxslab_t *R_NextSlab(kvxslab_t *slab);
+
+	void R_DeinitRenderVoxel();
+
+	// [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
+	struct FCoverageBuffer
+	{
+		struct Span
+		{
+			Span *NextSpan;
+			short Start, Stop;
+		};
+
+		FCoverageBuffer(int size);
+		~FCoverageBuffer();
+
+		void Clear();
+		void InsertSpan(int listnum, int start, int stop);
+		Span *AllocSpan();
+
+		FMemArena SpanArena;
+		Span **Spans;	// [0..NumLists-1] span lists
+		Span *FreeSpans;
+		unsigned int NumLists;
+	};
 }

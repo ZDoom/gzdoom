@@ -127,7 +127,6 @@ vertexdata_t*		vertexdatas;
 
 int 			numsegs;
 seg_t*			segs;
-glsegextra_t*	glsegextras;
 
 int 			numsubsectors;
 subsector_t*	subsectors;
@@ -933,7 +932,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg[-1].v2 = seg->v1;
 			}
-			glsegextras[seg - segs].PartnerSeg = partner;
+			seg->PartnerSeg = &segs[partner];
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
@@ -1041,7 +1040,6 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	numsegs = numSegs;
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
-	glsegextras = NULL;
 
 	for (i = 0; i < numSubs; ++i)
 	{
@@ -1054,7 +1052,6 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	else
 	{
-		glsegextras = new glsegextra_t[numsegs];
 		P_LoadGLZSegs (data, glnodes);
 	}
 
@@ -3092,14 +3089,11 @@ static void P_GroupLines (bool buildmap)
 	{
 		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
 	}
-	if (glsegextras != NULL)
+	for (int i = 0; i < numsubsectors; i++)
 	{
-		for (int i = 0; i < numsubsectors; i++)
+		for (jj = 0; jj < subsectors[i].numlines; ++jj)
 		{
-			for (jj = 0; jj < subsectors[i].numlines; ++jj)
-			{
-				glsegextras[subsectors[i].firstline - segs + jj].Subsector = &subsectors[i];
-			}
+			subsectors[i].firstline[jj].Subsector = &subsectors[i];
 		}
 	}
 	times[0].Unclock();
@@ -3437,11 +3431,6 @@ void P_FreeLevelData ()
 		segs = NULL;
 	}
 	numsegs = 0;
-	if (glsegextras != NULL)
-	{
-		delete[] glsegextras;
-		glsegextras = NULL;
-	}
 	if (level.sectors.Size() > 0)
 	{
 		delete[] level.sectors[0].e;
@@ -3908,7 +3897,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract (nodes, numnodes,
-			segs, glsegextras, numsegs,
+			segs, numsegs,
 			subsectors, numsubsectors,
 			level.vertexes);
 		endTime = I_FPSTime ();
@@ -4165,12 +4154,6 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsUserData.Clear();
 
 	P_BackupMapData();
-
-	if (glsegextras != NULL)
-	{
-		delete[] glsegextras;
-		glsegextras = NULL;
-	}
 }
 
 

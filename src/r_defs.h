@@ -1418,12 +1418,6 @@ struct seg_t
 	float			sidefrac;		// relative position of seg's ending vertex on owning sidedef
 };
 
-struct glsegextra_t
-{
-	DWORD		 PartnerSeg;
-	subsector_t *Subsector;
-};
-
 extern seg_t *segs;
 
 

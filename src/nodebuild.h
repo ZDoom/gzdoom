@@ -210,7 +210,7 @@ public:
 	~FNodeBuilder ();
 
 	void Extract(node_t *&nodes, int &nodeCount,
-		seg_t *&segs, glsegextra_t *&glsegextras, int &segCount,
+		seg_t *&segs, int &segCount,
 		subsector_t *&ssecs, int &subCount,
 		TStaticArray<vertex_t> &vertexes);
 	const int *GetOldVertexTable();

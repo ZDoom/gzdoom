@@ -501,36 +501,6 @@ static void PrepareSegs()
 
 	// count the segs
 	memset(segcount, 0, numsides * sizeof(int));
-	
-	// set up the extra data in case the map was loaded with regular nodes that might pass as GL nodes.
-	if (glsegextras == NULL)
-	{
-		for(int i=0;i<numsegs;i++)
-		{
-			segs[i].PartnerSeg = NULL;
-		}
-		for (int i=0; i<numsubsectors; i++)
-		{
-			int seg = int(subsectors[i].firstline-segs);
-			for(DWORD j=0;j<subsectors[i].numlines;j++)
-			{
-				segs[j+seg].Subsector = &subsectors[i];
-			}
-		}
-	}
-	else
-	{
-		for(int i=0;i<numsegs;i++)
-		{
-			seg_t *seg = &segs[i];
-
-			// Account for ZDoom space optimizations that cannot be done for GL
-			unsigned int partner= glsegextras[i].PartnerSeg;
-			if (partner < unsigned(numsegs))  seg->PartnerSeg = &segs[partner];
-			else seg->PartnerSeg = NULL;
-			seg->Subsector = glsegextras[i].Subsector;
-		}
-	}
 
 	for(int i=0;i<numsegs;i++)
 	{

@@ -58,7 +58,7 @@
 
 namespace swrenderer
 {
-	void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags)
+	void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade)
 	{
 		FWallCoords wallc;
 		double x1, x2;

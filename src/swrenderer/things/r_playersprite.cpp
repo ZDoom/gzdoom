@@ -147,7 +147,7 @@ namespace swrenderer
 
 		// get light level
 		lightnum = ((floorlight + ceilinglight) >> 1) + r_actualextralight;
-		spriteshade = LIGHT2SHADE(lightnum) - 24 * FRACUNIT;
+		int spriteshade = LIGHT2SHADE(lightnum) - 24 * FRACUNIT;
 
 		if (camera->player != NULL)
 		{
@@ -190,7 +190,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
+					R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade);
 				}
 
 				psp = psp->GetNext();
@@ -200,7 +200,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
+	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade)
 	{
 		double 				tx;
 		int 				x1;

@@ -20,6 +20,6 @@ namespace swrenderer
 	void R_SetupPlayerSpriteScale();
 
 	void R_DrawPlayerSprites();
-	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac);
+	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade);
 	void R_DrawRemainingPlayerSprites();
 }

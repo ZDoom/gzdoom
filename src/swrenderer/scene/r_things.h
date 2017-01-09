@@ -40,8 +40,6 @@ namespace swrenderer
 
 extern FTexture			*WallSpriteTile;
 
-extern int spriteshade;
-
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
 

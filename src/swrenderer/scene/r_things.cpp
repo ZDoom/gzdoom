@@ -88,8 +88,6 @@ namespace swrenderer
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
-int		spriteshade;
-
 FTexture		*WallSpriteTile;
 
 //
@@ -198,7 +196,7 @@ bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 // R_ProjectSprite
 // Generates a vissprite for a thing if it might be visible.
 //
-void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector)
+void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
 {
 	double 			tr_x;
 	double 			tr_y;
@@ -357,7 +355,7 @@ void R_ProjectSprite (AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor
 
 	if ((renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 	{
-		R_ProjectWallSprite(thing, pos, picnum, spriteScale, renderflags);
+		R_ProjectWallSprite(thing, pos, picnum, spriteScale, renderflags, spriteshade);
 		return;
 	}
 
@@ -648,7 +646,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, WaterFakeSide fakeside)
 	// Well, now it will be done.
 	sec->validcount = validcount;
 
-	spriteshade = LIGHT2SHADE(lightlevel + r_actualextralight);
+	int spriteshade = LIGHT2SHADE(lightlevel + r_actualextralight);
 
 	// Handle all things in sector.
 	for(auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
@@ -685,7 +683,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, WaterFakeSide fakeside)
 				if(rover->bottom.plane->ZatPoint(0., 0.) >= thing->Top()) fakeceiling = rover;
 			}
 		}	
-		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling, sec);
+		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling, sec, spriteshade);
 		fakeceiling = NULL;
 		fakefloor = NULL;
 	}
@@ -1018,7 +1016,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else
 			{ // diminished light
-				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
+				int spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
 				spr->Style.BaseColormap = mybasecolormap;
 				spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 			}
@@ -1349,7 +1347,7 @@ void R_DrawMaskedSingle (bool renew)
 
 void R_DrawHeightPlanes(double height); // kg3D - fake planes
 
-void R_DrawMasked (void)
+void R_DrawMasked ()
 {
 	R_CollectPortals();
 	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);

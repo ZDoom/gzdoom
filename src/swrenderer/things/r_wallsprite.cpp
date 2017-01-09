@@ -221,7 +221,7 @@ namespace swrenderer
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
-				if (!R_ClipSpriteColumnWithPortals(spr))
+				if (!R_ClipSpriteColumnWithPortals(x, spr))
 					R_WallSpriteColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;

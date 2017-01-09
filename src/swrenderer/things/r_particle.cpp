@@ -252,8 +252,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				dc_x = x;
-				if (R_ClipSpriteColumnWithPortals(vis))
+				if (R_ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
@@ -263,8 +262,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				dc_x = x;
-				if (R_ClipSpriteColumnWithPortals(vis))
+				if (R_ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint8_t *dest = ylookup[yl] + x + dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);

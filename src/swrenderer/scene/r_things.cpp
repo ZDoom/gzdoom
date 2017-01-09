@@ -77,7 +77,6 @@ CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
 
 namespace swrenderer
 {
-	using namespace drawerargs;
 
 bool			DrewAVoxel;
 
@@ -144,7 +143,7 @@ static inline void R_CollectPortals()
 	}
 }
 
-bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
+bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
 {
 	RenderPortal *renderportal = RenderPortal::Instance();
 	
@@ -165,7 +164,7 @@ bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 			continue;
 
 		// now if current column is covered by this drawseg, we clip it away
-		if ((dc_x >= seg->x1) && (dc_x < seg->x2))
+		if ((x >= seg->x1) && (x < seg->x2))
 			return true;
 	}
 

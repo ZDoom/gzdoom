@@ -116,7 +116,7 @@ namespace swrenderer
 			{
 				while (x < x2)
 				{
-					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
+					if (ispsprite || !R_ClipSpriteColumnWithPortals(x, vis))
 						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;

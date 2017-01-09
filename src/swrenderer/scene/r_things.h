@@ -38,7 +38,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 namespace swrenderer
 {
 
-bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
+bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
 
 
 void R_CacheSprite (spritedef_t *sprite);

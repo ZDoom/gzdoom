@@ -79,15 +79,6 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-//
-// Sprite rotation 0 is facing the viewer,
-//	rotation 1 is one angle turn CLOCKWISE around the axis.
-// This is not the same as the angle,
-//	which increases counter clockwise (protractor).
-//
-fixed_t			sky1scale;			// [RH] Sky 1 scale factor
-fixed_t			sky2scale;			// [RH] Sky 2 scale factor
-
 FTexture		*WallSpriteTile;
 
 //

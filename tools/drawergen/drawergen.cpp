@@ -88,7 +88,11 @@ int main(int argc, char **argv)
 		
 		std::cout << "Target triple is " << triple << std::endl;
 
+#ifdef __arm__
+		std::string cpuName = "armv8";
+#else
 		std::string cpuName = "pentium4";
+#endif
 		std::string features;
 		std::cout << "Compiling drawer code for " << cpuName << ".." << std::endl;
 

@@ -70,6 +70,7 @@
 #include "po_man.h"
 #include "a_keys.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 
 //=============================================================================
@@ -601,23 +602,21 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 {
 	int flagged = 0;
 	int total = 0;
-	if (self > 0 && numlines > 0)
+	if (self > 0 && level.lines.Size() > 0)
 	{
-		for(int i=0;i<numlines;i++)
+		for(auto &line : level.lines)
 		{
-			line_t *line = &lines[i];
-
 			// disregard intra-sector lines
-			if (line->frontsector == line->backsector) continue;	
+			if (line.frontsector == line.backsector) continue;	
 
 			// disregard control sectors for deep water
-			if (line->frontsector->e->FakeFloor.Sectors.Size() > 0) continue;	
+			if (line.frontsector->e->FakeFloor.Sectors.Size() > 0) continue;	
 
 			// disregard control sectors for 3D-floors
-			if (line->frontsector->e->XFloor.attached.Size() > 0) continue;	
+			if (line.frontsector->e->XFloor.attached.Size() > 0) continue;	
 
 			total++;
-			if (line->flags & ML_DONTDRAW) flagged++;
+			if (line.flags & ML_DONTDRAW) flagged++;
 		}
 		am_showallenabled =  (flagged * 100 / total >= self);
 	}
@@ -1030,17 +1029,17 @@ static void AM_findMinMaxBoundaries ()
 	min_x = min_y = FLT_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (int i = 0; i < numvertexes; i++)
+	for (auto &vert : level.vertexes)
 	{
-		if (vertexes[i].fX() < min_x)
-			min_x = vertexes[i].fX();
-		else if (vertexes[i].fX() > max_x)
-			max_x = vertexes[i].fX();
+		if (vert.fX() < min_x)
+			min_x = vert.fX();
+		else if (vert.fX() > max_x)
+			max_x = vert.fX();
     
-		if (vertexes[i].fY() < min_y)
-			min_y = vertexes[i].fY();
-		else if (vertexes[i].fY() > max_y)
-			max_y = vertexes[i].fY();
+		if (vert.fY() < min_y)
+			min_y = vert.fY();
+		else if (vert.fY() > max_y)
+			max_y = vert.fY();
 	}
   
 	max_w = max_x - min_x;
@@ -2382,7 +2381,6 @@ bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
 
 void AM_drawWalls (bool allmap)
 {
-	int i;
 	static mline_t l;
 	int lock, color;
 
@@ -2393,18 +2391,18 @@ void AM_drawWalls (bool allmap)
 		if (p == MapPortalGroup) continue;
 
 
-		for (i = 0; i < numlines; i++)
+		for (auto &line : level.lines)
 		{
 			int pg;
 			
-			if (lines[i].sidedef[0]->Flags & WALLF_POLYOBJ)
+			if (line.sidedef[0]->Flags & WALLF_POLYOBJ)
 			{
 				// For polyobjects we must test the surrounding sector to get the proper group.
-				pg = P_PointInSector(lines[i].v1->fX() + lines[i].Delta().X / 2, lines[i].v1->fY() + lines[i].Delta().Y / 2)->PortalGroup;
+				pg = P_PointInSector(line.v1->fX() + line.Delta().X / 2, line.v1->fY() + line.Delta().Y / 2)->PortalGroup;
 			}
 			else
 			{
-				pg = lines[i].frontsector->PortalGroup;
+				pg = line.frontsector->PortalGroup;
 			}
 			DVector2 offset;
 			bool portalmode = numportalgroups > 0 &&  pg != MapPortalGroup;
@@ -2418,10 +2416,10 @@ void AM_drawWalls (bool allmap)
 			}
 			else continue;
 
-			l.a.x = (lines[i].v1->fX() + offset.X);
-			l.a.y = (lines[i].v1->fY() + offset.Y);
-			l.b.x = (lines[i].v2->fX() + offset.X);
-			l.b.y = (lines[i].v2->fY() + offset.Y);
+			l.a.x = (line.v1->fX() + offset.X);
+			l.a.y = (line.v1->fY() + offset.Y);
+			l.b.x = (line.v2->fX() + offset.X);
+			l.b.y = (line.v2->fY() + offset.Y);
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
@@ -2429,9 +2427,9 @@ void AM_drawWalls (bool allmap)
 				AM_rotatePoint(&l.b.x, &l.b.y);
 			}
 
-			if (am_cheat != 0 || (lines[i].flags & ML_MAPPED))
+			if (am_cheat != 0 || (line.flags & ML_MAPPED))
 			{
-				if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
+				if ((line.flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 				{
 					if (!am_showallenabled || CheckCheatmode(false))
 					{
@@ -2443,27 +2441,27 @@ void AM_drawWalls (bool allmap)
 				{
 					AM_drawMline(&l, AMColors.PortalColor);
 				}
-				else if (AM_CheckSecret(&lines[i]))
+				else if (AM_CheckSecret(&line))
 				{
 					// map secret sectors like Boom
 					AM_drawMline(&l, AMColors.SecretSectorColor);
 				}
-				else if (lines[i].flags & ML_SECRET)
+				else if (line.flags & ML_SECRET)
 				{ // secret door
-					if (am_cheat != 0 && lines[i].backsector != NULL)
+					if (am_cheat != 0 && line.backsector != NULL)
 						AM_drawMline(&l, AMColors.SecretWallColor);
 					else
 						AM_drawMline(&l, AMColors.WallColor);
 				}
-				else if (AM_isTeleportBoundary(lines[i]) && AMColors.isValid(AMColors.IntraTeleportColor))
+				else if (AM_isTeleportBoundary(line) && AMColors.isValid(AMColors.IntraTeleportColor))
 				{ // intra-level teleporters
 					AM_drawMline(&l, AMColors.IntraTeleportColor);
 				}
-				else if (AM_isExitBoundary(lines[i]) && AMColors.isValid(AMColors.InterTeleportColor))
+				else if (AM_isExitBoundary(line) && AMColors.isValid(AMColors.InterTeleportColor))
 				{ // inter-level/game-ending teleporters
 					AM_drawMline(&l, AMColors.InterTeleportColor);
 				}
-				else if (AM_isLockBoundary(lines[i], &lock))
+				else if (AM_isLockBoundary(line, &lock))
 				{
 					if (AMColors.displayLocks)
 					{
@@ -2483,25 +2481,25 @@ void AM_drawWalls (bool allmap)
 				}
 				else if (am_showtriggerlines
 					&& AMColors.isValid(AMColors.SpecialWallColor)
-					&& AM_isTriggerBoundary(lines[i]))
+					&& AM_isTriggerBoundary(line))
 				{
 					AM_drawMline(&l, AMColors.SpecialWallColor);	// wall with special non-door action the player can do
 				}
-				else if (lines[i].backsector == NULL)
+				else if (line.backsector == NULL)
 				{
 					AM_drawMline(&l, AMColors.WallColor);	// one-sided wall
 				}
-				else if (lines[i].backsector->floorplane
-					!= lines[i].frontsector->floorplane)
+				else if (line.backsector->floorplane
+					!= line.frontsector->floorplane)
 				{
 					AM_drawMline(&l, AMColors.FDWallColor); // floor level change
 				}
-				else if (lines[i].backsector->ceilingplane
-					!= lines[i].frontsector->ceilingplane)
+				else if (line.backsector->ceilingplane
+					!= line.frontsector->ceilingplane)
 				{
 					AM_drawMline(&l, AMColors.CDWallColor); // ceiling level change
 				}
-				else if (AM_Check3DFloors(&lines[i]))
+				else if (AM_Check3DFloors(&line))
 				{
 					AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
 				}
@@ -2512,7 +2510,7 @@ void AM_drawWalls (bool allmap)
 			}
 			else if (allmap)
 			{
-				if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
+				if ((line.flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 				{
 					if (!am_showallenabled || CheckCheatmode(false))
 					{

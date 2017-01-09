@@ -44,6 +44,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 #include "xlat/xlat.h"
 
 // define names for the TriggerType field of the general linedefs
@@ -317,27 +318,27 @@ void P_TranslateTeleportThings ()
 
 	if (foundSomething)
 	{
-		for (int i = 0; i < numlines; ++i)
+		for (auto &line : level.lines)
 		{
-			if (lines[i].special == Teleport)
+			if (line.special == Teleport)
 			{
-				if (lines[i].args[1] == 0)
+				if (line.args[1] == 0)
 				{
-					lines[i].args[0] = 1;
+					line.args[0] = 1;
 				}
 			}
-			else if (lines[i].special == Teleport_NoFog)
+			else if (line.special == Teleport_NoFog)
 			{
-				if (lines[i].args[2] == 0)
+				if (line.args[2] == 0)
 				{
-					lines[i].args[0] = 1;
+					line.args[0] = 1;
 				}
 			}
-			else if (lines[i].special == Teleport_ZombieChanger)
+			else if (line.special == Teleport_ZombieChanger)
 			{
-				if (lines[i].args[1] == 0)
+				if (line.args[1] == 0)
 				{
-					lines[i].args[0] = 1;
+					line.args[0] = 1;
 				}
 			}
 		}

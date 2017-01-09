@@ -48,6 +48,7 @@
 #include "c_dispatch.h"
 #include "r_utility.h"
 #include "v_video.h"
+#include "g_levellocals.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 

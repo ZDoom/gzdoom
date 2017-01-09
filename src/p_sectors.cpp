@@ -35,6 +35,7 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 
 // [RH]
@@ -710,7 +711,7 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (Lines.Size() == 0) *v = &vertexes[0];
+			if (Lines.Size() == 0) *v = &level.vertexes[0];
 			else *v = Lines[0]->v1;
 		}
 		return -floorplane.fD();
@@ -759,7 +760,7 @@ double sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (Lines.Size() == 0) *v = &vertexes[0];
+			if (Lines.Size() == 0) *v = &level.vertexes[0];
 			else *v = Lines[0]->v1;
 		}
 		return ceilingplane.fD();
@@ -1772,6 +1773,205 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_FLOAT(self->CenterCeiling());
  }
 
+ DEFINE_ACTION_FUNCTION(_Sector, Index)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	unsigned ndx = self->Index();
+	if (ndx >= level.sectors.Size())
+	{
+		// This qualifies as an array out of bounds exception. Normally it can only happen when a sector copy is concerned which scripts should not be able to create.
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid sector");
+	}
+	ACTION_RETURN_INT(ndx);
+ }
+
+ //===========================================================================
+ //
+ //  line_t exports
+ //
+ //===========================================================================
+
+ DEFINE_ACTION_FUNCTION(_Line, isLinePortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isLinePortal());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, isVisualPortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isVisualPortal());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalDestination)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_POINTER(self->getPortalDestination());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalAlignment)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalAlignment());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.lines.Size())
+	 {
+		 ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid line");
+	 }
+	 ACTION_RETURN_INT(ndx);
+ }
+
+ //===========================================================================
+ //
+ // 
+ //
+ //===========================================================================
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_INT(self->GetTexture(which).GetIndex());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_INT(tex);
+	 self->SetTexture(which, FSetTextureID(tex));
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, AddTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXOffset(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, AddTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYOffset(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXScale(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, SetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, GetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYScale(which));
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, V1)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V1());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, V2)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V2());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Side, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_INT(self->Index());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Vertex, Index)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(vertex_t);
+	 ACTION_RETURN_INT(self->Index());
+ }
+
 //===========================================================================
 //
 // 
@@ -1838,7 +2038,7 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 bool P_AlignFlat (int linenum, int side, int fc)
 {
-	line_t *line = lines + linenum;
+	line_t *line = &level.lines[linenum];
 	sector_t *sec = side ? line->backsector : line->frontsector;
 
 	if (!sec)
@@ -1871,10 +2071,10 @@ void subsector_t::BuildPolyBSP()
 	assert((BSP == NULL || BSP->bDirty) && "BSP computed more than once");
 
 	// Set up level information for the node builder.
-	PolyNodeLevel.Sides = sides;
-	PolyNodeLevel.NumSides = numsides;
-	PolyNodeLevel.Lines = lines;
-	PolyNodeLevel.NumLines = numlines;
+	PolyNodeLevel.Sides = &level.sides[0];
+	PolyNodeLevel.NumSides = level.sides.Size();
+	PolyNodeLevel.Lines = &level.lines[0];
+	PolyNodeLevel.NumLines = numlines; // is this correct???
 
 	// Feed segs to the nodebuilder and build the nodes.
 	PolyNodeBuilder.Clear();
@@ -2100,6 +2300,12 @@ DEFINE_FIELD_X(Line, line_t, backsector)
 DEFINE_FIELD_X(Line, line_t, validcount)
 DEFINE_FIELD_X(Line, line_t, locknumber)
 DEFINE_FIELD_X(Line, line_t, portalindex)
+DEFINE_FIELD_X(Line, line_t, portaltransferred)
+
+DEFINE_FIELD_X(Side, side_t, sector)
+DEFINE_FIELD_X(Side, side_t, linedef)
+DEFINE_FIELD_X(Side, side_t, Light)
+DEFINE_FIELD_X(Side, side_t, Flags)
 
 DEFINE_FIELD_X(Secplane, secplane_t, normal)
 DEFINE_FIELD_X(Secplane, secplane_t, D)

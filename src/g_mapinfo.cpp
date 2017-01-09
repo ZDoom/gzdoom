@@ -51,6 +51,7 @@
 #include "autosegs.h"
 #include "version.h"
 #include "v_text.h"
+#include "g_levellocals.h"
 
 TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;

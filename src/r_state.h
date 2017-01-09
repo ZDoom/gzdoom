@@ -42,10 +42,7 @@ extern "C" int			viewheight;
 extern TArray<spritedef_t> sprites;
 extern DWORD NumStdSprites;
 
-extern int				numvertexes;
-extern vertex_t*		vertexes;
-extern int				numvertexdatas;
-extern vertexdata_t*		vertexdatas;
+extern TArray<vertexdata_t> vertexdatas;
 
 extern int				numsegs;
 extern seg_t*			segs;
@@ -55,12 +52,6 @@ extern subsector_t* 	subsectors;
 
 extern int				numnodes;
 extern node_t*			nodes;
-
-extern int				numlines;
-extern line_t*			lines;
-
-extern int				numsides;
-extern side_t*			sides;
 
 extern TArray<zone_t>	Zones;
 

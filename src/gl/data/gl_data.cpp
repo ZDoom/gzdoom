@@ -41,6 +41,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
@@ -547,7 +548,7 @@ CCMD(dumpgeometry)
 				{
 				Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d", 
 					seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
-					int(seg-segs), int(seg->linedef-lines), seg->sidedef != seg->linedef->sidedef[0]);
+					int(seg-segs), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
 				}
 				else
 				{

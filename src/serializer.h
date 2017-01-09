@@ -15,10 +15,6 @@ struct usercmd_t;
 struct FWriter;
 struct FReader;
 
-extern TArray<sector_t>	loadsectors;
-extern TArray<line_t>	loadlines;
-extern TArray<side_t>	loadsides;
-
 inline bool nullcmp(const void *buffer, size_t length)
 {
 	const char *p = (const char *)buffer;

@@ -44,6 +44,7 @@
 #include "gstrings.h"
 #include "wi_stuff.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 
 //==========================================================================

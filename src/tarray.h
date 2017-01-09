@@ -553,6 +553,13 @@ public:
 		this->Count = 0;
 		this->Array = NULL;
 	}
+	TStaticArray(TStaticArray<T> &&other)
+	{
+		this->Array = other.Array;
+		this->Count = other.Count;
+		other.Array = nullptr;
+		other.Count = 0;
+	}
 	// This is not supposed to be copyable.
 	TStaticArray(const TStaticArray<T> &other) = delete;
 
@@ -564,7 +571,7 @@ public:
 	{
 		if (this->Array) delete[] this->Array;
 		this->Count = 0;
-		this->Array = NULL;
+		this->Array = nullptr;
 	}
 	void Alloc(unsigned int amount)
 	{
@@ -572,6 +579,21 @@ public:
 		if (this->Array) delete[] this->Array;
 		this->Array = new T[amount];
 		this->Count = amount;
+	}
+	TStaticArray &operator=(const TStaticArray &other)
+	{
+		Alloc(other.Size());
+		memcpy(this->Array, other.Array, this->Count * sizeof(T));
+		return *this;
+	}
+	TStaticArray &operator=(TStaticArray &&other)
+	{
+		if (this->Array) delete[] this->Array;
+		this->Array = other.Array;
+		this->Count = other.Count;
+		other.Array = nullptr;
+		other.Count = 0;
+		return *this;
 	}
 };
 

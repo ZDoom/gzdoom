@@ -40,6 +40,7 @@
 #include "p_maputl.h"
 #include "r_defs.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //

@@ -150,7 +150,6 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 };
 extern sidei_t *sidetemp;
 extern bool hasglnodes;
-extern struct glsegextra_t *glsegextras;
 
 struct FMissingCount
 {

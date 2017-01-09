@@ -22,6 +22,7 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "virtual.h"
+#include "g_levellocals.h"
 
 #include "r_data/colormaps.h"
 

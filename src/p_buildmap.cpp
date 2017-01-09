@@ -19,6 +19,7 @@
 #include "gi.h"
 #include "p_spec.h"
 
+#if 0
 // MACROS ------------------------------------------------------------------
 
 //#define SHADE2LIGHT(s) (160-2*(s))
@@ -487,7 +488,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	// Setting numvertexes to the same as numwalls is overly conservative,
 	// but the extra vertices will be removed during the BSP building pass.
 	numsides = numvertexes = numwalls;
-	numlines = 0;
+	int numlines = 0;
 
 	sides = new side_t[numsides];
 	memset (sides, 0, numsides*sizeof(side_t));
@@ -562,8 +563,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	}
 
 	// Set line properties that Doom doesn't store per-sidedef
-	lines = new line_t[numlines];
-	memset (lines, 0, numlines*sizeof(line_t));
+	level.lines.Alloc(numlines);
+	memset (&level.lines[0], 0, numlines*sizeof(line_t));
 
 	for (i = 0, j = -1; i < numwalls; ++i)
 	{
@@ -573,6 +574,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		j = int(intptr_t(sides[i].linedef));
+		auto &lines = level.lines;
 		lines[j].sidedef[0] = (side_t*)(intptr_t)i;
 		lines[j].sidedef[1] = (side_t*)(intptr_t)walls[i].nextwall;
 		lines[j].v1 = FindVertex (walls[i].x, walls[i].y);
@@ -654,8 +656,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingZ;
 			CalcPlane (slope, sec.ceilingplane);
 		}
-		int linenum = int(intptr_t(sides[bsec->wallptr].linedef));
-		int sidenum = int(intptr_t(lines[linenum].sidedef[1]));
+		int linenum = sides[bsec->wallptr].linedef->Index();
+		int sidenum = int(intptr_t(level.lines[linenum].sidedef[1] - sides));
 		if (bsec->floorstat & 64)
 		{ // floor is aligned to first wall
 			P_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
@@ -667,8 +669,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	}
 	for (i = 0; i < numlines; i++)
 	{
-		intptr_t front = intptr_t(lines[i].sidedef[0]);
-		intptr_t back = intptr_t(lines[i].sidedef[1]);
+		intptr_t front = intptr_t(level.lines[i].sidedef[0]-sides);
+		intptr_t back = intptr_t(level.lines[i].sidedef[1]-sides);
 		lines[i].sidedef[0] = front >= 0 ? &sides[front] : NULL;
 		lines[i].sidedef[1] = back >= 0 ? &sides[back] : NULL;
 	}
@@ -851,6 +853,7 @@ static void Decrypt (void *to_, const void *from_, int len, int key)
 	}
 }
 
+#endif
 //==========================================================================
 //
 // Just an actor to make the Build sprites show up. It doesn't do anything
@@ -892,3 +895,4 @@ void ACustomSprite::BeginPlay ()
 	// set face/wall/floor flags
 	renderflags |= ActorRenderFlags::FromInt (((cstat >> 4) & 3) << 12);
 }
+

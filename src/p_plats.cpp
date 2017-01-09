@@ -32,6 +32,7 @@
 #include "gi.h"
 #include "serializer.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 static FRandom pr_doplat ("DoPlat");
 

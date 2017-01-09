@@ -209,10 +209,10 @@ public:
 		bool makeGLNodes);
 	~FNodeBuilder ();
 
-	void Extract (node_t *&nodes, int &nodeCount,
-		seg_t *&segs, glsegextra_t *&glsegextras, int &segCount,
+	void Extract(node_t *&nodes, int &nodeCount,
+		seg_t *&segs, int &segCount,
 		subsector_t *&ssecs, int &subCount,
-		vertex_t *&verts, int &vertCount);
+		TStaticArray<vertex_t> &vertexes);
 	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.

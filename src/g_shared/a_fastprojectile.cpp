@@ -7,6 +7,7 @@
 #include "b_bot.h"
 #include "p_checkposition.h"
 #include "virtual.h"
+#include "g_levellocals.h"
 
 IMPLEMENT_CLASS(AFastProjectile, false, false)
 

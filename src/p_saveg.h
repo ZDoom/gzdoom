@@ -46,4 +46,7 @@ void P_WriteACSDefereds (FSerializer &);
 
 void G_SerializeLevel(FSerializer &arc, bool hubLoad);
 
+void P_BackupMapData();
+void P_FreeMapDataBackup();
+
 #endif // __P_SAVEG_H__

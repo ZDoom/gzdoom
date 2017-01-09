@@ -38,6 +38,7 @@
 #include "gi.h"
 #include "g_level.h"
 #include "a_sharedglobal.h"
+#include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"

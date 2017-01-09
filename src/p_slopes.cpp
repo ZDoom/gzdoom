@@ -38,6 +38,7 @@
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 //===========================================================================
 //
@@ -52,7 +53,7 @@ static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 	FLineIdIterator itr(lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
-		const line_t *line = &lines[linenum];
+		const line_t *line = &level.lines[linenum];
 		sector_t *sec;
 		secplane_t *plane;
 		
@@ -257,9 +258,9 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 		{
 			if (mt->info->Special == SMT_VertexFloorZ || mt->info->Special == SMT_VertexCeilingZ)
 			{
-				for (int i = 0; i < numvertexes; i++)
+				for (unsigned i = 0; i < level.vertexes.Size(); i++)
 				{
-					if (vertexes[i].fX() == mt->pos.X && vertexes[i].fY() == mt->pos.Y)
+					if (level.vertexes[i].fX() == mt->pos.X && level.vertexes[i].fY() == mt->pos.Y)
 					{
 						if (mt->info->Special == SMT_VertexFloorZ)
 						{
@@ -277,7 +278,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 		}
 	}
 
-	for(int i = 0; i < numvertexdatas; i++)
+	for(unsigned i = 0; i < vertexdatas.Size(); i++)
 	{
 		int ii = oldvertextable == NULL ? i : oldvertextable[i];
 
@@ -295,9 +296,8 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 	}
 
 	// If vertexdata_t is ever extended for non-slope usage, this will obviously have to be deferred or removed.
-	delete[] vertexdatas;
-	vertexdatas = NULL;
-	numvertexdatas = 0;
+	vertexdatas.Clear();
+	vertexdatas.ShrinkToFit();
 
 	if (vt_found)
 	{
@@ -309,14 +309,14 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			DVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 
-			vi1 = int(sec.Lines[0]->v1 - vertexes);
-			vi2 = int(sec.Lines[0]->v2 - vertexes);
+			vi1 = sec.Lines[0]->v1->Index();
+			vi2 = sec.Lines[0]->v2->Index();
 			vi3 = (sec.Lines[1]->v1 == sec.Lines[0]->v1 || sec.Lines[1]->v1 == sec.Lines[0]->v2)?
-				int(sec.Lines[1]->v2 - vertexes) : int(sec.Lines[1]->v1 - vertexes);
+				sec.Lines[1]->v2->Index() : sec.Lines[1]->v1->Index();
 
-			vt1 = DVector3(vertexes[vi1].fPos(), 0);
-			vt2 = DVector3(vertexes[vi2].fPos(), 0);
-			vt3 = DVector3(vertexes[vi3].fPos(), 0);
+			vt1 = DVector3(level.vertexes[vi1].fPos(), 0);
+			vt2 = DVector3(level.vertexes[vi2].fPos(), 0);
+			vt3 = DVector3(level.vertexes[vi3].fPos(), 0);
 
 			for(int j=0; j<2; j++)
 			{
@@ -329,7 +329,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				vt2.Z = h2? *h2 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
 				vt3.Z = h3? *h3 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
 
-				if (P_PointOnLineSidePrecise(vertexes[vi3].fX(), vertexes[vi3].fY(), sec.Lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(level.vertexes[vi3].fX(), level.vertexes[vi3].fY(), sec.Lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;
@@ -359,7 +359,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 
 				secplane_t *plane = j==0? &sec.floorplane : &sec.ceilingplane;
 
-				double dist = -cross[0] * vertexes[vi3].fX() - cross[1] * vertexes[vi3].fY() - cross[2] * vt3.Z;
+				double dist = -cross[0] * level.vertexes[vi3].fX() - cross[1] * level.vertexes[vi3].fY() - cross[2] * vt3.Z;
 				plane->set(cross[0], cross[1], cross[2], dist);
 			}
 		}
@@ -516,14 +516,14 @@ static void P_AlignPlane(sector_t *sec, line_t *line, int which)
 
 void P_SetSlopes ()
 {
-	int i, s;
+	int s;
 
-	for (i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Plane_Align)
+		if (line.special == Plane_Align)
 		{
-			lines[i].special = 0;
-			if (lines[i].backsector != NULL)
+			line.special = 0;
+			if (line.backsector != nullptr)
 			{
 				// args[0] is for floor, args[1] is for ceiling
 				//
@@ -531,15 +531,15 @@ void P_SetSlopes ()
 				// then args[0], bits 2-3 are for ceiling.
 				for (s = 0; s < 2; s++)
 				{
-					int bits = lines[i].args[s] & 3;
+					int bits = line.args[s] & 3;
 
 					if (s == 1 && bits == 0)
-						bits = (lines[i].args[0] >> 2) & 3;
+						bits = (line.args[0] >> 2) & 3;
 
 					if (bits == 1)			// align front side to back
-						P_AlignPlane (lines[i].frontsector, lines + i, s);
+						P_AlignPlane (line.frontsector, &line, s);
 					else if (bits == 2)		// align back side to front
-						P_AlignPlane (lines[i].backsector, lines + i, s);
+						P_AlignPlane (line.backsector, &line, s);
 				}
 			}
 		}
@@ -554,9 +554,9 @@ void P_SetSlopes ()
 
 void P_CopySlopes()
 {
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Plane_Copy)
+		if (line.special == Plane_Copy)
 		{
 			// The args are used for the tags of sectors to copy:
 			// args[0]: front floor
@@ -564,31 +564,31 @@ void P_CopySlopes()
 			// args[2]: back floor
 			// args[3]: back ceiling
 			// args[4]: copy slopes from one side of the line to the other.
-			lines[i].special = 0;
-			for (int s = 0; s < (lines[i].backsector ? 4 : 2); s++)
+			line.special = 0;
+			for (int s = 0; s < (line.backsector ? 4 : 2); s++)
 			{
-				if (lines[i].args[s])
-					P_CopyPlane(lines[i].args[s], 
-					(s & 2 ? lines[i].backsector : lines[i].frontsector), s & 1);
+				if (line.args[s])
+					P_CopyPlane(line.args[s], 
+					(s & 2 ? line.backsector : line.frontsector), s & 1);
 			}
 
-			if (lines[i].backsector != NULL)
+			if (line.backsector != NULL)
 			{
-				if ((lines[i].args[4] & 3) == 1)
+				if ((line.args[4] & 3) == 1)
 				{
-					lines[i].backsector->floorplane = lines[i].frontsector->floorplane;
+					line.backsector->floorplane = line.frontsector->floorplane;
 				}
-				else if ((lines[i].args[4] & 3) == 2)
+				else if ((line.args[4] & 3) == 2)
 				{
-					lines[i].frontsector->floorplane = lines[i].backsector->floorplane;
+					line.frontsector->floorplane = line.backsector->floorplane;
 				}
-				if ((lines[i].args[4] & 12) == 4)
+				if ((line.args[4] & 12) == 4)
 				{
-					lines[i].backsector->ceilingplane = lines[i].frontsector->ceilingplane;
+					line.backsector->ceilingplane = line.frontsector->ceilingplane;
 				}
-				else if ((lines[i].args[4] & 12) == 8)
+				else if ((line.args[4] & 12) == 8)
 				{
-					lines[i].frontsector->ceilingplane = lines[i].backsector->ceilingplane;
+					line.frontsector->ceilingplane = line.backsector->ceilingplane;
 				}
 			}
 		}

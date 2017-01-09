@@ -52,6 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "a_ammo.h"
+#include "g_levellocals.h"
 
 #include "gi.h"
 

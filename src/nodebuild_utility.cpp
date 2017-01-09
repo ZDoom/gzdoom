@@ -50,6 +50,7 @@
 #include "i_system.h"
 #include "po_man.h"
 #include "r_state.h"
+#include "g_levellocals.h"
 #include "math/cmath.h"
 
 static const int PO_LINE_START = 1;
@@ -186,7 +187,7 @@ int FNodeBuilder::CreateSeg (int linenum, int sidenum)
 	}
 	seg.linedef = linenum;
 	side_t *sd = Level.Lines[linenum].sidedef[sidenum];
-	seg.sidedef = sd != NULL? int(sd - sides) : int(NO_SIDE);
+	seg.sidedef = sd != NULL? sd->Index() : int(NO_SIDE);
 	seg.nextforvert = Vertices[seg.v1].segs;
 	seg.nextforvert2 = Vertices[seg.v2].segs2;
 

@@ -48,6 +48,7 @@
 #include "w_wad.h"
 #include "p_tags.h"
 #include "p_terrain.h"
+#include "g_levellocals.h"
 
 //===========================================================================
 //
@@ -393,7 +394,6 @@ class UDMFParser : public UDMFParserBase
 	TArray<intmapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
-	TArray<vertexdata_t> ParsedVertexDatas;
 
 	FDynamicColormap	*fogMap, *normMap;
 	FMissingTextureTracker &missingTex;
@@ -792,6 +792,7 @@ public:
 		memset(ld, 0, sizeof(*ld));
 		ld->alpha = 1.;
 		ld->portalindex = UINT_MAX;
+		ld->portaltransferred = UINT_MAX;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -1135,7 +1136,7 @@ public:
 		sdt->midtexture = "-";
 		sd->SetTextureXScale(1.);
 		sd->SetTextureYScale(1.);
-		sd->Index = index;
+		sd->UDMFIndex = index;
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1788,12 +1789,12 @@ public:
 			intptr_t v1i = intptr_t(ParsedLines[i].v1);
 			intptr_t v2i = intptr_t(ParsedLines[i].v2);
 
-			if (v1i >= numvertexes || v2i >= numvertexes || v1i < 0 || v2i < 0)
+			if (v1i >= level.vertexes.Size() || v2i >= level.vertexes.Size() || v1i < 0 || v2i < 0)
 			{
-				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %d vertices.", i+skipped, v1i, v2i, numvertexes);
+				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %u vertices.", i+skipped, v1i, v2i, level.vertexes.Size());
 			}
 			else if (v1i == v2i ||
-				(vertexes[v1i].fX() == vertexes[v2i].fX() && vertexes[v1i].fY() == vertexes[v2i].fY()))
+				(level.vertexes[v1i].fX() == level.vertexes[v2i].fX() && level.vertexes[v1i].fY() == level.vertexes[v2i].fY()))
 			{
 				Printf ("Removing 0-length line %d\n", i+skipped);
 				ParsedLines.Delete(i);
@@ -1802,8 +1803,8 @@ public:
 			}
 			else
 			{
-				ParsedLines[i].v1 = &vertexes[v1i];
-				ParsedLines[i].v2 = &vertexes[v2i];
+				ParsedLines[i].v1 = &level.vertexes[v1i];
+				ParsedLines[i].v2 = &level.vertexes[v2i];
 
 				if (ParsedLines[i].sidedef[0] != NULL)
 					sidecount++;
@@ -1813,13 +1814,14 @@ public:
 				i++;
 			}
 		}
-		numlines = ParsedLines.Size();
-		numsides = sidecount;
-		lines = new line_t[numlines];
-		sides = new side_t[numsides];
+		unsigned numlines = ParsedLines.Size();
+		level.sides.Alloc(sidecount);
+		level.lines.Alloc(numlines);
 		int line, side;
+		auto lines = &level.lines[0];
+		auto sides = &level.sides[0];
 
-		for(line = 0, side = 0; line < numlines; line++)
+		for(line = 0, side = 0; line < (int)numlines; line++)
 		{
 			short tempalpha[2] = { SHRT_MIN, SHRT_MIN };
 
@@ -1852,11 +1854,10 @@ public:
 			P_AdjustLine(&lines[line]);
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
-		assert(side <= numsides);
-		if (side < numsides)
+		assert((unsigned)side <= level.sides.Size());
+		if ((unsigned)side > level.sides.Size())
 		{
-			Printf("Map had %d invalid side references\n", numsides - side);
-			numsides = side;
+			Printf("Map had %d invalid side references\n", (int)level.sides.Size() - side);
 		}
 	}
 
@@ -1994,7 +1995,7 @@ public:
 				vertexdata_t vd;
 				ParseVertex(&vt, &vd);
 				ParsedVertices.Push(vt);
-				ParsedVertexDatas.Push(vd);
+				vertexdatas.Push(vd);
 			}
 			else
 			{
@@ -2009,14 +2010,8 @@ public:
 		if (ParsedSides.Size() == 0)	I_Error("Map has no sidedefs.\n");
 
 		// Create the real vertices
-		numvertexes = ParsedVertices.Size();
-		vertexes = new vertex_t[numvertexes];
-		memcpy(vertexes, &ParsedVertices[0], numvertexes * sizeof(*vertexes));
-
-		// Create the real vertex datas
-		numvertexdatas = ParsedVertexDatas.Size();
-		vertexdatas = new vertexdata_t[numvertexdatas];
-		memcpy(vertexdatas, &ParsedVertexDatas[0], numvertexdatas * sizeof(*vertexdatas));
+		level.vertexes.Alloc(ParsedVertices.Size());
+		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
 
 		// Create the real sectors
 		level.sectors.Alloc(ParsedSectors.Size());

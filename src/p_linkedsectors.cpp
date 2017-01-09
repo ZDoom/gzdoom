@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 enum
 {
@@ -360,7 +361,7 @@ void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		line_t *ld = &lines[line];
+		line_t *ld = &level.lines[line];
 
 		if (ld->special == Static_Init && ld->args[1] == Init_SectorLink)
 		{

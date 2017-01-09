@@ -52,6 +52,7 @@
 #include "p_tags.h"
 #include "r_state.h"
 #include "w_wad.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -475,9 +476,9 @@ void SetCompatibilityParams()
 			{
 				case CP_CLEARFLAGS:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						line_t *line = &lines[CompatParams[i+1]];
+						line_t *line = &level.lines[CompatParams[i+1]];
 						line->flags &= ~CompatParams[i+2];
 					}
 					i+=3;
@@ -485,9 +486,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SETFLAGS:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						line_t *line = &lines[CompatParams[i+1]];
+						line_t *line = &level.lines[CompatParams[i+1]];
 						line->flags |= CompatParams[i+2];
 					}
 					i+=3;
@@ -495,9 +496,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SETSPECIAL:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						line_t *line = &lines[CompatParams[i+1]];
+						line_t *line = &level.lines[CompatParams[i+1]];
 						line->special = CompatParams[i+2];
 						for(int ii=0;ii<5;ii++)
 						{
@@ -509,9 +510,9 @@ void SetCompatibilityParams()
 				}
 				case CP_CLEARSPECIAL:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						line_t *line = &lines[CompatParams[i+1]];
+						line_t *line = &level.lines[CompatParams[i+1]];
 						line->special = 0;
 						memset(line->args, 0, sizeof(line->args));
 					}
@@ -520,9 +521,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SETACTIVATION:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						line_t *line = &lines[CompatParams[i+1]];
+						line_t *line = &level.lines[CompatParams[i+1]];
 						line->activation = CompatParams[i+2];
 					}
 					i += 3;
@@ -552,9 +553,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SETWALLYSCALE:
 				{
-					if (CompatParams[i+1] < numlines)
+					if ((unsigned)CompatParams[i+1] < level.lines.Size())
 					{
-						side_t *side = lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
+						side_t *side = level.lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
 						if (side != NULL)
 						{
 							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4] / 65536.);

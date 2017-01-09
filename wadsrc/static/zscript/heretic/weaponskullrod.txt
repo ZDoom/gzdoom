@@ -402,7 +402,7 @@ class RainPillar : Actor
 
 	// Rain pillar 1 ------------------------------------------------------------
 
-	int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
 	{
 		if (target.bBoss)
 		{ // Decrease damage for bosses

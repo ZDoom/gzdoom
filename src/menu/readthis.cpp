@@ -37,6 +37,7 @@
 #include "v_video.h"
 #include "g_level.h"
 #include "gi.h"
+#include "g_levellocals.h"
 #include "textures/textures.h"
 
 class DReadThisMenu : public DMenu

@@ -10,6 +10,7 @@
 #include "g_level.h"
 #include "r_state.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 static FRandom pr_lightning ("Lightning");
 

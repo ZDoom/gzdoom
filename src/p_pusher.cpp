@@ -32,6 +32,7 @@
 #include "p_maputl.h"
 #include "p_local.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 
@@ -358,11 +359,10 @@ AActor *P_GetPushThing (int s)
 
 void P_SpawnPushers ()
 {
-	int i;
-	line_t *l = lines;
+	line_t *l = &level.lines[0];
 	int s;
 
-	for (i = 0; i < numlines; i++, l++)
+	for (unsigned i = 0; i < level.lines.Size(); i++, l++)
 	{
 		switch (l->special)
 		{

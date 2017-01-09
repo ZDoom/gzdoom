@@ -49,6 +49,7 @@
 #include "zstring.h"
 #include "d_dehacked.h"
 #include "v_text.h"
+#include "g_levellocals.h"
 
 
 #include "gl/dynlights/gl_dynlight.h"

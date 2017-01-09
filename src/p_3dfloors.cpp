@@ -47,6 +47,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Int, vid_renderer)
 
@@ -850,16 +851,14 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 void P_Spawn3DFloors (void)
 {
 	static int flagvals[] = {512, 2+512, 512+1024};
-	int i;
-	line_t * line;
 
-	for (i=0,line=lines;i<numlines;i++,line++)
+	for (auto &line : level.lines)
 	{
-		switch(line->special)
+		switch(line.special)
 		{
 		case ExtraFloor_LightOnly:
-			if (line->args[1] < 0 || line->args[1] > 2) line->args[1] = 0;
-			P_Set3DFloor(line, 3, flagvals[line->args[1]], 0);
+			if (line.args[1] < 0 || line.args[1] > 2) line.args[1] = 0;
+			P_Set3DFloor(&line, 3, flagvals[line.args[1]], 0);
 			break;
 
 		case Sector_Set3DFloor:
@@ -868,24 +867,24 @@ void P_Spawn3DFloors (void)
 			// In Doom format the translators can take full integers for the tag and the line ID always is the same as the tag.
 			if (level.maptype == MAPTYPE_HEXEN)	
 			{
-				if (line->args[1]&8)
+				if (line.args[1]&8)
 				{
-					tagManager.AddLineID(i, line->args[4]);
+					tagManager.AddLineID(line.Index(), line.args[4]);
 				}
 				else
 				{
-					line->args[0]+=256*line->args[4];
-					line->args[4]=0;
+					line.args[0]+=256*line.args[4];
+					line.args[4]=0;
 				}
 			}
-			P_Set3DFloor(line, line->args[1]&~8, line->args[2], line->args[3]);
+			P_Set3DFloor(&line, line.args[1]&~8, line.args[2], line.args[3]);
 			break;
 
 		default:
 			continue;
 		}
-		line->special=0;
-		line->args[0] = line->args[1] = line->args[2] = line->args[3] = line->args[4] = 0;
+		line.special=0;
+		line.args[0] = line.args[1] = line.args[2] = line.args[3] = line.args[4] = 0;
 	}
 	// kg3D - do it in software
 	for (auto &sec : level.sectors)

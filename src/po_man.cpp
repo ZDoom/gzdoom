@@ -32,23 +32,13 @@
 #include "p_maputl.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define PO_MAXPOLYSEGS 64
 
 // TYPES -------------------------------------------------------------------
-
-inline vertex_t *side_t::V1() const
-{
-	return this == linedef->sidedef[0]? linedef->v1 : linedef->v2;
-}
-
-inline vertex_t *side_t::V2() const
-{
-	return this == linedef->sidedef[0]? linedef->v2 : linedef->v1;
-}
-
 
 class DRotatePoly : public DPolyAction
 {
@@ -147,8 +137,6 @@ static void FreePolyNode();
 static void ReleaseAllPolyNodes();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern seg_t *segs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1429,11 +1417,11 @@ static void InitBlockMap (void)
 
 static void InitSideLists ()
 {
-	for (int i = 0; i < numsides; ++i)
+	for (unsigned i = 0; i < level.sides.Size(); ++i)
 	{
-		if (sides[i].linedef != NULL &&
-			(sides[i].linedef->special == Polyobj_StartLine ||
-			 sides[i].linedef->special == Polyobj_ExplicitLine))
+		if (level.sides[i].linedef != NULL &&
+			(level.sides[i].linedef->special == Polyobj_StartLine ||
+				level.sides[i].linedef->special == Polyobj_ExplicitLine))
 		{
 			KnownPolySides.Push (i);
 		}
@@ -1491,7 +1479,7 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 	assert(sidetemp != NULL);
 
 	vnum.Clear();
-	vnum.Push(DWORD(side->V1() - vertexes));
+	vnum.Push(DWORD(side->V1()->Index()));
 	vnumat = 0;
 
 	while (vnum.Size() != vnumat)
@@ -1499,8 +1487,8 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 		DWORD sidenum = sidetemp[vnum[vnumat++]].b.first;
 		while (sidenum != NO_SIDE)
 		{
-			po->Sidedefs.Push(&sides[sidenum]);
-			AddPolyVert(vnum, DWORD(sides[sidenum].V2() - vertexes));
+			po->Sidedefs.Push(&level.sides[sidenum]);
+			AddPolyVert(vnum, DWORD(level.sides[sidenum].V2()->Index()));
 			sidenum = sidetemp[sidenum].b.next;
 		}
 	}
@@ -1534,7 +1522,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 		po->bBlocked = false;
 		po->bHasPortals = 0;
 
-		side_t *sd = &sides[i];
+		side_t *sd = &level.sides[i];
 		
 		if (sd->linedef->special == Polyobj_StartLine &&
 			sd->linedef->args[0] == tag)
@@ -1570,14 +1558,14 @@ static void SpawnPolyobj (int index, int tag, int type)
 			i = KnownPolySides[ii];
 
 			if (i >= 0 &&
-				sides[i].linedef->special == Polyobj_ExplicitLine &&
-				sides[i].linedef->args[0] == tag)
+				level.sides[i].linedef->special == Polyobj_ExplicitLine &&
+				level.sides[i].linedef->args[0] == tag)
 			{
-				if (!sides[i].linedef->args[1])
+				if (!level.sides[i].linedef->args[1])
 				{
-					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, int(sides[i].linedef - lines));
+					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, level.sides[i].linedef->Index());
 				}
-				po->Sidedefs.Push (&sides[i]);
+				po->Sidedefs.Push (&level.sides[i]);
 			}
 		}
 		qsort(&po->Sidedefs[0], po->Sidedefs.Size(), sizeof(po->Sidedefs[0]), posicmp);
@@ -1776,11 +1764,11 @@ void PO_Init (void)
 		}
 	}
 	// clear all polyobj specials so that they do not obstruct using other lines.
-	for (int i = 0; i < numlines; i++)
+	for (auto &line : level.lines)
 	{
-		if (lines[i].special == Polyobj_ExplicitLine || lines[i].special == Polyobj_StartLine)
+		if (line.special == Polyobj_ExplicitLine || line.special == Polyobj_StartLine)
 		{
-			lines[i].special = 0;
+			line.special = 0;
 		}
 	}
 }

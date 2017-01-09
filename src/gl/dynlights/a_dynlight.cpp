@@ -71,6 +71,7 @@
 #include "portal.h"
 #include "doomstat.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 
 #include "gl/renderer/gl_renderer.h"

@@ -64,6 +64,7 @@
 #include "doomerrors.h"
 #include "v_text.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
@@ -1458,7 +1459,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPoly
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, sides);
+	return SerializePointer(arc, key, value, defval, &level.sides[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
@@ -1478,12 +1479,12 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, lines);
+	return SerializePointer(arc, key, value, defval, &level.lines[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, vertexes);
+	return SerializePointer(arc, key, value, defval, &level.vertexes[0]);
 }
 
 //==========================================================================

@@ -53,6 +53,7 @@
 #include "serializer.h"
 #include "d_player.h"
 #include "r_state.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 

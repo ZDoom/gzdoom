@@ -32,6 +32,7 @@
 #include "r_utility.h"
 #include "r_state.h"
 #include "doomstat.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_data.h"

@@ -73,6 +73,7 @@
 #include "a_ammo.h"
 #include "a_health.h"
 #include "a_keys.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //

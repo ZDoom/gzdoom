@@ -39,6 +39,7 @@
 #include "s_sndseq.h"
 #include "serializer.h"
 #include "r_data/r_interpolate.h"
+#include "g_levellocals.h"
 
 IMPLEMENT_CLASS(DPillar, false, true)
 

@@ -72,6 +72,7 @@
 #include "r_utility.h"
 #include "r_data/r_interpolate.h"
 #include "c_functions.h"
+#include "g_levellocals.h"
 
 extern FILE *Logfile;
 extern bool insave;

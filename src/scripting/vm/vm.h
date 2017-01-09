@@ -209,6 +209,9 @@ public:
 	void MaybePrintMessage();
 };
 
+// This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
+void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+
 enum EVMOpMode
 {
 	MODE_ASHIFT		= 0,

@@ -22,6 +22,7 @@
 #include "virtual.h"
 #include "a_ammo.h"
 #include "c_functions.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 

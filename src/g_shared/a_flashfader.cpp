@@ -2,6 +2,7 @@
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 IMPLEMENT_CLASS(DFlashFader, false, true)
 

@@ -112,7 +112,7 @@ class Heresiarch : Actor
 		Stop;
 	}
 
-	void Die (Actor source, Actor inflictor, int dmgflags)
+	override void Die (Actor source, Actor inflictor, int dmgflags)
 	{
 		// The heresiarch just executes a script instead of a special upon death
 		int script = special;
@@ -698,8 +698,8 @@ class SorcBall2 : SorcBall
 
 		Actor parent = target;
 		Actor mo = Spawn("SorcFX2", Pos + (0, 0, parent.Floorclip + Heresiarch.SORC_DEFENSE_HEIGHT), ALLOW_REPLACE);
-		bReflective = true;
-		bInvulnerable = true;
+		parent.bReflective = true;
+		parent.bInvulnerable = true;
 		parent.args[0] = Heresiarch.SORC_DEFENSE_TIME;
 		if (mo) mo.target = parent;
 	}

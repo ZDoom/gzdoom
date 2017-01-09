@@ -44,9 +44,7 @@
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
 
-// This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
-void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
-// intentionally implemented in a different source file tp prevent inlining.
+// intentionally implemented in a different source file to prevent inlining.
 void ThrowVMException(VMException *x);
 
 #define IMPLEMENT_VMEXEC

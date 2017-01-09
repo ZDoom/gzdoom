@@ -43,6 +43,7 @@
 #include "v_font.h"
 #include "m_fixed.h"
 #include "gstrings.h"
+#include "g_levellocals.h"
 
 TArray<FSkillInfo> AllSkills;
 int DefaultSkill = -1;

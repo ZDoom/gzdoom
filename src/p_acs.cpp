@@ -86,6 +86,7 @@
 #include "a_armor.h"
 #include "a_ammo.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 extern FILE *Logfile;
 
@@ -3284,7 +3285,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 	int linenum = -1;
 	const char *texname = FBehavior::StaticLookupString (name);
 
-	if (texname == NULL)
+	if (texname == nullptr)
 		return;
 
 	side = !!side;
@@ -3296,8 +3297,8 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 	{
 		side_t *sidedef;
 
-		sidedef = lines[linenum].sidedef[side];
-		if (sidedef == NULL)
+		sidedef = level.lines[linenum].sidedef[side];
+		if (sidedef == nullptr)
 			continue;
 
 		switch (position)
@@ -3332,16 +3333,14 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
-		for (int i = 0; i < numsides; ++i)
+		for (auto &side : level.sides)
 		{
-			side_t *wal = &sides[i];
-
 			for(int j=0;j<3;j++)
 			{
 				static BYTE bits[]={NOT_TOP, NOT_MIDDLE, NOT_BOTTOM};
-				if (!(flags & bits[j]) && wal->GetTexture(j) == picnum1)
+				if (!(flags & bits[j]) && side.GetTexture(j) == picnum1)
 				{
-					wal->SetTexture(j, picnum2);
+					side.SetTexture(j, picnum2);
 				}
 			}
 		}
@@ -4428,14 +4427,14 @@ int DLevelScript::SideFromID(int id, int side)
 	{
 		if (activationline == NULL) return -1;
 		if (activationline->sidedef[side] == NULL) return -1;
-		return activationline->sidedef[side]->Index;
+		return activationline->sidedef[side]->UDMFIndex;
 	}
 	else
 	{
 		int line = P_FindFirstLineFromID(id);
 		if (line == -1) return -1;
-		if (lines[line].sidedef[side] == NULL) return -1;
-		return lines[line].sidedef[side]->Index;
+		if (level.lines[line].sidedef[side] == NULL) return -1;
+		return level.lines[line].sidedef[side]->UDMFIndex;
 	}
 }
 
@@ -4444,7 +4443,7 @@ int DLevelScript::LineFromID(int id)
 	if (id == 0)
 	{
 		if (activationline == NULL) return -1;
-		return int(activationline - lines);
+		return activationline->Index();
 	}
 	else
 	{
@@ -5695,7 +5694,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				FLineIdIterator itr(args[0]);
 				while ((line = itr.Next()) >= 0)
 				{
-					lines[line].activation = args[1];
+					level.lines[line].activation = args[1];
 				}
 			}
 			break;
@@ -5704,7 +5703,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount > 0)
 			{
 				int line = P_FindFirstLineFromID(args[0]);
-				return line >= 0 ? lines[line].activation : 0;
+				return line >= 0 ? level.lines[line].activation : 0;
 			}
 			break;
 
@@ -7742,7 +7741,7 @@ scriptwait:
 			if (activationline != NULL)
 			{
 				activationline->special = 0;
-				DPrintf(DMSG_SPAMMY, "Cleared line special on line %d\n", (int)(activationline - lines));
+				DPrintf(DMSG_SPAMMY, "Cleared line special on line %d\n", activationline->Index());
 			}
 			break;
 
@@ -8307,32 +8306,33 @@ scriptwait:
 
 		case PCD_SETLINEBLOCKING:
 			{
-				int line;
+				int lineno;
 
 				FLineIdIterator itr(STACK(2));
-				while ((line = itr.Next()) >= 0)
+				while ((lineno = itr.Next()) >= 0)
 				{
+					auto &line = level.lines[lineno];
 					switch (STACK(1))
 					{
 					case BLOCK_NOTHING:
-						lines[line].flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
+						line.flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
 						break;
 					case BLOCK_CREATURES:
 					default:
-						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
-						lines[line].flags |= ML_BLOCKING;
+						line.flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
+						line.flags |= ML_BLOCKING;
 						break;
 					case BLOCK_EVERYTHING:
-						lines[line].flags &= ~(ML_RAILING|ML_BLOCK_PLAYERS);
-						lines[line].flags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
+						line.flags &= ~(ML_RAILING|ML_BLOCK_PLAYERS);
+						line.flags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
 						break;
 					case BLOCK_RAILING:
-						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS);
-						lines[line].flags |= ML_RAILING|ML_BLOCKING;
+						line.flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS);
+						line.flags |= ML_RAILING|ML_BLOCKING;
 						break;
 					case BLOCK_PLAYERS:
-						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCKING|ML_RAILING);
-						lines[line].flags |= ML_BLOCK_PLAYERS;
+						line.flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCKING|ML_RAILING);
+						line.flags |= ML_BLOCK_PLAYERS;
 						break;
 					}
 				}
@@ -8349,9 +8349,9 @@ scriptwait:
 				while ((line = itr.Next()) >= 0)
 				{
 					if (STACK(1))
-						lines[line].flags |= ML_BLOCKMONSTERS;
+						level.lines[line].flags |= ML_BLOCKMONSTERS;
 					else
-						lines[line].flags &= ~ML_BLOCKMONSTERS;
+						level.lines[line].flags &= ~ML_BLOCKMONSTERS;
 				}
 
 				sp -= 2;
@@ -8374,7 +8374,7 @@ scriptwait:
 				FLineIdIterator itr(STACK(7));
 				while ((linenum = itr.Next()) >= 0)
 				{
-					line_t *line = &lines[linenum];
+					line_t *line = &level.lines[linenum];
 					line->special = specnum;
 					line->args[0] = arg0;
 					line->args[1] = STACK(4);

@@ -16,6 +16,7 @@
 #include "v_text.h"
 #include "doomstat.h"
 #include "doomdata.h"
+#include "g_levellocals.h"
 
 #define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");

@@ -67,6 +67,7 @@
 #include "m_misc.h"
 #include "r_utility.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
@@ -129,6 +130,7 @@ struct gl5_mapnode_t
 
 static int CheckForMissingSegs()
 {
+	auto numsides = level.sides.Size();
 	double *added_seglen = new double[numsides];
 	int missing = 0;
 
@@ -141,13 +143,13 @@ static int CheckForMissingSegs()
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
 			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
-			added_seglen[seg->sidedef - sides] += vec1.Length();
+			added_seglen[seg->sidedef->Index()] += vec1.Length();
 		}
 	}
 
-	for(int i=0;i<numsides;i++)
+	for(unsigned i=0;i<numsides;i++)
 	{
-		double linelen = sides[i].linedef->Delta().Length();
+		double linelen = level.sides[i].linedef->Delta().Length();
 		missing += (added_seglen[i] < linelen - 1.);
 	}
 
@@ -222,7 +224,7 @@ static bool LoadGLVertexes(FileReader * lump)
 	BYTE *gldata;
 	int                 i;
 
-	firstglvertex = numvertexes;
+	firstglvertex = level.vertexes.Size();
 	
 	int gllen=lump->GetLength();
 
@@ -247,23 +249,23 @@ static bool LoadGLVertexes(FileReader * lump)
 	}
 	else format5=false;
 
-	mapglvertex_t*	mgl;
+	mapglvertex_t*	mgl = (mapglvertex_t *)(gldata + GL_VERT_OFFSET);
+	unsigned numvertexes = firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
 
-	vertex_t * oldvertexes = vertexes;
-	numvertexes += (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
-	vertexes	 = new vertex_t[numvertexes];
-	mgl			 = (mapglvertex_t *) (gldata + GL_VERT_OFFSET);	
+	TStaticArray<vertex_t> oldvertexes = std::move(level.vertexes);
+	level.vertexes.Alloc(numvertexes);
 
-	memcpy(vertexes, oldvertexes, firstglvertex * sizeof(vertex_t));
-	for(i=0;i<numlines;i++)
+	memcpy(&level.vertexes[0], &oldvertexes[0], firstglvertex * sizeof(vertex_t));
+	for(auto &line : level.lines)
 	{
-		lines[i].v1 = vertexes + (lines[i].v1 - oldvertexes);
-		lines[i].v2 = vertexes + (lines[i].v2 - oldvertexes);
+		// Remap vertex pointers in linedefs
+		line.v1 = &level.vertexes[line.v1 - &oldvertexes[0]];
+		line.v2 = &level.vertexes[line.v2 - &oldvertexes[0]];
 	}
 
-	for (i = firstglvertex; i < numvertexes; i++)
+	for (i = firstglvertex; i < (int)numvertexes; i++)
 	{
-		vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
+		level.vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
 		mgl++;
 	}
 	delete[] gldata;
@@ -317,18 +319,16 @@ static bool LoadGLSegs(FileReader * lump)
 			numsegs/=sizeof(glseg_t);
 			segs = new seg_t[numsegs];
 			memset(segs,0,sizeof(seg_t)*numsegs);
-			glsegextras = new glsegextra_t[numsegs];
 			
 			glseg_t * ml = (glseg_t*)data;
 			for(i = 0; i < numsegs; i++)
 			{							// check for gl-vertices
-				segs[i].v1 = &vertexes[checkGLVertex(LittleShort(ml->v1))];
-				segs[i].v2 = &vertexes[checkGLVertex(LittleShort(ml->v2))];
-				
-				glsegextras[i].PartnerSeg = ml->partner == 0xFFFF ? DWORD_MAX : LittleShort(ml->partner);
+				segs[i].v1 = &level.vertexes[checkGLVertex(LittleShort(ml->v1))];
+				segs[i].v2 = &level.vertexes[checkGLVertex(LittleShort(ml->v2))];
+				segs[i].PartnerSeg = ml->partner == 0xFFFF ? nullptr : &segs[LittleShort(ml->partner)];
 				if(ml->linedef != 0xffff)
 				{
-					ldef = &lines[LittleShort(ml->linedef)];
+					ldef = &level.lines[LittleShort(ml->linedef)];
 					segs[i].linedef = ldef;
 	
 					
@@ -370,19 +370,17 @@ static bool LoadGLSegs(FileReader * lump)
 			numsegs/=sizeof(glseg3_t);
 			segs = new seg_t[numsegs];
 			memset(segs,0,sizeof(seg_t)*numsegs);
-			glsegextras = new glsegextra_t[numsegs];
 			
 			glseg3_t * ml = (glseg3_t*)(data+ (format5? 0:4));
 			for(i = 0; i < numsegs; i++)
 			{							// check for gl-vertices
-				segs[i].v1 = &vertexes[checkGLVertex3(LittleLong(ml->v1))];
-				segs[i].v2 = &vertexes[checkGLVertex3(LittleLong(ml->v2))];
-				
-				glsegextras[i].PartnerSeg = LittleLong(ml->partner);
+				segs[i].v1 = &level.vertexes[checkGLVertex3(LittleLong(ml->v1))];
+				segs[i].v2 = &level.vertexes[checkGLVertex3(LittleLong(ml->v2))];
+				segs[i].PartnerSeg = LittleLong(ml->partner) == 0xffffffffu? nullptr : &segs[LittleLong(ml->partner)];
 	
 				if(ml->linedef != 0xffff) // skip minisegs 
 				{
-					ldef = &lines[LittleLong(ml->linedef)];
+					ldef = &level.lines[LittleLong(ml->linedef)];
 					segs[i].linedef = ldef;
 	
 					
@@ -1000,18 +998,18 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			P_GetPolySpots (map, polyspots, anchors);
 			FNodeBuilder::FLevel leveldata =
 			{
-				vertexes, numvertexes,
-				sides, numsides,
-				lines, numlines,
+				&level.vertexes[0], (int)level.vertexes.Size(),
+				&level.sides[0], (int)level.sides.Size(),
+				&level.lines[0], (int)level.lines.Size(),
 				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
-			delete[] vertexes;
+			
 			builder.Extract (nodes, numnodes,
-				segs, glsegextras, numsegs,
+				segs, numsegs,
 				subsectors, numsubsectors,
-				vertexes, numvertexes);
+				level.vertexes);
 			endTime = I_FPSTime ();
 			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 			buildtime = endTime - startTime;
@@ -1093,11 +1091,11 @@ static void CreateCachedNodes(MapData *map)
 	MemFile ZNodes;
 
 	WriteLong(ZNodes, 0);
-	WriteLong(ZNodes, numvertexes);
-	for(int i=0;i<numvertexes;i++)
+	WriteLong(ZNodes, level.vertexes.Size());
+	for(auto &vert : level.vertexes)
 	{
-		WriteLong(ZNodes, vertexes[i].fixX());
-		WriteLong(ZNodes, vertexes[i].fixY());
+		WriteLong(ZNodes, vert.fixX());
+		WriteLong(ZNodes, vert.fixY());
 	}
 
 	WriteLong(ZNodes, numsubsectors);
@@ -1109,12 +1107,11 @@ static void CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, numsegs);
 	for(int i=0;i<numsegs;i++)
 	{
-		WriteLong(ZNodes, DWORD(segs[i].v1 - vertexes));
-		if (glsegextras != NULL) WriteLong(ZNodes, DWORD(glsegextras[i].PartnerSeg));
-		else WriteLong(ZNodes, 0);
+		WriteLong(ZNodes, segs[i].v1->Index());
+		WriteLong(ZNodes, segs[i].PartnerSeg == nullptr? 0xffffffffu : DWORD(segs[i].PartnerSeg - segs));
 		if (segs[i].linedef)
 		{
-			WriteLong(ZNodes, DWORD(segs[i].linedef - lines));
+			WriteLong(ZNodes, DWORD(segs[i].linedef->Index()));
 			WriteByte(ZNodes, segs[i].sidedef == segs[i].linedef->sidedef[0]? 0:1);
 		}
 		else
@@ -1156,7 +1153,7 @@ static void CreateCachedNodes(MapData *map)
 
 	uLongf outlen = ZNodes.Size();
 	BYTE *compressed;
-	int offset = numlines * 8 + 12 + 16;
+	int offset = level.lines.Size() * 8 + 12 + 16;
 	int r;
 	do
 	{
@@ -1171,13 +1168,13 @@ static void CreateCachedNodes(MapData *map)
 	while (r == Z_BUF_ERROR);
 
 	memcpy(compressed, "CACH", 4);
-	DWORD len = LittleLong(numlines);
+	DWORD len = LittleLong(level.lines.Size());
 	memcpy(compressed+4, &len, 4);
 	map->GetChecksum(compressed+8);
-	for(int i=0;i<numlines;i++)
+	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		DWORD ndx[2] = {LittleLong(DWORD(lines[i].v1 - vertexes)), LittleLong(DWORD(lines[i].v2 - vertexes)) };
-		memcpy(compressed+8+16+8*i, ndx, 8);
+		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1->Index())), LittleLong(DWORD(level.lines[i].v2->Index())) };
+		memcpy(compressed + 8 + 16 + 8 * i, ndx, 8);
 	}
 	memcpy(compressed + offset - 4, "ZGL3", 4);
 
@@ -1219,7 +1216,7 @@ static bool CheckCachedNodes(MapData *map)
 
 	if (fread(&numlin, 4, 1, f) != 1) goto errorout; 
 	numlin = LittleLong(numlin);
-	if ((int)numlin != numlines) goto errorout;
+	if (numlin != level.lines.Size()) goto errorout;
 
 	if (fread(md5, 1, 16, f) != 16) goto errorout;
 	map->GetChecksum(md5map);
@@ -1261,10 +1258,11 @@ static bool CheckCachedNodes(MapData *map)
 		goto errorout;
 	}
 
-	for(int i=0;i<numlines;i++)
+	for(auto &line : level.lines)
 	{
-		lines[i].v1 = &vertexes[LittleLong(verts[i*2])];
-		lines[i].v2 = &vertexes[LittleLong(verts[i*2+1])];
+		int i = line.Index();
+		line.v1 = &level.vertexes[LittleLong(verts[i*2])];
+		line.v2 = &level.vertexes[LittleLong(verts[i*2+1])];
 	}
 	delete [] verts;
 
@@ -1437,40 +1435,32 @@ void P_SetRenderSector()
 #endif
 
 	// Check for incorrect partner seg info so that the following code does not crash.
-	if (glsegextras == NULL)
+
+	for (i = 0; i < numsegs; i++)
 	{
-		// This can be normal nodes, mistakenly identified as GL nodes so we must fill
-		// in the missing pieces differently.
-
-		for (i = 0; i < numsubsectors; i++)
+		auto p = segs[i].PartnerSeg;
+		if (p != nullptr)
 		{
-			ss = &subsectors[i];
-			ss->render_sector = ss->sector;
-		}
-		return;
-	}
+			int partner = (int)(p - segs);
 
-	for(i=0;i<numsegs;i++)
-	{
-		int partner = (int)glsegextras[i].PartnerSeg;
+			if (partner < 0 || partner >= numsegs)
+			{
+				segs[i].PartnerSeg = nullptr;
+			}
 
-		if (partner<0 || partner>=numsegs/*eh? || &segs[partner]!=glsegextras[i].PartnerSeg*/)
-		{
-			glsegextras[i].PartnerSeg=DWORD_MAX;
+			// glbsp creates such incorrect references for Strife.
+			if (segs[i].linedef && segs[i].PartnerSeg != nullptr && !segs[i].PartnerSeg->linedef)
+			{
+				segs[i].PartnerSeg = segs[i].PartnerSeg->PartnerSeg = nullptr;
+			}
 		}
 
-		// glbsp creates such incorrect references for Strife.
-		if (segs[i].linedef && glsegextras[i].PartnerSeg != DWORD_MAX && !segs[glsegextras[i].PartnerSeg].linedef)
+		for (i = 0; i < numsegs; i++)
 		{
-			glsegextras[i].PartnerSeg = glsegextras[glsegextras[i].PartnerSeg].PartnerSeg = DWORD_MAX;
-		}
-	}
-
-	for(i=0;i<numsegs;i++)
-	{
-		if (glsegextras[i].PartnerSeg != DWORD_MAX && glsegextras[glsegextras[i].PartnerSeg].PartnerSeg!=(DWORD)i)
-		{
-			glsegextras[i].PartnerSeg=DWORD_MAX;
+			if (segs[i].PartnerSeg != nullptr && segs[i].PartnerSeg->PartnerSeg != &segs[i])
+			{
+				segs[i].PartnerSeg = nullptr;
+			}
 		}
 	}
 
@@ -1498,7 +1488,7 @@ void P_SetRenderSector()
 		seg = ss->firstline;
 		for(j=0; j<ss->numlines; j++)
 		{
-			if(seg->sidedef && (glsegextras[seg - segs].PartnerSeg == DWORD_MAX || seg->sidedef->sector!=segs[glsegextras[seg - segs].PartnerSeg].sidedef->sector))
+			if(seg->sidedef && (seg->PartnerSeg == nullptr || seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector))
 			{
 				ss->render_sector = seg->sidedef->sector;
 				break;
@@ -1522,15 +1512,14 @@ void P_SetRenderSector()
 			
 			for(j=0; j<ss->numlines; j++)
 			{
-				DWORD partner = glsegextras[seg - segs].PartnerSeg;
-				if (partner != DWORD_MAX && glsegextras[partner].Subsector)
+				if (seg->PartnerSeg != nullptr && seg->PartnerSeg->Subsector)
 				{
-					sector_t * backsec = glsegextras[partner].Subsector->render_sector;
+					sector_t * backsec = seg->PartnerSeg->Subsector->render_sector;
 					if (backsec)
 					{
-						ss->render_sector=backsec;
+						ss->render_sector = backsec;
 						undetermined.Delete(i);
-						deleted=1;
+						deleted = 1;
 						break;
 					}
 				}

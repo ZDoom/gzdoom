@@ -36,19 +36,9 @@
 
 #include "p_tags.h"
 #include "c_dispatch.h"
+#include "g_levellocals.h"
 
 FTagManager tagManager;
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-static inline int lineindex(const line_t *line)
-{
-	return (int)(intptr_t)(line - lines);
-}
 
 //-----------------------------------------------------------------------------
 //
@@ -244,7 +234,7 @@ bool FTagManager::SectorHasTag(const sector_t *sector, int tag) const
 
 int FTagManager::GetFirstLineID(const line_t *line) const
 {
-	int i = lineindex(line);
+	int i = line->Index();
 	return LineHasIDs(i) ? allIDs[startForLine[i]].tag : 0;
 }
 
@@ -276,7 +266,7 @@ bool FTagManager::LineHasID(int i, int tag) const
 
 bool FTagManager::LineHasID(const line_t *line, int tag) const
 {
-	return LineHasID(lineindex(line), tag);
+	return LineHasID(line->Index(), tag);
 }
 
 //-----------------------------------------------------------------------------

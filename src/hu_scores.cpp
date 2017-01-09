@@ -50,6 +50,7 @@
 #include "gstrings.h"
 #include "d_net.h"
 #include "c_dispatch.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 

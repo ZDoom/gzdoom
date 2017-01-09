@@ -33,6 +33,7 @@
 #include "p_maputl.h"
 #include "doomdata.h"
 #include "portal.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
@@ -326,7 +327,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	//::SplitWall.Clock();
 
 #ifdef _DEBUG
-	if (seg->linedef-lines==1)
+	if (seg->linedef->Index() == 1)
 	{
 		int a = 0;
 	}
@@ -1414,7 +1415,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * segback;
 
 #ifdef _DEBUG
-	if (seg->linedef - lines < 4)
+	if (seg->linedef->Index() == 1)
 	{
 		int a = 0;
 	}
@@ -1547,7 +1548,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			zbottom[1] = zfloor[1];
 			PutPortal(PORTALTYPE_LINETOLINE);
 		}
-		else if (seg->linedef->portaltransferred > 0)
+		else if (seg->linedef->GetTransferredPortal())
 		{
 			SkyLine(frontsector, seg->linedef);
 		}

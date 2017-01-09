@@ -43,6 +43,7 @@
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "gi.h"
+#include "g_levellocals.h"
 #include "xlat/xlat.h"
 
 void T_Init();

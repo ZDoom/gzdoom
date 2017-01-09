@@ -29,6 +29,7 @@
 #include "r_state.h"
 
 #include "stats.h"
+#include "g_levellocals.h"
 
 static FRandom pr_botchecksight ("BotCheckSight");
 static FRandom pr_checksight ("CheckSight");
@@ -116,6 +117,7 @@ public:
 		sightend = t2->PosRelative(task->portalgroup);
 		sightstart.Z += t1->Height * 0.75;
 
+		portalgroup = task->portalgroup;
 		Startfrac = task->Frac;
 		Trace = { sightstart.X, sightstart.Y, sightend.X - sightstart.X, sightend.Y - sightstart.Y };
 		Lastztop = Lastzbottom = sightstart.Z;
@@ -482,7 +484,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 
 	for (list = blockmaplump + offset + 1; *list != -1; list++)
 	{
-		if (!P_SightCheckLine (&lines[*list]))
+		if (!P_SightCheckLine (&level.lines[*list]))
 		{
 			if (!portalfound) return 0;
 			else res = -1;
@@ -790,6 +792,7 @@ sightcounts[2]++;
 
 	bool traverseres = P_SightTraverseIntercepts ( );
 	if (itres == -1) return false;	// if the iterator had an early out there was no line of sight. The traverser was only called to collect more portals.
+	if (seeingthing->Sector->PortalGroup != portalgroup) return false;	// We are in a different group than the seeingthing, so this trace cannot determine visibility alone.
 	return traverseres;
 }
 

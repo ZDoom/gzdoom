@@ -77,6 +77,7 @@
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -709,15 +710,15 @@ size_t DSectorMarker::PropagateMark()
 			moretodo = true;
 		}
 	}
-	if (!moretodo && sides != NULL)
+	if (!moretodo && level.sides.Size() > 0)
 	{
-		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < numsides; ++i)
+		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < (int)level.sides.Size(); ++i)
 		{
-			side_t *side = &sides[SideNum + i];
+			side_t *side = &level.sides[SideNum + i];
 			for(int j=0;j<3;j++) GC::Mark(side->textures[j].interpolation);
 		}
 		marked += i * sizeof(side_t);
-		if (SideNum + i < numsides)
+		if (SideNum + i < (int)level.sides.Size())
 		{
 			SideNum += i;
 			moretodo = true;

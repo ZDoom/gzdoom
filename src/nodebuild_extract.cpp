@@ -53,14 +53,14 @@
 #endif
 
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
-	seg_t *&outSegs, glsegextra_t *&outSegExtras, int &segCount,
+	seg_t *&outSegs, int &segCount,
 	subsector_t *&outSubs, int &subCount,
-	vertex_t *&outVerts, int &vertCount)
+	TStaticArray<vertex_t> &outVerts)
 {
 	int i;
 
-	vertCount = Vertices.Size ();
-	outVerts = new vertex_t[vertCount];
+	int vertCount = Vertices.Size ();
+	outVerts.Alloc(vertCount);
 
 	for (i = 0; i < vertCount; ++i)
 	{
@@ -109,14 +109,13 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 		for (i = 0; i < subCount; ++i)
 		{
-			DWORD numsegs = CloseSubsector (segs, i, outVerts);
+			DWORD numsegs = CloseSubsector (segs, i, &outVerts[0]);
 			outSubs[i].numlines = numsegs;
 			outSubs[i].firstline = (seg_t *)(size_t)(segs.Size() - numsegs);
 		}
 
 		segCount = segs.Size ();
 		outSegs = new seg_t[segCount];
-		outSegExtras = new glsegextra_t[segCount];
 
 		for (i = 0; i < segCount; ++i)
 		{
@@ -124,11 +123,11 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 			if (segs[i].Partner != DWORD_MAX)
 			{
-				outSegExtras[i].PartnerSeg = Segs[segs[i].Partner].storedseg;
+				outSegs[i].PartnerSeg = &outSegs[Segs[segs[i].Partner].storedseg];
 			}
 			else
 			{
-				outSegExtras[i].PartnerSeg = DWORD_MAX;
+				outSegs[i].PartnerSeg = nullptr;
 			}
 		}
 	}
@@ -137,7 +136,6 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		memcpy (outSubs, &Subsectors[0], subCount*sizeof(subsector_t));
 		segCount = Segs.Size ();
 		outSegs = new seg_t[segCount];
-		outSegExtras = NULL;
 		for (i = 0; i < segCount; ++i)
 		{
 			const FPrivSeg *org = &Segs[SegList[i].SegNum];
@@ -145,12 +143,13 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 			D(Printf(PRINT_LOG, "Seg %d: v1(%d) -> v2(%d)\n", i, org->v1, org->v2));
 
-			out->v1 = outVerts + org->v1;
-			out->v2 = outVerts + org->v2;
+			out->v1 = &outVerts[org->v1];
+			out->v2 = &outVerts[org->v2];
 			out->backsector = org->backsector;
 			out->frontsector = org->frontsector;
 			out->linedef = Level.Lines + org->linedef;
 			out->sidedef = Level.Sides + org->sidedef;
+			out->PartnerSeg = nullptr;
 		}
 	}
 	for (i = 0; i < subCount; ++i)
@@ -162,8 +161,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
-		Level.Lines[i].v1 = outVerts + (size_t)Level.Lines[i].v1;
-		Level.Lines[i].v2 = outVerts + (size_t)Level.Lines[i].v2;
+		Level.Lines[i].v1 = &outVerts[(size_t)Level.Lines[i].v1];
+		Level.Lines[i].v2 = &outVerts[(size_t)Level.Lines[i].v2];
 	}
 }
 

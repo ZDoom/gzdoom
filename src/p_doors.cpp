@@ -38,6 +38,7 @@
 #include "serializer.h"
 #include "d_player.h"
 #include "p_spec.h"
+#include "g_levellocals.h"
 
 //============================================================================
 //

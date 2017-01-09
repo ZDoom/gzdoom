@@ -61,6 +61,7 @@
 #include "virtual.h"
 #include "a_armor.h"
 #include "a_ammo.h"
+#include "g_levellocals.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

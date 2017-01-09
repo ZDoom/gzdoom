@@ -34,6 +34,7 @@
 #include "r_utility.h"
 #include "v_text.h"
 #include "gi.h"
+#include "g_levellocals.h"
 
 //
 // sky mapping

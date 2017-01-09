@@ -81,6 +81,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "r_utility.h"
+#include "g_levellocals.h"
 
 #include "stats.h"
 #include "st_start.h"

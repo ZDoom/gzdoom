@@ -311,7 +311,7 @@ class PhoenixFX2 : Actor
 	}
 	
 
-	int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
 	{
 		if (target.player && Random[PhoenixFX2]() < 128)
 		{ // Freeze player for a bit

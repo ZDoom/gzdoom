@@ -376,77 +376,6 @@ struct level_info_t
 	}
 };
 
-struct FLevelLocals
-{
-	void Tick ();
-	void AddScroller (int secnum);
-
-	BYTE		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
-	int			time;			// time in the hub
-	int			maptime;		// time in the map
-	int			totaltime;		// time in the game
-	int			starttime;
-	int			partime;
-	int			sucktime;
-
-	level_info_t *info;
-	int			cluster;
-	int			clusterflags;
-	int			levelnum;
-	int			lumpnum;
-	FString		LevelName;
-	FString		MapName;			// the lump name (E1M1, MAP01, etc)
-	FString		NextMap;			// go here when using the regular exit
-	FString		NextSecretMap;		// map to go to when used secret exit
-	EMapType	maptype;
-
-	TStaticArray<sector_t> sectors;
-
-	DWORD		flags;
-	DWORD		flags2;
-	DWORD		flags3;
-
-	DWORD		fadeto;					// The color the palette fades to (usually black)
-	DWORD		outsidefog;				// The fog for sectors with sky ceilings
-
-	FString		Music;
-	int			musicorder;
-	int			cdtrack;
-	unsigned int cdid;
-	FTextureID	skytexture1;
-	FTextureID	skytexture2;
-
-	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
-	float		skyspeed2;
-
-	int			total_secrets;
-	int			found_secrets;
-
-	int			total_items;
-	int			found_items;
-
-	int			total_monsters;
-	int			killed_monsters;
-
-	double		gravity;
-	double		aircontrol;
-	double		airfriction;
-	int			airsupply;
-	int			DefaultEnvironment;		// Default sound environment.
-
-	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
-
-	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
-	SBYTE		WallHorizLight;
-
-	bool		FromSnapshot;			// The current map was restored from a snapshot
-
-	double		teamdamage;
-
-	bool		IsJumpingAllowed() const;
-	bool		IsCrouchingAllowed() const;
-	bool		IsFreelookAllowed() const;
-};
 
 struct cluster_info_t
 {
@@ -475,8 +404,6 @@ struct cluster_info_t
 #define CLUSTER_LOOKUPNAME		0x00000040	// Name is the name of a language string
 #define CLUSTER_LOOKUPCLUSTERNAME 0x00000080	// Cluster name is the name of a language string
 #define CLUSTER_ALLOWINTERMISSION 0x00000100  // Allow intermissions between levels in a hub.
-
-extern FLevelLocals level;
 
 extern TArray<level_info_t> wadlevelinfos;
 extern TArray<cluster_info_t> wadclusterinfos;

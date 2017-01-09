@@ -114,6 +114,10 @@ namespace swrenderer
 	extern uint8_t identitymap[256];
 	extern FDynamicColormap identitycolormap;
 
+	// Constant arrays used for psprite clipping and initializing clipping.
+	extern short zeroarray[MAXWIDTH];
+	extern short screenheightarray[MAXWIDTH];
+
 	// Spectre/Invisibility.
 	#define FUZZTABLE 50
 	extern int fuzzoffset[FUZZTABLE + 1];
@@ -185,6 +189,9 @@ namespace swrenderer
 
 	void R_SetSpanTexture(FTexture *tex);
 	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
+
+	void R_DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
+	void R_DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
 
 	extern DrawerFunc colfunc;
 	extern DrawerFunc basecolfunc;

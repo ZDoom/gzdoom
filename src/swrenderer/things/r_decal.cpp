@@ -39,7 +39,7 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
-#include "r_wallsprite.h"
+#include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
 
 namespace swrenderer
@@ -69,6 +69,8 @@ namespace swrenderer
 		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
 		float light = 0;
+		short *mfloorclip;
+		short *mceilingclip;
 
 		if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 			return;
@@ -255,6 +257,7 @@ namespace swrenderer
 			calclighting = true;
 
 		// Draw it
+		bool sprflipvert;
 		if (decal->RenderFlags & RF_YFLIP)
 		{
 			sprflipvert = true;
@@ -287,7 +290,7 @@ namespace swrenderer
 					{ // calculate lighting
 						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					R_DecalColumn(x, maskedScaleY);
+					R_DecalColumn(x, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -308,21 +311,16 @@ namespace swrenderer
 		WallC = savecoord;
 	}
 
-	void R_DecalColumn(int x, float maskedScaleY)
+	void R_DecalColumn(int x, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		using namespace drawerargs;
-
-		dc_x = x;
-
-		float iscale = swall[dc_x] * maskedScaleY;
-		dc_iscale = FLOAT2FIXED(iscale);
-		spryscale = 1 / iscale;
+		float iscale = swall[x] * maskedScaleY;
+		double spryscale = 1 / iscale;
+		double sprtopscreen;
 		if (sprflipvert)
 			sprtopscreen = CenterY + dc_texturemid * spryscale;
 		else
 			sprtopscreen = CenterY - dc_texturemid * spryscale;
 
-		dc_texturefrac = 0;
-		R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
+		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}
 }

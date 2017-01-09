@@ -38,18 +38,6 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 namespace swrenderer
 {
 
-// Constant arrays used for psprite clipping
-//	and initializing clipping.
-extern short			zeroarray[MAXWIDTH];
-extern short			screenheightarray[MAXWIDTH];
-
-// vars for R_DrawMaskedColumn
-extern short*			mfloorclip;
-extern short*			mceilingclip;
-extern double			spryscale;
-extern double			sprtopscreen;
-extern bool				sprflipvert;
-
 extern double			pspritexscale;
 extern double			pspritexiscale;
 extern double			pspriteyscale;
@@ -60,7 +48,6 @@ extern int spriteshade;
 
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
-void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = false);
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
@@ -74,7 +61,7 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
-void R_DrawVisSprite(vissprite_t *vis);
+
 
 }
 

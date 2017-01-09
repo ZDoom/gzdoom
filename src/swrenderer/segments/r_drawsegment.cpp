@@ -140,7 +140,7 @@ namespace swrenderer
 
 		const sector_t *sec;
 
-		sprflipvert = false;
+		bool sprflipvert = false;
 
 		curline = ds->curline;
 
@@ -192,8 +192,8 @@ namespace swrenderer
 			}
 		}
 
-		mfloorclip = openings + ds->sprbottomclip - ds->x1;
-		mceilingclip = openings + ds->sprtopclip - ds->x1;
+		short *mfloorclip = openings + ds->sprbottomclip - ds->x1;
+		short *mceilingclip = openings + ds->sprtopclip - ds->x1;
 
 
 		// [RH] Draw fog partition
@@ -213,7 +213,7 @@ namespace swrenderer
 		MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 		MaskedScaleY = ds->yscale;
 		maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
-		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
+		double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 
 		if (fixedlightlev >= 0)
@@ -342,21 +342,21 @@ namespace swrenderer
 			// draw the columns one at a time
 			if (visible)
 			{
-				using namespace drawerargs;
-				for (dc_x = x1; dc_x < x2; ++dc_x)
+				for (int x = x1; x < x2; ++x)
 				{
 					if (fixedcolormap == nullptr && fixedlightlev < 0)
 					{
 						R_SetColorMapLight(basecolormap, rw_light, wallshade);
 					}
 
-					dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
+					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
+					double sprtopscreen;
 					if (sprflipvert)
 						sprtopscreen = CenterY + dc_texturemid * spryscale;
 					else
 						sprtopscreen = CenterY - dc_texturemid * spryscale;
 
-					R_DrawMaskedColumn(tex, maskedtexturecol[dc_x]);
+					R_DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 
 					rw_light += rw_lightstep;
 					spryscale += rw_scalestep;
@@ -463,10 +463,10 @@ namespace swrenderer
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-		mfloorclip = openings + ds->sprbottomclip - ds->x1;
-		mceilingclip = openings + ds->sprtopclip - ds->x1;
+		short *mfloorclip = openings + ds->sprbottomclip - ds->x1;
+		short *mceilingclip = openings + ds->sprtopclip - ds->x1;
 
-		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
+		//double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		float *MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 
 		// find positioning
@@ -558,7 +558,6 @@ namespace swrenderer
 		double floorHeight;
 		double ceilingHeight;
 
-		sprflipvert = false;
 		curline = ds->curline;
 
 		frontsector = curline->frontsector;

@@ -860,6 +860,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/things/r_voxel.cpp
 	swrenderer/things/r_particle.cpp
 	swrenderer/things/r_playersprite.cpp
+	swrenderer/things/r_sprite.cpp
 	swrenderer/things/r_wallsprite.cpp
 	swrenderer/things/r_decal.cpp
 	swrenderer/plane/r_visibleplane.cpp

@@ -46,7 +46,6 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_things.h"
 #endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"
@@ -212,23 +211,24 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		// There is not enough precision in the drawing routines to keep the full
 		// precision for y0. :(
+		double sprtopscreen;
 		modf(y0, &sprtopscreen);
 
 		double yscale = parms.destheight / img->GetHeight();
 		double iyscale = 1 / yscale;
 
-		spryscale = yscale;
+		double spryscale = yscale;
 		assert(spryscale > 0);
 
-		sprflipvert = false;
-		//dc_iscale = FLOAT2FIXED(iyscale);
-		//dc_texturemid = (-y0) * iyscale;
-		//dc_iscale = 0xffffffffu / (unsigned)spryscale;
-		dc_iscale = FLOAT2FIXED(1 / spryscale);
-		dc_texturemid = (CenterY - 1 - sprtopscreen) * dc_iscale / 65536;
+		bool sprflipvert = false;
+		fixed_t iscale = FLOAT2FIXED(1 / spryscale);
+		//dc_texturemid = (CenterY - 1 - sprtopscreen) * iscale / 65536;
 		fixed_t frac = 0;
 		double xiscale = img->GetWidth() / parms.destwidth;
 		double x2 = x0 + parms.destwidth;
+
+		short *mfloorclip;
+		short *mceilingclip;
 
 		if (bottomclipper[0] != parms.dclip)
 		{
@@ -272,14 +272,14 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			x2 = parms.rclip;
 		}
 
-		dc_x = int(x0);
+		int x = int(x0);
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
-		while (dc_x < x2_i)
+		while (x < x2_i)
 		{
-			R_DrawMaskedColumn(img, frac, !parms.masked);
-			dc_x++;
+			R_DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
+			x++;
 			frac += xiscale_i;
 		}
 

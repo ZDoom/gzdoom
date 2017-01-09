@@ -68,6 +68,9 @@ namespace swrenderer
 	int fuzzpos;
 	int fuzzviewheight;
 
+	short zeroarray[MAXWIDTH];
+	short screenheightarray[MAXWIDTH];
+
 	DrawerFunc colfunc;
 	DrawerFunc basecolfunc;
 	DrawerFunc fuzzcolfunc;
@@ -629,5 +632,200 @@ namespace swrenderer
 		dc_yh = MIN(dc_yh, fuzzviewheight);
 		if (dc_yl <= dc_yh)
 			fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
+	}
+
+	void R_DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	{
+		using namespace drawerargs;
+
+		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
+		if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
+		{
+			R_DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
+			return;
+		}
+
+		dc_x = x;
+		dc_iscale = iscale;
+
+		const FTexture::Span *span;
+		const BYTE *column;
+		if (r_swtruecolor && !drawer_needs_pal_input)
+			column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
+		else
+			column = tex->GetColumn(col >> FRACBITS, &span);
+
+		FTexture::Span unmaskedSpan[2];
+		if (unmasked)
+		{
+			span = unmaskedSpan;
+			unmaskedSpan[0].TopOffset = 0;
+			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[1].TopOffset = 0;
+			unmaskedSpan[1].Length = 0;
+		}
+
+		int pixelsize = r_swtruecolor ? 4 : 1;
+
+		while (span->Length != 0)
+		{
+			const int length = span->Length;
+			const int top = span->TopOffset;
+
+			// calculate unclipped screen coordinates for post
+			dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+			dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
+
+			if (sprflipvert)
+			{
+				swapvalues(dc_yl, dc_yh);
+			}
+
+			if (dc_yh >= mfloorclip[dc_x])
+			{
+				dc_yh = mfloorclip[dc_x] - 1;
+			}
+			if (dc_yl < mceilingclip[dc_x])
+			{
+				dc_yl = mceilingclip[dc_x];
+			}
+
+			if (dc_yl <= dc_yh)
+			{
+				dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
+				dc_source = column;
+				dc_source2 = nullptr;
+				dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
+				dc_count = dc_yh - dc_yl + 1;
+
+				fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+				dc_texturefrac = MAX(dc_texturefrac, 0);
+				dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+				if (dc_iscale > 0)
+					dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+				else if (dc_iscale < 0)
+					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
+				(R_Drawers()->*colfunc)();
+			}
+			span++;
+		}
+	}
+
+	void R_DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	{
+		using namespace drawerargs;
+
+		dc_x = x;
+		dc_iscale = iscale;
+
+		// Normalize to 0-1 range:
+		double uv_stepd = FIXED2DBL(dc_iscale);
+		double v_step = uv_stepd / tex->GetHeight();
+
+		// Convert to uint32:
+		dc_iscale = (uint32_t)(v_step * (1 << 30));
+
+		// Texture mipmap and filter selection:
+		fixed_t xoffset = col;
+
+		double xmagnitude = 1.0; // To do: pass this into R_DrawMaskedColumn
+		double ymagnitude = fabs(uv_stepd);
+		double magnitude = MAX(ymagnitude, xmagnitude);
+		double min_lod = -1000.0;
+		double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+		bool magnifying = lod < 0.0f;
+
+		int mipmap_offset = 0;
+		int mip_width = tex->GetWidth();
+		int mip_height = tex->GetHeight();
+		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
+		if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
+		{
+			int level = (int)lod;
+			while (level > 0 && mip_width > 1 && mip_height > 1)
+			{
+				mipmap_offset += mip_width * mip_height;
+				level--;
+				mip_width = MAX(mip_width >> 1, 1);
+				mip_height = MAX(mip_height >> 1, 1);
+			}
+		}
+		xoffset = (xpos >> FRACBITS) * mip_width;
+
+		const uint32_t *pixels = tex->GetPixelsBgra() + mipmap_offset;
+
+		bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+		if (filter_nearest)
+		{
+			xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+
+			int tx = xoffset >> FRACBITS;
+			dc_source = (BYTE*)(pixels + tx * mip_height);
+			dc_source2 = nullptr;
+			dc_textureheight = mip_height;
+			dc_texturefracx = 0;
+		}
+		else
+		{
+			xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+
+			int tx0 = xoffset >> FRACBITS;
+			int tx1 = MIN(tx0 + 1, mip_width - 1);
+			dc_source = (BYTE*)(pixels + tx0 * mip_height);
+			dc_source2 = (BYTE*)(pixels + tx1 * mip_height);
+			dc_textureheight = mip_height;
+			dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
+		}
+
+		// Grab the posts we need to draw
+		const FTexture::Span *span;
+		tex->GetColumnBgra(col >> FRACBITS, &span);
+		FTexture::Span unmaskedSpan[2];
+		if (unmasked)
+		{
+			span = unmaskedSpan;
+			unmaskedSpan[0].TopOffset = 0;
+			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[1].TopOffset = 0;
+			unmaskedSpan[1].Length = 0;
+		}
+
+		// Draw each span post
+		while (span->Length != 0)
+		{
+			const int length = span->Length;
+			const int top = span->TopOffset;
+
+			// calculate unclipped screen coordinates for post
+			dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+			dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
+
+			if (sprflipvert)
+			{
+				swapvalues(dc_yl, dc_yh);
+			}
+
+			if (dc_yh >= mfloorclip[dc_x])
+			{
+				dc_yh = mfloorclip[dc_x] - 1;
+			}
+			if (dc_yl < mceilingclip[dc_x])
+			{
+				dc_yl = mceilingclip[dc_x];
+			}
+
+			if (dc_yl <= dc_yh)
+			{
+				dc_dest = (ylookup[dc_yl] + dc_x) * 4 + dc_destorg;
+				dc_count = dc_yh - dc_yl + 1;
+
+				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
+				dc_texturefrac = (uint32_t)(v * (1 << 30));
+
+				(R_Drawers()->*colfunc)();
+			}
+			span++;
+		}
 	}
 }

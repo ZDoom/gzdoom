@@ -134,10 +134,11 @@ namespace swrenderer
 		vis->wallc = wallc;
 	}
 
-	void R_DrawWallSprite(vissprite_t *spr)
+	void R_DrawWallSprite(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)
 	{
 		int x1, x2;
 		double iyscale;
+		bool sprflipvert;
 
 		x1 = MAX<int>(spr->x1, spr->wallc.sx1);
 		x2 = MIN<int>(spr->x2, spr->wallc.sx2);
@@ -221,7 +222,7 @@ namespace swrenderer
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(x, maskedScaleY);
+					R_WallSpriteColumn(x, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
@@ -229,21 +230,16 @@ namespace swrenderer
 		R_FinishSetPatchStyle();
 	}
 
-	void R_WallSpriteColumn(int x, float maskedScaleY)
+	void R_WallSpriteColumn(int x, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		using namespace drawerargs;
-
-		dc_x = x;
-
-		float iscale = swall[dc_x] * maskedScaleY;
-		dc_iscale = FLOAT2FIXED(iscale);
-		spryscale = 1 / iscale;
+		float iscale = swall[x] * maskedScaleY;
+		double spryscale = 1 / iscale;
+		double sprtopscreen;
 		if (sprflipvert)
 			sprtopscreen = CenterY + dc_texturemid * spryscale;
 		else
 			sprtopscreen = CenterY - dc_texturemid * spryscale;
 
-		dc_texturefrac = 0;
-		R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
+		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}
 }

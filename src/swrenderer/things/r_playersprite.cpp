@@ -52,6 +52,7 @@
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/things/r_sprite.h"
 #include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Bool, st_scale)
@@ -136,10 +137,6 @@ namespace swrenderer
 		// get light level
 		lightnum = ((floorlight + ceilinglight) >> 1) + r_actualextralight;
 		spriteshade = LIGHT2SHADE(lightnum) - 24 * FRACUNIT;
-
-		// clip to screen bounds
-		mfloorclip = screenheightarray;
-		mceilingclip = zeroarray;
 
 		if (camera->player != NULL)
 		{
@@ -566,7 +563,11 @@ namespace swrenderer
 			}
 		}
 
-		R_DrawVisSprite(vis);
+		// clip to screen bounds
+		short *mfloorclip = screenheightarray;
+		short *mceilingclip = zeroarray;
+
+		R_DrawVisSprite(vis, mfloorclip, mceilingclip);
 	}
 
 	void R_DrawRemainingPlayerSprites()

@@ -35,6 +35,7 @@ namespace swrenderer
 	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);
 	kvxslab_t *R_NextSlab(kvxslab_t *slab);
 
+	void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 	void R_DeinitRenderVoxel();
 
 	// [RH] A c-buffer. Used for keeping track of offscreen voxel spans.

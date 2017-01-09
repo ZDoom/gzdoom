@@ -56,8 +56,6 @@ void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
 
-void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
-
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);

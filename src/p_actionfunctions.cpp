@@ -2270,6 +2270,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	PARAM_FLOAT_DEF	(spawnofs_z)		
 	PARAM_INT_DEF	(SpiralOffset)		
 	PARAM_INT_DEF	(limit)				
+	PARAM_FLOAT_DEF	(veleffect)
 
 	if (range == 0) range = 8192.;
 	if (sparsity == 0) sparsity = 1;
@@ -2308,7 +2309,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
+		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 
 		if (aim == CRF_AIMDIRECT)
 		{
@@ -2318,7 +2319,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 				spawnofs_xy * self->Angles.Yaw.Cos(),
 				spawnofs_xy * self->Angles.Yaw.Sin()));
 			spawnofs_xy = 0;
-			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * 3, -self->target->Vel.Y * 3);
+			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 		}
 
 		if (self->target->flags & MF_SHADOW)

@@ -1003,8 +1003,9 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 			line.v1 = line.v1 - &level.vertexes[0] + &newvertarray[0];
 			line.v2 = line.v2 - &level.vertexes[0] + &newvertarray[0];
 		}
-		level.vertexes = std::move(newvertarray);
 	}
+
+	level.vertexes = std::move(newvertarray);
 
 	// Read the subsectors
 	DWORD numSubs, currSeg;

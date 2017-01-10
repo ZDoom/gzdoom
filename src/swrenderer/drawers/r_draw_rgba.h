@@ -27,6 +27,10 @@
 #include "r_thread.h"
 #include "r_drawers.h"
 
+#ifdef __arm__
+#define NO_SSE
+#endif
+
 #ifndef NO_SSE
 #include <immintrin.h>
 #endif

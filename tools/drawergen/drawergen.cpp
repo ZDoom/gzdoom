@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 		std::cout << "Target triple is " << triple << std::endl;
 
 #ifdef __arm__
-		std::string cpuName = "armv8";
+		std::string cpuName = llvm::sys::getHostCPUName(); // "armv8";
 #else
 		std::string cpuName = "pentium4";
 #endif

@@ -73,8 +73,14 @@ SSAVec16ub::SSAVec16ub(SSAVec8s s0, SSAVec8s s1)
 : v(0)
 {
 #ifdef ARM_TARGET
+	/*
 	llvm::Value *int8x8_i0 = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::arm_neon_vqmovnsu), s0.v, SSAScope::hint());
 	llvm::Value *int8x8_i1 = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::arm_neon_vqmovnsu), s1.v, SSAScope::hint());
+	v = shuffle(from_llvm(int8x8_i0), from_llvm(int8x8_i1), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15).v;
+	*/
+	// To do: add some clamping here
+	llvm::Value *int8x8_i0 = SSAScope::builder().CreateTrunc(s0.v, llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 8));
+	llvm::Value *int8x8_i1 = SSAScope::builder().CreateTrunc(s1.v, llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 8));
 	v = shuffle(from_llvm(int8x8_i0), from_llvm(int8x8_i1), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15).v;
 #else
 	llvm::Value *values[2] = { s0.v, s1.v };

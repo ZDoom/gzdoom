@@ -57,7 +57,8 @@ llvm::Type *SSAFloat::llvm_type()
 SSAFloat SSAFloat::rsqrt(SSAFloat f)
 {
 #ifdef ARM_TARGET
-	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::aarch64_neon_frsqrts), f.v, SSAScope::hint()));
+	//return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::aarch64_neon_frsqrts), f.v, SSAScope::hint()));
+	return SSAFloat(1.0f) / (f * SSAFloat(0.01f));
 #else
 	llvm::Value *f_ss = SSAScope::builder().CreateInsertElement(llvm::UndefValue::get(SSAVec4f::llvm_type()), f.v, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, (uint64_t)0)));
 	f_ss = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse_rsqrt_ss), f_ss, SSAScope::hint());

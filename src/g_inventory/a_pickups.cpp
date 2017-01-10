@@ -644,6 +644,8 @@ void AInventory::BecomeItem ()
 	RemoveFromHash ();
 	flags &= ~MF_SPECIAL;
 	ChangeStatNum(STAT_INVENTORY);
+	// stop all sounds this item is playing.
+	for(int i = 1;i<=7;i++) S_StopSound(this, i);
 	SetState (FindState("Held"));
 }
 

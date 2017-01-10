@@ -2720,7 +2720,7 @@ namespace swrenderer
 				}
 			}
 		}
-		for (; i < width; i++)
+		for (; i <= width; i++)
 		{
 			tiltlighting[i] = lightfiller;
 		}

@@ -435,7 +435,7 @@ namespace swrenderer
 			{
 				dc_colormap += fixedlightlev;
 			}
-			return r_columnmethod ? DoDraw1 : DoDraw0;
+			return DoDraw0;
 		}
 
 		fglevel = GetAlpha(style.SrcAlpha, alpha);
@@ -468,7 +468,7 @@ namespace swrenderer
 		{
 			return DontDraw;
 		}
-		return r_columnmethod ? DoDraw1 : DoDraw0;
+		return DoDraw0;
 	}
 
 	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)

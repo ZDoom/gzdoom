@@ -1108,6 +1108,9 @@ bool DPlayerMenu::MouseEvent(int type, int x, int y)
 				SendNewColor (RPART(color), GPART(color), v);
 			}
 			break;
+		case NAME_Autoaim:
+			AutoaimChanged(li);
+			break;
 		}
 	}
 	return res;

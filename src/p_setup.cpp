@@ -930,7 +930,8 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg[-1].v2 = seg->v1;
 			}
-			seg->PartnerSeg = &segs[partner];
+			
+			seg->PartnerSeg = partner == 0xffffffffu? nullptr : &segs[partner];
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
@@ -1002,8 +1003,9 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 			line.v1 = line.v1 - &level.vertexes[0] + &newvertarray[0];
 			line.v2 = line.v2 - &level.vertexes[0] + &newvertarray[0];
 		}
-		level.vertexes = std::move(newvertarray);
 	}
+
+	level.vertexes = std::move(newvertarray);
 
 	// Read the subsectors
 	DWORD numSubs, currSeg;
@@ -3359,6 +3361,11 @@ static void P_PrecacheLevel()
 		actorhitlist[actor->GetClass()] = true;
 	}
 
+	for (auto n : gameinfo.PrecachedClasses)
+	{
+		PClassActor *cls = PClass::FindActor(n);
+		if (cls != NULL) actorhitlist[cls] = true;
+	}
 	for (unsigned i = 0; i < level.info->PrecacheClasses.Size(); i++)
 	{
 		// level.info can only store names, no class pointers.
@@ -3395,6 +3402,11 @@ static void P_PrecacheLevel()
 		hitlist[sky2texture.GetIndex()] |= FTextureManager::HIT_Sky;
 	}
 
+	for (auto n : gameinfo.PrecachedTextures)
+	{
+		FTextureID tex = TexMan.CheckForTexture(n, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+	}
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
 		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);

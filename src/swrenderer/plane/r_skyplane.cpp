@@ -147,7 +147,7 @@ namespace swrenderer
 				skyangle += FLOAT2FIXED(s->GetTextureXOffset(pos));
 
 				// Vertical offset allows careful sky positioning.
-				skymid = s->GetTextureYOffset(pos) - 28;
+				skymid = s->GetTextureYOffset(pos);
 
 				// We sometimes flip the picture horizontally.
 				//

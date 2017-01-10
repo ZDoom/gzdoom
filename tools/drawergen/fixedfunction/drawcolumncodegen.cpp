@@ -81,7 +81,6 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, SSAValue args, SSAVa
 
 	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
 	iscale = iscale * thread.num_cores;
-	one = (1 << 30) / textureheight;
 
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
@@ -97,6 +96,7 @@ void DrawColumnCodegen::LoopShade(DrawColumnVariant variant, bool isSimpleShade)
 	branch.if_block(is_nearest_filter);
 	Loop(variant, isSimpleShade, true);
 	branch.else_block();
+	one = (1 << 30) / textureheight;
 	stack_frac.store(stack_frac.load() - (one >> 1));
 	Loop(variant, isSimpleShade, false);
 	branch.end_block();

@@ -647,6 +647,7 @@ namespace swrenderer
 
 		dc_x = x;
 		dc_iscale = iscale;
+		dc_textureheight = tex->GetHeight();
 
 		const FTexture::Span *span;
 		const BYTE *column;

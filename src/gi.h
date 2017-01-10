@@ -36,6 +36,7 @@
 
 #include "basictypes.h"
 #include "zstring.h"
+#include "s_sound.h"
 
 // Flags are not user configurable and only depend on the standard IWADs
 #define GI_MAPxx				0x00000001
@@ -119,6 +120,10 @@ struct gameinfo_t
 	TArray<FName> infoPages;
 	TArray<FName> DefaultWeaponSlots[10];
 	TArray<FName> PlayerClasses;
+
+	TArray<FName> PrecachedClasses;
+	TArray<FString> PrecachedTextures;
+	TArray<FSoundID> PrecachedSounds;
 
 	FString titleMusic;
 	int titleOrder;

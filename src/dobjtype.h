@@ -965,6 +965,7 @@ extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;
+extern PPointer *TypeVoidPtr;
 
 // A constant value ---------------------------------------------------------
 

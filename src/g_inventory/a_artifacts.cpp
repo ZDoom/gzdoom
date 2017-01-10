@@ -204,7 +204,7 @@ void APowerup::CallInitEffect()
 
 //===========================================================================
 //
-// APowerup :: isBlinking
+// APowerup :: isBlinking (todo: make this virtual so that child classes can configure their blinking)
 //
 //===========================================================================
 

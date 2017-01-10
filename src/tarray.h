@@ -398,8 +398,8 @@ public:
 	}
 private:
 	T *Array;
-	unsigned int Most;
 	unsigned int Count;
+	unsigned int Most;
 
 	void DoCopy (const TArray<T> &other)
 	{

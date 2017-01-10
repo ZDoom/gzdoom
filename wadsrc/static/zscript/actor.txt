@@ -45,7 +45,7 @@ class Actor : Thinker native
 	native TextureID ceilingpic;
 	native double Height;
 	native readonly double Radius;
-        native readonly double RenderRadius;
+    native readonly double RenderRadius;
 	native double projectilepassheight;
 	native int tics;
 	native readonly State CurState;
@@ -149,6 +149,7 @@ class Actor : Thinker native
 	native readonly State SeeState;
 	native State MeleeState;
 	native State MissileState;
+	native voidptr /*DecalBase*/ DecalGenerator;
 	
 	native meta String Obituary;		// Player was killed by this actor
 	native meta String HitObituary;		// Player was killed by this actor in melee
@@ -177,7 +178,6 @@ class Actor : Thinker native
 	//FRenderStyle RenderStyle;
 	//line_t *BlockingLine; // Line that blocked the last move
 	//int ConversationRoot; // THe root of the current dialogue
-	//DecalBase DecalGenerator;
 
 	// deprecated things.
 	native readonly deprecated double X;

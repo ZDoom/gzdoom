@@ -94,6 +94,7 @@ PStruct *TypeVector3;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
+PPointer *TypeVoidPtr;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -593,6 +594,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSpriteID = new PSpriteID);
 	TypeTable.AddType(TypeTextureID = new PTextureID);
 
+	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 	TypeStringStruct = NewNativeStruct(NAME_String, nullptr);
 #ifdef __BIG_ENDIAN__

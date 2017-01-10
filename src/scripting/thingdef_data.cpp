@@ -796,9 +796,6 @@ void InitThingdef()
 	playerf = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
 	GlobalSymbols.AddSymbol(playerf);
 
-	// this needs to be done manually until it can be given a proper type.
-	RUNTIME_CLASS(AActor)->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));
-
 	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
 	for (auto &fl : FlagLists)
 	{

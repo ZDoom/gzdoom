@@ -3383,6 +3383,11 @@ static void P_PrecacheLevel()
 		actorhitlist[actor->GetClass()] = true;
 	}
 
+	for (auto n : gameinfo.PrecachedClasses)
+	{
+		PClassActor *cls = PClass::FindActor(n);
+		if (cls != NULL) actorhitlist[cls] = true;
+	}
 	for (unsigned i = 0; i < level.info->PrecacheClasses.Size(); i++)
 	{
 		// level.info can only store names, no class pointers.
@@ -3419,6 +3424,11 @@ static void P_PrecacheLevel()
 		hitlist[sky2texture.GetIndex()] |= FTextureManager::HIT_Sky;
 	}
 
+	for (auto n : gameinfo.PrecachedTextures)
+	{
+		FTextureID tex = TexMan.CheckForTexture(n, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+	}
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
 		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);

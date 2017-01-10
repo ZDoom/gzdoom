@@ -480,6 +480,10 @@ void S_PrecacheLevel ()
 		{
 			actor->MarkPrecacheSounds();
 		}
+		for (auto i : gameinfo.PrecachedSounds)
+		{
+			level.info->PrecacheSounds[i].MarkUsed();
+		}
 		// Precache all extra sounds requested by this map.
 		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
 		{

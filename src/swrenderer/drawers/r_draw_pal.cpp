@@ -2635,7 +2635,7 @@ namespace swrenderer
 		const uint8_t **tiltlighting = thread->tiltlighting;
 
 		double lstep;
-		uint8_t *lightfiller;
+		uint8_t *lightfiller = nullptr;
 		int i = 0;
 
 		if (width == 0 || lval == lend)
@@ -2720,7 +2720,7 @@ namespace swrenderer
 				}
 			}
 		}
-		for (; i <= width; i++)
+		for (; i < width; i++)
 		{
 			tiltlighting[i] = lightfiller;
 		}

@@ -167,7 +167,7 @@ void APowerup::Serialize(FSerializer &arc)
 
 PalEntry APowerup::GetBlend ()
 {
-	if (EffectTics <= BLINKTHRESHOLD && !(EffectTics & 8))
+	if (isBlinking())
 		return 0;
 
 	if (IsSpecialColormap(BlendColor)) return 0;
@@ -202,6 +202,22 @@ void APowerup::CallInitEffect()
 	else InitEffect();
 }
 
+//===========================================================================
+//
+// APowerup :: isBlinking
+//
+//===========================================================================
+
+bool APowerup::isBlinking() const
+{
+	return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !(ItemFlags & IF_NOSCREENBLINK));
+}
+
+DEFINE_ACTION_FUNCTION(APowerup, isBlinking)
+{
+	PARAM_SELF_PROLOGUE(APowerup);
+	ACTION_RETURN_BOOL(self->isBlinking());
+}
 
 //===========================================================================
 //
@@ -222,7 +238,7 @@ void APowerup::DoEffect ()
 
 		if (Colormap != NOFIXEDCOLORMAP)
 		{
-			if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
+			if (!isBlinking())
 			{
 				Owner->player->fixedcolormap = Colormap;
 			}
@@ -294,7 +310,7 @@ bool APowerup::DrawPowerup (int x, int y)
 	{
 		return false;
 	}
-	if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
+	if (!isBlinking())
 	{
 		FTexture *pic = TexMan(Icon);
 		screen->DrawTexture (pic, x, y,
@@ -903,7 +919,7 @@ void APowerLightAmp::DoEffect ()
 
 	if (Owner->player != NULL && Owner->player->fixedcolormap < NUMCOLORMAPS)
 	{
-		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
+		if (!isBlinking())
 		{	
 			Owner->player->fixedlightlevel = 1;
 		}

@@ -641,6 +641,11 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool bgra, b
 	PalEntry flashColor;
 	int flashAmount;
 
+	if (fullscreen)
+	{
+		I_ClosestResolution(&width, &height, D3D ? 32 : 8);
+	}
+
 	LOG4 ("CreateFB %d %d %d %p\n", width, height, fullscreen, old);
 
 	if (old != NULL)

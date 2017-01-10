@@ -189,6 +189,9 @@ class RandomSpawner : Actor native
 		+NOGRAVITY
 		+THRUACTORS
 	}
+	
+	virtual void PostSpawn(Actor spawned)
+	{}
 }
 
 // Sector flag setter ------------------------------------------------------

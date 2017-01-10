@@ -663,8 +663,9 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 						sec = tsec;
 						continue;
 					}
-					newsecnum = tsec->Index();
+					
 				}
+				newsecnum = (int)(tsec - sectors);
 			}
 			else
 			{

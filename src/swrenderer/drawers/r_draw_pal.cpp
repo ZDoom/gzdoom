@@ -33,7 +33,13 @@
 **
 */
 
+#ifdef __arm__
+#define NO_SSE
+#endif
+
+#ifndef NO_SSE
 #include <xmmintrin.h>
+#endif
 #include "templates.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -132,7 +138,11 @@ namespace swrenderer
 			float Lxy2 = lights[i].x; // L.x*L.x + L.y*L.y
 			float Lz = lights[i].z - viewpos_z;
 			float dist2 = Lxy2 + Lz * Lz;
+#ifdef NO_SSE
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+#endif
 			float dist = dist2 * rcp_dist;
 			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
 
@@ -1742,7 +1752,11 @@ namespace swrenderer
 			float Lyz2 = lights[i].y; // L.y*L.y + L.z*L.z
 			float Lx = lights[i].x - viewpos_x;
 			float dist2 = Lyz2 + Lx * Lx;
+#ifdef NO_SSE
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+#endif
 			float dist = dist2 * rcp_dist;
 			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
 

@@ -28,7 +28,7 @@ if( NOT WIN32 )
 		irreader transformutils instrumentation profiledata runtimedyld
 		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
 		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen
-		armasmprinter arminfo armdesc armutils armcodegen )
+		armasmprinter arminfo armdesc armcodegen )
 
 	# Example LLVM_DIR folder: C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
 	find_package(LLVM REQUIRED CONFIG)
@@ -37,6 +37,7 @@ if( NOT WIN32 )
 	llvm_map_components_to_libnames( llvm_libs ${LLVM_COMPONENTS} )
 	include_directories( ${LLVM_INCLUDE_DIRS} )
 	set( DRAWERGEN_LIBS ${DRAWERGEN_LIBS} ${llvm_libs} )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti" )
 else()
 	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen passes ipo
 		irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld

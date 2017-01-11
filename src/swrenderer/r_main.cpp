@@ -43,6 +43,7 @@
 #include "segments/r_clipsegment.h"
 #include "scene/r_3dfloors.h"
 #include "scene/r_portal.h"
+#include "scene/r_translucent.h"
 #include "r_sky.h"
 #include "drawers/r_draw_rgba.h"
 #include "st_stuff.h"

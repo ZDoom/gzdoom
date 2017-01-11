@@ -50,6 +50,7 @@
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_translucent.h"
 #include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 

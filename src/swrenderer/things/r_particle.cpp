@@ -40,6 +40,7 @@
 #include "p_effect.h"
 #include "swrenderer/scene/r_bsp.h"
 #include "swrenderer/scene/r_3dfloors.h"
+#include "swrenderer/scene/r_translucent.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "v_palette.h"

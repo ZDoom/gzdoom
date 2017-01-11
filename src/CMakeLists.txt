@@ -848,6 +848,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_3dfloors.cpp
 	swrenderer/scene/r_bsp.cpp
 	swrenderer/scene/r_portal.cpp
+	swrenderer/scene/r_translucent.cpp
 	swrenderer/line/r_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp
@@ -856,6 +857,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/segments/r_drawsegment.cpp
 	swrenderer/segments/r_portalsegment.cpp
 	swrenderer/things/r_visiblesprite.cpp
+	swrenderer/things/r_visiblespritelist.cpp
 	swrenderer/things/r_voxel.cpp
 	swrenderer/things/r_particle.cpp
 	swrenderer/things/r_playersprite.cpp

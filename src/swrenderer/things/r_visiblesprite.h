@@ -15,6 +15,7 @@
 
 #include "swrenderer/line/r_line.h"
 #include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/things/r_visiblespritelist.h"
 
 #define MINZ double((2048*4) / double(1 << 20))
 
@@ -23,8 +24,6 @@ struct FVoxel;
 
 namespace swrenderer
 {
-	struct drawseg_t;
-
 	struct vissprite_t
 	{
 		struct posang
@@ -88,57 +87,5 @@ namespace swrenderer
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
 
 		vissprite_t() {}
-	};
-
-	class VisibleSpriteList
-	{
-	public:
-		static int MaxVisSprites;
-		static vissprite_t **vissprites;
-		static vissprite_t **firstvissprite;
-		static vissprite_t **vissprite_p;
-
-		static void Deinit();
-		static void Clear();
-		static vissprite_t *Add();
-
-	private:
-		static vissprite_t **lastvissprite;
-	};
-
-	class SortedVisibleSpriteList
-	{
-	public:
-		static void Deinit();
-
-		static void Sort(bool(*compare)(vissprite_t *, vissprite_t *), size_t first);
-
-		static bool sv_compare(vissprite_t *a, vissprite_t *b);
-		static bool sv_compare2d(vissprite_t *a, vissprite_t *b);
-
-		static vissprite_t **spritesorter;
-		static int vsprcount;
-
-	private:
-		static int spritesortersize;
-	};
-
-	class RenderTranslucent
-	{
-	public:
-		static void Deinit();
-		static void Clear();
-		static void Render();
-
-		static bool DrewAVoxel;
-
-		static bool ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
-
-	private:
-		static void CollectPortals();
-		static void DrawSprite(vissprite_t *spr);
-		static void DrawMaskedSingle(bool renew);
-
-		static TArray<drawseg_t *> portaldrawsegs;
 	};
 }

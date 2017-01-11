@@ -5,6 +5,7 @@
 
 class VMFunctionBuilder;
 class FxExpression;
+class FxLocalVariableDeclaration;
 
 struct ExpEmit
 {
@@ -92,6 +93,7 @@ public:
 
 	// keep the frame pointer, if needed, in a register because the LFP opcode is hideously inefficient, requiring more than 20 instructions on x64.
 	ExpEmit FramePointer;
+	TArray<FxLocalVariableDeclaration *> ConstructedStructs;
 
 private:
 	struct AddrKonst

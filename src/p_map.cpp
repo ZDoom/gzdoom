@@ -84,6 +84,28 @@ TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
 
+// FCheckPosition requires explicit contstruction and destruction when used in the VM
+DEFINE_ACTION_FUNCTION(_FCheckPosition, _Constructor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	new(self) FCheckPosition;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_FCheckPosition, _Destructor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->~FCheckPosition();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_FCheckPosition, ClearLastRipped)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->LastRipped.Clear();
+	return 0;
+}
+
 //==========================================================================
 //
 // CanCollideWith

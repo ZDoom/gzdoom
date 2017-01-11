@@ -1,3 +1,37 @@
+struct FCheckPosition
+{
+/*
+
+	// in
+	native Actor		thing;
+	native Vector3		pos;
+
+	// out
+	native sector		sector;
+	native double		floorz;
+	native double		ceilingz;
+	native double		dropoffz;
+	nativeTextureID		floorpic;
+	native int			floorterrain;
+	native sector		floorsector;
+	native TextureID	ceilingpic;
+	native sector		ceilingsector;
+	native bool			touchmidtex;
+	native bool			abovemidtex;
+	native bool			floatok;
+	native bool			FromPMove;
+	native line			ceilingline;
+	native AActor		stepthing;
+	native bool			DoRipping;
+	native bool			portalstep;
+
+	native int			PushTime;
+*/
+	
+	native void ClearLastRipped();
+}
+
+
 class Actor : Thinker native
 {
 	const DEFAULT_HEALTH = 1000;

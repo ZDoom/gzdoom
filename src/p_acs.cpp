@@ -4408,6 +4408,8 @@ enum EACSFunctions
 	ACSF_DamageActor, // [arookas]
 	ACSF_SetActorFlag,
 	ACSF_SetTranslation,
+	ACSF_GetActorFloorTexture,
+	ACSF_GetActorFloorTerrain,
 
 
 	// OpenGL stuff
@@ -6099,6 +6101,35 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			break;
 		}
+
+		case ACSF_GetActorFloorTexture:
+		{
+			auto a = SingleActorFromTID(args[0], activator);
+			if (a != nullptr)
+			{
+				return GlobalACSStrings.AddString(TexMan[a->floorpic]->Name);
+			}
+			else
+			{
+				return GlobalACSStrings.AddString("");
+			}
+			break;
+		}
+
+		case ACSF_GetActorFloorTerrain:
+		{
+			auto a = SingleActorFromTID(args[0], activator);
+			if (a != nullptr)
+			{
+				return GlobalACSStrings.AddString(Terrains[a->floorterrain].Name);
+			}
+			else
+			{
+				return GlobalACSStrings.AddString("");
+			}
+			break;
+		}
+
 
 
 		default:

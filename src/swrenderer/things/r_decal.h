@@ -20,7 +20,13 @@ namespace swrenderer
 {
 	struct drawseg_t;
 
-	void R_RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC);
-	void R_RenderDecal(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, int pass);
-	void R_DecalColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+	class RenderDecal
+	{
+	public:
+		static void RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC);
+
+	private:
+		static void Render(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, int pass);
+		static void DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+	};
 }

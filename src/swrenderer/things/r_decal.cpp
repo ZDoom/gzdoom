@@ -45,11 +45,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void R_RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC)
+	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			R_RenderDecal(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, 0);
+			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, 0);
 		}
 	}
 
@@ -57,7 +57,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void R_RenderDecal(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, int pass)
+	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -291,7 +291,7 @@ namespace swrenderer
 					{ // calculate lighting
 						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					R_DecalColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -312,7 +312,7 @@ namespace swrenderer
 		WallC = savecoord;
 	}
 
-	void R_DecalColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

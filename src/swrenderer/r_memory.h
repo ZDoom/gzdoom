@@ -15,9 +15,14 @@
 
 namespace swrenderer
 {
+	struct visplane_light;
+
 	extern short *openings;
 
 	ptrdiff_t R_NewOpening(ptrdiff_t len);
 	void R_FreeOpenings();
 	void R_DeinitOpenings();
+
+	visplane_light *R_NewPlaneLight();
+	void R_FreePlaneLights();
 }

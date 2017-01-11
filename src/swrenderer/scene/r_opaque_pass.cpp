@@ -501,7 +501,7 @@ namespace swrenderer
 			(frontsector->heightsec &&
 				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
-			R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+			VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 				frontsector->GetTexture(sector_t::ceiling),
 				ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 				frontsector->GetAlpha(sector_t::ceiling),
@@ -512,7 +512,7 @@ namespace swrenderer
 			) : nullptr;
 
 		if (ceilingplane)
-			R_AddPlaneLights(ceilingplane, frontsector->lighthead);
+			ceilingplane->AddLights(frontsector->lighthead);
 
 		if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
@@ -541,7 +541,7 @@ namespace swrenderer
 			(frontsector->heightsec &&
 				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
-			R_FindPlane(frontsector->floorplane,
+			VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),
 				floorlightlevel + r_actualextralight,				// killough 3/16/98
 				frontsector->GetAlpha(sector_t::floor),
@@ -552,7 +552,7 @@ namespace swrenderer
 			) : nullptr;
 
 		if (floorplane)
-			R_AddPlaneLights(floorplane, frontsector->lighthead);
+			floorplane->AddLights(frontsector->lighthead);
 
 		// kg3D - fake planes rendering
 		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
@@ -606,7 +606,7 @@ namespace swrenderer
 					}
 
 					ceilingplane = nullptr;
-					floorplane = R_FindPlane(frontsector->floorplane,
+					floorplane = VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
 						frontsector->GetTexture(sector_t::floor),
 						floorlightlevel + r_actualextralight,				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
@@ -616,7 +616,7 @@ namespace swrenderer
 						nullptr);
 
 					if (floorplane)
-						R_AddPlaneLights(floorplane, frontsector->lighthead);
+						floorplane->AddLights(frontsector->lighthead);
 
 					FakeDrawLoop(sub, floorplane, ceilingplane);
 					clip3d->fake3D = 0;
@@ -671,7 +671,7 @@ namespace swrenderer
 					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
 
 					floorplane = nullptr;
-					ceilingplane = R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+					ceilingplane = VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 						frontsector->GetTexture(sector_t::ceiling),
 						ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
@@ -681,7 +681,7 @@ namespace swrenderer
 						nullptr);
 
 					if (ceilingplane)
-						R_AddPlaneLights(ceilingplane, frontsector->lighthead);
+						ceilingplane->AddLights(frontsector->lighthead);
 
 					FakeDrawLoop(sub, floorplane, ceilingplane);
 					clip3d->fake3D = 0;

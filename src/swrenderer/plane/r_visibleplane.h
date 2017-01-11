@@ -64,29 +64,37 @@ namespace swrenderer
 		unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
 		unsigned short pad;				//		allocated immediately after the
 		unsigned short top[];			//		visplane.
+
+		void AddLights(FLightNode *node);
+		void Render(fixed_t alpha, bool additive, bool masked);
 	};
 
-	#define MAXVISPLANES 128    /* must be a power of 2 */
-	#define visplane_hash(picnum,lightlevel,height) ((unsigned)((picnum)*3+(lightlevel)+(FLOAT2FIXED((height).fD()))*7) & (MAXVISPLANES-1))
+	class VisiblePlaneList
+	{
+	public:
+		static VisiblePlaneList *Instance();
 
-	extern visplane_t *visplanes[MAXVISPLANES + 1];
-	extern visplane_t *freetail;
-	extern visplane_t **freehead;
+		void Init();
+		void Deinit();
+		void Clear(bool fullclear);
 
-	void R_DeinitPlanes();
-	visplane_t *new_visplane(unsigned hash);
+		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal);
+		visplane_t *GetRange(visplane_t *pl, int start, int stop);
 
-	void R_PlaneInitData();
-	void R_ClearPlanes(bool fullclear);
+		int Render();
+		void RenderHeight(double height);
 
-	void R_AddPlaneLights(visplane_t *plane, FLightNode *node);
+		enum { MAXVISPLANES = 128 }; // must be a power of 2
+		visplane_t *visplanes[MAXVISPLANES + 1];
+		visplane_t *freetail = nullptr;
+		visplane_t **freehead = nullptr;
 
-	visplane_t *R_FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal);
-	visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
+	private:
+		VisiblePlaneList();
+		visplane_t *Add(unsigned hash);
 
-	int R_DrawPlanes();
-	void R_DrawHeightPlanes(double height);
-	void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
+		static unsigned CalcHash(int picnum, int lightlevel, const secplane_t &height) { return (unsigned)((picnum) * 3 + (lightlevel)+(FLOAT2FIXED((height).fD())) * 7) & (MAXVISPLANES - 1); }
+	};
 
 	class PlaneRenderer
 	{

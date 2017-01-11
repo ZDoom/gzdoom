@@ -386,7 +386,7 @@ void R_InitRenderer()
 static void R_ShutdownRenderer()
 {
 	RenderTranslucentPass::Deinit();
-	R_DeinitPlanes();
+	VisiblePlaneList::Instance()->Deinit();
 	Clip3DFloors::Instance()->Cleanup();
 	R_DeinitOpenings();
 	R_FreeDrawSegs();
@@ -527,7 +527,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Clear buffers.
 	R_ClearClipSegs (0, viewwidth);
 	R_ClearDrawSegs ();
-	R_ClearPlanes (true);
+	VisiblePlaneList::Instance()->Clear(true);
+	R_FreePlaneLights();
 	RenderTranslucentPass::Clear();
 
 	// opening / clipping determination
@@ -568,7 +569,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		R_DrawPlanes();
+		VisiblePlaneList::Instance()->Render();
 		RenderPortal::Instance()->RenderPlanePortals();
 		PlaneCycles.Unclock();
 
@@ -655,7 +656,7 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 
 void R_MultiresInit ()
 {
-	R_PlaneInitData ();
+	VisiblePlaneList::Instance()->Init();
 }
 
 

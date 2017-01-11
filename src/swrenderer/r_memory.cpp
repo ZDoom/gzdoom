@@ -20,6 +20,7 @@
 #include "p_setup.h"
 #include "swrenderer/r_main.h"
 #include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/plane/r_visibleplane.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "p_effect.h"
@@ -69,5 +70,26 @@ namespace swrenderer
 			M_Free(openings);
 			openings = nullptr;
 		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	namespace
+	{
+		enum { max_plane_lights = 32 * 1024 };
+		visplane_light plane_lights[max_plane_lights];
+		int next_plane_light = 0;
+	}
+
+	visplane_light *R_NewPlaneLight()
+	{
+		if (next_plane_light == max_plane_lights)
+			return nullptr;
+		return &plane_lights[next_plane_light++];
+	}
+
+	void R_FreePlaneLights()
+	{
+		next_plane_light = 0;
 	}
 }

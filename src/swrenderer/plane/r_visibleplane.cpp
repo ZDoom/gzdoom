@@ -29,6 +29,7 @@
 #include "g_level.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "swrenderer/r_main.h"
+#include "swrenderer/r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
@@ -42,19 +43,101 @@ CVAR(Bool, tilt, false, 0);
 
 namespace swrenderer
 {
-	// [RH] Allocate one extra for sky box planes.
-	visplane_t *visplanes[MAXVISPLANES + 1];
-	visplane_t *freetail;
-	visplane_t **freehead = &freetail;
-
-	namespace
+	void visplane_t::AddLights(FLightNode *node)
 	{
-		enum { max_plane_lights = 32 * 1024 };
-		visplane_light plane_lights[max_plane_lights];
-		int next_plane_light = 0;
+		if (!r_dynlights)
+			return;
+
+		while (node)
+		{
+			if (!(node->lightsource->flags2&MF2_DORMANT))
+			{
+				bool found = false;
+				visplane_light *light_node = lights;
+				while (light_node)
+				{
+					if (light_node->lightsource == node->lightsource)
+					{
+						found = true;
+						break;
+					}
+					light_node = light_node->next;
+				}
+				if (!found)
+				{
+					visplane_light *newlight = R_NewPlaneLight();
+					if (!newlight)
+						return;
+
+					newlight->next = lights;
+					newlight->lightsource = node->lightsource;
+					lights = newlight;
+				}
+			}
+			node = node->nextLight;
+		}
 	}
 
-	void R_DeinitPlanes()
+	void visplane_t::Render(fixed_t alpha, bool additive, bool masked)
+	{
+		if (left >= right)
+			return;
+
+		if (picnum == skyflatnum) // sky flat
+		{
+			RenderSkyPlane::Render(this);
+		}
+		else // regular flat
+		{
+			FTexture *tex = TexMan(picnum, true);
+
+			if (tex->UseType == FTexture::TEX_Null)
+			{
+				return;
+			}
+
+			if (!masked && !additive)
+			{ // If we're not supposed to see through this plane, draw it opaque.
+				alpha = OPAQUE;
+			}
+			else if (!tex->bMasked)
+			{ // Don't waste time on a masked texture if it isn't really masked.
+				masked = false;
+			}
+			R_SetSpanTexture(tex);
+			double xscale = xform.xScale * tex->Scale.X;
+			double yscale = xform.yScale * tex->Scale.Y;
+
+			basecolormap = colormap;
+
+			if (!height.isSlope() && !tilt)
+			{
+				RenderFlatPlane renderer;
+				renderer.Render(this, xscale, yscale, alpha, additive, masked);
+			}
+			else
+			{
+				RenderSlopePlane renderer;
+				renderer.Render(this, xscale, yscale, alpha, additive, masked);
+			}
+		}
+		NetUpdate();
+	}
+
+	VisiblePlaneList *VisiblePlaneList::Instance()
+	{
+		static VisiblePlaneList instance;
+		return &instance;
+	}
+
+	VisiblePlaneList::VisiblePlaneList()
+	{
+		for (auto &plane : visplanes)
+			plane = nullptr;
+		freehead = &freetail;
+	}
+
+	void VisiblePlaneList::Deinit()
 	{
 		// do not use R_ClearPlanes because at this point the screen pointer is no longer valid.
 		for (int i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
@@ -72,7 +155,7 @@ namespace swrenderer
 		}
 	}
 
-	visplane_t *new_visplane(unsigned hash)
+	visplane_t *VisiblePlaneList::Add(unsigned hash)
 	{
 		visplane_t *check = freetail;
 
@@ -94,7 +177,7 @@ namespace swrenderer
 		return check;
 	}
 
-	void R_PlaneInitData()
+	void VisiblePlaneList::Init()
 	{
 		int i;
 		visplane_t *pl;
@@ -124,7 +207,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_ClearPlanes(bool fullclear)
+	void VisiblePlaneList::Clear(bool fullclear)
 	{
 		int i;
 
@@ -159,47 +242,10 @@ namespace swrenderer
 					freehead = &(*freehead)->next;
 				}
 			}
-
-			next_plane_light = 0;
 		}
 	}
 
-	void R_AddPlaneLights(visplane_t *plane, FLightNode *node)
-	{
-		if (!r_dynlights)
-			return;
-
-		while (node)
-		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
-			{
-				bool found = false;
-				visplane_light *light_node = plane->lights;
-				while (light_node)
-				{
-					if (light_node->lightsource == node->lightsource)
-					{
-						found = true;
-						break;
-					}
-					light_node = light_node->next;
-				}
-				if (!found)
-				{
-					if (next_plane_light == max_plane_lights)
-						return;
-
-					visplane_light *newlight = &plane_lights[next_plane_light++];
-					newlight->next = plane->lights;
-					newlight->lightsource = node->lightsource;
-					plane->lights = newlight;
-				}
-			}
-			node = node->nextLight;
-		}
-	}
-
-	visplane_t *R_FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal)
+	visplane_t *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal)
 	{
 		secplane_t plane;
 		visplane_t *check;
@@ -246,7 +292,7 @@ namespace swrenderer
 		}
 
 		// New visplane algorithm uses hash table -- killough
-		hash = isskybox ? MAXVISPLANES : visplane_hash(picnum.GetIndex(), lightlevel, height);
+		hash = isskybox ? MAXVISPLANES : CalcHash(picnum.GetIndex(), lightlevel, height);
 		
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -307,7 +353,7 @@ namespace swrenderer
 				}
 		}
 
-		check = new_visplane(hash);		// killough
+		check = Add(hash);		// killough
 
 		check->height = plane;
 		check->picnum = picnum;
@@ -333,7 +379,7 @@ namespace swrenderer
 		return check;
 	}
 
-	visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
+	visplane_t *VisiblePlaneList::GetRange(visplane_t *pl, int start, int stop)
 	{
 		int intrl, intrh;
 		int unionl, unionh;
@@ -384,9 +430,9 @@ namespace swrenderer
 			}
 			else
 			{
-				hash = visplane_hash(pl->picnum.GetIndex(), pl->lightlevel, pl->height);
+				hash = CalcHash(pl->picnum.GetIndex(), pl->lightlevel, pl->height);
 			}
-			visplane_t *new_pl = new_visplane(hash);
+			visplane_t *new_pl = Add(hash);
 
 			new_pl->height = pl->height;
 			new_pl->picnum = pl->picnum;
@@ -413,7 +459,7 @@ namespace swrenderer
 		return pl;
 	}
 
-	int R_DrawPlanes()
+	int VisiblePlaneList::Render()
 	{
 		visplane_t *pl;
 		int i;
@@ -433,14 +479,14 @@ namespace swrenderer
 				// kg3D - draw only real planes now
 				if (pl->sky >= 0) {
 					vpcount++;
-					R_DrawSinglePlane(pl, OPAQUE, false, false);
+					pl->Render(OPAQUE, false, false);
 				}
 			}
 		}
 		return vpcount;
 	}
 
-	void R_DrawHeightPlanes(double height)
+	void VisiblePlaneList::RenderHeight(double height)
 	{
 		visplane_t *pl;
 		int i;
@@ -465,58 +511,12 @@ namespace swrenderer
 					ViewAngle = pl->viewangle;
 					renderportal->MirrorFlags = pl->MirrorFlags;
 
-					R_DrawSinglePlane(pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
+					pl->Render(pl->sky & 0x7FFFFFFF, pl->Additive, true);
 				}
 			}
 		}
 		ViewPos = oViewPos;
 		ViewAngle = oViewAngle;
-	}
-
-	void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked)
-	{
-		if (pl->left >= pl->right)
-			return;
-
-		if (pl->picnum == skyflatnum) // sky flat
-		{
-			RenderSkyPlane::Render(pl);
-		}
-		else // regular flat
-		{
-			FTexture *tex = TexMan(pl->picnum, true);
-
-			if (tex->UseType == FTexture::TEX_Null)
-			{
-				return;
-			}
-
-			if (!masked && !additive)
-			{ // If we're not supposed to see through this plane, draw it opaque.
-				alpha = OPAQUE;
-			}
-			else if (!tex->bMasked)
-			{ // Don't waste time on a masked texture if it isn't really masked.
-				masked = false;
-			}
-			R_SetSpanTexture(tex);
-			double xscale = pl->xform.xScale * tex->Scale.X;
-			double yscale = pl->xform.yScale * tex->Scale.Y;
-
-			basecolormap = pl->colormap;
-
-			if (!pl->height.isSlope() && !tilt)
-			{
-				RenderFlatPlane renderer;
-				renderer.Render(pl, xscale, yscale, alpha, additive, masked);
-			}
-			else
-			{
-				RenderSlopePlane renderer;
-				renderer.Render(pl, xscale, yscale, alpha, additive, masked);
-			}
-		}
-		NetUpdate();
 	}
 
 	void PlaneRenderer::RenderLines(visplane_t *pl)

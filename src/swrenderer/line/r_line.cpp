@@ -537,7 +537,7 @@ namespace swrenderer
 		{
 			if (ceilingplane)
 			{	// killough 4/11/98: add NULL ptr checks
-				ceilingplane = R_CheckPlane(ceilingplane, start, stop);
+				ceilingplane = VisiblePlaneList::Instance()->GetRange(ceilingplane, start, stop);
 			}
 			else
 			{
@@ -549,7 +549,7 @@ namespace swrenderer
 		{
 			if (floorplane)
 			{	// killough 4/11/98: add NULL ptr checks
-				floorplane = R_CheckPlane(floorplane, start, stop);
+				floorplane = VisiblePlaneList::Instance()->GetRange(floorplane, start, stop);
 			}
 			else
 			{
@@ -559,7 +559,8 @@ namespace swrenderer
 
 		RenderWallSegmentTextures(start, stop);
 
-		if (clip3d->fake3D & FAKE3D_FAKEMASK) {
+		if (clip3d->fake3D & FAKE3D_FAKEMASK)
+		{
 			return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
 		}
 

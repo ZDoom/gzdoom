@@ -586,7 +586,7 @@ namespace swrenderer
 				}
 				clip3d->sclipBottom = hl->height;
 				DrawMaskedSingle(true);
-				R_DrawHeightPlanes(hl->height);
+				VisiblePlaneList::Instance()->RenderHeight(hl->height);
 			}
 
 			// floors
@@ -595,7 +595,7 @@ namespace swrenderer
 			DrawMaskedSingle(true);
 			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < ViewPos.Z; hl = hl->next)
 			{
-				R_DrawHeightPlanes(hl->height);
+				VisiblePlaneList::Instance()->RenderHeight(hl->height);
 				if (hl->next)
 				{
 					clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;

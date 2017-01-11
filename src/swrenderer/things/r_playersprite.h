@@ -15,6 +15,9 @@
 
 #include "r_visiblesprite.h"
 
+#define BASEXCENTER (160)
+#define BASEYCENTER (100)
+
 namespace swrenderer
 {
 	void R_SetupPlayerSpriteScale();

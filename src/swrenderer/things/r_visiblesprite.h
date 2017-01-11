@@ -16,6 +16,8 @@
 #include "swrenderer/line/r_line.h"
 #include "swrenderer/scene/r_bsp.h"
 
+#define MINZ double((2048*4) / double(1 << 20))
+
 struct particle_t;
 struct FVoxel;
 

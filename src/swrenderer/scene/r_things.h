@@ -29,9 +29,6 @@
 struct particle_t;
 struct FVoxel;
 
-#define MINZ			double((2048*4) / double(1 << 20))
-#define BASEXCENTER		(160)
-#define BASEYCENTER 	(100)
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
@@ -46,8 +43,6 @@ void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first)
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
-
-enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 

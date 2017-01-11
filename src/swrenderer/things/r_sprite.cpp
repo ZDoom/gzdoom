@@ -47,194 +47,32 @@
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
 #include "p_local.h"
-#include "p_maputl.h"
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/r_memory.h"
 
-EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void R_ProjectSprite(AActor *thing, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
+	void R_ProjectSprite(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
 	{
-		double 			tr_x;
-		double 			tr_y;
-
-		double				gzt;				// killough 3/27/98
-		double				gzb;				// [RH] use bottom of sprite, not actor
-		double	 			tx;// , tx2;
-		double 				tz;
-
-		double 				xscale = 1, yscale = 1;
-
-		int 				x1;
-		int 				x2;
-
-		FTextureID			picnum;
-		FTexture			*tex;
-		FVoxelDef			*voxel;
-
-		vissprite_t*		vis;
-
-		fixed_t 			iscale;
-
-		sector_t*			heightsec;			// killough 3/27/98
-
-												// Don't waste time projecting sprites that are definitely not visible.
-		if (thing == nullptr ||
-			(thing->renderflags & RF_INVISIBLE) ||
-			!thing->RenderStyle.IsVisible(thing->Alpha) ||
-			!thing->IsVisibleToPlayer() ||
-			!thing->IsInsideVisibleAngles())
-		{
-			return;
-		}
-
-		RenderPortal *renderportal = RenderPortal::Instance();
-
-		// [ZZ] Or less definitely not visible (hue)
-		// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
-			return;
-
-		// [RH] Interpolate the sprite's position to make it look smooth
-		DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
-		pos.Z += thing->GetBobOffset(r_TicFracF);
-
-		tex = nullptr;
-		voxel = nullptr;
-
-		int spritenum = thing->sprite;
-		DVector2 spriteScale = thing->Scale;
-		int renderflags = thing->renderflags;
-		if (spriteScale.Y < 0)
-		{
-			spriteScale.Y = -spriteScale.Y;
-			renderflags ^= RF_YFLIP;
-		}
-		if (thing->player != nullptr)
-		{
-			P_CheckPlayerSprite(thing, spritenum, spriteScale);
-		}
-
-		if (thing->picnum.isValid())
-		{
-			picnum = thing->picnum;
-
-			tex = TexMan(picnum);
-			if (tex->UseType == FTexture::TEX_Null)
-			{
-				return;
-			}
-
-			if (tex->Rotations != 0xFFFF)
-			{
-				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
-				DAngle ang = (pos - ViewPos).Angle();
-				angle_t rot;
-				if (sprframe->Texture[0] == sprframe->Texture[1])
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
-				}
-				else
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-				}
-				picnum = sprframe->Texture[rot];
-				if (sprframe->Flip & (1 << rot))
-				{
-					renderflags ^= RF_XFLIP;
-				}
-				tex = TexMan[picnum];	// Do not animate the rotation
-			}
-		}
-		else
-		{
-			// decide which texture to use for the sprite
-			if ((unsigned)spritenum >= sprites.Size())
-			{
-				DPrintf(DMSG_ERROR, "R_ProjectSprite: invalid sprite number %u\n", spritenum);
-				return;
-			}
-			spritedef_t *sprdef = &sprites[spritenum];
-			if (thing->frame >= sprdef->numframes)
-			{
-				// If there are no frames at all for this sprite, don't draw it.
-				return;
-			}
-			else
-			{
-				//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
-				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-				DAngle ang = (pos - ViewPos).Angle();
-				angle_t rot;
-				if (sprframe->Texture[0] == sprframe->Texture[1])
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
-				}
-				else
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-				}
-				picnum = sprframe->Texture[rot];
-				if (sprframe->Flip & (1 << rot))
-				{
-					renderflags ^= RF_XFLIP;
-				}
-				tex = TexMan[picnum];	// Do not animate the rotation
-				if (r_drawvoxels)
-				{
-					voxel = sprframe->Voxel;
-				}
-			}
-		}
-		if (spriteScale.X < 0)
-		{
-			spriteScale.X = -spriteScale.X;
-			renderflags ^= RF_XFLIP;
-		}
-		if (voxel == nullptr && (tex == nullptr || tex->UseType == FTexture::TEX_Null))
-		{
-			return;
-		}
-
-		if ((renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
-		{
-			R_ProjectWallSprite(thing, pos, picnum, spriteScale, renderflags, spriteshade);
-			return;
-		}
-
 		// transform the origin point
-		tr_x = pos.X - ViewPos.X;
-		tr_y = pos.Y - ViewPos.Y;
+		double tr_x = pos.X - ViewPos.X;
+		double tr_y = pos.Y - ViewPos.Y;
 
-		tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+		double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
 
 		// thing is behind view plane?
-		if (voxel == nullptr && tz < MINZ)
+		if (tz < MINZ)
 			return;
 
-		tx = tr_x * ViewSin - tr_y * ViewCos;
+		double tx = tr_x * ViewSin - tr_y * ViewCos;
 
 		// [RH] Flip for mirrors
+		RenderPortal *renderportal = RenderPortal::Instance();
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			tx = -tx;
@@ -242,37 +80,22 @@ namespace swrenderer
 		//tx2 = tx >> 4;
 
 		// too far off the side?
-		// if it's a voxel, it can be further off the side
-		if ((voxel == nullptr && (fabs(tx / 64) > fabs(tz))) ||
-			(voxel != nullptr && (fabs(tx / 128) > fabs(tz))))
+		if (fabs(tx / 64) > fabs(tz))
 		{
 			return;
 		}
 
-		if (voxel == nullptr)
-		{
-			// [RH] Added scaling
-			int scaled_to = tex->GetScaledTopOffset();
-			int scaled_bo = scaled_to - tex->GetScaledHeight();
-			gzt = pos.Z + spriteScale.Y * scaled_to;
-			gzb = pos.Z + spriteScale.Y * scaled_bo;
-		}
-		else
-		{
-			xscale = spriteScale.X * voxel->Scale;
-			yscale = spriteScale.Y * voxel->Scale;
-			double piv = voxel->Voxel->Mips[0].Pivot.Z;
-			gzt = pos.Z + yscale * piv - thing->Floorclip;
-			gzb = pos.Z + yscale * (piv - voxel->Voxel->Mips[0].SizeZ);
-			if (gzt <= gzb)
-				return;
-		}
+		// [RH] Added scaling
+		int scaled_to = tex->GetScaledTopOffset();
+		int scaled_bo = scaled_to - tex->GetScaledHeight();
+		double gzt = pos.Z + spriteScale.Y * scaled_to;
+		double gzb = pos.Z + spriteScale.Y * scaled_bo;
 
 		// killough 3/27/98: exclude things totally separated
 		// from the viewer, by either water or fake ceilings
 		// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
 
-		heightsec = thing->Sector->GetHeightSec();
+		sector_t *heightsec = thing->Sector->GetHeightSec();
 
 		if (heightsec != nullptr)	// only clip things which are in special sectors
 		{
@@ -295,94 +118,65 @@ namespace swrenderer
 			}
 		}
 
-		if (voxel == nullptr)
+		double xscale = CenterX / tz;
+
+		// [RH] Reject sprites that are off the top or bottom of the screen
+		if (globaluclip * tz > ViewPos.Z - gzb || globaldclip * tz < ViewPos.Z - gzt)
 		{
-			xscale = CenterX / tz;
+			return;
+		}
 
-			// [RH] Reject sprites that are off the top or bottom of the screen
-			if (globaluclip * tz > ViewPos.Z - gzb || globaldclip * tz < ViewPos.Z - gzt)
-			{
-				return;
-			}
+		// [RH] Flip for mirrors
+		renderflags ^= renderportal->MirrorFlags & RF_XFLIP;
 
-			// [RH] Flip for mirrors
-			renderflags ^= renderportal->MirrorFlags & RF_XFLIP;
+		// calculate edges of the shape
+		const double thingxscalemul = spriteScale.X / tex->Scale.X;
 
-			// calculate edges of the shape
-			const double thingxscalemul = spriteScale.X / tex->Scale.X;
+		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
+		double dtx1 = tx * xscale;
+		int x1 = centerx + xs_RoundToInt(dtx1);
 
-			tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
-			double dtx1 = tx * xscale;
-			x1 = centerx + xs_RoundToInt(dtx1);
+		// off the right side?
+		if (x1 >= renderportal->WindowRight)
+			return;
 
-			// off the right side?
-			if (x1 >= renderportal->WindowRight)
-				return;
+		tx += tex->GetWidth() * thingxscalemul;
+		int x2 = centerx + xs_RoundToInt(tx * xscale);
 
-			tx += tex->GetWidth() * thingxscalemul;
-			x2 = centerx + xs_RoundToInt(tx * xscale);
+		// off the left side or too small?
+		if ((x2 < renderportal->WindowLeft || x2 <= x1))
+			return;
 
-			// off the left side or too small?
-			if ((x2 < renderportal->WindowLeft || x2 <= x1))
-				return;
+		xscale = spriteScale.X * xscale / tex->Scale.X;
+		fixed_t iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
 
-			xscale = spriteScale.X * xscale / tex->Scale.X;
-			iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
+		double yscale = spriteScale.Y / tex->Scale.Y;
 
-			double yscale = spriteScale.Y / tex->Scale.Y;
+		// store information in a vissprite
+		vissprite_t *vis = R_NewVisSprite();
 
-			// store information in a vissprite
-			vis = R_NewVisSprite();
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		vis->xscale = FLOAT2FIXED(xscale);
+		vis->yscale = float(InvZtoScale * yscale / tz);
+		vis->idepth = float(1 / tz);
+		vis->floorclip = thing->Floorclip / yscale;
+		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
+		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
+		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
+		vis->Angle = thing->Angles.Yaw;
 
-			vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
-			vis->xscale = FLOAT2FIXED(xscale);
-			vis->yscale = float(InvZtoScale * yscale / tz);
-			vis->idepth = float(1 / tz);
-			vis->floorclip = thing->Floorclip / yscale;
-			vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
-			vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
-			vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
-			vis->Angle = thing->Angles.Yaw;
-
-			if (renderflags & RF_XFLIP)
-			{
-				vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
-				vis->xiscale = -iscale;
-			}
-			else
-			{
-				vis->startfrac = 0;
-				vis->xiscale = iscale;
-			}
-
-			vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
+		if (renderflags & RF_XFLIP)
+		{
+			vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
+			vis->xiscale = -iscale;
 		}
 		else
 		{
-			vis = R_NewVisSprite();
-
-			vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
-			vis->xscale = FLOAT2FIXED(xscale);
-			vis->yscale = (float)yscale;
-			vis->x1 = renderportal->WindowLeft;
-			vis->x2 = renderportal->WindowRight;
-			vis->idepth = 1 / MINZ;
-			vis->floorclip = thing->Floorclip;
-
-			pos.Z -= thing->Floorclip;
-
-			vis->Angle = thing->Angles.Yaw + voxel->AngleOffset;
-
-			int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
-			if (voxelspin != 0)
-			{
-				DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
-				vis->Angle -= ang;
-			}
-
-			vis->pa.vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
-			vis->pa.vang = FAngle((float)ViewAngle.Degrees);
+			vis->startfrac = 0;
+			vis->xiscale = iscale;
 		}
+
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
 
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;
@@ -408,19 +202,9 @@ namespace swrenderer
 		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		vis->bSplitSprite = false;
 
-		if (voxel != nullptr)
-		{
-			vis->voxel = voxel->Voxel;
-			vis->bIsVoxel = true;
-			vis->bWallSprite = false;
-			DrewAVoxel = true;
-		}
-		else
-		{
-			vis->pic = tex;
-			vis->bIsVoxel = false;
-			vis->bWallSprite = false;
-		}
+		vis->pic = tex;
+		vis->bIsVoxel = false;
+		vis->bWallSprite = false;
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
@@ -481,8 +265,7 @@ namespace swrenderer
 			}
 			else
 			{ // diminished light
-				vis->Style.ColormapNum = GETPALOOKUP(
-					r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+				vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
 				vis->Style.BaseColormap = mybasecolormap;
 			}
 		}

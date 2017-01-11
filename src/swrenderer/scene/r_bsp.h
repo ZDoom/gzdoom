@@ -19,6 +19,8 @@
 #include "swrenderer/line/r_line.h"
 #include "swrenderer/scene/r_3dfloors.h"
 
+struct FVoxelDef;
+
 namespace swrenderer
 {
 	struct visplane_t;
@@ -33,6 +35,17 @@ namespace swrenderer
 		Center,
 		BelowFloor,
 		AboveCeiling
+	};
+
+	struct ThingSprite
+	{
+		DVector3 pos;
+		int spritenum;
+		FTexture *tex;
+		FVoxelDef *voxel;
+		FTextureID picnum;
+		DVector2 spriteScale;
+		int renderflags;
 	};
 
 	class RenderBSP
@@ -58,6 +71,9 @@ namespace swrenderer
 		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane);
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside);
+
+		static bool IsPotentiallyVisible(AActor *thing);
+		static bool GetThingSprite(AActor *thing, ThingSprite &sprite);
 
 		subsector_t *InSubsector = nullptr;
 		sector_t *frontsector = nullptr;

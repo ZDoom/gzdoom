@@ -36,6 +36,8 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/things/r_sprite.h"
+#include "swrenderer/things/r_wallsprite.h"
+#include "swrenderer/things/r_voxel.h"
 #include "swrenderer/things/r_particle.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/line/r_wallsetup.h"
@@ -45,6 +47,7 @@
 #include "g_level.h"
 #include "p_effect.h"
 #include "c_console.h"
+#include "p_maputl.h"
 
 // State.
 #include "doomstat.h"
@@ -57,6 +60,7 @@
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+EXTERN_CVAR(Bool, r_drawvoxels);
 
 namespace swrenderer
 {
@@ -855,9 +859,170 @@ namespace swrenderer
 					if (rover->bottom.plane->ZatPoint(0., 0.) >= thing->Top()) fakeceiling = rover;
 				}
 			}
-			R_ProjectSprite(thing, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+
+			if (IsPotentiallyVisible(thing))
+			{
+				ThingSprite sprite;
+				if (GetThingSprite(thing, sprite))
+				{
+					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+					{
+						R_ProjectWallSprite(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade);
+					}
+					else if (sprite.voxel)
+					{
+						R_ProjectVoxel(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+					}
+					else
+					{
+						R_ProjectSprite(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+					}
+				}
+			}
+
 			fakeceiling = nullptr;
 			fakefloor = nullptr;
 		}
+	}
+
+	bool RenderBSP::IsPotentiallyVisible(AActor *thing)
+	{
+		// Don't waste time projecting sprites that are definitely not visible.
+		if (thing == nullptr ||
+			(thing->renderflags & RF_INVISIBLE) ||
+			!thing->RenderStyle.IsVisible(thing->Alpha) ||
+			!thing->IsVisibleToPlayer() ||
+			!thing->IsInsideVisibleAngles())
+		{
+			return false;
+		}
+
+		// [ZZ] Or less definitely not visible (hue)
+		// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
+		RenderPortal *renderportal = RenderPortal::Instance();
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
+			return false;
+
+		return true;
+	}
+
+	bool RenderBSP::GetThingSprite(AActor *thing, ThingSprite &sprite)
+	{
+		sprite.pos = thing->InterpolatedPosition(r_TicFracF);
+		sprite.pos.Z += thing->GetBobOffset(r_TicFracF);
+
+		sprite.spritenum = thing->sprite;
+		sprite.tex = nullptr;
+		sprite.voxel = nullptr;
+		sprite.spriteScale = thing->Scale;
+		sprite.renderflags = thing->renderflags;
+
+		if (thing->picnum.isValid())
+		{
+			sprite.picnum = thing->picnum;
+
+			sprite.tex = TexMan(sprite.picnum);
+			if (sprite.tex->UseType == FTexture::TEX_Null)
+			{
+				return false;
+			}
+
+			if (sprite.tex->Rotations != 0xFFFF)
+			{
+				// choose a different rotation based on player view
+				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->Rotations];
+				DAngle ang = (sprite.pos - ViewPos).Angle();
+				angle_t rot;
+				if (sprframe->Texture[0] == sprframe->Texture[1])
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+					else
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
+				}
+				else
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+					else
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				}
+				sprite.picnum = sprframe->Texture[rot];
+				if (sprframe->Flip & (1 << rot))
+				{
+					sprite.renderflags ^= RF_XFLIP;
+				}
+				sprite.tex = TexMan[sprite.picnum];	// Do not animate the rotation
+			}
+		}
+		else
+		{
+			// decide which texture to use for the sprite
+			if ((unsigned)sprite.spritenum >= sprites.Size())
+			{
+				DPrintf(DMSG_ERROR, "R_ProjectSprite: invalid sprite number %u\n", sprite.spritenum);
+				return false;
+			}
+			spritedef_t *sprdef = &sprites[sprite.spritenum];
+			if (thing->frame >= sprdef->numframes)
+			{
+				// If there are no frames at all for this sprite, don't draw it.
+				return false;
+			}
+			else
+			{
+				//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
+				// choose a different rotation based on player view
+				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
+				DAngle ang = (sprite.pos - ViewPos).Angle();
+				angle_t rot;
+				if (sprframe->Texture[0] == sprframe->Texture[1])
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+					else
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
+				}
+				else
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+					else
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				}
+				sprite.picnum = sprframe->Texture[rot];
+				if (sprframe->Flip & (1 << rot))
+				{
+					sprite.renderflags ^= RF_XFLIP;
+				}
+				sprite.tex = TexMan[sprite.picnum];	// Do not animate the rotation
+				if (r_drawvoxels)
+				{
+					sprite.voxel = sprframe->Voxel;
+				}
+			}
+
+			if (sprite.voxel == nullptr && (sprite.tex == nullptr || sprite.tex->UseType == FTexture::TEX_Null))
+			{
+				return false;
+			}
+
+			if (sprite.spriteScale.Y < 0)
+			{
+				sprite.spriteScale.Y = -sprite.spriteScale.Y;
+				sprite.renderflags ^= RF_YFLIP;
+			}
+			if (thing->player != nullptr)
+			{
+				P_CheckPlayerSprite(thing, sprite.spritenum, sprite.spriteScale);
+			}
+			if (sprite.spriteScale.X < 0)
+			{
+				sprite.spriteScale.X = -sprite.spriteScale.X;
+				sprite.renderflags ^= RF_XFLIP;
+			}
+		}
+
+		return true;
 	}
 }

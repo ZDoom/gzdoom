@@ -36,7 +36,10 @@
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
+#include "swrenderer/scene/r_portal.h"
 #include "swrenderer/r_main.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
@@ -45,6 +48,182 @@ namespace swrenderer
 		FCoverageBuffer *OffscreenCoverageBuffer;
 		int OffscreenBufferWidth, OffscreenBufferHeight;
 		uint8_t *OffscreenColorBuffer;
+	}
+
+	void R_ProjectVoxel(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
+	{
+		// transform the origin point
+		double tr_x = pos.X - ViewPos.X;
+		double tr_y = pos.Y - ViewPos.Y;
+
+		double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+		double tx = tr_x * ViewSin - tr_y * ViewCos;
+
+		// [RH] Flip for mirrors
+		RenderPortal *renderportal = RenderPortal::Instance();
+		if (renderportal->MirrorFlags & RF_XFLIP)
+		{
+			tx = -tx;
+		}
+		//tx2 = tx >> 4;
+
+		// too far off the side?
+		if (fabs(tx / 128) > fabs(tz))
+		{
+			return;
+		}
+
+		double xscale = spriteScale.X * voxel->Scale;
+		double yscale = spriteScale.Y * voxel->Scale;
+		double piv = voxel->Voxel->Mips[0].Pivot.Z;
+		double gzt = pos.Z + yscale * piv - thing->Floorclip;
+		double gzb = pos.Z + yscale * (piv - voxel->Voxel->Mips[0].SizeZ);
+		if (gzt <= gzb)
+			return;
+
+		// killough 3/27/98: exclude things totally separated
+		// from the viewer, by either water or fake ceilings
+		// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+
+		sector_t *heightsec = thing->Sector->GetHeightSec();
+
+		if (heightsec != nullptr)	// only clip things which are in special sectors
+		{
+			if (fakeside == WaterFakeSide::AboveCeiling)
+			{
+				if (gzt < heightsec->ceilingplane.ZatPoint(pos))
+					return;
+			}
+			else if (fakeside == WaterFakeSide::BelowFloor)
+			{
+				if (gzb >= heightsec->floorplane.ZatPoint(pos))
+					return;
+			}
+			else
+			{
+				if (gzt < heightsec->floorplane.ZatPoint(pos))
+					return;
+				if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos))
+					return;
+			}
+		}
+
+		vissprite_t *vis = R_NewVisSprite();
+
+		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		vis->xscale = FLOAT2FIXED(xscale);
+		vis->yscale = (float)yscale;
+		vis->x1 = renderportal->WindowLeft;
+		vis->x2 = renderportal->WindowRight;
+		vis->idepth = 1 / MINZ;
+		vis->floorclip = thing->Floorclip;
+
+		pos.Z -= thing->Floorclip;
+
+		vis->Angle = thing->Angles.Yaw + voxel->AngleOffset;
+
+		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
+		if (voxelspin != 0)
+		{
+			DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
+			vis->Angle -= ang;
+		}
+
+		vis->pa.vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
+		vis->pa.vang = FAngle((float)ViewAngle.Degrees);
+
+		// killough 3/27/98: save sector for special clipping later
+		vis->heightsec = heightsec;
+		vis->sector = thing->Sector;
+
+		vis->depth = (float)tz;
+		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
+		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
+		vis->gzt = (float)gzt;		// killough 3/27/98
+		vis->deltax = float(pos.X - ViewPos.X);
+		vis->deltay = float(pos.Y - ViewPos.Y);
+		vis->renderflags = renderflags;
+		if (thing->flags5 & MF5_BRIGHT)
+			vis->renderflags |= RF_FULLBRIGHT; // kg3D
+		vis->Style.RenderStyle = thing->RenderStyle;
+		vis->FillColor = thing->fillcolor;
+		vis->Translation = thing->Translation;		// [RH] thing translation table
+		vis->FakeFlatStat = fakeside;
+		vis->Style.Alpha = float(thing->Alpha);
+		vis->fakefloor = fakefloor;
+		vis->fakeceiling = fakeceiling;
+		vis->Style.ColormapNum = 0;
+		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
+		vis->bSplitSprite = false;
+
+		vis->voxel = voxel->Voxel;
+		vis->bIsVoxel = true;
+		vis->bWallSprite = false;
+		DrewAVoxel = true;
+
+		// The software renderer cannot invert the source without inverting the overlay
+		// too. That means if the source is inverted, we need to do the reverse of what
+		// the invert overlay flag says to do.
+		INTBOOL invertcolormap = (vis->Style.RenderStyle.Flags & STYLEF_InvertOverlay);
+
+		if (vis->Style.RenderStyle.Flags & STYLEF_InvertSource)
+		{
+			invertcolormap = !invertcolormap;
+		}
+
+		FDynamicColormap *mybasecolormap = basecolormap;
+		if (current_sector->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
+		{
+			// Todo: The actor is from a different sector so we have to retrieve the proper basecolormap for that sector.
+		}
+
+		// Sprites that are added to the scene must fade to black.
+		if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+		{
+			mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
+		}
+
+		if (vis->Style.RenderStyle.Flags & STYLEF_FadeToBlack)
+		{
+			if (invertcolormap)
+			{ // Fade to white
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
+				invertcolormap = false;
+			}
+			else
+			{ // Fade to black
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
+			}
+		}
+
+		// get light level
+		if (fixedcolormap != nullptr)
+		{ // fixed map
+			vis->Style.BaseColormap = fixedcolormap;
+			vis->Style.ColormapNum = 0;
+		}
+		else
+		{
+			if (invertcolormap)
+			{
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
+			}
+			if (fixedlightlev >= 0)
+			{
+				vis->Style.BaseColormap = mybasecolormap;
+				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+			}
+			else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
+			{ // full bright
+				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				vis->Style.ColormapNum = 0;
+			}
+			else
+			{ // diminished light
+				vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+				vis->Style.BaseColormap = mybasecolormap;
+			}
+		}
 	}
 
 	void R_DrawVisVoxel(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)

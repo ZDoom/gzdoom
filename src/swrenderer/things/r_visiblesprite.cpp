@@ -43,24 +43,7 @@ CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
 
 namespace swrenderer
 {
-	int MaxVisSprites;
-	vissprite_t **vissprites;
-	vissprite_t **firstvissprite;
-	vissprite_t **vissprite_p;
-	vissprite_t **lastvissprite;
-
-	bool DrewAVoxel;
-
-	namespace
-	{
-		vissprite_t **spritesorter;
-		int spritesortersize = 0;
-		int vsprcount;
-
-		TArray<drawseg_t *> portaldrawsegs;
-	}
-
-	void R_DeinitVisSprites()
+	void VisibleSpriteList::Deinit()
 	{
 		// Free vissprites
 		for (int i = 0; i < MaxVisSprites; ++i)
@@ -73,12 +56,12 @@ namespace swrenderer
 		MaxVisSprites = 0;
 	}
 
-	void R_ClearVisSprites()
+	void VisibleSpriteList::Clear()
 	{
 		vissprite_p = firstvissprite;
 	}
 
-	vissprite_t *R_NewVisSprite()
+	vissprite_t *VisibleSpriteList::Add()
 	{
 		if (vissprite_p == lastvissprite)
 		{
@@ -103,27 +86,97 @@ namespace swrenderer
 		return *(vissprite_p - 1);
 	}
 
-	void R_DeinitSprites()
-	{
-		R_DeinitVisSprites();
-		RenderVoxel::Deinit();
+	int VisibleSpriteList::MaxVisSprites;
+	vissprite_t **VisibleSpriteList::vissprites;
+	vissprite_t **VisibleSpriteList::firstvissprite;
+	vissprite_t **VisibleSpriteList::vissprite_p;
+	vissprite_t **VisibleSpriteList::lastvissprite;
 
-		// Free vissprites sorter
-		if (spritesorter != nullptr)
-		{
-			delete[] spritesorter;
-			spritesortersize = 0;
-			spritesorter = nullptr;
-		}
+	/////////////////////////////////////////////////////////////////////////
+
+	void SortedVisibleSpriteList::Deinit()
+	{
+		delete[] spritesorter;
+		spritesortersize = 0;
+		spritesorter = nullptr;
 	}
 
-	void R_ClearSprites()
+	// This is the standard version, which does a simple test based on depth.
+	bool SortedVisibleSpriteList::sv_compare(vissprite_t *a, vissprite_t *b)
 	{
-		R_ClearVisSprites();
+		return a->idepth > b->idepth;
+	}
+
+	// This is an alternate version, for when one or more voxel is in view.
+	// It does a 2D distance test based on whichever one is furthest from
+	// the viewpoint.
+	bool SortedVisibleSpriteList::sv_compare2d(vissprite_t *a, vissprite_t *b)
+	{
+		return DVector2(a->deltax, a->deltay).LengthSquared() < DVector2(b->deltax, b->deltay).LengthSquared();
+	}
+
+	void SortedVisibleSpriteList::Sort(bool(*compare)(vissprite_t *, vissprite_t *), size_t first)
+	{
+		int i;
+		vissprite_t **spr;
+
+		vsprcount = int(VisibleSpriteList::vissprite_p - &VisibleSpriteList::vissprites[first]);
+
+		if (vsprcount == 0)
+			return;
+
+		if (spritesortersize < VisibleSpriteList::MaxVisSprites)
+		{
+			if (spritesorter != nullptr)
+				delete[] spritesorter;
+			spritesorter = new vissprite_t *[VisibleSpriteList::MaxVisSprites];
+			spritesortersize = VisibleSpriteList::MaxVisSprites;
+		}
+
+		if (!(i_compatflags & COMPATF_SPRITESORT))
+		{
+			for (i = 0, spr = VisibleSpriteList::firstvissprite; i < vsprcount; i++, spr++)
+			{
+				spritesorter[i] = *spr;
+			}
+		}
+		else
+		{
+			// If the compatibility option is on sprites of equal distance need to
+			// be sorted in inverse order. This is most easily achieved by
+			// filling the sort array backwards before the sort.
+			for (i = 0, spr = VisibleSpriteList::firstvissprite + vsprcount - 1; i < vsprcount; i++, spr--)
+			{
+				spritesorter[i] = *spr;
+			}
+		}
+
+		std::stable_sort(&spritesorter[0], &spritesorter[vsprcount], compare);
+	}
+
+	vissprite_t **SortedVisibleSpriteList::spritesorter;
+	int SortedVisibleSpriteList::spritesortersize = 0;
+	int SortedVisibleSpriteList::vsprcount;
+
+	/////////////////////////////////////////////////////////////////////////
+
+	bool RenderTranslucent::DrewAVoxel;
+	TArray<drawseg_t *> RenderTranslucent::portaldrawsegs;
+
+	void RenderTranslucent::Deinit()
+	{
+		VisibleSpriteList::Deinit();
+		SortedVisibleSpriteList::Deinit();
+		RenderVoxel::Deinit();
+	}
+
+	void RenderTranslucent::Clear()
+	{
+		VisibleSpriteList::Clear();
 		DrewAVoxel = false;
 	}
 
-	void R_CollectPortals()
+	void RenderTranslucent::CollectPortals()
 	{
 		// This function collects all drawsegs that may be of interest to R_ClipSpriteColumnWithPortals 
 		// Having that function over the entire list of drawsegs can break down performance quite drastically.
@@ -153,7 +206,7 @@ namespace swrenderer
 		}
 	}
 
-	bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
+	bool RenderTranslucent::ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -181,60 +234,7 @@ namespace swrenderer
 		return false;
 	}
 
-	// This is the standard version, which does a simple test based on depth.
-	bool sv_compare(vissprite_t *a, vissprite_t *b)
-	{
-		return a->idepth > b->idepth;
-	}
-
-	// This is an alternate version, for when one or more voxel is in view.
-	// It does a 2D distance test based on whichever one is furthest from
-	// the viewpoint.
-	bool sv_compare2d(vissprite_t *a, vissprite_t *b)
-	{
-		return DVector2(a->deltax, a->deltay).LengthSquared() < DVector2(b->deltax, b->deltay).LengthSquared();
-	}
-
-	void R_SortVisSprites(bool(*compare)(vissprite_t *, vissprite_t *), size_t first)
-	{
-		int i;
-		vissprite_t **spr;
-
-		vsprcount = int(vissprite_p - &vissprites[first]);
-
-		if (vsprcount == 0)
-			return;
-
-		if (spritesortersize < MaxVisSprites)
-		{
-			if (spritesorter != nullptr)
-				delete[] spritesorter;
-			spritesorter = new vissprite_t *[MaxVisSprites];
-			spritesortersize = MaxVisSprites;
-		}
-
-		if (!(i_compatflags & COMPATF_SPRITESORT))
-		{
-			for (i = 0, spr = firstvissprite; i < vsprcount; i++, spr++)
-			{
-				spritesorter[i] = *spr;
-			}
-		}
-		else
-		{
-			// If the compatibility option is on sprites of equal distance need to
-			// be sorted in inverse order. This is most easily achieved by
-			// filling the sort array backwards before the sort.
-			for (i = 0, spr = firstvissprite + vsprcount - 1; i < vsprcount; i++, spr--)
-			{
-				spritesorter[i] = *spr;
-			}
-		}
-
-		std::stable_sort(&spritesorter[0], &spritesorter[vsprcount], compare);
-	}
-
-	void R_DrawSprite(vissprite_t *spr)
+	void RenderTranslucent::DrawSprite(vissprite_t *spr)
 	{
 		static short clipbot[MAXWIDTH];
 		static short cliptop[MAXWIDTH];
@@ -639,15 +639,15 @@ namespace swrenderer
 		spr->Style.ColormapNum = colormapnum;
 	}
 
-	void R_DrawMaskedSingle(bool renew)
+	void RenderTranslucent::DrawMaskedSingle(bool renew)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
-		for (int i = vsprcount; i > 0; i--)
+		for (int i = SortedVisibleSpriteList::vsprcount; i > 0; i--)
 		{
-			if (spritesorter[i - 1]->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+			if (SortedVisibleSpriteList::spritesorter[i - 1]->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue; // probably another time
-			R_DrawSprite(spritesorter[i - 1]);
+			DrawSprite(SortedVisibleSpriteList::spritesorter[i - 1]);
 		}
 
 		// render any remaining masked mid textures
@@ -676,15 +676,15 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawMasked()
+	void RenderTranslucent::Render()
 	{
-		R_CollectPortals();
-		R_SortVisSprites(DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
+		CollectPortals();
+		SortedVisibleSpriteList::Sort(DrewAVoxel ? SortedVisibleSpriteList::sv_compare2d : SortedVisibleSpriteList::sv_compare, VisibleSpriteList::firstvissprite - VisibleSpriteList::vissprites);
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 		if (clip3d->height_top == nullptr)
 		{ // kg3D - no visible 3D floors, normal rendering
-			R_DrawMaskedSingle(false);
+			DrawMaskedSingle(false);
 		}
 		else
 		{ // kg3D - correct sorting
@@ -701,14 +701,14 @@ namespace swrenderer
 					clip3d->fake3D = FAKE3D_CLIPBOTTOM;
 				}
 				clip3d->sclipBottom = hl->height;
-				R_DrawMaskedSingle(true);
+				DrawMaskedSingle(true);
 				R_DrawHeightPlanes(hl->height);
 			}
 
 			// floors
 			clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
 			clip3d->sclipTop = clip3d->height_top->height;
-			R_DrawMaskedSingle(true);
+			DrawMaskedSingle(true);
 			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < ViewPos.Z; hl = hl->next)
 			{
 				R_DrawHeightPlanes(hl->height);
@@ -722,7 +722,7 @@ namespace swrenderer
 					clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPBOTTOM;
 				}
 				clip3d->sclipBottom = hl->height;
-				R_DrawMaskedSingle(true);
+				DrawMaskedSingle(true);
 			}
 			clip3d->DeleteHeights();
 			clip3d->fake3D = 0;

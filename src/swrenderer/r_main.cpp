@@ -92,7 +92,6 @@ namespace swrenderer
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void R_SpanInitData ();
-void R_DeinitSprites();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -385,7 +384,7 @@ void R_InitRenderer()
 
 static void R_ShutdownRenderer()
 {
-	R_DeinitSprites();
+	RenderTranslucent::Deinit();
 	R_DeinitPlanes();
 	Clip3DFloors::Instance()->Cleanup();
 	R_DeinitOpenings();
@@ -528,7 +527,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	R_ClearClipSegs (0, viewwidth);
 	R_ClearDrawSegs ();
 	R_ClearPlanes (true);
-	R_ClearSprites ();
+	RenderTranslucent::Clear();
 
 	// opening / clipping determination
 	RenderBSP::Instance()->ClearClip();
@@ -577,7 +576,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		R_DrawMasked ();
+		RenderTranslucent::Render();
 		MaskedCycles.Unclock();
 
 		NetUpdate ();

@@ -177,7 +177,7 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		vis = R_NewVisSprite();
+		vis = VisibleSpriteList::Add();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -253,7 +253,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				if (R_ClipSpriteColumnWithPortals(x, vis))
+				if (RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
@@ -263,7 +263,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				if (R_ClipSpriteColumnWithPortals(x, vis))
+				if (RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint8_t *dest = ylookup[yl] + x + dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);

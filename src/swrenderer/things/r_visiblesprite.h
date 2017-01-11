@@ -23,6 +23,8 @@ struct FVoxel;
 
 namespace swrenderer
 {
+	struct drawseg_t;
+
 	struct vissprite_t
 	{
 		struct posang
@@ -88,25 +90,55 @@ namespace swrenderer
 		vissprite_t() {}
 	};
 
-	extern int MaxVisSprites;
-	extern vissprite_t **vissprites, **firstvissprite;
-	extern vissprite_t **vissprite_p;
+	class VisibleSpriteList
+	{
+	public:
+		static int MaxVisSprites;
+		static vissprite_t **vissprites;
+		static vissprite_t **firstvissprite;
+		static vissprite_t **vissprite_p;
 
-	extern bool DrewAVoxel;
+		static void Deinit();
+		static void Clear();
+		static vissprite_t *Add();
 
-	void R_DeinitVisSprites();
-	void R_ClearVisSprites();
-	vissprite_t *R_NewVisSprite();
+	private:
+		static vissprite_t **lastvissprite;
+	};
 
-	void R_DeinitSprites();
-	void R_ClearSprites();
-	void R_CollectPortals();
-	bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
-	void R_SortVisSprites(bool(*compare)(vissprite_t *, vissprite_t *), size_t first);
-	void R_DrawSprite(vissprite_t *spr);
-	void R_DrawMaskedSingle(bool renew);
-	void R_DrawMasked();
+	class SortedVisibleSpriteList
+	{
+	public:
+		static void Deinit();
 
-	bool sv_compare(vissprite_t *a, vissprite_t *b);
-	bool sv_compare2d(vissprite_t *a, vissprite_t *b);
+		static void Sort(bool(*compare)(vissprite_t *, vissprite_t *), size_t first);
+
+		static bool sv_compare(vissprite_t *a, vissprite_t *b);
+		static bool sv_compare2d(vissprite_t *a, vissprite_t *b);
+
+		static vissprite_t **spritesorter;
+		static int vsprcount;
+
+	private:
+		static int spritesortersize;
+	};
+
+	class RenderTranslucent
+	{
+	public:
+		static void Deinit();
+		static void Clear();
+		static void Render();
+
+		static bool DrewAVoxel;
+
+		static bool ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
+
+	private:
+		static void CollectPortals();
+		static void DrawSprite(vissprite_t *spr);
+		static void DrawMaskedSingle(bool renew);
+
+		static TArray<drawseg_t *> portaldrawsegs;
+	};
 }

@@ -102,7 +102,7 @@ namespace swrenderer
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
-		vis = R_NewVisSprite();
+		vis = VisibleSpriteList::Add();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 >= renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
@@ -222,7 +222,7 @@ namespace swrenderer
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
-				if (!R_ClipSpriteColumnWithPortals(x, spr))
+				if (!RenderTranslucent::ClipSpriteColumnWithPortals(x, spr))
 					DrawColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;

@@ -101,7 +101,7 @@ namespace swrenderer
 			}
 		}
 
-		vissprite_t *vis = R_NewVisSprite();
+		vissprite_t *vis = VisibleSpriteList::Add();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -152,7 +152,7 @@ namespace swrenderer
 		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
 		vis->bWallSprite = false;
-		DrewAVoxel = true;
+		RenderTranslucent::DrewAVoxel = true;
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what

@@ -153,7 +153,7 @@ namespace swrenderer
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
 		// store information in a vissprite
-		vissprite_t *vis = R_NewVisSprite();
+		vissprite_t *vis = VisibleSpriteList::Add();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -330,7 +330,7 @@ namespace swrenderer
 			{
 				while (x < x2)
 				{
-					if (ispsprite || !R_ClipSpriteColumnWithPortals(x, vis))
+					if (ispsprite || !RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
 						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;

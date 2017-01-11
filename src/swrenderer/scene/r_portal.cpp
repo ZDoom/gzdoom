@@ -96,7 +96,7 @@ namespace swrenderer
 		int savedextralight = extralight;
 		DVector3 savedpos = ViewPos;
 		DAngle savedangle = ViewAngle;
-		ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
+		ptrdiff_t savedvissprite_p = VisibleSpriteList::vissprite_p - VisibleSpriteList::vissprites;
 		ptrdiff_t savedds_p = ds_p - drawsegs;
 		size_t savedinteresting = FirstInterestingDrawseg;
 		double savedvisibility = R_GetVisibility();
@@ -212,14 +212,14 @@ namespace swrenderer
 			memcpy(openings + draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			memcpy(openings + draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 
-			firstvissprite = vissprite_p;
+			VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprite_p;
 			firstdrawseg = draw_segment;
 			FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
 			interestingStack.Push(FirstInterestingDrawseg);
 			ptrdiff_t diffnum = firstdrawseg - drawsegs;
 			drawsegStack.Push(diffnum);
-			diffnum = firstvissprite - vissprites;
+			diffnum = VisibleSpriteList::firstvissprite - VisibleSpriteList::vissprites;
 			visspriteStack.Push(diffnum);
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
@@ -242,15 +242,15 @@ namespace swrenderer
 			drawsegStack.Pop(pd);
 			firstdrawseg = drawsegs + pd;
 			visspriteStack.Pop(pd);
-			firstvissprite = vissprites + pd;
+			VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprites + pd;
 
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
 
-			R_DrawMasked();
+			RenderTranslucent::Render();
 
 			ds_p = firstdrawseg;
-			vissprite_p = firstvissprite;
+			VisibleSpriteList::vissprite_p = VisibleSpriteList::firstvissprite;
 
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
@@ -260,8 +260,8 @@ namespace swrenderer
 			*freehead = pl;
 			freehead = &pl->next;
 		}
-		firstvissprite = vissprites;
-		vissprite_p = vissprites + savedvissprite_p;
+		VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprites;
+		VisibleSpriteList::vissprite_p = VisibleSpriteList::vissprites + savedvissprite_p;
 		firstdrawseg = drawsegs;
 		ds_p = drawsegs + savedds_p;
 		InterestingDrawsegs.Resize((unsigned int)FirstInterestingDrawseg);
@@ -469,7 +469,7 @@ namespace swrenderer
 		NetUpdate();
 
 		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
-		R_DrawMasked();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
+		RenderTranslucent::Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
 		MaskedCycles.Unclock();
 
 		NetUpdate();

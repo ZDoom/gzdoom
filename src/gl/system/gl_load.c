@@ -17,11 +17,12 @@ static void* AppleGLGetProcAddress (const char *name)
 }
 #endif /* __APPLE__ */
 
-#if defined(__sgi) || defined (__sun)
+/* BEGINNING OF MANUAL CHANGES, DO NOT REMOVE! */
+#if defined(__sgi) || defined (__sun) || defined(__unix__)
 #include <dlfcn.h>
 #include <stdio.h>
 
-static void* SunGetProcAddress (const GLubyte* name)
+static void* PosixGetProcAddress (const GLubyte* name)
 {
   static void* h = NULL;
   static void* gpa;
@@ -37,7 +38,7 @@ static void* SunGetProcAddress (const GLubyte* name)
   else
     return dlsym(h, (const char*)name);
 }
-#endif /* __sgi || __sun */
+#endif /* __sgi || __sun || __unix__ */
 
 #if defined(_WIN32)
 
@@ -77,8 +78,9 @@ static PROC WinGetProcAddress(const char *name)
 	#if defined(__APPLE__)
 		#define IntGetProcAddress(name) AppleGLGetProcAddress(name)
 	#else
-		#if defined(__sgi) || defined(__sun)
-			#define IntGetProcAddress(name) SunGetProcAddress(name)
+		#if defined(__sgi) || defined(__sun) || defined(__unix__)
+			#define IntGetProcAddress(name) PosixGetProcAddress((const GLubyte*)name)
+/* END OF MANUAL CHANGES, DO NOT REMOVE! */
 		#else /* GLX */
 		    #include <GL/glx.h>
 

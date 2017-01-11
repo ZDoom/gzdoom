@@ -106,7 +106,7 @@ namespace swrenderer
 	void R_DeinitSprites()
 	{
 		R_DeinitVisSprites();
-		R_DeinitRenderVoxel();
+		RenderVoxel::Deinit();
 
 		// Free vissprites sorter
 		if (spritesorter != nullptr)
@@ -633,7 +633,7 @@ namespace swrenderer
 			}
 			int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
-			R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
+			RenderVoxel::Render(spr, minvoxely, maxvoxely, cliptop, clipbot);
 		}
 		spr->Style.BaseColormap = colormap;
 		spr->Style.ColormapNum = colormapnum;

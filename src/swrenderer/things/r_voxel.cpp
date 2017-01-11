@@ -43,14 +43,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	namespace
-	{
-		FCoverageBuffer *OffscreenCoverageBuffer;
-		int OffscreenBufferWidth, OffscreenBufferHeight;
-		uint8_t *OffscreenColorBuffer;
-	}
-
-	void R_ProjectVoxel(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
+	void RenderVoxel::Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -226,7 +219,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawVisVoxel(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)
+	void RenderVoxel::Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)
 	{
 		R_SetColorMapLight(sprite->Style.BaseColormap, 0, sprite->Style.ColormapNum << FRACBITS);
 		bool visible = R_SetPatchStyle(sprite->Style.RenderStyle, sprite->Style.Alpha, sprite->Translation, sprite->FillColor);
@@ -305,10 +298,10 @@ namespace swrenderer
 			{
 				for (int y = startY[index]; y != endY; y += stepY[index])
 				{
-					kvxslab_t *slab_start = R_GetSlabStart(mip, x, y);
-					kvxslab_t *slab_end = R_GetSlabEnd(mip, x, y);
+					kvxslab_t *slab_start = GetSlabStart(mip, x, y);
+					kvxslab_t *slab_end = GetSlabEnd(mip, x, y);
 				
-					for (kvxslab_t *slab = slab_start; slab != slab_end; slab = R_NextSlab(slab))
+					for (kvxslab_t *slab = slab_start; slab != slab_end; slab = NextSlab(slab))
 					{
 						// To do: check slab->backfacecull
 						
@@ -327,7 +320,7 @@ namespace swrenderer
 							voxel_pos.Y += dirY.X * x + dirY.Y * y;
 							voxel_pos.Z += dirZ * z;
 						
-							R_FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+							FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
 						}
 					}
 				}
@@ -335,22 +328,22 @@ namespace swrenderer
 		}
 	}
 	
-	kvxslab_t *R_GetSlabStart(const FVoxelMipLevel &mip, int x, int y)
+	kvxslab_t *RenderVoxel::GetSlabStart(const FVoxelMipLevel &mip, int x, int y)
 	{
 		return (kvxslab_t *)&mip.SlabData[mip.OffsetX[x] + (int)mip.OffsetXY[x * (mip.SizeY + 1) + y]];
 	}
 
-	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y)
+	kvxslab_t *RenderVoxel::GetSlabEnd(const FVoxelMipLevel &mip, int x, int y)
 	{
-		return R_GetSlabStart(mip, x, y + 1);
+		return GetSlabStart(mip, x, y + 1);
 	}
 	
-	kvxslab_t *R_NextSlab(kvxslab_t *slab)
+	kvxslab_t *RenderVoxel::NextSlab(kvxslab_t *slab)
 	{
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
-	void R_FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
+	void RenderVoxel::FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
 		double viewX, viewY, viewZ;
 		if (viewspace)
@@ -402,7 +395,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DeinitRenderVoxel()
+	void RenderVoxel::Deinit()
 	{
 		// Free offscreen buffer
 		if (OffscreenColorBuffer != nullptr)
@@ -418,7 +411,7 @@ namespace swrenderer
 		OffscreenBufferHeight = OffscreenBufferWidth = 0;
 	}
 
-	void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
+	void RenderVoxel::CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		// Allocates the offscreen coverage buffer and optionally the offscreen
 		// color buffer. If they already exist but are the wrong size, they will
@@ -459,6 +452,11 @@ namespace swrenderer
 		OffscreenBufferWidth = width;
 		OffscreenBufferHeight = height;
 	}
+
+	FCoverageBuffer *RenderVoxel::OffscreenCoverageBuffer;
+	int RenderVoxel::OffscreenBufferWidth;
+	int RenderVoxel::OffscreenBufferHeight;
+	uint8_t *RenderVoxel::OffscreenColorBuffer;
 
 	////////////////////////////////////////////////////////////////////////////
 

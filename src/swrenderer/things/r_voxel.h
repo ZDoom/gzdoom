@@ -30,18 +30,6 @@ namespace swrenderer
 {
 	struct vissprite_t;
 
-	enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
-
-	void R_ProjectVoxel(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade);
-	void R_DrawVisVoxel(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom);
-	void R_FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch);
-	kvxslab_t *R_GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
-	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);
-	kvxslab_t *R_NextSlab(kvxslab_t *slab);
-
-	void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
-	void R_DeinitRenderVoxel();
-
 	// [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 	struct FCoverageBuffer
 	{
@@ -62,5 +50,30 @@ namespace swrenderer
 		Span **Spans;	// [0..NumLists-1] span lists
 		Span *FreeSpans;
 		unsigned int NumLists;
+	};
+
+	class RenderVoxel
+	{
+	public:
+		static void Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade);
+		static void Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom);
+
+		static void Deinit();
+
+	private:
+		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
+
+		static void FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch);
+
+		static kvxslab_t *GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
+		static kvxslab_t *GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);
+		static kvxslab_t *NextSlab(kvxslab_t *slab);
+
+		static void CheckOffscreenBuffer(int width, int height, bool spansonly);
+
+		static FCoverageBuffer *OffscreenCoverageBuffer;
+		static int OffscreenBufferWidth;
+		static int OffscreenBufferHeight;
+		static uint8_t *OffscreenColorBuffer;
 	};
 }

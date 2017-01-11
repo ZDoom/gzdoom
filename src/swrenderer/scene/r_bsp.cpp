@@ -871,7 +871,7 @@ namespace swrenderer
 					}
 					else if (sprite.voxel)
 					{
-						R_ProjectVoxel(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
 					}
 					else
 					{

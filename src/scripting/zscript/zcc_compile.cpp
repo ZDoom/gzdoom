@@ -1457,6 +1457,10 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			// statelabel et.al. are not tokens - there really is no need to, it works just as well as an identifier. Maybe the same should be done for some other types, too?
 			switch (btype->UserType->Id)
 			{
+			case NAME_Voidptr:
+				retval = TypeVoidPtr;
+				break;
+
 			case NAME_StateLabel:
 				retval = TypeStateLabel;
 				break;

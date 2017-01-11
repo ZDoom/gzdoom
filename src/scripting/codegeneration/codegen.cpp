@@ -262,12 +262,15 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompar
 {
 	if (dest->IsKindOf(RUNTIME_CLASS(PPointer)) && source->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
-		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
 		auto fromtype = static_cast<PPointer *>(source);
 		auto totype = static_cast<PPointer *>(dest);
-		if (fromtype == nullptr) return true;
+		// null pointers can be assigned to everything, everything can be assigned to void pointers.
+		if (fromtype == nullptr || totype == TypeVoidPtr) return true;
+		// when comparing const-ness does not matter.
 		if (!forcompare && totype->IsConst != fromtype->IsConst) return false;
+		// A type is always compatible to itself.
 		if (fromtype == totype) return true;
+		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
 		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
 			auto fromcls = static_cast<PClass *>(fromtype->PointedType);

@@ -623,20 +623,6 @@ void gl_CleanLevelData()
 		mo=next;
 	}
 
-	for(auto &v : level.vertexes) if (v.numsectors > 0)
-	{
-		if (v.sectors != nullptr)
-		{
-			delete [] v.sectors;
-			v.sectors = nullptr;
-		}
-		if (v.heightlist != nullptr)
-		{
-			delete [] v.heightlist;
-			v.heightlist = nullptr;
-		}
-	}
-
 	if (level.sides.Size() > 0 && level.sides[0].segs)
 	{
 		delete [] level.sides[0].segs;

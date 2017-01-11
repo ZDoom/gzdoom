@@ -846,9 +846,9 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/drawers/r_drawers.cpp
 	swrenderer/drawers/r_thread.cpp
 	swrenderer/scene/r_3dfloors.cpp
-	swrenderer/scene/r_bsp.cpp
+	swrenderer/scene/r_opaque_pass.cpp
 	swrenderer/scene/r_portal.cpp
-	swrenderer/scene/r_translucent.cpp
+	swrenderer/scene/r_translucent_pass.cpp
 	swrenderer/line/r_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp

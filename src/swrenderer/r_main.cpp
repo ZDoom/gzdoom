@@ -37,13 +37,13 @@
 #include "r_main.h"
 #include "drawers/r_draw.h"
 #include "plane/r_flatplane.h"
-#include "scene/r_bsp.h"
+#include "scene/r_opaque_pass.h"
 #include "segments/r_drawsegment.h"
 #include "segments/r_portalsegment.h"
 #include "segments/r_clipsegment.h"
 #include "scene/r_3dfloors.h"
 #include "scene/r_portal.h"
-#include "scene/r_translucent.h"
+#include "scene/r_translucent_pass.h"
 #include "r_sky.h"
 #include "drawers/r_draw_rgba.h"
 #include "st_stuff.h"
@@ -385,7 +385,7 @@ void R_InitRenderer()
 
 static void R_ShutdownRenderer()
 {
-	RenderTranslucent::Deinit();
+	RenderTranslucentPass::Deinit();
 	R_DeinitPlanes();
 	Clip3DFloors::Instance()->Cleanup();
 	R_DeinitOpenings();
@@ -528,10 +528,10 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	R_ClearClipSegs (0, viewwidth);
 	R_ClearDrawSegs ();
 	R_ClearPlanes (true);
-	RenderTranslucent::Clear();
+	RenderTranslucentPass::Clear();
 
 	// opening / clipping determination
-	RenderBSP::Instance()->ClearClip();
+	RenderOpaquePass::Instance()->ClearClip();
 	R_FreeOpenings();
 
 	NetUpdate ();
@@ -544,7 +544,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	r_dontmaplines = dontmaplines;
 	
 	// [RH] Hack to make windows into underwater areas possible
-	RenderBSP::Instance()->ResetFakingUnderwater();
+	RenderOpaquePass::Instance()->ResetFakingUnderwater();
 
 	// [RH] Setup particles for this frame
 	P_FindParticleSubsectors ();
@@ -558,7 +558,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
-	RenderBSP::Instance()->RenderScene();
+	RenderOpaquePass::Instance()->RenderScene();
 	Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
@@ -577,7 +577,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		RenderTranslucent::Render();
+		RenderTranslucentPass::Render();
 		MaskedCycles.Unclock();
 
 		NetUpdate ();

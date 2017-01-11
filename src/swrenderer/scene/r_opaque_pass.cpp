@@ -52,7 +52,7 @@
 // State.
 #include "doomstat.h"
 #include "r_state.h"
-#include "r_bsp.h"
+#include "r_opaque_pass.h"
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"
@@ -64,13 +64,13 @@ EXTERN_CVAR(Bool, r_drawvoxels);
 
 namespace swrenderer
 {
-	RenderBSP *RenderBSP::Instance()
+	RenderOpaquePass *RenderOpaquePass::Instance()
 	{
-		static RenderBSP bsp;
-		return &bsp;
+		static RenderOpaquePass instance;
+		return &instance;
 	}
 
-	sector_t *RenderBSP::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2)
+	sector_t *RenderOpaquePass::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2)
 	{
 		// If player's view height is underneath fake floor, lower the
 		// drawn ceiling to be just under the floor height, and replace
@@ -277,7 +277,7 @@ namespace swrenderer
 
 	// Checks BSP node/subtree bounding box.
 	// Returns true if some part of the bbox might be visible.
-	bool RenderBSP::CheckBBox(float *bspcoord)
+	bool RenderOpaquePass::CheckBBox(float *bspcoord)
 	{
 		static const int checkcoord[12][4] =
 		{
@@ -378,7 +378,7 @@ namespace swrenderer
 		return R_IsWallSegmentVisible(sx1, sx2);
 	}
 
-	void RenderBSP::AddPolyobjs(subsector_t *sub)
+	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)
 	{
 		if (sub->BSP == nullptr || sub->BSP->bDirty)
 		{
@@ -395,7 +395,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderBSP::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -413,7 +413,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderBSP::RenderSubsector(subsector_t *sub)
+	void RenderOpaquePass::RenderSubsector(subsector_t *sub)
 	{
 		// Determine floor/ceiling planes.
 		// Add sprites of things in sector.
@@ -761,7 +761,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderBSP::RenderScene()
+	void RenderOpaquePass::RenderScene()
 	{
 		InSubsector = nullptr;
 		RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
@@ -773,7 +773,7 @@ namespace swrenderer
 	// Just call with BSP root and -1.
 	// killough 5/2/98: reformatted, removed tail recursion
 
-	void RenderBSP::RenderBSPNode(void *node)
+	void RenderOpaquePass::RenderBSPNode(void *node)
 	{
 		if (numnodes == 0)
 		{
@@ -800,14 +800,14 @@ namespace swrenderer
 		RenderSubsector((subsector_t *)((BYTE *)node - 1));
 	}
 
-	void RenderBSP::ClearClip()
+	void RenderOpaquePass::ClearClip()
 	{
 		// clip ceiling to console bottom
 		fillshort(floorclip, viewwidth, viewheight);
 		fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
 	}
 
-	void RenderBSP::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside)
+	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside)
 	{
 		F3DFloor *fakeceiling = nullptr;
 		F3DFloor *fakefloor = nullptr;
@@ -885,7 +885,7 @@ namespace swrenderer
 		}
 	}
 
-	bool RenderBSP::IsPotentiallyVisible(AActor *thing)
+	bool RenderOpaquePass::IsPotentiallyVisible(AActor *thing)
 	{
 		// Don't waste time projecting sprites that are definitely not visible.
 		if (thing == nullptr ||
@@ -906,7 +906,7 @@ namespace swrenderer
 		return true;
 	}
 
-	bool RenderBSP::GetThingSprite(AActor *thing, ThingSprite &sprite)
+	bool RenderOpaquePass::GetThingSprite(AActor *thing, ThingSprite &sprite)
 	{
 		sprite.pos = thing->InterpolatedPosition(r_TicFracF);
 		sprite.pos.Z += thing->GetBobOffset(r_TicFracF);

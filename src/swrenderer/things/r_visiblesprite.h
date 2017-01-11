@@ -14,7 +14,7 @@
 #pragma once
 
 #include "swrenderer/line/r_line.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/things/r_visiblespritelist.h"
 
 #define MINZ double((2048*4) / double(1 << 20))

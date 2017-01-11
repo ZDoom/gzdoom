@@ -39,7 +39,7 @@
 #include "v_video.h"
 #include "m_png.h"
 #include "r_swrenderer.h"
-#include "scene/r_bsp.h"
+#include "scene/r_opaque_pass.h"
 #include "scene/r_3dfloors.h"
 #include "scene/r_portal.h"
 #include "textures/textures.h"
@@ -477,6 +477,6 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
 {
-	return RenderBSP::Instance()->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
+	return RenderOpaquePass::Instance()->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
 }
 

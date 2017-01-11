@@ -49,8 +49,8 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/things/r_visiblesprite.h"
-#include "swrenderer/scene/r_bsp.h"
-#include "swrenderer/scene/r_translucent.h"
+#include "swrenderer/scene/r_opaque_pass.h"
+#include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 
@@ -178,8 +178,8 @@ namespace swrenderer
 			WindowLeft = pl->left;
 			WindowRight = pl->right;
 
-			auto ceilingclip = RenderBSP::Instance()->ceilingclip;
-			auto floorclip = RenderBSP::Instance()->floorclip;
+			auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
+			auto floorclip = RenderOpaquePass::Instance()->floorclip;
 			for (i = pl->left; i < pl->right; i++)
 			{
 				if (pl->top[i] == 0x7fff)
@@ -225,7 +225,7 @@ namespace swrenderer
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
 
-			RenderBSP::Instance()->RenderScene();
+			RenderOpaquePass::Instance()->RenderScene();
 			Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 			R_DrawPlanes();
 
@@ -248,7 +248,7 @@ namespace swrenderer
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
 
-			RenderTranslucent::Render();
+			RenderTranslucentPass::Render();
 
 			ds_p = firstdrawseg;
 			VisibleSpriteList::vissprite_p = VisibleSpriteList::firstvissprite;
@@ -441,12 +441,12 @@ namespace swrenderer
 		CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
 
 		// first pass, set clipping
-		auto ceilingclip = RenderBSP::Instance()->ceilingclip;
-		auto floorclip = RenderBSP::Instance()->floorclip;
+		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
+		auto floorclip = RenderOpaquePass::Instance()->floorclip;
 		memcpy(ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len * sizeof(*ceilingclip));
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
-		RenderBSP::Instance()->RenderScene();
+		RenderOpaquePass::Instance()->RenderScene();
 		Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 
@@ -470,7 +470,7 @@ namespace swrenderer
 		NetUpdate();
 
 		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
-		RenderTranslucent::Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
+		RenderTranslucentPass::Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
 		MaskedCycles.Unclock();
 
 		NetUpdate();

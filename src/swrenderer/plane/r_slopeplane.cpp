@@ -27,7 +27,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "r_slopeplane.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "v_palette.h"

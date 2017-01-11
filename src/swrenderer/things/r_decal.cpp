@@ -28,7 +28,7 @@
 #include "a_sharedglobal.h"
 #include "d_net.h"
 #include "g_level.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "r_decal.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/drawers/r_draw.h"
@@ -173,7 +173,7 @@ namespace swrenderer
 			else if (pass == 0)
 			{
 				mceilingclip = walltop;
-				mfloorclip = RenderBSP::Instance()->ceilingclip;
+				mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 				needrepeat = 1;
 			}
 			else
@@ -189,7 +189,7 @@ namespace swrenderer
 				goto done;
 			}
 			mceilingclip = walltop;
-			mfloorclip = RenderBSP::Instance()->ceilingclip;
+			mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 			break;
 
 		case RF_CLIPMID:
@@ -206,7 +206,7 @@ namespace swrenderer
 			{
 				goto done;
 			}
-			mceilingclip = RenderBSP::Instance()->floorclip;
+			mceilingclip = RenderOpaquePass::Instance()->floorclip;
 			mfloorclip = wallbottom;
 			break;
 		}
@@ -300,7 +300,7 @@ namespace swrenderer
 			// If this sprite is RF_CLIPFULL on a two-sided line, needrepeat will
 			// be set 1 if we need to draw on the lower wall. In all other cases,
 			// needrepeat will be 0, and the while will fail.
-			mceilingclip = RenderBSP::Instance()->floorclip;
+			mceilingclip = RenderOpaquePass::Instance()->floorclip;
 			mfloorclip = wallbottom;
 			R_FinishSetPatchStyle();
 		} while (needrepeat--);

@@ -38,9 +38,9 @@
 #include "colormatcher.h"
 #include "d_netinf.h"
 #include "p_effect.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
-#include "swrenderer/scene/r_translucent.h"
+#include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "v_palette.h"
@@ -331,7 +331,7 @@ namespace swrenderer
 			{
 				while (x < x2)
 				{
-					if (ispsprite || !RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
+					if (ispsprite || !RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
 						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;

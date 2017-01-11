@@ -38,9 +38,9 @@
 #include "colormatcher.h"
 #include "d_netinf.h"
 #include "p_effect.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
-#include "swrenderer/scene/r_translucent.h"
+#include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "v_palette.h"
@@ -118,8 +118,8 @@ namespace swrenderer
 		// entered, we don't need to clip it to drawsegs like a normal sprite.
 
 		// Clip particles behind walls.
-		auto ceilingclip = RenderBSP::Instance()->ceilingclip;
-		auto floorclip = RenderBSP::Instance()->floorclip;
+		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
+		auto floorclip = RenderOpaquePass::Instance()->floorclip;
 		if (y1 <  ceilingclip[x1])		y1 = ceilingclip[x1];
 		if (y1 <  ceilingclip[x2 - 1])	y1 = ceilingclip[x2 - 1];
 		if (y2 >= floorclip[x1])		y2 = floorclip[x1] - 1;
@@ -254,7 +254,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				if (RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
+				if (RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
@@ -264,7 +264,7 @@ namespace swrenderer
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
-				if (RenderTranslucent::ClipSpriteColumnWithPortals(x, vis))
+				if (RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
 					continue;
 				uint8_t *dest = ylookup[yl] + x + dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);

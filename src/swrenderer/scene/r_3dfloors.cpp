@@ -10,7 +10,7 @@
 #include "p_local.h"
 #include "c_dispatch.h"
 #include "swrenderer/r_main.h"
-#include "r_bsp.h"
+#include "r_opaque_pass.h"
 #include "c_cvars.h"
 #include "r_3dfloors.h"
 
@@ -102,8 +102,8 @@ namespace swrenderer
 
 		curr = (ClipStack*)M_Malloc(sizeof(ClipStack));
 		curr->next = 0;
-		memcpy(curr->floorclip, RenderBSP::Instance()->floorclip, sizeof(short) * MAXWIDTH);
-		memcpy(curr->ceilingclip, RenderBSP::Instance()->ceilingclip, sizeof(short) * MAXWIDTH);
+		memcpy(curr->floorclip, RenderOpaquePass::Instance()->floorclip, sizeof(short) * MAXWIDTH);
+		memcpy(curr->ceilingclip, RenderOpaquePass::Instance()->ceilingclip, sizeof(short) * MAXWIDTH);
 		curr->ffloor = fakeFloor;
 		assert(fakeFloor->floorclip == nullptr);
 		assert(fakeFloor->ceilingclip == nullptr);

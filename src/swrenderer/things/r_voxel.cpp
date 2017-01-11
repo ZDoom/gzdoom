@@ -37,7 +37,7 @@
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/scene/r_portal.h"
-#include "swrenderer/scene/r_translucent.h"
+#include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/r_main.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
@@ -153,7 +153,7 @@ namespace swrenderer
 		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
 		vis->bWallSprite = false;
-		RenderTranslucent::DrewAVoxel = true;
+		RenderTranslucentPass::DrewAVoxel = true;
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what

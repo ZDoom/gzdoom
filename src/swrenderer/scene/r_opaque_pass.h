@@ -48,10 +48,10 @@ namespace swrenderer
 		int renderflags;
 	};
 
-	class RenderBSP
+	class RenderOpaquePass
 	{
 	public:
-		static RenderBSP *Instance();
+		static RenderOpaquePass *Instance();
 
 		void ClearClip();
 		void RenderScene();

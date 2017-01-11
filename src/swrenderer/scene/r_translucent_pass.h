@@ -25,7 +25,7 @@ namespace swrenderer
 	struct vissprite_t;
 	struct drawseg_t;
 
-	class RenderTranslucent
+	class RenderTranslucentPass
 	{
 	public:
 		static void Deinit();

@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_visiblesprite.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 
 namespace swrenderer
 {

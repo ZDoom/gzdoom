@@ -33,7 +33,7 @@
 #include "r_data/colormaps.h"
 #include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/line/r_line.h"
@@ -138,7 +138,7 @@ namespace swrenderer
 			// kg3D - its fake, no transfer_heights
 			if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-				backsector = RenderBSP::Instance()->FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
+				backsector = RenderOpaquePass::Instance()->FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
 			}
 			doorclosed = false;		// killough 4/16/98
 
@@ -455,7 +455,7 @@ namespace swrenderer
 
 					// kg3D - backup for mid and fake walls
 					draw_segment->bkup = R_NewOpening(stop - start);
-					memcpy(openings + draw_segment->bkup, &RenderBSP::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+					memcpy(openings + draw_segment->bkup, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(frontsector, backsector);
 					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->bFakeBoundary)
@@ -567,13 +567,13 @@ namespace swrenderer
 		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == -1)
 		{
 			draw_segment->sprtopclip = R_NewOpening(stop - start);
-			memcpy(openings + draw_segment->sprtopclip, &RenderBSP::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+			memcpy(openings + draw_segment->sprtopclip, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == -1)
 		{
 			draw_segment->sprbottomclip = R_NewOpening(stop - start);
-			memcpy(openings + draw_segment->sprbottomclip, &RenderBSP::Instance()->floorclip[start], sizeof(short)*(stop - start));
+			memcpy(openings + draw_segment->sprbottomclip, &RenderOpaquePass::Instance()->floorclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
@@ -969,8 +969,8 @@ namespace swrenderer
 			R_SetColorMapLight(fixedcolormap, 0, 0);
 
 		// clip wall to the floor and ceiling
-		auto ceilingclip = RenderBSP::Instance()->ceilingclip;
-		auto floorclip = RenderBSP::Instance()->floorclip;
+		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
+		auto floorclip = RenderOpaquePass::Instance()->floorclip;
 		for (x = x1; x < x2; ++x)
 		{
 			if (walltop[x] < ceilingclip[x])

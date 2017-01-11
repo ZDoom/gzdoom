@@ -32,7 +32,7 @@
 #include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
-#include "swrenderer/scene/r_translucent.h"
+#include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/r_memory.h"
 
@@ -44,23 +44,23 @@ CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	bool RenderTranslucent::DrewAVoxel;
-	TArray<drawseg_t *> RenderTranslucent::portaldrawsegs;
+	bool RenderTranslucentPass::DrewAVoxel;
+	TArray<drawseg_t *> RenderTranslucentPass::portaldrawsegs;
 
-	void RenderTranslucent::Deinit()
+	void RenderTranslucentPass::Deinit()
 	{
 		VisibleSpriteList::Deinit();
 		SortedVisibleSpriteList::Deinit();
 		RenderVoxel::Deinit();
 	}
 
-	void RenderTranslucent::Clear()
+	void RenderTranslucentPass::Clear()
 	{
 		VisibleSpriteList::Clear();
 		DrewAVoxel = false;
 	}
 
-	void RenderTranslucent::CollectPortals()
+	void RenderTranslucentPass::CollectPortals()
 	{
 		// This function collects all drawsegs that may be of interest to R_ClipSpriteColumnWithPortals 
 		// Having that function over the entire list of drawsegs can break down performance quite drastically.
@@ -90,7 +90,7 @@ namespace swrenderer
 		}
 	}
 
-	bool RenderTranslucent::ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
+	bool RenderTranslucentPass::ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -118,7 +118,7 @@ namespace swrenderer
 		return false;
 	}
 
-	void RenderTranslucent::DrawSprite(vissprite_t *spr)
+	void RenderTranslucentPass::DrawSprite(vissprite_t *spr)
 	{
 		static short clipbot[MAXWIDTH];
 		static short cliptop[MAXWIDTH];
@@ -523,7 +523,7 @@ namespace swrenderer
 		spr->Style.ColormapNum = colormapnum;
 	}
 
-	void RenderTranslucent::DrawMaskedSingle(bool renew)
+	void RenderTranslucentPass::DrawMaskedSingle(bool renew)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -560,7 +560,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderTranslucent::Render()
+	void RenderTranslucentPass::Render()
 	{
 		CollectPortals();
 		SortedVisibleSpriteList::Sort(DrewAVoxel ? SortedVisibleSpriteList::sv_compare2d : SortedVisibleSpriteList::sv_compare, VisibleSpriteList::firstvissprite - VisibleSpriteList::vissprites);

@@ -26,7 +26,7 @@
 #include "p_effect.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"

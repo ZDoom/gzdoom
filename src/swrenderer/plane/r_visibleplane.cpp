@@ -29,7 +29,7 @@
 #include "g_level.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_bsp.h"
+#include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/plane/r_flatplane.h"

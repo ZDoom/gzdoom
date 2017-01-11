@@ -21,7 +21,6 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_things.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -55,6 +54,8 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/r_memory.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {

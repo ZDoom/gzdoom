@@ -20,7 +20,6 @@
 #include "doomdata.h"
 #include "p_lnspec.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_things.h"
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
@@ -41,6 +40,8 @@
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {

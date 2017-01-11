@@ -21,7 +21,6 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_things.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -60,6 +59,7 @@ EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {

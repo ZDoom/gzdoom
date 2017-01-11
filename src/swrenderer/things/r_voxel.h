@@ -24,6 +24,7 @@
 #pragma once
 
 struct kvxslab_t;
+struct FVoxelMipLevel;
 
 namespace swrenderer
 {

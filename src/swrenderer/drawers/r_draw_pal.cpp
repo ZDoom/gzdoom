@@ -46,7 +46,6 @@
 #include "r_defs.h"
 #include "r_draw.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_things.h"
 #include "v_video.h"
 #include "r_draw_pal.h"
 

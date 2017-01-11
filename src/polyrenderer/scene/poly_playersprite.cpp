@@ -27,7 +27,6 @@
 #include "r_data/r_translate.h"
 #include "poly_playersprite.h"
 #include "polyrenderer/poly_renderer.h"
-#include "swrenderer/scene/r_things.h" // for pspritexscale
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)

@@ -31,7 +31,6 @@
 #include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/drawers/r_draw.h"
-#include "swrenderer/scene/r_things.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_bsp.h"
 #include "swrenderer/scene/r_portal.h"
@@ -39,6 +38,9 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_fogboundary.h"
 #include "swrenderer/segments/r_drawsegment.h"
+#include "swrenderer/things/r_visiblesprite.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {

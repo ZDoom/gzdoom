@@ -35,7 +35,6 @@
 #include "m_random.h"
 #include "m_bbox.h"
 #include "r_main.h"
-#include "scene/r_things.h"
 #include "drawers/r_draw.h"
 #include "plane/r_flatplane.h"
 #include "scene/r_bsp.h"

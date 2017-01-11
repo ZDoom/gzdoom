@@ -92,7 +92,21 @@ namespace swrenderer
 	extern vissprite_t **vissprites, **firstvissprite;
 	extern vissprite_t **vissprite_p;
 
+	extern bool DrewAVoxel;
+
 	void R_DeinitVisSprites();
 	void R_ClearVisSprites();
 	vissprite_t *R_NewVisSprite();
+
+	void R_DeinitSprites();
+	void R_ClearSprites();
+	void R_CollectPortals();
+	bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
+	void R_SortVisSprites(bool(*compare)(vissprite_t *, vissprite_t *), size_t first);
+	void R_DrawSprite(vissprite_t *spr);
+	void R_DrawMaskedSingle(bool renew);
+	void R_DrawMasked();
+
+	bool sv_compare(vissprite_t *a, vissprite_t *b);
+	bool sv_compare2d(vissprite_t *a, vissprite_t *b);
 }

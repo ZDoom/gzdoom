@@ -39,7 +39,6 @@
 #include "swrenderer/things/r_particle.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/line/r_wallsetup.h"
-#include "r_things.h"
 #include "r_3dfloors.h"
 #include "r_portal.h"
 #include "a_sharedglobal.h"

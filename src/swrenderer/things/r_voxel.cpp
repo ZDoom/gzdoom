@@ -31,12 +31,12 @@
 #include "r_data/sprites.h"
 #include "d_net.h"
 #include "po_man.h"
-#include "swrenderer/scene/r_things.h"
+#include "r_utility.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
-#include "r_utility.h"
+#include "swrenderer/things/r_visiblesprite.h"
+#include "swrenderer/things/r_voxel.h"
 #include "swrenderer/r_main.h"
-#include "r_voxel.h"
 
 namespace swrenderer
 {

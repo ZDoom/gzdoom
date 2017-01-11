@@ -727,6 +727,6 @@ namespace swrenderer
 			clip3d->DeleteHeights();
 			clip3d->fake3D = 0;
 		}
-		R_DrawPlayerSprites();
+		RenderPlayerSprite::RenderPlayerSprites();
 	}
 }

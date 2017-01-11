@@ -20,9 +20,32 @@
 
 namespace swrenderer
 {
-	void R_SetupPlayerSpriteScale();
+	class RenderPlayerSprite
+	{
+	public:
+		static void SetupSpriteScale();
 
-	void R_DrawPlayerSprites();
-	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade);
-	void R_DrawRemainingPlayerSprites();
+		static void RenderPlayerSprites();
+		static void RenderRemainingPlayerSprites();
+
+	private:
+		static void Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade);
+
+		// Used to store a psprite's drawing information if it needs to be drawn later.
+		struct vispsp_t
+		{
+			vissprite_t *vis;
+			FDynamicColormap *basecolormap;
+			int	 x1;
+		};
+
+		static TArray<vispsp_t> vispsprites;
+		static unsigned int vispspindex;
+
+		static double pspritexscale;
+		static double pspritexiscale;
+		static double pspriteyscale;
+
+		static TArray<vissprite_t> avis;
+	};
 }

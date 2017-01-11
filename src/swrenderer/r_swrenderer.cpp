@@ -294,7 +294,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
 	if (!r_polyrenderer)
 	{
-		R_DrawRemainingPlayerSprites();
+		RenderPlayerSprite::RenderRemainingPlayerSprites();
 	}
 	else
 	{

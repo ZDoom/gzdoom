@@ -345,7 +345,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	WallTMapScale2 = IYaspectMul / CenterX;
 
 	// psprite scales
-	R_SetupPlayerSpriteScale();
+	RenderPlayerSprite::SetupSpriteScale();
 
 	// thing clipping
 	fillshort (screenheightarray, viewwidth, (short)viewheight);

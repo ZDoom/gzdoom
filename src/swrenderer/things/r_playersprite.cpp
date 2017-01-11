@@ -63,32 +63,23 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	namespace
-	{
-		// Used to store a psprite's drawing information if it needs to be drawn later.
-		struct vispsp_t
-		{
-			vissprite_t *vis;
-			FDynamicColormap *basecolormap;
-			int	 x1;
-		};
+	TArray<RenderPlayerSprite::vispsp_t> RenderPlayerSprite::vispsprites;
+	unsigned int RenderPlayerSprite::vispspindex;
 
-		TArray<vispsp_t> vispsprites;
-		unsigned int vispspindex;
+	double RenderPlayerSprite::pspritexscale;
+	double RenderPlayerSprite::pspritexiscale;
+	double RenderPlayerSprite::pspriteyscale;
 
-		double pspritexscale;
-		double pspritexiscale;
-		double pspriteyscale;
-	}
+	TArray<vissprite_t> RenderPlayerSprite::avis;
 
-	void R_SetupPlayerSpriteScale()
+	void RenderPlayerSprite::SetupSpriteScale()
 	{
 		pspritexscale = centerxwide / 160.0;
 		pspriteyscale = pspritexscale * YaspectMul;
 		pspritexiscale = 1 / pspritexscale;
 	}
 
-	void R_DrawPlayerSprites()
+	void RenderPlayerSprite::RenderPlayerSprites()
 	{
 		int 		i;
 		int 		lightnum;
@@ -191,7 +182,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade);
+					Render(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade);
 				}
 
 				psp = psp->GetNext();
@@ -201,7 +192,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade)
+	void RenderPlayerSprite::Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade)
 	{
 		double 				tx;
 		int 				x1;
@@ -215,7 +206,6 @@ namespace swrenderer
 		vissprite_t*		vis;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
-		static TArray<vissprite_t> avis;
 
 		if (avis.Size() < vispspindex + 1)
 			avis.Reserve(avis.Size() - vispspindex + 1);
@@ -582,7 +572,7 @@ namespace swrenderer
 		RenderSprite::Render(vis, mfloorclip, mceilingclip);
 	}
 
-	void R_DrawRemainingPlayerSprites()
+	void RenderPlayerSprite::RenderRemainingPlayerSprites()
 	{
 		for (unsigned int i = 0; i < vispspindex; i++)
 		{

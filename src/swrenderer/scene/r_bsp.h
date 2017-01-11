@@ -57,6 +57,8 @@ namespace swrenderer
 		void AddPolyobjs(subsector_t *sub);
 		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane);
 
+		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside);
+
 		subsector_t *InSubsector = nullptr;
 		sector_t *frontsector = nullptr;
 		WaterFakeSide FakeSide = WaterFakeSide::Center;

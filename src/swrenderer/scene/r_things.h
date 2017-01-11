@@ -43,7 +43,6 @@ bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr);
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
-void R_AddSprites (sector_t *sec, int lightlevel, WaterFakeSide fakeside);
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
@@ -52,6 +51,7 @@ enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 
+extern bool DrewAVoxel;
 
 }
 

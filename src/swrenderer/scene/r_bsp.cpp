@@ -875,7 +875,7 @@ namespace swrenderer
 					}
 					else
 					{
-						R_ProjectSprite(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
 					}
 				}
 			}

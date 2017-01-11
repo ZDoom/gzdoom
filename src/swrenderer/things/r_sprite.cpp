@@ -57,7 +57,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void R_ProjectSprite(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
+	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -271,7 +271,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawVisSprite(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip)
+	void RenderSprite::Render(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip)
 	{
 		fixed_t 		frac;
 		FTexture		*tex;

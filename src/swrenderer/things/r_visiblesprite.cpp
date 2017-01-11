@@ -595,7 +595,7 @@ namespace swrenderer
 		{
 			if (!spr->bWallSprite)
 			{
-				R_DrawVisSprite(spr, clipbot, cliptop);
+				RenderSprite::Render(spr, clipbot, cliptop);
 			}
 			else
 			{

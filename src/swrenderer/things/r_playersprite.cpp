@@ -579,7 +579,7 @@ namespace swrenderer
 		short *mfloorclip = screenheightarray;
 		short *mceilingclip = zeroarray;
 
-		R_DrawVisSprite(vis, mfloorclip, mceilingclip);
+		RenderSprite::Render(vis, mfloorclip, mceilingclip);
 	}
 
 	void R_DrawRemainingPlayerSprites()

@@ -13,10 +13,12 @@
 
 #pragma once
 
-#include "r_visibleplane.h"
+#include "r_planerenderer.h"
 
 namespace swrenderer
 {
+	struct visplane_light;
+
 	class RenderFlatPlane : PlaneRenderer
 	{
 	public:

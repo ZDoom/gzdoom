@@ -865,7 +865,9 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/things/r_wallsprite.cpp
 	swrenderer/things/r_decal.cpp
 	swrenderer/plane/r_visibleplane.cpp
+	swrenderer/plane/r_visibleplanelist.cpp
 	swrenderer/plane/r_skyplane.cpp
+	swrenderer/plane/r_planerenderer.cpp
 	swrenderer/plane/r_flatplane.cpp
 	swrenderer/plane/r_slopeplane.cpp
 	polyrenderer/poly_renderer.cpp

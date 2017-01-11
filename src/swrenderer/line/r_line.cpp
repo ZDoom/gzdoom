@@ -43,6 +43,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/plane/r_visibleplane.h"
+#include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/things/r_decal.h"
 
 CVAR(Bool, r_fogboundary, true, 0)

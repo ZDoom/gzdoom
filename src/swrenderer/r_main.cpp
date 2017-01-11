@@ -69,6 +69,7 @@
 #include "c_console.h"
 #include "r_memory.h"
 #include "swrenderer/things/r_playersprite.h"
+#include "swrenderer/plane/r_visibleplanelist.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)

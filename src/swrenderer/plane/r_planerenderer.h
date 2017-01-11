@@ -13,23 +13,22 @@
 
 #pragma once
 
-#include "r_planerenderer.h"
+#include <stddef.h>
+#include "r_defs.h"
 
 namespace swrenderer
 {
-	class RenderSlopePlane : PlaneRenderer
+	struct visplane_t;
+
+	class PlaneRenderer
 	{
 	public:
-		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked);
+		void RenderLines(visplane_t *pl);
+
+		virtual void RenderLine(int y, int x1, int x2) = 0;
+		virtual void StepColumn() { }
 
 	private:
-		void RenderLine(int y, int x1, int x2) override;
-
-		FVector3 plane_sz, plane_su, plane_sv;
-		float planelightfloat;
-		bool plane_shade;
-		int planeshade;
-		fixed_t pviewx, pviewy;
-		fixed_t xscale, yscale;
+		short spanend[MAXHEIGHT];
 	};
 }

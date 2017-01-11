@@ -48,6 +48,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/plane/r_visibleplane.h"
+#include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_translucent_pass.h"

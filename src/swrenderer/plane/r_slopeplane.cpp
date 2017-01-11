@@ -38,6 +38,7 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/plane/r_visibleplane.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)

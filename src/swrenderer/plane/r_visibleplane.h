@@ -68,43 +68,4 @@ namespace swrenderer
 		void AddLights(FLightNode *node);
 		void Render(fixed_t alpha, bool additive, bool masked);
 	};
-
-	class VisiblePlaneList
-	{
-	public:
-		static VisiblePlaneList *Instance();
-
-		void Init();
-		void Deinit();
-		void Clear(bool fullclear);
-
-		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal);
-		visplane_t *GetRange(visplane_t *pl, int start, int stop);
-
-		int Render();
-		void RenderHeight(double height);
-
-		enum { MAXVISPLANES = 128 }; // must be a power of 2
-		visplane_t *visplanes[MAXVISPLANES + 1];
-		visplane_t *freetail = nullptr;
-		visplane_t **freehead = nullptr;
-
-	private:
-		VisiblePlaneList();
-		visplane_t *Add(unsigned hash);
-
-		static unsigned CalcHash(int picnum, int lightlevel, const secplane_t &height) { return (unsigned)((picnum) * 3 + (lightlevel)+(FLOAT2FIXED((height).fD())) * 7) & (MAXVISPLANES - 1); }
-	};
-
-	class PlaneRenderer
-	{
-	public:
-		void RenderLines(visplane_t *pl);
-
-		virtual void RenderLine(int y, int x1, int x2) = 0;
-		virtual void StepColumn() { }
-
-	private:
-		short spanend[MAXHEIGHT];
-	};
 }

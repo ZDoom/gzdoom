@@ -37,6 +37,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/r_memory.h"
 
 namespace swrenderer

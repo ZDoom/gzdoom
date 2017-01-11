@@ -35,6 +35,7 @@
 #include "swrenderer/r_main.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/plane/r_visibleplane.h"
+#include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/things/r_voxel.h"

@@ -34,6 +34,7 @@
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/plane/r_visibleplane.h"
+#include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)

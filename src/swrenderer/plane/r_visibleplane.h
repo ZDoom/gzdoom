@@ -87,5 +87,16 @@ namespace swrenderer
 	int R_DrawPlanes();
 	void R_DrawHeightPlanes(double height);
 	void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
-	void R_MapVisPlane(visplane_t *pl, void(*mapfunc)(int y, int x1, int x2), void(*stepfunc)());
+
+	class PlaneRenderer
+	{
+	public:
+		void RenderLines(visplane_t *pl);
+
+		virtual void RenderLine(int y, int x1, int x2) = 0;
+		virtual void StepColumn() { }
+
+	private:
+		short spanend[MAXHEIGHT];
+	};
 }

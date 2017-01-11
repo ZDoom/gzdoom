@@ -467,7 +467,7 @@ void R_SetupFreelook()
 	globaluclip = -CenterY / InvZtoScale;
 	globaldclip = (viewheight - CenterY) / InvZtoScale;
 
-	R_SetupPlaneSlope();
+	RenderFlatPlane::SetupSlope();
 }
 
 //==========================================================================

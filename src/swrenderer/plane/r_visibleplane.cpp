@@ -52,8 +52,6 @@ namespace swrenderer
 		enum { max_plane_lights = 32 * 1024 };
 		visplane_light plane_lights[max_plane_lights];
 		int next_plane_light = 0;
-
-		short spanend[MAXHEIGHT];
 	}
 
 	void R_DeinitPlanes()
@@ -509,17 +507,19 @@ namespace swrenderer
 
 			if (!pl->height.isSlope() && !tilt)
 			{
-				R_DrawNormalPlane(pl, xscale, yscale, alpha, additive, masked);
+				RenderFlatPlane renderer;
+				renderer.Render(pl, xscale, yscale, alpha, additive, masked);
 			}
 			else
 			{
-				R_DrawTiltedPlane(pl, xscale, yscale, alpha, additive, masked);
+				RenderSlopePlane renderer;
+				renderer.Render(pl, xscale, yscale, alpha, additive, masked);
 			}
 		}
 		NetUpdate();
 	}
 
-	void R_MapVisPlane(visplane_t *pl, void(*mapfunc)(int y, int x1, int x2), void(*stepfunc)())
+	void PlaneRenderer::RenderLines(visplane_t *pl)
 	{
 		// t1/b1 are at x
 		// t2/b2 are at x+1
@@ -547,14 +547,14 @@ namespace swrenderer
 			{
 				int y = t2++;
 				int x2 = spanend[y];
-				mapfunc(y, xr, x2);
+				RenderLine(y, xr, x2);
 			}
 			stop = MAX(b1, t2);
 			while (b2 > stop)
 			{
 				int y = --b2;
 				int x2 = spanend[y];
-				mapfunc(y, xr, x2);
+				RenderLine(y, xr, x2);
 			}
 
 			// Mark any spans that have just opened
@@ -572,15 +572,14 @@ namespace swrenderer
 			t2 = pl->top[x];
 			b2 = pl->bottom[x];
 
-			if (stepfunc)
-				stepfunc();
+			StepColumn();
 		}
 		// Draw any spans that are still open
 		while (t2 < b2)
 		{
 			int y = --b2;
 			int x2 = spanend[y];
-			mapfunc(y, pl->left, x2);
+			RenderLine(y, pl->left, x2);
 		}
 	}
 }

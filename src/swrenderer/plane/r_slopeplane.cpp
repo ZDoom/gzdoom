@@ -45,17 +45,7 @@
 
 namespace swrenderer
 {
-	namespace
-	{
-		FVector3 plane_sz, plane_su, plane_sv;
-		float planelightfloat;
-		bool plane_shade;
-		int planeshade;
-		fixed_t pviewx, pviewy;
-		fixed_t xscale, yscale;
-	}
-
-	void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
+	void RenderSlopePlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 	{
 		using namespace drawerargs;
 
@@ -182,10 +172,10 @@ namespace swrenderer
 			plane_su[2] = plane_su[1] = plane_su[0] = 0;
 		}
 
-		R_MapVisPlane(pl, R_MapTiltedPlane, nullptr);
+		RenderLines(pl);
 	}
 
-	void R_MapTiltedPlane(int y, int x1, int x2)
+	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
 		R_Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 	}

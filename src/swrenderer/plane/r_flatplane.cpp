@@ -41,20 +41,7 @@
 
 namespace swrenderer
 {
-	namespace
-	{
-		double planeheight;
-		bool plane_shade;
-		int planeshade;
-		fixed_t pviewx, pviewy;
-		float yslope[MAXHEIGHT];
-		fixed_t xscale, yscale;
-		double xstepscale, ystepscale;
-		double basexfrac, baseyfrac;
-		visplane_light *ds_light_list;
-	}
-
-	void R_DrawNormalPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
+	void RenderFlatPlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 	{
 		using namespace drawerargs;
 
@@ -189,18 +176,12 @@ namespace swrenderer
 			}
 		}
 
-		ds_light_list = pl->lights;
+		light_list = pl->lights;
 
-		R_MapVisPlane(pl, R_MapPlane, R_StepPlane);
+		RenderLines(pl);
 	}
 
-	void R_StepPlane()
-	{
-		basexfrac -= xstepscale;
-		baseyfrac -= ystepscale;
-	}
-
-	void R_MapPlane(int y, int x1, int x2)
+	void RenderFlatPlane::RenderLine(int y, int x1, int x2)
 	{
 		using namespace drawerargs;
 
@@ -275,7 +256,7 @@ namespace swrenderer
 			// Setup lights for row
 			dc_num_lights = 0;
 			dc_lights = lightbuffer + nextlightindex;
-			visplane_light *cur_node = ds_light_list;
+			visplane_light *cur_node = light_list;
 			while (cur_node && nextlightindex < 64 * 1024)
 			{
 				double lightX = cur_node->lightsource->X() - ViewPos.X;
@@ -326,17 +307,13 @@ namespace swrenderer
 		(R_Drawers()->*spanfunc)();
 	}
 
-	void R_DrawColoredPlane(visplane_t *pl)
+	void RenderFlatPlane::StepColumn()
 	{
-		R_MapVisPlane(pl, R_MapColoredPlane, nullptr);
+		basexfrac -= xstepscale;
+		baseyfrac -= ystepscale;
 	}
 
-	void R_MapColoredPlane(int y, int x1, int x2)
-	{
-		R_Drawers()->DrawColoredSpan(y, x1, x2);
-	}
-
-	void R_SetupPlaneSlope()
+	void RenderFlatPlane::SetupSlope()
 	{
 		int e, i;
 
@@ -376,5 +353,19 @@ namespace swrenderer
 				den += 1;
 			} while (++i < e);
 		}
+	}
+
+	float RenderFlatPlane::yslope[MAXHEIGHT];
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void RenderColoredPlane::Render(visplane_t *pl)
+	{
+		RenderLines(pl);
+	}
+
+	void RenderColoredPlane::RenderLine(int y, int x1, int x2)
+	{
+		R_Drawers()->DrawColoredSpan(y, x1, x2);
 	}
 }

@@ -30,6 +30,7 @@ public:
 	virtual void InitEffect ();
 	virtual void DoEffect () override;
 	virtual void EndEffect ();
+	bool isBlinking() const;
 
 protected:
 	void CallInitEffect();

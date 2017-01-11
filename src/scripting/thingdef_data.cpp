@@ -408,6 +408,7 @@ static FFlagDef InventoryFlagDefs[] =
 	DEFINE_FLAG(IF, ALWAYSRESPAWN, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, TRANSFER, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOTELEPORTFREEZE, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, NOSCREENBLINK, AInventory, ItemFlags),
 
 	DEFINE_DUMMY_FLAG(FORCERESPAWNINSURVIVAL, false),
 

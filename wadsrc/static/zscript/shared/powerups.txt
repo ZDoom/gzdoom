@@ -28,6 +28,7 @@ class Powerup : Inventory native
 
 	native virtual void InitEffect();
 	native virtual void EndEffect();
+	native bool isBlinking();
 	
 }
 

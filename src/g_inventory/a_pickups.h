@@ -46,6 +46,7 @@ enum
 	IF_ALWAYSRESPAWN	= 1<<23,	// Always respawn, regardless of dmflag
 	IF_TRANSFER			= 1<<24,	// All inventory items that the inventory item contains is also transfered to the pickuper
 	IF_NOTELEPORTFREEZE	= 1<<25,	// does not 'freeze' the player right after teleporting.
+	IF_NOSCREENBLINK	= 1<<26,	// Does not blink the screen overlay when expiring.
 };
 
 

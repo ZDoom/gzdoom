@@ -17,6 +17,7 @@
 #include "doomstat.h"
 #include "doomdata.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 #define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");
@@ -211,6 +212,12 @@ class ARandomSpawner : public AActor
 			AActor *rep = GetDefaultByType(GetClass()->GetReplacee());
 			if (rep && ((rep->flags4 & MF4_BOSSDEATH) || (rep->flags2 & MF2_BOSS)))
 				boss = true;
+
+			IFVIRTUAL(ARandomSpawner, PostSpawn)
+			{
+				VMValue params[2] = { (DObject*)this, newmobj };
+				GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+			}
 		}
 		if (boss)
 			this->tracer = newmobj;

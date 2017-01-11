@@ -201,7 +201,7 @@ namespace swrenderer
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
 		{
-			R_DrawFogBoundary(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep);
+			RenderFogBoundary::Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep);
 			if (ds->maskedtexturecol == -1)
 			{
 				goto clearfog;

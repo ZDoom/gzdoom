@@ -45,12 +45,7 @@
 
 namespace swrenderer
 {
-	namespace
-	{
-		short spanend[MAXHEIGHT];
-	}
-
-	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep)
+	void RenderFogBoundary::Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that
@@ -87,7 +82,7 @@ namespace swrenderer
 				if (t2 < b2 && rcolormap != 0)
 				{ // Colormap 0 is always the identity map, so rendering it is
 				  // just a waste of time.
-					R_DrawFogBoundarySection(t2, b2, xr);
+					RenderSection(t2, b2, xr);
 				}
 				if (t1 < t2) t2 = t1;
 				if (b1 > b2) b2 = b1;
@@ -139,15 +134,17 @@ namespace swrenderer
 		}
 		if (t2 < b2 && rcolormap != 0)
 		{
-			R_DrawFogBoundarySection(t2, b2, x1);
+			RenderSection(t2, b2, x1);
 		}
 	}
 
-	void R_DrawFogBoundarySection(int y, int y2, int x1)
+	void RenderFogBoundary::RenderSection(int y, int y2, int x1)
 	{
 		for (; y < y2; ++y)
 		{
 			R_Drawers()->DrawFogBoundaryLine(y, x1, spanend[y]);
 		}
 	}
+
+	short RenderFogBoundary::spanend[MAXHEIGHT];
 }

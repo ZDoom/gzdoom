@@ -15,6 +15,15 @@
 
 namespace swrenderer
 {
-	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep);
-	void R_DrawFogBoundarySection(int y, int y2, int x1);
+	class RenderFogBoundary
+	{
+	public:
+		static void Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep);
+
+	private:
+		static void RenderSection(int y, int y2, int x1);
+
+		static short spanend[MAXHEIGHT];
+	};
+
 }

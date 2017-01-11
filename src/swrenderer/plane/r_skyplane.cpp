@@ -47,31 +47,7 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer
 {
-	namespace
-	{
-		FTexture *frontskytex, *backskytex;
-		angle_t skyflip;
-		int frontpos, backpos;
-		double frontyScale;
-		fixed_t frontcyl, backcyl;
-		double skymid;
-		angle_t skyangle;
-		double frontiScale;
-
-		// Allow for layer skies up to 512 pixels tall. This is overkill,
-		// since the most anyone can ever see of the sky is 500 pixels.
-		// We need 4 skybufs because R_DrawSkySegment can draw up to 4 columns at a time.
-		// Need two versions - one for true color and one for palette
-		#define MAXSKYBUF 3072
-		uint8_t skybuf[4][512];
-		uint32_t skybuf_bgra[MAXSKYBUF][512];
-		uint32_t lastskycol[4];
-		uint32_t lastskycol_bgra[MAXSKYBUF];
-		int skycolplace;
-		int skycolplace_bgra;
-	}
-
-	void R_DrawSkyPlane(visplane_t *pl)
+	void RenderSkyPlane::Render(visplane_t *pl)
 	{
 		FTextureID sky1tex, sky2tex;
 		double frontdpos = 0, backdpos = 0;
@@ -181,7 +157,7 @@ namespace swrenderer
 			R_SetColorMapLight(fixedcolormap, 0, 0);
 		}
 
-		R_DrawSky(pl);
+		DrawSky(pl);
 
 		if (fakefixed)
 			fixedcolormap = NULL;
@@ -189,7 +165,7 @@ namespace swrenderer
 
 
 	// Get a column of sky when there is only one sky texture.
-	const uint8_t *R_GetOneSkyColumn(FTexture *fronttex, int x)
+	const uint8_t *RenderSkyPlane::GetOneSkyColumn(FTexture *fronttex, int x)
 	{
 		int tx;
 		if (r_linearsky)
@@ -213,7 +189,7 @@ namespace swrenderer
 	}
 
 	// Get a column of sky when there are two overlapping sky textures
-	const uint8_t *R_GetTwoSkyColumns(FTexture *fronttex, int x)
+	const uint8_t *RenderSkyPlane::GetTwoSkyColumns(FTexture *fronttex, int x)
 	{
 		uint32_t ang, angle1, angle2;
 
@@ -271,7 +247,7 @@ namespace swrenderer
 		}
 		else
 		{
-			//return R_GetOneSkyColumn(fronttex, x);
+			//return GetOneSkyColumn(fronttex, x);
 			for (i = skycolplace_bgra - 4; i < skycolplace_bgra; ++i)
 			{
 				int ic = (i % MAXSKYBUF); // i "checker" - can wrap around the ends of the array
@@ -311,7 +287,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
+	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
 	{
 		using namespace drawerargs;
 		
@@ -376,12 +352,12 @@ namespace swrenderer
 			R_Drawers()->DrawDoubleSkyColumn(solid_top, solid_bottom);
 	}
 
-	void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
+	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2, int columns)
 	{
 		if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 		{
 			double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
-			R_DrawSkyColumnStripe(start_x, y1, y2, columns, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
+			DrawSkyColumnStripe(start_x, y1, y2, columns, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
 		}
 		else
 		{
@@ -392,11 +368,11 @@ namespace swrenderer
 			double topfrac = fmod(skymid + iscale * (1 - CenterY), frontskytex->GetHeight());
 			if (topfrac < 0) topfrac += frontskytex->GetHeight();
 			double texturemid = topfrac - iscale * (1 - CenterY);
-			R_DrawSkyColumnStripe(start_x, y1, y2, columns, scale, texturemid, yrepeat);
+			DrawSkyColumnStripe(start_x, y1, y2, columns, scale, texturemid, yrepeat);
 		}
 	}
 
-	void R_DrawCapSky(visplane_t *pl)
+	void RenderSkyPlane::DrawCapSky(visplane_t *pl)
 	{
 		int x1 = pl->left;
 		int x2 = pl->right;
@@ -410,15 +386,15 @@ namespace swrenderer
 			if (y2 <= y1)
 				continue;
 
-			R_DrawSkyColumn(x, y1, y2, 1);
+			DrawSkyColumn(x, y1, y2, 1);
 		}
 	}
 
-	void R_DrawSky(visplane_t *pl)
+	void RenderSkyPlane::DrawSky(visplane_t *pl)
 	{
 		if (r_skymode == 2)
 		{
-			R_DrawCapSky(pl);
+			DrawCapSky(pl);
 			return;
 		}
 
@@ -468,17 +444,17 @@ namespace swrenderer
 				lastskycol_bgra[x] = 0xffffffff;
 			}
 			R_DrawSkySegment(frontskytex, pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
-				frontyScale, 0, 0, 0.0f, 0.0f, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+				frontyScale, 0, 0, 0.0f, 0.0f, backskytex == NULL ? RenderSkyPlane::GetOneSkyColumn : RenderSkyPlane::GetTwoSkyColumns);
 		}
 		else
 		{ // The texture does not tile nicely
 			frontyScale *= skyscale;
 			frontiScale = 1 / frontyScale;
-			R_DrawSkyStriped(pl);
+			DrawSkyStriped(pl);
 		}
 	}
 
-	void R_DrawSkyStriped(visplane_t *pl)
+	void RenderSkyPlane::DrawSkyStriped(visplane_t *pl)
 	{
 		short drawheight = short(frontskytex->GetHeight() * frontyScale);
 		double topfrac;
@@ -505,10 +481,33 @@ namespace swrenderer
 				lastskycol[x] = 0xffffffff;
 				lastskycol_bgra[x] = 0xffffffff;
 			}
-			R_DrawSkySegment(frontskytex, pl->left, pl->right, top, bot, swall, lwall, frontskytex->Scale.Y, 0, 0, 0.0f, 0.0f, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			R_DrawSkySegment(frontskytex, pl->left, pl->right, top, bot, swall, lwall, frontskytex->Scale.Y, 0, 0, 0.0f, 0.0f, backskytex == NULL ? RenderSkyPlane::GetOneSkyColumn : RenderSkyPlane::GetTwoSkyColumns);
 			yl = yh;
 			yh += drawheight;
 			dc_texturemid = iscale * (centery - yl - 1);
 		}
 	}
+
+	FTexture *RenderSkyPlane::frontskytex;
+	FTexture *RenderSkyPlane::backskytex;
+	angle_t RenderSkyPlane::skyflip;
+	int RenderSkyPlane::frontpos;
+	int RenderSkyPlane::backpos;
+	double RenderSkyPlane::frontyScale;
+	fixed_t RenderSkyPlane::frontcyl;
+	fixed_t RenderSkyPlane::backcyl;
+	double RenderSkyPlane::skymid;
+	angle_t RenderSkyPlane::skyangle;
+	double RenderSkyPlane::frontiScale;
+
+	// Allow for layer skies up to 512 pixels tall. This is overkill,
+	// since the most anyone can ever see of the sky is 500 pixels.
+	// We need 4 skybufs because DrawSkySegment can draw up to 4 columns at a time.
+	// Need two versions - one for true color and one for palette
+	uint8_t RenderSkyPlane::skybuf[4][512];
+	uint32_t RenderSkyPlane::skybuf_bgra[MAXSKYBUF][512];
+	uint32_t RenderSkyPlane::lastskycol[4];
+	uint32_t RenderSkyPlane::lastskycol_bgra[MAXSKYBUF];
+	int RenderSkyPlane::skycolplace;
+	int RenderSkyPlane::skycolplace_bgra;
 }

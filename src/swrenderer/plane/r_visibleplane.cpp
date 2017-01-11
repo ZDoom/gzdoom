@@ -480,7 +480,7 @@ namespace swrenderer
 
 		if (pl->picnum == skyflatnum) // sky flat
 		{
-			R_DrawSkyPlane(pl);
+			RenderSkyPlane::Render(pl);
 		}
 		else // regular flat
 		{

@@ -15,9 +15,6 @@
 
 #include "r_visiblesprite.h"
 
-#define BASEXCENTER (160)
-#define BASEYCENTER (100)
-
 namespace swrenderer
 {
 	class RenderPlayerSprite
@@ -30,6 +27,9 @@ namespace swrenderer
 
 	private:
 		static void Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade);
+
+		enum { BASEXCENTER = 160 };
+		enum { BASEYCENTER = 100 };
 
 		// Used to store a psprite's drawing information if it needs to be drawn later.
 		struct vispsp_t

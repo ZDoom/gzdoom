@@ -57,7 +57,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void R_ProjectParticle(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside)
+	void RenderParticle::Project(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -222,7 +222,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawParticle(vissprite_t *vis)
+	void RenderParticle::Render(vissprite_t *vis)
 	{
 		using namespace drawerargs;
 
@@ -236,7 +236,7 @@ namespace swrenderer
 		if (ycount <= 0 || countbase <= 0)
 			return;
 
-		R_DrawMaskedSegsBehindParticle(vis);
+		DrawMaskedSegsBehindParticle(vis);
 
 		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 
@@ -271,7 +271,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawMaskedSegsBehindParticle(const vissprite_t *vis)
+	void RenderParticle::DrawMaskedSegsBehindParticle(const vissprite_t *vis)
 	{
 		const int x1 = vis->x1;
 		const int x2 = vis->x2;

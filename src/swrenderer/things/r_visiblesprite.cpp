@@ -257,7 +257,7 @@ namespace swrenderer
 			// kg3D - reject invisible parts
 			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= clip3d->sclipBottom) return;
 			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gpos.Z >= clip3d->sclipTop) return;
-			R_DrawParticle(spr);
+			RenderParticle::Render(spr);
 			return;
 		}
 

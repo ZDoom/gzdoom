@@ -710,7 +710,7 @@ namespace swrenderer
 			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + r_actualextralight);
 			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				R_ProjectParticle(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide);
+				RenderParticle::Project(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide);
 			}
 		}
 

@@ -18,7 +18,13 @@
 
 namespace swrenderer
 {
-	void R_ProjectParticle(particle_t *, const sector_t *sector, int shade, WaterFakeSide fakeside);
-	void R_DrawParticle(vissprite_t *);
-	void R_DrawMaskedSegsBehindParticle(const vissprite_t *vis);
+	class RenderParticle
+	{
+	public:
+		static void Project(particle_t *, const sector_t *sector, int shade, WaterFakeSide fakeside);
+		static void Render(vissprite_t *);
+
+	private:
+		static void DrawMaskedSegsBehindParticle(const vissprite_t *vis);
+	};
 }

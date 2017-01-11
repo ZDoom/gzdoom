@@ -1488,7 +1488,7 @@ void P_SetRenderSector()
 		seg = ss->firstline;
 		for(j=0; j<ss->numlines; j++)
 		{
-			if(seg->sidedef && (seg->PartnerSeg == nullptr || seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector))
+			if(seg->sidedef && (seg->PartnerSeg == nullptr || (seg->PartnerSeg->sidedef != nullptr && seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector)))
 			{
 				ss->render_sector = seg->sidedef->sector;
 				break;

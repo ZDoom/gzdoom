@@ -394,16 +394,20 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 	}
 	if (startdraw==0 && lendraw==h) return false;	// nothing saved so don't create a split list
 
-	FloatRect * rcs = new FloatRect[gapc];
-
-	for(x=0;x<gapc;x++)
+	if (gapc > 0)
 	{
-		// gaps are stored as texture (u/v) coordinates
-		rcs[x].width=rcs[x].left=-1.0f;
-		rcs[x].top=(float)gaps[x][0]/(float)h;
-		rcs[x].height=(float)gaps[x][1]/(float)h;
+		FloatRect * rcs = new FloatRect[gapc];
+
+		for (x = 0; x < gapc; x++)
+		{
+			// gaps are stored as texture (u/v) coordinates
+			rcs[x].width = rcs[x].left = -1.0f;
+			rcs[x].top = (float)gaps[x][0] / (float)h;
+			rcs[x].height = (float)gaps[x][1] / (float)h;
+		}
+		gl_info.areas = rcs;
 	}
-	gl_info.areas=rcs;
+	else gl_info.areas = nullptr;
 	gl_info.areacount=gapc;
 
 	return true;

@@ -483,7 +483,7 @@ FTextureID gl_GetSpriteFrame(unsigned sprite, int frame, int rot, angle_t ang, b
 
 //==========================================================================
 //
-// Recalculate all heights affectting this vertex.
+// Recalculate all heights affecting this vertex.
 //
 //==========================================================================
 void gl_RecalcVertexHeights(vertex_t * v)

@@ -164,7 +164,7 @@ void FGLRenderer::Initialize(int width, int height)
 	}
 	else mVAOID = 0;
 
-	gllight = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/gllight.png"), FTexture::TEX_MiscPatch);
+	if (gl.legacyMode) gllight = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/gllight.png"), FTexture::TEX_MiscPatch);
 	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);
 	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
@@ -196,6 +196,7 @@ FGLRenderer::~FGLRenderer()
 	if (mLights != NULL) delete mLights;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;
+	if (gllight) delete gllight;
 	if (mirrortexture) delete mirrortexture;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)

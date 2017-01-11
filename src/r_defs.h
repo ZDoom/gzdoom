@@ -156,6 +156,12 @@ struct vertex_t
 		heightlist = NULL;
 	}
 
+	~vertex_t()
+	{
+		if (sectors != nullptr) delete[] sectors;
+		if (heightlist != nullptr) delete[] heightlist;
+	}
+
 	bool operator== (const vertex_t &other)
 	{
 		return p == other.p;

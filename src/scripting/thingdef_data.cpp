@@ -50,6 +50,8 @@
 #include "zstring.h"
 #include "d_event.h"
 #include "g_levellocals.h"
+#include "vm.h"
+#include "p_checkposition.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -855,6 +857,14 @@ void InitThingdef()
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
+
+	// Add the constructor and destructor to FCheckPosition.
+	auto fcp = NewStruct("FCheckPosition", nullptr);
+	fcp->mConstructor = *FindFunction(fcp, "_Constructor")->VMPointer;
+	fcp->mDestructor = *FindFunction(fcp, "_Destructor")->VMPointer;
+	fcp->Size = sizeof(FCheckPosition);
+	fcp->Align = alignof(FCheckPosition);
+
 
 	FieldTable.Clear();
 	if (FieldTable.Size() == 0)

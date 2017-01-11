@@ -1993,6 +1993,7 @@ class FxLocalVariableDeclaration : public FxExpression
 public:
 	int StackOffset = -1;
 	int RegNum = -1;
+	bool constructed = false;
 
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);
 	~FxLocalVariableDeclaration();

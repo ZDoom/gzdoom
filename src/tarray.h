@@ -71,8 +71,8 @@ protected:
 struct FArray
 {
 	void *Array;
-	unsigned int Most;
 	unsigned int Count;
+	unsigned int Most;
 };
 
 // T is the type stored in the array.

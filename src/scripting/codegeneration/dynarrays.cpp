@@ -37,9 +37,7 @@
 **
 */
 
-#define private public	// this file needs public access to TArray's private 'Count' field so just hack the visibility qualifiers here
 #include "tarray.h"
-#undef private
 #include "dobject.h"
 #include "thingdef.h"
 // We need one specific type for each of the 7 integral VM types and instantiate the needed functions for each of them.
@@ -775,10 +773,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_String, Clear)
 	return 0;
 }
 
-DEFINE_FIELD_NAMED(FDynArray_I8, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_I16, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_I32, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_F32, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_F64, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_Ptr, Count, Size)		// clashes with type 'Inventory'.
-DEFINE_FIELD_NAMED(FDynArray_String, Count, Size)		// clashes with type 'Inventory'.
+DEFINE_FIELD_NAMED_X(DynArray_I8, FArray, Count, Size)		
+DEFINE_FIELD_NAMED_X(DynArray_I16, FArray, Count, Size)		
+DEFINE_FIELD_NAMED_X(DynArray_I32, FArray, Count, Size)		
+DEFINE_FIELD_NAMED_X(DynArray_F32, FArray, Count, Size)		
+DEFINE_FIELD_NAMED_X(DynArray_F64, FArray, Count, Size)		
+DEFINE_FIELD_NAMED_X(DynArray_Ptr, FArray, Count, Size)	
+DEFINE_FIELD_NAMED_X(DynArray_String, FArray, Count, Size)

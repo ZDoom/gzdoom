@@ -84,6 +84,49 @@ TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
 
+// FCheckPosition requires explicit contstruction and destruction when used in the VM
+DEFINE_ACTION_FUNCTION(_FCheckPosition, _Constructor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	new(self) FCheckPosition;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_FCheckPosition, _Destructor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->~FCheckPosition();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_FCheckPosition, ClearLastRipped)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->LastRipped.Clear();
+	return 0;
+}
+
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);
+DEFINE_FIELD_NAMED_X(FCheckPosition, FCheckPosition, sector, cursector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, dropoffz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorpic);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorterrain);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorsector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingpic);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingsector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, touchmidtex);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, abovemidtex);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floatok);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, FromPMove);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingline);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, stepthing);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, DoRipping);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
+
 //==========================================================================
 //
 // CanCollideWith
@@ -1845,8 +1888,17 @@ DEFINE_ACTION_FUNCTION(AActor, CheckPosition)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_BOOL_DEF(actorsonly);
-	ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), actorsonly));
+	PARAM_POINTER_DEF(tm, FCheckPosition);
+	if (tm)
+	{
+		ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), *tm, actorsonly));
+	}
+	else
+	{
+		ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), actorsonly));
+	}
 }
+
 
 //----------------------------------------------------------------------------
 //
@@ -2637,10 +2689,10 @@ pushline:
 
 bool P_TryMove(AActor *thing, const DVector2 &pos,
 	int dropoff, // killough 3/15/98: allow dropoff as option
-	const secplane_t *onfloor) // [RH] Let P_TryMove keep the thing on the floor
+	const secplane_t *onfloor, bool missilecheck) // [RH] Let P_TryMove keep the thing on the floor
 {
 	FCheckPosition tm;
-	return P_TryMove(thing, pos, dropoff, onfloor, tm);
+	return P_TryMove(thing, pos, dropoff, onfloor, tm, missilecheck);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, TryMove)
@@ -2649,7 +2701,16 @@ DEFINE_ACTION_FUNCTION(AActor, TryMove)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_INT(dropoff);
-	ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff));
+	PARAM_BOOL_DEF(missilecheck);
+	PARAM_POINTER_DEF(tm, FCheckPosition);
+	if (tm == nullptr)
+	{
+		ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff, nullptr, missilecheck));
+	}
+	else
+	{
+		ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff, nullptr, *tm, missilecheck));
+	}
 }
 
 

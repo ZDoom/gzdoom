@@ -708,11 +708,15 @@ protected:
 class PStruct : public PNamedType
 {
 	DECLARE_CLASS(PStruct, PNamedType);
+
 public:
 	PStruct(FName name, PTypeBase *outer);
 
 	TArray<PField *> Fields;
 	bool HasNativeFields;
+	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use thes two functions for it.
+	VMFunction *mConstructor = nullptr;
+	VMFunction *mDestructor = nullptr;
 
 	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
 	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);

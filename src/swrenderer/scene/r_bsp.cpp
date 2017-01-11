@@ -867,7 +867,7 @@ namespace swrenderer
 				{
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						R_ProjectWallSprite(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade);
+						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade);
 					}
 					else if (sprite.voxel)
 					{

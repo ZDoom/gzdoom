@@ -59,7 +59,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade)
+	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade)
 	{
 		FWallCoords wallc;
 		double x1, x2;
@@ -135,7 +135,7 @@ namespace swrenderer
 		vis->wallc = wallc;
 	}
 
-	void R_DrawWallSprite(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)
 	{
 		int x1, x2;
 		double iyscale;
@@ -223,7 +223,7 @@ namespace swrenderer
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!R_ClipSpriteColumnWithPortals(x, spr))
-					R_WallSpriteColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
@@ -231,7 +231,7 @@ namespace swrenderer
 		R_FinishSetPatchStyle();
 	}
 
-	void R_WallSpriteColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

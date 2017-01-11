@@ -599,7 +599,7 @@ namespace swrenderer
 			}
 			else
 			{
-				R_DrawWallSprite(spr, clipbot, cliptop);
+				RenderWallSprite::Render(spr, clipbot, cliptop);
 			}
 		}
 		else

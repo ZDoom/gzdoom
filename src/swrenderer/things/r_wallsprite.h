@@ -17,7 +17,13 @@
 
 namespace swrenderer
 {
-	void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade);
-	void R_DrawWallSprite(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip);
-	void R_WallSpriteColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+	class RenderWallSprite
+	{
+	public:
+		static void Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade);
+		static void Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip);
+
+	private:
+		static void DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+	};
 }

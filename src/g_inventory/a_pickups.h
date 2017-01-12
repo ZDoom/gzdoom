@@ -182,7 +182,7 @@ private:
 
 class AStateProvider : public AInventory
 {
-	DECLARE_CLASS(AStateProvider, AInventory)
+	DECLARE_CLASS (AStateProvider, AInventory)
 };
 
 // CustomInventory: Supports the Use, Pickup, and Drop states from 96x

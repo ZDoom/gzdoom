@@ -221,7 +221,7 @@ enum
 
 class AWeaponGiver : public AWeapon
 {
-	DECLARE_CLASS(AWeaponGiver, AWeapon)
+	DECLARE_CLASS (AWeaponGiver, AWeapon)
 
 public:
 	virtual bool TryPickup(AActor *&toucher) override;

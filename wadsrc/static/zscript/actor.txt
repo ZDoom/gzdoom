@@ -145,6 +145,7 @@ class Actor : Thinker native
 	native int lastbump;
 	native int DesignatedTeam;
 	native Actor BlockingMobj;
+	native Line BlockingLine;
 	native int PoisonDamage;
 	native name PoisonDamageType;
 	native int PoisonDuration;
@@ -207,7 +208,6 @@ class Actor : Thinker native
 
 	// need some definition work first
 	//FRenderStyle RenderStyle;
-	//line_t *BlockingLine; // Line that blocked the last move
 	//int ConversationRoot; // THe root of the current dialogue
 
 	// deprecated things.
@@ -345,7 +345,12 @@ class Actor : Thinker native
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
 	native bool CheckLocalView(int consoleplayer);
-
+	native bool CheckNoDelay();
+	native bool UpdateWaterLevel (bool splash = true);
+	native bool IsZeroDamage();
+	native void ClearInterpolation();
+	native Vector3 PosRelative(sector sec);
+	
 	native void ExplodeMissile(line lin = null, Actor target = null);
 	native void RestoreDamage();
 	native int SpawnHealth();

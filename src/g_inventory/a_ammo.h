@@ -3,7 +3,7 @@
 
 class AAmmo : public AInventory
 {
-	DECLARE_CLASS(AAmmo, AInventory)
+	DECLARE_CLASS (AAmmo, AInventory)
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;

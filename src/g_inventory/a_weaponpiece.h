@@ -4,7 +4,7 @@
 
 class AWeaponPiece : public AInventory
 {
-	DECLARE_CLASS(AWeaponPiece, AInventory)
+	DECLARE_CLASS (AWeaponPiece, AInventory)
 	HAS_OBJECT_POINTERS
 protected:
 	bool PrivateShouldStay ();
@@ -26,7 +26,7 @@ public:
 // [BL] Needs to be available for SBarInfo to check weaponpieces
 class AWeaponHolder : public AInventory
 {
-	DECLARE_CLASS(AWeaponHolder, AInventory)
+	DECLARE_CLASS (AWeaponHolder, AInventory)
 
 public:
 	int PieceMask;

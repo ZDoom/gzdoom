@@ -52,6 +52,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "p_checkposition.h"
+#include "r_sky.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -742,9 +743,8 @@ void InitThingdef()
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
 	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
 
-	// add the sector planes. These are value items of native structs so they have to be done here. Write access should be through functions only to allow later optimization inside the renderer.
-	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native|VARF_ReadOnly);
-	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native|VARF_ReadOnly);
+	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native);
+	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native);
 
 
 
@@ -786,6 +786,12 @@ void InitThingdef()
 	GlobalSymbols.AddSymbol(playerf);
 
 	playerf = new PField("gameaction", TypeUInt8, VARF_Native | VARF_Static, (intptr_t)&gameaction);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("skyflatnum", TypeTextureID, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&skyflatnum);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("globalfreeze", TypeUInt8, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&bglobal.freeze);
 	GlobalSymbols.AddSymbol(playerf);
 
 	playerf = new PField("consoleplayer", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&consoleplayer);

@@ -215,12 +215,4 @@ public:
 	ActorFlags FlagsSave;
 };
 
-class AFastProjectile : public AActor
-{
-	DECLARE_CLASS(AFastProjectile, AActor)
-public:
-	void Tick ();
-};
-
-
 #endif //__A_SHAREDGLOBAL_H__

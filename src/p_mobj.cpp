@@ -4333,6 +4333,12 @@ bool AActor::CheckNoDelay()
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckNoDelay)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(self->CheckNoDelay());
+}
+
 //==========================================================================
 //
 // AActor :: CheckSectorTransition
@@ -4486,6 +4492,12 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 	return false;	// we did the splash ourselves
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UpdateWaterLevel)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(splash);
+	ACTION_RETURN_BOOL(self->UpdateWaterLevel(splash));
+}
 
 //==========================================================================
 //
@@ -7821,6 +7833,13 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PosRelative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(sec, sector_t);
+	ACTION_RETURN_VEC3(self->PosRelative(sec));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -7861,6 +7880,19 @@ DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
 	ACTION_RETURN_FLOAT(self->CountsAsKill());
 }
 
+DEFINE_ACTION_FUNCTION(AActor, IsZeroDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(self->IsZeroDamage());
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ClearInterpolation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearInterpolation();
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 {
 	PARAM_PROLOGUE;
@@ -7879,6 +7911,7 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 		ACTION_RETURN_INT(defdamage);
 	}
 }
+
 
 //----------------------------------------------------------------------------
 //

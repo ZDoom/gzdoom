@@ -48,7 +48,7 @@
 
 namespace swrenderer
 {
-	void RenderSlopePlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
+	void RenderSlopePlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
 	{
 		using namespace drawerargs;
 
@@ -148,6 +148,8 @@ namespace swrenderer
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;
 
+		basecolormap = colormap;
+
 		if (fixedlightlev >= 0)
 		{
 			R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
@@ -180,6 +182,6 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
-		R_Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+		R_Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

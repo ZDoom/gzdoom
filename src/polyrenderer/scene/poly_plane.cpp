@@ -100,7 +100,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	if (swrenderer::fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
 	{
 		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
-		swrenderer::basecolormap = light->extra_colormap;
+		//basecolormap = light->extra_colormap;
 		lightlevel = *light->p_lightlevel;
 	}
 

@@ -20,6 +20,7 @@ struct subsector_t;
 struct sector_t;
 struct side_t;
 struct line_t;
+struct FDynamicColormap;
 
 namespace swrenderer
 {
@@ -48,7 +49,7 @@ namespace swrenderer
 	class SWRenderLine
 	{
 	public:
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
 
 	private:
 		bool RenderWallSegment(int x1, int x2);
@@ -118,5 +119,6 @@ namespace swrenderer
 		FTexture *midtexture;
 
 		bool foggy;
+		FDynamicColormap *basecolormap;
 	};
 }

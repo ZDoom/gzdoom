@@ -44,7 +44,7 @@
 
 namespace swrenderer
 {
-	void RenderFlatPlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
+	void RenderFlatPlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
 	{
 		using namespace drawerargs;
 
@@ -105,6 +105,7 @@ namespace swrenderer
 
 		planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
+		basecolormap = colormap;
 		GlobVis = r_FloorVisibility / planeheight;
 		ds_light = 0;
 		if (fixedlightlev >= 0)

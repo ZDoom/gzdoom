@@ -380,7 +380,7 @@ namespace swrenderer
 		void DrawSpanMaskedAddClamp() override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>(); }
 		void FillSpan() override { DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>(); }
 
-		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy) override
+		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
 		{
 			DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 		}

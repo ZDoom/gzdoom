@@ -46,7 +46,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderVoxel::Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy)
+	void RenderVoxel::Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -206,6 +206,7 @@ namespace swrenderer
 			{
 				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
 			}
+
 			if (fixedlightlev >= 0)
 			{
 				vis->Style.BaseColormap = mybasecolormap;
@@ -226,8 +227,11 @@ namespace swrenderer
 
 	void RenderVoxel::Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)
 	{
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Style.BaseColormap);
+
 		R_SetColorMapLight(sprite->Style.BaseColormap, 0, sprite->Style.ColormapNum << FRACBITS);
-		bool visible = R_SetPatchStyle(sprite->Style.RenderStyle, sprite->Style.Alpha, sprite->Translation, sprite->FillColor);
+
+		bool visible = R_SetPatchStyle(sprite->Style.RenderStyle, sprite->Style.Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
 

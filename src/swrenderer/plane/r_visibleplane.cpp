@@ -108,17 +108,15 @@ namespace swrenderer
 			double xscale = xform.xScale * tex->Scale.X;
 			double yscale = xform.yScale * tex->Scale.Y;
 
-			basecolormap = colormap;
-
 			if (!height.isSlope() && !tilt)
 			{
 				RenderFlatPlane renderer;
-				renderer.Render(this, xscale, yscale, alpha, additive, masked);
+				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap);
 			}
 			else
 			{
 				RenderSlopePlane renderer;
-				renderer.Render(this, xscale, yscale, alpha, additive, masked);
+				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap);
 			}
 		}
 		NetUpdate();

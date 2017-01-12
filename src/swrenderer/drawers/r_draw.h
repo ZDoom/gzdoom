@@ -162,7 +162,7 @@ namespace swrenderer
 		virtual void DrawSpanAddClamp() = 0;
 		virtual void DrawSpanMaskedAddClamp() = 0;
 		virtual void FillSpan() = 0;
-		virtual void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy) = 0;
+		virtual void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
 		virtual void DrawColoredSpan(int y, int x1, int x2) = 0;
 		virtual void DrawFogBoundaryLine(int y, int x1, int x2) = 0;
 	};
@@ -175,9 +175,8 @@ namespace swrenderer
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 
-	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
-	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
-	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
+	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
+	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
 	DrawerFunc R_GetTransMaskDrawer();
 
 	void R_UpdateFuzzPos();

@@ -47,11 +47,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy)
+	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, 0);
+			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, 0);
 		}
 	}
 
@@ -59,7 +59,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, int pass)
+	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -277,7 +277,7 @@ namespace swrenderer
 		{
 			int x = x1;
 
-			bool visible = R_SetPatchStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+			bool visible = R_SetPatchStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
 
 			// R_SetPatchStyle can modify basecolormap.
 			if (rereadcolormap)
@@ -304,12 +304,10 @@ namespace swrenderer
 			// needrepeat will be 0, and the while will fail.
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
 			mfloorclip = wallbottom;
-			R_FinishSetPatchStyle();
 		} while (needrepeat--);
 
 		colfunc = basecolfunc;
 
-		R_FinishSetPatchStyle();
 	done:
 		WallC = savecoord;
 	}

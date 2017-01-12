@@ -189,10 +189,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	fixedcolormap = dc_fcolormap;
 	bool visible;
+	FDynamicColormap *basecolormap = nullptr;
 	if (r_swtruecolor)
-		visible = R_SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor);
+		visible = R_SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
-		visible = R_SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor);
+		visible = R_SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
 
 	BYTE *destorgsave = dc_destorg;
 	int destheightsave = dc_destheight;
@@ -287,7 +288,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		CenterY = centeryback;
 	}
-	R_FinishSetPatchStyle ();
 
 	dc_destorg = destorgsave;
 	dc_destheight = destheightsave;

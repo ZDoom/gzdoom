@@ -99,6 +99,7 @@ namespace swrenderer
 			(r_deathcamera && camera->health <= 0))
 			return;
 
+		FDynamicColormap *basecolormap;
 		if (fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size())
 		{
 			for (i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
@@ -183,7 +184,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					Render(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade);
+					Render(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade, basecolormap);
 				}
 
 				psp = psp->GetNext();
@@ -193,7 +194,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderPlayerSprite::Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade)
+	void RenderPlayerSprite::Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap)
 	{
 		double 				tx;
 		int 				x1;

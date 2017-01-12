@@ -20,7 +20,7 @@ namespace swrenderer
 	class RenderSlopePlane : PlaneRenderer
 	{
 	public:
-		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked);
+		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;
@@ -31,5 +31,6 @@ namespace swrenderer
 		int planeshade;
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
+		FDynamicColormap *basecolormap;
 	};
 }

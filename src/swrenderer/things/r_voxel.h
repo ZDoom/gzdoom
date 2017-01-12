@@ -55,7 +55,7 @@ namespace swrenderer
 	class RenderVoxel
 	{
 	public:
-		static void Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy);
+		static void Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
 		static void Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom);
 
 		static void Deinit();

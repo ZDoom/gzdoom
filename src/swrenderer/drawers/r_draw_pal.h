@@ -162,7 +162,7 @@ namespace swrenderer
 	class DrawTiltedSpanPalCommand : public DrawerCommand
 	{
 	public:
-		DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
+		DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override { return "DrawTiltedSpanPalCommand"; }
 
@@ -276,9 +276,9 @@ namespace swrenderer
 		void DrawSpanMaskedAddClamp() override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>(); }
 		void FillSpan() override { DrawerCommandQueue::QueueCommand<FillSpanPalCommand>(); }
 
-		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy) override
+		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
 		{
-			DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+			DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 		}
 
 		void DrawColoredSpan(int y, int x1, int x2) override { DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2); }

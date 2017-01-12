@@ -165,7 +165,7 @@ namespace swrenderer
 		}
 	}
 
-	visplane_t *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal)
+	visplane_t *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap)
 	{
 		secplane_t plane;
 		visplane_t *check;

@@ -31,7 +31,7 @@ namespace swrenderer
 		void Deinit();
 		void Clear(bool fullclear);
 
-		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal);
+		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap);
 		visplane_t *GetRange(visplane_t *pl, int start, int stop);
 
 		int Render();

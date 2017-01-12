@@ -22,7 +22,7 @@ namespace swrenderer
 	class RenderFlatPlane : PlaneRenderer
 	{
 	public:
-		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked);
+		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
 
 		static void SetupSlope();
 
@@ -34,6 +34,7 @@ namespace swrenderer
 		bool plane_shade;
 		int planeshade;
 		double GlobVis;
+		FDynamicColormap *basecolormap;
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		double xstepscale, ystepscale;

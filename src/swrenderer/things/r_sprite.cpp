@@ -60,7 +60,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy)
+	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -295,7 +295,9 @@ namespace swrenderer
 		fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 		R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
 
-		bool visible = R_SetPatchStyle(vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Style.BaseColormap);
+
+		bool visible = R_SetPatchStyle(vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor, basecolormap);
 
 		if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
@@ -342,8 +344,6 @@ namespace swrenderer
 				}
 			}
 		}
-
-		R_FinishSetPatchStyle();
 
 		NetUpdate();
 	}

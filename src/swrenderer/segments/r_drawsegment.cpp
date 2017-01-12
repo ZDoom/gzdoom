@@ -147,8 +147,9 @@ namespace swrenderer
 
 		curline = ds->curline;
 
+		FDynamicColormap *patchstylecolormap = nullptr;
 		bool visible = R_SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
-			(float)MIN(curline->linedef->alpha, 1.), 0, 0);
+			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 		{
@@ -169,7 +170,7 @@ namespace swrenderer
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
 		sec = RenderOpaquePass::Instance()->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
-		basecolormap = sec->ColorMap;	// [RH] Set basecolormap
+		FDynamicColormap *basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 
 		int wallshade = ds->shade;
 		rw_lightstep = ds->lightstep;
@@ -202,7 +203,7 @@ namespace swrenderer
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
 		{
-			RenderFogBoundary::Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep);
+			RenderFogBoundary::Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
 			if (ds->maskedtexturecol == -1)
 			{
 				goto clearfog;
@@ -420,11 +421,10 @@ namespace swrenderer
 
 			rw_offset = 0;
 			rw_pic = tex;
-			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy);
+			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 		}
 
 	clearfog:
-		R_FinishSetPatchStyle();
 		if (ds->bFakeBoundary & 3)
 		{
 			R_RenderFakeWallRange(ds, x1, x2, wallshade);
@@ -448,7 +448,7 @@ namespace swrenderer
 	}
 
 	// kg3D - render one fake wall
-	void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover, int wallshade)
+	void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
 	{
 		int i;
 		double xscale;
@@ -456,12 +456,10 @@ namespace swrenderer
 
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 		bool visible = R_SetPatchStyle(LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
-			Alpha, 0, 0);
+			Alpha, 0, 0, basecolormap);
 
-		if (!visible) {
-			R_FinishSetPatchStyle();
+		if (!visible)
 			return;
-		}
 
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
@@ -547,8 +545,7 @@ namespace swrenderer
 		}
 
 		PrepLWall(lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
-		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy);
-		R_FinishSetPatchStyle();
+		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors
@@ -734,7 +731,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				basecolormap = frontsector->ColorMap;
+				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
 				if (fixedlightlev < 0)
 				{
@@ -767,7 +764,7 @@ namespace swrenderer
 				}
 				if (rw_pic != DONT_DRAW)
 				{
-					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade);
+					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
 				}
 				else rw_pic = nullptr;
 				break;
@@ -908,7 +905,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				basecolormap = frontsector->ColorMap;
+				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
 				if (fixedlightlev < 0)
 				{
@@ -942,7 +939,7 @@ namespace swrenderer
 
 				if (rw_pic != DONT_DRAW)
 				{
-					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade);
+					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
 				}
 				else
 				{

@@ -28,7 +28,7 @@ namespace swrenderer
 		static void RenderRemainingPlayerSprites();
 
 	private:
-		static void Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade);
+		static void Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap);
 
 		enum { BASEXCENTER = 160 };
 		enum { BASEYCENTER = 100 };

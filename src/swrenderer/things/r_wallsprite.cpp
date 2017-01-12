@@ -62,7 +62,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy)
+	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		FWallCoords wallc;
 		double x1, x2;
@@ -165,7 +165,7 @@ namespace swrenderer
 		}
 		// Prepare lighting
 		bool calclighting = false;
-		FDynamicColormap *usecolormap = basecolormap;
+		FSWColormap *usecolormap = spr->Style.BaseColormap;
 		bool rereadcolormap = true;
 
 		// Decals that are added to the scene must fade to black.
@@ -206,12 +206,14 @@ namespace swrenderer
 
 		int x = x1;
 
-		bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Style.BaseColormap);
+
+		bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
 		{
-			usecolormap = basecolormap;
+			usecolormap = spr->Style.BaseColormap;
 		}
 
 		if (!visible)
@@ -232,7 +234,6 @@ namespace swrenderer
 				x++;
 			}
 		}
-		R_FinishSetPatchStyle();
 	}
 
 	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)

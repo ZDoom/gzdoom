@@ -60,7 +60,6 @@ namespace swrenderer
 	extern int fixedlightlev;
 	extern FSWColormap *fixedcolormap;
 	extern FSpecialColormap *realfixedcolormap;
-	extern FDynamicColormap *basecolormap;	// [RH] Colormap for sector currently being drawn
 
 	inline int R_ActualExtraLight(bool fog) { return fog ? 0 : extralight << 4; }
 

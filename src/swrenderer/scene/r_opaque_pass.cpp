@@ -398,7 +398,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy, FDynamicColormap *basecolormap)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -410,7 +410,7 @@ namespace swrenderer
 		{
 			if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy);
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap);
 			}
 			line++;
 		}
@@ -479,6 +479,7 @@ namespace swrenderer
 		bool foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 
 		// kg3D - fake lights
+		FDynamicColormap *basecolormap;
 		if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
 			light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
@@ -510,7 +511,8 @@ namespace swrenderer
 				!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::ceiling].xform,
 				frontsector->sky,
-				portal
+				portal,
+				basecolormap
 			) : nullptr;
 
 		if (ceilingplane)
@@ -550,7 +552,8 @@ namespace swrenderer
 				!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::floor].xform,
 				frontsector->sky,
-				portal
+				portal,
+				basecolormap
 			) : nullptr;
 
 		if (floorplane)
@@ -615,12 +618,13 @@ namespace swrenderer
 						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
 						frontsector->sky,
-						nullptr);
+						nullptr,
+						basecolormap);
 
 					if (floorplane)
 						floorplane->AddLights(frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane, foggy);
+					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap);
 					clip3d->fake3D = 0;
 					frontsector = sub->sector;
 				}
@@ -680,12 +684,13 @@ namespace swrenderer
 						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
 						frontsector->sky,
-						nullptr);
+						nullptr,
+						basecolormap);
 
 					if (ceilingplane)
 						ceilingplane->AddLights(frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane, foggy);
+					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap);
 					clip3d->fake3D = 0;
 					frontsector = sub->sector;
 				}
@@ -704,7 +709,7 @@ namespace swrenderer
 		// lightlevels on floor & ceiling lightlevels in the surrounding area.
 		// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
 		// it, otherwise they are lit by the floor.
-		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy);
+		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, basecolormap);
 
 		// [RH] Add particles
 		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
@@ -746,14 +751,14 @@ namespace swrenderer
 							clip3d->fakeFloor->validcount = validcount;
 							clip3d->NewClip();
 						}
-						renderline.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane, foggy); // fake
+						renderline.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane, foggy, basecolormap); // fake
 					}
 					clip3d->fakeFloor = nullptr;
 					clip3d->fake3D = 0;
 					floorplane = backupfp;
 					ceilingplane = backupcp;
 				}
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy); // now real
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap); // now real
 			}
 			line++;
 		}
@@ -809,7 +814,7 @@ namespace swrenderer
 		fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
 	}
 
-	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy)
+	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap)
 	{
 		F3DFloor *fakeceiling = nullptr;
 		F3DFloor *fakefloor = nullptr;
@@ -869,15 +874,15 @@ namespace swrenderer
 				{
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade, foggy);
+						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade, foggy, basecolormap);
 					}
 					else if (sprite.voxel)
 					{
-						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy);
+						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy, basecolormap);
 					}
 					else
 					{
-						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy);
+						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy, basecolormap);
 					}
 				}
 			}

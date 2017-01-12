@@ -45,7 +45,6 @@ namespace swrenderer
 	double r_SpriteVisibility;
 	double r_ParticleVisibility;
 
-	FDynamicColormap *basecolormap; // [RH] colormap currently drawing with
 	int fixedlightlev;
 	FSWColormap *fixedcolormap;
 	FSpecialColormap *realfixedcolormap;

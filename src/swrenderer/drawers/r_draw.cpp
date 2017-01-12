@@ -375,11 +375,9 @@ namespace swrenderer
 			default:					return 0;
 			}
 		}
-
-		FDynamicColormap *basecolormapsave;
 	}
 
-	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color)
+	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
 	{
 		using namespace drawerargs;
 
@@ -428,7 +426,6 @@ namespace swrenderer
 				}
 			}
 		}
-		basecolormapsave = basecolormap;
 
 		// Check for special modes
 		if (style.BlendOp == STYLEOP_Fuzz)
@@ -488,14 +485,9 @@ namespace swrenderer
 		return true;
 	}
 
-	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)
+	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
 	{
-		return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color);
-	}
-
-	void R_FinishSetPatchStyle()
-	{
-		basecolormap = basecolormapsave;
+		return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap);
 	}
 
 	DrawerFunc R_GetTransMaskDrawer()

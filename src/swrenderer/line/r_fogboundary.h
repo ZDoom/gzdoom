@@ -18,7 +18,7 @@ namespace swrenderer
 	class RenderFogBoundary
 	{
 	public:
-		static void Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep);
+		static void Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap);
 
 	private:
 		static void RenderSection(int y, int y2, int x1);

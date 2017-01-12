@@ -646,7 +646,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 			if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
-				PClassAmmo *atype = static_cast<PClassAmmo *>(type);
+				PClassInventory *atype = static_cast<PClassInventory *>(type);
 				AInventory *ammo = player->mo->FindInventory(atype);
 				if (ammo == NULL)
 				{

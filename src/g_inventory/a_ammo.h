@@ -1,21 +1,9 @@
 #pragma once
 #include "a_pickups.h"
 
-// Ammo: Something a weapon needs to operate
-class PClassAmmo : public PClassInventory
-{
-	DECLARE_CLASS(PClassAmmo, PClassInventory)
-protected:
-	virtual void DeriveData(PClass *newclass);
-public:
-	PClassAmmo();
-
-	int DropAmount;			// Specifies the amount for a dropped ammo item.
-};
-
 class AAmmo : public AInventory
 {
-	DECLARE_CLASS_WITH_META(AAmmo, AInventory, PClassAmmo)
+	DECLARE_CLASS(AAmmo, AInventory)
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;
@@ -24,7 +12,7 @@ public:
 	virtual AInventory *CreateTossable () override;
 	PClassActor *GetParentAmmo () const;
 
-	int BackpackAmount, BackpackMaxAmount;
+	int BackpackAmount, BackpackMaxAmount, DropAmount;
 };
 
 

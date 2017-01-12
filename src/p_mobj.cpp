@@ -1134,7 +1134,7 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (PClassAmmo *type, int amount)
+bool AActor::GiveAmmo (PClassInventory *type, int amount)
 {
 	if (type != NULL)
 	{

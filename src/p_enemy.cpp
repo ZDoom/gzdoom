@@ -3241,7 +3241,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	else if (inv->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		// Half ammo when dropped by bad guys.
-		int amount = static_cast<PClassAmmo *>(inv->GetClass())->DropAmount;
+		int amount = static_cast<AAmmo *>(inv)->DropAmount;
 		if (amount <= 0)
 		{
 			amount = MAX(1, int(inv->Amount * dropammofactor));

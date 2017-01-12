@@ -341,7 +341,7 @@ inline int T_FindFirstSectorFromTag(int tagnum)
 // Doom index is only supported for the 4 original ammo types
 //
 //==========================================================================
-static PClassAmmo * T_GetAmmo(const svalue_t &t)
+static PClassInventory * T_GetAmmo(const svalue_t &t)
 {
 	const char * p;
 
@@ -362,7 +362,7 @@ static PClassAmmo * T_GetAmmo(const svalue_t &t)
 		}
 		p=DefAmmo[ammonum];
 	}
-	PClassAmmo * am=dyn_cast<PClassAmmo>(PClass::FindActor(p));
+	PClassInventory * am=dyn_cast<PClassInventory>(PClass::FindActor(p));
 	if (am == NULL)
 	{
 		script_error("unknown ammo type : %s", p);
@@ -2572,7 +2572,7 @@ void FParser::SF_PlayerKeys(void)
 void FParser::SF_PlayerAmmo(void)
 {
 	int playernum, amount;
-	PClassAmmo * ammotype;
+	PClassInventory * ammotype;
 	
 	if (CheckArgs(2))
 	{
@@ -2608,7 +2608,7 @@ void FParser::SF_PlayerAmmo(void)
 void FParser::SF_MaxPlayerAmmo()
 {
 	int playernum, amount;
-	PClassAmmo * ammotype;
+	PClassInventory * ammotype;
 
 	if (CheckArgs(2))
 	{

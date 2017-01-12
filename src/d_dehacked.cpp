@@ -147,7 +147,7 @@ struct StyleName
 
 static TArray<StyleName> StyleNames;
 
-static TArray<PClassAmmo *> AmmoNames;
+static TArray<PClassActor *> AmmoNames;
 static TArray<PClassActor *> WeaponNames;
 
 // DeHackEd trickery to support MBF-style parameters
@@ -1535,7 +1535,7 @@ static int PatchSprite (int sprNum)
 
 static int PatchAmmo (int ammoNum)
 {
-	PClassAmmo *ammoType = NULL;
+	PClassActor *ammoType = NULL;
 	AAmmo *defaultAmmo = NULL;
 	int result;
 	int oldclip;
@@ -1670,7 +1670,7 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = AmmoNames[val];
+				info->AmmoType1 = (PClassInventory*)AmmoNames[val];
 				if (info->AmmoType1 != NULL)
 				{
 					info->AmmoGive1 = ((AAmmo*)GetDefaultByType (info->AmmoType1))->Amount * 2;
@@ -2929,8 +2929,8 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						PClassAmmo *cls = dyn_cast<PClassAmmo>(PClass::FindClass(sc.String));
-						if (cls == NULL)
+						auto cls = PClass::FindActor(sc.String);
+						if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AAmmo)))
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}

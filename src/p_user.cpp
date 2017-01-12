@@ -942,7 +942,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::BestWeapon(PClassAmmo *ammotype)
+AWeapon *APlayerPawn::BestWeapon(PClassInventory *ammotype)
 {
 	AWeapon *bestMatch = NULL;
 	int bestOrder = INT_MAX;
@@ -1004,7 +1004,7 @@ AWeapon *APlayerPawn::BestWeapon(PClassAmmo *ammotype)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::PickNewWeapon(PClassAmmo *ammotype)
+AWeapon *APlayerPawn::PickNewWeapon(PClassInventory *ammotype)
 {
 	AWeapon *best = BestWeapon (ammotype);
 
@@ -1032,7 +1032,7 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassAmmo *ammotype)
 //
 //===========================================================================
 
-void APlayerPawn::CheckWeaponSwitch(PClassAmmo *ammotype)
+void APlayerPawn::CheckWeaponSwitch(PClassInventory *ammotype)
 {
 	if (!player->userinfo.GetNeverSwitch() &&
 		player->PendingWeapon == WP_NOCHANGE && 

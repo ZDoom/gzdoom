@@ -44,7 +44,6 @@
 #include "portal.h"
 
 struct subsector_t;
-class PClassAmmo;
 struct FBlockNode;
 struct FPortalGroupArray;
 
@@ -733,7 +732,7 @@ public:
 	AInventory *FirstInv ();
 
 	// Tries to give the actor some ammo.
-	bool GiveAmmo (PClassAmmo *type, int amount);
+	bool GiveAmmo (PClassInventory *type, int amount);
 
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();

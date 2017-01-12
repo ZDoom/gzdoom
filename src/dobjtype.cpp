@@ -3090,7 +3090,6 @@ PClass *ClassReg::RegisterClass()
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
-		&PClassAmmo::RegistrationInfo,
 		&PClassHealth::RegistrationInfo,
 		&PClassPuzzleItem::RegistrationInfo,
 		&PClassWeapon::RegistrationInfo,

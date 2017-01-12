@@ -37,22 +37,6 @@
 #include "d_player.h"
 #include "serializer.h"
 
-IMPLEMENT_CLASS(PClassAmmo, false, false)
-
-PClassAmmo::PClassAmmo()
-{
-	DropAmount = 0;
-}
-
-void PClassAmmo::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
-	Super::DeriveData(newclass);
-	PClassAmmo *newc = static_cast<PClassAmmo *>(newclass);
-
-	newc->DropAmount = DropAmount;
-}
-
 IMPLEMENT_CLASS(AAmmo, false, false)
 
 DEFINE_FIELD(AAmmo, BackpackAmount)

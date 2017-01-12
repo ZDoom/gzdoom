@@ -107,7 +107,7 @@ class AWeapon : public AStateProvider
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
-	PClassAmmo *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
+	PClassInventory *AmmoType1, *AmmoType2;	// Types of ammo used by this weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot

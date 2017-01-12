@@ -37,7 +37,7 @@ class LowerStackLookOnly : StackPoint
 }
 
 
-class SectorSilencer native 
+class SectorSilencer : Actor
 {
 	default
 	{
@@ -45,5 +45,20 @@ class SectorSilencer native
 		+NOGRAVITY
 		+DONTSPLASH
 		RenderStyle "None";
+	}
+	
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		CurSector.Flags |= Sector.SECF_SILENT;
+	}
+
+	override void OnDestroy ()
+	{
+		if (CurSector != null)
+		{
+			CurSector.Flags &= ~Sector.SECF_SILENT;
+		}
+		Super.OnDestroy();
 	}
 }

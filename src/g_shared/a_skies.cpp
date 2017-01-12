@@ -150,30 +150,3 @@ void AStackPoint::BeginPlay ()
 	AActor::BeginPlay ();
 }
 
-//---------------------------------------------------------------------------
-
-class ASectorSilencer : public AActor
-{
-	DECLARE_CLASS (ASectorSilencer, AActor)
-public:
-	void BeginPlay ();
-	void OnDestroy() override;
-};
-
-IMPLEMENT_CLASS(ASectorSilencer, false, false)
-
-void ASectorSilencer::BeginPlay ()
-{
-	Super::BeginPlay ();
-	Sector->Flags |= SECF_SILENT;
-}
-
-void ASectorSilencer::OnDestroy ()
-{
-	if (Sector != nullptr)
-	{
-		Sector->Flags &= ~SECF_SILENT;
-	}
-	Super::OnDestroy();
-}
-

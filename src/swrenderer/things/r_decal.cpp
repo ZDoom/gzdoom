@@ -214,7 +214,7 @@ namespace swrenderer
 		}
 
 		yscale = decal->ScaleY;
-		dc_texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
+		double texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
 
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);
@@ -265,7 +265,7 @@ namespace swrenderer
 		{
 			sprflipvert = true;
 			yscale = -yscale;
-			dc_texturemid -= WallSpriteTile->GetHeight();
+			texturemid -= WallSpriteTile->GetHeight();
 		}
 		else
 		{
@@ -293,7 +293,7 @@ namespace swrenderer
 					{ // calculate lighting
 						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					DrawColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -312,15 +312,15 @@ namespace swrenderer
 		WallC = savecoord;
 	}
 
-	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
-			sprtopscreen = CenterY + dc_texturemid * spryscale;
+			sprtopscreen = CenterY + texturemid * spryscale;
 		else
-			sprtopscreen = CenterY - dc_texturemid * spryscale;
+			sprtopscreen = CenterY - texturemid * spryscale;
 
 		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}

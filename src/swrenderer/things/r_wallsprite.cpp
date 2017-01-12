@@ -153,7 +153,7 @@ namespace swrenderer
 		WallT.InitFromWallCoords(&spr->wallc);
 		PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
 		iyscale = 1 / spr->yscale;
-		dc_texturemid = (spr->gzt - ViewPos.Z) * iyscale;
+		double texturemid = (spr->gzt - ViewPos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
 		{
 			int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -195,7 +195,7 @@ namespace swrenderer
 		{
 			sprflipvert = true;
 			iyscale = -iyscale;
-			dc_texturemid -= spr->pic->GetHeight();
+			texturemid -= spr->pic->GetHeight();
 		}
 		else
 		{
@@ -229,22 +229,22 @@ namespace swrenderer
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!RenderTranslucentPass::ClipSpriteColumnWithPortals(x, spr))
-					DrawColumn(x, WallSpriteTile, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = swall[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
-			sprtopscreen = CenterY + dc_texturemid * spryscale;
+			sprtopscreen = CenterY + texturemid * spryscale;
 		else
-			sprtopscreen = CenterY - dc_texturemid * spryscale;
+			sprtopscreen = CenterY - texturemid * spryscale;
 
 		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}

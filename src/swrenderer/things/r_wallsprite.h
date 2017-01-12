@@ -24,6 +24,6 @@ namespace swrenderer
 		static void Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip);
 
 	private:
-		static void DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+		static void DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 	};
 }

@@ -1059,7 +1059,6 @@ namespace swrenderer
 		{ // one sided line
 			if (midtexture->UseType != FTexture::TEX_Null && viewactive)
 			{
-				dc_texturemid = rw_midtexturemid;
 				rw_pic = midtexture;
 				xscale = rw_pic->Scale.X * rw_midtexturescalex;
 				yscale = rw_pic->Scale.Y * rw_midtexturescaley;
@@ -1080,7 +1079,7 @@ namespace swrenderer
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, rw_midtexturemid, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
@@ -1095,7 +1094,6 @@ namespace swrenderer
 				}
 				if (viewactive)
 				{
-					dc_texturemid = rw_toptexturemid;
 					rw_pic = toptexture;
 					xscale = rw_pic->Scale.X * rw_toptexturescalex;
 					yscale = rw_pic->Scale.Y * rw_toptexturescaley;
@@ -1116,7 +1114,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, rw_toptexturemid, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1134,7 +1132,6 @@ namespace swrenderer
 				}
 				if (viewactive)
 				{
-					dc_texturemid = rw_bottomtexturemid;
 					rw_pic = bottomtexture;
 					xscale = rw_pic->Scale.X * rw_bottomtexturescalex;
 					yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
@@ -1155,7 +1152,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, rw_bottomtexturemid, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
 			}

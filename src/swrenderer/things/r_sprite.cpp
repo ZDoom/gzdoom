@@ -314,20 +314,20 @@ namespace swrenderer
 			fixed_t iscale = FLOAT2FIXED(1 / vis->yscale);
 			frac = vis->startfrac;
 			xiscale = vis->xiscale;
-			dc_texturemid = vis->texturemid;
+			double texturemid = vis->texturemid;
 
 			if (vis->renderflags & RF_YFLIP)
 			{
 				sprflipvert = true;
 				spryscale = -spryscale;
 				iscale = -iscale;
-				dc_texturemid -= vis->pic->GetHeight();
-				sprtopscreen = CenterY + dc_texturemid * spryscale;
+				texturemid -= vis->pic->GetHeight();
+				sprtopscreen = CenterY + texturemid * spryscale;
 			}
 			else
 			{
 				sprflipvert = false;
-				sprtopscreen = CenterY - dc_texturemid * spryscale;
+				sprtopscreen = CenterY - texturemid * spryscale;
 			}
 
 			int x = vis->x1;

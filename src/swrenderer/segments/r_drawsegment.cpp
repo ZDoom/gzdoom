@@ -232,13 +232,15 @@ namespace swrenderer
 		{
 			texheight = texheight / texheightscale;
 		}
+
+		double texturemid;
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			dc_texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
 		}
 		else
 		{
-			dc_texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 		}
 
 		rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
@@ -257,21 +259,21 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				dc_texturemid += rowoffset - ViewPos.Z;
-				textop = dc_texturemid;
-				dc_texturemid *= MaskedScaleY;
+				texturemid += rowoffset - ViewPos.Z;
+				textop = texturemid;
+				texturemid *= MaskedScaleY;
 			}
 			else
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				textop = dc_texturemid + rowoffset / MaskedScaleY - ViewPos.Z;
-				dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+				textop = texturemid + rowoffset / MaskedScaleY - ViewPos.Z;
+				texturemid = (texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
 			}
 			if (sprflipvert)
 			{
 				MaskedScaleY = -MaskedScaleY;
-				dc_texturemid -= tex->GetHeight() << FRACBITS;
+				texturemid -= tex->GetHeight() << FRACBITS;
 			}
 
 			// [RH] Don't bother drawing segs that are completely offscreen
@@ -356,9 +358,9 @@ namespace swrenderer
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
 					double sprtopscreen;
 					if (sprflipvert)
-						sprtopscreen = CenterY + dc_texturemid * spryscale;
+						sprtopscreen = CenterY + texturemid * spryscale;
 					else
-						sprtopscreen = CenterY - dc_texturemid * spryscale;
+						sprtopscreen = CenterY - texturemid * spryscale;
 
 					R_DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 
@@ -373,13 +375,13 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				dc_texturemid = (dc_texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
+				texturemid = (texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
 			}
 			else
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+				texturemid = (texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
 			}
 
 			WallC.sz1 = ds->sz1;
@@ -421,7 +423,7 @@ namespace swrenderer
 
 			rw_offset = 0;
 			rw_pic = tex;
-			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
+			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 		}
 
 	clearfog:
@@ -498,20 +500,20 @@ namespace swrenderer
 		{
 			rowoffset += rw_pic->GetHeight();
 		}
-		dc_texturemid = (planez - ViewPos.Z) * yscale;
+		double texturemid = (planez - ViewPos.Z) * yscale;
 		if (rw_pic->bWorldPanning)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
 
-			dc_texturemid = dc_texturemid + rowoffset * yscale;
+			texturemid = texturemid + rowoffset * yscale;
 			rw_offset = xs_RoundToInt(rw_offset * xscale);
 		}
 		else
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			dc_texturemid += rowoffset;
+			texturemid += rowoffset;
 		}
 
 		if (fixedlightlev >= 0)
@@ -545,7 +547,7 @@ namespace swrenderer
 		}
 
 		PrepLWall(lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
-		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
+		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, texturemid, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors

@@ -35,8 +35,6 @@ namespace swrenderer
 		bool simple_shade;
 	};
 
-	extern double dc_texturemid;
-
 	namespace drawerargs
 	{
 		extern int dc_pitch;

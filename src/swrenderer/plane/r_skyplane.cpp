@@ -436,7 +436,7 @@ namespace swrenderer
 		}
 
 		frontyScale = frontskytex->Scale.Y;
-		dc_texturemid = skymid * frontyScale;
+		double texturemid = skymid * frontyScale;
 
 		if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 		{ // The texture tiles nicely
@@ -445,7 +445,7 @@ namespace swrenderer
 				lastskycol[x] = 0xffffffff;
 				lastskycol_bgra[x] = 0xffffffff;
 			}
-			R_DrawSkySegment(frontskytex, pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
+			R_DrawSkySegment(frontskytex, pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, texturemid, swall, lwall,
 				frontyScale, 0, 0, 0.0f, 0.0f, nullptr, backskytex == nullptr ? RenderSkyPlane::GetOneSkyColumn : RenderSkyPlane::GetTwoSkyColumns);
 		}
 		else
@@ -469,7 +469,7 @@ namespace swrenderer
 		if (topfrac < 0) topfrac += frontskytex->GetHeight();
 		yl = 0;
 		yh = short((frontskytex->GetHeight() - topfrac) * frontyScale);
-		dc_texturemid = topfrac - iscale * (1 - CenterY);
+		double texturemid = topfrac - iscale * (1 - CenterY);
 
 		while (yl < viewheight)
 		{
@@ -483,10 +483,10 @@ namespace swrenderer
 				lastskycol[x] = 0xffffffff;
 				lastskycol_bgra[x] = 0xffffffff;
 			}
-			R_DrawSkySegment(frontskytex, pl->left, pl->right, top, bot, swall, lwall, frontskytex->Scale.Y, 0, 0, 0.0f, 0.0f, nullptr, backskytex == nullptr ? RenderSkyPlane::GetOneSkyColumn : RenderSkyPlane::GetTwoSkyColumns);
+			R_DrawSkySegment(frontskytex, pl->left, pl->right, top, bot, texturemid, swall, lwall, frontskytex->Scale.Y, 0, 0, 0.0f, 0.0f, nullptr, backskytex == nullptr ? RenderSkyPlane::GetOneSkyColumn : RenderSkyPlane::GetTwoSkyColumns);
 			yl = yh;
 			yh += drawheight;
-			dc_texturemid = iscale * (centery - yl - 1);
+			texturemid = iscale * (centery - yl - 1);
 		}
 	}
 

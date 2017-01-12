@@ -36,7 +36,6 @@ namespace swrenderer
 	};
 
 	extern double dc_texturemid;
-	extern FLightNode *dc_light_list;
 
 	namespace drawerargs
 	{

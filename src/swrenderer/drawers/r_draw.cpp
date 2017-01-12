@@ -57,7 +57,6 @@ CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 namespace swrenderer
 {
 	double dc_texturemid;
-	FLightNode *dc_light_list;
 
 	int ylookup[MAXHEIGHT];
 	uint8_t shadetables[NUMCOLORMAPS * 16 * 256];

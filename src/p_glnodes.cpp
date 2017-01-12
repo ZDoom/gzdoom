@@ -1443,7 +1443,7 @@ void P_SetRenderSector()
 		{
 			int partner = (int)(p - segs);
 
-			if (partner < 0 || partner >= numsegs)
+			if (partner < 0 || partner >= numsegs || &segs[partner] != p)
 			{
 				segs[i].PartnerSeg = nullptr;
 			}

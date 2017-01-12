@@ -1158,7 +1158,6 @@ set (PCH_SOURCES
 	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp
-	g_shared/a_bridge.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp

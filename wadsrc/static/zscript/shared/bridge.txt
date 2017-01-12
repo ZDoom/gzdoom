@@ -70,7 +70,7 @@ class BridgeBall : Actor
 
 // The bridge itself -------------------------------------------------------
 
-class CustomBridge : Actor native
+class CustomBridge : Actor
 {
 	const ORBIT_RADIUS = 15;
 
@@ -114,6 +114,26 @@ class CustomBridge : Actor native
 			A_SetRenderStyle(1., STYLE_Normal);
 		}
 	}
+	
+	override void OnDestroy()
+	{
+		// Hexen originally just set a flag to make the bridge balls remove themselves in A_BridgeOrbit.
+		// But this is not safe with custom bridge balls that do not necessarily call that function.
+		// So the best course of action is to look for all bridge balls here and destroy them ourselves.
+		
+		let it = ThinkerIterator.Create("Actor");
+		Actor thing;
+		
+		while ((thing = Actor(it.Next())))
+		{
+			if (thing.target == self)
+			{
+				thing.Destroy();
+			}
+		}
+		Super.OnDestroy();
+	}
+	
 
 	void A_BridgeInit(class<Actor> balltype = "BridgeBall")
 	{

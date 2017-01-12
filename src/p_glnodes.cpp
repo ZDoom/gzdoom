@@ -1290,7 +1290,7 @@ CCMD(clearnodecache)
 	}
 	catch (CRecoverableError &err)
 	{
-		Printf("%s", err.GetMessage());
+		Printf("%s\n", err.GetMessage());
 		return;
 	}
 

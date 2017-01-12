@@ -524,8 +524,7 @@ namespace swrenderer
 					}
 					else
 					{
-						draw_segment->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel)
-							+ r_actualextralight);
+						draw_segment->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel) + R_ActualExtraLight(foggy));
 					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != -1)
@@ -938,8 +937,7 @@ namespace swrenderer
 
 			if (fixedcolormap == NULL && fixedlightlev < 0)
 			{
-				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
-					+ r_actualextralight);
+				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel) + R_ActualExtraLight(foggy));
 				double GlobVis = r_WallVisibility;
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));

@@ -57,12 +57,13 @@ namespace swrenderer
 	extern float r_TiltVisibility;
 	extern double r_SpriteVisibility;
 
-	extern int r_actualextralight;
 	extern bool foggy;
 	extern int fixedlightlev;
 	extern FSWColormap *fixedcolormap;
 	extern FSpecialColormap *realfixedcolormap;
 	extern FDynamicColormap *basecolormap;	// [RH] Colormap for sector currently being drawn
+
+	inline int R_ActualExtraLight(bool fog) { return fog ? 0 : extralight << 4; }
 
 	void R_SetVisibility(double visibility);
 	double R_GetVisibility();

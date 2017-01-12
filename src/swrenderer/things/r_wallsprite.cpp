@@ -174,7 +174,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
+		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(foggy));
 		double GlobVis = r_WallVisibility;
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));

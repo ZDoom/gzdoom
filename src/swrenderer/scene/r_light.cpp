@@ -51,7 +51,6 @@ namespace swrenderer
 	FSpecialColormap *realfixedcolormap;
 
 	bool foggy; // [RH] ignore extralight and fullbright?
-	int r_actualextralight;
 
 	namespace
 	{

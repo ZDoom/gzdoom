@@ -240,7 +240,7 @@ namespace swrenderer
 				}
 				else
 				{ // diminished light
-					int spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
+					int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(foggy));
 					spr->Style.BaseColormap = mybasecolormap;
 					spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 				}

@@ -477,7 +477,6 @@ namespace swrenderer
 
 		// [RH] set foggy flag
 		foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
-		r_actualextralight = foggy ? 0 : extralight << 4;
 
 		// kg3D - fake lights
 		if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -506,7 +505,7 @@ namespace swrenderer
 				frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
 			VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 				frontsector->GetTexture(sector_t::ceiling),
-				ceilinglightlevel + r_actualextralight,				// killough 4/11/98
+				ceilinglightlevel + R_ActualExtraLight(foggy),				// killough 4/11/98
 				frontsector->GetAlpha(sector_t::ceiling),
 				!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::ceiling].xform,
@@ -546,7 +545,7 @@ namespace swrenderer
 				frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
 			VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),
-				floorlightlevel + r_actualextralight,				// killough 3/16/98
+				floorlightlevel + R_ActualExtraLight(foggy),				// killough 3/16/98
 				frontsector->GetAlpha(sector_t::floor),
 				!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::floor].xform,
@@ -611,7 +610,7 @@ namespace swrenderer
 					ceilingplane = nullptr;
 					floorplane = VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
 						frontsector->GetTexture(sector_t::floor),
-						floorlightlevel + r_actualextralight,				// killough 3/16/98
+						floorlightlevel + R_ActualExtraLight(foggy),				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
 						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
@@ -676,7 +675,7 @@ namespace swrenderer
 					floorplane = nullptr;
 					ceilingplane = VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 						frontsector->GetTexture(sector_t::ceiling),
-						ceilinglightlevel + r_actualextralight,				// killough 4/11/98
+						ceilinglightlevel + R_ActualExtraLight(foggy),				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
 						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
@@ -710,7 +709,7 @@ namespace swrenderer
 		// [RH] Add particles
 		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
 		{ // Only do it for the main BSP.
-			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + r_actualextralight);
+			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + R_ActualExtraLight(foggy));
 			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
 				RenderParticle::Project(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide);
@@ -825,7 +824,7 @@ namespace swrenderer
 		// Well, now it will be done.
 		sec->validcount = validcount;
 
-		int spriteshade = LIGHT2SHADE(lightlevel + r_actualextralight);
+		int spriteshade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
 
 		// Handle all things in sector.
 		for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)

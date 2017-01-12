@@ -33,6 +33,7 @@ namespace swrenderer
 		double planeheight;
 		bool plane_shade;
 		int planeshade;
+		double GlobVis;
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		double xstepscale, ystepscale;

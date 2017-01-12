@@ -57,8 +57,6 @@ namespace swrenderer
 	extern float r_TiltVisibility;
 	extern double r_SpriteVisibility;
 
-	extern double GlobVis;
-
 	extern int r_actualextralight;
 	extern bool foggy;
 	extern int fixedlightlev;

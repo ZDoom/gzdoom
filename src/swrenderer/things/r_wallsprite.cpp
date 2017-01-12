@@ -175,7 +175,7 @@ namespace swrenderer
 		}
 
 		int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
-		GlobVis = r_WallVisibility;
+		double GlobVis = r_WallVisibility;
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;

@@ -940,7 +940,7 @@ namespace swrenderer
 			{
 				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
 					+ r_actualextralight);
-				GlobVis = r_WallVisibility;
+				double GlobVis = r_WallVisibility;
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 			}

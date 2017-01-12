@@ -6145,6 +6145,8 @@ enum
 	PRINTNAME_LEVELNAME		= -1,
 	PRINTNAME_LEVEL			= -2,
 	PRINTNAME_SKILL			= -3,
+	PRINTNAME_NEXTLEVEL		= -4,
+	PRINTNAME_NEXTSECRET	= -5,
 };
 
 
@@ -7886,6 +7888,22 @@ scriptwait:
 						uppername.ToUpper();
 						work += uppername;
 						break; 
+					}
+
+					case PRINTNAME_NEXTLEVEL:
+					{
+						FString uppername = level.NextMap;
+						uppername.ToUpper();
+						work += uppername;
+						break;
+					}
+
+					case PRINTNAME_NEXTSECRET:
+					{
+						FString uppername = level.NextSecretMap;
+						uppername.ToUpper();
+						work += uppername;
+						break;
 					}
 
 					case PRINTNAME_SKILL:

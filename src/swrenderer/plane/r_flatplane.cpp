@@ -18,7 +18,6 @@
 #include "w_wad.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "stats.h"
 #include "v_video.h"
@@ -37,6 +36,9 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/r_memory.h"
 

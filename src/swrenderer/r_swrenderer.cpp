@@ -32,9 +32,12 @@
 **
 */
 
-
-#include "r_main.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/things/r_playersprite.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "v_palette.h"
 #include "v_video.h"
 #include "m_png.h"
@@ -67,16 +70,6 @@ CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOI
 		// [SP] Update pitch limits to the netgame/gamesim.
 		players[consoleplayer].SendPitchLimits();
 	}
-}
-
-namespace swrenderer
-{
-
-void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
-void R_SetupColormap(player_t *);
-void R_SetupFreelook();
-void R_InitRenderer();
-
 }
 
 using namespace swrenderer;

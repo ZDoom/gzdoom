@@ -63,7 +63,6 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "swrenderer/r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "sbar.h"
@@ -73,6 +72,7 @@
 #include "w_wad.h"
 #include "r_data/colormaps.h"
 #include "SkylineBinPack.h"
+#include "swrenderer/scene/r_light.h"
 
 // MACROS ------------------------------------------------------------------
 

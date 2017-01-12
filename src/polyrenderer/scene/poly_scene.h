@@ -28,7 +28,6 @@
 #include <functional>
 #include "doomdata.h"
 #include "r_utility.h"
-#include "swrenderer/r_main.h"
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "polyrenderer/math/poly_intersection.h"
 #include "poly_wall.h"

@@ -45,7 +45,8 @@
 #ifndef NO_SWRENDER
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
-#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_light.h"
+#include "swrenderer/scene/r_viewport.h"
 #endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"

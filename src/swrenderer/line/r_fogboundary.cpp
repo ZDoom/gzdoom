@@ -18,7 +18,6 @@
 #include "w_wad.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "stats.h"
 #include "v_video.h"
@@ -38,6 +37,7 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/line/r_fogboundary.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/scene/r_light.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)

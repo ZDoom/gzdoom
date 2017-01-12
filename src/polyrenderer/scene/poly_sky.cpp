@@ -28,6 +28,7 @@
 #include "poly_portal.h"
 #include "r_sky.h" // for skyflatnum
 #include "g_levellocals.h"
+#include "swrenderer/scene/r_light.h"
 
 PolySkyDome::PolySkyDome()
 {

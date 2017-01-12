@@ -18,7 +18,6 @@
 #include "i_system.h"
 #include "p_lnspec.h"
 #include "p_setup.h"
-#include "swrenderer/r_main.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "a_sharedglobal.h"

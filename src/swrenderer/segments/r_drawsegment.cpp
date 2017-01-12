@@ -28,7 +28,6 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 #include "d_net.h"
-#include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/scene/r_3dfloors.h"
@@ -39,6 +38,8 @@
 #include "swrenderer/line/r_fogboundary.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/things/r_visiblesprite.h"
+#include "swrenderer/scene/r_light.h"
+#include "swrenderer/scene/r_viewport.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 

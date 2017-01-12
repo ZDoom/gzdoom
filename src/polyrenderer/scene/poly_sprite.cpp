@@ -28,6 +28,7 @@
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/math/poly_intersection.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)

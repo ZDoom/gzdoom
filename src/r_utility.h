@@ -21,6 +21,11 @@ extern DAngle			ViewPitch;
 extern DAngle			ViewRoll;
 extern DVector3			ViewPath[2];
 
+extern double			ViewCos;
+extern double			ViewSin;
+extern int				viewwindowx;
+extern int				viewwindowy;
+
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
 

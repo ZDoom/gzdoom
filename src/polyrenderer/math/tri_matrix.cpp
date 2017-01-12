@@ -33,10 +33,11 @@
 #include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_utility.h"
 #include "tri_matrix.h"
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
-#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_viewport.h"
 
 TriMatrix TriMatrix::null()
 {

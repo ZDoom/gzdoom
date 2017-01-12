@@ -32,7 +32,6 @@
 #include "p_lnspec.h"
 #include "p_setup.h"
 
-#include "swrenderer/r_main.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/plane/r_visibleplanelist.h"
@@ -42,6 +41,9 @@
 #include "swrenderer/things/r_particle.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/line/r_wallsetup.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "r_3dfloors.h"
 #include "r_portal.h"
 #include "a_sharedglobal.h"

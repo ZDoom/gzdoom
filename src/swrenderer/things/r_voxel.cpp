@@ -38,7 +38,9 @@
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_translucent_pass.h"
-#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 

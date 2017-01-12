@@ -35,7 +35,6 @@
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
-#include "swrenderer/r_main.h"
 #include "screen_triangle.h"
 
 void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread)

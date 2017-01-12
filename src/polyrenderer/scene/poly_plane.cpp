@@ -29,6 +29,7 @@
 #include "poly_portal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Int, r_3dfloors)
 

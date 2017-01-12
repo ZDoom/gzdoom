@@ -15,6 +15,7 @@
 
 class FTexture;
 struct FLightNode;
+struct seg_t;
 
 namespace swrenderer
 {

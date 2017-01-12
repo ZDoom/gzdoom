@@ -30,6 +30,8 @@
 #include "gl/data/gl_data.h"
 #include "d_net.h"
 #include "po_man.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
 
 EXTERN_CVAR(Int, screenblocks)
 void InitGLRMapinfoData();

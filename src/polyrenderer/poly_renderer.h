@@ -28,7 +28,6 @@
 #include <functional>
 #include "doomdata.h"
 #include "r_utility.h"
-#include "swrenderer/r_main.h"
 #include "scene/poly_portal.h"
 #include "scene/poly_playersprite.h"
 #include "scene/poly_sky.h"

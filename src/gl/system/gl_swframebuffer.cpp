@@ -57,7 +57,6 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "swrenderer/r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "sbar.h"
@@ -71,6 +70,8 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
 #include "gl_debug.h"
+
+#include "swrenderer/scene/r_light.h"
 
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows

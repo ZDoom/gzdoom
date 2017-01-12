@@ -838,7 +838,6 @@ set( NOT_COMPILED_SOURCE_FILES
 
 set( FASTMATH_PCH_SOURCES
 	swrenderer/r_swrenderer.cpp
-	swrenderer/r_main.cpp
 	swrenderer/r_memory.cpp
 	swrenderer/drawers/r_draw.cpp
 	swrenderer/drawers/r_draw_pal.cpp
@@ -846,9 +845,12 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/drawers/r_drawers.cpp
 	swrenderer/drawers/r_thread.cpp
 	swrenderer/scene/r_3dfloors.cpp
+	swrenderer/scene/r_light.cpp
 	swrenderer/scene/r_opaque_pass.cpp
 	swrenderer/scene/r_portal.cpp
+	swrenderer/scene/r_scene.cpp
 	swrenderer/scene/r_translucent_pass.cpp
+	swrenderer/scene/r_viewport.cpp
 	swrenderer/line/r_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp

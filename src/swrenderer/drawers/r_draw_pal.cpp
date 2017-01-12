@@ -45,9 +45,10 @@
 #include "doomdef.h"
 #include "r_defs.h"
 #include "r_draw.h"
-#include "swrenderer/r_main.h"
 #include "v_video.h"
 #include "r_draw_pal.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 // [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
 CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)

@@ -18,7 +18,6 @@
 #include "w_wad.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "stats.h"
 #include "v_video.h"
@@ -39,6 +38,9 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "swrenderer/r_memory.h"
 #include "g_levellocals.h"
 

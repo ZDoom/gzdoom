@@ -28,6 +28,8 @@
 #include "poly_decal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "a_sharedglobal.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_light.h"
 
 void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {

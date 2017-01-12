@@ -19,9 +19,11 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_walldraw.h"
-#include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/line/r_line.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 namespace swrenderer
 {

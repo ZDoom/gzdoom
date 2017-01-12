@@ -27,7 +27,6 @@
 #include "doomdef.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "swrenderer/r_main.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"
@@ -39,6 +38,8 @@
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 #include "gl/data/gl_matrix.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 #include "gi.h"
 #include "stats.h"

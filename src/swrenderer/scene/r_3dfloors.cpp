@@ -9,10 +9,10 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "c_dispatch.h"
-#include "swrenderer/r_main.h"
 #include "r_opaque_pass.h"
 #include "c_cvars.h"
 #include "r_3dfloors.h"
+#include "r_utility.h"
 
 CVAR(Int, r_3dfloors, true, 0);
 

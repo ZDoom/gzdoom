@@ -32,6 +32,7 @@
 #include "poly_decal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 

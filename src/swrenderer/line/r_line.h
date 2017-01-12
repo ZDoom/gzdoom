@@ -13,6 +13,14 @@
 
 #pragma once
 
+#include "vectors.h"
+
+struct seg_t;
+struct subsector_t;
+struct sector_t;
+struct side_t;
+struct line_t;
+
 namespace swrenderer
 {
 	struct visplane_t;

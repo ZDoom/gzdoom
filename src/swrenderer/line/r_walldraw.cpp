@@ -27,7 +27,6 @@
 #include "doomstat.h"
 #include "doomdata.h"
 
-#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "v_video.h"
 
@@ -45,6 +44,9 @@
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_wallsetup.h"
 

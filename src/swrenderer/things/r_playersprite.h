@@ -15,6 +15,8 @@
 
 #include "r_visiblesprite.h"
 
+class DPSprite;
+
 namespace swrenderer
 {
 	class RenderPlayerSprite

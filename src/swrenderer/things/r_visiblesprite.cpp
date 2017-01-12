@@ -22,7 +22,6 @@
 #include "w_wad.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
-#include "swrenderer/r_main.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/things/r_particle.h"

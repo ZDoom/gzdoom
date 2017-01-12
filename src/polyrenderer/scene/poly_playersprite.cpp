@@ -27,6 +27,9 @@
 #include "r_data/r_translate.h"
 #include "poly_playersprite.h"
 #include "polyrenderer/poly_renderer.h"
+#include "d_player.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)

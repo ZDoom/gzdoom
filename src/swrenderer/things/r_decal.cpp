@@ -19,7 +19,6 @@
 #include "doomstat.h"
 #include "doomdata.h"
 #include "p_lnspec.h"
-#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
@@ -38,6 +37,9 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/scene/r_scene.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
 

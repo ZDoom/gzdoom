@@ -20,7 +20,6 @@
 #include "m_swap.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "swrenderer/r_main.h"
 #include "swrenderer/things/r_particle.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -53,6 +52,8 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 

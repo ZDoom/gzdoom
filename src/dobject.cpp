@@ -351,8 +351,18 @@ DObject::~DObject ()
 //
 //==========================================================================
 
-void DObject::Destroy ()
+void DObject:: Destroy ()
 {
+	// We cannot call the VM during shutdown because all the needed data has been or is in the process of being deleted.
+	if (!PClass::bShuttingDown)
+	{
+		IFVIRTUAL(DObject, OnDestroy)
+		{
+			VMValue params[1] = { (DObject*)this };
+			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+		}
+	}
+	OnDestroy();
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
 }
 

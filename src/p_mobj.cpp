@@ -1770,7 +1770,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 		}
 	}
 
-	// play the sound before changing the state, so that AActor::Destroy can call S_RelinkSounds on it and the death state can override it.
+	// play the sound before changing the state, so that AActor::OnDestroy can call S_RelinkSounds on it and the death state can override it.
 	if (mo->DeathSound)
 	{
 		S_Sound (mo, CHAN_VOICE, mo->DeathSound, 1,
@@ -4920,7 +4920,7 @@ void AActor::CallDeactivate(AActor *activator)
 //
 //===========================================================================
 
-void AActor::Destroy ()
+void AActor::OnDestroy ()
 {
 	ClearRenderSectorList();
 	ClearRenderLineList();
@@ -4938,7 +4938,7 @@ void AActor::Destroy ()
 	// Transform any playing sound into positioned, non-actor sounds.
 	S_RelinkSound (this, NULL);
 
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 //===========================================================================

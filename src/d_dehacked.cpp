@@ -3199,14 +3199,14 @@ void ADehackedPickup::DoPickupSpecial (AActor *toucher)
 	RealPickup = nullptr;
 }
 
-void ADehackedPickup::Destroy ()
+void ADehackedPickup::OnDestroy ()
 {
 	if (RealPickup != nullptr)
 	{
 		RealPickup->Destroy ();
 		RealPickup = nullptr;
 	}
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 PClassActor *ADehackedPickup::DetermineType ()

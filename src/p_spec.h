@@ -243,7 +243,7 @@ public:
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
-	void Destroy() override;
+	void OnDestroy() override;
 
 protected:
 	EPillar		m_Type;
@@ -574,7 +574,7 @@ public:
 
 	DElevator (sector_t *sec);
 
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 

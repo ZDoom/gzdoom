@@ -45,7 +45,7 @@ public:
 	
 	DScroller (EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	DScroller (double dx, double dy, const line_t *l, int control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
-	void Destroy() override;
+	void OnDestroy() override;
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -306,7 +306,7 @@ DScroller::DScroller (EScroll type, double dx, double dy,
 	}
 }
 
-void DScroller::Destroy ()
+void DScroller::OnDestroy ()
 {
 	for(int i=0;i<3;i++)
 	{
@@ -316,7 +316,7 @@ void DScroller::Destroy ()
 			m_Interpolations[i] = NULL;
 		}
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //-----------------------------------------------------------------------------

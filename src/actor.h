@@ -595,7 +595,7 @@ public:
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
-	virtual void Destroy() override;
+	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void PostSerialize() override;
 	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick

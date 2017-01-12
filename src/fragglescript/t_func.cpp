@@ -1786,7 +1786,7 @@ public:
 	DLightLevel(sector_t * s,int destlevel,int speed);
 	void	Serialize(FSerializer &arc);
 	void		Tick ();
-	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
+	void		OnDestroy() { Super::OnDestroy(); m_Sector->lightingdata = nullptr; }
 };
 
 IMPLEMENT_CLASS(DLightLevel, false, false)

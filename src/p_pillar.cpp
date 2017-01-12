@@ -52,7 +52,7 @@ DPillar::DPillar ()
 {
 }
 
-void DPillar::Destroy()
+void DPillar::OnDestroy()
 {
 	if (m_Interp_Ceiling != NULL)
 	{
@@ -64,7 +64,7 @@ void DPillar::Destroy()
 		m_Interp_Floor->DelRef();
 		m_Interp_Floor = NULL;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 void DPillar::Serialize(FSerializer &arc)

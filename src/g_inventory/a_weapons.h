@@ -145,7 +145,7 @@ public:
 	virtual bool TryPickup (AActor *&toucher) override;
 	virtual bool TryPickupRestricted (AActor *&toucher) override;
 	virtual bool Use (bool pickup) override;
-	virtual void Destroy() override;
+	virtual void OnDestroy() override;
 
 	bool PickupForAmmo(AWeapon *ownedWeapon);
 	void PostMorphWeapon();

@@ -219,7 +219,7 @@ class DCorpsePointer : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DCorpsePointer (AActor *ptr);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor> Corpse;
 	DWORD Count;	// Only the first corpse pointer's count is valid.
@@ -271,7 +271,7 @@ DCorpsePointer::DCorpsePointer (AActor *ptr)
 	++first->Count;
 }
 
-void DCorpsePointer::Destroy ()
+void DCorpsePointer::OnDestroy ()
 {
 	// Store the count of corpses in the first thinker in the list
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
@@ -293,7 +293,7 @@ void DCorpsePointer::Destroy ()
 	{
 		Corpse->Destroy ();
 	}
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 void DCorpsePointer::Serialize(FSerializer &arc)

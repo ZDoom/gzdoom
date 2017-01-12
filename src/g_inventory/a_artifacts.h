@@ -12,7 +12,7 @@ class APowerup : public AInventory
 	DECLARE_CLASS (APowerup, AInventory)
 public:
 	virtual void Tick () override;
-	virtual void Destroy () override;
+	virtual void OnDestroy() override;
 	virtual bool HandlePickup (AInventory *item) override;
 	virtual AInventory *CreateCopy (AActor *other) override;
 	virtual AInventory *CreateTossable () override;

@@ -76,7 +76,7 @@ public:
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void MarkPrecacheSounds() const override;
 	virtual void BeginPlay () override;
-	virtual void Destroy () override;
+	virtual void OnDestroy() override;
 	virtual void Tick() override;
 	virtual bool Grind(bool items) override;
 

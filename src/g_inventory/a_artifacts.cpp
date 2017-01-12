@@ -292,10 +292,10 @@ void APowerup::CallEndEffect()
 //
 //===========================================================================
 
-void APowerup::Destroy ()
+void APowerup::OnDestroy ()
 {
 	CallEndEffect ();
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 //===========================================================================

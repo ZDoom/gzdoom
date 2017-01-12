@@ -2715,7 +2715,6 @@ void D_DoomMain (void)
 			*(afunc->VMPointer) = NULL;
 		}
 
-		ReleaseGlobalSymbols();
 		PClass::StaticShutdown();
 
 		GC::FullGC();					// perform one final garbage collection after shutdown
@@ -2727,6 +2726,7 @@ void D_DoomMain (void)
 
 		restart++;
 		PClass::bShutdown = false;
+		PClass::bShuttingDown = false;
 	}
 	while (1);
 }

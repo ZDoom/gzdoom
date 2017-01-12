@@ -869,7 +869,7 @@ void DElevator::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-void DElevator::Destroy()
+void DElevator::OnDestroy()
 {
 	if (m_Interp_Ceiling != NULL)
 	{
@@ -881,7 +881,7 @@ void DElevator::Destroy()
 		m_Interp_Floor->DelRef();
 		m_Interp_Floor = NULL;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

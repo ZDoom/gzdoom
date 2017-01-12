@@ -63,7 +63,7 @@ class DMessageBoxMenu : public DMenu
 public:
 
 	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false);
 	void Drawer();
 	bool Responder(event_t *ev);
@@ -124,11 +124,11 @@ void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, 
 //
 //=============================================================================
 
-void DMessageBoxMenu::Destroy()
+void DMessageBoxMenu::OnDestroy()
 {
 	if (mMessage != NULL) V_FreeBrokenLines(mMessage);
 	mMessage = NULL;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //=============================================================================

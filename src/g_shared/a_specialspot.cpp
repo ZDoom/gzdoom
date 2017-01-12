@@ -220,13 +220,13 @@ DSpotState::DSpotState ()
 //
 //----------------------------------------------------------------------------
 
-void DSpotState::Destroy ()
+void DSpotState::OnDestroy ()
 {
 	SpotLists.Clear();
 	SpotLists.ShrinkToFit();
 
 	SpotState = NULL;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //----------------------------------------------------------------------------
@@ -389,11 +389,11 @@ void ASpecialSpot::BeginPlay()
 //
 //----------------------------------------------------------------------------
 
-void ASpecialSpot::Destroy()
+void ASpecialSpot::OnDestroy()
 {
 	DSpotState *state = DSpotState::GetSpotState(false);
 	if (state != NULL) state->RemoveSpot(this);
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 // Mace spawn spot ----------------------------------------------------------

@@ -108,7 +108,7 @@ public:
 	void BeginPlay();
 	void SetOrigin (double x, double y, double z, bool moving = false);
 	void PostBeginPlay();
-	void Destroy();
+	void OnDestroy() override;
 	void Activate(AActor *activator);
 	void Deactivate(AActor *activator);
 	void SetOffset(const DVector3 &pos);

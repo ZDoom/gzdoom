@@ -47,7 +47,7 @@ bool ASectorAction::IsActivatedByUse() const
 	return ActivatedByUse;
 }
 
-void ASectorAction::Destroy ()
+void ASectorAction::OnDestroy ()
 {
 	if (Sector != nullptr)
 	{
@@ -72,7 +72,7 @@ void ASectorAction::Destroy ()
 		Sector = nullptr;
 	}
 
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 void ASectorAction::BeginPlay ()

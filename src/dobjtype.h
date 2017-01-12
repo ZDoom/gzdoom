@@ -883,6 +883,7 @@ public:
 	static TArray<PClass *> AllClasses;
 
 	static bool bShutdown;
+	static bool bShuttingDown;
 };
 
 class PClassType : public PClass
@@ -1014,8 +1015,6 @@ public:
 	PSymbolConstString(FName name, FString &str) : PSymbolConst(name, TypeString), Str(str) {}
 	PSymbolConstString() {}
 };
-
-void ReleaseGlobalSymbols();
 
 // Enumerations for serializing types in an archive -------------------------
 

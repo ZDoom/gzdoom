@@ -104,7 +104,7 @@ class ASoundSequence : public AActor
 {
 	DECLARE_CLASS (ASoundSequence, AActor)
 public:
-	void Destroy() override;
+	void OnDestroy() override;
 	void PostBeginPlay ();
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
@@ -119,10 +119,10 @@ IMPLEMENT_CLASS(ASoundSequence, false, false)
 //
 //==========================================================================
 
-void ASoundSequence::Destroy ()
+void ASoundSequence::OnDestroy ()
 {
 	SN_StopSequence (this);
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

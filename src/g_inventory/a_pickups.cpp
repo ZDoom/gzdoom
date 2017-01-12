@@ -1137,14 +1137,14 @@ bool AInventory::CallShouldStay()
 //
 //===========================================================================
 
-void AInventory::Destroy ()
+void AInventory::OnDestroy ()
 {
 	if (Owner != NULL)
 	{
 		Owner->RemoveInventory (this);
 	}
 	Inventory = NULL;
-	Super::Destroy ();
+	Super::OnDestroy();
 
 	// Although contrived it can theoretically happen that these variables still got a pointer to this item
 	if (SendItemUse == this) SendItemUse = NULL;

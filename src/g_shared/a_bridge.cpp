@@ -8,12 +8,12 @@ class ACustomBridge : public AActor
 {
 	DECLARE_CLASS (ACustomBridge, AActor)
 public:
-	void Destroy() override;
+	void OnDestroy() override;
 };
 
 IMPLEMENT_CLASS(ACustomBridge, false, false)
 
-void ACustomBridge::Destroy()
+void ACustomBridge::OnDestroy()
 {
 	// Hexen originally just set a flag to make the bridge balls remove themselves in A_BridgeOrbit.
 	// But this is not safe with custom bridge balls that do not necessarily call that function.
@@ -29,5 +29,5 @@ void ACustomBridge::Destroy()
 			thing->Destroy();
 		}
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }

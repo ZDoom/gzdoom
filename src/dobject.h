@@ -473,7 +473,8 @@ public:
 	// that don't call their base class.
 	void CheckIfSerialized () const;
 
-	virtual void Destroy();
+	virtual void OnDestroy() {}
+	void Destroy();
 
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,

@@ -136,7 +136,7 @@ namespace swrenderer
 		}
 
 		// [RH] set foggy flag
-		foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
+		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
 		// get light level
 		lightnum = ((floorlight + ceilinglight) >> 1) + R_ActualExtraLight(foggy);
@@ -478,7 +478,7 @@ namespace swrenderer
 					vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
 					vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 				}
-				else if (!foggy && pspr->GetState()->GetFullbright())
+				else if (!vis->foggy && pspr->GetState()->GetFullbright())
 				{ // full bright
 					vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
 					vis->Style.ColormapNum = 0;
@@ -535,7 +535,7 @@ namespace swrenderer
 			// [SP] If emulating GZDoom fullbright, disable acceleration
 			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
 				mybasecolormap = &FullNormalLight;
-			if (r_fullbrightignoresectorcolor && !foggy && pspr->GetState()->GetFullbright())
+			if (r_fullbrightignoresectorcolor && !vis->foggy && pspr->GetState()->GetFullbright())
 				mybasecolormap = &FullNormalLight;
 			colormap_to_use = mybasecolormap;
 		}

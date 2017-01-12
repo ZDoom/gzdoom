@@ -57,7 +57,6 @@ namespace swrenderer
 	extern float r_TiltVisibility;
 	extern double r_SpriteVisibility;
 
-	extern bool foggy;
 	extern int fixedlightlev;
 	extern FSWColormap *fixedcolormap;
 	extern FSpecialColormap *realfixedcolormap;

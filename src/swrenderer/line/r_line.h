@@ -48,7 +48,7 @@ namespace swrenderer
 	class SWRenderLine
 	{
 	public:
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy);
 
 	private:
 		bool RenderWallSegment(int x1, int x2);
@@ -116,5 +116,7 @@ namespace swrenderer
 		FTexture *toptexture;
 		FTexture *bottomtexture;
 		FTexture *midtexture;
+
+		bool foggy;
 	};
 }

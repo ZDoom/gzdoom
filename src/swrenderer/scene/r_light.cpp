@@ -50,8 +50,6 @@ namespace swrenderer
 	FSWColormap *fixedcolormap;
 	FSpecialColormap *realfixedcolormap;
 
-	bool foggy; // [RH] ignore extralight and fullbright?
-
 	namespace
 	{
 		double CurrentVisibility = 8.f;

@@ -68,9 +68,9 @@ namespace swrenderer
 
 		bool CheckBBox(float *bspcoord);
 		void AddPolyobjs(subsector_t *sub);
-		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane);
+		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy);
 
-		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside);
+		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy);
 
 		static bool IsPotentiallyVisible(AActor *thing);
 		static bool GetThingSprite(AActor *thing, ThingSprite &sprite);

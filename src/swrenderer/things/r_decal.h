@@ -23,10 +23,10 @@ namespace swrenderer
 	class RenderDecal
 	{
 	public:
-		static void RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC);
+		static void RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy);
 
 	private:
-		static void Render(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, int pass);
+		static void Render(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, bool foggy, int pass);
 		static void DrawColumn(int x, FTexture *WallSpriteTile, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 	};
 }

@@ -215,6 +215,7 @@ namespace swrenderer
 			draw_segment->bFogBoundary = false;
 			draw_segment->curline = nullptr;
 			draw_segment->fake = 0;
+			draw_segment->foggy = false;
 			memcpy(openings + draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			memcpy(openings + draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 

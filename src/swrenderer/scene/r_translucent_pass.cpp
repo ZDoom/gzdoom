@@ -233,14 +233,14 @@ namespace swrenderer
 					spr->Style.BaseColormap = mybasecolormap;
 					spr->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 				}
-				else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
+				else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
 				{ // full bright
 					spr->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
 					spr->Style.ColormapNum = 0;
 				}
 				else
 				{ // diminished light
-					int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(foggy));
+					int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
 					spr->Style.BaseColormap = mybasecolormap;
 					spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 				}

@@ -59,7 +59,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderParticle::Project(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside)
+	void RenderParticle::Project(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -200,6 +200,7 @@ namespace swrenderer
 		vis->FakeFlatStat = fakeside;
 		vis->floorclip = 0;
 		vis->Style.ColormapNum = 0;
+		vis->foggy = foggy;
 
 		if (fixedlightlev >= 0)
 		{

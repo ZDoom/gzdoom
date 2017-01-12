@@ -398,7 +398,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -410,7 +410,7 @@ namespace swrenderer
 		{
 			if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane);
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy);
 			}
 			line++;
 		}
@@ -476,7 +476,7 @@ namespace swrenderer
 		cll = ceilinglightlevel;
 
 		// [RH] set foggy flag
-		foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
+		bool foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 
 		// kg3D - fake lights
 		if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -620,7 +620,7 @@ namespace swrenderer
 					if (floorplane)
 						floorplane->AddLights(frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane);
+					FakeDrawLoop(sub, floorplane, ceilingplane, foggy);
 					clip3d->fake3D = 0;
 					frontsector = sub->sector;
 				}
@@ -685,7 +685,7 @@ namespace swrenderer
 					if (ceilingplane)
 						ceilingplane->AddLights(frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane);
+					FakeDrawLoop(sub, floorplane, ceilingplane, foggy);
 					clip3d->fake3D = 0;
 					frontsector = sub->sector;
 				}
@@ -704,7 +704,7 @@ namespace swrenderer
 		// lightlevels on floor & ceiling lightlevels in the surrounding area.
 		// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
 		// it, otherwise they are lit by the floor.
-		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide);
+		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy);
 
 		// [RH] Add particles
 		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
@@ -712,7 +712,7 @@ namespace swrenderer
 			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + R_ActualExtraLight(foggy));
 			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide);
+				RenderParticle::Project(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
 			}
 		}
 
@@ -746,14 +746,14 @@ namespace swrenderer
 							clip3d->fakeFloor->validcount = validcount;
 							clip3d->NewClip();
 						}
-						renderline.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane); // fake
+						renderline.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane, foggy); // fake
 					}
 					clip3d->fakeFloor = nullptr;
 					clip3d->fake3D = 0;
 					floorplane = backupfp;
 					ceilingplane = backupcp;
 				}
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane); // now real
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy); // now real
 			}
 			line++;
 		}
@@ -809,7 +809,7 @@ namespace swrenderer
 		fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
 	}
 
-	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside)
+	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy)
 	{
 		F3DFloor *fakeceiling = nullptr;
 		F3DFloor *fakefloor = nullptr;
@@ -869,15 +869,15 @@ namespace swrenderer
 				{
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade);
+						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade, foggy);
 					}
 					else if (sprite.voxel)
 					{
-						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy);
 					}
 					else
 					{
-						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade);
+						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy);
 					}
 				}
 			}

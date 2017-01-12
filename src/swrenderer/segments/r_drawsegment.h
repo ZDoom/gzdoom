@@ -32,6 +32,7 @@ namespace swrenderer
 		uint8_t bFogBoundary;
 		uint8_t bFakeBoundary; // for fake walls
 		int shade;
+		bool foggy;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
 		ptrdiff_t sprtopclip; // type short

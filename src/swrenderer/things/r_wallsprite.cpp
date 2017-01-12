@@ -62,7 +62,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade)
+	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy)
 	{
 		FWallCoords wallc;
 		double x1, x2;
@@ -136,6 +136,7 @@ namespace swrenderer
 			r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
 		vis->Style.BaseColormap = basecolormap;
 		vis->wallc = wallc;
+		vis->foggy = foggy;
 	}
 
 	void RenderWallSprite::Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)
@@ -174,7 +175,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(foggy));
+		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(spr->foggy));
 		double GlobVis = r_WallVisibility;
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
@@ -183,7 +184,7 @@ namespace swrenderer
 			R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		else if (fixedcolormap != NULL)
 			R_SetColorMapLight(fixedcolormap, 0, 0);
-		else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
+		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
 			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 		else
 			calclighting = true;

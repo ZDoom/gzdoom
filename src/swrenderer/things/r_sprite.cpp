@@ -60,7 +60,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade)
+	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -209,6 +209,8 @@ namespace swrenderer
 		vis->bIsVoxel = false;
 		vis->bWallSprite = false;
 
+		vis->foggy = foggy;
+
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
 		// the invert overlay flag says to do.
@@ -261,7 +263,7 @@ namespace swrenderer
 				vis->Style.BaseColormap = mybasecolormap;
 				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
-			else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
+			else if (!vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 			{ // full bright
 				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
 				vis->Style.ColormapNum = 0;

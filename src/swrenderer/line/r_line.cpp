@@ -55,7 +55,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *linefloorplane, visplane_t *lineceilingplane)
+	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *linefloorplane, visplane_t *lineceilingplane, bool infog)
 	{
 		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 		bool			solid;
@@ -66,6 +66,7 @@ namespace swrenderer
 		backsector = fakebacksector;
 		floorplane = linefloorplane;
 		ceilingplane = lineceilingplane;
+		foggy = infog;
 
 		curline = line;
 
@@ -365,6 +366,7 @@ namespace swrenderer
 		draw_segment->curline = curline;
 		draw_segment->bFogBoundary = false;
 		draw_segment->bFakeBoundary = false;
+		draw_segment->foggy = foggy;
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
@@ -589,7 +591,7 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!rw_markportal)
 		{
-			RenderDecal::RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC);
+			RenderDecal::RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC, foggy);
 		}
 
 		if (rw_markportal)
@@ -1077,7 +1079,7 @@ namespace swrenderer
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
+				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
@@ -1113,7 +1115,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy);
 				}
 				memcpy(ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1152,7 +1154,7 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy);
 				}
 				memcpy(floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
 			}

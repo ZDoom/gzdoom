@@ -20,7 +20,7 @@ namespace swrenderer
 	class RenderSprite
 	{
 	public:
-		static void Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade);
+		static void Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy);
 		static void Render(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip);
 	};
 }

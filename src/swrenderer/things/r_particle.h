@@ -21,7 +21,7 @@ namespace swrenderer
 	class RenderParticle
 	{
 	public:
-		static void Project(particle_t *, const sector_t *sector, int shade, WaterFakeSide fakeside);
+		static void Project(particle_t *, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy);
 		static void Render(vissprite_t *);
 
 	private:

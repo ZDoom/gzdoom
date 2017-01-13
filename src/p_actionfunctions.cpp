@@ -3210,6 +3210,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Log)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(text);
+	PARAM_BOOL_DEF(local);
+
+	if (local && !self->CheckLocalView(consoleplayer)) return 0;
 
 	if (text[0] == '$') text = GStrings(&text[1]);
 	FString formatted = strbin1(text);
@@ -3227,6 +3230,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogInt)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(num);
+	PARAM_BOOL_DEF(local);
+
+	if (local && !self->CheckLocalView(consoleplayer)) return 0;
 	Printf("%d\n", num);
 	return 0;
 }
@@ -3241,6 +3247,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogFloat)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(num);
+	PARAM_BOOL_DEF(local);
+
+	if (local && !self->CheckLocalView(consoleplayer)) return 0;
 	IGNORE_FORMAT_PRE
 	Printf("%H\n", num);
 	IGNORE_FORMAT_POST

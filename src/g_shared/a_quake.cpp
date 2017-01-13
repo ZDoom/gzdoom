@@ -124,7 +124,7 @@ void DEarthquake::Tick ()
 				{
 					if (pr_quake() < 50)
 					{
-						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_None);
+						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_Quake);
 					}
 					// Thrust player around
 					DAngle an = victim->Angles.Yaw + pr_quake();

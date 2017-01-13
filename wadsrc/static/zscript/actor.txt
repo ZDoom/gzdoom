@@ -746,9 +746,9 @@ class Actor : Thinker native
 	native bool A_SpawnItemEx(class<Actor> itemtype, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0);
 	native void A_Print(string whattoprint, double time = 0, name fontname = "none");
 	native void A_PrintBold(string whattoprint, double time = 0, name fontname = "none");
-	native void A_Log(string whattoprint);
-	native void A_LogInt(int whattoprint);
-	native void A_LogFloat(double whattoprint);
+	native void A_Log(string whattoprint, bool local = false);
+	native void A_LogInt(int whattoprint, bool local = false);
+	native void A_LogFloat(double whattoprint, bool local = false);
 	native void A_SetTranslucent(double alpha, int style = 0);
 	native void A_SetRenderStyle(double alpha, int style);
 	native void A_FadeIn(double reduce = 0.1, int flags = 0);

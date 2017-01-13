@@ -354,7 +354,7 @@ DObject::~DObject ()
 void DObject:: Destroy ()
 {
 	// We cannot call the VM during shutdown because all the needed data has been or is in the process of being deleted.
-	if (!PClass::bShuttingDown)
+	if (PClass::bVMOperational)
 	{
 		IFVIRTUAL(DObject, OnDestroy)
 		{
@@ -495,7 +495,7 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 #define SECTOR_CHECK(f,t) \
 if (sec.f.p == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); changed++; }
 		SECTOR_CHECK( SoundTarget, AActor );
-		SECTOR_CHECK( SecActTarget, ASectorAction );
+		SECTOR_CHECK( SecActTarget, AActor );
 		SECTOR_CHECK( floordata, DSectorEffect );
 		SECTOR_CHECK( ceilingdata, DSectorEffect );
 		SECTOR_CHECK( lightingdata, DSectorEffect );

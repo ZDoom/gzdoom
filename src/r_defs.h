@@ -287,7 +287,6 @@ public:
 	void Activate (AActor *source);
 	void Deactivate (AActor *source);
 	bool CanTrigger (AActor *triggerer) const;
-	bool IsActivatedByUse() const;
 	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
 protected:
 	bool CheckTrigger(AActor *triggerer) const;
@@ -1068,7 +1067,7 @@ public:
 	// flexible in a Bloody way. SecActTarget forms a list of actors
 	// joined by their tracer fields. When a potential sector action
 	// occurs, SecActTarget's TriggerAction method is called.
-	TObjPtr<ASectorAction> SecActTarget;
+	TObjPtr<AActor> SecActTarget;
 
 	// [RH] The portal or skybox to render for this sector.
 	unsigned Portals[2];

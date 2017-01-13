@@ -443,6 +443,8 @@ void LoadActors()
 	timer.Unclock();
 	if (!batchrun) Printf("script parsing took %.2f ms\n", timer.TimeMS());
 
+	// Now we may call the scripted OnDestroy method.
+	PClass::bVMOperational = true;
 	// Since these are defined in DECORATE now the table has to be initialized here.
 	for (int i = 0; i < 31; i++)
 	{

@@ -72,7 +72,7 @@ FTypeTable TypeTable;
 PSymbolTable GlobalSymbols;
 TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
-bool PClass::bShuttingDown;
+bool PClass::bVMOperational;
 
 PErrorType *TypeError;
 PErrorType *TypeAuto;
@@ -2962,7 +2962,7 @@ void PClass::StaticShutdown ()
 
 	// From this point onward no scripts may be called anymore because the data needed by the VM is getting deleted now.
 	// This flags DObject::Destroy not to call any scripted OnDestroy methods anymore.
-	bShuttingDown = true;
+	bVMOperational = false;
 
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	TypeTable.Clear();

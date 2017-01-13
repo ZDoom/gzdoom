@@ -1,7 +1,7 @@
 
-class SectorAction : Actor native
+class SectorAction : Actor
 {
-	// this class uses health to define the activation type.
+	// self class uses health to define the activation type.
 	enum EActivation
 	{
 		SECSPAC_Enter		= 1,
@@ -24,9 +24,70 @@ class SectorAction : Actor native
 		+NOGRAVITY
 		+DONTSPLASH
 	}
+	
+	override void OnDestroy ()
+	{
+		if (CurSector != null)
+		{
+			// Remove ourself from self CurSector's list of actions
+			if (CurSector.SecActTarget == self)
+			{
+				CurSector.SecActTarget = SectorAction(tracer);
+			}
+			else
+			{
+				Actor probe = CurSector.SecActTarget;
+				while (probe.tracer != self && probe.tracer != null)
+				{
+					probe = probe.tracer;
+				}
+				if (probe.tracer == self)
+				{
+					probe.tracer = tracer;
+				}
+			}
+		}
+		Super.OnDestroy();
+	}
+
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+
+		// Add ourself to self CurSector's list of actions
+		tracer = CurSector.SecActTarget;
+		CurSector.SecActTarget = self;
+	}
+
+	override void Activate (Actor source)
+	{
+		bDormant = false;	// Projectiles cannot trigger
+	}
+
+	override void Deactivate (Actor source)
+	{
+		bDormant = true;	// Projectiles can trigger
+	}
+
+	virtual bool TriggerAction (Actor triggerer, int activationType)
+	{
+		if ((activationType & health) && CanTrigger(triggerer))
+		{
+			return triggerer.A_CallSpecial(special, args[0], args[1], args[2], args[3], args[4]);
+		}
+		return false;
+	}
+
+	virtual bool CanTrigger (Actor triggerer)
+	{
+		return special &&
+			((triggerer.player && !bFriendly) ||
+			(bAmbush && triggerer.bActivateMCross) ||
+			(bDormant && triggerer.bActivatePCross));
+	}
 }
 
-// Triggered when entering sector -------------------------------------------
+// Triggered when entering CurSector -------------------------------------------
 
 class SecActEnter : SectorAction
 {
@@ -36,7 +97,7 @@ class SecActEnter : SectorAction
 	}
 }
 
-// Triggered when leaving sector --------------------------------------------
+// Triggered when leaving CurSector --------------------------------------------
 
 class SecActExit : SectorAction
 {
@@ -46,7 +107,7 @@ class SecActExit : SectorAction
 	}
 }
 
-// Triggered when hitting sector's floor ------------------------------------
+// Triggered when hitting CurSector's floor ------------------------------------
 
 class SecActHitFloor : SectorAction
 {
@@ -56,7 +117,7 @@ class SecActHitFloor : SectorAction
 	}
 }
 
-// Triggered when hitting sector's ceiling ----------------------------------
+// Triggered when hitting CurSector's ceiling ----------------------------------
 
 class SecActHitCeil : SectorAction
 {
@@ -66,7 +127,7 @@ class SecActHitCeil : SectorAction
 	}
 }
 
-// Triggered when using inside sector ---------------------------------------
+// Triggered when using inside CurSector ---------------------------------------
 
 class SecActUse : SectorAction
 {
@@ -76,7 +137,7 @@ class SecActUse : SectorAction
 	}
 }
 
-// Triggered when using a sector's wall -------------------------------------
+// Triggered when using a CurSector's wall -------------------------------------
 
 class SecActUseWall : SectorAction
 {
@@ -136,9 +197,40 @@ class SecActHitFakeFloor : SectorAction
 	}
 }
 
-// Music changer ----------------------------------
+//==========================================================================
+//
+// Music changer. Uses the sector action class to do its job
+//
+//==========================================================================
 
-class MusicChanger : SectorAction native
+class MusicChanger : SectorAction
 {
+	override bool TriggerAction (Actor triggerer, int activationType)
+	{
+		if (activationType & SECSPAC_Enter && triggerer.player != null)
+		{
+			if (triggerer.player.MUSINFOactor != self)
+			{
+				triggerer.player.MUSINFOactor = self;
+				triggerer.player.MUSINFOtics = 30;
+			}
+		}
+		return false;
+	}
+	 
+	override void PostBeginPlay()
+	{
+		// The music changer should consider itself activated if the player
+		// spawns in its sector as well as if it enters the sector during a P_TryMove.
+		Super.PostBeginPlay();
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo && players[i].mo.CurSector == self.CurSector)
+			{
+				TriggerAction(players[i].mo, SECSPAC_Enter);
+			}
+		}
+	}
 }
+
 

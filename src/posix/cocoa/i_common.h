@@ -184,14 +184,19 @@ typedef NSInteger NSApplicationActivationPolicy;
 - (void)setWantsBestResolutionOpenGLSurface:(BOOL)flag;
 @end
 
+@interface NSView(Compatibility)
+- (NSRect)convertRectToBacking:(NSRect)aRect;
+@end
+
 @interface NSScreen(HiDPIStubs)
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 @end
 
 static const NSWindowCollectionBehavior NSWindowCollectionBehaviorFullScreenAuxiliary = NSWindowCollectionBehavior(1 << 8);
 
-static const NSOpenGLPixelFormatAttribute NSOpenGLPFAOpenGLProfile(96);
-static const NSOpenGLPixelFormatAttribute NSOpenGLProfileVersion3_2Core(0x3200);
+static const auto NSOpenGLPFAOpenGLProfile = NSOpenGLPixelFormatAttribute(96);
+static const auto NSOpenGLProfileVersionLegacy = NSOpenGLPixelFormatAttribute(0x1000);
+static const auto NSOpenGLProfileVersion3_2Core = NSOpenGLPixelFormatAttribute(0x3200);
 
 #endif // prior to 10.7
 

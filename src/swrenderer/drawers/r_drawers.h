@@ -230,6 +230,7 @@ struct TriUniforms
 	uint16_t fade_green;
 	uint16_t fade_blue;
 	uint16_t desaturate;
+	float globvis;
 	uint32_t flags;
 	enum Flags
 	{

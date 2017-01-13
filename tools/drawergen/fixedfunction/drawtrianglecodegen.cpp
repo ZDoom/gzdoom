@@ -613,7 +613,6 @@ void DrawTriangleCodegen::CalculateGradients()
 	}
 
 	shade = (64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f) / 32.0f;
-	globVis = SSAFloat(1706.0f / 32.0f);
 }
 
 void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
@@ -671,7 +670,9 @@ void DrawTriangleCodegen::LoadUniforms(SSAValue uniforms)
 	SSAShort fade_green = uniforms[0][11].load(true);
 	SSAShort fade_blue = uniforms[0][12].load(true);
 	SSAShort desaturate = uniforms[0][13].load(true);
-	SSAInt flags = uniforms[0][14].load(true);
+	globVis = uniforms[0][14].load(true);
+	globVis = globVis * SSAFloat(1.0f / 32.0f);
+	SSAInt flags = uniforms[0][15].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();

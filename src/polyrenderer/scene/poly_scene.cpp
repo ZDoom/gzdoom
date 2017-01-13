@@ -29,6 +29,7 @@
 #include "polyrenderer/scene/poly_scene.h"
 #include "polyrenderer/poly_renderer.h"
 #include "gl/data/gl_data.h"
+#include "swrenderer/scene/r_light.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)
 EXTERN_CVAR(Int, r_portal_recursions)
@@ -240,6 +241,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
+		args.uniforms.globvis = (float)swrenderer::r_WallVisibility;
 		args.uniforms.color = 0;
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

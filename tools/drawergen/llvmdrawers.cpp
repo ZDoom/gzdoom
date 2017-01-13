@@ -360,6 +360,7 @@ llvm::Type *LLVMDrawers::GetTriUniformsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_green;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
+	elements.push_back(llvm::Type::getFloatTy(context)); // float globvis;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
 	elements.push_back(GetTriMatrixStruct(context));     // TriMatrix objectToClip
 	TriUniformsStruct = llvm::StructType::create(context, elements, "TriUniforms", false)->getPointerTo();

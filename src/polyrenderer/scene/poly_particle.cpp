@@ -73,6 +73,8 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	PolyDrawArgs args;
 
+	args.uniforms.globvis = (float)swrenderer::r_SpriteVisibility;
+
 	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		args.uniforms.light = 256;

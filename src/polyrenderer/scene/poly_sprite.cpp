@@ -138,6 +138,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 
 	PolyDrawArgs args;
+	args.uniforms.globvis = (float)swrenderer::r_SpriteVisibility;
 	args.uniforms.flags = 0;
 	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{

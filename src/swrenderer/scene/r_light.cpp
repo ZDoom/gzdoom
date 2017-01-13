@@ -43,7 +43,6 @@ namespace swrenderer
 	double r_FloorVisibility;
 	float r_TiltVisibility;
 	double r_SpriteVisibility;
-	double r_ParticleVisibility;
 
 	int fixedlightlev;
 	FSWColormap *fixedcolormap;

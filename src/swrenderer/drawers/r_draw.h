@@ -121,6 +121,8 @@ namespace swrenderer
 	extern int fuzzpos;
 	extern int fuzzviewheight;
 
+	extern uint32_t particle_texture[16 * 16];
+
 	extern bool r_swtruecolor;
 
 	class SWPixelFormatDrawers
@@ -171,6 +173,7 @@ namespace swrenderer
 	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
+	void R_InitParticleTexture();
 
 	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
 	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);

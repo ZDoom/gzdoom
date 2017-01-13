@@ -163,6 +163,8 @@ namespace swrenderer
 				ylookup[i] = i * pitch;
 			}
 		}
+
+		R_InitParticleTexture();
 	}
 
 	void R_InitTextureMapping()

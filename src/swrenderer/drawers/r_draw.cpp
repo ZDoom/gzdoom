@@ -65,6 +65,8 @@ namespace swrenderer
 	int fuzzpos;
 	int fuzzviewheight;
 
+	uint32_t particle_texture[16 * 16];
+
 	short zeroarray[MAXWIDTH];
 	short screenheightarray[MAXWIDTH];
 
@@ -230,6 +232,22 @@ namespace swrenderer
 		for (int i = 0; i < FUZZTABLE; i++)
 		{
 			fuzzoffset[i] = fuzzinit[i] * fuzzoff;
+		}
+	}
+
+	void R_InitParticleTexture()
+	{
+		for (int y = 0; y < 16; y++)
+		{
+			for (int x = 0; x < 16; x++)
+			{
+				float dx = (8 - x) / 8.0f;
+				float dy = (8 - y) / 8.0f;
+				float dist = sqrt(dx * dx + dy * dy);
+				float alpha = clamp(3.0f - dist * 3.0f, 0.0f, 1.0f);
+
+				particle_texture[x + y * 16] = (int)(alpha * 64.0f + 0.5f);
+			}
 		}
 	}
 

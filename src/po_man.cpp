@@ -187,7 +187,7 @@ DPolyAction::DPolyAction (int polyNum)
 	SetInterpolation ();
 }
 
-void DPolyAction::Destroy()
+void DPolyAction::OnDestroy()
 {
 	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 
@@ -197,7 +197,7 @@ void DPolyAction::Destroy()
 	}
 
 	StopInterpolation();
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 void DPolyAction::Stop()

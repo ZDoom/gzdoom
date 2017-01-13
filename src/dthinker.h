@@ -66,7 +66,7 @@ class DThinker : public DObject
 	DECLARE_CLASS (DThinker, DObject)
 public:
 	DThinker (int statnum = STAT_DEFAULT) throw();
-	void Destroy () override;
+	void OnDestroy () override;
 	virtual ~DThinker ();
 	virtual void Tick ();
 	void CallTick();

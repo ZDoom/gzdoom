@@ -123,7 +123,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 			if (segs[i].Partner != DWORD_MAX)
 			{
-				outSegs[i].PartnerSeg = &outSegs[Segs[segs[i].Partner].storedseg];
+				const DWORD storedseg = Segs[segs[i].Partner].storedseg;
+				outSegs[i].PartnerSeg = DWORD_MAX == storedseg ? nullptr : &outSegs[storedseg];
 			}
 			else
 			{

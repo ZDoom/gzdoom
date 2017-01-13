@@ -164,6 +164,7 @@ extern int ogl_ext_EXT_texture_filter_anisotropic;
 extern int ogl_ext_EXT_texture_sRGB;
 extern int ogl_ext_KHR_debug;
 extern int ogl_ext_ARB_invalidate_subdata;
+extern int ogl_ext_EXT_abgr;
 
 #define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
 
@@ -330,6 +331,8 @@ extern int ogl_ext_ARB_invalidate_subdata;
 #define GL_STACK_OVERFLOW 0x0503
 #define GL_STACK_UNDERFLOW 0x0504
 #define GL_VERTEX_ARRAY 0x8074
+
+#define GL_ABGR_EXT 0x8000
 
 #define GL_2D 0x0600
 #define GL_2_BYTES 0x1407
@@ -1702,6 +1705,7 @@ extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexImage)(GLuint texture, GLint 
 extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexSubImage)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth);
 #define glInvalidateTexSubImage _ptrc_glInvalidateTexSubImage
 #endif /*GL_ARB_invalidate_subdata*/ 
+
 
 extern void (CODEGEN_FUNCPTR *_ptrc_glAccum)(GLenum op, GLfloat value);
 #define glAccum _ptrc_glAccum

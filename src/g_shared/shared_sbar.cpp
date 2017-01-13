@@ -258,7 +258,7 @@ DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::Destroy ()
+void DBaseStatusBar::OnDestroy ()
 {
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
@@ -271,7 +271,7 @@ void DBaseStatusBar::Destroy ()
 		}
 		Messages[i] = NULL;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //---------------------------------------------------------------------------

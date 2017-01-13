@@ -72,6 +72,7 @@ FTypeTable TypeTable;
 PSymbolTable GlobalSymbols;
 TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
+bool PClass::bShuttingDown;
 
 PErrorType *TypeError;
 PErrorType *TypeAuto;
@@ -534,16 +535,9 @@ const char *PType::DescriptiveName() const
 //
 //==========================================================================
 
-void ReleaseGlobalSymbols()
-{
-	TypeTable.Clear();
-	GlobalSymbols.ReleaseSymbols();
-}
-
 void PType::StaticInit()
 {
 	// Add types to the global symbol table.
-	atterm(ReleaseGlobalSymbols);
 
 	// Set up TypeTable hash keys.
 	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
@@ -2962,7 +2956,18 @@ void PClass::StaticShutdown ()
 	TArray<size_t *> uniqueFPs(64);
 	unsigned int i, j;
 
-	FS_Close();	// this must be done before the classes get deleted.
+
+	// Make a full garbage collection here so that all destroyed but uncollected higher level objects that still exist can be properly taken down.
+	GC::FullGC();
+
+	// From this point onward no scripts may be called anymore because the data needed by the VM is getting deleted now.
+	// This flags DObject::Destroy not to call any scripted OnDestroy methods anymore.
+	bShuttingDown = true;
+
+	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
+	TypeTable.Clear();
+	GlobalSymbols.ReleaseSymbols();
+
 	for (i = 0; i < PClass::AllClasses.Size(); ++i)
 	{
 		PClass *type = PClass::AllClasses[i];
@@ -2989,7 +2994,6 @@ void PClass::StaticShutdown ()
 	{
 		delete[] uniqueFPs[i];
 	}
-	TypeTable.Clear();
 	bShutdown = true;
 
 	AllClasses.Clear();
@@ -3002,7 +3006,7 @@ void PClass::StaticShutdown ()
 		auto cr = ((ClassReg *)*probe);
 		cr->MyClass = nullptr;
 	}
-
+	
 }
 
 //==========================================================================
@@ -3090,7 +3094,6 @@ PClass *ClassReg::RegisterClass()
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
-		&PClassAmmo::RegistrationInfo,
 		&PClassHealth::RegistrationInfo,
 		&PClassPuzzleItem::RegistrationInfo,
 		&PClassWeapon::RegistrationInfo,

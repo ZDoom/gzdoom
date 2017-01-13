@@ -120,9 +120,9 @@ public:
 	void TweakSpeeds (double &forwardmove, double &sidemove);
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
-	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
-	AWeapon *BestWeapon (PClassAmmo *ammotype);
-	void CheckWeaponSwitch(PClassAmmo *ammotype);
+	AWeapon *PickNewWeapon (PClassInventory *ammotype);
+	AWeapon *BestWeapon (PClassInventory *ammotype);
+	void CheckWeaponSwitch(PClassInventory *ammotype);
 	void GiveDeathmatchInventory ();
 	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 

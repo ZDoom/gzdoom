@@ -1733,7 +1733,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 //
 //------------------------------------------------------------------------
 
-void DPSprite::Destroy()
+void DPSprite::OnDestroy()
 {
 	// Do not crash if this gets called on partially initialized objects.
 	if (Owner != nullptr && Owner->psprites != nullptr)
@@ -1756,7 +1756,7 @@ void DPSprite::Destroy()
 			GC::WriteBarrier(Next);
 		}
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //------------------------------------------------------------------------

@@ -39,15 +39,12 @@
 
 IMPLEMENT_CLASS(ASectorAction, false, false)
 
-ASectorAction::ASectorAction (bool activatedByUse) :
-	ActivatedByUse (activatedByUse) {}
-
 bool ASectorAction::IsActivatedByUse() const
 {
-	return ActivatedByUse;
+	return !!(health & (SECSPAC_Use|SECSPAC_UseWall));
 }
 
-void ASectorAction::Destroy ()
+void ASectorAction::OnDestroy ()
 {
 	if (Sector != nullptr)
 	{
@@ -72,7 +69,7 @@ void ASectorAction::Destroy ()
 		Sector = nullptr;
 	}
 
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 void ASectorAction::BeginPlay ()
@@ -94,24 +91,9 @@ void ASectorAction::Deactivate (AActor *source)
 	flags2 |= MF2_DORMANT;	// Projectiles can trigger
 }
 
-bool ASectorAction::TriggerAction(AActor *triggerer, int activationType)
-{
-	if (DoTriggerAction(triggerer, activationType))
-	{
-		if (flags4 & MF4_STANDSTILL)
-		{
-			Destroy();
-		}
-	}
-	return false;
-}
-
 bool ASectorAction::DoTriggerAction (AActor *triggerer, int activationType)
 {
-	if (tracer != NULL)
-		return barrier_cast<ASectorAction *>(tracer)->DoTriggerAction (triggerer, activationType);
-	else
-		return false;
+	return (activationType & health) ? CheckTrigger(triggerer) : false;
 }
 
 bool ASectorAction::CanTrigger (AActor *triggerer) const
@@ -133,205 +115,3 @@ bool ASectorAction::CheckTrigger (AActor *triggerer) const
 	return false;
 }
 
-// Triggered when entering sector -------------------------------------------
-
-class ASecActEnter : public ASectorAction
-{
-	DECLARE_CLASS (ASecActEnter, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActEnter, false, false)
-
-
-bool ASecActEnter::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_Enter) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when leaving sector --------------------------------------------
-
-class ASecActExit : public ASectorAction
-{
-	DECLARE_CLASS (ASecActExit, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActExit, false, false)
-
-
-bool ASecActExit::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_Exit) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when hitting sector's floor ------------------------------------
-
-class ASecActHitFloor : public ASectorAction
-{
-	DECLARE_CLASS (ASecActHitFloor, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-// Skull Tag uses 9999 for a special that is triggered whenever
-// the player is on the sector's floor. I think this is more useful.
-
-IMPLEMENT_CLASS(ASecActHitFloor, false, false)
-
-
-bool ASecActHitFloor::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_HitFloor) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when hitting sector's ceiling ----------------------------------
-
-class ASecActHitCeil : public ASectorAction
-{
-	DECLARE_CLASS (ASecActHitCeil, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActHitCeil, false, false)
-
-
-bool ASecActHitCeil::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_HitCeiling) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when using inside sector ---------------------------------------
-
-class ASecActUse : public ASectorAction
-{
-	DECLARE_CLASS (ASecActUse, ASectorAction)
-public:
-	ASecActUse() : ASectorAction (true) {}
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActUse, false, false)
-
-
-bool ASecActUse::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_Use) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when using a sector's wall -------------------------------------
-
-class ASecActUseWall : public ASectorAction
-{
-	DECLARE_CLASS (ASecActUseWall, ASectorAction)
-public:
-	ASecActUseWall() : ASectorAction (true) {}
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActUseWall, false, false)
-
-
-bool ASecActUseWall::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_UseWall) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when eyes go below fake floor ----------------------------------
-
-class ASecActEyesDive : public ASectorAction
-{
-	DECLARE_CLASS (ASecActEyesDive, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActEyesDive, false, false)
-
-
-bool ASecActEyesDive::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_EyesDive) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when eyes go above fake floor ----------------------------------
-
-class ASecActEyesSurface : public ASectorAction
-{
-	DECLARE_CLASS (ASecActEyesSurface, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActEyesSurface, false, false)
-
-
-bool ASecActEyesSurface::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_EyesSurface) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when eyes go below fake floor ----------------------------------
-
-class ASecActEyesBelowC : public ASectorAction
-{
-	DECLARE_CLASS (ASecActEyesBelowC, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActEyesBelowC, false, false)
-
-
-bool ASecActEyesBelowC::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_EyesBelowC) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when eyes go above fake floor ----------------------------------
-
-class ASecActEyesAboveC : public ASectorAction
-{
-	DECLARE_CLASS (ASecActEyesAboveC, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActEyesAboveC, false, false)
-
-
-bool ASecActEyesAboveC::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_EyesAboveC) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}
-
-// Triggered when eyes go below fake floor ----------------------------------
-
-class ASecActHitFakeFloor : public ASectorAction
-{
-	DECLARE_CLASS (ASecActHitFakeFloor, ASectorAction)
-public:
-	bool DoTriggerAction (AActor *triggerer, int activationType);
-};
-
-IMPLEMENT_CLASS(ASecActHitFakeFloor, false, false)
-
-
-bool ASecActHitFakeFloor::DoTriggerAction (AActor *triggerer, int activationType)
-{
-	bool didit = (activationType & SECSPAC_HitFakeFloor) ? CheckTrigger (triggerer) : false;
-	return didit | Super::DoTriggerAction (triggerer, activationType);
-}

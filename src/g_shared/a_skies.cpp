@@ -56,7 +56,7 @@ void ASkyViewpoint::BeginPlay ()
 	}
 }
 
-void ASkyViewpoint::Destroy ()
+void ASkyViewpoint::OnDestroy ()
 {
 	// remove all sector references to ourselves.
 	for (auto &s : sectorPortals)
@@ -70,7 +70,7 @@ void ASkyViewpoint::Destroy ()
 		}
 	}
 
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 IMPLEMENT_CLASS(ASkyCamCompat, false, false)
@@ -148,32 +148,5 @@ void AStackPoint::BeginPlay ()
 {
 	// Skip SkyViewpoint's initialization
 	AActor::BeginPlay ();
-}
-
-//---------------------------------------------------------------------------
-
-class ASectorSilencer : public AActor
-{
-	DECLARE_CLASS (ASectorSilencer, AActor)
-public:
-	void BeginPlay ();
-	void Destroy() override;
-};
-
-IMPLEMENT_CLASS(ASectorSilencer, false, false)
-
-void ASectorSilencer::BeginPlay ()
-{
-	Super::BeginPlay ();
-	Sector->Flags |= SECF_SILENT;
-}
-
-void ASectorSilencer::Destroy ()
-{
-	if (Sector != nullptr)
-	{
-		Sector->Flags &= ~SECF_SILENT;
-	}
-	Super::Destroy ();
 }
 

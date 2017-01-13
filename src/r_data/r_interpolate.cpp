@@ -62,7 +62,7 @@ public:
 
 	DSectorPlaneInterpolation() {}
 	DSectorPlaneInterpolation(sector_t *sector, bool plane, bool attach);
-	void Destroy() override;
+	void OnDestroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -91,7 +91,7 @@ public:
 
 	DSectorScrollInterpolation() {}
 	DSectorScrollInterpolation(sector_t *sector, bool plane);
-	void Destroy() override;
+	void OnDestroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -119,7 +119,7 @@ public:
 
 	DWallScrollInterpolation() {}
 	DWallScrollInterpolation(side_t *side, int part);
-	void Destroy() override;
+	void OnDestroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -146,7 +146,7 @@ public:
 
 	DPolyobjInterpolation() {}
 	DPolyobjInterpolation(FPolyObj *poly);
-	void Destroy() override;
+	void OnDestroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -364,11 +364,11 @@ int DInterpolation::DelRef(bool force)
 //
 //==========================================================================
 
-void DInterpolation::Destroy()
+void DInterpolation::OnDestroy()
 {
 	interpolator.RemoveInterpolation(this);
 	refcount = 0;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -419,7 +419,7 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 //
 //==========================================================================
 
-void DSectorPlaneInterpolation::Destroy()
+void DSectorPlaneInterpolation::OnDestroy()
 {
 	if (sector != nullptr)
 	{
@@ -437,7 +437,7 @@ void DSectorPlaneInterpolation::Destroy()
 	{
 		attached[i]->DelRef();
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -597,7 +597,7 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 //
 //==========================================================================
 
-void DSectorScrollInterpolation::Destroy()
+void DSectorScrollInterpolation::OnDestroy()
 {
 	if (sector != nullptr)
 	{
@@ -611,7 +611,7 @@ void DSectorScrollInterpolation::Destroy()
 		}
 		sector = nullptr;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -702,14 +702,14 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 //
 //==========================================================================
 
-void DWallScrollInterpolation::Destroy()
+void DWallScrollInterpolation::OnDestroy()
 {
 	if (side != nullptr)
 	{
 		side->textures[part].interpolation = nullptr;
 		side = nullptr;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -800,13 +800,13 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 //
 //==========================================================================
 
-void DPolyobjInterpolation::Destroy()
+void DPolyobjInterpolation::OnDestroy()
 {
 	if (poly != nullptr)
 	{
 		poly->interpolation = nullptr;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

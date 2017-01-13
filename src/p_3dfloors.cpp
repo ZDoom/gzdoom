@@ -369,7 +369,7 @@ bool P_CheckFor3DFloorHit(AActor * mo, double z)
 		{
 			if (fabs(z - rover->top.plane->ZatPoint(mo)) < EQUAL_EPSILON) 
 			{
-				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
+				rover->model->TriggerSectorActions (mo, SECSPAC_HitFloor);
 				return true;
 			}
 		}
@@ -395,7 +395,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo, double z)
 		{
 			if(fabs(z - rover->bottom.plane->ZatPoint(mo)) < EQUAL_EPSILON)
 			{
-				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
+				rover->model->TriggerSectorActions (mo, SECSPAC_HitCeiling);
 				return true;
 			}
 		}

@@ -272,6 +272,7 @@ VMFrameStack::~VMFrameStack()
 			next = block->NextBlock;
 			delete[] (VM_UBYTE *)block;
 		}
+		Blocks = NULL;
 	}
 	if (UnusedBlocks != NULL)
 	{
@@ -281,9 +282,8 @@ VMFrameStack::~VMFrameStack()
 			next = block->NextBlock;
 			delete[] (VM_UBYTE *)block;
 		}
+		UnusedBlocks = NULL;
 	}
-	Blocks = NULL;
-	UnusedBlocks = NULL;
 }
 
 //===========================================================================

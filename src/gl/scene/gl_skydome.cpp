@@ -60,7 +60,7 @@
 #include "w_wad.h"
 #include "r_state.h"
 #include "r_utility.h"
-//#include "gl/gl_intern.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
@@ -381,7 +381,13 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 
 		float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 		float yscale = 1.f;
-		if (texh < 128)
+		if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
+		{
+			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
+			yscale = 240.f / texh;
+		}
+		else if (texh < 128)
 		{
 			// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
 			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);

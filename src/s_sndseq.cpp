@@ -106,7 +106,7 @@ class DSeqActorNode : public DSeqNode
 	HAS_OBJECT_POINTERS
 public:
 	DSeqActorNode(AActor *actor, int sequence, int modenum);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -134,7 +134,7 @@ class DSeqPolyNode : public DSeqNode
 	DECLARE_CLASS(DSeqPolyNode, DSeqNode)
 public:
 	DSeqPolyNode(FPolyObj *poly, int sequence, int modenum);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -162,7 +162,7 @@ class DSeqSectorNode : public DSeqNode
 	DECLARE_CLASS(DSeqSectorNode, DSeqNode)
 public:
 	DSeqSectorNode(sector_t *sec, int chan, int sequence, int modenum);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -379,7 +379,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 	}
 }
 
-void DSeqNode::Destroy()
+void DSeqNode::OnDestroy()
 {
 	// If this sequence was launched by a parent sequence, advance that
 	// sequence now.
@@ -405,7 +405,7 @@ void DSeqNode::Destroy()
 		GC::WriteBarrier(m_Next, m_Prev);
 	}
 	ActiveSequences--;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 void DSeqNode::StopAndDestroy ()
@@ -1041,31 +1041,31 @@ void SN_DoStop (void *source)
 	}
 }
 
-void DSeqActorNode::Destroy ()
+void DSeqActorNode::OnDestroy ()
 {
 	if (m_StopSound >= 0)
 		S_StopSound (m_Actor, CHAN_BODY);
 	if (m_StopSound >= 1)
 		MakeSound (0, m_StopSound);
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
-void DSeqSectorNode::Destroy ()
+void DSeqSectorNode::OnDestroy ()
 {
 	if (m_StopSound >= 0)
 		S_StopSound (m_Sector, Channel & 7);
 	if (m_StopSound >= 1)
 		MakeSound (0, m_StopSound);
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
-void DSeqPolyNode::Destroy ()
+void DSeqPolyNode::OnDestroy ()
 {
 	if (m_StopSound >= 0)
 		S_StopSound (m_Poly, CHAN_BODY);
 	if (m_StopSound >= 1)
 		MakeSound (0, m_StopSound);
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

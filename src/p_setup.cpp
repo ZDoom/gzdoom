@@ -4188,6 +4188,11 @@ static void P_Shutdown ()
 	P_FreeLevelData ();
 	P_FreeExtraLevelData ();
 	ST_Clear();
+	FS_Close();
+	for (auto &p : players)
+	{
+		if (p.psprites != nullptr) p.psprites->Destroy();
+	}
 }
 
 #if 0

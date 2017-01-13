@@ -800,10 +800,10 @@ void ADynamicLight::UnlinkLight ()
 	while (touching_sector) touching_sector = DeleteLightNode(touching_sector);
 }
 
-void ADynamicLight::Destroy()
+void ADynamicLight::OnDestroy()
 {
 	UnlinkLight();
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 

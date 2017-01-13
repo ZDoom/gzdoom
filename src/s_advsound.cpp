@@ -2483,7 +2483,7 @@ bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 			triggerer->player->MUSINFOtics = 30;
 		}
 	}
-	return Super::DoTriggerAction (triggerer, activationType);
+	return false;
 }
  
 void AMusicChanger::PostBeginPlay()
@@ -2495,7 +2495,7 @@ void AMusicChanger::PostBeginPlay()
 	{
 		if (playeringame[i] && players[i].mo && players[i].mo->Sector == this->Sector)
 		{
-			TriggerAction(players[i].mo, SECSPAC_Enter);
+			DoTriggerAction(players[i].mo, SECSPAC_Enter);
 		}
 	}
 }

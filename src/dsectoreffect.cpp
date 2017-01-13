@@ -39,7 +39,7 @@ DSectorEffect::DSectorEffect ()
 	m_Sector = NULL;
 }
 
-void DSectorEffect::Destroy()
+void DSectorEffect::OnDestroy()
 {
 	if (m_Sector)
 	{
@@ -56,7 +56,7 @@ void DSectorEffect::Destroy()
 			m_Sector->lightingdata = NULL;
 		}
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 DSectorEffect::DSectorEffect (sector_t *sector)
@@ -87,10 +87,10 @@ DMover::DMover (sector_t *sector)
 	interpolation = NULL;
 }
 
-void DMover::Destroy()
+void DMover::OnDestroy()
 {
 	StopInterpolation();
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 void DMover::Serialize(FSerializer &arc)

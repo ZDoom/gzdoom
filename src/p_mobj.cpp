@@ -1134,7 +1134,7 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (PClassAmmo *type, int amount)
+bool AActor::GiveAmmo (PClassInventory *type, int amount)
 {
 	if (type != NULL)
 	{
@@ -1770,7 +1770,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 		}
 	}
 
-	// play the sound before changing the state, so that AActor::Destroy can call S_RelinkSounds on it and the death state can override it.
+	// play the sound before changing the state, so that AActor::OnDestroy can call S_RelinkSounds on it and the death state can override it.
 	if (mo->DeathSound)
 	{
 		S_Sound (mo, CHAN_VOICE, mo->DeathSound, 1,
@@ -2810,7 +2810,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
-			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
+			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitFloor);
 		}
 		P_CheckFor3DFloorHit(mo, mo->floorz);
 		// [RH] Need to recheck this because the sector action might have
@@ -2913,7 +2913,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
-			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
+			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitCeiling);
 		}
 		P_CheckFor3DCeilingHit(mo, mo->ceilingz);
 		// [RH] Need to recheck this because the sector action might have
@@ -2981,7 +2981,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 
 		if (oldz > waterz && mo->Z() <= waterz)
 		{ // Feet hit fake floor
-			sec->SecActTarget->TriggerAction (mo, SECSPAC_HitFakeFloor);
+			sec->TriggerSectorActions (mo, SECSPAC_HitFakeFloor);
 		}
 
 		newz = mo->Z() + viewheight;
@@ -2992,11 +2992,11 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 
 		if (oldz <= waterz && newz > waterz)
 		{ // View went above fake floor
-			sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesSurface);
+			sec->TriggerSectorActions (mo, SECSPAC_EyesSurface);
 		}
 		else if (oldz > waterz && newz <= waterz)
 		{ // View went below fake floor
-			sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesDive);
+			sec->TriggerSectorActions (mo, SECSPAC_EyesDive);
 		}
 
 		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
@@ -3004,11 +3004,11 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
 			{ // View went above fake ceiling
-				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
+				sec->TriggerSectorActions (mo, SECSPAC_EyesAboveC);
 			}
 			else if (oldz > waterz && newz <= waterz)
 			{ // View went below fake ceiling
-				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesBelowC);
+				sec->TriggerSectorActions (mo, SECSPAC_EyesBelowC);
 			}
 		}
 	}
@@ -4333,6 +4333,12 @@ bool AActor::CheckNoDelay()
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckNoDelay)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(self->CheckNoDelay());
+}
+
 //==========================================================================
 //
 // AActor :: CheckSectorTransition
@@ -4347,7 +4353,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 	{
 		if (oldsec->SecActTarget != NULL)
 		{
-			oldsec->SecActTarget->TriggerAction(this, SECSPAC_Exit);
+			oldsec->TriggerSectorActions(this, SECSPAC_Exit);
 		}
 		if (Sector->SecActTarget != NULL)
 		{
@@ -4364,7 +4370,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 			{
 				act |= SECSPAC_HitFakeFloor;
 			}
-			Sector->SecActTarget->TriggerAction(this, act);
+			Sector->TriggerSectorActions(this, act);
 		}
 		if (Z() == floorz)
 		{
@@ -4486,6 +4492,12 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 	return false;	// we did the splash ourselves
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UpdateWaterLevel)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(splash);
+	ACTION_RETURN_BOOL(self->UpdateWaterLevel(splash));
+}
 
 //==========================================================================
 //
@@ -4920,7 +4932,7 @@ void AActor::CallDeactivate(AActor *activator)
 //
 //===========================================================================
 
-void AActor::Destroy ()
+void AActor::OnDestroy ()
 {
 	ClearRenderSectorList();
 	ClearRenderLineList();
@@ -4938,7 +4950,7 @@ void AActor::Destroy ()
 	// Transform any playing sound into positioned, non-actor sounds.
 	S_RelinkSound (this, NULL);
 
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 //===========================================================================
@@ -7821,6 +7833,13 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PosRelative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(sec, sector_t);
+	ACTION_RETURN_VEC3(self->PosRelative(sec));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -7861,6 +7880,19 @@ DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
 	ACTION_RETURN_FLOAT(self->CountsAsKill());
 }
 
+DEFINE_ACTION_FUNCTION(AActor, IsZeroDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(self->IsZeroDamage());
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ClearInterpolation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearInterpolation();
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 {
 	PARAM_PROLOGUE;
@@ -7879,6 +7911,7 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 		ACTION_RETURN_INT(defdamage);
 	}
 }
+
 
 //----------------------------------------------------------------------------
 //

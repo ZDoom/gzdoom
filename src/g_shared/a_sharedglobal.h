@@ -24,7 +24,7 @@ public:
 	DBaseDecal (const DBaseDecal *basis);
 
 	void Serialize(FSerializer &arc);
-	void Destroy() override;
+	void OnDestroy() override;
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
 	void SetShade (DWORD rgb);
@@ -66,7 +66,7 @@ public:
 	static DImpactDecal *StaticCreate(const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 
 	void BeginPlay ();
-	void Destroy() override;
+	void OnDestroy() override;
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -88,7 +88,7 @@ class ASkyViewpoint : public AActor
 	DECLARE_CLASS (ASkyViewpoint, AActor)
 public:
 	void BeginPlay ();
-	void Destroy() override;
+	void OnDestroy() override;
 };
 
 // For an EE compatible linedef based definition.
@@ -116,7 +116,7 @@ public:
 	DFlashFader (float r1, float g1, float b1, float a1,
 				 float r2, float g2, float b2, float a2,
 				 float time, AActor *who);
-	void Destroy() override;
+	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
@@ -207,20 +207,12 @@ public:
 	
 	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
-	void Destroy() override;
+	void OnDestroy() override;
 
 	TObjPtr<AActor> UnmorphedMe;
 	int UnmorphTime, MorphStyle;
 	PClassActor *MorphExitFlash;
 	ActorFlags FlagsSave;
 };
-
-class AFastProjectile : public AActor
-{
-	DECLARE_CLASS(AFastProjectile, AActor)
-public:
-	void Tick ();
-};
-
 
 #endif //__A_SHAREDGLOBAL_H__

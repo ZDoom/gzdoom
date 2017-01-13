@@ -1723,8 +1723,7 @@ DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
 DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
 {
 	PROP_INT_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
-	static_cast<PClassAmmo *>(info)->DropAmount = i;
+	defaults->DropAmount = i;
 }
 
 //==========================================================================

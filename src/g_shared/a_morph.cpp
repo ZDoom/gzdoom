@@ -690,13 +690,13 @@ void AMorphedMonster::Serialize(FSerializer &arc)
 		("flagsave", FlagsSave);
 }
 
-void AMorphedMonster::Destroy ()
+void AMorphedMonster::OnDestroy ()
 {
 	if (UnmorphedMe != NULL)
 	{
 		UnmorphedMe->Destroy ();
 	}
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)

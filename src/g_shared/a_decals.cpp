@@ -111,10 +111,10 @@ DBaseDecal::DBaseDecal (const DBaseDecal *basis)
 {
 }
 
-void DBaseDecal::Destroy ()
+void DBaseDecal::OnDestroy ()
 {
 	Remove ();
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 void DBaseDecal::Remove ()
@@ -670,10 +670,10 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 	return decal;
 }
 
-void DImpactDecal::Destroy ()
+void DImpactDecal::OnDestroy ()
 {
 	ImpactCount--;
-	Super::Destroy ();
+	Super::OnDestroy();
 }
 
 CCMD (countdecals)

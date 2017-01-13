@@ -1,6 +1,22 @@
 
 class SectorAction : Actor native
 {
+	// this class uses health to define the activation type.
+	enum EActivation
+	{
+		SECSPAC_Enter		= 1,
+		SECSPAC_Exit		= 2,
+		SECSPAC_HitFloor	= 4,
+		SECSPAC_HitCeiling	= 8,
+		SECSPAC_Use			= 16,
+		SECSPAC_UseWall		= 32,
+		SECSPAC_EyesDive	= 64,
+		SECSPAC_EyesSurface = 128,
+		SECSPAC_EyesBelowC	= 256,
+		SECSPAC_EyesAboveC	= 512,
+		SECSPAC_HitFakeFloor= 1024,
+	};
+
 	default
 	{
 		+NOBLOCKMAP
@@ -12,68 +28,112 @@ class SectorAction : Actor native
 
 // Triggered when entering sector -------------------------------------------
 
-class SecActEnter : SectorAction native
+class SecActEnter : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_Enter;
+	}
 }
 
 // Triggered when leaving sector --------------------------------------------
 
-class SecActExit : SectorAction native
+class SecActExit : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_Exit;
+	}
 }
 
 // Triggered when hitting sector's floor ------------------------------------
 
-class SecActHitFloor : SectorAction native
+class SecActHitFloor : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_HitFloor;
+	}
 }
 
 // Triggered when hitting sector's ceiling ----------------------------------
 
-class SecActHitCeil : SectorAction native
+class SecActHitCeil : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_HitCeiling;
+	}
 }
 
 // Triggered when using inside sector ---------------------------------------
 
-class SecActUse : SectorAction native
+class SecActUse : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_Use;
+	}
 }
 
 // Triggered when using a sector's wall -------------------------------------
 
-class SecActUseWall : SectorAction native
+class SecActUseWall : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_UseWall;
+	}
 }
 
 // Triggered when eyes go below fake floor ----------------------------------
 
-class SecActEyesDive : SectorAction native
+class SecActEyesDive : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_EyesDive;
+	}
 }
 
 // Triggered when eyes go above fake floor ----------------------------------
 
-class SecActEyesSurface : SectorAction native
+class SecActEyesSurface : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_EyesSurface;
+	}
 }
 
-// Triggered when eyes go below fake floor ----------------------------------
+// Triggered when eyes go below fake ceiling ----------------------------------
 
-class SecActEyesBelowC : SectorAction native
+class SecActEyesBelowC : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_EyesBelowC;
+	}
 }
 
-// Triggered when eyes go above fake floor ----------------------------------
+// Triggered when eyes go above fake ceiling ----------------------------------
 
-class SecActEyesAboveC : SectorAction native
+class SecActEyesAboveC : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_EyesAboveC;
+	}
 }
 
-// Triggered when eyes go below fake floor ----------------------------------
+// Triggered when hitting fake floor ----------------------------------
 
-class SecActHitFakeFloor : SectorAction native
+class SecActHitFakeFloor : SectorAction
 {
+	Default
+	{
+		Health SECSPAC_HitFakeFloor;
+	}
 }
 
 // Music changer ----------------------------------

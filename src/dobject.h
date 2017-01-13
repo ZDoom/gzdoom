@@ -94,15 +94,12 @@ enum
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
 	CLASSREG_PClassInventory,
-	CLASSREG_PClassAmmo,
 	CLASSREG_PClassHealth,
 	CLASSREG_PClassPuzzleItem,
 	CLASSREG_PClassWeapon,
 	CLASSREG_PClassPlayerPawn,
 	CLASSREG_PClassType,
 	CLASSREG_PClassClass,
-	CLASSREG_PClassWeaponPiece,
-	CLASSREG_PClassPowerupGiver
 };
 
 struct ClassReg
@@ -476,7 +473,8 @@ public:
 	// that don't call their base class.
 	void CheckIfSerialized () const;
 
-	virtual void Destroy();
+	virtual void OnDestroy() {}
+	void Destroy();
 
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,

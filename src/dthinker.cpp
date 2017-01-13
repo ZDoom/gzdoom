@@ -253,7 +253,7 @@ DThinker::~DThinker ()
 	assert(NextThinker == NULL && PrevThinker == NULL);
 }
 
-void DThinker::Destroy ()
+void DThinker::OnDestroy ()
 {
 	assert((NextThinker != NULL && PrevThinker != NULL) ||
 		   (NextThinker == NULL && PrevThinker == NULL));
@@ -261,7 +261,7 @@ void DThinker::Destroy ()
 	{
 		Remove();
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

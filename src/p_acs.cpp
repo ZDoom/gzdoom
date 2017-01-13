@@ -8720,19 +8720,19 @@ scriptwait:
 		case PCD_SETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
+				PClassActor *type = PClass::FindActor (FBehavior::StaticLookupString (STACK(2)));
 				AInventory *item;
 
 				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
-					item = activator->FindInventory (static_cast<PClassActor *>(type));
+					item = activator->FindInventory (type);
 					if (item != NULL)
 					{
 						item->MaxAmount = STACK(1);
 					}
 					else
 					{
-						item = activator->GiveInventoryType (static_cast<PClassAmmo *>(type));
+						item = activator->GiveInventoryType (type);
 						if (item != NULL)
 						{
 							item->MaxAmount = STACK(1);

@@ -329,7 +329,7 @@ bool AWeapon::Use (bool pickup)
 //
 //===========================================================================
 
-void AWeapon::Destroy()
+void AWeapon::OnDestroy()
 {
 	AWeapon *sister = SisterWeapon;
 
@@ -342,7 +342,7 @@ void AWeapon::Destroy()
 			sister->Destroy();
 		}
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //===========================================================================

@@ -17,8 +17,10 @@ class Object native
 	native static void SetMusicVolume(float vol);
 
 	native Name GetClassName();
+	native void Destroy();
 
-	/*virtual*/ native void Destroy();
+	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
+	virtual void OnDestroy() {}
 }
 
 class Thinker : Object native
@@ -506,6 +508,7 @@ struct Sector native
 	native int GetOppositePortalGroup(int plane);
 	native double CenterFloor();
 	native double CenterCeiling();
+	native bool TriggerSectorActions(Actor thing, int activation);
 
 	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
 	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);

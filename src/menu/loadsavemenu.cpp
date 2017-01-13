@@ -103,7 +103,7 @@ protected:
 	char savegamestring[SAVESTRINGSIZE];
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	void Destroy() override;
+	void OnDestroy() override;
 
 	int RemoveSaveSlot (int index);
 	void UnloadSaveData ();
@@ -461,12 +461,12 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 	commentBottom = commentTop + commentHeight;
 }
 
-void DLoadSaveMenu::Destroy()
+void DLoadSaveMenu::OnDestroy()
 {
 	if (currentSavePic != nullptr) delete currentSavePic;
 	currentSavePic = nullptr;
 	ClearSaveStuff ();
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //=============================================================================
@@ -928,7 +928,7 @@ class DSaveMenu : public DLoadSaveMenu
 public:
 
 	DSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	void Destroy() override;
+	void OnDestroy() override;
 	void DoSave (FSaveGameNode *node);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
@@ -968,7 +968,7 @@ DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
-void DSaveMenu::Destroy()
+void DSaveMenu::OnDestroy()
 {
 	if (SaveGames[0] == &NewSaveNode)
 	{
@@ -976,7 +976,7 @@ void DSaveMenu::Destroy()
 		if (Selected == 0) Selected = -1;
 		else Selected--;
 	}
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //=============================================================================

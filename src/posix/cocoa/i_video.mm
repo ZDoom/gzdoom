@@ -69,6 +69,19 @@
 #undef Class
 
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+
+@implementation NSView(Compatibility)
+
+- (NSRect)convertRectToBacking:(NSRect)aRect
+{
+	return [self convertRect:aRect toView:[self superview]];
+}
+
+@end
+
+#endif // prior to 10.7
+
 @implementation NSWindow(ExitAppOnClose)
 
 - (void)exitAppOnClose

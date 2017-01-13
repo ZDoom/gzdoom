@@ -184,7 +184,7 @@ DFsScript::~DFsScript()
 //
 //==========================================================================
 
-void DFsScript::Destroy()
+void DFsScript::OnDestroy()
 {
 	ClearVariables(true);
 	ClearSections();
@@ -194,7 +194,7 @@ void DFsScript::Destroy()
 	data = NULL;
 	parent = NULL;
 	trigger = NULL;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -334,7 +334,7 @@ DRunningScript::DRunningScript(AActor *trigger, DFsScript *owner, int index)
 //
 //==========================================================================
 
-void DRunningScript::Destroy()
+void DRunningScript::OnDestroy()
 {
 	int i;
 	DFsVariable *current, *next;
@@ -352,7 +352,7 @@ void DRunningScript::Destroy()
 		}
 		variables[i] = NULL;
     }
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -421,7 +421,7 @@ DFraggleThinker::DFraggleThinker()
 //
 //==========================================================================
 
-void DFraggleThinker::Destroy()
+void DFraggleThinker::OnDestroy()
 {
 	DRunningScript *p = RunningScripts;
 	while (p)
@@ -438,7 +438,7 @@ void DFraggleThinker::Destroy()
 
 	SpawnedThings.Clear();
 	ActiveThinker = NULL;
-	Super::Destroy();
+	Super::OnDestroy();
 }
 
 //==========================================================================

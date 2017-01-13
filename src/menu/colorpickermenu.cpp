@@ -95,7 +95,7 @@ public:
 		desc->CalcIndent();
 	}
 
-	void Destroy() override
+	void OnDestroy() override
 	{
 		if (mStartItem >= 0)
 		{

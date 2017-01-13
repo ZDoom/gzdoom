@@ -913,7 +913,7 @@ begin:
 
 						switch (c)
 						{
-							// string and char formats
+						// string
 						case 's':
 						{
 							if (argnum < 0 && haveargnums)
@@ -929,13 +929,30 @@ begin:
 							break;
 						}
 
-						// int formats
+						// pointer
+						case 'p':
+						{
+							if (argnum < 0 && haveargnums)
+								ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+							in_fmt = false;
+							// fail if something was found, but it's not a string
+							if (argnum >= countparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+							if (args[argnum].Type != REGT_POINTER) ThrowAbortException(X_FORMAT_ERROR, "Expected a pointer for format %s.", fmt_current.GetChars());
+							// append
+							output.AppendFormat(fmt_current.GetChars(), args[argnum].a);
+							if (!haveargnums) argnum = ++argauto;
+							else argnum = -1;
+							break;
+						}
+
+						// int formats (including char)
 						case 'd':
 						case 'i':
 						case 'u':
 						case 'x':
 						case 'X':
 						case 'o':
+						case 'c':
 						{
 							if (argnum < 0 && haveargnums)
 								ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");

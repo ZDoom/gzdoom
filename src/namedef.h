@@ -700,6 +700,7 @@ xx(BuiltinFindSingleNameState)
 xx(BuiltinHandleRuntimeState)
 xx(BuiltinGetDefault)
 xx(BuiltinClassCast)
+xx(BuiltinFormat)
 xx(Damage)
 
 // basic type names

@@ -1533,19 +1533,21 @@ public:
 
 //==========================================================================
 //
-//	FxFormatFunctionCall
+//	FxFormat
 //
 //==========================================================================
 
 class FxFormat : public FxExpression
 {
 	FArgumentList ArgList;
+	bool EmitTail;
 
 public:
 
 	FxFormat(FArgumentList &args, const FScriptPosition &pos);
 	~FxFormat();
 	FxExpression *Resolve(FCompileContext&);
+	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

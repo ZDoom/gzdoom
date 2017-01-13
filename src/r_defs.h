@@ -282,7 +282,6 @@ class ASectorAction : public AActor
 {
 	DECLARE_CLASS (ASectorAction, AActor)
 public:
-	ASectorAction (bool activatedByUse = false);
 	void OnDestroy() override;
 	void BeginPlay ();
 	void Activate (AActor *source);
@@ -292,8 +291,6 @@ public:
 	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
 protected:
 	bool CheckTrigger(AActor *triggerer) const;
-private:
-	bool ActivatedByUse;
 };
 
 class ASkyViewpoint;

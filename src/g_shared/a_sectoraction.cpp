@@ -39,12 +39,9 @@
 
 IMPLEMENT_CLASS(ASectorAction, false, false)
 
-ASectorAction::ASectorAction (bool activatedByUse) :
-	ActivatedByUse (activatedByUse) {}
-
 bool ASectorAction::IsActivatedByUse() const
 {
-	return ActivatedByUse;
+	return !!(health & (SECSPAC_Use|SECSPAC_UseWall));
 }
 
 void ASectorAction::OnDestroy ()

@@ -962,10 +962,10 @@ namespace swrenderer
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, _dest);
 		int pitch = _pitch * thread->num_cores;
 
-		const uint32_t *source = &particle_texture[(_fracposx >> FRACBITS) * 16];
+		const uint32_t *source = &particle_texture[(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
-		uint32_t fracstep = 16 * FRACUNIT / _count;
+		uint32_t fracstep = PARTICLE_TEXTURE_SIZE * FRACUNIT / _count;
 		uint32_t fracpos = fracstep * thread->skipped_by_thread(_dest_y) + fracstep / 2;
 		fracstep *= thread->num_cores;
 
@@ -975,7 +975,7 @@ namespace swrenderer
 
 		for (int y = 0; y < count; y++)
 		{
-			uint32_t alpha = (source[fracpos >> FRACBITS] * particle_alpha) >> 6;
+			uint32_t alpha = (source[fracpos >> FRACBITS] * particle_alpha) >> 7;
 			uint32_t inv_alpha = 256 - alpha;
 
 			uint32_t bg_red = (*dest >> 16) & 0xff;

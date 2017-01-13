@@ -121,7 +121,8 @@ namespace swrenderer
 	extern int fuzzpos;
 	extern int fuzzviewheight;
 
-	extern uint32_t particle_texture[16 * 16];
+	#define PARTICLE_TEXTURE_SIZE 64
+	extern uint32_t particle_texture[PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
 	extern bool r_swtruecolor;
 

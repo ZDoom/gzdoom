@@ -249,7 +249,7 @@ namespace swrenderer
 
 		spacing = RenderTarget->GetPitch();
 
-		uint32_t fracstepx = 16 * FRACUNIT / countbase;
+		uint32_t fracstepx = PARTICLE_TEXTURE_SIZE * FRACUNIT / countbase;
 		uint32_t fracposx = fracstepx / 2;
 
 		if (r_swtruecolor)

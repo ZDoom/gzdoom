@@ -842,7 +842,7 @@ static void R_DrawCapSky(visplane_t *pl)
 
 static void R_DrawSky (visplane_t *pl)
 {
-	if (r_skymode == 2)
+	if (r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY))
 	{
 		R_DrawCapSky(pl);
 		return;

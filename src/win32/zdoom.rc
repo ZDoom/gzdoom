@@ -74,7 +74,7 @@ BEGIN
     "            VALUE ""CompanyName"", "" ""\r\n"
     "            VALUE ""FileDescription"", ""QZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
-    "            VALUE ""InternalName"", "QZDoom""\r\n"
+    "            VALUE ""InternalName"", ""QZDoom""\r\n"
     "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
     "            VALUE ""OriginalFilename"", ""qzdoom.exe""\r\n"

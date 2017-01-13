@@ -1464,7 +1464,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
 		 IFVIRTUALPTRNAME(act, "SectorAction", TriggerAction)
 		 {
-			 VMValue params[3] = { act, thing, activation };
+			 VMValue params[3] = { (DObject *)act, thing, activation };
 			 VMReturn ret;
 			 int didit;
 			 ret.IntAt(&didit);

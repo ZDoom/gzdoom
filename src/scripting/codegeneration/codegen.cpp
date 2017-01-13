@@ -7115,6 +7115,14 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	// [ZZ] string formatting function
+	if (MethodName == NAME_Format)
+	{
+		FxExpression *x = new FxFormat(ArgList, ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
+	}
+
 	int min, max, special;
 	if (MethodName == NAME_ACS_NamedExecuteWithResult || MethodName == NAME_CallACS)
 	{
@@ -8337,6 +8345,85 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_FLOP, to.RegNum, from.RegNum, FxFlops[Index].Flop);
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
+	return to;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFormat::FxFormat(FArgumentList &args, const FScriptPosition &pos)
+	: FxExpression(EFX_FlopFunctionCall, pos)
+{
+	ArgList = std::move(args);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFormat::~FxFormat()
+{
+}
+
+FxExpression *FxFormat::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+
+	for (int i = 0; i < ArgList.Size(); i++)
+	{
+		ArgList[i] = ArgList[i]->Resolve(ctx);
+		if (ArgList[i] == nullptr)
+		{
+			delete this;
+			return nullptr;
+		}
+
+		// first argument should be a string
+		if (!i && ArgList[i]->ValueType != TypeString)
+		{
+			ScriptPosition.Message(MSG_ERROR, "String was expected for format");
+			delete this;
+			return nullptr;
+		}
+
+		if (ArgList[i]->ValueType == TypeName ||
+			ArgList[i]->ValueType == TypeSound)
+		{
+			FxExpression* x = new FxStringCast(ArgList[i]);
+			x = x->Resolve(ctx);
+			if (x == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+			ArgList[i] = x;
+		}
+	}
+
+	ValueType = TypeString;
+	return this;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+ExpEmit FxFormat::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit to = ExpEmit(build, REGT_STRING);
+	for (int i = 0; i < ArgList.Size(); i++)
+	{
+		EmitParameter(build, ArgList[i], ScriptPosition);
+	}
+
+	build->Emit(OP_STRFMT, to.RegNum, ArgList.Size(), 0);
 	return to;
 }
 

@@ -120,6 +120,7 @@ xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA >= rB, throw exception
 xx(CONCAT,		concat,	RSRSRS,		NOP,	0, 0),		// sA = sB..sC
 xx(LENS,		lens,	RIRS,		NOP,	0, 0),			// dA = sB.Length
 xx(CMPS,		cmps,	I8RXRX,		NOP,	0, 0),		// if ((skB op skC) != (A & 1)) then pc++
+xx(STRFMT,      strfmt, RIRIRI,     NOP,  0, 0),
 
 // Integer math.
 xx(SLL_RR,		sll,	RIRIRI,		NOP,	0, 0),		// dA = dkB << diC

@@ -2128,8 +2128,6 @@ CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
-	if (self > 20)
-		self = 20;
 }
 
 extern void P_CalcHeight (player_t *);

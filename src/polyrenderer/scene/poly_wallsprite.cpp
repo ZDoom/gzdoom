@@ -27,6 +27,7 @@
 #include "r_data/r_translate.h"
 #include "poly_wallsprite.h"
 #include "polyrenderer/poly_renderer.h"
+#include "swrenderer/scene/r_light.h"
 
 void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {

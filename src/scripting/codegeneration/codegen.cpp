@@ -8356,7 +8356,7 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxFormat::FxFormat(FArgumentList &args, const FScriptPosition &pos)
-	: FxExpression(EFX_FlopFunctionCall, pos)
+	: FxExpression(EFX_Format, pos)
 {
 	ArgList = std::move(args);
 }

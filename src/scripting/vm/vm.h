@@ -199,6 +199,7 @@ enum EVMAbortException
 	X_ARRAY_OUT_OF_BOUNDS,
 	X_DIVISION_BY_ZERO,
 	X_BAD_SELF,
+	X_FORMAT_ERROR
 };
 
 class CVMAbortException : public CDoomError

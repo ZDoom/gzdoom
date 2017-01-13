@@ -255,6 +255,7 @@ enum EFxType
 	EFX_MemberFunctionCall,
 	EFX_ActionSpecialCall,
 	EFX_FlopFunctionCall,
+	EFX_FormatFunctionCall,
 	EFX_VMFunctionCall,
 	EFX_Sequence,
 	EFX_CompoundStatement,
@@ -1532,7 +1533,25 @@ public:
 
 //==========================================================================
 //
-//	FxFlopFunctionCall
+//	FxFormatFunctionCall
+//
+//==========================================================================
+
+class FxFormat : public FxExpression
+{
+	FArgumentList ArgList;
+
+public:
+
+	FxFormat(FArgumentList &args, const FScriptPosition &pos);
+	~FxFormat();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxVectorBuiltin
 //
 //==========================================================================
 
@@ -1551,7 +1570,7 @@ public:
 
 //==========================================================================
 //
-//	FxFlopFunctionCall
+//	FxGetClass
 //
 //==========================================================================
 
@@ -1569,7 +1588,7 @@ public:
 
 //==========================================================================
 //
-//	FxFlopFunctionCall
+//	FxGetDefaultByType
 //
 //==========================================================================
 

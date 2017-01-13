@@ -14,3 +14,4 @@ EXT_texture_filter_anisotropic
 EXT_texture_sRGB
 KHR_debug
 ARB_invalidate_subdata
+EXT_abgr

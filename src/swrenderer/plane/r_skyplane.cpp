@@ -394,7 +394,7 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSky(visplane_t *pl)
 	{
-		if (r_skymode == 2)
+		if (r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY))
 		{
 			DrawCapSky(pl);
 			return;

@@ -28,6 +28,7 @@
 #include "p_lnspec.h"
 #include "p_local.h"
 #include "a_sharedglobal.h"
+#include "g_levellocals.h"
 #include "r_sky.h"
 #include "p_effect.h"
 #include "po_man.h"

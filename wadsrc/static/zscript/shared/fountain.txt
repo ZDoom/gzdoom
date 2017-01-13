@@ -1,5 +1,16 @@
-class ParticleFountain : Actor native
+class ParticleFountain : Actor
 {
+	enum EColor
+	{
+		REDFOUNTAIN		= 1,
+		GREENFOUNTAIN	= 2,
+		BLUEFOUNTAIN	= 3,
+		YELLOWFOUNTAIN	= 4,
+		PURPLEFOUNTAIN	= 5,
+		BLACKFOUNTAIN	= 6,
+		WHITEFOUNTAIN	= 7
+	}
+
 	default
 	{
 		Height 0;
@@ -7,13 +18,32 @@ class ParticleFountain : Actor native
 		+NOGRAVITY
 		+INVISIBLE
 	}
+	
+	override void PostBeginPlay ()
+	{
+		Super.PostBeginPlay ();
+		if (!(SpawnFlags & MTF_DORMANT))
+			Activate (null);
+	}
+
+	override void Activate (Actor activator)
+	{
+		Super.Activate (activator);
+		fountaincolor = health;
+	}
+
+	override void Deactivate (Actor activator)
+	{
+		Super.Deactivate (activator);
+		fountaincolor = 0;
+	}
 }
 
 class RedParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 1;
+		Health REDFOUNTAIN;
 	}
 }
 
@@ -21,7 +51,7 @@ class GreenParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 2;
+		Health GREENFOUNTAIN;
 	}
 }
 
@@ -29,7 +59,7 @@ class BlueParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 3;
+		Health BLUEFOUNTAIN;
 	}
 }
 
@@ -37,7 +67,7 @@ class YellowParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 4;
+		Health YELLOWFOUNTAIN;
 	}
 }
 
@@ -45,7 +75,7 @@ class PurpleParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 5;
+		Health PURPLEFOUNTAIN;
 	}
 }
 
@@ -53,7 +83,7 @@ class BlackParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 6;
+		Health BLACKFOUNTAIN;
 	}
 }
 
@@ -61,6 +91,6 @@ class WhiteParticleFountain : ParticleFountain
 {
 	default
 	{
-		Health 7;
+		Health WHITEFOUNTAIN;
 	}
 }

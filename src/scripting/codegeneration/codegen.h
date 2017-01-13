@@ -255,7 +255,7 @@ enum EFxType
 	EFX_MemberFunctionCall,
 	EFX_ActionSpecialCall,
 	EFX_FlopFunctionCall,
-	EFX_FormatFunctionCall,
+	EFX_Format,
 	EFX_VMFunctionCall,
 	EFX_Sequence,
 	EFX_CompoundStatement,

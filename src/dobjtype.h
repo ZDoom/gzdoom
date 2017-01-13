@@ -883,7 +883,7 @@ public:
 	static TArray<PClass *> AllClasses;
 
 	static bool bShutdown;
-	static bool bShuttingDown;
+	static bool bVMOperational;
 };
 
 class PClassType : public PClass

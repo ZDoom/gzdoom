@@ -2726,7 +2726,7 @@ void D_DoomMain (void)
 
 		restart++;
 		PClass::bShutdown = false;
-		PClass::bShuttingDown = false;
+		PClass::bVMOperational = false;
 	}
 	while (1);
 }

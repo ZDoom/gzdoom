@@ -18,3 +18,13 @@ inline unsigned GetVirtualIndex(PClass *cls, const char *funcname)
 	if (func != nullptr)
 
 #define IFVIRTUAL(cls, funcname) IFVIRTUALPTR(this, cls, funcname)
+
+#define IFVIRTUALPTRNAME(self, cls, funcname) \
+	static unsigned VIndex = ~0u; \
+	if (VIndex == ~0u) { \
+		VIndex = GetVirtualIndex(PClass::FindActor(cls), #funcname); \
+		assert(VIndex != ~0u); \
+	} \
+	auto clss = self->GetClass(); \
+	VMFunction *func = clss->Virtuals.Size() > VIndex? clss->Virtuals[VIndex] : nullptr;  \
+	if (func != nullptr)

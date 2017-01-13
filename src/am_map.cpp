@@ -2228,11 +2228,13 @@ bool AM_Check3DFloors(line_t *line)
 // If needUseActivated is true, the special must be activated by use.
 bool AM_checkSectorActions (sector_t *sector, bool (*function)(int, int *), int *specialptr, int **argsptr, bool needUseActivated)
 {
-	for (ASectorAction* action = sector->SecActTarget; action; action = barrier_cast<ASectorAction *>(action->tracer))
+	// This code really stands in the way of a more generic and flexible implementation of sector actions because it makes far too many assumptions
+	// about their internal workings. Well, it can't be helped. Let's just hope that nobody abuses the special and the health field in a way that breaks this.
+	for (AActor* action = sector->SecActTarget; action; action = action->tracer)
 	{
-		if ((action->IsActivatedByUse() || false == needUseActivated)
+		if (((action->health & (SECSPAC_Use | SECSPAC_UseWall)) || false == needUseActivated)
 			&& (*function)(action->special, action->args)
-			&& action->CanTrigger (players[consoleplayer].mo))
+			&& !(action->flags & MF_FRIENDLY))
 		{
 			*specialptr = action->special;
 			*argsptr = action->args;

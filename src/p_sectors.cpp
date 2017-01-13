@@ -36,6 +36,7 @@
 #include "r_sky.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 
 // [RH]
@@ -1461,16 +1462,24 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 {
 		 AActor *next = act->tracer;
 
-		 bool didit = act->DoTriggerAction(thing, activation);
-		 if (didit)
+		 IFVIRTUALPTRNAME(act, "SectorAction", TriggerAction)
 		 {
-			 if (act->flags4 & MF4_STANDSTILL)
+			 VMValue params[3] = { act, thing, activation };
+			 VMReturn ret;
+			 int didit;
+			 ret.IntAt(&didit);
+			 GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+
+			 if (didit)
 			 {
-				 act->Destroy();
+				 if (act->flags4 & MF4_STANDSTILL)
+				 {
+					 act->Destroy();
+				 }
 			 }
+			 act = next;
+			 res |= !!didit;
 		 }
-		 act = static_cast<ASectorAction*>(next);
-		 res |= didit;
 	 }
 	 return res;
  }

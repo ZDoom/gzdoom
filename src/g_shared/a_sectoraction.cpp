@@ -94,26 +94,9 @@ void ASectorAction::Deactivate (AActor *source)
 	flags2 |= MF2_DORMANT;	// Projectiles can trigger
 }
 
-bool ASectorAction::TriggerAction(AActor *triggerer, int activationType)
-{
-	if (DoTriggerAction(triggerer, activationType))
-	{
-		if (flags4 & MF4_STANDSTILL)
-		{
-			Destroy();
-		}
-	}
-	return false;
-}
-
 bool ASectorAction::DoTriggerAction (AActor *triggerer, int activationType)
 {
-	bool didit = (activationType & health) ? CheckTrigger(triggerer) : false;
-
-	if (tracer != NULL)
-		return didit | barrier_cast<ASectorAction *>(tracer)->DoTriggerAction (triggerer, activationType);
-	else
-		return didit;
+	return (activationType & health) ? CheckTrigger(triggerer) : false;
 }
 
 bool ASectorAction::CanTrigger (AActor *triggerer) const

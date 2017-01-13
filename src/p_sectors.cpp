@@ -1446,6 +1446,49 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
  }
 
 
+ //===========================================================================
+ //
+ //
+ //
+ //===========================================================================
+
+ bool sector_t::TriggerSectorActions(AActor *thing, int activation)
+ {
+	 auto act = SecActTarget;
+	 bool res = false;
+
+	 while (act != nullptr)
+	 {
+		 AActor *next = act->tracer;
+
+		 bool didit = act->DoTriggerAction(thing, activation);
+		 if (didit)
+		 {
+			 if (act->flags4 & MF4_STANDSTILL)
+			 {
+				 act->Destroy();
+			 }
+		 }
+		 act = static_cast<ASectorAction*>(next);
+		 res |= didit;
+	 }
+	 return res;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, TriggerSectorActions)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_OBJECT(thing, AActor);
+	 PARAM_INT(activation);
+	 ACTION_RETURN_BOOL(self->TriggerSectorActions(thing, activation));
+ }
+
+ //===========================================================================
+ //
+ //
+ //
+ //===========================================================================
+
  DEFINE_ACTION_FUNCTION(_Sector, PointInSector)
  {
 	 PARAM_PROLOGUE;

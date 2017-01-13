@@ -287,7 +287,6 @@ public:
 	void BeginPlay ();
 	void Activate (AActor *source);
 	void Deactivate (AActor *source);
-	bool TriggerAction(AActor *triggerer, int activationType);
 	bool CanTrigger (AActor *triggerer) const;
 	bool IsActivatedByUse() const;
 	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
@@ -674,6 +673,7 @@ public:
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
 	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
+	bool TriggerSectorActions(AActor *thing, int activation);
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 

@@ -508,6 +508,7 @@ struct Sector native
 	native int GetOppositePortalGroup(int plane);
 	native double CenterFloor();
 	native double CenterCeiling();
+	native bool TriggerSectorActions(Actor thing, int activation);
 
 	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
 	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);

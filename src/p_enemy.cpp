@@ -713,7 +713,7 @@ bool P_Move (AActor *actor)
 				if (actor->floorsector->SecActTarget != NULL &&
 					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
 				{
-					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
+					actor->floorsector->TriggerSectorActions(actor, SECSPAC_HitFloor);
 				}
 				P_CheckFor3DFloorHit(actor, actor->Z());
 			}

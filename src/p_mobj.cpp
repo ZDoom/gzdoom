@@ -7754,6 +7754,13 @@ DEFINE_ACTION_FUNCTION(AActor, RotateVector)
 	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Normalize180)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
 {
 	PARAM_SELF_PROLOGUE(AActor);

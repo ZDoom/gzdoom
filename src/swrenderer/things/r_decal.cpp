@@ -147,6 +147,8 @@ namespace swrenderer
 		decal_left = decal_pos - edge_left * angvec - ViewPos;
 		decal_right = decal_pos + edge_right * angvec - ViewPos;
 
+		double texturemid;
+
 		if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
 			goto done;
 
@@ -214,7 +216,7 @@ namespace swrenderer
 		}
 
 		yscale = decal->ScaleY;
-		double texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
+		texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
 
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);

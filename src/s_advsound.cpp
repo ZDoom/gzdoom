@@ -2483,7 +2483,7 @@ bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 			triggerer->player->MUSINFOtics = 30;
 		}
 	}
-	return Super::DoTriggerAction (triggerer, activationType);
+	return tracer == nullptr? false : barrier_cast<ASectorAction *>(tracer)->DoTriggerAction(triggerer, activationType);
 }
  
 void AMusicChanger::PostBeginPlay()

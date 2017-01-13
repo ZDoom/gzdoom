@@ -290,8 +290,8 @@ public:
 	bool TriggerAction(AActor *triggerer, int activationType);
 	bool CanTrigger (AActor *triggerer) const;
 	bool IsActivatedByUse() const;
-protected:
 	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
+protected:
 	bool CheckTrigger(AActor *triggerer) const;
 private:
 	bool ActivatedByUse;

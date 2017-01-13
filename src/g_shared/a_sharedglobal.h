@@ -76,13 +76,6 @@ private:
 	DImpactDecal();
 };
 
-class ATeleportFog : public AActor
-{
-	DECLARE_CLASS (ATeleportFog, AActor)
-public:
-	void PostBeginPlay ();
-};
-
 class ASkyViewpoint : public AActor
 {
 	DECLARE_CLASS (ASkyViewpoint, AActor)

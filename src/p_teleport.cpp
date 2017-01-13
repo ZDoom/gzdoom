@@ -48,28 +48,6 @@ extern void P_CalcHeight (player_t *player);
 
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
-IMPLEMENT_CLASS(ATeleportFog, false, false)
-
-void ATeleportFog::PostBeginPlay ()
-{
-	Super::PostBeginPlay ();
-	S_Sound (this, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
-	switch (gameinfo.gametype)
-	{
-	case GAME_Hexen:
-	case GAME_Heretic:
-		SetState(FindState(NAME_Raven));
-		break;
-
-	case GAME_Strife:
-		SetState(FindState(NAME_Strife));
-		break;
-		
-	default:
-		break;
-	}
-}
-
 //==========================================================================
 //
 // P_SpawnTeleportFog

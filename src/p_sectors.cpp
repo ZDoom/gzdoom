@@ -1455,7 +1455,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
  bool sector_t::TriggerSectorActions(AActor *thing, int activation)
  {
-	 auto act = SecActTarget;
+	 AActor *act = SecActTarget;
 	 bool res = false;
 
 	 while (act != nullptr)

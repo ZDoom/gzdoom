@@ -316,9 +316,9 @@ object BFGExtra
 // Barrel
 pulselight BARREL
 {
-    color 0.0 0.5 0.0
-    size 30
-    secondarySize 31
+    color 0.0 0.3 0.0
+    size 20
+    secondarySize 21
     interval 0.5
     offset 0 36 0
 	dontlightself 1

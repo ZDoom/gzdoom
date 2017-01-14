@@ -1213,7 +1213,6 @@ set (PCH_SOURCES
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
-	g_shared/a_randomspawner.cpp
 	g_shared/a_skies.cpp
 	g_shared/a_soundenvironment.cpp
 	g_shared/a_soundsequence.cpp

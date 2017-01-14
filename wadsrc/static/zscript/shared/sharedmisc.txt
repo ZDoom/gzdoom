@@ -178,22 +178,6 @@ class SwitchingDecoration : SwitchableDecoration
 	}
 }
 
-// Random spawner ----------------------------------------------------------
-
-class RandomSpawner : Actor native
-{
-	Default
-	{
-		+NOBLOCKMAP
-		+NOSECTOR
-		+NOGRAVITY
-		+THRUACTORS
-	}
-	
-	virtual void PostSpawn(Actor spawned)
-	{}
-}
-
 // Sector flag setter ------------------------------------------------------
 
 class SectorFlagSetter : Actor

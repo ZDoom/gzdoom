@@ -1164,7 +1164,6 @@ set (PCH_SOURCES
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_skies.cpp
-	g_shared/a_soundenvironment.cpp
 	g_shared/a_soundsequence.cpp
 	g_shared/a_specialspot.cpp
 	g_shared/hudmessages.cpp

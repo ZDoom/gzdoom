@@ -389,7 +389,7 @@ struct Sector native
 	native int16 		damageinterval;
 	native int16 		leakydamage;
 
-	native uint16		ZoneNumber;
+	native readonly uint16	ZoneNumber;
 	
 	enum ESectorMoreFlags
 	{
@@ -531,6 +531,8 @@ struct Sector native
 	native double, Vertex FindLowestCeilingPoint();
 	native double, Vertex FindHighestFloorPoint();
 
+	native void SetEnvironment(String env);
+	native void SetEnvironmentID(int envnum);
 
 	 bool isSecret()
 	 {

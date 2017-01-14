@@ -1837,6 +1837,22 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	ACTION_RETURN_INT(ndx);
  }
 
+ DEFINE_ACTION_FUNCTION(_Sector, SetEnvironmentID)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(envnum);
+	 Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, SetEnvironment)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_STRING(env);
+	 Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	 return 0;
+ }
+
  //===========================================================================
  //
  //  line_t exports

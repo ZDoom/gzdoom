@@ -51,9 +51,14 @@ EXTERN_CVAR(Bool, r_shadercolormaps)
 namespace swrenderer
 {
 	cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
-	bool r_dontmaplines;
+	
+	RenderScene *RenderScene::Instance()
+	{
+		static RenderScene instance;
+		return &instance;
+	}
 
-	void R_RenderActorView(AActor *actor, bool dontmaplines)
+	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
 	{
 		WallCycles.Reset();
 		PlaneCycles.Reset();
@@ -85,7 +90,7 @@ namespace swrenderer
 
 		RenderPortal::Instance()->SetMainPortal();
 
-		r_dontmaplines = dontmaplines;
+		this->dontmaplines = dontmaplines;
 
 		// [RH] Hack to make windows into underwater areas possible
 		RenderOpaquePass::Instance()->ResetFakingUnderwater();
@@ -138,7 +143,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
+	void RenderScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 	{
 		const bool savedviewactive = viewactive;
 		const bool savedoutputformat = r_swtruecolor;
@@ -160,7 +165,7 @@ namespace swrenderer
 		viewwindowy = y;
 		viewactive = true;
 
-		R_RenderActorView(actor, dontmaplines);
+		RenderActorView(actor, dontmaplines);
 
 		R_EndDrawerCommands();
 
@@ -180,14 +185,14 @@ namespace swrenderer
 		}
 	}
 
-	void R_MultiresInit()
+	void RenderScene::ScreenResized()
 	{
 		VisiblePlaneList::Instance()->Init();
 	}
 
-	void R_InitRenderer()
+	void RenderScene::Init()
 	{
-		atterm(R_ShutdownRenderer);
+		atterm([]() { RenderScene::Instance()->Deinit(); });
 		// viewwidth / viewheight are set by the defaults
 		fillshort(zeroarray, MAXWIDTH, 0);
 
@@ -195,7 +200,7 @@ namespace swrenderer
 		R_InitColumnDrawers();
 	}
 
-	void R_ShutdownRenderer()
+	void RenderScene::Deinit()
 	{
 		RenderTranslucentPass::Deinit();
 		VisiblePlaneList::Instance()->Deinit();

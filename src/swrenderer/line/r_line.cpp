@@ -638,7 +638,7 @@ namespace swrenderer
 		linedef = curline->linedef;
 
 		// mark the segment as visible for auto map
-		if (!r_dontmaplines) linedef->flags |= ML_MAPPED;
+		if (!RenderScene::Instance()->DontMapLines()) linedef->flags |= ML_MAPPED;
 
 		midtexture = toptexture = bottomtexture = 0;
 

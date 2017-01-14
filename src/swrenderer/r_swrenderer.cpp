@@ -93,7 +93,7 @@ void FSoftwareRenderer::Init()
 	gl_ParseDefs();
 
 	r_swtruecolor = screen->IsBgra();
-	R_InitRenderer();
+	RenderScene::Instance()->Init();
 }
 
 //==========================================================================
@@ -224,7 +224,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	}
 
 	R_BeginDrawerCommands();
-	R_RenderActorView (player->mo);
+	RenderScene::Instance()->RenderActorView(player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
 
@@ -268,7 +268,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
 	else
-		R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
+		RenderScene::Instance()->RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
@@ -323,7 +323,7 @@ bool FSoftwareRenderer::RequireGLNodes()
 
 void FSoftwareRenderer::OnModeSet ()
 {
-	R_MultiresInit ();
+	RenderScene::Instance()->ScreenResized();
 
 	RenderTarget = screen;
 	screen->Lock (true);
@@ -413,7 +413,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
-		R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+		RenderScene::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);
 
 	if (Canvas->IsBgra())

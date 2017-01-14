@@ -22,13 +22,22 @@ extern cycle_t FrameCycles;
 namespace swrenderer
 {
 	extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+	
+	class RenderScene
+	{
+	public:
+		static RenderScene *Instance();
 
-	extern bool r_dontmaplines;
+		void Init();
+		void ScreenResized();
+		void Deinit();	
+		
+		void RenderActorView(AActor *actor, bool dontmaplines = false);
+		void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
+	
+		bool DontMapLines() const { return dontmaplines; }
 
-	void R_RenderActorView(AActor *actor, bool dontmaplines = false);
-	void R_RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
-
-	void R_InitRenderer();
-	void R_MultiresInit();
-	void R_ShutdownRenderer();
+	private:
+		bool dontmaplines = false;
+	};
 }

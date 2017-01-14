@@ -37,5 +37,4 @@ namespace swrenderer
 	void R_InitTextureMapping();
 	void R_SetupBuffer();
 	void R_SetupFreelook();
-	void R_InitRenderer();
 }

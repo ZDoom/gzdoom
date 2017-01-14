@@ -1,10 +1,24 @@
 
+struct SectorPortal native
+{
+	native int mType;
+	native int mFlags;
+	native uint mPartner;
+	native int mPlane;
+	native Sector mOrigin;
+	native Sector mDestination;
+	native Vector2 mDisplacement;
+	native double mPlaneZ;
+	native Actor mSkybox;
+};
+
+
 struct Vertex native
 {
 	native readonly Vector2 p;
 }
 
-struct Side
+struct Side native
 {
 	enum ETexpart
 	{
@@ -97,7 +111,7 @@ struct Line native
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	native double					alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
-	//native Side					sidedef[2];
+	native Side						sidedef[2];
 	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
 	native readonly Sector			frontsector, backsector;
 	native int 						validcount;	// if == validcount, already checked

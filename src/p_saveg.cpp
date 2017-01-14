@@ -964,7 +964,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
-	arc("sectorportals", sectorPortals);
+	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
 
 	DThinker::SerializeThinkers(arc, !hubload);

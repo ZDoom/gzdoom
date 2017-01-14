@@ -39,6 +39,7 @@
 #include "r_sky.h"
 #include "r_state.h"
 #include "portal.h"
+#include "g_levellocals.h"
 
 // arg0 = Visibility*4 for this skybox
 
@@ -49,17 +50,17 @@ void ASkyViewpoint::BeginPlay ()
 {
 	Super::BeginPlay ();
 
-	if (tid == 0 && sectorPortals[0].mSkybox == nullptr)
+	if (tid == 0 && level.sectorPortals[0].mSkybox == nullptr)
 	{
-		sectorPortals[0].mSkybox = this;
-		sectorPortals[0].mDestination = Sector;
+		level.sectorPortals[0].mSkybox = this;
+		level.sectorPortals[0].mDestination = Sector;
 	}
 }
 
 void ASkyViewpoint::OnDestroy ()
 {
 	// remove all sector references to ourselves.
-	for (auto &s : sectorPortals)
+	for (auto &s : level.sectorPortals)
 	{
 		if (s.mSkybox == this)
 		{

@@ -32,6 +32,9 @@ struct FLevelLocals
 	TStaticArray<line_t> lines;
 	TStaticArray<side_t> sides;
 
+	TArray<FSectorPortal> sectorPortals;
+
+
 	DWORD		flags;
 	DWORD		flags2;
 	DWORD		flags3;
@@ -95,7 +98,37 @@ inline int line_t::Index() const
 	return int(this - &level.lines[0]);
 }
 
+inline FSectorPortal *line_t::GetTransferredPortal()
+{
+	return portaltransferred >= level.sectorPortals.Size() ? (FSectorPortal*)nullptr : &level.sectorPortals[portaltransferred];
+}
+
 inline int sector_t::Index() const 
 { 
 	return int(this - &level.sectors[0]); 
+}
+
+inline FSectorPortal *sector_t::GetPortal(int plane)
+{
+	return &level.sectorPortals[Portals[plane]];
+}
+
+inline double sector_t::GetPortalPlaneZ(int plane)
+{
+	return level.sectorPortals[Portals[plane]].mPlaneZ;
+}
+
+inline DVector2 sector_t::GetPortalDisplacement(int plane)
+{
+	return level.sectorPortals[Portals[plane]].mDisplacement;
+}
+
+inline int sector_t::GetPortalType(int plane)
+{
+	return level.sectorPortals[Portals[plane]].mType;
+}
+
+inline int sector_t::GetOppositePortalGroup(int plane)
+{
+	return level.sectorPortals[Portals[plane]].mDestination->PortalGroup;
 }

@@ -43,9 +43,6 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/data/gl_data.h"
 
-class ASkyViewpoint;
-
-
 struct GLHorizonInfo
 {
 	GLSectorPlane plane;

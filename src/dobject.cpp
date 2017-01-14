@@ -480,11 +480,11 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 			changed += players[i].FixPointers (old, notOld);
 	}
 
-	for (auto &s : sectorPortals)
+	for (auto &s : level.sectorPortals)
 	{
 		if (s.mSkybox == old)
 		{
-			s.mSkybox = static_cast<ASkyViewpoint*>(notOld);
+			s.mSkybox = static_cast<AActor*>(notOld);
 			changed++;
 		}
 	}

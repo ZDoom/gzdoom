@@ -25,8 +25,6 @@
 
 #include <stddef.h>
 
-class ASkyViewpoint;
-
 namespace swrenderer
 {
 

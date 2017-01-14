@@ -1136,7 +1136,7 @@ void R_DrawPortals ()
 		case PORTS_SKYVIEWPOINT:
 		{
 			// Don't let gun flashes brighten the sky box
-			ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(port->mSkybox);
+			AActor *sky = port->mSkybox;
 			extralight = 0;
 			R_SetVisibility(sky->args[0] * 0.25f);
 
@@ -1171,7 +1171,7 @@ void R_DrawPortals ()
 		}
 
 		port->mFlags |= PORTSF_INSKYBOX;
-		if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
+		if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
 		camera = NULL;
 		viewsector = port->mDestination;
 		assert(viewsector != NULL);
@@ -1234,7 +1234,7 @@ void R_DrawPortals ()
 		R_DrawPlanes ();
 
 		port->mFlags &= ~PORTSF_INSKYBOX;
-		if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
+		if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
 	}
 
 	// Draw all the masked textures in a second pass, in the reverse order they

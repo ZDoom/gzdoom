@@ -21,6 +21,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "g_levellocals.h"
 #include "r_state.h"
 #include "p_maputl.h"
 #include "p_blockmap.h"

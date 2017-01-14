@@ -57,6 +57,7 @@
 #include "r_utility.h"
 #include "d_player.h"
 #include "p_local.h"
+#include "g_levellocals.h"
 #include "p_maputl.h"
 #include "math/cmath.h"
 

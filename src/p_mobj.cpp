@@ -4832,6 +4832,13 @@ void AActor::MarkPrecacheSounds() const
 	CrushPainSound.MarkUsed();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, MarkPrecacheSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->MarkPrecacheSounds();
+	return 0;
+}
+
 bool AActor::isFast()
 {
 	if (flags5&MF5_ALWAYSFAST) return true;

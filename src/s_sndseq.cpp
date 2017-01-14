@@ -425,9 +425,25 @@ void DSeqNode::AddChoice (int seqnum, seqtype_t type)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DSeqNode, AddChoice)
+{
+	PARAM_SELF_PROLOGUE(DSeqNode);
+	PARAM_NAME(seq);
+	PARAM_INT(mode);
+	self->AddChoice(seq, seqtype_t(mode));
+	return 0;
+}
+
+
 FName DSeqNode::GetSequenceName () const
 {
 	return Sequences[m_Sequence]->SeqName;
+}
+
+DEFINE_ACTION_FUNCTION(DSeqNode, GetSequenceName)
+{
+	PARAM_SELF_PROLOGUE(DSeqNode);
+	ACTION_RETURN_INT(self->GetSequenceName().GetIndex());
 }
 
 IMPLEMENT_CLASS(DSeqActorNode, false, true)

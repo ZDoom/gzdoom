@@ -859,7 +859,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 		{
 			PClass *type = PClassActor::AllActorClasses[i];
 
-			if (type->IsDescendantOf(RUNTIME_CLASS (ABackpackItem)))
+			if (type->IsDescendantOf(PClass::FindClass(NAME_BackpackItem)))
 			{
 				AInventory *pack = player->mo->FindInventory(static_cast<PClassActor *>(type));
 

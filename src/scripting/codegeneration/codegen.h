@@ -1591,6 +1591,24 @@ public:
 
 //==========================================================================
 //
+//	FxGetClass
+//
+//==========================================================================
+
+class FxGetParentClass : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetParentClass(FxExpression *self);
+	~FxGetParentClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxGetDefaultByType
 //
 //==========================================================================

@@ -2637,7 +2637,7 @@ void FParser::SF_MaxPlayerAmmo()
 
 			for (AInventory *item = players[playernum].mo->Inventory; item != NULL; item = item->Inventory)
 			{
-				if (item->IsKindOf(RUNTIME_CLASS(ABackpackItem)))
+				if (item->IsKindOf(PClass::FindClass(NAME_BackpackItem)))
 				{
 					if (t_argc>=4) amount = intvalue(t_argv[3]);
 					else amount*=2;

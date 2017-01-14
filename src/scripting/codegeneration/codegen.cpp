@@ -7265,6 +7265,13 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		break;
 
+	case NAME_GetParentClass:
+		if (CheckArgSize(NAME_GetParentClass, ArgList, 0, 0, ScriptPosition))
+		{
+			func = new FxGetParentClass(new FxSelf(ScriptPosition));
+		}
+		break;
+
 	case NAME_GetDefaultByType:
 		if (CheckArgSize(NAME_GetDefaultByType, ArgList, 1, 1, ScriptPosition))
 		{
@@ -7575,6 +7582,20 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+
+	if (MethodName == NAME_GetParentClass &&
+		(Self->IsObject() || Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer))))
+	{
+		if (ArgList.Size() > 0)
+		{
+			ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+		auto x = new FxGetParentClass(Self);
+		return x->Resolve(ctx);
+	}
+	
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
@@ -7591,6 +7612,8 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				auto x = new FxGetClass(Self);
 				return x->Resolve(ctx);
 			}
+
+
 			cls = static_cast<PStruct *>(ptype);
 		}
 		else
@@ -8742,6 +8765,52 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 	op.Free(build);
 	ExpEmit to(build, REGT_POINTER);
 	build->Emit(OP_META, to.RegNum, op.RegNum);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxGetParentClass::FxGetParentClass(FxExpression *self)
+	:FxExpression(EFX_GetClass, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxGetParentClass::~FxGetParentClass()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxGetParentClass::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+
+	if (!Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && !Self->IsObject())
+	{
+		ScriptPosition.Message(MSG_ERROR, "GetClass() requires an object");
+		delete this;
+		return nullptr;
+	}
+	ValueType = NewClassPointer(RUNTIME_CLASS(DObject)); // 
+	return this;
+}
+
+ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+	if (Self->IsObject())
+	{
+		ExpEmit to(build, REGT_POINTER);
+		build->Emit(OP_META, to.RegNum, op.RegNum);
+		op = to;
+		op.Free(build);
+	}
+	ExpEmit to(build, REGT_POINTER);
+	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
 	return to;
 }
 

@@ -772,6 +772,11 @@ void InitThingdef()
 	lstruct->AddNativeField("vertexes", NewPointer(NewResizableArray(vertstruct), false), myoffsetof(FLevelLocals, vertexes), VARF_Native|VARF_ReadOnly);
 	lstruct->AddNativeField("sectorportals", NewPointer(NewResizableArray(sectorportalstruct), false), myoffsetof(FLevelLocals, sectorPortals), VARF_Native);
 
+
+	auto aact = NewPointer(NewResizableArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
+	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
+	GlobalSymbols.AddSymbol(aacf);
+
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
 	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);

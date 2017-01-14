@@ -491,6 +491,7 @@ class Actor : Thinker native
 	native Inventory GiveInventoryType(class<Inventory> itemtype);
 	native Inventory DropInventory (Inventory item);
 	native bool UseInventory(Inventory item);
+	native void ObtainInventory(Actor other);
 	native bool GiveAmmo (Class<Ammo> type, int amount);
 	native float AccuracyFactor();
 
@@ -725,13 +726,6 @@ class Actor : Thinker native
 	native void A_ActiveSound();
 
 	native void A_FastChase();
-	native void A_FreezeDeath();
-	native void A_FreezeDeathChunks();
-	void A_GenericFreezeDeath()
-	{
-		A_SetTranslation('Ice');
-		A_FreezeDeath();
-	}
 	native void A_PlayerScream();
 	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
 	native void A_CheckPlayerDone();

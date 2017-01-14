@@ -162,7 +162,7 @@ enum EPlayerState
 
 struct PlayerInfo native	// this is what internally is known as player_t
 {
-	native readonly PlayerPawn mo;
+	native PlayerPawn mo;
 	native uint8 playerstate;
 	native uint original_oldbuttons;
 	native readonly Class<PlayerPawn> cls;

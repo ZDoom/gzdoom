@@ -1311,6 +1311,13 @@ void AActor::ObtainInventory (AActor *other)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ObtainInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	self->ObtainInventory(other);
+	return 0;
+}
 //============================================================================
 //
 // AActor :: CheckLocalView

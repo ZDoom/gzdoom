@@ -105,6 +105,7 @@ class PlayerPawn : Actor native
 
 	native int GetMaxHealth();
 	native bool ResetAirSupply (bool playgasp = false);
+	native void CheckWeaponSwitch(class<Inventory> item);
 }
 
 class PlayerChunk : PlayerPawn native

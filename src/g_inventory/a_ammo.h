@@ -7,9 +7,6 @@ class AAmmo : public AInventory
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;
-	virtual AInventory *CreateCopy (AActor *other) override;
-	virtual bool HandlePickup (AInventory *item) override;
-	virtual AInventory *CreateTossable () override;
 	PClassActor *GetParentAmmo () const;
 
 	int BackpackAmount, BackpackMaxAmount, DropAmount;

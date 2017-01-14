@@ -84,116 +84,11 @@ PClassActor *AAmmo::GetParentAmmo () const
 	return static_cast<PClassActor *>(type);
 }
 
-//===========================================================================
-//
-// AAmmo :: HandlePickup
-//
-//===========================================================================
-EXTERN_CVAR(Bool, sv_unlimited_pickup)
-
-bool AAmmo::HandlePickup (AInventory *item)
+DEFINE_ACTION_FUNCTION(AAmmo, GetParentAmmo)
 {
-	if (GetClass() == item->GetClass() ||
-		(item->IsKindOf (RUNTIME_CLASS(AAmmo)) && static_cast<AAmmo*>(item)->GetParentAmmo() == GetClass()))
-	{
-		if (Amount < MaxAmount || sv_unlimited_pickup)
-		{
-			int receiving = item->Amount;
-
-			if (!(item->ItemFlags & IF_IGNORESKILL))
-			{ // extra ammo in baby mode and nightmare mode
-				receiving = int(receiving * G_SkillProperty(SKILLP_AmmoFactor));
-			}
-			int oldamount = Amount;
-
-			if (Amount > 0 && Amount + receiving < 0)
-			{
-				Amount = 0x7fffffff;
-			}
-			else
-			{
-				Amount += receiving;
-			}
-			if (Amount > MaxAmount && !sv_unlimited_pickup)
-			{
-				Amount = MaxAmount;
-			}
-			item->ItemFlags |= IF_PICKUPGOOD;
-
-			// If the player previously had this ammo but ran out, possibly switch
-			// to a weapon that uses it, but only if the player doesn't already
-			// have a weapon pending.
-
-			assert (Owner != NULL);
-
-			if (oldamount == 0 && Owner != NULL && Owner->player != NULL)
-			{
-				barrier_cast<APlayerPawn *>(Owner)->CheckWeaponSwitch(GetClass());
-			}
-		}
-		return true;
-	}
-	return false;
+	PARAM_SELF_PROLOGUE(AAmmo);
+	ACTION_RETURN_OBJECT(self->GetParentAmmo());
 }
-
-//===========================================================================
-//
-// AAmmo :: CreateCopy
-//
-//===========================================================================
-
-AInventory *AAmmo::CreateCopy (AActor *other)
-{
-	AInventory *copy;
-	int amount = Amount;
-
-	// extra ammo in baby mode and nightmare mode
-	if (!(ItemFlags&IF_IGNORESKILL))
-	{
-		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
-	}
-
-	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
-	{
-		PClassActor *type = GetParentAmmo();
-		if (!GoAway ())
-		{
-			Destroy ();
-		}
-
-		copy = static_cast<AInventory *>(Spawn (type));
-		copy->Amount = amount;
-		copy->BecomeItem ();
-	}
-	else
-	{
-		copy = Super::CreateCopy (other);
-		copy->Amount = amount;
-	}
-	if (copy->Amount > copy->MaxAmount)
-	{ // Don't pick up more ammo than you're supposed to be able to carry.
-		copy->Amount = copy->MaxAmount;
-	}
-	return copy;
-}
-
-//===========================================================================
-//
-// AAmmo :: CreateTossable
-//
-//===========================================================================
-
-AInventory *AAmmo::CreateTossable()
-{
-	AInventory *copy = Super::CreateTossable();
-	if (copy != NULL)
-	{ // Do not increase ammo by dropping it and picking it back up at
-	  // certain skill levels.
-		copy->ItemFlags |= IF_IGNORESKILL;
-	}
-	return copy;
-}
-
 
 // Backpack -----------------------------------------------------------------
 
@@ -214,6 +109,7 @@ void ABackpackItem::Serialize(FSerializer &arc)
 	arc("bdepleted", bDepleted, def->bDepleted);
 }
 
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
 //===========================================================================
 //
 // ABackpackItem :: CreateCopy

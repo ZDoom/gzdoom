@@ -125,20 +125,3 @@ class WeaponPiece : Inventory native
 	}
 }
 
-class Ammo : Inventory native
-{
-	native int BackpackAmount;
-	native int BackpackMaxAmount;
-	
-	Default
-	{
-		+INVENTORY.KEEPDEPLETED
-		Inventory.PickupSound "misc/ammo_pkup";
-	}
-}
-
-class BackpackItem : Inventory native
-{
-	native bool bDepleted;
-}
-

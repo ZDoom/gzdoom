@@ -1,0 +1,129 @@
+
+class Ammo : Inventory native
+{
+	native int BackpackAmount;
+	native int BackpackMaxAmount;
+	
+	Default
+	{
+		+INVENTORY.KEEPDEPLETED
+		Inventory.PickupSound "misc/ammo_pkup";
+	}
+
+	native Class<Actor> GetParentAmmo ();
+
+	//===========================================================================
+	//
+	// AAmmo :: HandlePickup
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		let ammoitem = Ammo(item);
+		if (ammoitem != null && ammoitem.GetParentAmmo() == GetClass())
+		{
+			if (Amount < MaxAmount || sv_unlimited_pickup)
+			{
+				int receiving = item.Amount;
+
+				if (!item.bIgnoreSkill)
+				{ // extra ammo in baby mode and nightmare mode
+					receiving = int(receiving * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+				}
+				int oldamount = Amount;
+
+				if (Amount > 0 && Amount + receiving < 0)
+				{
+					Amount = 0x7fffffff;
+				}
+				else
+				{
+					Amount += receiving;
+				}
+				if (Amount > MaxAmount && !sv_unlimited_pickup)
+				{
+					Amount = MaxAmount;
+				}
+				item.bPickupGood = true;
+
+				// If the player previously had this ammo but ran out, possibly switch
+				// to a weapon that uses it, but only if the player doesn't already
+				// have a weapon pending.
+
+				if (oldamount == 0 && Owner != null && Owner.player != null)
+				{
+					PlayerPawn(Owner).CheckWeaponSwitch(GetClass());
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AAmmo :: CreateCopy
+	//
+	//===========================================================================
+
+	override Inventory CreateCopy (Actor other)
+	{
+		Inventory copy;
+		int amount = Amount;
+
+		// extra ammo in baby mode and nightmare mode
+		if (!bIgnoreSkill)
+		{
+			amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+		}
+
+		let type = GetParentAmmo();
+		if (GetClass() == type)
+		{
+			if (!GoAway ())
+			{
+				Destroy ();
+			}
+
+			copy = Inventory(Spawn (type));
+			copy.Amount = amount;
+			copy.BecomeItem ();
+		}
+		else
+		{
+			copy = Super.CreateCopy (other);
+			copy.Amount = amount;
+		}
+		if (copy.Amount > copy.MaxAmount)
+		{ // Don't pick up more ammo than you're supposed to be able to carry.
+			copy.Amount = copy.MaxAmount;
+		}
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// AAmmo :: CreateTossable
+	//
+	//===========================================================================
+
+	override Inventory CreateTossable()
+	{
+		Inventory copy = Super.CreateTossable();
+		if (copy != null)
+		{ // Do not increase ammo by dropping it and picking it back up at
+		  // certain skill levels.
+			copy.bIgnoreSkill = true;
+		}
+		return copy;
+	}
+
+	
+}
+
+class BackpackItem : Inventory native
+{
+	native bool bDepleted;
+}
+

@@ -486,6 +486,12 @@ bool AInventory::GoAway ()
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, GoAway)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_BOOL(self->GoAway());
+}
+
 //===========================================================================
 //
 // AInventory :: GoAwayAndDie

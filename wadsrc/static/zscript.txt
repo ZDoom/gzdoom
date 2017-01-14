@@ -6,11 +6,13 @@
 #include "zscript/actor.txt"
 #include "zscript/actor_checks.txt"
 
-#include "zscript/shared/inventory.txt"
-#include "zscript/shared/inv_misc.txt"
-#include "zscript/shared/weapons.txt"
-#include "zscript/shared/armor.txt"
-#include "zscript/shared/powerups.txt"
+#include "zscript/inventory/inventory.txt"
+#include "zscript/inventory/inv_misc.txt"
+#include "zscript/inventory/weapons.txt"
+#include "zscript/inventory/armor.txt"
+#include "zscript/inventory/ammo.txt"
+#include "zscript/inventory/powerups.txt"
+
 #include "zscript/shared/player.txt"
 #include "zscript/shared/morph.txt"
 #include "zscript/shared/botstuff.txt"

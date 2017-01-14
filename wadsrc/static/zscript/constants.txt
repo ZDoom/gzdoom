@@ -1084,3 +1084,33 @@ enum EPlayerCheats
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 };
+
+const TEXTCOLOR_BRICK			= "\034A";
+const TEXTCOLOR_TAN				= "\034B";
+const TEXTCOLOR_GRAY			= "\034C";
+const TEXTCOLOR_GREY			= "\034C";
+const TEXTCOLOR_GREEN			= "\034D";
+const TEXTCOLOR_BROWN			= "\034E";
+const TEXTCOLOR_GOLD			= "\034F";
+const TEXTCOLOR_RED				= "\034G";
+const TEXTCOLOR_BLUE			= "\034H";
+const TEXTCOLOR_ORANGE			= "\034I";
+const TEXTCOLOR_WHITE			= "\034J";
+const TEXTCOLOR_YELLOW			= "\034K";
+const TEXTCOLOR_UNTRANSLATED	= "\034L";
+const TEXTCOLOR_BLACK			= "\034M";
+const TEXTCOLOR_LIGHTBLUE		= "\034N";
+const TEXTCOLOR_CREAM			= "\034O";
+const TEXTCOLOR_OLIVE			= "\034P";
+const TEXTCOLOR_DARKGREEN		= "\034Q";
+const TEXTCOLOR_DARKRED			= "\034R";
+const TEXTCOLOR_DARKBROWN		= "\034S";
+const TEXTCOLOR_PURPLE			= "\034T";
+const TEXTCOLOR_DARKGRAY		= "\034U";
+const TEXTCOLOR_CYAN			= "\034V";
+
+const TEXTCOLOR_NORMAL			= "\034-";
+const TEXTCOLOR_BOLD			= "\034+";
+
+const TEXTCOLOR_CHAT			= "\034*";
+const TEXTCOLOR_TEAMCHAT		= "\034!";

@@ -611,10 +611,11 @@ public:
 class FxNameCast : public FxExpression
 {
 	FxExpression *basex;
+	bool mExplicit;
 
 public:
 
-	FxNameCast(FxExpression *x);
+	FxNameCast(FxExpression *x, bool explicitly = false);
 	~FxNameCast();
 	FxExpression *Resolve(FCompileContext&);
 

@@ -4772,6 +4772,13 @@ void AActor::HandleSpawnFlags ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, HandleSpawnFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->HandleSpawnFlags();
+	return 0;
+}
+
 void AActor::BeginPlay ()
 {
 	// If the actor is spawned with the dormant flag set, clear it, and use

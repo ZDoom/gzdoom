@@ -492,8 +492,16 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 	}
 	else
 	{
-		pos.Message(MSG_ERROR, "'%s' is not a constant\n", sym->SymbolName.GetChars());
-		x = nullptr;
+		PSymbolConstString *csym = dyn_cast<PSymbolConstString>(sym);
+		if (csym != nullptr)
+		{
+			x = new FxConstant(csym->Str, pos);
+		}
+		else
+		{
+			pos.Message(MSG_ERROR, "'%s' is not a constant\n", sym->SymbolName.GetChars());
+			x = nullptr;
+		}
 	}
 	return x;
 }
@@ -1037,11 +1045,12 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxNameCast::FxNameCast(FxExpression *x)
+FxNameCast::FxNameCast(FxExpression *x, bool explicitly)
 	: FxExpression(EFX_NameCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeName;
+	mExplicit = explicitly;
 }
 
 //==========================================================================
@@ -1066,7 +1075,18 @@ FxExpression *FxNameCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->ValueType == TypeName)
+	if (mExplicit && basex->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		if (basex->isConstant())
+		{
+			auto constval = static_cast<FxConstant *>(basex)->GetValue().GetPointer();
+			FxExpression *x = new FxConstant(static_cast<PClass*>(constval)->TypeName, ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else if (basex->ValueType == TypeName)
 	{
 		FxExpression *x = basex;
 		basex = nullptr;
@@ -1100,13 +1120,25 @@ FxExpression *FxNameCast::Resolve(FCompileContext &ctx)
 
 ExpEmit FxNameCast::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit from = basex->Emit(build);
-	assert(!from.Konst);
-	assert(basex->ValueType == TypeString);
-	from.Free(build);
-	ExpEmit to(build, REGT_INT);
-	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_S2N);
-	return to;
+	if (basex->ValueType == TypeString)
+	{
+		ExpEmit from = basex->Emit(build);
+		assert(!from.Konst);
+		assert(basex->ValueType == TypeString);
+		from.Free(build);
+		ExpEmit to(build, REGT_INT);
+		build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_S2N);
+		return to;
+	}
+	else
+	{
+		ExpEmit ptr = basex->Emit(build);
+		assert(ptr.RegType == REGT_POINTER);
+		ptr.Free(build);
+		ExpEmit to(build, REGT_INT);
+		build->Emit(OP_LW, to.RegNum, ptr.RegNum, build->GetConstantInt(myoffsetof(PClassActor, TypeName)));
+		return to;
+	}
 }
 
 //==========================================================================
@@ -1471,7 +1503,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	}
 	else if (ValueType == TypeName)
 	{
-		FxExpression *x = new FxNameCast(basex);
+		FxExpression *x = new FxNameCast(basex, Explicit);
 		x = x->Resolve(ctx);
 		basex = nullptr;
 		delete this;
@@ -8394,7 +8426,7 @@ FxExpression *FxFormat::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	for (int i = 0; i < ArgList.Size(); i++)
+	for (unsigned i = 0; i < ArgList.Size(); i++)
 	{
 		ArgList[i] = ArgList[i]->Resolve(ctx);
 		if (ArgList[i] == nullptr)
@@ -8605,7 +8637,7 @@ ExpEmit FxFormat::Emit(VMFunctionBuilder *build)
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
-	for (int i = 0; i < ArgList.Size(); i++)
+	for (unsigned i = 0; i < ArgList.Size(); i++)
 		EmitParameter(build, ArgList[i], ScriptPosition);
 	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), ArgList.Size(), 1);
 

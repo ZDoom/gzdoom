@@ -37,6 +37,7 @@
 #include "zscript/shared/ice.txt"
 #include "zscript/shared/dog.txt"
 #include "zscript/shared/fastprojectile.txt"
+#include "zscript/shared/randomspawner.txt"
 #include "zscript/shared/dynlights.txt"
 
 #include "zscript/compatibility.txt"

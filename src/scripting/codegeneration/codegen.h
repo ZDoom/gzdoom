@@ -1438,7 +1438,7 @@ class FxArrayElement : public FxExpression
 public:
 	FxExpression *Array;
 	FxExpression *index;
-	unsigned SizeAddr;
+	size_t SizeAddr;
 	bool AddressRequested;
 	bool AddressWritable;
 	bool arrayispointer = false;

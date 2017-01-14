@@ -1163,7 +1163,6 @@ set (PCH_SOURCES
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
-	g_shared/a_skies.cpp
 	g_shared/a_specialspot.cpp
 	g_shared/hudmessages.cpp
 	g_shared/sbarinfo.cpp

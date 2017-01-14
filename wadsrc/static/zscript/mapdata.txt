@@ -1,6 +1,22 @@
 
 struct SectorPortal native
 {
+	enum EType
+	{
+		TYPE_SKYVIEWPOINT = 0,		// a regular skybox
+		TYPE_STACKEDSECTORTHING,	// stacked sectors with the thing method
+		TYPE_PORTAL,				// stacked sectors with Sector_SetPortal
+		TYPE_LINKEDPORTAL,			// linked portal (interactive)
+		TYPE_PLANE,					// EE-style plane portal (not implemented in SW renderer)
+		TYPE_HORIZON,				// EE-style horizon portal (not implemented in SW renderer)
+	};
+
+	enum EFlags
+	{
+		FLAG_SKYFLATONLY = 1,			// portal is only active on skyflatnum
+		FLAG_INSKYBOX = 2,				// to avoid recursion
+	};
+
 	native int mType;
 	native int mFlags;
 	native uint mPartner;
@@ -10,6 +26,8 @@ struct SectorPortal native
 	native Vector2 mDisplacement;
 	native double mPlaneZ;
 	native Actor mSkybox;
+	
+	native static uint GetSkyboxPortal(Actor actor);
 };
 
 
@@ -264,7 +282,7 @@ struct Sector native
 
 	native SectorAction		SecActTarget;
 
-	native readonly uint		Portals[2];
+	native uint					Portals[2];
 	native readonly int			PortalGroup;
 
 	native readonly int			sectornum;

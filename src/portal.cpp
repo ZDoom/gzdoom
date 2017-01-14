@@ -676,6 +676,12 @@ unsigned P_GetSkyboxPortal(AActor *actor)
 	return i;
 }
 
+DEFINE_ACTION_FUNCTION(FSectorPortal, GetSkyboxPortal)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(actor, AActor);
+	ACTION_RETURN_INT(P_GetSkyboxPortal(actor));
+}
 //============================================================================
 //
 // P_GetPortal

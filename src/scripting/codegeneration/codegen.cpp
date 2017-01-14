@@ -1620,6 +1620,17 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			if (fromtype->IsDescendantOf(totype)) goto basereturn;
 		}
 	}
+	else if (basex->ValueType->IsA(RUNTIME_CLASS(PNativeStruct)) && ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType == basex->ValueType)
+	{
+		bool writable;
+		basex->RequestAddress(ctx, &writable);
+		basex->ValueType = ValueType;
+		auto x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+
 	else if (AreCompatiblePointerTypes(ValueType, basex->ValueType))
 	{
 		goto basereturn;
@@ -6747,12 +6758,12 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
 		{
 			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-			SizeAddr = unsigned(parentfield->Offset + parentfield->Type->Align);
+			SizeAddr = parentfield->Offset + parentfield->Type->Align;
 		}
 		else if (Array->ExprType == EFX_GlobalVariable)
 		{
 			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			SizeAddr = unsigned(parentfield->Offset + parentfield->Type->Align);
+			SizeAddr = parentfield->Offset + parentfield->Type->Align;
 		}
 		else
 		{
@@ -6836,12 +6847,16 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	{
 		arraytype = static_cast<PArray*>(Array->ValueType);
 	}
-	ExpEmit start = Array->Emit(build);
+	ExpEmit arrayvar = Array->Emit(build);
+	ExpEmit start;
 	ExpEmit bound;
 
-	// For resizable arrays we even need to check the bounds if if the index is constant.
 	if (SizeAddr != ~0u)
 	{
+		arrayvar.Free(build);
+		start = ExpEmit(build, REGT_POINTER);
+		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
+
 		auto f = new PField(NAME_None, TypeUInt32, 0, SizeAddr);
 		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
 		{
@@ -6857,12 +6872,14 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		Array->ValueType = TypeUInt32;
 		bound = Array->Emit(build);
 	}
+	else start = arrayvar;
 
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
 		assert(SizeAddr != ~0u || (indexval < arraytype->ElementCount && "Array index out of bounds"));
 
+		// For resizable arrays we even need to check the bounds if if the index is constant because they are not known at compile time.
 		if (SizeAddr != ~0u)
 		{
 			ExpEmit indexreg(build, REGT_INT);
@@ -6948,19 +6965,11 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 			if (AddressRequested)
 			{
-				if (!start.Fixed)
-				{
-					build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexwork.RegNum);
-				}
-				else
-				{
-					start.Free(build);
-					// do not clobber local variables.
-					ExpEmit temp(build, start.RegType);
-					build->Emit(OP_ADDA_RR, temp.RegNum, start.RegNum, indexwork.RegNum);
-					start = temp;
-				}
-				return start;
+				start.Free(build);
+				// do not clobber local variables.
+				ExpEmit temp(build, start.RegType);
+				build->Emit(OP_ADDA_RR, temp.RegNum, start.RegNum, indexwork.RegNum);
+				return temp;
 			}
 			else
 			{

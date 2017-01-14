@@ -1,4 +1,6 @@
 #include "zscript/base.txt"
+#include "zscript/sounddata.txt"
+#include "zscript/mapdata.txt"
 #include "zscript/dynarrays.txt"
 #include "zscript/constants.txt"
 #include "zscript/actor.txt"

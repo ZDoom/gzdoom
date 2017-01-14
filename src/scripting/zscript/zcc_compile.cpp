@@ -2306,19 +2306,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		unsigned vindex = ~0u;
 		if (virtsym != nullptr) vindex = virtsym->Variants[0].Implementation->VirtualIndex;
 
-		if (vindex != ~0u || (varflags & VARF_Virtual))
-		{
-			// Todo: Check if the declaration is legal. 
-
-			// First step: compare prototypes - if they do not match the virtual base method does not apply.
-
-			// Second step: Check flags. Possible cases:
-			// 1. Base method is final: Error.
-			// 2. This method is override: Base virtual method must exist
-			// 3. This method is virtual but not override: Base may not have a virtual method with the same prototype.
-		}
-
-
 		if (!(f->Flags & ZCC_Native))
 		{
 			if (f->Body == nullptr)

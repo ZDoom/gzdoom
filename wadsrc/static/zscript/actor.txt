@@ -420,6 +420,10 @@ class Actor : Thinker native
 	native bool HitFriend();
 	native bool MonsterMove();
 	
+	native SeqNode StartSoundSequenceID (int sequence, int type, int modenum, bool nostop = false);
+	native SeqNode StartSoundSequence (Name seqname, int modenum);
+	native void StopSoundSequence();
+
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
 	native bool, Actor TestMobjZ(bool quick = false);

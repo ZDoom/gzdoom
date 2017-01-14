@@ -549,6 +549,10 @@ CVMAbortException::CVMAbortException(EVMAbortException reason, const char *morei
 		AppendMessage("invalid self pointer.");
 		break;
 
+	case X_FORMAT_ERROR:
+		AppendMessage("string format failed.");
+		break;
+
 	default:
 	{
 		size_t len = strlen(m_Message);

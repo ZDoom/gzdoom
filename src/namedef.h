@@ -349,6 +349,7 @@ xx(VisibleStartAngle)
 xx(VisibleStartPitch)
 xx(VisibleEndAngle)
 xx(VisibleEndPitch)
+xx(Format)
 
 // Various actor names which are used internally
 xx(MapSpot)
@@ -699,6 +700,7 @@ xx(BuiltinFindSingleNameState)
 xx(BuiltinHandleRuntimeState)
 xx(BuiltinGetDefault)
 xx(BuiltinClassCast)
+xx(BuiltinFormat)
 xx(Damage)
 
 // basic type names

@@ -314,6 +314,7 @@ DEFINE_FIELD(AActor, MissileState)
 DEFINE_FIELD(AActor, ConversationRoot)
 DEFINE_FIELD(AActor, Conversation)
 DEFINE_FIELD(AActor, DecalGenerator)
+DEFINE_FIELD(AActor, fountaincolor)
 
 DEFINE_FIELD(PClassActor, Obituary)
 DEFINE_FIELD(PClassActor, HitObituary)
@@ -366,6 +367,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("lastlookpn", LastLookPlayerNumber)
 		("lastlookactor", LastLookActor)
 		A("effects", effects)
+		A("fountaincolor", fountaincolor)
 		A("alpha", Alpha)
 		A("fillcolor", fillcolor)
 		A("sector", Sector)
@@ -7750,6 +7752,13 @@ DEFINE_ACTION_FUNCTION(AActor, RotateVector)
 	PARAM_FLOAT(y);
 	PARAM_ANGLE(angle);
 	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Normalize180)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)

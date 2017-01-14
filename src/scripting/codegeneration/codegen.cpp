@@ -7115,6 +7115,14 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	// [ZZ] string formatting function
+	if (MethodName == NAME_Format)
+	{
+		FxExpression *x = new FxFormat(ArgList, ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
+	}
+
 	int min, max, special;
 	if (MethodName == NAME_ACS_NamedExecuteWithResult || MethodName == NAME_CallACS)
 	{
@@ -8338,6 +8346,279 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 	return to;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFormat::FxFormat(FArgumentList &args, const FScriptPosition &pos)
+	: FxExpression(EFX_Format, pos)
+{
+	EmitTail = false;
+	ArgList = std::move(args);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFormat::~FxFormat()
+{
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxFormat::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFormat::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+
+	for (int i = 0; i < ArgList.Size(); i++)
+	{
+		ArgList[i] = ArgList[i]->Resolve(ctx);
+		if (ArgList[i] == nullptr)
+		{
+			delete this;
+			return nullptr;
+		}
+
+		// first argument should be a string
+		if (!i && ArgList[i]->ValueType != TypeString)
+		{
+			ScriptPosition.Message(MSG_ERROR, "String was expected for format");
+			delete this;
+			return nullptr;
+		}
+
+		if (ArgList[i]->ValueType == TypeName ||
+			ArgList[i]->ValueType == TypeSound)
+		{
+			FxExpression* x = new FxStringCast(ArgList[i]);
+			x = x->Resolve(ctx);
+			if (x == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+			ArgList[i] = x;
+		}
+	}
+
+	ValueType = TypeString;
+	return this;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+static int BuiltinFormat(VMValue *args, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+{
+	assert(args[0].Type == REGT_STRING);
+	FString fmtstring = args[0].s().GetChars();
+
+	// note: we don't need a real printf format parser.
+	//       enough to simply find the subtitution tokens and feed them to the real printf after checking types.
+	//       https://en.wikipedia.org/wiki/Printf_format_string#Format_placeholder_specification
+	FString output;
+	bool in_fmt = false;
+	FString fmt_current;
+	int argnum = 1;
+	int argauto = 1;
+	// % = starts
+	//  [0-9], -, +, \s, 0, #, . continue
+	//  %, s, d, i, u, fF, eE, gG, xX, o, c, p, aA terminate
+	// various type flags are not supported. not like stuff like 'hh' modifier is to be used in the VM.
+	// the only combination that is parsed locally is %n$...
+	bool haveargnums = false;
+	for (int i = 0; i < fmtstring.Len(); i++)
+	{
+		char c = fmtstring[i];
+		if (in_fmt)
+		{
+			if ((c >= '0' && c <= '9') ||
+				c == '-' || c == '+' || (c == ' ' && fmt_current[fmt_current.Len() - 1] != ' ') || c == '#' || c == '.')
+			{
+				fmt_current += c;
+			}
+			else if (c == '$') // %number$format
+			{
+				if (!haveargnums && argauto > 1)
+					ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+				FString argnumstr = fmt_current.Mid(1);
+				if (!argnumstr.IsInt()) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for argument number, got '%s'.", argnumstr.GetChars());
+				argnum = argnumstr.ToLong();
+				if (argnum < 1 || argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum, numparam);
+				fmt_current = "%";
+				haveargnums = true;
+			}
+			else
+			{
+				fmt_current += c;
+
+				switch (c)
+				{
+					// string
+				case 's':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a string
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (args[argnum].Type != REGT_STRING) ThrowAbortException(X_FORMAT_ERROR, "Expected a string for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), args[argnum].s().GetChars());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// pointer
+				case 'p':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a string
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (args[argnum].Type != REGT_POINTER) ThrowAbortException(X_FORMAT_ERROR, "Expected a pointer for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), args[argnum].a);
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// int formats (including char)
+				case 'd':
+				case 'i':
+				case 'u':
+				case 'x':
+				case 'X':
+				case 'o':
+				case 'c':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not an int
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (args[argnum].Type != REGT_INT &&
+						args[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), args[argnum].ToInt());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// double formats
+				case 'f':
+				case 'F':
+				case 'e':
+				case 'E':
+				case 'g':
+				case 'G':
+				case 'a':
+				case 'A':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a float
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (args[argnum].Type != REGT_INT &&
+						args[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), args[argnum].ToDouble());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				default:
+					// invalid character
+					output += fmt_current;
+					in_fmt = false;
+					break;
+				}
+			}
+		}
+		else
+		{
+			if (c == '%')
+			{
+				if (i + 1 < fmtstring.Len() && fmtstring[i + 1] == '%')
+				{
+					output += '%';
+					i++;
+				}
+				else
+				{
+					in_fmt = true;
+					fmt_current = "%";
+				}
+			}
+			else
+			{
+				output += c;
+			}
+		}
+	}
+
+	ACTION_RETURN_STRING(output);
+}
+
+ExpEmit FxFormat::Emit(VMFunctionBuilder *build)
+{
+	// Call DecoRandom to generate a random number.
+	VMFunction *callfunc;
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinFormat, BuiltinFormat);
+
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+
+	for (int i = 0; i < ArgList.Size(); i++)
+		EmitParameter(build, ArgList[i], ScriptPosition);
+	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), ArgList.Size(), 1);
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
+	ExpEmit out(build, REGT_STRING);
+	build->Emit(OP_RESULT, 0, REGT_STRING, out.RegNum);
+	return out;
 }
 
 

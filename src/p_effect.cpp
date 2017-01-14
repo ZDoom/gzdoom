@@ -358,7 +358,7 @@ void P_RunEffects ()
 
 	while ( (actor = iterator.Next ()) )
 	{
-		if (actor->effects)
+		if (actor->effects || actor->fountaincolor)
 		{
 			// Only run the effect if the actor is potentially visible
 			int rnum = pnum + actor->Sector->Index();
@@ -494,7 +494,7 @@ void P_RunEffect (AActor *actor, int effects)
 
 		P_DrawSplash2 (6, pos, moveangle + 180, 2, 2);
 	}
-	if (effects & FX_FOUNTAINMASK)
+	if (actor->fountaincolor)
 	{
 		// Particle fountain
 
@@ -508,7 +508,7 @@ void P_RunEffect (AActor *actor, int effects)
 			  &black,	&grey3,
 			  &grey4,	&white
 			};
-		int color = (effects & FX_FOUNTAINMASK) >> 15;
+		int color = actor->fountaincolor*2;
 		MakeFountain (actor, *fountainColors[color], *fountainColors[color+1]);
 	}
 	if (effects & FX_RESPAWNINVUL)

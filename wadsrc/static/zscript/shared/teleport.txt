@@ -1,5 +1,5 @@
 
-class TeleportFog : Actor native
+class TeleportFog : Actor
 {
 	default
 	{
@@ -22,6 +22,27 @@ class TeleportFog : Actor native
 		TFOG ABCDEFEDCB 6 Bright;
 		Stop;
 	}
+	
+	override void PostBeginPlay ()
+	{
+		Super.PostBeginPlay ();
+		A_PlaySound ("misc/teleport", CHAN_BODY);
+		switch (gametype())
+		{
+		case GAME_Hexen:
+		case GAME_Heretic:
+			SetStateLabel("Raven");
+			break;
+
+		case GAME_Strife:
+			SetStateLabel("Strife");
+			break;
+			
+		default:
+			break;
+		}
+	}
+	
 }
 
 

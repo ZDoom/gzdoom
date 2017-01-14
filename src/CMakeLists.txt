@@ -1210,10 +1210,8 @@ set (PCH_SOURCES
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_flashfader.cpp
-	g_shared/a_fountain.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
-	g_shared/a_movingcamera.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_randomspawner.cpp
 	g_shared/a_skies.cpp

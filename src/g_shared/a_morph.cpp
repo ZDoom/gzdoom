@@ -116,7 +116,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->PosPlusZ(TELEFOGHEIGHT), ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : PClass::FindActor("TeleportFog")), actor->PosPlusZ(TELEFOGHEIGHT), ALLOW_REPLACE);
 	actor->player = nullptr;
 	actor->alternative = morphed;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
@@ -128,7 +128,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	p->MorphedPlayerClass = spawntype;
 
 	p->MorphStyle = style;
-	p->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
+	p->MorphExitFlash = (exit_flash) ? exit_flash : PClass::FindActor("TeleportFog");
 	p->health = morphed->health;
 	p->mo = morphed;
 	p->Vel.X = p->Vel.Y = 0;
@@ -416,7 +416,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 
 	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
 	morphed->MorphStyle = style;
-	morphed->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
+	morphed->MorphExitFlash = (exit_flash) ? exit_flash : PClass::FindActor("TeleportFog");
 	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
 	morphed->special = actor->special;
 	memcpy (morphed->args, actor->args, sizeof(actor->args));
@@ -434,7 +434,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->PosPlusZ(TELEFOGHEIGHT), ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : PClass::FindActor("TeleportFog")), actor->PosPlusZ(TELEFOGHEIGHT), ALLOW_REPLACE);
 	if (eflash)
 		eflash->target = morphed;
 	return true;

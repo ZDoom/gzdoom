@@ -8485,7 +8485,7 @@ static int BuiltinFormat(VMValue *args, TArray<VMValue> &defaultparam, int numpa
 	// various type flags are not supported. not like stuff like 'hh' modifier is to be used in the VM.
 	// the only combination that is parsed locally is %n$...
 	bool haveargnums = false;
-	for (int i = 0; i < fmtstring.Len(); i++)
+	for (size_t i = 0; i < fmtstring.Len(); i++)
 	{
 		char c = fmtstring[i];
 		if (in_fmt)

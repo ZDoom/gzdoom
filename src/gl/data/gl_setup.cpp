@@ -399,20 +399,15 @@ static void AddToVertex(const sector_t * sec, TArray<int> & list)
 
 static void InitVertexData()
 {
-	TArray<int> * vt_sectorlists;
-
-	int i,j,k;
-
-	vt_sectorlists = new TArray<int>[level.vertexes.Size()];
-
+	auto vt_sectorlists = new TArray<int>[level.vertexes.Size()];
 
 	for(auto &line : level.lines)
 	{
-		for(j=0;j<2;j++)
+		for(int j = 0; j < 2; ++j)
 		{
 			vertex_t * v = j==0? line.v1 : line.v2;
 
-			for(k=0;k<2;k++)
+			for(int k = 0; k < 2; ++k)
 			{
 				sector_t * sec = k==0? line.frontsector : line.backsector;
 
@@ -427,7 +422,7 @@ static void InitVertexData()
 		}
 	}
 
-	for(i=0;i<level.vertexes.Size();i++)
+	for(unsigned i = 0; i < level.vertexes.Size(); ++i)
 	{
 		auto vert = level.vertexes[i];
 		int cnt = vt_sectorlists[i].Size();
@@ -524,7 +519,7 @@ static void PrepareSegs()
 	level.sides[0].segs = new seg_t*[realsegs];
 	level.sides[0].numsegs = 0;
 
-	for(int i = 1; i < numsides; i++)
+	for(unsigned i = 1; i < numsides; i++)
 	{
 		level.sides[i].segs = level.sides[i-1].segs + segcount[i-1];
 		level.sides[i].numsegs = 0;
@@ -539,7 +534,7 @@ static void PrepareSegs()
 	}
 
 	// sort the segs
-	for(int i = 0; i < numsides; i++)
+	for(unsigned i = 0; i < numsides; i++)
 	{
 		if (level.sides[i].numsegs > 1) qsort(level.sides[i].segs, level.sides[i].numsegs, sizeof(seg_t*), segcmp);
 	}

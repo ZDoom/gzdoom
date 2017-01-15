@@ -53,6 +53,8 @@ void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
 
+	swrenderer::RenderTarget = screen;
+
 	bool saved_swtruecolor = r_swtruecolor;
 	r_swtruecolor = screen->IsBgra();
 
@@ -82,7 +84,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	const bool savedoutputformat = swrenderer::r_swtruecolor;
 
 	viewwidth = width;
-	RenderTarget = canvas;
+	swrenderer::RenderTarget = canvas;
 	swrenderer::bRenderingToCanvas = true;
 	R_SetWindow(12, width, height, height, true);
 	swrenderer::R_SWRSetWindow(12, width, height, height, WidescreenRatio);
@@ -97,7 +99,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	
 	canvas->Unlock();
 
-	RenderTarget = screen;
+	swrenderer::RenderTarget = screen;
 	swrenderer::bRenderingToCanvas = false;
 	R_ExecuteSetViewSize();
 	float trueratio;
@@ -153,8 +155,8 @@ void PolyRenderer::RenderRemainingPlayerSprites()
 void PolyRenderer::ClearBuffers()
 {
 	PolyVertexBuffer::Clear();
-	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
-	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
+	PolyStencilBuffer::Instance()->Clear(swrenderer::RenderTarget->GetWidth(), swrenderer::RenderTarget->GetHeight(), 0);
+	PolySubsectorGBuffer::Instance()->Resize(swrenderer::RenderTarget->GetPitch(), swrenderer::RenderTarget->GetHeight());
 	NextStencilValue = 0;
 	SeenLinePortals.clear();
 	SeenMirrors.clear();
@@ -162,6 +164,8 @@ void PolyRenderer::ClearBuffers()
 
 void PolyRenderer::SetSceneViewport()
 {
+	using namespace swrenderer;
+
 	if (RenderTarget == screen) // Rendering to screen
 	{
 		int height;

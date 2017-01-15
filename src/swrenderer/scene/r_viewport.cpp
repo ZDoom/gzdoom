@@ -44,6 +44,7 @@ namespace swrenderer
 	double FocalLengthX;
 	double FocalLengthY;
 
+	DCanvas *RenderTarget;
 	bool bRenderingToCanvas;
 	double globaluclip, globaldclip;
 	double CenterX, CenterY;

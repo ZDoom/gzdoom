@@ -18,6 +18,7 @@
 
 namespace swrenderer
 {
+	extern DCanvas *RenderTarget;
 	extern bool bRenderingToCanvas;
 	extern fixed_t viewingrangerecip;
 	extern double FocalLengthX;

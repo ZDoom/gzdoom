@@ -12,8 +12,6 @@ class FSerializer;
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 #define NUMCOLORMAPS			32
 
-extern DCanvas			*RenderTarget;
-
 extern DVector3			ViewPos;
 extern DVector3			ViewActorPos;
 extern DAngle			ViewAngle;

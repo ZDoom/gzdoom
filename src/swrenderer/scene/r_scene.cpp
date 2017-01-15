@@ -49,6 +49,7 @@
 #include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Int, r_clearbuffer)
 
 namespace swrenderer
 {
@@ -60,8 +61,15 @@ namespace swrenderer
 		return &instance;
 	}
 
+	void RenderScene::SetClearColor(int color)
+	{
+		clearcolor = color;
+	}
+
 	void RenderScene::RenderView(player_t *player)
 	{
+		RenderTarget = screen;
+
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		int stHeight = ST_Y;
@@ -73,6 +81,22 @@ namespace swrenderer
 		{
 			r_swtruecolor = screen->IsBgra();
 			R_InitColumnDrawers();
+		}
+
+		if (r_clearbuffer != 0)
+		{
+			if (!r_swtruecolor)
+			{
+				memset(RenderTarget->GetBuffer(), clearcolor, RenderTarget->GetPitch() * RenderTarget->GetHeight());
+			}
+			else
+			{
+				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+				int size = RenderTarget->GetPitch() * RenderTarget->GetHeight();
+				uint32_t *dest = (uint32_t *)RenderTarget->GetBuffer();
+				for (int i = 0; i < size; i++)
+					dest[i] = bgracolor;
+			}
 		}
 
 		R_BeginDrawerCommands();

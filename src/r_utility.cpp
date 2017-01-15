@@ -100,8 +100,6 @@ CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (self > 1.f) self = 1.f;
 }
 
-DCanvas			*RenderTarget;		// [RH] canvas to render to
-
 int 			viewwindowx;
 int 			viewwindowy;
 
@@ -908,7 +906,7 @@ void R_SetupFrame (AActor *actor)
 
 	validcount++;
 
-	if (RenderTarget == screen && r_clearbuffer != 0)
+	if (r_clearbuffer != 0)
 	{
 		int color;
 		int hom = r_clearbuffer;

@@ -31,6 +31,8 @@ namespace swrenderer
 		void Init();
 		void ScreenResized();
 		void Deinit();	
+
+		void SetClearColor(int color);
 		
 		void RenderActorView(AActor *actor, bool dontmaplines = false);
 		void RenderView(player_t *player);
@@ -40,5 +42,6 @@ namespace swrenderer
 
 	private:
 		bool dontmaplines = false;
+		int clearcolor = 0;
 	};
 }

@@ -244,18 +244,7 @@ void FSoftwareRenderer::OnModeSet ()
 
 void FSoftwareRenderer::ClearBuffer(int color)
 {
-	if (!r_swtruecolor)
-	{
-		memset(RenderTarget->GetBuffer(), color, RenderTarget->GetPitch() * RenderTarget->GetHeight());
-	}
-	else
-	{
-		uint32_t bgracolor = GPalette.BaseColors[color].d;
-		int size = RenderTarget->GetPitch() * RenderTarget->GetHeight();
-		uint32_t *dest = (uint32_t *)RenderTarget->GetBuffer();
-		for (int i = 0; i < size; i++)
-			dest[i] = bgracolor;
-	}
+	RenderScene::Instance()->SetClearColor(color);
 }
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)

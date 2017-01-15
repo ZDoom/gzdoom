@@ -1,5 +1,6 @@
 class Inventory : Actor native
 {
+	const BLINKTHRESHOLD = (4*32);
 
 	native Actor Owner;						// Who owns this item? NULL if it's still a pickup.
 	native int Amount;						// Amount of item this instance has
@@ -37,6 +38,7 @@ class Inventory : Actor native
 	virtual native void PlayPickupSound(Actor user);
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
+	virtual native bool DrawPowerup(int x, int y);
 	
 	//===========================================================================
 	//

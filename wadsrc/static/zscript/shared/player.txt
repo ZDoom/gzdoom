@@ -139,7 +139,7 @@ class PSprite : Object native
 	};
 
 	native readonly State CurState; 
-	native readonly Actor Caller;
+	native Actor Caller;
 	native readonly PSprite Next;
 	native readonly PlayerInfo Owner;
 	native SpriteID Sprite;

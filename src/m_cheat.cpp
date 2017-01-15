@@ -218,7 +218,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_POWER:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
+			item = player->mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true);
 			if (item != NULL)
 			{
 				item->Destroy ();
@@ -226,7 +226,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			}
 			else
 			{
-				player->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+				player->mo->GiveInventoryType (PClass::FindActor(NAME_PowerWeaponLevel2));
 				msg = GStrings("TXT_CHEATPOWERON");
 			}
 		}

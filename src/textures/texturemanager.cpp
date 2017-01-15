@@ -261,6 +261,15 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 	return FTextureID(-1);
 }
 
+DEFINE_ACTION_FUNCTION(_TexMan, CheckForTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(type);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_INT(TexMan.CheckForTexture(name, type, flags).GetIndex());
+}
+
 //==========================================================================
 //
 // FTextureManager :: ListTextures

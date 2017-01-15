@@ -186,6 +186,13 @@ private:
 	int texnum;
 };
 
+// This is for the script interface which needs to do casts from int to texture.
+class FSetTextureID : public FTextureID
+{
+public:
+	FSetTextureID(int v) : FTextureID(v) {}
+};
+
 
 
 // Screenshot buffer image data types

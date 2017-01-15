@@ -130,6 +130,16 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 	DrawTextureParms(img, parms);
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, DrawHUDTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	screen->DrawTexture(TexMan(FSetTextureID(texid)), x, y, DTA_HUDRules, HUD_Normal, TAG_END);
+	return 0;
+}
+
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER

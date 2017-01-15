@@ -2841,23 +2841,23 @@ FUNC(LS_SetPlayerProperty)
 	// Add or remove a power
 	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
 	{
-		static PClass * const *powers[11] =
+		static ENamedName powers[11] =
 		{
-			&RUNTIME_CLASS_CASTLESS(APowerInvulnerable),
-			&RUNTIME_CLASS_CASTLESS(APowerStrength),
-			&RUNTIME_CLASS_CASTLESS(APowerInvisibility),
-			&RUNTIME_CLASS_CASTLESS(APowerIronFeet),
-			NULL, // MapRevealer
-			&RUNTIME_CLASS_CASTLESS(APowerLightAmp),
-			&RUNTIME_CLASS_CASTLESS(APowerWeaponLevel2),
-			&RUNTIME_CLASS_CASTLESS(APowerFlight),
-			NULL,
-			NULL,
-			&RUNTIME_CLASS_CASTLESS(APowerSpeed)
+			NAME_PowerInvulnerable,
+			NAME_PowerStrength,
+			NAME_PowerInvisibility,
+			NAME_PowerIronFeet,
+			NAME_None,
+			NAME_PowerLightAmp,
+			NAME_PowerWeaponLevel2,
+			NAME_PowerFlight,
+			NAME_None,
+			NAME_None,
+			NAME_PowerSpeed
 		};
 		int power = arg2 - PROP_INVULNERABILITY;
 
-		if (power > 4 && powers[power] == NULL)
+		if (power > 4 && powers[power] == NAME_None)
 		{
 			return false;
 		}
@@ -2868,7 +2868,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Give power to activator
 				if (power != 4)
 				{
-					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType(static_cast<PClassActor *>(*powers[power])));
+					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType(PClass::FindActor(powers[power])));
 					if (item != NULL && power == 0 && arg1 == 1) 
 					{
 						item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
@@ -2883,7 +2883,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Take power from activator
 				if (power != 4)
 				{
-					AInventory *item = it->FindInventory(static_cast<PClassActor *>(*powers[power]), true);
+					AInventory *item = it->FindInventory(PClass::FindActor(powers[power]), true);
 					if (item != NULL)
 					{
 						item->Destroy ();
@@ -2908,7 +2908,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Give power
 					if (power != 4)
 					{
-						APowerup *item = static_cast<APowerup*>(players[i].mo->GiveInventoryType (static_cast<PClassActor *>(*powers[power])));
+						APowerup *item = static_cast<APowerup*>(players[i].mo->GiveInventoryType ((PClass::FindActor(powers[power]))));
 						if (item != NULL && power == 0 && arg1 == 1) 
 						{
 							item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
@@ -2923,7 +2923,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Take power
 					if (power != 4)
 					{
-						AInventory *item = players[i].mo->FindInventory (static_cast<PClassActor *>(*powers[power]));
+						AInventory *item = players[i].mo->FindInventory (PClass::FindActor(powers[power]));
 						if (item != NULL)
 						{
 							item->Destroy ();

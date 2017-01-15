@@ -2676,7 +2676,11 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (left->ValueType == TypeState && right->IsInteger() && Operator == '+' && !left->isConstant())
+	if (left->ValueType == TypeTextureID && right->IsInteger())
+	{
+		ValueType = TypeTextureID;
+	}
+	else if (left->ValueType == TypeState && right->IsInteger() && Operator == '+' && !left->isConstant())
 	{
 		// This is the only special case of pointer addition that will be accepted - because it is used quite often in the existing game code.
 		ValueType = TypeState;
@@ -2755,6 +2759,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 	assert(Operator == '+' || Operator == '-');
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
+	ExpEmit to;
 	if (Operator == '+')
 	{
 		if (op1.RegType == REGT_POINTER)
@@ -2775,7 +2780,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst);
 		op1.Free(build);
 		op2.Free(build);
-		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+		to = ExpEmit(build, ValueType->GetRegType(), ValueType->GetRegCount());
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -2798,6 +2803,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
 			build->Emit(op2.Konst ? OP_ADD_RK : OP_ADD_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			if (ValueType == TypeTextureID) goto texcheck;
 			return to;
 		}
 	}
@@ -2807,7 +2813,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst || !op2.Konst);
 		op1.Free(build);
 		op2.Free(build);
-		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+		to = ExpEmit(build, ValueType->GetRegType(), ValueType->GetRegCount());
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -2825,9 +2831,23 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
 			build->Emit(op1.Konst ? OP_SUB_KR : op2.Konst ? OP_SUB_RK : OP_SUB_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			if (ValueType == TypeTextureID) goto texcheck;
 			return to;
 		}
 	}
+
+texcheck:
+	// Do a bounds check for the texture index. Note that count can change at run time so this needs to read the value from the texture manager.
+	auto * ptr = (FArray*)&TexMan.Textures;
+	auto * countptr = &ptr->Count;
+	ExpEmit bndp(build, REGT_POINTER);
+	ExpEmit bndc(build, REGT_INT);
+	build->Emit(OP_LKP, bndp.RegNum, build->GetConstantAddress(countptr, ATAG_GENERIC));
+	build->Emit(OP_LW, bndc.RegNum, bndp.RegNum, build->GetConstantInt(0));
+	build->Emit(OP_BOUND_R, to.RegNum, bndc.RegNum);
+	bndp.Free(build);
+	bndc.Free(build);
+	return to;
 }
 
 //==========================================================================

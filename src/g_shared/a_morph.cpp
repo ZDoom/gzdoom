@@ -58,9 +58,9 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 		if ((p->mo->GetClass() == spawntype)
 			&& (p->mo->PlayerFlags & PPF_CANSUPERMORPH)
 			&& (p->morphTics < (((duration) ? duration : MORPHTICS) - TICRATE))
-			&& (p->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true) == nullptr))
+			&& (p->mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true) == nullptr))
 		{ // Make a super chicken
-			p->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+			p->mo->GiveInventoryType (PClass::FindActor(NAME_PowerWeaponLevel2));
 		}
 		return false;
 	}
@@ -263,7 +263,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	player->MorphStyle = 0;
 	player->MorphExitFlash = nullptr;
 	player->viewheight = mo->ViewHeight;
-	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
+	AInventory *level2 = mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true);
 	if (level2 != nullptr)
 	{
 		level2->Destroy ();

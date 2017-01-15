@@ -1673,12 +1673,6 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_INT(self->GetPlaneLight(pos));
  }
 
- class FSetTextureID : public FTextureID
- {
- public:
-	 FSetTextureID(int v) : FTextureID(v) {}
- };
-
  DEFINE_ACTION_FUNCTION(_Sector, SetTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);

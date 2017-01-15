@@ -1279,6 +1279,14 @@ bool AInventory::DrawPowerup (int x, int y)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, DrawPowerup)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_INT(x);
+	PARAM_INT(y);
+	ACTION_RETURN_BOOL(self->DrawPowerup(x, y));
+}
+
 //===========================================================================
 //
 // AInventory :: DoRespawn

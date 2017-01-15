@@ -311,7 +311,7 @@ bool AWeapon::Use (bool pickup)
 	// weapon, if one exists.
 	if (SisterWeapon != NULL &&
 		SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		Owner->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
+		Owner->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true))
 	{
 		useweap = SisterWeapon;
 	}
@@ -823,18 +823,6 @@ DEFINE_ACTION_FUNCTION(AWeapon, EndPowerup)
 	self->EndPowerup();
 	return 0;
 }
-
-void AWeapon::CallEndPowerup()
-{
-	IFVIRTUAL(AWeapon, EndPowerup)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-	else EndPowerup();
-}
-
 
 //===========================================================================
 //

@@ -114,16 +114,146 @@ class PowerLightAmp : Powerup native
 
 class PowerTorch : PowerLightAmp native {}
 
-class PowerFlight : Powerup native
+//===========================================================================
+//
+// Flight
+//
+//===========================================================================
+
+class PowerFlight : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 		+INVENTORY.HUBPOWER
 	}
+
+	bool HitCenterFrame;
+
+	//===========================================================================
+	//
+	// APowerFlight :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+		Owner.bFly = true;
+		Owner.bNoGravity = true;
+		if (Owner.pos.Z <= Owner.floorz)
+		{
+			Owner.Vel.Z = 4;;	// thrust the player in the air a bit
+		}
+		if (Owner.Vel.Z <= -35)
+		{ // stop falling scream
+			Owner.A_StopSound (CHAN_VOICE);
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: DoEffect
+	//
+	//===========================================================================
+
+	override void Tick ()
+	{
+		// The Wings of Wrath only expire in multiplayer and non-hub games
+		if (!multiplayer && level.infinite_flight)
+		{
+			EffectTics++;
+		}
+		Super.Tick ();
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner == NULL || Owner.player == NULL)
+		{
+			return;
+		}
+
+		if (!(Owner.bFlyCheat))
+		{
+			if (Owner.pos.Z != Owner.floorz)
+			{
+				Owner.player.centering = true;
+			}
+			Owner.bFly = false;
+			Owner.bNoGravity = false;
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: DrawPowerup
+	//
+	//===========================================================================
+
+	override bool DrawPowerup (int x, int y)
+	{
+		// If this item got a valid icon use that instead of the default spinning wings.
+		if (Icon.isValid())
+		{
+			return Super.DrawPowerup(x, y);
+		}
+
+		if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
+		{
+			TextureID picnum = TexMan.CheckForTexture ("SPFLY0", TexMan.Type_MiscPatch);
+			int frame = (level.time/3) & 15;
+
+			if (!picnum.isValid())
+			{
+				return false;
+			}
+			if (Owner.bNoGravity)
+			{
+				if (HitCenterFrame && (frame != 15 && frame != 0))
+				{
+					screen.DrawHUDTexture (picnum + 15, x, y);
+				}
+				else
+				{
+					screen.DrawHUDTexture (picnum + frame, x, y);
+					HitCenterFrame = false;
+				}
+			}
+			else
+			{
+				if (!HitCenterFrame && (frame != 15 && frame != 0))
+				{
+					screen.DrawHUDTexture (picnum + frame, x, y);
+					HitCenterFrame = false;
+				}
+				else
+				{
+					screen.DrawHUDTexture (picnum+15, x, y);
+					HitCenterFrame = true;
+				}
+			}
+		}
+		return true;
+	}
+
+	
 }
 
-class PowerWeaponLevel2 : Powerup native
+//===========================================================================
+//
+// WeaponLevel2
+//
+//===========================================================================
+
+class PowerWeaponLevel2 : Powerup
 {
 	Default
 	{
@@ -131,6 +261,86 @@ class PowerWeaponLevel2 : Powerup native
 		Inventory.Icon "SPINBK0";
 		+INVENTORY.NOTELEPORTFREEZE
 	}
+	
+	//===========================================================================
+	//
+	// APowerWeaponLevel2 :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		
+		Super.InitEffect();
+
+		let player = Owner.player;
+
+		if (player == null)
+			return;
+
+		let weap = player.ReadyWeapon;
+
+		if (weap == null)
+			return;
+
+		let sister = weap.SisterWeapon;
+
+		if (sister == null)
+			return;
+
+		if (!sister.bPowered_Up)
+			return;
+
+		let ready = sister.GetReadyState();
+		if (weap.GetReadyState() != ready)
+		{
+			player.ReadyWeapon = sister;
+			player.SetPsprite(PSP_WEAPON, ready);
+		}
+		else
+		{
+			PSprite psp = player.FindPSprite(PSprite.WEAPON);
+			if (psp != null && psp.Caller == player.ReadyWeapon)
+			{
+				// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+				psp.Caller = sister;
+				player.ReadyWeapon = sister;
+			}
+			else
+			{
+				// Something went wrong. Initiate a regular weapon change.
+				player.PendingWeapon = sister;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerWeaponLevel2 :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner == null) return;
+		let player = Owner.player;
+		if (player != NULL)
+		{
+			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
+			{
+				player.ReadyWeapon.EndPowerup ();
+			}
+			if (player.PendingWeapon != NULL && player.PendingWeapon != WP_NOCHANGE &&
+				player.PendingWeapon.bPowered_Up &&
+				player.PendingWeapon.SisterWeapon != NULL)
+			{
+				player.PendingWeapon = player.PendingWeapon.SisterWeapon;
+			}
+		}
+	}
+
+	
 }
 
 //===========================================================================

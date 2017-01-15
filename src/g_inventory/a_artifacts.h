@@ -124,30 +124,6 @@ protected:
 	int NewTorch, NewTorchDelta;
 };
 
-class APowerFlight : public APowerup
-{
-	DECLARE_CLASS (APowerFlight, APowerup)
-public:
-	virtual bool DrawPowerup (int x, int y) override;
-	virtual void Serialize(FSerializer &arc) override;
-
-protected:
-	virtual void InitEffect () override;
-	virtual void Tick () override;
-	virtual void EndEffect () override;
-
-private:
-	bool HitCenterFrame;
-};
-
-class APowerWeaponLevel2 : public APowerup
-{
-	DECLARE_CLASS (APowerWeaponLevel2, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)

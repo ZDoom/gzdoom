@@ -476,7 +476,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 				if (source->player->morphTics)
 				{ // Make a super chicken
-					source->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+					source->GiveInventoryType (PClass::FindActor(NAME_PowerWeaponLevel2));
 				}
 
 				if (deathmatch && cl_showsprees)

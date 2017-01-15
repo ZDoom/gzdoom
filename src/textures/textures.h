@@ -339,9 +339,11 @@ public:
 	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
 };
 
+class FxAddSub;
 // Texture manager
 class FTextureManager
 {
+	friend class FxAddSub;	// needs access to do a bounds check on the texture ID.
 public:
 	FTextureManager ();
 	~FTextureManager ();

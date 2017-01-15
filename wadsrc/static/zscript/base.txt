@@ -1,3 +1,42 @@
+struct TexMan
+{
+	enum EUseTypes
+	{
+		Type_Any,
+		Type_Wall,
+		Type_Flat,
+		Type_Sprite,
+		Type_WallPatch,
+		Type_Build,
+		Type_SkinSprite,
+		Type_Decal,
+		Type_MiscPatch,
+		Type_FontChar,
+		Type_Override,	// For patches between TX_START/TX_END
+		Type_Autopage,	// Automap background - used to enable the use of FAutomapTexture
+		Type_SkinGraphic,
+		Type_Null,
+		Type_FirstDefined,
+	};
+
+	enum EFlags
+	{
+		TryAny = 1,
+		Overridable = 2,
+		ReturnFirst = 4,
+		AllowSkins = 8,
+		ShortNameOnly = 16,
+		DontCreate = 32
+	};
+
+	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
+}
+
+struct Screen
+{
+	native static void DrawHUDTexture(TextureID tex, double x, double y);
+}
+
 class Object native
 {
 	native bool bDestroyed;
@@ -143,6 +182,7 @@ struct LevelLocals native
 	native bool polygrind;
 	native bool nomonsters;
 	native bool frozen;
+	native bool infinite_flight;
 // level_info_t *info cannot be done yet.
 }
 

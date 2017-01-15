@@ -179,7 +179,7 @@ class PowerMinotaur : Powerup
 	}
 }
 
-class PowerTargeter : Powerup native
+class PowerTargeter : Powerup
 {
 	Default
 	{
@@ -196,6 +196,119 @@ class PowerTargeter : Powerup native
 		TRGT C -1;
 		Stop;
 	}
+	
+	override void Travelled ()
+	{
+		InitEffect ();
+	}
+
+	override void InitEffect ()
+	{
+		// Why is this called when the inventory isn't even attached yet
+		// in APowerup.CreateCopy?
+		if (!Owner.FindInventory(GetClass(), true))
+			return;
+
+		let player = Owner.player;
+
+		Super.InitEffect();
+
+		if (player == null)
+			return;
+
+		let stat = FindState("Targeter");
+
+		if (stat != null)
+		{
+			player.SetPsprite(PSprite.TARGETCENTER,  stat);
+			player.SetPsprite(PSprite.TARGETLEFT,  stat + 1);
+			player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
+		}
+
+		player.GetPSprite(PSprite.TARGETCENTER).x = (160-3);
+		player.GetPSprite(PSprite.TARGETCENTER).y =
+			player.GetPSprite(PSprite.TARGETLEFT).y =
+			player.GetPSprite(PSprite.TARGETRIGHT).y = (100-3);
+		PositionAccuracy ();
+	}
+
+	override void AttachToOwner(Actor other)
+	{
+		Super.AttachToOwner(other);
+
+		// Let's actually properly call this for the targeters.
+		InitEffect();
+	}
+
+	override bool HandlePickup(Inventory item)
+	{
+		if (Super.HandlePickup(item))
+		{
+			InitEffect();	// reset the HUD sprites
+			return true;
+		}
+		return false;
+	}
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+
+		if (Owner != null && Owner.player != null)
+		{
+			let player = Owner.player;
+
+			PositionAccuracy ();
+			if (EffectTics < 5*TICRATE)
+			{
+				let stat = FindState("Targeter");
+
+				if (stat != null)
+				{
+					if (EffectTics & 32)
+					{
+						player.SetPsprite(PSprite.TARGETRIGHT, null);
+						player.SetPsprite(PSprite.TARGETLEFT,  stat + 1);
+					}
+					else if (EffectTics & 16)
+					{
+						player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
+						player.SetPsprite(PSprite.TARGETLEFT,  null);
+					}
+				}
+			}
+		}
+	}
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner != null && Owner.player != null)
+		{
+			// Calling GetPSprite here could crash if we're creating a new game.
+			// This is because P_SetupLevel nulls the player's mo before destroying
+			// every DThinker which in turn ends up calling this.
+			// However P_SetupLevel is only called after G_NewInit which calls
+			// every player's dtor which destroys all their psprites.
+			let player = Owner.player;
+			PSprite pspr;
+			if ((pspr = player.FindPSprite(PSprite.TARGETCENTER)) != null) pspr.SetState(null);
+			if ((pspr = player.FindPSprite(PSprite.TARGETLEFT)) != null) pspr.SetState(null);
+			if ((pspr = player.FindPSprite(PSprite.TARGETRIGHT)) != null) pspr.SetState(null);
+		}
+	}
+
+	private void PositionAccuracy ()
+	{
+		let player = Owner.player;
+
+		if (player != null)
+		{
+			player.GetPSprite(PSprite.TARGETLEFT).x = (160-3) - ((100 - player.mo.accuracy));
+			player.GetPSprite(PSprite.TARGETRIGHT).x = (160-3)+ ((100 - player.mo.accuracy));
+		}
+	}
+	
 }
 
 //===========================================================================

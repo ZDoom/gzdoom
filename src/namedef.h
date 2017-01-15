@@ -171,6 +171,7 @@ xx(PuzzleItemNumber)
 xx(HealthPickup)
 xx(autousemode)
 xx(Ammo)
+xx(PowerTargeter)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

@@ -370,19 +370,6 @@ void AInventory::CallDoEffect()
 
 //===========================================================================
 //
-// AInventory :: Travelled
-//
-// Called when an item in somebody's inventory is carried over to another
-// map, in case it needs to do special reinitialization.
-//
-//===========================================================================
-
-void AInventory::Travelled ()
-{
-}
-
-//===========================================================================
-//
 // AInventory :: OwnerDied
 //
 // Items receive this message when their owners die.
@@ -1403,7 +1390,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 			copy->ItemFlags &= ~IF_CREATECOPYMOVED;
 		}
 		// Continue onwards with the rest
-		copy->AttachToOwner (newtoucher);
+		copy->CallAttachToOwner (newtoucher);
 		if (ItemFlags & IF_AUTOACTIVATE)
 		{
 			if (copy->CallUse (true))

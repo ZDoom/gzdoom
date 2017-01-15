@@ -84,6 +84,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "virtual.h"
 
 #include "gi.h"
 
@@ -1313,7 +1314,13 @@ void G_FinishTravel ()
 		{
 			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld (nullptr);
-			inv->Travelled ();
+
+			IFVIRTUALPTR(inv, AInventory, Travelled)
+			{
+				VMValue params[1] = { inv };
+				VMFrameStack stack;
+				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+			}
 		}
 		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
 		{

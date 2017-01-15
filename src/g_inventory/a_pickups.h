@@ -140,7 +140,6 @@ public:
 	double GetSpeedFactor();
 	bool GetNoTeleportFreeze();
 	// Stuff for later when more features are exported.
-	virtual void Travelled();
 	virtual void OwnerDied();
 
 

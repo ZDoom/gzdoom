@@ -38,6 +38,18 @@ class Inventory : Actor native
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
 	
+	//===========================================================================
+	//
+	// AInventory :: Travelled
+	//
+	// Called when an item in somebody's inventory is carried over to another
+	// map, in case it needs to do special reinitialization.
+	//
+	//===========================================================================
+
+	virtual void Travelled() 
+	{}
+
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}

@@ -931,7 +931,7 @@ void R_SetupFrame (AActor *actor)
 		{
 			color = pr_hom();
 		}
-		Renderer->ClearBuffer(color);
+		Renderer->SetClearColor(color);
 	}
 }
 

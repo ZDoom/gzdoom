@@ -1013,7 +1013,7 @@ struct FGLInterface : public FRenderer
 	bool RequireGLNodes() override;
 
 	int GetMaxViewPitch(bool down) override;
-	void ClearBuffer(int color) override;
+	void SetClearColor(int color) override;
 	void Init() override;
 };
 
@@ -1263,7 +1263,7 @@ int FGLInterface::GetMaxViewPitch(bool down)
 //
 //===========================================================================
 
-void FGLInterface::ClearBuffer(int color)
+void FGLInterface::SetClearColor(int color)
 {
 	PalEntry pe = GPalette.BaseColors[color];
 	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;

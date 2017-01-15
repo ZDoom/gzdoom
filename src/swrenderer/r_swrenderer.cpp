@@ -242,7 +242,7 @@ void FSoftwareRenderer::OnModeSet ()
 	RenderScene::Instance()->ScreenResized();
 }
 
-void FSoftwareRenderer::ClearBuffer(int color)
+void FSoftwareRenderer::SetClearColor(int color)
 {
 	RenderScene::Instance()->SetClearColor(color);
 }

@@ -53,7 +53,7 @@ struct FRenderer
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
 	virtual void OnModeSet () {}
-	virtual void ClearBuffer(int color) = 0;
+	virtual void SetClearColor(int color) = 0;
 	virtual void Init() = 0;
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) = 0;
 	virtual sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) = 0;

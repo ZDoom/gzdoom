@@ -1,11 +1,7 @@
-#ifndef __R_SWRENDERER_H
-#define __R_SWRENDERER_H
+
+#pragma once
 
 #include "r_renderer.h"
-
-void gl_SetActorLights(AActor *);
-void gl_PreprocessLevel();
-void gl_CleanLevelData();
 
 struct FSoftwareRenderer : public FRenderer
 {
@@ -44,22 +40,8 @@ struct FSoftwareRenderer : public FRenderer
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) override;
 	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) override;
 
-	void StateChanged(AActor *actor) override
-	{
-		gl_SetActorLights(actor);
-	}
-
-	void PreprocessLevel() override
-	{
-		gl_PreprocessLevel();
-	}
-
-	void CleanLevelData() override
-	{
-		gl_CleanLevelData();
-	}
+	void StateChanged(AActor *actor) override;
+	void PreprocessLevel() override;
+	void CleanLevelData() override;
 
 };
-
-
-#endif

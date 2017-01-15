@@ -188,6 +188,11 @@ namespace swrenderer
 	void RenderScene::ScreenResized()
 	{
 		VisiblePlaneList::Instance()->Init();
+
+		RenderTarget = screen;
+		screen->Lock(true);
+		R_SetupBuffer();
+		screen->Unlock();
 	}
 
 	void RenderScene::Init()

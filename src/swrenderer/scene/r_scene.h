@@ -34,13 +34,14 @@ namespace swrenderer
 
 		void SetClearColor(int color);
 		
-		void RenderActorView(AActor *actor, bool dontmaplines = false);
 		void RenderView(player_t *player);
 		void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 	
 		bool DontMapLines() const { return dontmaplines; }
 
 	private:
+		void RenderActorView(AActor *actor, bool dontmaplines = false);
+		
 		bool dontmaplines = false;
 		int clearcolor = 0;
 	};

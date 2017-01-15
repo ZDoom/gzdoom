@@ -66,7 +66,7 @@ namespace swrenderer
 		WallScanCycles.Reset();
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
-		clip3d->fakeActive = false; // kg3D - reset fake floor indicator
+		clip3d->Cleanup();
 		clip3d->ResetClip(); // reset clips (floor/ceiling)
 
 		R_SetupBuffer();

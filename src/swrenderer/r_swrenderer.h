@@ -31,7 +31,6 @@ struct FSoftwareRenderer : public FRenderer
 	bool RequireGLNodes() override;
 
 	void OnModeSet () override;
-	void ErrorCleanup () override;
 	void ClearBuffer(int color) override;
 	void Init() override;
 	void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) override;

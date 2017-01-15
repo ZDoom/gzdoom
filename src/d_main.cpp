@@ -961,7 +961,6 @@ void D_ErrorCleanup ()
 		menuactive = MENU_Off;
 	}
 	insave = false;
-	Renderer->ErrorCleanup();
 }
 
 //==========================================================================

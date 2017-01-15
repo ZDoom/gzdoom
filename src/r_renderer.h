@@ -53,7 +53,6 @@ struct FRenderer
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
 	virtual void OnModeSet () {}
-	virtual void ErrorCleanup () {}
 	virtual void ClearBuffer(int color) = 0;
 	virtual void Init() = 0;
 	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) {}

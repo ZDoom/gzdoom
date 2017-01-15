@@ -276,11 +276,6 @@ void FSoftwareRenderer::OnModeSet ()
 	RenderScene::Instance()->ScreenResized();
 }
 
-void FSoftwareRenderer::ErrorCleanup ()
-{
-	Clip3DFloors::Instance()->Cleanup();
-}
-
 void FSoftwareRenderer::ClearBuffer(int color)
 {
 	if (!r_swtruecolor)

@@ -34,18 +34,13 @@
 
 namespace swrenderer
 {
-	namespace
+	RenderClipSegment *RenderClipSegment::Instance()
 	{
-		struct cliprange_t
-		{
-			short first, last;
-		};
-
-		cliprange_t *newend; // newend is one past the last valid seg
-		cliprange_t solidsegs[MAXWIDTH / 2 + 2];
+		static RenderClipSegment instance;
+		return &instance;
 	}
 
-	void R_ClearClipSegs(short left, short right)
+	void RenderClipSegment::Clear(short left, short right)
 	{
 		solidsegs[0].first = -0x7fff;
 		solidsegs[0].last = left;
@@ -54,7 +49,7 @@ namespace swrenderer
 		newend = solidsegs+2;
 	}
 
-	bool R_CheckClipWallSegment(int first, int last)
+	bool RenderClipSegment::Check(int first, int last)
 	{
 		cliprange_t *start;
 
@@ -78,7 +73,7 @@ namespace swrenderer
 		return false;
 	}
 
-	bool R_IsWallSegmentVisible(int sx1, int sx2)
+	bool RenderClipSegment::IsVisible(int sx1, int sx2)
 	{
 		// Does not cross a pixel.
 		if (sx2 <= sx1)
@@ -97,7 +92,7 @@ namespace swrenderer
 		return true;
 	}
 
-	bool R_ClipWallSegment(int first, int last, bool solid, VisibleSegmentCallback callback)
+	bool RenderClipSegment::Clip(int first, int last, bool solid, VisibleSegmentCallback callback)
 	{
 		cliprange_t *next, *start;
 		int i, j;

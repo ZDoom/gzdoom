@@ -131,7 +131,7 @@ namespace swrenderer
 		RenderPortal::Instance()->CopyStackedViewParameters();
 
 		// Clear buffers.
-		R_ClearClipSegs(0, viewwidth);
+		RenderClipSegment::Instance()->Clear(0, viewwidth);
 		R_ClearDrawSegs();
 		VisiblePlaneList::Instance()->Clear(true);
 		RenderTranslucentPass::Clear();

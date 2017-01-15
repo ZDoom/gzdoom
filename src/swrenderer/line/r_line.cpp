@@ -91,7 +91,7 @@ namespace swrenderer
 
 		if (line->linedef == NULL)
 		{
-			if (R_CheckClipWallSegment(WallC.sx1, WallC.sx2))
+			if (RenderClipSegment::Instance()->Check(WallC.sx1, WallC.sx2))
 			{
 				InSubsector->flags |= SSECF_DRAWN;
 			}
@@ -257,7 +257,7 @@ namespace swrenderer
 				// mark their subsectors as visible for automap texturing.
 				if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
 				{
-					if (R_CheckClipWallSegment(WallC.sx1, WallC.sx2))
+					if (RenderClipSegment::Instance()->Check(WallC.sx1, WallC.sx2))
 					{
 						InSubsector->flags |= SSECF_DRAWN;
 					}
@@ -298,7 +298,7 @@ namespace swrenderer
 		}
 
 		static SWRenderLine *self = this;
-		bool visible = R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
+		bool visible = RenderClipSegment::Instance()->Clip(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
 		{
 			return self->RenderWallSegment(x1, x2);
 		});

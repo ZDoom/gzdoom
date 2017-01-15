@@ -179,7 +179,7 @@ namespace swrenderer
 			validcount++;	// Make sure we see all sprites
 
 			planes->Clear(false);
-			R_ClearClipSegs(pl->left, pl->right);
+			RenderClipSegment::Instance()->Clear(pl->left, pl->right);
 			WindowLeft = pl->left;
 			WindowRight = pl->right;
 
@@ -429,7 +429,7 @@ namespace swrenderer
 		CurrentPortal = pds;
 
 		VisiblePlaneList::Instance()->Clear(false);
-		R_ClearClipSegs(pds->x1, pds->x2);
+		RenderClipSegment::Instance()->Clear(pds->x1, pds->x2);
 
 		WindowLeft = pds->x1;
 		WindowRight = pds->x2;

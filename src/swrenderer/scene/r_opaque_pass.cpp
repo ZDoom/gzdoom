@@ -378,7 +378,7 @@ namespace swrenderer
 		// Find the first clippost that touches the source post
 		//	(adjacent pixels are touching).
 
-		return R_IsWallSegmentVisible(sx1, sx2);
+		return RenderClipSegment::Instance()->IsVisible(sx1, sx2);
 	}
 
 	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)

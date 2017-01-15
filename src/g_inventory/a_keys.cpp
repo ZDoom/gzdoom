@@ -533,32 +533,6 @@ IMPLEMENT_CLASS(AKey, false, false)
 
 DEFINE_FIELD(AKey, KeyNumber)
 
-bool AKey::HandlePickup (AInventory *item)
-{
-	// In single player, you can pick up an infinite number of keys
-	// even though you can only hold one of each.
-	if (multiplayer)
-	{
-		return Super::HandlePickup (item);
-	}
-	if (GetClass() == item->GetClass())
-	{
-		item->ItemFlags |= IF_PICKUPGOOD;
-		return true;
-	}
-	return false;
-}
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool AKey::ShouldStay ()
-{
-	return !!multiplayer;
-}
-
 //==========================================================================
 //
 // These functions can be used to get color information for

@@ -7,12 +7,7 @@ class AKey : public AInventory
 {
 	DECLARE_CLASS (AKey, AInventory)
 public:
-	virtual bool HandlePickup (AInventory *item) override;
-
 	BYTE KeyNumber;
-
-protected:
-	virtual bool ShouldStay () override;
 };
 
 bool P_CheckKeys (AActor *owner, int keynum, bool remote);
@@ -37,10 +32,6 @@ class APuzzleItem : public AInventory
 	DECLARE_CLASS_WITH_META(APuzzleItem, AInventory, PClassPuzzleItem)
 public:
 	
-	virtual bool ShouldStay () override;
-	virtual bool Use (bool pickup) override;
-	virtual bool HandlePickup (AInventory *item) override;
-
 	int PuzzleItemNumber;
 };
 

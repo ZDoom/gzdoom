@@ -914,7 +914,10 @@ DEFINE_ACTION_FUNCTION(FStringTable, Localize)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(label);
-	ACTION_RETURN_STRING(GStrings(label));
+	PARAM_BOOL_DEF(prefixed);
+	if (!prefixed) ACTION_RETURN_STRING(GStrings(label));
+	if (label[0] != '$') ACTION_RETURN_STRING(label);
+	ACTION_RETURN_STRING(GStrings(&label[1]));
 }
 
 DEFINE_ACTION_FUNCTION(FString, Replace)

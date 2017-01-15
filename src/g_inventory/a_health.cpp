@@ -45,42 +45,7 @@
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(PClassHealth, false, false)
-IMPLEMENT_CLASS(AHealth, false, false)
-DEFINE_FIELD(AHealth, PrevHealth)
-DEFINE_FIELD(PClassHealth, LowHealth)
-DEFINE_FIELD(PClassHealth, LowHealthMessage)
-
-//===========================================================================
-//
-// PClassHealth Constructor
-//
-//===========================================================================
-
-PClassHealth::PClassHealth()
-{
-	LowHealth = 0;
-}
-
-//===========================================================================
-//
-// PClassHealth :: DeriveData
-//
-//===========================================================================
-
-void PClassHealth::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassHealth)));
-	Super::DeriveData(newclass);
-	PClassHealth *newc = static_cast<PClassHealth *>(newclass);
-	
-	newc->LowHealth = LowHealth;
-	newc->LowHealthMessage = LowHealthMessage;
-}
-
-
 IMPLEMENT_CLASS(AHealthPickup, false, false)
-
 DEFINE_FIELD(AHealthPickup, autousemode)
 
 //===========================================================================

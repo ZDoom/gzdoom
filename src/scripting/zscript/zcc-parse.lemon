@@ -209,7 +209,6 @@ class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) ACTION.					{ X.Flags = A.Flags | ZCC_Action; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
 
 /*----- Dottable Identifier -----*/
@@ -265,6 +264,7 @@ class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; /*X-overwrites-A*/ }
 class_innards(X) ::= .									{ X = NULL; }
 class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
 
+%type property_def{ZCC_Property *}
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
 %type states_def {ZCC_States *}
@@ -276,6 +276,7 @@ class_member(X) ::= struct_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= property_def(A).					{ X = A; /*X-overwrites-A*/ }
 
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
@@ -283,6 +284,30 @@ class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 %type opt_struct_body{ZCC_TreeNode *}
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
+%type identifier_list{ZCC_Identifier *}
+
+property_def(X) ::= PROPERTY(T) IDENTIFIER(A) COLON identifier_list(B) SEMICOLON.
+{
+	NEW_AST_NODE(Property,def,T);
+	def->NodeName = A.Name();
+	def->Body = B;
+	X = def;
+}
+
+identifier_list(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(Identifier,id,A);
+	id->Id = A.Name();
+	X = id;
+}
+
+identifier_list(X) ::= states_opt(A) COMMA IDENTIFIER(B).
+{
+	NEW_AST_NODE(Identifier,id,B);
+	id->Id = B.Name();
+	X = A; /*X-overwrites-A*/
+	AppendTreeNodeSibling(X, id);
+}
 
 struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
 {
@@ -747,7 +772,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -964,6 +989,7 @@ decl_flag(X) ::= PROTECTED(T).	{ X.Int = ZCC_Protected; X.SourceLoc =  T.SourceL
 decl_flag(X) ::= LATENT(T).		{ X.Int = ZCC_Latent; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= TRANSIENT(T).	{ X.Int = ZCC_Transient; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }

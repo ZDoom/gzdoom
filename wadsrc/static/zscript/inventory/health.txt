@@ -33,11 +33,13 @@
 **
 */
 
-class Health : Inventory native 
+class Health : Inventory
 {
-	native int PrevHealth;
-	native meta int LowHealth;
-	native meta String LowHealthMessage;
+	transient int PrevHealth;
+	/*meta*/ int LowHealth;
+	/*meta*/ String LowHealthMessage;
+	
+	property LowMessage: LowHealth, LowHealthMessage;
 	
 	Default
 	{
@@ -56,7 +58,6 @@ class Health : Inventory native
 		if (PrevHealth < LowHealth)
 		{
 			String message = LowHealthMessage;
-
 			if (message.Length() != 0)
 			{
 				return message;

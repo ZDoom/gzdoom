@@ -208,10 +208,6 @@ ExpEmit::ExpEmit(VMFunctionBuilder *build, int type, int count)
 
 void ExpEmit::Free(VMFunctionBuilder *build)
 {
-	if (RegType == REGT_INT && RegNum == 0)
-	{
-		int a = 0;
-	}
 	if (!Fixed && !Konst && RegType <= REGT_TYPE)
 	{
 		build->Registers[RegType].Return(RegNum, RegCount);
@@ -4447,10 +4443,6 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(expr, ctx);
-	if (expr->ExprType == EFX_GetDefaultByType)
-	{
-		int a = 0;
-	}
 	bool constflag = expr->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer *>(expr->ValueType)->IsConst;
 	if (constflag)
 	{
@@ -6472,7 +6464,7 @@ FxStructMember::~FxStructMember()
 bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	// Cannot take the address of metadata variables.
-	if (membervar->Flags & VARF_Static)
+	if (membervar->Flags & VARF_Meta)
 	{
 		return false;
 	}
@@ -6615,7 +6607,7 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 		obj = newobj;
 	}
 
-	if (membervar->Flags & VARF_Static)
+	if (membervar->Flags & VARF_Meta)
 	{
 		obj.Free(build);
 		ExpEmit meta(build, REGT_POINTER);

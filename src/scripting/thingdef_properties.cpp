@@ -1972,18 +1972,6 @@ DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(lowmessage, IT, Health)
-{
-	PROP_INT_PARM(i, 0);
-	PROP_STRING_PARM(str, 1);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassHealth)));
-	static_cast<PClassHealth *>(info)->LowHealth = i;
-	static_cast<PClassHealth *>(info)->LowHealthMessage = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(autouse, I, HealthPickup)
 {
 	PROP_INT_PARM(i, 0);

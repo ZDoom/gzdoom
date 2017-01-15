@@ -336,6 +336,16 @@ static void PrintStruct(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintProperty(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_Property *snode = (ZCC_Property *)node;
+	out.Break();
+	out.Open("property");
+	out.AddName(snode->NodeName);
+	PrintNodes(out, snode->Body, false, true);
+	out.Close();
+}
+
 static void PrintEnum(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Enum *enode = (ZCC_Enum *)node;
@@ -934,6 +944,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintVectorInitializer,
 	PrintDeclFlags,
 	PrintExprClassCast,
+	PrintProperty,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

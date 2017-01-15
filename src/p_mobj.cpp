@@ -1341,7 +1341,7 @@ bool P_GiveBody(AActor *actor, int num, int max)
 	if (player != NULL)
 	{
 		// Max is 0 by default, preserving default behavior for P_GiveBody()
-		// calls while supporting AHealth.
+		// calls while supporting health pickups.
 		if (max <= 0)
 		{
 			max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->mo->stamina;
@@ -1396,7 +1396,7 @@ bool P_GiveBody(AActor *actor, int num, int max)
 	else
 	{
 		// Parameter value for max is ignored on monsters, preserving original
-		// behaviour on AHealth as well as on existing calls to P_GiveBody().
+		// behaviour of health as well as on existing calls to P_GiveBody().
 		max = actor->SpawnHealth();
 		if (num < 0)
 		{
@@ -5663,9 +5663,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// [RH] Other things that shouldn't be spawned depending on dmflags
 	if (deathmatch || alwaysapplydmflags)
 	{
+		// Fixme: This needs to be done differently, it's quite broken.
 		if (dmflags & DF_NO_HEALTH)
 		{
-			if (i->IsDescendantOf (RUNTIME_CLASS(AHealth)))
+			if (i->IsDescendantOf (PClass::FindActor(NAME_Health)))
 				return NULL;
 			if (i->TypeName == NAME_Berserk)
 				return NULL;

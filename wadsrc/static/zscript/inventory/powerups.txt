@@ -133,9 +133,18 @@ class PowerWeaponLevel2 : Powerup native
 	}
 }
 
+//===========================================================================
+//
+// Speed
+//
+//===========================================================================
+
 class PowerSpeed : Powerup native
 {
 	native int SpeedFlags;
+	
+	const PSF_NOTRAIL = 1;
+
 
 	Default
 	{
@@ -145,7 +154,67 @@ class PowerSpeed : Powerup native
 		+INVENTORY.NOTELEPORTFREEZE
 	}
 	
-	override double GetSpeedFactor() { return Speed; }
+	override double GetSpeedFactor() 
+	{ 
+		return Speed; 
+	}
+	
+	//===========================================================================
+	//
+	// APowerSpeed :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+		
+		if (Owner == NULL || Owner.player == NULL)
+			return;
+
+		if (Owner.player.cheats & CF_PREDICTING)
+			return;
+
+		if (SpeedFlags & PSF_NOTRAIL)
+			return;
+
+		if (level.time & 1)
+			return;
+
+		// Check if another speed item is present to avoid multiple drawing of the speed trail.
+		// Only the last PowerSpeed without PSF_NOTRAIL set will actually draw the trail.
+		for (Inventory item = Inv; item != NULL; item = item.Inv)
+		{
+			let sitem = PowerSpeed(item);
+			if (sitem != null && !(sitem.SpeedFlags & PSF_NOTRAIL))
+			{
+				return;
+			}
+		}
+
+		if (Owner.Vel.Length() <= 12)
+			return;
+
+		Actor speedMo = Spawn("PlayerSpeedTrail", Owner.Pos, NO_REPLACE);
+		if (speedMo)
+		{
+			speedMo.Angle = Owner.Angle;
+			speedMo.Translation = Owner.Translation;
+			speedMo.target = Owner;
+			speedMo.sprite = Owner.sprite;
+			speedMo.frame = Owner.frame;
+			speedMo.Floorclip = Owner.Floorclip;
+
+			// [BC] Also get the scale from the owner.
+			speedMo.Scale = Owner.Scale;
+
+			if (Owner == players[consoleplayer].camera &&
+				!(Owner.player.cheats & CF_CHASECAM))
+			{
+				speedMo.bInvisible = true;
+			}
+		}
+	}
 }
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------
@@ -170,6 +239,12 @@ class PlayerSpeedTrail : Actor
 	}
 }
 
+//===========================================================================
+//
+// Minotaur
+//
+//===========================================================================
+
 class PowerMinotaur : Powerup
 {
 	Default
@@ -178,6 +253,12 @@ class PowerMinotaur : Powerup
 		Inventory.Icon "SPMINO0";
 	}
 }
+
+//===========================================================================
+//
+// Targeter
+//
+//===========================================================================
 
 class PowerTargeter : Powerup
 {

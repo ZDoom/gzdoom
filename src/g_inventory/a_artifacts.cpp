@@ -1250,63 +1250,6 @@ void APowerSpeed::Serialize(FSerializer &arc)
 	arc("speedflags", SpeedFlags);
 }
 
-//===========================================================================
-//
-// APowerSpeed :: DoEffect
-//
-//===========================================================================
-
-void APowerSpeed::DoEffect ()
-{
-	Super::DoEffect ();
-	
-	if (Owner == NULL || Owner->player == NULL)
-		return;
-
-	if (Owner->player->cheats & CF_PREDICTING)
-		return;
-
-	if (SpeedFlags & PSF_NOTRAIL)
-		return;
-
-	if (level.time & 1)
-		return;
-
-	// Check if another speed item is present to avoid multiple drawing of the speed trail.
-	// Only the last PowerSpeed without PSF_NOTRAIL set will actually draw the trail.
-	for (AInventory *item = Inventory; item != NULL; item = item->Inventory)
-	{
-		if (item->IsKindOf(RUNTIME_CLASS(APowerSpeed)) &&
-			!(static_cast<APowerSpeed *>(item)->SpeedFlags & PSF_NOTRAIL))
-		{
-			return;
-		}
-	}
-
-	if (Owner->Vel.LengthSquared() <= 12*12)
-		return;
-
-	AActor *speedMo = Spawn("PlayerSpeedTrail", Owner->Pos(), NO_REPLACE);
-	if (speedMo)
-	{
-		speedMo->Angles.Yaw = Owner->Angles.Yaw;
-		speedMo->Translation = Owner->Translation;
-		speedMo->target = Owner;
-		speedMo->sprite = Owner->sprite;
-		speedMo->frame = Owner->frame;
-		speedMo->Floorclip = Owner->Floorclip;
-
-		// [BC] Also get the scale from the owner.
-		speedMo->Scale = Owner->Scale;
-
-		if (Owner == players[consoleplayer].camera &&
-			!(Owner->player->cheats & CF_CHASECAM))
-		{
-			speedMo->renderflags |= RF_INVISIBLE;
-		}
-	}
-}
-
 // Morph powerup ------------------------------------------------------
 
 IMPLEMENT_CLASS(APowerMorph, false, true)

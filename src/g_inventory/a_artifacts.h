@@ -152,8 +152,6 @@ class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
-	virtual void DoEffect () override;
-	
 	virtual void Serialize(FSerializer &arc) override;
 public:
 	int SpeedFlags;

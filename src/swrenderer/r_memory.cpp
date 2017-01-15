@@ -72,23 +72,43 @@ namespace swrenderer
 	}
 
 	/////////////////////////////////////////////////////////////////////////
-
-	namespace
+	
+	void *RenderMemory::AllocBytes(int size)
 	{
-		enum { max_plane_lights = 32 * 1024 };
-		visplane_light plane_lights[max_plane_lights];
-		int next_plane_light = 0;
-	}
+		size = (size + 15) / 16 * 16; // 16-byte align
+		
+		if (UsedBlocks.empty() || UsedBlocks.back()->Position + size > BlockSize)
+		{
+			if (!FreeBlocks.empty())
+			{
+				auto block = std::move(FreeBlocks.back());
+				block->Position = 0;
+				FreeBlocks.pop_back();
+				UsedBlocks.push_back(std::move(block));
+			}
+			else
+			{
+				UsedBlocks.push_back(std::make_unique<MemoryBlock>());
+			}
+		}
+		
+		auto &block = UsedBlocks.back();
+		void *data = block->Data + block->Position;
+		block->Position += size;
 
-	visplane_light *R_NewPlaneLight()
-	{
-		if (next_plane_light == max_plane_lights)
-			return nullptr;
-		return &plane_lights[next_plane_light++];
+		return data;
 	}
-
-	void R_FreePlaneLights()
+	
+	void RenderMemory::Clear()
 	{
-		next_plane_light = 0;
+		while (!UsedBlocks.empty())
+		{
+			auto block = std::move(UsedBlocks.back());
+			UsedBlocks.pop_back();
+			FreeBlocks.push_back(std::move(block));
+		}
 	}
+	
+	std::vector<std::unique_ptr<RenderMemory::MemoryBlock>> RenderMemory::UsedBlocks;
+	std::vector<std::unique_ptr<RenderMemory::MemoryBlock>> RenderMemory::FreeBlocks;
 }

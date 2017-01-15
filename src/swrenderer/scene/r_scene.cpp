@@ -117,6 +117,8 @@ namespace swrenderer
 		PlaneCycles.Reset();
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
+		
+		RenderMemory::Clear();
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 		clip3d->Cleanup();
@@ -132,7 +134,6 @@ namespace swrenderer
 		R_ClearClipSegs(0, viewwidth);
 		R_ClearDrawSegs();
 		VisiblePlaneList::Instance()->Clear(true);
-		R_FreePlaneLights();
 		RenderTranslucentPass::Clear();
 
 		// opening / clipping determination

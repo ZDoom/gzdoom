@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace swrenderer
 {
 	struct visplane_light;
@@ -22,7 +24,43 @@ namespace swrenderer
 	ptrdiff_t R_NewOpening(ptrdiff_t len);
 	void R_FreeOpenings();
 	void R_DeinitOpenings();
-
-	visplane_light *R_NewPlaneLight();
-	void R_FreePlaneLights();
+	
+	// Memory needed for the duration of a frame rendering
+	class RenderMemory
+	{
+	public:
+		static void Clear();
+		
+		template<typename T>
+		static T *AllocMemory(int size = 1)
+		{
+			return (T*)AllocBytes(sizeof(T) * size);
+		}
+		
+		template<typename T, typename... Types>
+		static T *NewObject(Types &&... args)
+		{
+			void *ptr = AllocBytes(sizeof(T));
+			return new (ptr)T(std::forward<Types>(args)...);
+		}
+		
+	private:
+		static void *AllocBytes(int size);
+		
+		enum { BlockSize = 1024 * 1024 };
+		
+		struct MemoryBlock
+		{
+			MemoryBlock() : Data(new uint8_t[BlockSize]), Position(0) { }
+			~MemoryBlock() { delete[] Data; }
+			
+			MemoryBlock(const MemoryBlock &) = delete;
+			MemoryBlock &operator=(const MemoryBlock &) = delete;
+			
+			uint8_t *Data;
+			uint32_t Position;
+		};
+		static std::vector<std::unique_ptr<MemoryBlock>> UsedBlocks;
+		static std::vector<std::unique_ptr<MemoryBlock>> FreeBlocks;
+	};
 }

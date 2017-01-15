@@ -65,10 +65,7 @@ namespace swrenderer
 				}
 				if (!found)
 				{
-					visplane_light *newlight = R_NewPlaneLight();
-					if (!newlight)
-						return;
-
+					visplane_light *newlight = RenderMemory::NewObject<visplane_light>();
 					newlight->next = lights;
 					newlight->lightsource = node->lightsource;
 					lights = newlight;

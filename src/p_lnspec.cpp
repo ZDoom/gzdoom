@@ -2138,11 +2138,12 @@ FUNC(LS_UsePuzzleItem)
 	if (!it) return false;
 
 	// Check player's inventory for puzzle item
+	auto pitype = PClass::FindActor(NAME_PuzzleItem);
 	for (item = it->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->IsKindOf (RUNTIME_CLASS(APuzzleItem)))
+		if (item->IsKindOf (pitype))
 		{
-			if (static_cast<APuzzleItem*>(item)->PuzzleItemNumber == arg0)
+			if (item->IntVar(NAME_PuzzleItemNumber) == arg0)
 			{
 				if (it->UseInventory (item))
 				{

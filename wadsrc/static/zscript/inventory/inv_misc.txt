@@ -87,10 +87,13 @@ class MapRevealer : Inventory
 //
 //===========================================================================
 
-class PuzzleItem : Inventory native 
+class PuzzleItem : Inventory
 {
-	native int PuzzleItemNumber;
-	native meta String PuzzFailMessage;
+	/*meta*/ int PuzzleItemNumber;
+	/*meta*/ String PuzzFailMessage;
+	
+	property Number: PuzzleItemNumber;
+	property FailMessage: PuzzFailMessage;
 
 	Default
 	{
@@ -99,7 +102,7 @@ class PuzzleItem : Inventory native
 		Inventory.DefMaxAmount;
 		Inventory.UseSound "PuzzleSuccess";
 		Inventory.PickupSound "misc/i_pkup";
-		PuzzleItem.FailMessage("TXT_USEPUZZLEFAILED");
+		PuzzleItem.FailMessage("$TXT_USEPUZZLEFAILED");
 	}
 	
 	override bool HandlePickup (Inventory item)

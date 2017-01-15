@@ -1153,7 +1153,6 @@ set (PCH_SOURCES
 	g_inventory/a_health.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
-	g_inventory/a_puzzleitems.cpp
 	g_inventory/a_weaponpiece.cpp
 	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp

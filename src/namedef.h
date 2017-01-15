@@ -166,6 +166,8 @@ xx(MiniMissileLauncher)
 xx(StrifeGrenadeLauncher)
 xx(Mauler)
 xx(BackpackItem)
+xx(PuzzleItem)
+xx(PuzzleItemNumber)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

@@ -94,7 +94,6 @@ enum
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
 	CLASSREG_PClassInventory,
-	CLASSREG_PClassPuzzleItem,
 	CLASSREG_PClassWeapon,
 	CLASSREG_PClassPlayerPawn,
 	CLASSREG_PClassType,

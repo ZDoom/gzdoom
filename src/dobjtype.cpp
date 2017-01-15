@@ -3115,7 +3115,6 @@ PClass *ClassReg::RegisterClass()
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
-		&PClassPuzzleItem::RegistrationInfo,
 		&PClassWeapon::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
 		&PClassType::RegistrationInfo,

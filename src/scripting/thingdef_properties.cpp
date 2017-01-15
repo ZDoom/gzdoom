@@ -1981,25 +1981,6 @@ DEFINE_CLASS_PROPERTY(autouse, I, HealthPickup)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->PuzzleItemNumber = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(failmessage, T, PuzzleItem)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPuzzleItem)));
-	static_cast<PClassPuzzleItem *>(info)->PuzzFailMessage = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(ammogive, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);

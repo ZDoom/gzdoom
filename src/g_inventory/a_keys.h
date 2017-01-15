@@ -16,24 +16,4 @@ void P_DeinitKeyMessages ();
 int P_GetMapColorForLock (int lock);
 int P_GetMapColorForKey (AInventory *key);
 
-
-// PuzzleItems work in conjunction with the UsePuzzleItem special
-class PClassPuzzleItem : public PClassInventory
-{
-	DECLARE_CLASS(PClassPuzzleItem, PClassInventory);
-protected:
-public:
-	virtual void DeriveData(PClass *newclass);
-	FString PuzzFailMessage;
-};
-
-class APuzzleItem : public AInventory
-{
-	DECLARE_CLASS_WITH_META(APuzzleItem, AInventory, PClassPuzzleItem)
-public:
-	
-	int PuzzleItemNumber;
-};
-
-
 #endif

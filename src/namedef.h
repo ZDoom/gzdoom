@@ -168,6 +168,8 @@ xx(Mauler)
 xx(BackpackItem)
 xx(PuzzleItem)
 xx(PuzzleItemNumber)
+xx(HealthPickup)
+xx(autousemode)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

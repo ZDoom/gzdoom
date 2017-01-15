@@ -89,9 +89,11 @@ class Health : Inventory
 	
 }
 
-class HealthPickup : Inventory native 
+class HealthPickup : Inventory
 {
-	native int autousemode;
+	int autousemode;
+
+	property AutoUse: autousemode;
 
 	Default
 	{

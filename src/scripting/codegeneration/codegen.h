@@ -289,6 +289,8 @@ enum EFxType
 	EFX_CVar,
 	EFX_NamedNode,
 	EFX_GetClass,
+	EFX_GetParentClass,
+	EFX_StrLen,
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
 	EFX_COUNT
@@ -1567,6 +1569,24 @@ public:
 
 	FxVectorBuiltin(FxExpression *self, FName name);
 	~FxVectorBuiltin();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxVectorBuiltin
+//
+//==========================================================================
+
+class FxStrLen : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxStrLen(FxExpression *self);
+	~FxStrLen();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

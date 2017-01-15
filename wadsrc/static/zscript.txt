@@ -11,6 +11,7 @@
 #include "zscript/inventory/weapons.txt"
 #include "zscript/inventory/armor.txt"
 #include "zscript/inventory/ammo.txt"
+#include "zscript/inventory/health.txt"
 #include "zscript/inventory/powerups.txt"
 
 #include "zscript/shared/player.txt"

@@ -1,20 +1,37 @@
-class ScoreItem : Inventory
-{
-	Default
-	{
-		Height 10;
-		+COUNTITEM
-		Inventory.Amount 1;
-		+Inventory.ALWAYSPICKUP
-	}
-	
-	override bool TryPickup (in out Actor toucher)
-	{
-		toucher.Score += Amount;
-		GoAwayAndDie();
-		return true;
-	}
-}
+/*
+** a_health.cpp
+** All health items
+**
+**---------------------------------------------------------------------------
+** Copyright 2000-2016 Randy Heit
+** Copyright 2006-2017 Cheistoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 class Health : Inventory native 
 {
@@ -140,50 +157,3 @@ class HealthPickup : Inventory native
 
 	
 }
-
-class Key : Inventory native
-{
-	native uint8 KeyNumber;
-
-	Default
-	{
-		+DONTGIB;		// Don't disappear due to a crusher
-		Inventory.InterHubAmount 0;
-		Inventory.PickupSound "misc/k_pkup";
-	}
-}
-
-class MapRevealer : Inventory
-{
-	//===========================================================================
-	//
-	// AMapRevealer . TryPickup
-	//
-	// A MapRevealer reveals the whole map for the player who picks it up.
-	// The MapRevealer doesn't actually go in your inventory. Instead, it sets
-	// a flag on the level.
-	//
-	//===========================================================================
-
-	override bool TryPickup (in out Actor toucher)
-	{
-		level.allmap = true;
-		GoAwayAndDie ();
-		return true;
-	}
-}
-
-class PuzzleItem : Inventory native 
-{
-	native int PuzzleItemNumber;
-
-	Default
-	{
-		+NOGRAVITY
-		+INVENTORY.INVBAR
-		Inventory.DefMaxAmount;
-		Inventory.UseSound "PuzzleSuccess";
-		Inventory.PickupSound "misc/i_pkup";
-	}
-}
-

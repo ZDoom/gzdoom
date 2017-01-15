@@ -7526,6 +7526,13 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	else if (Self->ValueType == TypeString)
 	{
+		if (MethodName == NAME_Length)	// This is an intrinsic because a dedicated opcode exists for it.
+		{
+			auto x = new FxStrLen(Self);
+			Self = nullptr;
+			delete this;
+			return x->Resolve(ctx);
+		}
 		// same for String methods. It also uses a hidden struct type to define them.
 		Self->ValueType = TypeStringStruct;
 	}
@@ -8735,6 +8742,39 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxStrLen::FxStrLen(FxExpression *self)
+	:FxExpression(EFX_StrLen, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxStrLen::~FxStrLen()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxStrLen::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	assert(Self->ValueType == TypeString);
+	ValueType = TypeUInt32;
+	return this;
+}
+
+ExpEmit FxStrLen::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit to(build, REGT_INT);
+	ExpEmit op = Self->Emit(build);
+	build->Emit(OP_LENS, to.RegNum, op.RegNum);
+	op.Free(build);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 FxGetClass::FxGetClass(FxExpression *self)
 	:FxExpression(EFX_GetClass, self->ScriptPosition)
 {
@@ -8774,7 +8814,7 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxGetParentClass::FxGetParentClass(FxExpression *self)
-	:FxExpression(EFX_GetClass, self->ScriptPosition)
+	:FxExpression(EFX_GetParentClass, self->ScriptPosition)
 {
 	Self = self;
 }

@@ -910,9 +910,6 @@ void R_SetupFrame (AActor *actor)
 		}
 	}
 
-	Renderer->CopyStackedViewParameters();
-	Renderer->SetupFrame(player);
-
 	validcount++;
 
 	if (RenderTarget == screen && r_clearbuffer != 0)

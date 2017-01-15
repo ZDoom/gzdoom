@@ -32,6 +32,7 @@
 #include "po_man.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/scene/r_light.h"
 
 EXTERN_CVAR(Int, screenblocks)
 void InitGLRMapinfoData();
@@ -81,7 +82,9 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 	R_SetupFrame(actor);
-	
+	swrenderer::R_SetupColormap(actor);
+	swrenderer::R_SetupFreelook();
+
 	ActorRenderFlags savedflags = camera->renderflags;
 	// Never draw the player unless in chasecam mode
 	if (!r_showviewer)

@@ -302,17 +302,6 @@ void FSoftwareRenderer::SetWindow (int windowSize, int fullWidth, int fullHeight
 	R_SWRSetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
-void FSoftwareRenderer::SetupFrame(player_t *player)
-{
-	R_SetupColormap(player);
-	R_SetupFreelook();
-}
-
-void FSoftwareRenderer::CopyStackedViewParameters() 
-{
-	RenderPortal::Instance()->CopyStackedViewParameters();
-}
-
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)
 {
 	BYTE *Pixels = r_swtruecolor ? (BYTE*)tex->GetPixelsBgra() : (BYTE*)tex->GetPixels();

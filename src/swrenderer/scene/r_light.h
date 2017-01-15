@@ -66,5 +66,5 @@ namespace swrenderer
 	void R_SetVisibility(double visibility);
 	double R_GetVisibility();
 
-	void R_SetupColormap(player_t *);
+	void R_SetupColormap(AActor *actor);
 }

@@ -71,6 +71,10 @@ namespace swrenderer
 
 		R_SetupBuffer();
 		R_SetupFrame(actor);
+		R_SetupColormap(actor);
+		R_SetupFreelook();
+
+		RenderPortal::Instance()->CopyStackedViewParameters();
 
 		// Clear buffers.
 		R_ClearClipSegs(0, viewwidth);

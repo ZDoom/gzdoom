@@ -109,8 +109,12 @@ namespace swrenderer
 		return CurrentVisibility;
 	}
 
-	void R_SetupColormap(player_t *player)
+	void R_SetupColormap(AActor *actor)
 	{
+		player_t *player = actor->player;
+		if (camera && camera->player != 0)
+			player = camera->player;
+
 		realfixedcolormap = NULL;
 		fixedcolormap = NULL;
 		fixedlightlev = -1;

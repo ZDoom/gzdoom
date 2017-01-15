@@ -402,7 +402,7 @@ namespace swrenderer
 			if (ds->fake) continue;
 			// determine if the drawseg obscures the sprite
 			if (ds->x1 >= x2 || ds->x2 <= x1 ||
-				(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1 &&
+				(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&
 					!ds->bFogBoundary))
 			{
 				// does not cover sprite
@@ -435,7 +435,7 @@ namespace swrenderer
 
 				// seg is behind sprite, so draw the mid texture if it has one
 				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
-					(ds->maskedtexturecol != -1 || ds->bFogBoundary))
+					(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
 					R_RenderMaskedSegRange(ds, r1, r2);
 
 				continue;
@@ -449,7 +449,7 @@ namespace swrenderer
 			if (ds->silhouette & SIL_BOTTOM) //bottom sil
 			{
 				clip1 = clipbot + r1;
-				clip2 = openings + ds->sprbottomclip + r1 - ds->x1;
+				clip2 = ds->sprbottomclip + r1 - ds->x1;
 				i = r2 - r1;
 				do
 				{
@@ -463,7 +463,7 @@ namespace swrenderer
 			if (ds->silhouette & SIL_TOP)   // top sil
 			{
 				clip1 = cliptop + r1;
-				clip2 = openings + ds->sprtopclip + r1 - ds->x1;
+				clip2 = ds->sprtopclip + r1 - ds->x1;
 				i = r2 - r1;
 				do
 				{
@@ -555,7 +555,7 @@ namespace swrenderer
 				continue;
 			// kg3D - no fake segs
 			if (ds->fake) continue;
-			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
+			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
 				R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
 			}

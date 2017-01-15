@@ -209,15 +209,16 @@ namespace swrenderer
 			draw_segment->x1 = pl->left;
 			draw_segment->x2 = pl->right;
 			draw_segment->silhouette = SIL_BOTH;
-			draw_segment->sprbottomclip = R_NewOpening(pl->right - pl->left);
-			draw_segment->sprtopclip = R_NewOpening(pl->right - pl->left);
-			draw_segment->maskedtexturecol = ds_p->swall = -1;
+			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(pl->right - pl->left);
+			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(pl->right - pl->left);
+			draw_segment->maskedtexturecol = nullptr;
+			draw_segment->swall = nullptr;
 			draw_segment->bFogBoundary = false;
 			draw_segment->curline = nullptr;
 			draw_segment->fake = 0;
 			draw_segment->foggy = false;
-			memcpy(openings + draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
-			memcpy(openings + draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
+			memcpy(draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
+			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 
 			VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprite_p;
 			firstdrawseg = draw_segment;

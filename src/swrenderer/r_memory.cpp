@@ -33,46 +33,6 @@
 
 namespace swrenderer
 {
-	short *openings;
-
-	namespace
-	{
-		size_t maxopenings;
-		ptrdiff_t lastopening;
-	}
-
-	ptrdiff_t R_NewOpening(ptrdiff_t len)
-	{
-		ptrdiff_t res = lastopening;
-		len = (len + 1) & ~1;	// only return DWORD aligned addresses because some code stores fixed_t's and floats in openings... 
-		lastopening += len;
-		if ((size_t)lastopening > maxopenings)
-		{
-			do
-				maxopenings = maxopenings ? maxopenings * 2 : 16384;
-			while ((size_t)lastopening > maxopenings);
-			openings = (short *)M_Realloc(openings, maxopenings * sizeof(*openings));
-			DPrintf(DMSG_NOTIFY, "MaxOpenings increased to %zu\n", maxopenings);
-		}
-		return res;
-	}
-
-	void R_FreeOpenings()
-	{
-		lastopening = 0;
-	}
-
-	void R_DeinitOpenings()
-	{
-		if (openings != nullptr)
-		{
-			M_Free(openings);
-			openings = nullptr;
-		}
-	}
-
-	/////////////////////////////////////////////////////////////////////////
-	
 	void *RenderMemory::AllocBytes(int size)
 	{
 		size = (size + 15) / 16 * 16; // 16-byte align

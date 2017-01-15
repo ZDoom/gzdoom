@@ -373,7 +373,11 @@ namespace swrenderer
 		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
 		else draw_segment->fake = 0;
 
-		draw_segment->sprtopclip = draw_segment->sprbottomclip = draw_segment->maskedtexturecol = draw_segment->bkup = draw_segment->swall = -1;
+		draw_segment->sprtopclip = nullptr;
+		draw_segment->sprbottomclip = nullptr;
+		draw_segment->maskedtexturecol = nullptr;
+		draw_segment->bkup = nullptr;
+		draw_segment->swall = nullptr;
 
 		if (rw_markportal)
 		{
@@ -381,10 +385,10 @@ namespace swrenderer
 		}
 		else if (backsector == NULL)
 		{
-			draw_segment->sprtopclip = R_NewOpening(stop - start);
-			draw_segment->sprbottomclip = R_NewOpening(stop - start);
-			fillshort(openings + draw_segment->sprtopclip, stop - start, viewheight);
-			memset(openings + draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
+			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
+			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+			fillshort(draw_segment->sprtopclip, stop - start, viewheight);
+			memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
 			draw_segment->silhouette = SIL_BOTH;
 		}
 		else
@@ -415,14 +419,14 @@ namespace swrenderer
 			{
 				if (doorclosed || (rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2))
 				{
-					draw_segment->sprbottomclip = R_NewOpening(stop - start);
-					memset(openings + draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
+					draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+					memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
 					draw_segment->silhouette |= SIL_BOTTOM;
 				}
 				if (doorclosed || (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 				{						// killough 1/17/98, 2/8/98
-					draw_segment->sprtopclip = R_NewOpening(stop - start);
-					fillshort(openings + draw_segment->sprtopclip, stop - start, viewheight);
+					draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
+					fillshort(draw_segment->sprtopclip, stop - start, viewheight);
 					draw_segment->silhouette |= SIL_TOP;
 				}
 			}
@@ -461,8 +465,8 @@ namespace swrenderer
 					maskedtexture = true;
 
 					// kg3D - backup for mid and fake walls
-					draw_segment->bkup = R_NewOpening(stop - start);
-					memcpy(openings + draw_segment->bkup, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+					draw_segment->bkup = RenderMemory::AllocMemory<short>(stop - start);
+					memcpy(draw_segment->bkup, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(frontsector, backsector);
 					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->bFakeBoundary)
@@ -470,12 +474,11 @@ namespace swrenderer
 						if (sidedef->GetTexture(side_t::mid).isValid())
 							draw_segment->bFakeBoundary |= 4; // it is also mid texture
 
-															  // note: This should never have used the openings array to store its data!
-						draw_segment->maskedtexturecol = R_NewOpening((stop - start) * 2);
-						draw_segment->swall = R_NewOpening((stop - start) * 2);
+						draw_segment->maskedtexturecol = RenderMemory::AllocMemory<fixed_t>(stop - start);
+						draw_segment->swall = RenderMemory::AllocMemory<float>(stop - start);
 
-						lwal = (fixed_t *)(openings + draw_segment->maskedtexturecol);
-						swal = (float *)(openings + draw_segment->swall);
+						lwal = draw_segment->maskedtexturecol;
+						swal = draw_segment->swall;
 						FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
 						double yscale = pic->Scale.Y * sidedef->GetTextureYScale(side_t::mid);
 						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -491,7 +494,7 @@ namespace swrenderer
 							*swal++ = swall[i];
 						}
 
-						double istart = *((float *)(openings + draw_segment->swall)) * yscale;
+						double istart = draw_segment->swall[0] * yscale;
 						double iend = *(swal - 1) * yscale;
 #if 0
 						///This was for avoiding overflow when using fixed point. It might not be needed anymore.
@@ -530,7 +533,7 @@ namespace swrenderer
 						draw_segment->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel) + R_ActualExtraLight(foggy));
 					}
 
-					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != -1)
+					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
 						size_t drawsegnum = draw_segment - drawsegs;
 						InterestingDrawsegs.Push(drawsegnum);
@@ -571,16 +574,16 @@ namespace swrenderer
 		}
 
 		// save sprite clipping info
-		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == -1)
+		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
 		{
-			draw_segment->sprtopclip = R_NewOpening(stop - start);
-			memcpy(openings + draw_segment->sprtopclip, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
+			memcpy(draw_segment->sprtopclip, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
 		}
 
-		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == -1)
+		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == nullptr)
 		{
-			draw_segment->sprbottomclip = R_NewOpening(stop - start);
-			memcpy(openings + draw_segment->sprbottomclip, &RenderOpaquePass::Instance()->floorclip[start], sizeof(short)*(stop - start));
+			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+			memcpy(draw_segment->sprbottomclip, &RenderOpaquePass::Instance()->floorclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
@@ -604,9 +607,9 @@ namespace swrenderer
 			pds.x2 = draw_segment->x2;
 			pds.len = pds.x2 - pds.x1;
 			pds.ceilingclip.Resize(pds.len);
-			memcpy(&pds.ceilingclip[0], openings + draw_segment->sprtopclip, pds.len * sizeof(*openings));
+			memcpy(&pds.ceilingclip[0], draw_segment->sprtopclip, pds.len * sizeof(short));
 			pds.floorclip.Resize(pds.len);
-			memcpy(&pds.floorclip[0], openings + draw_segment->sprbottomclip, pds.len * sizeof(*openings));
+			memcpy(&pds.floorclip[0], draw_segment->sprbottomclip, pds.len * sizeof(short));
 
 			for (int i = 0; i < pds.x2 - pds.x1; i++)
 			{

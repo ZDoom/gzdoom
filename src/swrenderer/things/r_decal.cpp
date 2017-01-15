@@ -182,8 +182,8 @@ namespace swrenderer
 			}
 			else
 			{
-				mceilingclip = openings + clipper->sprtopclip - clipper->x1;
-				mfloorclip = openings + clipper->sprbottomclip - clipper->x1;
+				mceilingclip = clipper->sprtopclip - clipper->x1;
+				mfloorclip = clipper->sprbottomclip - clipper->x1;
 			}
 			break;
 
@@ -201,8 +201,8 @@ namespace swrenderer
 			{
 				goto done;
 			}
-			mceilingclip = openings + clipper->sprtopclip - clipper->x1;
-			mfloorclip = openings + clipper->sprbottomclip - clipper->x1;
+			mceilingclip = clipper->sprtopclip - clipper->x1;
+			mfloorclip = clipper->sprbottomclip - clipper->x1;
 			break;
 
 		case RF_CLIPLOWER:

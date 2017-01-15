@@ -196,15 +196,15 @@ namespace swrenderer
 			}
 		}
 
-		short *mfloorclip = openings + ds->sprbottomclip - ds->x1;
-		short *mceilingclip = openings + ds->sprtopclip - ds->x1;
+		short *mfloorclip = ds->sprbottomclip - ds->x1;
+		short *mceilingclip = ds->sprtopclip - ds->x1;
 		double spryscale;
 
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
 		{
 			RenderFogBoundary::Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
-			if (ds->maskedtexturecol == -1)
+			if (ds->maskedtexturecol == nullptr)
 			{
 				goto clearfog;
 			}
@@ -214,9 +214,9 @@ namespace swrenderer
 			goto clearfog;
 		}
 
-		MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+		MaskedSWall = ds->swall - ds->x1;
 		MaskedScaleY = ds->yscale;
-		maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
+		maskedtexturecol = ds->maskedtexturecol - ds->x1;
 		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 
@@ -437,13 +437,13 @@ namespace swrenderer
 			{
 				if (!wrap)
 				{
-					assert(ds->bkup >= 0);
-					memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
+					assert(ds->bkup != nullptr);
+					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
 				}
 			}
 			else
 			{
-				fillshort(openings + ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+				fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 			}
 		}
 		return;
@@ -466,11 +466,11 @@ namespace swrenderer
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-		short *mfloorclip = openings + ds->sprbottomclip - ds->x1;
-		short *mceilingclip = openings + ds->sprtopclip - ds->x1;
+		short *mfloorclip = ds->sprbottomclip - ds->x1;
+		short *mceilingclip = ds->sprtopclip - ds->x1;
 
 		//double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		float *MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+		float *MaskedSWall = ds->swall - ds->x1;
 
 		// find positioning
 		side_t *scaledside;

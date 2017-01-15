@@ -35,11 +35,11 @@ namespace swrenderer
 		bool foggy;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
-		ptrdiff_t sprtopclip; // type short
-		ptrdiff_t sprbottomclip; // type short
-		ptrdiff_t maskedtexturecol; // type short
-		ptrdiff_t swall; // type float
-		ptrdiff_t bkup; // sprtopclip backup, for mid and fake textures
+		short *sprtopclip;
+		short *sprbottomclip;
+		fixed_t *maskedtexturecol;
+		float *swall;
+		short *bkup; // sprtopclip backup, for mid and fake textures
 		
 		FWallTmapVals tmapvals;
 		

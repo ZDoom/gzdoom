@@ -138,7 +138,6 @@ namespace swrenderer
 
 		// opening / clipping determination
 		RenderOpaquePass::Instance()->ClearClip();
-		R_FreeOpenings();
 
 		NetUpdate();
 
@@ -274,7 +273,6 @@ namespace swrenderer
 		RenderTranslucentPass::Deinit();
 		VisiblePlaneList::Instance()->Deinit();
 		Clip3DFloors::Instance()->Cleanup();
-		R_DeinitOpenings();
 		R_FreeDrawSegs();
 	}
 

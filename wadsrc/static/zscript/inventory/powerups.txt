@@ -104,15 +104,112 @@ class PowerMask : PowerIronFeet native
 	}
 }
 
-class PowerLightAmp : Powerup native
+//===========================================================================
+//
+// LightAmp
+//
+//===========================================================================
+
+class PowerLightAmp : Powerup
 {
 	Default
 	{
 		Powerup.Duration -120;
 	}
+	
+	//===========================================================================
+	//
+	// APowerLightAmp :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+
+		let player = Owner.player;
+		if (player != NULL && player.fixedcolormap < PlayerInfo.NUMCOLORMAPS)
+		{
+			if (!isBlinking())
+			{	
+				player.fixedlightlevel = 1;
+			}
+			else
+			{
+				player.fixedlightlevel = -1;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerLightAmp :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner != NULL && Owner.player != NULL && Owner.player.fixedcolormap < PlayerInfo.NUMCOLORMAPS)
+		{
+			Owner.player.fixedlightlevel = -1;
+		}
+	}
+	
 }
 
-class PowerTorch : PowerLightAmp native {}
+//===========================================================================
+//
+// Torch
+//
+//===========================================================================
+
+class PowerTorch : PowerLightAmp
+{
+	int NewTorch, NewTorchDelta;
+	
+	override void DoEffect ()
+	{
+		if (Owner == NULL || Owner.player == NULL)
+		{
+			return;
+		}
+
+		let player = Owner.player;
+		if (EffectTics <= BLINKTHRESHOLD || player.fixedcolormap >= PlayerInfo.NUMCOLORMAPS)
+		{
+			Super.DoEffect ();
+		}
+		else 
+		{
+			Powerup.DoEffect ();
+
+			if (!(level.time & 16) && Owner.player != NULL)
+			{
+				if (NewTorch != 0)
+				{
+					if (player.fixedlightlevel + NewTorchDelta > 7
+						|| player.fixedlightlevel + NewTorchDelta < 0
+						|| NewTorch == player.fixedlightlevel)
+					{
+						NewTorch = 0;
+					}
+					else
+					{
+						player.fixedlightlevel += NewTorchDelta;
+					}
+				}
+				else
+				{
+					NewTorch = (random[torch]() & 7) + 1;
+					NewTorchDelta = (NewTorch == Owner.player.fixedlightlevel) ?
+						0 : ((NewTorch > player.fixedlightlevel) ? 1 : -1);
+				}
+			}
+		}
+	}
+	
+}
 
 //===========================================================================
 //

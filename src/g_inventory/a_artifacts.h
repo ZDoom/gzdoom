@@ -105,25 +105,6 @@ public:
 	virtual void DoEffect () override;
 };
 
-class APowerLightAmp : public APowerup
-{
-	DECLARE_CLASS (APowerLightAmp, APowerup)
-protected:
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-};
-
-class APowerTorch : public APowerLightAmp
-{
-	DECLARE_CLASS (APowerTorch, APowerLightAmp)
-public:
-	
-	virtual void Serialize(FSerializer &arc) override;
-protected:
-	virtual void DoEffect () override;
-	int NewTorch, NewTorchDelta;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)

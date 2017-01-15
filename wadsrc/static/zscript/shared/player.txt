@@ -173,6 +173,10 @@ enum EPlayerState
 
 struct PlayerInfo native	// this is what internally is known as player_t
 {
+	// technically engine constants but the only part of the playsim using them is the player.
+	const NOFIXEDCOLORMAP = -1;
+	const NUMCOLORMAPS = 32;
+	
 	native PlayerPawn mo;
 	native uint8 playerstate;
 	native uint original_oldbuttons;

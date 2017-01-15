@@ -7450,7 +7450,28 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				cls = ccls;
 				staticonly = true;
-				goto isresolved;
+				if (ccls->IsKindOf(RUNTIME_CLASS(PClass)))
+				{
+					auto clstype = dyn_cast<PClass>(ctx.Function->Variants[0].SelfClass);
+					if (clstype != nullptr)
+					{
+						novirtual = clstype->IsDescendantOf(static_cast<PClass*>(ccls));
+						if (novirtual)
+						{
+							bool error;
+							PFunction *afd = FindClassMemberFunction(ccls, ctx.Class, MethodName, ScriptPosition, &error);
+							if ((afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
+							{
+								staticonly = false;
+								novirtual = true;
+								delete Self;
+								Self = new FxSelf(ScriptPosition);
+								Self->ValueType = NewPointer(cls);
+							}
+						}
+					}
+				}
+				if (!novirtual) goto isresolved;
 			}
 		}
 	}
@@ -7685,20 +7706,23 @@ isresolved:
 
 	if (staticonly && (afd->Variants[0].Flags & VARF_Method))
 	{
-		auto clstype = dyn_cast<PClass>(ctx.Class);
-		auto ccls = dyn_cast<PClass>(cls);
-		if (clstype == nullptr || ccls == nullptr || !clstype->IsDescendantOf(ccls))
+		if (!novirtual || !(afd->Variants[0].Flags & VARF_Virtual))
 		{
-			ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here\n", cls->TypeName.GetChars(), MethodName.GetChars());
-			delete this;
-			return nullptr;
-		}
-		else
-		{
-			// Todo: If this is a qualified call to a parent class function, let it through (but this needs to disable virtual calls later.)
-			ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class %s::%s is not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
-			delete this;
-			return nullptr;
+			auto clstype = dyn_cast<PClass>(ctx.Class);
+			auto ccls = dyn_cast<PClass>(cls);
+			if (clstype == nullptr || ccls == nullptr || !clstype->IsDescendantOf(ccls))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here\n", cls->TypeName.GetChars(), MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+			else
+			{
+				// Todo: If this is a qualified call to a parent class function, let it through (but this needs to disable virtual calls later.)
+				ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class %s::%s is not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
 		}
 	}
 

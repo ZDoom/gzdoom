@@ -178,45 +178,11 @@ void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &act
 void FSoftwareRenderer::RenderView(player_t *player)
 {
 	if (r_polyrenderer)
-	{
-		bool saved_swtruecolor = r_swtruecolor;
-		r_swtruecolor = screen->IsBgra();
-		
-		PolyRenderer::Instance()->RenderActorView(player->mo, false);
-		
-		// Apply special colormap if the target cannot do it
-		if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
-		{
-			R_BeginDrawerCommands();
-			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
-			R_EndDrawerCommands();
-		}
-		
-		r_swtruecolor = saved_swtruecolor;
-
-		FCanvasTextureInfo::UpdateAll();
-	}
+		PolyRenderer::Instance()->RenderView(player);
 	else
-	{
-		if (r_swtruecolor != screen->IsBgra())
-		{
-			r_swtruecolor = screen->IsBgra();
-			R_InitColumnDrawers();
-		}
+		RenderScene::Instance()->RenderView(player);
 
-		R_BeginDrawerCommands();
-		RenderScene::Instance()->RenderActorView(player->mo);
-
-		// Apply special colormap if the target cannot do it
-		if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
-		{
-			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
-		}
-
-		R_EndDrawerCommands();
-
-		FCanvasTextureInfo::UpdateAll();
-	}
+	FCanvasTextureInfo::UpdateAll();
 }
 
 void FSoftwareRenderer::RemapVoxels()
@@ -290,11 +256,6 @@ void FSoftwareRenderer::ClearBuffer(int color)
 		for (int i = 0; i < size; i++)
 			dest[i] = bgracolor;
 	}
-}
-
-void FSoftwareRenderer::SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio)
-{
-	R_SWRSetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)

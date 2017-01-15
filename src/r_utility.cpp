@@ -201,8 +201,6 @@ void R_SetViewSize (int blocks)
 
 void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas)
 {
-	float trueratio;
-
 	if (windowSize >= 11)
 	{
 		viewwidth = fullWidth;
@@ -224,11 +222,10 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, b
 	if (renderingToCanvas)
 	{
 		WidescreenRatio = fullWidth / (float)fullHeight;
-		trueratio = WidescreenRatio;
 	}
 	else
 	{
-		WidescreenRatio = ActiveRatio(fullWidth, fullHeight, &trueratio);
+		WidescreenRatio = ActiveRatio(fullWidth, fullHeight);
 	}
 
 	DrawFSHUD = (windowSize == 11);
@@ -258,7 +255,6 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, b
 		if (fov > 170.) fov = 170.;
 	}
 	FocalTangent = tan(fov.Radians() / 2);
-	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
 //==========================================================================

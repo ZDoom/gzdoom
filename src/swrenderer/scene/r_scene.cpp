@@ -30,6 +30,7 @@
 #include "g_level.h"
 #include "p_effect.h"
 #include "po_man.h"
+#include "st_stuff.h"
 #include "r_data/r_interpolate.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_viewport.h"
@@ -43,6 +44,7 @@
 #include "swrenderer/segments/r_portalsegment.h"
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/r_memory.h"
 
@@ -56,6 +58,34 @@ namespace swrenderer
 	{
 		static RenderScene instance;
 		return &instance;
+	}
+
+	void RenderScene::RenderView(player_t *player)
+	{
+		int width = SCREENWIDTH;
+		int height = SCREENHEIGHT;
+		int stHeight = ST_Y;
+		float trueratio;
+		ActiveRatio(width, height, &trueratio);
+		R_SWRSetWindow(setblocks, width, height, stHeight, trueratio);
+
+		if (r_swtruecolor != screen->IsBgra())
+		{
+			r_swtruecolor = screen->IsBgra();
+			R_InitColumnDrawers();
+		}
+
+		R_BeginDrawerCommands();
+
+		RenderActorView(player->mo);
+
+		// Apply special colormap if the target cannot do it
+		if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+		{
+			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
+		}
+
+		R_EndDrawerCommands();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -165,6 +195,8 @@ namespace swrenderer
 		bRenderingToCanvas = true;
 
 		R_SetWindow(12, width, height, height, true);
+		R_SWRSetWindow(12, width, height, height, WidescreenRatio);
+
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
@@ -175,7 +207,11 @@ namespace swrenderer
 
 		RenderTarget = screen;
 		bRenderingToCanvas = false;
+
 		R_ExecuteSetViewSize();
+		float trueratio;
+		ActiveRatio(width, height, &trueratio);
+		R_SWRSetWindow(setblocks, width, height, height, WidescreenRatio);
 		screen->Lock(true);
 		R_SetupBuffer();
 		screen->Unlock();

@@ -33,7 +33,6 @@ struct FSoftwareRenderer : public FRenderer
 	void OnModeSet () override;
 	void ClearBuffer(int color) override;
 	void Init() override;
-	void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) override;
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) override;
 	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) override;
 

@@ -72,10 +72,9 @@ namespace swrenderer
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
-		int stHeight = ST_Y;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		R_SWRSetWindow(setblocks, width, height, stHeight, trueratio);
+		RenderViewport::Instance()->SetViewport(width, height, trueratio);
 
 		if (r_swtruecolor != screen->IsBgra())
 		{
@@ -123,10 +122,9 @@ namespace swrenderer
 		clip3d->Cleanup();
 		clip3d->ResetClip(); // reset clips (floor/ceiling)
 
-		R_SetupBuffer();
 		R_SetupFrame(actor);
 		R_SetupColormap(actor);
-		R_SetupFreelook();
+		RenderViewport::Instance()->SetupFreelook();
 
 		RenderPortal::Instance()->CopyStackedViewParameters();
 
@@ -191,7 +189,6 @@ namespace swrenderer
 		}
 		WallPortals.Clear();
 		interpolator.RestoreInterpolations();
-		R_SetupBuffer();
 
 		// If we don't want shadered colormaps, NULL it now so that the
 		// copy to the screen does not use a special colormap shader.
@@ -219,11 +216,10 @@ namespace swrenderer
 		bRenderingToCanvas = true;
 
 		R_SetWindow(12, width, height, height, true);
-		R_SWRSetWindow(12, width, height, height, WidescreenRatio);
-
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
+		RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
 
@@ -235,9 +231,8 @@ namespace swrenderer
 		R_ExecuteSetViewSize();
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		R_SWRSetWindow(setblocks, width, height, height, WidescreenRatio);
 		screen->Lock(true);
-		R_SetupBuffer();
+		RenderViewport::Instance()->SetViewport(width, height, trueratio);
 		screen->Unlock();
 
 		viewactive = savedviewactive;
@@ -254,8 +249,12 @@ namespace swrenderer
 		VisiblePlaneList::Instance()->Init();
 
 		RenderTarget = screen;
+		int width = SCREENWIDTH;
+		int height = SCREENHEIGHT;
+		float trueratio;
+		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
-		R_SetupBuffer();
+		RenderViewport::Instance()->SetViewport(SCREENWIDTH, SCREENHEIGHT, trueratio);
 		screen->Unlock();
 	}
 

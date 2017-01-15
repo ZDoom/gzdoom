@@ -34,8 +34,16 @@ namespace swrenderer
 	extern double globaldclip;
 	extern angle_t xtoviewangle[MAXWIDTH + 1];
 
-	void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
-	void R_InitTextureMapping();
-	void R_SetupBuffer();
-	void R_SetupFreelook();
+	class RenderViewport
+	{
+	public:
+		static RenderViewport *Instance();
+
+		void SetViewport(int width, int height, float trueratio);
+		void SetupFreelook();
+
+	private:
+		void InitTextureMapping();
+		void SetupBuffer();
+	};
 }

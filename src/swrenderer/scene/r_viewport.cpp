@@ -60,7 +60,13 @@ namespace swrenderer
 	// from clipangle to -clipangle.
 	angle_t xtoviewangle[MAXWIDTH + 1];
 
-	void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio)
+	RenderViewport *RenderViewport::Instance()
+	{
+		static RenderViewport instance;
+		return &instance;
+	}
+
+	void RenderViewport::SetViewport(int fullWidth, int fullHeight, float trueratio)
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
@@ -113,13 +119,15 @@ namespace swrenderer
 		// thing clipping
 		fillshort(screenheightarray, viewwidth, (short)viewheight);
 
-		R_InitTextureMapping();
+		InitTextureMapping();
 
 		// Reset r_*Visibility vars
 		R_SetVisibility(R_GetVisibility());
+
+		SetupBuffer();
 	}
 
-	void R_SetupFreelook()
+	void RenderViewport::SetupFreelook()
 	{
 		double dy;
 
@@ -140,7 +148,7 @@ namespace swrenderer
 		RenderFlatPlane::SetupSlope();
 	}
 
-	void R_SetupBuffer()
+	void RenderViewport::SetupBuffer()
 	{
 		using namespace drawerargs;
 
@@ -168,7 +176,7 @@ namespace swrenderer
 		R_InitParticleTexture();
 	}
 
-	void R_InitTextureMapping()
+	void RenderViewport::InitTextureMapping()
 	{
 		int i;
 

@@ -63,7 +63,7 @@ void PolyRenderer::RenderView(player_t *player)
 	int stHeight = ST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	R_SWRSetWindow(setblocks, width, height, stHeight, trueratio);
+	RenderViewport::Instance()->SetViewport(width, height, trueratio);
 
 	RenderActorView(player->mo, false);
 
@@ -87,7 +87,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	swrenderer::RenderTarget = canvas;
 	swrenderer::bRenderingToCanvas = true;
 	R_SetWindow(12, width, height, height, true);
-	swrenderer::R_SWRSetWindow(12, width, height, height, WidescreenRatio);
+	swrenderer::RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
@@ -104,7 +104,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	R_ExecuteSetViewSize();
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	swrenderer::R_SWRSetWindow(setblocks, width, height, height, WidescreenRatio);
+	swrenderer::RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
 	viewactive = savedviewactive;
 	swrenderer::r_swtruecolor = savedoutputformat;
 }
@@ -119,7 +119,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	PO_LinkToSubsectors();
 	R_SetupFrame(actor);
 	swrenderer::R_SetupColormap(actor);
-	swrenderer::R_SetupFreelook();
+	swrenderer::RenderViewport::Instance()->SetupFreelook();
 
 	ActorRenderFlags savedflags = camera->renderflags;
 	// Never draw the player unless in chasecam mode

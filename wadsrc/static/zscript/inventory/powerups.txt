@@ -84,16 +84,45 @@ class PowerShadow : PowerInvisibility
 	}
 }
 
-class PowerIronFeet : Powerup native
+//===========================================================================
+//
+// IronFeet
+//
+//===========================================================================
+
+class PowerIronFeet : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 		Powerup.Color "00 ff 00", 0.125;
 	}
+	
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	{
+		if (damageType == 'Drowning')
+		{
+			newdamage = 0;
+		}
+	}
+
+	override void DoEffect ()
+	{
+		if (Owner.player != NULL)
+		{
+			Owner.player.mo.ResetAirSupply ();
+		}
+	}
+	
 }
 
-class PowerMask : PowerIronFeet native
+//===========================================================================
+//
+// Mask
+//
+//===========================================================================
+
+class PowerMask : PowerIronFeet
 {
 	Default
 	{
@@ -102,6 +131,24 @@ class PowerMask : PowerIronFeet native
 		+INVENTORY.HUBPOWER
 		Inventory.Icon "I_MASK";
 	}
+	
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	{
+		if (damageType == 'Fire' || damageType == 'Drowning')
+		{
+			newdamage = 0;
+		}
+	}
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+		if (!(level.time & 0x3f))
+		{
+			Owner.A_PlaySound ("misc/mask", CHAN_AUTO);
+		}
+	}
+	
 }
 
 //===========================================================================

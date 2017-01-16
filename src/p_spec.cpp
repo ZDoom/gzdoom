@@ -394,9 +394,10 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		// Allow subclasses. Better would be to implement it as armor and let that reduce
 		// the damage as part of the normal damage procedure. Unfortunately, I don't have
 		// different damage types yet, so that's not happening for now.
+		auto pitype = PClass::FindActor(NAME_PowerIronFeet);
 		for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
 		{
-			if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
+			if (ironfeet->IsKindOf(pitype))
 				break;
 		}
 
@@ -578,9 +579,10 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 
 		if (Terrains[floorType].AllowProtection)
 		{
+			auto pitype = PClass::FindActor(NAME_PowerIronFeet);
 			for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
 			{
-				if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
+				if (ironfeet->IsKindOf (pitype))
 					break;
 			}
 		}

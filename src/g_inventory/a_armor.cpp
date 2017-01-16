@@ -229,6 +229,8 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		// This code is taken and adapted from APowerProtection::ModifyDamage().
 		// The differences include not using a default value, and of course the way
 		// the damage factor info is obtained.
+
+		// ApplyDamageFactors(ArmorType, damageType, damage, damage);
 		DmgFactors *df = PClass::FindActor(ArmorType)->DamageFactors;
 		if (df != NULL)
 		{

@@ -89,22 +89,6 @@ protected:
 	virtual int AlterWeaponSprite (visstyle_t *vis) override;
 };
 
-class APowerIronFeet : public APowerup
-{
-	DECLARE_CLASS (APowerIronFeet, APowerup)
-public:
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
-	virtual void DoEffect () override;
-};
-
-class APowerMask : public APowerIronFeet
-{
-	DECLARE_CLASS (APowerMask, APowerIronFeet)
-public:
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
-	virtual void DoEffect () override;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)

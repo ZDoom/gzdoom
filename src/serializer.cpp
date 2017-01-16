@@ -495,7 +495,7 @@ void FSerializer::Close()
 	{
 		// we must explicitly delete all thinkers in the array which did not get linked into the thinker lists.
 		// Otherwise these objects may survive a level deletion and point to incorrect data.
-		for (auto &obj : r->mDObjects)
+		for (auto obj : r->mDObjects)
 		{
 			auto think = dyn_cast<DThinker>(obj);
 			if (think != nullptr)

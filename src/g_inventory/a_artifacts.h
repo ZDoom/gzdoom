@@ -64,45 +64,6 @@ protected:
 	virtual void InitEffect () override;
 	virtual void DoEffect () override;
 	virtual void EndEffect () override;
-	virtual int AlterWeaponSprite (visstyle_t *vis) override;
-};
-
-class APowerStrength : public APowerup
-{
-	DECLARE_CLASS (APowerStrength, APowerup)
-public:
-	PalEntry GetBlend ();
-protected:
-	virtual void InitEffect () override;
-	virtual void Tick () override;
-	virtual bool HandlePickup (AInventory *item) override;
-};
-
-class APowerInvisibility : public APowerup
-{
-	DECLARE_CLASS (APowerInvisibility, APowerup)
-protected:
-	virtual bool HandlePickup (AInventory *item) override;
-	virtual void InitEffect () override;
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-	virtual int AlterWeaponSprite (visstyle_t *vis) override;
-};
-
-class APowerIronFeet : public APowerup
-{
-	DECLARE_CLASS (APowerIronFeet, APowerup)
-public:
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
-	virtual void DoEffect () override;
-};
-
-class APowerMask : public APowerIronFeet
-{
-	DECLARE_CLASS (APowerMask, APowerIronFeet)
-public:
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
-	virtual void DoEffect () override;
 };
 
 class APowerSpeed : public APowerup

@@ -289,19 +289,26 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		{
 			visstyle_t visstyle;
 			visstyle.Alpha = Alpha;
-			visstyle.RenderStyle = RenderStyle;
-			visstyle.colormap = nullptr; // Same as the GL render is doing.
-			
+			visstyle.RenderStyle = STYLE_Count;
+			visstyle.Invert = false;
+
 			camera->Inventory->AlterWeaponSprite(&visstyle);
-			
-			RenderStyle = visstyle.RenderStyle;
+
 			Alpha = visstyle.Alpha;
-			
-			// Only bother checking for the one type it changes it to until this has been ZScript'ed..
-			if (visstyle.colormap == SpecialColormaps[INVERSECOLORMAP].Colormap)
+
+			if (visstyle.RenderStyle != STYLE_Count)
+			{
+				RenderStyle = visstyle.RenderStyle;
+			}
+
+			if (visstyle.Invert)
 			{
 				BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
 				ColormapNum = 0;
+				if (BaseColormap->Maps < mybasecolormap->Maps || BaseColormap->Maps >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
+				{
+					noaccel = true;
+				}
 			}
 		}
 		

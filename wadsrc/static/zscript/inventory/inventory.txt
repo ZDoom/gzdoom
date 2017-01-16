@@ -1,3 +1,10 @@
+struct VisStyle
+{
+	bool			Invert;
+	float			Alpha;
+	int				RenderStyle;
+}
+
 class Inventory : Actor native
 {
 	const BLINKTHRESHOLD = (4*32);
@@ -39,6 +46,7 @@ class Inventory : Actor native
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
 	virtual native bool DrawPowerup(int x, int y);
+	virtual native void AbsorbDamage (int damage, Name damageType, out int newdamage);
 	
 	//===========================================================================
 	//
@@ -55,6 +63,7 @@ class Inventory : Actor native
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
+	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
 
 	native bool GoAway();
 	native void GoAwayAndDie();

@@ -229,15 +229,13 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		// This code is taken and adapted from APowerProtection::ModifyDamage().
 		// The differences include not using a default value, and of course the way
 		// the damage factor info is obtained.
+
+		// ApplyDamageFactors(ArmorType, damageType, damage, damage);
 		DmgFactors *df = PClass::FindActor(ArmorType)->DamageFactors;
 		if (df != NULL)
 		{
 			damage = newdamage = df->Apply(damageType, damage);
 		}
-	}
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 
@@ -628,10 +626,6 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 			newdamage -= saved;
 			damage = newdamage;
 		}
-	}
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 

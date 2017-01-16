@@ -697,12 +697,17 @@ DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
 
 void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
-	}
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, AbsorbDamage)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_INT(damage);
+	PARAM_NAME(type);
+	PARAM_POINTER(newdmg, int);
+	self->AbsorbDamage(damage, type, *newdmg);
+	return 0;
+}
 //===========================================================================
 //
 // AInventory :: ModifyDamage
@@ -776,24 +781,6 @@ bool AInventory::GetNoTeleportFreeze ()
 		self = self->Inventory;
 	}
 	return false;
-}
-
-//===========================================================================
-//
-// AInventory :: AlterWeaponSprite
-//
-// Allows inventory items to alter a player's weapon sprite just before it
-// is drawn.
-//
-//===========================================================================
-
-int AInventory::AlterWeaponSprite (visstyle_t *vis)
-{
-	if (Inventory != NULL)
-	{
-		return Inventory->AlterWeaponSprite (vis);
-	}
-	return 0;
 }
 
 //===========================================================================

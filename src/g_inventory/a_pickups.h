@@ -133,7 +133,6 @@ public:
 
 	// visual stuff is for later. Right now the VM has not yet access to the needed functionality.
 	virtual bool DrawPowerup(int x, int y);
-	virtual int AlterWeaponSprite(visstyle_t *vis);
 
 
 	// virtual on the script side only.

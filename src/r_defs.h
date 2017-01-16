@@ -1488,9 +1488,9 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 // This encapsulates the fields of vissprite_t that can be altered by AlterWeaponSprite
 struct visstyle_t
 {
-	lighttable_t	*colormap;
+	bool			Invert;
 	float			Alpha;
-	FRenderStyle	RenderStyle;
+	ERenderStyle	RenderStyle;
 };
 
 

@@ -46,7 +46,7 @@
 struct subsector_t;
 struct FBlockNode;
 struct FPortalGroupArray;
-
+struct visstyle_t;
 //
 // NOTES: AActor
 //
@@ -616,6 +616,8 @@ public:
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
 	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
+	int AbsorbDamage(int damage, FName dmgtype);
+	void AlterWeaponSprite(visstyle_t *vis);
 
 	// Returns true if this actor is within melee range of its target
 	bool CheckMeleeRange();

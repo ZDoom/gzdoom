@@ -821,6 +821,68 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 
 //==========================================================================
 //
+// Parses an actor property's parameters and calls the handler
+//
+//==========================================================================
+
+static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaults, Baggage &bag)
+{
+	for (unsigned i=0; i<prop->Variables.Size();i++)
+	{
+		auto f = prop->Variables[i];
+		void *addr;
+
+		if (i > 0) sc.MustGetStringName(",");
+		if (f->Flags & VARF_Meta)
+		{
+			addr = ((char*)bag.Info) + f->Offset;
+		}
+		else
+		{
+			addr = ((char*)defaults) + f->Offset;
+		}
+
+		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		{
+			sc.MustGetNumber();
+			static_cast<PInt*>(f->Type)->SetValue(addr, sc.Number);
+		}
+		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			sc.MustGetFloat();
+			static_cast<PFloat*>(f->Type)->SetValue(addr, sc.Float);
+		}
+		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		{
+			sc.MustGetString();
+			*(FString*)addr = sc.String;
+		}
+		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+		{
+			sc.MustGetString();
+			auto cls = PClass::FindClass(sc.String);
+			*(PClass**)addr = cls;
+			if (cls == nullptr)
+			{
+				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+			}
+			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			{
+				sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
+			*(PClass**)addr = cls;
+		}
+		else
+		{
+			sc.ScriptMessage("unhandled property type %s", f->Type->DescriptiveName());
+			FScriptPosition::ErrorCounter++;
+		}
+	}
+}
+
+//==========================================================================
+//
 // Parses an actor property
 //
 //==========================================================================
@@ -867,6 +929,17 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 	else
 	{
+		propname.Insert(0, "@property@");
+		FName name(propname, true);
+		if (name != NAME_None)
+		{
+			auto propp = dyn_cast<PProperty>(bag.Info->Symbols.FindSymbol(name, true));
+			if (propp != nullptr)
+			{
+				DispatchScriptProperty(sc, propp, (AActor *)bag.Info->Defaults, bag);
+				return;
+			}
+		}
 		sc.ScriptError("'%s' is an unknown actor property\n", propname.GetChars());
 	}
 }

@@ -2127,6 +2127,7 @@ CCMD (soundlist)
 		{
 			Printf ("%3d. %s **not present**\n", i, sfx->name.GetChars());
 		}
+		Printf("    PitchMask = %d\n", sfx->PitchMask);
 	}
 }
 

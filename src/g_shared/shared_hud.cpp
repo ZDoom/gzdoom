@@ -297,8 +297,8 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 		CR_BLUE;
 
 	const bool haveBerserk = hud_berserk_health
-		&& NULL != berserkpic
-		&& NULL != CPlayer->mo->FindInventory< APowerStrength >();
+		&& nullptr != berserkpic
+		&& nullptr != CPlayer->mo->FindInventory(PClass::FindActor(NAME_PowerStrength));
 
 	DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
 	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);

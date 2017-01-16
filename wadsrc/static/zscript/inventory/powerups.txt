@@ -58,7 +58,13 @@ class PowerInvulnerable : Powerup native
 	}
 }
 
-class PowerStrength : Powerup native
+//===========================================================================
+//
+// Strength
+//
+//===========================================================================
+
+class PowerStrength : Powerup
 {
 	Default
 	{
@@ -66,6 +72,49 @@ class PowerStrength : Powerup native
 		Powerup.Color "ff 00 00", 0.5;
 		+INVENTORY.HUBPOWER
 	}
+	
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{ // Setting EffectTics to 0 will force Powerup's HandlePickup()
+		  // method to reset the tic count so you get the red flash again.
+			EffectTics = 0;
+		}
+		return Super.HandlePickup (item);
+	}
+
+	//===========================================================================
+	//
+	// APowerStrength :: DoEffect
+	//
+	//===========================================================================
+
+	override void Tick ()
+	{
+		// Strength counts up to diminish the fade.
+		EffectTics += 2;
+		Super.Tick();
+	}
+
+	//===========================================================================
+	//
+	// APowerStrength :: GetBlend
+	//
+	//===========================================================================
+
+	override color GetBlend ()
+	{
+		// slowly fade the berserk out
+		int cnt = 128 - (EffectTics>>3);
+
+		if (cnt > 0)
+		{
+			return Color(BlendColor.a*cnt/256,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		return 0;
+	}
+	
 }
 
 //===========================================================================

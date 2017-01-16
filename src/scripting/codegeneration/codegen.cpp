@@ -5921,8 +5921,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	{
 		Object->ValueType = TypeColorStruct;
 	}
-
-	else if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
 		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))

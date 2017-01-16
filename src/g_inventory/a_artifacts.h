@@ -66,17 +66,6 @@ protected:
 	virtual void EndEffect () override;
 };
 
-class APowerStrength : public APowerup
-{
-	DECLARE_CLASS (APowerStrength, APowerup)
-public:
-	PalEntry GetBlend ();
-protected:
-	virtual void InitEffect () override;
-	virtual void Tick () override;
-	virtual bool HandlePickup (AInventory *item) override;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)

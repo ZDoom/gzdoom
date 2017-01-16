@@ -18,13 +18,22 @@
 
 namespace swrenderer
 {
-	class RenderParticle
+	class RenderParticle : public VisibleSprite
 	{
 	public:
 		static void Project(particle_t *, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy);
-		static void Render(vissprite_t *);
+
+		bool IsParticle() const override { return true; }
+		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
-		static void DrawMaskedSegsBehindParticle(const vissprite_t *vis);
+		void DrawMaskedSegsBehindParticle();
+
+		fixed_t xscale;
+		fixed_t	startfrac; // horizontal position of x1
+		int y1, y2;
+
+		uint32_t Translation;
+		uint32_t FillColor;
 	};
 }

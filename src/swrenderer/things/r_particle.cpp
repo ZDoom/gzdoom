@@ -178,7 +178,7 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
+		RenderParticle *vis = RenderMemory::NewObject<RenderParticle>();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -194,7 +194,6 @@ namespace swrenderer
 		vis->Translation = 0;
 		vis->startfrac = 255 & (particle->color >> 24);
 		vis->pic = NULL;
-		vis->bIsVoxel = false;
 		vis->renderflags = (short)(particle->alpha * 255.0f + 0.5f);
 		vis->FakeFlatStat = fakeside;
 		vis->floorclip = 0;
@@ -226,9 +225,11 @@ namespace swrenderer
 		VisibleSpriteList::Instance()->Push(vis);
 	}
 
-	void RenderParticle::Render(vissprite_t *vis)
+	void RenderParticle::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
 		using namespace drawerargs;
+
+		auto vis = this;
 
 		int spacing;
 		BYTE color = vis->Style.BaseColormap->Maps[vis->startfrac];
@@ -240,7 +241,7 @@ namespace swrenderer
 		if (ycount <= 0 || countbase <= 0)
 			return;
 
-		DrawMaskedSegsBehindParticle(vis);
+		DrawMaskedSegsBehindParticle();
 
 		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 
@@ -275,11 +276,8 @@ namespace swrenderer
 		}
 	}
 
-	void RenderParticle::DrawMaskedSegsBehindParticle(const vissprite_t *vis)
+	void RenderParticle::DrawMaskedSegsBehindParticle()
 	{
-		const int x1 = vis->x1;
-		const int x2 = vis->x2;
-
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
 		for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
@@ -291,10 +289,10 @@ namespace swrenderer
 			{
 				continue;
 			}
-			if ((ds->siz2 - ds->siz1) * ((x2 + x1) / 2 - ds->sx1) / (ds->sx2 - ds->sx1) + ds->siz1 < vis->idepth)
+			if ((ds->siz2 - ds->siz1) * ((x2 + x1) / 2 - ds->sx1) / (ds->sx2 - ds->sx1) + ds->siz1 < idepth)
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
-				if (ds->CurrentPortalUniq == vis->CurrentPortalUniq)
+				if (ds->CurrentPortalUniq == CurrentPortalUniq)
 					R_RenderMaskedSegRange(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2));
 			}
 		}

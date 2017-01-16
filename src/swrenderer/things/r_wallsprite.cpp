@@ -104,7 +104,7 @@ namespace swrenderer
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
-		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
+		RenderWallSprite *vis = RenderMemory::NewObject<RenderWallSprite>();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 >= renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
@@ -127,12 +127,9 @@ namespace swrenderer
 		vis->Style.Alpha = float(thing->Alpha);
 		vis->fakefloor = NULL;
 		vis->fakeceiling = NULL;
-		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
+		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		vis->pic = pic;
-		vis->bIsVoxel = false;
-		vis->bWallSprite = true;
-		vis->Style.ColormapNum = GETPALOOKUP(
-			r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+		vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
 		vis->Style.BaseColormap = basecolormap;
 		vis->wallc = wallc;
 		vis->foggy = foggy;
@@ -140,8 +137,10 @@ namespace swrenderer
 		VisibleSpriteList::Instance()->Push(vis);
 	}
 
-	void RenderWallSprite::Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::Render(short *mfloorclip, short *mceilingclip, int, int)
 	{
+		auto spr = this;
+
 		int x1, x2;
 		double iyscale;
 		bool sprflipvert;

@@ -52,15 +52,15 @@ namespace swrenderer
 		StartIndices.Pop();
 	}
 
-	void VisibleSpriteList::Push(vissprite_t *sprite)
+	void VisibleSpriteList::Push(VisibleSprite *sprite)
 	{
 		Sprites.Push(sprite);
 	}
 
 	void VisibleSpriteList::Sort(bool compare2d)
 	{
-		size_t first = StartIndices.Size() == 0 ? 0 : StartIndices.Last();
-		size_t count = Sprites.Size() - first;
+		unsigned int first = StartIndices.Size() == 0 ? 0 : StartIndices.Last();
+		unsigned int count = Sprites.Size() - first;
 
 		SortedSprites.Resize(count);
 
@@ -69,7 +69,7 @@ namespace swrenderer
 
 		if (!(i_compatflags & COMPATF_SPRITESORT))
 		{
-			for (size_t i = 0; i < count; i++)
+			for (unsigned int i = 0; i < count; i++)
 				SortedSprites[i] = Sprites[first + i];
 		}
 		else
@@ -77,7 +77,7 @@ namespace swrenderer
 			// If the compatibility option is on sprites of equal distance need to
 			// be sorted in inverse order. This is most easily achieved by
 			// filling the sort array backwards before the sort.
-			for (size_t i = 0; i < count; i++)
+			for (unsigned int i = 0; i < count; i++)
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
@@ -87,7 +87,7 @@ namespace swrenderer
 			// It does a 2D distance test based on whichever one is furthest from
 			// the viewpoint.
 
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](vissprite_t *a, vissprite_t *b) -> bool
+			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{
 				return DVector2(a->deltax, a->deltay).LengthSquared() < DVector2(b->deltax, b->deltay).LengthSquared();
 			});
@@ -96,7 +96,7 @@ namespace swrenderer
 		{
 			// This is the standard version, which does a simple test based on depth.
 
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](vissprite_t *a, vissprite_t *b) -> bool
+			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{
 				return a->idepth > b->idepth;
 			});

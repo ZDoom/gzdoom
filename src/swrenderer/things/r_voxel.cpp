@@ -105,7 +105,7 @@ namespace swrenderer
 			}
 		}
 
-		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
+		RenderVoxel *vis = RenderMemory::NewObject<RenderVoxel>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -150,12 +150,10 @@ namespace swrenderer
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
 		vis->Style.ColormapNum = 0;
-		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
-		vis->bSplitSprite = false;
+		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
+		//vis->bSplitSprite = false;
 
 		vis->voxel = voxel->Voxel;
-		vis->bIsVoxel = true;
-		vis->bWallSprite = false;
 		vis->foggy = foggy;
 
 		// The software renderer cannot invert the source without inverting the overlay
@@ -227,8 +225,10 @@ namespace swrenderer
 		RenderTranslucentPass::DrewAVoxel = true;
 	}
 
-	void RenderVoxel::Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)
+	void RenderVoxel::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
+		auto sprite = this;
+
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Style.BaseColormap);
 
 		R_SetColorMapLight(sprite->Style.BaseColormap, 0, sprite->Style.ColormapNum << FRACBITS);

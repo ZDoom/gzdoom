@@ -72,7 +72,7 @@ namespace swrenderer
 	double RenderPlayerSprite::pspritexiscale;
 	double RenderPlayerSprite::pspriteyscale;
 
-	TArray<vissprite_t> RenderPlayerSprite::avis;
+	TArray<RenderSprite> RenderPlayerSprite::avis;
 
 	void RenderPlayerSprite::SetupSpriteScale()
 	{
@@ -205,7 +205,6 @@ namespace swrenderer
 		FTextureID			picnum;
 		WORD				flip;
 		FTexture*			tex;
-		vissprite_t*		vis;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
 
@@ -273,7 +272,7 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		vis = &avis[vispspindex];
+		RenderSprite *vis = &avis[vispspindex];
 		vis->renderflags = owner->renderflags;
 		vis->floorclip = 0;
 
@@ -571,16 +570,14 @@ namespace swrenderer
 		short *mfloorclip = screenheightarray;
 		short *mceilingclip = zeroarray;
 
-		RenderSprite::Render(vis, mfloorclip, mceilingclip);
+		vis->Render(mfloorclip, mceilingclip, 0, 0);
 	}
 
 	void RenderPlayerSprite::RenderRemainingPlayerSprites()
 	{
 		for (unsigned int i = 0; i < vispspindex; i++)
 		{
-			vissprite_t *vis;
-
-			vis = vispsprites[i].vis;
+			RenderSprite *vis = vispsprites[i].vis;
 			FDynamicColormap *colormap = vispsprites[i].basecolormap;
 			bool flip = vis->xiscale < 0;
 			FSpecialColormap *special = NULL;

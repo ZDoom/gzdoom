@@ -24,70 +24,44 @@ struct FVoxel;
 
 namespace swrenderer
 {
-	struct vissprite_t
+	class VisibleSprite
 	{
-		struct posang
-		{
-			FVector3 vpos; // view origin
-			FAngle vang; // view angle
-		};
+	public:
+		virtual bool IsParticle() const { return false; }
+		virtual bool IsVoxel() const { return false; }
+		virtual bool IsWallSprite() const { return false; }
+
+		virtual void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) = 0;
+
+		FTexture *pic;
 
 		short x1, x2;
-		FVector3 gpos; // origin in world coordinates
-		union
-		{
-			struct
-			{
-				float gzb, gzt; // global bottom / top for silhouette clipping
-			};
-			struct
-			{
-				int y1, y2; // top / bottom of particle on screen
-			};
-		};
-		DAngle Angle;
-		fixed_t xscale;
-		float yscale;
-		float depth;
-		float idepth; // 1/z
-		float deltax, deltay;
-		uint32_t FillColor;
+		float gzb, gzt; // global bottom / top for silhouette clipping
+
 		double floorclip;
-		union
-		{
-			FTexture *pic;
-			struct FVoxel *voxel;
-		};
-		union
-		{
-			// Used by face sprites
-			struct
-			{
-				double texturemid;
-				fixed_t	startfrac; // horizontal position of x1
-				fixed_t	xiscale; // negative if flipped
-			};
-			// Used by wall sprites
-			FWallCoords wallc;
-			// Used by voxels
-			posang pa;
-		};
-		sector_t *heightsec; // killough 3/27/98: height sector for underwater/fake ceiling
-		sector_t *sector; // [RH] sector this sprite is in
-		F3DFloor *fakefloor;
+
+		double texturemid; // floorclip
+		float yscale; // voxel and floorclip
+
+		sector_t *heightsec; // height sector for underwater/fake ceiling
+		WaterFakeSide FakeFlatStat; // which side of fake/floor ceiling sprite is on
+
+		F3DFloor *fakefloor; // 3d floor clipping
 		F3DFloor *fakeceiling;
-		uint8_t bIsVoxel : 1; // [RH] Use voxel instead of pic
-		uint8_t bWallSprite : 1; // [RH] This is a wall sprite
-		uint8_t bSplitSprite : 1; // [RH] Sprite was split by a drawseg
-		uint8_t bInMirror : 1; // [RH] Sprite is "inside" a mirror
-		WaterFakeSide FakeFlatStat; // [RH] which side of fake/floor ceiling sprite is on
-		short renderflags;
-		uint32_t Translation; // [RH] for color translation
+
+		FVector3 gpos; // origin in world coordinates
+		sector_t *sector; // sector this sprite is in
+
+		// Light shared calculation?
 		visstyle_t Style;
-		int CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
-
 		bool foggy;
+		short renderflags;
 
-		vissprite_t() {}
+		float depth; // Sort (draw segments), also light
+
+		float deltax, deltay; // Sort (2d/voxel version)
+		float idepth; // Sort (non-voxel version)
+
+		int CurrentPortalUniq; // to identify the portal that this thing is in. used for clipping.
 	};
 }

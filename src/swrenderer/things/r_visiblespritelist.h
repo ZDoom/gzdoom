@@ -16,7 +16,7 @@
 namespace swrenderer
 {
 	struct drawseg_t;
-	struct vissprite_t;
+	class VisibleSprite;
 
 	class VisibleSpriteList
 	{
@@ -26,13 +26,13 @@ namespace swrenderer
 		void Clear();
 		void PushPortal();
 		void PopPortal();
-		void Push(vissprite_t *sprite);
+		void Push(VisibleSprite *sprite);
 		void Sort(bool compare2d);
 
-		TArray<vissprite_t *> SortedSprites;
+		TArray<VisibleSprite *> SortedSprites;
 
 	private:
-		TArray<vissprite_t *> Sprites;
-		TArray<size_t> StartIndices;
+		TArray<VisibleSprite *> Sprites;
+		TArray<unsigned int> StartIndices;
 	};
 }

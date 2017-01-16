@@ -156,7 +156,7 @@ namespace swrenderer
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
 		// store information in a vissprite
-		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
+		RenderSprite *vis = RenderMemory::NewObject<RenderSprite>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -166,7 +166,7 @@ namespace swrenderer
 		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
 		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
 		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
-		vis->Angle = thing->Angles.Yaw;
+		//vis->Angle = thing->Angles.Yaw;
 
 		if (renderflags & RF_XFLIP)
 		{
@@ -202,12 +202,10 @@ namespace swrenderer
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
 		vis->Style.ColormapNum = 0;
-		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
-		vis->bSplitSprite = false;
+		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
+		//vis->bSplitSprite = false;
 
 		vis->pic = tex;
-		vis->bIsVoxel = false;
-		vis->bWallSprite = false;
 
 		vis->foggy = foggy;
 
@@ -278,8 +276,10 @@ namespace swrenderer
 		VisibleSpriteList::Instance()->Push(vis);
 	}
 
-	void RenderSprite::Render(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip)
+	void RenderSprite::Render(short *mfloorclip, short *mceilingclip, int, int)
 	{
+		auto vis = this;
+
 		fixed_t 		frac;
 		FTexture		*tex;
 		int				x2;

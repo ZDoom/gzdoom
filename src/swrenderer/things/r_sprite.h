@@ -17,10 +17,21 @@
 
 namespace swrenderer
 {
-	class RenderSprite
+	class RenderSprite : public VisibleSprite
 	{
 	public:
 		static void Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
-		static void Render(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip);
+
+		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+
+	private:
+		fixed_t xscale;
+		fixed_t	startfrac; // horizontal position of x1
+		fixed_t	xiscale; // negative if flipped
+
+		uint32_t Translation;
+		uint32_t FillColor;
+
+		friend class RenderPlayerSprite; // To do: detach sprite from playersprite!
 	};
 }

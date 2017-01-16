@@ -90,7 +90,7 @@ namespace swrenderer
 		}
 	}
 
-	bool RenderTranslucentPass::ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
+	bool RenderTranslucentPass::ClipSpriteColumnWithPortals(int x, VisibleSprite *spr)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -118,7 +118,7 @@ namespace swrenderer
 		return false;
 	}
 
-	void RenderTranslucentPass::DrawSprite(vissprite_t *spr)
+	void RenderTranslucentPass::DrawSprite(VisibleSprite *spr)
 	{
 		static short clipbot[MAXWIDTH];
 		static short cliptop[MAXWIDTH];
@@ -136,12 +136,13 @@ namespace swrenderer
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 
 		// [RH] Check for particles
-		if (!spr->bIsVoxel && spr->pic == nullptr)
+		if (spr->IsParticle())
 		{
 			// kg3D - reject invisible parts
 			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= clip3d->sclipBottom) return;
 			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gpos.Z >= clip3d->sclipTop) return;
-			RenderParticle::Render(spr);
+
+			spr->Render(nullptr, nullptr, 0, 0);
 			return;
 		}
 
@@ -258,7 +259,7 @@ namespace swrenderer
 		double scale = InvZtoScale * spr->idepth;
 		double hzb = DBL_MIN, hzt = DBL_MAX;
 
-		if (spr->bIsVoxel && spr->floorclip != 0)
+		if (spr->IsVoxel() && spr->floorclip != 0)
 		{
 			hzb = spr->gzb;
 		}
@@ -272,7 +273,7 @@ namespace swrenderer
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 				{ // seen below floor: clip top
-					if (!spr->bIsVoxel && h > topclip)
+					if (!spr->IsVoxel() && h > topclip)
 					{
 						topclip = short(MIN(h, viewheight));
 					}
@@ -280,7 +281,7 @@ namespace swrenderer
 				}
 				else
 				{ // seen in the middle: clip bottom
-					if (!spr->bIsVoxel && h < botclip)
+					if (!spr->IsVoxel() && h < botclip)
 					{
 						botclip = MAX<short>(0, h);
 					}
@@ -294,7 +295,7 @@ namespace swrenderer
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 				{ // seen above ceiling: clip bottom
-					if (!spr->bIsVoxel && h < botclip)
+					if (!spr->IsVoxel() && h < botclip)
 					{
 						botclip = MAX<short>(0, h);
 					}
@@ -302,7 +303,7 @@ namespace swrenderer
 				}
 				else
 				{ // seen in the middle: clip top
-					if (!spr->bIsVoxel && h > topclip)
+					if (!spr->IsVoxel() && h > topclip)
 					{
 						topclip = MIN(h, viewheight);
 					}
@@ -311,7 +312,7 @@ namespace swrenderer
 			}
 		}
 		// killough 3/27/98: end special clipping for deep water / fake ceilings
-		else if (!spr->bIsVoxel && spr->floorclip)
+		else if (!spr->IsVoxel() && spr->floorclip)
 		{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
 		  //int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid - (spr->pic->GetHeight() << FRACBITS) + spr->floorclip, spr->yscale)) >> FRACBITS);
 			int clip = xs_RoundToInt(CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
@@ -323,7 +324,7 @@ namespace swrenderer
 
 		if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 		{
-			if (!spr->bIsVoxel)
+			if (!spr->IsVoxel())
 			{
 				double hz = clip3d->sclipBottom;
 				if (spr->fakefloor)
@@ -344,7 +345,7 @@ namespace swrenderer
 		}
 		if (clip3d->fake3D & FAKE3D_CLIPTOP)
 		{
-			if (!spr->bIsVoxel)
+			if (!spr->IsVoxel())
 			{
 				double hz = clip3d->sclipTop;
 				if (spr->fakeceiling != nullptr)
@@ -411,7 +412,7 @@ namespace swrenderer
 			r2 = MIN<int>(ds->x2, x2);
 
 			float neardepth, fardepth;
-			if (!spr->bWallSprite)
+			if (!spr->IsWallSprite())
 			{
 				if (ds->sz1 < ds->sz2)
 				{
@@ -425,7 +426,7 @@ namespace swrenderer
 
 
 			// Check if sprite is in front of draw seg:
-			if ((!spr->bWallSprite && neardepth > spr->depth) || ((spr->bWallSprite || fardepth > spr->depth) &&
+			if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
 				(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
 				(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
 			{
@@ -475,16 +476,9 @@ namespace swrenderer
 
 		// all clipping has been performed, so draw the sprite
 
-		if (!spr->bIsVoxel)
+		if (!spr->IsVoxel())
 		{
-			if (!spr->bWallSprite)
-			{
-				RenderSprite::Render(spr, clipbot, cliptop);
-			}
-			else
-			{
-				RenderWallSprite::Render(spr, clipbot, cliptop);
-			}
+			spr->Render(clipbot, cliptop, 0, 0);
 		}
 		else
 		{
@@ -517,7 +511,7 @@ namespace swrenderer
 			}
 			int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
-			RenderVoxel::Render(spr, minvoxely, maxvoxely, cliptop, clipbot);
+			spr->Render(cliptop, clipbot, minvoxely, maxvoxely);
 		}
 		spr->Style.BaseColormap = colormap;
 		spr->Style.ColormapNum = colormapnum;

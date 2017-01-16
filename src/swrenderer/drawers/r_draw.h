@@ -19,8 +19,6 @@ EXTERN_CVAR(Bool, r_dynlights);
 
 namespace swrenderer
 {
-	struct vissprite_t;
-
 	struct ShadeConstants
 	{
 		uint16_t light_alpha;

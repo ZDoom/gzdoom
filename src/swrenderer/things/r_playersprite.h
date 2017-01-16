@@ -14,6 +14,7 @@
 #pragma once
 
 #include "r_visiblesprite.h"
+#include "r_sprite.h"
 
 class DPSprite;
 
@@ -36,7 +37,7 @@ namespace swrenderer
 		// Used to store a psprite's drawing information if it needs to be drawn later.
 		struct vispsp_t
 		{
-			vissprite_t *vis;
+			RenderSprite *vis;
 			FDynamicColormap *basecolormap;
 			int	 x1;
 		};
@@ -48,6 +49,6 @@ namespace swrenderer
 		static double pspritexiscale;
 		static double pspriteyscale;
 
-		static TArray<vissprite_t> avis;
+		static TArray<RenderSprite> avis;
 	};
 }

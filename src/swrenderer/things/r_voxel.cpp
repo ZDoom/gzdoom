@@ -41,6 +41,7 @@
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
+#include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
@@ -104,7 +105,7 @@ namespace swrenderer
 			}
 		}
 
-		vissprite_t *vis = VisibleSpriteList::Add();
+		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -156,8 +157,6 @@ namespace swrenderer
 		vis->bIsVoxel = true;
 		vis->bWallSprite = false;
 		vis->foggy = foggy;
-
-		RenderTranslucentPass::DrewAVoxel = true;
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
@@ -223,6 +222,9 @@ namespace swrenderer
 				vis->Style.BaseColormap = mybasecolormap;
 			}
 		}
+
+		VisibleSpriteList::Instance()->Push(vis);
+		RenderTranslucentPass::DrewAVoxel = true;
 	}
 
 	void RenderVoxel::Render(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom)

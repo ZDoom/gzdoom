@@ -66,7 +66,6 @@ namespace swrenderer
 		double	 			tz, tiz;
 		double	 			xscale, yscale;
 		int 				x1, x2, y1, y2;
-		vissprite_t*		vis;
 		sector_t*			heightsec = NULL;
 		FSWColormap*			map;
 		
@@ -179,7 +178,7 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		vis = VisibleSpriteList::Add();
+		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -223,6 +222,8 @@ namespace swrenderer
 			vis->Style.ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
 			vis->Style.BaseColormap = map;
 		}
+
+		VisibleSpriteList::Instance()->Push(vis);
 	}
 
 	void RenderParticle::Render(vissprite_t *vis)

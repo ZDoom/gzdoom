@@ -51,14 +51,12 @@ namespace swrenderer
 
 	void RenderTranslucentPass::Deinit()
 	{
-		VisibleSpriteList::Deinit();
-		SortedVisibleSpriteList::Deinit();
 		RenderVoxel::Deinit();
 	}
 
 	void RenderTranslucentPass::Clear()
 	{
-		VisibleSpriteList::Clear();
+		VisibleSpriteList::Instance()->Clear();
 		DrewAVoxel = false;
 	}
 
@@ -529,11 +527,12 @@ namespace swrenderer
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
-		for (int i = SortedVisibleSpriteList::vsprcount; i > 0; i--)
+		auto &sortedSprites = VisibleSpriteList::Instance()->SortedSprites;
+		for (int i = sortedSprites.Size(); i > 0; i--)
 		{
-			if (SortedVisibleSpriteList::spritesorter[i - 1]->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+			if (sortedSprites[i - 1]->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue; // probably another time
-			DrawSprite(SortedVisibleSpriteList::spritesorter[i - 1]);
+			DrawSprite(sortedSprites[i - 1]);
 		}
 
 		// render any remaining masked mid textures
@@ -565,7 +564,7 @@ namespace swrenderer
 	void RenderTranslucentPass::Render()
 	{
 		CollectPortals();
-		SortedVisibleSpriteList::Sort(DrewAVoxel ? SortedVisibleSpriteList::sv_compare2d : SortedVisibleSpriteList::sv_compare, VisibleSpriteList::firstvissprite - VisibleSpriteList::vissprites);
+		VisibleSpriteList::Instance()->Sort(DrewAVoxel);
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 		if (clip3d->height_top == nullptr)

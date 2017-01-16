@@ -21,33 +21,18 @@ namespace swrenderer
 	class VisibleSpriteList
 	{
 	public:
-		static int MaxVisSprites;
-		static vissprite_t **vissprites;
-		static vissprite_t **firstvissprite;
-		static vissprite_t **vissprite_p;
+		static VisibleSpriteList *Instance();
 
-		static void Deinit();
-		static void Clear();
-		static vissprite_t *Add();
+		void Clear();
+		void PushPortal();
+		void PopPortal();
+		void Push(vissprite_t *sprite);
+		void Sort(bool compare2d);
 
-	private:
-		static vissprite_t **lastvissprite;
-	};
-
-	class SortedVisibleSpriteList
-	{
-	public:
-		static void Deinit();
-
-		static void Sort(bool(*compare)(vissprite_t *, vissprite_t *), size_t first);
-
-		static bool sv_compare(vissprite_t *a, vissprite_t *b);
-		static bool sv_compare2d(vissprite_t *a, vissprite_t *b);
-
-		static vissprite_t **spritesorter;
-		static int vsprcount;
+		TArray<vissprite_t *> SortedSprites;
 
 	private:
-		static int spritesortersize;
+		TArray<vissprite_t *> Sprites;
+		TArray<size_t> StartIndices;
 	};
 }

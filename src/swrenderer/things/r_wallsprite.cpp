@@ -72,7 +72,6 @@ namespace swrenderer
 		DAngle ang = thing->Angles.Yaw + 90;
 		double angcos = ang.Cos();
 		double angsin = ang.Sin();
-		vissprite_t *vis;
 
 		// Determine left and right edges of sprite. The sprite's angle is its normal,
 		// so the edges are 90 degrees each side of it.
@@ -105,7 +104,7 @@ namespace swrenderer
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
-		vis = VisibleSpriteList::Add();
+		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 >= renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
@@ -137,6 +136,8 @@ namespace swrenderer
 		vis->Style.BaseColormap = basecolormap;
 		vis->wallc = wallc;
 		vis->foggy = foggy;
+
+		VisibleSpriteList::Instance()->Push(vis);
 	}
 
 	void RenderWallSprite::Render(vissprite_t *spr, const short *mfloorclip, const short *mceilingclip)

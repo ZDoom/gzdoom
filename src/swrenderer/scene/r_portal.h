@@ -55,7 +55,6 @@ namespace swrenderer
 		
 		TArray<size_t> interestingStack;
 		TArray<ptrdiff_t> drawsegStack;
-		TArray<ptrdiff_t> visspriteStack;
 		TArray<DVector3> viewposStack;
 		TArray<visplane_t *> visplaneStack;
 	};

@@ -102,7 +102,6 @@ namespace swrenderer
 		int savedextralight = extralight;
 		DVector3 savedpos = ViewPos;
 		DAngle savedangle = ViewAngle;
-		ptrdiff_t savedvissprite_p = VisibleSpriteList::vissprite_p - VisibleSpriteList::vissprites;
 		ptrdiff_t savedds_p = ds_p - drawsegs;
 		size_t savedinteresting = FirstInterestingDrawseg;
 		double savedvisibility = R_GetVisibility();
@@ -220,15 +219,13 @@ namespace swrenderer
 			memcpy(draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 
-			VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprite_p;
 			firstdrawseg = draw_segment;
 			FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
 			interestingStack.Push(FirstInterestingDrawseg);
 			ptrdiff_t diffnum = firstdrawseg - drawsegs;
 			drawsegStack.Push(diffnum);
-			diffnum = VisibleSpriteList::firstvissprite - VisibleSpriteList::vissprites;
-			visspriteStack.Push(diffnum);
+			VisibleSpriteList::Instance()->PushPortal();
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
 
@@ -249,8 +246,6 @@ namespace swrenderer
 
 			drawsegStack.Pop(pd);
 			firstdrawseg = drawsegs + pd;
-			visspriteStack.Pop(pd);
-			VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprites + pd;
 
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
@@ -258,7 +253,8 @@ namespace swrenderer
 			RenderTranslucentPass::Render();
 
 			ds_p = firstdrawseg;
-			VisibleSpriteList::vissprite_p = VisibleSpriteList::firstvissprite;
+
+			VisibleSpriteList::Instance()->PopPortal();
 
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
@@ -268,8 +264,6 @@ namespace swrenderer
 			*planes->freehead = pl;
 			planes->freehead = &pl->next;
 		}
-		VisibleSpriteList::firstvissprite = VisibleSpriteList::vissprites;
-		VisibleSpriteList::vissprite_p = VisibleSpriteList::vissprites + savedvissprite_p;
 		firstdrawseg = drawsegs;
 		ds_p = drawsegs + savedds_p;
 		InterestingDrawsegs.Resize((unsigned int)FirstInterestingDrawseg);

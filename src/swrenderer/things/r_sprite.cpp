@@ -156,7 +156,7 @@ namespace swrenderer
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
 		// store information in a vissprite
-		vissprite_t *vis = VisibleSpriteList::Add();
+		vissprite_t *vis = RenderMemory::NewObject<vissprite_t>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
@@ -274,6 +274,8 @@ namespace swrenderer
 				vis->Style.BaseColormap = mybasecolormap;
 			}
 		}
+
+		VisibleSpriteList::Instance()->Push(vis);
 	}
 
 	void RenderSprite::Render(vissprite_t *vis, const short *mfloorclip, const short *mceilingclip)

@@ -862,11 +862,16 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			sc.MustGetString();
 			auto cls = PClass::FindClass(sc.String);
 			*(PClass**)addr = cls;
-			if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			if (cls == nullptr)
 			{
-				sc.ScriptMessage("class %s is not compatible with property type %s", cls->TypeName.GetChars(), static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+			}
+			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			{
+				sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
 				FScriptPosition::ErrorCounter++;
 			}
+			*(PClass**)addr = cls;
 		}
 		else
 		{

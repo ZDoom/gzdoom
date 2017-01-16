@@ -1960,12 +1960,17 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{
-			auto cls = PClass::FindClass(GetString(exp));
-			*(PClass**)addr = cls;
-			if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			auto clsname = GetString(exp);
+			auto cls = PClass::FindClass(clsname);
+			if (cls == nullptr)
 			{
-				Error(property, "class %s is not compatible with property type %s", cls->TypeName.GetChars(), static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(clsname);
 			}
+			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			{
+				Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+			}
+			*(PClass**)addr = cls;
 		}
 		else
 		{

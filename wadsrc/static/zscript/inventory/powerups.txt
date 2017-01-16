@@ -104,26 +104,253 @@ class PowerMask : PowerIronFeet native
 	}
 }
 
-class PowerLightAmp : Powerup native
+//===========================================================================
+//
+// LightAmp
+//
+//===========================================================================
+
+class PowerLightAmp : Powerup
 {
 	Default
 	{
 		Powerup.Duration -120;
 	}
+	
+	//===========================================================================
+	//
+	// APowerLightAmp :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+
+		let player = Owner.player;
+		if (player != NULL && player.fixedcolormap < PlayerInfo.NUMCOLORMAPS)
+		{
+			if (!isBlinking())
+			{	
+				player.fixedlightlevel = 1;
+			}
+			else
+			{
+				player.fixedlightlevel = -1;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerLightAmp :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner != NULL && Owner.player != NULL && Owner.player.fixedcolormap < PlayerInfo.NUMCOLORMAPS)
+		{
+			Owner.player.fixedlightlevel = -1;
+		}
+	}
+	
 }
 
-class PowerTorch : PowerLightAmp native {}
+//===========================================================================
+//
+// Torch
+//
+//===========================================================================
 
-class PowerFlight : Powerup native
+class PowerTorch : PowerLightAmp
+{
+	int NewTorch, NewTorchDelta;
+	
+	override void DoEffect ()
+	{
+		if (Owner == NULL || Owner.player == NULL)
+		{
+			return;
+		}
+
+		let player = Owner.player;
+		if (EffectTics <= BLINKTHRESHOLD || player.fixedcolormap >= PlayerInfo.NUMCOLORMAPS)
+		{
+			Super.DoEffect ();
+		}
+		else 
+		{
+			Powerup.DoEffect ();
+
+			if (!(level.time & 16) && Owner.player != NULL)
+			{
+				if (NewTorch != 0)
+				{
+					if (player.fixedlightlevel + NewTorchDelta > 7
+						|| player.fixedlightlevel + NewTorchDelta < 0
+						|| NewTorch == player.fixedlightlevel)
+					{
+						NewTorch = 0;
+					}
+					else
+					{
+						player.fixedlightlevel += NewTorchDelta;
+					}
+				}
+				else
+				{
+					NewTorch = (random[torch]() & 7) + 1;
+					NewTorchDelta = (NewTorch == Owner.player.fixedlightlevel) ?
+						0 : ((NewTorch > player.fixedlightlevel) ? 1 : -1);
+				}
+			}
+		}
+	}
+	
+}
+
+//===========================================================================
+//
+// Flight
+//
+//===========================================================================
+
+class PowerFlight : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 		+INVENTORY.HUBPOWER
 	}
+
+	bool HitCenterFrame;
+
+	//===========================================================================
+	//
+	// APowerFlight :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+		Owner.bFly = true;
+		Owner.bNoGravity = true;
+		if (Owner.pos.Z <= Owner.floorz)
+		{
+			Owner.Vel.Z = 4;;	// thrust the player in the air a bit
+		}
+		if (Owner.Vel.Z <= -35)
+		{ // stop falling scream
+			Owner.A_StopSound (CHAN_VOICE);
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: DoEffect
+	//
+	//===========================================================================
+
+	override void Tick ()
+	{
+		// The Wings of Wrath only expire in multiplayer and non-hub games
+		if (!multiplayer && level.infinite_flight)
+		{
+			EffectTics++;
+		}
+		Super.Tick ();
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner == NULL || Owner.player == NULL)
+		{
+			return;
+		}
+
+		if (!(Owner.bFlyCheat))
+		{
+			if (Owner.pos.Z != Owner.floorz)
+			{
+				Owner.player.centering = true;
+			}
+			Owner.bFly = false;
+			Owner.bNoGravity = false;
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerFlight :: DrawPowerup
+	//
+	//===========================================================================
+
+	override bool DrawPowerup (int x, int y)
+	{
+		// If this item got a valid icon use that instead of the default spinning wings.
+		if (Icon.isValid())
+		{
+			return Super.DrawPowerup(x, y);
+		}
+
+		if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
+		{
+			TextureID picnum = TexMan.CheckForTexture ("SPFLY0", TexMan.Type_MiscPatch);
+			int frame = (level.time/3) & 15;
+
+			if (!picnum.isValid())
+			{
+				return false;
+			}
+			if (Owner.bNoGravity)
+			{
+				if (HitCenterFrame && (frame != 15 && frame != 0))
+				{
+					screen.DrawHUDTexture (picnum + 15, x, y);
+				}
+				else
+				{
+					screen.DrawHUDTexture (picnum + frame, x, y);
+					HitCenterFrame = false;
+				}
+			}
+			else
+			{
+				if (!HitCenterFrame && (frame != 15 && frame != 0))
+				{
+					screen.DrawHUDTexture (picnum + frame, x, y);
+					HitCenterFrame = false;
+				}
+				else
+				{
+					screen.DrawHUDTexture (picnum+15, x, y);
+					HitCenterFrame = true;
+				}
+			}
+		}
+		return true;
+	}
+
+	
 }
 
-class PowerWeaponLevel2 : Powerup native
+//===========================================================================
+//
+// WeaponLevel2
+//
+//===========================================================================
+
+class PowerWeaponLevel2 : Powerup
 {
 	Default
 	{
@@ -131,11 +358,100 @@ class PowerWeaponLevel2 : Powerup native
 		Inventory.Icon "SPINBK0";
 		+INVENTORY.NOTELEPORTFREEZE
 	}
+	
+	//===========================================================================
+	//
+	// APowerWeaponLevel2 :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		
+		Super.InitEffect();
+
+		let player = Owner.player;
+
+		if (player == null)
+			return;
+
+		let weap = player.ReadyWeapon;
+
+		if (weap == null)
+			return;
+
+		let sister = weap.SisterWeapon;
+
+		if (sister == null)
+			return;
+
+		if (!sister.bPowered_Up)
+			return;
+
+		let ready = sister.GetReadyState();
+		if (weap.GetReadyState() != ready)
+		{
+			player.ReadyWeapon = sister;
+			player.SetPsprite(PSP_WEAPON, ready);
+		}
+		else
+		{
+			PSprite psp = player.FindPSprite(PSprite.WEAPON);
+			if (psp != null && psp.Caller == player.ReadyWeapon)
+			{
+				// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+				psp.Caller = sister;
+				player.ReadyWeapon = sister;
+			}
+			else
+			{
+				// Something went wrong. Initiate a regular weapon change.
+				player.PendingWeapon = sister;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerWeaponLevel2 :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner == null) return;
+		let player = Owner.player;
+		if (player != NULL)
+		{
+			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
+			{
+				player.ReadyWeapon.EndPowerup ();
+			}
+			if (player.PendingWeapon != NULL && player.PendingWeapon != WP_NOCHANGE &&
+				player.PendingWeapon.bPowered_Up &&
+				player.PendingWeapon.SisterWeapon != NULL)
+			{
+				player.PendingWeapon = player.PendingWeapon.SisterWeapon;
+			}
+		}
+	}
+
+	
 }
+
+//===========================================================================
+//
+// Speed
+//
+//===========================================================================
 
 class PowerSpeed : Powerup native
 {
 	native int SpeedFlags;
+	
+	const PSF_NOTRAIL = 1;
+
 
 	Default
 	{
@@ -145,7 +461,67 @@ class PowerSpeed : Powerup native
 		+INVENTORY.NOTELEPORTFREEZE
 	}
 	
-	override double GetSpeedFactor() { return Speed; }
+	override double GetSpeedFactor() 
+	{ 
+		return Speed; 
+	}
+	
+	//===========================================================================
+	//
+	// APowerSpeed :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+		
+		if (Owner == NULL || Owner.player == NULL)
+			return;
+
+		if (Owner.player.cheats & CF_PREDICTING)
+			return;
+
+		if (SpeedFlags & PSF_NOTRAIL)
+			return;
+
+		if (level.time & 1)
+			return;
+
+		// Check if another speed item is present to avoid multiple drawing of the speed trail.
+		// Only the last PowerSpeed without PSF_NOTRAIL set will actually draw the trail.
+		for (Inventory item = Inv; item != NULL; item = item.Inv)
+		{
+			let sitem = PowerSpeed(item);
+			if (sitem != null && !(sitem.SpeedFlags & PSF_NOTRAIL))
+			{
+				return;
+			}
+		}
+
+		if (Owner.Vel.Length() <= 12)
+			return;
+
+		Actor speedMo = Spawn("PlayerSpeedTrail", Owner.Pos, NO_REPLACE);
+		if (speedMo)
+		{
+			speedMo.Angle = Owner.Angle;
+			speedMo.Translation = Owner.Translation;
+			speedMo.target = Owner;
+			speedMo.sprite = Owner.sprite;
+			speedMo.frame = Owner.frame;
+			speedMo.Floorclip = Owner.Floorclip;
+
+			// [BC] Also get the scale from the owner.
+			speedMo.Scale = Owner.Scale;
+
+			if (Owner == players[consoleplayer].camera &&
+				!(Owner.player.cheats & CF_CHASECAM))
+			{
+				speedMo.bInvisible = true;
+			}
+		}
+	}
 }
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------
@@ -170,6 +546,12 @@ class PlayerSpeedTrail : Actor
 	}
 }
 
+//===========================================================================
+//
+// Minotaur
+//
+//===========================================================================
+
 class PowerMinotaur : Powerup
 {
 	Default
@@ -179,7 +561,13 @@ class PowerMinotaur : Powerup
 	}
 }
 
-class PowerTargeter : Powerup native
+//===========================================================================
+//
+// Targeter
+//
+//===========================================================================
+
+class PowerTargeter : Powerup
 {
 	Default
 	{
@@ -196,6 +584,119 @@ class PowerTargeter : Powerup native
 		TRGT C -1;
 		Stop;
 	}
+	
+	override void Travelled ()
+	{
+		InitEffect ();
+	}
+
+	override void InitEffect ()
+	{
+		// Why is this called when the inventory isn't even attached yet
+		// in APowerup.CreateCopy?
+		if (!Owner.FindInventory(GetClass(), true))
+			return;
+
+		let player = Owner.player;
+
+		Super.InitEffect();
+
+		if (player == null)
+			return;
+
+		let stat = FindState("Targeter");
+
+		if (stat != null)
+		{
+			player.SetPsprite(PSprite.TARGETCENTER,  stat);
+			player.SetPsprite(PSprite.TARGETLEFT,  stat + 1);
+			player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
+		}
+
+		player.GetPSprite(PSprite.TARGETCENTER).x = (160-3);
+		player.GetPSprite(PSprite.TARGETCENTER).y =
+			player.GetPSprite(PSprite.TARGETLEFT).y =
+			player.GetPSprite(PSprite.TARGETRIGHT).y = (100-3);
+		PositionAccuracy ();
+	}
+
+	override void AttachToOwner(Actor other)
+	{
+		Super.AttachToOwner(other);
+
+		// Let's actually properly call this for the targeters.
+		InitEffect();
+	}
+
+	override bool HandlePickup(Inventory item)
+	{
+		if (Super.HandlePickup(item))
+		{
+			InitEffect();	// reset the HUD sprites
+			return true;
+		}
+		return false;
+	}
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+
+		if (Owner != null && Owner.player != null)
+		{
+			let player = Owner.player;
+
+			PositionAccuracy ();
+			if (EffectTics < 5*TICRATE)
+			{
+				let stat = FindState("Targeter");
+
+				if (stat != null)
+				{
+					if (EffectTics & 32)
+					{
+						player.SetPsprite(PSprite.TARGETRIGHT, null);
+						player.SetPsprite(PSprite.TARGETLEFT,  stat + 1);
+					}
+					else if (EffectTics & 16)
+					{
+						player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
+						player.SetPsprite(PSprite.TARGETLEFT,  null);
+					}
+				}
+			}
+		}
+	}
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner != null && Owner.player != null)
+		{
+			// Calling GetPSprite here could crash if we're creating a new game.
+			// This is because P_SetupLevel nulls the player's mo before destroying
+			// every DThinker which in turn ends up calling this.
+			// However P_SetupLevel is only called after G_NewInit which calls
+			// every player's dtor which destroys all their psprites.
+			let player = Owner.player;
+			PSprite pspr;
+			if ((pspr = player.FindPSprite(PSprite.TARGETCENTER)) != null) pspr.SetState(null);
+			if ((pspr = player.FindPSprite(PSprite.TARGETLEFT)) != null) pspr.SetState(null);
+			if ((pspr = player.FindPSprite(PSprite.TARGETRIGHT)) != null) pspr.SetState(null);
+		}
+	}
+
+	private void PositionAccuracy ()
+	{
+		let player = Owner.player;
+
+		if (player != null)
+		{
+			player.GetPSprite(PSprite.TARGETLEFT).x = (160-3) - ((100 - player.mo.accuracy));
+			player.GetPSprite(PSprite.TARGETRIGHT).x = (160-3)+ ((100 - player.mo.accuracy));
+		}
+	}
+	
 }
 
 //===========================================================================

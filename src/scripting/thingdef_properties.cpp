@@ -71,7 +71,6 @@
 #include "a_weaponpiece.h"
 #include "vmbuilder.h"
 #include "a_ammo.h"
-#include "a_health.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 
@@ -1967,46 +1966,6 @@ DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 	PROP_INT_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
 	static_cast<PClassInventory *>(info)->GiveQuest = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(lowmessage, IT, Health)
-{
-	PROP_INT_PARM(i, 0);
-	PROP_STRING_PARM(str, 1);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassHealth)));
-	static_cast<PClassHealth *>(info)->LowHealth = i;
-	static_cast<PClassHealth *>(info)->LowHealthMessage = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(autouse, I, HealthPickup)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->autousemode = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->PuzzleItemNumber = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(failmessage, T, PuzzleItem)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPuzzleItem)));
-	static_cast<PClassPuzzleItem *>(info)->PuzzFailMessage = str;
 }
 
 //==========================================================================

@@ -146,7 +146,7 @@ std2:
 		'instanceof'				{ RET(TK_InstanceOf); }
 		'auto'						{ RET(TK_Auto); }
 		'exec'						{ RET(TK_Exec); }
-		'defaultproperties'			{ RET(TK_DefaultProperties); }
+		'property'					{ RET(TK_Property); }
 		'native'					{ RET(TK_Native); }
 		'var'						{ RET(TK_Var); }
 		'out'						{ RET(TK_Out); }

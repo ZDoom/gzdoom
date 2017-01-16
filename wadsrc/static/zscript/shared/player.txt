@@ -105,6 +105,7 @@ class PlayerPawn : Actor native
 
 	native int GetMaxHealth();
 	native bool ResetAirSupply (bool playgasp = false);
+	native void CheckWeaponSwitch(class<Inventory> item);
 }
 
 class PlayerChunk : PlayerPawn native
@@ -127,8 +128,18 @@ class PlayerChunk : PlayerPawn native
 
 class PSprite : Object native
 {
+	enum PSPLayers
+	{
+		STRIFEHANDS = -1,
+		WEAPON = 1,
+		FLASH = 1000,
+		TARGETCENTER = 0x7fffffff - 2,
+		TARGETLEFT,
+		TARGETRIGHT,
+	};
+
 	native readonly State CurState; 
-	native readonly Actor Caller;
+	native Actor Caller;
 	native readonly PSprite Next;
 	native readonly PlayerInfo Owner;
 	native SpriteID Sprite;
@@ -164,7 +175,11 @@ enum EPlayerState
 
 struct PlayerInfo native	// this is what internally is known as player_t
 {
-	native readonly PlayerPawn mo;
+	// technically engine constants but the only part of the playsim using them is the player.
+	const NOFIXEDCOLORMAP = -1;
+	const NUMCOLORMAPS = 32;
+	
+	native PlayerPawn mo;
 	native uint8 playerstate;
 	native uint original_oldbuttons;
 	native readonly Class<PlayerPawn> cls;

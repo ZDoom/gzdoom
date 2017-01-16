@@ -28,6 +28,7 @@
 #include "a_sharedglobal.h"
 #include "d_net.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 #include "r_wallsetup.h"
 #include "v_palette.h"
 #include "r_utility.h"

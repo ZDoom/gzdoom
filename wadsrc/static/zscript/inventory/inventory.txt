@@ -1,5 +1,6 @@
 class Inventory : Actor native
 {
+	const BLINKTHRESHOLD = (4*32);
 
 	native Actor Owner;						// Who owns this item? NULL if it's still a pickup.
 	native int Amount;						// Amount of item this instance has
@@ -37,11 +38,25 @@ class Inventory : Actor native
 	virtual native void PlayPickupSound(Actor user);
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
+	virtual native bool DrawPowerup(int x, int y);
 	
+	//===========================================================================
+	//
+	// AInventory :: Travelled
+	//
+	// Called when an item in somebody's inventory is carried over to another
+	// map, in case it needs to do special reinitialization.
+	//
+	//===========================================================================
+
+	virtual void Travelled() 
+	{}
+
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
 
+	native bool GoAway();
 	native void GoAwayAndDie();
 	native void BecomeItem();
 	native void BecomePickup();

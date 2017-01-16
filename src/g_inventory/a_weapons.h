@@ -161,7 +161,6 @@ public:
 
 
 	virtual void EndPowerup ();
-	void CallEndPowerup();
 
 	enum
 	{

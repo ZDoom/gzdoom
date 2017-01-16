@@ -316,9 +316,9 @@ object BFGExtra
 // Barrel
 pulselight BARREL
 {
-    color 0.0 0.5 0.0
-    size 30
-    secondarySize 31
+    color 0.0 0.3 0.0
+    size 20
+    secondarySize 21
     interval 0.5
     offset 0 36 0
 	dontlightself 1
@@ -628,9 +628,9 @@ object BlurSphere
 // Armour Helmet
 pulselight ARMORBONUS
 {
-    color 0.6 0.2 0.2
-    size 24
-    secondarySize 21
+    color 0.3 0.1 0.1
+    size 16
+    secondarySize 20
     interval 1.0
 	dontlightself 1
 	attenuate 1
@@ -657,7 +657,7 @@ object BlueSkull
 pulselight YELLOWKEY
 {
     color 0.6 0.6 0.0
-    size 24
+    size 15
     secondarySize 27
     interval 2.0
 	attenuate 1
@@ -698,7 +698,7 @@ object RedSkull
 pointlight GREENARMOR2
 {
     color 0.4 0.0 0.0
-    size 48
+    size 40
 	attenuate 1
     offset 0 10 0
 }

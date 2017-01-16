@@ -35,6 +35,7 @@ enum
 	ZCC_Extension		= 1 << 12,
 	ZCC_Virtual			= 1 << 13,
 	ZCC_Override		= 1 << 14,
+	ZCC_Transient		= 1 << 15,
 };
 
 // Function parameter modifiers
@@ -104,6 +105,7 @@ enum EZCCTreeNodeType
 	AST_DeclFlags,
 	AST_ClassCast,
 	AST_StaticArrayStatement,
+	AST_Property,
 
 	NUM_AST_NODE_TYPES
 };
@@ -187,6 +189,11 @@ struct ZCC_Struct : ZCC_NamedNode
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
 	PStruct *Type;
+};
+
+struct ZCC_Property : ZCC_NamedNode
+{
+	ZCC_TreeNode *Body;
 };
 
 struct ZCC_Class : ZCC_Struct

@@ -5515,6 +5515,13 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UsePuzzleItem)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(puzznum);
+	ACTION_RETURN_BOOL(P_UsePuzzleItem(self, puzznum));
+}
+
 //==========================================================================
 //
 // RADIUS ATTACK

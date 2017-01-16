@@ -76,7 +76,6 @@
 #include "vmbuilder.h"
 #include "a_armor.h"
 #include "a_ammo.h"
-#include "a_health.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -1971,21 +1970,21 @@ static int PatchMisc (int dummy)
 		barmor->MaxSaveAmount = deh.MaxArmor;
 	}
 
-	AHealth *health;
-	health = static_cast<AHealth *> (GetDefaultByName ("HealthBonus"));
+	AInventory *health;
+	health = static_cast<AInventory *> (GetDefaultByName ("HealthBonus"));
 	if (health!=NULL) 
 	{
 		health->MaxAmount = 2 * deh.MaxHealth;
 	}
 
-	health = static_cast<AHealth *> (GetDefaultByName ("Soulsphere"));
+	health = static_cast<AInventory *> (GetDefaultByName ("Soulsphere"));
 	if (health!=NULL)
 	{
 		health->Amount = deh.SoulsphereHealth;
 		health->MaxAmount = deh.MaxSoulsphere;
 	}
 
-	health = static_cast<AHealth *> (GetDefaultByName ("MegasphereHealth"));
+	health = static_cast<AInventory *> (GetDefaultByName ("MegasphereHealth"));
 	if (health!=NULL)
 	{
 		health->Amount = health->MaxAmount = deh.MegasphereHealth;

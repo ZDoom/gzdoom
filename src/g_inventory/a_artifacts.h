@@ -105,74 +105,16 @@ public:
 	virtual void DoEffect () override;
 };
 
-class APowerLightAmp : public APowerup
-{
-	DECLARE_CLASS (APowerLightAmp, APowerup)
-protected:
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-};
-
-class APowerTorch : public APowerLightAmp
-{
-	DECLARE_CLASS (APowerTorch, APowerLightAmp)
-public:
-	
-	virtual void Serialize(FSerializer &arc) override;
-protected:
-	virtual void DoEffect () override;
-	int NewTorch, NewTorchDelta;
-};
-
-class APowerFlight : public APowerup
-{
-	DECLARE_CLASS (APowerFlight, APowerup)
-public:
-	virtual bool DrawPowerup (int x, int y) override;
-	virtual void Serialize(FSerializer &arc) override;
-
-protected:
-	virtual void InitEffect () override;
-	virtual void Tick () override;
-	virtual void EndEffect () override;
-
-private:
-	bool HitCenterFrame;
-};
-
-class APowerWeaponLevel2 : public APowerup
-{
-	DECLARE_CLASS (APowerWeaponLevel2, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
-	virtual void DoEffect () override;
-	
 	virtual void Serialize(FSerializer &arc) override;
 public:
 	int SpeedFlags;
 };
 
 #define PSF_NOTRAIL		1
-
-class APowerTargeter : public APowerup
-{
-	DECLARE_CLASS (APowerTargeter, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-	void PositionAccuracy ();
-	virtual void Travelled () override;
-	virtual void AttachToOwner(AActor *other) override;
-	virtual bool HandlePickup(AInventory *item) override;
-};
 
 class APowerMorph : public APowerup
 {

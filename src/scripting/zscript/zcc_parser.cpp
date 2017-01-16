@@ -144,6 +144,8 @@ static void InitTokenMap()
 	TOKENDEF ('{',				ZCC_LBRACE);
 	TOKENDEF ('}',				ZCC_RBRACE);
 	TOKENDEF (TK_Struct,		ZCC_STRUCT);
+	TOKENDEF (TK_Property,		ZCC_PROPERTY);
+	TOKENDEF (TK_Transient,		ZCC_TRANSIENT);
 	TOKENDEF (TK_Enum,			ZCC_ENUM);
 	TOKENDEF2(TK_SByte,			ZCC_SBYTE,		NAME_sByte);
 	TOKENDEF2(TK_Byte,			ZCC_BYTE,		NAME_Byte);

@@ -399,21 +399,30 @@ begin:
 		reg.s[a] = reg.s[B];
 		NEXTOP;
 	OP(MOVEA):
+	{
 		ASSERTA(a); ASSERTA(B);
-		reg.a[a] = reg.a[B];
-		reg.atag[a] = reg.atag[B];
+		int b = B;
+		reg.a[a] = reg.a[b];
+		reg.atag[a] = reg.atag[b];
 		NEXTOP;
+	}
 	OP(MOVEV2):
+	{
 		ASSERTF(a); ASSERTF(B);
-		reg.f[a] = reg.f[B];
-		reg.f[a+1] = reg.f[B+1];
+		int b = B;
+		reg.f[a] = reg.f[b];
+		reg.f[a + 1] = reg.f[b + 1];
 		NEXTOP;
+	}
 	OP(MOVEV3):
+	{
 		ASSERTF(a); ASSERTF(B);
-		reg.f[a] = reg.f[B];
-		reg.f[a+1] = reg.f[B+1];
-		reg.f[a+2] = reg.f[B+2];
+		int b = B;
+		reg.f[a] = reg.f[b];
+		reg.f[a + 1] = reg.f[b + 1];
+		reg.f[a + 2] = reg.f[b + 2];
 		NEXTOP;
+	}
 	OP(DYNCAST_R) :
 		ASSERTA(a); ASSERTA(B);	ASSERTA(C);
 		b = B;

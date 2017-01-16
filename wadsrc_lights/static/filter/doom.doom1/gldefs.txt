@@ -317,9 +317,9 @@ object BFGExtra
 // Barrel
 pulselight BARREL
 {
-    color 0.0 0.5 0.0
-    size 30
-    secondarySize 31
+    color 0.0 0.3 0.0
+    size 20
+    secondarySize 21
     interval 0.5
     offset 0 36 0
 	dontlightself 1
@@ -629,9 +629,9 @@ object BlurSphere
 // Health Potion
 pulselight HEALTHPOTION
 {
-    color 0.0 0.0 0.6
-    size 24
-    secondarySize 27
+    color 0.0 0.0 0.3
+    size 16
+    secondarySize 20
     interval 2.0
 	attenuate 1
     offset 0 10 0
@@ -645,9 +645,9 @@ object HealthBonus
 // Armour Helmet
 pulselight ARMORBONUS
 {
-    color 0.2 0.6 0.2
-    size 24
-    secondarySize 21
+    color 0.1 0.3 0.1
+    size 16
+    secondarySize 20
     interval 1.0
 	dontlightself 1
 	attenuate 1
@@ -715,16 +715,16 @@ object RedSkull
 // Green armour
 pointlight GREENARMOR1
 {
-    color 0.0 0.6 0.0
-    size 72
+    color 0.0 0.3 0.0
+    size 40
 	attenuate 1
     offset 0 10 0
 }
 
 pointlight GREENARMOR2
 {
-    color 0.0 0.6 0.0
-    size 48
+    color 0.0 0.3 0.0
+    size 30
 	attenuate 1
     offset 0 10 0
 }
@@ -738,16 +738,16 @@ object GreenArmor
 // Blue armour
 pointlight BLUEARMOR1
 {
-    color 0.0 0.0 0.6
-    size 72
+    color 0.0 0.0 0.3
+    size 40
 	attenuate 1
     offset 0 10 0
 }
 
 pointlight BLUEARMOR2
 {
-    color 0.0 0.0 0.6
-    size 48
+    color 0.0 0.0 0.3
+    size 30
 	attenuate 1
     offset 0 10 0
 }

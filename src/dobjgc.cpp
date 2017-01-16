@@ -329,7 +329,7 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
-	for (auto &s : sectorPortals)
+	for (auto &s : level.sectorPortals)
 	{
 		Mark(s.mSkybox);
 	}

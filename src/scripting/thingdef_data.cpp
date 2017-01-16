@@ -472,7 +472,7 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 1 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -738,6 +738,9 @@ void InitThingdef()
 	vertstruct->Size = sizeof(vertex_t);
 	vertstruct->Align = alignof(vertex_t);
 
+	auto sectorportalstruct = NewNativeStruct("SectorPortal", nullptr);
+	sectorportalstruct->Size = sizeof(FSectorPortal);
+	sectorportalstruct->Align = alignof(FSectorPortal);
 
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
@@ -762,11 +765,17 @@ void InitThingdef()
 	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
 	GlobalSymbols.AddSymbol(levelf);
 
-	// Add the sector array to LevelLocals.
+	// Add the game data arrays to LevelLocals.
 	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
 	lstruct->AddNativeField("lines", NewPointer(NewResizableArray(linestruct), false), myoffsetof(FLevelLocals, lines), VARF_Native);
 	lstruct->AddNativeField("sides", NewPointer(NewResizableArray(sidestruct), false), myoffsetof(FLevelLocals, sides), VARF_Native);
 	lstruct->AddNativeField("vertexes", NewPointer(NewResizableArray(vertstruct), false), myoffsetof(FLevelLocals, vertexes), VARF_Native|VARF_ReadOnly);
+	lstruct->AddNativeField("sectorportals", NewPointer(NewResizableArray(sectorportalstruct), false), myoffsetof(FLevelLocals, sectorPortals), VARF_Native);
+
+
+	auto aact = NewPointer(NewResizableArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
+	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
+	GlobalSymbols.AddSymbol(aacf);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
@@ -905,7 +914,10 @@ DEFINE_ACTION_FUNCTION(FStringTable, Localize)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(label);
-	ACTION_RETURN_STRING(GStrings(label));
+	PARAM_BOOL_DEF(prefixed);
+	if (!prefixed) ACTION_RETURN_STRING(GStrings(label));
+	if (label[0] != '$') ACTION_RETURN_STRING(label);
+	ACTION_RETURN_STRING(GStrings(&label[1]));
 }
 
 DEFINE_ACTION_FUNCTION(FString, Replace)

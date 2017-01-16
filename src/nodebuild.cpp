@@ -1053,7 +1053,7 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	Printf (PRINT_LOG, "set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf (PRINT_LOG, "\t%u(%td)%c%d(%d,%d)-%d(%d,%d)\n", set, Segs[set].frontsector->sectornum,
+		Printf (PRINT_LOG, "\t%u(%d)%c%d(%d,%d)-%d(%d,%d)\n", set, Segs[set].frontsector->sectornum,
 			Segs[set].linedef == -1 ? '+' : ':',
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,

@@ -46,7 +46,6 @@ inline	int getExtraLight()
 void gl_RecalcVertexHeights(vertex_t * v);
 FTextureID gl_GetSpriteFrame(unsigned sprite, int frame, int rot, angle_t ang, bool *mirror);
 
-class AStackPoint;
 struct GLSectorStackPortal;
 
 struct FPortal

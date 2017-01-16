@@ -378,7 +378,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == level.vertexes.Size() && num_subs == numsubsectors && hasglnodes)
+			if (num_verts == (int)level.vertexes.Size() && num_subs == numsubsectors && hasglnodes)
 			{
 				success = true;
 				int sub = 0;
@@ -964,7 +964,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
-	arc("sectorportals", sectorPortals);
+	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
 
 	DThinker::SerializeThinkers(arc, !hubload);

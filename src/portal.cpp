@@ -62,7 +62,16 @@ FPortalBlockmap PortalBlockmap;
 TArray<FLinePortal> linePortals;
 TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
 
-TArray<FSectorPortal> sectorPortals;
+
+DEFINE_FIELD(FSectorPortal, mType);
+DEFINE_FIELD(FSectorPortal, mFlags);
+DEFINE_FIELD(FSectorPortal, mPartner);
+DEFINE_FIELD(FSectorPortal, mPlane);
+DEFINE_FIELD(FSectorPortal, mOrigin);
+DEFINE_FIELD(FSectorPortal, mDestination);
+DEFINE_FIELD(FSectorPortal, mDisplacement);
+DEFINE_FIELD(FSectorPortal, mPlaneZ);
+DEFINE_FIELD(FSectorPortal, mSkybox);
 
 //============================================================================
 //
@@ -490,15 +499,15 @@ void P_ClearPortals()
 	Displacements.Create(1);
 	linePortals.Clear();
 	linkedPortals.Clear();
-	sectorPortals.Resize(2);
+	level.sectorPortals.Resize(2);
 	// The first entry must always be the default skybox. This is what every sector gets by default.
-	memset(&sectorPortals[0], 0, sizeof(sectorPortals[0]));
-	sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
-	sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
+	memset(&level.sectorPortals[0], 0, sizeof(level.sectorPortals[0]));
+	level.sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
+	level.sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
 	// The second entry will be the default sky. This is for forcing a regular sky through the skybox picker
-	memset(&sectorPortals[1], 0, sizeof(sectorPortals[0]));
-	sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
-	sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
+	memset(&level.sectorPortals[1], 0, sizeof(level.sectorPortals[0]));
+	level.sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
+	level.sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
 }
 
 //============================================================================
@@ -651,22 +660,28 @@ void P_TranslatePortalZ(line_t* src, double& z)
 //
 //============================================================================
 
-unsigned P_GetSkyboxPortal(ASkyViewpoint *actor)
+unsigned P_GetSkyboxPortal(AActor *actor)
 {
 	if (actor == NULL) return 1;	// this means a regular sky.
-	for (unsigned i = 0;i<sectorPortals.Size();i++)
+	for (unsigned i = 0;i<level.sectorPortals.Size();i++)
 	{
-		if (sectorPortals[i].mSkybox == actor) return i;
+		if (level.sectorPortals[i].mSkybox == actor) return i;
 	}
-	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
-	sectorPortals[i].mType = PORTS_SKYVIEWPOINT;
-	sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(ASkyCamCompat)) ? 0 : PORTSF_SKYFLATONLY;
-	sectorPortals[i].mSkybox = actor;
-	sectorPortals[i].mDestination = actor->Sector;
+	unsigned i = level.sectorPortals.Reserve(1);
+	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
+	level.sectorPortals[i].mType = PORTS_SKYVIEWPOINT;
+	level.sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf(PClass::FindActor("SkyCamCompat")) ? 0 : PORTSF_SKYFLATONLY;
+	level.sectorPortals[i].mSkybox = actor;
+	level.sectorPortals[i].mDestination = actor->Sector;
 	return i;
 }
 
+DEFINE_ACTION_FUNCTION(FSectorPortal, GetSkyboxPortal)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(actor, AActor);
+	ACTION_RETURN_INT(P_GetSkyboxPortal(actor));
+}
 //============================================================================
 //
 // P_GetPortal
@@ -677,14 +692,14 @@ unsigned P_GetSkyboxPortal(ASkyViewpoint *actor)
 
 unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DVector2 &displacement)
 {
-	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
-	sectorPortals[i].mType = type;
-	sectorPortals[i].mPlane = plane;
-	sectorPortals[i].mOrigin = from;
-	sectorPortals[i].mDestination = to;
-	sectorPortals[i].mDisplacement = displacement;
-	sectorPortals[i].mPlaneZ = type == PORTS_LINKEDPORTAL? from->GetPlaneTexZ(plane) : FLT_MAX;
+	unsigned i = level.sectorPortals.Reserve(1);
+	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
+	level.sectorPortals[i].mType = type;
+	level.sectorPortals[i].mPlane = plane;
+	level.sectorPortals[i].mOrigin = from;
+	level.sectorPortals[i].mDestination = to;
+	level.sectorPortals[i].mDisplacement = displacement;
+	level.sectorPortals[i].mPlaneZ = type == PORTS_LINKEDPORTAL? from->GetPlaneTexZ(plane) : FLT_MAX;
 	return i;
 }
 
@@ -698,14 +713,14 @@ unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DV
 
 unsigned P_GetStackPortal(AActor *point, int plane)
 {
-	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
-	sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;
-	sectorPortals[i].mPlane = plane;
-	sectorPortals[i].mOrigin = point->target->Sector;
-	sectorPortals[i].mDestination = point->Sector;
-	sectorPortals[i].mPlaneZ = FLT_MAX;
-	sectorPortals[i].mSkybox = point;
+	unsigned i = level.sectorPortals.Reserve(1);
+	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
+	level.sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;
+	level.sectorPortals[i].mPlane = plane;
+	level.sectorPortals[i].mOrigin = point->target->Sector;
+	level.sectorPortals[i].mDestination = point->Sector;
+	level.sectorPortals[i].mPlaneZ = FLT_MAX;
+	level.sectorPortals[i].mSkybox = point;
 	return i;
 }
 
@@ -971,7 +986,7 @@ void P_CreateLinkedPortals()
 	int id = 1;
 	bool bogus = false;
 
-	for(auto &s : sectorPortals)
+	for(auto &s : level.sectorPortals)
 	{
 		if (s.mType == PORTS_LINKEDPORTAL)
 		{

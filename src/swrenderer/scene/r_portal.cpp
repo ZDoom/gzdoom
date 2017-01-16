@@ -44,6 +44,7 @@
 #include "version.h"
 #include "r_utility.h"
 #include "r_3dfloors.h"
+#include "g_levellocals.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
@@ -135,7 +136,7 @@ namespace swrenderer
 			case PORTS_SKYVIEWPOINT:
 			{
 				// Don't let gun flashes brighten the sky box
-				ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(port->mSkybox);
+				AActor *sky = port->mSkybox;
 				extralight = 0;
 				R_SetVisibility(sky->args[0] * 0.25f);
 
@@ -170,7 +171,7 @@ namespace swrenderer
 			}
 
 			port->mFlags |= PORTSF_INSKYBOX;
-			if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
+			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
 			camera = nullptr;
 			viewsector = port->mDestination;
 			assert(viewsector != nullptr);
@@ -234,7 +235,7 @@ namespace swrenderer
 			planes->Render();
 
 			port->mFlags &= ~PORTSF_INSKYBOX;
-			if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
+			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
 		}
 
 		// Draw all the masked textures in a second pass, in the reverse order they

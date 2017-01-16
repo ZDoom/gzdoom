@@ -2298,7 +2298,7 @@ static void P_AllocateSideDefs (MapData *map, int count)
 		sidetemp[i].a.alpha = SHRT_MIN;
 		sidetemp[i].a.map = NO_SIDE;
 	}
-	auto numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
+	int numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
 	if (count < numsides)
 	{
 		Printf ("Map has %d unused sidedefs\n", numsides - count);

@@ -79,7 +79,6 @@
 #include "thingdef.h"
 #include "math/cmath.h"
 #include "a_armor.h"
-#include "a_health.h"
 #include "g_levellocals.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
@@ -2400,7 +2399,7 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 		{
 			return false;
 		}
-		if (item->IsKindOf(RUNTIME_CLASS(AHealth)))
+		if (item->IsKindOf(PClass::FindActor(NAME_Health)))
 		{
 			item->Amount *= amount;
 		}
@@ -5655,7 +5654,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
 			AInventory *gift = static_cast<AInventory *>(Spawn(item));
-			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
+			if (gift->IsKindOf(PClass::FindActor(NAME_Health)))
 			{
 				gift->Amount *= amount;
 			}

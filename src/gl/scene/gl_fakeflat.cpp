@@ -27,6 +27,7 @@
 
 #include "p_lnspec.h"
 #include "p_local.h"
+#include "g_levellocals.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
 #include "gl/renderer/gl_renderer.h"

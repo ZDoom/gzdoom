@@ -237,7 +237,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	{
 		if (mo != nullptr)
 		{
-			newcaller = mo->FindInventory(RUNTIME_CLASS(APowerTargeter), true);
+			newcaller = mo->FindInventory(PClass::FindActor(NAME_PowerTargeter), true);
 		}
 	}
 	else if (layer == PSP_STRIFEHANDS)
@@ -485,7 +485,7 @@ void P_BringUpWeapon (player_t *player)
 	if (weapon != nullptr &&
 		weapon->SisterWeapon &&
 		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
+		player->mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true))
 	{
 		weapon = weapon->SisterWeapon;
 	}

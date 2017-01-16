@@ -16,7 +16,6 @@
 #include <stddef.h>
 #include "r_defs.h"
 
-class ASkyViewpoint;
 class ADynamicLight;
 struct FLightNode;
 struct FDynamicColormap;

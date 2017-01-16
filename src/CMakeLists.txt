@@ -1200,10 +1200,8 @@ set (PCH_SOURCES
 	g_inventory/a_ammo.cpp
 	g_inventory/a_armor.cpp
 	g_inventory/a_artifacts.cpp
-	g_inventory/a_health.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
-	g_inventory/a_puzzleitems.cpp
 	g_inventory/a_weaponpiece.cpp
 	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp
@@ -1213,9 +1211,6 @@ set (PCH_SOURCES
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
-	g_shared/a_skies.cpp
-	g_shared/a_soundenvironment.cpp
-	g_shared/a_soundsequence.cpp
 	g_shared/a_specialspot.cpp
 	g_shared/hudmessages.cpp
 	g_shared/sbarinfo.cpp

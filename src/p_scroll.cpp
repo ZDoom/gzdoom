@@ -529,7 +529,7 @@ void P_SpawnScrollers(void)
 			FLineIdIterator itr(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
-				if (s != i)
+				if (s != (int)i)
 					new DScroller(dx, dy, &level.lines[s], control, accel);
 			}
 			break;

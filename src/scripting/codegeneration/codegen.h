@@ -289,6 +289,8 @@ enum EFxType
 	EFX_CVar,
 	EFX_NamedNode,
 	EFX_GetClass,
+	EFX_GetParentClass,
+	EFX_StrLen,
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
 	EFX_COUNT
@@ -1438,7 +1440,7 @@ class FxArrayElement : public FxExpression
 public:
 	FxExpression *Array;
 	FxExpression *index;
-	unsigned SizeAddr;
+	size_t SizeAddr;
 	bool AddressRequested;
 	bool AddressWritable;
 	bool arrayispointer = false;
@@ -1573,6 +1575,24 @@ public:
 
 //==========================================================================
 //
+//	FxVectorBuiltin
+//
+//==========================================================================
+
+class FxStrLen : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxStrLen(FxExpression *self);
+	~FxStrLen();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxGetClass
 //
 //==========================================================================
@@ -1585,6 +1605,24 @@ public:
 
 	FxGetClass(FxExpression *self);
 	~FxGetClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxGetClass
+//
+//==========================================================================
+
+class FxGetParentClass : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetParentClass(FxExpression *self);
+	~FxGetParentClass();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

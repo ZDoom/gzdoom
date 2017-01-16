@@ -51,7 +51,6 @@
 #include "doomerrors.h"
 #include "fragglescript/t_fs.h"
 #include "a_keys.h"
-#include "a_health.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2609,6 +2608,27 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 	else BitValue = -1;
 }
 
+/* PProperty *****************************************************************/
+
+IMPLEMENT_CLASS(PProperty, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PProperty::PProperty()
+	: PSymbol(NAME_None)
+{
+}
+
+PProperty::PProperty(FName name, TArray<PField *> &fields)
+	: PSymbol(name)
+{
+	Variables = std::move(fields);
+}
+
 /* PPrototype *************************************************************/
 
 IMPLEMENT_CLASS(PPrototype, false, false)
@@ -3094,8 +3114,6 @@ PClass *ClassReg::RegisterClass()
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
-		&PClassHealth::RegistrationInfo,
-		&PClassPuzzleItem::RegistrationInfo,
 		&PClassWeapon::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
 		&PClassType::RegistrationInfo,
@@ -3234,7 +3252,7 @@ DObject *PClass::CreateNew() const
 
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
-	InitializeSpecials(mem);
+	InitializeSpecials(mem, Defaults);
 	return (DObject *)mem;
 }
 
@@ -3246,7 +3264,7 @@ DObject *PClass::CreateNew() const
 //
 //==========================================================================
 
-void PClass::InitializeSpecials(void *addr) const
+void PClass::InitializeSpecials(void *addr, void *defaults) const
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle initialization natively.
@@ -3255,10 +3273,10 @@ void PClass::InitializeSpecials(void *addr) const
 		return;
 	}
 	assert(ParentClass != NULL);
-	ParentClass->InitializeSpecials(addr);
+	ParentClass->InitializeSpecials(addr, defaults);
 	for (auto tao : SpecialInits)
 	{
-		tao.first->InitializeValue((BYTE*)addr + tao.second, Defaults == nullptr? nullptr : Defaults + tao.second);
+		tao.first->InitializeValue((char*)addr + tao.second, defaults == nullptr? nullptr : ((char*)defaults) + tao.second);
 	}
 }
 
@@ -3332,7 +3350,7 @@ void PClass::InitializeDefaults()
 	{
 		// Copy parent values from the parent defaults.
 		assert(ParentClass != NULL);
-		ParentClass->InitializeSpecials(Defaults);
+		ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
 
 		for (const PField *field : Fields)
 		{
@@ -3921,6 +3939,13 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 	}
 	Symbols.Insert(sym->SymbolName, sym);
 	return sym;
+}
+
+void PSymbolTable::RemoveSymbol(PSymbol *sym)
+{
+	auto mysym = Symbols.CheckKey(sym->SymbolName);
+	if (mysym == nullptr || *mysym != sym) return;
+	Symbols.Remove(sym->SymbolName);
 }
 
 PSymbol *PSymbolTable::ReplaceSymbol(PSymbol *newsym)

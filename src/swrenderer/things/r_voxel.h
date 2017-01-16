@@ -58,6 +58,7 @@ namespace swrenderer
 
 		static void Deinit();
 
+	protected:
 		bool IsVoxel() const override { return true; }
 		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 

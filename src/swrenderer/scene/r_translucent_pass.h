@@ -38,7 +38,6 @@ namespace swrenderer
 
 	private:
 		static void CollectPortals();
-		static void DrawSprite(VisibleSprite *spr);
 		static void DrawMaskedSingle(bool renew);
 
 		static TArray<drawseg_t *> portaldrawsegs;

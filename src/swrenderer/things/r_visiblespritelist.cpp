@@ -89,7 +89,7 @@ namespace swrenderer
 
 			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{
-				return DVector2(a->deltax, a->deltay).LengthSquared() < DVector2(b->deltax, b->deltay).LengthSquared();
+				return a->SortDist2D() < b->SortDist2D();
 			});
 		}
 		else
@@ -98,7 +98,7 @@ namespace swrenderer
 
 			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{
-				return a->idepth > b->idepth;
+				return a->SortDist() > b->SortDist();
 			});
 		}
 	}

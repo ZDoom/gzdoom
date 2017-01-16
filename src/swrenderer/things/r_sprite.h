@@ -22,6 +22,7 @@ namespace swrenderer
 	public:
 		static void Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
 
+	protected:
 		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:

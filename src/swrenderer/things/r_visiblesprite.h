@@ -19,14 +19,20 @@
 
 #define MINZ double((2048*4) / double(1 << 20))
 
-struct particle_t;
-struct FVoxel;
-
 namespace swrenderer
 {
 	class VisibleSprite
 	{
 	public:
+		void Render();
+
+		bool IsCurrentPortalUniq(int portalUniq) const { return CurrentPortalUniq == portalUniq; }
+		const FVector3 &WorldPos() const { return gpos; }
+
+		double SortDist2D() const { return DVector2(deltax, deltay).LengthSquared(); }
+		float SortDist() const { return idepth; }
+
+	protected:
 		virtual bool IsParticle() const { return false; }
 		virtual bool IsVoxel() const { return false; }
 		virtual bool IsWallSprite() const { return false; }

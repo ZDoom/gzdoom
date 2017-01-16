@@ -699,6 +699,15 @@ void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, AbsorbDamage)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_INT(damage);
+	PARAM_NAME(type);
+	PARAM_POINTER(newdmg, int);
+	self->AbsorbDamage(damage, type, *newdmg);
+	return 0;
+}
 //===========================================================================
 //
 // AInventory :: ModifyDamage

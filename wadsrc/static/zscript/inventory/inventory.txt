@@ -39,6 +39,7 @@ class Inventory : Actor native
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
 	virtual native bool DrawPowerup(int x, int y);
+	virtual native void AbsorbDamage (int damage, Name damageType, out int newdamage);
 	
 	//===========================================================================
 	//

@@ -3621,7 +3621,7 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 	{
 		IFVIRTUALPTR(item, AInventory, AbsorbDamage)
 		{
-			VMValue params[4] = { (item, damage, dmgtype.GetIndex(), &damage };
+			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
 			GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
 		}
 		else item->AbsorbDamage(damage, dmgtype, damage);

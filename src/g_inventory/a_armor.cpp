@@ -235,10 +235,6 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 			damage = newdamage = df->Apply(damageType, damage);
 		}
 	}
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
-	}
 }
 
 //===========================================================================
@@ -628,10 +624,6 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 			newdamage -= saved;
 			damage = newdamage;
 		}
-	}
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 

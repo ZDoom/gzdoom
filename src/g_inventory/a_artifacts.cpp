@@ -845,10 +845,6 @@ void APowerIronFeet::AbsorbDamage (int damage, FName damageType, int &newdamage)
 	{
 		newdamage = 0;
 	}
-	else if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
-	}
 }
 
 //===========================================================================

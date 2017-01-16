@@ -3615,6 +3615,20 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	return false;
 }
 
+int AActor::AbsorbDamage(int damage, FName dmgtype)
+{
+	for (AInventory *item = Inventory; item != nullptr; item = item->Inventory)
+	{
+		IFVIRTUALPTR(item, AInventory, AbsorbDamage)
+		{
+			VMValue params[4] = { (item, damage, dmgtype.GetIndex(), &damage };
+			GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
+		}
+		else item->AbsorbDamage(damage, dmgtype, damage);
+	}
+	return damage;
+}
+
 void AActor::PlayActiveSound ()
 {
 	if (ActiveSound && !S_IsActorPlayingSomething (this, CHAN_VOICE, -1))

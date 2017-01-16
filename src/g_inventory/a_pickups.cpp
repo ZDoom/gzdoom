@@ -697,10 +697,6 @@ DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
 
 void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (Inventory != NULL)
-	{
-		Inventory->AbsorbDamage (damage, damageType, newdamage);
-	}
 }
 
 //===========================================================================

@@ -120,17 +120,17 @@ namespace swrenderer
 		vis->deltay = float(pos.Y - ViewPos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
-		vis->Style.RenderStyle = thing->RenderStyle;
+		vis->RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;
 		vis->FakeFlatStat = WaterFakeSide::Center;
-		vis->Style.Alpha = float(thing->Alpha);
+		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = NULL;
 		vis->fakeceiling = NULL;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		vis->pic = pic;
-		vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-		vis->Style.BaseColormap = basecolormap;
+		vis->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+		vis->BaseColormap = basecolormap;
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
@@ -165,11 +165,11 @@ namespace swrenderer
 		}
 		// Prepare lighting
 		bool calclighting = false;
-		FSWColormap *usecolormap = spr->Style.BaseColormap;
+		FSWColormap *usecolormap = spr->BaseColormap;
 		bool rereadcolormap = true;
 
 		// Decals that are added to the scene must fade to black.
-		if (spr->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
+		if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
 		{
 			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
 			rereadcolormap = false;
@@ -206,14 +206,14 @@ namespace swrenderer
 
 		int x = x1;
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Style.BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->BaseColormap);
 
-		bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor, basecolormap);
+		bool visible = R_SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
 		{
-			usecolormap = spr->Style.BaseColormap;
+			usecolormap = spr->BaseColormap;
 		}
 
 		if (!visible)

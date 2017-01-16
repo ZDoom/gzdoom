@@ -19,11 +19,15 @@
 
 #define MINZ double((2048*4) / double(1 << 20))
 
+struct FSWColormap;
+
 namespace swrenderer
 {
 	class VisibleSprite
 	{
 	public:
+		virtual ~VisibleSprite() { }
+		
 		void Render();
 
 		bool IsCurrentPortalUniq(int portalUniq) const { return CurrentPortalUniq == portalUniq; }
@@ -59,7 +63,10 @@ namespace swrenderer
 		sector_t *sector; // sector this sprite is in
 
 		// Light shared calculation?
-		visstyle_t Style;
+		int ColormapNum;	// Which colormap is rendered
+		FSWColormap *BaseColormap;	// Base colormap used together with ColormapNum
+		float Alpha;
+		FRenderStyle RenderStyle;
 		bool foggy;
 		short renderflags;
 

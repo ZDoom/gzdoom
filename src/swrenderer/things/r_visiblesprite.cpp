@@ -52,8 +52,8 @@ namespace swrenderer
 		int r1, r2;
 		short topclip, botclip;
 		short *clip1, *clip2;
-		FSWColormap *colormap = spr->Style.BaseColormap;
-		int colormapnum = spr->Style.ColormapNum;
+		FSWColormap *colormap = spr->BaseColormap;
+		int colormapnum = spr->ColormapNum;
 		F3DFloor *rover;
 		FDynamicColormap *mybasecolormap;
 
@@ -120,20 +120,20 @@ namespace swrenderer
 			// found new values, recalculate
 			if (sec)
 			{
-				INTBOOL invertcolormap = (spr->Style.RenderStyle.Flags & STYLEF_InvertOverlay);
+				INTBOOL invertcolormap = (spr->RenderStyle.Flags & STYLEF_InvertOverlay);
 
-				if (spr->Style.RenderStyle.Flags & STYLEF_InvertSource)
+				if (spr->RenderStyle.Flags & STYLEF_InvertSource)
 				{
 					invertcolormap = !invertcolormap;
 				}
 
 				// Sprites that are added to the scene must fade to black.
-				if (spr->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+				if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
 				{
 					mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
 				}
 
-				if (spr->Style.RenderStyle.Flags & STYLEF_FadeToBlack)
+				if (spr->RenderStyle.Flags & STYLEF_FadeToBlack)
 				{
 					if (invertcolormap)
 					{ // Fade to white
@@ -153,19 +153,19 @@ namespace swrenderer
 				}
 				if (fixedlightlev >= 0)
 				{
-					spr->Style.BaseColormap = mybasecolormap;
-					spr->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+					spr->BaseColormap = mybasecolormap;
+					spr->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 				}
 				else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
 				{ // full bright
-					spr->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-					spr->Style.ColormapNum = 0;
+					spr->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+					spr->ColormapNum = 0;
 				}
 				else
 				{ // diminished light
 					int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
-					spr->Style.BaseColormap = mybasecolormap;
-					spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
+					spr->BaseColormap = mybasecolormap;
+					spr->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 				}
 			}
 		}
@@ -291,8 +291,8 @@ namespace swrenderer
 
 		if (topclip >= botclip)
 		{
-			spr->Style.BaseColormap = colormap;
-			spr->Style.ColormapNum = colormapnum;
+			spr->BaseColormap = colormap;
+			spr->ColormapNum = colormapnum;
 			return;
 		}
 
@@ -418,8 +418,8 @@ namespace swrenderer
 				}
 				if (i == x2)
 				{
-					spr->Style.BaseColormap = colormap;
-					spr->Style.ColormapNum = colormapnum;
+					spr->BaseColormap = colormap;
+					spr->ColormapNum = colormapnum;
 					return;
 				}
 			}
@@ -437,7 +437,7 @@ namespace swrenderer
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
 			spr->Render(cliptop, clipbot, minvoxely, maxvoxely);
 		}
-		spr->Style.BaseColormap = colormap;
-		spr->Style.ColormapNum = colormapnum;
+		spr->BaseColormap = colormap;
+		spr->ColormapNum = colormapnum;
 	}
 }

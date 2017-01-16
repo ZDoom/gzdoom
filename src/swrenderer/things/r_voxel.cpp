@@ -142,14 +142,14 @@ namespace swrenderer
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
-		vis->Style.RenderStyle = thing->RenderStyle;
+		vis->RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;
-		vis->Style.Alpha = float(thing->Alpha);
+		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		vis->Style.ColormapNum = 0;
+		vis->ColormapNum = 0;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
@@ -159,9 +159,9 @@ namespace swrenderer
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
 		// the invert overlay flag says to do.
-		INTBOOL invertcolormap = (vis->Style.RenderStyle.Flags & STYLEF_InvertOverlay);
+		INTBOOL invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay);
 
-		if (vis->Style.RenderStyle.Flags & STYLEF_InvertSource)
+		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
 		{
 			invertcolormap = !invertcolormap;
 		}
@@ -173,12 +173,12 @@ namespace swrenderer
 		}
 
 		// Sprites that are added to the scene must fade to black.
-		if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
 		{
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
 		}
 
-		if (vis->Style.RenderStyle.Flags & STYLEF_FadeToBlack)
+		if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 		{
 			if (invertcolormap)
 			{ // Fade to white
@@ -194,8 +194,8 @@ namespace swrenderer
 		// get light level
 		if (fixedcolormap != nullptr)
 		{ // fixed map
-			vis->Style.BaseColormap = fixedcolormap;
-			vis->Style.ColormapNum = 0;
+			vis->BaseColormap = fixedcolormap;
+			vis->ColormapNum = 0;
 		}
 		else
 		{
@@ -206,18 +206,18 @@ namespace swrenderer
 
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.BaseColormap = mybasecolormap;
-				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+				vis->BaseColormap = mybasecolormap;
+				vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 			{ // full bright
-				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-				vis->Style.ColormapNum = 0;
+				vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				vis->ColormapNum = 0;
 			}
 			else
 			{ // diminished light
-				vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-				vis->Style.BaseColormap = mybasecolormap;
+				vis->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+				vis->BaseColormap = mybasecolormap;
 			}
 		}
 
@@ -229,11 +229,11 @@ namespace swrenderer
 	{
 		auto sprite = this;
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Style.BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->BaseColormap);
 
-		R_SetColorMapLight(sprite->Style.BaseColormap, 0, sprite->Style.ColormapNum << FRACBITS);
+		R_SetColorMapLight(sprite->BaseColormap, 0, sprite->ColormapNum << FRACBITS);
 
-		bool visible = R_SetPatchStyle(sprite->Style.RenderStyle, sprite->Style.Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		bool visible = R_SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
 
@@ -620,8 +620,8 @@ namespace swrenderer
 		int flags = 0;
 
 		// Do setup for blending.
-		R_SetColorMapLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
-		bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+		R_SetColorMapLight(spr->BaseColormap, 0, spr->ColormapNum << FRACBITS);
+		bool visible = R_SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor);
 
 		if (!visible)
 		{
@@ -646,7 +646,7 @@ namespace swrenderer
 
 		// Render the voxel, either directly to the screen or offscreen.
 		R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
-			spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.BaseColormap, spr->Style.ColormapNum, cliptop, clipbot,
+			spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->BaseColormap, spr->ColormapNum, cliptop, clipbot,
 			minslabz, maxslabz, flags);
 
 		// Blend the voxel, if that's what we need to do.

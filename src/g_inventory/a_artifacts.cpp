@@ -791,8 +791,7 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 	if ((vis->Alpha < 0.25f && special1 > 0) || (vis->Alpha == 0))
 	{
 		vis->Alpha = clamp((1.f - float(Strength/100)), 0.f, 1.f);
-		vis->BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
-		vis->ColormapNum = 0;
+		vis->colormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency
 }

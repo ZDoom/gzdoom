@@ -290,6 +290,7 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	return false;
 }
 
+#if 0
 visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 {
 	visstyle_t visstyle;
@@ -298,16 +299,17 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 	int actualextralight = foggy ? 0 : extralight << 4;
 	int spriteshade = LIGHT2SHADE(thing->Sector->lightlevel + actualextralight);
 
-	visstyle.RenderStyle = thing->RenderStyle;
-	visstyle.Alpha = float(thing->Alpha);
-	visstyle.ColormapNum = 0;
+	FRenderStyle RenderStyle;
+	RenderStyle = thing->RenderStyle;
+	float Alpha = float(thing->Alpha);
+	int ColormapNum = 0;
 
 	// The software renderer cannot invert the source without inverting the overlay
 	// too. That means if the source is inverted, we need to do the reverse of what
 	// the invert overlay flag says to do.
-	bool invertcolormap = (visstyle.RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
+	bool invertcolormap = (RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
 
-	if (visstyle.RenderStyle.Flags & STYLEF_InvertSource)
+	if (RenderStyle.Flags & STYLEF_InvertSource)
 	{
 		invertcolormap = !invertcolormap;
 	}
@@ -315,12 +317,12 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 	FDynamicColormap *mybasecolormap = thing->Sector->ColorMap;
 
 	// Sprites that are added to the scene must fade to black.
-	if (visstyle.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+	if (RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
 	{
 		mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
 	}
 
-	if (visstyle.RenderStyle.Flags & STYLEF_FadeToBlack)
+	if (RenderStyle.Flags & STYLEF_FadeToBlack)
 	{
 		if (invertcolormap)
 		{ // Fade to white
@@ -336,8 +338,8 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 	// get light level
 	if (swrenderer::fixedcolormap != nullptr)
 	{ // fixed map
-		visstyle.BaseColormap = swrenderer::fixedcolormap;
-		visstyle.ColormapNum = 0;
+		BaseColormap = swrenderer::fixedcolormap;
+		ColormapNum = 0;
 	}
 	else
 	{
@@ -347,24 +349,25 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 		}
 		if (swrenderer::fixedlightlev >= 0)
 		{
-			visstyle.BaseColormap = mybasecolormap;
-			visstyle.ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
+			BaseColormap = mybasecolormap;
+			ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			visstyle.BaseColormap = mybasecolormap;
-			visstyle.ColormapNum = 0;
+			BaseColormap = mybasecolormap;
+			ColormapNum = 0;
 		}
 		else
 		{ // diminished light
 			double minz = double((2048 * 4) / double(1 << 20));
-			visstyle.ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / MAX(z, minz), spriteshade);
-			visstyle.BaseColormap = mybasecolormap;
+			ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / MAX(z, minz), spriteshade);
+			BaseColormap = mybasecolormap;
 		}
 	}
 
 	return visstyle;
 }
+#endif
 
 FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 {

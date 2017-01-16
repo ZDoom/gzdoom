@@ -197,29 +197,29 @@ namespace swrenderer
 		vis->renderflags = (short)(particle->alpha * 255.0f + 0.5f);
 		vis->FakeFlatStat = fakeside;
 		vis->floorclip = 0;
-		vis->Style.ColormapNum = 0;
+		vis->ColormapNum = 0;
 		vis->foggy = foggy;
 
 		if (fixedlightlev >= 0)
 		{
-			vis->Style.BaseColormap = map;
-			vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+			vis->BaseColormap = map;
+			vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (fixedcolormap)
 		{
-			vis->Style.BaseColormap = fixedcolormap;
-			vis->Style.ColormapNum = 0;
+			vis->BaseColormap = fixedcolormap;
+			vis->ColormapNum = 0;
 		}
 		else if (particle->bright)
 		{
-			vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : map;
-			vis->Style.ColormapNum = 0;
+			vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : map;
+			vis->ColormapNum = 0;
 		}
 		else
 		{
 			// Particles are slightly more visible than regular sprites.
-			vis->Style.ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
-			vis->Style.BaseColormap = map;
+			vis->ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
+			vis->BaseColormap = map;
 		}
 
 		VisibleSpriteList::Instance()->Push(vis);
@@ -232,7 +232,7 @@ namespace swrenderer
 		auto vis = this;
 
 		int spacing;
-		BYTE color = vis->Style.BaseColormap->Maps[vis->startfrac];
+		BYTE color = vis->BaseColormap->Maps[vis->startfrac];
 		int yl = vis->y1;
 		int ycount = vis->y2 - yl + 1;
 		int x1 = vis->x1;
@@ -243,7 +243,7 @@ namespace swrenderer
 
 		DrawMaskedSegsBehindParticle();
 
-		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
+		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->ColormapNum << FRACBITS)));
 
 		// vis->renderflags holds translucency level (0-255)
 		fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;

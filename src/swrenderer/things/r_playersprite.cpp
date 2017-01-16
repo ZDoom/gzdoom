@@ -305,7 +305,7 @@ namespace swrenderer
 		vis->yscale = float(pspriteyscale / tex->Scale.Y);
 		vis->Translation = 0;		// [RH] Use default colors
 		vis->pic = tex;
-		vis->Style.ColormapNum = 0;
+		vis->ColormapNum = 0;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
@@ -335,42 +335,42 @@ namespace swrenderer
 
 				if (pspr->Flags & PSPF_FORCESTYLE)
 				{
-					vis->Style.RenderStyle = LegacyRenderStyles[rs];
+					vis->RenderStyle = LegacyRenderStyles[rs];
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 				{
-					vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
+					vis->RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
 				{
-					vis->Style.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
-					vis->Style.RenderStyle.CheckFuzz();
+					vis->RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+					vis->RenderStyle.CheckFuzz();
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 				{
-					vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
+					vis->RenderStyle = LegacyRenderStyles[STYLE_Subtract];
 				}
 				else
 				{
-					vis->Style.RenderStyle = LegacyRenderStyles[rs];
+					vis->RenderStyle = LegacyRenderStyles[rs];
 				}
 			}
 			else
 			{
-				vis->Style.RenderStyle = owner->RenderStyle;
+				vis->RenderStyle = owner->RenderStyle;
 			}
 
 			// Set the alpha based on if using the overlay's own or not. Also adjust
 			// and override the alpha if not forced.
 			if (pspr->Flags & PSPF_ALPHA)
 			{
-				if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+				if (vis->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 				{
 					alpha = owner->Alpha;
 				}
-				else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
 				{
-					FRenderStyle style = vis->Style.RenderStyle;
+					FRenderStyle style = vis->RenderStyle;
 					style.CheckFuzz();
 					switch (style.BlendOp)
 					{
@@ -384,15 +384,15 @@ namespace swrenderer
 					}
 
 				}
-				else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 				{
 					alpha = owner->Alpha;
 				}
-				else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
 				{
 					alpha = owner->Alpha * pspr->alpha;
 				}
@@ -405,10 +405,10 @@ namespace swrenderer
 			// Should normal renderstyle come out on top at the end and we desire alpha,
 			// switch it to translucent. Normal never applies any sort of alpha.
 			if ((pspr->Flags & PSPF_ALPHA) &&
-				vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
-				vis->Style.Alpha < 1.0)
+				vis->RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
+				vis->Alpha < 1.0)
 			{
-				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+				vis->RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				alpha = owner->Alpha * pspr->alpha;
 			}
 
@@ -417,22 +417,22 @@ namespace swrenderer
 			if (pspr->Flags & PSPF_FORCEALPHA)
 			{
 				//Due to lack of != operators...
-				if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
-					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
+				if (vis->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
+					vis->RenderStyle == LegacyRenderStyles[STYLE_Stencil])
 				{
 				}
 				else
 				{
 					alpha = pspr->alpha;
-					vis->Style.RenderStyle.Flags |= STYLEF_ForceAlpha;
+					vis->RenderStyle.Flags |= STYLEF_ForceAlpha;
 				}
 			}
-			vis->Style.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
+			vis->Alpha = clamp<float>(float(alpha), 0.f, 1.f);
 
 			// Due to how some of the effects are handled, going to 0 or less causes some
 			// weirdness to display. There's no point rendering it anyway if it's 0.
-			if (vis->Style.Alpha <= 0.)
+			if (vis->Alpha <= 0.)
 				return;
 
 			//-----------------------------------------------------------------------------
@@ -440,16 +440,16 @@ namespace swrenderer
 			// The software renderer cannot invert the source without inverting the overlay
 			// too. That means if the source is inverted, we need to do the reverse of what
 			// the invert overlay flag says to do.
-			INTBOOL invertcolormap = (vis->Style.RenderStyle.Flags & STYLEF_InvertOverlay);
+			INTBOOL invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay);
 
-			if (vis->Style.RenderStyle.Flags & STYLEF_InvertSource)
+			if (vis->RenderStyle.Flags & STYLEF_InvertSource)
 			{
 				invertcolormap = !invertcolormap;
 			}
 
 			FDynamicColormap *mybasecolormap = basecolormap;
 
-			if (vis->Style.RenderStyle.Flags & STYLEF_FadeToBlack)
+			if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 			{
 				if (invertcolormap)
 				{ // Fade to white
@@ -464,8 +464,8 @@ namespace swrenderer
 
 			if (realfixedcolormap != nullptr && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
 			{ // fixed color
-				vis->Style.BaseColormap = realfixedcolormap;
-				vis->Style.ColormapNum = 0;
+				vis->BaseColormap = realfixedcolormap;
+				vis->ColormapNum = 0;
 			}
 			else
 			{
@@ -475,47 +475,43 @@ namespace swrenderer
 				}
 				if (fixedlightlev >= 0)
 				{
-					vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-					vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+					vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+					vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 				}
 				else if (!vis->foggy && pspr->GetState()->GetFullbright())
 				{ // full bright
-					vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
-					vis->Style.ColormapNum = 0;
+					vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
+					vis->ColormapNum = 0;
 				}
 				else
 				{ // local light
-					vis->Style.BaseColormap = mybasecolormap;
-					vis->Style.ColormapNum = GETPALOOKUP(0, spriteshade);
+					vis->BaseColormap = mybasecolormap;
+					vis->ColormapNum = GETPALOOKUP(0, spriteshade);
 				}
 			}
 			if (camera->Inventory != nullptr)
 			{
-				BYTE oldcolormapnum = vis->Style.ColormapNum;
-				FSWColormap *oldcolormap = vis->Style.BaseColormap;
-				camera->Inventory->AlterWeaponSprite(&vis->Style);
-				if (vis->Style.BaseColormap != oldcolormap || vis->Style.ColormapNum != oldcolormapnum)
+				visstyle_t visstyle;
+				visstyle.Alpha = vis->Alpha;
+				visstyle.RenderStyle = vis->RenderStyle;
+				visstyle.colormap = nullptr; // Same as the GL render is doing.
+				
+				camera->Inventory->AlterWeaponSprite(&visstyle);
+				
+				vis->RenderStyle = visstyle.RenderStyle;
+				vis->Alpha = visstyle.Alpha;
+				
+				// Only bother checking for the one type it changes it to until this has been ZScript'ed..
+				if (visstyle.colormap == SpecialColormaps[INVERSECOLORMAP].Colormap)
 				{
-					// The colormap has changed. Is it one we can easily identify?
-					// If not, then don't bother trying to identify it for
-					// hardware accelerated drawing.
-					if (vis->Style.BaseColormap < &SpecialColormaps[0] ||
-						vis->Style.BaseColormap > &SpecialColormaps.Last())
-					{
-						noaccel = true;
-					}
-					// Has the basecolormap changed? If so, we can't hardware accelerate it,
-					// since we don't know what it is anymore.
-					else if (vis->Style.BaseColormap != mybasecolormap)
-					{
-						noaccel = true;
-					}
+					vis->BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
+					vis->ColormapNum = 0;
 				}
 			}
 			// If we're drawing with a special colormap, but shaders for them are disabled, do
 			// not accelerate.
-			if (!r_shadercolormaps && (vis->Style.BaseColormap >= &SpecialColormaps[0] &&
-				vis->Style.BaseColormap <= &SpecialColormaps.Last()))
+			if (!r_shadercolormaps && (vis->BaseColormap >= &SpecialColormaps[0] &&
+				vis->BaseColormap <= &SpecialColormaps.Last()))
 			{
 				noaccel = true;
 			}
@@ -543,15 +539,15 @@ namespace swrenderer
 		{
 			colormap_to_use = basecolormap;
 
-			vis->Style.BaseColormap = basecolormap;
-			vis->Style.ColormapNum = 0;
+			vis->BaseColormap = basecolormap;
+			vis->ColormapNum = 0;
 		}
 
 		// Check for hardware-assisted 2D. If it's available, and this sprite is not
 		// fuzzy, don't draw it until after the switch to 2D mode.
 		if (!noaccel && RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 		{
-			FRenderStyle style = vis->Style.RenderStyle;
+			FRenderStyle style = vis->RenderStyle;
 			style.CheckFuzz();
 			if (style.BlendOp != STYLEOP_Fuzz)
 			{
@@ -585,16 +581,16 @@ namespace swrenderer
 			FColormapStyle colormapstyle;
 			bool usecolormapstyle = false;
 
-			if (vis->Style.BaseColormap >= &SpecialColormaps[0] &&
-				vis->Style.BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
+			if (vis->BaseColormap >= &SpecialColormaps[0] &&
+				vis->BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
 			{
-				special = static_cast<FSpecialColormap*>(vis->Style.BaseColormap);
+				special = static_cast<FSpecialColormap*>(vis->BaseColormap);
 			}
 			else if (colormap->Color == PalEntry(255, 255, 255) &&
 				colormap->Desaturate == 0)
 			{
 				overlay = colormap->Fade;
-				overlay.a = BYTE(vis->Style.ColormapNum * 255 / NUMCOLORMAPS);
+				overlay.a = BYTE(vis->ColormapNum * 255 / NUMCOLORMAPS);
 			}
 			else
 			{
@@ -602,7 +598,7 @@ namespace swrenderer
 				colormapstyle.Color = colormap->Color;
 				colormapstyle.Fade = colormap->Fade;
 				colormapstyle.Desaturate = colormap->Desaturate;
-				colormapstyle.FadeLevel = vis->Style.ColormapNum / float(NUMCOLORMAPS);
+				colormapstyle.FadeLevel = vis->ColormapNum / float(NUMCOLORMAPS);
 			}
 			screen->DrawTexture(vis->pic,
 				viewwindowx + vispsprites[i].x1,
@@ -617,8 +613,8 @@ namespace swrenderer
 				DTA_ClipTop, viewwindowy,
 				DTA_ClipRight, viewwindowx + viewwidth,
 				DTA_ClipBottom, viewwindowy + viewheight,
-				DTA_AlphaF, vis->Style.Alpha,
-				DTA_RenderStyle, vis->Style.RenderStyle,
+				DTA_AlphaF, vis->Alpha,
+				DTA_RenderStyle, vis->RenderStyle,
 				DTA_FillColor, vis->FillColor,
 				DTA_SpecialColormap, special,
 				DTA_ColorOverlay, overlay.d,

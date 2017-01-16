@@ -194,14 +194,14 @@ namespace swrenderer
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
-		vis->Style.RenderStyle = thing->RenderStyle;
+		vis->RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;
-		vis->Style.Alpha = float(thing->Alpha);
+		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		vis->Style.ColormapNum = 0;
+		vis->ColormapNum = 0;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
@@ -212,9 +212,9 @@ namespace swrenderer
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
 		// the invert overlay flag says to do.
-		INTBOOL invertcolormap = (vis->Style.RenderStyle.Flags & STYLEF_InvertOverlay);
+		INTBOOL invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay);
 
-		if (vis->Style.RenderStyle.Flags & STYLEF_InvertSource)
+		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
 		{
 			invertcolormap = !invertcolormap;
 		}
@@ -226,12 +226,12 @@ namespace swrenderer
 		}
 
 		// Sprites that are added to the scene must fade to black.
-		if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
 		{
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
 		}
 
-		if (vis->Style.RenderStyle.Flags & STYLEF_FadeToBlack)
+		if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 		{
 			if (invertcolormap)
 			{ // Fade to white
@@ -247,8 +247,8 @@ namespace swrenderer
 		// get light level
 		if (fixedcolormap != nullptr)
 		{ // fixed map
-			vis->Style.BaseColormap = fixedcolormap;
-			vis->Style.ColormapNum = 0;
+			vis->BaseColormap = fixedcolormap;
+			vis->ColormapNum = 0;
 		}
 		else
 		{
@@ -258,18 +258,18 @@ namespace swrenderer
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.BaseColormap = mybasecolormap;
-				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+				vis->BaseColormap = mybasecolormap;
+				vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 			{ // full bright
-				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-				vis->Style.ColormapNum = 0;
+				vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				vis->ColormapNum = 0;
 			}
 			else
 			{ // diminished light
-				vis->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-				vis->Style.BaseColormap = mybasecolormap;
+				vis->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
+				vis->BaseColormap = mybasecolormap;
 			}
 		}
 
@@ -295,17 +295,17 @@ namespace swrenderer
 		}
 
 		fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-		R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
+		R_SetColorMapLight(vis->BaseColormap, 0, vis->ColormapNum << FRACBITS);
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Style.BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->BaseColormap);
 
-		bool visible = R_SetPatchStyle(vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor, basecolormap);
+		bool visible = R_SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
 
-		if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 		  // it is the brightest one. We need to get back to the proper light level for
 		  // this sprite.
-			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, vis->Style.ColormapNum << FRACBITS);
+			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, vis->ColormapNum << FRACBITS);
 		}
 
 		if (visible)

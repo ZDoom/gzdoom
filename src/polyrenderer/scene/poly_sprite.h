@@ -36,5 +36,5 @@ public:
 	static FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 
 private:
-	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
+	//visstyle_t GetSpriteVisStyle(AActor *thing, double z);
 };

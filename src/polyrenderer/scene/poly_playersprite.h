@@ -22,8 +22,11 @@
 
 #pragma once
 
+#include "r_defs.h"
+
 class PolyScreenSprite;
 class DPSprite;
+struct FSWColormap;
 
 class RenderPolyPlayerSprites
 {
@@ -53,7 +56,10 @@ public:
 	double Height = 0.0;
 	FRemapTable *Translation = nullptr;
 	bool Flip = false;
-	visstyle_t visstyle;
+	float Alpha = 1;
+	FRenderStyle RenderStyle;
+	FSWColormap *BaseColormap = nullptr;
+	int ColormapNum = 0;
 	uint32_t FillColor = 0;
 	FDynamicColormap *Colormap = nullptr;
 };

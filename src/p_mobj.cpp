@@ -5373,7 +5373,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		(dmflags2 & DF2_YES_RESPAWN_INVUL) &&
 		(multiplayer || alwaysapplydmflags))
 	{
-		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
+		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (PClass::FindActor(NAME_PowerInvulnerable)));
 		invul->EffectTics = 3*TICRATE;
 		invul->BlendColor = 0;			// don't mess with the view
 		invul->ItemFlags |= IF_UNDROPPABLE;	// Don't drop this

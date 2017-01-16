@@ -57,15 +57,6 @@ public:
 	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
 };
 
-class APowerInvulnerable : public APowerup
-{
-	DECLARE_CLASS (APowerInvulnerable, APowerup)
-protected:
-	virtual void InitEffect () override;
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-};
-
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)

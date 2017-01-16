@@ -100,6 +100,7 @@ static FFlagDef InternalActorFlagDefs[]=
 	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
 	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
 	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
+	DEFINE_FLAG(FX, RESPAWNINVUL, AActor, effects),
 };
 
 

@@ -38,14 +38,134 @@ class Powerup : Inventory native
 //
 //===========================================================================
 
-class PowerInvulnerable : Powerup native
+class PowerInvulnerable : Powerup
 {
 	Default
 	{
 		Powerup.Duration -30;
 		inventory.icon "SPSHLD0";
 	}
-	
+
+	//===========================================================================
+	//
+	// APowerInvulnerable :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+		Owner.bRespawnInvul = false;
+		Owner.bInvulnerable = true;
+		if (Mode == 'None' && Owner is "PlayerPawn")
+		{
+			Mode = PlayerPawn(Owner).InvulMode;
+		}
+		if (Mode == 'Reflective')
+		{
+			Owner.bReflective = true;
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerInvulnerable :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		Super.DoEffect ();
+
+		if (Owner == NULL)
+		{
+			return;
+		}
+
+		if (Mode == 'Ghost')
+		{
+			if (!Owner.bShadow)
+			{
+				// Don't mess with the translucency settings if an
+				// invisibility powerup is active.
+				let alpha = Owner.Alpha;
+				if (!(level.time & 7) && alpha > 0 && alpha < 1)
+				{
+					if (alpha == HX_SHADOW)
+					{
+						alpha = HX_ALTSHADOW;
+					}
+					else
+					{
+						alpha = 0;
+						Owner.bNonShootable = true;
+					}
+				}
+				if (!(level.time & 31))
+				{
+					if (alpha == 0)
+					{
+						Owner.bNonShootable = false;
+						alpha = HX_ALTSHADOW;
+					}
+					else
+					{
+						alpha = HX_SHADOW;
+					}
+				}
+				Owner.A_SetRenderStyle(alpha, STYLE_Translucent);
+			}
+			else
+			{
+				Owner.bNonShootable = false;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerInvulnerable :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+
+		if (Owner == NULL)
+		{
+			return;
+		}
+
+		Owner.bRespawnInvul = false;
+		Owner.bInvulnerable = false;
+		if (Mode == 'Ghost')
+		{
+			Owner.bNonShootable = false;
+			if (!bShadow)
+			{
+				// Don't mess with the translucency settings if an
+				// invisibility powerup is active.
+				Owner.A_SetRenderStyle(1, STYLE_Normal);
+			}
+		}
+		else if (Mode == 'Reflective')
+		{
+			Owner.bReflective = false;
+		}
+
+		if (Owner.player != NULL)
+		{
+			Owner.player.fixedcolormap = PlayerInfo.NOFIXEDCOLORMAP;
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerInvulnerable :: AlterWeaponSprite
+	//
+	//===========================================================================
+
 	override void AlterWeaponSprite (VisStyle vis, in out int changed)
 	{
 		if (Owner != NULL)

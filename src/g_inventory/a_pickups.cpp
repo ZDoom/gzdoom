@@ -785,24 +785,6 @@ bool AInventory::GetNoTeleportFreeze ()
 
 //===========================================================================
 //
-// AInventory :: AlterWeaponSprite
-//
-// Allows inventory items to alter a player's weapon sprite just before it
-// is drawn.
-//
-//===========================================================================
-
-int AInventory::AlterWeaponSprite (visstyle_t *vis)
-{
-	if (Inventory != NULL)
-	{
-		return Inventory->AlterWeaponSprite (vis);
-	}
-	return 0;
-}
-
-//===========================================================================
-//
 // AInventory :: Use
 //
 //===========================================================================

@@ -3629,6 +3629,25 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 	return damage;
 }
 
+void AActor::AlterWeaponSprite(visstyle_t *vis)
+{
+	int changed = 0;
+	TArray<AInventory *> items;
+	// This needs to go backwards through the items but the list has no backlinks.
+	for (AInventory *item = Inventory; item != nullptr; item = item->Inventory)
+	{
+		items.Push(item);
+	}
+	for(int i=items.Size()-1;i>=0;i--)
+	{
+		IFVIRTUALPTR(items[i], AInventory, AlterWeaponSprite)
+		{
+			VMValue params[3] = { items[i], vis, &changed };
+			GlobalVMStack.Call(func, params, 3, nullptr, 0, nullptr);
+		}
+	}
+}
+
 void AActor::PlayActiveSound ()
 {
 	if (ActiveSound && !S_IsActorPlayingSomething (this, CHAN_VOICE, -1))

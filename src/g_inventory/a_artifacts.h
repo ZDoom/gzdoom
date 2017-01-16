@@ -64,7 +64,6 @@ protected:
 	virtual void InitEffect () override;
 	virtual void DoEffect () override;
 	virtual void EndEffect () override;
-	virtual int AlterWeaponSprite (visstyle_t *vis) override;
 };
 
 class APowerStrength : public APowerup
@@ -76,17 +75,6 @@ protected:
 	virtual void InitEffect () override;
 	virtual void Tick () override;
 	virtual bool HandlePickup (AInventory *item) override;
-};
-
-class APowerInvisibility : public APowerup
-{
-	DECLARE_CLASS (APowerInvisibility, APowerup)
-protected:
-	virtual bool HandlePickup (AInventory *item) override;
-	virtual void InitEffect () override;
-	virtual void DoEffect () override;
-	virtual void EndEffect () override;
-	virtual int AlterWeaponSprite (visstyle_t *vis) override;
 };
 
 class APowerSpeed : public APowerup

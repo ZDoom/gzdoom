@@ -32,12 +32,29 @@ class Powerup : Inventory native
 	
 }
 
+//===========================================================================
+//
+// Invulnerable
+//
+//===========================================================================
+
 class PowerInvulnerable : Powerup native
 {
 	Default
 	{
 		Powerup.Duration -30;
 		inventory.icon "SPSHLD0";
+	}
+	
+	override void AlterWeaponSprite (VisStyle vis, in out int changed)
+	{
+		if (Owner != NULL)
+		{
+			if (Mode == 'Ghost' && !(Owner.bShadow))
+			{
+				vis.Alpha = min(0.25 + Owner.Alpha * 0.75, 1.);
+			}
+		}
 	}
 }
 
@@ -51,7 +68,13 @@ class PowerStrength : Powerup native
 	}
 }
 
-class PowerInvisibility : Powerup native
+//===========================================================================
+//
+// Invisibility
+//
+//===========================================================================
+
+class PowerInvisibility : Powerup
 {
 	Default
 	{
@@ -59,6 +82,202 @@ class PowerInvisibility : Powerup native
 		Powerup.Duration -60;
 		Powerup.Strength 80;
 		Powerup.Mode "Fuzzy";
+	}
+	
+	//===========================================================================
+	//
+	// APowerInvisibility :: InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect ()
+	{
+		Super.InitEffect();
+
+		let Owner = self.Owner;
+		if (Owner != NULL)
+		{
+			let savedShadow = Owner.bShadow;
+			let savedGhost = Owner.bGhost;
+			let savedCantSeek = Owner.bCantSeek;
+			Owner.bShadow = bShadow;
+			Owner.bGhost = bGhost;
+			Owner.bCantSeek = bCantSeek;
+			bShadow = savedShadow;
+			bGhost = savedGhost;
+			bCantSeek = savedCantSeek;
+			DoEffect();
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerInvisibility :: DoEffect
+	//
+	//===========================================================================
+	
+	override void DoEffect ()
+	{
+		Super.DoEffect();
+		// Due to potential interference with other PowerInvisibility items
+		// the effect has to be refreshed each tic.
+		double ts = (Strength / 100) * (special1 + 1);
+		
+		if (ts > 1.) ts = 1.;
+		let newAlpha = clamp((1. - ts), 0., 1.);
+		int newStyle;
+		switch (Mode)
+		{
+		case 'Fuzzy':
+			newStyle = STYLE_OptFuzzy;
+			break;
+		case 'Opaque':
+			newStyle = STYLE_Normal;
+			break;
+		case 'Additive':
+			newStyle = STYLE_Add;
+			break;
+		case 'Stencil':
+			newStyle = STYLE_Stencil;
+			break;
+		case 'AddStencil' :
+			newStyle = STYLE_AddStencil;
+			break;
+		case 'TranslucentStencil':
+			newStyle = STYLE_TranslucentStencil;
+			break;
+		case 'None' :
+		case 'Cumulative':
+		case 'Translucent':
+			newStyle = STYLE_Translucent;
+			break;
+		default: // Something's wrong
+			newStyle = STYLE_Normal;
+			newAlpha = 1.;
+			break;
+		}
+		Owner.A_SetRenderStyle(newAlpha, newStyle);
+	}
+
+	//===========================================================================
+	//
+	// APowerInvisibility :: EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect ()
+	{
+		Super.EndEffect();
+		if (Owner != NULL)
+		{
+			Owner.bShadow = bShadow;
+			Owner.bGhost = bGhost;
+			Owner.bCantSeek = bCantSeek;
+
+			Owner.A_SetRenderStyle(1, STYLE_Normal);
+
+			// Check whether there are other invisibility items and refresh their effect.
+			// If this isn't done there will be one incorrectly drawn frame when this
+			// item expires.
+			for(let item = Owner.Inv; item != null; item = item.Inv)
+			{
+				if (item != self && item is 'PowerInvisibility')
+				{
+					item.DoEffect();
+				}
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerInvisibility :: AlterWeaponSprite
+	//
+	//===========================================================================
+
+	override void AlterWeaponSprite (VisStyle vis, in out int changed)
+	{
+		// Blink if the powerup is wearing off
+		if (changed == 0 && EffectTics < 4*32 && !(EffectTics & 8))
+		{
+			vis.RenderStyle = STYLE_Normal;
+			vis.Alpha = 1.f;
+			changed = 1;
+			return;
+		}
+		else if (changed == 1)
+		{
+			// something else set the weapon sprite back to opaque but this item is still active.
+			float ts = float((Strength / 100) * (special1 + 1));
+			vis.Alpha = clamp((1. - ts), 0., 1.);
+			switch (Mode)
+			{
+			case 'Fuzzy':
+				vis.RenderStyle = STYLE_OptFuzzy;
+				break;
+			case 'Opaque':
+				vis.RenderStyle = STYLE_Normal;
+				break;
+			case 'Additive':
+				vis.RenderStyle = STYLE_Add;
+				break;
+			case 'Stencil':
+				vis.RenderStyle = STYLE_Stencil;
+				break;
+			case 'TranslucentStencil':
+				vis.RenderStyle = STYLE_TranslucentStencil;
+				break;
+			case 'AddStencil':
+				vis.RenderStyle = STYLE_AddStencil;
+				break;
+			case 'None':
+			case 'Cumulative':
+			case 'Translucent':
+			default:
+				vis.RenderStyle = STYLE_Translucent;
+				break;
+			}
+		}
+		// Handling of Strife-like cumulative invisibility powerups, the weapon itself shouldn't become invisible
+		if ((vis.Alpha < 0.25f && special1 > 0) || (vis.Alpha == 0))
+		{
+			vis.Alpha = clamp((1. - Strength/100.), 0., 1.);
+			vis.invert = true;
+		}
+		changed = -1;	// This item is valid so another one shouldn't reset the translucency
+	}
+
+	//===========================================================================
+	//
+	// APowerInvisibility :: HandlePickup
+	//
+	// If the player already has the first stage of a cumulative powerup, getting 
+	// it again increases the player's alpha. (But shouldn't this be in Use()?)
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (Mode == 'Cumulative' && ((Strength * special1) < 1.) && item.GetClass() == GetClass())
+		{
+			let power = Powerup(item);
+			if (power.EffectTics == 0)
+			{
+				power.bPickupGood = true;
+				return true;
+			}
+			// Only increase the EffectTics, not decrease it.
+			// Color also gets transferred only when the new item has an effect.
+			if (power.EffectTics > EffectTics)
+			{
+				EffectTics = power.EffectTics;
+				BlendColor = power.BlendColor;
+			}
+			special1++;	// increases power
+			power.bPickupGood = true;
+			return true;
+		}
+		return Super.HandlePickup (item);
 	}
 }
 

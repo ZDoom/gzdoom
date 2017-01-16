@@ -95,6 +95,8 @@ struct vissprite_t
 	BYTE			ColormapNum;	// Which colormap is rendered (needed for shaded drawer)
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
+	lighttable_t	*colormap;
+	FRenderStyle	RenderStyle;
 	visstyle_t		Style;
 	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
 

@@ -310,21 +310,21 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	visstyle_t vis;
 
-	vis.RenderStyle=playermo->RenderStyle;
-	vis.Alpha=playermo->Alpha;
-	vis.colormap = NULL;
-	if (playermo->Inventory) 
+	vis.RenderStyle = STYLE_Count;
+	vis.Alpha = playermo->Alpha;
+	vis.Invert = false;
+	playermo->AlterWeaponSprite(&vis);
+	
+	FRenderStyle RenderStyle;
+	if (vis.RenderStyle == STYLE_Count) RenderStyle = playermo->RenderStyle;
+	else RenderStyle = vis.RenderStyle;
+
+	if (vis.Invert)
 	{
-		playermo->Inventory->AlterWeaponSprite(&vis);
-		if (vis.colormap >= SpecialColormaps[0].Colormap && 
-			vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap && 
-			gl_fixedcolormap == CM_DEFAULT)
-		{
-			// this only happens for Strife's inverted weapon sprite
-			vis.RenderStyle.Flags |= STYLEF_InvertSource;
-		}
+		// this only happens for Strife's inverted weapon sprite
+		RenderStyle.Flags |= STYLEF_InvertSource;
 	}
-	if (vis.RenderStyle.AsDWORD == 0)
+	if (RenderStyle.AsDWORD == 0)
 	{
 		// This is RenderStyle None.
 		return;
@@ -334,32 +334,32 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	int OverrideShader = -1;
 	float trans = 0.f;
-	if (vis.RenderStyle.BlendOp >= STYLEOP_Fuzz && vis.RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
+	if (RenderStyle.BlendOp >= STYLEOP_Fuzz && RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
 	{
-		vis.RenderStyle.CheckFuzz();
-		if (vis.RenderStyle.BlendOp == STYLEOP_Fuzz)
+		RenderStyle.CheckFuzz();
+		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
 			if (gl_fuzztype != 0)
 			{
 				// Todo: implement shader selection here
-				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				OverrideShader = gl_fuzztype + 4;
 				trans = 0.99f;	// trans may not be 1 here
 			}
 			else
 			{
-				vis.RenderStyle.BlendOp = STYLEOP_Shadow;
+				RenderStyle.BlendOp = STYLEOP_Shadow;
 			}
 		}
 	}
 
-	gl_SetRenderStyle(vis.RenderStyle, false, false);
+	gl_SetRenderStyle(RenderStyle, false, false);
 
-	if (vis.RenderStyle.Flags & STYLEF_TransSoulsAlpha)
+	if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
 	{
 		trans = transsouls;
 	}
-	else if (vis.RenderStyle.Flags & STYLEF_Alpha1)
+	else if (RenderStyle.Flags & STYLEF_Alpha1)
 	{
 		trans = 1.f;
 	}
@@ -402,7 +402,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				ll = 255;
 			}
 			// set the lighting parameters
-			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
+			if (RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
 				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.desaturation);
 			}
@@ -438,7 +438,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			}
 
 
-			DrawPSprite(player, psp, sx, sy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));
+			DrawPSprite(player, psp, sx, sy, hudModelStep, OverrideShader, !!(RenderStyle.Flags & STYLEF_RedIsAlpha));
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);

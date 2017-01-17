@@ -216,11 +216,6 @@ namespace swrenderer
 		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
 			invertcolormap = !invertcolormap;
 
-		if (current_sector->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
-		{
-			basecolormap = thing->Sector->ColorMap;
-		}
-
 		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && basecolormap->Fade != 0)
 		{
 			basecolormap = GetSpecialLights(basecolormap->Color, 0, basecolormap->Desaturate);

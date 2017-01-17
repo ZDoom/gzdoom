@@ -87,6 +87,7 @@
 #include "a_ammo.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "stats.h"
 
 extern FILE *Logfile;
 
@@ -2974,8 +2975,12 @@ void DACSThinker::Serialize(FSerializer &arc)
 	}
 }
 
+cycle_t ACSTime;
+
 void DACSThinker::Tick ()
 {
+	ACSTime.Reset();
+	ACSTime.Clock();
 	DLevelScript *script = Scripts;
 
 	while (script)
@@ -2993,6 +2998,7 @@ void DACSThinker::Tick ()
 		ACS_StringBuilderStack.Clear();
 		I_Error("Error: %d garbage entries on ACS string builder stack.", size);
 	}
+	ACSTime.Unclock();
 }
 
 void DACSThinker::StopScriptsFor (AActor *actor)
@@ -10268,4 +10274,9 @@ CCMD(acsprofile)
 
 	ShowProfileData(ScriptProfiles, limit, sorter, false);
 	ShowProfileData(FuncProfiles, limit, sorter, true);
+}
+
+ADD_STAT(ACS)
+{
+	return FStringf("ACS time: %f ms", ACSTime.TimeMS());
 }

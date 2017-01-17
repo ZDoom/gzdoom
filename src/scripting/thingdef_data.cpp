@@ -462,7 +462,7 @@ static FFlagDef PlayerPawnFlagDefs[] =
 static FFlagDef PowerSpeedFlagDefs[] =
 {
 	// PowerSpeed flags
-	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
+	DEFINE_DEPRECATED_FLAG(NOTRAIL),
 };
 
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
@@ -473,7 +473,6 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 1 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -547,6 +546,12 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 				}
 			}
 		}
+	}
+
+	// Handle that lone PowerSpeed flag - this should be more generalized but it's just this one flag and unlikely to become more so an explicit check will do.
+	if ((!stricmp(part1, "NOTRAIL") && !strict) || (!stricmp(part1, "POWERSPEED") && !stricmp(part2, "NOTRAIL")))
+	{
+		return &PowerSpeedFlagDefs[0];
 	}
 	return NULL;
 }

@@ -187,6 +187,7 @@ enum
 	DEPF_HEXENBOUNCE,
 	DEPF_DOOMBOUNCE,
 	DEPF_INTERHUBSTRIP,
+	DEPF_NOTRAIL,
 };
 
 // Types of old style decorations

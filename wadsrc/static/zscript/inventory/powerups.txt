@@ -22,13 +22,232 @@ class Powerup : Inventory native
 	native color BlendColor;
 	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	native int Colormap;
+	const SPECIALCOLORMAP_MASK =  0x00b60000;
 
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
-	override bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+	override bool GetNoTeleportFreeze() 
+	{ 
+		return bNoTeleportFreeze; 
+	}
 
-	native virtual void InitEffect();
-	native virtual void EndEffect();
-	native bool isBlinking();
+	//===========================================================================
+	//
+	// APowerup :: Tick
+	//
+	//===========================================================================
+
+	override void Tick ()
+	{
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL)
+		{
+			Destroy ();
+		}
+		if (EffectTics > 0 && --EffectTics == 0)
+		{
+			Destroy ();
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: HandlePickup
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{
+			let power = Powerup(item);
+			if (power.EffectTics == 0)
+			{
+				power.bPickupGood = true;
+				return true;
+			}
+			// Color gets transferred if the new item has an effect.
+
+			// Increase the effect's duration.
+			if (power.bAdditiveTime) 
+			{
+				EffectTics += power.EffectTics;
+				BlendColor = power.BlendColor;
+			}
+			// If it's not blinking yet, you can't replenish the power unless the
+			// powerup is required to be picked up.
+			else if (EffectTics > BLINKTHRESHOLD && !power.bAlwaysPickup)
+			{
+				return true;
+			}
+			// Reset the effect duration.
+			else if (power.EffectTics > EffectTics)
+			{
+				EffectTics = power.EffectTics;
+				BlendColor = power.BlendColor;
+			}
+			power.bPickupGood = true;
+			return true;
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: CreateCopy
+	//
+	//===========================================================================
+
+	override Inventory CreateCopy (Actor other)
+	{
+		// Get the effective effect time.
+		EffectTics = abs (EffectTics);
+		// Abuse the Owner field to tell the
+		// InitEffect method who started it;
+		// this should be cleared afterwards,
+		// as this powerup instance is not
+		// properly attached to anything yet.
+		Owner = other;
+		// Actually activate the powerup.
+		InitEffect ();
+		// Clear the Owner field, unless it was
+		// changed by the activation, for example,
+		// if this instance is a morph powerup;
+		// the flag tells the caller that the
+		// ownership has changed so that they
+		// can properly handle the situation.
+		if (!bCreateCopyMoved)
+		{
+			Owner = NULL;
+		}
+		// All done.
+		return self;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: CreateTossable
+	//
+	// Powerups are never droppable, even without IF_UNDROPPABLE set.
+	//
+	//===========================================================================
+
+	override Inventory CreateTossable ()
+	{
+		return NULL;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: InitEffect
+	//
+	//===========================================================================
+
+	virtual void InitEffect() 
+	{
+		// initialize this only once instead of recalculating repeatedly.
+		Colormap = ((BlendColor & 0xFFFF0000) == SPECIALCOLORMAP_MASK)? BlendColor & 0xffff : PlayerInfo.NOFIXEDCOLORMAP;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: DoEffect
+	//
+	//===========================================================================
+
+	override void DoEffect ()
+	{
+		if (Owner == NULL || Owner.player == NULL)
+		{
+			return;
+		}
+
+		if (EffectTics > 0)
+		{
+			if (Colormap != PlayerInfo.NOFIXEDCOLORMAP)
+			{
+				if (!isBlinking())
+				{
+					Owner.player.fixedcolormap = Colormap;
+				}
+				else if (Owner.player.fixedcolormap == Colormap)	
+				{
+					// only unset if the fixed colormap comes from this item
+					Owner.player.fixedcolormap = PlayerInfo.NOFIXEDCOLORMAP;
+				}
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: EndEffect
+	//
+	//===========================================================================
+
+	virtual void EndEffect ()
+	{
+		if (colormap != PlayerInfo.NOFIXEDCOLORMAP && Owner && Owner.player && Owner.player.fixedcolormap == colormap)
+		{ // only unset if the fixed colormap comes from this item
+			Owner.player.fixedcolormap = PlayerInfo.NOFIXEDCOLORMAP;
+		}
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: Destroy
+	//
+	//===========================================================================
+
+	override void OnDestroy ()
+	{
+		EndEffect ();
+		Super.OnDestroy();
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: GetBlend
+	//
+	//===========================================================================
+
+	override color GetBlend ()
+	{
+		if (Colormap != Player.NOFIXEDCOLORMAP) return 0;
+		if (isBlinking()) return 0;
+		return BlendColor;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: DrawPowerup
+	//
+	//===========================================================================
+
+	override bool DrawPowerup (int x, int y)
+	{
+		if (!Icon.isValid())
+		{
+			return false;
+		}
+		if (!isBlinking())
+		{
+			screen.DrawHUDTexture(Icon, x, y);
+		}
+		return true;
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: isBlinking 
+	//
+	//===========================================================================
+
+	virtual bool isBlinking()
+	{
+		return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !bNoScreenBlink);
+	}
+
 	
 }
 
@@ -881,13 +1100,12 @@ class PowerWeaponLevel2 : Powerup
 //
 //===========================================================================
 
-class PowerSpeed : Powerup native
+class PowerSpeed : Powerup
 {
-	native int SpeedFlags;
+	int NoTrail;
+
+	Property NoTrail: NoTrail;
 	
-	const PSF_NOTRAIL = 1;
-
-
 	Default
 	{
 		Powerup.Duration -45;
@@ -917,7 +1135,7 @@ class PowerSpeed : Powerup native
 		if (Owner.player.cheats & CF_PREDICTING)
 			return;
 
-		if (SpeedFlags & PSF_NOTRAIL)
+		if (NoTrail)
 			return;
 
 		if (level.time & 1)
@@ -928,7 +1146,7 @@ class PowerSpeed : Powerup native
 		for (Inventory item = Inv; item != NULL; item = item.Inv)
 		{
 			let sitem = PowerSpeed(item);
-			if (sitem != null && !(sitem.SpeedFlags & PSF_NOTRAIL))
+			if (sitem != null && !NoTrail)
 			{
 				return;
 			}
@@ -1678,7 +1896,7 @@ class PowerMorph : Powerup native
 	native Class<Actor> MorphFlash, UnMorphFlash;
 	native int MorphStyle;
 	native PlayerInfo MorphedPlayer;
-
+	
 	Default
 	{
 		Powerup.Duration -40;

@@ -36,6 +36,7 @@
 #include "dobject.h"
 #include "v_text.h"
 #include "stats.h"
+#include "templates.h"
 
 cycle_t VMCycles[10];
 int VMCalls[10];
@@ -605,11 +606,16 @@ ADD_STAT(VM)
 {
 	double added = 0;
 	int addedc = 0;
-	for (auto d : VMCycles) added += d.TimeMS();
+	double peak = 0;
+	for (auto d : VMCycles)
+	{
+		added += d.TimeMS();
+		peak = MAX<double>(peak, d.TimeMS());
+	}
 	for (auto d : VMCalls) addedc += d;
 	memmove(&VMCycles[1], &VMCycles[0], 9 * sizeof(cycle_t));
 	memmove(&VMCalls[1], &VMCalls[0], 9 * sizeof(int));
 	VMCycles[0].Reset();
 	VMCalls[0] = 0;
-	return FStringf("VM time in last 10 tics: %f ms, %d calls", added, addedc);
+	return FStringf("VM time in last 10 tics: %f ms, %d calls, peak = %f ms", added, addedc, peak);
 }

@@ -354,6 +354,23 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		break;
 	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
 		static_cast<AInventory*>(defaults)->InterHubAmount = set ? 0 : 1;
+		break;
+	case DEPF_NOTRAIL:
+	{
+		FString propname = "@property@powerspeed.notrail";
+		FName name(propname, true);
+		if (name != NAME_None)
+		{
+			auto propp = dyn_cast<PProperty>(info->Symbols.FindSymbol(name, true));
+			if (propp != nullptr)
+			{
+				*((char*)defaults + propp->Variables[0]->Offset) = set ? 1 : 0;
+			}
+		}
+		break;
+	}
+
+
 	default:
 		break;	// silence GCC
 	}

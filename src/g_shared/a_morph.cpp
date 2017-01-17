@@ -17,6 +17,7 @@
 #include "a_armor.h"
 #include "r_data/sprites.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -597,7 +598,12 @@ void EndAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
 		{
-			static_cast<APowerup *>(item)->CallEndEffect();
+			IFVIRTUALPTR(item, APowerup, EndEffect)
+			{
+				VMValue params[1] = { item };
+				VMFrameStack stack;
+				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+			}
 		}
 		item = item->Inventory;
 	}
@@ -617,7 +623,12 @@ void InitAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
 		{
-			static_cast<APowerup *>(item)->CallInitEffect();
+			IFVIRTUALPTR(item, APowerup, InitEffect)
+			{
+				VMValue params[1] = { item };
+				VMFrameStack stack;
+				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+			}
 		}
 		item = item->Inventory;
 	}

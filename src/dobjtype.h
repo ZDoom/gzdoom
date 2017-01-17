@@ -639,6 +639,19 @@ protected:
 	PProperty();
 };
 
+class PPropFlag : public PSymbol
+{
+	DECLARE_CLASS(PPropFlag, PSymbol);
+public:
+	PPropFlag(FName name, PField *offset, int bitval);
+
+	PField *Offset;
+	int bitval;
+
+protected:
+	PPropFlag();
+};
+
 // Compound types -----------------------------------------------------------
 
 class PEnum : public PNamedType

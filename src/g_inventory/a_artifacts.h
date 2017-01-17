@@ -11,31 +11,16 @@ class APowerup : public AInventory
 {
 	DECLARE_CLASS (APowerup, AInventory)
 public:
-	virtual void Tick () override;
-	virtual void OnDestroy() override;
-	virtual bool HandlePickup (AInventory *item) override;
-	virtual AInventory *CreateCopy (AActor *other) override;
-	virtual AInventory *CreateTossable () override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void OwnerDied () override;
-	virtual PalEntry GetBlend () override;
-	virtual bool DrawPowerup (int x, int y) override;
 
 	int EffectTics;
 	PalEntry BlendColor;
 	FNameNoInit Mode;
 	double Strength;
+	int Colormap;
 
 public:
-	virtual void InitEffect ();
-	virtual void DoEffect () override;
-	virtual void EndEffect ();
-	bool isBlinking() const;
-
-protected:
-	void CallInitEffect();
-	void CallEndEffect();
-
 	friend void EndAllPowerupEffects(AInventory *item);
 	friend void InitAllPowerupEffects(AInventory *item);
 };
@@ -56,17 +41,6 @@ public:
 	FNameNoInit Mode;		// Meaning depends on powerup - used for Invulnerability and Invisibility
 	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
 };
-
-class APowerSpeed : public APowerup
-{
-	DECLARE_CLASS (APowerSpeed, APowerup)
-protected:
-	virtual void Serialize(FSerializer &arc) override;
-public:
-	int SpeedFlags;
-};
-
-#define PSF_NOTRAIL		1
 
 class APowerMorph : public APowerup
 {

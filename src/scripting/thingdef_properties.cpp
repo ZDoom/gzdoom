@@ -458,9 +458,35 @@ int MatchString (const char *in, const char **strings)
 
 //==========================================================================
 //
+// Get access to scripted fields.
+// Fortunately there's only a handful that cannot be done with a
+// scripted property definition, most notably the powerup and morph stuff.
+//
+//==========================================================================
+
+static void *ScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
+{
+	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
+	if (sym && sym->Type == type)
+	{
+		return (((char*)obj) + sym->Offset);
+	}
+	I_Error("Variable %s of type %s not found in %s\n", field.GetChars(), type->DescriptiveName(), cls->TypeName.GetChars());
+	return nullptr;
+}
+
+template<class T>
+T &TypedScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
+{
+	return *(T*)ScriptVar(obj, cls, field, type);
+}
+
+//==========================================================================
+//
 // Info Property handlers
 //
 //==========================================================================
+
 
 //==========================================================================
 //
@@ -3026,37 +3052,37 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_PlayerClass, NewClassPointer(RUNTIME_CLASS(APlayerPawn))) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);
-	defaults->MorphStyle = i;
+	TypedScriptVar<int>(defaults, bag.Info, NAME_MorphStyle, TypeSInt32) = i;
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_MorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_UnMorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 

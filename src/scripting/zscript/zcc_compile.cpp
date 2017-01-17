@@ -2022,13 +2022,14 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 
 	if (property != nullptr && property->category != CAT_INFO)
 	{
-		if (cls->IsDescendantOf(*property->cls))
+		auto pcls = PClass::FindActor(property->clsname);
+		if (cls->IsDescendantOf(pcls))
 		{
 			DispatchProperty(property, prop, (AActor *)bag.Info->Defaults, bag);
 		}
 		else
 		{
-			Error(prop, "'%s' requires an actor of type '%s'\n", propname.GetChars(), (*property->cls)->TypeName.GetChars());
+			Error(prop, "'%s' requires an actor of type '%s'\n", propname.GetChars(), pcls->TypeName.GetChars());
 		}
 	}
 	else

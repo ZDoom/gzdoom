@@ -12,7 +12,6 @@ class APowerup : public AInventory
 	DECLARE_CLASS (APowerup, AInventory)
 public:
 	virtual void Serialize(FSerializer &arc) override;
-	virtual void OwnerDied () override;
 
 	int EffectTics;
 	PalEntry BlendColor;
@@ -31,7 +30,6 @@ class APowerupGiver : public AInventory
 	DECLARE_CLASS (APowerupGiver, AInventory)
 	HAS_OBJECT_POINTERS
 public:
-	virtual bool Use (bool pickup) override;
 	virtual void Serialize(FSerializer &arc) override;
 
 
@@ -42,19 +40,5 @@ public:
 	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
 };
 
-class APowerMorph : public APowerup
-{
-	DECLARE_CLASS( APowerMorph, APowerup )
-	HAS_OBJECT_POINTERS
-public:
-	
-	virtual void Serialize(FSerializer &arc) override;
-
-	// Variables
-	PClassPlayerPawn *PlayerClass;
-	PClassActor *MorphFlash, *UnMorphFlash;
-	int MorphStyle;
-	player_t *MorphedPlayer;
-};
 
 #endif //__A_ARTIFACTS_H__

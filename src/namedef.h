@@ -706,6 +706,10 @@ xx(WBobSpeed)
 xx(PlayerClass)
 xx(Wi_NoAutostartMap)
 
+xx(MorphStyle)
+xx(MorphFlash)
+xx(UnMorphFlash)
+
 // Decorate compatibility functions
 xx(BuiltinTypeCheck)
 xx(BuiltinRandom)

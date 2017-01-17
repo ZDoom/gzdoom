@@ -370,18 +370,6 @@ void AInventory::CallDoEffect()
 
 //===========================================================================
 //
-// AInventory :: OwnerDied
-//
-// Items receive this message when their owners die.
-//
-//===========================================================================
-
-void AInventory::OwnerDied ()
-{
-}
-
-//===========================================================================
-//
 // AInventory :: HandlePickup
 //
 // Returns true if the pickup was handled (or should not happen at all),
@@ -1348,7 +1336,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		}
 		// The item is placed in the inventory just long enough to be used.
 		toucher->AddInventory (this);
-		bool usegood = Use (true);
+		bool usegood = CallUse (true);
 		toucher->RemoveInventory (this);
 
 		if (usegood)

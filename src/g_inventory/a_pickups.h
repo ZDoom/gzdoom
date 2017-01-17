@@ -138,8 +138,6 @@ public:
 	// virtual on the script side only.
 	double GetSpeedFactor();
 	bool GetNoTeleportFreeze();
-	// Stuff for later when more features are exported.
-	virtual void OwnerDied();
 
 
 	bool GoAway();

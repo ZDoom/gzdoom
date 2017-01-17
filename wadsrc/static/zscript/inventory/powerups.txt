@@ -14,6 +14,50 @@ class PowerupGiver : Inventory native
 		+INVENTORY.FANCYPICKUPSOUND
 		Inventory.PickupSound "misc/p_pkup";
 	}
+	
+	//===========================================================================
+	//
+	// APowerupGiver :: Use
+	//
+	//===========================================================================
+
+	override bool Use (bool pickup)
+	{
+		if (PowerupType == NULL) return true;	// item is useless
+		if (Owner == null) return true;
+
+		let power = Powerup(Spawn (PowerupType));
+
+		if (EffectTics != 0)
+		{
+			power.EffectTics = EffectTics;
+		}
+		if (BlendColor != 0)
+		{
+			if (BlendColor != Powerup.SPECIALCOLORMAP_MASK | 65535) power.BlendColor = BlendColor;
+			else power.BlendColor = 0;
+		}
+		if (Mode != 'None')
+		{
+			power.Mode = Mode;
+		}
+		if (Strength != 0)
+		{
+			power.Strength = Strength;
+		}
+
+		power.bAlwaysPickup |= bAlwaysPickup;
+		power.bAdditiveTime |= bAdditiveTime;
+		power.bNoTeleportFreeze |= bNoTeleportFreeze;
+		if (power.CallTryPickup (Owner))
+		{
+			return true;
+		}
+		power.GoAwayAndDie ();
+		return false;
+	}
+
+	
 }
 
 class Powerup : Inventory native 
@@ -246,6 +290,19 @@ class Powerup : Inventory native
 	virtual bool isBlinking()
 	{
 		return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !bNoScreenBlink);
+	}
+
+	//===========================================================================
+	//
+	// APowerup :: OwnerDied
+	//
+	// Powerups don't last beyond death.
+	//
+	//===========================================================================
+
+	override void OwnerDied ()
+	{
+		Destroy ();
 	}
 
 	
@@ -1890,12 +1947,12 @@ class PowerInfiniteAmmo : Powerup
 //
 //===========================================================================
 
-class PowerMorph : Powerup native
+class PowerMorph : Powerup
 {
-	native Class<PlayerPawn> PlayerClass;
-	native Class<Actor> MorphFlash, UnMorphFlash;
-	native int MorphStyle;
-	native PlayerInfo MorphedPlayer;
+	Class<PlayerPawn> PlayerClass;
+	Class<Actor> MorphFlash, UnMorphFlash;
+	int MorphStyle;
+	PlayerInfo MorphedPlayer;
 	
 	Default
 	{

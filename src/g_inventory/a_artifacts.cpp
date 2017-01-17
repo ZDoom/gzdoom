@@ -62,46 +62,6 @@ DEFINE_FIELD(APowerupGiver, Strength)
 
 //===========================================================================
 //
-// APowerupGiver :: Use
-//
-//===========================================================================
-
-bool APowerupGiver::Use (bool pickup)
-{
-	if (PowerupType == NULL) return true;	// item is useless
-	if (Owner == nullptr) return true;
-
-	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType));
-
-	if (EffectTics != 0)
-	{
-		power->EffectTics = EffectTics;
-	}
-	if (BlendColor != 0)
-	{
-		if (BlendColor != MakeSpecialColormap(65535)) power->BlendColor = BlendColor;
-		else power->BlendColor = 0;
-	}
-	if (Mode != NAME_None)
-	{
-		power->Mode = Mode;
-	}
-	if (Strength != 0)
-	{
-		power->Strength = Strength;
-	}
-
-	power->ItemFlags |= ItemFlags & (IF_ALWAYSPICKUP|IF_ADDITIVETIME|IF_NOTELEPORTFREEZE);
-	if (power->CallTryPickup (Owner))
-	{
-		return true;
-	}
-	power->GoAwayAndDie ();
-	return false;
-}
-
-//===========================================================================
-//
 // APowerupGiver :: Serialize
 //
 //===========================================================================
@@ -140,51 +100,5 @@ void APowerup::Serialize(FSerializer &arc)
 		("mode", Mode, def->Mode)
 		("strength", Strength, def->Strength)
 		("colormap", Colormap, def->Colormap);
-}
-
-//===========================================================================
-//
-// APowerup :: OwnerDied
-//
-// Powerups don't last beyond death.
-//
-//===========================================================================
-
-void APowerup::OwnerDied ()
-{
-	Destroy ();
-}
-
-// Morph powerup ------------------------------------------------------
-
-IMPLEMENT_CLASS(APowerMorph, false, true)
-
-IMPLEMENT_POINTERS_START(APowerMorph)
-	IMPLEMENT_POINTER(PlayerClass)
-	IMPLEMENT_POINTER(MorphFlash)
-	IMPLEMENT_POINTER(UnMorphFlash)
-IMPLEMENT_POINTERS_END
-
-
-DEFINE_FIELD(APowerMorph, PlayerClass)
-DEFINE_FIELD(APowerMorph, MorphFlash)
-DEFINE_FIELD(APowerMorph, UnMorphFlash)
-DEFINE_FIELD(APowerMorph, MorphStyle)
-DEFINE_FIELD(APowerMorph, MorphedPlayer)
-
-//===========================================================================
-//
-// APowerMorph :: Serialize
-//
-//===========================================================================
-
-void APowerMorph::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("playerclass", PlayerClass)
-		("morphstyle", MorphStyle)
-		("morphflash", MorphFlash)
-		("unmorphflash", UnMorphFlash)
-		("morphedplayer", MorphedPlayer);
 }
 

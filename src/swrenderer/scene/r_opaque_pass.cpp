@@ -816,9 +816,6 @@ namespace swrenderer
 
 	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap)
 	{
-		F3DFloor *fakeceiling = nullptr;
-		F3DFloor *fakefloor = nullptr;
-
 		// BSP is traversed by subsector.
 		// A sector might have been split into several
 		//	subsectors during BSP building.
@@ -850,6 +847,8 @@ namespace swrenderer
 			}
 
 			// find fake level
+			F3DFloor *fakeceiling = nullptr;
+			F3DFloor *fakefloor = nullptr;
 			for (auto rover : thing->Sector->e->XFloor.ffloors)
 			{
 				if (!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERPLANES)) continue;
@@ -895,9 +894,6 @@ namespace swrenderer
 					}
 				}
 			}
-
-			fakeceiling = nullptr;
-			fakefloor = nullptr;
 		}
 	}
 

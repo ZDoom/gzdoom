@@ -926,7 +926,7 @@ DEFINE_ACTION_FUNCTION(FString, Replace)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(s1);
 	PARAM_STRING(s2);
-	self->Substitute(*s1, *s2);
+	self->Substitute(s1, s2);
 	return 0;
 }
 

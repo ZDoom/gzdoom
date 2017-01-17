@@ -615,8 +615,8 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
     SoundDecoder *decoder = NULL;
     int pos = reader->Tell();
 
-#ifdef HAVE_MPG123
-		decoder = new MPG123Decoder;
+#ifdef HAVE_SNDFILE
+		decoder = new SndFileDecoder;
 		if (decoder->open(reader))
 			return decoder;
 		reader->Seek(pos, SEEK_SET);
@@ -624,8 +624,8 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 		delete decoder;
 		decoder = NULL;
 #endif
-#ifdef HAVE_SNDFILE
-		decoder = new SndFileDecoder;
+#ifdef HAVE_MPG123
+		decoder = new MPG123Decoder;
 		if (decoder->open(reader))
 			return decoder;
 		reader->Seek(pos, SEEK_SET);

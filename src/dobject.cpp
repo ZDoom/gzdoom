@@ -456,9 +456,7 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 			auto def = GetDefaultByType(p);
 			if (def != nullptr)
 			{
-				def->Class = p;
 				def->DObject::PointerSubstitution(old, notOld);
-				def->Class = nullptr;	// reset pointer. Defaults should not have a valid class pointer.
 			}
 		}
 	}

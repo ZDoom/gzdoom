@@ -1,11 +1,11 @@
-class PowerupGiver : Inventory native
+class PowerupGiver : Inventory
 {
 	
-	native Class<Actor> PowerupType;
-	native int EffectTics;		// Non-0 to override the powerup's default tics
-	native color BlendColor;	// Non-0 to override the powerup's default blend
-	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
-	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	Class<Actor> PowerupType;
+	int EffectTics;		// Non-0 to override the powerup's default tics
+	color BlendColor;	// Non-0 to override the powerup's default blend
+	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	double Strength;	// Meaning depends on powerup - currently used only by Invisibility
 	
 	Default
 	{
@@ -56,8 +56,6 @@ class PowerupGiver : Inventory native
 		power.GoAwayAndDie ();
 		return false;
 	}
-
-	
 }
 
 class Powerup : Inventory native 

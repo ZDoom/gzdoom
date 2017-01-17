@@ -1166,7 +1166,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(APowerupGiver)))
+				item->IsKindOf(PClass::FindActor(NAME_PowerupGiver)))
 			{
 				item->Destroy();
 			}

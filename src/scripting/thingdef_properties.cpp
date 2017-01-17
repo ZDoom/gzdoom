@@ -464,10 +464,17 @@ int MatchString (const char *in, const char **strings)
 //
 //==========================================================================
 
+static bool PointerCheck(PType *symtype, PType *checktype)
+{
+	auto symptype = dyn_cast<PClassPointer>(symtype);
+	auto checkptype = dyn_cast<PClassPointer>(checktype);
+	return symptype != nullptr && checkptype != nullptr && symptype->ClassRestriction->IsDescendantOf(checkptype->ClassRestriction);
+}
+
 static void *ScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
 {
 	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
-	if (sym && sym->Type == type)
+	if (sym && (sym->Type == type || PointerCheck(sym->Type, type)))
 	{
 		return (((char*)obj) + sym->Offset);
 	}
@@ -2278,14 +2285,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 	int alpha;
 	PalEntry *pBlendColor;
+	bool isgiver = info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver));
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || isgiver)
 	{
-		pBlendColor = &((APowerup*)defaults)->BlendColor;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
 	}
 	else
 	{
@@ -2307,7 +2311,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
-		else if (!stricmp(name, "none") && info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+		else if (!stricmp(name, "none") && isgiver)
 		{
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
@@ -2333,13 +2337,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry * pBlendColor;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pBlendColor = &((APowerup*)defaults)->BlendColor;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
 	}
 	else
 	{
@@ -2377,13 +2377,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	int *pEffectTics;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pEffectTics = &((APowerup*)defaults)->EffectTics;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pEffectTics = &((APowerupGiver*)defaults)->EffectTics;
+		pEffectTics = &TypedScriptVar<int>(defaults, info, NAME_EffectTics, TypeSInt32);
 	}
 	else
 	{
@@ -2402,13 +2398,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
 	double *pStrength;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pStrength = &((APowerup*)defaults)->Strength;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pStrength = &((APowerupGiver*)defaults)->Strength;
+		pStrength = &TypedScriptVar<double>(defaults, info, NAME_Strength, TypeFloat64);
 	}
 	else
 	{
@@ -2426,13 +2418,10 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	FName *pMode;
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pMode = &((APowerup*)defaults)->Mode;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pMode = &((APowerupGiver*)defaults)->Mode;
+		pMode = &TypedScriptVar<FName>(defaults, info, NAME_Mode, TypeName);
 	}
 	else
 	{
@@ -2445,7 +2434,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
+DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 {
 	PROP_STRING_PARM(str, 0);
 
@@ -2465,8 +2454,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 			I_Error("Unknown powerup type %s", str);
 		}
 	}
-
-	defaults->PowerupType = cls;
+	TypedScriptVar<PClassActor*>(defaults, info, NAME_PowerupType, NewClassPointer(RUNTIME_CLASS(AActor))) = cls;
 }
 
 //==========================================================================

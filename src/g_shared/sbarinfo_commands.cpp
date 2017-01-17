@@ -1158,10 +1158,10 @@ class CommandDrawNumber : public CommandDrawString
 						if(!parenthesized || !sc.CheckToken(TK_StringConst))
 							sc.MustGetToken(TK_Identifier);
 						inventoryItem = PClass::FindActor(sc.String);
-						if(inventoryItem == NULL || !RUNTIME_CLASS(APowerupGiver)->IsAncestorOf(inventoryItem))
+						if(inventoryItem == NULL || !PClass::FindActor(NAME_PowerupGiver)->IsAncestorOf(inventoryItem))
 						{
 							sc.ScriptMessage("'%s' is not a type of PowerupGiver.", sc.String);
-							inventoryItem = RUNTIME_CLASS(APowerupGiver);
+							inventoryItem = PClass::FindActor(NAME_PowerupGiver);
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
@@ -1433,11 +1433,14 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case POWERUPTIME:
 				{
-					//Get the PowerupType and check to see if the player has any in inventory.
-					PClassActor* powerupType = ((APowerupGiver*) GetDefaultByType(inventoryItem))->PowerupType;
-					APowerup* powerup = (APowerup*) statusBar->CPlayer->mo->FindInventory(powerupType);
-					if(powerup != NULL)
-						num = powerup->EffectTics / TICRATE + 1;
+					// num = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem) / TICRATE + 1;
+					static VMFunction *func = nullptr;
+					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
+					int retv;
+					VMReturn ret(&retv);
+					GlobalVMStack.Call(func, params, 2, &ret, 1);
+					num = retv / TICRATE + 1;
 					break;
 				}
 				case INVENTORY:
@@ -2655,10 +2658,10 @@ class CommandDrawBar : public SBarInfoCommand
 				if(!parenthesized || !sc.CheckToken(TK_StringConst))
 					sc.MustGetToken(TK_Identifier);
 				data.inventoryItem = PClass::FindActor(sc.String);
-				if(data.inventoryItem == NULL || !RUNTIME_CLASS(APowerupGiver)->IsAncestorOf(data.inventoryItem))
+				if(data.inventoryItem == NULL || !PClass::FindActor(NAME_PowerupGiver)->IsAncestorOf(data.inventoryItem))
 				{
 					sc.ScriptMessage("'%s' is not a type of PowerupGiver.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(APowerupGiver);
+					data.inventoryItem = PClass::FindActor(NAME_PowerupGiver);
 				}
 
 				if(parenthesized) sc.MustGetToken(')');
@@ -2822,18 +2825,16 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case POWERUPTIME:
 				{
-					//Get the PowerupType and check to see if the player has any in inventory.
-					APowerupGiver *powerupGiver = (APowerupGiver*) GetDefaultByType(data.inventoryItem);
-					PClassActor *powerupType = powerupGiver->PowerupType;
-					APowerup *powerup = (APowerup*) statusBar->CPlayer->mo->FindInventory(powerupType);
-					if(powerup != NULL && powerupType != NULL && powerupGiver != NULL)
-					{
-						value = powerup->EffectTics + 1;
-						if(powerupGiver->EffectTics == 0) //if 0 we need to get the default from the powerup
-							max = ((APowerup*) GetDefaultByType(powerupType))->EffectTics + 1;
-						else
-							max = powerupGiver->EffectTics + 1;
-					}
+					static VMFunction *func = nullptr;
+					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					VMValue params[] = { statusBar->CPlayer->mo, data.inventoryItem };
+					VMReturn ret[2];
+					int ival;
+					ret[0].IntAt(&ival);
+					ret[1].IntAt(&max);
+					GlobalVMStack.Call(func, params, 2, ret, 2);
+					value = ival + 1;
+					max++;
 					break;
 				}
 				case SAVEPERCENT:

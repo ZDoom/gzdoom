@@ -208,7 +208,6 @@ enum EObjectFlags
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
 	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
-	OF_SuperCall		= 1 << 12,		// A super call from the VM is about to be performed
 };
 
 template<class T> class TObjPtr;
@@ -452,6 +451,8 @@ public:
 	uint32 ObjectFlags;			// Flags for this object
 
 	void *ScriptVar(FName field, PType *type);
+
+protected:
 
 public:
 	DObject ();

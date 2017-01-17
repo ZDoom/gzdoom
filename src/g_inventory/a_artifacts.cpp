@@ -48,35 +48,6 @@ IMPLEMENT_CLASS(APowerup, false, false)
 // Powerup-Giver -------------------------------------------------------------
 
 
-IMPLEMENT_CLASS(APowerupGiver, false, true)
-
-IMPLEMENT_POINTERS_START(APowerupGiver)
-IMPLEMENT_POINTER(PowerupType)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD(APowerupGiver, PowerupType)
-DEFINE_FIELD(APowerupGiver, EffectTics)
-DEFINE_FIELD(APowerupGiver, BlendColor)
-DEFINE_FIELD(APowerupGiver, Mode)
-DEFINE_FIELD(APowerupGiver, Strength)
-
-//===========================================================================
-//
-// APowerupGiver :: Serialize
-//
-//===========================================================================
-
-void APowerupGiver::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (APowerupGiver*)GetDefault();
-	arc("poweruptype", PowerupType, def->PowerupType)
-		("effecttics", EffectTics, def->EffectTics)
-		("blendcolor", BlendColor, def->BlendColor)
-		("mode", Mode, def->Mode)
-		("strength", Strength, def->Strength);
-}
-
 // Powerup -------------------------------------------------------------------
 
 DEFINE_FIELD(APowerup, EffectTics)
@@ -101,4 +72,3 @@ void APowerup::Serialize(FSerializer &arc)
 		("strength", Strength, def->Strength)
 		("colormap", Colormap, def->Colormap);
 }
-

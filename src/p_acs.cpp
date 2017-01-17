@@ -5719,7 +5719,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				PClassActor *powerupclass = PClass::FindActor(FBehavior::StaticLookupString(args[1]));
-				if (powerupclass == NULL || !RUNTIME_CLASS(APowerup)->IsAncestorOf(powerupclass))
+				if (powerupclass == NULL || !powerupclass->IsDescendantOf(PClass::FindActor(NAME_Powerup)))
 				{
 					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
 					return 0;

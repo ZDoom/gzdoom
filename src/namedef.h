@@ -709,6 +709,13 @@ xx(Wi_NoAutostartMap)
 xx(MorphStyle)
 xx(MorphFlash)
 xx(UnMorphFlash)
+xx(Powerup)
+xx(EffectTics)
+xx(PowerupGiver)
+xx(BlendColor)
+xx(Strength)
+xx(Mode)
+xx(PowerupType)
 
 // Decorate compatibility functions
 xx(BuiltinTypeCheck)

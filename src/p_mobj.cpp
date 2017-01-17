@@ -5381,15 +5381,13 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		oldactor->DestroyAllInventory();
 	}
 	// [BC] Handle temporary invulnerability when respawned
-	if ((state == PST_REBORN || state == PST_ENTER) &&
-		(dmflags2 & DF2_YES_RESPAWN_INVUL) &&
-		(multiplayer || alwaysapplydmflags))
+	if (state == PST_REBORN || state == PST_ENTER)
 	{
-		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (PClass::FindActor(NAME_PowerInvulnerable)));
-		invul->EffectTics = 3*TICRATE;
-		invul->BlendColor = 0;			// don't mess with the view
-		invul->ItemFlags |= IF_UNDROPPABLE;	// Don't drop this
-		p->mo->effects |= FX_RESPAWNINVUL;	// [RH] special effect
+		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
+		{
+			VMValue param = p->mo;
+			GlobalVMStack.Call(func, &param, 1, nullptr, 0);
+		}
 	}
 
 	if (StatusBar != NULL && (playernum == consoleplayer || StatusBar->GetPlayer() == playernum))

@@ -594,11 +594,12 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 
 void EndAllPowerupEffects(AInventory *item)
 {
+	auto ptype = PClass::FindActor(NAME_Powerup);
 	while (item != NULL)
 	{
-		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		if (item->IsKindOf(ptype))
 		{
-			IFVIRTUALPTR(item, APowerup, EndEffect)
+			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
 			{
 				VMValue params[1] = { item };
 				VMFrameStack stack;
@@ -619,11 +620,12 @@ void EndAllPowerupEffects(AInventory *item)
 
 void InitAllPowerupEffects(AInventory *item)
 {
+	auto ptype = PClass::FindActor(NAME_Powerup);
 	while (item != NULL)
 	{
-		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		if (item->IsKindOf(ptype))
 		{
-			IFVIRTUALPTR(item, APowerup, InitEffect)
+			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
 			{
 				VMValue params[1] = { item };
 				VMFrameStack stack;

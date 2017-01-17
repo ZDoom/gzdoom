@@ -166,22 +166,21 @@ namespace swrenderer
 			invertcolormap = !invertcolormap;
 		}
 
-		FDynamicColormap *mybasecolormap = basecolormap;
 		if (current_sector->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 		{
-			// Todo: The actor is from a different sector so we have to retrieve the proper basecolormap for that sector.
+			basecolormap = thing->Sector->ColorMap;
 		}
 
 		// Sprites that are added to the scene must fade to black.
-		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && basecolormap->Fade != 0)
 		{
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
+			basecolormap = GetSpecialLights(basecolormap->Color, 0, basecolormap->Desaturate);
 		}
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, mybasecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		VisibleSpriteList::Instance()->Push(vis);
 		RenderTranslucentPass::DrewAVoxel = true;

@@ -873,24 +873,25 @@ namespace swrenderer
 				if (GetThingSprite(thing, sprite))
 				{
 					FDynamicColormap *thingColormap = basecolormap;
+					int thingShade = spriteshade;
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 					{
 						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-						spriteshade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
+						thingShade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
 						thingColormap = thing->Sector->ColorMap;
 					}
 
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, spriteshade, foggy, thingColormap);
+						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, thingShade, foggy, thingColormap);
 					}
 					else if (sprite.voxel)
 					{
-						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy, thingColormap);
+						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
 					else
 					{
-						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, spriteshade, foggy, thingColormap);
+						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
 				}
 			}

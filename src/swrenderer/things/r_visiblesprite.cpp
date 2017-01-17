@@ -55,7 +55,6 @@ namespace swrenderer
 		FSWColormap *colormap = spr->BaseColormap;
 		int colormapnum = spr->ColormapNum;
 		F3DFloor *rover;
-		FDynamicColormap *mybasecolormap;
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 
@@ -93,6 +92,7 @@ namespace swrenderer
 				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(ViewPos);
 			}
 			sector_t *sec = nullptr;
+			FDynamicColormap *mybasecolormap = nullptr;
 			for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
 				if (clip3d->sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
@@ -120,53 +120,21 @@ namespace swrenderer
 			// found new values, recalculate
 			if (sec)
 			{
-				INTBOOL invertcolormap = (spr->RenderStyle.Flags & STYLEF_InvertOverlay);
-
+				bool invertcolormap = (spr->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
 				if (spr->RenderStyle.Flags & STYLEF_InvertSource)
-				{
 					invertcolormap = !invertcolormap;
-				}
 
-				// Sprites that are added to the scene must fade to black.
-				if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+				if (RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
 				{
 					mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
 				}
 
-				if (spr->RenderStyle.Flags & STYLEF_FadeToBlack)
-				{
-					if (invertcolormap)
-					{ // Fade to white
-						mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
-						invertcolormap = false;
-					}
-					else
-					{ // Fade to black
-						mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
-					}
-				}
+				bool isFullBright = !foggy && (renderflags & RF_FULLBRIGHT);
+				bool fadeToBlack = spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0;
 
-				// get light level
-				if (invertcolormap)
-				{
-					mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-				}
-				if (fixedlightlev >= 0)
-				{
-					spr->BaseColormap = mybasecolormap;
-					spr->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
-				}
-				else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
-				{ // full bright
-					spr->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-					spr->ColormapNum = 0;
-				}
-				else
-				{ // diminished light
-					int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
-					spr->BaseColormap = mybasecolormap;
-					spr->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
-				}
+				int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
+
+				SetColormap(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
 			}
 		}
 
@@ -439,5 +407,47 @@ namespace swrenderer
 		}
 		spr->BaseColormap = colormap;
 		spr->ColormapNum = colormapnum;
+	}
+
+	void VisibleSprite::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
+	{
+		if (fadeToBlack)
+		{
+			if (invertColormap) // Fade to white
+			{
+				basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(255, 255, 255), basecolormap->Desaturate);
+				invertColormap = false;
+			}
+			else // Fade to black
+			{
+				basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(0, 0, 0), basecolormap->Desaturate);
+			}
+		}
+
+		if (invertColormap)
+		{
+			basecolormap = GetSpecialLights(basecolormap->Color, basecolormap->Fade.InverseColor(), basecolormap->Desaturate);
+		}
+
+		if (fixedcolormap)
+		{
+			BaseColormap = fixedcolormap;
+			ColormapNum = 0;
+		}
+		else if (fixedlightlev >= 0)
+		{
+			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
+			ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+		}
+		else if (fullbright)
+		{
+			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
+			ColormapNum = 0;
+		}
+		else
+		{
+			BaseColormap = basecolormap;
+			ColormapNum = GETPALOOKUP(visibility, shade);
+		}
 	}
 }

@@ -129,10 +129,10 @@ namespace swrenderer
 		vis->fakeceiling = NULL;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		vis->pic = pic;
-		vis->ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-		vis->BaseColormap = basecolormap;
 		vis->wallc = wallc;
 		vis->foggy = foggy;
+
+		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}

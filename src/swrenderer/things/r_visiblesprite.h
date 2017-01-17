@@ -37,6 +37,8 @@ namespace swrenderer
 		float SortDist() const { return idepth; }
 
 	protected:
+		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
+
 		virtual bool IsParticle() const { return false; }
 		virtual bool IsVoxel() const { return false; }
 		virtual bool IsWallSprite() const { return false; }

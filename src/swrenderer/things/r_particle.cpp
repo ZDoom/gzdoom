@@ -67,7 +67,6 @@ namespace swrenderer
 		double	 			xscale, yscale;
 		int 				x1, x2, y1, y2;
 		sector_t*			heightsec = NULL;
-		FSWColormap*			map;
 		
 		RenderPortal *renderportal = RenderPortal::Instance();
 
@@ -135,6 +134,7 @@ namespace swrenderer
 		const secplane_t *botplane;
 		FTextureID toppic;
 		FTextureID botpic;
+		FDynamicColormap *map;
 
 		if (heightsec)	// only clip things which are in special sectors
 		{
@@ -200,27 +200,8 @@ namespace swrenderer
 		vis->ColormapNum = 0;
 		vis->foggy = foggy;
 
-		if (fixedlightlev >= 0)
-		{
-			vis->BaseColormap = map;
-			vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
-		}
-		else if (fixedcolormap)
-		{
-			vis->BaseColormap = fixedcolormap;
-			vis->ColormapNum = 0;
-		}
-		else if (particle->bright)
-		{
-			vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : map;
-			vis->ColormapNum = 0;
-		}
-		else
-		{
-			// Particles are slightly more visible than regular sprites.
-			vis->ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
-			vis->BaseColormap = map;
-		}
+		// Particles are slightly more visible than regular sprites.
+		vis->SetColormap(tiz * r_SpriteVisibility * 0.5, shade, map, particle->bright != 0, false, false);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}

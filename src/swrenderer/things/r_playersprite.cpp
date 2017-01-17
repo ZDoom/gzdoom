@@ -440,55 +440,20 @@ namespace swrenderer
 			// The software renderer cannot invert the source without inverting the overlay
 			// too. That means if the source is inverted, we need to do the reverse of what
 			// the invert overlay flag says to do.
-			INTBOOL invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay);
+			bool invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
 
 			if (vis->RenderStyle.Flags & STYLEF_InvertSource)
 			{
 				invertcolormap = !invertcolormap;
 			}
 
-			FDynamicColormap *mybasecolormap = basecolormap;
+			bool fullbright = !vis->foggy && pspr->GetState()->GetFullbright();
+			bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-			if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
-			{
-				if (invertcolormap)
-				{ // Fade to white
-					mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
-					invertcolormap = false;
-				}
-				else
-				{ // Fade to black
-					mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
-				}
-			}
+			vis->SetColormap(0, spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-			if (realfixedcolormap != nullptr && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
-			{ // fixed color
-				vis->BaseColormap = realfixedcolormap;
-				vis->ColormapNum = 0;
-			}
-			else
-			{
-				if (invertcolormap)
-				{
-					mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-				}
-				if (fixedlightlev >= 0)
-				{
-					vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-					vis->ColormapNum = fixedlightlev >> COLORMAPSHIFT;
-				}
-				else if (!vis->foggy && pspr->GetState()->GetFullbright())
-				{ // full bright
-					vis->BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
-					vis->ColormapNum = 0;
-				}
-				else
-				{ // local light
-					vis->BaseColormap = mybasecolormap;
-					vis->ColormapNum = GETPALOOKUP(0, spriteshade);
-				}
-			}
+			colormap_to_use = (FDynamicColormap*)vis->BaseColormap;
+
 			if (camera->Inventory != nullptr)
 			{
 				visstyle_t visstyle;
@@ -509,10 +474,7 @@ namespace swrenderer
 				{
 					vis->BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
 					vis->ColormapNum = 0;
-					if (vis->BaseColormap->Maps < mybasecolormap->Maps || vis->BaseColormap->Maps >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
-					{
-						noaccel = true;
-					}
+					noaccel = true;
 				}
 			}
 			// If we're drawing with a special colormap, but shaders for them are disabled, do
@@ -523,24 +485,18 @@ namespace swrenderer
 				noaccel = true;
 			}
 			// If drawing with a BOOM colormap, disable acceleration.
-			if (mybasecolormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
+			if (vis->BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
 			{
 				noaccel = true;
 			}
 			// If the main colormap has fixed lights, and this sprite is being drawn with that
 			// colormap, disable acceleration so that the lights can remain fixed.
 			if (!noaccel && realfixedcolormap == nullptr &&
-				NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
+				NormalLightHasFixedLights && vis->BaseColormap == &NormalLight &&
 				vis->pic->UseBasePalette())
 			{
 				noaccel = true;
 			}
-			// [SP] If emulating GZDoom fullbright, disable acceleration
-			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
-				mybasecolormap = &FullNormalLight;
-			if (r_fullbrightignoresectorcolor && !vis->foggy && pspr->GetState()->GetFullbright())
-				mybasecolormap = &FullNormalLight;
-			colormap_to_use = mybasecolormap;
 		}
 		else
 		{

@@ -258,11 +258,12 @@ struct PlayerInfo native	// this is what internally is known as player_t
 	native Actor ConversationPC;
 	native double ConversationNPCAngle;
 	native bool ConversationFaceTalker;
+	//native WeaponSlots weapons; <- defined internally
+
 /* these are not doable yet
 ticcmd_t	cmd;
 usercmd_t	original_cmd;
-userinfo_t	userinfo;				// [RH] who is this?
-FWeaponSlots weapons;
+userinfo_t	userinfo;
 */
 	
 
@@ -276,5 +277,6 @@ FWeaponSlots weapons;
 	native PSprite FindPSprite(int id);
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
+	native String GetUserName();
 
 }

@@ -4362,9 +4362,8 @@ ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
 FxTypeCheck::FxTypeCheck(FxExpression *l, FxExpression *r)
 	: FxExpression(EFX_TypeCheck, l->ScriptPosition)
 {
-	left = new FxTypeCast(l, NewPointer(RUNTIME_CLASS(DObject)), false);
-	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), r);
-	EmitTail = false;
+	left = l;
+	right = r;
 	ValueType = TypeBool;
 }
 
@@ -4389,9 +4388,27 @@ FxTypeCheck::~FxTypeCheck()
 FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
+	// This must resolve the cast separately so that it can set the proper type for class descriptors.
 	RESOLVE(left, ctx);
 	RESOLVE(right, ctx);
 	ABORT(right && left);
+
+	if (left->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		left = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), left);
+		ClassCheck = true;
+	}
+	else
+	{
+		left = new FxTypeCast(left, NewPointer(RUNTIME_CLASS(DObject)), false);
+		ClassCheck = false;
+	}
+	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), right);
+
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	ABORT(right && left);
+
 	return this;
 }
 
@@ -4408,7 +4425,8 @@ ExpEmit FxTypeCheck::EmitCommon(VMFunctionBuilder *build)
 	castee.Free(build);
 	casttype.Free(build);
 	ExpEmit ares(build, REGT_POINTER);
-	build->Emit(casttype.Konst ? OP_DYNCAST_K : OP_DYNCAST_R, ares.RegNum, castee.RegNum, casttype.RegNum);
+	if (!ClassCheck) build->Emit(casttype.Konst ? OP_DYNCAST_K : OP_DYNCAST_R, ares.RegNum, castee.RegNum, casttype.RegNum);
+	else build->Emit(casttype.Konst ? OP_DYNCASTC_K : OP_DYNCASTC_R, ares.RegNum, castee.RegNum, casttype.RegNum);
 	return ares;
 }
 

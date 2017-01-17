@@ -788,6 +788,11 @@ void InitThingdef()
 	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
 	GlobalSymbols.AddSymbol(dehf);
 
+	// set up a variable for the global gameinfo data
+	PStruct *gistruct = NewNativeStruct("GameInfoStruct", nullptr);
+	PField *gi = new PField("gameinfo", gistruct, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gameinfo);
+	GlobalSymbols.AddSymbol(gi);
+
 	// set up a variable for the global players array.
 	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
 	pstruct->Size = sizeof(player_t);
@@ -795,6 +800,9 @@ void InitThingdef()
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	GlobalSymbols.AddSymbol(playerf);
+
+	pstruct->AddNativeField("weapons", NewNativeStruct("WeaponSlots", nullptr), myoffsetof(player_t, weapons), VARF_Native);
+
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);

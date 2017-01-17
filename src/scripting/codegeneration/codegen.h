@@ -1086,7 +1086,7 @@ class FxTypeCheck : public FxExpression
 public:
 	FxExpression		*left;
 	FxExpression		*right;
-	bool EmitTail;
+	bool ClassCheck;
 
 	FxTypeCheck(FxExpression*, FxExpression*);
 	~FxTypeCheck();

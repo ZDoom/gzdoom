@@ -638,6 +638,14 @@ void player_t::SendPitchLimits() const
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_STRING(self->userinfo.GetName());
+}
+
+
 //===========================================================================
 //
 // APlayerPawn

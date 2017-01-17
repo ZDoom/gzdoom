@@ -15,6 +15,7 @@
 #include "zscript/inventory/powerups.txt"
 
 #include "zscript/shared/player.txt"
+#include "zscript/shared/player_cheat.txt"
 #include "zscript/shared/morph.txt"
 #include "zscript/shared/botstuff.txt"
 #include "zscript/shared/sharedmisc.txt"

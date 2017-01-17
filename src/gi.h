@@ -148,7 +148,7 @@ struct gameinfo_t
 	FString translator;
 	DWORD defaultbloodcolor;
 	DWORD defaultbloodparticlecolor;
-	FString backpacktype;
+	FName backpacktype;
 	FString statusbar;
 	FString intermissionMusic;
 	int intermissionOrder;

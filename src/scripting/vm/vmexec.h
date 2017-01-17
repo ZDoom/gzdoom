@@ -401,7 +401,7 @@ begin:
 	OP(MOVEA):
 	{
 		ASSERTA(a); ASSERTA(B);
-		int b = B;
+		b = B;
 		reg.a[a] = reg.a[b];
 		reg.atag[a] = reg.atag[b];
 		NEXTOP;
@@ -409,7 +409,7 @@ begin:
 	OP(MOVEV2):
 	{
 		ASSERTF(a); ASSERTF(B);
-		int b = B;
+		b = B;
 		reg.f[a] = reg.f[b];
 		reg.f[a + 1] = reg.f[b + 1];
 		NEXTOP;
@@ -417,7 +417,7 @@ begin:
 	OP(MOVEV3):
 	{
 		ASSERTF(a); ASSERTF(B);
-		int b = B;
+		b = B;
 		reg.f[a] = reg.f[b];
 		reg.f[a + 1] = reg.f[b + 1];
 		reg.f[a + 2] = reg.f[b + 2];
@@ -433,6 +433,18 @@ begin:
 		ASSERTA(a); ASSERTA(B);	ASSERTKA(C);
 		b = B;
 		reg.a[a] = (reg.a[b] && ((DObject*)(reg.a[b]))->IsKindOf((PClass*)(konsta[C].o))) ? reg.a[b] : nullptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+	OP(DYNCASTC_R) :
+		ASSERTA(a); ASSERTA(B);	ASSERTA(C);
+		b = B;
+		reg.a[a] = (reg.a[b] && ((PClass*)(reg.a[b]))->IsDescendantOf((PClass*)(reg.a[C]))) ? reg.a[b] : nullptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+	OP(DYNCASTC_K) :
+		ASSERTA(a); ASSERTA(B);	ASSERTKA(C);
+		b = B;
+		reg.a[a] = (reg.a[b] && ((PClass*)(reg.a[b]))->IsDescendantOf((PClass*)(konsta[C].o))) ? reg.a[b] : nullptr;
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(CAST):
@@ -1746,9 +1758,21 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		break;
 
 	case CAST_P2S:
+	{
 		ASSERTS(a); ASSERTA(b);
-		reg.s[a].Format("%s<%p>", reg.atag[b] == ATAG_OBJECT ? (reg.a[b] == nullptr? "Object" : ((DObject*)reg.a[b])->GetClass()->TypeName.GetChars() ) : "Pointer", reg.a[b]);
-		break;
+		if (reg.a[b] == nullptr) reg.s[a] = "null";
+		else if (reg.atag[b] == ATAG_OBJECT)
+		{
+			auto op = static_cast<DObject*>(reg.a[b]);
+			if (op->IsKindOf(RUNTIME_CLASS(PClass))) reg.s[a].Format("Class<%s>", static_cast<PClass*>(op)->TypeName.GetChars());
+			else reg.s[a].Format("Object<%p>", ((DObject*)reg.a[b])->GetClass()->TypeName.GetChars());
+		}
+		else
+		{
+			reg.s[a].Format("%s<%p>", "Pointer", reg.a[b]);
+		}
+		break; 
+	}
 
 	case CAST_S2I:
 		ASSERTD(a); ASSERTS(b);

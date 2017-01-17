@@ -822,11 +822,13 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	return result;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Inventory)
+DEFINE_ACTION_FUNCTION(AActor, GiveInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	ACTION_RETURN_BOOL(self->UseInventory(item));
+	PARAM_CLASS(type, AInventory);
+	PARAM_INT(amount);
+	PARAM_BOOL_DEF(givecheat);
+	ACTION_RETURN_BOOL(self->GiveInventory(type, amount, givecheat));
 }
 
 
@@ -918,6 +920,16 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 	return result;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	PARAM_INT(amount);
+	PARAM_BOOL_DEF(fromdecorate);
+	PARAM_BOOL_DEF(notakeinfinite);
+	self->RemoveInventory(item);
+	return 0;
+}
 
 //============================================================================
 //

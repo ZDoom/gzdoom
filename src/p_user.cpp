@@ -659,8 +659,6 @@ IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(FlechetteType)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(APlayerChunk, false, false)
-
 void APlayerPawn::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -1700,13 +1698,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(spawntype, APlayerChunk);
+	PARAM_CLASS_DEF(spawntype, APlayerPawn);
 
 	APlayerPawn *mo;
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
+	if (spawntype == NULL || !spawntype->IsDescendantOf(PClass::FindActor("PlayerChunk")))
 	{
 		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
 		if (spawntype == NULL)
@@ -2203,7 +2201,7 @@ void P_DeathThink (player_t *player)
 	player->TickPSprites();
 
 	player->onground = (player->mo->Z() <= player->mo->floorz);
-	if (player->mo->IsKindOf (RUNTIME_CLASS(APlayerChunk)))
+	if (player->mo->IsKindOf (PClass::FindActor("PlayerChunk")))
 	{ // Flying bloody skull or flying ice chunk
 		player->viewheight = 6;
 		player->deltaviewheight = 0;

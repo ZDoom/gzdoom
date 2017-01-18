@@ -2059,7 +2059,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 	PARAM_FLOAT_DEF	(range);
 	PARAM_FLOAT_DEF	(lifesteal);
 	PARAM_INT_DEF	(lifestealmax);
-	PARAM_CLASS_DEF	(armorbonustype, ABasicArmorBonus);
+	PARAM_CLASS_DEF	(armorbonustype, AActor);
 	PARAM_SOUND_DEF	(MeleeSound);
 	PARAM_SOUND_DEF	(MissSound);
 
@@ -2107,18 +2107,17 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 			{
 				if (armorbonustype == NULL)
 				{
-					armorbonustype = dyn_cast<ABasicArmorBonus::MetaClass>(PClass::FindClass("ArmorBonus"));
+					armorbonustype = PClass::FindActor("ArmorBonus");
 				}
 				if (armorbonustype != NULL)
 				{
-					assert(armorbonustype->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)));
-					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype));
-					armorbonus->SaveAmount *= int(actualdamage * lifesteal);
-					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
+					auto armorbonus = Spawn(armorbonustype);
+					armorbonus->IntVar(NAME_SaveAmount) *= int(actualdamage * lifesteal);
+					if (lifestealmax > 0) armorbonus->IntVar("MaxSaveAmount") = lifestealmax;
 					armorbonus->flags |= MF_DROPPED;
 					armorbonus->ClearCounters();
 
-					if (!armorbonus->CallTryPickup(self))
+					if (!static_cast<AInventory*>(armorbonus)->CallTryPickup(self))
 					{
 						armorbonus->Destroy ();
 					}

@@ -1726,45 +1726,14 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxsaveamount, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->MaxSaveAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonus, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BonusCount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonusmax, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BonusMax = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
 {
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorPickup)) || info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 	{
-		((ABasicArmorPickup*)defaults)->SaveAmount=i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->SaveAmount=i;
+		defaults->IntVar(NAME_SaveAmount)=i;
 	}
 	else
 	{
@@ -1781,13 +1750,9 @@ DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 
 	i = clamp(i, 0., 100.)/100.;
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorPickup)) || info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->SavePercent = i;
+		defaults->FloatVar(NAME_SavePercent) = i;
 	}
 	else
 	{
@@ -1803,13 +1768,9 @@ DEFINE_CLASS_PROPERTY(maxabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorPickup)) || info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 	{
-		((ABasicArmorPickup*)defaults)->MaxAbsorb = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->MaxAbsorb = i;
+		defaults->IntVar(NAME_MaxAbsorb) = i;
 	}
 	else
 	{
@@ -1825,13 +1786,9 @@ DEFINE_CLASS_PROPERTY(maxfullabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorPickup)) || info->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 	{
-		((ABasicArmorPickup*)defaults)->MaxFullAbsorb = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->MaxFullAbsorb = i;
+		defaults->IntVar(NAME_MaxFullAbsorb) = i;
 	}
 	else
 	{

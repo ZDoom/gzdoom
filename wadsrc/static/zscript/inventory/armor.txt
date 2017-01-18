@@ -21,17 +21,55 @@ class BasicArmor : Armor native
 	{
 		+Inventory.KEEPDEPLETED
 	}
+	
+	//===========================================================================
+	//
+	// ABasicArmor :: HandlePickup
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == "BasicArmor")
+		{
+			// You shouldn't be picking up BasicArmor anyway.
+			return true;
+		}
+		if (!item.bIgnoreSkill)
+		{
+			if (item is "BasicArmorBonus")
+			{
+				let armor = BasicArmorBonus(item);
+				armor.SaveAmount = int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
+			}
+			else if (item is "BasicArmorPickup")
+			{
+				let armor = BasicArmorPickup(item);
+				armor.SaveAmount = int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
+			}
+		}
+		return false;
+	}
 }
 
-class BasicArmorBonus : Armor native
+class BasicArmorBonus : Armor 
 {
-	native double SavePercent;	// The default, for when you don't already have armor
-	native int MaxSaveAmount;
-	native int MaxAbsorb;
-	native int MaxFullAbsorb;
-	native int SaveAmount;
-	native int BonusCount;
-	native int BonusMax;
+	double SavePercent;	// The default, for when you don't already have armor
+	int MaxSaveAmount;
+	int MaxAbsorb;
+	int MaxFullAbsorb;
+	int SaveAmount;
+	int BonusCount;
+	int BonusMax;
+	
+	property prefix: Armor;
+	property MaxSaveAmount: MaxSaveAmount;
+	property SaveAmount : SaveAmount;
+	property SavePercent: SavePercent;
+	property MaxAbsorb: MaxAbsorb;
+	property MaxFullAbsorb: MaxFullAbsorb;
+	property MaxBonus: BonusCount;
+	property MaxBonusMax: BonusMax;
 
 	Default
 	{
@@ -40,6 +78,93 @@ class BasicArmorBonus : Armor native
 		Inventory.MaxAmount 0;
 		Armor.SavePercent 33.335;
 	}
+	
+	//===========================================================================
+	//
+	// ABasicArmorBonus :: CreateCopy
+	//
+	//===========================================================================
+
+	override Inventory CreateCopy (Actor other)
+	{
+		let copy = BasicArmorBonus(Super.CreateCopy (other));
+
+		if (!bIgnoreSkill)
+		{
+			SaveAmount = int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
+		}
+
+		copy.SavePercent = SavePercent;
+		copy.SaveAmount = SaveAmount;
+		copy.MaxSaveAmount = MaxSaveAmount;
+		copy.BonusCount = BonusCount;
+		copy.BonusMax = BonusMax;
+		copy.MaxAbsorb = MaxAbsorb;
+		copy.MaxFullAbsorb = MaxFullAbsorb;
+
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// ABasicArmorBonus :: Use
+	//
+	// Tries to add to the amount of BasicArmor a player has.
+	//
+	//===========================================================================
+
+	override bool Use (bool pickup)
+	{
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == NULL)
+		{
+			armor = BasicArmor(Spawn("BasicArmor"));
+			armor.BecomeItem ();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(SaveAmount, MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100);
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		return true;
+	}
+
+	
 }
 
 class BasicArmorPickup : Armor native

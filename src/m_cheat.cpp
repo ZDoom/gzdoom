@@ -318,7 +318,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_RESSURECT:
 		if (player->playerstate != PST_LIVE && player->mo != nullptr)
 		{
-			if (player->mo->IsKindOf(RUNTIME_CLASS(APlayerChunk)))
+			if (player->mo->IsKindOf(PClass::FindActor("PlayerChunk")))
 			{
 				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
 			}

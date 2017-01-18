@@ -48,7 +48,6 @@
 IMPLEMENT_CLASS(AArmor, false, false)
 IMPLEMENT_CLASS(ABasicArmor, false, false)
 IMPLEMENT_CLASS(ABasicArmorPickup, false, false)
-IMPLEMENT_CLASS(ABasicArmorBonus, false, false)
 IMPLEMENT_CLASS(AHexenArmor, false, false)
 
 //===========================================================================
@@ -135,34 +134,6 @@ AInventory *ABasicArmor::CreateCopy (AActor *other)
 
 //===========================================================================
 //
-// ABasicArmor :: HandlePickup
-//
-//===========================================================================
-
-bool ABasicArmor::HandlePickup (AInventory *item)
-{
-	if (item->GetClass() == RUNTIME_CLASS(ABasicArmor))
-	{
-		// You shouldn't be picking up BasicArmor anyway.
-		return true;
-	}
-	if (item->IsKindOf(RUNTIME_CLASS(ABasicArmorBonus)) && !(item->ItemFlags & IF_IGNORESKILL))
-	{
-		ABasicArmorBonus *armor = static_cast<ABasicArmorBonus*>(item);
-
-		armor->SaveAmount = int(armor->SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
-	}
-	else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmorPickup)) && !(item->ItemFlags & IF_IGNORESKILL))
-	{
-		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup*>(item);
-
-		armor->SaveAmount = int(armor->SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
-	}
-	return false;
-}
-
-//===========================================================================
-//
 // ABasicArmor :: AbsorbDamage
 //
 //===========================================================================
@@ -205,7 +176,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 			AInventory *probe = Owner->Inventory;
 			while (probe != NULL)
 			{
-				if (probe->IsKindOf (RUNTIME_CLASS(ABasicArmorPickup)))
+				if (probe->IsKindOf (PClass::FindActor(NAME_BasicArmorPickup)))
 				{
 					ABasicArmorPickup *inInv = static_cast<ABasicArmorPickup*>(probe);
 					if (best == NULL || best->SavePercent < inInv->SavePercent)
@@ -336,126 +307,6 @@ bool ABasicArmorPickup::Use (bool pickup)
 	armor->MaxFullAbsorb = MaxFullAbsorb;
 	armor->ArmorType = this->GetClass()->TypeName;
 	armor->ActualSaveAmount = SaveAmount;
-	return true;
-}
-
-//===========================================================================
-//
-//
-// BasicArmorBonus
-//
-//
-//===========================================================================
-
-
-DEFINE_FIELD(ABasicArmorBonus, SavePercent)
-DEFINE_FIELD(ABasicArmorBonus, MaxSaveAmount)
-DEFINE_FIELD(ABasicArmorBonus, MaxAbsorb)
-DEFINE_FIELD(ABasicArmorBonus, MaxFullAbsorb)
-DEFINE_FIELD(ABasicArmorBonus, SaveAmount)
-DEFINE_FIELD(ABasicArmorBonus, BonusCount)
-DEFINE_FIELD(ABasicArmorBonus, BonusMax)
-
-//===========================================================================
-//
-// ABasicArmorBonus :: Serialize
-//
-//===========================================================================
-
-void ABasicArmorBonus::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (ABasicArmorBonus *)GetDefault();
-	arc("savepercent", SavePercent, def->SavePercent)
-		("saveamount", SaveAmount, def->SaveAmount)
-		("maxsaveamount", MaxSaveAmount, def->MaxSaveAmount)
-		("bonuscount", BonusCount, def->BonusCount)
-		("bonusmax", BonusMax, def->BonusMax)
-		("maxabsorb", MaxAbsorb, def->MaxAbsorb)
-		("maxfullabsorb", MaxFullAbsorb, def->MaxFullAbsorb);
-}
-
-//===========================================================================
-//
-// ABasicArmorBonus :: CreateCopy
-//
-//===========================================================================
-
-AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
-{
-	ABasicArmorBonus *copy = static_cast<ABasicArmorBonus *> (Super::CreateCopy (other));
-
-	if (!(ItemFlags & IF_IGNORESKILL))
-	{
-		SaveAmount = int(SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
-	}
-
-	copy->SavePercent = SavePercent;
-	copy->SaveAmount = SaveAmount;
-	copy->MaxSaveAmount = MaxSaveAmount;
-	copy->BonusCount = BonusCount;
-	copy->BonusMax = BonusMax;
-	copy->MaxAbsorb = MaxAbsorb;
-	copy->MaxFullAbsorb = MaxFullAbsorb;
-
-	return copy;
-}
-
-//===========================================================================
-//
-// ABasicArmorBonus :: Use
-//
-// Tries to add to the amount of BasicArmor a player has.
-//
-//===========================================================================
-
-bool ABasicArmorBonus::Use (bool pickup)
-{
-	ABasicArmor *armor = Owner->FindInventory<ABasicArmor> ();
-	bool result = false;
-
-	if (armor == NULL)
-	{
-		armor = Spawn<ABasicArmor> ();
-		armor->BecomeItem ();
-		armor->Amount = 0;
-		armor->MaxAmount = MaxSaveAmount;
-		Owner->AddInventory (armor);
-	}
-
-	if (BonusCount > 0 && armor->BonusCount < BonusMax)
-	{
-		armor->BonusCount = MIN (armor->BonusCount + BonusCount, BonusMax);
-		result = true;
-	}
-
-	int saveAmount = MIN (SaveAmount, MaxSaveAmount);
-
-	if (saveAmount <= 0)
-	{ // If it can't give you anything, it's as good as used.
-		return BonusCount > 0 ? result : true;
-	}
-
-	// If you already have more armor than this item can give you, you can't
-	// use it.
-	if (armor->Amount >= MaxSaveAmount + armor->BonusCount)
-	{
-		return result;
-	}
-
-	if (armor->Amount <= 0)
-	{ // Should never be less than 0, but might as well check anyway
-		armor->Amount = 0;
-		armor->Icon = Icon;
-		armor->SavePercent = SavePercent;
-		armor->MaxAbsorb = MaxAbsorb;
-		armor->ArmorType = this->GetClass()->TypeName;
-		armor->MaxFullAbsorb = MaxFullAbsorb;
-		armor->ActualSaveAmount = MaxSaveAmount;
-	}
-
-	armor->Amount = MIN(armor->Amount + saveAmount, MaxSaveAmount + armor->BonusCount);
-	armor->MaxAmount = MAX (armor->MaxAmount, MaxSaveAmount);
 	return true;
 }
 

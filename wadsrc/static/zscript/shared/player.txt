@@ -138,7 +138,7 @@ class PlayerPawn : Actor native
 	native void CheckWeaponSwitch(class<Inventory> item);
 }
 
-class PlayerChunk : PlayerPawn native
+class PlayerChunk : PlayerPawn
 {
 	Default
 	{

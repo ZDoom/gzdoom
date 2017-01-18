@@ -19,7 +19,6 @@ public:
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void Tick () override;
 	virtual AInventory *CreateCopy (AActor *other) override;
-	virtual bool HandlePickup (AInventory *item) override;
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
 
 	int AbsorbCount;
@@ -45,25 +44,6 @@ public:
 	int MaxAbsorb;
 	int MaxFullAbsorb;
 	int SaveAmount;
-};
-
-// BasicArmorBonus adds to the armor you have.
-class ABasicArmorBonus : public AArmor
-{
-	DECLARE_CLASS (ABasicArmorBonus, AArmor)
-public:
-	
-	virtual void Serialize(FSerializer &arc) override;
-	virtual AInventory *CreateCopy (AActor *other) override;
-	virtual bool Use (bool pickup) override;
-
-	double SavePercent;	// The default, for when you don't already have armor
-	int MaxSaveAmount;
-	int MaxAbsorb;
-	int MaxFullAbsorb;
-	int SaveAmount;
-	int BonusCount;
-	int BonusMax;
 };
 
 // Hexen armor consists of four separate armor types plus a conceptual armor

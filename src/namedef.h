@@ -83,6 +83,13 @@ xx(PointPuller)
 xx(UpperStackLookOnly)
 xx(LowerStackLookOnly)
 
+xx(BasicArmorBonus)
+xx(BasicArmorPickup)
+xx(SaveAmount)
+xx(SavePercent)
+xx(MaxAbsorb)
+xx(MaxFullAbsorb)
+
 xx(BulletPuff)
 xx(StrifePuff)
 xx(MaulerPuff)

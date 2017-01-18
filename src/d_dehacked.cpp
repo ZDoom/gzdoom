@@ -1963,11 +1963,10 @@ static int PatchMisc (int dummy)
 		armor->SavePercent = deh.BlueAC == 1 ? 0.33335 : 0.5;
 	}
 
-	ABasicArmorBonus *barmor;
-	barmor = static_cast<ABasicArmorBonus *> (GetDefaultByName ("ArmorBonus"));
+	auto barmor = GetDefaultByName ("ArmorBonus");
 	if (barmor!=NULL)
 	{
-		barmor->MaxSaveAmount = deh.MaxArmor;
+		barmor->IntVar("MaxSaveAmount") = deh.MaxArmor;
 	}
 
 	AInventory *health;

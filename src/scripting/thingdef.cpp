@@ -56,7 +56,6 @@
 #include "m_argv.h"
 #include "p_local.h"
 #include "doomerrors.h"
-#include "a_artifacts.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
 #include "v_text.h"

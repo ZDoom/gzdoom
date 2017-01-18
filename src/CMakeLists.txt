@@ -1147,7 +1147,6 @@ set (PCH_SOURCES
 	zstrformat.cpp
 	g_inventory/a_ammo.cpp
 	g_inventory/a_armor.cpp
-	g_inventory/a_artifacts.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
 	g_inventory/a_weaponpiece.cpp

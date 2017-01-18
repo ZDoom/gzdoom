@@ -1,6 +1,5 @@
 #include "info.h"
 #include "a_pickups.h"
-#include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
 #include "gi.h"

@@ -57,7 +57,6 @@
 #include "p_effect.h"
 #include "v_palette.h"
 #include "doomerrors.h"
-#include "a_artifacts.h"
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"

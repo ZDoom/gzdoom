@@ -51,7 +51,6 @@
 #include "sbarinfo.h"
 #include "gi.h"
 #include "r_data/r_translate.h"
-#include "a_artifacts.h"
 #include "a_weaponpiece.h"
 #include "g_level.h"
 #include "v_palette.h"

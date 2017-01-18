@@ -45,7 +45,6 @@
 #include "autosegs.h"
 #include "v_text.h"
 #include "a_pickups.h"
-#include "a_artifacts.h"
 #include "a_weaponpiece.h"
 #include "d_player.h"
 #include "doomerrors.h"

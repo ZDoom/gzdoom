@@ -11,11 +11,6 @@ protected:
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;
-	virtual bool TryPickup (AActor *&toucher) override;
-	virtual bool TryPickupRestricted (AActor *&toucher) override;
-	virtual bool ShouldStay () override;
-	virtual FString PickupMessage () override;
-	virtual void PlayPickupSound (AActor *toucher) override;
 
 	int PieceValue;
 	PClassActor *WeaponClass;

@@ -3183,7 +3183,7 @@ bool ADehackedPickup::ShouldRespawn ()
 void ADehackedPickup::PlayPickupSound (AActor *toucher)
 {
 	if (RealPickup != nullptr)
-		RealPickup->PlayPickupSound (toucher);
+		RealPickup->CallPlayPickupSound (toucher);
 }
 
 void ADehackedPickup::DoPickupSpecial (AActor *toucher)

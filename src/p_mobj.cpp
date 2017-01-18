@@ -1211,12 +1211,7 @@ void AActor::ClearInventory()
 		if (!(inv->ItemFlags & IF_UNDROPPABLE))
 		{
 			inv->DepleteOrDestroy();
-		}
-		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
-		{
-			AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
-			harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
-			invp = &inv->Inventory;
+			if (!(inv->ObjectFlags & OF_EuthanizeMe)) invp = &inv->Inventory;	// was only depleted so advance the pointer manually.
 		}
 		else
 		{

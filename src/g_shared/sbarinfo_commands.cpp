@@ -3691,3 +3691,5 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 	sc.MustGetToken('}');
 	return NULL;
 }
+
+

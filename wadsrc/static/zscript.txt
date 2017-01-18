@@ -9,6 +9,7 @@
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"
 #include "zscript/inventory/weapons.txt"
+#include "zscript/inventory/weaponpiece.txt"
 #include "zscript/inventory/armor.txt"
 #include "zscript/inventory/ammo.txt"
 #include "zscript/inventory/health.txt"

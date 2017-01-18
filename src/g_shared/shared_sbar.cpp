@@ -1794,7 +1794,7 @@ AInventory *DBaseStatusBar::ValidateInvFirst (int numVisible) const
 //
 //============================================================================
 
-void DBaseStatusBar::GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const
+void DBaseStatusBar::GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const
 {
 	if (CPlayer->ReadyWeapon != NULL)
 	{

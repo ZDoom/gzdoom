@@ -294,7 +294,6 @@ int FindMugShotStateIndex(FName state);
 // Base Status Bar ----------------------------------------------------------
 
 class FTexture;
-class AAmmo;
 
 enum
 {
@@ -395,7 +394,7 @@ protected:
 
 	void RefreshBackground () const;
 
-	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
+	void GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const;
 
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;

@@ -20,7 +20,6 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "virtual.h"
-#include "a_ammo.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
 
@@ -1314,29 +1313,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		ItemFlags &= ~IF_PICKUPGOOD;
 		GoAwayAndDie ();
 	}
-	else if (MaxAmount == 0 && !IsKindOf(RUNTIME_CLASS(AAmmo)))
-	{
-		// Special case: If an item's MaxAmount is 0, you can still pick it
-		// up if it is autoactivate-able.
-		if (!(ItemFlags & IF_AUTOACTIVATE))
-		{
-			return false;
-		}
-		// The item is placed in the inventory just long enough to be used.
-		toucher->AddInventory (this);
-		bool usegood = CallUse (true);
-		toucher->RemoveInventory (this);
-
-		if (usegood)
-		{
-			GoAwayAndDie ();
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
+	else if (MaxAmount > 0)
 	{
 		// Add the item to the inventory. It is not already there, or HandlePickup
 		// would have already taken care of it.
@@ -1372,6 +1349,25 @@ bool AInventory::TryPickup (AActor *&toucher)
 					copy->SetState (copy->FindState("HoldAndDestroy"));
 				}
 			}
+		}
+	}
+	else if (ItemFlags & IF_AUTOACTIVATE)
+	{
+		// Special case: If an item's MaxAmount is 0, you can still pick it
+		// up if it is autoactivate-able.
+
+		// The item is placed in the inventory just long enough to be used.
+		toucher->AddInventory(this);
+		bool usegood = CallUse(true);
+		toucher->RemoveInventory(this);
+
+		if (usegood)
+		{
+			GoAwayAndDie();
+		}
+		else
+		{
+			return false;
 		}
 	}
 	return true;

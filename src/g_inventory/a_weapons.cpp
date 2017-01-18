@@ -54,7 +54,7 @@
 #include "serializer.h"
 #include "thingdef.h"
 #include "virtual.h"
-#include "a_ammo.h"
+
 
 #define BONUSADD 6
 
@@ -499,9 +499,9 @@ void AWeapon::AttachToOwner (AActor *other)
 //
 //===========================================================================
 
-AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
+AInventory *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 {
-	AAmmo *ammo;
+	AInventory *ammo;
 
 	if (ammotype == NULL)
 	{
@@ -518,10 +518,10 @@ AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 	{
 		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 	}
-	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
+	ammo = other->FindInventory (ammotype);
 	if (ammo == NULL)
 	{
-		ammo = static_cast<AAmmo *>(Spawn (ammotype));
+		ammo = static_cast<AInventory *>(Spawn (ammotype));
 		ammo->Amount = MIN (amount, ammo->MaxAmount);
 		ammo->AttachToOwner (other);
 	}
@@ -545,7 +545,7 @@ AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 //===========================================================================
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
+bool AWeapon::AddExistingAmmo (AInventory *ammo, int amount)
 {
 	if (ammo != NULL && (ammo->Amount < ammo->MaxAmount || sv_unlimited_pickup))
 	{

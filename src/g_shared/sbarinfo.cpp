@@ -58,7 +58,6 @@
 #include "gstrings.h"
 #include "version.h"
 #include "cmdlib.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
@@ -1517,7 +1516,7 @@ public:
 		return translationtables[TRANSLATION_Players][int(CPlayer - players)];
 	}
 
-	AAmmo *ammo1, *ammo2;
+	AInventory *ammo1, *ammo2;
 	int ammocount1, ammocount2;
 	ABasicArmor *armor;
 	FImageCollection Images;

@@ -13,7 +13,6 @@
 #include "templates.h"
 #include "a_keys.h"
 #include "a_armor.h"
-#include "a_ammo.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
@@ -417,7 +416,7 @@ private:
 		}
 
 		// Ammo
-		AAmmo *ammo1, *ammo2;
+		AInventory *ammo1, *ammo2;
 		int ammocount1, ammocount2;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
@@ -485,7 +484,7 @@ private:
 		}
 
 		// Draw ammo
-		AAmmo *ammo1, *ammo2;
+		AInventory *ammo1, *ammo2;
 		int ammocount1, ammocount2;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);

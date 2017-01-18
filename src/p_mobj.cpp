@@ -70,7 +70,6 @@
 #include "d_player.h"
 #include "virtual.h"
 #include "a_armor.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 
@@ -906,7 +905,7 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 	// and infinite ammo is on
 	if (notakeinfinite &&
 	((dmflags & DF_INFINITE_AMMO) || (player && player->cheats & CF_INFINITEAMMO)) &&
-		item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+		item->IsKindOf(PClass::FindActor(NAME_Ammo)))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
 		result = false;
@@ -1171,7 +1170,7 @@ bool AActor::GiveAmmo (PClassInventory *type, int amount)
 DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AAmmo);
+	PARAM_CLASS(type, AInventory);
 	PARAM_INT(amount);
 	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
 }

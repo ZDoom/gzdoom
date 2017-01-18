@@ -69,7 +69,6 @@
 #include "r_data/colormaps.h"
 #include "a_weaponpiece.h"
 #include "vmbuilder.h"
-#include "a_ammo.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 
@@ -98,9 +97,9 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool 
 	}
 	return static_cast<PClassActor *>(cls);
 }
-static AAmmo::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
+static AInventory::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
 {
-	return static_cast<AAmmo::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AAmmo), optional));
+	return static_cast<PClassInventory *>(FindClassTentative(name, PClass::FindActor(NAME_Ammo), optional));
 }
 static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optional = false)
 {
@@ -1740,33 +1739,6 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 		if (*n != 0)
 			static_cast<PClassInventory*>(info)->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(backpackamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BackpackAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BackpackMaxAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->DropAmount = i;
 }
 
 //==========================================================================

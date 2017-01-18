@@ -60,7 +60,6 @@
 #include "p_spec.h"
 #include "virtual.h"
 #include "a_armor.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 
 static FRandom pr_skullpop ("SkullPop");
@@ -1171,7 +1170,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				item->Destroy();
 			}
 			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+				item->IsKindOf(PClass::FindActor(NAME_Ammo)))
 			{
 				if (defitem == NULL)
 				{

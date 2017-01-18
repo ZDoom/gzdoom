@@ -84,7 +84,6 @@
 #include "thingdef.h"
 #include "a_pickups.h"
 #include "a_armor.h"
-#include "a_ammo.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "stats.h"
@@ -8700,7 +8699,7 @@ scriptwait:
 				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
 				AInventory *item;
 
-				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
+				if (type != NULL && type->ParentClass == PClass::FindActor(NAME_Ammo))
 				{
 					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
@@ -8729,7 +8728,7 @@ scriptwait:
 				PClassActor *type = PClass::FindActor (FBehavior::StaticLookupString (STACK(2)));
 				AInventory *item;
 
-				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
+				if (type != NULL && type->ParentClass == PClass::FindActor(NAME_Ammo))
 				{
 					item = activator->FindInventory (type);
 					if (item != NULL)

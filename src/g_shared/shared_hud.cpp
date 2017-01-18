@@ -44,7 +44,6 @@
 #include "w_wad.h"
 #include "a_keys.h"
 #include "a_armor.h"
-#include "a_ammo.h"
 #include "sbar.h"
 #include "sc_man.h"
 #include "templates.h"
@@ -527,7 +526,7 @@ static void AddAmmoToList(AWeapon * weapdef)
 		PClassInventory * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
-			AAmmo * ammodef=(AAmmo*)GetDefaultByType(ti);
+			auto ammodef=(AInventory*)GetDefaultByType(ti);
 
 			if (ammodef && !(ammodef->ItemFlags&IF_INVBAR))
 			{
@@ -561,9 +560,9 @@ static void GetAmmoTextLengths(player_t *CPlayer, int& ammocur, int& ammomax)
 {
 	for (auto type : orderedammos)
 	{
-		AAmmo * ammoitem = static_cast<AAmmo*>(CPlayer->mo->FindInventory(type));
-		AAmmo * inv = nullptr == ammoitem
-			? static_cast<AAmmo*>(GetDefaultByType(type))
+		auto ammoitem = CPlayer->mo->FindInventory(type);
+		auto inv = nullptr == ammoitem
+			? static_cast<AInventory*>(GetDefaultByType(type))
 			: ammoitem;
 		assert(nullptr != inv);
 
@@ -648,9 +647,9 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	{
 
 		PClassInventory * type = orderedammos[i];
-		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
+		auto ammoitem = CPlayer->mo->FindInventory(type);
 
-		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
+		auto inv = ammoitem? ammoitem : (AInventory*)GetDefaultByType(orderedammos[i]);
 		FTextureID AltIcon = GetHUDIcon(type);
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;

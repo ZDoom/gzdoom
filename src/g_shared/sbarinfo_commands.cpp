@@ -244,31 +244,31 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				texture = TexMan(statusBar->CPlayer->mo->ScoreIcon);
 			else if(type == AMMO1)
 			{
-				AAmmo *ammo = statusBar->ammo1;
+				auto ammo = statusBar->ammo1;
 				if(ammo != NULL)
 					GetIcon(ammo);
 			}
 			else if(type == AMMO2)
 			{
-				AAmmo *ammo = statusBar->ammo2;
+				auto ammo = statusBar->ammo2;
 				if(ammo != NULL)
 					GetIcon(ammo);
 			}
 			else if(type == ARMOR)
 			{
-				ABasicArmor *armor = statusBar->armor;
+				auto armor = statusBar->armor;
 				if(armor != NULL && armor->Amount != 0)
 					GetIcon(armor);
 			}
 			else if(type == WEAPONICON)
 			{
-				AWeapon *weapon = statusBar->CPlayer->ReadyWeapon;
+				auto weapon = statusBar->CPlayer->ReadyWeapon;
 				if(weapon != NULL)
 					GetIcon(weapon);
 			}
 			else if(type == SIGIL)
 			{
-				AInventory *item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+				auto item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 				if (item != NULL)
 					texture = TexMan(item->Icon);
 			}
@@ -1076,10 +1076,10 @@ class CommandDrawNumber : public CommandDrawString
 						if(!parenthesized || !sc.CheckToken(TK_StringConst))
 							sc.MustGetToken(TK_Identifier);
 						inventoryItem = PClass::FindActor(sc.String);
-						if(inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
+						if(inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
 						{
 							sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-							inventoryItem = RUNTIME_CLASS(AAmmo);
+							inventoryItem = PClass::FindActor(NAME_Ammo);
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
@@ -1092,10 +1092,10 @@ class CommandDrawNumber : public CommandDrawString
 						if(!parenthesized || !sc.CheckToken(TK_StringConst))
 							sc.MustGetToken(TK_Identifier);
 						inventoryItem = PClass::FindActor(sc.String);
-						if(inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
+						if(inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
 						{
 							sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-							inventoryItem = RUNTIME_CLASS(AAmmo);
+							inventoryItem = PClass::FindActor(NAME_Ammo);
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
@@ -1435,7 +1435,7 @@ class CommandDrawNumber : public CommandDrawString
 				{
 					// num = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem) / TICRATE + 1;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
 					int retv;
 					VMReturn ret(&retv);
@@ -2630,10 +2630,10 @@ class CommandDrawBar : public SBarInfoCommand
 						sc.MustGetToken(TK_Identifier);
 				type = AMMO;
 				data.inventoryItem = PClass::FindActor(sc.String);
-				if(data.inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(data.inventoryItem)) //must be a kind of ammo
+				if(data.inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(data.inventoryItem)) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AAmmo);
+					data.inventoryItem = PClass::FindActor(NAME_Ammo);
 				}
 
 				if(parenthesized) sc.MustGetToken(')');
@@ -2825,8 +2825,10 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case POWERUPTIME:
 				{
+					// [value, max] = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem);
+					// value++; max++;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, data.inventoryItem };
 					VMReturn ret[2];
 					int ival;
@@ -3312,10 +3314,10 @@ class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 			for(int i = 0;i < 2;i++)
 			{
 				ammo[i] = PClass::FindClass(sc.String);
-				if(ammo[i] == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo[i])) //must be a kind of ammo
+				if(ammo[i] == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(ammo[i])) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-					ammo[i] = RUNTIME_CLASS(AAmmo);
+					ammo[i] = PClass::FindActor(NAME_Ammo);
 				}
 		
 				if(sc.CheckToken(TK_OrOr))

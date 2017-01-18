@@ -716,6 +716,7 @@ xx(BlendColor)
 xx(Strength)
 xx(Mode)
 xx(PowerupType)
+xx(PlayerPawn)
 
 // Decorate compatibility functions
 xx(BuiltinTypeCheck)

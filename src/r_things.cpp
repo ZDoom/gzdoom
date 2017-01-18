@@ -1363,6 +1363,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis = &avis[vispspindex];
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
+	vis->sector = nullptr;
 
 	vis->texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 

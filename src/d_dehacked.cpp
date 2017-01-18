@@ -1948,19 +1948,18 @@ static int PatchMisc (int dummy)
 
 	// Update default item properties by patching the affected items
 	// Note: This won't have any effect on DECORATE derivates of these items!
-	ABasicArmorPickup *armor;
 
-	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
+	auto armor = GetDefaultByName ("GreenArmor");
 	if (armor!=NULL)
 	{
-		armor->SaveAmount = 100 * deh.GreenAC;
-		armor->SavePercent = deh.GreenAC == 1 ? 0.33335 : 0.5;
+		armor->IntVar(NAME_SaveAmount) = 100 * deh.GreenAC;
+		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 0.33335 : 0.5;
 	}
-	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
+	armor = GetDefaultByName ("BlueArmor");
 	if (armor!=NULL)
 	{
-		armor->SaveAmount = 100 * deh.BlueAC;
-		armor->SavePercent = deh.BlueAC == 1 ? 0.33335 : 0.5;
+		armor->IntVar(NAME_SaveAmount) = 100 * deh.BlueAC;
+		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 0.33335 : 0.5;
 	}
 
 	auto barmor = GetDefaultByName ("ArmorBonus");

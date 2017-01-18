@@ -226,10 +226,12 @@ public:
 		NoArmor = false;
 	}
 
-	static DamageTypeDefinition *Get(FName type);
 	static bool IgnoreArmor(FName type);
-	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
+
+private:
+	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);
+	static DamageTypeDefinition *Get(FName type);
 };
 
 class DDropItem;

@@ -42,11 +42,18 @@ struct Console native
 	native static void HideConsole();
 }
 
+struct DamageTypeDefinition native
+{
+	native static bool IgnoreArmor(Name type);
+}
+
 struct GameInfoStruct native
 {
 	// will be extended as needed.
 	native Name backpacktype;
 	native double Armor2Percent;
+	native String ArmorIcon1;
+	native String ArmorIcon2;
 }
 
 class Object native

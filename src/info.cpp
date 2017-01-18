@@ -758,6 +758,14 @@ bool DamageTypeDefinition::IgnoreArmor(FName type)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(_DamageTypeDefinition, IgnoreArmor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(type);
+	ACTION_RETURN_BOOL(DamageTypeDefinition::IgnoreArmor(type));
+}
+
+
 //==========================================================================
 //
 // DamageTypeDefinition :: ApplyMobjDamageFactor

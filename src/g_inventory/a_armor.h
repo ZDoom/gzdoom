@@ -78,7 +78,7 @@ public:
 	virtual AInventory *CreateTossable () override;
 	virtual bool HandlePickup (AInventory *item) override;
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
-	virtual void DepleteOrDestroy() override;
+	virtual DestroyResult DepleteOrDestroy() override;
 
 	double Slots[5];
 	double SlotsIncrement[4];

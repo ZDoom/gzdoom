@@ -1114,7 +1114,7 @@ void AInventory::OnDestroy ()
 //
 //===========================================================================
 
-void AInventory::DepleteOrDestroy ()
+AInventory::DestroyResult AInventory::DepleteOrDestroy ()
 {
 	// If it's not ammo or an internal armor, destroy it.
 	// Ammo needs to stick around, even when it's zero for the benefit
@@ -1125,10 +1125,12 @@ void AInventory::DepleteOrDestroy ()
 	if (ItemFlags & IF_KEEPDEPLETED)
 	{
 		Amount = 0;
+		return DEPLETED;
 	}
 	else
 	{
 		Destroy();
+		return DESTROYED;
 	}
 }
 

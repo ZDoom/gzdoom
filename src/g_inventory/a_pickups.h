@@ -80,9 +80,15 @@ public:
 	virtual void Tick() override;
 	virtual bool Grind(bool items) override;
 
+	enum DestroyResult
+	{
+		DEPLETED,
+		DESTROYED
+	};
+
 	// virtual methods that only get overridden by special internal classes, like DehackedPickup.
 	// There is no need to expose these to scripts.
-	virtual void DepleteOrDestroy ();
+	virtual DestroyResult DepleteOrDestroy ();
 	virtual bool ShouldRespawn ();
 	virtual void DoPickupSpecial (AActor *toucher);
 

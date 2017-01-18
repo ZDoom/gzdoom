@@ -1784,6 +1784,18 @@ PClassPointer::PClassPointer(PClass *restrict)
 
 //==========================================================================
 //
+// PClassPointer - isCompatible
+//
+//==========================================================================
+
+bool PClassPointer::isCompatible(PType *type)
+{
+	auto other = dyn_cast<PClassPointer>(type);
+	return (other != nullptr && other->ClassRestriction->IsDescendantOf(ClassRestriction));
+}
+
+//==========================================================================
+//
 // PClassPointer :: IsMatch
 //
 //==========================================================================
@@ -3333,6 +3345,20 @@ void PClass::InitializeDefaults()
 {
 	assert(Defaults == NULL);
 	Defaults = (BYTE *)M_Malloc(Size);
+
+	// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
+	// bSerialOverride prevents linking into the thinker chains.
+	auto s = DThinker::bSerialOverride;
+	DThinker::bSerialOverride = true;
+	ConstructNative(Defaults);
+	DThinker::bSerialOverride = s;
+	// We must unlink the defaults from the class list because it's just a static block of data to the engine.
+	DObject *optr = (DObject*)Defaults;
+	GC::Root = optr->ObjNext;
+	optr->ObjNext = nullptr;
+	optr->SetClass(this);
+
+
 	if (ParentClass->Defaults != NULL)
 	{
 		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);

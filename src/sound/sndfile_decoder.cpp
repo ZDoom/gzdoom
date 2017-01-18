@@ -60,6 +60,7 @@ bool SndFileDecoder::open(FileReader *reader)
 		SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
 		Reader = reader;
+		SndInfo.format = 0;
 		SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
 		if (SndFile)
 		{

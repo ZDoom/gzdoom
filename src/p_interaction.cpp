@@ -357,15 +357,19 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
 		int pnum = int(this->player-players);
 		dieticks[pnum] = gametic;
-		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
-		this->player->cheats&CF_PREDICTING?"predicting":"real");
+		fprintf(debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
+			this->player->cheats&CF_PREDICTING ? "predicting" : "real");
 	}
 
 	// [RH] Notify this actor's items.
 	for (AInventory *item = Inventory; item != NULL; )
 	{
 		AInventory *next = item->Inventory;
-		item->OwnerDied();
+		IFVIRTUALPTR(item, AInventory, OwnerDied)
+		{
+			VMValue params[1] = { item };
+			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+		}
 		item = next;
 	}
 

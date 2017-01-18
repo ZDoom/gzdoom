@@ -4362,9 +4362,8 @@ ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
 FxTypeCheck::FxTypeCheck(FxExpression *l, FxExpression *r)
 	: FxExpression(EFX_TypeCheck, l->ScriptPosition)
 {
-	left = new FxTypeCast(l, NewPointer(RUNTIME_CLASS(DObject)), false);
-	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), r);
-	EmitTail = false;
+	left = l;
+	right = r;
 	ValueType = TypeBool;
 }
 
@@ -4389,9 +4388,27 @@ FxTypeCheck::~FxTypeCheck()
 FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
+	// This must resolve the cast separately so that it can set the proper type for class descriptors.
 	RESOLVE(left, ctx);
 	RESOLVE(right, ctx);
 	ABORT(right && left);
+
+	if (left->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		left = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), left);
+		ClassCheck = true;
+	}
+	else
+	{
+		left = new FxTypeCast(left, NewPointer(RUNTIME_CLASS(DObject)), false);
+		ClassCheck = false;
+	}
+	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), right);
+
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	ABORT(right && left);
+
 	return this;
 }
 
@@ -4408,7 +4425,8 @@ ExpEmit FxTypeCheck::EmitCommon(VMFunctionBuilder *build)
 	castee.Free(build);
 	casttype.Free(build);
 	ExpEmit ares(build, REGT_POINTER);
-	build->Emit(casttype.Konst ? OP_DYNCAST_K : OP_DYNCAST_R, ares.RegNum, castee.RegNum, casttype.RegNum);
+	if (!ClassCheck) build->Emit(casttype.Konst ? OP_DYNCAST_K : OP_DYNCAST_R, ares.RegNum, castee.RegNum, casttype.RegNum);
+	else build->Emit(casttype.Konst ? OP_DYNCASTC_K : OP_DYNCASTC_R, ares.RegNum, castee.RegNum, casttype.RegNum);
 	return ares;
 }
 
@@ -9938,37 +9956,76 @@ ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxReturnStatement::FxReturnStatement(FxExpression *value, const FScriptPosition &pos)
-: FxExpression(EFX_ReturnStatement, pos), Value(value)
+: FxExpression(EFX_ReturnStatement, pos)
 {
+	if (value != nullptr) Args.Push(value);
+	ValueType = TypeVoid;
+}
+
+FxReturnStatement::FxReturnStatement(FArgumentList &values, const FScriptPosition &pos)
+	: FxExpression(EFX_ReturnStatement, pos)
+{
+	Args = std::move(values);
 	ValueType = TypeVoid;
 }
 
 FxReturnStatement::~FxReturnStatement()
 {
-	SAFE_DELETE(Value);
 }
 
 FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 {
+	bool fail = false;
 	CHECKRESOLVED();
-	SAFE_RESOLVE_OPT(Value, ctx);
+	for (auto &Value : Args)
+	{
+		SAFE_RESOLVE_OPT(Value, ctx);
+		fail |= (Value == nullptr);
+	}
+	if (fail)
+	{
+		delete this;
+		return nullptr;
+	}
 
 	PPrototype *retproto;
-	if (Value == nullptr)
+	if (Args.Size() == 0)
 	{
 		TArray<PType *> none(0);
 		retproto = NewPrototype(none, none);
 	}
-	else
+	else if (Args.Size() == 1)
 	{
 		// If we already know the real return type we need at least try to cast the value to its proper type (unless in an anonymous function.)
 		if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() > 0 && ctx.Function->SymbolName != NAME_None)
 		{
-			Value = new FxTypeCast(Value, ctx.ReturnProto->ReturnTypes[0], false, false);
-			Value = Value->Resolve(ctx);
-			ABORT(Value);
+			Args[0] = new FxTypeCast(Args[0], ctx.ReturnProto->ReturnTypes[0], false, false);
+			Args[0] = Args[0]->Resolve(ctx);
+			ABORT(Args[0]);
 		}
-		retproto = Value->ReturnProto();
+		retproto = Args[0]->ReturnProto();
+	}
+	else if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() == Args.Size())
+	{
+		for (unsigned i = 0; i < Args.Size(); i++)
+		{
+			auto &Value = Args[0];
+			Value = new FxTypeCast(Value, ctx.ReturnProto->ReturnTypes[i], false, false);
+			Value = Value->Resolve(ctx);
+			if (Value == nullptr) fail = true;
+		}
+		if (fail)
+		{
+			delete this;
+			return nullptr;
+		}
+		return this;	// no point calling CheckReturn here.
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
+		delete this;
+		return nullptr;
 	}
 
 	ctx.CheckReturn(retproto, ScriptPosition);
@@ -9978,7 +10035,19 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 
 ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 {
+	TArray<ExpEmit> outs;
+
 	ExpEmit out(0, REGT_NIL);
+
+	// If there's structs to destroy here we need to emit all returns before destroying them.
+	if (build->ConstructedStructs.Size())
+	{
+		for (auto ret : Args)
+		{
+			ExpEmit r = ret->Emit(build);
+			outs.Push(r);
+		}
+	}
 
 	// call the destructors for all structs requiring one.
 	// go in reverse order of construction
@@ -9995,19 +10064,19 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 
 	// If we return nothing, use a regular RET opcode.
 	// Otherwise just return the value we're given.
-	if (Value == nullptr)
+	if (Args.Size() == 0)
 	{
 		build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 	}
-	else
+	else if (Args.Size() == 1)
 	{
-		out = Value->Emit(build);
+		out = outs.Size() > 0? outs[0] : Args[0]->Emit(build);
 
 		// Check if it is a function call that simplified itself
 		// into a tail call in which case we don't emit anything.
 		if (!out.Final)
 		{
-			if (Value->ValueType == TypeVoid)
+			if (Args[0]->ValueType == TypeVoid)
 			{ // Nothing is returned.
 				build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 			}
@@ -10017,6 +10086,14 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
+	else
+	{
+		for (unsigned i = 0; i < Args.Size(); i++)
+		{
+			out = outs.Size() > 0 ? outs[i] : Args[i]->Emit(build);
+			build->Emit(OP_RET, i < Args.Size() - 1 ? i : i+RET_FINAL, EncodeRegType(out), out.RegNum);
+		}
+	}
 
 	out.Final = true;
 	return out;
@@ -10024,9 +10101,9 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 
 VMFunction *FxReturnStatement::GetDirectFunction()
 {
-	if (Value != nullptr)
+	if (Args.Size() == 1)
 	{
-		return Value->GetDirectFunction();
+		return Args[0]->GetDirectFunction();
 	}
 	return nullptr;
 }

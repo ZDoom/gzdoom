@@ -100,6 +100,7 @@ static FFlagDef InternalActorFlagDefs[]=
 	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
 	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
 	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
+	DEFINE_FLAG(FX, RESPAWNINVUL, AActor, effects),
 };
 
 
@@ -461,7 +462,7 @@ static FFlagDef PlayerPawnFlagDefs[] =
 static FFlagDef PowerSpeedFlagDefs[] =
 {
 	// PowerSpeed flags
-	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
+	DEFINE_DEPRECATED_FLAG(NOTRAIL),
 };
 
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
@@ -472,7 +473,6 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 1 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -546,6 +546,12 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 				}
 			}
 		}
+	}
+
+	// Handle that lone PowerSpeed flag - this should be more generalized but it's just this one flag and unlikely to become more so an explicit check will do.
+	if ((!stricmp(part1, "NOTRAIL") && !strict) || (!stricmp(part1, "POWERSPEED") && !stricmp(part2, "NOTRAIL")))
+	{
+		return &PowerSpeedFlagDefs[0];
 	}
 	return NULL;
 }
@@ -782,6 +788,11 @@ void InitThingdef()
 	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
 	GlobalSymbols.AddSymbol(dehf);
 
+	// set up a variable for the global gameinfo data
+	PStruct *gistruct = NewNativeStruct("GameInfoStruct", nullptr);
+	PField *gi = new PField("gameinfo", gistruct, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gameinfo);
+	GlobalSymbols.AddSymbol(gi);
+
 	// set up a variable for the global players array.
 	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
 	pstruct->Size = sizeof(player_t);
@@ -789,6 +800,9 @@ void InitThingdef()
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	GlobalSymbols.AddSymbol(playerf);
+
+	pstruct->AddNativeField("weapons", NewNativeStruct("WeaponSlots", nullptr), myoffsetof(player_t, weapons), VARF_Native);
+
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
@@ -925,7 +939,7 @@ DEFINE_ACTION_FUNCTION(FString, Replace)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(s1);
 	PARAM_STRING(s2);
-	self->Substitute(*s1, *s2);
+	self->Substitute(s1, s2);
 	return 0;
 }
 

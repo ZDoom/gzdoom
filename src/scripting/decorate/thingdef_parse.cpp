@@ -913,13 +913,14 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 	if (prop != NULL)
 	{
-		if (bag.Info->IsDescendantOf(*prop->cls))
+		auto pcls = PClass::FindActor(prop->clsname);
+		if (bag.Info->IsDescendantOf(pcls))
 		{
 			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Defaults, bag);
 		}
 		else
 		{
-			sc.ScriptMessage("'%s' requires an actor of type '%s'\n", propname.GetChars(), (*prop->cls)->TypeName.GetChars());
+			sc.ScriptMessage("'%s' requires an actor of type '%s'\n", propname.GetChars(), pcls->TypeName.GetChars());
 			FScriptPosition::ErrorCounter++;
 		}
 	}

@@ -64,6 +64,7 @@ class Inventory : Actor native
 	virtual bool GetNoTeleportFreeze() { return false; }
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
 	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
+	virtual void OwnerDied() {}
 
 	native bool GoAway();
 	native void GoAwayAndDie();

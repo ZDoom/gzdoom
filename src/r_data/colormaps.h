@@ -72,16 +72,6 @@ inline uint32 MakeSpecialColormap(int index)
 	return index | SPECIALCOLORMAP_MASK;
 }
 
-inline bool IsSpecialColormap(uint32 map)
-{
-	return (map & 0xFFFF0000) == SPECIALCOLORMAP_MASK;
-}
-
-inline int GetSpecialColormap(int blend)
-{
-	return IsSpecialColormap(blend) ? blend & 0xFFFF : NOFIXEDCOLORMAP;
-}
-
 int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2);
 
 

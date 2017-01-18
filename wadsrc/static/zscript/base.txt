@@ -32,9 +32,21 @@ struct TexMan
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 }
 
-struct Screen
+struct Screen native
 {
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
+}
+
+struct Console native
+{
+	native static void HideConsole();
+}
+
+struct GameInfoStruct native
+{
+	// will be extended as needed.
+	native Name backpacktype;
+	native double Armor2Percent;
 }
 
 class Object native
@@ -200,6 +212,7 @@ struct DehInfo native
 	native double ExplosionAlpha;
 	native int NoAutofreeze;
 	native int BFGCells;
+	native int BlueAC;
 }
 
 struct State native

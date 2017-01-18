@@ -599,6 +599,7 @@ public:
 
 	// this is only here to block PPointer's implementation
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override {}
+	bool isCompatible(PType *type);
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
@@ -637,6 +638,19 @@ public:
 
 protected:
 	PProperty();
+};
+
+class PPropFlag : public PSymbol
+{
+	DECLARE_CLASS(PPropFlag, PSymbol);
+public:
+	PPropFlag(FName name, PField *offset, int bitval);
+
+	PField *Offset;
+	int bitval;
+
+protected:
+	PPropFlag();
 };
 
 // Compound types -----------------------------------------------------------

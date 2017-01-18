@@ -1226,22 +1226,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckInventory)
 
 //==========================================================================
 //
-// State jump function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, CheckArmorType)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME	 (type);
-	PARAM_INT_DEF(amount);
-
-	ABasicArmor *armor = (ABasicArmor *)self->FindInventory(NAME_BasicArmor);
-
-	ACTION_RETURN_BOOL(armor && armor->ArmorType == type && armor->Amount >= amount);
-}
-
-//==========================================================================
-//
 // Parameterized version of A_Explode
 //
 //==========================================================================

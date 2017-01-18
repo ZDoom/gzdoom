@@ -86,6 +86,8 @@ xx(CAST,	cast,	CAST,		NOP,	0, 0),		// xA = xB, conversion specified by C
 xx(CASTB,	castb,	CAST,		NOP,	0, 0),		// xA = !!xB, type specified by C
 xx(DYNCAST_R,	dyncast, RPRPRP,	NOP,	0, 0),		// aA = dyn_cast<aC>(aB);
 xx(DYNCAST_K,	dyncast, RPRPKP,	NOP,	0, 0),		// aA = dyn_cast<aKC>(aB);
+xx(DYNCASTC_R,	dyncastc, RPRPRP,	NOP,	0, 0),		// aA = dyn_cast<aC>(aB); for class types
+xx(DYNCASTC_K,	dyncastc, RPRPKP,	NOP,	0, 0),		// aA = dyn_cast<aKC>(aB);
 
 // Control flow.
 xx(TEST,	test,	RII16,		NOP,	0, 0),		// if (dA != BC) then pc++

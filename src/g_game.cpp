@@ -1263,10 +1263,11 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	// Strip all current powers, unless moving in a hub and the power is okay to keep.
 	item = p->mo->Inventory;
+	auto ptype = PClass::FindActor(NAME_Powerup);
 	while (item != NULL)
 	{
 		next = item->Inventory;
-		if (item->IsKindOf (RUNTIME_CLASS(APowerup)))
+		if (item->IsKindOf (ptype))
 		{
 			if (deathmatch || ((mode != FINISH_SameHub || !(item->ItemFlags & IF_HUBPOWER))
 				&& !(item->ItemFlags & IF_PERSISTENTPOWER))) // Keep persistent powers in non-deathmatch games

@@ -638,6 +638,14 @@ void player_t::SendPitchLimits() const
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_STRING(self->userinfo.GetName());
+}
+
+
 //===========================================================================
 //
 // APlayerPawn
@@ -1158,7 +1166,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(APowerupGiver)))
+				item->IsKindOf(PClass::FindActor(NAME_PowerupGiver)))
 			{
 				item->Destroy();
 			}

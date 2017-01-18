@@ -125,3 +125,7 @@ class WeaponPiece : Inventory native
 	}
 }
 
+struct WeaponSlots native
+{
+	native bool, int, int LocateWeapon(class<Weapon> weap);
+}

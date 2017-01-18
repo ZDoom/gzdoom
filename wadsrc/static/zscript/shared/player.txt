@@ -102,6 +102,36 @@ class PlayerPawn : Actor native
 	virtual void MorphPlayerThink()
 	{
 	}
+	
+	virtual void OnRespawn()
+	{
+		if (sv_respawnprotect && (multiplayer || alwaysapplydmflags))
+		{
+			let invul = Powerup(Spawn("PowerInvulnerable"));
+			invul.EffectTics = 3 * TICRATE;
+			invul.BlendColor = 0;			// don't mess with the view
+			invul.bUndroppable = true;		// Don't drop this
+			bRespawnInvul = true;			// [RH] special effect
+		}
+	}
+	
+	// This is for SBARINFO.
+	int, int GetEffectTicsForItem(class<Inventory> item)
+	{
+		let pg = (class<PowerupGiver>)(item);
+		if (pg != null)
+		{
+			let powerupType = (class<Powerup>)(GetDefaultByType(pg).PowerupType);
+			let powerup = Powerup(FindInventory(powerupType));
+			if(powerup != null) 
+			{
+				let maxtics = GetDefaultByType(powerupType).EffectTics;
+				if (maxtics == 0) maxtics = powerup.default.EffectTics;
+				return powerup.EffectTics, maxtics;
+			}
+		}
+		return 0, 0;
+	}
 
 	native int GetMaxHealth();
 	native bool ResetAirSupply (bool playgasp = false);
@@ -260,11 +290,12 @@ struct PlayerInfo native	// this is what internally is known as player_t
 	native Actor ConversationPC;
 	native double ConversationNPCAngle;
 	native bool ConversationFaceTalker;
+	//native WeaponSlots weapons; <- defined internally
+
 /* these are not doable yet
 ticcmd_t	cmd;
 usercmd_t	original_cmd;
-userinfo_t	userinfo;				// [RH] who is this?
-FWeaponSlots weapons;
+userinfo_t	userinfo;
 */
 	
 
@@ -278,5 +309,6 @@ FWeaponSlots weapons;
 	native PSprite FindPSprite(int id);
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
+	native String GetUserName();
 
 }

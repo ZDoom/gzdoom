@@ -1086,7 +1086,7 @@ class FxTypeCheck : public FxExpression
 public:
 	FxExpression		*left;
 	FxExpression		*right;
-	bool EmitTail;
+	bool ClassCheck;
 
 	FxTypeCheck(FxExpression*, FxExpression*);
 	~FxTypeCheck();
@@ -1911,10 +1911,11 @@ public:
 
 class FxReturnStatement : public FxExpression
 {
-	FxExpression *Value;
+	FArgumentList Args;
 
 public:
 	FxReturnStatement(FxExpression *value, const FScriptPosition &pos);
+	FxReturnStatement(FArgumentList &args, const FScriptPosition &pos);
 	~FxReturnStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

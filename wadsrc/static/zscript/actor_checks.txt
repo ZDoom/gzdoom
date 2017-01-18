@@ -106,11 +106,15 @@ extend class Actor
 	
 	//==========================================================================
 	//
-	// 
+	// rather pointless these days to do it this way.
 	//
 	//==========================================================================
 
-	native bool CheckArmorType(name Type, int amount = 1);
+	bool CheckArmorType(name Type, int amount = 1)
+	{
+		let myarmor = BasicArmor(FindInventory("BasicArmor"));
+		return myarmor != null && myarmor.ArmorType == type && myarmor.Amount >= amount;
+	}
 
 	action state A_JumpIfArmorType(name Type, statelabel label, int amount = 1)
 	{

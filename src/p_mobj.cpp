@@ -822,11 +822,13 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	return result;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Inventory)
+DEFINE_ACTION_FUNCTION(AActor, GiveInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	ACTION_RETURN_BOOL(self->UseInventory(item));
+	PARAM_CLASS(type, AInventory);
+	PARAM_INT(amount);
+	PARAM_BOOL_DEF(givecheat);
+	ACTION_RETURN_BOOL(self->GiveInventory(type, amount, givecheat));
 }
 
 
@@ -918,6 +920,16 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 	return result;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	PARAM_INT(amount);
+	PARAM_BOOL_DEF(fromdecorate);
+	PARAM_BOOL_DEF(notakeinfinite);
+	self->RemoveInventory(item);
+	return 0;
+}
 
 //============================================================================
 //
@@ -5369,15 +5381,13 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		oldactor->DestroyAllInventory();
 	}
 	// [BC] Handle temporary invulnerability when respawned
-	if ((state == PST_REBORN || state == PST_ENTER) &&
-		(dmflags2 & DF2_YES_RESPAWN_INVUL) &&
-		(multiplayer || alwaysapplydmflags))
+	if (state == PST_REBORN || state == PST_ENTER)
 	{
-		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
-		invul->EffectTics = 3*TICRATE;
-		invul->BlendColor = 0;			// don't mess with the view
-		invul->ItemFlags |= IF_UNDROPPABLE;	// Don't drop this
-		p->mo->effects |= FX_RESPAWNINVUL;	// [RH] special effect
+		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
+		{
+			VMValue param = p->mo;
+			GlobalVMStack.Call(func, &param, 1, nullptr, 0);
+		}
 	}
 
 	if (StatusBar != NULL && (playernum == consoleplayer || StatusBar->GetPlayer() == playernum))

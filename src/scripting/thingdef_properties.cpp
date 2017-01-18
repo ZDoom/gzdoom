@@ -354,6 +354,23 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		break;
 	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
 		static_cast<AInventory*>(defaults)->InterHubAmount = set ? 0 : 1;
+		break;
+	case DEPF_NOTRAIL:
+	{
+		FString propname = "@property@powerspeed.notrail";
+		FName name(propname, true);
+		if (name != NAME_None)
+		{
+			auto propp = dyn_cast<PProperty>(info->Symbols.FindSymbol(name, true));
+			if (propp != nullptr)
+			{
+				*((char*)defaults + propp->Variables[0]->Offset) = set ? 1 : 0;
+			}
+		}
+		break;
+	}
+
+
 	default:
 		break;	// silence GCC
 	}
@@ -441,9 +458,42 @@ int MatchString (const char *in, const char **strings)
 
 //==========================================================================
 //
+// Get access to scripted fields.
+// Fortunately there's only a handful that cannot be done with a
+// scripted property definition, most notably the powerup and morph stuff.
+//
+//==========================================================================
+
+static bool PointerCheck(PType *symtype, PType *checktype)
+{
+	auto symptype = dyn_cast<PClassPointer>(symtype);
+	auto checkptype = dyn_cast<PClassPointer>(checktype);
+	return symptype != nullptr && checkptype != nullptr && symptype->ClassRestriction->IsDescendantOf(checkptype->ClassRestriction);
+}
+
+static void *ScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
+{
+	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
+	if (sym && (sym->Type == type || PointerCheck(sym->Type, type)))
+	{
+		return (((char*)obj) + sym->Offset);
+	}
+	I_Error("Variable %s of type %s not found in %s\n", field.GetChars(), type->DescriptiveName(), cls->TypeName.GetChars());
+	return nullptr;
+}
+
+template<class T>
+T &TypedScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
+{
+	return *(T*)ScriptVar(obj, cls, field, type);
+}
+
+//==========================================================================
+//
 // Info Property handlers
 //
 //==========================================================================
+
 
 //==========================================================================
 //
@@ -2235,14 +2285,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 	int alpha;
 	PalEntry *pBlendColor;
+	bool isgiver = info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver));
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || isgiver)
 	{
-		pBlendColor = &((APowerup*)defaults)->BlendColor;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
 	}
 	else
 	{
@@ -2264,7 +2311,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
-		else if (!stricmp(name, "none") && info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+		else if (!stricmp(name, "none") && isgiver)
 		{
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
@@ -2290,13 +2337,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry * pBlendColor;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pBlendColor = &((APowerup*)defaults)->BlendColor;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
 	}
 	else
 	{
@@ -2334,13 +2377,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	int *pEffectTics;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pEffectTics = &((APowerup*)defaults)->EffectTics;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pEffectTics = &((APowerupGiver*)defaults)->EffectTics;
+		pEffectTics = &TypedScriptVar<int>(defaults, info, NAME_EffectTics, TypeSInt32);
 	}
 	else
 	{
@@ -2359,13 +2398,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
 	double *pStrength;
 
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pStrength = &((APowerup*)defaults)->Strength;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pStrength = &((APowerupGiver*)defaults)->Strength;
+		pStrength = &TypedScriptVar<double>(defaults, info, NAME_Strength, TypeFloat64);
 	}
 	else
 	{
@@ -2383,13 +2418,10 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	FName *pMode;
-	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+
+	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
-		pMode = &((APowerup*)defaults)->Mode;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
-	{
-		pMode = &((APowerupGiver*)defaults)->Mode;
+		pMode = &TypedScriptVar<FName>(defaults, info, NAME_Mode, TypeName);
 	}
 	else
 	{
@@ -2402,7 +2434,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
+DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 {
 	PROP_STRING_PARM(str, 0);
 
@@ -2422,8 +2454,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 			I_Error("Unknown powerup type %s", str);
 		}
 	}
-
-	defaults->PowerupType = cls;
+	TypedScriptVar<PClassActor*>(defaults, info, NAME_PowerupType, NewClassPointer(RUNTIME_CLASS(AActor))) = cls;
 }
 
 //==========================================================================
@@ -3009,37 +3040,37 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_PlayerClass, NewClassPointer(RUNTIME_CLASS(APlayerPawn))) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);
-	defaults->MorphStyle = i;
+	TypedScriptVar<int>(defaults, bag.Info, NAME_MorphStyle, TypeSInt32) = i;
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_MorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
+DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_UnMorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 

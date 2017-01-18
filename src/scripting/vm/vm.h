@@ -393,6 +393,11 @@ struct VMReturn
 		TagOfs = 0;
 		RegType = REGT_POINTER;
 	}
+	VMReturn() { }
+	VMReturn(int *loc) { IntAt(loc); }
+	VMReturn(double *loc) { FloatAt(loc); }
+	VMReturn(FString *loc) { StringAt(loc); }
+	VMReturn(void **loc) { PointerAt(loc); }
 };
 
 struct VMRegisters;

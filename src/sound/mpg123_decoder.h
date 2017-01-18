@@ -30,7 +30,6 @@ private:
     bool Done;
 
     FileReader *Reader;
-    int StartOffset;
     static off_t file_lseek(void *handle, off_t offset, int whence);
     static ssize_t file_read(void *handle, void *buffer, size_t bytes);
 

@@ -1288,6 +1288,19 @@ bool FWeaponSlots::LocateWeapon (PClassWeapon *type, int *const slot, int *const
 	return false;
 }
 
+
+DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_CLASS(weap, AWeapon);
+	int slot = 0, index = 0;
+	bool retv = self->LocateWeapon(weap, &slot, &index);
+	if (numret >= 1) ret[0].SetInt(retv);
+	if (numret >= 2) ret[1].SetInt(slot);
+	if (numret >= 3) ret[2].SetInt(index);
+	return MIN(numret, 3);
+}
+
 //===========================================================================
 //
 // FindMostRecentWeapon

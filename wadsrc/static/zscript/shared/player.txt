@@ -116,7 +116,7 @@ class PlayerPawn : Actor native
 	}
 	
 	// This is for SBARINFO.
-	int/*, int*/ GetEffectTicsForItem(class<Inventory> item)
+	int, int GetEffectTicsForItem(class<Inventory> item)
 	{
 		let pg = (class<PowerupGiver>)(item);
 		if (pg != null)
@@ -127,10 +127,10 @@ class PlayerPawn : Actor native
 			{
 				let maxtics = GetDefaultByType(powerupType).EffectTics;
 				if (maxtics == 0) maxtics = powerup.default.EffectTics;
-				return powerup.EffectTics/*, maxtics*/;
+				return powerup.EffectTics, maxtics;
 			}
 		}
-		return 0/*, 0*/;
+		return 0, 0;
 	}
 
 	native int GetMaxHealth();

@@ -3314,16 +3314,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		{
 			return new FxReturnStatement(nullptr, *ast);
 		}
-		else if (args.Size() == 1)
-		{
-			auto arg = args[0];
-			args[0] = nullptr;
-			return new FxReturnStatement(arg, *ast);
-		}
 		else
 		{
-			Error(ast, "Return with multiple values not implemented yet.");
-			return new FxReturnStatement(nullptr, *ast);
+			return new FxReturnStatement(args, *ast);
 		}
 	}
 

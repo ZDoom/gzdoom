@@ -47,7 +47,6 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
-#include "a_armor.h"
 #include "g_levellocals.h"
 #include "virtual.h"
 

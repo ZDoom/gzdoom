@@ -59,7 +59,6 @@
 #include "a_morph.h"
 #include "p_spec.h"
 #include "virtual.h"
-#include "a_armor.h"
 #include "g_levellocals.h"
 
 static FRandom pr_skullpop ("SkullPop");
@@ -1142,7 +1141,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(RUNTIME_CLASS(AArmor)))
+				item->IsKindOf(PClass::FindActor(NAME_Armor)))
 			{
 				if (defitem == NULL)
 				{

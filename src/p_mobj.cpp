@@ -69,7 +69,6 @@
 #include "thingdef.h"
 #include "d_player.h"
 #include "virtual.h"
-#include "a_armor.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 
@@ -5698,7 +5697,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 		if (dmflags & DF_NO_ARMOR)
 		{
-			if (i->IsDescendantOf (RUNTIME_CLASS(AArmor)))
+			if (i->IsDescendantOf (PClass::FindActor(NAME_Armor)))
 				return NULL;
 			if (i->TypeName == NAME_Megasphere)
 				return NULL;

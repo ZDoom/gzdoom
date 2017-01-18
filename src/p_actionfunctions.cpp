@@ -78,7 +78,6 @@
 #include "v_text.h"
 #include "thingdef.h"
 #include "math/cmath.h"
-#include "a_armor.h"
 #include "g_levellocals.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);

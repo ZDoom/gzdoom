@@ -83,7 +83,6 @@
 #include "serializer.h"
 #include "thingdef.h"
 #include "a_pickups.h"
-#include "a_armor.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "stats.h"

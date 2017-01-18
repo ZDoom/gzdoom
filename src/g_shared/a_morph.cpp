@@ -13,7 +13,6 @@
 #include "serializer.h"
 #include "p_enemy.h"
 #include "d_player.h"
-#include "a_armor.h"
 #include "r_data/sprites.h"
 #include "g_levellocals.h"
 #include "virtual.h"
@@ -137,7 +136,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	for (item = morphed->Inventory; item != nullptr; )
 	{
 		AInventory *next = item->Inventory;
-		if (item->IsKindOf (RUNTIME_CLASS(AArmor)))
+		if (item->IsKindOf (PClass::FindActor(NAME_Armor)))
 		{
 			item->DepleteOrDestroy();
 		}

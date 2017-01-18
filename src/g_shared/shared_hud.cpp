@@ -43,7 +43,6 @@
 #include "c_cvars.h"
 #include "w_wad.h"
 #include "a_keys.h"
-#include "a_armor.h"
 #include "sbar.h"
 #include "sc_man.h"
 #include "templates.h"

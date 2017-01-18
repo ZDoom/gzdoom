@@ -31,7 +31,6 @@
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"
-#include "a_armor.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128

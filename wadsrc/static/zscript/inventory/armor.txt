@@ -33,7 +33,7 @@
 **
 */
 
-class Armor : Inventory native
+class Armor : Inventory
 {
 	Default
 	{

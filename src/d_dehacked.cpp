@@ -1928,7 +1928,7 @@ static int PatchMisc (int dummy)
 					}
 					else if (a > 0)
 					{
-						static_cast<APowerup *>(GetDefaultByName (types[i]))->BlendColor = PalEntry(
+						GetDefaultByName (types[i])->ColorVar(NAME_BlendColor) = PalEntry(
 							BYTE(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
@@ -1936,7 +1936,7 @@ static int PatchMisc (int dummy)
 					}
 					else
 					{
-						static_cast<APowerup *>(GetDefaultByName (types[i]))->BlendColor = 0;
+						GetDefaultByName (types[i])->ColorVar(NAME_BlendColor) = 0;
 					}
 				}
 			}

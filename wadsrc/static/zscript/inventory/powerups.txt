@@ -58,13 +58,13 @@ class PowerupGiver : Inventory
 	}
 }
 
-class Powerup : Inventory native 
+class Powerup : Inventory
 {
-	native int EffectTics;	
-	native color BlendColor;
-	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
-	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
-	native int Colormap;
+	int EffectTics;	
+	color BlendColor;
+	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	int Colormap;
 	const SPECIALCOLORMAP_MASK =  0x00b60000;
 
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.

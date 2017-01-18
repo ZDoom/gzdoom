@@ -5728,9 +5728,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				AActor *actor = SingleActorFromTID(args[0], activator);
 				if (actor != NULL)
 				{
-					APowerup* powerup = (APowerup*)actor->FindInventory(powerupclass);
+					auto powerup = actor->FindInventory(powerupclass);
 					if (powerup != NULL)
-						return powerup->EffectTics;
+						return powerup->IntVar(NAME_EffectTics);
 				}
 				return 0;
 			}

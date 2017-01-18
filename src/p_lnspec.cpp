@@ -2868,10 +2868,10 @@ FUNC(LS_SetPlayerProperty)
 			{ // Give power to activator
 				if (power != 4)
 				{
-					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType(PClass::FindActor(powers[power])));
+					auto item = it->GiveInventoryType(PClass::FindActor(powers[power]));
 					if (item != NULL && power == 0 && arg1 == 1) 
 					{
-						item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
+						item->ColorVar(NAME_BlendColor) = MakeSpecialColormap(INVERSECOLORMAP);
 					}
 				}
 				else if (it->player - players == consoleplayer)
@@ -2908,10 +2908,10 @@ FUNC(LS_SetPlayerProperty)
 				{ // Give power
 					if (power != 4)
 					{
-						APowerup *item = static_cast<APowerup*>(players[i].mo->GiveInventoryType ((PClass::FindActor(powers[power]))));
+						auto item = players[i].mo->GiveInventoryType ((PClass::FindActor(powers[power])));
 						if (item != NULL && power == 0 && arg1 == 1) 
 						{
-							item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
+							item->ColorVar(NAME_BlendColor) = MakeSpecialColormap(INVERSECOLORMAP);
 						}
 					}
 					else if (i == consoleplayer)

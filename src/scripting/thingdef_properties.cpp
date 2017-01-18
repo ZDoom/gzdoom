@@ -107,10 +107,6 @@ static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optio
 {
 	return static_cast<AWeapon::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AWeapon), optional));
 }
-static APowerup::MetaClass *FindClassTentativePowerup(const char *name, bool optional = false)
-{
-	return static_cast<APowerup::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APowerup), optional));
-}
 static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name, bool optional = false)
 {
 	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn), optional));
@@ -458,9 +454,8 @@ int MatchString (const char *in, const char **strings)
 
 //==========================================================================
 //
-// Get access to scripted fields.
-// Fortunately there's only a handful that cannot be done with a
-// scripted property definition, most notably the powerup and morph stuff.
+// Get access to scripted pointers.
+// They need a bit more work than other variables.
 //
 //==========================================================================
 
@@ -2289,7 +2284,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || isgiver)
 	{
-		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
+		pBlendColor = &defaults->ColorVar(NAME_BlendColor);
 	}
 	else
 	{
@@ -2335,13 +2330,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
-	PalEntry * pBlendColor;
+	PalEntry BlendColor;
 
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
-	{
-		pBlendColor = &TypedScriptVar<PalEntry>(defaults, info, NAME_BlendColor, TypeColor);
-	}
-	else
+	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
 		I_Error("\"powerup.colormap\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2352,7 +2343,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r, 0);
 		PROP_FLOAT_PARM(g, 1);
 		PROP_FLOAT_PARM(b, 2);
-		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
 	}
 	else if (PROP_PARM_COUNT == 6)
 	{
@@ -2362,12 +2353,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r2, 3);
 		PROP_FLOAT_PARM(g2, 4);
 		PROP_FLOAT_PARM(b2, 5);
-		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
 	}
 	else
 	{
 		I_Error("\"power.colormap\" must have either 3 or 6 parameters\n");
 	}
+	defaults->ColorVar(NAME_BlendColor) = BlendColor;
 }
 
 //==========================================================================
@@ -2375,20 +2367,14 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
-	int *pEffectTics;
-
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
-	{
-		pEffectTics = &TypedScriptVar<int>(defaults, info, NAME_EffectTics, TypeSInt32);
-	}
-	else
+	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
 		I_Error("\"powerup.duration\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
 
 	PROP_INT_PARM(i, 0);
-	*pEffectTics = (i >= 0) ? i : -i * TICRATE;
+	defaults->IntVar(NAME_EffectTics) = (i >= 0) ? i : -i * TICRATE;
 }
 
 //==========================================================================
@@ -2396,19 +2382,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
-	double *pStrength;
-
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
-	{
-		pStrength = &TypedScriptVar<double>(defaults, info, NAME_Strength, TypeFloat64);
-	}
-	else
+	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
 	PROP_DOUBLE_PARM(f, 0);
-	*pStrength = f;
+	defaults->FloatVar(NAME_Strength) = f;
 }
 
 //==========================================================================
@@ -2417,18 +2397,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
-	FName *pMode;
 
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
-	{
-		pMode = &TypedScriptVar<FName>(defaults, info, NAME_Mode, TypeName);
-	}
-	else
+	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
 	{
 		I_Error("\"powerup.mode\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	*pMode = (FName)str;
+	defaults->NameVar(NAME_Mode) = (FName)str;
 }
 
 //==========================================================================
@@ -2441,13 +2416,14 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 	// Yuck! What was I thinking when I decided to prepend "Power" to the name? 
 	// Now it's too late to change it...
 	PClassActor *cls = PClass::FindActor(str);
-	if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	auto pow = PClass::FindActor(NAME_Powerup);
+	if (cls == nullptr || !cls->IsDescendantOf(pow))
 	{
 		if (bag.fromDecorate)
 		{
 			FString st;
 			st.Format("%s%s", strnicmp(str, "power", 5) ? "Power" : "", str);
-			cls = FindClassTentativePowerup(st);
+			cls = FindClassTentative(st, pow);
 		}
 		else
 		{

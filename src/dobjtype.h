@@ -1078,6 +1078,16 @@ inline int &DObject::IntVar(FName field)
 	return *(int*)ScriptVar(field, TypeSInt32);
 }
 
+inline PalEntry &DObject::ColorVar(FName field)
+{
+	return *(PalEntry*)ScriptVar(field, TypeColor);
+}
+
+inline FName &DObject::NameVar(FName field)
+{
+	return *(FName*)ScriptVar(field, TypeName);
+}
+
 inline double &DObject::FloatVar(FName field)
 {
 	return *(double*)ScriptVar(field, TypeFloat64);

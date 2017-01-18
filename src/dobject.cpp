@@ -275,6 +275,7 @@ DObject::DObject ()
 {
 	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
 	ObjNext = GC::Root;
+	GCNext = nullptr;
 	GC::Root = this;
 }
 
@@ -283,6 +284,7 @@ DObject::DObject (PClass *inClass)
 {
 	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
 	ObjNext = GC::Root;
+	GCNext = nullptr;
 	GC::Root = this;
 }
 

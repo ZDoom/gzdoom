@@ -3347,7 +3347,7 @@ void PClass::InitializeDefaults()
 	Defaults = (BYTE *)M_Malloc(Size);
 
 	// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
-	// bSerialOverride prevents linking into the thinker chains.
+	// Temporarily setting bSerialOverride prevents linking into the thinker chains.
 	auto s = DThinker::bSerialOverride;
 	DThinker::bSerialOverride = true;
 	ConstructNative(Defaults);
@@ -3359,9 +3359,10 @@ void PClass::InitializeDefaults()
 	optr->SetClass(this);
 
 
+	// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
 	if (ParentClass->Defaults != NULL)
 	{
-		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);
+		memcpy(Defaults + sizeof(DObject), ParentClass->Defaults + sizeof(DObject), ParentClass->Size - sizeof(DObject));
 		if (Size > ParentClass->Size)
 		{
 			memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
@@ -3369,7 +3370,7 @@ void PClass::InitializeDefaults()
 	}
 	else
 	{
-		memset(Defaults, 0, Size);
+		memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
 	}
 
 	if (bRuntimeClass)

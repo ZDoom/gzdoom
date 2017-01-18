@@ -115,8 +115,7 @@ public:
 	virtual bool ShouldStay();
 	bool CallShouldStay();
 
-	virtual void DoEffect();
-	void CallDoEffect();
+	void DoEffect();
 
 	virtual void PlayPickupSound(AActor *toucher);
 	void CallPlayPickupSound(AActor *toucher);

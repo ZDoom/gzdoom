@@ -3145,12 +3145,12 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 
 			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
 			{
-				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
+				auto hc = PClass::FindActor("WeaponHolder");
+				if(inv->IsKindOf(hc))
 				{
-					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
-					if(hold->PieceWeapon == weapon)
+					if(inv->PointerVar<PClass>("PieceWeapon") == weapon)
 					{
-						SetTruth(0 != (hold->PieceMask & (1 << (piece-1))), block, statusBar);
+						SetTruth(0 != (inv->IntVar("PieceMask") & (1 << (piece-1))), block, statusBar);
 						return;
 					}
 				}

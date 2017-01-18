@@ -67,7 +67,6 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
-#include "a_weaponpiece.h"
 #include "vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
@@ -462,23 +461,6 @@ static bool PointerCheck(PType *symtype, PType *checktype)
 	auto symptype = dyn_cast<PClassPointer>(symtype);
 	auto checkptype = dyn_cast<PClassPointer>(checktype);
 	return symptype != nullptr && checkptype != nullptr && symptype->ClassRestriction->IsDescendantOf(checkptype->ClassRestriction);
-}
-
-static void *ScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
-{
-	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
-	if (sym && (sym->Type == type || PointerCheck(sym->Type, type)))
-	{
-		return (((char*)obj) + sym->Offset);
-	}
-	I_Error("Variable %s of type %s not found in %s\n", field.GetChars(), type->DescriptiveName(), cls->TypeName.GetChars());
-	return nullptr;
-}
-
-template<class T>
-T &TypedScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
-{
-	return *(T*)ScriptVar(obj, cls, field, type);
 }
 
 //==========================================================================
@@ -2226,24 +2208,6 @@ DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->PieceValue = 1 << (i-1);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->WeaponClass = FindClassTentativeWeapon(str);
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
 	static const char *specialcolormapnames[] = {
@@ -2401,7 +2365,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 			I_Error("Unknown powerup type %s", str);
 		}
 	}
-	TypedScriptVar<PClassActor*>(defaults, info, NAME_PowerupType, NewClassPointer(RUNTIME_CLASS(AActor))) = cls;
+	defaults->PointerVar<PClassActor>(NAME_PowerupType) = cls;
 }
 
 //==========================================================================
@@ -2990,7 +2954,7 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_PlayerClass, NewClassPointer(RUNTIME_CLASS(APlayerPawn))) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
 }
 
 //==========================================================================
@@ -2999,7 +2963,7 @@ DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);
-	TypedScriptVar<int>(defaults, bag.Info, NAME_MorphStyle, TypeSInt32) = i;
+	defaults->IntVar(NAME_MorphStyle) = i;
 }
 
 //==========================================================================
@@ -3008,7 +2972,7 @@ DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_MorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_MorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
@@ -3017,7 +2981,7 @@ DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_UnMorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 

@@ -571,7 +571,7 @@ DEFINE_ACTION_FUNCTION(DObject, GetClassName)
 void *DObject::ScriptVar(FName field, PType *type)
 {
 	auto sym = dyn_cast<PField>(GetClass()->Symbols.FindSymbol(field, true));
-	if (sym && sym->Type == type)
+	if (sym && (sym->Type == type || type == nullptr))
 	{
 		return (((char*)this) + sym->Offset);
 	}

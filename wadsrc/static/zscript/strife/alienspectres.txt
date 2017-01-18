@@ -166,7 +166,7 @@ class AlienSpectre1 : SpectralMonster
 				player.GiveInventoryType ("UpgradeAccuracy");
 			}
 			Sigil sigl = Sigil(player.FindInventory("Sigil"));
-			if (sigl != null /*&& sigl.NumPieces == 5*/)
+			if (sigl != null && sigl.health == 5)
 			{	// You wield the power of the complete Sigil.
 				log = 85;
 			}

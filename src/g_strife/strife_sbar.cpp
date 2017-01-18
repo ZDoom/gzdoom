@@ -261,7 +261,7 @@ public:
 					item != NULL;
 					item = item->Inventory)
 				{
-					if (item->IsKindOf (RUNTIME_CLASS(AKey)))
+					if (item->IsKindOf (PClass::FindActor(NAME_Key)))
 					{
 						if (i == KeyPopPos)
 						{
@@ -633,7 +633,7 @@ private:
 				i < endpos && item != NULL;
 				item = item->Inventory)
 			{
-				if (!item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (!item->IsKindOf (PClass::FindActor(NAME_Key)))
 					continue;
 				
 				if (i < pos)
@@ -678,7 +678,7 @@ private:
 				item != NULL;
 				item = item->Inventory)
 			{
-				if (item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (item->IsKindOf (PClass::FindActor(NAME_Key)))
 				{
 					i++;
 				}

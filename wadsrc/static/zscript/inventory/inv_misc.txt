@@ -28,10 +28,8 @@ class ScoreItem : Inventory
 //
 //===========================================================================
 
-class Key : Inventory native
+class Key : Inventory
 {
-	native uint8 KeyNumber;
-
 	Default
 	{
 		+DONTGIB;		// Don't disappear due to a crusher

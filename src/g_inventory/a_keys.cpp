@@ -51,7 +51,6 @@
 //
 //===========================================================================
 
-
 //===========================================================================
 //
 //
@@ -64,29 +63,24 @@ struct OneKey
 
 	bool check(AActor *owner)
 	{
-		if (owner->IsKindOf(RUNTIME_CLASS(AKey)))
-		{
-			// P_GetMapColorForKey() checks the key directly
-			return owner->IsA(key) || owner->GetSpecies() == key->TypeName;
-		}
-		else 
-		{
-			// Other calls check an actor that may have a key in its inventory.
-			AInventory *item;
+		// P_GetMapColorForKey() checks the key directly
+		if (owner->IsA(key) || owner->GetSpecies() == key->TypeName) return true;
 
-			for (item = owner->Inventory; item != NULL; item = item->Inventory)
+		// Other calls check an actor that may have a key in its inventory.
+		AInventory *item;
+
+		for (item = owner->Inventory; item != NULL; item = item->Inventory)
+		{
+			if (item->IsA(key))
 			{
-				if (item->IsA(key))
-				{
-					return true;
-				}
-				else if (item->GetSpecies() == key->TypeName)
-				{
-					return true;
-				}
+				return true;
 			}
-			return false;
+			else if (item->GetSpecies() == key->TypeName)
+			{
+				return true;
+			}
 		}
+		return false;
 	}
 };
 
@@ -138,9 +132,10 @@ struct Lock
 		// An empty key list means that any key will do
 		if (!keylist.Size())
 		{
+			auto kt = PClass::FindActor(NAME_Key);
 			for (AInventory * item = owner->Inventory; item != NULL; item = item->Inventory)
 			{
-				if (item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (item->IsKindOf (kt))
 				{
 					return true;
 				}
@@ -192,12 +187,12 @@ static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 			keygroup->anykeylist.Push (k);
 
 			//... but only keys get key numbers!
-			if (mi->IsDescendantOf(RUNTIME_CLASS(AKey)))
+			if (mi->IsDescendantOf(PClass::FindActor(NAME_Key)))
 			{
 				if (!ignorekey &&
-					static_cast<AKey*>(GetDefaultByType(mi))->KeyNumber == 0)
+					GetDefaultByType(mi)->special1 == 0)
 				{
-					static_cast<AKey*>(GetDefaultByType(mi))->KeyNumber=++currentnumber;
+					GetDefaultByType(mi)->special1 = ++currentnumber;
 				}
 			}
 		}
@@ -387,14 +382,15 @@ static void ParseLock(FScanner &sc)
 static void ClearLocks()
 {
 	unsigned int i;
+	auto kt = PClass::FindActor(NAME_Key);
 	for(i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		if (PClassActor::AllActorClasses[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf(kt))
 		{
-			AKey *key = static_cast<AKey*>(GetDefaultByType(PClassActor::AllActorClasses[i]));
+			auto key = GetDefaultByType(PClassActor::AllActorClasses[i]);
 			if (key != NULL)
 			{
-				key->KeyNumber = 0;
+				key->special1 = 0;
 			}
 		}
 	}
@@ -522,15 +518,6 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 
 	return false;
 }
-
-//==========================================================================
-//
-// AKey implementation
-//
-//==========================================================================
-
-IMPLEMENT_CLASS(AKey, false, false)
-DEFINE_FIELD(AKey, KeyNumber)
 
 //==========================================================================
 //

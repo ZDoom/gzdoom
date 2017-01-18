@@ -416,10 +416,10 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 			{
 				PClassActor *cls = PClassActor::AllActorClasses[i];
-				if (cls->IsDescendantOf(RUNTIME_CLASS(AKey)))
+				if (cls->IsDescendantOf(PClass::FindActor(NAME_Key)))
 				{
-					AKey *key = (AKey *)GetDefaultByType(cls);
-					if (key->KeyNumber == keynum)
+					auto key = GetDefaultByType(cls);
+					if (key->special1 == keynum)
 						return cls->TypeName;
 				}
 			}
@@ -554,9 +554,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 
 				for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 				{
-					if(item->IsKindOf(RUNTIME_CLASS(AKey)))
+					if(item->IsKindOf(PClass::FindActor(NAME_Key)))
 					{
-						int keynum = static_cast<AKey *>(item)->KeyNumber;
+						int keynum = item->special1;
 						if(keynum)
 						{
 							if(keynum == conditionalValue[0])
@@ -1474,7 +1474,7 @@ class CommandDrawNumber : public CommandDrawString
 					num = 0;
 					for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 					{
-						if(item->IsKindOf(RUNTIME_CLASS(AKey)))
+						if(item->IsKindOf(PClass::FindActor(NAME_Key)))
 							num++;
 					}
 					break;
@@ -2429,7 +2429,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			int rowWidth = 0;
 			for(unsigned int i = 0;i < number+keyOffset;i++)
 			{
-				while(!item->Icon.isValid() || !item->IsKindOf(RUNTIME_CLASS(AKey)))
+				while(!item->Icon.isValid() || !item->IsKindOf(PClass::FindActor(NAME_Key)))
 				{
 					item = item->Inventory;
 					if(item == NULL)

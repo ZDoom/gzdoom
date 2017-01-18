@@ -385,9 +385,9 @@ static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
 
 static int ktcmp(const void * a, const void * b)
 {
-	AKey *key1 = (AKey*)GetDefaultByType ( *(PClassActor **)a );
-	AKey *key2 = (AKey*)GetDefaultByType ( *(PClassActor **)b );
-	return key1->KeyNumber - key2->KeyNumber;
+	auto key1 = GetDefaultByType ( *(PClassActor **)a );
+	auto key2 = GetDefaultByType ( *(PClassActor **)b );
+	return key1->special1 - key2->special1;
 }
 
 static void SetKeyTypes()
@@ -395,13 +395,14 @@ static void SetKeyTypes()
 	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
 		PClass *ti = PClassActor::AllActorClasses[i];
+		auto kt = PClass::FindActor(NAME_Key);
 
-		if (ti->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (ti->IsDescendantOf(kt))
 		{
 			PClassActor *tia = static_cast<PClassActor *>(ti);
-			AKey *key = (AKey*)GetDefaultByType(tia);
+			AInventory *key = (AInventory*)(GetDefaultByType(tia));
 
-			if (key->Icon.isValid() && key->KeyNumber>0)
+			if (key->Icon.isValid() && key->special1 > 0)
 			{
 				KeyTypes.Push(tia);
 			}
@@ -418,8 +419,7 @@ static void SetKeyTypes()
 	else
 	{
 		// Don't leave the list empty
-		PClassActor *ti = RUNTIME_CLASS(AKey);
-		KeyTypes.Push(ti);
+		KeyTypes.Push(PClass::FindActor(NAME_Key));
 	}
 }
 

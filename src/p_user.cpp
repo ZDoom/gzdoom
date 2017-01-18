@@ -1075,12 +1075,12 @@ void APlayerPawn::GiveDeathmatchInventory()
 {
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		if (PClassActor::AllActorClasses[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf (PClass::FindActor(NAME_Key)))
 		{
-			AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
-			if (key->KeyNumber != 0)
+			AInventory *key = (AInventory*)GetDefaultByType (PClassActor::AllActorClasses[i]);
+			if (key->special1 != 0)
 			{
-				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i])));
+				key = (AInventory*)Spawn(PClassActor::AllActorClasses[i]);
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();
@@ -1133,7 +1133,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 
 			if ((dmflags & DF_COOP_LOSE_KEYS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(AKey)))
+				item->IsKindOf(PClass::FindActor(NAME_Key)))
 			{
 				item->Destroy();
 			}

@@ -642,7 +642,7 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 		return;
 
 	// Don't take keys.
-	if (itemtype->IsDescendantOf (RUNTIME_CLASS(AKey)))
+	if (itemtype->IsDescendantOf (PClass::FindActor(NAME_Key)))
 		return;
 
 	// Don't take the sigil.

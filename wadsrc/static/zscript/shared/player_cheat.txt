@@ -157,8 +157,8 @@ extend class PlayerPawn
 			{
 				if (AllActorClasses[i] is "Key")
 				{
-					readonly<Key> keyitem = GetDefaultByType ((class<Key>)(AllActorClasses[i]));
-					if (keyitem.KeyNumber != 0)
+					let keyitem = GetDefaultByType (AllActorClasses[i]);
+					if (keyitem.special1 != 0)
 					{
 						let item = Inventory(Spawn(AllActorClasses[i]));
 						if (!item.CallTryPickup (self))

@@ -717,6 +717,7 @@ xx(Strength)
 xx(Mode)
 xx(PowerupType)
 xx(PlayerPawn)
+xx(Key)
 
 // Decorate compatibility functions
 xx(BuiltinTypeCheck)

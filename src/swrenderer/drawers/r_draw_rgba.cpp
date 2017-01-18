@@ -310,7 +310,7 @@ namespace swrenderer
 		return d;
 	}
 
-	DrawSkyLLVMCommand::DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom)
+	DrawSkyLLVMCommand::DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
 	{
 		using namespace drawerargs;
 

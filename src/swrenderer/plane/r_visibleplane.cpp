@@ -82,7 +82,8 @@ namespace swrenderer
 
 		if (picnum == skyflatnum) // sky flat
 		{
-			RenderSkyPlane::Render(this);
+			RenderSkyPlane renderer;
+			renderer.Render(this);
 		}
 		else // regular flat
 		{

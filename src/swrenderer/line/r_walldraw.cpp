@@ -59,24 +59,7 @@ namespace swrenderer
 		FTexture *rw_pic;
 	}
 
-	static const uint8_t *R_GetColumn(FTexture *tex, int col)
-	{
-		int width;
-
-		// If the texture's width isn't a power of 2, then we need to make it a
-		// positive offset for proper clamping.
-		if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
-		{
-			col = width + (col % width);
-		}
-
-		if (r_swtruecolor)
-			return (const uint8_t *)tex->GetColumnBgra(col, nullptr);
-		else
-			return tex->GetColumn(col, nullptr);
-	}
-
-	WallSampler::WallSampler(int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
+	WallSampler::WallSampler(int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)
 	{
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
@@ -109,7 +92,21 @@ namespace swrenderer
 				uv_max = 1;
 			}
 
-			source = getcol(texture, xoffset >> FRACBITS);
+			int col = xoffset >> FRACBITS;
+
+			// If the texture's width isn't a power of 2, then we need to make it a
+			// positive offset for proper clamping.
+			int width;
+			if (col < 0 && (width = texture->GetWidth()) != (1 << texture->WidthBits))
+			{
+				col = width + (col % width);
+			}
+
+			if (r_swtruecolor)
+				source = (const uint8_t *)texture->GetColumnBgra(col, nullptr);
+			else
+				source = texture->GetColumn(col, nullptr);
+
 			source2 = nullptr;
 			texturefracx = 0;
 		}
@@ -134,64 +131,54 @@ namespace swrenderer
 			uv_max = 0;
 
 			// Texture mipmap and filter selection:
-			if (getcol != R_GetColumn)
+			double ymagnitude = fabs(uv_stepd);
+			double magnitude = MAX(ymagnitude, xmagnitude);
+			double min_lod = -1000.0;
+			double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			bool magnifying = lod < 0.0f;
+
+			int mipmap_offset = 0;
+			int mip_width = texture->GetWidth();
+			int mip_height = texture->GetHeight();
+			if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
 			{
-				source = getcol(texture, xoffset >> FRACBITS);
+				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
+
+				int level = (int)lod;
+				while (level > 0 && mip_width > 1 && mip_height > 1)
+				{
+					mipmap_offset += mip_width * mip_height;
+					level--;
+					mip_width = MAX(mip_width >> 1, 1);
+					mip_height = MAX(mip_height >> 1, 1);
+				}
+				xoffset = (xpos >> FRACBITS) * mip_width;
+			}
+
+			const uint32_t *pixels = texture->GetPixelsBgra() + mipmap_offset;
+
+			bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+			if (filter_nearest)
+			{
+				int tx = (xoffset >> FRACBITS) % mip_width;
+				if (tx < 0)
+					tx += mip_width;
+				source = (BYTE*)(pixels + tx * mip_height);
 				source2 = nullptr;
-				height = texture->GetHeight();
+				height = mip_height;
 				texturefracx = 0;
 			}
 			else
 			{
-				double ymagnitude = fabs(uv_stepd);
-				double magnitude = MAX(ymagnitude, xmagnitude);
-				double min_lod = -1000.0;
-				double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
-				bool magnifying = lod < 0.0f;
-
-				int mipmap_offset = 0;
-				int mip_width = texture->GetWidth();
-				int mip_height = texture->GetHeight();
-				if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
-				{
-					uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
-
-					int level = (int)lod;
-					while (level > 0 && mip_width > 1 && mip_height > 1)
-					{
-						mipmap_offset += mip_width * mip_height;
-						level--;
-						mip_width = MAX(mip_width >> 1, 1);
-						mip_height = MAX(mip_height >> 1, 1);
-					}
-					xoffset = (xpos >> FRACBITS) * mip_width;
-				}
-
-				const uint32_t *pixels = texture->GetPixelsBgra() + mipmap_offset;
-
-				bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
-				if (filter_nearest)
-				{
-					int tx = (xoffset >> FRACBITS) % mip_width;
-					if (tx < 0)
-						tx += mip_width;
-					source = (BYTE*)(pixels + tx * mip_height);
-					source2 = nullptr;
-					height = mip_height;
-					texturefracx = 0;
-				}
-				else
-				{
-					xoffset -= FRACUNIT / 2;
-					int tx0 = (xoffset >> FRACBITS) % mip_width;
-					if (tx0 < 0)
-						tx0 += mip_width;
-					int tx1 = (tx0 + 1) % mip_width;
-					source = (BYTE*)(pixels + tx0 * mip_height);
-					source2 = (BYTE*)(pixels + tx1 * mip_height);
-					height = mip_height;
-					texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
-				}
+				xoffset -= FRACUNIT / 2;
+				int tx0 = (xoffset >> FRACBITS) % mip_width;
+				if (tx0 < 0)
+					tx0 += mip_width;
+				int tx1 = (tx0 + 1) % mip_width;
+				source = (BYTE*)(pixels + tx0 * mip_height);
+				source2 = (BYTE*)(pixels + tx1 * mip_height);
+				height = mip_height;
+				texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
 			}
 		}
 	}
@@ -339,7 +326,7 @@ namespace swrenderer
 		const FWallCoords &WallC,
 		int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap,
 		FLightNode *light_list,
-		const BYTE *(*getcol)(FTexture *tex, int x), DrawerFunc drawcolumn)
+		DrawerFunc drawcolumn)
 	{
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
@@ -394,41 +381,41 @@ namespace swrenderer
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
-			WallSampler sampler(y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
+			WallSampler sampler(y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic);
 			Draw1Column(WallC, x, y1, y2, sampler, light_list, drawcolumn);
 		}
 
 		NetUpdate();
 	}
 
-	static void ProcessNormalWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+	static void ProcessNormalWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list)
 	{
-		ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, getcol, &SWPixelFormatDrawers::DrawWallColumn);
+		ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, &SWPixelFormatDrawers::DrawWallColumn);
 	}
 
-	static void ProcessMaskedWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+	static void ProcessMaskedWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list)
 	{
 		if (!rw_pic->bMasked) // Textures that aren't masked can use the faster ProcessNormalWall.
 		{
-			ProcessNormalWall(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, getcol);
+			ProcessNormalWall(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list);
 		}
 		else
 		{
-			ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, getcol, &SWPixelFormatDrawers::DrawWallMaskedColumn);
+			ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, &SWPixelFormatDrawers::DrawWallMaskedColumn);
 		}
 	}
 
-	static void ProcessTranslucentWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+	static void ProcessTranslucentWall(const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, FLightNode *light_list)
 	{
 		DrawerFunc drawcol1 = R_GetTransMaskDrawer();
 		if (drawcol1 == nullptr)
 		{
 			// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
-			ProcessMaskedWall(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, getcol);
+			ProcessMaskedWall(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list);
 		}
 		else
 		{
-			ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, getcol, drawcol1);
+			ProcessWallWorker(WallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list, drawcol1);
 		}
 	}
 
@@ -607,12 +594,5 @@ namespace swrenderer
 		{
 			ProcessWall(frontsector, curline, WallC, x1, x2, walltop, wallbottom, texturemid, swall, lwall, yscale, wallshade, xoffset, light, lightstep, false, foggy, basecolormap, light_list);
 		}
-	}
-
-	void R_DrawSkySegment(FTexture *pic, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, FDynamicColormap *basecolormap, const uint8_t *(*getcol)(FTexture *tex, int x))
-	{
-		rw_pic = pic;
-		FWallCoords wallC; // Not used. To do: don't use r_walldraw to draw the sky!!
-		ProcessNormalWall(wallC, x1, x2, uwal, dwal, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, nullptr, getcol);
 	}
 }

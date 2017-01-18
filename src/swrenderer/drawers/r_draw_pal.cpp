@@ -560,7 +560,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom) : solid_top(solid_top), solid_bottom(solid_bottom)
+	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
 	{
 		using namespace drawerargs;
 
@@ -588,7 +588,39 @@ namespace swrenderer
 		int32_t frac = _texturefrac[0];
 		int32_t fracstep = _iscale[0];
 
+		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
+		int fade_length = (1 << (24 - start_fade));
+		int start_fadetop_y = (-frac) / fracstep;
+		int end_fadetop_y = (fade_length - frac) / fracstep;
+		int start_fadebottom_y = ((2 << 24) - fade_length - frac) / fracstep;
+		int end_fadebottom_y = ((2 << 24) - frac) / fracstep;
+		start_fadetop_y = clamp(start_fadetop_y, 0, count);
+		end_fadetop_y = clamp(end_fadetop_y, 0, count);
+		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
+
+		int num_cores = thread->num_cores;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * skipped;
+		fracstep *= num_cores;
+		pitch *= num_cores;
+
+		if (!fadeSky)
+		{
+			count = thread->count_for_thread(_dest_y, count);
+
+			for (int index = 0; index < count; index++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				*dest = source0[sample_index];
+				dest += pitch;
+				frac += fracstep;
+			}
+
+			return;
+		}
 
 		int solid_top_r = RPART(solid_top);
 		int solid_top_g = GPART(solid_top);
@@ -596,49 +628,83 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
+		uint8_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+		uint8_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
 
-		count = thread->count_for_thread(_dest_y, count);
-		if (count <= 0)
-			return;
+		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
 
-		int skipped = thread->skipped_by_thread(_dest_y);
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * skipped;
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+		int index = skipped;
 
-		for (int index = 0; index < count; index++)
+		// Top solid color:
+		while (index < start_fadetop_y)
+		{
+			*dest = solid_top_fill;
+			dest += pitch;
+			frac += fracstep;
+			index += num_cores;
+		}
+
+		// Top fade:
+		while (index < end_fadetop_y)
 		{
 			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 			uint8_t fg = source0[sample_index];
 
+			uint32_t c = palette[fg];
 			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-
-			if (alpha_top == 256 && alpha_bottom == 256)
-			{
-				*dest = fg;
-			}
-			else
-			{
-				int inv_alpha_top = 256 - alpha_top;
-				int inv_alpha_bottom = 256 - alpha_bottom;
-
-				const auto &c = GPalette.BaseColors[fg];
-				int c_red = c.r;
-				int c_green = c.g;
-				int c_blue = c.b;
-				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
-			}
+			int inv_alpha_top = 256 - alpha_top;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+			*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 
 			frac += fracstep;
 			dest += pitch;
+			index += num_cores;
+		}
+
+		// Textured center:
+		while (index < start_fadebottom_y)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			*dest = source0[sample_index];
+
+			frac += fracstep;
+			dest += pitch;
+			index += num_cores;
+		}
+
+		// Fade bottom:
+		while (index < end_fadebottom_y)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[sample_index];
+
+			uint32_t c = palette[fg];
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			int inv_alpha_bottom = 256 - alpha_bottom;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+			*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+
+			frac += fracstep;
+			dest += pitch;
+			index += num_cores;
+		}
+
+		// Bottom solid color:
+		while (index < count)
+		{
+			*dest = solid_bottom_fill;
+			dest += pitch;
+			index += num_cores;
 		}
 	}
 
@@ -655,7 +721,46 @@ namespace swrenderer
 		int32_t frac = _texturefrac[0];
 		int32_t fracstep = _iscale[0];
 
+		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
+		int fade_length = (1 << (24 - start_fade));
+		int start_fadetop_y = (-frac) / fracstep;
+		int end_fadetop_y = (fade_length - frac) / fracstep;
+		int start_fadebottom_y = ((2 << 24) - fade_length - frac) / fracstep;
+		int end_fadebottom_y = ((2 << 24) - frac) / fracstep;
+		start_fadetop_y = clamp(start_fadetop_y, 0, count);
+		end_fadetop_y = clamp(end_fadetop_y, 0, count);
+		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
+
+		int num_cores = thread->num_cores;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * skipped;
+		fracstep *= num_cores;
+		pitch *= num_cores;
+
+		if (!fadeSky)
+		{
+			count = thread->count_for_thread(_dest_y, count);
+
+			for (int index = 0; index < count; index++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[sample_index];
+				if (fg == 0)
+				{
+					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					fg = source1[sample_index2];
+				}
+
+				*dest = fg;
+				dest += pitch;
+				frac += fracstep;
+			}
+
+			return;
+		}
 
 		int solid_top_r = RPART(solid_top);
 		int solid_top_g = GPART(solid_top);
@@ -663,18 +768,24 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
+		uint8_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+		uint8_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
 
-		count = thread->count_for_thread(_dest_y, count);
-		if (count <= 0)
-			return;
+		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
 
-		int skipped = thread->skipped_by_thread(_dest_y);
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * skipped;
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+		int index = skipped;
 
-		for (int index = 0; index < count; index++)
+		// Top solid color:
+		while (index < start_fadetop_y)
+		{
+			*dest = solid_top_fill;
+			dest += pitch;
+			frac += fracstep;
+			index += num_cores;
+		}
+
+		// Top fade:
+		while (index < end_fadetop_y)
 		{
 			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 			uint8_t fg = source0[sample_index];
@@ -684,33 +795,72 @@ namespace swrenderer
 				fg = source1[sample_index2];
 			}
 
+			uint32_t c = palette[fg];
 			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-
-			if (alpha_top == 256 && alpha_bottom == 256)
-			{
-				*dest = fg;
-			}
-			else
-			{
-				int inv_alpha_top = 256 - alpha_top;
-				int inv_alpha_bottom = 256 - alpha_bottom;
-
-				const auto &c = GPalette.BaseColors[fg];
-				int c_red = c.r;
-				int c_green = c.g;
-				int c_blue = c.b;
-				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
-			}
+			int inv_alpha_top = 256 - alpha_top;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+			*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 
 			frac += fracstep;
 			dest += pitch;
+			index += num_cores;
+		}
+
+		// Textured center:
+		while (index < start_fadebottom_y)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[sample_index];
+			if (fg == 0)
+			{
+				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				fg = source1[sample_index2];
+			}
+			*dest = fg;
+
+			frac += fracstep;
+			dest += pitch;
+			index += num_cores;
+		}
+
+		// Fade bottom:
+		while (index < end_fadebottom_y)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[sample_index];
+			if (fg == 0)
+			{
+				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				fg = source1[sample_index2];
+			}
+
+			uint32_t c = palette[fg];
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			int inv_alpha_bottom = 256 - alpha_bottom;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+			*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+
+			frac += fracstep;
+			dest += pitch;
+			index += num_cores;
+		}
+
+		// Bottom solid color:
+		while (index < count)
+		{
+			*dest = solid_bottom_fill;
+			dest += pitch;
+			index += num_cores;
 		}
 	}
 

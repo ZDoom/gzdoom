@@ -134,8 +134,8 @@ namespace swrenderer
 		virtual void DrawWallAddClampColumn() = 0;
 		virtual void DrawWallSubClampColumn() = 0;
 		virtual void DrawWallRevSubClampColumn() = 0;
-		virtual void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) = 0;
-		virtual void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) = 0;
+		virtual void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
 		virtual void DrawColumn() = 0;
 		virtual void FillColumn() = 0;
 		virtual void FillAddColumn() = 0;

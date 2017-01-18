@@ -157,7 +157,7 @@ namespace swrenderer
 		WorkerThreadData ThreadData(DrawerThread *thread);
 
 	public:
-		DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom);
+		DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky);
 		FString DebugInfo() override;
 	};
 
@@ -353,8 +353,8 @@ namespace swrenderer
 		void DrawWallAddClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>(); }
 		void DrawWallSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>(); }
 		void DrawWallRevSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>(); }
-		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom); }
-		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom); }
+		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool skyFade) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom, skyFade); }
+		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool skyFade) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom, skyFade); }
 		void DrawColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>(); }
 		void FillColumn() override { DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>(); }
 		void FillAddColumn() override { DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>(); }

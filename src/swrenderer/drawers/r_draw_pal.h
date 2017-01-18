@@ -42,12 +42,13 @@ namespace swrenderer
 	class PalSkyCommand : public DrawerCommand
 	{
 	public:
-		PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom);
+		PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky);
 		FString DebugInfo() override { return "PalSkyCommand"; }
 
 	protected:
 		uint32_t solid_top;
 		uint32_t solid_bottom;
+		bool fadeSky;
 
 		uint8_t *_dest;
 		int _count;
@@ -249,8 +250,8 @@ namespace swrenderer
 		void DrawWallAddClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>(); }
 		void DrawWallSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>(); }
 		void DrawWallRevSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>(); }
-		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom); }
-		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom); }
+		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom, fadeSky); }
+		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom, fadeSky); }
 		void DrawColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>(); }
 		void FillColumn() override { DrawerCommandQueue::QueueCommand<FillColumnPalCommand>(); }
 		void FillAddColumn() override { DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>(); }

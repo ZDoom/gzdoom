@@ -452,16 +452,165 @@ class BasicArmorPickup : Armor
 //
 //===========================================================================
 
-class HexenArmor : Armor native
+class HexenArmor : Armor
 {
 	
-	native double Slots[5];
-	native double SlotsIncrement[4];
+	double Slots[5];
+	double SlotsIncrement[4];
 	
 	Default
 	{
 		+Inventory.KEEPDEPLETED
 		+Inventory.UNTOSSABLE
 	}
+	
+	//===========================================================================
+	//
+	// AHexenArmor :: CreateCopy
+	//
+	//===========================================================================
+
+	override Inventory CreateCopy (Actor other)
+	{
+		// Like BasicArmor, HexenArmor is used in the inventory but not the map.
+		// health is the slot this armor occupies.
+		// Amount is the quantity to give (0 = normal max).
+		let copy = HexenArmor(Spawn("HexenArmor"));
+		copy.AddArmorToSlot (health, Amount);
+		GoAwayAndDie ();
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// AHexenArmor :: CreateTossable
+	//
+	// Since this isn't really a single item, you can't drop it. Ever.
+	//
+	//===========================================================================
+
+	override Inventory CreateTossable ()
+	{
+		return NULL;
+	}
+
+	//===========================================================================
+	//
+	// AHexenArmor :: HandlePickup
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item is "HexenArmor")
+		{
+			if (AddArmorToSlot (item.health, item.Amount))
+			{
+				item.bPickupGood = true;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AHexenArmor :: AddArmorToSlot
+	//
+	//===========================================================================
+
+	protected bool AddArmorToSlot (int slot, int amount)
+	{
+		double hits;
+
+		if (slot < 0 || slot > 3)
+		{
+			return false;
+		}
+		if (amount <= 0)
+		{
+			hits = SlotsIncrement[slot];
+			if (Slots[slot] < hits)
+			{
+				Slots[slot] = hits;
+				return true;
+			}
+		}
+		else
+		{
+			hits = amount * 5;
+			let total = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
+			let max = SlotsIncrement[0] + SlotsIncrement[1] + SlotsIncrement[2] + SlotsIncrement[3] + Slots[4] + 4 * 5;
+			if (total < max)
+			{
+				Slots[slot] += hits;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AHexenArmor :: AbsorbDamage
+	//
+	//===========================================================================
+
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	{
+		if (!DamageTypeDefinition.IgnoreArmor(damageType))
+		{
+			double savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
+
+			if (savedPercent)
+			{ // armor absorbed some damage
+				if (savedPercent > 100)
+				{
+					savedPercent = 100;
+				}
+				for (int i = 0; i < 4; i++)
+				{
+					if (Slots[i])
+					{
+						// 300 damage always wipes out the armor unless some was added
+						// with the dragon skin bracers.
+						if (damage < 10000)
+						{
+							Slots[i] -= damage * SlotsIncrement[i] / 300.;
+							if (Slots[i] < 2)
+							{
+								Slots[i] = 0;
+							}
+						}
+						else
+						{
+							Slots[i] = 0;
+						}
+					}
+				}
+				int saved = int(damage * savedPercent / 100.);
+				if (saved > savedPercent*2)
+				{	
+					saved = int(savedPercent*2);
+				}
+				newdamage -= saved;
+				damage = newdamage;
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// AHexenArmor :: DepleteOrDestroy
+	//
+	//===========================================================================
+
+	override void DepleteOrDestroy()
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			Slots[i] = 0;
+		}
+	}	
 }
 

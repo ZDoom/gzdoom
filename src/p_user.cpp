@@ -1153,12 +1153,11 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
 					item->Amount = defitem->Amount;
 				}
-				else if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+				else if (item->IsKindOf(PClass::FindActor(NAME_HexenArmor)))
 				{
-					static_cast<AHexenArmor*>(item)->Slots[0] = static_cast<AHexenArmor*>(defitem)->Slots[0];
-					static_cast<AHexenArmor*>(item)->Slots[1] = static_cast<AHexenArmor*>(defitem)->Slots[1];
-					static_cast<AHexenArmor*>(item)->Slots[2] = static_cast<AHexenArmor*>(defitem)->Slots[2];
-					static_cast<AHexenArmor*>(item)->Slots[3] = static_cast<AHexenArmor*>(defitem)->Slots[3];
+					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
+					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
+					memcpy(SlotsTo, SlotsFrom, 4 * sizeof(double)); 
 				}
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
@@ -1364,12 +1363,15 @@ void APlayerPawn::GiveDefaultInventory ()
 	// it provides player class based protection that should not affect
 	// any other protection item.
 	PClassPlayerPawn *myclass = GetClass();
-	GiveInventoryType(RUNTIME_CLASS(AHexenArmor));
-	AHexenArmor *harmor = FindInventory<AHexenArmor>();
-	harmor->Slots[4] = myclass->HexenArmor[0];
+	GiveInventoryType(PClass::FindActor(NAME_HexenArmor));
+	auto harmor = FindInventory(NAME_HexenArmor);
+
+	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
+	Slots[4] = myclass->HexenArmor[0];
 	for (int i = 0; i < 4; ++i)
 	{
-		harmor->SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+		SlotsIncrement[i] = myclass->HexenArmor[i + 1];
 	}
 
 	// BasicArmor must come right after that. It should not affect any

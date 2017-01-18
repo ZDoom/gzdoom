@@ -276,13 +276,15 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				int armorType = type - HEXENARMOR_ARMOR;
 			
-				AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
+				auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
 				if (harmor != NULL)
 				{
-					if (harmor->Slots[armorType] > 0 && harmor->SlotsIncrement[armorType] > 0)
+					double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+					double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
+					if (Slots[armorType] > 0 && SlotsIncrement[armorType] > 0)
 					{
 						//combine the alpha values
-						alpha *= MIN(1., harmor->Slots[armorType] / harmor->SlotsIncrement[armorType]);
+						alpha *= MIN(1., Slots[armorType] / SlotsIncrement[armorType]);
 						texture = statusBar->Images[image];
 					}
 					else
@@ -1409,11 +1411,11 @@ class CommandDrawNumber : public CommandDrawString
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
 					if(harmor != NULL)
 					{
-						add = harmor->Slots[0] + harmor->Slots[1] +
-							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
@@ -2842,12 +2844,13 @@ class CommandDrawBar : public SBarInfoCommand
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
-					if(harmor != NULL)
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
+					if (harmor != NULL)
 					{
-						add = harmor->Slots[0] + harmor->Slots[1] +
-							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
+
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{

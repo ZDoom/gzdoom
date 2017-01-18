@@ -310,14 +310,15 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 //
 //===========================================================================
 
-static void DrawArmor(AInventory * barmor, AHexenArmor * harmor, int x, int y)
+static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 {
 	int ap = 0;
 	int bestslot = 4;
 
 	if (harmor)
 	{
-		auto ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+		auto ac = (Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4]);
 		ap += int(ac);
 		
 		if (ac)
@@ -326,7 +327,7 @@ static void DrawArmor(AInventory * barmor, AHexenArmor * harmor, int x, int y)
 			bestslot = 0;
 			for (int i = 1; i < 4; ++i)
 			{
-				if (harmor->Slots[i] > harmor->Slots[bestslot])
+				if (Slots[i] > Slots[bestslot])
 				{
 					bestslot = i;
 				}
@@ -1141,8 +1142,7 @@ void DrawHUD()
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
 		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(CPlayer->mo->FindInventory(NAME_BasicArmor), 
-			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
+		DrawArmor(CPlayer->mo->FindInventory(NAME_BasicArmor), CPlayer->mo->FindInventory(NAME_HexenArmor), 5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, i);

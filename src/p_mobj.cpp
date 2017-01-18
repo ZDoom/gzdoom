@@ -894,9 +894,6 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 		result = true;
 	}
 
-	if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
-		return false;
-
 	// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
 	// and infinite ammo is on
 	if (notakeinfinite &&

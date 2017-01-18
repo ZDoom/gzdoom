@@ -364,10 +364,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 	pmo->Destroy ();
 	// Restore playerclass armor to its normal amount.
-	AHexenArmor *hxarmor = mo->FindInventory<AHexenArmor>();
+	auto hxarmor = mo->FindInventory(NAME_HexenArmor);
 	if (hxarmor != nullptr)
 	{
-		hxarmor->Slots[4] = mo->GetClass()->HexenArmor[0];
+		double *Slots = (double*)hxarmor->ScriptVar(NAME_Slots, nullptr);
+		Slots[4] = mo->GetClass()->HexenArmor[0];
 	}
 	return true;
 }

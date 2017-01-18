@@ -1051,19 +1051,10 @@ void AInventory::OnDestroy ()
 
 void AInventory::DepleteOrDestroy ()
 {
-	// If it's not ammo or an internal armor, destroy it.
-	// Ammo needs to stick around, even when it's zero for the benefit
-	// of the weapons that use it and to maintain the maximum ammo
-	// amounts a backpack might have given.
-	// Armor shouldn't be removed because they only work properly when
-	// they are the last items in the inventory.
-	if (ItemFlags & IF_KEEPDEPLETED)
+	IFVIRTUAL(AInventory, DepleteOrDestroy)
 	{
-		Amount = 0;
-	}
-	else
-	{
-		Destroy();
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }
 

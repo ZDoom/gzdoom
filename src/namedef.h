@@ -92,6 +92,9 @@ xx(MaxFullAbsorb)
 xx(MaxAmount)
 xx(ActualSaveAmount)
 xx(ArmorType)
+xx(HexenArmor)
+xx(Slots)
+xx(SlotsIncrement)
 
 
 xx(BulletPuff)

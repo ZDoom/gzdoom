@@ -434,7 +434,7 @@ static bool DoSubstitution (FString &out, const char *in)
 		{
 			if (strnicmp(a, "armor", 5) == 0)
 			{
-				AInventory *armor = player->mo->FindInventory<ABasicArmor>();
+				AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
 				out.AppendFormat("%d", armor != NULL ? armor->Amount : 0);
 			}
 		}

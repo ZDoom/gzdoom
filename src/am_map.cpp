@@ -3048,7 +3048,7 @@ void AM_Drawer ()
 		return;
 
 	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
-	bool allthings = allmap && players[consoleplayer].mo->FindInventory(PClass::FindActor(NAME_PowerScanner), true) != nullptr;
+	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
 
 	if (am_portaloverlay)
 	{

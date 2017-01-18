@@ -268,7 +268,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 			else if(type == SIGIL)
 			{
-				auto item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+				auto item = statusBar->CPlayer->mo->FindInventory(NAME_Sigil);
 				if (item != NULL)
 					texture = TexMan(item->Icon);
 			}
@@ -592,11 +592,11 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else if(condition == ARMORTYPE)
 			{
-				ABasicArmor *armor = (ABasicArmor *) statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
+				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
 				if(armor != NULL)
 				{
-					bool matches1 = armor->ArmorType.GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
-					bool matches2 = armor->ArmorType.GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
+					bool matches1 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
+					bool matches2 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
 
 					drawAlt = 1;
 					if(conditionAnd)
@@ -614,12 +614,12 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else //check the inventory items and draw selected sprite
 			{
-				AInventory* item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(inventoryItem[0]));
+				AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
 				if(item == NULL || !EvaluateOperation(conditionalOperator[0], conditionalValue[0], item->Amount))
 					drawAlt = 1;
 				if(conditionAnd)
 				{
-					item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(inventoryItem[1]));
+					item = statusBar->CPlayer->mo->FindInventory(inventoryItem[1]);
 					bool secondCondition = item != NULL && EvaluateOperation(conditionalOperator[1], conditionalValue[1], item->Amount);
 					if((item != NULL && secondCondition) && drawAlt == 0) //both
 					{
@@ -1418,7 +1418,7 @@ class CommandDrawNumber : public CommandDrawString
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						add += statusBar->armor->SavePercent * 100;
+						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}
 					if(value == ARMORCLASS)
 						add /= 5;
@@ -2851,7 +2851,7 @@ class CommandDrawBar : public SBarInfoCommand
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						add += statusBar->armor->SavePercent * 100;
+						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}
 					value = int(add);
 					max = 100;

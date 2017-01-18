@@ -1067,7 +1067,7 @@ public:
 
 		//prepare ammo counts
 		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
-		armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 
 		if(state != HUD_AltHud)
 		{
@@ -1517,7 +1517,7 @@ public:
 
 	AInventory *ammo1, *ammo2;
 	int ammocount1, ammocount2;
-	ABasicArmor *armor;
+	AInventory *armor;
 	FImageCollection Images;
 	unsigned int invBarOffset;
 

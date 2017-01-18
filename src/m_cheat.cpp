@@ -266,7 +266,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory(PClass::FindActor(BeholdPowers[i]));
+			item = player->mo->FindInventory(BeholdPowers[i]);
 			if (item == NULL)
 			{
 				if (i != 0)
@@ -487,7 +487,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				int oldpieces = 1;
 				ret.IntAt(&oldpieces);
 				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
-				item = player->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+				item = player->mo->FindInventory(NAME_Sigil);
 
 				if (item != NULL)
 				{

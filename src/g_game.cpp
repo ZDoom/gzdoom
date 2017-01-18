@@ -447,7 +447,7 @@ CCMD (use)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemUse = who->FindInventory(PClass::FindActor(argv[1]));
+		SendItemUse = who->FindInventory(argv[1]);
 	}
 }
 
@@ -468,7 +468,7 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemDrop = who->FindInventory(PClass::FindActor(argv[1]));
+		SendItemDrop = who->FindInventory(argv[1]);
 	}
 }
 
@@ -513,7 +513,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = who->FindInventory(PClass::FindActor(argv[1]));
+		AInventory *item = who->FindInventory(argv[1]);
 		if (item != NULL)
 		{
 			who->InvSel = item;

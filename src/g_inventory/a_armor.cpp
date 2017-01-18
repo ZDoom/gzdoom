@@ -46,43 +46,7 @@
 #include "cmdlib.h"
 
 IMPLEMENT_CLASS(AArmor, false, false)
-IMPLEMENT_CLASS(ABasicArmor, false, false)
 IMPLEMENT_CLASS(AHexenArmor, false, false)
-
-//===========================================================================
-//
-//
-// BasicArmor
-//
-//
-//===========================================================================
-
-DEFINE_FIELD(ABasicArmor, AbsorbCount)
-DEFINE_FIELD(ABasicArmor, SavePercent)
-DEFINE_FIELD(ABasicArmor, MaxAbsorb)
-DEFINE_FIELD(ABasicArmor, MaxFullAbsorb)
-DEFINE_FIELD(ABasicArmor, BonusCount)
-DEFINE_FIELD(ABasicArmor, ArmorType)
-DEFINE_FIELD(ABasicArmor, ActualSaveAmount)
-
-//===========================================================================
-//
-// ABasicArmor :: Serialize
-//
-//===========================================================================
-
-void ABasicArmor::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (ABasicArmor *)GetDefault();
-	arc("savepercent", SavePercent, def->SavePercent)
-		("bonuscount", BonusCount, def->BonusCount)
-		("maxabsorb", MaxAbsorb, def->MaxAbsorb)
-		("maxfullabsorb", MaxFullAbsorb, def->MaxFullAbsorb)
-		("absorbcount", AbsorbCount, def->AbsorbCount)
-		("armortype", ArmorType, def->ArmorType)
-		("actualsaveamount", ActualSaveAmount, def->ActualSaveAmount);
-}
 
 //===========================================================================
 //

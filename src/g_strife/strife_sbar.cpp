@@ -408,7 +408,7 @@ private:
 		DrawImage (&HealthBar, 49, 7);
 
 		// Armor
-		item = CPlayer->mo->FindInventory<ABasicArmor>();
+		item = CPlayer->mo->FindInventory(NAME_BasicArmor);
 		if (item != NULL && item->Amount > 0)
 		{
 			DrawImage (TexMan(item->Icon), 2, 9);
@@ -436,7 +436,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+		item = CPlayer->mo->FindInventory(NAME_Sigil);
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);
@@ -473,7 +473,7 @@ private:
 			TAG_DONE);
 
 		// Draw armor
-		ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		auto armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 		if (armor != NULL && armor->Amount != 0)
 		{
 			DrINumberOuter (armor->Amount, 35, -10, false, 7);

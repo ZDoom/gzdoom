@@ -297,7 +297,7 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 
 	const bool haveBerserk = hud_berserk_health
 		&& nullptr != berserkpic
-		&& nullptr != CPlayer->mo->FindInventory(PClass::FindActor(NAME_PowerStrength));
+		&& nullptr != CPlayer->mo->FindInventory(NAME_PowerStrength);
 
 	DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
 	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
@@ -310,7 +310,7 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 //
 //===========================================================================
 
-static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
+static void DrawArmor(AInventory * barmor, AHexenArmor * harmor, int x, int y)
 {
 	int ap = 0;
 	int bestslot = 4;
@@ -1141,7 +1141,7 @@ void DrawHUD()
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
 		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(CPlayer->mo->FindInventory<ABasicArmor>(), 
+		DrawArmor(CPlayer->mo->FindInventory(NAME_BasicArmor), 
 			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);

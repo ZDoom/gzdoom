@@ -8,25 +8,6 @@ class AArmor : public AInventory
 	DECLARE_CLASS (AArmor, AInventory)
 };
 
-// Basic armor absorbs a specific percent of the damage. You should
-// never pickup a BasicArmor. Instead, you pickup a BasicArmorPickup
-// or BasicArmorBonus and those gives you BasicArmor when it activates.
-class ABasicArmor : public AArmor
-{
-	DECLARE_CLASS (ABasicArmor, AArmor)
-public:
-	
-	virtual void Serialize(FSerializer &arc) override;
-
-	int AbsorbCount;
-	double SavePercent;
-	int MaxAbsorb;
-	int MaxFullAbsorb;
-	int BonusCount;
-	FNameNoInit ArmorType;
-	int ActualSaveAmount;
-};
-
 // Hexen armor consists of four separate armor types plus a conceptual armor
 // type (the player himself) that work together as a single armor.
 class AHexenArmor : public AArmor

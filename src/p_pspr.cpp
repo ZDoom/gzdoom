@@ -233,7 +233,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	{
 		if (mo != nullptr)
 		{
-			newcaller = mo->FindInventory(PClass::FindActor(NAME_PowerTargeter), true);
+			newcaller = mo->FindInventory(NAME_PowerTargeter, true);
 		}
 	}
 	else if (layer == PSP_STRIFEHANDS)

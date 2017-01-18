@@ -89,6 +89,10 @@ xx(SaveAmount)
 xx(SavePercent)
 xx(MaxAbsorb)
 xx(MaxFullAbsorb)
+xx(MaxAmount)
+xx(ActualSaveAmount)
+xx(ArmorType)
+
 
 xx(BulletPuff)
 xx(StrifePuff)

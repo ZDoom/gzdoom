@@ -1148,9 +1148,9 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				{
 					item->Destroy();
 				}
-				else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmor)))
+				else if (item->IsKindOf(PClass::FindActor(NAME_BasicArmor)))
 				{
-					static_cast<ABasicArmor*>(item)->SavePercent = static_cast<ABasicArmor*>(defitem)->SavePercent;
+					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
 					item->Amount = defitem->Amount;
 				}
 				else if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
@@ -1375,10 +1375,8 @@ void APlayerPawn::GiveDefaultInventory ()
 	// BasicArmor must come right after that. It should not affect any
 	// other protection item as well but needs to process the damage
 	// before the HexenArmor does.
-	ABasicArmor *barmor = Spawn<ABasicArmor> ();
+	auto barmor = (AInventory*)Spawn(NAME_BasicArmor);
 	barmor->BecomeItem ();
-	barmor->SavePercent = 0;
-	barmor->Amount = 0;
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition

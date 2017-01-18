@@ -1093,9 +1093,9 @@ AInventory *AActor::FindInventory (PClassActor *type, bool subclass)
 	return item;
 }
 
-AInventory *AActor::FindInventory (FName type)
+AInventory *AActor::FindInventory (FName type, bool subclass)
 {
-	return FindInventory(PClass::FindActor(type));
+	return FindInventory(PClass::FindActor(type), subclass);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, FindInventory)

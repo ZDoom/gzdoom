@@ -1210,7 +1210,10 @@ void AActor::ClearInventory()
 		AInventory *inv = *invp;
 		if (!(inv->ItemFlags & IF_UNDROPPABLE))
 		{
-			inv->DepleteOrDestroy();
+			if (AInventory::DEPLETED == inv->DepleteOrDestroy())
+			{
+				invp = &inv->Inventory;
+			}
 		}
 		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
 		{

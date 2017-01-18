@@ -635,10 +635,12 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 //
 //===========================================================================
 
-void AHexenArmor::DepleteOrDestroy()
+AInventory::DestroyResult AHexenArmor::DepleteOrDestroy()
 {
 	for (int i = 0; i < 4; i++)
 	{
 		Slots[i] = 0;
 	}
+
+	return DEPLETED;
 }

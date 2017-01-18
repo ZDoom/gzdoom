@@ -329,6 +329,7 @@ namespace swrenderer
 		args.textureheight1 = dc_wall_sourceheight[1];
 		args.top_color = solid_top;
 		args.bottom_color = solid_bottom;
+		args.flags = fadeSky ? DrawSkyArgs::fade_sky : 0;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

@@ -200,6 +200,11 @@ struct DrawSkyArgs
 	uint32_t textureheight1;
 	uint32_t top_color;
 	uint32_t bottom_color;
+	uint32_t flags;
+	enum Flags
+	{
+		fade_sky = 1
+	};
 
 	FString ToString();
 };

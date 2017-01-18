@@ -36,7 +36,7 @@ public:
 	void Generate(DrawSkyVariant variant, SSAValue args, SSAValue thread_data);
 
 private:
-	void Loop(DrawSkyVariant variant);
+	void Loop(DrawSkyVariant variant, bool fade_sky);
 	SSAVec4i Sample(SSAInt frac, DrawSkyVariant variant);
 	SSAVec4i FadeOut(SSAInt frac, SSAVec4i color);
 
@@ -57,4 +57,6 @@ private:
 	SSAWorkerThread thread;
 
 	SSAInt fracstep;
+
+	SSABool is_fade_sky;
 };

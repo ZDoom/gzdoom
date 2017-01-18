@@ -47,11 +47,14 @@ void DrawSkyCodegen::Generate(DrawSkyVariant variant, SSAValue args, SSAValue th
 	maxtextureheight1 = textureheight1 - 1;
 	top_color = SSAVec4i::unpack(args[0][22].load(true));
 	bottom_color = SSAVec4i::unpack(args[0][23].load(true));
+	SSAInt flags = args[0][24].load(true);
 
 	thread.core = thread_data[0][0].load(true);
 	thread.num_cores = thread_data[0][1].load(true);
 	thread.pass_start_y = thread_data[0][2].load(true);
 	thread.pass_end_y = thread_data[0][3].load(true);
+
+	is_fade_sky = (flags & DrawSkyArgs::fade_sky) == SSAInt(DrawSkyArgs::fade_sky);
 
 	count = count_for_thread(dest_y, count, thread);
 	dest = dest_for_thread(dest_y, pitch, dest, thread);
@@ -61,10 +64,15 @@ void DrawSkyCodegen::Generate(DrawSkyVariant variant, SSAValue args, SSAValue th
 	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
 	fracstep = iscale * thread.num_cores;
 
-	Loop(variant);
+	SSAIfBlock branch;
+	branch.if_block(is_fade_sky);
+	Loop(variant, true);
+	branch.else_block();
+	Loop(variant, false);
+	branch.end_block();
 }
 
-void DrawSkyCodegen::Loop(DrawSkyVariant variant)
+void DrawSkyCodegen::Loop(DrawSkyVariant variant, bool fade_sky)
 {
 	stack_index.store(SSAInt(0));
 	{
@@ -76,8 +84,15 @@ void DrawSkyCodegen::Loop(DrawSkyVariant variant)
 
 		SSAInt offset = index * pitch * 4;
 
-		SSAVec4i color = FadeOut(frac, Sample(frac, variant));
-		dest[offset].store_vec4ub(color);
+		if (fade_sky)
+		{
+			SSAVec4i color = FadeOut(frac, Sample(frac, variant));
+			dest[offset].store_vec4ub(color);
+		}
+		else
+		{
+			dest[offset].store_vec4ub(Sample(frac, variant));
+		}
 
 		stack_index.store(index.add(SSAInt(1), true, true));
 		stack_frac.store(frac + fracstep);

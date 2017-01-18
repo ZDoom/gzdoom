@@ -280,7 +280,7 @@ llvm::Type *LLVMDrawers::GetDrawSkyArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
 	for (int i = 0; i < 8; i++)
 		elements.push_back(llvm::Type::getInt8PtrTy(context));
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 16; i++)
 		elements.push_back(llvm::Type::getInt32Ty(context));
 	DrawSkyArgsStruct = llvm::StructType::create(context, elements, "DrawSkyArgs", false)->getPointerTo();
 	return DrawSkyArgsStruct;

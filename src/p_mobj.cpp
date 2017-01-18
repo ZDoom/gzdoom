@@ -3954,7 +3954,7 @@ void AActor::Tick ()
 		// by the order in the inventory, not the order in the thinker table
 		while (item != NULL && item->Owner == this)
 		{
-			item->CallDoEffect();
+			item->DoEffect();
 			item = item->Inventory;
 		}
 

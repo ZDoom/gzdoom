@@ -71,7 +71,6 @@
 #include "m_png.h"
 #include "gi.h"
 #include "a_keys.h"
-#include "a_artifacts.h"
 #include "r_data/r_translate.h"
 #include "cmdlib.h"
 #include "d_net.h"

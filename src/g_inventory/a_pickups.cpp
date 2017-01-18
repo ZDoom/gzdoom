@@ -341,22 +341,11 @@ bool AInventory::Grind(bool items)
 // AInventory :: DoEffect
 //
 // Handles any effect an item might apply to its owner
-// Normally only used by subclasses of APowerup
+// Normally only used by subclasses of Powerup
 //
 //===========================================================================
 
-void AInventory::DoEffect ()
-{
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, DoEffect)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	self->DoEffect();
-	return 0;
-}
-
-void AInventory::CallDoEffect()
+void AInventory::DoEffect()
 {
 	IFVIRTUAL(AInventory, DoEffect)
 	{
@@ -364,7 +353,6 @@ void AInventory::CallDoEffect()
 		VMFrameStack stack;
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
-	else DoEffect();
 }
 
 

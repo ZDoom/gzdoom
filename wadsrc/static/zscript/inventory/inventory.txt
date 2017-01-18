@@ -41,7 +41,6 @@ class Inventory : Actor native
 	virtual native bool SpecialDropAction (Actor dropper);
 	virtual native String PickupMessage();
 	virtual native bool ShouldStay();
-	virtual native void DoEffect();
 	virtual native void PlayPickupSound(Actor user);
 	virtual native void AttachToOwner(Actor user);
 	virtual native void DetachFromOwner();
@@ -57,9 +56,19 @@ class Inventory : Actor native
 	//
 	//===========================================================================
 
-	virtual void Travelled() 
-	{}
+	virtual void Travelled() {}
 
+	//===========================================================================
+	//
+	// AInventory :: DoEffect
+	//
+	// Handles any effect an item might apply to its owner
+	// Normally only used by subclasses of Powerup
+	//
+	//===========================================================================
+
+	virtual void DoEffect() {}
+	
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}

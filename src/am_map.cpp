@@ -66,7 +66,6 @@
 #include "gstrings.h"
 
 #include "am_map.h"
-#include "a_artifacts.h"
 #include "po_man.h"
 #include "a_keys.h"
 #include "r_data/colormaps.h"

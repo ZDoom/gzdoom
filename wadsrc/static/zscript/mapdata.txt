@@ -270,7 +270,7 @@ struct Sector native
 		SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
 		SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
 	}
-	
+
 	enum EMoveResult 
 	{ 
 		MOVE_OK, 
@@ -288,6 +288,15 @@ struct Sector native
 	native readonly int			sectornum;
 
 	native int Index();
+
+	enum EChangeSectorMode
+	{
+		CS_Floor = 0,
+		CS_Ceiling = 1,
+		CS_3DMidTex = 2
+	};
+
+	native bool ChangeSector(int crunch, double amt, EChangeSectorMode mode/*floorOrCeiling*/, bool isreset, bool instant);
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);

@@ -6358,6 +6358,21 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 //
 //=============================================================================
 
+//
+DEFINE_ACTION_FUNCTION(_Sector, ChangeSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(crunch);
+	PARAM_FLOAT(amt);
+	PARAM_INT(floorOrCeil);
+	PARAM_BOOL(isreset);
+	PARAM_BOOL(instant);
+
+	bool b = P_ChangeSector(self, crunch, amt, floorOrCeil, isreset, instant);
+
+	ACTION_RETURN_BOOL(b);
+}
+
 bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, bool isreset, bool instant)
 {
 	FChangePosition cpos;

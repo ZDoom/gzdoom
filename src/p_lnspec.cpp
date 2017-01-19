@@ -3230,7 +3230,7 @@ FUNC(LS_GlassBreak)
 			}
 			if (it != NULL)
 			{
-				it->GiveInventoryType (QuestItemClasses[28]);
+				it->GiveInventoryType (PClass::FindActor("QuestItem29"));
 				it->GiveInventoryType (PClass::FindActor("UpgradeAccuracy"));
 				it->GiveInventoryType (PClass::FindActor("UpgradeStamina"));
 			}

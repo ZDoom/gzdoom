@@ -65,40 +65,6 @@ struct FExtraInfo
 	double DeathHeight, BurnHeight;
 };
 
-class AFakeInventory : public AInventory
-{
-	DECLARE_CLASS (AFakeInventory, AInventory);
-public:
-	bool Respawnable;
-
-	bool ShouldRespawn ()
-	{
-		return Respawnable && Super::ShouldRespawn();
-	}
-
-	bool TryPickup (AActor *&toucher)
-	{
-		INTBOOL success = P_ExecuteSpecial(special, NULL, toucher, false,
-			args[0], args[1], args[2], args[3], args[4]);
-
-		if (success)
-		{
-			GoAwayAndDie ();
-			return true;
-		}
-		return false;
-	}
-
-	void DoPickupSpecial (AActor *toucher)
-	{
-		// The special was already executed by TryPickup, so do nothing here
-	}
-};
-
-IMPLEMENT_CLASS(AFakeInventory, false, false)
-
-DEFINE_FIELD(AFakeInventory, Respawnable)
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -127,16 +93,6 @@ static const char *RenderStyles[] =
 
 //==========================================================================
 //
-//==========================================================================
-DEFINE_CLASS_PROPERTY(respawns, 0, FakeInventory)
-{
-	defaults->Respawnable = true;
-}
-
-
-
-//==========================================================================
-//
 // ParseOldDecoration
 //
 // Reads an old style decoration object
@@ -154,7 +110,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	PClassActor *parent;
 	FName typeName;
 
-	parent = (def == DEF_Pickup) ? RUNTIME_CLASS(AFakeInventory) : RUNTIME_CLASS(AActor);
+	parent = (def == DEF_Pickup) ? PClass::FindActor("FakeInventory") : RUNTIME_CLASS(AActor);
 
 	sc.MustGetString();
 	typeName = FName(sc.String);
@@ -360,7 +316,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray, TArray<FScriptPosition> &SourceLines)
 {
-	AFakeInventory *const inv = static_cast<AFakeInventory *>(defaults);
+	AInventory *const inv = static_cast<AInventory *>(defaults);
 	char sprite[5] = "TNT1";
 
 	sc.MustGetString ();
@@ -588,7 +544,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
-			inv->Respawnable = true;
+			inv->BoolVar("Respawnable") = true;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnDeath"))
 		{

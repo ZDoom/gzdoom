@@ -842,7 +842,12 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			addr = ((char*)defaults) + f->Offset;
 		}
 
-		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		if (f->Type == TypeBool)
+		{
+			bool val = sc.CheckNumber() ? !!sc.Number : true;
+			static_cast<PBool*>(f->Type)->SetValue(addr, !!val);
+		}
+		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
 			sc.MustGetNumber();
 			static_cast<PInt*>(f->Type)->SetValue(addr, sc.Number);

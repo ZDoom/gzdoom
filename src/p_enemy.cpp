@@ -3261,11 +3261,20 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		static_cast<AWeapon *>(inv)->AmmoGive2 = int(static_cast<AWeapon *>(inv)->AmmoGive2 * dropammofactor);
 		inv->ItemFlags |= flagmask;
 	}			
-	else if (inv->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))
+	else if (inv->IsKindOf (PClass::FindClass(NAME_DehackedPickup)))
 	{
 		// For weapons and ammo modified by Dehacked we need to flag the item.
-		static_cast<ADehackedPickup *>(inv)->droppedbymonster = true;
+		inv->BoolVar("droppedbymonster") = true;
 	}
+}
+
+// todo: make this a scripted virtual function so it can better deal with some of the classes involved.
+DEFINE_ACTION_FUNCTION(AInventory, ModifyDropAmount)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_INT(dropamount);
+	ModifyDropAmount(self, dropamount);
+	return 0;
 }
 
 //---------------------------------------------------------------------------

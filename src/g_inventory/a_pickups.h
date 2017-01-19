@@ -78,39 +78,19 @@ public:
 	virtual void Tick() override;
 	virtual bool Grind(bool items) override;
 
-	// virtual methods that only get overridden by special internal classes, like DehackedPickup.
-	// There is no need to expose these to scripts.
-	void DepleteOrDestroy ();
-	virtual bool ShouldRespawn ();
-	virtual void DoPickupSpecial (AActor *toucher);
+	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 
-	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// This wraps both virtual methods plus a few more checks. 
+	void DepleteOrDestroy ();			// virtual on the script side. 
+	bool CallUse(bool pickup);			// virtual on the script side.
+	PalEntry CallGetBlend();			// virtual on the script side.
+	double GetSpeedFactor();			// virtual on the script side.
+	bool GetNoTeleportFreeze();			// virtual on the script side.
 
-	bool CallUse(bool pickup);
-
-	virtual PalEntry GetBlend();
-	PalEntry CallGetBlend();
-
-	bool CallShouldStay();
-
-	virtual void PlayPickupSound(AActor *toucher);
-	void CallPlayPickupSound(AActor *toucher);
-
-	void CallAttachToOwner(AActor *other);
-
-	// virtual on the script side only.
-	double GetSpeedFactor();
-	bool GetNoTeleportFreeze();
-
-
-	bool GoAway();
-	void GoAwayAndDie();
-
-	void Hide();
 	void BecomeItem ();
 	void BecomePickup ();
 
 	bool DoRespawn();
+
 	AInventory *PrevItem();		// Returns the item preceding this one in the list.
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
@@ -128,13 +108,6 @@ public:
 	PClassActor *PickupFlash;	// actor to spawn as pickup flash
 
 	FSoundIDNoInit PickupSound;
-
-
-protected:
-	bool CanPickup(AActor * toucher);
-	void GiveQuest(AActor * toucher);
-
-private:
 };
 
 class AStateProvider : public AInventory
@@ -143,8 +116,5 @@ class AStateProvider : public AInventory
 public:
 	bool CallStateChain(AActor *actor, FState *state);
 };
-
-extern PClassActor *QuestItemClasses[31];
-
 
 #endif //__A_PICKUPS_H__

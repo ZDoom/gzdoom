@@ -222,15 +222,9 @@ DEFINE_FIELD_X(DehInfo, DehInfo, BlueAC)
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
 // class type to identify them instead. To support the traditional Doom
 // behavior, for every thing touched by dehacked that has the MF_PICKUP flag,
-// a new subclass of ADehackedPickup will be created with properties copied
+// a new subclass of DehackedPickup will be created with properties copied
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
-
-IMPLEMENT_CLASS(ADehackedPickup, false, true)
-
-IMPLEMENT_POINTERS_START(ADehackedPickup)
-	IMPLEMENT_POINTER(RealPickup)
-IMPLEMENT_POINTERS_END
 
 TArray<PClassActor *> TouchedActors;
 
@@ -238,7 +232,7 @@ char *UnchangedSpriteNames;
 int NumUnchangedSprites;
 bool changedStates;
 
-// Sprite<->Class map for ADehackedPickup::DetermineType
+// Sprite<->Class map for DehackedPickup::DetermineType
 static struct DehSpriteMap
 {
 	char Sprite[5];
@@ -3009,12 +3003,12 @@ void FinishDehPatch ()
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
 		// 
+		auto dehtype = PClass::FindActor(NAME_DehackedPickup);
 		do
 		{
 			// Retry until we find a free name. This is unlikely to happen but not impossible.
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
-			subclass = static_cast<PClassActor *>(RUNTIME_CLASS(ADehackedPickup)->
-				CreateDerivedClass(typeNameBuilder, sizeof(ADehackedPickup)));
+			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size));
 		} 
 		while (subclass == nullptr);
 		
@@ -3120,94 +3114,10 @@ void FinishDehPatch ()
 	WeaponNames.ShrinkToFit();
 }
 
-void ModifyDropAmount(AInventory *inv, int dropamount);
-
-bool ADehackedPickup::TryPickup (AActor *&toucher)
+DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 {
-	PClassActor *type = DetermineType ();
-	if (type == NULL)
-	{
-		return false;
-	}
-	RealPickup = static_cast<AInventory *>(Spawn (type, Pos(), NO_REPLACE));
-	if (RealPickup != NULL)
-	{
-		// The internally spawned item should never count towards statistics.
-		RealPickup->ClearCounters();
-		if (!(flags & MF_DROPPED))
-		{
-			RealPickup->flags &= ~MF_DROPPED;
-		}
-		// If this item has been dropped by a monster the
-		// amount of ammo this gives must be adjusted.
-		if (droppedbymonster)
-		{
-			ModifyDropAmount(RealPickup, 0);
-		}
-		if (!RealPickup->CallTryPickup (toucher))
-		{
-			RealPickup->Destroy ();
-			RealPickup = NULL;
-			return false;
-		}
-		GoAwayAndDie ();
-		return true;
-	}
-	return false;
-}
+	PARAM_SELF_PROLOGUE(AInventory);
 
-FString ADehackedPickup::PickupMessage ()
-{
-	/*
-	if (RealPickup != nullptr)
-		return RealPickup->PickupMessage ();
-	else*/ return "";
-}
-
-bool ADehackedPickup::ShouldStay ()
-{
-	if (RealPickup != nullptr)
-		return RealPickup->CallShouldStay ();
-	else return true;
-}
-
-bool ADehackedPickup::ShouldRespawn ()
-{
-	if (RealPickup != nullptr)
-		return RealPickup->ShouldRespawn ();
-	else return false;
-}
-
-void ADehackedPickup::PlayPickupSound (AActor *toucher)
-{
-	if (RealPickup != nullptr)
-		RealPickup->CallPlayPickupSound (toucher);
-}
-
-void ADehackedPickup::DoPickupSpecial (AActor *toucher)
-{
-	Super::DoPickupSpecial (toucher);
-	// If the real pickup hasn't joined the toucher's inventory, make sure it
-	// doesn't stick around.
-	if (RealPickup != nullptr && RealPickup->Owner != toucher)
-	{
-		RealPickup->Destroy ();
-	}
-	RealPickup = nullptr;
-}
-
-void ADehackedPickup::OnDestroy ()
-{
-	if (RealPickup != nullptr)
-	{
-		RealPickup->Destroy ();
-		RealPickup = nullptr;
-	}
-	Super::OnDestroy();
-}
-
-PClassActor *ADehackedPickup::DetermineType ()
-{
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
 	int min = 0;
@@ -3216,10 +3126,10 @@ PClassActor *ADehackedPickup::DetermineType ()
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[sprite].name, 4);
+		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[self->sprite].name, 4);
 		if (lex == 0)
 		{
-			return PClass::FindActor(DehSpriteMappings[mid].ClassName);
+			ACTION_RETURN_OBJECT(PClass::FindActor(DehSpriteMappings[mid].ClassName));
 		}
 		else if (lex < 0)
 		{
@@ -3230,11 +3140,6 @@ PClassActor *ADehackedPickup::DetermineType ()
 			max = mid - 1;
 		}
 	}
-	return NULL;
+	ACTION_RETURN_OBJECT(nullptr);
 }
 
-void ADehackedPickup::Serialize(FSerializer &arc)
-{
-	Super::Serialize(arc);
-	arc("droppedbymonster", droppedbymonster);
-}

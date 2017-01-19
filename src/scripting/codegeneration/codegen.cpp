@@ -420,6 +420,10 @@ PPrototype *FxExpression::ReturnProto()
 static int EncodeRegType(ExpEmit reg)
 {
 	int regtype = reg.RegType;
+	if (reg.Fixed && reg.Target)
+	{
+		regtype |= REGT_ADDROF;
+	}
 	if (reg.Konst)
 	{
 		regtype |= REGT_KONST;
@@ -10008,10 +10012,9 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 	{
 		for (unsigned i = 0; i < Args.Size(); i++)
 		{
-			auto &Value = Args[0];
-			Value = new FxTypeCast(Value, ctx.ReturnProto->ReturnTypes[i], false, false);
-			Value = Value->Resolve(ctx);
-			if (Value == nullptr) fail = true;
+			Args[i] = new FxTypeCast(Args[i], ctx.ReturnProto->ReturnTypes[i], false, false);
+			Args[i] = Args[i]->Resolve(ctx);
+			if (Args[i] == nullptr) fail = true;
 		}
 		if (fail)
 		{

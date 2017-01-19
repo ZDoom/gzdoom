@@ -411,7 +411,9 @@ enum ESoundFlags
 	CHAN_LISTENERZ = 8,
 	CHAN_MAYBE_LOCAL = 16,
 	CHAN_UI = 32,
-	CHAN_NOPAUSE = 64
+	CHAN_NOPAUSE = 64,
+	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL)
+
 };
 
 // sound attenuation values

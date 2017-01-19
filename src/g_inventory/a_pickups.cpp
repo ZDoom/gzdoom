@@ -99,6 +99,7 @@ DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
 DEFINE_FIELD(PClassInventory, PickupMsg)
+DEFINE_FIELD(PClassInventory, GiveQuest)
 
 //===========================================================================
 //
@@ -179,22 +180,6 @@ void AInventory::MarkPrecacheSounds() const
 
 //===========================================================================
 //
-// AInventory :: ShouldRespawn
-//
-// Returns true if the item should hide itself and reappear later when picked
-// up.
-//
-//===========================================================================
-
-bool AInventory::ShouldRespawn ()
-{
-	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags2 & DF2_RESPAWN_SUPER)) return false;
-	if (ItemFlags & IF_NEVERRESPAWN) return false;
-	return !!((dmflags & DF_ITEMS_RESPAWN) || (ItemFlags & IF_ALWAYSRESPAWN));
-}
-
-//===========================================================================
-//
 // AInventory :: Grind
 //
 //===========================================================================
@@ -218,66 +203,6 @@ bool AInventory::Grind(bool items)
 	}
 	// Non-dropped items call the super method for compatibility.
 	return Super::Grind(items);
-}
-
-//===========================================================================
-//
-// AInventory :: GoAway
-//
-// Returns true if you must create a copy of this item to give to the player
-// or false if you can use this one instead.
-//
-//===========================================================================
-
-bool AInventory::GoAway ()
-{
-	// Dropped items never stick around
-	if (flags & MF_DROPPED)
-	{
-		return false;
-	}
-
-	if (!CallShouldStay ())
-	{
-		Hide ();
-		if (ShouldRespawn ())
-		{
-			return true;
-		}
-		return false;
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, GoAway)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_BOOL(self->GoAway());
-}
-
-//===========================================================================
-//
-// AInventory :: GoAwayAndDie
-//
-// Like GoAway but used by items that don't insert themselves into the
-// inventory. If they won't be respawning, then they can destroy themselves.
-//
-//===========================================================================
-
-void AInventory::GoAwayAndDie ()
-{
-	if (!GoAway ())
-	{
-		flags &= ~MF_SPECIAL;
-		SetState (FindState("HoldAndDestroy"));
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, GoAwayAndDie)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	self->GoAwayAndDie();
-	return 0;
 }
 
 //===========================================================================
@@ -405,65 +330,12 @@ bool AInventory::CallUse(bool pickup)
 	IFVIRTUAL(AInventory, Use)
 	{
 		VMValue params[2] = { (DObject*)this, pickup };
-		VMReturn ret;
 		int retval;
-		ret.IntAt(&retval);
+		VMReturn ret(&retval);
 		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 	}
 	return false;
-}
-
-
-//===========================================================================
-//
-// AInventory :: Hide
-//
-// Hides this actor until it's time to respawn again. 
-//
-//===========================================================================
-
-void AInventory::Hide ()
-{
-	FState *HideSpecialState = NULL, *HideDoomishState = NULL;
-
- 	flags = (flags & ~MF_SPECIAL) | MF_NOGRAVITY;
-	renderflags |= RF_INVISIBLE;
-
-	if (gameinfo.gametype & GAME_Raven)
-	{
-		HideSpecialState = FindState("HideSpecial");
-		if (HideSpecialState == NULL)
-		{
-			HideDoomishState = FindState("HideDoomish");
-		}
-	}
-	else
-	{
-		HideDoomishState = FindState("HideDoomish");
-		if (HideDoomishState == NULL)
-		{
-			HideSpecialState = FindState("HideSpecial");
-		}
-	}
-
-	assert(HideDoomishState != NULL || HideSpecialState != NULL);
-
-	if (HideSpecialState != NULL)
-	{
-		SetState (HideSpecialState);
-		tics = 1400;
-		if (PickupFlash != NULL) tics += 30;
-	}
-	else if (HideDoomishState != NULL)
-	{
-		SetState (HideDoomishState);
-		tics = 1050;
-	}
-	if (RespawnTics != 0)
-	{
-		tics = RespawnTics;
-	}
 }
 
 
@@ -491,112 +363,6 @@ DEFINE_ACTION_FUNCTION(AInventory, PrintPickupMessage)
 	}
 	return 0;
 }
-
-//===========================================================================
-//
-// AInventory :: DoPickupSpecial
-//
-// Executes this actor's special when it is picked up.
-//
-//===========================================================================
-
-void AInventory::DoPickupSpecial (AActor *toucher)
-{
-	if (special)
-	{
-		P_ExecuteSpecial(special, NULL, toucher, false,
-			args[0], args[1], args[2], args[3], args[4]);
-		special = 0;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, DoPickupSpecial)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(toucher, AActor);
-	self->DoPickupSpecial(toucher);
-	return 0;
-}
-
-//===========================================================================
-//
-// AInventory :: PlayPickupSound
-//
-//===========================================================================
-
-void AInventory::PlayPickupSound (AActor *toucher)
-{
-	float atten;
-	int chan;
-
-	if (ItemFlags & IF_NOATTENPICKUPSOUND)
-	{
-		atten = ATTN_NONE;
-	}
-#if 0
-	else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
-		(toucher == NULL || toucher->CheckLocalView(consoeplayer)))
-	{
-		atten = ATTN_NONE;
-	}
-#endif
-	else
-	{
-		atten = ATTN_NORM;
-	}
-
-	if (toucher != NULL && toucher->CheckLocalView(consoleplayer))
-	{
-		chan = CHAN_PICKUP|CHAN_NOPAUSE;
-	}
-	else
-	{
-		chan = CHAN_PICKUP;
-	}
-	S_Sound (toucher, chan, PickupSound, 1, atten);
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, PlayPickupSound)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(other, AActor);
-	self->PlayPickupSound(other);
-	return 0;
-}
-
-void AInventory::CallPlayPickupSound(AActor *other)
-{
-	IFVIRTUAL(AInventory, PlayPickupSound)
-	{
-		VMValue params[2] = { (DObject*)this, (DObject*)other };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
-	}
-	else PlayPickupSound(other);
-}
-
-
-//===========================================================================
-//
-// AInventory :: ShouldStay
-//
-// Returns true if the item should not disappear, even temporarily.
-//
-//===========================================================================
-
-bool AInventory::CallShouldStay()
-{
-	IFVIRTUAL(AInventory, ShouldStay)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
 
 //===========================================================================
 //
@@ -644,29 +410,17 @@ void AInventory::DepleteOrDestroy ()
 //
 //===========================================================================
 
-PalEntry AInventory::GetBlend ()
-{
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, GetBlend)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_INT(self->GetBlend());
-}
-
 PalEntry AInventory::CallGetBlend()
 {
 	IFVIRTUAL(AInventory, GetBlend)
 	{
 		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
 		int retval;
-		ret.IntAt(&retval);
+		VMReturn ret(&retval);
 		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
-	else return GetBlend();
+	else return 0;
 }
 
 //===========================================================================
@@ -761,105 +515,24 @@ DEFINE_ACTION_FUNCTION(AInventory, DoRespawn)
 
 //===========================================================================
 //
-// AInventory :: GiveQuest
-//
-//===========================================================================
-
-void AInventory::GiveQuest (AActor *toucher)
-{
-	int quest = GetClass()->GiveQuest;
-	if (quest > 0 && quest <= (int)countof(QuestItemClasses))
-	{
-		toucher->GiveInventoryType (QuestItemClasses[quest-1]);
-	}
-}
-
-//===========================================================================
-//
 // AInventory :: CallTryPickup
 //
 //===========================================================================
 
-bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
+bool AInventory::CallTryPickup(AActor *toucher, AActor **toucher_return)
 {
-	TObjPtr<AInventory> Invstack = Inventory; // A pointer of the inventories item stack.
-
-	// unmorphed versions of a currently morphed actor cannot pick up anything. 
-	if (toucher->flags & MF_UNMORPHED) return false;
-
-	bool res;
-	if (CanPickup(toucher))
-	{
-		IFVIRTUAL(AInventory, TryPickup)
-		{
-			VMValue params[2] = { (DObject*)this, (void*)&toucher };
-			VMReturn ret;
-			int retval;
-			ret.IntAt(&retval);
-			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-			res = !!retval;
-		}
-	}
-	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
-	{
-		// let an item decide for itself how it will handle this
-		IFVIRTUAL(AInventory, TryPickupRestricted)
-		{
-			VMValue params[2] = { (DObject*)this, (void*)&toucher };
-			VMReturn ret;
-			int retval;
-			ret.IntAt(&retval);
-			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-			res = !!retval;
-		}
-	}
-	else
-		return false;
-
-	// Morph items can change the toucher so we need an option to return this info.
-	if (toucher_return != NULL) *toucher_return = toucher;
-
-	if (!res && (ItemFlags & IF_ALWAYSPICKUP) && !CallShouldStay())
-	{
-		res = true;
-		GoAwayAndDie();
-	}
-
-	if (res)
-	{
-		GiveQuest(toucher);
-
-		// Transfer all inventory accross that the old object had, if requested.
-		if ((ItemFlags & IF_TRANSFER))
-		{
-			while (Invstack)
-			{
-				AInventory* titem = Invstack;
-				Invstack = titem->Inventory;
-				if (titem->Owner == this)
-				{
-					if (!titem->CallTryPickup(toucher)) // The object no longer can exist
-					{
-						titem->Destroy();
-					}
-				}
-			}
-		}
-	}
-	return res;
+	static VMFunction *func = nullptr;
+	if (func == nullptr) func = PClass::FindFunction(NAME_Inventory, NAME_CallTryPickup);
+	VMValue params[2] = { (DObject*)this, toucher };
+	VMReturn ret[2];
+	int res;
+	AActor *tret;
+	ret[0].IntAt(&res);
+	ret[1].PointerAt((void**)&tret);
+	GlobalVMStack.Call(func, params, 2, ret, 2);
+	if (toucher_return) *toucher_return = tret;
+	return !!res;
 }
-
-DEFINE_ACTION_FUNCTION(AInventory, CallTryPickup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(toucher, AActor);
-	AActor *t_ret;
-	bool res = self->CallTryPickup(toucher, &t_ret);
-	if (numret > 0) ret[0].SetInt(res);
-	if (numret > 1) ret[1].SetPointer(t_ret, ATAG_OBJECT), numret = 2;
-	return numret;
-}
-	
 
 //===========================================================================
 //
@@ -867,21 +540,24 @@ DEFINE_ACTION_FUNCTION(AInventory, CallTryPickup)
 //
 //===========================================================================
 
-bool AInventory::CanPickup (AActor *toucher)
+DEFINE_ACTION_FUNCTION(AInventory, CanPickup)
 {
-	if (!toucher)
-		return false;
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(toucher, AActor);
 
-	PClassInventory *ai = GetClass();
+	if (!toucher)
+		ACTION_RETURN_BOOL(false);
+
+	PClassInventory *ai = self->GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{
 		for (unsigned i = 0; i < ai->RestrictedToPlayerClass.Size(); ++i)
 		{
 			if (toucher->IsKindOf(ai->RestrictedToPlayerClass[i]))
-				return true;
+				ACTION_RETURN_BOOL(true);
 		}
-		return false;
+		ACTION_RETURN_BOOL(false);
 	}
 	// Or is it forbidden to certain other classes?
 	else
@@ -889,10 +565,10 @@ bool AInventory::CanPickup (AActor *toucher)
 		for (unsigned i = 0; i < ai->ForbiddenToPlayerClass.Size(); ++i)
 		{
 			if (toucher->IsKindOf(ai->ForbiddenToPlayerClass[i]))
-				return false;
+				ACTION_RETURN_BOOL(false);
 		}
 	}
-	return true;
+	ACTION_RETURN_BOOL(true);
 }
 
 //===========================================================================
@@ -937,22 +613,6 @@ CCMD (targetinv)
 	else Printf("No target found. Targetinv cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
-
-//===========================================================================
-//
-// AInventory :: AttachToOwner
-//
-//===========================================================================
-
-void AInventory::CallAttachToOwner(AActor *other)
-{
-	IFVIRTUAL(AInventory, AttachToOwner)
-	{
-		VMValue params[2] = { (DObject*)this, (DObject*)other };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
-	}
-}
-
 
 //===========================================================================
 //===========================================================================

@@ -43,6 +43,18 @@ CVAR(Bool, tilt, false, 0);
 
 namespace swrenderer
 {
+	visplane_t::visplane_t()
+	{
+		picnum.SetNull();
+		height.set(0.0, 0.0, 1.0, 0.0);
+
+		bottom = RenderMemory::AllocMemory<uint16_t>(viewwidth);
+		top = RenderMemory::AllocMemory<uint16_t>(viewwidth);
+
+		fillshort(bottom, viewwidth, 0);
+		fillshort(top, viewwidth, 0x7fff);
+	}
+
 	void visplane_t::AddLights(FLightNode *node)
 	{
 		if (!r_dynlights)

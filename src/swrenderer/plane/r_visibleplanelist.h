@@ -27,8 +27,6 @@ namespace swrenderer
 	public:
 		static VisiblePlaneList *Instance();
 
-		void Init();
-		void Deinit();
 		void Clear(bool fullclear);
 
 		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap);
@@ -39,8 +37,6 @@ namespace swrenderer
 
 		enum { MAXVISPLANES = 128 }; // must be a power of 2
 		visplane_t *visplanes[MAXVISPLANES + 1];
-		visplane_t *freetail = nullptr;
-		visplane_t **freehead = nullptr;
 
 	private:
 		VisiblePlaneList();

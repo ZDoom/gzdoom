@@ -15,6 +15,8 @@
 
 #include <stddef.h>
 #include "r_defs.h"
+#include "r_state.h"
+#include "swrenderer/r_memory.h"
 
 class ADynamicLight;
 struct FLightNode;
@@ -31,40 +33,42 @@ namespace swrenderer
 
 	struct visplane_t
 	{
-		visplane_t *next;		// Next visplane in hash chain -- killough
+		visplane_t();
 
-		FDynamicColormap *colormap;		// [RH] Support multiple colormaps
-		FSectorPortal *portal;			// [RH] Support sky boxes
-		visplane_light *lights;
+		void AddLights(FLightNode *node);
+		void Render(fixed_t alpha, bool additive, bool masked);
+
+		visplane_t *next = nullptr;		// Next visplane in hash chain -- killough
+
+		FDynamicColormap *colormap = nullptr;		// [RH] Support multiple colormaps
+		FSectorPortal *portal = nullptr;			// [RH] Support sky boxes
+		visplane_light *lights = nullptr;
 
 		FTransform	xform;
 		secplane_t	height;
 		FTextureID	picnum;
-		int			lightlevel;
-		int			left, right;
-		int			sky;
+		int lightlevel = 0;
+		int left = viewwidth;
+		int right = 0;
+		int sky = 0;
 
 		// [RH] This set of variables copies information from the time when the
 		// visplane is created. They are only used by stacks so that you can
 		// have stacked sectors inside a skybox. If the visplane is not for a
 		// stack, then they are unused.
-		int			extralight;
-		double		visibility;
-		DVector3	viewpos;
-		DAngle		viewangle;
-		fixed_t		Alpha;
-		bool		Additive;
+		int			extralight = 0;
+		double		visibility = 0.0;
+		DVector3	viewpos = { 0.0, 0.0, 0.0 };
+		DAngle		viewangle = { 0.0 };
+		fixed_t		Alpha = 0;
+		bool		Additive = false;
 
 		// kg3D - keep track of mirror and skybox owner
-		int CurrentSkybox;
-		int CurrentPortalUniq; // mirror counter, counts all of them
-		int MirrorFlags; // this is not related to CurrentMirror
+		int CurrentSkybox = 0;
+		int CurrentPortalUniq = 0; // mirror counter, counts all of them
+		int MirrorFlags = 0; // this is not related to CurrentMirror
 
-		unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
-		unsigned short pad;				//		allocated immediately after the
-		unsigned short top[];			//		visplane.
-
-		void AddLights(FLightNode *node);
-		void Render(fixed_t alpha, bool additive, bool masked);
+		uint16_t *bottom = nullptr;
+		uint16_t *top = nullptr;
 	};
 }

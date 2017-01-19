@@ -54,87 +54,22 @@ namespace swrenderer
 	{
 		for (auto &plane : visplanes)
 			plane = nullptr;
-		freehead = &freetail;
-	}
-
-	void VisiblePlaneList::Deinit()
-	{
-		// do not use R_ClearPlanes because at this point the screen pointer is no longer valid.
-		for (int i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
-		{
-			for (*freehead = visplanes[i], visplanes[i] = nullptr; *freehead; )
-			{
-				freehead = &(*freehead)->next;
-			}
-		}
-		for (visplane_t *pl = freetail; pl != nullptr; )
-		{
-			visplane_t *next = pl->next;
-			free(pl);
-			pl = next;
-		}
 	}
 
 	visplane_t *VisiblePlaneList::Add(unsigned hash)
 	{
-		visplane_t *check = freetail;
-
-		if (check == nullptr)
-		{
-			check = (visplane_t *)M_Malloc(sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH * 2));
-			memset(check, 0, sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH * 2));
-			check->bottom = check->top + MAXWIDTH + 2;
-		}
-		else if (nullptr == (freetail = freetail->next))
-		{
-			freehead = &freetail;
-		}
-
-		check->lights = nullptr;
-
-		check->next = visplanes[hash];
-		visplanes[hash] = check;
-		return check;
-	}
-
-	void VisiblePlaneList::Init()
-	{
-		int i;
-		visplane_t *pl;
-
-		// Free all visplanes and let them be re-allocated as needed.
-		pl = freetail;
-
-		while (pl)
-		{
-			visplane_t *next = pl->next;
-			M_Free(pl);
-			pl = next;
-		}
-		freetail = nullptr;
-		freehead = &freetail;
-
-		for (i = 0; i < MAXVISPLANES; i++)
-		{
-			pl = visplanes[i];
-			visplanes[i] = nullptr;
-			while (pl)
-			{
-				visplane_t *next = pl->next;
-				M_Free(pl);
-				pl = next;
-			}
-		}
+		visplane_t *newplane = RenderMemory::NewObject<visplane_t>();
+		newplane->next = visplanes[hash];
+		visplanes[hash] = newplane;
+		return newplane;
 	}
 
 	void VisiblePlaneList::Clear(bool fullclear)
 	{
-		int i;
-
 		// Don't clear fake planes if not doing a full clear.
 		if (!fullclear)
 		{
-			for (i = 0; i <= MAXVISPLANES - 1; i++)	// new code -- killough
+			for (int i = 0; i <= MAXVISPLANES - 1; i++)
 			{
 				for (visplane_t **probe = &visplanes[i]; *probe != nullptr; )
 				{
@@ -143,25 +78,18 @@ namespace swrenderer
 						probe = &(*probe)->next;
 					}
 					else
-					{ // not fake: move to freelist
+					{ // not fake: move from list
 						visplane_t *vis = *probe;
-						*freehead = vis;
 						*probe = vis->next;
 						vis->next = nullptr;
-						freehead = &vis->next;
 					}
 				}
 			}
 		}
 		else
 		{
-			for (i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
-			{
-				for (*freehead = visplanes[i], visplanes[i] = nullptr; *freehead; )
-				{
-					freehead = &(*freehead)->next;
-				}
-			}
+			for (int i = 0; i <= MAXVISPLANES; i++)
+				visplanes[i] = nullptr;
 		}
 	}
 
@@ -282,8 +210,6 @@ namespace swrenderer
 		check->colormap = basecolormap;		// [RH] Save colormap
 		check->sky = sky;
 		check->portal = portal;
-		check->left = viewwidth;			// Was SCREENWIDTH -- killough 11/98
-		check->right = 0;
 		check->extralight = renderportal->stacked_extralight;
 		check->visibility = renderportal->stacked_visibility;
 		check->viewpos = renderportal->stacked_viewpos;
@@ -293,8 +219,6 @@ namespace swrenderer
 		check->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		check->MirrorFlags = renderportal->MirrorFlags;
 		check->CurrentSkybox = Clip3DFloors::Instance()->CurrentSkybox;
-
-		fillshort(check->top, viewwidth, 0x7fff);
 
 		return check;
 	}
@@ -330,8 +254,8 @@ namespace swrenderer
 			intrh = stop;
 		}
 
-		for (x = intrl; x < intrh && pl->top[x] == 0x7fff; x++)
-			;
+		x = intrl;
+		while (x < intrh && pl->top[x] == 0x7fff) x++;
 
 		if (x >= intrh)
 		{
@@ -374,7 +298,6 @@ namespace swrenderer
 			pl = new_pl;
 			pl->left = start;
 			pl->right = stop;
-			fillshort(pl->top, viewwidth, 0x7fff);
 		}
 		return pl;
 	}

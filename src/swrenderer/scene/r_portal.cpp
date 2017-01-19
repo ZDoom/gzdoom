@@ -123,8 +123,6 @@ namespace swrenderer
 			if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES || pl->portal == nullptr)
 			{
 				pl->Render(OPAQUE, false, false);
-				*planes->freehead = pl;
-				planes->freehead = &pl->next;
 				continue;
 			}
 
@@ -164,8 +162,6 @@ namespace swrenderer
 
 			default:
 				pl->Render(OPAQUE, false, false);
-				*planes->freehead = pl;
-				planes->freehead = &pl->next;
 				numskyboxes--;
 				continue;
 			}
@@ -262,8 +258,6 @@ namespace swrenderer
 			{
 				pl->Render(pl->Alpha, pl->Additive, true);
 			}
-			*planes->freehead = pl;
-			planes->freehead = &pl->next;
 		}
 		firstdrawseg = drawsegs;
 		ds_p = drawsegs + savedds_p;
@@ -283,8 +277,7 @@ namespace swrenderer
 
 		if (Clip3DFloors::Instance()->fakeActive) return;
 
-		for (*planes->freehead = planes->visplanes[VisiblePlaneList::MAXVISPLANES], planes->visplanes[VisiblePlaneList::MAXVISPLANES] = nullptr; *planes->freehead; )
-			planes->freehead = &(*planes->freehead)->next;
+		planes->visplanes[VisiblePlaneList::MAXVISPLANES] = nullptr;
 	}
 
 	void RenderPortal::RenderLinePortals()

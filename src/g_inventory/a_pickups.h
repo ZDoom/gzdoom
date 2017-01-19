@@ -59,7 +59,7 @@ public:
 	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void Finalize(FStateDefinitions &statedef);
 
-	FString PickupMessage;
+	FString PickupMsg;
 	int GiveQuest;			// Optionally give one of the quest items.
 	FTextureID AltHUDIcon;
 	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
@@ -72,71 +72,28 @@ class AInventory : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	
-	virtual void Touch (AActor *toucher) override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void MarkPrecacheSounds() const override;
-	virtual void BeginPlay () override;
 	virtual void OnDestroy() override;
 	virtual void Tick() override;
 	virtual bool Grind(bool items) override;
 
-	// virtual methods that only get overridden by special internal classes, like DehackedPickup.
-	// There is no need to expose these to scripts.
-	void DepleteOrDestroy ();
-	virtual bool ShouldRespawn ();
-	virtual void DoPickupSpecial (AActor *toucher);
+	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 
-	// methods that can be overridden by scripts, plus their callers.
-	virtual bool SpecialDropAction (AActor *dropper);
-	bool CallSpecialDropAction(AActor *dropper);
+	void DepleteOrDestroy ();			// virtual on the script side. 
+	bool CallUse(bool pickup);			// virtual on the script side.
+	PalEntry CallGetBlend();			// virtual on the script side.
+	double GetSpeedFactor();			// virtual on the script side.
+	bool GetNoTeleportFreeze();			// virtual on the script side.
 
-	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// This wraps both virtual methods plus a few more checks. 
-
-	virtual AInventory *CreateCopy(AActor *other);
-
-	AInventory *CreateTossable();
-
-	virtual FString PickupMessage();
-	FString GetPickupMessage();
-
-	virtual bool HandlePickup(AInventory *item);
-
-	bool CallUse(bool pickup);
-
-	virtual PalEntry GetBlend();
-	PalEntry CallGetBlend();
-
-	virtual bool ShouldStay();
-	bool CallShouldStay();
-
-	void DoEffect();
-
-	virtual void PlayPickupSound(AActor *toucher);
-	void CallPlayPickupSound(AActor *toucher);
-
-	void CallAttachToOwner(AActor *other);
-
-	// still need to be done.
-	void ModifyDamage(int damage, FName damageType, int &newdamage, bool passive);
-
-	// virtual on the script side only.
-	double GetSpeedFactor();
-	bool GetNoTeleportFreeze();
-
-
-	bool GoAway();
-	void GoAwayAndDie();
-
-	void Hide();
 	void BecomeItem ();
 	void BecomePickup ();
 
 	bool DoRespawn();
+
 	AInventory *PrevItem();		// Returns the item preceding this one in the list.
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
-
-	bool CallStateChain(AActor *actor, FState *state);
 
 	TObjPtr<AActor> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
@@ -151,23 +108,13 @@ public:
 	PClassActor *PickupFlash;	// actor to spawn as pickup flash
 
 	FSoundIDNoInit PickupSound;
-
-
-protected:
-	bool CanPickup(AActor * toucher);
-	void GiveQuest(AActor * toucher);
-
-private:
-	static int StaticLastMessageTic;
-	static FString StaticLastMessage;
 };
 
 class AStateProvider : public AInventory
 {
 	DECLARE_CLASS (AStateProvider, AInventory)
+public:
+	bool CallStateChain(AActor *actor, FState *state);
 };
-
-extern PClassActor *QuestItemClasses[31];
-
 
 #endif //__A_PICKUPS_H__

@@ -52,6 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 #include "gi.h"
 
@@ -3260,11 +3261,20 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		static_cast<AWeapon *>(inv)->AmmoGive2 = int(static_cast<AWeapon *>(inv)->AmmoGive2 * dropammofactor);
 		inv->ItemFlags |= flagmask;
 	}			
-	else if (inv->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))
+	else if (inv->IsKindOf (PClass::FindClass(NAME_DehackedPickup)))
 	{
 		// For weapons and ammo modified by Dehacked we need to flag the item.
-		static_cast<ADehackedPickup *>(inv)->droppedbymonster = true;
+		inv->BoolVar("droppedbymonster") = true;
 	}
+}
+
+// todo: make this a scripted virtual function so it can better deal with some of the classes involved.
+DEFINE_ACTION_FUNCTION(AInventory, ModifyDropAmount)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_INT(dropamount);
+	ModifyDropAmount(self, dropamount);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -3312,11 +3322,19 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				AInventory *inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
 				inv->ItemFlags |= IF_TOSSED;
-				if (inv->CallSpecialDropAction (source))
+
+				IFVIRTUALPTR(inv, AInventory, SpecialDropAction)
 				{
-					// The special action indicates that the item should not spawn
-					inv->Destroy();
-					return NULL;
+					VMValue params[2] = { inv, source };
+					int retval;
+					VMReturn ret(&retval);
+					GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+					if (retval)
+					{
+						// The special action indicates that the item should not spawn
+						inv->Destroy();
+						return NULL;
+					}
 				}
 				return inv;
 			}

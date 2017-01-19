@@ -69,8 +69,6 @@
 void InitThingdef();
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
-PClassActor *QuestItemClasses[31];
-
 
 static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
@@ -448,12 +446,5 @@ void LoadActors()
 
 	// Now we may call the scripted OnDestroy method.
 	PClass::bVMOperational = true;
-	// Since these are defined in DECORATE now the table has to be initialized here.
-	for (int i = 0; i < 31; i++)
-	{
-		char fmt[20];
-		mysnprintf(fmt, countof(fmt), "QuestItem%d", i + 1);
-		QuestItemClasses[i] = PClass::FindActor(fmt);
-	}
 	StateSourceLines.Clear();
 }

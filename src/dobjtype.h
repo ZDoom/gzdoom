@@ -1073,6 +1073,11 @@ enum ETypeVal : BYTE
 	VAL_Class,
 };
 
+inline bool &DObject::BoolVar(FName field)
+{
+	return *(bool*)ScriptVar(field, TypeBool);
+}
+
 inline int &DObject::IntVar(FName field)
 {
 	return *(int*)ScriptVar(field, TypeSInt32);

@@ -1926,6 +1926,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 
 void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *property, AActor *defaults, Baggage &bag)
 {
+	ZCC_ExprConstant one;
 	unsigned parmcount = 1;
 	ZCC_TreeNode *x = property->Values;
 	while (x->SiblingNext != property->Values)
@@ -1933,7 +1934,16 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		x = x->SiblingNext;
 		parmcount++;
 	}
-	if (parmcount != prop->Variables.Size())
+	if (parmcount == 0 && prop->Variables.Size() == 1 && prop->Variables[0]->Type == TypeBool)
+	{
+		// allow boolean properties to have the parameter omitted
+		one.Operation = PEX_ConstValue;
+		one.NodeType = AST_ExprConstant;
+		one.Type = TypeBool;
+		one.IntVal = 1;
+		property->Values = &one;
+	}
+	else if (parmcount != prop->Variables.Size())
 	{
 		Error(x, "Argument count mismatch: Got %u, expected %u", parmcount, prop->Variables.Size());
 		return;
@@ -1954,6 +1964,10 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			addr = ((char*)defaults) + f->Offset;
 		}
 
+		if (f->Type == TypeBool)
+		{
+			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetInt(exp));
+		}
 		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
 			static_cast<PInt*>(f->Type)->SetValue(addr, GetInt(exp));

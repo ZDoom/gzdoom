@@ -478,6 +478,7 @@ public:
 	void Destroy();
 
 	// Add other types as needed.
+	bool &BoolVar(FName field);
 	int &IntVar(FName field);
 	PalEntry &ColorVar(FName field);
 	FName &NameVar(FName field);

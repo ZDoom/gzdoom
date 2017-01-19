@@ -3158,9 +3158,10 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 
 FString ADehackedPickup::PickupMessage ()
 {
+	/*
 	if (RealPickup != nullptr)
 		return RealPickup->PickupMessage ();
-	else return "";
+	else*/ return "";
 }
 
 bool ADehackedPickup::ShouldStay ()

@@ -48,8 +48,6 @@ struct FLinePortal;
 
 #define STEEPSLOPE		(46342/65536.)	// [RH] Minimum floorplane.c value for walking
 
-#define BONUSADD		6
-
 // Inspired by Maes
 extern int bmapnegx;
 extern int bmapnegy;

@@ -52,6 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 #include "gi.h"
 
@@ -3312,11 +3313,19 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				AInventory *inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
 				inv->ItemFlags |= IF_TOSSED;
-				if (inv->CallSpecialDropAction (source))
+
+				IFVIRTUALPTR(inv, AInventory, SpecialDropAction)
 				{
-					// The special action indicates that the item should not spawn
-					inv->Destroy();
-					return NULL;
+					VMValue params[2] = { inv, source };
+					int retval;
+					VMReturn ret(&retval);
+					GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+					if (retval)
+					{
+						// The special action indicates that the item should not spawn
+						inv->Destroy();
+						return NULL;
+					}
 				}
 				return inv;
 			}

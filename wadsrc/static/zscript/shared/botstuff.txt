@@ -24,6 +24,7 @@ class CajunTrace : Actor
 	}
 }
 
-struct Bot native
+class Bot native
 {
+	native Actor dest;
 }

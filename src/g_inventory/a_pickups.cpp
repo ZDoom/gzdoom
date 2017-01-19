@@ -39,7 +39,7 @@ void PClassInventory::DeriveData(PClass *newclass)
 	Super::DeriveData(newclass);
 	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
 
-	newc->PickupMessage = PickupMessage;
+	newc->PickupMsg = PickupMsg;
 	newc->GiveQuest = GiveQuest;
 	newc->AltHUDIcon = AltHUDIcon;
 	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
@@ -79,19 +79,16 @@ void PClassInventory::Finalize(FStateDefinitions &statedef)
 	((AActor*)Defaults)->flags |= MF_SPECIAL;
 }
 
-int AInventory::StaticLastMessageTic;
-FString AInventory::StaticLastMessage;
-
 IMPLEMENT_CLASS(AInventory, false, true)
 
 IMPLEMENT_POINTERS_START(AInventory)
-	IMPLEMENT_POINTER(Owner)
+IMPLEMENT_POINTER(Owner)
 IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD_BIT(AInventory, ItemFlags, bPickupGood, IF_PICKUPGOOD)
 DEFINE_FIELD_BIT(AInventory, ItemFlags, bCreateCopyMoved, IF_CREATECOPYMOVED)
 DEFINE_FIELD_BIT(AInventory, ItemFlags, bInitEffectFailed, IF_INITEFFECTFAILED)
-DEFINE_FIELD(AInventory, Owner)		
+DEFINE_FIELD(AInventory, Owner)
 DEFINE_FIELD(AInventory, Amount)
 DEFINE_FIELD(AInventory, MaxAmount)
 DEFINE_FIELD(AInventory, InterHubAmount)
@@ -101,6 +98,7 @@ DEFINE_FIELD(AInventory, DropTime)
 DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
+DEFINE_FIELD(PClassInventory, PickupMsg)
 
 //===========================================================================
 //
@@ -181,42 +179,6 @@ void AInventory::MarkPrecacheSounds() const
 
 //===========================================================================
 //
-// AInventory :: SpecialDropAction
-//
-// Called by P_DropItem. Return true to prevent the standard drop tossing.
-// A few Strife items that are meant to trigger actions rather than be
-// picked up use this. Normal items shouldn't need it.
-//
-//===========================================================================
-
-bool AInventory::SpecialDropAction (AActor *dropper)
-{
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, SpecialDropAction)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT_NOT_NULL(dropper, AActor);
-	ACTION_RETURN_BOOL(self->SpecialDropAction(dropper));
-}
-
-bool AInventory::CallSpecialDropAction(AActor *dropper)
-{
-	IFVIRTUAL(AInventory, SpecialDropAction)
-	{
-		VMValue params[2] = { (DObject*)this, (DObject*)dropper };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-		return !!retval;
-	}
-	return SpecialDropAction(dropper);
-}
-
-//===========================================================================
-//
 // AInventory :: ShouldRespawn
 //
 // Returns true if the item should hide itself and reappear later when picked
@@ -229,18 +191,6 @@ bool AInventory::ShouldRespawn ()
 	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags2 & DF2_RESPAWN_SUPER)) return false;
 	if (ItemFlags & IF_NEVERRESPAWN) return false;
 	return !!((dmflags & DF_ITEMS_RESPAWN) || (ItemFlags & IF_ALWAYSRESPAWN));
-}
-
-//===========================================================================
-//
-// AInventory :: BeginPlay
-//
-//===========================================================================
-
-void AInventory::BeginPlay ()
-{
-	Super::BeginPlay ();
-	flags |= MF_DROPPED;	// [RH] Items are dropped by default
 }
 
 //===========================================================================
@@ -268,68 +218,6 @@ bool AInventory::Grind(bool items)
 	}
 	// Non-dropped items call the super method for compatibility.
 	return Super::Grind(items);
-}
-
-//===========================================================================
-//
-// AInventory :: DoEffect
-//
-// Handles any effect an item might apply to its owner
-// Normally only used by subclasses of Powerup
-//
-//===========================================================================
-
-void AInventory::DoEffect()
-{
-	IFVIRTUAL(AInventory, DoEffect)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMFrameStack stack;
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-}
-
-
-//===========================================================================
-//
-// AInventory :: HandlePickup
-//
-// Returns true if the pickup was handled (or should not happen at all),
-// false if not.
-//
-//===========================================================================
-
-bool AInventory::HandlePickup (AInventory *item)
-{
-	if (item->GetClass() == GetClass())
-	{
-		if (Amount < MaxAmount || (sv_unlimited_pickup && !item->CallShouldStay()))
-		{
-			if (Amount > 0 && Amount + item->Amount < 0)
-			{
-				Amount = 0x7fffffff;
-			}
-			else
-			{
-				Amount += item->Amount;
-			}
-		
-			if (Amount > MaxAmount && !sv_unlimited_pickup)
-			{
-				Amount = MaxAmount;
-			}
-			item->ItemFlags |= IF_PICKUPGOOD;
-		}
-		return true;
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, HandlePickup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	ACTION_RETURN_BOOL(self->HandlePickup(item));
 }
 
 //===========================================================================
@@ -390,67 +278,6 @@ DEFINE_ACTION_FUNCTION(AInventory, GoAwayAndDie)
 	PARAM_SELF_PROLOGUE(AInventory);
 	self->GoAwayAndDie();
 	return 0;
-}
-
-
-//===========================================================================
-//
-// AInventory :: CreateCopy
-//
-// Returns an actor suitable for placing in an inventory, either itself or
-// a copy based on whether it needs to respawn or not. Returning NULL
-// indicates the item should not be picked up.
-//
-//===========================================================================
-
-AInventory *AInventory::CreateCopy (AActor *other)
-{
-	AInventory *copy;
-
-	Amount = MIN(Amount, MaxAmount);
-	if (GoAway ())
-	{
-		copy = static_cast<AInventory *>(Spawn (GetClass()));
-		copy->Amount = Amount;
-		copy->MaxAmount = MaxAmount;
-	}
-	else
-	{
-		copy = this;
-	}
-	return copy;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, CreateCopy)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(other, AActor);
-	ACTION_RETURN_OBJECT(self->CreateCopy(other));
-}
-
-
-//===========================================================================
-//
-// AInventory::CreateTossable
-//
-// Creates a copy of the item suitable for dropping. If this actor embodies
-// only one item, then it is tossed out itself. Otherwise, the count drops
-// by one and a new item with an amount of 1 is spawned.
-//
-//===========================================================================
-
-AInventory *AInventory::CreateTossable()
-{
-	IFVIRTUAL(AInventory, CreateTossable)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		AInventory *retval;
-		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
-		return retval;
-	}
-	else return CreateTossable();
 }
 
 //===========================================================================
@@ -520,30 +347,6 @@ DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
 
 //===========================================================================
 //
-// AInventory :: ModifyDamage
-//
-// Allows inventory items to manipulate the amount of damage
-// inflicted. Damage is the amount of damage that would be done without manipulation,
-// and newdamage is the amount that should be done after the item has changed
-// it.
-// 'active' means it is called by the inflictor, 'passive' by the target.
-// It may seem that this is redundant and AbsorbDamage is the same. However,
-// AbsorbDamage is called only for players and also depends on other settings
-// which are undesirable for a protection artifact.
-//
-//===========================================================================
-
-void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, bool passive)
-{
-	IFVIRTUAL(AInventory, ModifyDamage)
-	{
-		VMValue params[5] = { (DObject*)this, damage, int(damageType), &newdamage, passive };
-		GlobalVMStack.Call(func, params, 5, nullptr, 0, nullptr);
-	}
-}
-
-//===========================================================================
-//
 // AInventory :: GetSpeedFactor
 //
 //===========================================================================
@@ -556,10 +359,9 @@ double AInventory::GetSpeedFactor()
 	{
 		IFVIRTUALPTR(self, AInventory, GetSpeedFactor)
 		{
-			VMValue params[2] = { (DObject*)self };
-			VMReturn ret;
+			VMValue params[1] = { (DObject*)self };
 			double retval;
-			ret.FloatAt(&retval);
+			VMReturn ret(&retval);
 			GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 			factor *= retval;
 		}
@@ -581,10 +383,9 @@ bool AInventory::GetNoTeleportFreeze ()
 	{
 		IFVIRTUALPTR(self, AInventory, GetNoTeleportFreeze)
 		{
-			VMValue params[2] = { (DObject*)self };
-			VMReturn ret;
+			VMValue params[1] = { (DObject*)self };
 			int retval;
-			ret.IntAt(&retval);
+			VMReturn ret(&retval);
 			GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 			if (retval) return true;
 		}
@@ -610,6 +411,7 @@ bool AInventory::CallUse(bool pickup)
 		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 	}
+	return false;
 }
 
 
@@ -669,100 +471,25 @@ void AInventory::Hide ()
 //
 //
 //===========================================================================
+static int StaticLastMessageTic;
+static FString StaticLastMessage;
 
-static void PrintPickupMessage (const char *str)
+DEFINE_ACTION_FUNCTION(AInventory, PrintPickupMessage)
 {
-	if (str != NULL)
+	PARAM_PROLOGUE;
+	PARAM_BOOL(localview);
+	PARAM_STRING(str);
+	if (str.IsNotEmpty() && localview && (StaticLastMessageTic != gametic || StaticLastMessage.Compare(str)))
 	{
-		if (str[0]=='$') 
-		{
-			str=GStrings(str+1);
-		}
-		if (str[0] != 0) Printf (PRINT_LOW, "%s\n", str);
+		StaticLastMessageTic = gametic;
+		StaticLastMessage = str;
+		const char *pstr = str.GetChars();
+
+		if (pstr[0] == '$')	pstr = GStrings(pstr + 1);
+		if (pstr[0] != 0) Printf(PRINT_LOW, "%s\n", pstr);
+		StatusBar->FlashCrosshair();
 	}
-}
-
-//===========================================================================
-//
-// AInventory :: Touch
-//
-// Handles collisions from another actor, possible adding itself to the
-// collider's inventory.
-//
-//===========================================================================
-
-void AInventory::Touch (AActor *toucher)
-{
-	player_t *player = toucher->player;
-
-	// If a voodoo doll touches something, pretend the real player touched it instead.
-	if (player != NULL)
-	{
-		toucher = player->mo;
-	}
-
-	bool localview = toucher->CheckLocalView(consoleplayer);
-
-	if (!CallTryPickup (toucher, &toucher)) return;
-
-	// This is the only situation when a pickup flash should ever play.
-	if (PickupFlash != NULL && !CallShouldStay())
-	{
-		Spawn(PickupFlash, Pos(), ALLOW_REPLACE);
-	}
-
-	if (!(ItemFlags & IF_QUIET))
-	{
-		FString message = GetPickupMessage ();
-
-		if (message.IsNotEmpty() && localview
-			&& (StaticLastMessageTic != gametic || StaticLastMessage.Compare(message)))
-		{
-			StaticLastMessageTic = gametic;
-			StaticLastMessage = message;
-			PrintPickupMessage (message);
-			StatusBar->FlashCrosshair ();
-		}
-
-		// Special check so voodoo dolls picking up items cause the
-		// real player to make noise.
-		if (player != NULL)
-		{
-			CallPlayPickupSound (player->mo);
-			if (!(ItemFlags & IF_NOSCREENFLASH))
-			{
-				player->bonuscount = BONUSADD;
-			}
-		}
-		else
-		{
-			CallPlayPickupSound (toucher);
-		}
-	}							
-
-	// [RH] Execute an attached special (if any)
-	DoPickupSpecial (toucher);
-
-	if (flags & MF_COUNTITEM)
-	{
-		if (player != NULL)
-		{
-			player->itemcount++;
-		}
-		level.found_items++;
-	}
-
-	if (flags5 & MF5_COUNTSECRET)
-	{
-		P_GiveSecret(player != NULL? (AActor*)player->mo : toucher, true, true, -1);
-	}
-
-	//Added by MC: Check if item taken was the roam destination of any bot
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		if (players[i].Bot != NULL && this == players[i].Bot->dest)
-			players[i].Bot->dest = NULL;
-	}
+	return 0;
 }
 
 //===========================================================================
@@ -783,37 +510,12 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 	}
 }
 
-//===========================================================================
-//
-// AInventory :: PickupMessage
-//
-// Returns the message to print when this actor is picked up.
-//
-//===========================================================================
-
-FString AInventory::PickupMessage ()
-{
-	return GetClass()->PickupMessage;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, PickupMessage)
+DEFINE_ACTION_FUNCTION(AInventory, DoPickupSpecial)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_STRING(self->PickupMessage());
-}
-
-FString AInventory::GetPickupMessage()
-{
-	IFVIRTUAL(AInventory, PickupMessage)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FString retval;
-		ret.StringAt(&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
-		return retval;
-	}
-	else return PickupMessage();
+	PARAM_OBJECT(toucher, AActor);
+	self->DoPickupSpecial(toucher);
+	return 0;
 }
 
 //===========================================================================
@@ -881,17 +583,6 @@ void AInventory::CallPlayPickupSound(AActor *other)
 //
 //===========================================================================
 
-bool AInventory::ShouldStay ()
-{
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, ShouldStay)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_BOOL(self->ShouldStay());
-}
-
 bool AInventory::CallShouldStay()
 {
 	IFVIRTUAL(AInventory, ShouldStay)
@@ -903,7 +594,7 @@ bool AInventory::CallShouldStay()
 		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return !!retval;
 	}
-	else return ShouldStay();
+	return false;
 }
 
 

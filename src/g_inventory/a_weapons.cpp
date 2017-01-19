@@ -56,8 +56,6 @@
 #include "virtual.h"
 
 
-#define BONUSADD 6
-
 extern FFlagDef WeaponFlagDefs[];
 
 IMPLEMENT_CLASS(AWeapon, false, true)

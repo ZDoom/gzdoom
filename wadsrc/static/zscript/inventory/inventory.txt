@@ -8,6 +8,7 @@ struct VisStyle
 class Inventory : Actor native
 {
 	const BLINKTHRESHOLD = (4*32);
+	const BONUSADD = 6;
 
 	native Actor Owner;						// Who owns self item? NULL if it's still a pickup.
 	native int Amount;						// Amount of item self instance has
@@ -22,6 +23,7 @@ class Inventory : Actor native
 	native bool bPickupGood;
 	native bool bCreateCopyMoved;
 	native bool bInitEffectFailed;
+	native meta String PickupMsg;
 	
 	Default
 	{
@@ -34,12 +36,8 @@ class Inventory : Actor native
 	}
 	
 	virtual native color GetBlend ();
-	virtual native bool HandlePickup(Inventory item);
-	virtual native Inventory CreateCopy(Actor other);
-	virtual native bool SpecialDropAction (Actor dropper);
-	virtual native String PickupMessage();
-	virtual native bool ShouldStay();
 	virtual native void PlayPickupSound(Actor user);
+	virtual native void DoPickupSpecial (Actor toucher);
 	
 	native bool DoRespawn();
 	native bool GoAway();
@@ -50,7 +48,7 @@ class Inventory : Actor native
 	// In this case the caller function is more than a simple wrapper around the virtual method and
 	// is what must be actually called to pick up an item.
 	native bool, Actor CallTryPickup(Actor toucher);
-	native bool CallStateChain (Actor actor, State state);
+	native static void PrintPickupMessage (bool localview, String str);
 
 	States(Actor, Overlay, Weapon, Item)
 	{
@@ -74,8 +72,18 @@ class Inventory : Actor native
 		Stop;
 	}
 	
-	// These are regular functions for the item itself.
-	
+	//===========================================================================
+	//
+	// AInventory :: BeginPlay
+	//
+	//===========================================================================
+
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		bDropped = true;	// [RH] Items are dropped by default
+	}
+
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_RestoreSpecialThing1
@@ -131,6 +139,69 @@ class Inventory : Actor native
 		}
 	}
 		
+
+	//===========================================================================
+	//
+	// AInventory :: CreateCopy
+	//
+	// Returns an actor suitable for placing in an inventory, either itself or
+	// a copy based on whether it needs to respawn or not. Returning NULL
+	// indicates the item should not be picked up.
+	//
+	//===========================================================================
+
+	virtual Inventory CreateCopy (Actor other)
+	{
+		Inventory copy;
+
+		Amount = MIN(Amount, MaxAmount);
+		if (GoAway ())
+		{
+			copy = Inventory(Spawn (GetClass()));
+			copy.Amount = Amount;
+			copy.MaxAmount = MaxAmount;
+		}
+		else
+		{
+			copy = self;
+		}
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: HandlePickup
+	//
+	// Returns true if the pickup was handled (or should not happen at all),
+	// false if not.
+	//
+	//===========================================================================
+
+	virtual bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{
+			if (Amount < MaxAmount || (sv_unlimited_pickup && !item.ShouldStay()))
+			{
+				if (Amount > 0 && Amount + item.Amount < 0)
+				{
+					Amount = 0x7fffffff;
+				}
+				else
+				{
+					Amount += item.Amount;
+				}
+			
+				if (Amount > MaxAmount && !sv_unlimited_pickup)
+				{
+					Amount = MaxAmount;
+				}
+				item.bPickupGood = true;
+			}
+			return true;
+		}
+		return false;
+	}
 
 	//===========================================================================
 	//
@@ -238,6 +309,19 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
+	// AInventory :: ShouldStay
+	//
+	// Returns true if the item should not disappear, even temporarily.
+	//
+	//===========================================================================
+
+	virtual bool ShouldStay ()
+	{
+		return false;
+	}
+
+	//===========================================================================
+	//
 	// AInventory :: TryPickupRestricted
 	//
 	//===========================================================================
@@ -313,6 +397,97 @@ class Inventory : Actor native
 		return copy;
 	}
 
+	
+	//===========================================================================
+	//
+	// AInventory :: PickupMessage
+	//
+	// Returns the message to print when this actor is picked up.
+	//
+	//===========================================================================
+
+	virtual String PickupMessage ()
+	{
+		return PickupMsg;
+	}
+	
+	//===========================================================================
+	//
+	// AInventory :: Touch
+	//
+	// Handles collisions from another actor, possible adding itself to the
+	// collider's inventory.
+	//
+	//===========================================================================
+
+	override void Touch (Actor toucher)
+	{
+		let player = toucher.player;
+
+		// If a voodoo doll touches something, pretend the real player touched it instead.
+		if (player != NULL)
+		{
+			toucher = player.mo;
+		}
+
+		bool localview = toucher.CheckLocalView(consoleplayer);
+
+		bool res;
+		[res, toucher] = CallTryPickup(toucher);
+		if (!res) return;
+
+		// This is the only situation when a pickup flash should ever play.
+		if (PickupFlash != NULL && !ShouldStay())
+		{
+			Spawn(PickupFlash, Pos, ALLOW_REPLACE);
+		}
+
+		if (!bQuiet)
+		{
+			PrintPickupMessage(localview, PickupMessage ());
+
+			// Special check so voodoo dolls picking up items cause the
+			// real player to make noise.
+			if (player != NULL)
+			{
+				PlayPickupSound (player.mo);
+				if (!bNoScreenFlash)
+				{
+					player.bonuscount = BONUSADD;
+				}
+			}
+			else
+			{
+				PlayPickupSound (toucher);
+			}
+		}							
+
+		// [RH] Execute an attached special (if any)
+		DoPickupSpecial (toucher);
+
+		if (bCountItem)
+		{
+			if (player != NULL)
+			{
+				player.itemcount++;
+			}
+			level.found_items++;
+		}
+
+		if (bCountSecret)
+		{
+			Actor ac = player != NULL? Actor(player.mo) : toucher;
+			ac.GiveSecret(true, true);
+		}
+
+		//Added by MC: Check if item taken was the roam destination of any bot
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (players[i].Bot != NULL && self == players[i].Bot.dest)
+				players[i].Bot.dest = NULL;
+		}
+	}
+
 	//===========================================================================
 	//
 	// AInventory :: DepleteOrDestroy
@@ -361,11 +536,27 @@ class Inventory : Actor native
 
 	virtual void DoEffect() {}
 	
+	//===========================================================================
+	//
+	// AInventory :: ModifyDamage
+	//
+	// Allows inventory items to manipulate the amount of damage
+	// inflicted. Damage is the amount of damage that would be done without manipulation,
+	// and newdamage is the amount that should be done after the item has changed
+	// it.
+	// 'active' means it is called by the inflictor, 'passive' by the target.
+	// It may seem that this is redundant and AbsorbDamage is the same. However,
+	// AbsorbDamage is called only for players and also depends on other settings
+	// which are undesirable for a protection artifact.
+	//
+	//===========================================================================
+
+	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
 	
+
 	virtual bool Use (bool pickup) { return false; }
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
-	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
 	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
 	virtual void OwnerDied() {}
 
@@ -392,6 +583,22 @@ class Inventory : Actor native
 	//===========================================================================
 
 	virtual void AbsorbDamage (int damage, Name damageType, out int newdamage) {}
+	
+	//===========================================================================
+	//
+	// AInventory :: SpecialDropAction
+	//
+	// Called by P_DropItem. Return true to prevent the standard drop tossing.
+	// A few Strife items that are meant to trigger actions rather than be
+	// picked up use this. Normal items shouldn't need it.
+	//
+	//===========================================================================
+
+	virtual bool SpecialDropAction (Actor dropper)
+	{
+		return false;
+	}
+
 	
 }
 

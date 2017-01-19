@@ -13,7 +13,7 @@ class StateProvider : Inventory native
 	action native void A_ResetReloadCounter();
 }
 
-class CustomInventory : StateProvider native 
+class CustomInventory : StateProvider
 {
 	Default
 	{
@@ -36,7 +36,8 @@ class CustomInventory : StateProvider native
 	deprecated action void A_Lower() {}
 	deprecated action void A_Raise() {}
 	deprecated action void A_CheckReload() {}
-	
+	native bool CallStateChain (Actor actor, State state);
+		
 	//===========================================================================
 	//
 	// ACustomInventory :: SpecialDropAction

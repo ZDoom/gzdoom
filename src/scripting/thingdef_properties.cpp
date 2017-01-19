@@ -1802,7 +1802,7 @@ DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	static_cast<PClassInventory *>(info)->PickupMessage = str;
+	static_cast<PClassInventory *>(info)->PickupMsg = str;
 }
 
 //==========================================================================

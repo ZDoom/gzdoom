@@ -2109,6 +2109,11 @@ static int RemoveClass(const PClass *cls)
 				player = true;
 				continue;
 			}
+			// [SP] Don't remove owned inventory objects.
+			if (static_cast<AInventory *>(actor)->Owner != NULL)
+			{
+				continue;
+			}
 			removecount++; 
 			actor->ClearCounters();
 			actor->Destroy();

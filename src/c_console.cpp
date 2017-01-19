@@ -1749,7 +1749,7 @@ void C_MidPrintBold (FFont *font, const char *msg)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(DObject, C_MidPrint)
+DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(font);

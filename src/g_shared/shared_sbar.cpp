@@ -1673,6 +1673,15 @@ void DBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
 {
 }
 
+DEFINE_ACTION_FUNCTION(_StatusBar, ReceivedWeapon)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(w, AWeapon);
+	StatusBar->ReceivedWeapon(w);
+	return 0;
+}
+
+
 void DBaseStatusBar::SerializeMessages(FSerializer &arc)
 {
 	arc.Array("hudmessages", Messages, 3, true);

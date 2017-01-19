@@ -49,6 +49,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, backpacktype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, Armor2Percent)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon1)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 
 
 const char *GameNames[17] =

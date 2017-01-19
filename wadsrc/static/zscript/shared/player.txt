@@ -308,6 +308,7 @@ userinfo_t	userinfo;
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
 	native String GetUserName();
+	native bool GetNeverSwitch();
 	native void DropWeapon();
 	native void BringUpWeapon();
 

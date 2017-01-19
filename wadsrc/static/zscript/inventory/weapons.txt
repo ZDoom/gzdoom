@@ -11,14 +11,14 @@ class Weapon : StateProvider native
 	const ZOOM_NOSCALETURNING = 2;
 	
 	native uint WeaponFlags;
-	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by this weapon
+	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by self weapon
 	native int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
-	native int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
+	native int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to self weapon
 	native int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	native int Kickback;
 	native float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
 	native sound UpSound, ReadySound;				// Sounds when coming up and idle
-	native class<Weapon> SisterWeaponType;			// Another weapon to pick up with this one
+	native class<Weapon> SisterWeaponType;			// Another weapon to pick up with self one
 	native class<Actor> ProjectileType;				// Projectile used by primary attack
 	native class<Actor> AltProjectileType;			// Projectile used by alternate attack
 	native int SelectionOrder;						// Lower-numbered weapons get picked first
@@ -33,7 +33,7 @@ class Weapon : StateProvider native
 	native float FOVScale;
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
-	native bool bAltFire;							// Set when this weapon's alternate fire is used.
+	native bool bAltFire;							// Set when self weapon's alternate fire is used.
 	native readonly bool bDehAmmo;
 
 	Default
@@ -55,7 +55,6 @@ class Weapon : StateProvider native
 	
 	native bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
 	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
-	native virtual void EndPowerup();
 	
 	virtual State GetReadyState ()
 	{
@@ -248,6 +247,398 @@ class Weapon : StateProvider native
 			player.ReadyWeapon.Crosshair = xhair;
 		}
 	}
+	
+	//===========================================================================
+	//
+	// AWeapon :: TryPickup
+	//
+	// If you can't see the weapon when it's active, then you can't pick it up.
+	//
+	//===========================================================================
+
+	override bool TryPickupRestricted (in out Actor toucher)
+	{
+		// Wrong class, but try to pick up for ammo
+		if (ShouldStay())
+		{ // Can't pick up weapons for other classes in coop netplay
+			return false;
+		}
+
+		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+		if (gaveSome)
+		{
+			GoAwayAndDie ();
+		}
+		return gaveSome;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: TryPickup
+	//
+	//===========================================================================
+
+	override bool TryPickup (in out Actor toucher)
+	{
+		State ReadyState = FindState('Ready');
+		if (ReadyState != NULL && ReadyState.ValidateSpriteFrame())
+		{
+			return Super.TryPickup (toucher);
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: Use
+	//
+	// Make the player switch to self weapon.
+	//
+	//===========================================================================
+
+	override bool Use (bool pickup)
+	{
+		Weapon useweap = self;
+
+		// Powered up weapons cannot be used directly.
+		if (bPowered_Up) return false;
+
+		// If the player is powered-up, use the alternate version of the
+		// weapon, if one exists.
+		if (SisterWeapon != NULL &&
+			SisterWeapon.bPowered_Up &&
+			Owner.FindInventory ("PowerWeaponLevel2", true))
+		{
+			useweap = SisterWeapon;
+		}
+		if (Owner.player != NULL && Owner.player.ReadyWeapon != useweap)
+		{
+			Owner.player.PendingWeapon = useweap;
+		}
+		// Return false so that the weapon is not removed from the inventory.
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: Destroy
+	//
+	//===========================================================================
+
+	override void OnDestroy()
+	{
+		let sister = SisterWeapon;
+
+		if (sister != NULL)
+		{
+			// avoid recursion
+			sister.SisterWeapon = NULL;
+			if (sister != self)
+			{ // In case we are our own sister, don't crash.
+				sister.Destroy();
+			}
+		}
+		Super.OnDestroy();
+	}
+
+
+	//===========================================================================
+	//
+	// AWeapon :: HandlePickup
+	//
+	// Try to leach ammo from the weapon if you have it already.
+	//
+	//===========================================================================
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{
+			if (Weapon(item).PickupForAmmo (self))
+			{
+				item.bPickupGood = true;
+			}
+			if (MaxAmount > 1) //[SP] If amount<maxamount do another pickup test of the weapon itself!
+			{
+				return Super.HandlePickup (item);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: PickupForAmmo
+	//
+	// The player already has self weapon, so try to pick it up for ammo.
+	//
+	//===========================================================================
+
+	protected bool PickupForAmmo (Weapon ownedWeapon)
+	{
+		bool gotstuff = false;
+
+		// Don't take ammo if the weapon sticks around.
+		if (!ShouldStay ())
+		{
+			int oldamount1 = 0;
+			int oldamount2 = 0;
+			if (ownedWeapon.Ammo1 != NULL) oldamount1 = ownedWeapon.Ammo1.Amount;
+			if (ownedWeapon.Ammo2 != NULL) oldamount2 = ownedWeapon.Ammo2.Amount;
+
+			if (AmmoGive1 > 0) gotstuff = AddExistingAmmo (ownedWeapon.Ammo1, AmmoGive1);
+			if (AmmoGive2 > 0) gotstuff |= AddExistingAmmo (ownedWeapon.Ammo2, AmmoGive2);
+
+			let Owner = ownedWeapon.Owner;
+			if (gotstuff && Owner != NULL && Owner.player != NULL)
+			{
+				if (ownedWeapon.Ammo1 != NULL && oldamount1 == 0)
+				{
+					PlayerPawn(Owner).CheckWeaponSwitch(ownedWeapon.Ammo1.GetClass());
+				}
+				else if (ownedWeapon.Ammo2 != NULL && oldamount2 == 0)
+				{
+					PlayerPawn(Owner).CheckWeaponSwitch(ownedWeapon.Ammo2.GetClass());
+				}
+			}
+		}
+		return gotstuff;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: CreateCopy
+	//
+	//===========================================================================
+
+	override Inventory CreateCopy (Actor other)
+	{
+		let copy = Weapon(Super.CreateCopy (other));
+		if (copy != self && copy != null)
+		{
+			copy.AmmoGive1 = AmmoGive1;
+			copy.AmmoGive2 = AmmoGive2;
+		}
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: CreateTossable
+	//
+	// A weapon that's tossed out should contain no ammo, so you can't cheat
+	// by dropping it and then picking it back up.
+	//
+	//===========================================================================
+
+	override Inventory CreateTossable ()
+	{
+		// Only drop the weapon that is meant to be placed in a level. That is,
+		// only drop the weapon that normally gives you ammo.
+		if (SisterWeapon != NULL && 
+			Default.AmmoGive1 == 0 && Default.AmmoGive2 == 0 &&
+			(SisterWeapon.Default.AmmoGive1 > 0 || SisterWeapon.Default.AmmoGive2 > 0))
+		{
+			return SisterWeapon.CreateTossable ();
+		}
+		let copy = Weapon(Super.CreateTossable ());
+
+		if (copy != NULL)
+		{
+			// If self weapon has a sister, remove it from the inventory too.
+			if (SisterWeapon != NULL)
+			{
+				SisterWeapon.SisterWeapon = NULL;
+				SisterWeapon.Destroy ();
+			}
+			// To avoid exploits, the tossed weapon must not have any ammo.
+			copy.AmmoGive1 = 0;
+			copy.AmmoGive2 = 0;
+		}
+		return copy;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: AttachToOwner
+	//
+	//===========================================================================
+
+	override void AttachToOwner (Actor other)
+	{
+		Super.AttachToOwner (other);
+
+		Ammo1 = AddAmmo (Owner, AmmoType1, AmmoGive1);
+		Ammo2 = AddAmmo (Owner, AmmoType2, AmmoGive2);
+		SisterWeapon = AddWeapon (SisterWeaponType);
+		if (Owner.player != NULL)
+		{
+			if (!Owner.player.GetNeverSwitch() && !bNo_Auto_Switch)
+			{
+				Owner.player.PendingWeapon = self;
+			}
+			if (Owner.player.mo == players[consoleplayer].camera)
+			{
+				StatusBar.ReceivedWeapon (self);
+			}
+		}
+		GivenAsMorphWeapon = false; // will be set explicitly by morphing code
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: AddAmmo
+	//
+	// Give some ammo to the owner, even if it's just 0.
+	//
+	//===========================================================================
+
+	protected Ammo AddAmmo (Actor other, Class<Ammo> ammotype, int amount)
+	{
+		Ammo ammoitem;
+
+		if (ammotype == NULL)
+		{
+			return NULL;
+		}
+
+		// [BC] This behavior is from the original Doom. Give 5/2 times as much ammoitem when
+		// we pick up a weapon in deathmatch.
+		if (( deathmatch ) && ( gameinfo.gametype & GAME_DoomChex ))
+			amount = amount * 5 / 2;
+
+		// extra ammoitem in baby mode and nightmare mode
+		if (!bIgnoreSkill)
+		{
+			amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+		}
+		ammoitem = Ammo(other.FindInventory (ammotype));
+		if (ammoitem == NULL)
+		{
+			ammoitem = Ammo(Spawn (ammotype));
+			ammoitem.Amount = MIN (amount, ammoitem.MaxAmount);
+			ammoitem.AttachToOwner (other);
+		}
+		else if (ammoitem.Amount < ammoitem.MaxAmount)
+		{
+			ammoitem.Amount += amount;
+			if (ammoitem.Amount > ammoitem.MaxAmount)
+			{
+				ammoitem.Amount = ammoitem.MaxAmount;
+			}
+		}
+		return ammoitem;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: AddExistingAmmo
+	//
+	// Give the owner some more ammo he already has.
+	//
+	//===========================================================================
+
+	protected bool AddExistingAmmo (Inventory ammo, int amount)
+	{
+		if (ammo != NULL && (ammo.Amount < ammo.MaxAmount || sv_unlimited_pickup))
+		{
+			// extra ammo in baby mode and nightmare mode
+			if (!bIgnoreSkill)
+			{
+				amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+			}
+			ammo.Amount += amount;
+			if (ammo.Amount > ammo.MaxAmount && !sv_unlimited_pickup)
+			{
+				ammo.Amount = ammo.MaxAmount;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: AddWeapon
+	//
+	// Give the owner a weapon if they don't have it already.
+	//
+	//===========================================================================
+
+	protected Weapon AddWeapon (Class<Weapon> weapontype)
+	{
+		Weapon weap;
+
+		if (weapontype == NULL)
+		{
+			return NULL;
+		}
+		weap = Weapon(Owner.FindInventory (weapontype));
+		if (weap == NULL)
+		{
+			weap = Weapon(Spawn (weapontype));
+			weap.AttachToOwner (Owner);
+		}
+		return weap;
+	}
+
+	//===========================================================================
+	//
+	// AWeapon :: ShouldStay
+	//
+	//===========================================================================
+
+	override bool ShouldStay ()
+	{
+		if (((multiplayer &&
+			(!deathmatch && !alwaysapplydmflags)) || sv_weaponstay) &&
+			!bDropped)
+		{
+			return true;
+		}
+		return false;
+	}
+
+
+	//===========================================================================
+	//
+	// AWeapon :: EndPowerUp
+	//
+	// The Tome of Power just expired.
+	//
+	//===========================================================================
+
+	virtual void EndPowerup ()
+	{
+		let player = Owner.player;
+		if (SisterWeapon != NULL && bPowered_Up)
+		{
+			if (GetReadyState() != SisterWeapon.GetReadyState())
+			{
+				if (player.PendingWeapon == NULL ||	player.PendingWeapon == WP_NOCHANGE)
+					player.PendingWeapon = SisterWeapon;
+			}
+			else
+			{
+				let psp = player.FindPSprite(PSP_WEAPON);
+				if (psp != null && psp.Caller == player.ReadyWeapon)
+				{
+					// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+					psp.Caller = SisterWeapon;
+					player.ReadyWeapon = SisterWeapon;
+				}
+				else
+				{
+					// Something went wrong. Initiate a regular weapon change.
+					player.PendingWeapon = SisterWeapon;
+				}
+			}
+		}
+	}
+
+
 }
 
 class WeaponGiver : Weapon
@@ -276,7 +667,7 @@ class WeaponGiver : Weapon
 					master = weap = Weapon(Spawn(di.Name));
 					if (weap != NULL)
 					{
-						weap.bAlwaysPickup = false;	// use the flag of this item only.
+						weap.bAlwaysPickup = false;	// use the flag of self item only.
 						weap.bDropped = bDropped;
 
 						// If our ammo gives are non-negative, transfer them to the real weapon.

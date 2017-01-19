@@ -1,4 +1,18 @@
-// This file contains compatibility wrappers for DECORATE functions with bad parameters.
+// This file contains compatibility wrappers for DECORATE functions with bad parameters or other things that were refactored since the first release.
+
+extend class Object
+{
+	deprecated static int GameType() // deprecated for 2.4.x
+	{ 
+		return gameinfo.gametype; 
+	}
+	
+	deprecated static void C_MidPrint(string fontname, string textlabel, bool bold = false) // deprecated for 2.4.x
+	{
+		return Console.MidPrint(fontname, textlabel, bold);
+	}
+
+}
 
 extend class Actor
 {
@@ -14,5 +28,11 @@ extend class StateProvider
 	{
 		A_FireProjectile(missiletype, angle, useammo, spawnofs_xy, spawnheight, flags, -pitch);
 	}
+}
+
+// this is just a placeholder until the statusbar gets properly exported.
+struct StatusBar native
+{
+	native static void ReceivedWeapon(Weapon weap);
 }
 

@@ -209,6 +209,7 @@ void ADynamicLight::Activate(AActor *activator)
 		m_cycler.SetCycleType(CYCLE_Sin);
 		m_currentRadius = m_cycler.GetVal();
 	}
+	assert(m_currentRadius > 0);
 }
 
 

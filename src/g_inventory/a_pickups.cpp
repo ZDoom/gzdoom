@@ -332,28 +332,6 @@ DEFINE_ACTION_FUNCTION(AInventory, HandlePickup)
 	ACTION_RETURN_BOOL(self->HandlePickup(item));
 }
 
-bool AInventory::CallHandlePickup(AInventory *item)
-{
-	auto self = this;
-	while (self != nullptr)
-	{
-		IFVIRTUALPTR(self, AInventory, HandlePickup)
-		{
-			// Without the type cast this picks the 'void *' assignment...
-			VMValue params[2] = { (DObject*)self, (DObject*)item };
-			VMReturn ret;
-			int retval;
-			ret.IntAt(&retval);
-			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-			if (retval) return true;
-		}
-		else if (self->HandlePickup(item)) return true;
-		self = self->Inventory;
-	}
-	return false;
-}
-
-
 //===========================================================================
 //
 // AInventory :: GoAway
@@ -450,20 +428,6 @@ DEFINE_ACTION_FUNCTION(AInventory, CreateCopy)
 	ACTION_RETURN_OBJECT(self->CreateCopy(other));
 }
 
-AInventory *AInventory::CallCreateCopy(AActor *other)
-{
-	IFVIRTUAL(AInventory, CreateCopy)
-	{
-		VMValue params[2] = { (DObject*)this, (DObject*)other };
-		VMReturn ret;
-		AInventory *retval;
-		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-		return retval;
-	}
-	else return CreateCopy(other);
-}
-
 
 //===========================================================================
 //
@@ -475,47 +439,7 @@ AInventory *AInventory::CallCreateCopy(AActor *other)
 //
 //===========================================================================
 
-AInventory *AInventory::CreateTossable ()
-{
-	AInventory *copy;
-
-	// If this actor lacks a SpawnState, don't drop it. (e.g. A base weapon
-	// like the fist can't be dropped because you'll never see it.)
-	if (SpawnState == ::GetDefault<AActor>()->SpawnState ||
-		SpawnState == NULL)
-	{
-		return NULL;
-	}
-	if ((ItemFlags & (IF_UNDROPPABLE|IF_UNTOSSABLE)) || Owner == NULL || Amount <= 0)
-	{
-		return NULL;
-	}
-	if (Amount == 1 && !(ItemFlags & IF_KEEPDEPLETED))
-	{
-		BecomePickup ();
-		DropTime = 30;
-		flags &= ~(MF_SPECIAL|MF_SOLID);
-		return this;
-	}
-	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->Pos(), NO_REPLACE));
-	if (copy != NULL)
-	{
-		copy->MaxAmount = MaxAmount;
-		copy->Amount = 1;
-		copy->DropTime = 30;
-		copy->flags &= ~(MF_SPECIAL|MF_SOLID);
-		Amount--;
-	}
-	return copy;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, CreateTossable)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_OBJECT(self->CreateTossable());
-}
-
-AInventory *AInventory::CallCreateTossable()
+AInventory *AInventory::CreateTossable()
 {
 	IFVIRTUAL(AInventory, CreateTossable)
 	{
@@ -594,30 +518,6 @@ DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
 	return 0;
 }
 
-//===========================================================================
-//
-// AInventory :: AbsorbDamage
-//
-// Allows inventory items (primarily armor) to reduce the amount of damage
-// taken. Damage is the amount of damage that would be done without armor,
-// and newdamage is the amount that should be done after the armor absorbs
-// it.
-//
-//===========================================================================
-
-void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
-{
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, AbsorbDamage)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_INT(damage);
-	PARAM_NAME(type);
-	PARAM_POINTER(newdmg, int);
-	self->AbsorbDamage(damage, type, *newdmg);
-	return 0;
-}
 //===========================================================================
 //
 // AInventory :: ModifyDamage
@@ -699,18 +599,6 @@ bool AInventory::GetNoTeleportFreeze ()
 //
 //===========================================================================
 
-bool AInventory::Use (bool pickup)
-{
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, Use)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_BOOL(pickup);
-	ACTION_RETURN_BOOL(self->Use(pickup));
-}
-
 bool AInventory::CallUse(bool pickup)
 {
 	IFVIRTUAL(AInventory, Use)
@@ -721,9 +609,7 @@ bool AInventory::CallUse(bool pickup)
 		ret.IntAt(&retval);
 		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
-
 	}
-	else return Use(pickup);
 }
 
 
@@ -1155,28 +1041,6 @@ AInventory *AInventory::NextInv ()
 
 //===========================================================================
 //
-// AInventory :: DrawPowerup
-//
-// Gives this item a chance to draw a special status indicator on the screen.
-// Returns false if it didn't draw anything.
-//
-//===========================================================================
-
-bool AInventory::DrawPowerup (int x, int y)
-{
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, DrawPowerup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_INT(x);
-	PARAM_INT(y);
-	ACTION_RETURN_BOOL(self->DrawPowerup(x, y));
-}
-
-//===========================================================================
-//
 // AInventory :: DoRespawn
 //
 //===========================================================================
@@ -1221,117 +1085,6 @@ void AInventory::GiveQuest (AActor *toucher)
 
 //===========================================================================
 //
-// AInventory :: TryPickup
-//
-//===========================================================================
-
-bool AInventory::TryPickup (AActor *&toucher)
-{
-	AActor *newtoucher = toucher; // in case changed by the powerup
-
-	// If HandlePickup() returns true, it will set the IF_PICKUPGOOD flag
-	// to indicate that this item has been picked up. If the item cannot be
-	// picked up, then it leaves the flag cleared.
-
-	ItemFlags &= ~IF_PICKUPGOOD;
-	if (toucher->Inventory != NULL && toucher->Inventory->CallHandlePickup (this))
-	{
-		// Let something else the player is holding intercept the pickup.
-		if (!(ItemFlags & IF_PICKUPGOOD))
-		{
-			return false;
-		}
-		ItemFlags &= ~IF_PICKUPGOOD;
-		GoAwayAndDie ();
-	}
-	else if (MaxAmount > 0)
-	{
-		// Add the item to the inventory. It is not already there, or HandlePickup
-		// would have already taken care of it.
-		AInventory *copy = CallCreateCopy (toucher);
-		if (copy == NULL)
-		{
-			return false;
-		}
-		// Some powerups cannot activate absolutely, for
-		// example, PowerMorph; fail the pickup if so.
-		if (copy->ItemFlags & IF_INITEFFECTFAILED)
-		{
-			if (copy != this) copy->Destroy();
-			else ItemFlags &= ~IF_INITEFFECTFAILED;
-			return false;
-		}
-		// Handle owner-changing powerups
-		if (copy->ItemFlags & IF_CREATECOPYMOVED)
-		{
-			newtoucher = copy->Owner;
-			copy->Owner = NULL;
-			copy->ItemFlags &= ~IF_CREATECOPYMOVED;
-		}
-		// Continue onwards with the rest
-		copy->CallAttachToOwner (newtoucher);
-		if (ItemFlags & IF_AUTOACTIVATE)
-		{
-			if (copy->CallUse (true))
-			{
-				if (--copy->Amount <= 0)
-				{
-					copy->flags &= ~MF_SPECIAL;
-					copy->SetState (copy->FindState("HoldAndDestroy"));
-				}
-			}
-		}
-	}
-	else if (ItemFlags & IF_AUTOACTIVATE)
-	{
-		// Special case: If an item's MaxAmount is 0, you can still pick it
-		// up if it is autoactivate-able.
-
-		// The item is placed in the inventory just long enough to be used.
-		toucher->AddInventory(this);
-		bool usegood = CallUse(true);
-		toucher->RemoveInventory(this);
-
-		if (usegood)
-		{
-			GoAwayAndDie();
-		}
-		else
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, TryPickup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_POINTER_NOT_NULL(toucher, AActor*);
-	ACTION_RETURN_BOOL(self->TryPickup(*toucher));
-}
-
-//===========================================================================
-//
-// AInventory :: TryPickupRestricted
-//
-//===========================================================================
-
-bool AInventory::TryPickupRestricted (AActor *&toucher)
-{
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, TryPickupRestricted)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_POINTER_NOT_NULL(toucher, AActor*);
-	ACTION_RETURN_BOOL(self->TryPickupRestricted(*toucher));
-}
-
-
-//===========================================================================
-//
 // AInventory :: CallTryPickup
 //
 //===========================================================================
@@ -1355,7 +1108,6 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 			res = !!retval;
 		}
-		else res = TryPickup(toucher);
 	}
 	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
 	{
@@ -1369,7 +1121,6 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 			res = !!retval;
 		}
-		else res = TryPickupRestricted(toucher);
 	}
 	else
 		return false;
@@ -1502,20 +1253,6 @@ CCMD (targetinv)
 //
 //===========================================================================
 
-void AInventory::AttachToOwner (AActor *other)
-{
-	BecomeItem ();
-	other->AddInventory (this);
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, AttachToOwner)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	self->AttachToOwner(other);
-	return 0;
-}
-
 void AInventory::CallAttachToOwner(AActor *other)
 {
 	IFVIRTUAL(AInventory, AttachToOwner)
@@ -1523,39 +1260,8 @@ void AInventory::CallAttachToOwner(AActor *other)
 		VMValue params[2] = { (DObject*)this, (DObject*)other };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
-	else AttachToOwner(other);
 }
 
-
-//===========================================================================
-//
-// AInventory :: DetachFromOwner
-//
-// Performs any special work needed when the item leaves an inventory,
-// either through destruction or becoming a pickup.
-//
-//===========================================================================
-
-void AInventory::DetachFromOwner ()
-{
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, DetachFromOwner)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	self->DetachFromOwner();
-	return 0;
-}
-
-void AInventory::CallDetachFromOwner()
-{
-	IFVIRTUAL(AInventory, DetachFromOwner)
-	{
-		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-	else DetachFromOwner();
-}
 
 //===========================================================================
 //===========================================================================
@@ -1563,47 +1269,4 @@ void AInventory::CallDetachFromOwner()
 
 
 IMPLEMENT_CLASS(AStateProvider, false, false)
-IMPLEMENT_CLASS(ACustomInventory, false, false)
 
-//===========================================================================
-//
-// ACustomInventory :: SpecialDropAction
-//
-//===========================================================================
-
-bool ACustomInventory::SpecialDropAction (AActor *dropper)
-{
-	return CallStateChain (dropper, FindState(NAME_Drop));
-}
-
-//===========================================================================
-//
-// ACustomInventory :: Use
-//
-//===========================================================================
-
-bool ACustomInventory::Use (bool pickup)
-{
-	return CallStateChain (Owner, FindState(NAME_Use));
-}
-
-//===========================================================================
-//
-// ACustomInventory :: TryPickup
-//
-//===========================================================================
-
-bool ACustomInventory::TryPickup (AActor *&toucher)
-{
-	FState *pickupstate = FindState(NAME_Pickup);
-	bool useok = CallStateChain (toucher, pickupstate);
-	if ((useok || pickupstate == NULL) && FindState(NAME_Use) != NULL)
-	{
-		useok = Super::TryPickup (toucher);
-	}
-	else if (useok)
-	{
-		GoAwayAndDie();
-	}
-	return useok;
-}

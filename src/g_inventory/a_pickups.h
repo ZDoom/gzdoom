@@ -90,23 +90,17 @@ public:
 	virtual bool SpecialDropAction (AActor *dropper);
 	bool CallSpecialDropAction(AActor *dropper);
 
-	virtual bool TryPickup(AActor *&toucher);
-	virtual bool TryPickupRestricted(AActor *&toucher);
 	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// This wraps both virtual methods plus a few more checks. 
 
 	virtual AInventory *CreateCopy(AActor *other);
-	AInventory *CallCreateCopy(AActor *other);
 
-	virtual AInventory *CreateTossable();
-	AInventory *CallCreateTossable();
+	AInventory *CreateTossable();
 
 	virtual FString PickupMessage();
 	FString GetPickupMessage();
 
 	virtual bool HandlePickup(AInventory *item);
-	bool CallHandlePickup(AInventory *item);
 
-	virtual bool Use(bool pickup);
 	bool CallUse(bool pickup);
 
 	virtual PalEntry GetBlend();
@@ -120,19 +114,10 @@ public:
 	virtual void PlayPickupSound(AActor *toucher);
 	void CallPlayPickupSound(AActor *toucher);
 
-	virtual void AttachToOwner(AActor *other);
 	void CallAttachToOwner(AActor *other);
 
-	virtual void DetachFromOwner();
-	void CallDetachFromOwner();
-
 	// still need to be done.
-	virtual void AbsorbDamage(int damage, FName damageType, int &newdamage);
 	void ModifyDamage(int damage, FName damageType, int &newdamage, bool passive);
-
-	// visual stuff is for later. Right now the VM has not yet access to the needed functionality.
-	virtual bool DrawPowerup(int x, int y);
-
 
 	// virtual on the script side only.
 	double GetSpeedFactor();
@@ -150,6 +135,8 @@ public:
 	AInventory *PrevItem();		// Returns the item preceding this one in the list.
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
+
+	bool CallStateChain(AActor *actor, FState *state);
 
 	TObjPtr<AActor> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
@@ -178,20 +165,6 @@ private:
 class AStateProvider : public AInventory
 {
 	DECLARE_CLASS (AStateProvider, AInventory)
-};
-
-// CustomInventory: Supports the Use, Pickup, and Drop states from 96x
-class ACustomInventory : public AStateProvider
-{
-	DECLARE_CLASS (ACustomInventory, AStateProvider)
-public:
-
-	// This is used when an inventory item's use state sequence is executed.
-	bool CallStateChain (AActor *actor, FState *state);
-
-	virtual bool TryPickup (AActor *&toucher) override;
-	virtual bool Use (bool pickup) override;
-	virtual bool SpecialDropAction (AActor *dropper) override;
 };
 
 extern PClassActor *QuestItemClasses[31];

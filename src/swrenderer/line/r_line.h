@@ -24,7 +24,7 @@ struct FDynamicColormap;
 
 namespace swrenderer
 {
-	struct visplane_t;
+	struct VisiblePlane;
 
 	struct FWallCoords
 	{
@@ -49,7 +49,7 @@ namespace swrenderer
 	class SWRenderLine
 	{
 	public:
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
 
 	private:
 		bool RenderWallSegment(int x1, int x2);
@@ -62,8 +62,8 @@ namespace swrenderer
 		subsector_t *InSubsector;
 		sector_t *frontsector;
 		sector_t *backsector;
-		visplane_t *floorplane;
-		visplane_t *ceilingplane;
+		VisiblePlane *floorplane;
+		VisiblePlane *ceilingplane;
 
 		seg_t *curline;
 		side_t *sidedef;

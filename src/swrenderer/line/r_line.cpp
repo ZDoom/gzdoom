@@ -56,7 +56,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, visplane_t *linefloorplane, visplane_t *lineceilingplane, bool infog, FDynamicColormap *colormap)
+	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap)
 	{
 		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 		bool			solid;

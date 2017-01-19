@@ -17,12 +17,12 @@
 
 namespace swrenderer
 {
-	struct visplane_light;
+	struct VisiblePlaneLight;
 
 	class RenderFlatPlane : PlaneRenderer
 	{
 	public:
-		void Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
+		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
 
 		static void SetupSlope();
 
@@ -39,7 +39,7 @@ namespace swrenderer
 		fixed_t xscale, yscale;
 		double xstepscale, ystepscale;
 		double basexfrac, baseyfrac;
-		visplane_light *light_list;
+		VisiblePlaneLight *light_list;
 
 		static float yslope[MAXHEIGHT];
 	};
@@ -47,7 +47,7 @@ namespace swrenderer
 	class RenderColoredPlane : PlaneRenderer
 	{
 	public:
-		void Render(visplane_t *pl);
+		void Render(VisiblePlane *pl);
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;

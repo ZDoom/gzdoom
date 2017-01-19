@@ -33,7 +33,7 @@
 
 namespace swrenderer
 {
-	void PlaneRenderer::RenderLines(visplane_t *pl)
+	void PlaneRenderer::RenderLines(VisiblePlane *pl)
 	{
 		// t1/b1 are at x
 		// t2/b2 are at x+1

@@ -17,7 +17,7 @@
 
 namespace swrenderer
 {
-	struct visplane_t;
+	struct VisiblePlane;
 
 	class RenderPortal
 	{
@@ -56,6 +56,6 @@ namespace swrenderer
 		TArray<size_t> interestingStack;
 		TArray<ptrdiff_t> drawsegStack;
 		TArray<DVector3> viewposStack;
-		TArray<visplane_t *> visplaneStack;
+		TArray<VisiblePlane *> visplaneStack;
 	};
 }

@@ -44,7 +44,7 @@
 
 namespace swrenderer
 {
-	void RenderFlatPlane::Render(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
+	void RenderFlatPlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
 	{
 		using namespace drawerargs;
 
@@ -260,7 +260,7 @@ namespace swrenderer
 			// Setup lights for row
 			dc_num_lights = 0;
 			dc_lights = lightbuffer + nextlightindex;
-			visplane_light *cur_node = light_list;
+			VisiblePlaneLight *cur_node = light_list;
 			while (cur_node && nextlightindex < 64 * 1024)
 			{
 				double lightX = cur_node->lightsource->X() - ViewPos.X;
@@ -363,7 +363,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void RenderColoredPlane::Render(visplane_t *pl)
+	void RenderColoredPlane::Render(VisiblePlane *pl)
 	{
 		RenderLines(pl);
 	}

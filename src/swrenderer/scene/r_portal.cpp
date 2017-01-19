@@ -109,7 +109,7 @@ namespace swrenderer
 		AActor *savedcamera = camera;
 		sector_t *savedsector = viewsector;
 
-		for (visplane_t *pl = planes->PopFirstPortalPlane(); pl != nullptr; pl = planes->PopFirstPortalPlane())
+		for (VisiblePlane *pl = planes->PopFirstPortalPlane(); pl != nullptr; pl = planes->PopFirstPortalPlane())
 		{
 			if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES || pl->portal == nullptr)
 			{
@@ -244,7 +244,7 @@ namespace swrenderer
 
 			VisibleSpriteList::Instance()->PopPortal();
 
-			visplane_t *pl;
+			VisiblePlane *pl;
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
 			{

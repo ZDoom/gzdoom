@@ -49,7 +49,7 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer
 {
-	void RenderSkyPlane::Render(visplane_t *pl)
+	void RenderSkyPlane::Render(VisiblePlane *pl)
 	{
 		FTextureID sky1tex, sky2tex;
 		double frontdpos = 0, backdpos = 0;
@@ -252,7 +252,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderSkyPlane::DrawSky(visplane_t *pl)
+	void RenderSkyPlane::DrawSky(VisiblePlane *pl)
 	{
 		int x1 = pl->left;
 		int x2 = pl->right;

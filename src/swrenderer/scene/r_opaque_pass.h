@@ -23,7 +23,7 @@ struct FVoxelDef;
 
 namespace swrenderer
 {
-	struct visplane_t;
+	struct VisiblePlane;
 
 	// The 3072 below is just an arbitrary value picked to avoid
 	// drawing lines the player is too close to that would overflow
@@ -68,7 +68,7 @@ namespace swrenderer
 
 		bool CheckBBox(float *bspcoord);
 		void AddPolyobjs(subsector_t *sub);
-		void FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
+		void FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
 

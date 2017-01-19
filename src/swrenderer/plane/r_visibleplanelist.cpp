@@ -56,9 +56,9 @@ namespace swrenderer
 			plane = nullptr;
 	}
 
-	visplane_t *VisiblePlaneList::Add(unsigned hash)
+	VisiblePlane *VisiblePlaneList::Add(unsigned hash)
 	{
-		visplane_t *newplane = RenderMemory::NewObject<visplane_t>();
+		VisiblePlane *newplane = RenderMemory::NewObject<VisiblePlane>();
 		newplane->next = visplanes[hash];
 		visplanes[hash] = newplane;
 		return newplane;
@@ -71,7 +71,7 @@ namespace swrenderer
 		{
 			for (int i = 0; i <= MAXVISPLANES - 1; i++)
 			{
-				for (visplane_t **probe = &visplanes[i]; *probe != nullptr; )
+				for (VisiblePlane **probe = &visplanes[i]; *probe != nullptr; )
 				{
 					if ((*probe)->sky < 0)
 					{ // fake: move past it
@@ -79,7 +79,7 @@ namespace swrenderer
 					}
 					else
 					{ // not fake: move from list
-						visplane_t *vis = *probe;
+						VisiblePlane *vis = *probe;
 						*probe = vis->next;
 						vis->next = nullptr;
 					}
@@ -93,10 +93,10 @@ namespace swrenderer
 		}
 	}
 
-	visplane_t *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap)
+	VisiblePlane *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap)
 	{
 		secplane_t plane;
-		visplane_t *check;
+		VisiblePlane *check;
 		unsigned hash;						// killough
 		bool isskybox;
 		const FTransform *xform = &xxform;
@@ -223,7 +223,7 @@ namespace swrenderer
 		return check;
 	}
 
-	visplane_t *VisiblePlaneList::GetRange(visplane_t *pl, int start, int stop)
+	VisiblePlane *VisiblePlaneList::GetRange(VisiblePlane *pl, int start, int stop)
 	{
 		int intrl, intrh;
 		int unionl, unionh;
@@ -276,7 +276,7 @@ namespace swrenderer
 			{
 				hash = CalcHash(pl->picnum.GetIndex(), pl->lightlevel, pl->height);
 			}
-			visplane_t *new_pl = Add(hash);
+			VisiblePlane *new_pl = Add(hash);
 
 			new_pl->height = pl->height;
 			new_pl->picnum = pl->picnum;
@@ -307,9 +307,9 @@ namespace swrenderer
 		return visplanes[MAXVISPLANES] != nullptr;
 	}
 
-	visplane_t *VisiblePlaneList::PopFirstPortalPlane()
+	VisiblePlane *VisiblePlaneList::PopFirstPortalPlane()
 	{
-		visplane_t *pl = visplanes[VisiblePlaneList::MAXVISPLANES];
+		VisiblePlane *pl = visplanes[VisiblePlaneList::MAXVISPLANES];
 		if (pl)
 		{
 			visplanes[VisiblePlaneList::MAXVISPLANES] = pl->next;
@@ -325,7 +325,7 @@ namespace swrenderer
 
 	int VisiblePlaneList::Render()
 	{
-		visplane_t *pl;
+		VisiblePlane *pl;
 		int i;
 		int vpcount = 0;
 
@@ -352,7 +352,7 @@ namespace swrenderer
 
 	void VisiblePlaneList::RenderHeight(double height)
 	{
-		visplane_t *pl;
+		VisiblePlane *pl;
 		int i;
 
 		drawerargs::ds_color = 3;

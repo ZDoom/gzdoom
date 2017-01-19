@@ -25,24 +25,24 @@ struct FSectorPortal;
 
 namespace swrenderer
 {
-	struct visplane_light
+	struct VisiblePlaneLight
 	{
 		ADynamicLight *lightsource;
-		visplane_light *next;
+		VisiblePlaneLight *next;
 	};
 
-	struct visplane_t
+	struct VisiblePlane
 	{
-		visplane_t();
+		VisiblePlane();
 
 		void AddLights(FLightNode *node);
 		void Render(fixed_t alpha, bool additive, bool masked);
 
-		visplane_t *next = nullptr;		// Next visplane in hash chain -- killough
+		VisiblePlane *next = nullptr;		// Next visplane in hash chain -- killough
 
 		FDynamicColormap *colormap = nullptr;		// [RH] Support multiple colormaps
 		FSectorPortal *portal = nullptr;			// [RH] Support sky boxes
-		visplane_light *lights = nullptr;
+		VisiblePlaneLight *lights = nullptr;
 
 		FTransform	xform;
 		secplane_t	height;

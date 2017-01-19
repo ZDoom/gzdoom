@@ -20,7 +20,7 @@ struct FSectorPortal;
 
 namespace swrenderer
 {
-	struct visplane_t;
+	struct VisiblePlane;
 
 	class VisiblePlaneList
 	{
@@ -29,11 +29,11 @@ namespace swrenderer
 
 		void Clear(bool fullclear);
 
-		visplane_t *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap);
-		visplane_t *GetRange(visplane_t *pl, int start, int stop);
+		VisiblePlane *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap);
+		VisiblePlane *GetRange(VisiblePlane *pl, int start, int stop);
 
 		bool HasPortalPlanes() const;
-		visplane_t *PopFirstPortalPlane();
+		VisiblePlane *PopFirstPortalPlane();
 		void ClearPortalPlanes();
 
 		int Render();
@@ -41,10 +41,10 @@ namespace swrenderer
 
 	private:
 		VisiblePlaneList();
-		visplane_t *Add(unsigned hash);
+		VisiblePlane *Add(unsigned hash);
 
 		enum { MAXVISPLANES = 128 }; // must be a power of 2
-		visplane_t *visplanes[MAXVISPLANES + 1];
+		VisiblePlane *visplanes[MAXVISPLANES + 1];
 
 		static unsigned CalcHash(int picnum, int lightlevel, const secplane_t &height) { return (unsigned)((picnum) * 3 + (lightlevel)+(FLOAT2FIXED((height).fD())) * 7) & (MAXVISPLANES - 1); }
 	};

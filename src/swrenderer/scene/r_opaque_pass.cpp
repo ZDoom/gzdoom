@@ -398,7 +398,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, visplane_t *floorplane, visplane_t *ceilingplane, bool foggy, FDynamicColormap *basecolormap)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -432,8 +432,8 @@ namespace swrenderer
 		FSectorPortal *portal;
 
 		// kg3D - fake floor stuff
-		visplane_t *backupfp;
-		visplane_t *backupcp;
+		VisiblePlane *backupfp;
+		VisiblePlane *backupcp;
 		//secplane_t templane;
 		lightlist_t *light;
 
@@ -498,7 +498,7 @@ namespace swrenderer
 
 		portal = frontsector->ValidatePortal(sector_t::ceiling);
 
-		visplane_t *ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
+		VisiblePlane *ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 			portal != nullptr ||
 			(frontsector->heightsec &&
@@ -539,7 +539,7 @@ namespace swrenderer
 		// killough 10/98: add support for skies transferred from sidedefs
 		portal = frontsector->ValidatePortal(sector_t::floor);
 
-		visplane_t *floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
+		VisiblePlane *floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
 			frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 			portal != nullptr ||
 			(frontsector->heightsec &&

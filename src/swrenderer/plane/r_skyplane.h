@@ -20,10 +20,10 @@ namespace swrenderer
 	class RenderSkyPlane
 	{
 	public:
-		void Render(visplane_t *pl);
+		void Render(VisiblePlane *pl);
 
 	private:
-		void DrawSky(visplane_t *pl);
+		void DrawSky(VisiblePlane *pl);
 		void DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat);
 		void DrawSkyColumn(int start_x, int y1, int y2, int columns);
 

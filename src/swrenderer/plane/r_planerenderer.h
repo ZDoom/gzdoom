@@ -18,12 +18,12 @@
 
 namespace swrenderer
 {
-	struct visplane_t;
+	struct VisiblePlane;
 
 	class PlaneRenderer
 	{
 	public:
-		void RenderLines(visplane_t *pl);
+		void RenderLines(VisiblePlane *pl);
 
 		virtual void RenderLine(int y, int x1, int x2) = 0;
 		virtual void StepColumn() { }

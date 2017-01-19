@@ -40,6 +40,7 @@ struct Screen native
 struct Console native
 {
 	native static void HideConsole();
+	native static void MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
 }
 
 struct DamageTypeDefinition native
@@ -54,6 +55,7 @@ struct GameInfoStruct native
 	native double Armor2Percent;
 	native String ArmorIcon1;
 	native String ArmorIcon2;
+	native int gametype;
 }
 
 class Object native
@@ -65,12 +67,10 @@ class Object native
 	native static double G_SkillPropertyFloat(int p);
 	native static vector3, int G_PickDeathmatchStart();
 	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
-	native static int GameType();
 	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
-	native static void C_MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
 
@@ -241,6 +241,7 @@ struct State native
 	native bool bDehacked;
 	
 	native int DistanceTo(state other);
+	native bool ValidateSpriteFrame();
 }
 
 struct F3DFloor native

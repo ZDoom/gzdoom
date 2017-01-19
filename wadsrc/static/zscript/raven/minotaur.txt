@@ -252,8 +252,7 @@ class Minotaur : Actor
 		{
 			Class<Actor> type;
 
-			//if (gameinfo.gametype == GAME_Heretic)
-			if (gametype() == GAME_Heretic)
+			if (gameinfo.gametype == GAME_Heretic)
 			{
 				type = "PhoenixPuff";
 			}

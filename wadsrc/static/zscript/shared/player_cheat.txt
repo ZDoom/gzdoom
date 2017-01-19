@@ -123,7 +123,7 @@ extend class PlayerPawn
 
 		if (giveall || name ~== "armor")
 		{
-			if (GameType() != GAME_Hexen)
+			if (gameinfo.gametype != GAME_Hexen)
 			{
 				let armoritem = BasicArmorPickup(Spawn("BasicArmorPickup"));
 				armoritem.SaveAmount = 100*deh.BlueAC;

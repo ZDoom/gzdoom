@@ -136,17 +136,7 @@ public:
 	virtual void MarkPrecacheSounds() const;
 	
 	virtual void Serialize(FSerializer &arc) override;
-	virtual bool ShouldStay () override;
-	virtual void AttachToOwner (AActor *other) override;
-	virtual bool HandlePickup (AInventory *item) override;
-	virtual AInventory *CreateCopy (AActor *other) override;
-	virtual AInventory *CreateTossable () override;
-	virtual bool TryPickup (AActor *&toucher) override;
-	virtual bool TryPickupRestricted (AActor *&toucher) override;
-	virtual bool Use (bool pickup) override;
-	virtual void OnDestroy() override;
 
-	bool PickupForAmmo(AWeapon *ownedWeapon);
 	void PostMorphWeapon();
 
 	// scripted virtuals.
@@ -157,9 +147,6 @@ public:
 	FState *GetAltAtkState (bool hold);
 	
 	FState *GetStateForButtonName (FName button);
-
-
-	virtual void EndPowerup ();
 
 	enum
 	{
@@ -180,10 +167,6 @@ public:
 		BobInverseSmooth
 	};
 
-protected:
-	AInventory *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
-	bool AddExistingAmmo (AInventory *ammo, int amount);
-	AWeapon *AddWeapon (PClassWeapon *weapon);
 };
 
 enum
@@ -215,16 +198,5 @@ enum
 	WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
 	WIF_BOT_EXPLOSIVE =		1<<30,		// weapon fires an explosive
 	WIF_BOT_BFG =			1<<28,		// this is a BFG
-};
-
-class AWeaponGiver : public AWeapon
-{
-	DECLARE_CLASS (AWeaponGiver, AWeapon)
-
-public:
-	virtual bool TryPickup(AActor *&toucher) override;
-	virtual void Serialize(FSerializer &arc) override;
-
-	double DropAmmoFactor;
 };
 

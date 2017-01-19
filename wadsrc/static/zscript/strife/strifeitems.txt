@@ -531,7 +531,7 @@ class Scanner : PowerupGiver
 		{
 			if (Owner.CheckLocalView (consoleplayer))
 			{
-				C_MidPrint("SmallFont", "$TXT_NEEDMAP");
+				Console.MidPrint("SmallFont", "$TXT_NEEDMAP");
 			}
 			return false;
 		}

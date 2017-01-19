@@ -137,7 +137,7 @@ public:
    void SetHalo(bool halo) { m_halo = halo; }
 protected:
    FName m_Name;
-   unsigned char m_Args[5];
+   int m_Args[5];
    double m_Param;
    DVector3 m_Pos;
    ELightType m_type;
@@ -159,7 +159,7 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 	m_type = type;
 
 	m_Pos.Zero();
-	memset(m_Args, 0, 5);
+	memset(m_Args, 0, sizeof(m_Args));
 	m_Param = 0;
 
 	m_subtractive = false;
@@ -1195,8 +1195,8 @@ void gl_SetActorLights(AActor *actor)
 
 	for(;count<actor->dynamiclights.Size();count++)
 	{
-		actor->dynamiclights[count]->flags2|=MF2_DORMANT;
-		memset(actor->dynamiclights[count]->args, 0, sizeof(actor->args));
+		actor->dynamiclights[count]->flags2 |= MF2_DORMANT;
+		memset(actor->dynamiclights[count]->args, 0, 3*sizeof(actor->args[0]));
 	}
 	All.Unclock();
 }

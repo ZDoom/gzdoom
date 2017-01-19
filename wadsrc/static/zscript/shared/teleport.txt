@@ -27,7 +27,7 @@ class TeleportFog : Actor
 	{
 		Super.PostBeginPlay ();
 		A_PlaySound ("misc/teleport", CHAN_BODY);
-		switch (gametype())
+		switch (gameinfo.gametype)
 		{
 		case GAME_Hexen:
 		case GAME_Heretic:

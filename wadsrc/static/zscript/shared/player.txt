@@ -214,7 +214,7 @@ struct PlayerInfo native	// this is what internally is known as player_t
 	native uint original_oldbuttons;
 	native readonly Class<PlayerPawn> cls;
 	native float DesiredFOV;
-	native readonly float FOV;
+	native float FOV;
 	native double viewz;
 	native double viewheight;
 	native double deltaviewheight;
@@ -310,5 +310,8 @@ userinfo_t	userinfo;
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
 	native String GetUserName();
+	native bool GetNeverSwitch();
+	native void DropWeapon();
+	native void BringUpWeapon();
 
 }

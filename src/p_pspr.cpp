@@ -36,7 +36,6 @@
 // MACROS ------------------------------------------------------------------
 
 #define LOWERSPEED				6.
-#define RAISESPEED				6.
 
 // TYPES -------------------------------------------------------------------
 
@@ -511,6 +510,13 @@ void P_BringUpWeapon (player_t *player)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, BringUpWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	P_BringUpWeapon(self);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC P_FireWeapon
@@ -607,6 +613,12 @@ void P_DropWeapon (player_t *player)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, DropWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	P_DropWeapon(self);
+	return 0;
+}
 //============================================================================
 //
 // P_BobWeapon
@@ -1003,40 +1015,6 @@ void A_ReFire(AActor *self, FState *state)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	player_t *player = self->player;
-
-	if (NULL != player)
-	{
-		player->refire = 0;
-	}
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC A_CheckReload
-//
-// Present in Doom, but unused. Also present in Strife, and actually used.
-// This and what I call A_XBowReFire are actually the same thing in Strife,
-// not two separate functions as I have them here.
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckReload)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if (self->player != NULL)
-	{
-		self->player->ReadyWeapon->CheckAmmo (
-			self->player->ReadyWeapon->bAltFire ? AWeapon::AltFire
-			: AWeapon::PrimaryFire, true);
-	}
-	return 0;
-}
 
 //---------------------------------------------------------------------------
 //
@@ -1274,95 +1252,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayRenderStyle)
 
 //---------------------------------------------------------------------------
 //
-// PROC A_Lower
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	player_t *player = self->player;
-	DPSprite *psp;
-
-	if (nullptr == player)
-	{
-		return 0;
-	}
-	if (nullptr == player->ReadyWeapon)
-	{
-		P_BringUpWeapon(player);
-		return 0;
-	}
-	psp = player->GetPSprite(PSP_WEAPON);
-	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
-	{
-		psp->y = WEAPONBOTTOM;
-	}
-	else
-	{
-		psp->y += LOWERSPEED;
-	}
-	if (psp->y < WEAPONBOTTOM)
-	{ // Not lowered all the way yet
-		return 0;
-	}
-	if (player->playerstate == PST_DEAD)
-	{ // Player is dead, so don't bring up a pending weapon
-		// Player is dead, so keep the weapon off screen
-		P_SetPsprite(player, PSP_FLASH, nullptr);
-		psp->SetState(player->ReadyWeapon->FindState(NAME_DeadLowered));
-		return 0;
-	}
-	// [RH] Clear the flash state. Only needed for Strife.
-	P_SetPsprite(player, PSP_FLASH, nullptr);
-	P_BringUpWeapon (player);
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC A_Raise
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_Raise)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if (self == nullptr)
-	{
-		return 0;
-	}
-	player_t *player = self->player;
-	DPSprite *psp;
-
-	if (nullptr == player)
-	{
-		return 0;
-	}
-	if (player->PendingWeapon != WP_NOCHANGE)
-	{
-		P_DropWeapon(player);
-		return 0;
-	}
-	if (player->ReadyWeapon == nullptr)
-	{
-		return 0;
-	}
-	psp = player->GetPSprite(PSP_WEAPON);
-	psp->y -= RAISESPEED;
-	if (psp->y > WEAPONTOP)
-	{ // Not raised all the way yet
-		return 0;
-	}
-	psp->y = WEAPONTOP;
-	psp->SetState(player->ReadyWeapon->GetReadyState());
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
 // PROC A_Overlay
 //
 //---------------------------------------------------------------------------
@@ -1431,47 +1320,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearOverlays)
 }
 
 //
-// A_GunFlash
-//
-enum GF_Flags
-{
-	GFF_NOEXTCHANGE = 1,
-};
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_GunFlash)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_STATE_ACTION_DEF(flash);
-	PARAM_INT_DEF(flags);
-
-	player_t *player = self->player;
-
-	if (nullptr == player)
-	{
-		return 0;
-	}
-	if (!(flags & GFF_NOEXTCHANGE))
-	{
-		player->mo->PlayAttacking2 ();
-	}
-	if (flash == nullptr)
-	{
-		if (player->ReadyWeapon->bAltFire)
-		{
-			flash = player->ReadyWeapon->FindState(NAME_AltFlash);
-		}
-		if (flash == nullptr)
-		{
-			flash = player->ReadyWeapon->FindState(NAME_Flash);
-		}
-	}
-	P_SetPsprite(player, PSP_FLASH, flash);
-	return 0;
-}
-
-
-
-//
 // WEAPON ATTACKS
 //
 
@@ -1514,20 +1362,6 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 	PARAM_POINTER_DEF(t, FTranslatedLineTarget);
 	PARAM_INT_DEF(aimflags);
 	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
-}
-
-
-AActor *P_AimTarget(AActor *mo)
-{
-	FTranslatedLineTarget t;
-	P_BulletSlope(mo, &t, ALF_PORTALRESTRICT);
-	return t.linetarget;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AimTarget)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_OBJECT(P_AimTarget(self));
 }
 
 //------------------------------------------------------------------------

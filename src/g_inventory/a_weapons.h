@@ -217,14 +217,3 @@ enum
 	WIF_BOT_BFG =			1<<28,		// this is a BFG
 };
 
-class AWeaponGiver : public AWeapon
-{
-	DECLARE_CLASS (AWeaponGiver, AWeapon)
-
-public:
-	virtual bool TryPickup(AActor *&toucher) override;
-	virtual void Serialize(FSerializer &arc) override;
-
-	double DropAmmoFactor;
-};
-

@@ -212,7 +212,7 @@ struct PlayerInfo native	// this is what internally is known as player_t
 	native uint original_oldbuttons;
 	native readonly Class<PlayerPawn> cls;
 	native float DesiredFOV;
-	native readonly float FOV;
+	native float FOV;
 	native double viewz;
 	native double viewheight;
 	native double deltaviewheight;

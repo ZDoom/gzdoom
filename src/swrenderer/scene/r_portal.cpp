@@ -94,7 +94,7 @@ namespace swrenderer
 
 		VisiblePlaneList *planes = VisiblePlaneList::Instance();
 
-		if (planes->visplanes[VisiblePlaneList::MAXVISPLANES] == nullptr)
+		if (!planes->HasPortalPlanes())
 			return;
 
 		Clip3DFloors::Instance()->EnterSkybox();
@@ -109,17 +109,8 @@ namespace swrenderer
 		AActor *savedcamera = camera;
 		sector_t *savedsector = viewsector;
 
-		int i;
-		visplane_t *pl;
-
-		for (pl = planes->visplanes[VisiblePlaneList::MAXVISPLANES]; pl != nullptr; pl = planes->visplanes[VisiblePlaneList::MAXVISPLANES])
+		for (visplane_t *pl = planes->PopFirstPortalPlane(); pl != nullptr; pl = planes->PopFirstPortalPlane())
 		{
-			// Pop the visplane off the list now so that if this skybox adds more
-			// skyboxes to the list, they will be drawn instead of skipped (because
-			// new skyboxes go to the beginning of the list instead of the end).
-			planes->visplanes[VisiblePlaneList::MAXVISPLANES] = pl->next;
-			pl->next = nullptr;
-
 			if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES || pl->portal == nullptr)
 			{
 				pl->Render(OPAQUE, false, false);
@@ -181,7 +172,7 @@ namespace swrenderer
 
 			auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
 			auto floorclip = RenderOpaquePass::Instance()->floorclip;
-			for (i = pl->left; i < pl->right; i++)
+			for (int i = pl->left; i < pl->right; i++)
 			{
 				if (pl->top[i] == 0x7fff)
 				{
@@ -253,6 +244,7 @@ namespace swrenderer
 
 			VisibleSpriteList::Instance()->PopPortal();
 
+			visplane_t *pl;
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
 			{
@@ -277,7 +269,7 @@ namespace swrenderer
 
 		if (Clip3DFloors::Instance()->fakeActive) return;
 
-		planes->visplanes[VisiblePlaneList::MAXVISPLANES] = nullptr;
+		planes->ClearPortalPlanes();
 	}
 
 	void RenderPortal::RenderLinePortals()

@@ -302,6 +302,27 @@ namespace swrenderer
 		return pl;
 	}
 
+	bool VisiblePlaneList::HasPortalPlanes() const
+	{
+		return visplanes[MAXVISPLANES] != nullptr;
+	}
+
+	visplane_t *VisiblePlaneList::PopFirstPortalPlane()
+	{
+		visplane_t *pl = visplanes[VisiblePlaneList::MAXVISPLANES];
+		if (pl)
+		{
+			visplanes[VisiblePlaneList::MAXVISPLANES] = pl->next;
+			pl->next = nullptr;
+		}
+		return pl;
+	}
+
+	void VisiblePlaneList::ClearPortalPlanes()
+	{
+		visplanes[VisiblePlaneList::MAXVISPLANES] = nullptr;
+	}
+
 	int VisiblePlaneList::Render()
 	{
 		visplane_t *pl;

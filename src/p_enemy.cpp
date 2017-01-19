@@ -51,7 +51,6 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "math/cmath.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 
 #include "gi.h"
@@ -3228,7 +3227,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 
 	if (dropamount > 0)
 	{
-		if (flagmask != 0 && inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
+		if (flagmask != 0 && inv->IsKindOf(PClass::FindActor(NAME_Ammo)))
 		{
 			inv->Amount = int(dropamount * dropammofactor);
 			inv->ItemFlags |= IF_IGNORESKILL;
@@ -3238,10 +3237,10 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 			inv->Amount = dropamount;
 		}
 	}
-	else if (inv->IsKindOf (RUNTIME_CLASS(AAmmo)))
+	else if (inv->IsKindOf (PClass::FindActor(NAME_Ammo)))
 	{
 		// Half ammo when dropped by bad guys.
-		int amount = static_cast<AAmmo *>(inv)->DropAmount;
+		int amount = inv->IntVar("DropAmount");
 		if (amount <= 0)
 		{
 			amount = MAX(1, int(inv->Amount * dropammofactor));

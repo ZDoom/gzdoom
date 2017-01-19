@@ -482,6 +482,7 @@ public:
 	PalEntry &ColorVar(FName field);
 	FName &NameVar(FName field);
 	double &FloatVar(FName field);
+	template<class T> T*& PointerVar(FName field);
 
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,

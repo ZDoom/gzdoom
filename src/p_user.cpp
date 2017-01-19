@@ -59,8 +59,6 @@
 #include "a_morph.h"
 #include "p_spec.h"
 #include "virtual.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 
 static FRandom pr_skullpop ("SkullPop");
@@ -660,8 +658,6 @@ IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(FlechetteType)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(APlayerChunk, false, false)
-
 void APlayerPawn::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -1076,12 +1072,12 @@ void APlayerPawn::GiveDeathmatchInventory()
 {
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		if (PClassActor::AllActorClasses[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf (PClass::FindActor(NAME_Key)))
 		{
-			AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
-			if (key->KeyNumber != 0)
+			AInventory *key = (AInventory*)GetDefaultByType (PClassActor::AllActorClasses[i]);
+			if (key->special1 != 0)
 			{
-				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i])));
+				key = (AInventory*)Spawn(PClassActor::AllActorClasses[i]);
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();
@@ -1134,7 +1130,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 
 			if ((dmflags & DF_COOP_LOSE_KEYS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(AKey)))
+				item->IsKindOf(PClass::FindActor(NAME_Key)))
 			{
 				item->Destroy();
 			}
@@ -1145,23 +1141,22 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(RUNTIME_CLASS(AArmor)))
+				item->IsKindOf(PClass::FindActor(NAME_Armor)))
 			{
 				if (defitem == NULL)
 				{
 					item->Destroy();
 				}
-				else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmor)))
+				else if (item->IsKindOf(PClass::FindActor(NAME_BasicArmor)))
 				{
-					static_cast<ABasicArmor*>(item)->SavePercent = static_cast<ABasicArmor*>(defitem)->SavePercent;
+					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
 					item->Amount = defitem->Amount;
 				}
-				else if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+				else if (item->IsKindOf(PClass::FindActor(NAME_HexenArmor)))
 				{
-					static_cast<AHexenArmor*>(item)->Slots[0] = static_cast<AHexenArmor*>(defitem)->Slots[0];
-					static_cast<AHexenArmor*>(item)->Slots[1] = static_cast<AHexenArmor*>(defitem)->Slots[1];
-					static_cast<AHexenArmor*>(item)->Slots[2] = static_cast<AHexenArmor*>(defitem)->Slots[2];
-					static_cast<AHexenArmor*>(item)->Slots[3] = static_cast<AHexenArmor*>(defitem)->Slots[3];
+					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
+					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
+					memcpy(SlotsTo, SlotsFrom, 4 * sizeof(double)); 
 				}
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
@@ -1171,7 +1166,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				item->Destroy();
 			}
 			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+				item->IsKindOf(PClass::FindActor(NAME_Ammo)))
 			{
 				if (defitem == NULL)
 				{
@@ -1367,21 +1362,22 @@ void APlayerPawn::GiveDefaultInventory ()
 	// it provides player class based protection that should not affect
 	// any other protection item.
 	PClassPlayerPawn *myclass = GetClass();
-	GiveInventoryType(RUNTIME_CLASS(AHexenArmor));
-	AHexenArmor *harmor = FindInventory<AHexenArmor>();
-	harmor->Slots[4] = myclass->HexenArmor[0];
+	GiveInventoryType(PClass::FindActor(NAME_HexenArmor));
+	auto harmor = FindInventory(NAME_HexenArmor);
+
+	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
+	Slots[4] = myclass->HexenArmor[0];
 	for (int i = 0; i < 4; ++i)
 	{
-		harmor->SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+		SlotsIncrement[i] = myclass->HexenArmor[i + 1];
 	}
 
 	// BasicArmor must come right after that. It should not affect any
 	// other protection item as well but needs to process the damage
 	// before the HexenArmor does.
-	ABasicArmor *barmor = Spawn<ABasicArmor> ();
+	auto barmor = (AInventory*)Spawn(NAME_BasicArmor);
 	barmor->BecomeItem ();
-	barmor->SavePercent = 0;
-	barmor->Amount = 0;
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition
@@ -1701,13 +1697,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(spawntype, APlayerChunk);
+	PARAM_CLASS_DEF(spawntype, APlayerPawn);
 
 	APlayerPawn *mo;
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
+	if (spawntype == NULL || !spawntype->IsDescendantOf(PClass::FindActor("PlayerChunk")))
 	{
 		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
 		if (spawntype == NULL)
@@ -2205,7 +2201,7 @@ void P_DeathThink (player_t *player)
 	player->TickPSprites();
 
 	player->onground = (player->mo->Z() <= player->mo->floorz);
-	if (player->mo->IsKindOf (RUNTIME_CLASS(APlayerChunk)))
+	if (player->mo->IsKindOf (PClass::FindActor("PlayerChunk")))
 	{ // Flying bloody skull or flying ice chunk
 		player->viewheight = 6;
 		player->deltaviewheight = 0;

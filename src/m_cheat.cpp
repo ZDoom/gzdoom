@@ -47,8 +47,6 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 #include "virtual.h"
 
@@ -267,7 +265,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory(PClass::FindActor(BeholdPowers[i]));
+			item = player->mo->FindInventory(BeholdPowers[i]);
 			if (item == NULL)
 			{
 				if (i != 0)
@@ -319,7 +317,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_RESSURECT:
 		if (player->playerstate != PST_LIVE && player->mo != nullptr)
 		{
-			if (player->mo->IsKindOf(RUNTIME_CLASS(APlayerChunk)))
+			if (player->mo->IsKindOf(PClass::FindActor("PlayerChunk")))
 			{
 				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
 			}
@@ -488,7 +486,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				int oldpieces = 1;
 				ret.IntAt(&oldpieces);
 				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
-				item = player->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+				item = player->mo->FindInventory(NAME_Sigil);
 
 				if (item != NULL)
 				{

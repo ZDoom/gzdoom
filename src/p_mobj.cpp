@@ -69,8 +69,6 @@
 #include "thingdef.h"
 #include "d_player.h"
 #include "virtual.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 
@@ -791,13 +789,9 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	item->ClearCounters();
 	if (!givecheat || amount > 0)
 	{
-		if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
+		if (type->IsDescendantOf (PClass::FindActor(NAME_BasicArmorPickup)) || type->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 		{
-			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-		}
-		else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-		{
-			static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
+			item->IntVar(NAME_SaveAmount) *= amount;
 		}
 		else
 		{
@@ -899,14 +893,11 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 		result = true;
 	}
 
-	if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
-		return false;
-
 	// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
 	// and infinite ammo is on
 	if (notakeinfinite &&
 	((dmflags & DF_INFINITE_AMMO) || (player && player->cheats & CF_INFINITEAMMO)) &&
-		item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+		item->IsKindOf(PClass::FindActor(NAME_Ammo)))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
 		result = false;
@@ -1098,9 +1089,9 @@ AInventory *AActor::FindInventory (PClassActor *type, bool subclass)
 	return item;
 }
 
-AInventory *AActor::FindInventory (FName type)
+AInventory *AActor::FindInventory (FName type, bool subclass)
 {
-	return FindInventory(PClass::FindActor(type));
+	return FindInventory(PClass::FindActor(type), subclass);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, FindInventory)
@@ -1171,7 +1162,7 @@ bool AActor::GiveAmmo (PClassInventory *type, int amount)
 DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AAmmo);
+	PARAM_CLASS(type, AInventory);
 	PARAM_INT(amount);
 	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
 }
@@ -1212,12 +1203,7 @@ void AActor::ClearInventory()
 		if (!(inv->ItemFlags & IF_UNDROPPABLE))
 		{
 			inv->DepleteOrDestroy();
-		}
-		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
-		{
-			AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
-			harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
-			invp = &inv->Inventory;
+			if (!(inv->ObjectFlags & OF_EuthanizeMe)) invp = &inv->Inventory;	// was only depleted so advance the pointer manually.
 		}
 		else
 		{
@@ -5711,7 +5697,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 		if (dmflags & DF_NO_ARMOR)
 		{
-			if (i->IsDescendantOf (RUNTIME_CLASS(AArmor)))
+			if (i->IsDescendantOf (PClass::FindActor(NAME_Armor)))
 				return NULL;
 			if (i->TypeName == NAME_Megasphere)
 				return NULL;

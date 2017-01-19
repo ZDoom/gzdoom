@@ -74,8 +74,6 @@
 #include "info.h"
 #include "v_text.h"
 #include "vmbuilder.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -1536,7 +1534,7 @@ static int PatchSprite (int sprNum)
 static int PatchAmmo (int ammoNum)
 {
 	PClassActor *ammoType = NULL;
-	AAmmo *defaultAmmo = NULL;
+	AInventory *defaultAmmo = NULL;
 	int result;
 	int oldclip;
 	int dummy;
@@ -1549,7 +1547,7 @@ static int PatchAmmo (int ammoNum)
 		ammoType = AmmoNames[ammoNum];
 		if (ammoType != NULL)
 		{
-			defaultAmmo = (AAmmo *)GetDefaultByType (ammoType);
+			defaultAmmo = (AInventory*)GetDefaultByType (ammoType);
 			if (defaultAmmo != NULL)
 			{
 				max = &defaultAmmo->MaxAmount;
@@ -1575,8 +1573,8 @@ static int PatchAmmo (int ammoNum)
 	// Calculate the new backpack-given amounts for this ammo.
 	if (ammoType != NULL)
 	{
-		defaultAmmo->BackpackMaxAmount = defaultAmmo->MaxAmount * 2;
-		defaultAmmo->BackpackAmount = defaultAmmo->Amount;
+		defaultAmmo->IntVar("BackpackMaxAmount") = defaultAmmo->MaxAmount * 2;
+		defaultAmmo->IntVar("BackpackAmount") = defaultAmmo->Amount;
 	}
 
 	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
@@ -1591,7 +1589,7 @@ static int PatchAmmo (int ammoNum)
 
 			if (type->IsDescendantOf (ammoType))
 			{
-				defaultAmmo = (AAmmo *)GetDefaultByType (type);
+				defaultAmmo = (AInventory *)GetDefaultByType (type);
 				defaultAmmo->MaxAmount = *max;
 				defaultAmmo->Amount = Scale (defaultAmmo->Amount, *per, oldclip);
 			}
@@ -1673,7 +1671,7 @@ static int PatchWeapon (int weapNum)
 				info->AmmoType1 = (PClassInventory*)AmmoNames[val];
 				if (info->AmmoType1 != NULL)
 				{
-					info->AmmoGive1 = ((AAmmo*)GetDefaultByType (info->AmmoType1))->Amount * 2;
+					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;
 					if (info->AmmoUse1 == 0)
 					{
 						info->AmmoUse1 = 1;
@@ -1949,26 +1947,24 @@ static int PatchMisc (int dummy)
 
 	// Update default item properties by patching the affected items
 	// Note: This won't have any effect on DECORATE derivates of these items!
-	ABasicArmorPickup *armor;
 
-	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
+	auto armor = GetDefaultByName ("GreenArmor");
 	if (armor!=NULL)
 	{
-		armor->SaveAmount = 100 * deh.GreenAC;
-		armor->SavePercent = deh.GreenAC == 1 ? 0.33335 : 0.5;
+		armor->IntVar(NAME_SaveAmount) = 100 * deh.GreenAC;
+		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 0.33335 : 0.5;
 	}
-	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
+	armor = GetDefaultByName ("BlueArmor");
 	if (armor!=NULL)
 	{
-		armor->SaveAmount = 100 * deh.BlueAC;
-		armor->SavePercent = deh.BlueAC == 1 ? 0.33335 : 0.5;
+		armor->IntVar(NAME_SaveAmount) = 100 * deh.BlueAC;
+		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 0.33335 : 0.5;
 	}
 
-	ABasicArmorBonus *barmor;
-	barmor = static_cast<ABasicArmorBonus *> (GetDefaultByName ("ArmorBonus"));
+	auto barmor = GetDefaultByName ("ArmorBonus");
 	if (barmor!=NULL)
 	{
-		barmor->MaxSaveAmount = deh.MaxArmor;
+		barmor->IntVar("MaxSaveAmount") = deh.MaxArmor;
 	}
 
 	AInventory *health;
@@ -2930,7 +2926,7 @@ static bool LoadDehSupp ()
 					else
 					{
 						auto cls = PClass::FindActor(sc.String);
-						if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AAmmo)))
+						if (cls == NULL || !cls->IsDescendantOf(PClass::FindActor(NAME_Ammo)))
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
@@ -3184,7 +3180,7 @@ bool ADehackedPickup::ShouldRespawn ()
 void ADehackedPickup::PlayPickupSound (AActor *toucher)
 {
 	if (RealPickup != nullptr)
-		RealPickup->PlayPickupSound (toucher);
+		RealPickup->CallPlayPickupSound (toucher);
 }
 
 void ADehackedPickup::DoPickupSpecial (AActor *toucher)

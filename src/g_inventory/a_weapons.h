@@ -1,7 +1,6 @@
 #pragma once
 
-#include "a_ammo.h"
-
+#include "a_pickups.h"
 class PClassWeapon;
 class AWeapon;
 
@@ -126,7 +125,7 @@ public:
 	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
 
 	// In-inventory instance variables
-	TObjPtr<AAmmo> Ammo1, Ammo2;
+	TObjPtr<AInventory> Ammo1, Ammo2;
 	TObjPtr<AWeapon> SisterWeapon;
 	float FOVScale;
 	int Crosshair;							// 0 to use player's crosshair
@@ -182,8 +181,8 @@ public:
 	};
 
 protected:
-	AAmmo *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
-	bool AddExistingAmmo (AAmmo *ammo, int amount);
+	AInventory *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
+	bool AddExistingAmmo (AInventory *ammo, int amount);
 	AWeapon *AddWeapon (PClassWeapon *weapon);
 };
 

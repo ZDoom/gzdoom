@@ -244,31 +244,31 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				texture = TexMan(statusBar->CPlayer->mo->ScoreIcon);
 			else if(type == AMMO1)
 			{
-				AAmmo *ammo = statusBar->ammo1;
+				auto ammo = statusBar->ammo1;
 				if(ammo != NULL)
 					GetIcon(ammo);
 			}
 			else if(type == AMMO2)
 			{
-				AAmmo *ammo = statusBar->ammo2;
+				auto ammo = statusBar->ammo2;
 				if(ammo != NULL)
 					GetIcon(ammo);
 			}
 			else if(type == ARMOR)
 			{
-				ABasicArmor *armor = statusBar->armor;
+				auto armor = statusBar->armor;
 				if(armor != NULL && armor->Amount != 0)
 					GetIcon(armor);
 			}
 			else if(type == WEAPONICON)
 			{
-				AWeapon *weapon = statusBar->CPlayer->ReadyWeapon;
+				auto weapon = statusBar->CPlayer->ReadyWeapon;
 				if(weapon != NULL)
 					GetIcon(weapon);
 			}
 			else if(type == SIGIL)
 			{
-				AInventory *item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+				auto item = statusBar->CPlayer->mo->FindInventory(NAME_Sigil);
 				if (item != NULL)
 					texture = TexMan(item->Icon);
 			}
@@ -276,13 +276,15 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				int armorType = type - HEXENARMOR_ARMOR;
 			
-				AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
+				auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
 				if (harmor != NULL)
 				{
-					if (harmor->Slots[armorType] > 0 && harmor->SlotsIncrement[armorType] > 0)
+					double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+					double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
+					if (Slots[armorType] > 0 && SlotsIncrement[armorType] > 0)
 					{
 						//combine the alpha values
-						alpha *= MIN(1., harmor->Slots[armorType] / harmor->SlotsIncrement[armorType]);
+						alpha *= MIN(1., Slots[armorType] / SlotsIncrement[armorType]);
 						texture = statusBar->Images[image];
 					}
 					else
@@ -416,10 +418,10 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 			{
 				PClassActor *cls = PClassActor::AllActorClasses[i];
-				if (cls->IsDescendantOf(RUNTIME_CLASS(AKey)))
+				if (cls->IsDescendantOf(PClass::FindActor(NAME_Key)))
 				{
-					AKey *key = (AKey *)GetDefaultByType(cls);
-					if (key->KeyNumber == keynum)
+					auto key = GetDefaultByType(cls);
+					if (key->special1 == keynum)
 						return cls->TypeName;
 				}
 			}
@@ -554,9 +556,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 
 				for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 				{
-					if(item->IsKindOf(RUNTIME_CLASS(AKey)))
+					if(item->IsKindOf(PClass::FindActor(NAME_Key)))
 					{
-						int keynum = static_cast<AKey *>(item)->KeyNumber;
+						int keynum = item->special1;
 						if(keynum)
 						{
 							if(keynum == conditionalValue[0])
@@ -592,11 +594,11 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else if(condition == ARMORTYPE)
 			{
-				ABasicArmor *armor = (ABasicArmor *) statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
+				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
 				if(armor != NULL)
 				{
-					bool matches1 = armor->ArmorType.GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
-					bool matches2 = armor->ArmorType.GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
+					bool matches1 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
+					bool matches2 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
 
 					drawAlt = 1;
 					if(conditionAnd)
@@ -614,12 +616,12 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else //check the inventory items and draw selected sprite
 			{
-				AInventory* item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(inventoryItem[0]));
+				AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
 				if(item == NULL || !EvaluateOperation(conditionalOperator[0], conditionalValue[0], item->Amount))
 					drawAlt = 1;
 				if(conditionAnd)
 				{
-					item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(inventoryItem[1]));
+					item = statusBar->CPlayer->mo->FindInventory(inventoryItem[1]);
 					bool secondCondition = item != NULL && EvaluateOperation(conditionalOperator[1], conditionalValue[1], item->Amount);
 					if((item != NULL && secondCondition) && drawAlt == 0) //both
 					{
@@ -1076,10 +1078,10 @@ class CommandDrawNumber : public CommandDrawString
 						if(!parenthesized || !sc.CheckToken(TK_StringConst))
 							sc.MustGetToken(TK_Identifier);
 						inventoryItem = PClass::FindActor(sc.String);
-						if(inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
+						if(inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
 						{
 							sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-							inventoryItem = RUNTIME_CLASS(AAmmo);
+							inventoryItem = PClass::FindActor(NAME_Ammo);
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
@@ -1092,10 +1094,10 @@ class CommandDrawNumber : public CommandDrawString
 						if(!parenthesized || !sc.CheckToken(TK_StringConst))
 							sc.MustGetToken(TK_Identifier);
 						inventoryItem = PClass::FindActor(sc.String);
-						if(inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
+						if(inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(inventoryItem)) //must be a kind of ammo
 						{
 							sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-							inventoryItem = RUNTIME_CLASS(AAmmo);
+							inventoryItem = PClass::FindActor(NAME_Ammo);
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
@@ -1409,16 +1411,16 @@ class CommandDrawNumber : public CommandDrawString
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
 					if(harmor != NULL)
 					{
-						add = harmor->Slots[0] + harmor->Slots[1] +
-							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						add += statusBar->armor->SavePercent * 100;
+						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}
 					if(value == ARMORCLASS)
 						add /= 5;
@@ -1435,7 +1437,7 @@ class CommandDrawNumber : public CommandDrawString
 				{
 					// num = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem) / TICRATE + 1;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
 					int retv;
 					VMReturn ret(&retv);
@@ -1474,7 +1476,7 @@ class CommandDrawNumber : public CommandDrawString
 					num = 0;
 					for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 					{
-						if(item->IsKindOf(RUNTIME_CLASS(AKey)))
+						if(item->IsKindOf(PClass::FindActor(NAME_Key)))
 							num++;
 					}
 					break;
@@ -2429,7 +2431,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			int rowWidth = 0;
 			for(unsigned int i = 0;i < number+keyOffset;i++)
 			{
-				while(!item->Icon.isValid() || !item->IsKindOf(RUNTIME_CLASS(AKey)))
+				while(!item->Icon.isValid() || !item->IsKindOf(PClass::FindActor(NAME_Key)))
 				{
 					item = item->Inventory;
 					if(item == NULL)
@@ -2630,10 +2632,10 @@ class CommandDrawBar : public SBarInfoCommand
 						sc.MustGetToken(TK_Identifier);
 				type = AMMO;
 				data.inventoryItem = PClass::FindActor(sc.String);
-				if(data.inventoryItem == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(data.inventoryItem)) //must be a kind of ammo
+				if(data.inventoryItem == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(data.inventoryItem)) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AAmmo);
+					data.inventoryItem = PClass::FindActor(NAME_Ammo);
 				}
 
 				if(parenthesized) sc.MustGetToken(')');
@@ -2825,8 +2827,10 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case POWERUPTIME:
 				{
+					// [value, max] = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem);
+					// value++; max++;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = static_cast<PFunction*>(RUNTIME_CLASS(APlayerPawn)->Symbols.FindSymbol("GetEffectTicsForItem", false))->Variants[0].Implementation;
+					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, data.inventoryItem };
 					VMReturn ret[2];
 					int ival;
@@ -2840,16 +2844,17 @@ class CommandDrawBar : public SBarInfoCommand
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
-					if(harmor != NULL)
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
+					if (harmor != NULL)
 					{
-						add = harmor->Slots[0] + harmor->Slots[1] +
-							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
+
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						add += statusBar->armor->SavePercent * 100;
+						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}
 					value = int(add);
 					max = 100;
@@ -3143,12 +3148,12 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 
 			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
 			{
-				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
+				auto hc = PClass::FindActor("WeaponHolder");
+				if(inv->IsKindOf(hc))
 				{
-					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
-					if(hold->PieceWeapon == weapon)
+					if(inv->PointerVar<PClass>("PieceWeapon") == weapon)
 					{
-						SetTruth(0 != (hold->PieceMask & (1 << (piece-1))), block, statusBar);
+						SetTruth(0 != (inv->IntVar("PieceMask") & (1 << (piece-1))), block, statusBar);
 						return;
 					}
 				}
@@ -3312,10 +3317,10 @@ class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 			for(int i = 0;i < 2;i++)
 			{
 				ammo[i] = PClass::FindClass(sc.String);
-				if(ammo[i] == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo[i])) //must be a kind of ammo
+				if(ammo[i] == NULL || !PClass::FindActor(NAME_Ammo)->IsAncestorOf(ammo[i])) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of ammo.", sc.String);
-					ammo[i] = RUNTIME_CLASS(AAmmo);
+					ammo[i] = PClass::FindActor(NAME_Ammo);
 				}
 		
 				if(sc.CheckToken(TK_OrOr))
@@ -3689,3 +3694,5 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 	sc.MustGetToken('}');
 	return NULL;
 }
+
+

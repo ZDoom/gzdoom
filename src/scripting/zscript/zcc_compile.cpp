@@ -1380,16 +1380,24 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		TArray<PField *> fields;
 		ZCC_Identifier *id = (ZCC_Identifier *)p->Body;
 
-		do
+		if (FName(p->NodeName) == FName("prefix") && Wads.GetLumpFile(Lump) == 0)
 		{
-			auto f = dyn_cast<PField>(type->Symbols.FindSymbol(id->Id, true));
-			if (f == nullptr)
+			// only for internal definitions: Allow setting a prefix. This is only for compatiblity with the old DECORATE property parser, but not for general use.
+			prefix = id->Id;
+		}
+		else
+		{
+			do
 			{
-				Error(id, "Variable %s not found in %s", FName(id->Id).GetChars(), type->TypeName.GetChars());
-			}
-			fields.Push(f);
-			id = (ZCC_Identifier*)id->SiblingNext;
-		} while (id != p->Body);
+				auto f = dyn_cast<PField>(type->Symbols.FindSymbol(id->Id, true));
+				if (f == nullptr)
+				{
+					Error(id, "Variable %s not found in %s", FName(id->Id).GetChars(), type->TypeName.GetChars());
+				}
+				fields.Push(f);
+				id = (ZCC_Identifier*)id->SiblingNext;
+			} while (id != p->Body);
+		}
 
 		FString qualifiedname;
 		// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.

@@ -104,27 +104,6 @@ class WeaponGiver : Weapon native
 	}
 }
 
-class WeaponHolder : Inventory native
-{
-	native int PieceMask;
-	native Class<Actor> PieceWeapon;
-	
-	Default
-	{
-		+NOBLOCKMAP
-		+NOSECTOR
-		+INVENTORY.UNDROPPABLE
-	}
-}
-
-class WeaponPiece : Inventory native 
-{
-	Default
-	{
-		+WEAPONSPAWN;
-	}
-}
-
 struct WeaponSlots native
 {
 	native bool, int, int LocateWeapon(class<Weapon> weap);

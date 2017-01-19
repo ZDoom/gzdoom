@@ -21,7 +21,6 @@
 #include "d_event.h"
 #include "d_player.h"
 #include "vectors.h"
-#include "a_ammo.h"
 
 static FRandom pr_botmove ("BotMove");
 
@@ -346,12 +345,12 @@ void DBot::WhatToGet (AActor *item)
 			}
 		}
 	}
-	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
+	else if (item->IsKindOf (PClass::FindActor(NAME_Ammo)))
 	{
-		AAmmo *ammo = static_cast<AAmmo *> (item);
-		PClassActor *parent = ammo->GetParentAmmo ();
-		AInventory *holdingammo = player->mo->FindInventory (parent);
-
+		auto ac = PClass::FindActor(NAME_Ammo);
+		auto parent = item->GetClass();
+		while (parent->ParentClass != ac) parent = (PClassActor*)(parent->ParentClass);
+		AInventory *holdingammo = player->mo->FindInventory(parent);
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
 		{
 			return;

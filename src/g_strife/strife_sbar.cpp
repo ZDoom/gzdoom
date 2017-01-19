@@ -12,8 +12,6 @@
 #include "m_swap.h"
 #include "templates.h"
 #include "a_keys.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
@@ -257,7 +255,7 @@ public:
 					item != NULL;
 					item = item->Inventory)
 				{
-					if (item->IsKindOf (RUNTIME_CLASS(AKey)))
+					if (item->IsKindOf (PClass::FindActor(NAME_Key)))
 					{
 						if (i == KeyPopPos)
 						{
@@ -404,7 +402,7 @@ private:
 		DrawImage (&HealthBar, 49, 7);
 
 		// Armor
-		item = CPlayer->mo->FindInventory<ABasicArmor>();
+		item = CPlayer->mo->FindInventory(NAME_BasicArmor);
 		if (item != NULL && item->Amount > 0)
 		{
 			DrawImage (TexMan(item->Icon), 2, 9);
@@ -412,7 +410,7 @@ private:
 		}
 
 		// Ammo
-		AAmmo *ammo1, *ammo2;
+		AInventory *ammo1, *ammo2;
 		int ammocount1, ammocount2;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
@@ -432,7 +430,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+		item = CPlayer->mo->FindInventory(NAME_Sigil);
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);
@@ -469,7 +467,7 @@ private:
 			TAG_DONE);
 
 		// Draw armor
-		ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		auto armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 		if (armor != NULL && armor->Amount != 0)
 		{
 			DrINumberOuter (armor->Amount, 35, -10, false, 7);
@@ -480,7 +478,7 @@ private:
 		}
 
 		// Draw ammo
-		AAmmo *ammo1, *ammo2;
+		AInventory *ammo1, *ammo2;
 		int ammocount1, ammocount2;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
@@ -629,7 +627,7 @@ private:
 				i < endpos && item != NULL;
 				item = item->Inventory)
 			{
-				if (!item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (!item->IsKindOf (PClass::FindActor(NAME_Key)))
 					continue;
 				
 				if (i < pos)
@@ -674,7 +672,7 @@ private:
 				item != NULL;
 				item = item->Inventory)
 			{
-				if (item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (item->IsKindOf (PClass::FindActor(NAME_Key)))
 				{
 					i++;
 				}

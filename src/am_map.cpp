@@ -2740,8 +2740,8 @@ void AM_drawKeys ()
 	mpoint_t p;
 	DAngle	 angle;
 
-	TThinkerIterator<AKey> it;
-	AKey *key;
+	TThinkerIterator<AInventory> it(NAME_Key);
+	AInventory *key;
 
 	while ((key = it.Next()) != NULL)
 	{
@@ -2853,7 +2853,7 @@ void AM_drawThings ()
 						// Find the key's own color.
 						// Only works correctly if single-key locks have lower numbers than any-key locks.
 						// That is the case for all default keys, however.
-						if (t->IsKindOf(RUNTIME_CLASS(AKey)))
+						if (t->IsKindOf(PClass::FindActor(NAME_Key)))
 						{
 							if (G_SkillProperty(SKILLP_EasyKey))
 							{
@@ -2863,7 +2863,7 @@ void AM_drawThings ()
 							else if (am_showkeys)
 							{
 								int P_GetMapColorForKey (AInventory * key);
-								int c = P_GetMapColorForKey(static_cast<AKey *>(t));
+								int c = P_GetMapColorForKey(static_cast<AInventory *>(t));
 
 								if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 								else color = AMColors[AMColors.ThingColor_CountItem];
@@ -3048,7 +3048,7 @@ void AM_Drawer ()
 		return;
 
 	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
-	bool allthings = allmap && players[consoleplayer].mo->FindInventory(PClass::FindActor(NAME_PowerScanner), true) != nullptr;
+	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
 
 	if (am_portaloverlay)
 	{

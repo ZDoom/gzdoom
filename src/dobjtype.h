@@ -1093,5 +1093,9 @@ inline double &DObject::FloatVar(FName field)
 	return *(double*)ScriptVar(field, TypeFloat64);
 }
 
-
+template<class T>
+inline T *&DObject::PointerVar(FName field)
+{
+	return *(T**)ScriptVar(field, nullptr);	// pointer check is more tricky and for the handful of uses in the DECORATE parser not worth the hassle.
+}
 #endif

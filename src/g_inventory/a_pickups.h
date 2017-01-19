@@ -82,7 +82,7 @@ public:
 
 	// virtual methods that only get overridden by special internal classes, like DehackedPickup.
 	// There is no need to expose these to scripts.
-	virtual void DepleteOrDestroy ();
+	void DepleteOrDestroy ();
 	virtual bool ShouldRespawn ();
 	virtual void DoPickupSpecial (AActor *toucher);
 

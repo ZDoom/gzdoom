@@ -46,7 +46,6 @@
 #include "templates.h"
 #include "r_defs.h"
 #include "a_pickups.h"
-#include "a_armor.h"
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
@@ -67,9 +66,7 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
-#include "a_weaponpiece.h"
 #include "vmbuilder.h"
-#include "a_ammo.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 
@@ -98,9 +95,9 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool 
 	}
 	return static_cast<PClassActor *>(cls);
 }
-static AAmmo::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
+static AInventory::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
 {
-	return static_cast<AAmmo::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AAmmo), optional));
+	return static_cast<PClassInventory *>(FindClassTentative(name, PClass::FindActor(NAME_Ammo), optional));
 }
 static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optional = false)
 {
@@ -463,23 +460,6 @@ static bool PointerCheck(PType *symtype, PType *checktype)
 	auto symptype = dyn_cast<PClassPointer>(symtype);
 	auto checkptype = dyn_cast<PClassPointer>(checktype);
 	return symptype != nullptr && checkptype != nullptr && symptype->ClassRestriction->IsDescendantOf(checkptype->ClassRestriction);
-}
-
-static void *ScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
-{
-	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
-	if (sym && (sym->Type == type || PointerCheck(sym->Type, type)))
-	{
-		return (((char*)obj) + sym->Offset);
-	}
-	I_Error("Variable %s of type %s not found in %s\n", field.GetChars(), type->DescriptiveName(), cls->TypeName.GetChars());
-	return nullptr;
-}
-
-template<class T>
-T &TypedScriptVar(DObject *obj, PClass *cls, FName field, PType *type)
-{
-	return *(T*)ScriptVar(obj, cls, field, type);
 }
 
 //==========================================================================
@@ -1745,149 +1725,6 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(backpackamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BackpackAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BackpackMaxAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->DropAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxsaveamount, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->MaxSaveAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonus, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BonusCount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonusmax, I, BasicArmorBonus)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->BonusMax = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
-{
-	PROP_INT_PARM(i, 0);
-
-	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		((ABasicArmorPickup*)defaults)->SaveAmount=i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->SaveAmount=i;
-	}
-	else
-	{
-		I_Error("\"Armor.SaveAmount\" requires an actor of type \"Armor\"");
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-
-	i = clamp(i, 0., 100.)/100.;
-	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		((ABasicArmorPickup*)defaults)->SavePercent = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->SavePercent = i;
-	}
-	else
-	{
-		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"\n");
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(maxabsorb, I, Armor)
-{
-	PROP_INT_PARM(i, 0);
-
-	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		((ABasicArmorPickup*)defaults)->MaxAbsorb = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->MaxAbsorb = i;
-	}
-	else
-	{
-		I_Error("\"Armor.MaxAbsorb\" requires an actor of type \"Armor\"\n");
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(maxfullabsorb, I, Armor)
-{
-	PROP_INT_PARM(i, 0);
-
-	// Special case here because this property has to work for 2 unrelated classes
-	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		((ABasicArmorPickup*)defaults)->MaxFullAbsorb = i;
-	}
-	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		((ABasicArmorBonus*)defaults)->MaxFullAbsorb = i;
-	}
-	else
-	{
-		I_Error("\"Armor.MaxFullAbsorb\" requires an actor of type \"Armor\"\n");
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(amount, I, Inventory)
 {
 	PROP_INT_PARM(i, 0);
@@ -2254,24 +2091,6 @@ DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->PieceValue = 1 << (i-1);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->WeaponClass = FindClassTentativeWeapon(str);
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
 	static const char *specialcolormapnames[] = {
@@ -2429,7 +2248,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 			I_Error("Unknown powerup type %s", str);
 		}
 	}
-	TypedScriptVar<PClassActor*>(defaults, info, NAME_PowerupType, NewClassPointer(RUNTIME_CLASS(AActor))) = cls;
+	defaults->PointerVar<PClassActor>(NAME_PowerupType) = cls;
 }
 
 //==========================================================================
@@ -3018,7 +2837,7 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_PlayerClass, NewClassPointer(RUNTIME_CLASS(APlayerPawn))) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
 }
 
 //==========================================================================
@@ -3027,7 +2846,7 @@ DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);
-	TypedScriptVar<int>(defaults, bag.Info, NAME_MorphStyle, TypeSInt32) = i;
+	defaults->IntVar(NAME_MorphStyle) = i;
 }
 
 //==========================================================================
@@ -3036,7 +2855,7 @@ DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_MorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_MorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
@@ -3045,7 +2864,7 @@ DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	TypedScriptVar<PClassActor*>(defaults, bag.Info, NAME_UnMorphFlash, NewClassPointer(RUNTIME_CLASS(AActor))) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 

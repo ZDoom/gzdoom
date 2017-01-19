@@ -85,6 +85,129 @@ class Weapon : StateProvider native
 		return s;
 	}
 	
+	action void A_GunFlash(statelabel flashlabel = null, int flags = 0)
+	{
+		let player = player;
+
+		if (null == player || player.ReadyWeapon == null)
+		{
+			return;
+		}
+		if (!(flags & GFF_NOEXTCHANGE))
+		{
+			player.mo.PlayAttacking2 ();
+		}
+		if (flashlabel == null)
+		{
+			if (player.ReadyWeapon.bAltFire)
+			{
+				flashlabel = 'AltFlash';
+			}
+			if (flashlabel == null)
+			{
+				flashlabel = 'Flash';
+			}
+		}
+		player.SetPsprite(PSP_FLASH, player.ReadyWeapon.FindState(flashlabel));
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_Lower
+	//
+	//---------------------------------------------------------------------------
+
+	action void A_Lower(int lowerspeed = 6)
+	{
+		let player = player;
+
+		if (null == player)
+		{
+			return;
+		}
+		if (null == player.ReadyWeapon)
+		{
+			player.BringUpWeapon();
+			return;
+		}
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
+		{
+			psp.y = WEAPONBOTTOM;
+		}
+		else
+		{
+			psp.y += lowerspeed;
+		}
+		if (psp.y < WEAPONBOTTOM)
+		{ // Not lowered all the way yet
+			return;
+		}
+		if (player.playerstate == PST_DEAD)
+		{ // Player is dead, so don't bring up a pending weapon
+			// Player is dead, so keep the weapon off screen
+			player.SetPsprite(PSP_FLASH, null);
+			psp.SetState(player.ReadyWeapon.FindState('DeadLowered'));
+			return;
+		}
+		// [RH] Clear the flash state. Only needed for Strife.
+		player.SetPsprite(PSP_FLASH, null);
+		player.BringUpWeapon ();
+		return;
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_Raise
+	//
+	//---------------------------------------------------------------------------
+
+	action void A_Raise(int raisespeed = 6)
+	{
+		let player = player;
+
+		if (null == player)
+		{
+			return;
+		}
+		if (player.PendingWeapon != WP_NOCHANGE)
+		{
+			player.DropWeapon();
+			return;
+		}
+		if (player.ReadyWeapon == null)
+		{
+			return;
+		}
+		let psp = player.GetPSprite(PSP_WEAPON);
+		psp.y -= raisespeed;
+		if (psp.y > WEAPONTOP)
+		{ // Not raised all the way yet
+			return;
+		}
+		psp.y = WEAPONTOP;
+		psp.SetState(player.ReadyWeapon.GetReadyState());
+		return;
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_CheckReload
+	//
+	// Present in Doom, but unused. Also present in Strife, and actually used.
+	//
+	//---------------------------------------------------------------------------
+
+	action void A_CheckReload()
+	{
+		let player = self.player;
+		if (player != NULL)
+		{
+			player.ReadyWeapon.CheckAmmo (player.ReadyWeapon.bAltFire ? Weapon.AltFire : Weapon.PrimaryFire, true);
+		}
+	}
+	
+	
 	native action void A_ZoomFactor(double scale = 1, int flags = 0);
 	native action void A_SetCrosshair(int xhair);
 	const ZOOM_INSTANT = 1;

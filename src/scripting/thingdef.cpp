@@ -253,12 +253,16 @@ static void CheckForUnsafeStates(PClassActor *obj)
 		if (obj->Size == RUNTIME_CLASS(AWeapon)->Size) return;	// This class cannot have user variables.
 		test = weaponstates;
 	}
-	else if (obj->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
+	else
 	{
-		if (obj->Size == RUNTIME_CLASS(ACustomInventory)->Size) return;	// This class cannot have user variables.
-		test = pickupstates;
+		auto citype = PClass::FindActor(NAME_CustomInventory);
+		if (obj->IsDescendantOf(citype))
+		{
+			if (obj->Size == citype->Size) return;	// This class cannot have user variables.
+			test = pickupstates;
+		}
+		else return;	// something else derived from AStateProvider. We do not know what this may be.
 	}
-	else return;	// something else derived from AStateProvider. We do not know what this may be.
 
 	for (; *test != NAME_None; test++)
 	{
@@ -338,7 +342,7 @@ static void CheckStates(PClassActor *obj)
 	{
 		CheckStateLabels(obj, weaponstates, SUF_WEAPON, "weapon sprites");
 	}
-	else if (obj->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
+	else if (obj->IsDescendantOf(PClass::FindActor(NAME_CustomInventory)))
 	{
 		CheckStateLabels(obj, pickupstates, SUF_ITEM, "CustomInventory state chain");
 	}

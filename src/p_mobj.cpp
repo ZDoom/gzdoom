@@ -844,7 +844,13 @@ void AActor::RemoveInventory(AInventory *item)
 			if (inv == item)
 			{
 				*invp = item->Inventory;
-				item->DetachFromOwner();
+
+				IFVIRTUALPTR(item, AInventory, DetachFromOwner)
+				{
+					VMValue params[1] = { item };
+					GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				}
+
 				item->Owner = NULL;
 				item->Inventory = NULL;
 				break;
@@ -1032,7 +1038,7 @@ DEFINE_ACTION_FUNCTION(AActor, UseInventory)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	AInventory *drop = item->CallCreateTossable ();
+	AInventory *drop = item->CreateTossable ();
 
 	if (drop == NULL)
 	{
@@ -3622,7 +3628,6 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
 			GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
 		}
-		else item->AbsorbDamage(damage, dmgtype, damage);
 	}
 	return damage;
 }

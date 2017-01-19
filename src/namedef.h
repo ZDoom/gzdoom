@@ -196,6 +196,7 @@ xx(PowerWeaponLevel2)
 xx(PowerFlight)
 xx(PowerSpeed)
 xx(PowerTorch)
+xx(CustomInventory)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

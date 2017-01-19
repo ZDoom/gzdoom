@@ -108,7 +108,7 @@ static FRandom pr_bfgselfdamage("BFGSelfDamage");
 //
 //==========================================================================
 
-bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
+bool AInventory::CallStateChain (AActor *actor, FState *state)
 {
 	INTBOOL result = false;
 	int counter = 0;
@@ -223,6 +223,13 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 	return !!result;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, CallStateChain)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(affectee, AActor);
+	PARAM_STATE(state);
+	ACTION_RETURN_BOOL(self->CallStateChain(affectee, state));
+}
 
 //==========================================================================
 //

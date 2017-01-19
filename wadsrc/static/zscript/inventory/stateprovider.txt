@@ -36,4 +36,48 @@ class CustomInventory : StateProvider native
 	deprecated action void A_Lower() {}
 	deprecated action void A_Raise() {}
 	deprecated action void A_CheckReload() {}
+	
+	//===========================================================================
+	//
+	// ACustomInventory :: SpecialDropAction
+	//
+	//===========================================================================
+
+	override bool SpecialDropAction (Actor dropper)
+	{
+		return CallStateChain (dropper, FindState('Drop'));
+	}
+
+	//===========================================================================
+	//
+	// ACustomInventory :: Use
+	//
+	//===========================================================================
+
+	override bool Use (bool pickup)
+	{
+		return CallStateChain (Owner, FindState('Use'));
+	}
+
+	//===========================================================================
+	//
+	// ACustomInventory :: TryPickup
+	//
+	//===========================================================================
+
+	override bool TryPickup (in out Actor toucher)
+	{
+		let pickupstate = FindState('Pickup');
+		bool useok = CallStateChain (toucher, pickupstate);
+		if ((useok || pickupstate == NULL) && FindState('Use') != NULL)
+		{
+			useok = Super.TryPickup (toucher);
+		}
+		else if (useok)
+		{
+			GoAwayAndDie();
+		}
+		return useok;
+	}
+	
 }

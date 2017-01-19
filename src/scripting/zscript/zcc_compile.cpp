@@ -2464,7 +2464,12 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		PFunction *virtsym = nullptr;
 		if (cls != nullptr && cls->ParentClass != nullptr) virtsym = dyn_cast<PFunction>(cls->ParentClass->Symbols.FindSymbol(FName(f->Name), true));
 		unsigned vindex = ~0u;
-		if (virtsym != nullptr) vindex = virtsym->Variants[0].Implementation->VirtualIndex;
+		if (virtsym != nullptr)
+		{
+			auto imp = virtsym->Variants[0].Implementation;
+			if (imp != nullptr) vindex = imp->VirtualIndex;
+			else Error(f, "Virtual base function %s not found in %s", FName(f->Name).GetChars(), cls->ParentClass->TypeName.GetChars());
+		}
 
 		if (!(f->Flags & ZCC_Native))
 		{

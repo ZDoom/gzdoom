@@ -2620,9 +2620,9 @@ void FParser::SF_MaxPlayerAmmo()
 			if(amount < 0) amount = 0;
 			if (!iammo) 
 			{
-				iammo = static_cast<AInventory *>(Spawn (ammotype));
+				players[playernum].mo->GiveAmmo(ammotype, 1);
+				iammo = players[playernum].mo->FindInventory(ammotype);
 				iammo->Amount = 0;
-				iammo->AttachToOwner (players[playernum].mo);
 			}
 			iammo->MaxAmount = amount;
 

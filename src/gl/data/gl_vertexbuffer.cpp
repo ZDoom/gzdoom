@@ -397,7 +397,9 @@ void FFlatVertexBuffer::CreateFlatVBO()
 	{
 		for(auto &sec : level.sectors)
 		{
-			CreateVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor);
+			secplane_t& plane = sec.GetSecPlane(h);
+			CreateVertices(h, &sec, plane, h == sector_t::floor);
+			plane.vbonormal = plane.normal;
 		}
 	}
 
@@ -464,15 +466,21 @@ void FFlatVertexBuffer::CreateVBO()
 
 void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 {
-	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
+	for (int i = sector_t::floor; i <= sector_t::ceiling; i++)
 	{
-		UpdatePlaneVertices(sector, sector_t::ceiling);
-		sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
-	}
-	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
-	{
-		UpdatePlaneVertices(sector, sector_t::floor);
-		sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
+		if (sector->GetPlaneTexZ(i) != sector->vboheight[i])
+		{
+			UpdatePlaneVertices(sector, i);
+			sector->vboheight[i] = sector->GetPlaneTexZ(i);
+			continue;
+		}
+
+		secplane_t &splane = sector->GetSecPlane(i);
+		if (splane.normal != splane.vbonormal)
+		{
+			UpdatePlaneVertices(sector, i);
+			splane.vbonormal = splane.normal;
+		}
 	}
 }
 

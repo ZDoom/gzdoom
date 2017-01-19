@@ -300,6 +300,7 @@ struct secplane_t
 //private:
 	DVector3 normal;
 	double  D, negiC;	// negative iC because that also saves a negation in all methods using this.
+	DVector3 vbonormal; // [ZZ] for opengl update. it's critical that this member is the last one, so that {{x,y,z},...} works properly
 public:
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplane_t *def);
 

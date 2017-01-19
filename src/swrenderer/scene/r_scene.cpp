@@ -133,7 +133,7 @@ namespace swrenderer
 		// Clear buffers.
 		RenderClipSegment::Instance()->Clear(0, viewwidth);
 		R_ClearDrawSegs();
-		VisiblePlaneList::Instance()->Clear(true);
+		VisiblePlaneList::Instance()->Clear();
 		RenderTranslucentPass::Clear();
 
 		// opening / clipping determination

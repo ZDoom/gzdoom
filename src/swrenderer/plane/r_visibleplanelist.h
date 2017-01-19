@@ -27,7 +27,8 @@ namespace swrenderer
 	public:
 		static VisiblePlaneList *Instance();
 
-		void Clear(bool fullclear);
+		void Clear();
+		void ClearKeepFakePlanes();
 
 		VisiblePlane *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap);
 		VisiblePlane *GetRange(VisiblePlane *pl, int start, int stop);

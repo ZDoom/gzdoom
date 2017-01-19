@@ -165,7 +165,7 @@ namespace swrenderer
 			R_SetViewAngle();
 			validcount++;	// Make sure we see all sprites
 
-			planes->Clear(false);
+			planes->ClearKeepFakePlanes();
 			RenderClipSegment::Instance()->Clear(pl->left, pl->right);
 			WindowLeft = pl->left;
 			WindowRight = pl->right;
@@ -408,7 +408,7 @@ namespace swrenderer
 		PortalDrawseg* prevpds = CurrentPortal;
 		CurrentPortal = pds;
 
-		VisiblePlaneList::Instance()->Clear(false);
+		VisiblePlaneList::Instance()->ClearKeepFakePlanes();
 		RenderClipSegment::Instance()->Clear(pds->x1, pds->x2);
 
 		WindowLeft = pds->x1;

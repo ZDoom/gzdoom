@@ -64,32 +64,29 @@ namespace swrenderer
 		return newplane;
 	}
 
-	void VisiblePlaneList::Clear(bool fullclear)
+	void VisiblePlaneList::Clear()
 	{
-		// Don't clear fake planes if not doing a full clear.
-		if (!fullclear)
+		for (int i = 0; i <= MAXVISPLANES; i++)
+			visplanes[i] = nullptr;
+	}
+
+	void VisiblePlaneList::ClearKeepFakePlanes()
+	{
+		for (int i = 0; i <= MAXVISPLANES - 1; i++)
 		{
-			for (int i = 0; i <= MAXVISPLANES - 1; i++)
+			for (VisiblePlane **probe = &visplanes[i]; *probe != nullptr; )
 			{
-				for (VisiblePlane **probe = &visplanes[i]; *probe != nullptr; )
-				{
-					if ((*probe)->sky < 0)
-					{ // fake: move past it
-						probe = &(*probe)->next;
-					}
-					else
-					{ // not fake: move from list
-						VisiblePlane *vis = *probe;
-						*probe = vis->next;
-						vis->next = nullptr;
-					}
+				if ((*probe)->sky < 0)
+				{ // fake: move past it
+					probe = &(*probe)->next;
+				}
+				else
+				{ // not fake: move from list
+					VisiblePlane *vis = *probe;
+					*probe = vis->next;
+					vis->next = nullptr;
 				}
 			}
-		}
-		else
-		{
-			for (int i = 0; i <= MAXVISPLANES; i++)
-				visplanes[i] = nullptr;
 		}
 	}
 

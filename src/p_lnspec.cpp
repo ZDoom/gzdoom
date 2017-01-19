@@ -2883,7 +2883,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Take power from activator
 				if (power != 4)
 				{
-					AInventory *item = it->FindInventory(PClass::FindActor(powers[power]), true);
+					AInventory *item = it->FindInventory(powers[power], true);
 					if (item != NULL)
 					{
 						item->Destroy ();

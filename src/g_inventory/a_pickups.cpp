@@ -20,7 +20,6 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "virtual.h"
-#include "a_ammo.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
 
@@ -78,71 +77,6 @@ void PClassInventory::Finalize(FStateDefinitions &statedef)
 {
 	Super::Finalize(statedef);
 	((AActor*)Defaults)->flags |= MF_SPECIAL;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC A_RestoreSpecialThing1
-//
-// Make a special thing visible again.
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialThing1)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-
-	self->renderflags &= ~RF_INVISIBLE;
-	if (self->DoRespawn ())
-	{
-		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
-	}
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC A_RestoreSpecialThing2
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialThing2)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-
-	self->flags |= MF_SPECIAL;
-	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
-	{
-		self->flags &= ~MF_NOGRAVITY;
-	}
-	self->SetState (self->SpawnState);
-	return 0;
-}
-
-
-//---------------------------------------------------------------------------
-//
-// PROC A_RestoreSpecialDoomThing
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialDoomThing)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-
-	self->renderflags &= ~RF_INVISIBLE;
-	self->flags |= MF_SPECIAL;
-	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
-	{
-		self->flags &= ~MF_NOGRAVITY;
-	}
-	if (self->DoRespawn ())
-	{
-		self->SetState (self->SpawnState);
-		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
-		Spawn ("ItemFog", self->Pos(), ALLOW_REPLACE);
-	}
-	return 0;
 }
 
 int AInventory::StaticLastMessageTic;
@@ -908,7 +842,7 @@ void AInventory::Touch (AActor *toucher)
 		// real player to make noise.
 		if (player != NULL)
 		{
-			PlayPickupSound (player->mo);
+			CallPlayPickupSound (player->mo);
 			if (!(ItemFlags & IF_NOSCREENFLASH))
 			{
 				player->bonuscount = BONUSADD;
@@ -916,7 +850,7 @@ void AInventory::Touch (AActor *toucher)
 		}
 		else
 		{
-			PlayPickupSound (toucher);
+			CallPlayPickupSound (toucher);
 		}
 	}							
 
@@ -1117,19 +1051,10 @@ void AInventory::OnDestroy ()
 
 void AInventory::DepleteOrDestroy ()
 {
-	// If it's not ammo or an internal armor, destroy it.
-	// Ammo needs to stick around, even when it's zero for the benefit
-	// of the weapons that use it and to maintain the maximum ammo
-	// amounts a backpack might have given.
-	// Armor shouldn't be removed because they only work properly when
-	// they are the last items in the inventory.
-	if (ItemFlags & IF_KEEPDEPLETED)
+	IFVIRTUAL(AInventory, DepleteOrDestroy)
 	{
-		Amount = 0;
-	}
-	else
-	{
-		Destroy();
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }
 
@@ -1273,6 +1198,11 @@ bool AInventory::DoRespawn ()
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, DoRespawn)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_BOOL(self->DoRespawn());
+}
 
 //===========================================================================
 //
@@ -1314,29 +1244,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		ItemFlags &= ~IF_PICKUPGOOD;
 		GoAwayAndDie ();
 	}
-	else if (MaxAmount == 0 && !IsKindOf(RUNTIME_CLASS(AAmmo)))
-	{
-		// Special case: If an item's MaxAmount is 0, you can still pick it
-		// up if it is autoactivate-able.
-		if (!(ItemFlags & IF_AUTOACTIVATE))
-		{
-			return false;
-		}
-		// The item is placed in the inventory just long enough to be used.
-		toucher->AddInventory (this);
-		bool usegood = CallUse (true);
-		toucher->RemoveInventory (this);
-
-		if (usegood)
-		{
-			GoAwayAndDie ();
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
+	else if (MaxAmount > 0)
 	{
 		// Add the item to the inventory. It is not already there, or HandlePickup
 		// would have already taken care of it.
@@ -1372,6 +1280,25 @@ bool AInventory::TryPickup (AActor *&toucher)
 					copy->SetState (copy->FindState("HoldAndDestroy"));
 				}
 			}
+		}
+	}
+	else if (ItemFlags & IF_AUTOACTIVATE)
+	{
+		// Special case: If an item's MaxAmount is 0, you can still pick it
+		// up if it is autoactivate-able.
+
+		// The item is placed in the inventory just long enough to be used.
+		toucher->AddInventory(this);
+		bool usegood = CallUse(true);
+		toucher->RemoveInventory(this);
+
+		if (usegood)
+		{
+			GoAwayAndDie();
+		}
+		else
+		{
+			return false;
 		}
 	}
 	return true;

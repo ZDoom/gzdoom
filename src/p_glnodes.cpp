@@ -1456,13 +1456,12 @@ void P_SetRenderSector()
 				segs[i].PartnerSeg = segs[i].PartnerSeg->PartnerSeg = nullptr;
 			}
 		}
-
-		for (i = 0; i < numsegs; i++)
+	}
+	for (i = 0; i < numsegs; i++)
+	{
+		if (segs[i].PartnerSeg != nullptr && segs[i].PartnerSeg->PartnerSeg != &segs[i])
 		{
-			if (segs[i].PartnerSeg != nullptr && segs[i].PartnerSeg->PartnerSeg != &segs[i])
-			{
-				segs[i].PartnerSeg = nullptr;
-			}
+			segs[i].PartnerSeg = nullptr;
 		}
 	}
 

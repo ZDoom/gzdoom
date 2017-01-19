@@ -31,7 +31,6 @@
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"
-#include "a_armor.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -434,7 +433,7 @@ static bool DoSubstitution (FString &out, const char *in)
 		{
 			if (strnicmp(a, "armor", 5) == 0)
 			{
-				AInventory *armor = player->mo->FindInventory<ABasicArmor>();
+				AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
 				out.AppendFormat("%d", armor != NULL ? armor->Amount : 0);
 			}
 		}

@@ -721,7 +721,7 @@ public:
 
 	// Finds the first item of a particular type.
 	AInventory *FindInventory (PClassActor *type, bool subclass=false);
-	AInventory *FindInventory (FName type);
+	AInventory *FindInventory (FName type, bool subclass = false);
 	template<class T> T *FindInventory ()
 	{
 		return static_cast<T *> (FindInventory (RUNTIME_TEMPLATE_CLASS(T)));

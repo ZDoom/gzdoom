@@ -177,11 +177,6 @@ public:
 
 };
 
-class APlayerChunk : public APlayerPawn
-{
-	DECLARE_CLASS (APlayerChunk, APlayerPawn)
-};
-
 //
 // PlayerPawn flags
 //

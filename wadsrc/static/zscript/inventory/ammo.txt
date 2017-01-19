@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2000-2016 Randy Heit
-** Copyright 2006-2017 Cheistoph Oelckers
+** Copyright 2006-2017 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,18 +33,49 @@
 **
 */
 
-class Ammo : Inventory native
+class Ammo : Inventory
 {
-	native int BackpackAmount;
-	native int BackpackMaxAmount;
+	int BackpackAmount;
+	int BackpackMaxAmount;
+	/*meta*/ int DropAmount;
 	
+	property BackpackAmount: BackpackAmount;
+	property BackpackMaxAmount: BackpackMaxAmount;
+	property DropAmount: DropAmount;
+
 	Default
 	{
 		+INVENTORY.KEEPDEPLETED
 		Inventory.PickupSound "misc/ammo_pkup";
 	}
 
-	native Class<Actor> GetParentAmmo ();
+	//===========================================================================
+	//
+	// AAmmo :: GetParentAmmo
+	//
+	// Returns the least-derived ammo type that this ammo is a descendant of.
+	// That is, if this ammo is an immediate subclass of Ammo, then this ammo's
+	// type is returned. If this ammo's superclass is not Ammo, then this
+	// function travels up the inheritance chain until it finds a type that is
+	// an immediate subclass of Ammo and returns that.
+	//
+	// The intent of this is that all unique ammo types will be immediate
+	// subclasses of Ammo. To make different pickups with different ammo amounts,
+	// you subclass the type of ammo you want a different amount for and edit
+	// that.
+	//
+	//===========================================================================
+
+	Class<Ammo> GetParentAmmo ()
+	{
+		class<Object> type = GetClass();
+
+		while (type.GetParentClass() != "Ammo" && type.GetParentClass() != NULL)
+		{
+			type = type.GetParentClass();
+		}
+		return (class<Ammo>)(type);
+	}
 
 	//===========================================================================
 	//
@@ -113,7 +144,7 @@ class Ammo : Inventory native
 		}
 
 		let type = GetParentAmmo();
-		if (GetClass() == type)
+		if (GetClass() != type && type != null)
 		{
 			if (!GoAway ())
 			{

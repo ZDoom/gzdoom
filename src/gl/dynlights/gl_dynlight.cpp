@@ -178,8 +178,8 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	light->SetOffset(m_Pos);
 	light->halo = m_halo;
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
-	light->m_Radius[0] = int(m_Args[LIGHT_INTENSITY]);
-	light->m_Radius[1] = int(m_Args[LIGHT_SECONDARY_INTENSITY]);
+	light->args[LIGHT_INTENSITY] = int(m_Args[LIGHT_INTENSITY]);
+	light->args[LIGHT_SECONDARY_INTENSITY] = int(m_Args[LIGHT_SECONDARY_INTENSITY]);
 	light->flags4 &= ~(MF4_ADDITIVE | MF4_SUBTRACTIVE | MF4_DONTLIGHTSELF);
 	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
@@ -190,7 +190,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		float pulseTime = float(m_Param / TICRATE);
 
 		light->m_lastUpdate = level.maptime;
-		light->m_cycler.SetParams(float(light->m_Radius[1]), float(light->m_Radius[0]), pulseTime, oldtype == PulseLight);
+		light->m_cycler.SetParams(float(light->args[LIGHT_SECONDARY_INTENSITY]), float(light->args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = light->m_cycler.GetVal();

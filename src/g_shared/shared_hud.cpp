@@ -43,8 +43,6 @@
 #include "c_cvars.h"
 #include "w_wad.h"
 #include "a_keys.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "sbar.h"
 #include "sc_man.h"
 #include "templates.h"
@@ -298,7 +296,7 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 
 	const bool haveBerserk = hud_berserk_health
 		&& nullptr != berserkpic
-		&& nullptr != CPlayer->mo->FindInventory(PClass::FindActor(NAME_PowerStrength));
+		&& nullptr != CPlayer->mo->FindInventory(NAME_PowerStrength);
 
 	DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
 	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
@@ -311,14 +309,15 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 //
 //===========================================================================
 
-static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
+static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 {
 	int ap = 0;
 	int bestslot = 4;
 
 	if (harmor)
 	{
-		auto ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
+		auto ac = (Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4]);
 		ap += int(ac);
 		
 		if (ac)
@@ -327,7 +326,7 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 			bestslot = 0;
 			for (int i = 1; i < 4; ++i)
 			{
-				if (harmor->Slots[i] > harmor->Slots[bestslot])
+				if (Slots[i] > Slots[bestslot])
 				{
 					bestslot = i;
 				}
@@ -386,9 +385,9 @@ static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
 
 static int ktcmp(const void * a, const void * b)
 {
-	AKey *key1 = (AKey*)GetDefaultByType ( *(PClassActor **)a );
-	AKey *key2 = (AKey*)GetDefaultByType ( *(PClassActor **)b );
-	return key1->KeyNumber - key2->KeyNumber;
+	auto key1 = GetDefaultByType ( *(PClassActor **)a );
+	auto key2 = GetDefaultByType ( *(PClassActor **)b );
+	return key1->special1 - key2->special1;
 }
 
 static void SetKeyTypes()
@@ -396,13 +395,14 @@ static void SetKeyTypes()
 	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
 		PClass *ti = PClassActor::AllActorClasses[i];
+		auto kt = PClass::FindActor(NAME_Key);
 
-		if (ti->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (ti->IsDescendantOf(kt))
 		{
 			PClassActor *tia = static_cast<PClassActor *>(ti);
-			AKey *key = (AKey*)GetDefaultByType(tia);
+			AInventory *key = (AInventory*)(GetDefaultByType(tia));
 
-			if (key->Icon.isValid() && key->KeyNumber>0)
+			if (key->Icon.isValid() && key->special1 > 0)
 			{
 				KeyTypes.Push(tia);
 			}
@@ -419,8 +419,7 @@ static void SetKeyTypes()
 	else
 	{
 		// Don't leave the list empty
-		PClassActor *ti = RUNTIME_CLASS(AKey);
-		KeyTypes.Push(ti);
+		KeyTypes.Push(PClass::FindActor(NAME_Key));
 	}
 }
 
@@ -527,7 +526,7 @@ static void AddAmmoToList(AWeapon * weapdef)
 		PClassInventory * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
-			AAmmo * ammodef=(AAmmo*)GetDefaultByType(ti);
+			auto ammodef=(AInventory*)GetDefaultByType(ti);
 
 			if (ammodef && !(ammodef->ItemFlags&IF_INVBAR))
 			{
@@ -561,9 +560,9 @@ static void GetAmmoTextLengths(player_t *CPlayer, int& ammocur, int& ammomax)
 {
 	for (auto type : orderedammos)
 	{
-		AAmmo * ammoitem = static_cast<AAmmo*>(CPlayer->mo->FindInventory(type));
-		AAmmo * inv = nullptr == ammoitem
-			? static_cast<AAmmo*>(GetDefaultByType(type))
+		auto ammoitem = CPlayer->mo->FindInventory(type);
+		auto inv = nullptr == ammoitem
+			? static_cast<AInventory*>(GetDefaultByType(type))
 			: ammoitem;
 		assert(nullptr != inv);
 
@@ -648,9 +647,9 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	{
 
 		PClassInventory * type = orderedammos[i];
-		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
+		auto ammoitem = CPlayer->mo->FindInventory(type);
 
-		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
+		auto inv = ammoitem? ammoitem : (AInventory*)GetDefaultByType(orderedammos[i]);
 		FTextureID AltIcon = GetHUDIcon(type);
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;
@@ -1142,8 +1141,7 @@ void DrawHUD()
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
 		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(CPlayer->mo->FindInventory<ABasicArmor>(), 
-			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
+		DrawArmor(CPlayer->mo->FindInventory(NAME_BasicArmor), CPlayer->mo->FindInventory(NAME_HexenArmor), 5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, i);

@@ -1,5 +1,28 @@
 class DynamicLight : Actor native
 {
+	enum EArgs
+	{
+	   LIGHT_RED = 0,
+	   LIGHT_GREEN = 1,
+	   LIGHT_BLUE = 2,
+	   LIGHT_INTENSITY = 3,
+	   LIGHT_SECONDARY_INTENSITY = 4,
+	   LIGHT_SCALE = 3,
+	};
+
+	enum ELightType
+	{
+		PointLight,
+		PulseLight,
+		FlickerLight,
+		RandomFlickerLight,
+		SectorLight,
+		SpotLight,
+		ColorPulseLight,
+		ColorFlickerLight, 
+		RandomColorFlickerLight
+	};
+	
 	Default
 	{
 		Height 0;
@@ -136,29 +159,6 @@ class PointLightFlickerRandomSubtractive : PointLightFlickerRandom
 	}
 }
 
-
-class VavoomLight : DynamicLight native
-{
-	Default
-	{
-	}
-}
-
-class VavoomLightWhite : VavoomLight native
-{
-	Default
-	{
-	}
-}
-
-class VavoomLightColor : VavoomLight native
-{
-	Default
-	{
-	}
-}
-
-
 class PointLightAttenuated : PointLight
 {
 	Default
@@ -198,4 +198,46 @@ class PointLightFlickerRandomAttenuated :PointLightFlickerRandom
 		+INCOMBAT
 	}
 }
+
+
+class VavoomLight : DynamicLight 
+{
+	Default
+	{
+		DynamicLight.Type "Point";
+	}
+	
+	override void BeginPlay ()
+	{
+		if (CurSector) AddZ(-CurSector.floorplane.ZatPoint(pos.XY), false); // z is absolute for Vavoom lights
+		Super.BeginPlay();
+	}
+}
+
+class VavoomLightWhite : VavoomLight
+{
+	override void BeginPlay ()
+	{
+		args[LIGHT_INTENSITY] = args[0] * 4;
+		args[LIGHT_RED] = 128;
+		args[LIGHT_GREEN] = 128;
+		args[LIGHT_BLUE] = 128;
+
+		Super.BeginPlay();
+	}
+}
+
+class VavoomLightColor : VavoomLight
+{
+	override void BeginPlay ()
+	{
+		int radius = args[0] * 4;
+		args[LIGHT_RED] = args[1] >> 1;
+		args[LIGHT_GREEN] = args[2] >> 1;
+		args[LIGHT_BLUE] = args[3] >> 1;
+		args[LIGHT_INTENSITY] = radius;
+		Super.BeginPlay();
+	}
+}
+
 

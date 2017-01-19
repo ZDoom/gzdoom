@@ -45,20 +45,17 @@
 #include "st_stuff.h"
 #include "m_swap.h"
 #include "a_keys.h"
-#include "a_armor.h"
 #include "templates.h"
 #include "i_system.h"
 #include "sbarinfo.h"
 #include "gi.h"
 #include "r_data/r_translate.h"
-#include "a_weaponpiece.h"
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_acs.h"
 #include "gstrings.h"
 #include "version.h"
 #include "cmdlib.h"
-#include "a_ammo.h"
 #include "g_levellocals.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
@@ -1069,7 +1066,7 @@ public:
 
 		//prepare ammo counts
 		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
-		armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 
 		if(state != HUD_AltHud)
 		{
@@ -1517,9 +1514,9 @@ public:
 		return translationtables[TRANSLATION_Players][int(CPlayer - players)];
 	}
 
-	AAmmo *ammo1, *ammo2;
+	AInventory *ammo1, *ammo2;
 	int ammocount1, ammocount2;
-	ABasicArmor *armor;
+	AInventory *armor;
 	FImageCollection Images;
 	unsigned int invBarOffset;
 

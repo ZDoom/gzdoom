@@ -1195,11 +1195,9 @@ set (PCH_SOURCES
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
-	g_inventory/a_ammo.cpp
 	g_inventory/a_armor.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
-	g_inventory/a_weaponpiece.cpp
 	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp

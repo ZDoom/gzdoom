@@ -47,44 +47,12 @@ class Inventory : Actor native
 	virtual native bool DrawPowerup(int x, int y);
 	virtual native void AbsorbDamage (int damage, Name damageType, out int newdamage);
 	
-	//===========================================================================
-	//
-	// AInventory :: Travelled
-	//
-	// Called when an item in somebody's inventory is carried over to another
-	// map, in case it needs to do special reinitialization.
-	//
-	//===========================================================================
-
-	virtual void Travelled() {}
-
-	//===========================================================================
-	//
-	// AInventory :: DoEffect
-	//
-	// Handles any effect an item might apply to its owner
-	// Normally only used by subclasses of Powerup
-	//
-	//===========================================================================
-
-	virtual void DoEffect() {}
-	
-	virtual double GetSpeedFactor() { return 1; }
-	virtual bool GetNoTeleportFreeze() { return false; }
-	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
-	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
-	virtual void OwnerDied() {}
-
+	native bool DoRespawn();
 	native bool GoAway();
 	native void GoAwayAndDie();
 	native void BecomeItem();
 	native void BecomePickup();
 	
-	// These are regular functions for the item itself.
-	private native void A_RestoreSpecialDoomThing();
-	private native void A_RestoreSpecialThing1();
-	private native void A_RestoreSpecialThing2();
-
 	// In this case the caller function is more than a simple wrapper around the virtual method and
 	// is what must be actually called to pick up an item.
 	virtual protected native bool TryPickup(in out Actor toucher);
@@ -112,6 +80,118 @@ class Inventory : Actor native
 		TNT1 A 1;
 		Stop;
 	}
+	
+	// These are regular functions for the item itself.
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_RestoreSpecialThing1
+	//
+	// Make a special thing visible again.
+	//
+	//---------------------------------------------------------------------------
+
+	void A_RestoreSpecialThing1()
+	{
+		bInvisible = false;
+		if (DoRespawn ())
+		{
+			A_PlaySound ("misc/spawn", CHAN_VOICE);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_RestoreSpecialThing2
+	//
+	//---------------------------------------------------------------------------
+
+	void A_RestoreSpecialThing2()
+	{
+		bSpecial = true;
+		if (!Default.bNoGravity)
+		{
+			bNoGravity = false;
+		}
+		SetState (SpawnState);
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_RestoreSpecialDoomThing
+	//
+	//---------------------------------------------------------------------------
+
+	void A_RestoreSpecialDoomThing()
+	{
+		bInvisible = false;
+		bSpecial = true;
+		if (!Default.bNoGravity)
+		{
+			bNoGravity = false;
+		}
+		if (DoRespawn ())
+		{
+			SetState (SpawnState);
+			A_PlaySound ("misc/spawn", CHAN_VOICE);
+			Spawn ("ItemFog", Pos, ALLOW_REPLACE);
+		}
+	}
+		
+	//===========================================================================
+	//
+	// AInventory :: DepleteOrDestroy
+	//
+	// If the item is depleted, just change its amount to 0, otherwise it's destroyed.
+	//
+	//===========================================================================
+
+	virtual void DepleteOrDestroy ()
+	{
+		// If it's not ammo or an internal armor, destroy it.
+		// Ammo needs to stick around, even when it's zero for the benefit
+		// of the weapons that use it and to maintain the maximum ammo
+		// amounts a backpack might have given.
+		// Armor shouldn't be removed because they only work properly when
+		// they are the last items in the inventory.
+		if (bKeepDepleted)
+		{
+			Amount = 0;
+		}
+		else
+		{
+			Destroy();
+		}
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: Travelled
+	//
+	// Called when an item in somebody's inventory is carried over to another
+	// map, in case it needs to do special reinitialization.
+	//
+	//===========================================================================
+
+	virtual void Travelled() {}
+
+	//===========================================================================
+	//
+	// AInventory :: DoEffect
+	//
+	// Handles any effect an item might apply to its owner
+	// Normally only used by subclasses of Powerup
+	//
+	//===========================================================================
+
+	virtual void DoEffect() {}
+	
+	virtual double GetSpeedFactor() { return 1; }
+	virtual bool GetNoTeleportFreeze() { return false; }
+	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
+	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
+	virtual void OwnerDied() {}
+	
 }
 
 class StateProvider : Inventory native

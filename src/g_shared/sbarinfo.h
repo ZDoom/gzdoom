@@ -42,7 +42,7 @@
 #define NUMPOPUPS 3
 
 class FScanner;
-
+class DSBarInfo;
 class SBarInfoMainBlock;
 
 //Popups!

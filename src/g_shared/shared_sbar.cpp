@@ -248,7 +248,7 @@ DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 	CPlayer = NULL;
 	ShowLog = false;
 	HorizontalResolution = hres;
-	VirticalResolution = vres;
+	VerticalResolution = vres;
 
 	SetScaled (st_scale);
 }
@@ -282,7 +282,7 @@ void DBaseStatusBar::OnDestroy ()
 //---------------------------------------------------------------------------
 
 //[BL] Added force argument to have forcescaled mean forcescaled.
-// - Also, if the VirticalResolution is something other than the default (200)
+// - Also, if the VerticalResolution is something other than the default (200)
 //   We should always obey the value of scale.
 void DBaseStatusBar::SetScaled (bool scale, bool force)
 {
@@ -295,7 +295,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		gST_Y = ST_Y;
 		if (RelTop > 0)
 		{
-			Displacement = double((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))/RelTop;
+			Displacement = double((ST_Y * VerticalResolution / SCREENHEIGHT) - (VerticalResolution - RelTop))/RelTop;
 		}
 		else
 		{
@@ -305,15 +305,15 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	else
 	{
 		ST_X = 0;
-		ST_Y = VirticalResolution - RelTop;
+		ST_Y = VerticalResolution - RelTop;
 		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
 		if (!AspectTallerThanWide(aspect))
 		{ // Normal resolution
-			gST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
+			gST_Y = Scale (ST_Y, SCREENHEIGHT, VerticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			gST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
+			gST_Y = Scale(ST_Y - VerticalResolution/2, SCREENHEIGHT*3, Scale(VerticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
 		}
 		Displacement = 0;

@@ -779,8 +779,10 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 		vt = gltexture->GetSpriteVT();
 		vb = gltexture->GetSpriteVB();
+		if (thing->renderflags & RF_YFLIP) std::swap(vt, vb);
+
 		gltexture->GetSpriteRect(&r);
-		if (mirror)
+		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
 		{
 			r.left = -r.width - r.left;	// mirror the sprite's x-offset
 			ul = gltexture->GetSpriteUL();

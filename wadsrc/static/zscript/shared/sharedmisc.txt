@@ -140,7 +140,7 @@ class Gibs : RealGibs
 
 // Needed for loading Build maps -------------------------------------------
 
-class CustomSprite : Actor native
+class CustomSprite : Actor
 {
 	Default
 	{
@@ -152,6 +152,33 @@ class CustomSprite : Actor native
 	Spawn:
 		TNT1 A -1;
 		Stop;
+	}
+	
+	override void BeginPlay ()
+	{
+		String name;
+		Super.BeginPlay ();
+
+		format(name, "BTIL%04d", args[0] & 0xffff);
+		picnum = TexMan.CheckForTexture (name, TexMan.TYPE_Build);
+		if (!picnum.Exists())
+		{
+			Destroy();
+			return;
+		}
+
+		Scale.X = args[2] / 64.;
+		Scale.Y = args[3] / 64.;
+
+		int cstat = args[4];
+		if (cstat & 2)
+		{
+			A_SetRenderStyle((cstat & 512) ? 0.6666 : 0.3333, STYLE_Translucent);
+		}
+		if (cstat & 4) bXFlip = true;
+		if (cstat & 8) bYFlip = true;
+		if (cstat & 16) bWallSprite = true;
+		if (cstat & 32) bFlatSprite = true;
 	}
 }
 

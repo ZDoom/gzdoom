@@ -1,9 +1,9 @@
-class MorphProjectile : Actor native
+class MorphProjectile : Actor
 {
 
-	native Class<PlayerPawn> PlayerClass;
-	native Class<Actor> MonsterClass, MorphFlash, UnMorphFlash;
-	native int Duration, MorphStyle;
+	Class<PlayerPawn> PlayerClass;
+	Class<Actor> MonsterClass, MorphFlash, UnMorphFlash;
+	int Duration, MorphStyle;
 
 	Default
 	{
@@ -12,6 +12,21 @@ class MorphProjectile : Actor native
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
 	}
+	
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		if (target.player)
+		{
+			target.player.MorphPlayer (NULL, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
+		}
+		else
+		{
+			target.MorphMonster (MonsterClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
+		}
+		return -1;
+	}
+
+	
 }
 
 class MorphedMonster : Actor native

@@ -25,12 +25,6 @@ class CustomInventory : StateProvider
 	//
 	//---------------------------------------------------------------------------
 
-	action void A_ClearReFire()
-	{
-		if (NULL != player)	player.refire = 0;
-	}
-
-	
 	// This is only here, because these functions were originally exported on Inventory, despite only working for weapons, so this is here to satisfy some potential old mods having called it through CustomInventory.
 	deprecated action void A_GunFlash(statelabel flash = null, int flags = 0) {}
 	deprecated action void A_Lower() {}
@@ -81,4 +75,9 @@ class CustomInventory : StateProvider
 		return useok;
 	}
 	
+	action void A_ClearReFire()
+	{
+		if (NULL != player)	player.refire = 0;
+	}
+
 }

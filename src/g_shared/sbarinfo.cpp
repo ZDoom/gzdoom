@@ -970,17 +970,16 @@ inline void adjustRelCenter(bool relX, bool relY, const double &x, const double 
 		outY = y;
 }
 
-class DSBarInfo : public DBaseStatusBar
+class DSBarInfo
 {
-	DECLARE_CLASS(DSBarInfo, DBaseStatusBar)
-	HAS_OBJECT_POINTERS
 public:
-	DSBarInfo (SBarInfo *script=NULL) : DBaseStatusBar(script->height, script->resW, script->resH),
+	DSBarInfo (DBaseStatusBar *wrapper, SBarInfo *script=NULL) :
 		ammo1(NULL), ammo2(NULL), ammocount1(0), ammocount2(0), armor(NULL),
-		pendingPopup(POP_None), currentPopup(POP_None), lastHud(-1),
+		pendingPopup(DBaseStatusBar::POP_None), currentPopup(DBaseStatusBar::POP_None), lastHud(-1),
 		scalingWasForced(false), lastInventoryBar(NULL), lastPopup(NULL)
 	{
 		this->script = script;
+		this->wrapper = wrapper;
 
 		static const char *InventoryBarLumps[] =
 		{
@@ -1001,8 +1000,6 @@ public:
 		}
 		invBarOffset = script->Images.Size();
 		Images.Init(&patchnames[0], patchnames.Size());
-
-		CompleteBorder = script->completeBorder;
 	}
 
 	~DSBarInfo ()
@@ -1010,9 +1007,18 @@ public:
 		Images.Uninit();
 	}
 
-	void ScreenSizeChanged() override
+	void _SetScaled(bool scaled)
 	{
-		Super::ScreenSizeChanged();
+		Scaled = scaled;
+	}
+
+	void _AttachToPlayer(player_t *player)
+	{
+		CPlayer = player;
+	}
+
+	void _ScreenSizeChanged()
+	{
 		if (uiscale > 0)
 		{
 			script->cleanX = uiscale;
@@ -1024,13 +1030,13 @@ public:
 		}
 	}
 
-	void Draw (EHudState state) override
+	void _Draw (EHudState state)
 	{
-		DBaseStatusBar::Draw(state);
 		if (script->cleanX <= 0)
 		{ // Calculate cleanX and cleanY
-			ScreenSizeChanged();
+			wrapper->ScreenSizeChanged();
 		}
+		wrapper->GetCoords(ST_X, ST_Y);
 		int hud = STBAR_NORMAL;
 		if(state == HUD_StatusBar)
 		{
@@ -1059,13 +1065,13 @@ public:
 			else if(!Scaled)
 			{
 				scalingWasForced = true;
-				SetScaled(true, true);
+				wrapper->SetScaled(true, true);
 				setsizeneeded = true;
 			}
 		}
 
 		//prepare ammo counts
-		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
+		wrapper->GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
 		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 
 		if(state != HUD_AltHud)
@@ -1078,12 +1084,12 @@ public:
 				if(scalingWasForced)
 				{
 					scalingWasForced = false;
-					SetScaled(false);
+					wrapper->SetScaled(false);
 					setsizeneeded = true;
 				}
 			}
 
-			if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
+			if(currentPopup != DBaseStatusBar::POP_None && !script->huds[hud]->FullScreenOffsets())
 				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), 1.);
 			else
 				script->huds[hud]->Draw(NULL, this, 0, 0, 1.);
@@ -1105,14 +1111,14 @@ public:
 		}
 
 		// Handle popups
-		if(currentPopup != POP_None)
+		if(currentPopup != DBaseStatusBar::POP_None)
 		{
 			int popbar = 0;
-			if(currentPopup == POP_Log)
+			if(currentPopup == DBaseStatusBar::POP_Log)
 				popbar = STBAR_POPUPLOG;
-			else if(currentPopup == POP_Keys)
+			else if(currentPopup == DBaseStatusBar::POP_Keys)
 				popbar = STBAR_POPUPKEYS;
-			else if(currentPopup == POP_Status)
+			else if(currentPopup == DBaseStatusBar::POP_Status)
 				popbar = STBAR_POPUPSTATUS;
 			if(script->huds[popbar] != lastPopup)
 			{
@@ -1129,40 +1135,33 @@ public:
 		hud_scale = oldhud_scale;
 	}
 
-	void NewGame () override
+	void _NewGame ()
 	{
-		if (CPlayer != NULL)
-		{
-			AttachToPlayer (CPlayer);
-
-			// Reset the huds
-			script->ResetHuds();
-			lastHud = -1; // Reset
-		}
+		// Reset the huds
+		script->ResetHuds();
+		lastHud = -1; // Reset
 	}
 
-	bool MustDrawLog (EHudState state) override
+	bool _MustDrawLog (EHudState state)
 	{
 		return script->huds[STBAR_POPUPLOG]->NumCommands() == 0;
 	}
 
-	void SetMugShotState (const char *state_name, bool wait_till_done, bool reset) override
+	void _SetMugShotState (const char *state_name, bool wait_till_done, bool reset)
 	{
 		script->MugShot.SetState(state_name, wait_till_done, reset);
 	}
 
-	void Tick () override
+	void _Tick ()
 	{
-		DBaseStatusBar::Tick();
-
 		script->MugShot.Tick(CPlayer);
-		if(currentPopup != POP_None)
+		if(currentPopup != DBaseStatusBar::POP_None)
 		{
 			script->popups[currentPopup-1].tick();
 			if(script->popups[currentPopup-1].opened == false && script->popups[currentPopup-1].isDoneMoving())
 			{
 				currentPopup = pendingPopup;
-				if(currentPopup != POP_None)
+				if(currentPopup != DBaseStatusBar::POP_None)
 					script->popups[currentPopup-1].open();
 			}
 
@@ -1175,30 +1174,29 @@ public:
 			lastInventoryBar->Tick(NULL, this, false);
 	}
 
-	void ReceivedWeapon(AWeapon *weapon) override
+	void _ReceivedWeapon(AWeapon *weapon)
 	{
 		script->MugShot.Grin();
 	}
 
 	// void DSBarInfo::FlashItem(const PClass *itemtype) - Is defined with CommandDrawSelectedInventory
-	void FlashItem(const PClass *itemtype) override;
+	void _FlashItem(const PClass *itemtype);
 
-	void ShowPop(int popnum) override
+	void _ShowPop(int popnum)
 	{
-		DBaseStatusBar::ShowPop(popnum);
 		if(popnum != currentPopup)
 		{
 			pendingPopup = popnum;
 		}
 		else
-			pendingPopup = POP_None;
-		if(currentPopup != POP_None)
+			pendingPopup = DBaseStatusBar::POP_None;
+		if(currentPopup != DBaseStatusBar::POP_None)
 			script->popups[currentPopup-1].close();
 		else
 		{
 			currentPopup = pendingPopup;
-			pendingPopup = POP_None;
-			if(currentPopup != POP_None)
+			pendingPopup = DBaseStatusBar::POP_None;
+			if(currentPopup != DBaseStatusBar::POP_None)
 				script->popups[currentPopup-1].open();
 		}
 	}
@@ -1519,6 +1517,10 @@ public:
 	AInventory *armor;
 	FImageCollection Images;
 	unsigned int invBarOffset;
+	player_t *CPlayer = nullptr;
+	DBaseStatusBar *wrapper;
+	bool Scaled;
+	int ST_X, ST_Y;
 
 private:
 	SBarInfo *script;
@@ -1530,20 +1532,6 @@ private:
 	SBarInfoMainBlock *lastPopup;
 };
 
-IMPLEMENT_CLASS(DSBarInfo, false, true)
-
-IMPLEMENT_POINTERS_START(DSBarInfo)
-	IMPLEMENT_POINTER(ammo1)
-	IMPLEMENT_POINTER(ammo2)
-	IMPLEMENT_POINTER(armor)
-IMPLEMENT_POINTERS_END
-
-DBaseStatusBar *CreateCustomStatusBar (int script)
-{
-	if(SBarInfoScript[script] == NULL)
-		I_FatalError("Tried to create a status bar with no script!");
-	return new DSBarInfo(SBarInfoScript[script]);
-}
 
 void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 {
@@ -1562,7 +1550,7 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 		else if(!statusBar->Scaled)
 		{
 			rescale = true;
-			statusBar->SetScaled(true, true);
+			statusBar->wrapper->SetScaled(true, true);
 		}
 	}
 
@@ -1573,8 +1561,111 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 		if(FullScreenOffsets())
 			hud_scale = false;
 		else
-			statusBar->SetScaled(false);
+			statusBar->wrapper->SetScaled(false);
 	}
 }
 
 #include "sbarinfo_commands.cpp"
+
+
+//==========================================================================
+//
+// SBarinfoWrapper
+//
+// This class abstracts SBARINFO from the rest of the engine.
+// The idea is, when status bars are moved to ZScript that only
+// this small wrapper class needs to be dealt with and the implementation
+// can be left alone.
+//
+//==========================================================================
+
+
+DSBarInfoWrapper::DSBarInfoWrapper(SBarInfo *script)
+	: DBaseStatusBar(script->height, script->resW, script->resH)
+{
+	core = new DSBarInfo(this, script);
+	core->_SetScaled(Scaled);
+	CompleteBorder = script->completeBorder;
+}
+
+void DSBarInfoWrapper::OnDestroy()
+{
+	if (core != nullptr) delete core;
+	Super::OnDestroy();
+}
+
+void DSBarInfoWrapper::SetScaled(bool scale, bool force)
+{
+	Super::SetScaled(scale, force);
+	core->_SetScaled(scale);
+}
+
+void DSBarInfoWrapper::AttachToPlayer(player_t *player)
+{
+	Super::AttachToPlayer(player);
+	core->_AttachToPlayer(player);
+}
+
+void DSBarInfoWrapper::ScreenSizeChanged()
+{
+	Super::ScreenSizeChanged();
+	core->_ScreenSizeChanged();
+}
+
+void DSBarInfoWrapper::Draw(EHudState state)
+{
+	Super::Draw(state);
+	core->_Draw(state);
+}
+
+void DSBarInfoWrapper::NewGame()
+{
+	Super::NewGame();
+	if (CPlayer != NULL)
+	{
+		AttachToPlayer(CPlayer);
+		core->_NewGame();
+	}
+}
+
+bool DSBarInfoWrapper::MustDrawLog(EHudState state)
+{
+	return core->_MustDrawLog(state);
+}
+
+void DSBarInfoWrapper::SetMugShotState(const char *state_name, bool wait_till_done, bool reset)
+{
+	core->_SetMugShotState(state_name, wait_till_done, reset);
+}
+
+void DSBarInfoWrapper::Tick()
+{
+	DBaseStatusBar::Tick();
+	core->_Tick();
+}
+
+void DSBarInfoWrapper::ReceivedWeapon(AWeapon *weapon)
+{
+	core->_ReceivedWeapon(weapon);
+}
+
+void DSBarInfoWrapper::FlashItem(const PClass *itemtype)
+{
+	core->_FlashItem(itemtype);
+}
+
+void DSBarInfoWrapper::ShowPop(int popnum)
+{
+	DBaseStatusBar::ShowPop(popnum);	//DBaseStatusBar supercall
+	core->_ShowPop(popnum);
+}
+
+IMPLEMENT_CLASS(DSBarInfoWrapper, false, false)
+
+DBaseStatusBar *CreateCustomStatusBar(int script)
+{
+	if (SBarInfoScript[script] == NULL)
+		I_FatalError("Tried to create a status bar with no script!");
+	return new DSBarInfoWrapper(SBarInfoScript[script]);
+}
+

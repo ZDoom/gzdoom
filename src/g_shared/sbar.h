@@ -307,6 +307,7 @@ enum
 
 class DBaseStatusBar : public DObject
 {
+	friend class DSBarInfo;
 	DECLARE_CLASS (DBaseStatusBar, DObject)
 	HAS_OBJECT_POINTERS
 public:
@@ -342,8 +343,6 @@ public:
 	DBaseStatusBar (int reltop, int hres=320, int vres=200);
 	void OnDestroy() override;
 
-	void SetScaled (bool scale, bool force=false);
-
 	void AttachMessage (DHUDMessage *msg, uint32 id=0, int layer=HUDMSGLayer_Default);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
 	DHUDMessage *DetachMessage (uint32 id);
@@ -357,6 +356,7 @@ public:
 	// do not make this a DObject Serialize function because it's not used like one!
 	void SerializeMessages(FSerializer &arc);
 
+	virtual void SetScaled(bool scale, bool force = false);
 	virtual void Tick ();
 	virtual void Draw (EHudState state);
 			void DrawBottomStuff (EHudState state);
@@ -374,6 +374,13 @@ public:
 	virtual bool MustDrawLog(EHudState state);
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
+
+	void GetCoords(int &x, int &y)
+	{
+		x = ST_X;
+		y = ST_Y;
+	}
+
 
 protected:
 	void DrawPowerups ();

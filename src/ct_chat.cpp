@@ -241,13 +241,13 @@ void CT_Drawer (void)
 		{
 			screen_width = SCREENWIDTH;
 			screen_height = SCREENHEIGHT;
-			st_y = ST_Y;
+			st_y = gST_Y;
 		}
 		else
 		{
 			screen_width = SCREENWIDTH / active_con_scaletext();
 			screen_height = SCREENHEIGHT / active_con_scaletext();
-			st_y = ST_Y / active_con_scaletext();
+			st_y = gST_Y / active_con_scaletext();
 		}
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;

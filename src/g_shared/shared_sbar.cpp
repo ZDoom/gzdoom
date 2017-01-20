@@ -86,7 +86,7 @@ DBaseStatusBar *StatusBar;
 
 extern int setblocks;
 
-int ST_X, ST_Y;
+int gST_X, gST_Y;
 int SB_state = 3;
 
 FTexture *CrosshairImage;
@@ -292,7 +292,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	{
 		ST_X = (SCREENWIDTH - HorizontalResolution) / 2;
 		ST_Y = SCREENHEIGHT - RelTop;
-		::ST_Y = ST_Y;
+		gST_Y = ST_Y;
 		if (RelTop > 0)
 		{
 			Displacement = double((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))/RelTop;
@@ -309,16 +309,16 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
 		if (!AspectTallerThanWide(aspect))
 		{ // Normal resolution
-			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
+			gST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
+			gST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
 		}
 		Displacement = 0;
 	}
-	::ST_X = ST_X;
+	gST_X = ST_X;
 	ST_SetNeedRefresh();
 }
 
@@ -1047,7 +1047,7 @@ void DBaseStatusBar::RefreshBackground () const
 
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
 	x = (ratio < 1.5f || !Scaled) ? ST_X : SCREENWIDTH*(48-AspectMultiplier(ratio))/(48*2);
-	y = x == ST_X && x > 0 ? ST_Y : ::ST_Y;
+	y = x == ST_X && x > 0 ? ST_Y : gST_Y;
 
 	if(!CompleteBorder)
 	{
@@ -1255,21 +1255,21 @@ void DBaseStatusBar::Draw (EHudState state)
 			vwidth = SCREENWIDTH;
 			vheight = SCREENHEIGHT;
 			xpos = vwidth - 80;
-			y = ::ST_Y - height;
+			y = gST_Y - height;
 		}
 		else if (active_con_scaletext() > 1)
 		{
 			vwidth = SCREENWIDTH / active_con_scaletext();
 			vheight = SCREENHEIGHT / active_con_scaletext();
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = ::ST_Y/4 - height;
+			y = gST_Y/4 - height;
 		}
 		else
 		{
 			vwidth = SCREENWIDTH/2;
 			vheight = SCREENHEIGHT/2;
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = ::ST_Y/2 - height;
+			y = gST_Y/2 - height;
 		}
 
 		if (gameinfo.gametype == GAME_Strife)
@@ -1325,7 +1325,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		}
 
 		// Draw map name
-		y = ::ST_Y - height;
+		y = gST_Y - height;
 		if (gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
 		{
 			y -= 8;
@@ -1476,7 +1476,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
-	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 }
 
 //---------------------------------------------------------------------------
@@ -1498,9 +1498,9 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	DrawPowerups ();
 	if (automapactive && !viewactive)
 	{
-		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 	}
-	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 	DrawConsistancy ();
 	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();

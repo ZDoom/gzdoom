@@ -1010,7 +1010,7 @@ public:
 		Images.Uninit();
 	}
 
-	void ScreenSizeChanged()
+	void ScreenSizeChanged() override
 	{
 		Super::ScreenSizeChanged();
 		if (uiscale > 0)
@@ -1024,7 +1024,7 @@ public:
 		}
 	}
 
-	void Draw (EHudState state)
+	void Draw (EHudState state) override
 	{
 		DBaseStatusBar::Draw(state);
 		if (script->cleanX <= 0)
@@ -1129,7 +1129,7 @@ public:
 		hud_scale = oldhud_scale;
 	}
 
-	void NewGame ()
+	void NewGame () override
 	{
 		if (CPlayer != NULL)
 		{
@@ -1141,17 +1141,17 @@ public:
 		}
 	}
 
-	bool MustDrawLog (EHudState state)
+	bool MustDrawLog (EHudState state) override
 	{
 		return script->huds[STBAR_POPUPLOG]->NumCommands() == 0;
 	}
 
-	void SetMugShotState (const char *state_name, bool wait_till_done, bool reset)
+	void SetMugShotState (const char *state_name, bool wait_till_done, bool reset) override
 	{
 		script->MugShot.SetState(state_name, wait_till_done, reset);
 	}
 
-	void Tick ()
+	void Tick () override
 	{
 		DBaseStatusBar::Tick();
 
@@ -1175,15 +1175,15 @@ public:
 			lastInventoryBar->Tick(NULL, this, false);
 	}
 
-	void ReceivedWeapon(AWeapon *weapon)
+	void ReceivedWeapon(AWeapon *weapon) override
 	{
 		script->MugShot.Grin();
 	}
 
 	// void DSBarInfo::FlashItem(const PClass *itemtype) - Is defined with CommandDrawSelectedInventory
-	void FlashItem(const PClass *itemtype);
+	void FlashItem(const PClass *itemtype) override;
 
-	void ShowPop(int popnum)
+	void ShowPop(int popnum) override
 	{
 		DBaseStatusBar::ShowPop(popnum);
 		if(popnum != currentPopup)

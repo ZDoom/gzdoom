@@ -2780,55 +2780,55 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewbob, F, PlayerPawn)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(playerclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(monsterclass, S, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(monsterclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MonsterClass = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_MonsterClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(duration, I, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(duration, I, MorphProjectile)
 {
 	PROP_INT_PARM(i, 0);
-	defaults->Duration = i >= 0 ? i : -i*TICRATE;
+	defaults->IntVar(NAME_Duration) = i >= 0 ? i : -i*TICRATE;
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphstyle, M, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(morphstyle, M, MorphProjectile)
 {
 	PROP_INT_PARM(i, 0);
-	defaults->MorphStyle = i;
+	defaults->IntVar(NAME_MorphStyle) = i;
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(morphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_MorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
+DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================

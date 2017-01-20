@@ -76,31 +76,6 @@ private:
 	DImpactDecal();
 };
 
-class ASkyViewpoint : public AActor
-{
-	DECLARE_CLASS (ASkyViewpoint, AActor)
-public:
-	void BeginPlay ();
-	void OnDestroy() override;
-};
-
-// For an EE compatible linedef based definition.
-class ASkyCamCompat : public ASkyViewpoint
-{
-	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
-
-public:
-	void BeginPlay();
-};
-
-
-class AStackPoint : public ASkyViewpoint
-{
-	DECLARE_CLASS (AStackPoint, ASkyViewpoint)
-public:
-	void BeginPlay ();
-};
-
 class DFlashFader : public DThinker
 {
 	DECLARE_CLASS (DFlashFader, DThinker)
@@ -175,20 +150,6 @@ public:
 
 private:
 	DEarthquake ();
-};
-
-class AMorphProjectile : public AActor
-{
-	DECLARE_CLASS (AMorphProjectile, AActor)
-	HAS_OBJECT_POINTERS;
-public:
-	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
-	
-	void Serialize(FSerializer &arc);
-
-	PClassPlayerPawn *PlayerClass;
-	PClassActor *MonsterClass, *MorphFlash, *UnMorphFlash;
-	int Duration, MorphStyle;
 };
 
 class AMorphedMonster : public AActor

@@ -278,20 +278,6 @@ enum
 	SECSPAC_HitFakeFloor= 1024,	// Trigger when player hits fake floor
 };
 
-class ASectorAction : public AActor
-{
-	DECLARE_CLASS (ASectorAction, AActor)
-public:
-	void OnDestroy() override;
-	void BeginPlay ();
-	void Activate (AActor *source);
-	void Deactivate (AActor *source);
-	bool CanTrigger (AActor *triggerer) const;
-	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
-protected:
-	bool CheckTrigger(AActor *triggerer) const;
-};
-
 struct secplane_t
 {
 	// the plane is defined as a*x + b*y + c*z + d = 0

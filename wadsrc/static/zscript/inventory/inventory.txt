@@ -65,6 +65,7 @@ class Inventory : Actor native
 		Stop;
 	}
 	
+
 	//===========================================================================
 	//
 	// AInventory :: BeginPlay

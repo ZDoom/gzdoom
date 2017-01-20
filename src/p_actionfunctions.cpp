@@ -160,27 +160,23 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			// we don't care about), we pretend they return true,
 			// thanks to the values set just above.
 
-			if (proto->ReturnTypes.Size() == 1)
-			{
-				if (proto->ReturnTypes[0] == TypeState)
-				{ // Function returns a state
-					wantret = &ret[0];
-					retval = false;	// this is a jump function which never affects the success state.
-				}
-				else if (proto->ReturnTypes[0] == TypeSInt32 || proto->ReturnTypes[0] == TypeBool)
-				{ // Function returns an int or bool
-					wantret = &ret[1];
-				}
-				numret = 1;
+			if (proto->ReturnTypes.Size() >= 2 && 
+				proto->ReturnTypes[0] == TypeState &&
+				(proto->ReturnTypes[1] == TypeSInt32 || proto->ReturnTypes[0] == TypeUInt32 || proto->ReturnTypes[1] == TypeBool))
+			{ // Function returns a state and an int or bool
+				wantret = &ret[0];
+				numret = 2;
 			}
-			else if (proto->ReturnTypes.Size() == 2)
-			{
-				if (proto->ReturnTypes[0] == TypeState &&
-					(proto->ReturnTypes[1] == TypeSInt32 || proto->ReturnTypes[1] == TypeBool))
-				{ // Function returns a state and an int or bool
-					wantret = &ret[0];
-					numret = 2;
-				}
+			else if (proto->ReturnTypes.Size() == 1 && proto->ReturnTypes[0] == TypeState)
+			{ // Function returns a state
+				wantret = &ret[0];
+				retval = false;	// this is a jump function which never affects the success state.
+			}
+			else if (proto->ReturnTypes.Size() >= 1 &&
+				(proto->ReturnTypes[0] == TypeSInt32 || proto->ReturnTypes[0] == TypeUInt32 || proto->ReturnTypes[0] == TypeBool))
+			{ // Function returns an int or bool
+				wantret = &ret[1];
+				numret = 1;
 			}
 			try
 			{
@@ -1464,7 +1460,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 	int aimmode = flags & CMF_AIMMODE;
 
 	AActor * targ;
-	AActor * missile;
+	AActor * missile = nullptr;
 
 	if (ref != NULL || aimmode == 2)
 	{
@@ -1576,7 +1572,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 		if (self->SeeState != NULL && (self->health > 0 || !(self->flags3 & MF3_ISMONSTER)))
 			self->SetState(self->SeeState);
 	}
-	return 0;
+	ACTION_RETURN_OBJECT(missile);
 }
 
 //==========================================================================
@@ -1990,7 +1986,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
 	PARAM_ANGLE_DEF	(pitch);
 
 	if (!self->player)
-		return 0;
+		ACTION_RETURN_OBJECT(nullptr);
 
 	player_t *player = self->player;
 	AWeapon *weapon = player->ReadyWeapon;
@@ -2000,7 +1996,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
 	if (useammo && ACTION_CALL_FROM_PSPRITE() && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
-			return 0;	// out of ammo
+			ACTION_RETURN_OBJECT(nullptr);	// out of ammo
 	}
 
 	if (ti) 
@@ -2032,8 +2028,9 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
 				misl->VelFromAngle(misl->VelXYToSpeed());
 			}
 		}
+		ACTION_RETURN_OBJECT(misl);
 	}
-	return 0;
+	ACTION_RETURN_OBJECT(nullptr);
 }
 
 
@@ -2861,17 +2858,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 	PARAM_FLOAT_DEF	(distance)				
 	PARAM_FLOAT_DEF	(zheight)				
 	PARAM_BOOL_DEF	(useammo)				
-	PARAM_BOOL_DEF	(transfer_translation)	
+	PARAM_BOOL_DEF	(transfer_translation);
+		
+	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
 
 	if (missile == NULL)
 	{
-		ACTION_RETURN_BOOL(false);
+		if (numret > 0) ret[0].SetInt(false);
+		return MIN(numret, 2);
 	}
 
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
 	{
-		ACTION_RETURN_BOOL(true);
+		if (numret > 0) ret[0].SetInt(true);
+		return MIN(numret, 2);
 	}
 
 	if (ACTION_CALL_FROM_PSPRITE())
@@ -2881,18 +2882,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 
 		if (weapon == NULL)
 		{
-			ACTION_RETURN_BOOL(true);
+			if (numret > 0) ret[0].SetInt(true);
+			return MIN(numret, 2);
 		}
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
 		{
-			ACTION_RETURN_BOOL(true);
+			if (numret > 0) ret[0].SetInt(true);
+			return MIN(numret, 2);
 		}
 	}
 
 	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->Angles.Yaw, -self->Floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
-	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
+	bool res = InitSpawnedItem(self, mo, flags);	// for an inventory item's use state
+	if (numret > 0) ret[0].SetInt(res);
+	if (numret > 1) ret[1].SetPointer(mo, ATAG_OBJECT);
+	return MIN(numret, 2);
+
 }
 
 //===========================================================================
@@ -2917,18 +2924,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 	PARAM_INT_DEF	(chance)	
 	PARAM_INT_DEF	(tid)		
 
+	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
+
 	if (missile == NULL) 
 	{
-		ACTION_RETURN_BOOL(false);
+		if (numret > 0) ret[0].SetInt(false);
+		return MIN(numret, 2);
 	}
 	if (chance > 0 && pr_spawnitemex() < chance)
 	{
-		ACTION_RETURN_BOOL(true);
+		if (numret > 0) ret[0].SetInt(true);
+		return MIN(numret, 2);
 	}
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
 	{
-		ACTION_RETURN_BOOL(true);
+		if (numret > 0) ret[0].SetInt(true);
+		return MIN(numret, 2);
 	}
 
 	DVector2 pos;
@@ -2976,7 +2988,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 		}
 		mo->Angles.Yaw = angle;
 	}
-	ACTION_RETURN_BOOL(res);	// for an inventory item's use state
+	if (numret > 0) ret[0].SetInt(res);
+	if (numret > 1) ret[1].SetPointer(mo, ATAG_OBJECT);
+	return MIN(numret, 2);
 }
 
 //===========================================================================
@@ -2995,9 +3009,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 		PARAM_FLOAT_DEF	(zvel)		
 		PARAM_BOOL_DEF	(useammo)	
 
+	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
+
 	if (missile == NULL)
 	{
-		ACTION_RETURN_BOOL(true);
+		if (numret > 0) ret[0].SetInt(false);
+		return MIN(numret, 2);
 	}
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -3006,11 +3023,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 
 		if (weapon == NULL)
 		{
-			ACTION_RETURN_BOOL(true);
+			if (numret > 0) ret[0].SetInt(true);
+			return MIN(numret, 2);
 		}
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
 		{
-			ACTION_RETURN_BOOL(true);
+			if (numret > 0) ret[0].SetInt(true);
+			return MIN(numret, 2);
 		}
 	}
 
@@ -3049,13 +3068,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 		bo->Vel.Z = xy_velz + z_velz;
 
 		bo->target = self;
-		P_CheckMissileSpawn (bo, self->radius);
+		if (!P_CheckMissileSpawn(bo, self->radius)) bo = nullptr;
+
+		if (numret > 0) ret[0].SetInt(true);
+		if (numret > 1) ret[1].SetPointer(bo, ATAG_OBJECT);
+		return MIN(numret, 2);
 	} 
 	else
 	{
-		ACTION_RETURN_BOOL(false);
+		if (numret > 0) ret[0].SetInt(false);
+		return MIN(numret, 2);
 	}
-	ACTION_RETURN_BOOL(true);
 }
 
 

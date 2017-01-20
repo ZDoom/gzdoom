@@ -756,14 +756,14 @@ class Actor : Thinker native
 	deprecated native void A_StopSoundEx(name slot);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
-	native void A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
+	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
 	native void A_CustomBulletAttack(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", double range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0);
 	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = null, double spawnofs_z = 0, int spiraloffset = 270, int limit = 0, double veleffect = 3);
 	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
 	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
-	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", double distance = 0, double zheight = 0, bool useammo = true, bool transfer_translation = false);
-	native bool A_SpawnItemEx(class<Actor> itemtype, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0);
+	action native bool, Actor A_SpawnItem(class<Actor> itemtype = "Unknown", double distance = 0, double zheight = 0, bool useammo = true, bool transfer_translation = false);
+	native bool, Actor A_SpawnItemEx(class<Actor> itemtype, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0);
 	native void A_Print(string whattoprint, double time = 0, name fontname = "none");
 	native void A_PrintBold(string whattoprint, double time = 0, name fontname = "none");
 	native void A_Log(string whattoprint, bool local = false);
@@ -785,7 +785,7 @@ class Actor : Thinker native
 	native void A_RaiseChildren(bool copy = 0);
 	native void A_RaiseSiblings(bool copy = 0);
 	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
-	action native bool A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
+	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 
 

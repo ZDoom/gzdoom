@@ -223,7 +223,7 @@ DEFINE_ACTION_FUNCTION(ACustomInventory, CallStateChain)
 {
 	PARAM_SELF_PROLOGUE(AStateProvider);
 	PARAM_OBJECT(affectee, AActor);
-	PARAM_STATE(state);
+	PARAM_POINTER(state, FState);
 	ACTION_RETURN_BOOL(self->CallStateChain(affectee, state));
 }
 

@@ -11,6 +11,11 @@ class StateProvider : Inventory native
 	action native void A_ReFire(statelabel flash = null);
 	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
 	action native void A_ResetReloadCounter();
+
+	action void A_ClearReFire()
+	{
+		if (NULL != player)	player.refire = 0;
+	}
 }
 
 class CustomInventory : StateProvider
@@ -74,10 +79,4 @@ class CustomInventory : StateProvider
 		}
 		return useok;
 	}
-	
-	action void A_ClearReFire()
-	{
-		if (NULL != player)	player.refire = 0;
-	}
-
 }

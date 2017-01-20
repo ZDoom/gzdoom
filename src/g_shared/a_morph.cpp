@@ -443,7 +443,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 DEFINE_ACTION_FUNCTION(AActor, MorphMonster)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(spawntype, APlayerPawn);
+	PARAM_CLASS(spawntype, AActor);
 	PARAM_INT(duration);
 	PARAM_INT(style);
 	PARAM_CLASS_DEF(enter_flash, AActor);

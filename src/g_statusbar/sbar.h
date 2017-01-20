@@ -385,9 +385,7 @@ public:
 protected:
 	void DrawPowerups ();
 
-	void DrawImage (FTexture *image, int x, int y, FRemapTable *translation=NULL) const;
-	void DrawDimImage (FTexture *image, int x, int y, bool dimmed) const;
-
+	
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const;

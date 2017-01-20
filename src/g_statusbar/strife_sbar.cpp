@@ -848,6 +848,8 @@ private:
 
 	void DrINumberOuter(signed int val, int x, int y, bool center = false, int w = 9) const;
 	void DrBNumberOuterFont(signed int val, int x, int y, int w = 3) const;
+	void DrawDimImage(FTexture *image, int x, int y, bool dimmed) const;
+	void DrawImage(FTexture *image, int x, int y, FRemapTable *translation = NULL) const;
 
 };
 
@@ -1016,6 +1018,48 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		}
 	}
 }
+
+//---------------------------------------------------------------------------
+//
+// PROC DrawImage
+//
+// Draws an image with the status bar's upper-left corner as the origin.
+//
+//---------------------------------------------------------------------------
+
+void DStrifeStatusBar::DrawImage(FTexture *img,
+	int x, int y, FRemapTable *translation) const
+{
+	if (img != NULL)
+	{
+		screen->DrawTexture(img, x + ST_X, y + ST_Y,
+			DTA_Translation, translation,
+			DTA_Bottom320x200, Scaled,
+			TAG_DONE);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC DrawImage
+//
+// Draws an optionally dimmed image with the status bar's upper-left corner
+// as the origin.
+//
+//---------------------------------------------------------------------------
+
+void DStrifeStatusBar::DrawDimImage(FTexture *img,
+	int x, int y, bool dimmed) const
+{
+	if (img != NULL)
+	{
+		screen->DrawTexture(img, x + ST_X, y + ST_Y,
+			DTA_ColorOverlay, dimmed ? DIM_OVERLAY : 0,
+			DTA_Bottom320x200, Scaled,
+			TAG_DONE);
+	}
+}
+
 
 
 

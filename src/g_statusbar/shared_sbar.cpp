@@ -537,48 +537,6 @@ void DBaseStatusBar::ShowPlayerName ()
 
 //---------------------------------------------------------------------------
 //
-// PROC DrawImage
-//
-// Draws an image with the status bar's upper-left corner as the origin.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawImage (FTexture *img,
-	int x, int y, FRemapTable *translation) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, x + ST_X, y + ST_Y,
-			DTA_Translation, translation,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawImage
-//
-// Draws an optionally dimmed image with the status bar's upper-left corner
-// as the origin.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawDimImage (FTexture *img,
-	int x, int y, bool dimmed) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, x + ST_X, y + ST_Y,
-			DTA_ColorOverlay, dimmed ? DIM_OVERLAY : 0,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-
-//---------------------------------------------------------------------------
-//
 // RefreshBackground
 //
 //---------------------------------------------------------------------------

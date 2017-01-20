@@ -578,28 +578,6 @@ void DBaseStatusBar::DrawDimImage (FTexture *img,
 
 //---------------------------------------------------------------------------
 //
-// PROC DrawPartialImage
-//
-// Draws a portion of an image with the status bar's upper-left corner as
-// the origin. The image should be the same size as the status bar.
-// Used for Doom's status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, ST_X, ST_Y,
-			DTA_WindowLeft, wx,
-			DTA_WindowRight, wx + ww,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // PROC DrINumber
 //
 // Draws a three digit number.
@@ -636,97 +614,6 @@ void DBaseStatusBar::DrINumber (signed int val, int x, int y, int imgBase) const
 	}
 	val = val % 10;
 	DrawImage (Images[imgBase+val], x+18, y);
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrBNumber
-//
-// Draws an x digit number using the big font.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
-{
-	bool neg;
-	int i, w;
-	int power;
-	FTexture *pic;
-
-	pic = Images[imgBNumbers];
-	w = (pic != NULL) ? pic->GetWidth() : 0;
-
-	if (val == 0)
-	{
-		if (pic != NULL)
-		{
-			DrawImage (pic, x - w, y);
-		}
-		return;
-	}
-
-	if ( (neg = val < 0) )
-	{
-		val = -val;
-		size--;
-	}
-	for (i = size-1, power = 10; i > 0; i--)
-	{
-		power *= 10;
-	}
-	if (val >= power)
-	{
-		val = power - 1;
-	}
-	while (val != 0 && size--)
-	{
-		x -= w;
-		pic = Images[imgBNumbers + val % 10];
-		val /= 10;
-		if (pic != NULL)
-		{
-			DrawImage (pic, x, y);
-		}
-	}
-	if (neg)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			DrawImage (pic, x - w, y);
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrSmallNumber
-//
-// Draws a small three digit number.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrSmallNumber (int val, int x, int y) const
-{
-	int digit = 0;
-
-	if (val > 999)
-	{
-		val = 999;
-	}
-	if (val > 99)
-	{
-		digit = val / 100;
-		DrawImage (Images[imgSmNumbers + digit], x, y);
-		val -= digit * 100;
-	}
-	if (val > 9 || digit)
-	{
-		digit = val / 10;
-		DrawImage (Images[imgSmNumbers + digit], x+4, y);
-		val -= digit * 10;
-	}
-	DrawImage (Images[imgSmNumbers + val], x+8, y);
 }
 
 //---------------------------------------------------------------------------
@@ -793,112 +680,6 @@ void DBaseStatusBar::DrINumberOuter (signed int val, int x, int y, bool center, 
 	}
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC DrBNumberOuter
-//
-// Draws a three digit number using the big font outside the status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) const
-{
-	int xpos;
-	int w;
-	bool negative = false;
-	FTexture *pic;
-
-	pic = Images[imgBNumbers+3];
-	if (pic != NULL)
-	{
-		w = pic->GetWidth();
-	}
-	else
-	{
-		w = 0;
-	}
-
-	xpos = x + w/2 + (size-1)*w;
-
-	if (val == 0)
-	{
-		pic = Images[imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-		return;
-	}
-	else if (val < 0)
-	{
-		negative = true;
-		val = -val;
-	}
-
-	int oval = val;
-	int oxpos = xpos;
-
-	// Draw shadow first
-	while (val != 0)
-	{
-		pic = Images[val % 10 + imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-		}
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-		}
-	}
-
-	// Then draw the real thing
-	val = oval;
-	xpos = oxpos;
-	while (val != 0)
-	{
-		pic = Images[val % 10 + imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-	}
-}
 
 //---------------------------------------------------------------------------
 //
@@ -1001,39 +782,6 @@ void DBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 	}
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC DrSmallNumberOuter
-//
-// Draws a small three digit number outside the status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) const
-{
-	int digit = 0;
-
-	if (val > 999)
-	{
-		val = 999;
-	}
-	if (val > 99)
-	{
-		digit = val / 100;
-		screen->DrawTexture (Images[imgSmNumbers + digit], x, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		val -= digit * 100;
-	}
-	if (val > 9 || digit)
-	{
-		digit = val / 10;
-		screen->DrawTexture (Images[imgSmNumbers + digit], x+4, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		val -= digit * 10;
-	}
-	screen->DrawTexture (Images[imgSmNumbers + val], x+8, y,
-		DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-}
 
 //---------------------------------------------------------------------------
 //

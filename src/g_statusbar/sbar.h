@@ -385,20 +385,14 @@ public:
 protected:
 	void DrawPowerups ();
 
-	void UpdateRect (int x, int y, int width, int height) const;
 	void DrawImage (FTexture *image, int x, int y, FRemapTable *translation=NULL) const;
 	void DrawDimImage (FTexture *image, int x, int y, bool dimmed) const;
-	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 
 	void DrINumber (signed int val, int x, int y, int imgBase=imgINumbers) const;
-	void DrBNumber (signed int val, int x, int y, int w=3) const;
-	void DrSmallNumber (int val, int x, int y) const;
 
 	void DrINumberOuter (signed int val, int x, int y, bool center=false, int w=9) const;
-	void DrBNumberOuter (signed int val, int x, int y, int w=3) const;
 	void DrBNumberOuterFont (signed int val, int x, int y, int w=3) const;
-	void DrSmallNumberOuter (int val, int x, int y, bool center) const;
-
+	
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const;

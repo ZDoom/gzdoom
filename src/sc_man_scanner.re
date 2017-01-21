@@ -171,6 +171,7 @@ std2:
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
 		'override'					{ RET(TK_Override); }
+		'vararg'					{ RET(TK_VarArg); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

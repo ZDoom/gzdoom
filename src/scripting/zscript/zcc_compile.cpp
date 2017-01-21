@@ -1423,10 +1423,11 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 
 FString ZCCCompiler::FlagsToString(uint32_t flags)
 {
-	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "funcconst", "abstract" };
+
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "funcconst", "abstract", "extension", "virtual", "override", "transient", "vararg" };
 	FString build;
 
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < countof(flagnames); i++)
 	{
 		if (flags & (1 << i))
 		{
@@ -2287,6 +2288,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
 		if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
 		if (f->Flags & ZCC_Override) varflags |= VARF_Override;
+		if (f->Flags & ZCC_VarArg) varflags |= VARF_VarArg;
+		if ((f->Flags & ZCC_VarArg) && !(f->Flags & ZCC_Native))
+		{
+			Error(f, "'VarArg' can only be used with native methods");
+		}
 		if (f->Flags & ZCC_Action)
 		{
 			// Non-Actors cannot have action functions.

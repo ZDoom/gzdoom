@@ -1427,7 +1427,7 @@ FString ZCCCompiler::FlagsToString(uint32_t flags)
 	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "funcconst", "abstract", "extension", "virtual", "override", "transient", "vararg" };
 	FString build;
 
-	for (int i = 0; i < countof(flagnames); i++)
+	for (size_t i = 0; i < countof(flagnames); i++)
 	{
 		if (flags & (1 << i))
 		{

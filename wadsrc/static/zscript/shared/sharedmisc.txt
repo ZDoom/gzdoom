@@ -159,7 +159,7 @@ class CustomSprite : Actor
 		String name;
 		Super.BeginPlay ();
 
-		//format(name, "BTIL%04d", args[0] & 0xffff); // note: this does NOTHING and did NOTHING. what?
+		name = String.Format("BTIL%04d", args[0] & 0xffff);
 		picnum = TexMan.CheckForTexture (name, TexMan.TYPE_Build);
 		if (!picnum.Exists())
 		{

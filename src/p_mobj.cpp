@@ -1041,7 +1041,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 	AInventory *drop = nullptr;
 	IFVIRTUALPTR(item, AInventory, CreateTossable)
 	{
-		VMValue params[1] = { (DObject*)this };
+		VMValue params[1] = { (DObject*)item };
 		VMReturn ret((void**)&drop);
 		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 	}

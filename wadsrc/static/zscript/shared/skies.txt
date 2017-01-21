@@ -115,7 +115,7 @@ class SkyPicker : Actor
 
 		if (box == null && args[0] != 0)
 		{
-			A_Log(format("Can't find SkyViewpoint %d for sector %d\n", args[0], CurSector.Index()));
+			A_Log(String.Format("Can't find SkyViewpoint %d for sector %d\n", args[0], CurSector.Index()));
 		}
 		else
 		{

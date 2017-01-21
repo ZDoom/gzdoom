@@ -50,7 +50,7 @@ extend class PlayerPawn
 		let player = self.player;
 
 		if (PlayerNumber() != consoleplayer)
-			A_Log(format ("%s is a cheater: give %s\n", player.GetUserName(), name));
+			A_Log(String.Format ("%s is a cheater: give %s\n", player.GetUserName(), name));
 
 		if (player.mo == NULL || player.health <= 0)
 		{
@@ -254,7 +254,7 @@ extend class PlayerPawn
 		if (type == NULL)
 		{
 			if (PlayerNumber() == consoleplayer)
-				A_Log(format("Unknown item \"%s\"\n", name));
+				A_Log(String.Format("Unknown item \"%s\"\n", name));
 		}
 		else
 		{
@@ -391,7 +391,7 @@ extend class PlayerPawn
 		if (type == NULL)
 		{
 			if (PlayerNumber() == consoleplayer)
-				A_Log(format("Unknown item \"%s\"\n", name));
+				A_Log(String.Format("Unknown item \"%s\"\n", name));
 		}
 		else
 		{

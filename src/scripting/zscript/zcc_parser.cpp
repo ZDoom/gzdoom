@@ -136,6 +136,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Protected,		ZCC_PROTECTED);
 	TOKENDEF (TK_Latent,		ZCC_LATENT);
 	TOKENDEF (TK_Virtual,		ZCC_VIRTUAL);
+	TOKENDEF (TK_VarArg,        ZCC_VARARG);
 	TOKENDEF (TK_Override,		ZCC_OVERRIDE);
 	TOKENDEF (TK_Final,			ZCC_FINAL);
 	TOKENDEF (TK_Meta,			ZCC_META);

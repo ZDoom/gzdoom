@@ -945,3 +945,176 @@ DEFINE_ACTION_FUNCTION(FString, Replace)
 	return 0;
 }
 
+static FString FStringFormat(VM_ARGS)
+{
+	assert(param[0].Type == REGT_STRING);
+	FString fmtstring = param[0].s().GetChars();
+
+	// note: we don't need a real printf format parser.
+	//       enough to simply find the subtitution tokens and feed them to the real printf after checking types.
+	//       https://en.wikipedia.org/wiki/Printf_format_string#Format_placeholder_specification
+	FString output;
+	bool in_fmt = false;
+	FString fmt_current;
+	int argnum = 1;
+	int argauto = 1;
+	// % = starts
+	//  [0-9], -, +, \s, 0, #, . continue
+	//  %, s, d, i, u, fF, eE, gG, xX, o, c, p, aA terminate
+	// various type flags are not supported. not like stuff like 'hh' modifier is to be used in the VM.
+	// the only combination that is parsed locally is %n$...
+	bool haveargnums = false;
+	for (size_t i = 0; i < fmtstring.Len(); i++)
+	{
+		char c = fmtstring[i];
+		if (in_fmt)
+		{
+			if ((c >= '0' && c <= '9') ||
+				c == '-' || c == '+' || (c == ' ' && fmt_current[fmt_current.Len() - 1] != ' ') || c == '#' || c == '.')
+			{
+				fmt_current += c;
+			}
+			else if (c == '$') // %number$format
+			{
+				if (!haveargnums && argauto > 1)
+					ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+				FString argnumstr = fmt_current.Mid(1);
+				if (!argnumstr.IsInt()) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for argument number, got '%s'.", argnumstr.GetChars());
+				argnum = argnumstr.ToLong();
+				if (argnum < 1 || argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum, numparam);
+				fmt_current = "%";
+				haveargnums = true;
+			}
+			else
+			{
+				fmt_current += c;
+
+				switch (c)
+				{
+					// string
+				case 's':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a string
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (param[argnum].Type != REGT_STRING) ThrowAbortException(X_FORMAT_ERROR, "Expected a string for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), param[argnum].s().GetChars());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// pointer
+				case 'p':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a string
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (param[argnum].Type != REGT_POINTER) ThrowAbortException(X_FORMAT_ERROR, "Expected a pointer for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), param[argnum].a);
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// int formats (including char)
+				case 'd':
+				case 'i':
+				case 'u':
+				case 'x':
+				case 'X':
+				case 'o':
+				case 'c':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not an int
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (param[argnum].Type != REGT_INT &&
+						param[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				// double formats
+				case 'f':
+				case 'F':
+				case 'e':
+				case 'E':
+				case 'g':
+				case 'G':
+				case 'a':
+				case 'A':
+				{
+					if (argnum < 0 && haveargnums)
+						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
+					in_fmt = false;
+					// fail if something was found, but it's not a float
+					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+					if (param[argnum].Type != REGT_INT &&
+						param[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+					// append
+					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToDouble());
+					if (!haveargnums) argnum = ++argauto;
+					else argnum = -1;
+					break;
+				}
+
+				default:
+					// invalid character
+					output += fmt_current;
+					in_fmt = false;
+					break;
+				}
+			}
+		}
+		else
+		{
+			if (c == '%')
+			{
+				if (i + 1 < fmtstring.Len() && fmtstring[i + 1] == '%')
+				{
+					output += '%';
+					i++;
+				}
+				else
+				{
+					in_fmt = true;
+					fmt_current = "%";
+				}
+			}
+			else
+			{
+				output += c;
+			}
+		}
+	}
+
+	return output;
+}
+
+DEFINE_ACTION_FUNCTION(FString, Format)
+{
+	PARAM_PROLOGUE;
+	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	ACTION_RETURN_STRING(s);
+}
+
+DEFINE_ACTION_FUNCTION(FString, AppendFormat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	// first parameter is the self pointer
+	FString s = FStringFormat(param+1, defaultparam, numparam-1, ret, numret);
+	(*self) += s;
+	return 0;
+}

@@ -35,6 +35,7 @@ enum
 	VARF_Ref			= (1<<16),	// argument is passed by reference.
 	VARF_Transient		= (1<<17),  // don't auto serialize field.
 	VARF_Meta			= (1<<18),	// static class data (by necessity read only.)
+	VARF_VarArg			= (1<<19),  // [ZZ] vararg: don't typecheck values after ... in function signature
 };
 
 // Symbol information -------------------------------------------------------

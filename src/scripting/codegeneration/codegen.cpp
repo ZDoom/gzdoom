@@ -8124,7 +8124,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				flag = argflags[i + implicit];
 			}
 
-			FxExpression *x;
+			FxExpression *x = nullptr;
 			if (foundvarargs && (Function->Variants[0].Flags & VARF_VarArg))
 			{
 				// only cast implicit-string types for vararg, leave everything else as-is

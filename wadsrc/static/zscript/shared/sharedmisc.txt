@@ -156,10 +156,9 @@ class CustomSprite : Actor
 	
 	override void BeginPlay ()
 	{
-		String name;
 		Super.BeginPlay ();
 
-		name = String.Format("BTIL%04d", args[0] & 0xffff);
+		String name = String.Format("BTIL%04d", args[0] & 0xffff);
 		picnum = TexMan.CheckForTexture (name, TexMan.TYPE_Build);
 		if (!picnum.Exists())
 		{

@@ -24,6 +24,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "sbar.h"
+#include "st_stuff.h"
 #include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
 #include "poly_renderer.h"
@@ -60,7 +61,7 @@ void PolyRenderer::RenderView(player_t *player)
 
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
-	int stHeight = ST_Y;
+	int stHeight = gST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
 	RenderViewport::Instance()->SetViewport(width, height, trueratio);

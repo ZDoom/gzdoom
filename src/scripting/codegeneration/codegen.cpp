@@ -8133,7 +8133,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				if (ArgList[i]->ValueType == TypeName ||
 					ArgList[i]->ValueType == TypeSound)
 				{
-					FxExpression* x = new FxStringCast(ArgList[i]);
+					x = new FxStringCast(ArgList[i]);
 					x = x->Resolve(ctx);
 				}
 				else x = ArgList[i];

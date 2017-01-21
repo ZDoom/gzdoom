@@ -86,7 +86,7 @@ DBaseStatusBar *StatusBar;
 
 extern int setblocks;
 
-int ST_X, ST_Y;
+int gST_X, gST_Y;
 int SB_state = 3;
 
 FTexture *CrosshairImage;
@@ -248,7 +248,7 @@ DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 	CPlayer = NULL;
 	ShowLog = false;
 	HorizontalResolution = hres;
-	VirticalResolution = vres;
+	VerticalResolution = vres;
 
 	SetScaled (st_scale);
 }
@@ -282,7 +282,7 @@ void DBaseStatusBar::OnDestroy ()
 //---------------------------------------------------------------------------
 
 //[BL] Added force argument to have forcescaled mean forcescaled.
-// - Also, if the VirticalResolution is something other than the default (200)
+// - Also, if the VerticalResolution is something other than the default (200)
 //   We should always obey the value of scale.
 void DBaseStatusBar::SetScaled (bool scale, bool force)
 {
@@ -292,10 +292,10 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	{
 		ST_X = (SCREENWIDTH - HorizontalResolution) / 2;
 		ST_Y = SCREENHEIGHT - RelTop;
-		::ST_Y = ST_Y;
+		gST_Y = ST_Y;
 		if (RelTop > 0)
 		{
-			Displacement = double((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))/RelTop;
+			Displacement = double((ST_Y * VerticalResolution / SCREENHEIGHT) - (VerticalResolution - RelTop))/RelTop;
 		}
 		else
 		{
@@ -305,20 +305,20 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	else
 	{
 		ST_X = 0;
-		ST_Y = VirticalResolution - RelTop;
+		ST_Y = VerticalResolution - RelTop;
 		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
 		if (!AspectTallerThanWide(aspect))
 		{ // Normal resolution
-			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
+			gST_Y = Scale (ST_Y, SCREENHEIGHT, VerticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
+			gST_Y = Scale(ST_Y - VerticalResolution/2, SCREENHEIGHT*3, Scale(VerticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
 		}
 		Displacement = 0;
 	}
-	::ST_X = ST_X;
+	gST_X = ST_X;
 	ST_SetNeedRefresh();
 }
 
@@ -537,506 +537,6 @@ void DBaseStatusBar::ShowPlayerName ()
 
 //---------------------------------------------------------------------------
 //
-// PROC DrawImage
-//
-// Draws an image with the status bar's upper-left corner as the origin.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawImage (FTexture *img,
-	int x, int y, FRemapTable *translation) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, x + ST_X, y + ST_Y,
-			DTA_Translation, translation,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawImage
-//
-// Draws an optionally dimmed image with the status bar's upper-left corner
-// as the origin.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawDimImage (FTexture *img,
-	int x, int y, bool dimmed) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, x + ST_X, y + ST_Y,
-			DTA_ColorOverlay, dimmed ? DIM_OVERLAY : 0,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawPartialImage
-//
-// Draws a portion of an image with the status bar's upper-left corner as
-// the origin. The image should be the same size as the status bar.
-// Used for Doom's status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, ST_X, ST_Y,
-			DTA_WindowLeft, wx,
-			DTA_WindowRight, wx + ww,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrINumber
-//
-// Draws a three digit number.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrINumber (signed int val, int x, int y, int imgBase) const
-{
-	int oldval;
-
-	if (val > 999)
-		val = 999;
-	oldval = val;
-	if (val < 0)
-	{
-		if (val < -9)
-		{
-			DrawImage (Images[imgLAME], x+1, y+1);
-			return;
-		}
-		val = -val;
-		DrawImage (Images[imgBase+val], x+18, y);
-		DrawImage (Images[imgNEGATIVE], x+9, y);
-		return;
-	}
-	if (val > 99)
-	{
-		DrawImage (Images[imgBase+val/100], x, y);
-	}
-	val = val % 100;
-	if (val > 9 || oldval > 99)
-	{
-		DrawImage (Images[imgBase+val/10], x+9, y);
-	}
-	val = val % 10;
-	DrawImage (Images[imgBase+val], x+18, y);
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrBNumber
-//
-// Draws an x digit number using the big font.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
-{
-	bool neg;
-	int i, w;
-	int power;
-	FTexture *pic;
-
-	pic = Images[imgBNumbers];
-	w = (pic != NULL) ? pic->GetWidth() : 0;
-
-	if (val == 0)
-	{
-		if (pic != NULL)
-		{
-			DrawImage (pic, x - w, y);
-		}
-		return;
-	}
-
-	if ( (neg = val < 0) )
-	{
-		val = -val;
-		size--;
-	}
-	for (i = size-1, power = 10; i > 0; i--)
-	{
-		power *= 10;
-	}
-	if (val >= power)
-	{
-		val = power - 1;
-	}
-	while (val != 0 && size--)
-	{
-		x -= w;
-		pic = Images[imgBNumbers + val % 10];
-		val /= 10;
-		if (pic != NULL)
-		{
-			DrawImage (pic, x, y);
-		}
-	}
-	if (neg)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			DrawImage (pic, x - w, y);
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrSmallNumber
-//
-// Draws a small three digit number.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrSmallNumber (int val, int x, int y) const
-{
-	int digit = 0;
-
-	if (val > 999)
-	{
-		val = 999;
-	}
-	if (val > 99)
-	{
-		digit = val / 100;
-		DrawImage (Images[imgSmNumbers + digit], x, y);
-		val -= digit * 100;
-	}
-	if (val > 9 || digit)
-	{
-		digit = val / 10;
-		DrawImage (Images[imgSmNumbers + digit], x+4, y);
-		val -= digit * 10;
-	}
-	DrawImage (Images[imgSmNumbers + val], x+8, y);
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrINumberOuter
-//
-// Draws a number outside the status bar, possibly scaled.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrINumberOuter (signed int val, int x, int y, bool center, int w) const
-{
-	bool negative = false;
-
-	x += w*2;
-	if (val < 0)
-	{
-		negative = true;
-		val = -val;
-	}
-	else if (val == 0)
-	{
-		screen->DrawTexture (Images[imgINumbers], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		screen->DrawTexture (Images[imgINumbers], x, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		return;
-	}
-
-	int oval = val;
-	int ox = x;
-
-	// First the shadow
-	while (val != 0)
-	{
-		screen->DrawTexture (Images[imgINumbers + val % 10], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		x -= w;
-		val /= 10;
-	}
-	if (negative)
-	{
-		screen->DrawTexture (Images[imgNEGATIVE], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-	}
-
-	// Then the real deal
-	val = oval;
-	x = ox;
-	while (val != 0)
-	{
-		screen->DrawTexture (Images[imgINumbers + val % 10], x, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		x -= w;
-		val /= 10;
-	}
-	if (negative)
-	{
-		screen->DrawTexture (Images[imgNEGATIVE], x, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrBNumberOuter
-//
-// Draws a three digit number using the big font outside the status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) const
-{
-	int xpos;
-	int w;
-	bool negative = false;
-	FTexture *pic;
-
-	pic = Images[imgBNumbers+3];
-	if (pic != NULL)
-	{
-		w = pic->GetWidth();
-	}
-	else
-	{
-		w = 0;
-	}
-
-	xpos = x + w/2 + (size-1)*w;
-
-	if (val == 0)
-	{
-		pic = Images[imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-		return;
-	}
-	else if (val < 0)
-	{
-		negative = true;
-		val = -val;
-	}
-
-	int oval = val;
-	int oxpos = xpos;
-
-	// Draw shadow first
-	while (val != 0)
-	{
-		pic = Images[val % 10 + imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-		}
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				TAG_DONE);
-		}
-	}
-
-	// Then draw the real thing
-	val = oval;
-	xpos = oxpos;
-	while (val != 0)
-	{
-		pic = Images[val % 10 + imgBNumbers];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = Images[imgBNEGATIVE];
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrBNumberOuter
-//
-// Draws a three digit number using the real big font outside the status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size) const
-{
-	int xpos;
-	int w, v;
-	bool negative = false;
-	FTexture *pic;
-
-	w = 0;
-	BigFont->GetChar ('0', &w);
-
-	if (w > 1)
-	{
-		w--;
-	}
-	xpos = x + w/2 + (size-1)*w;
-
-	if (val == 0)
-	{
-		pic = BigFont->GetChar ('0', &v);
-		screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
-			DTA_HUDRules, HUD_Normal,
-			DTA_AlphaF, HR_SHADOW,
-			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-			TAG_DONE);
-		screen->DrawTexture (pic, xpos - v/2, y,
-			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-			TAG_DONE);
-		return;
-	}
-	else if (val < 0)
-	{
-		negative = true;
-		val = -val;
-	}
-
-	int oval = val;
-	int oxpos = xpos;
-
-	// First the shadow
-	while (val != 0)
-	{
-		pic = BigFont->GetChar ('0' + val % 10, &v);
-		screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
-			DTA_HUDRules, HUD_Normal,
-			DTA_AlphaF, HR_SHADOW,
-			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-			TAG_DONE);
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = BigFont->GetChar ('-', &v);
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
-				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
-				DTA_FillColor, 0,
-				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-				TAG_DONE);
-		}
-	}
-
-	// Then the foreground number
-	val = oval;
-	xpos = oxpos;
-	while (val != 0)
-	{
-		pic = BigFont->GetChar ('0' + val % 10, &v);
-		screen->DrawTexture (pic, xpos - v/2, y,
-			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-			TAG_DONE);
-		val /= 10;
-		xpos -= w;
-	}
-	if (negative)
-	{
-		pic = BigFont->GetChar ('-', &v);
-		if (pic != NULL)
-		{
-			screen->DrawTexture (pic, xpos - v/2, y,
-				DTA_HUDRules, HUD_Normal,
-				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-				TAG_DONE);
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrSmallNumberOuter
-//
-// Draws a small three digit number outside the status bar.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) const
-{
-	int digit = 0;
-
-	if (val > 999)
-	{
-		val = 999;
-	}
-	if (val > 99)
-	{
-		digit = val / 100;
-		screen->DrawTexture (Images[imgSmNumbers + digit], x, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		val -= digit * 100;
-	}
-	if (val > 9 || digit)
-	{
-		digit = val / 10;
-		screen->DrawTexture (Images[imgSmNumbers + digit], x+4, y,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		val -= digit * 10;
-	}
-	screen->DrawTexture (Images[imgSmNumbers + val], x+8, y,
-		DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-}
-
-//---------------------------------------------------------------------------
-//
 // RefreshBackground
 //
 //---------------------------------------------------------------------------
@@ -1047,7 +547,7 @@ void DBaseStatusBar::RefreshBackground () const
 
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
 	x = (ratio < 1.5f || !Scaled) ? ST_X : SCREENWIDTH*(48-AspectMultiplier(ratio))/(48*2);
-	y = x == ST_X && x > 0 ? ST_Y : ::ST_Y;
+	y = x == ST_X && x > 0 ? ST_Y : gST_Y;
 
 	if(!CompleteBorder)
 	{
@@ -1255,21 +755,21 @@ void DBaseStatusBar::Draw (EHudState state)
 			vwidth = SCREENWIDTH;
 			vheight = SCREENHEIGHT;
 			xpos = vwidth - 80;
-			y = ::ST_Y - height;
+			y = gST_Y - height;
 		}
 		else if (active_con_scaletext() > 1)
 		{
 			vwidth = SCREENWIDTH / active_con_scaletext();
 			vheight = SCREENHEIGHT / active_con_scaletext();
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = ::ST_Y/4 - height;
+			y = gST_Y/4 - height;
 		}
 		else
 		{
 			vwidth = SCREENWIDTH/2;
 			vheight = SCREENHEIGHT/2;
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = ::ST_Y/2 - height;
+			y = gST_Y/2 - height;
 		}
 
 		if (gameinfo.gametype == GAME_Strife)
@@ -1325,7 +825,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		}
 
 		// Draw map name
-		y = ::ST_Y - height;
+		y = gST_Y - height;
 		if (gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
 		{
 			y -= 8;
@@ -1476,7 +976,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
-	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 }
 
 //---------------------------------------------------------------------------
@@ -1498,9 +998,9 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	DrawPowerups ();
 	if (automapactive && !viewactive)
 	{
-		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 	}
-	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
 	DrawConsistancy ();
 	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();

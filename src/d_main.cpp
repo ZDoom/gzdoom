@@ -785,13 +785,13 @@ void D_Display ()
 			screen->DrawBlendingRect();
 			if (automapactive)
 			{
-				int saved_ST_Y = ST_Y;
+				int saved_ST_Y = gST_Y;
 				if (hud_althud && viewheight == SCREENHEIGHT)
 				{
-					ST_Y = viewheight;
+					gST_Y = viewheight;
 				}
 				AM_Drawer ();
-				ST_Y = saved_ST_Y;
+				gST_Y = saved_ST_Y;
 			}
 			if (!automapactive || viewactive)
 			{

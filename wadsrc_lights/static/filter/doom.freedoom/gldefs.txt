@@ -479,7 +479,7 @@ object ShortBlueTorch
 // Burning barrel
 flickerlight2 FIREBARREL
 {
-    color 1.0 0.9 0.4
+    color 0.6 0.6 0.9
     size 72
     secondarySize 81
     interval 0.1

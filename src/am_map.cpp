@@ -1059,7 +1059,7 @@ static void AM_findMinMaxBoundaries ()
 static void AM_calcMinMaxMtoF()
 {
 	double a = SCREENWIDTH / max_w;
-	double b = ::ST_Y / max_h;
+	double b = gST_Y / max_h;
 
 	min_scale_mtof = a < b ? a : b;
 	max_scale_mtof = SCREENHEIGHT / (2*PLAYERRADIUS);
@@ -1417,7 +1417,7 @@ void AM_NewResolution()
 	else if (scale_mtof > max_scale_mtof)
 		AM_maxOutWindowScale();
 	f_w = screen->GetWidth();
-	f_h = ST_Y;
+	f_h = gST_Y;
 	AM_activateNewScale();
 }
 
@@ -3066,7 +3066,7 @@ void AM_Drawer ()
 		// and view size adjustments.
 		f_x = f_y = 0;
 		f_w = screen->GetWidth ();
-		f_h = ST_Y;
+		f_h = gST_Y;
 		f_p = screen->GetPitch ();
 
 		AM_clearFB(AMColors[AMColors.Background]);

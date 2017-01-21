@@ -1818,7 +1818,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 int CommandDrawSelectedInventory::artiflashTick = 0;
 double CommandDrawSelectedInventory::itemflashFade = 0.75;
 
-void DSBarInfo::FlashItem(const PClass *itemtype)
+void DSBarInfo::_FlashItem(const PClass *itemtype)
 {
 	CommandDrawSelectedInventory::Flash();
 }
@@ -2190,7 +2190,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			AInventory *item;
 			unsigned int i = 0;
 			// If the player has no artifacts, don't draw the bar
-			statusBar->CPlayer->mo->InvFirst = statusBar->ValidateInvFirst(size);
+			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
 			if(statusBar->CPlayer->mo->InvFirst != NULL || alwaysShow)
 			{
 				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = item->NextInv(), ++i)

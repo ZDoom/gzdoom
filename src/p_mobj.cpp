@@ -920,11 +920,11 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	PARAM_CLASS_NOT_NULL(item, AInventory);
 	PARAM_INT(amount);
 	PARAM_BOOL_DEF(fromdecorate);
 	PARAM_BOOL_DEF(notakeinfinite);
-	self->RemoveInventory(item);
+	self->TakeInventory(item, amount, fromdecorate, notakeinfinite);
 	return 0;
 }
 

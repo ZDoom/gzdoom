@@ -255,7 +255,6 @@ enum EFxType
 	EFX_MemberFunctionCall,
 	EFX_ActionSpecialCall,
 	EFX_FlopFunctionCall,
-	EFX_Format,
 	EFX_VMFunctionCall,
 	EFX_Sequence,
 	EFX_CompoundStatement,
@@ -1531,26 +1530,6 @@ public:
 	FxFlopFunctionCall(size_t index, FArgumentList &args, const FScriptPosition &pos);
 	~FxFlopFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
-//	FxFormat
-//
-//==========================================================================
-
-class FxFormat : public FxExpression
-{
-	FArgumentList ArgList;
-	bool EmitTail;
-
-public:
-
-	FxFormat(FArgumentList &args, const FScriptPosition &pos);
-	~FxFormat();
-	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

@@ -432,9 +432,15 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		StatusBar->Destroy();
 		StatusBar = NULL;
 	}
+	auto cls = PClass::FindClass("DoomStatusBar");
+
 	if (bTitleLevel)
 	{
 		StatusBar = new DBaseStatusBar (0);
+	}
+	else if (cls && gameinfo.gametype == GAME_Doom)
+	{
+		StatusBar = (DBaseStatusBar*)cls->CreateNew();
 	}
 	else if (SBarInfoScript[SCRIPT_CUSTOM] != NULL)
 	{

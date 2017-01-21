@@ -308,6 +308,8 @@ enum EPickStart
 struct String native
 {
 	native void Replace(String pattern, String replacement);
+	native static vararg String Format(String fmt, ...);
+        native vararg void AppendFormat(String fmt, ...);
 }
 
 class Floor : Thinker native

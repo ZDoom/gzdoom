@@ -646,8 +646,14 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t rs;
 	sector_t * rendersector;
 
+	if (thing == nullptr)
+		return;
+
+	// [ZZ] allow CustomSprite-style direct picnum specification
+	bool isPicnumOverride = thing->picnum.isValid();
+
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer() || !thing->IsInsideVisibleAngles())
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || !thing->IsInsideVisibleAngles())
 	{
 		return;
 	}
@@ -752,13 +758,19 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		z += fz;
 	}
 
-	modelframe = gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+	modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{
 		bool mirror;
 		DAngle ang = (thingpos - ViewPos).Angle();
 		FTextureID patch;
-		if (thing->flags7 & MF7_SPRITEANGLE)
+		// [ZZ] add direct picnum override
+		if (isPicnumOverride)
+		{
+			patch = thing->picnum;
+			mirror = false;
+		}
+		else if (thing->flags7 & MF7_SPRITEANGLE)
 		{
 			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (thing->SpriteAngle).BAMs(), &mirror);
 		}
@@ -775,7 +787,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
-		if (!gltexture) return;
+		if (!gltexture)
+			return;
 
 		vt = gltexture->GetSpriteVT();
 		vb = gltexture->GetSpriteVB();

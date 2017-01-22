@@ -88,6 +88,7 @@ public:
 	int Compile();
 
 private:
+	int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
@@ -103,7 +104,7 @@ private:
 	bool CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
-	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
 
 	void InitDefaults();

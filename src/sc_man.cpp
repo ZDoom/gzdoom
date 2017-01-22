@@ -1054,6 +1054,8 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 	{
 		severity = StrictErrors || strictdecorate ? MSG_ERROR : MSG_WARNING;
 	}
+	// This is mainly for catching the error with an exception handler.
+	if (severity == MSG_ERROR && errorout) severity = MSG_FATAL;
 
 	if (message == NULL)
 	{

@@ -52,6 +52,42 @@
 #include "vmbuilder.h"
 #include "version.h"
 
+static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxIntCast(ex, false);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetInt() : 0;
+}
+
+static double GetFloatConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxFloatCast(ex);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetFloat() : 0;
+}
+
+static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxStringCast(ex);
+	ex = ex->Resolve(ctx);
+	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+}
+
+int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+{
+	FCompileContext ctx(cls, false);
+	FxExpression *ex = new FxIntCast(ConvertNode(node), false);
+	ex = ex->Resolve(ctx);
+	if (ex == nullptr) return 0;
+	if (!ex->isConstant())
+	{
+		ex->ScriptPosition.Message(MSG_ERROR, "Expression is not constant");
+		return 0;
+	}
+	return static_cast<FxConstant*>(ex)->GetValue().GetInt();
+}
+
+
 //==========================================================================
 //
 // ZCCCompiler :: ProcessClass
@@ -1293,7 +1329,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		if (field->Type->ArraySize != nullptr)
 		{
-			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, &type->Symbols);
+			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, type);
 		}
 
 		auto name = field->Names;
@@ -1304,7 +1340,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				auto thisfieldtype = fieldtype;
 				if (name->ArraySize != nullptr)
 				{
-					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, &type->Symbols);
+					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, type);
 				}
 				
 				if (varflags & VARF_Native)
@@ -1662,7 +1698,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 //
 //==========================================================================
 
-PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym)
+PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls)
 {
 	TArray<ZCC_Expression *> indices;
 
@@ -1674,15 +1710,21 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		node = static_cast<ZCC_Expression*>(node->SiblingNext);
 	} while (node != arraysize);
 
+
+	FCompileContext ctx(cls, false);
 	for (auto node : indices)
 	{
-		auto val = Simplify(node, sym, true);
-		if (val->Operation != PEX_ConstValue || !val->Type->IsA(RUNTIME_CLASS(PInt)))
+		// There is no float->int casting here.
+		FxExpression *ex = ConvertNode(node);
+		ex = ex->Resolve(ctx);
+
+		if (ex == nullptr) return TypeError;
+		if (!ex->isConstant() || !ex->ValueType->IsA(RUNTIME_CLASS(PInt)))
 		{
 			Error(arraysize, "Array index must be an integer constant");
 			return TypeError;
 		}
-		int size = static_cast<ZCC_ExprConstant *>(val)->IntVal;
+		int size = static_cast<FxConstant*>(ex)->GetValue().GetInt();
 		if (size < 1)
 		{
 			Error(arraysize, "Array size must be positive");
@@ -1763,27 +1805,6 @@ const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
 		if (!silent) Error(expr, "Cannot convert to string");
 		return nullptr;
 	}
-}
-
-static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
-{
-	ex = new FxIntCast(ex, false);
-	ex = ex->Resolve(ctx);
-	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetInt() : 0;
-}
-
-static double GetFloatConst(FxExpression *ex, FCompileContext &ctx)
-{
-	ex = new FxFloatCast(ex);
-	ex = ex->Resolve(ctx);
-	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetFloat() : 0;
-}
-
-static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
-{
-	ex = new FxStringCast(ex);
-	ex = ex->Resolve(ctx);
-	return static_cast<FxConstant*>(ex)->GetValue().GetString();
 }
 
 //==========================================================================
@@ -2812,7 +2833,7 @@ void ZCCCompiler::CompileStates()
 					{
 						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
 					}
-					// It is important to call CheckRandom before Simplify, because Simplify will resolve the function's name to nonsense
+					FCompileContext ctx(c->Type(), false);
 					if (CheckRandom(sl->Duration))
 					{
 						auto func = static_cast<ZCC_ExprFuncCall *>(sl->Duration);
@@ -2820,26 +2841,16 @@ void ZCCCompiler::CompileStates()
 						{
 							Error(sl, "Random duration requires exactly 2 parameters");
 						}
-						auto p1 = Simplify(func->Parameters->Value, &c->Type()->Symbols, true);
-						auto p2 = Simplify(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value, &c->Type()->Symbols, true);
-						int v1 = GetInt(p1);
-						int v2 = GetInt(p2);
+						int v1 = IntConstFromNode(func->Parameters->Value, c->Type());
+						int v2 = IntConstFromNode(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value, c->Type());
 						if (v1 > v2) std::swap(v1, v2);
 						state.Tics = (int16_t)clamp<int>(v1, 0, INT16_MAX);
 						state.TicRange = (uint16_t)clamp<int>(v2 - v1, 0, UINT16_MAX);
 					}
 					else
 					{
-						auto duration = Simplify(sl->Duration, &c->Type()->Symbols, true);
-						if (duration->Operation == PEX_ConstValue)
-						{
-							state.Tics = (int16_t)clamp<int>(GetInt(duration), -1, INT16_MAX);
-							state.TicRange = 0;
-						}
-						else
-						{
-							Error(sl, "Duration is not a constant");
-						}
+						state.Tics = (int16_t)IntConstFromNode(sl->Duration, c->Type());
+						state.TicRange = 0;
 					}
 					if (sl->bBright) state.StateFlags |= STF_FULLBRIGHT;
 					if (sl->bFast) state.StateFlags |= STF_FAST;
@@ -2855,18 +2866,8 @@ void ZCCCompiler::CompileStates()
 					}
 					if (sl->Offset != nullptr)
 					{
-						auto o1 = static_cast<ZCC_Expression *>(Simplify(sl->Offset, &c->Type()->Symbols, true));
-						auto o2 = static_cast<ZCC_Expression *>(Simplify(static_cast<ZCC_Expression *>(o1->SiblingNext), &c->Type()->Symbols, true));
-
-						if (o1->Operation != PEX_ConstValue || o2->Operation != PEX_ConstValue)
-						{
-							Error(o1, "State offsets must be constant");
-						}
-						else
-						{
-							state.Misc1 = GetInt(o1);
-							state.Misc2 = GetInt(o2);
-						}
+						state.Misc1 = IntConstFromNode(sl->Offset, c->Type());
+						state.Misc2 = IntConstFromNode(static_cast<ZCC_Expression *>(sl->Offset->SiblingNext), c->Type());
 					}
 #ifdef DYNLIGHT
 					if (sl->Lights != nullptr)
@@ -2915,23 +2916,15 @@ void ZCCCompiler::CompileStates()
 					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
 					if (sg->Offset != nullptr)
 					{
-						auto ofs = Simplify(sg->Offset, &c->Type()->Symbols, true);
-						if (ofs->Operation != PEX_ConstValue)
+						int offset = IntConstFromNode(sg->Offset, c->Type());
+						if (offset < 0)
 						{
-							Error(sg, "Constant offset expected for GOTO");
+							Error(sg, "GOTO offset must be positive");
+							offset = 0;
 						}
-						else
+						if (offset > 0)
 						{
-							int offset = GetInt(ofs);
-							if (offset < 0)
-							{
-								Error(sg, "GOTO offset must be positive");
-								offset = 0;
-							}
-							if (offset > 0)
-							{
-								statename.AppendFormat("+%d", offset);
-							}
+							statename.AppendFormat("+%d", offset);
 						}
 					}
 					if (!statedef.SetGotoLabel(statename))
@@ -3332,7 +3325,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		if (loc->Type->ArraySize != nullptr)
 		{
-			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, &ConvertClass->Symbols);
+			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, ConvertClass);
 		}
 
 		do
@@ -3341,7 +3334,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 			if (node->ArraySize != nullptr)
 			{
-				type = ResolveArraySize(ztype, node->ArraySize, &ConvertClass->Symbols);
+				type = ResolveArraySize(ztype, node->ArraySize, ConvertClass);
 			}
 			else
 			{

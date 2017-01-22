@@ -146,6 +146,7 @@ struct FScriptPosition
 	static bool StrictErrors;
 	FString FileName;
 	int ScriptLine;
+	bool errorout = false;
 
 	FScriptPosition()
 	{

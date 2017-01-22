@@ -109,79 +109,32 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Unregister)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DEventHandler, MapLoaded)
-{
-	PARAM_SELF_PROLOGUE(DEventHandler);
-	// do nothing
-	return 0;
+#define DEFINE_EVENT_HANDLER(cls, funcname) DEFINE_ACTION_FUNCTION(cls, funcname) \
+{ \
+	PARAM_SELF_PROLOGUE(cls); \
+	return 0; \
+} \
+void cls::funcname() \
+{ \
+	IFVIRTUAL(cls, funcname) \
+	{ \
+		if (func == cls##_##funcname##_VMPtr) \
+			return; \
+		VMValue params[1] = { (cls*)this }; \
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr); \
+	} \
 }
 
-DEFINE_ACTION_FUNCTION(DEventHandler, MapUnloading)
-{
-	PARAM_SELF_PROLOGUE(DEventHandler);
-	// do nothing
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DEventHandler, RenderFrame)
-{
-	PARAM_SELF_PROLOGUE(DEventHandler);
-	// do nothing
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DEventHandler, RenderCamera)
-{
-	PARAM_SELF_PROLOGUE(DEventHandler);
-	// do nothing
-	return 0;
-}
+DEFINE_EVENT_HANDLER(DEventHandler, MapLoaded)
+DEFINE_EVENT_HANDLER(DEventHandler, MapUnloading)
+DEFINE_EVENT_HANDLER(DEventHandler, RenderFrame)
+DEFINE_EVENT_HANDLER(DEventHandler, RenderCamera)
 
 //
 void DEventHandler::OnDestroy()
 {
 	E_UnregisterHandler(this);
 	DObject::OnDestroy();
-}
-
-void DEventHandler::MapLoaded()
-{
-	IFVIRTUAL(DEventHandler, MapLoaded)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[1] = { (DEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-}
-
-void DEventHandler::MapUnloading()
-{
-	IFVIRTUAL(DEventHandler, MapUnloading)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[1] = { (DEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-}
-
-void DEventHandler::RenderFrame()
-{
-	IFVIRTUAL(DEventHandler, RenderFrame)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[1] = { (DEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
-}
-
-void DEventHandler::RenderCamera()
-{
-	IFVIRTUAL(DEventHandler, RenderCamera)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[1] = { (DEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-	}
 }
 
 void DRenderEventHandler::Setup()

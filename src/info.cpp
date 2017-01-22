@@ -54,6 +54,7 @@
 #include "thingdef.h"
 #include "d_player.h"
 #include "doomerrors.h"
+#include "events.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -214,6 +215,9 @@ void PClassActor::StaticInit()
 	ClearStrifeTypes();
 	LoadActors ();
 	InitBotStuff();
+
+	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
+	E_InitStaticHandlers(false);
 }
 
 //==========================================================================

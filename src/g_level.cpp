@@ -1068,6 +1068,8 @@ void G_DoLoadLevel (int position, bool autosave)
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	// [ZZ] init per-map static handlers
 	E_InitStaticHandlers(true);
+	//      call map load hook
+	E_MapLoaded();
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)

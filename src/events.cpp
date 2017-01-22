@@ -18,7 +18,7 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	if (handler->next)
 		handler->next->prev = handler;
 	E_FirstEventHandler = handler;
-	if (handler->IsStatic() && handler->isMapScope) handler->ObjectFlags |= OF_Fixed;
+	if (handler->IsStatic() && !handler->isMapScope) handler->ObjectFlags |= OF_Fixed;
 	return true;
 }
 
@@ -35,7 +35,7 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		handler->next->prev = handler->prev;
 	if (handler == E_FirstEventHandler)
 		E_FirstEventHandler = handler->next;
-	if (handler->IsStatic() && handler->isMapScope)
+	if (handler->IsStatic() && !handler->isMapScope)
 	{
 		handler->ObjectFlags |= OF_YesReallyDelete;
 		delete handler;

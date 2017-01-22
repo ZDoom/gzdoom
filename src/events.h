@@ -11,6 +11,10 @@ bool E_RegisterHandler(DStaticEventHandler* handler);
 bool E_UnregisterHandler(DStaticEventHandler* handler);
 // find
 bool E_CheckHandler(DStaticEventHandler* handler);
+// check type
+bool E_IsStaticType(PClass* type);
+// init static handlers
+void E_InitStaticHandlers(bool map);
 
 // called right after the map has loaded (approximately same time as OPEN ACS scripts)
 void E_MapLoaded();
@@ -33,6 +37,7 @@ public:
 	DStaticEventHandler* next;
 	DStaticEventHandler* unregPrev;
 	DStaticEventHandler* unregNext;
+	bool isMapScope; // this is only used with IsStatic=true
 	virtual bool IsStatic() { return true; }
 
 	// destroy handler. this unlinks EventHandler from the list automatically.

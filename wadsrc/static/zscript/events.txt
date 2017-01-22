@@ -1,0 +1,24 @@
+class EventHandler : Object native
+{
+	static native EventHandler Create(class<EventHandler> type);
+	static native EventHandler CreateOnce(class<EventHandler> type);
+	static native EventHandler Find(class<EventHandler> type);
+
+	static native bool Register(EventHandler handler);
+	static native bool Unregister(EventHandler handler);
+
+	virtual native void MapLoaded();
+	virtual native void MapUnloading();
+
+	virtual native void RenderFrame();
+	virtual native void RenderCamera();
+}
+
+class RenderEventHandler : EventHandler native
+{
+	native readonly Vector3 ViewPos;
+	native readonly double ViewAngle;
+	native readonly double ViewPitch;
+	native readonly double ViewRoll;
+	native readonly double FracTic;
+}

@@ -143,9 +143,9 @@ class Inquisitor : Actor
 		A_PlaySound ("inquisitor/jump", CHAN_ITEM, 1, true);
 		AddZ(64);
 		A_FaceTarget ();
-		speed = Speed * (2./3);
-		VelFromAngle(speed);
-		double dist = DistanceBySpeed(target, speed);
+		let localspeed = Speed * (2./3);
+		VelFromAngle(localspeed);
+		double dist = DistanceBySpeed(target, localspeed);
 		Vel.Z = (target.pos.z - pos.z) / dist;
 		reactiontime = 60;
 		bNoGravity = true;

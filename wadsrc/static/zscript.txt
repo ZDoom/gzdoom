@@ -5,6 +5,7 @@
 #include "zscript/constants.txt"
 #include "zscript/actor.txt"
 #include "zscript/actor_checks.txt"
+#include "zscript/events.txt"
 
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"

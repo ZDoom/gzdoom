@@ -59,6 +59,7 @@
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
 #include "r_thread.h"
+#include "events.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
@@ -839,6 +840,9 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 	R_SetupBuffer ();
 	R_SetupFrame (actor);
+
+	// [ZZ] call event hook
+	E_RenderCamera();
 
 	// Clear buffers.
 	R_ClearClipSegs (0, viewwidth);

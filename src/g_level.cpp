@@ -85,6 +85,7 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "virtual.h"
+#include "events.h"
 
 #include "gi.h"
 
@@ -655,6 +656,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	// [RH] Give scripts a chance to do something
 	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	E_MapUnloading();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel);

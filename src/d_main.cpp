@@ -110,6 +110,7 @@
 #include "autosegs.h"
 #include "fragglescript/t_fs.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -775,6 +776,9 @@ void D_Display ()
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + viewwidth, viewwindowy + viewheight);
 
+			// [ZZ] execute event hook that we just started the frame
+			E_RenderFrame();
+			//
 			Renderer->RenderView(&players[consoleplayer]);
 
 			if ((hw2d = screen->Begin2D(viewactive)))

@@ -618,6 +618,9 @@ void R_HighlightPortal (PortalDrawseg* pds)
 
 void R_EnterPortal (PortalDrawseg* pds, int depth)
 {
+	// [ZZ] portal hook
+	E_RenderCamera();
+
 	// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
 	if (depth >= r_portal_recursions)
 	{

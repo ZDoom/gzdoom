@@ -1977,8 +1977,8 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		return;
 	}
 
-	auto values = Simplify(property->Values, &bag.Info->Symbols, true);	// need to do this before the loop so that we can find the head node again.
-	auto exp = values;
+	auto exp = property->Values;
+	FCompileContext ctx(bag.Info, false);
 	for (auto f : prop->Variables)
 	{
 		void *addr;
@@ -1992,25 +1992,38 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			addr = ((char*)defaults) + f->Offset;
 		}
 
+		FxExpression *ex = ConvertNode(exp);
+		ex = ex->Resolve(ctx);
+		if (ex == nullptr)
+		{
+			return;
+		}
+		else if (!ex->isConstant())
+		{
+			// If we get TypeError, there has already been a message from deeper down so do not print another one.
+			if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName);
+			return;
+		}
+
 		if (f->Type == TypeBool)
 		{
-			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetInt(exp));
+			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetIntConst(ex, ctx));
 		}
 		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
-			static_cast<PInt*>(f->Type)->SetValue(addr, GetInt(exp));
+			static_cast<PInt*>(f->Type)->SetValue(addr, GetIntConst(ex, ctx));
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
 		{
-			static_cast<PFloat*>(f->Type)->SetValue(addr, GetDouble(exp));
+			static_cast<PFloat*>(f->Type)->SetValue(addr, GetFloatConst(ex, ctx));
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
 		{
-			*(FString*)addr = GetString(exp);
+			*(FString*)addr = GetStringConst(ex, ctx);
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{
-			auto clsname = GetString(exp);
+			auto clsname = GetStringConst(ex, ctx);
 			auto cls = PClass::FindClass(clsname);
 			if (cls == nullptr)
 			{

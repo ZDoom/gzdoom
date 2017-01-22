@@ -1765,6 +1765,27 @@ const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
 	}
 }
 
+static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxIntCast(ex, false);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetInt() : 0;
+}
+
+static double GetFloatConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxFloatCast(ex);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetFloat() : 0;
+}
+
+static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxStringCast(ex);
+	ex = ex->Resolve(ctx);
+	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+}
+
 //==========================================================================
 //
 // Parses an actor property's parameters and calls the handler
@@ -1787,16 +1808,22 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			Error(property, "%s: arguments missing", prop->name);
 			return;
 		}
-		property->Values = Simplify(property->Values, &bag.Info->Symbols, true);	// need to do this before the loop so that we can find the head node again.
 		const char * p = prop->params;
 		auto exp = property->Values;
 
+		FCompileContext ctx(bag.Info, false);
 		while (true)
 		{
 			FPropParam conv;
 			FPropParam pref;
 
-			if (exp->NodeType != AST_ExprConstant)
+			FxExpression *ex = ConvertNode(exp);
+			ex = ex->Resolve(ctx);
+			if (ex == nullptr)
+			{
+				return;
+			}
+			else if (!ex->isConstant())
 			{
 				// If we get TypeError, there has already been a message from deeper down so do not print another one.
 				if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->name);
@@ -1809,7 +1836,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			{
 
 			case 'X':	// Expression in parentheses or number. We only support the constant here. The function will have to be handled by a separate property to get past the parser.
-				conv.i = GetInt(exp);
+				conv.i = GetIntConst(ex, ctx);
 				params.Push(conv);
 				conv.exp = nullptr;
 				break;
@@ -1817,15 +1844,15 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			case 'I':
 			case 'M':	// special case for morph styles in DECORATE . This expression-aware parser will not need this.
 			case 'N':	// special case for thing activations in DECORATE. This expression-aware parser will not need this.
-				conv.i = GetInt(exp);
+				conv.i = GetIntConst(ex, ctx);
 				break;
 
 			case 'F':
-				conv.d = GetDouble(exp);
+				conv.d = GetFloatConst(ex, ctx);
 				break;
 
 			case 'Z':	// an optional string. Does not allow any numeric value.
-				if (!GetString(exp, true))
+				if (ex->ValueType != TypeString)
 				{
 					// apply this expression to the next argument on the list.
 					params.Push(conv);
@@ -1833,21 +1860,21 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 					p++;
 					continue;
 				}
-				conv.s = GetString(exp);
+				conv.s = GetStringConst(ex, ctx);
 				break;
 
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;
 			case 'S':
 			case 'T': // a filtered string (ZScript only parses filtered strings so there's nothing to do here.)
-				conv.s = GetString(exp);
+				conv.s = GetStringConst(ex, ctx);
 				break;
 
 			case 'L':	// Either a number or a list of strings
-				if (!GetString(exp, true))
+				if (ex->ValueType != TypeString)
 				{
 					pref.i = 0;
-					conv.i = GetInt(exp);
+					conv.i = GetIntConst(ex, ctx);
 				}
 				else
 				{
@@ -1857,13 +1884,13 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 
 					do
 					{
-						conv.s = GetString(exp);
+						conv.s = GetStringConst(ex, ctx);
 						if (conv.s != nullptr)
 						{
 							params.Push(conv);
 							params[0].i++;
 						}
-						exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
+						exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
 					} while (exp != property->Values);
 					goto endofparm;
 				}
@@ -1881,7 +1908,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			}
 			params.Push(conv);
 			params[0].i++;
-			exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
+			exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
 		endofparm:
 			p++;
 			// Skip the DECORATE 'no comma' marker

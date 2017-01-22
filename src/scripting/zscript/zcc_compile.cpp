@@ -2022,7 +2022,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		else if (!ex->isConstant())
 		{
 			// If we get TypeError, there has already been a message from deeper down so do not print another one.
-			if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName);
+			if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName.GetChars());
 			return;
 		}
 
@@ -2052,7 +2052,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			}
 			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
 			{
-				Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				Error(property, "class %s is not compatible with property type %s", clsname.GetChars(), static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
 			}
 			*(PClass**)addr = cls;
 		}

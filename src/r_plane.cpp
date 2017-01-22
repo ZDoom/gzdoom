@@ -59,6 +59,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -1177,6 +1178,8 @@ void R_DrawPortals ()
 		assert(viewsector != NULL);
 		R_SetViewAngle ();
 		validcount++;	// Make sure we see all sprites
+
+		E_RenderCamera();
 
 		R_ClearPlanes (false);
 		R_ClearClipSegs (pl->left, pl->right);

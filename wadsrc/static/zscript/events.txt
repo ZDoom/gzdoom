@@ -1,12 +1,5 @@
-class EventHandler : Object native
+class StaticEventHandler : Object native
 {
-	static native EventHandler Create(class<EventHandler> type);
-	static native EventHandler CreateOnce(class<EventHandler> type);
-	static native EventHandler Find(class<EventHandler> type);
-
-	static native bool Register(EventHandler handler);
-	static native bool Unregister(EventHandler handler);
-
 	virtual native void MapLoaded();
 	virtual native void MapUnloading();
 
@@ -16,7 +9,7 @@ class EventHandler : Object native
 	virtual native void RenderAfterThing();
 }
 
-class RenderEventHandler : EventHandler native
+class StaticRenderEventHandler : StaticEventHandler native
 {
 	// for frame and camera
 	native readonly Vector3 ViewPos;
@@ -29,3 +22,15 @@ class RenderEventHandler : EventHandler native
 	// for thing
 	native readonly Actor CurrentThing;
 }
+
+class EventHandler : StaticEventHandler native
+{
+	static native StaticEventHandler Create(class<StaticEventHandler> type);
+	static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
+	static native StaticEventHandler Find(class<StaticEventHandler> type);
+
+	static native bool Register(StaticEventHandler handler);
+	static native bool Unregister(StaticEventHandler handler);
+}
+
+class RenderEventHandler : StaticRenderEventHandler native { }

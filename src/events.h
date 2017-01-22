@@ -3,12 +3,14 @@
 
 #include "dobject.h"
 
-class DEventHandler;
+class DStaticEventHandler;
 
 // register
-void E_RegisterHandler(DEventHandler* handler);
+bool E_RegisterHandler(DStaticEventHandler* handler);
 // unregister
-void E_UnregisterHandler(DEventHandler* handler);
+bool E_UnregisterHandler(DStaticEventHandler* handler);
+// find
+bool E_CheckHandler(DStaticEventHandler* handler);
 
 // called right after the map has loaded (approximately same time as OPEN ACS scripts)
 void E_MapLoaded();
@@ -23,17 +25,21 @@ void E_RenderBeforeThing(AActor* thing);
 // called after adding each actor to the render list
 void E_RenderAfterThing(AActor* thing);
 
-class DEventHandler : public DObject // make it a part of normal GC process
+class DStaticEventHandler : public DObject // make it a part of normal GC process
 {
-	DECLARE_CLASS(DEventHandler, DObject)
+	DECLARE_CLASS(DStaticEventHandler, DObject)
 public:
-	DEventHandler* prev;
-	DEventHandler* next;
-	DEventHandler* unregPrev;
-	DEventHandler* unregNext;
+	DStaticEventHandler* prev;
+	DStaticEventHandler* next;
+	DStaticEventHandler* unregPrev;
+	DStaticEventHandler* unregNext;
+	virtual bool IsStatic() { return true; }
 
 	// destroy handler. this unlinks EventHandler from the list automatically.
 	void OnDestroy() override;
+
+	// this checks if we are /actually/ static, using DObject dynamic typing system.
+	static bool IsActuallyStatic(PClass* type);
 
 	// called right after the map has loaded (approximately same time as OPEN ACS scripts)
 	virtual void MapLoaded();
@@ -48,11 +54,17 @@ public:
 	// called after adding each actor to the render list
 	virtual void RenderAfterThing(AActor* thing);
 };
-extern DEventHandler* E_FirstEventHandler;
-
-class DRenderEventHandler : public DEventHandler
+class DEventHandler : public DStaticEventHandler
 {
-	DECLARE_CLASS(DRenderEventHandler, DEventHandler)
+	DECLARE_CLASS(DEventHandler, DStaticEventHandler) // TODO: make sure this does not horribly break anything
+public:
+	bool IsStatic() override { return false; }
+};
+extern DStaticEventHandler* E_FirstEventHandler;
+
+class DStaticRenderEventHandler : public DStaticEventHandler
+{
+	DECLARE_CLASS(DStaticRenderEventHandler, DStaticEventHandler)
 public:
 	// these are for all render events
 	DVector3 ViewPos;
@@ -90,6 +102,12 @@ public:
 
 private:
 	void Setup();
+};
+class DRenderEventHandler : public DStaticRenderEventHandler
+{
+	DECLARE_CLASS(DRenderEventHandler, DStaticRenderEventHandler) // TODO: make sure this does not horribly break anythings
+public:
+	bool IsStatic() override { return false; }
 };
 
 #endif

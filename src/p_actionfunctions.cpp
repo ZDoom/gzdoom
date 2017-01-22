@@ -171,6 +171,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			{ // Function returns a state
 				wantret = &ret[0];
 				retval = false;	// this is a jump function which never affects the success state.
+				numret = 1;
 			}
 			else if (proto->ReturnTypes.Size() >= 1 &&
 				(proto->ReturnTypes[0] == TypeSInt32 || proto->ReturnTypes[0] == TypeUInt32 || proto->ReturnTypes[0] == TypeBool))

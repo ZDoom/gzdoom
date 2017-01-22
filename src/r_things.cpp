@@ -1361,6 +1361,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 	// store information in a vissprite
 	vis = &avis[vispspindex];
+	memset(vis, 0, sizeof(*vis));
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 	vis->sector = nullptr;

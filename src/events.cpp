@@ -2,6 +2,7 @@
 #include "virtual.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "gi.h"
 #include "v_text.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
@@ -56,6 +57,37 @@ bool E_IsStaticType(PClass* type)
 			!type->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)));
 }
 
+static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
+{
+	if (type == nullptr)
+	{
+		Printf("%cGWarning: unknown event handler class %s in MAPINFO!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		return;
+	}
+
+	if (!E_IsStaticType(type))
+	{
+		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		return;
+	}
+
+	// check if type already exists, don't add twice.
+	bool typeExists = false;
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsA(type))
+		{
+			typeExists = true;
+			break;
+		}
+	}
+
+	if (typeExists) return;
+	DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
+	handler->isMapScope = map;
+	E_RegisterHandler(handler);
+}
+
 void E_InitStaticHandlers(bool map)
 {
 	// remove existing
@@ -72,39 +104,17 @@ void E_InitStaticHandlers(bool map)
 		{
 			FString typestring = level.info->EventHandlers[i];
 			PClass* type = PClass::FindClass(typestring);
-			
-			if (type == nullptr)
-			{
-				Printf("%cGWarning: unknown event handler class %s in MAPINFO!", TEXTCOLOR_ESCAPE, typestring.GetChars());
-				continue;
-			}
-
-			if (!E_IsStaticType(type))
-			{
-				Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!", TEXTCOLOR_ESCAPE, typestring.GetChars());
-				continue;
-			}
-
-			// check if type already exists, don't add twice.
-			bool typeExists = false;
-			for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-			{
-				if (handler->IsA(type))
-				{
-					typeExists = true;
-					break;
-				}
-			}
-			
-			if (typeExists) continue;
-			DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
-			handler->isMapScope = true;
-			E_RegisterHandler(handler);
+			E_InitStaticHandler(type, typestring, true);
 		}
 	}
 	else
 	{
-
+		for (unsigned int i = 0; i < gameinfo.EventHandlers.Size(); i++)
+		{
+			FString typestring = gameinfo.EventHandlers[i];
+			PClass* type = PClass::FindClass(typestring);
+			E_InitStaticHandler(type, typestring, false);
+		}
 	}
 }
 

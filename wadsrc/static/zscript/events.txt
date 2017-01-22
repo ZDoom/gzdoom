@@ -12,13 +12,20 @@ class EventHandler : Object native
 
 	virtual native void RenderFrame();
 	virtual native void RenderCamera();
+	virtual native void RenderBeforeThing();
+	virtual native void RenderAfterThing();
 }
 
 class RenderEventHandler : EventHandler native
 {
+	// for frame and camera
 	native readonly Vector3 ViewPos;
 	native readonly double ViewAngle;
 	native readonly double ViewPitch;
 	native readonly double ViewRoll;
 	native readonly double FracTic;
+	// for camera
+	native readonly Actor Camera;
+	// for thing
+	native readonly Actor CurrentThing;
 }

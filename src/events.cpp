@@ -1,6 +1,8 @@
 #include "events.h"
 #include "virtual.h"
 #include "r_utility.h"
+#include "g_levellocals.h"
+#include "v_text.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
 
@@ -16,7 +18,7 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	if (handler->next)
 		handler->next->prev = handler;
 	E_FirstEventHandler = handler;
-	if (handler->IsStatic()) handler->ObjectFlags |= OF_Fixed;
+	if (handler->IsStatic() && handler->isMapScope) handler->ObjectFlags |= OF_Fixed;
 	return true;
 }
 
@@ -33,7 +35,7 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		handler->next->prev = handler->prev;
 	if (handler == E_FirstEventHandler)
 		E_FirstEventHandler = handler->next;
-	if (handler->IsStatic())
+	if (handler->IsStatic() && handler->isMapScope)
 	{
 		handler->ObjectFlags |= OF_YesReallyDelete;
 		delete handler;
@@ -46,6 +48,64 @@ bool E_CheckHandler(DStaticEventHandler* handler)
 	for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
 		if (handler == lhandler) return true;
 	return false;
+}
+
+bool E_IsStaticType(PClass* type)
+{
+	return (!type->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
+			!type->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)));
+}
+
+void E_InitStaticHandlers(bool map)
+{
+	// remove existing
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic() && handler->isMapScope == map)
+			handler->Destroy();
+	}
+
+	// add new
+	if (map)
+	{
+		for (unsigned int i = 0; i < level.info->EventHandlers.Size(); i++)
+		{
+			FString typestring = level.info->EventHandlers[i];
+			PClass* type = PClass::FindClass(typestring);
+			
+			if (type == nullptr)
+			{
+				Printf("%cGWarning: unknown event handler class %s in MAPINFO!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+				continue;
+			}
+
+			if (!E_IsStaticType(type))
+			{
+				Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+				continue;
+			}
+
+			// check if type already exists, don't add twice.
+			bool typeExists = false;
+			for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+			{
+				if (handler->IsA(type))
+				{
+					typeExists = true;
+					break;
+				}
+			}
+			
+			if (typeExists) continue;
+			DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
+			handler->isMapScope = true;
+			E_RegisterHandler(handler);
+		}
+	}
+	else
+	{
+
+	}
 }
 
 void E_MapLoaded()
@@ -104,8 +164,7 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
 	// check if type inherits dynamic handlers
-	if (!t->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
-		!t->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)))
+	if (E_IsStaticType(t))
 	{
 		// disallow static types creation with Create()
 		ACTION_RETURN_OBJECT(nullptr);
@@ -119,8 +178,7 @@ DEFINE_ACTION_FUNCTION(DEventHandler, CreateOnce)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
 	// check if type inherits dynamic handlers
-	if (!t->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
-		!t->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)))
+	if (E_IsStaticType(t))
 	{
 		// disallow static types creation with Create()
 		ACTION_RETURN_OBJECT(nullptr);

@@ -2,7 +2,7 @@
 #include "virtual.h"
 #include "r_utility.h"
 
-DEventHandler* E_FirstDEventHandler = nullptr;
+DEventHandler* E_FirstEventHandler = nullptr;
 
 void E_RegisterHandler(DEventHandler* handler)
 {
@@ -10,10 +10,10 @@ void E_RegisterHandler(DEventHandler* handler)
 		return;
 	// link into normal list
 	handler->prev = nullptr;
-	handler->next = E_FirstDEventHandler;
+	handler->next = E_FirstEventHandler;
 	if (handler->next)
 		handler->next->prev = handler;
-	E_FirstDEventHandler = handler;
+	E_FirstEventHandler = handler;
 }
 
 void E_UnregisterHandler(DEventHandler* handler)
@@ -25,31 +25,31 @@ void E_UnregisterHandler(DEventHandler* handler)
 		handler->prev->next = handler->next;
 	if (handler->next)
 		handler->next->prev = handler->prev;
-	if (handler == E_FirstDEventHandler)
-		E_FirstDEventHandler = handler->next;
+	if (handler == E_FirstEventHandler)
+		E_FirstEventHandler = handler->next;
 }
 
 void E_MapLoaded()
 {
-	for (DEventHandler* handler = E_FirstDEventHandler; handler; handler = handler->next)
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->MapLoaded();
 }
 
 void E_MapUnloading()
 {
-	for (DEventHandler* handler = E_FirstDEventHandler; handler; handler = handler->next)
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->MapUnloading();
 }
 
 void E_RenderFrame()
 {
-	for (DEventHandler* handler = E_FirstDEventHandler; handler; handler = handler->next)
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->RenderFrame();
 }
 
 void E_RenderCamera()
 {
-	for (DEventHandler* handler = E_FirstDEventHandler; handler; handler = handler->next)
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->RenderCamera();
 }
 
@@ -69,6 +69,28 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 	PARAM_CLASS(t, DEventHandler);
 	// generate a new object of this type.
 	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+DEFINE_ACTION_FUNCTION(DEventHandler, CreateOnce)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DEventHandler);
+	// check if there are already registered handlers of this type.
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->GetClass() == t) // check precise class
+			ACTION_RETURN_OBJECT(nullptr);
+	// generate a new object of this type.
+	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+DEFINE_ACTION_FUNCTION(DEventHandler, Find)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DEventHandler);
+	for (DEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->GetClass() == t) // check precise class
+			ACTION_RETURN_OBJECT(handler);
+	ACTION_RETURN_OBJECT(nullptr);
 }
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Register)

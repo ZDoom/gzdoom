@@ -66,6 +66,7 @@
 #include "p_maputl.h"
 #include "g_levellocals.h"
 #include "r_thread.h"
+#include "events.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
@@ -1244,6 +1245,8 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 		if (thing->validcount == validcount) continue;
 		thing->validcount = validcount;
 		
+		DRenderEventHandler::AutoThing autoRenderThingEvent(thing);
+
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{

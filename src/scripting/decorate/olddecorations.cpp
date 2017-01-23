@@ -100,7 +100,7 @@ static const char *RenderStyles[] =
 //==========================================================================
 PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName);
 
-void ParseOldDecoration(FScanner &sc, EDefinitionType def)
+void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 {
 	Baggage bag;
 	TArray<FState> StateArray;
@@ -116,6 +116,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	typeName = FName(sc.String);
 	type = DecoDerivedClass(FScriptPosition(sc), parent, typeName);
 	ResetBaggage(&bag, parent);
+	bag.Namespace = ns;
 	bag.Info = type;
 	bag.fromDecorate = true;
 #ifdef _DEBUG

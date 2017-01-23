@@ -95,14 +95,14 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump) 
-	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump)
+FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump) 
+	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump), CurGlobals(cg)
 {
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PStruct *cls, bool fromdecorate) 
-	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1)
+FCompileContext::FCompileContext(PNamespace *cg, PStruct *cls, bool fromdecorate) 
+	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg)
 {
 }
 
@@ -119,7 +119,7 @@ PSymbol *FCompileContext::FindInSelfClass(FName identifier, PSymbolTable *&symt)
 }
 PSymbol *FCompileContext::FindGlobal(FName identifier)
 {
-	return GlobalSymbols.FindSymbol(identifier, true);
+	return CurGlobals->Symbols.FindSymbol(identifier, true);
 }
 
 void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
@@ -185,16 +185,30 @@ FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
 	}
 }
 
-static PStruct *FindStructType(FName name)
+static PStruct *FindStructType(FName name, FCompileContext &ctx)
 {
-	PStruct *ccls = PClass::FindClass(name);
-	if (ccls == nullptr)
+	auto sym = ctx.Class->Symbols.FindSymbol(name, true);
+	if (sym == nullptr) sym = ctx.CurGlobals->Symbols.FindSymbol(name, true);
+	if (sym && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
-		ccls = dyn_cast<PStruct>(TypeTable.FindType(RUNTIME_CLASS(PStruct), 0, (intptr_t)name, nullptr));
-		if (ccls == nullptr) ccls = dyn_cast<PStruct>(TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), 0, (intptr_t)name, nullptr));
+		auto type = static_cast<PSymbolType*>(sym);
+		return dyn_cast<PStruct>(type->Type);
 	}
-	return ccls;
+	return nullptr;
 }
+
+// This is for resolving class identifiers which need to be context aware, unlike class names.
+static PClass *FindClassType(FName name, FCompileContext &ctx)
+{
+	auto sym = ctx.CurGlobals->Symbols.FindSymbol(name, true);
+	if (sym && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
+	{
+		auto type = static_cast<PSymbolType*>(sym);
+		return dyn_cast<PClass>(type->Type);
+	}
+	return nullptr;
+}
+
 //==========================================================================
 //
 // ExpEmit
@@ -235,7 +249,7 @@ void ExpEmit::Reuse(VMFunctionBuilder *build)
 
 static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func)
 {
-	PSymbol *sym = GlobalSymbols.FindSymbol(funcname, false);
+	PSymbol *sym = Namespaces.GlobalNamespace->Symbols.FindSymbol(funcname, false);
 	if (sym == nullptr)
 	{
 		PSymbolVMFunction *symfunc = new PSymbolVMFunction(funcname);
@@ -243,7 +257,7 @@ static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCall
 		calldec->PrintableName = funcname.GetChars();
 		symfunc->Function = calldec;
 		sym = symfunc;
-		GlobalSymbols.AddSymbol(sym);
+		Namespaces.GlobalNamespace->Symbols.AddSymbol(sym);
 	}
 	return sym;
 }
@@ -5918,7 +5932,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	{
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier);
+		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier, ctx);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
 	}
 
@@ -7256,7 +7270,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
-	PClass *cls = PClass::FindClass(MethodName);
+	PClass *cls = FindClassType(MethodName, ctx);
 	if (cls != nullptr && cls->bExported)
 	{
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
@@ -7487,9 +7501,11 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (Self->ExprType == EFX_Identifier)
 	{
+		auto id = static_cast<FxIdentifier *>(Self)->Identifier;
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		ccls = FindStructType(static_cast<FxIdentifier *>(Self)->Identifier);
+		if (id == NAME_String) ccls = TypeStringStruct;
+		else ccls = FindStructType(id, ctx);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Self)->noglobal = true;
 	}
 
@@ -7500,8 +7516,6 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		if (ccls != nullptr)
 		{
 			// [ZZ] substitute ccls for String internal type.
-			if (ccls->TypeName == NAME_String)
-				ccls = TypeStringStruct;
 			if (!ccls->IsKindOf(RUNTIME_CLASS(PClass)) || static_cast<PClass *>(ccls)->bExported)
 			{
 				cls = ccls;
@@ -9977,7 +9991,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 
 		if (clsname != NAME_None)
 		{
-			cls = PClass::FindClass(clsname);
+			cls = FindClassType(clsname, ctx);
 			if (cls == nullptr)
 			{
 				/* lax */

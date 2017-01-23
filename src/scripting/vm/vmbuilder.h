@@ -141,6 +141,7 @@ class FFunctionBuildList
 		FxExpression *Code = nullptr;
 		PPrototype *Proto = nullptr;
 		VMScriptFunction *Function = nullptr;
+		PNamespace *CurGlobals = nullptr;
 		FString PrintableName;
 		int StateIndex;
 		int StateCount;
@@ -151,7 +152,7 @@ class FFunctionBuildList
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
+	VMFunction *AddFunction(PNamespace *curglobals, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();
 };
 

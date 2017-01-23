@@ -86,7 +86,7 @@ struct ZCC_ConstantWork
 class ZCCCompiler
 {
 public:
-	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PSymbolTable &outsymbols, int lumpnum);
+	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PNamespace *outnamespace, int lumpnum);
 	~ZCCCompiler();
 	int Compile();
 
@@ -130,7 +130,6 @@ private:
 
 	PSymbolTreeNode *AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents = false);
 
-	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *sym);
 	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);
 	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode);
 	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
@@ -147,7 +146,7 @@ private:
 	DObject *Outer;
 	PStruct *ConvertClass;	// class type to be used when resoving symbols while converting an AST
 	PSymbolTable *GlobalTreeNodes;
-	PSymbolTable *OutputSymbols;
+	PNamespace *OutNamespace;
 	ZCC_AST &AST;
 	int Lump;
 };

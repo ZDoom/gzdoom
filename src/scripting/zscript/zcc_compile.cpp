@@ -48,9 +48,58 @@
 #include "p_lnspec.h"
 #include "i_system.h"
 #include "gdtoa.h"
-#include "codegeneration/codegen.h"
 #include "vmbuilder.h"
 #include "version.h"
+
+static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxIntCast(ex, false);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetInt() : 0;
+}
+
+static double GetFloatConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxFloatCast(ex);
+	ex = ex->Resolve(ctx);
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetFloat() : 0;
+}
+
+static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
+{
+	ex = new FxStringCast(ex);
+	ex = ex->Resolve(ctx);
+	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+}
+
+int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+{
+	FCompileContext ctx(cls, false);
+	FxExpression *ex = new FxIntCast(ConvertNode(node), false);
+	ex = ex->Resolve(ctx);
+	if (ex == nullptr) return 0;
+	if (!ex->isConstant())
+	{
+		ex->ScriptPosition.Message(MSG_ERROR, "Expression is not constant");
+		return 0;
+	}
+	return static_cast<FxConstant*>(ex)->GetValue().GetInt();
+}
+
+FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+{
+	FCompileContext ctx(cls, false);
+	FxExpression *ex = new FxStringCast(ConvertNode(node));
+	ex = ex->Resolve(ctx);
+	if (ex == nullptr) return "";
+	if (!ex->isConstant())
+	{
+		ex->ScriptPosition.Message(MSG_ERROR, "Expression is not constant");
+		return "";
+	}
+	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+}
+
 
 //==========================================================================
 //
@@ -606,11 +655,11 @@ void ZCCCompiler::CreateClassTypes()
 //
 //==========================================================================
 
-void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot)
+void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot)
 {
 	for (auto c : Constants)
 	{
-		dest.Push({ c, ot });
+		dest.Push({ c, cls, ot });
 	}
 }
 
@@ -629,14 +678,14 @@ void ZCCCompiler::CompileAllConstants()
 	// put all constants in one list to make resolving this easier.
 	TArray<ZCC_ConstantWork> constantwork;
 
-	CopyConstants(constantwork, Constants, OutputSymbols);
+	CopyConstants(constantwork, Constants, nullptr, OutputSymbols);
 	for (auto c : Classes)
 	{
-		CopyConstants(constantwork, c->Constants, &c->Type()->Symbols);
+		CopyConstants(constantwork, c->Constants, c->Type(), &c->Type()->Symbols);
 	}
 	for (auto s : Structs)
 	{
-		CopyConstants(constantwork, s->Constants, &s->Type()->Symbols);
+		CopyConstants(constantwork, s->Constants, s->Type(), &s->Type()->Symbols);
 	}
 
 	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.
@@ -657,7 +706,7 @@ void ZCCCompiler::CompileAllConstants()
 		donesomething = false;
 		for (unsigned i = 0; i < constantwork.Size(); i++)
 		{
-			if (CompileConstant(constantwork[i].node, constantwork[i].outputtable))
+			if (CompileConstant(&constantwork[i]))
 			{
 				AddConstant(constantwork[i]);
 				// Remove the constant from the list
@@ -685,6 +734,9 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 {
 	auto def = constant.node;
 	auto val = def->Value;
+	ExpVal &c = constant.constval;
+	
+	// This is for literal constants.
 	if (val->NodeType == AST_ExprConstant)
 	{
 		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
@@ -711,14 +763,40 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 			Error(def->Value, "Bad type for constant definiton");
 			def->Symbol = nullptr;
 		}
-
-		if (def->Symbol == nullptr)
-		{
-			// Create a dummy constant so we don't make any undefined value warnings.
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
-		}
-		constant.outputtable->ReplaceSymbol(def->Symbol);
 	}
+	else
+	{
+		if (c.Type == TypeString)
+		{
+			def->Symbol = new PSymbolConstString(def->NodeName, c.GetString());
+		}
+		else if (c.Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			// How do we get an Enum type in here without screwing everything up???
+			//auto type = def->Type != nullptr ? def->Type : cval->Type;
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetInt());
+		}
+		else if (c.Type->IsA(RUNTIME_CLASS(PFloat)))
+		{
+			if (def->Type != nullptr)
+			{
+				Error(def, "Enum members must be integer values");
+			}
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetFloat());
+		}
+		else
+		{
+			Error(def->Value, "Bad type for constant definiton");
+			def->Symbol = nullptr;
+		}
+	}
+
+	if (def->Symbol == nullptr)
+	{
+		// Create a dummy constant so we don't make any undefined value warnings.
+		def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
+	}
+	constant.Outputtable->ReplaceSymbol(def->Symbol);
 }
 
 //==========================================================================
@@ -730,309 +808,33 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 //
 //==========================================================================
 
-bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
+bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 {
-	assert(def->Symbol == nullptr);
-
-	ZCC_Expression *val = Simplify(def->Value, sym, true);
-	def->Value = val;
-	return (val->NodeType == AST_ExprConstant);
-}
-
-
-//==========================================================================
-//
-// ZCCCompiler :: Simplify
-//
-// For an expression,
-//   Evaluate operators whose arguments are both constants, replacing it
-//     with a new constant.
-//   For a binary operator with one constant argument, put it on the right-
-//     hand operand, where permitted.
-//   Perform automatic type promotion.
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym, bool wantconstant)
-{
-	SimplifyingConstant = wantconstant;
-	return  DoSimplify(root, sym);
-}
-
-ZCC_Expression *ZCCCompiler::DoSimplify(ZCC_Expression *root, PSymbolTable *sym)
-{
-	if (root->NodeType == AST_ExprUnary)
+	FCompileContext ctx(work->cls, false);
+	FxExpression *exp = ConvertNode(work->node->Value);
+	try
 	{
-		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root), sym);
-	}
-	else if (root->NodeType == AST_ExprBinary)
-	{
-		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root), sym);
-	}
-	else if (root->Operation == PEX_ID)
-	{
-		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root), sym);
-	}
-	else if (root->Operation == PEX_MemberAccess)
-	{
-		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root), sym);
-	}
-	else if (root->Operation == PEX_FuncCall)
-	{
-		return SimplifyFunctionCall(static_cast<ZCC_ExprFuncCall *>(root), sym);
-	}
-	return root;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyUnary
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *sym)
-{
-	unary->Operand = DoSimplify(unary->Operand, sym);
-	if (unary->Operand->Type == nullptr)
-	{
-		return unary;
-	}
-	ZCC_OpProto *op = PromoteUnary(unary->Operation, unary->Operand);
-	if (op == NULL)
-	{ // Oh, poo!
-		unary->Type = TypeError;
-	}
-	else if (unary->Operand->Operation == PEX_ConstValue)
-	{
-		return op->EvalConst1(static_cast<ZCC_ExprConstant *>(unary->Operand));
-	}
-	return unary;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyBinary
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *sym)
-{
-	binary->Left = DoSimplify(binary->Left, sym);
-	binary->Right = DoSimplify(binary->Right, sym);
-	if (binary->Left->Type == nullptr || binary->Right->Type == nullptr)
-	{
-		// We do not know yet what this is so we cannot promote it (yet.)
-		return binary;
-	}
-	ZCC_OpProto *op = PromoteBinary(binary->Operation, binary->Left, binary->Right);
-	if (op == NULL)
-	{
-		binary->Type = TypeError;
-	}
-	else if (binary->Left->Operation == PEX_ConstValue &&
-		binary->Right->Operation == PEX_ConstValue)
-	{
-		return op->EvalConst2(static_cast<ZCC_ExprConstant *>(binary->Left),
-							  static_cast<ZCC_ExprConstant *>(binary->Right), AST.Strings);
-	}
-	return binary;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyMemberAccess
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *symt)
-{
-	PSymbolTable *symtable;
-
-	// TBD: Is it safe to simplify the left side here when not processing a constant?
-	dotop->Left = DoSimplify(dotop->Left, symt);
-
-	if (dotop->Left->Operation == PEX_TypeRef)
-	{ // Type refs can be evaluated now.
-		PType *ref = static_cast<ZCC_ExprTypeRef *>(dotop->Left)->RefType;
-		PSymbol *sym = ref->Symbols.FindSymbolInTable(dotop->Right, symtable);
-		if (sym != nullptr)
+		FScriptPosition::errorout = true;
+		exp = exp->Resolve(ctx);
+		if (exp == nullptr) return false;
+		FScriptPosition::errorout = false;
+		if (!exp->isConstant())
 		{
-			ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
-			if (expr != nullptr)
-			{
-				return expr;
-			}
+			delete exp;
+			return false;
 		}
+		work->constval = static_cast<FxConstant*>(exp)->GetValue();
+		delete exp;
+		return true;
 	}
-	else if (dotop->Left->Operation == PEX_Super)
+	catch (...)
 	{
-		symt = symt->GetParentTable();
-		if (symt != nullptr)
-		{
-			PSymbol *sym = symt->FindSymbolInTable(dotop->Right, symtable);
-			if (sym != nullptr)
-			{
-				ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
-				if (expr != nullptr)
-				{
-					return expr;
-				}
-			}
-		}
+		// eat the reported error and treat this as a temorary failure. All unresolved contants will be reported at the end.
+		FScriptPosition::errorout = false;
+		return false;
 	}
-	return dotop;
 }
 
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyFunctionCall
-//
-// This may replace a function call with cast(s), since they look like the
-// same thing to the parser.
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *sym)
-{
-	ZCC_FuncParm *parm;
-	int parmcount = 0;
-
-	parm = callop->Parameters;
-	if (parm != NULL)
-	{
-		do
-		{
-			parmcount++;
-			assert(parm->NodeType == AST_FuncParm);
-			parm->Value = DoSimplify(parm->Value, sym);
-			parm = static_cast<ZCC_FuncParm *>(parm->SiblingNext);
-		}
-		while (parm != callop->Parameters);
-	}
-	// Only simplify the 'function' part if we want to retrieve a constant.
-	// This is necessary to evaluate the type casts, but for actual functions
-	// the simplification process is destructive and has to be avoided.
-	if (SimplifyingConstant)
-	{
-		callop->Function = DoSimplify(callop->Function, sym);
-	}
-	// If the left side is a type ref, then this is actually a cast
-	// and not a function call.
-	if (callop->Function->Operation == PEX_TypeRef)
-	{
-		if (parmcount != 1)
-		{
-			Error(callop, "Type cast requires one parameter");
-			callop->ToErrorNode();
-		}
-		else
-		{
-			PType *dest = static_cast<ZCC_ExprTypeRef *>(callop->Function)->RefType;
-			const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-			int routelen = parm->Value->Type->FindConversion(dest, route, countof(route));
-			if (routelen < 0)
-			{
-				///FIXME: Need real type names
-				Error(callop, "Cannot convert %s to %s", parm->Value->Type->DescriptiveName(), dest->DescriptiveName());
-				callop->ToErrorNode();
-			}
-			else
-			{
-				ZCC_Expression *val = ApplyConversion(parm->Value, route, routelen);
-				assert(val->Type == dest);
-				return val;
-			}
-		}
-	}
-	return callop;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: PromoteUnary
-//
-// Converts the operand into a format preferred by the operator.
-//
-//==========================================================================
-
-ZCC_OpProto *ZCCCompiler::PromoteUnary(EZCCExprType op, ZCC_Expression *&expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return NULL;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = countof(route);
-	ZCC_OpProto *proto = ZCC_OpInfo[op].FindBestProto(expr->Type, route, routelen);
-
-	if (proto != NULL)
-	{
-		expr = ApplyConversion(expr, route, routelen);
-	}
-	return proto;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: PromoteBinary
-//
-// Converts the operands into a format (hopefully) compatible with the
-// operator.
-//
-//==========================================================================
-
-ZCC_OpProto *ZCCCompiler::PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right)
-{
-	// If either operand is of type 'error', the result is also 'error'
-	if (left->Type == TypeError || right->Type == TypeError)
-	{
-		return NULL;
-	}
-	const PType::Conversion *route1[CONVERSION_ROUTE_SIZE], *route2[CONVERSION_ROUTE_SIZE];
-	int route1len = countof(route1), route2len = countof(route2);
-	ZCC_OpProto *proto = ZCC_OpInfo[op].FindBestProto(left->Type, route1, route1len, right->Type, route2, route2len);
-	if (proto != NULL)
-	{
-		left = ApplyConversion(left, route1, route1len);
-		right = ApplyConversion(right, route2, route2len);
-	}
-	return proto;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: ApplyConversion
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen)
-{
-	for (int i = 0; i < routelen; ++i)
-	{
-		if (expr->Operation != PEX_ConstValue)
-		{
-			expr = AddCastNode(route[i]->TargetType, expr);
-		}
-		else
-		{
-			route[i]->ConvertConstant(static_cast<ZCC_ExprConstant *>(expr), AST.Strings);
-		}
-	}
-	return expr;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: AddCastNode
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::AddCastNode(PType *type, ZCC_Expression *expr)
-{
-	assert(expr->Operation != PEX_ConstValue && "Expression must not be constant");
-	// TODO: add a node here
-	return expr;
-}
 
 //==========================================================================
 //
@@ -1293,7 +1095,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		if (field->Type->ArraySize != nullptr)
 		{
-			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, &type->Symbols);
+			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, type);
 		}
 
 		auto name = field->Names;
@@ -1304,7 +1106,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				auto thisfieldtype = fieldtype;
 				if (name->ArraySize != nullptr)
 				{
-					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, &type->Symbols);
+					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, type);
 				}
 				
 				if (varflags & VARF_Native)
@@ -1662,7 +1464,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 //
 //==========================================================================
 
-PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym)
+PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls)
 {
 	TArray<ZCC_Expression *> indices;
 
@@ -1674,15 +1476,21 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		node = static_cast<ZCC_Expression*>(node->SiblingNext);
 	} while (node != arraysize);
 
+
+	FCompileContext ctx(cls, false);
 	for (auto node : indices)
 	{
-		auto val = Simplify(node, sym, true);
-		if (val->Operation != PEX_ConstValue || !val->Type->IsA(RUNTIME_CLASS(PInt)))
+		// There is no float->int casting here.
+		FxExpression *ex = ConvertNode(node);
+		ex = ex->Resolve(ctx);
+
+		if (ex == nullptr) return TypeError;
+		if (!ex->isConstant() || !ex->ValueType->IsA(RUNTIME_CLASS(PInt)))
 		{
 			Error(arraysize, "Array index must be an integer constant");
 			return TypeError;
 		}
-		int size = static_cast<ZCC_ExprConstant *>(val)->IntVal;
+		int size = static_cast<FxConstant*>(ex)->GetValue().GetInt();
 		if (size < 1)
 		{
 			Error(arraysize, "Array size must be positive");
@@ -1691,78 +1499,6 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		baseType = NewArray(baseType, size);
 	}
 	return baseType;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: GetInt - Input must be a constant expression
-//
-//==========================================================================
-
-int ZCCCompiler::GetInt(ZCC_Expression *expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return 0;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = expr->Type->FindConversion(TypeSInt32, route, countof(route));
-	if (routelen < 0)
-	{
-		Error(expr, "Cannot convert to integer");
-		return 0;
-	}
-	else
-	{
-		if (expr->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
-		{
-			Warn(expr, "Truncation of floating point value");
-		}
-		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
-		return ex->IntVal;
-	}
-}
-
-double ZCCCompiler::GetDouble(ZCC_Expression *expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return 0;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = expr->Type->FindConversion(TypeFloat64, route, countof(route));
-	if (routelen < 0)
-	{
-		Error(expr, "Cannot convert to float");
-		return 0;
-	}
-	else
-	{
-		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
-		return ex->DoubleVal;
-	}
-}
-
-const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
-{
-	if (expr->Type == TypeError)
-	{
-		return nullptr;
-	}
-	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PString)))
-	{
-		return static_cast<ZCC_ExprConstant *>(expr)->StringVal->GetChars();
-	}
-	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PName)))
-	{
-		// Ugh... What a mess...
-		return FName(ENamedName(static_cast<ZCC_ExprConstant *>(expr)->IntVal)).GetChars();
-	}
-	else
-	{
-		if (!silent) Error(expr, "Cannot convert to string");
-		return nullptr;
-	}
 }
 
 //==========================================================================
@@ -1787,16 +1523,22 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			Error(property, "%s: arguments missing", prop->name);
 			return;
 		}
-		property->Values = Simplify(property->Values, &bag.Info->Symbols, true);	// need to do this before the loop so that we can find the head node again.
 		const char * p = prop->params;
 		auto exp = property->Values;
 
+		FCompileContext ctx(bag.Info, false);
 		while (true)
 		{
 			FPropParam conv;
 			FPropParam pref;
 
-			if (exp->NodeType != AST_ExprConstant)
+			FxExpression *ex = ConvertNode(exp);
+			ex = ex->Resolve(ctx);
+			if (ex == nullptr)
+			{
+				return;
+			}
+			else if (!ex->isConstant())
 			{
 				// If we get TypeError, there has already been a message from deeper down so do not print another one.
 				if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->name);
@@ -1809,7 +1551,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			{
 
 			case 'X':	// Expression in parentheses or number. We only support the constant here. The function will have to be handled by a separate property to get past the parser.
-				conv.i = GetInt(exp);
+				conv.i = GetIntConst(ex, ctx);
 				params.Push(conv);
 				conv.exp = nullptr;
 				break;
@@ -1817,15 +1559,15 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			case 'I':
 			case 'M':	// special case for morph styles in DECORATE . This expression-aware parser will not need this.
 			case 'N':	// special case for thing activations in DECORATE. This expression-aware parser will not need this.
-				conv.i = GetInt(exp);
+				conv.i = GetIntConst(ex, ctx);
 				break;
 
 			case 'F':
-				conv.d = GetDouble(exp);
+				conv.d = GetFloatConst(ex, ctx);
 				break;
 
 			case 'Z':	// an optional string. Does not allow any numeric value.
-				if (!GetString(exp, true))
+				if (ex->ValueType != TypeString)
 				{
 					// apply this expression to the next argument on the list.
 					params.Push(conv);
@@ -1833,21 +1575,21 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 					p++;
 					continue;
 				}
-				conv.s = GetString(exp);
+				conv.s = GetStringConst(ex, ctx);
 				break;
 
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;
 			case 'S':
 			case 'T': // a filtered string (ZScript only parses filtered strings so there's nothing to do here.)
-				conv.s = GetString(exp);
+				conv.s = GetStringConst(ex, ctx);
 				break;
 
 			case 'L':	// Either a number or a list of strings
-				if (!GetString(exp, true))
+				if (ex->ValueType != TypeString)
 				{
 					pref.i = 0;
-					conv.i = GetInt(exp);
+					conv.i = GetIntConst(ex, ctx);
 				}
 				else
 				{
@@ -1857,13 +1599,13 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 
 					do
 					{
-						conv.s = GetString(exp);
+						conv.s = GetStringConst(ex, ctx);
 						if (conv.s != nullptr)
 						{
 							params.Push(conv);
 							params[0].i++;
 						}
-						exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
+						exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
 					} while (exp != property->Values);
 					goto endofparm;
 				}
@@ -1881,7 +1623,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			}
 			params.Push(conv);
 			params[0].i++;
-			exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
+			exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
 		endofparm:
 			p++;
 			// Skip the DECORATE 'no comma' marker
@@ -1950,8 +1692,8 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		return;
 	}
 
-	auto values = Simplify(property->Values, &bag.Info->Symbols, true);	// need to do this before the loop so that we can find the head node again.
-	auto exp = values;
+	auto exp = property->Values;
+	FCompileContext ctx(bag.Info, false);
 	for (auto f : prop->Variables)
 	{
 		void *addr;
@@ -1965,25 +1707,38 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			addr = ((char*)defaults) + f->Offset;
 		}
 
+		FxExpression *ex = ConvertNode(exp);
+		ex = ex->Resolve(ctx);
+		if (ex == nullptr)
+		{
+			return;
+		}
+		else if (!ex->isConstant())
+		{
+			// If we get TypeError, there has already been a message from deeper down so do not print another one.
+			if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName.GetChars());
+			return;
+		}
+
 		if (f->Type == TypeBool)
 		{
-			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetInt(exp));
+			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetIntConst(ex, ctx));
 		}
 		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
-			static_cast<PInt*>(f->Type)->SetValue(addr, GetInt(exp));
+			static_cast<PInt*>(f->Type)->SetValue(addr, GetIntConst(ex, ctx));
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
 		{
-			static_cast<PFloat*>(f->Type)->SetValue(addr, GetDouble(exp));
+			static_cast<PFloat*>(f->Type)->SetValue(addr, GetFloatConst(ex, ctx));
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
 		{
-			*(FString*)addr = GetString(exp);
+			*(FString*)addr = GetStringConst(ex, ctx);
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{
-			auto clsname = GetString(exp);
+			auto clsname = GetStringConst(ex, ctx);
 			auto cls = PClass::FindClass(clsname);
 			if (cls == nullptr)
 			{
@@ -1991,7 +1746,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			}
 			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
 			{
-				Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				Error(property, "class %s is not compatible with property type %s", clsname.GetChars(), static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
 			}
 			*(PClass**)addr = cls;
 		}
@@ -2772,7 +2527,7 @@ void ZCCCompiler::CompileStates()
 					{
 						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
 					}
-					// It is important to call CheckRandom before Simplify, because Simplify will resolve the function's name to nonsense
+					FCompileContext ctx(c->Type(), false);
 					if (CheckRandom(sl->Duration))
 					{
 						auto func = static_cast<ZCC_ExprFuncCall *>(sl->Duration);
@@ -2780,26 +2535,16 @@ void ZCCCompiler::CompileStates()
 						{
 							Error(sl, "Random duration requires exactly 2 parameters");
 						}
-						auto p1 = Simplify(func->Parameters->Value, &c->Type()->Symbols, true);
-						auto p2 = Simplify(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value, &c->Type()->Symbols, true);
-						int v1 = GetInt(p1);
-						int v2 = GetInt(p2);
+						int v1 = IntConstFromNode(func->Parameters->Value, c->Type());
+						int v2 = IntConstFromNode(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value, c->Type());
 						if (v1 > v2) std::swap(v1, v2);
 						state.Tics = (int16_t)clamp<int>(v1, 0, INT16_MAX);
 						state.TicRange = (uint16_t)clamp<int>(v2 - v1, 0, UINT16_MAX);
 					}
 					else
 					{
-						auto duration = Simplify(sl->Duration, &c->Type()->Symbols, true);
-						if (duration->Operation == PEX_ConstValue)
-						{
-							state.Tics = (int16_t)clamp<int>(GetInt(duration), -1, INT16_MAX);
-							state.TicRange = 0;
-						}
-						else
-						{
-							Error(sl, "Duration is not a constant");
-						}
+						state.Tics = (int16_t)IntConstFromNode(sl->Duration, c->Type());
+						state.TicRange = 0;
 					}
 					if (sl->bBright) state.StateFlags |= STF_FULLBRIGHT;
 					if (sl->bFast) state.StateFlags |= STF_FAST;
@@ -2815,18 +2560,8 @@ void ZCCCompiler::CompileStates()
 					}
 					if (sl->Offset != nullptr)
 					{
-						auto o1 = static_cast<ZCC_Expression *>(Simplify(sl->Offset, &c->Type()->Symbols, true));
-						auto o2 = static_cast<ZCC_Expression *>(Simplify(static_cast<ZCC_Expression *>(o1->SiblingNext), &c->Type()->Symbols, true));
-
-						if (o1->Operation != PEX_ConstValue || o2->Operation != PEX_ConstValue)
-						{
-							Error(o1, "State offsets must be constant");
-						}
-						else
-						{
-							state.Misc1 = GetInt(o1);
-							state.Misc2 = GetInt(o2);
-						}
+						state.Misc1 = IntConstFromNode(sl->Offset, c->Type());
+						state.Misc2 = IntConstFromNode(static_cast<ZCC_Expression *>(sl->Offset->SiblingNext), c->Type());
 					}
 #ifdef DYNLIGHT
 					if (sl->Lights != nullptr)
@@ -2834,7 +2569,7 @@ void ZCCCompiler::CompileStates()
 						auto l = sl->Lights;
 						do
 						{
-							AddStateLight(&state, GetString(l));
+							AddStateLight(&state, StringConstFromNode(l, c->Type()));
 							l = static_cast<decltype(l)>(l->SiblingNext);
 						} while (l != sl->Lights);
 					}
@@ -2875,23 +2610,15 @@ void ZCCCompiler::CompileStates()
 					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
 					if (sg->Offset != nullptr)
 					{
-						auto ofs = Simplify(sg->Offset, &c->Type()->Symbols, true);
-						if (ofs->Operation != PEX_ConstValue)
+						int offset = IntConstFromNode(sg->Offset, c->Type());
+						if (offset < 0)
 						{
-							Error(sg, "Constant offset expected for GOTO");
+							Error(sg, "GOTO offset must be positive");
+							offset = 0;
 						}
-						else
+						if (offset > 0)
 						{
-							int offset = GetInt(ofs);
-							if (offset < 0)
-							{
-								Error(sg, "GOTO offset must be positive");
-								offset = 0;
-							}
-							if (offset > 0)
-							{
-								statename.AppendFormat("+%d", offset);
-							}
+							statename.AppendFormat("+%d", offset);
 						}
 					}
 					if (!statedef.SetGotoLabel(statename))
@@ -3292,7 +3019,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		if (loc->Type->ArraySize != nullptr)
 		{
-			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, &ConvertClass->Symbols);
+			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, ConvertClass);
 		}
 
 		do
@@ -3301,7 +3028,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 			if (node->ArraySize != nullptr)
 			{
-				type = ResolveArraySize(ztype, node->ArraySize, &ConvertClass->Symbols);
+				type = ResolveArraySize(ztype, node->ArraySize, ConvertClass);
 			}
 			else
 			{

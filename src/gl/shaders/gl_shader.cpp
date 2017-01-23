@@ -60,15 +60,15 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
-	int i_lump = Wads.CheckNumForFullName("shaders/glsl/shaderdefs.i");
+	int i_lump = Wads.CheckNumForFullName("shaders/glsl/shaderdefs.i", 0);
 	if (i_lump == -1) I_Error("Unable to load 'shaders/glsl/shaderdefs.i'");
 	FMemLump i_data = Wads.ReadLump(i_lump);
 
-	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump);
+	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
 	FMemLump vp_data = Wads.ReadLump(vp_lump);
 
-	int fp_lump = Wads.CheckNumForFullName(frag_prog_lump);
+	int fp_lump = Wads.CheckNumForFullName(frag_prog_lump, 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump);
 	FMemLump fp_data = Wads.ReadLump(fp_lump);
 

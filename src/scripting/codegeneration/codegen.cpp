@@ -4078,7 +4078,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		int cast;
+		int cast = 0;
 		strng2 = ExpEmit(build, REGT_STRING);
 		if (op2.Konst)
 		{
@@ -5653,6 +5653,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 
 	if (Identifier == NAME_Default)
 	{
+		if (ctx.Function == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to access class defaults from constant declaration");
+			delete this;
+			return nullptr;
+		}
 		if (ctx.Function->Variants[0].SelfClass == nullptr)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Unable to access class defaults from static function");
@@ -5680,6 +5686,13 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
+			if (ctx.Function == nullptr)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Unable to access class member %s from constant declaration", sym->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
+
 			FxExpression *self = new FxSelf(ScriptPosition);
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
@@ -5696,6 +5709,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 			goto foundit;
+		}
+		else if (ctx.Function == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to access class member %s from constant declaration", sym->SymbolName.GetChars());
+			delete this;
+			return nullptr;
 		}
 		// Do this check for ZScript as well, so that a clearer error message can be printed. MSG_OPTERROR will default to MSG_ERROR there.
 		else if (ctx.Function->Variants[0].SelfClass != ctx.Class && sym->IsKindOf(RUNTIME_CLASS(PField)))
@@ -5810,7 +5829,7 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 		return x->Resolve(ctx);
 	}
 
-	if ((sym = objtype->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
+	if (objtype != nullptr && (sym = objtype->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 		{
@@ -7149,7 +7168,6 @@ static bool CheckArgSize(FName fname, FArgumentList &args, int min, int max, FSc
 
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
-	ABORT(ctx.Class);
 	bool error = false;
 
 	for (auto a : ArgList)
@@ -7162,20 +7180,30 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
-
-	if (afd != nullptr)
+	if (ctx.Class != nullptr)
 	{
-		if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))
-		{
-			delete this;
-			return nullptr;
-		}
+		PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
 
-		auto self = (afd->Variants[0].Flags & VARF_Method)? new FxSelf(ScriptPosition) : nullptr;
-		auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, false);
-		delete this;
-		return x->Resolve(ctx);
+		if (afd != nullptr)
+		{
+			if (ctx.Function == nullptr)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Unable to call function %s from constant declaration", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+
+			if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))
+			{
+				delete this;
+				return nullptr;
+			}
+
+			auto self = (afd->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : nullptr;
+			auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, false);
+			delete this;
+			return x->Resolve(ctx);
+		}
 	}
 
 	for (size_t i = 0; i < countof(FxFlops); ++i)
@@ -7202,7 +7230,13 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	if (special != 0 && min >= 0)
 	{
 		int paramcount = ArgList.Size();
-		if (paramcount < min)
+		if (ctx.Function == nullptr || ctx.Class == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to call action special %s from constant declaration", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+		else if (paramcount < min)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Not enough parameters for '%s' (expected %d, got %d)", 
 				MethodName.GetChars(), min, paramcount);
@@ -7427,12 +7461,19 @@ FxMemberFunctionCall::~FxMemberFunctionCall()
 
 FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 {
-	ABORT(ctx.Class);
 	PStruct *cls;
 	bool staticonly = false;
 	bool novirtual = false;
 
 	PStruct *ccls = nullptr;
+
+	if (ctx.Class == nullptr)
+	{
+		// There's no way that a member function call can resolve to a constant so abort right away.
+		ScriptPosition.Message(MSG_ERROR, "Expression is not constant.");
+		delete this;
+		return nullptr;
+	}
 
 	for (auto a : ArgList)
 	{
@@ -7467,6 +7508,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				staticonly = true;
 				if (ccls->IsKindOf(RUNTIME_CLASS(PClass)))
 				{
+					if (ctx.Function == nullptr)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Unable to call %s from constant declaration", MethodName.GetChars());
+						delete this;
+						return nullptr;
+					}
 					auto clstype = dyn_cast<PClass>(ctx.Function->Variants[0].SelfClass);
 					if (clstype != nullptr)
 					{
@@ -7493,6 +7540,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (Self->ExprType == EFX_Super)
 	{
+		if (ctx.Function == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to call %s from constant declaration", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
 		auto clstype = dyn_cast<PClass>(ctx.Function->Variants[0].SelfClass);
 		if (clstype != nullptr)
 		{
@@ -7743,6 +7796,12 @@ isresolved:
 
 	if (afd->Variants[0].Flags & VARF_Method)
 	{
+		if (ctx.Function == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to call %s from constant declaration", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
 		if (Self->ExprType == EFX_Self)
 		{
 			if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))

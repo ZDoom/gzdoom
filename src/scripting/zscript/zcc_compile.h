@@ -2,6 +2,7 @@
 #define ZCC_COMPILE_H
 
 #include <memory>
+#include "codegeneration/codegen.h"
 
 struct Baggage;
 struct FPropertyInfo;
@@ -77,7 +78,9 @@ struct ZCC_PropertyWork
 struct ZCC_ConstantWork
 {
 	ZCC_ConstantDef *node;
-	PSymbolTable *outputtable;
+	PStruct *cls;
+	PSymbolTable *Outputtable;
+	ExpVal constval;
 };
 
 class ZCCCompiler
@@ -88,14 +91,16 @@ public:
 	int Compile();
 
 private:
+	int IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
+	FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
 	void CreateClassTypes();
-	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot);
+	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot);
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
-	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
+	bool CompileConstant(ZCC_ConstantWork *def);
 
 	void CompileAllFields();
 	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
@@ -103,7 +108,7 @@ private:
 	bool CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
-	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
 
 	void InitDefaults();
@@ -111,9 +116,6 @@ private:
 	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *flg, Baggage &bag);
 	void DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
 	void DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
-	int GetInt(ZCC_Expression *expr);
-	double GetDouble(ZCC_Expression *expr);
-	const char *GetString(ZCC_Expression *expr, bool silent = false);
 	void CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool forclass);
 
 	void InitFunctions();
@@ -127,18 +129,6 @@ private:
 	TArray<ZCC_PropertyWork *> Properties;
 
 	PSymbolTreeNode *AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents = false);
-
-	ZCC_Expression *Simplify(ZCC_Expression *root, PSymbolTable *Symbols, bool wantconstant);
-	ZCC_Expression *DoSimplify(ZCC_Expression *root, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *Symbols);
-	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
-	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
-
-	ZCC_Expression *ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen);
-	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);
 
 	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *sym);
 	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);

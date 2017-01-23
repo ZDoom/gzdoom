@@ -273,6 +273,8 @@ namespace swrenderer
 
 		// store information in a vissprite
 		RenderSprite *vis = &avis[vispspindex];
+		memset(vis, 0, sizeof(*vis));
+
 		vis->renderflags = owner->renderflags;
 		vis->floorclip = 0;
 

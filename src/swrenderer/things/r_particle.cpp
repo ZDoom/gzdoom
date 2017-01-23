@@ -179,6 +179,8 @@ namespace swrenderer
 
 		// store information in a vissprite
 		RenderParticle *vis = RenderMemory::NewObject<RenderParticle>();
+		memset(vis, 0, sizeof(*vis));
+
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;
 		vis->xscale = FLOAT2FIXED(xscale);

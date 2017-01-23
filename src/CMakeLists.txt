@@ -1280,7 +1280,6 @@ set (PCH_SOURCES
 	scripting/vm/vmframe.cpp
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
-	scripting/zscript/zcc_expr.cpp
 	scripting/zscript/zcc_parser.cpp
 	sfmt/SFMT.cpp
 )

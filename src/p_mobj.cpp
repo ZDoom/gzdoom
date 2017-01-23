@@ -924,8 +924,7 @@ DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
 	PARAM_INT(amount);
 	PARAM_BOOL_DEF(fromdecorate);
 	PARAM_BOOL_DEF(notakeinfinite);
-	self->TakeInventory(item, amount, fromdecorate, notakeinfinite);
-	return 0;
+	ACTION_RETURN_BOOL(self->TakeInventory(item, amount, fromdecorate, notakeinfinite));
 }
 
 //============================================================================

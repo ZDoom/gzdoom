@@ -144,6 +144,7 @@ struct FScriptPosition
 	static int WarnCounter;
 	static int ErrorCounter;
 	static bool StrictErrors;
+	static bool errorout;
 	FString FileName;
 	int ScriptLine;
 

@@ -133,10 +133,6 @@ SDLGLVideo::SDLGLVideo (int parm)
         fprintf( stderr, "Video initialization failed: %s\n",
              SDL_GetError( ) );
     }
-#ifndef	_WIN32
-	// mouse cursor is visible by default on linux systems, we disable it by default
-	SDL_ShowCursor (0);
-#endif
 }
 
 SDLGLVideo::~SDLGLVideo ()

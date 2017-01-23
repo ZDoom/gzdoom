@@ -127,7 +127,7 @@ extend class PlayerPawn
 			{
 				let armoritem = BasicArmorPickup(Spawn("BasicArmorPickup"));
 				armoritem.SaveAmount = 100*deh.BlueAC;
-				armoritem.SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : 0.5;
+				armoritem.SavePercent = gameinfo.Armor2Percent > 0 ? gameinfo.Armor2Percent * 100 : 50;
 				if (!armoritem.CallTryPickup (self))
 				{
 					armoritem.Destroy ();

@@ -513,7 +513,7 @@ static void OpenExprType(FLispString &out, EZCCExprType type)
 
 	if (unsigned(type) < PEX_COUNT_OF)
 	{
-		mysnprintf(buf, countof(buf), "expr-%s", ZCC_OpInfo[type].OpName);
+		mysnprintf(buf, countof(buf), "expr %d", type);
 	}
 	else
 	{

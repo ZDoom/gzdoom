@@ -92,6 +92,7 @@ public:
 
 private:
 	int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
+	FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
@@ -115,9 +116,6 @@ private:
 	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *flg, Baggage &bag);
 	void DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
 	void DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
-	int GetInt(ZCC_Expression *expr);
-	double GetDouble(ZCC_Expression *expr);
-	const char *GetString(ZCC_Expression *expr, bool silent = false);
 	void CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool forclass);
 
 	void InitFunctions();
@@ -131,18 +129,6 @@ private:
 	TArray<ZCC_PropertyWork *> Properties;
 
 	PSymbolTreeNode *AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents = false);
-
-	ZCC_Expression *Simplify(ZCC_Expression *root, PSymbolTable *Symbols, bool wantconstant);
-	ZCC_Expression *DoSimplify(ZCC_Expression *root, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *Symbols);
-	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *Symbols);
-	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
-	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
-
-	ZCC_Expression *ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen);
-	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);
 
 	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *sym);
 	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);

@@ -214,15 +214,6 @@ public:
 	typedef PClassType MetaClass;
 	MetaClass *GetClass() const;
 
-	struct Conversion
-	{
-		Conversion(PType *target, void (*convert)(ZCC_ExprConstant *, class FSharedStringArena &))
-			: TargetType(target), ConvertConstant(convert) {}
-
-		PType *TargetType;
-		void (*ConvertConstant)(ZCC_ExprConstant *val, class FSharedStringArena &strdump);
-	};
-
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
@@ -234,10 +225,6 @@ public:
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
 	virtual bool isNumeric() { return false; }
-
-	bool AddConversion(PType *target, void (*convertconst)(ZCC_ExprConstant *, class FSharedStringArena &));
-
-	int FindConversion(PType *target, const Conversion **slots, int numslots);
 
 	// Writes the value of a variable of this type at (addr) to an archive, preceded by
 	// a tag indicating its type. The tag is there so that variable types can be changed
@@ -318,54 +305,6 @@ public:
 	size_t PropagateMark();
 
 	static void StaticInit();
-
-private:
-	// Stuff for type conversion searches
-	class VisitQueue
-	{
-	public:
-		VisitQueue() : In(0), Out(0) {}
-		void Push(PType *type);
-		PType *Pop();
-		bool IsEmpty() { return In == Out; }
-
-	private:
-		// This is a fixed-sized ring buffer.
-		PType *Queue[64];
-		int In, Out;
-
-		void Advance(int &ptr)
-		{
-			ptr = (ptr + 1) & (countof(Queue) - 1);
-		}
-	};
-
-	class VisitedNodeSet
-	{
-	public:
-		VisitedNodeSet() { memset(Buckets, 0, sizeof(Buckets)); }
-		void Insert(PType *node);
-		bool Check(const PType *node);
-
-	private:
-		PType *Buckets[32];
-
-		size_t Hash(const PType *type) { return size_t(type) >> 4; }
-	};
-
-	TArray<Conversion> Conversions;
-	PType *PredType;
-	PType *VisitNext;
-	short PredConv;
-	short Distance;
-
-	void MarkPred(PType *pred, int conv, int dist)
-	{
-		PredType = pred;
-		PredConv = conv;
-		Distance = dist;
-	}
-	void FillConversionPath(const Conversion **slots);
 };
 
 // Not-really-a-type types --------------------------------------------------

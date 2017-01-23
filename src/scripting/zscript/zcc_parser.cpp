@@ -408,9 +408,6 @@ void ParseScripts()
 	{
 		InitTokenMap();
 	}
-	ZCC_InitOperators();
-	ZCC_InitConversions();
-
 	int lump, lastlump = 0;
 	FScriptPosition::ResetErrorCounter();
 

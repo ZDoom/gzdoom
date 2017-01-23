@@ -86,6 +86,20 @@ int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
 	return static_cast<FxConstant*>(ex)->GetValue().GetInt();
 }
 
+FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+{
+	FCompileContext ctx(cls, false);
+	FxExpression *ex = new FxStringCast(ConvertNode(node));
+	ex = ex->Resolve(ctx);
+	if (ex == nullptr) return "";
+	if (!ex->isConstant())
+	{
+		ex->ScriptPosition.Message(MSG_ERROR, "Expression is not constant");
+		return "";
+	}
+	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+}
+
 
 //==========================================================================
 //
@@ -824,300 +838,6 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 
 //==========================================================================
 //
-// ZCCCompiler :: Simplify
-//
-// For an expression,
-//   Evaluate operators whose arguments are both constants, replacing it
-//     with a new constant.
-//   For a binary operator with one constant argument, put it on the right-
-//     hand operand, where permitted.
-//   Perform automatic type promotion.
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym, bool wantconstant)
-{
-	SimplifyingConstant = wantconstant;
-	return  DoSimplify(root, sym);
-}
-
-ZCC_Expression *ZCCCompiler::DoSimplify(ZCC_Expression *root, PSymbolTable *sym)
-{
-	if (root->NodeType == AST_ExprUnary)
-	{
-		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root), sym);
-	}
-	else if (root->NodeType == AST_ExprBinary)
-	{
-		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root), sym);
-	}
-	else if (root->Operation == PEX_ID)
-	{
-		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root), sym);
-	}
-	else if (root->Operation == PEX_MemberAccess)
-	{
-		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root), sym);
-	}
-	else if (root->Operation == PEX_FuncCall)
-	{
-		return SimplifyFunctionCall(static_cast<ZCC_ExprFuncCall *>(root), sym);
-	}
-	return root;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyUnary
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *sym)
-{
-	unary->Operand = DoSimplify(unary->Operand, sym);
-	if (unary->Operand->Type == nullptr)
-	{
-		return unary;
-	}
-	ZCC_OpProto *op = PromoteUnary(unary->Operation, unary->Operand);
-	if (op == NULL)
-	{ // Oh, poo!
-		unary->Type = TypeError;
-	}
-	else if (unary->Operand->Operation == PEX_ConstValue)
-	{
-		return op->EvalConst1(static_cast<ZCC_ExprConstant *>(unary->Operand));
-	}
-	return unary;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyBinary
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *sym)
-{
-	binary->Left = DoSimplify(binary->Left, sym);
-	binary->Right = DoSimplify(binary->Right, sym);
-	if (binary->Left->Type == nullptr || binary->Right->Type == nullptr)
-	{
-		// We do not know yet what this is so we cannot promote it (yet.)
-		return binary;
-	}
-	ZCC_OpProto *op = PromoteBinary(binary->Operation, binary->Left, binary->Right);
-	if (op == NULL)
-	{
-		binary->Type = TypeError;
-	}
-	else if (binary->Left->Operation == PEX_ConstValue &&
-		binary->Right->Operation == PEX_ConstValue)
-	{
-		return op->EvalConst2(static_cast<ZCC_ExprConstant *>(binary->Left),
-							  static_cast<ZCC_ExprConstant *>(binary->Right), AST.Strings);
-	}
-	return binary;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyMemberAccess
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *symt)
-{
-	PSymbolTable *symtable;
-
-	// TBD: Is it safe to simplify the left side here when not processing a constant?
-	dotop->Left = DoSimplify(dotop->Left, symt);
-
-	if (dotop->Left->Operation == PEX_TypeRef)
-	{ // Type refs can be evaluated now.
-		PType *ref = static_cast<ZCC_ExprTypeRef *>(dotop->Left)->RefType;
-		PSymbol *sym = ref->Symbols.FindSymbolInTable(dotop->Right, symtable);
-		if (sym != nullptr)
-		{
-			ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
-			if (expr != nullptr)
-			{
-				return expr;
-			}
-		}
-	}
-	else if (dotop->Left->Operation == PEX_Super)
-	{
-		symt = symt->GetParentTable();
-		if (symt != nullptr)
-		{
-			PSymbol *sym = symt->FindSymbolInTable(dotop->Right, symtable);
-			if (sym != nullptr)
-			{
-				ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
-				if (expr != nullptr)
-				{
-					return expr;
-				}
-			}
-		}
-	}
-	return dotop;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: SimplifyFunctionCall
-//
-// This may replace a function call with cast(s), since they look like the
-// same thing to the parser.
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *sym)
-{
-	ZCC_FuncParm *parm;
-	int parmcount = 0;
-
-	parm = callop->Parameters;
-	if (parm != NULL)
-	{
-		do
-		{
-			parmcount++;
-			assert(parm->NodeType == AST_FuncParm);
-			parm->Value = DoSimplify(parm->Value, sym);
-			parm = static_cast<ZCC_FuncParm *>(parm->SiblingNext);
-		}
-		while (parm != callop->Parameters);
-	}
-	// Only simplify the 'function' part if we want to retrieve a constant.
-	// This is necessary to evaluate the type casts, but for actual functions
-	// the simplification process is destructive and has to be avoided.
-	if (SimplifyingConstant)
-	{
-		callop->Function = DoSimplify(callop->Function, sym);
-	}
-	// If the left side is a type ref, then this is actually a cast
-	// and not a function call.
-	if (callop->Function->Operation == PEX_TypeRef)
-	{
-		if (parmcount != 1)
-		{
-			Error(callop, "Type cast requires one parameter");
-			callop->ToErrorNode();
-		}
-		else
-		{
-			PType *dest = static_cast<ZCC_ExprTypeRef *>(callop->Function)->RefType;
-			const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-			int routelen = parm->Value->Type->FindConversion(dest, route, countof(route));
-			if (routelen < 0)
-			{
-				///FIXME: Need real type names
-				Error(callop, "Cannot convert %s to %s", parm->Value->Type->DescriptiveName(), dest->DescriptiveName());
-				callop->ToErrorNode();
-			}
-			else
-			{
-				ZCC_Expression *val = ApplyConversion(parm->Value, route, routelen);
-				assert(val->Type == dest);
-				return val;
-			}
-		}
-	}
-	return callop;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: PromoteUnary
-//
-// Converts the operand into a format preferred by the operator.
-//
-//==========================================================================
-
-ZCC_OpProto *ZCCCompiler::PromoteUnary(EZCCExprType op, ZCC_Expression *&expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return NULL;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = countof(route);
-	ZCC_OpProto *proto = ZCC_OpInfo[op].FindBestProto(expr->Type, route, routelen);
-
-	if (proto != NULL)
-	{
-		expr = ApplyConversion(expr, route, routelen);
-	}
-	return proto;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: PromoteBinary
-//
-// Converts the operands into a format (hopefully) compatible with the
-// operator.
-//
-//==========================================================================
-
-ZCC_OpProto *ZCCCompiler::PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right)
-{
-	// If either operand is of type 'error', the result is also 'error'
-	if (left->Type == TypeError || right->Type == TypeError)
-	{
-		return NULL;
-	}
-	const PType::Conversion *route1[CONVERSION_ROUTE_SIZE], *route2[CONVERSION_ROUTE_SIZE];
-	int route1len = countof(route1), route2len = countof(route2);
-	ZCC_OpProto *proto = ZCC_OpInfo[op].FindBestProto(left->Type, route1, route1len, right->Type, route2, route2len);
-	if (proto != NULL)
-	{
-		left = ApplyConversion(left, route1, route1len);
-		right = ApplyConversion(right, route2, route2len);
-	}
-	return proto;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: ApplyConversion
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen)
-{
-	for (int i = 0; i < routelen; ++i)
-	{
-		if (expr->Operation != PEX_ConstValue)
-		{
-			expr = AddCastNode(route[i]->TargetType, expr);
-		}
-		else
-		{
-			route[i]->ConvertConstant(static_cast<ZCC_ExprConstant *>(expr), AST.Strings);
-		}
-	}
-	return expr;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: AddCastNode
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::AddCastNode(PType *type, ZCC_Expression *expr)
-{
-	assert(expr->Operation != PEX_ConstValue && "Expression must not be constant");
-	// TODO: add a node here
-	return expr;
-}
-
-//==========================================================================
-//
 // ZCCCompiler :: IdentifyIdentifier
 //
 // Returns a node that represents what the identifer stands for.
@@ -1779,78 +1499,6 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		baseType = NewArray(baseType, size);
 	}
 	return baseType;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: GetInt - Input must be a constant expression
-//
-//==========================================================================
-
-int ZCCCompiler::GetInt(ZCC_Expression *expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return 0;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = expr->Type->FindConversion(TypeSInt32, route, countof(route));
-	if (routelen < 0)
-	{
-		Error(expr, "Cannot convert to integer");
-		return 0;
-	}
-	else
-	{
-		if (expr->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
-		{
-			Warn(expr, "Truncation of floating point value");
-		}
-		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
-		return ex->IntVal;
-	}
-}
-
-double ZCCCompiler::GetDouble(ZCC_Expression *expr)
-{
-	if (expr->Type == TypeError)
-	{
-		return 0;
-	}
-	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
-	int routelen = expr->Type->FindConversion(TypeFloat64, route, countof(route));
-	if (routelen < 0)
-	{
-		Error(expr, "Cannot convert to float");
-		return 0;
-	}
-	else
-	{
-		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
-		return ex->DoubleVal;
-	}
-}
-
-const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
-{
-	if (expr->Type == TypeError)
-	{
-		return nullptr;
-	}
-	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PString)))
-	{
-		return static_cast<ZCC_ExprConstant *>(expr)->StringVal->GetChars();
-	}
-	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PName)))
-	{
-		// Ugh... What a mess...
-		return FName(ENamedName(static_cast<ZCC_ExprConstant *>(expr)->IntVal)).GetChars();
-	}
-	else
-	{
-		if (!silent) Error(expr, "Cannot convert to string");
-		return nullptr;
-	}
 }
 
 //==========================================================================
@@ -2921,7 +2569,7 @@ void ZCCCompiler::CompileStates()
 						auto l = sl->Lights;
 						do
 						{
-							AddStateLight(&state, GetString(l));
+							AddStateLight(&state, StringConstFromNode(l, c->Type()));
 							l = static_cast<decltype(l)>(l->SiblingNext);
 						} while (l != sl->Lights);
 					}

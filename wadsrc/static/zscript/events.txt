@@ -1,12 +1,11 @@
 class StaticEventHandler : Object native
 {
-	virtual native void MapLoaded();
-	virtual native void MapUnloading();
+	virtual native void WorldLoaded();
+    virtual native void WorldLoadedUnsafe();
+	virtual native void WorldUnloading();
+    virtual native void WorldUnloadingUnsafe();
 
 	virtual native void RenderFrame();
-	virtual native void RenderCamera();
-	virtual native void RenderBeforeThing();
-	virtual native void RenderAfterThing();
 }
 
 class StaticRenderEventHandler : StaticEventHandler native
@@ -17,10 +16,7 @@ class StaticRenderEventHandler : StaticEventHandler native
 	native readonly double ViewPitch;
 	native readonly double ViewRoll;
 	native readonly double FracTic;
-	// for camera
 	native readonly Actor Camera;
-	// for thing
-	native readonly Actor CurrentThing;
 }
 
 class EventHandler : StaticEventHandler native

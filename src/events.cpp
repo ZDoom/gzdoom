@@ -61,6 +61,53 @@ bool E_IsStaticType(PClass* type)
 void E_SerializeEvents(FSerializer& arc)
 {
 	// todo : stuff
+	if (arc.BeginArray("eventhandlers"))
+	{
+		int numlocalhandlers = 0;
+		TArray<DStaticEventHandler*> handlers;
+		if (arc.isReading())
+		{
+			numlocalhandlers = arc.ArraySize();
+			// delete all current local handlers, if any
+			for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
+				if (!lhandler->IsStatic()) lhandler->Destroy();
+		}
+		else
+		{
+			for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
+			{
+				if (lhandler->IsStatic()) continue;
+				numlocalhandlers++;
+				handlers.Push(lhandler);
+			}
+		}
+
+		for (int i = 0; i < numlocalhandlers; i++)
+		{
+			// serialize the object properly.
+			if (arc.isReading())
+			{
+				// get object and put it into the array
+				DStaticEventHandler* lhandler;
+				arc(nullptr, lhandler);
+				if (lhandler != nullptr)
+					handlers.Push(lhandler);
+			}
+			else
+			{
+				::Serialize<DStaticEventHandler>(arc, nullptr, handlers[i], nullptr);
+			}
+		}
+
+		if (arc.isReading())
+		{
+			// add all newly deserialized handlers into the list
+			for (int i = 0; i < numlocalhandlers; i++)
+				E_RegisterHandler(handlers[i]);
+		}
+
+		arc.EndArray();
+	}
 }
 
 static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
@@ -124,23 +171,17 @@ void E_InitStaticHandlers(bool map)
 	}
 }
 
-void E_MapLoaded()
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->MapLoaded();
+#define DEFINE_EVENT_LOOPER(name) void E_##name() \
+{ \
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next) \
+		handler->name(); \
 }
 
-void E_MapUnloading()
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->MapUnloading();
-}
-
-void E_RenderFrame()
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->RenderFrame();
-}
+DEFINE_EVENT_LOOPER(WorldLoaded)
+DEFINE_EVENT_LOOPER(WorldUnloading)
+DEFINE_EVENT_LOOPER(WorldLoadedUnsafe)
+DEFINE_EVENT_LOOPER(WorldUnloadingUnsafe)
+DEFINE_EVENT_LOOPER(RenderFrame)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
@@ -230,15 +271,17 @@ void cls::funcname(args) \
 	} \
 }
 
-DEFINE_EVENT_HANDLER(DStaticEventHandler, MapLoaded,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, MapUnloading,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame,)
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoaded,)
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloading,)
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoadedUnsafe, )
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloadingUnsafe, )
+DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame, )
 
 //
 void DStaticEventHandler::OnDestroy()
 {
 	E_UnregisterHandler(this);
-	DObject::OnDestroy();
+	Super::OnDestroy();
 }
 
 void DStaticRenderEventHandler::Setup()
@@ -254,6 +297,5 @@ void DStaticRenderEventHandler::Setup()
 void DStaticRenderEventHandler::RenderFrame()
 {
 	Setup();
-	DStaticEventHandler::RenderFrame();
+	Super::RenderFrame();
 }
-

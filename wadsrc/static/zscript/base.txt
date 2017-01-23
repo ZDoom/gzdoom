@@ -41,6 +41,7 @@ struct Console native
 {
 	native static void HideConsole();
 	native static void MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
+    native static vararg void Printf(string fmt, ...);
 }
 
 struct DamageTypeDefinition native

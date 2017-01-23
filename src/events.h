@@ -18,9 +18,13 @@ bool E_IsStaticType(PClass* type);
 void E_InitStaticHandlers(bool map);
 
 // called right after the map has loaded (approximately same time as OPEN ACS scripts)
-void E_MapLoaded();
+void E_WorldLoaded();
 // called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
-void E_MapUnloading();
+void E_WorldUnloading();
+// called right after the map has loaded (every time, UNSAFE VERSION)
+void E_WorldLoadedUnsafe();
+// called right before the map is unloaded (every time, UNSAFE VERSION)
+void E_WorldUnloadingUnsafe();
 // called on each render frame once.
 void E_RenderFrame();
 
@@ -38,17 +42,28 @@ public:
 	bool isMapScope; // this is only used with IsStatic=true
 	virtual bool IsStatic() { return true; }
 
+	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		if (arc.isReading())
+		{
+			Printf("DStaticEventHandler::Serialize: reading object %s\n", GetClass()->TypeName.GetChars());
+		}
+		else
+		{
+			Printf("DStaticEventHandler::Serialize: store object %s\n", GetClass()->TypeName.GetChars());
+		}
+		/* do nothing */
+	}
+
 	// destroy handler. this unlinks EventHandler from the list automatically.
 	void OnDestroy() override;
 
-	// this checks if we are /actually/ static, using DObject dynamic typing system.
-	static bool IsActuallyStatic(PClass* type);
-
-	// called right after the map has loaded (approximately same time as OPEN ACS scripts)
-	virtual void MapLoaded();
-	// called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
-	virtual void MapUnloading();
-	// called on each render frame once.
+	virtual void WorldLoaded();
+	virtual void WorldUnloading();
+	virtual void WorldLoadedUnsafe();
+	virtual void WorldUnloadingUnsafe();
 	virtual void RenderFrame();
 };
 class DEventHandler : public DStaticEventHandler
@@ -70,6 +85,18 @@ public:
 	DAngle ViewRoll;
 	double FracTic; // 0..1 value that describes where we are inside the current gametic, render-wise.
 	AActor* Camera;
+
+	// serialization handler for our local stuff
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		arc("ViewPos", ViewPos);
+		arc("ViewAngle", ViewAngle);
+		arc("ViewPitch", ViewPitch);
+		arc("ViewRoll", ViewRoll);
+		arc("FracTic", FracTic);
+		arc("Camera", Camera);
+	}
 
 	void RenderFrame() override;
 

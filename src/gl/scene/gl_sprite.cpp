@@ -650,8 +650,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	if (thing == nullptr)
 		return;
 
-	DStaticRenderEventHandler::AutoThing autoRenderThingEvent(thing);
-
 	// [ZZ] allow CustomSprite-style direct picnum specification
 	bool isPicnumOverride = thing->picnum.isValid();
 

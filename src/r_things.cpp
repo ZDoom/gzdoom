@@ -1245,8 +1245,6 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 		if (thing->validcount == validcount) continue;
 		thing->validcount = validcount;
 		
-		DStaticRenderEventHandler::AutoThing autoRenderThingEvent(thing);
-
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{

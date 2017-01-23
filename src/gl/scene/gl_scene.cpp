@@ -478,9 +478,6 @@ void FGLRenderer::RenderTranslucent()
 
 void FGLRenderer::DrawScene(int drawmode)
 {
-	// [ZZ] call event hook
-	E_RenderCamera();
-
 	static int recursion=0;
 	static int ssao_portals_available = 0;
 

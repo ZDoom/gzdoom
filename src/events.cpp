@@ -53,8 +53,14 @@ bool E_CheckHandler(DStaticEventHandler* handler)
 
 bool E_IsStaticType(PClass* type)
 {
-	return (!type->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
+	return (type->IsDescendantOf(RUNTIME_CLASS(DStaticEventHandler)) && // make sure it's from our hierarchy at all.
+			!type->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
 			!type->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)));
+}
+
+void E_SerializeEvents(FSerializer& arc)
+{
+	// todo : stuff
 }
 
 static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
@@ -136,24 +142,6 @@ void E_RenderFrame()
 		handler->RenderFrame();
 }
 
-void E_RenderCamera()
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->RenderCamera();
-}
-
-void E_RenderBeforeThing(AActor* thing)
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->RenderBeforeThing(thing);
-}
-
-void E_RenderAfterThing(AActor* thing)
-{
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->RenderAfterThing(thing);
-}
-
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
 IMPLEMENT_CLASS(DStaticRenderEventHandler, false, false);
@@ -166,7 +154,6 @@ DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewPitch);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewRoll);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, FracTic);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, Camera);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, CurrentThing);
 
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
@@ -246,9 +233,6 @@ void cls::funcname(args) \
 DEFINE_EVENT_HANDLER(DStaticEventHandler, MapLoaded,)
 DEFINE_EVENT_HANDLER(DStaticEventHandler, MapUnloading,)
 DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderCamera,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderBeforeThing, AActor*)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderAfterThing, AActor*)
 
 //
 void DStaticEventHandler::OnDestroy()
@@ -273,20 +257,3 @@ void DStaticRenderEventHandler::RenderFrame()
 	DStaticEventHandler::RenderFrame();
 }
 
-void DStaticRenderEventHandler::RenderCamera()
-{
-	Setup();
-	DStaticEventHandler::RenderCamera();
-}
-
-void DStaticRenderEventHandler::RenderBeforeThing(AActor* thing)
-{
-	CurrentThing = thing;
-	DStaticEventHandler::RenderBeforeThing(thing);
-}
-
-void DStaticRenderEventHandler::RenderAfterThing(AActor* thing)
-{
-	CurrentThing = thing;
-	DStaticEventHandler::RenderAfterThing(thing);
-}

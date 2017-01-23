@@ -1179,8 +1179,6 @@ void R_DrawPortals ()
 		R_SetViewAngle ();
 		validcount++;	// Make sure we see all sprites
 
-		E_RenderCamera();
-
 		R_ClearPlanes (false);
 		R_ClearClipSegs (pl->left, pl->right);
 		WindowLeft = pl->left;

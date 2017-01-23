@@ -720,9 +720,6 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 	R_CopyStackedViewParameters();
 
-	// [ZZ] portal hook
-	E_RenderCamera();
-
 	validcount++;
 	PortalDrawseg* prevpds = CurrentPortal;
 	CurrentPortal = pds;
@@ -843,9 +840,6 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 	R_SetupBuffer ();
 	R_SetupFrame (actor);
-
-	// [ZZ] call event hook
-	E_RenderCamera();
 
 	// Clear buffers.
 	R_ClearClipSegs (0, viewwidth);

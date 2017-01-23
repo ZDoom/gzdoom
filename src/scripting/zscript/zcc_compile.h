@@ -92,7 +92,7 @@ public:
 
 private:
 	int IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
-	FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
+	FString StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();

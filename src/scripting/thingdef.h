@@ -117,6 +117,7 @@ struct Baggage
 #ifdef _DEBUG
 	FString ClassName;	// This is here so that during debugging the class name can be seen
 #endif
+	PNamespace *Namespace;
 	PClassActor *Info;
 	bool DropItemSet;
 	bool StateSet;
@@ -132,7 +133,7 @@ struct Baggage
 
 inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 {
-	bag->DropItemList = NULL;
+	bag->DropItemList = nullptr;
 	bag->DropItemSet = false;
 	bag->CurrentState = 0;
 	bag->fromDecorate = true;
@@ -150,7 +151,7 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string);
 FieldDesc *FindField(PStruct *cls, const char * string);
 
 
-FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, bool mustresolve = false);
+FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, PNamespace *resolvenspc = nullptr);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
@@ -160,7 +161,7 @@ FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
 PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
-void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
+void CreateDamageFunction(PNamespace *ns, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
 
 //==========================================================================
 //
@@ -169,7 +170,7 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 //==========================================================================
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
-FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant);
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type);
 
 
 enum 

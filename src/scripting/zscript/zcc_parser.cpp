@@ -226,6 +226,8 @@ static void InitTokenMap()
 #undef TOKENDEF
 #undef TOKENDEF2
 
+//**--------------------------------------------------------------------------
+
 static void ParseSingleFile(const char *filename, int lump, void *parser, ZCCParseState &state)
 {
 	int tokentype;
@@ -311,6 +313,8 @@ parse_end:
 	state.sc = nullptr;
 }
 
+//**--------------------------------------------------------------------------
+
 static void DoParse(int lumpnum)
 {
 	FScanner sc;
@@ -395,7 +399,8 @@ static void DoParse(int lumpnum)
 	}
 
 	PSymbolTable symtable;
-	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols, lumpnum);
+	auto newns = Wads.GetLumpFile(lumpnum) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(lumpnum));
+	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum);
 	cc.Compile();
 
 	if (FScriptPosition::ErrorCounter > 0)

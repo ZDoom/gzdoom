@@ -84,9 +84,10 @@ struct FCompileContext
 	int Lump;
 	bool Unsafe = false;
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
+	PNamespace *CurGlobals;
 
-	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
-	FCompileContext(PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
+	FCompileContext(PNamespace *spc, PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);

@@ -802,7 +802,7 @@ void VMFunctionBuilder::BackpatchListToHere(TArray<size_t> &locs)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
+VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
 {
 	auto func = code->GetDirectFunction();
 	if (func != nullptr)
@@ -814,6 +814,8 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	//Printf("Adding %s\n", name.GetChars());
 
 	Item it;
+	assert(gnspc != nullptr);
+	it.CurGlobals = gnspc;
 	it.Func = functype;
 	it.Code = code;
 	it.PrintableName = name;
@@ -853,7 +855,7 @@ void FFunctionBuildList::Build()
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump);
+		FCompileContext ctx(item.CurGlobals, item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump);
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
 		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());

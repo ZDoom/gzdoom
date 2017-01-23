@@ -74,7 +74,7 @@ static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
 
 int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
 {
-	FCompileContext ctx(cls, false);
+	FCompileContext ctx(OutNamespace, cls, false);
 	FxExpression *ex = new FxIntCast(ConvertNode(node), false);
 	ex = ex->Resolve(ctx);
 	if (ex == nullptr) return 0;
@@ -88,7 +88,7 @@ int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
 
 FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls)
 {
-	FCompileContext ctx(cls, false);
+	FCompileContext ctx(OutNamespace, cls, false);
 	FxExpression *ex = new FxStringCast(ConvertNode(node));
 	ex = ex->Resolve(ctx);
 	if (ex == nullptr) return "";
@@ -154,7 +154,12 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 					cls->Enums.Push(enumType);
 					break;
 
-				case AST_Struct:		
+				case AST_Struct:	
+					if (static_cast<ZCC_Struct *>(node)->Flags & VARF_Native)
+					{
+						Error(node, "Cannot define native structs inside classes");
+						static_cast<ZCC_Struct *>(node)->Flags &= ~VARF_Native;
+					}
 					ProcessStruct(static_cast<ZCC_Struct *>(node), childnode, cls->cls);	
 					break;
 
@@ -271,8 +276,8 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 //
 //==========================================================================
 
-ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols, int lumpnum)
-	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), Lump(lumpnum)
+ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PNamespace *_outnamespc, int lumpnum)
+	: Outer(_outer), GlobalTreeNodes(&_symbols), OutNamespace(_outnamespc), AST(ast), Lump(lumpnum)
 {
 	FScriptPosition::ResetErrorCounter();
 	// Group top-level nodes by type
@@ -303,8 +308,8 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 					{
 					case AST_Enum:
 						zenumType = static_cast<ZCC_Enum *>(node);
-						enumType = NewEnum(zenumType->NodeName, nullptr);
-						GlobalSymbols.AddSymbol(new PSymbolType(zenumType->NodeName, enumType));
+						enumType = NewEnum(zenumType->NodeName, OutNamespace);
+						OutNamespace->Symbols.AddSymbol(new PSymbolType(zenumType->NodeName, enumType));
 						break;
 
 					case AST_Class:
@@ -468,13 +473,31 @@ void ZCCCompiler::CreateStructTypes()
 {
 	for(auto s : Structs)
 	{
+		PTypeBase *outer;
+		PSymbolTable *syms;
+
 		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->CType();
-		if (s->strct->Flags & ZCC_Native)
-			s->strct->Type = NewNativeStruct(s->NodeName(), nullptr);
+		if (s->Outer)
+		{
+			outer = s->Outer;
+			syms = &s->Outer->Symbols;
+		}
 		else
-			s->strct->Type = NewStruct(s->NodeName(), s->Outer);
+		{
+			outer = OutNamespace;
+			syms = &OutNamespace->Symbols;
+		}
+
+		if (s->strct->Flags & ZCC_Native)
+		{
+			s->strct->Type = NewNativeStruct(s->NodeName(), outer);
+		}
+		else
+		{
+			s->strct->Type = NewStruct(s->NodeName(), outer);
+		}
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
-		GlobalSymbols.AddSymbol(s->strct->Symbol);
+		syms->AddSymbol(s->strct->Symbol);
 
 		for (auto e : s->Enums)
 		{
@@ -577,7 +600,7 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
-				GlobalSymbols.AddSymbol(c->cls->Symbol);
+				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 				Classes.Push(c);
 				OrigClasses.Delete(i--);
 				donesomething = true;
@@ -601,7 +624,7 @@ void ZCCCompiler::CreateClassTypes()
 					// create a placeholder so that the compiler can continue looking for errors.
 					c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
 					c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
-					GlobalSymbols.AddSymbol(c->cls->Symbol);
+					OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 					Classes.Push(c);
 					OrigClasses.Delete(i--);
 					donesomething = true;
@@ -617,7 +640,7 @@ void ZCCCompiler::CreateClassTypes()
 		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
 		c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
 		c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
-		GlobalSymbols.AddSymbol(c->cls->Symbol);
+		OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);
 	}
 
@@ -678,7 +701,7 @@ void ZCCCompiler::CompileAllConstants()
 	// put all constants in one list to make resolving this easier.
 	TArray<ZCC_ConstantWork> constantwork;
 
-	CopyConstants(constantwork, Constants, nullptr, OutputSymbols);
+	CopyConstants(constantwork, Constants, nullptr, &OutNamespace->Symbols);
 	for (auto c : Classes)
 	{
 		CopyConstants(constantwork, c->Constants, c->Type(), &c->Type()->Symbols);
@@ -810,7 +833,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 
 bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 {
-	FCompileContext ctx(work->cls, false);
+	FCompileContext ctx(OutNamespace, work->cls, false);
 	FxExpression *exp = ConvertNode(work->node->Value);
 	try
 	{
@@ -835,49 +858,6 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 	}
 }
 
-
-//==========================================================================
-//
-// ZCCCompiler :: IdentifyIdentifier
-//
-// Returns a node that represents what the identifer stands for.
-//
-//==========================================================================
-
-ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *symt)
-{
-	// Check the symbol table for the identifier.
-	PSymbolTable *table;
-	PSymbol *sym = symt->FindSymbolInTable(idnode->Identifier, table);
-	// GlobalSymbols cannot be the parent of a class's symbol table so we have to look for global symbols explicitly.
-	if (sym == nullptr && symt != &GlobalSymbols) sym = GlobalSymbols.FindSymbolInTable(idnode->Identifier, table);
-	if (sym != nullptr)
-	{
-		ZCC_Expression *node = NodeFromSymbol(sym, idnode, table);
-		if (node != NULL)
-		{
-			return node;
-		}
-	}
-	else if (SimplifyingConstant)	// leave unknown identifiers alone when simplifying non-constants. It is impossible to know what they are here.
-	{
-		// Also handle line specials.
-		// To call this like a function this needs to be done differently, but for resolving constants this is ok.
-		int spec = P_FindLineSpecial(FName(idnode->Identifier).GetChars());
-		if (spec != 0)
-		{
-			ZCC_ExprConstant *val = static_cast<ZCC_ExprConstant *>(AST.InitNode(sizeof(*val), AST_ExprConstant, idnode));
-			val->Operation = PEX_ConstValue;
-			val->Type = TypeSInt32;
-			val->IntVal = spec;
-			return val;
-		}
-
-		Error(idnode, "Unknown identifier '%s'", FName(idnode->Identifier).GetChars());
-		idnode->ToErrorNode();
-	}
-	return idnode;
-}
 
 //==========================================================================
 //
@@ -1056,6 +1036,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 	{
 		auto field = Fields[0];
 		FieldDesc *fd = nullptr;
+		FString str = FName(field->Names[0].Name).GetChars();
 
 		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
 
@@ -1394,10 +1375,15 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		}
 		else
 		{
+			// This doesn't check the class list directly but the current symbol table to ensure that
+			// this does not reference a type that got shadowed by a more local definition.
+			// We first look in the current class and its parents, and then in the current namespace and its parents.
 			auto sym = outertype->Symbols.FindSymbol(ctype->Restriction->Id, true);
-			if (sym == nullptr) sym = GlobalSymbols.FindSymbol(ctype->Restriction->Id, false);
+			if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(ctype->Restriction->Id, true);
 			if (sym == nullptr)
 			{
+				// A symbol with a given name cannot be reached from this definition point, so
+				// even if a class with the given name exists, it is not accessible.
 				Error(field, "%s: Unknown identifier", FName(ctype->Restriction->Id).GetChars());
 				return TypeError;
 			}
@@ -1434,10 +1420,9 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 {
 	// Check the symbol table for the identifier.
-	PSymbolTable *table;
-	PSymbol *sym = symt->FindSymbolInTable(type->UserType->Id, table);
-	// GlobalSymbols cannot be the parent of a class's symbol table so we have to look for global symbols explicitly.
-	if (sym == nullptr && symt != &GlobalSymbols) sym = GlobalSymbols.FindSymbolInTable(type->UserType->Id, table);
+	PSymbol *sym = symt->FindSymbol(type->UserType->Id, true);
+	// We first look in the current class and its parents, and then in the current namespace and its parents.
+	if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(type->UserType->Id, true);
 	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
 		auto ptype = static_cast<PSymbolType *>(sym)->Type;
@@ -1477,7 +1462,7 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 	} while (node != arraysize);
 
 
-	FCompileContext ctx(cls, false);
+	FCompileContext ctx(OutNamespace, cls, false);
 	for (auto node : indices)
 	{
 		// There is no float->int casting here.
@@ -1526,7 +1511,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 		const char * p = prop->params;
 		auto exp = property->Values;
 
-		FCompileContext ctx(bag.Info, false);
+		FCompileContext ctx(OutNamespace, bag.Info, false);
 		while (true)
 		{
 			FPropParam conv;
@@ -1693,7 +1678,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 	}
 
 	auto exp = property->Values;
-	FCompileContext ctx(bag.Info, false);
+	FCompileContext ctx(OutNamespace, bag.Info, false);
 	for (auto f : prop->Variables)
 	{
 		void *addr;
@@ -1775,7 +1760,7 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 		if (namenode->Id == NAME_DamageFunction)
 		{
 			auto x = ConvertNode(prop->Values);
-			CreateDamageFunction(cls, (AActor *)bag.Info->Defaults, x, false, Lump);
+			CreateDamageFunction(OutNamespace, cls, (AActor *)bag.Info->Defaults, x, false, Lump);
 			((AActor *)bag.Info->Defaults)->DamageVal = -1;
 			return;
 		}
@@ -1923,6 +1908,7 @@ void ZCCCompiler::InitDefaults()
 			#ifdef _DEBUG
 				bag.ClassName = c->Type()->TypeName;
 			#endif
+				bag.Namespace = OutNamespace;
 				bag.Info = ti;
 				bag.DropItemSet = false;
 				bag.StateSet = false;
@@ -2150,7 +2136,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						// It will also lose important type info about enums, once these get implemented
 						// The code generator can do this properly for us.
 						FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
-						FCompileContext ctx(c->Type(), false);
+						FCompileContext ctx(OutNamespace, c->Type(), false);
 						x = x->Resolve(ctx);
 
 						if (x != nullptr)
@@ -2258,7 +2244,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				auto code = ConvertAST(c->Type(), f->Body);
 				if (code != nullptr)
 				{
-					FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
+					FunctionBuildList.AddFunction(OutNamespace, sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
 				}
 			}
 		}
@@ -2527,7 +2513,7 @@ void ZCCCompiler::CompileStates()
 					{
 						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
 					}
-					FCompileContext ctx(c->Type(), false);
+					FCompileContext ctx(OutNamespace, c->Type(), false);
 					if (CheckRandom(sl->Duration))
 					{
 						auto func = static_cast<ZCC_ExprFuncCall *>(sl->Duration);
@@ -2581,7 +2567,7 @@ void ZCCCompiler::CompileStates()
 						if (code != nullptr)
 						{
 							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, state.UseFlags);
-							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len(), Lump);
+							state.ActionFunc = FunctionBuildList.AddFunction(OutNamespace, funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len(), Lump);
 						}
 					}
 

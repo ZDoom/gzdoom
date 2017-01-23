@@ -56,7 +56,7 @@
 #include "v_text.h"
 #include "m_argv.h"
 
-void ParseOldDecoration(FScanner &sc, EDefinitionType def);
+void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);
 
 
@@ -101,12 +101,11 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 //
 // ParseParameter
 //
-// Parses a parameter - either a default in a function declaration 
-// or an argument in a function call.
+// Parses an argument in a function call.
 //
 //==========================================================================
 
-FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant)
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 {
 	FxExpression *x = NULL;
 	int v;
@@ -118,12 +117,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 	}
 	else if (type == TypeBool || type == TypeSInt32 || type == TypeFloat64)
 	{
-		x = ParseExpression (sc, cls, constant);
-		if (constant && !x->isConstant())
-		{
-			sc.ScriptMessage("Default parameter must be constant.");
-			FScriptPosition::ErrorCounter++;
-		}
+		x = ParseExpression (sc, cls, nullptr);
 		// Do automatic coercion between bools, ints and floats.
 		if (type == TypeBool)
 		{
@@ -193,11 +187,10 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 				x = new FxMultiNameState(sc.String, sc);
 			}
 		}
-		else if (!constant)
+		else
 		{
 			x = new FxRuntimeStateIndex(ParseExpression(sc, cls));
 		}
-		else sc.MustGetToken(TK_StringConst); // This is for the error.
 	}
 	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
 	{	// Actor name
@@ -222,7 +215,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 //
 //==========================================================================
 
-static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
+static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls, PNamespace *ns)
 {
 	// Read the type and make sure it's int or float.
 	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
@@ -231,7 +224,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		sc.MustGetToken(TK_Identifier);
 		FName symname = sc.String;
 		sc.MustGetToken('=');
-		FxExpression *expr = ParseExpression (sc, cls, true);
+		FxExpression *expr = ParseExpression (sc, cls, ns);
 		sc.MustGetToken(';');
 
 		if (expr == nullptr)
@@ -283,7 +276,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 //
 //==========================================================================
 
-static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
+static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls, PNamespace *ns)
 {
 	int currvalue = 0;
 
@@ -294,7 +287,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		FName symname = sc.String;
 		if (sc.CheckToken('='))
 		{
-			FxExpression *expr = ParseExpression (sc, cls, true);
+			FxExpression *expr = ParseExpression (sc, cls, ns);
 			if (expr != nullptr)
 			{
 				if (!expr->isConstant())
@@ -339,7 +332,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 //
 //==========================================================================
 
-static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
+static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls, PNamespace *ns)
 {
 	PType *type;
 	int maxelems = 1;
@@ -381,7 +374,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 
 	if (sc.CheckToken('['))
 	{
-		FxExpression *expr = ParseExpression(sc, cls, true);
+		FxExpression *expr = ParseExpression(sc, cls, ns);
 		if (expr == nullptr)
 		{
 			sc.ScriptMessage("Error while resolving array size");
@@ -1112,11 +1105,12 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 // Reads an actor definition
 //
 //==========================================================================
-static void ParseActor(FScanner &sc)
+static void ParseActor(FScanner &sc, PNamespace *ns)
 {
 	PClassActor *info = NULL;
 	Baggage bag;
 
+	bag.Namespace = ns;
 	bag.fromDecorate = true;
 	info = ParseActorHeader(sc, &bag);
 	sc.MustGetToken('{');
@@ -1125,15 +1119,15 @@ static void ParseActor(FScanner &sc)
 		switch (sc.TokenType)
 		{
 		case TK_Const:
-			ParseConstant (sc, &info->Symbols, info);
+			ParseConstant (sc, &info->Symbols, info, ns);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &info->Symbols, info);
+			ParseEnum (sc, &info->Symbols, info, ns);
 			break;
 
 		case TK_Var:
-			ParseUserVariable (sc, &info->Symbols, info);
+			ParseUserVariable (sc, &info->Symbols, info, ns);
 			break;
 
 		case TK_Identifier:
@@ -1225,6 +1219,7 @@ static void ParseDamageDefinition(FScanner &sc)
 
 void ParseDecorate (FScanner &sc)
 {
+	auto ns = Namespaces.NewNamespace(sc.LumpNum);
 	// Get actor class name.
 	for(;;)
 	{
@@ -1255,11 +1250,11 @@ void ParseDecorate (FScanner &sc)
 		}
 
 		case TK_Const:
-			ParseConstant (sc, &GlobalSymbols, NULL);
+			ParseConstant (sc, &ns->Symbols, NULL, ns);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &GlobalSymbols, NULL);
+			ParseEnum (sc, &ns->Symbols, NULL, ns);
 			break;
 
 		case ';':
@@ -1275,22 +1270,22 @@ void ParseDecorate (FScanner &sc)
 			// so let's do a special case for this.
 			if (sc.Compare("ACTOR"))
 			{
-				ParseActor (sc);
+				ParseActor (sc, ns);
 				break;
 			}
 			else if (sc.Compare("PICKUP"))
 			{
-				ParseOldDecoration (sc, DEF_Pickup);
+				ParseOldDecoration (sc, DEF_Pickup, ns);
 				break;
 			}
 			else if (sc.Compare("BREAKABLE"))
 			{
-				ParseOldDecoration (sc, DEF_BreakableDecoration);
+				ParseOldDecoration (sc, DEF_BreakableDecoration, ns);
 				break;
 			}
 			else if (sc.Compare("PROJECTILE"))
 			{
-				ParseOldDecoration (sc, DEF_Projectile);
+				ParseOldDecoration (sc, DEF_Projectile, ns);
 				break;
 			}
 			else if (sc.Compare("DAMAGETYPE"))
@@ -1300,7 +1295,7 @@ void ParseDecorate (FScanner &sc)
 			}
 		default:
 			sc.RestorePos(pos);
-			ParseOldDecoration(sc, DEF_Decoration);
+			ParseOldDecoration(sc, DEF_Decoration, ns);
 			break;
 		}
 	}

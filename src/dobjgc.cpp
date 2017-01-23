@@ -379,7 +379,7 @@ static void MarkRoot()
 		Mark(PClass::AllClasses[i]);
 	}
 	// Mark global symbols
-	GlobalSymbols.MarkSymbols();
+	Namespaces.MarkSymbols();
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);

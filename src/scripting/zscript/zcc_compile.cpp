@@ -48,7 +48,6 @@
 #include "p_lnspec.h"
 #include "i_system.h"
 #include "gdtoa.h"
-#include "codegeneration/codegen.h"
 #include "vmbuilder.h"
 #include "version.h"
 
@@ -642,11 +641,11 @@ void ZCCCompiler::CreateClassTypes()
 //
 //==========================================================================
 
-void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot)
+void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot)
 {
 	for (auto c : Constants)
 	{
-		dest.Push({ c, ot });
+		dest.Push({ c, cls, ot });
 	}
 }
 
@@ -665,14 +664,14 @@ void ZCCCompiler::CompileAllConstants()
 	// put all constants in one list to make resolving this easier.
 	TArray<ZCC_ConstantWork> constantwork;
 
-	CopyConstants(constantwork, Constants, OutputSymbols);
+	CopyConstants(constantwork, Constants, nullptr, OutputSymbols);
 	for (auto c : Classes)
 	{
-		CopyConstants(constantwork, c->Constants, &c->Type()->Symbols);
+		CopyConstants(constantwork, c->Constants, c->Type(), &c->Type()->Symbols);
 	}
 	for (auto s : Structs)
 	{
-		CopyConstants(constantwork, s->Constants, &s->Type()->Symbols);
+		CopyConstants(constantwork, s->Constants, s->Type(), &s->Type()->Symbols);
 	}
 
 	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.
@@ -693,7 +692,7 @@ void ZCCCompiler::CompileAllConstants()
 		donesomething = false;
 		for (unsigned i = 0; i < constantwork.Size(); i++)
 		{
-			if (CompileConstant(constantwork[i].node, constantwork[i].outputtable))
+			if (CompileConstant(&constantwork[i]))
 			{
 				AddConstant(constantwork[i]);
 				// Remove the constant from the list
@@ -721,6 +720,9 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 {
 	auto def = constant.node;
 	auto val = def->Value;
+	ExpVal &c = constant.constval;
+	
+	// This is for literal constants.
 	if (val->NodeType == AST_ExprConstant)
 	{
 		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
@@ -747,14 +749,40 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 			Error(def->Value, "Bad type for constant definiton");
 			def->Symbol = nullptr;
 		}
-
-		if (def->Symbol == nullptr)
-		{
-			// Create a dummy constant so we don't make any undefined value warnings.
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
-		}
-		constant.outputtable->ReplaceSymbol(def->Symbol);
 	}
+	else
+	{
+		if (c.Type == TypeString)
+		{
+			def->Symbol = new PSymbolConstString(def->NodeName, c.GetString());
+		}
+		else if (c.Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			// How do we get an Enum type in here without screwing everything up???
+			//auto type = def->Type != nullptr ? def->Type : cval->Type;
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetInt());
+		}
+		else if (c.Type->IsA(RUNTIME_CLASS(PFloat)))
+		{
+			if (def->Type != nullptr)
+			{
+				Error(def, "Enum members must be integer values");
+			}
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetFloat());
+		}
+		else
+		{
+			Error(def->Value, "Bad type for constant definiton");
+			def->Symbol = nullptr;
+		}
+	}
+
+	if (def->Symbol == nullptr)
+	{
+		// Create a dummy constant so we don't make any undefined value warnings.
+		def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
+	}
+	constant.Outputtable->ReplaceSymbol(def->Symbol);
 }
 
 //==========================================================================
@@ -766,13 +794,31 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 //
 //==========================================================================
 
-bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
+bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 {
-	assert(def->Symbol == nullptr);
-
-	ZCC_Expression *val = Simplify(def->Value, sym, true);
-	def->Value = val;
-	return (val->NodeType == AST_ExprConstant);
+	FCompileContext ctx(work->cls, false);
+	FxExpression *exp = ConvertNode(work->node->Value);
+	try
+	{
+		FScriptPosition::errorout = true;
+		exp = exp->Resolve(ctx);
+		if (exp == nullptr) return false;
+		FScriptPosition::errorout = false;
+		if (!exp->isConstant())
+		{
+			delete exp;
+			return false;
+		}
+		work->constval = static_cast<FxConstant*>(exp)->GetValue();
+		delete exp;
+		return true;
+	}
+	catch (...)
+	{
+		// eat the reported error and treat this as a temorary failure. All unresolved contants will be reported at the end.
+		FScriptPosition::errorout = false;
+		return false;
+	}
 }
 
 

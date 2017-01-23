@@ -2,6 +2,7 @@
 #define ZCC_COMPILE_H
 
 #include <memory>
+#include "codegeneration/codegen.h"
 
 struct Baggage;
 struct FPropertyInfo;
@@ -77,7 +78,9 @@ struct ZCC_PropertyWork
 struct ZCC_ConstantWork
 {
 	ZCC_ConstantDef *node;
-	PSymbolTable *outputtable;
+	PStruct *cls;
+	PSymbolTable *Outputtable;
+	ExpVal constval;
 };
 
 class ZCCCompiler
@@ -93,10 +96,10 @@ private:
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
 	void CreateClassTypes();
-	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot);
+	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot);
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
-	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
+	bool CompileConstant(ZCC_ConstantWork *def);
 
 	void CompileAllFields();
 	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);

@@ -1043,7 +1043,7 @@ class PSymbolConstString : public PSymbolConst
 public:
 	FString Str;
 
-	PSymbolConstString(FName name, FString &str) : PSymbolConst(name, TypeString), Str(str) {}
+	PSymbolConstString(FName name, const FString &str) : PSymbolConst(name, TypeString), Str(str) {}
 	PSymbolConstString() {}
 };
 

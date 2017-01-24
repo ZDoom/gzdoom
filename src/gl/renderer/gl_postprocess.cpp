@@ -81,9 +81,6 @@ CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_base, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_speed, 0.05f, CVAR_ARCHIVE)
 
-CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE)
-CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE)
-
 CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE)
 {
 	if (self < 0 || self > 5)
@@ -135,6 +132,17 @@ CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
 {
 	if (self < 0.1f) self = 0.1f;
 }
+
+CUSTOM_CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	GLRenderer->ClearTonemapPalette();
+}
+
+CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	GLRenderer->ClearTonemapPalette();
+}
+
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -536,8 +544,11 @@ void FGLRenderer::CreateTonemapPalette()
 
 void FGLRenderer::ClearTonemapPalette()
 {
-	delete mTonemapPalette;
-	mTonemapPalette = nullptr;
+	if (mTonemapPalette)
+	{
+		delete mTonemapPalette;
+		mTonemapPalette = nullptr;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -824,12 +835,14 @@ int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int f
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	static double powtable[256];
 	static bool firstTime = true;
+	static float trackpowtable = 0.;
 
 	double fbestdist, fdist;
 	int bestcolor;
 
-	if (firstTime)
+	if (firstTime || trackpowtable != gl_paltonemap_powtable)
 	{
+		trackpowtable = gl_paltonemap_powtable;
 		firstTime = false;
 		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)gl_paltonemap_powtable);
 	}

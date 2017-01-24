@@ -41,6 +41,7 @@ uniform vec4 uLightAttr;
 #define uLightFactor uLightAttr.g
 #define uLightDist uLightAttr.r
 uniform int uFogEnabled;
+uniform int uPalLightLevels;
 
 // dynamic lights
 uniform int uLightIndex;

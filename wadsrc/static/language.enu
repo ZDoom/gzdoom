@@ -2664,6 +2664,7 @@ GLPREFMNU_SSAO_PORTALS			= "Portals with AO";
 GLPREFMNU_FXAA					= "FXAA Quality";
 GLPREFMNU_PALTONEMAPORDER		= "Tonemap Palette Order";
 GLPREFMNU_PALTONEMAPPOWER		= "Tonemap Palette Exponent";
+GLPREFMNU_SWLMBANDED			= "Banded SW Lightmode";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";

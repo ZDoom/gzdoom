@@ -2,7 +2,7 @@
 #include "v_video.h"
 #include "sdlglvideo.h"
 
-class SDLFB : public DFrameBuffer
+class SDLFB : public SDLBaseFB
 {
 	DECLARE_CLASS(SDLFB, SDLBaseFB)
 public:

@@ -32,7 +32,5 @@ namespace swrenderer
 
 		uint32_t Translation = 0;
 		uint32_t FillColor = 0;
-
-		friend class RenderPlayerSprite; // To do: detach sprite from playersprite!
 	};
 }

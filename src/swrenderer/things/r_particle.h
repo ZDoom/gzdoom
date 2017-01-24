@@ -32,11 +32,11 @@ namespace swrenderer
 	private:
 		void DrawMaskedSegsBehindParticle();
 
-		fixed_t xscale;
-		fixed_t	startfrac; // horizontal position of x1
-		int y1, y2;
+		fixed_t xscale = 0;
+		fixed_t	startfrac = 0; // horizontal position of x1
+		int y1 = 0, y2 = 0;
 
-		uint32_t Translation;
-		uint32_t FillColor;
+		uint32_t Translation = 0;
+		uint32_t FillColor = 0;
 	};
 }

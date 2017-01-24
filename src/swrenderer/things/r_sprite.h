@@ -26,12 +26,12 @@ namespace swrenderer
 		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
-		fixed_t xscale;
-		fixed_t	startfrac; // horizontal position of x1
-		fixed_t	xiscale; // negative if flipped
+		fixed_t xscale = 0;
+		fixed_t	startfrac = 0; // horizontal position of x1
+		fixed_t	xiscale = 0; // negative if flipped
 
-		uint32_t Translation;
-		uint32_t FillColor;
+		uint32_t Translation = 0;
+		uint32_t FillColor = 0;
 
 		friend class RenderPlayerSprite; // To do: detach sprite from playersprite!
 	};

@@ -65,17 +65,17 @@ namespace swrenderer
 	private:
 		struct posang
 		{
-			FVector3 vpos; // view origin
-			FAngle vang; // view angle
+			FVector3 vpos = { 0.0f, 0.0f, 0.0f }; // view origin
+			FAngle vang = { 0.0f }; // view angle
 		};
 
 		posang pa;
-		DAngle Angle;
-		fixed_t xscale;
-		FVoxel *voxel;
+		DAngle Angle = { 0.0 };
+		fixed_t xscale = 0;
+		FVoxel *voxel = nullptr;
 
-		uint32_t Translation;
-		uint32_t FillColor;
+		uint32_t Translation = 0;
+		uint32_t FillColor = 0;
 
 		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 

@@ -49,6 +49,8 @@
 // Converts fixedlightlev into a shade value
 #define FIXEDLIGHT2SHADE(lightlev) (((lightlev) >> COLORMAPSHIFT) << FRACBITS)
 
+struct FSWColormap;
+
 namespace swrenderer
 {
 	extern double r_BaseVisibility;
@@ -67,4 +69,13 @@ namespace swrenderer
 	double R_GetVisibility();
 
 	void R_SetupColormap(AActor *actor);
+
+	class ColormapLight
+	{
+	public:
+		int ColormapNum = 0;
+		FSWColormap *BaseColormap = nullptr;
+
+		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
+	};
 }

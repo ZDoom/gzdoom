@@ -408,46 +408,4 @@ namespace swrenderer
 		spr->Light.BaseColormap = colormap;
 		spr->Light.ColormapNum = colormapnum;
 	}
-
-	void ColormapLight::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
-	{
-		if (fadeToBlack)
-		{
-			if (invertColormap) // Fade to white
-			{
-				basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(255, 255, 255), basecolormap->Desaturate);
-				invertColormap = false;
-			}
-			else // Fade to black
-			{
-				basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(0, 0, 0), basecolormap->Desaturate);
-			}
-		}
-
-		if (invertColormap)
-		{
-			basecolormap = GetSpecialLights(basecolormap->Color, basecolormap->Fade.InverseColor(), basecolormap->Desaturate);
-		}
-
-		if (fixedcolormap)
-		{
-			BaseColormap = fixedcolormap;
-			ColormapNum = 0;
-		}
-		else if (fixedlightlev >= 0)
-		{
-			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
-			ColormapNum = fixedlightlev >> COLORMAPSHIFT;
-		}
-		else if (fullbright)
-		{
-			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
-			ColormapNum = 0;
-		}
-		else
-		{
-			BaseColormap = basecolormap;
-			ColormapNum = GETPALOOKUP(visibility, shade);
-		}
-	}
 }

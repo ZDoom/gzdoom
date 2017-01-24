@@ -14,24 +14,14 @@
 #pragma once
 
 #include "swrenderer/line/r_line.h"
+#include "swrenderer/scene/r_light.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/things/r_visiblespritelist.h"
 
 #define MINZ double((2048*4) / double(1 << 20))
 
-struct FSWColormap;
-
 namespace swrenderer
 {
-	class ColormapLight
-	{
-	public:
-		int ColormapNum = 0;
-		FSWColormap *BaseColormap = nullptr;
-
-		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
-	};
-
 	class VisibleSprite
 	{
 	public:

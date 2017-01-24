@@ -1613,7 +1613,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	}
 	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
-		FxExpression *x = new FxClassTypeCast(static_cast<PClassPointer*>(ValueType), basex);
+		FxExpression *x = new FxClassTypeCast(static_cast<PClassPointer*>(ValueType), basex, Explicit);
 		x = x->Resolve(ctx);
 		basex = nullptr;
 		delete this;
@@ -4412,7 +4412,7 @@ FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 
 	if (left->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
-		left = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), left);
+		left = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), left, false);
 		ClassCheck = true;
 	}
 	else
@@ -4420,7 +4420,7 @@ FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 		left = new FxTypeCast(left, NewPointer(RUNTIME_CLASS(DObject)), false);
 		ClassCheck = false;
 	}
-	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), right);
+	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), right, false);
 
 	RESOLVE(left, ctx);
 	RESOLVE(right, ctx);
@@ -9922,12 +9922,13 @@ VMFunction *FxReturnStatement::GetDirectFunction()
 //
 //==========================================================================
 
-FxClassTypeCast::FxClassTypeCast(PClassPointer *dtype, FxExpression *x)
+FxClassTypeCast::FxClassTypeCast(PClassPointer *dtype, FxExpression *x, bool explicitily)
 : FxExpression(EFX_ClassTypeCast, x->ScriptPosition)
 {
 	ValueType = dtype;
 	desttype = dtype->ClassRestriction;
 	basex=x;
+	Explicit = explicitily;
 }
 
 //==========================================================================
@@ -9991,7 +9992,9 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 
 		if (clsname != NAME_None)
 		{
-			cls = FindClassType(clsname, ctx);
+			if (Explicit) cls = FindClassType(clsname, ctx);
+			else cls = PClass::FindClass(clsname);
+			
 			if (cls == nullptr)
 			{
 				/* lax */
@@ -10141,7 +10144,7 @@ FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
 	}
 	else if (basex->ValueType == TypeString || basex->ValueType == TypeName)
 	{
-		FxExpression *x = new FxClassTypeCast(to, basex);
+		FxExpression *x = new FxClassTypeCast(to, basex, true);
 		basex = nullptr;
 		delete this;
 		return x->Resolve(ctx);

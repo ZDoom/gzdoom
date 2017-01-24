@@ -52,8 +52,8 @@ namespace swrenderer
 		int r1, r2;
 		short topclip, botclip;
 		short *clip1, *clip2;
-		FSWColormap *colormap = spr->BaseColormap;
-		int colormapnum = spr->ColormapNum;
+		FSWColormap *colormap = spr->Light.BaseColormap;
+		int colormapnum = spr->Light.ColormapNum;
 		F3DFloor *rover;
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
@@ -134,7 +134,7 @@ namespace swrenderer
 
 				int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
 
-				SetColormap(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
+				Light.SetColormap(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
 			}
 		}
 
@@ -259,8 +259,8 @@ namespace swrenderer
 
 		if (topclip >= botclip)
 		{
-			spr->BaseColormap = colormap;
-			spr->ColormapNum = colormapnum;
+			spr->Light.BaseColormap = colormap;
+			spr->Light.ColormapNum = colormapnum;
 			return;
 		}
 
@@ -386,8 +386,8 @@ namespace swrenderer
 				}
 				if (i == x2)
 				{
-					spr->BaseColormap = colormap;
-					spr->ColormapNum = colormapnum;
+					spr->Light.BaseColormap = colormap;
+					spr->Light.ColormapNum = colormapnum;
 					return;
 				}
 			}
@@ -405,11 +405,11 @@ namespace swrenderer
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
 			spr->Render(cliptop, clipbot, minvoxely, maxvoxely);
 		}
-		spr->BaseColormap = colormap;
-		spr->ColormapNum = colormapnum;
+		spr->Light.BaseColormap = colormap;
+		spr->Light.ColormapNum = colormapnum;
 	}
 
-	void VisibleSprite::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
+	void ColormapLight::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
 	{
 		if (fadeToBlack)
 		{

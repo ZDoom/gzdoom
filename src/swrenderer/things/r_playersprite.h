@@ -14,41 +14,83 @@
 #pragma once
 
 #include "r_visiblesprite.h"
-#include "r_sprite.h"
+#include "r_data/colormaps.h"
 
 class DPSprite;
 
 namespace swrenderer
 {
-	class RenderPlayerSprite
+	class NoAccelPlayerSprite
 	{
 	public:
-		static void SetupSpriteScale();
+		short x1 = 0;
+		short x2 = 0;
 
-		static void RenderPlayerSprites();
-		static void RenderRemainingPlayerSprites();
+		double texturemid = 0.0;
+
+		fixed_t xscale = 0;
+		float yscale = 0.0f;
+
+		FTexture *pic = nullptr;
+
+		fixed_t xiscale = 0;
+		fixed_t startfrac = 0;
+
+		float Alpha = 0.0f;
+		FRenderStyle RenderStyle;
+		uint32_t Translation = 0;
+		uint32_t FillColor = 0;
+
+		ColormapLight Light;
+
+		short renderflags = 0;
+
+		void Render();
+	};
+
+	class HWAccelPlayerSprite
+	{
+	public:
+		FTexture *pic = nullptr;
+		double texturemid = 0.0;
+		float yscale = 0.0f;
+		fixed_t xscale = 0;
+
+		float Alpha = 0.0f;
+		FRenderStyle RenderStyle;
+		uint32_t Translation = 0;
+		uint32_t FillColor = 0;
+
+		FDynamicColormap *basecolormap = nullptr;
+		int x1 = 0;
+
+		bool flip = false;
+		FSpecialColormap *special = nullptr;
+		PalEntry overlay = 0;
+		FColormapStyle colormapstyle;
+		bool usecolormapstyle = false;
+	};
+
+	class RenderPlayerSprites
+	{
+	public:
+		static RenderPlayerSprites *Instance();
+
+		void SetupSpriteScale();
+
+		void Render();
+		void RenderRemaining();
 
 	private:
-		static void Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap);
+		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);
 
 		enum { BASEXCENTER = 160 };
 		enum { BASEYCENTER = 100 };
 
-		// Used to store a psprite's drawing information if it needs to be drawn later.
-		struct vispsp_t
-		{
-			RenderSprite *vis;
-			FDynamicColormap *basecolormap;
-			int	 x1;
-		};
+		TArray<HWAccelPlayerSprite> AcceleratedSprites;
 
-		static TArray<vispsp_t> vispsprites;
-		static unsigned int vispspindex;
-
-		static double pspritexscale;
-		static double pspritexiscale;
-		static double pspriteyscale;
-
-		static TArray<RenderSprite> avis;
+		double pspritexscale = 0.0;
+		double pspritexiscale = 0.0;
+		double pspriteyscale = 0.0;
 	};
 }

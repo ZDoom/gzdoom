@@ -114,7 +114,7 @@ namespace swrenderer
 		WallTMapScale2 = IYaspectMul / CenterX;
 
 		// psprite scales
-		RenderPlayerSprite::SetupSpriteScale();
+		RenderPlayerSprites::Instance()->SetupSpriteScale();
 
 		// thing clipping
 		fillshort(screenheightarray, viewwidth, (short)viewheight);

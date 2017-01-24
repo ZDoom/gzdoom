@@ -452,7 +452,7 @@ namespace swrenderer
 		else if (style == LegacyRenderStyles[STYLE_Shaded])
 		{
 			// Shaded drawer only gets 16 levels of alpha because it saves memory.
-			if ((alpha >>= 12) == 0)
+			if ((alpha >>= 12) == 0 || basecolormap == nullptr)
 				return false;
 			colfunc = &SWPixelFormatDrawers::DrawShadedColumn;
 			drawer_needs_pal_input = true;

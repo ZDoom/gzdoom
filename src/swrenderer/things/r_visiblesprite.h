@@ -23,6 +23,15 @@ struct FSWColormap;
 
 namespace swrenderer
 {
+	class ColormapLight
+	{
+	public:
+		int ColormapNum = 0;
+		FSWColormap *BaseColormap = nullptr;
+
+		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
+	};
+
 	class VisibleSprite
 	{
 	public:
@@ -38,8 +47,6 @@ namespace swrenderer
 		float SortDist() const { return idepth; }
 
 	protected:
-		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
-
 		virtual bool IsParticle() const { return false; }
 		virtual bool IsVoxel() const { return false; }
 		virtual bool IsWallSprite() const { return false; }
@@ -65,9 +72,7 @@ namespace swrenderer
 		FVector3 gpos = { 0.0f, 0.0f, 0.0f }; // origin in world coordinates
 		sector_t *sector = nullptr; // sector this sprite is in
 
-		// Light shared calculation?
-		int ColormapNum = 0;	// Which colormap is rendered
-		FSWColormap *BaseColormap = nullptr;	// Base colormap used together with ColormapNum
+		ColormapLight Light;
 		float Alpha = 0.0f;
 		FRenderStyle RenderStyle;
 		bool foggy = false;

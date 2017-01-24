@@ -132,7 +132,7 @@ namespace swrenderer
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
-		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
+		vis->Light.SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}
@@ -165,7 +165,7 @@ namespace swrenderer
 		}
 		// Prepare lighting
 		bool calclighting = false;
-		FSWColormap *usecolormap = spr->BaseColormap;
+		FSWColormap *usecolormap = spr->Light.BaseColormap;
 		bool rereadcolormap = true;
 
 		// Decals that are added to the scene must fade to black.
@@ -206,14 +206,14 @@ namespace swrenderer
 
 		int x = x1;
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
 
 		bool visible = R_SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
 		{
-			usecolormap = spr->BaseColormap;
+			usecolormap = spr->Light.BaseColormap;
 		}
 
 		if (!visible)

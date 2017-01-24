@@ -149,7 +149,7 @@ namespace swrenderer
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		vis->ColormapNum = 0;
+		vis->Light.ColormapNum = 0;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
@@ -175,7 +175,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		VisibleSpriteList::Instance()->Push(vis);
 		RenderTranslucentPass::DrewAVoxel = true;
@@ -185,9 +185,9 @@ namespace swrenderer
 	{
 		auto sprite = this;
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
-		R_SetColorMapLight(sprite->BaseColormap, 0, sprite->ColormapNum << FRACBITS);
+		R_SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
 		bool visible = R_SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)

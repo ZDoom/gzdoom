@@ -198,11 +198,10 @@ namespace swrenderer
 		vis->renderflags = (short)(particle->alpha * 255.0f + 0.5f);
 		vis->FakeFlatStat = fakeside;
 		vis->floorclip = 0;
-		vis->ColormapNum = 0;
 		vis->foggy = foggy;
 
 		// Particles are slightly more visible than regular sprites.
-		vis->SetColormap(tiz * r_SpriteVisibility * 0.5, shade, map, particle->bright != 0, false, false);
+		vis->Light.SetColormap(tiz * r_SpriteVisibility * 0.5, shade, map, particle->bright != 0, false, false);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}
@@ -214,7 +213,7 @@ namespace swrenderer
 		auto vis = this;
 
 		int spacing;
-		BYTE color = vis->BaseColormap->Maps[vis->startfrac];
+		BYTE color = vis->Light.BaseColormap->Maps[vis->startfrac];
 		int yl = vis->y1;
 		int ycount = vis->y2 - yl + 1;
 		int x1 = vis->x1;
@@ -225,7 +224,7 @@ namespace swrenderer
 
 		DrawMaskedSegsBehindParticle();
 
-		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->ColormapNum << FRACBITS)));
+		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Light.ColormapNum << FRACBITS)));
 
 		// vis->renderflags holds translucency level (0-255)
 		fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;

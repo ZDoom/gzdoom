@@ -65,23 +65,20 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	TArray<RenderPlayerSprite::vispsp_t> RenderPlayerSprite::vispsprites;
-	unsigned int RenderPlayerSprite::vispspindex;
+	RenderPlayerSprites *RenderPlayerSprites::Instance()
+	{
+		static RenderPlayerSprites instance;
+		return &instance;
+	}
 
-	double RenderPlayerSprite::pspritexscale;
-	double RenderPlayerSprite::pspritexiscale;
-	double RenderPlayerSprite::pspriteyscale;
-
-	TArray<RenderSprite> RenderPlayerSprite::avis;
-
-	void RenderPlayerSprite::SetupSpriteScale()
+	void RenderPlayerSprites::SetupSpriteScale()
 	{
 		pspritexscale = centerxwide / 160.0;
 		pspriteyscale = pspritexscale * YaspectMul;
 		pspritexiscale = 1 / pspritexscale;
 	}
 
-	void RenderPlayerSprite::RenderPlayerSprites()
+	void RenderPlayerSprites::Render()
 	{
 		int 		i;
 		int 		lightnum;
@@ -184,7 +181,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					Render(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade, basecolormap);
+					RenderSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade, basecolormap, foggy);
 				}
 
 				psp = psp->GetNext();
@@ -194,7 +191,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderPlayerSprite::Render(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap)
+	void RenderPlayerSprites::RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy)
 	{
 		double 				tx;
 		int 				x1;
@@ -207,9 +204,6 @@ namespace swrenderer
 		FTexture*			tex;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
-
-		if (avis.Size() < vispspindex + 1)
-			avis.Reserve(avis.Size() - vispspindex + 1);
 
 		// decide which patch to use
 		if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
@@ -272,12 +266,11 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		RenderSprite *vis = &avis[vispspindex];
+		NoAccelPlayerSprite vis;
 
-		vis->renderflags = owner->renderflags;
-		vis->floorclip = 0;
+		vis.renderflags = owner->renderflags;
 
-		vis->texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
+		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 
 		if (camera->player && (RenderTarget != screen ||
 			viewheight == RenderTarget->GetHeight() ||
@@ -288,41 +281,39 @@ namespace swrenderer
 			{
 				if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 				{
-					vis->texturemid -= weapon->YAdjust;
+					vis.texturemid -= weapon->YAdjust;
 				}
 				else
 				{
-					vis->texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
+					vis.texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
 				}
 			}
 		}
 		if (pspr->GetID() < PSP_TARGETCENTER)
 		{ // Move the weapon down for 1280x1024.
-			vis->texturemid -= AspectPspriteOffset(WidescreenRatio);
+			vis.texturemid -= AspectPspriteOffset(WidescreenRatio);
 		}
-		vis->x1 = x1 < 0 ? 0 : x1;
-		vis->x2 = x2 >= viewwidth ? viewwidth : x2;
-		vis->xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
-		vis->yscale = float(pspriteyscale / tex->Scale.Y);
-		vis->Translation = 0;		// [RH] Use default colors
-		vis->pic = tex;
-		vis->ColormapNum = 0;
+		vis.x1 = x1 < 0 ? 0 : x1;
+		vis.x2 = x2 >= viewwidth ? viewwidth : x2;
+		vis.xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
+		vis.yscale = float(pspriteyscale / tex->Scale.Y);
+		vis.pic = tex;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
 		if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 		{
-			vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
-			vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
+			vis.xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
+			vis.startfrac = (tex->GetWidth() << FRACBITS) - 1;
 		}
 		else
 		{
-			vis->xiscale = FLOAT2FIXED(pspritexiscale * tex->Scale.X);
-			vis->startfrac = 0;
+			vis.xiscale = FLOAT2FIXED(pspritexiscale * tex->Scale.X);
+			vis.startfrac = 0;
 		}
 
-		if (vis->x1 > x1)
-			vis->startfrac += vis->xiscale*(vis->x1 - x1);
+		if (vis.x1 > x1)
+			vis.startfrac += vis.xiscale*(vis.x1 - x1);
 
 		noaccel = false;
 		FDynamicColormap *colormap_to_use = nullptr;
@@ -336,42 +327,42 @@ namespace swrenderer
 
 				if (pspr->Flags & PSPF_FORCESTYLE)
 				{
-					vis->RenderStyle = LegacyRenderStyles[rs];
+					vis.RenderStyle = LegacyRenderStyles[rs];
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 				{
-					vis->RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
+					vis.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
 				{
-					vis->RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
-					vis->RenderStyle.CheckFuzz();
+					vis.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+					vis.RenderStyle.CheckFuzz();
 				}
 				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 				{
-					vis->RenderStyle = LegacyRenderStyles[STYLE_Subtract];
+					vis.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
 				}
 				else
 				{
-					vis->RenderStyle = LegacyRenderStyles[rs];
+					vis.RenderStyle = LegacyRenderStyles[rs];
 				}
 			}
 			else
 			{
-				vis->RenderStyle = owner->RenderStyle;
+				vis.RenderStyle = owner->RenderStyle;
 			}
 
 			// Set the alpha based on if using the overlay's own or not. Also adjust
 			// and override the alpha if not forced.
 			if (pspr->Flags & PSPF_ALPHA)
 			{
-				if (vis->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+				if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 				{
 					alpha = owner->Alpha;
 				}
-				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
 				{
-					FRenderStyle style = vis->RenderStyle;
+					FRenderStyle style = vis.RenderStyle;
 					style.CheckFuzz();
 					switch (style.BlendOp)
 					{
@@ -385,15 +376,15 @@ namespace swrenderer
 					}
 
 				}
-				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 				{
 					alpha = owner->Alpha;
 				}
-				else if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
 				{
 					alpha = owner->Alpha * pspr->alpha;
 				}
@@ -406,10 +397,10 @@ namespace swrenderer
 			// Should normal renderstyle come out on top at the end and we desire alpha,
 			// switch it to translucent. Normal never applies any sort of alpha.
 			if ((pspr->Flags & PSPF_ALPHA) &&
-				vis->RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
-				vis->Alpha < 1.0)
+				vis.RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
+				vis.Alpha < 1.0)
 			{
-				vis->RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				alpha = owner->Alpha * pspr->alpha;
 			}
 
@@ -418,22 +409,22 @@ namespace swrenderer
 			if (pspr->Flags & PSPF_FORCEALPHA)
 			{
 				//Due to lack of != operators...
-				if (vis->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
-					vis->RenderStyle == LegacyRenderStyles[STYLE_Stencil])
+				if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
+					vis.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
 				{
 				}
 				else
 				{
 					alpha = pspr->alpha;
-					vis->RenderStyle.Flags |= STYLEF_ForceAlpha;
+					vis.RenderStyle.Flags |= STYLEF_ForceAlpha;
 				}
 			}
-			vis->Alpha = clamp<float>(float(alpha), 0.f, 1.f);
+			vis.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
 
 			// Due to how some of the effects are handled, going to 0 or less causes some
 			// weirdness to display. There's no point rendering it anyway if it's 0.
-			if (vis->Alpha <= 0.)
+			if (vis.Alpha <= 0.)
 				return;
 
 			//-----------------------------------------------------------------------------
@@ -441,60 +432,60 @@ namespace swrenderer
 			// The software renderer cannot invert the source without inverting the overlay
 			// too. That means if the source is inverted, we need to do the reverse of what
 			// the invert overlay flag says to do.
-			bool invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
+			bool invertcolormap = (vis.RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
 
-			if (vis->RenderStyle.Flags & STYLEF_InvertSource)
+			if (vis.RenderStyle.Flags & STYLEF_InvertSource)
 			{
 				invertcolormap = !invertcolormap;
 			}
 
-			bool fullbright = !vis->foggy && pspr->GetState()->GetFullbright();
-			bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
+			bool fullbright = !foggy && pspr->GetState()->GetFullbright();
+			bool fadeToBlack = (vis.RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-			vis->SetColormap(0, spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+			vis.Light.SetColormap(0, spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-			colormap_to_use = (FDynamicColormap*)vis->BaseColormap;
+			colormap_to_use = (FDynamicColormap*)vis.Light.BaseColormap;
 
 			if (camera->Inventory != nullptr)
 			{
 				visstyle_t visstyle;
-				visstyle.Alpha = vis->Alpha;
+				visstyle.Alpha = vis.Alpha;
 				visstyle.RenderStyle = STYLE_Count;
 				visstyle.Invert = false;
 				
 				camera->Inventory->AlterWeaponSprite(&visstyle);
 				
-				vis->Alpha = visstyle.Alpha;
+				vis.Alpha = visstyle.Alpha;
 
 				if (visstyle.RenderStyle != STYLE_Count)
 				{
-					vis->RenderStyle = visstyle.RenderStyle;
+					vis.RenderStyle = visstyle.RenderStyle;
 				}
 
 				if (visstyle.Invert)
 				{
-					vis->BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
-					vis->ColormapNum = 0;
+					vis.Light.BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
+					vis.Light.ColormapNum = 0;
 					noaccel = true;
 				}
 			}
 			// If we're drawing with a special colormap, but shaders for them are disabled, do
 			// not accelerate.
-			if (!r_shadercolormaps && (vis->BaseColormap >= &SpecialColormaps[0] &&
-				vis->BaseColormap <= &SpecialColormaps.Last()))
+			if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialColormaps[0] &&
+				vis.Light.BaseColormap <= &SpecialColormaps.Last()))
 			{
 				noaccel = true;
 			}
 			// If drawing with a BOOM colormap, disable acceleration.
-			if (vis->BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
+			if (vis.Light.BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
 			{
 				noaccel = true;
 			}
 			// If the main colormap has fixed lights, and this sprite is being drawn with that
 			// colormap, disable acceleration so that the lights can remain fixed.
 			if (!noaccel && realfixedcolormap == nullptr &&
-				NormalLightHasFixedLights && vis->BaseColormap == &NormalLight &&
-				vis->pic->UseBasePalette())
+				NormalLightHasFixedLights && vis.Light.BaseColormap == &NormalLight &&
+				vis.pic->UseBasePalette())
 			{
 				noaccel = true;
 			}
@@ -503,89 +494,145 @@ namespace swrenderer
 		{
 			colormap_to_use = basecolormap;
 
-			vis->BaseColormap = basecolormap;
-			vis->ColormapNum = 0;
+			vis.Light.BaseColormap = basecolormap;
+			vis.Light.ColormapNum = 0;
 		}
 
 		// Check for hardware-assisted 2D. If it's available, and this sprite is not
 		// fuzzy, don't draw it until after the switch to 2D mode.
 		if (!noaccel && RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 		{
-			FRenderStyle style = vis->RenderStyle;
+			FRenderStyle style = vis.RenderStyle;
 			style.CheckFuzz();
 			if (style.BlendOp != STYLEOP_Fuzz)
 			{
-				if (vispsprites.Size() < vispspindex + 1)
-					vispsprites.Reserve(vispsprites.Size() - vispspindex + 1);
+				HWAccelPlayerSprite accelSprite;
 
-				vispsprites[vispspindex].vis = vis;
-				vispsprites[vispspindex].basecolormap = colormap_to_use;
-				vispsprites[vispspindex].x1 = x1;
-				vispspindex++;
+				accelSprite.pic = vis.pic;
+				accelSprite.texturemid = vis.texturemid;
+				accelSprite.yscale = vis.yscale;
+				accelSprite.xscale = vis.xscale;
+
+				accelSprite.Alpha = vis.Alpha;
+				accelSprite.RenderStyle = vis.RenderStyle;
+				accelSprite.Translation = vis.Translation;
+				accelSprite.FillColor = vis.FillColor;
+
+				accelSprite.basecolormap = colormap_to_use;
+				accelSprite.x1 = x1;
+				accelSprite.flip = vis.xiscale < 0;
+
+				if (vis.Light.BaseColormap >= &SpecialColormaps[0] &&
+					vis.Light.BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
+				{
+					accelSprite.special = static_cast<FSpecialColormap*>(vis.Light.BaseColormap);
+				}
+				else if (colormap_to_use->Color == PalEntry(255, 255, 255) &&
+					colormap_to_use->Desaturate == 0)
+				{
+					accelSprite.overlay = colormap_to_use->Fade;
+					accelSprite.overlay.a = BYTE(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
+				}
+				else
+				{
+					accelSprite.usecolormapstyle = true;
+					accelSprite.colormapstyle.Color = colormap_to_use->Color;
+					accelSprite.colormapstyle.Fade = colormap_to_use->Fade;
+					accelSprite.colormapstyle.Desaturate = colormap_to_use->Desaturate;
+					accelSprite.colormapstyle.FadeLevel = vis.Light.ColormapNum / float(NUMCOLORMAPS);
+				}
+
+				AcceleratedSprites.Push(accelSprite);
 				return;
 			}
 		}
 
-		// clip to screen bounds
-		short *mfloorclip = screenheightarray;
-		short *mceilingclip = zeroarray;
-
-		vis->Render(mfloorclip, mceilingclip, 0, 0);
+		vis.Render();
 	}
 
-	void RenderPlayerSprite::RenderRemainingPlayerSprites()
+	void RenderPlayerSprites::RenderRemaining()
 	{
-		for (unsigned int i = 0; i < vispspindex; i++)
+		for (const HWAccelPlayerSprite &sprite : AcceleratedSprites)
 		{
-			RenderSprite *vis = vispsprites[i].vis;
-			FDynamicColormap *colormap = vispsprites[i].basecolormap;
-			bool flip = vis->xiscale < 0;
-			FSpecialColormap *special = NULL;
-			PalEntry overlay = 0;
-			FColormapStyle colormapstyle;
-			bool usecolormapstyle = false;
-
-			if (vis->BaseColormap >= &SpecialColormaps[0] &&
-				vis->BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
-			{
-				special = static_cast<FSpecialColormap*>(vis->BaseColormap);
-			}
-			else if (colormap->Color == PalEntry(255, 255, 255) &&
-				colormap->Desaturate == 0)
-			{
-				overlay = colormap->Fade;
-				overlay.a = BYTE(vis->ColormapNum * 255 / NUMCOLORMAPS);
-			}
-			else
-			{
-				usecolormapstyle = true;
-				colormapstyle.Color = colormap->Color;
-				colormapstyle.Fade = colormap->Fade;
-				colormapstyle.Desaturate = colormap->Desaturate;
-				colormapstyle.FadeLevel = vis->ColormapNum / float(NUMCOLORMAPS);
-			}
-			screen->DrawTexture(vis->pic,
-				viewwindowx + vispsprites[i].x1,
-				viewwindowy + viewheight / 2 - vis->texturemid * vis->yscale - 0.5,
-				DTA_DestWidthF, FIXED2DBL(vis->pic->GetWidth() * vis->xscale),
-				DTA_DestHeightF, vis->pic->GetHeight() * vis->yscale,
-				DTA_Translation, TranslationToTable(vis->Translation),
-				DTA_FlipX, flip,
+			screen->DrawTexture(sprite.pic,
+				viewwindowx + sprite.x1,
+				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
+				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),
+				DTA_DestHeightF, sprite.pic->GetHeight() * sprite.yscale,
+				DTA_Translation, TranslationToTable(sprite.Translation),
+				DTA_FlipX, sprite.flip,
 				DTA_TopOffset, 0,
 				DTA_LeftOffset, 0,
 				DTA_ClipLeft, viewwindowx,
 				DTA_ClipTop, viewwindowy,
 				DTA_ClipRight, viewwindowx + viewwidth,
 				DTA_ClipBottom, viewwindowy + viewheight,
-				DTA_AlphaF, vis->Alpha,
-				DTA_RenderStyle, vis->RenderStyle,
-				DTA_FillColor, vis->FillColor,
-				DTA_SpecialColormap, special,
-				DTA_ColorOverlay, overlay.d,
-				DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : NULL,
+				DTA_AlphaF, sprite.Alpha,
+				DTA_RenderStyle, sprite.RenderStyle,
+				DTA_FillColor, sprite.FillColor,
+				DTA_SpecialColormap, sprite.special,
+				DTA_ColorOverlay, sprite.overlay.d,
+				DTA_ColormapStyle, sprite.usecolormapstyle ? &sprite.colormapstyle : nullptr,
 				TAG_DONE);
 		}
 
-		vispspindex = 0;
+		AcceleratedSprites.Clear();
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void NoAccelPlayerSprite::Render()
+	{
+		if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
+		{ // scaled to 0; can't see
+			return;
+		}
+
+		R_SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
+
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
+
+		bool visible = R_SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap);
+
+		if (RenderStyle == LegacyRenderStyles[STYLE_Shaded])
+		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
+		  // it is the brightest one. We need to get back to the proper light level for
+		  // this sprite.
+			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, Light.ColormapNum << FRACBITS);
+		}
+
+		if (!visible)
+			return;
+
+		double spryscale = yscale;
+		bool sprflipvert = false;
+		fixed_t iscale = FLOAT2FIXED(1 / yscale);
+
+		double sprtopscreen;
+		if (renderflags & RF_YFLIP)
+		{
+			sprflipvert = true;
+			spryscale = -spryscale;
+			iscale = -iscale;
+			sprtopscreen = CenterY + (texturemid - pic->GetHeight()) * spryscale;
+		}
+		else
+		{
+			sprflipvert = false;
+			sprtopscreen = CenterY - texturemid * spryscale;
+		}
+
+		// clip to screen bounds
+		short *mfloorclip = screenheightarray;
+		short *mceilingclip = zeroarray;
+
+		fixed_t frac = startfrac;
+		for (int x = x1; x < x2; x++)
+		{
+			R_DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			frac += xiscale;
+		}
+
+		NetUpdate();
 	}
 }

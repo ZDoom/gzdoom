@@ -201,7 +201,6 @@ namespace swrenderer
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		vis->ColormapNum = 0;
 		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
@@ -224,7 +223,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}
@@ -237,7 +236,6 @@ namespace swrenderer
 		FTexture		*tex;
 		int				x2;
 		fixed_t			xiscale;
-		bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
 
 		double spryscale, sprtopscreen;
 		bool sprflipvert;
@@ -248,9 +246,9 @@ namespace swrenderer
 		}
 
 		fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-		R_SetColorMapLight(vis->BaseColormap, 0, vis->ColormapNum << FRACBITS);
+		R_SetColorMapLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->BaseColormap);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
 		bool visible = R_SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
 
@@ -258,7 +256,7 @@ namespace swrenderer
 		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 		  // it is the brightest one. We need to get back to the proper light level for
 		  // this sprite.
-			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, vis->ColormapNum << FRACBITS);
+			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, vis->Light.ColormapNum << FRACBITS);
 		}
 
 		if (visible)
@@ -292,7 +290,7 @@ namespace swrenderer
 			{
 				while (x < x2)
 				{
-					if (ispsprite || !RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
+					if (!RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
 						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;

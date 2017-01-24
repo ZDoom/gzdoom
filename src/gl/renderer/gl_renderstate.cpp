@@ -43,7 +43,7 @@ void gl_SetTextureMode(int type);
 FRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
-CVAR(Bool, gl_bandedswlight, true, CVAR_ARCHIVE)
+CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 
 
 static VSMatrix identityMatrix(1);

@@ -68,6 +68,9 @@ namespace swrenderer
 		float rw_lightstep;
 		fixed_t rw_offset;
 		FTexture *rw_pic;
+
+		ProjectedWallLine wallupper;
+		ProjectedWallLine walllower;
 	}
 
 	void R_FreeDrawSegs()
@@ -546,6 +549,7 @@ namespace swrenderer
 				walllower.ScreenY[i] = mfloorclip[i];
 		}
 
+		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
 		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 	}

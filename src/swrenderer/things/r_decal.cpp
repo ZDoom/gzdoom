@@ -47,11 +47,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap)
+	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, 0);
+			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, 0);
 		}
 	}
 
@@ -59,7 +59,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, int pass)
+	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -72,8 +72,8 @@ namespace swrenderer
 		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
 		float light = 0;
-		short *mfloorclip;
-		short *mceilingclip;
+		const short *mfloorclip;
+		const short *mceilingclip;
 
 		if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 			return;
@@ -171,12 +171,12 @@ namespace swrenderer
 				{
 					goto done;
 				}
-				mceilingclip = walltop.ScreenY;
-				mfloorclip = wallbottom.ScreenY;
+				mceilingclip = walltop;
+				mfloorclip = wallbottom;
 			}
 			else if (pass == 0)
 			{
-				mceilingclip = walltop.ScreenY;
+				mceilingclip = walltop;
 				mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 				needrepeat = 1;
 			}
@@ -192,7 +192,7 @@ namespace swrenderer
 			{
 				goto done;
 			}
-			mceilingclip = walltop.ScreenY;
+			mceilingclip = walltop;
 			mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 			break;
 
@@ -211,7 +211,7 @@ namespace swrenderer
 				goto done;
 			}
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
-			mfloorclip = wallbottom.ScreenY;
+			mfloorclip = wallbottom;
 			break;
 		}
 
@@ -226,6 +226,7 @@ namespace swrenderer
 			goto done;
 		}
 
+		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project(WallSpriteTile->GetWidth(), x1, x2, WallT);
 
 		if (flipx)
@@ -295,7 +296,7 @@ namespace swrenderer
 					{ // calculate lighting
 						R_SetColorMapLight(usecolormap, light, wallshade);
 					}
-					DrawColumn(x, WallSpriteTile, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -305,7 +306,7 @@ namespace swrenderer
 			// be set 1 if we need to draw on the lower wall. In all other cases,
 			// needrepeat will be 0, and the while will fail.
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
-			mfloorclip = wallbottom.ScreenY;
+			mfloorclip = wallbottom;
 		} while (needrepeat--);
 
 		colfunc = basecolfunc;
@@ -314,7 +315,7 @@ namespace swrenderer
 		WallC = savecoord;
 	}
 
-	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

@@ -34,10 +34,4 @@ namespace swrenderer
 		void Project(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 		void ProjectPos(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 	};
-
-	extern ProjectedWallLine walltop;
-	extern ProjectedWallLine wallbottom;
-	extern ProjectedWallLine wallupper;
-	extern ProjectedWallLine walllower;
-	extern ProjectedWallTexcoords walltexcoords;
 }

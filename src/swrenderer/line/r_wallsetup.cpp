@@ -27,12 +27,6 @@
 
 namespace swrenderer
 {
-	ProjectedWallLine walltop;
-	ProjectedWallLine wallbottom;
-	ProjectedWallLine wallupper;
-	ProjectedWallLine walllower;
-	ProjectedWallTexcoords walltexcoords;
-
 	ProjectedWallCull ProjectedWallLine::Project(double z, const FWallCoords *wallc)
 	{
 		return Project(z, z, wallc);

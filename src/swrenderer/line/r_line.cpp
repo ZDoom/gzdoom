@@ -579,7 +579,7 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!rw_markportal)
 		{
-			RenderDecal::RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC, foggy, basecolormap);
+			RenderDecal::RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC, foggy, basecolormap, walltop.ScreenY, wallbottom.ScreenY);
 		}
 
 		if (rw_markportal)

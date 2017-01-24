@@ -123,5 +123,11 @@ namespace swrenderer
 		FDynamicColormap *basecolormap;
 
 		double lwallscale;
+
+		ProjectedWallLine walltop;
+		ProjectedWallLine wallbottom;
+		ProjectedWallLine wallupper;
+		ProjectedWallLine walllower;
+		ProjectedWallTexcoords walltexcoords;
 	};
 }

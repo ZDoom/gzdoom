@@ -149,9 +149,13 @@ namespace swrenderer
 		x2 = MIN<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
+
 		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(&spr->wallc);
+
+		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project(spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
+
 		iyscale = 1 / spr->yscale;
 		double texturemid = (spr->gzt - ViewPos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
@@ -229,14 +233,14 @@ namespace swrenderer
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!RenderTranslucentPass::ClipSpriteColumnWithPortals(x, spr))
-					DrawColumn(x, WallSpriteTile, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

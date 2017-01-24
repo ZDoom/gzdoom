@@ -171,12 +171,12 @@ namespace swrenderer
 			if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 			{
 				rw_havehigh = true;
-				R_CreateWallSegmentYSloped(wallupper, backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+				wallupper.Project(backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			}
 			if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 			{
 				rw_havelow = true;
-				R_CreateWallSegmentYSloped(walllower, backsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+				walllower.Project(backsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			}
 
 			// Portal
@@ -272,30 +272,13 @@ namespace swrenderer
 		if (line->linedef->special == Line_Horizon)
 		{
 			// Be aware: Line_Horizon does not work properly with sloped planes
-			fillshort(walltop + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-			fillshort(wallbottom + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
 		}
 		else
 		{
-			rw_ceilstat = R_CreateWallSegmentYSloped(walltop, frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
-			rw_floorstat = R_CreateWallSegmentYSloped(wallbottom, frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
-
-			// [RH] treat off-screen walls as solid
-#if 0	// Maybe later...
-			if (!solid)
-			{
-				if (rw_ceilstat == 12 && line->sidedef->GetTexture(side_t::top) != 0)
-				{
-					rw_mustmarkceiling = true;
-					solid = true;
-				}
-				if (rw_floorstat == 3 && line->sidedef->GetTexture(side_t::bottom) != 0)
-				{
-					rw_mustmarkfloor = true;
-					solid = true;
-				}
-			}
-#endif
+			rw_ceilstat = walltop.Project(frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+			rw_floorstat = wallbottom.Project(frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		}
 
 		static SWRenderLine *self = this;
@@ -455,8 +438,8 @@ namespace swrenderer
 				// allocate space for masked texture tables, if needed
 				// [RH] Don't just allocate the space; fill it in too.
 				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->bFakeBoundary || IsFogBoundary(frontsector, backsector)) &&
-					(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
-					(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
+					(rw_ceilstat != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
+					(rw_floorstat != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 				{
 					float *swal;
@@ -491,8 +474,8 @@ namespace swrenderer
 
 						for (i = start; i < stop; i++)
 						{
-							*lwal++ = lwall[i] + xoffset;
-							*swal++ = swall[i];
+							*lwal++ = walltexcoords.UPos[i] + xoffset;
+							*swal++ = walltexcoords.VStep[i];
 						}
 
 						double istart = draw_segment->swall[0] * yscale;
@@ -696,7 +679,7 @@ namespace swrenderer
 			{
 				if (rw_havehigh)
 				{ // front ceiling is above back ceiling
-					memcpy(&walltop[WallC.sx1], &wallupper[WallC.sx1], (WallC.sx2 - WallC.sx1) * sizeof(walltop[0]));
+					memcpy(&walltop.ScreenY[WallC.sx1], &wallupper.ScreenY[WallC.sx1], (WallC.sx2 - WallC.sx1) * sizeof(walltop.ScreenY[0]));
 					rw_havehigh = false;
 				}
 				else if (rw_havelow && frontsector->ceilingplane != backsector->ceilingplane)
@@ -707,7 +690,7 @@ namespace swrenderer
 				  // Recalculate walltop so that the wall is clipped by the back sector's
 				  // ceiling instead of the front sector's ceiling.
 				  	RenderPortal *renderportal = RenderPortal::Instance();
-					R_CreateWallSegmentYSloped(walltop, backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+					walltop.Project(backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 				}
 				// Putting sky ceilings on the front and back of a line alters the way unpegged
 				// positioning works.
@@ -916,7 +899,7 @@ namespace swrenderer
 				bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 				1.;
 
-			PrepWall(swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.Project(sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
 
 			if (fixedcolormap == NULL && fixedlightlev < 0)
 			{
@@ -959,13 +942,13 @@ namespace swrenderer
 		auto floorclip = RenderOpaquePass::Instance()->floorclip;
 		for (x = x1; x < x2; ++x)
 		{
-			if (walltop[x] < ceilingclip[x])
+			if (walltop.ScreenY[x] < ceilingclip[x])
 			{
-				walltop[x] = ceilingclip[x];
+				walltop.ScreenY[x] = ceilingclip[x];
 			}
-			if (wallbottom[x] > floorclip[x])
+			if (wallbottom.ScreenY[x] > floorclip[x])
 			{
-				wallbottom[x] = floorclip[x];
+				wallbottom.ScreenY[x] = floorclip[x];
 			}
 		}
 
@@ -977,7 +960,7 @@ namespace swrenderer
 			for (x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKECEILING) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
-				short bottom = MIN(walltop[x], floorclip[x]);
+				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
 					ceilingplane->top[x] = top;
@@ -991,7 +974,7 @@ namespace swrenderer
 		{
 			for (x = x1; x < x2; ++x)
 			{
-				short top = MAX(wallbottom[x], ceilingclip[x]);
+				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKEFLOOR) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
@@ -1007,27 +990,27 @@ namespace swrenderer
 		{
 			if (clip3d->fake3D & FAKE3D_CLIPBOTFRONT)
 			{
-				memcpy(clip3d->fakeFloor->floorclip + x1, wallbottom + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->floorclip + x1, wallbottom.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			else
 			{
 				for (x = x1; x < x2; ++x)
 				{
-					walllower[x] = MIN(MAX(walllower[x], ceilingclip[x]), wallbottom[x]);
+					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
-				memcpy(clip3d->fakeFloor->floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPTOPFRONT)
 			{
-				memcpy(clip3d->fakeFloor->ceilingclip + x1, walltop + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			else
 			{
 				for (x = x1; x < x2; ++x)
 				{
-					wallupper[x] = MAX(MIN(wallupper[x], floorclip[x]), walltop[x]);
+					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
-				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
+				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 		}
 		if (clip3d->fake3D & FAKE3D_FAKEMASK) return;
@@ -1044,7 +1027,7 @@ namespace swrenderer
 				yscale = rw_pic->Scale.Y * rw_midtexturescaley;
 				if (xscale != lwallscale)
 				{
-					PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+					walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 					lwallscale = xscale;
 				}
 				if (midtexture->bWorldPanning)
@@ -1059,7 +1042,7 @@ namespace swrenderer
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallbottom, rw_midtexturemid, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+				R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
@@ -1070,7 +1053,7 @@ namespace swrenderer
 			{ // top wall
 				for (x = x1; x < x2; ++x)
 				{
-					wallupper[x] = MAX(MIN(wallupper[x], floorclip[x]), walltop[x]);
+					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				if (viewactive)
 				{
@@ -1079,7 +1062,7 @@ namespace swrenderer
 					yscale = rw_pic->Scale.Y * rw_toptexturescaley;
 					if (xscale != lwallscale)
 					{
-						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+						walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
 					if (toptexture->bWorldPanning)
@@ -1094,13 +1077,13 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop, wallupper, rw_toptexturemid, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
-				memcpy(ceilingclip + x1, wallupper + x1, (x2 - x1) * sizeof(short));
+				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			else if (markceiling)
 			{ // no top wall
-				memcpy(ceilingclip + x1, walltop + x1, (x2 - x1) * sizeof(short));
+				memcpy(ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 
 
@@ -1108,7 +1091,7 @@ namespace swrenderer
 			{ // bottom wall
 				for (x = x1; x < x2; ++x)
 				{
-					walllower[x] = MIN(MAX(walllower[x], ceilingclip[x]), wallbottom[x]);
+					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
 				if (viewactive)
 				{
@@ -1117,7 +1100,7 @@ namespace swrenderer
 					yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
 					if (xscale != lwallscale)
 					{
-						PrepLWall(lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+						walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
 					if (bottomtexture->bWorldPanning)
@@ -1132,13 +1115,13 @@ namespace swrenderer
 					{
 						rw_offset = -rw_offset;
 					}
-					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower, wallbottom, rw_bottomtexturemid, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					R_DrawWallSegment(frontsector, curline, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
-				memcpy(floorclip + x1, walllower + x1, (x2 - x1) * sizeof(short));
+				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			else if (markfloor)
 			{ // no bottom wall
-				memcpy(floorclip + x1, wallbottom + x1, (x2 - x1) * sizeof(short));
+				memcpy(floorclip + x1, wallbottom.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 		}
 		rw_offset = xoffset;

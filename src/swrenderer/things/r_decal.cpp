@@ -171,12 +171,12 @@ namespace swrenderer
 				{
 					goto done;
 				}
-				mceilingclip = walltop;
-				mfloorclip = wallbottom;
+				mceilingclip = walltop.ScreenY;
+				mfloorclip = wallbottom.ScreenY;
 			}
 			else if (pass == 0)
 			{
-				mceilingclip = walltop;
+				mceilingclip = walltop.ScreenY;
 				mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 				needrepeat = 1;
 			}
@@ -192,7 +192,7 @@ namespace swrenderer
 			{
 				goto done;
 			}
-			mceilingclip = walltop;
+			mceilingclip = walltop.ScreenY;
 			mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
 			break;
 
@@ -211,7 +211,7 @@ namespace swrenderer
 				goto done;
 			}
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
-			mfloorclip = wallbottom;
+			mfloorclip = wallbottom.ScreenY;
 			break;
 		}
 
@@ -226,7 +226,7 @@ namespace swrenderer
 			goto done;
 		}
 
-		PrepWall(swall, lwall, WallSpriteTile->GetWidth(), x1, x2, WallT);
+		walltexcoords.Project(WallSpriteTile->GetWidth(), x1, x2, WallT);
 
 		if (flipx)
 		{
@@ -235,7 +235,7 @@ namespace swrenderer
 
 			for (i = x1; i < x2; i++)
 			{
-				lwall[i] = right - lwall[i];
+				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
 			}
 		}
 
@@ -305,7 +305,7 @@ namespace swrenderer
 			// be set 1 if we need to draw on the lower wall. In all other cases,
 			// needrepeat will be 0, and the while will fail.
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
-			mfloorclip = wallbottom;
+			mfloorclip = wallbottom.ScreenY;
 		} while (needrepeat--);
 
 		colfunc = basecolfunc;
@@ -316,7 +316,7 @@ namespace swrenderer
 
 	void RenderDecal::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		float iscale = swall[x] * maskedScaleY;
+		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
@@ -324,6 +324,6 @@ namespace swrenderer
 		else
 			sprtopscreen = CenterY - texturemid * spryscale;
 
-		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}
 }

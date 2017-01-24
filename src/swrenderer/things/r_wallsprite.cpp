@@ -151,7 +151,7 @@ namespace swrenderer
 			return;
 		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(&spr->wallc);
-		PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
+		walltexcoords.Project(spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
 		iyscale = 1 / spr->yscale;
 		double texturemid = (spr->gzt - ViewPos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
@@ -160,7 +160,7 @@ namespace swrenderer
 
 			for (int i = x1; i < x2; i++)
 			{
-				lwall[i] = right - lwall[i];
+				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
 			}
 		}
 		// Prepare lighting
@@ -238,7 +238,7 @@ namespace swrenderer
 
 	void RenderWallSprite::DrawColumn(int x, FTexture *WallSpriteTile, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		float iscale = swall[x] * maskedScaleY;
+		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
@@ -246,6 +246,6 @@ namespace swrenderer
 		else
 			sprtopscreen = CenterY - texturemid * spryscale;
 
-		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, lwall[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+		R_DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}
 }

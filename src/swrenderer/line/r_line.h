@@ -14,6 +14,7 @@
 #pragma once
 
 #include "vectors.h"
+#include "r_wallsetup.h"
 
 struct seg_t;
 struct subsector_t;
@@ -85,7 +86,7 @@ namespace swrenderer
 		fixed_t rw_offset_mid;
 		fixed_t rw_offset_bottom;
 
-		int rw_ceilstat, rw_floorstat;
+		ProjectedWallCull rw_ceilstat, rw_floorstat;
 		bool rw_mustmarkfloor, rw_mustmarkceiling;
 		bool rw_prepped;
 		bool rw_markportal;
@@ -120,5 +121,7 @@ namespace swrenderer
 
 		bool foggy;
 		FDynamicColormap *basecolormap;
+
+		double lwallscale;
 	};
 }

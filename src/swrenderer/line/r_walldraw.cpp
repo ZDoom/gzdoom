@@ -421,11 +421,11 @@ namespace swrenderer
 
 	static void ProcessStripedWall(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, bool foggy, FDynamicColormap *basecolormap, FLightNode *light_list)
 	{
-		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
+		ProjectedWallLine most1, most2, most3;
 		short *up, *down;
 
 		up = uwal;
-		down = most1;
+		down = most1.ScreenY;
 
 		assert(WallC.sx1 <= x1);
 		assert(WallC.sx2 >= x2);
@@ -435,16 +435,16 @@ namespace swrenderer
 		// kg3D - fake floors instead of zdoom light list
 		for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 		{
-			int j = R_CreateWallSegmentYSloped(most3, frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
-			if (j != 3)
+			ProjectedWallCull j = most3.Project(frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+			if (j != ProjectedWallCull::OutsideAbove)
 			{
 				for (int j = x1; j < x2; ++j)
 				{
-					down[j] = clamp(most3[j], up[j], dwal[j]);
+					down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
 				}
 				ProcessNormalWall(WallC, x1, x2, up, down, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, basecolormap, light_list);
 				up = down;
-				down = (down == most1) ? most2 : most1;
+				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
@@ -494,7 +494,7 @@ namespace swrenderer
 
 	static void ProcessWallNP2(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, int wallshade, fixed_t xoffset, float light, float lightstep, bool mask, bool foggy, FDynamicColormap *basecolormap, FLightNode *light_list)
 	{
-		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
+		ProjectedWallLine most1, most2, most3;
 		short *up, *down;
 		double texheight = rw_pic->GetHeight();
 		double partition;
@@ -508,20 +508,20 @@ namespace swrenderer
 				partition -= scaledtexheight;
 			}
 			up = uwal;
-			down = most1;
+			down = most1.ScreenY;
 			texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 			while (partition > bot)
 			{
-				int j = R_CreateWallSegmentY(most3, partition - ViewPos.Z, &WallC);
-				if (j != 3)
+				ProjectedWallCull j = most3.Project(partition - ViewPos.Z, &WallC);
+				if (j != ProjectedWallCull::OutsideAbove)
 				{
 					for (int j = x1; j < x2; ++j)
 					{
-						down[j] = clamp(most3[j], up[j], dwal[j]);
+						down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
 					}
 					ProcessWall(frontsector, curline, WallC, x1, x2, up, down, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, mask, foggy, basecolormap, light_list);
 					up = down;
-					down = (down == most1) ? most2 : most1;
+					down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 				}
 				partition -= scaledtexheight;
 				texturemid -= texheight;
@@ -531,21 +531,21 @@ namespace swrenderer
 		else
 		{ // upside down: draw strips from bottom to top
 			partition = bot - fmod(bot - texturemid / yrepeat - ViewPos.Z, scaledtexheight);
-			up = most1;
+			up = most1.ScreenY;
 			down = dwal;
 			texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 			while (partition < top)
 			{
-				int j = R_CreateWallSegmentY(most3, partition - ViewPos.Z, &WallC);
-				if (j != 12)
+				ProjectedWallCull j = most3.Project(partition - ViewPos.Z, &WallC);
+				if (j != ProjectedWallCull::OutsideBelow)
 				{
 					for (int j = x1; j < x2; ++j)
 					{
-						up[j] = clamp(most3[j], uwal[j], down[j]);
+						up[j] = clamp(most3.ScreenY[j], uwal[j], down[j]);
 					}
 					ProcessWall(frontsector, curline, WallC, x1, x2, up, down, texturemid, swal, lwal, yrepeat, wallshade, xoffset, light, lightstep, mask, foggy, basecolormap, light_list);
 					down = up;
-					up = (up == most1) ? most2 : most1;
+					up = (up == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 				}
 				partition -= scaledtexheight;
 				texturemid -= texheight;

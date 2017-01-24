@@ -27,37 +27,35 @@
 
 namespace swrenderer
 {
-	short walltop[MAXWIDTH];
-	short wallbottom[MAXWIDTH];
-	short wallupper[MAXWIDTH];
-	short walllower[MAXWIDTH];
-	float swall[MAXWIDTH];
-	fixed_t lwall[MAXWIDTH];
-	double lwallscale;
+	ProjectedWallLine walltop;
+	ProjectedWallLine wallbottom;
+	ProjectedWallLine wallupper;
+	ProjectedWallLine walllower;
+	ProjectedWallTexcoords walltexcoords;
 
-	int R_CreateWallSegmentY(short *outbuf, double z, const FWallCoords *wallc)
+	ProjectedWallCull ProjectedWallLine::Project(double z, const FWallCoords *wallc)
 	{
-		return R_CreateWallSegmentY(outbuf, z, z, wallc);
+		return Project(z, z, wallc);
 	}
 
-	int R_CreateWallSegmentY(short *outbuf, double z1, double z2, const FWallCoords *wallc)
+	ProjectedWallCull ProjectedWallLine::Project(double z1, double z2, const FWallCoords *wallc)
 	{
 		float y1 = (float)(CenterY - z1 * InvZtoScale / wallc->sz1);
 		float y2 = (float)(CenterY - z2 * InvZtoScale / wallc->sz2);
 
 		if (y1 < 0 && y2 < 0) // entire line is above screen
 		{
-			memset(&outbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1) * sizeof(outbuf[0]));
-			return 3;
+			memset(&ScreenY[wallc->sx1], 0, (wallc->sx2 - wallc->sx1) * sizeof(ScreenY[0]));
+			return ProjectedWallCull::OutsideAbove;
 		}
 		else if (y1 > viewheight && y2 > viewheight) // entire line is below screen
 		{
-			fillshort(&outbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
-			return 12;
+			fillshort(&ScreenY[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
+			return ProjectedWallCull::OutsideBelow;
 		}
 
 		if (wallc->sx2 <= wallc->sx1)
-			return 0;
+			return ProjectedWallCull::Visible;
 
 		float rcp_delta = 1.0f / (wallc->sx2 - wallc->sx1);
 		if (y1 >= 0.0f && y2 >= 0.0f && xs_RoundToInt(y1) <= viewheight && xs_RoundToInt(y2) <= viewheight)
@@ -66,7 +64,7 @@ namespace swrenderer
 			{
 				float t = (x - wallc->sx1) * rcp_delta;
 				float y = y1 * (1.0f - t) + y2 * t;
-				outbuf[x] = (short)xs_RoundToInt(y);
+				ScreenY[x] = (short)xs_RoundToInt(y);
 			}
 		}
 		else
@@ -75,18 +73,18 @@ namespace swrenderer
 			{
 				float t = (x - wallc->sx1) * rcp_delta;
 				float y = y1 * (1.0f - t) + y2 * t;
-				outbuf[x] = (short)clamp(xs_RoundToInt(y), 0, viewheight);
+				ScreenY[x] = (short)clamp(xs_RoundToInt(y), 0, viewheight);
 			}
 		}
 
-		return 0;
+		return ProjectedWallCull::Visible;
 	}
 
-	int R_CreateWallSegmentYSloped(short *outbuf, const secplane_t &plane, const FWallCoords *wallc, seg_t *curline, bool xflip)
+	ProjectedWallCull ProjectedWallLine::Project(const secplane_t &plane, const FWallCoords *wallc, seg_t *curline, bool xflip)
 	{
 		if (!plane.isSlope())
 		{
-			return R_CreateWallSegmentY(outbuf, plane.Zat0() - ViewPos.Z, wallc);
+			return Project(plane.Zat0() - ViewPos.Z, wallc);
 		}
 		else
 		{
@@ -151,11 +149,13 @@ namespace swrenderer
 				}
 			}
 
-			return R_CreateWallSegmentY(outbuf, z1, z2, wallc);
+			return Project(z1, z2, wallc);
 		}
 	}
 
-	void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	/////////////////////////////////////////////////////////////////////////
+
+	void ProjectedWallTexcoords::Project(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
@@ -171,8 +171,8 @@ namespace swrenderer
 			{
 				float u = uOverZ / invZ;
 
-				upos[x] = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
-				vstep[x] = depthOrg + u * depthScale;
+				UPos[x] = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
+				VStep[x] = depthOrg + u * depthScale;
 
 				uOverZ += uGradient;
 				invZ += zGradient;
@@ -184,8 +184,8 @@ namespace swrenderer
 			{
 				float u = uOverZ / invZ;
 
-				upos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
-				vstep[x] = depthOrg + u * depthScale;
+				UPos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
+				VStep[x] = depthOrg + u * depthScale;
 
 				uOverZ += uGradient;
 				invZ += zGradient;
@@ -193,7 +193,7 @@ namespace swrenderer
 		}
 	}
 
-	void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	void ProjectedWallTexcoords::ProjectPos(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
@@ -207,7 +207,7 @@ namespace swrenderer
 			{
 				float u = uOverZ / invZ * xrepeat - xrepeat;
 
-				upos[x] = (fixed_t)(u * FRACUNIT);
+				UPos[x] = (fixed_t)(u * FRACUNIT);
 
 				uOverZ += uGradient;
 				invZ += zGradient;
@@ -219,7 +219,7 @@ namespace swrenderer
 			{
 				float u = uOverZ / invZ * xrepeat;
 
-				upos[x] = (fixed_t)(u * FRACUNIT);
+				UPos[x] = (fixed_t)(u * FRACUNIT);
 
 				uOverZ += uGradient;
 				invZ += zGradient;

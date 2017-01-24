@@ -110,21 +110,21 @@ namespace swrenderer
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.
 	void ClipMidtex(int x1, int x2)
 	{
-		short most[MAXWIDTH];
+		ProjectedWallLine most;
 
 		RenderPortal *renderportal = RenderPortal::Instance();
 		
-		R_CreateWallSegmentYSloped(most, curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
-			if (wallupper[i] < most[i])
-				wallupper[i] = most[i];
+			if (wallupper.ScreenY[i] < most.ScreenY[i])
+				wallupper.ScreenY[i] = most.ScreenY[i];
 		}
-		R_CreateWallSegmentYSloped(most, curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
-			if (walllower[i] > most[i])
-				walllower[i] = most[i];
+			if (walllower.ScreenY[i] > most.ScreenY[i])
+				walllower.ScreenY[i] = most.ScreenY[i];
 		}
 	}
 
@@ -305,30 +305,30 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				R_CreateWallSegmentY(wallupper, textop < clip3d->sclipTop - ViewPos.Z ? textop : clip3d->sclipTop - ViewPos.Z, &WallC);
+				wallupper.Project(textop < clip3d->sclipTop - ViewPos.Z ? textop : clip3d->sclipTop - ViewPos.Z, &WallC);
 			}
 			else
 			{
-				R_CreateWallSegmentY(wallupper, textop, &WallC);
+				wallupper.Project(textop, &WallC);
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				R_CreateWallSegmentY(walllower, textop - texheight > clip3d->sclipBottom - ViewPos.Z ? textop - texheight : clip3d->sclipBottom - ViewPos.Z, &WallC);
+				walllower.Project(textop - texheight > clip3d->sclipBottom - ViewPos.Z ? textop - texheight : clip3d->sclipBottom - ViewPos.Z, &WallC);
 			}
 			else
 			{
-				R_CreateWallSegmentY(walllower, textop - texheight, &WallC);
+				walllower.Project(textop - texheight, &WallC);
 			}
 
 			for (i = x1; i < x2; i++)
 			{
-				if (wallupper[i] < mceilingclip[i])
-					wallupper[i] = mceilingclip[i];
+				if (wallupper.ScreenY[i] < mceilingclip[i])
+					wallupper.ScreenY[i] = mceilingclip[i];
 			}
 			for (i = x1; i < x2; i++)
 			{
-				if (walllower[i] > mfloorclip[i])
-					walllower[i] = mfloorclip[i];
+				if (walllower.ScreenY[i] > mfloorclip[i])
+					walllower.ScreenY[i] = mfloorclip[i];
 			}
 
 			if (clip3d->CurrentSkybox)
@@ -342,8 +342,8 @@ namespace swrenderer
 				}
 			}
 
-			mfloorclip = walllower;
-			mceilingclip = wallupper;
+			mfloorclip = walllower.ScreenY;
+			mceilingclip = wallupper.ScreenY;
 
 			// draw the columns one at a time
 			if (visible)
@@ -402,23 +402,23 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				R_CreateWallSegmentY(wallupper, clip3d->sclipTop - ViewPos.Z, &WallC);
+				wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
-					if (wallupper[i] < mceilingclip[i])
-						wallupper[i] = mceilingclip[i];
+					if (wallupper.ScreenY[i] < mceilingclip[i])
+						wallupper.ScreenY[i] = mceilingclip[i];
 				}
-				mceilingclip = wallupper;
+				mceilingclip = wallupper.ScreenY;
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				R_CreateWallSegmentY(walllower, clip3d->sclipBottom - ViewPos.Z, &WallC);
+				walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
-					if (walllower[i] > mfloorclip[i])
-						walllower[i] = mfloorclip[i];
+					if (walllower.ScreenY[i] > mfloorclip[i])
+						walllower.ScreenY[i] = mfloorclip[i];
 				}
-				mfloorclip = walllower;
+				mfloorclip = walllower.ScreenY;
 			}
 
 			rw_offset = 0;
@@ -532,22 +532,22 @@ namespace swrenderer
 		WallT = ds->tmapvals;
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
-		R_CreateWallSegmentY(wallupper, clip3d->sclipTop - ViewPos.Z, &WallC);
-		R_CreateWallSegmentY(walllower, clip3d->sclipBottom - ViewPos.Z, &WallC);
+		wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
+		walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
 
 		for (i = x1; i < x2; i++)
 		{
-			if (wallupper[i] < mceilingclip[i])
-				wallupper[i] = mceilingclip[i];
+			if (wallupper.ScreenY[i] < mceilingclip[i])
+				wallupper.ScreenY[i] = mceilingclip[i];
 		}
 		for (i = x1; i < x2; i++)
 		{
-			if (walllower[i] > mfloorclip[i])
-				walllower[i] = mfloorclip[i];
+			if (walllower.ScreenY[i] > mfloorclip[i])
+				walllower.ScreenY[i] = mfloorclip[i];
 		}
 
-		PrepLWall(lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
-		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper, walllower, texturemid, MaskedSWall, lwall, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
+		walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
+		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors

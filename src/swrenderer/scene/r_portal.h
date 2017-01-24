@@ -29,6 +29,8 @@ namespace swrenderer
 	
 		void RenderPlanePortals();
 		void RenderLinePortals();
+
+		void AddLinePortal(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip);
 	
 		int WindowLeft = 0;
 		int WindowRight = 0;
@@ -57,5 +59,6 @@ namespace swrenderer
 		TArray<ptrdiff_t> drawsegStack;
 		TArray<DVector3> viewposStack;
 		TArray<VisiblePlane *> visplaneStack;
+		TArray<PortalDrawseg *> WallPortals;
 	};
 }

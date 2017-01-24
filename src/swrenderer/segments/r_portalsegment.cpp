@@ -31,8 +31,33 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 #include "swrenderer/segments/r_portalsegment.h"
+#include "swrenderer/r_memory.h"
 
 namespace swrenderer
 {
-	TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
+	PortalDrawseg::PortalDrawseg(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip) : x1(x1), x2(x2)
+	{
+		src = linedef;
+		dst = linedef->special == Line_Mirror ? linedef : linedef->getPortalDestination();
+		len = x2 - x1;
+
+		ceilingclip = RenderMemory::AllocMemory<short>(len);
+		floorclip = RenderMemory::AllocMemory<short>(len);
+		memcpy(ceilingclip, topclip, len * sizeof(short));
+		memcpy(floorclip, bottomclip, len * sizeof(short));
+
+		for (int i = 0; i < x2 - x1; i++)
+		{
+			if (ceilingclip[i] < 0)
+				ceilingclip[i] = 0;
+			if (ceilingclip[i] >= viewheight)
+				ceilingclip[i] = viewheight - 1;
+			if (floorclip[i] < 0)
+				floorclip[i] = 0;
+			if (floorclip[i] >= viewheight)
+				floorclip[i] = viewheight - 1;
+		}
+
+		mirror = linedef->special == Line_Mirror;
+	}
 }

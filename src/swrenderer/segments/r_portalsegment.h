@@ -18,18 +18,18 @@ namespace swrenderer
 	/* portal structure, this is used in r_ code in order to store drawsegs with portals (and mirrors) */
 	struct PortalDrawseg
 	{
-		line_t* src; // source line (the one drawn) this doesn't change over render loops
-		line_t* dst; // destination line (the one that the portal is linked with, equals 'src' for mirrors)
+		PortalDrawseg(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip);
 
-		int x1; // drawseg x1
-		int x2; // drawseg x2
+		line_t* src = nullptr; // source line (the one drawn) this doesn't change over render loops
+		line_t* dst = nullptr; // destination line (the one that the portal is linked with, equals 'src' for mirrors)
 
-		int len;
-		TArray<short> ceilingclip;
-		TArray<short> floorclip;
+		int x1 = 0; // drawseg x1
+		int x2 = 0; // drawseg x2
 
-		bool mirror; // true if this is a mirror (src should equal dst)
+		int len = 0;
+		short *ceilingclip = nullptr;
+		short *floorclip = nullptr;
+
+		bool mirror = false; // true if this is a mirror (src should equal dst)
 	};
-	
-	extern TArray<PortalDrawseg> WallPortals;
 }

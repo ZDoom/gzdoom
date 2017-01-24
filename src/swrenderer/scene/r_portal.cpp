@@ -279,7 +279,7 @@ namespace swrenderer
 		size_t lastportal = WallPortals.Size();
 		for (unsigned int i = 0; i < lastportal; i++)
 		{
-			RenderLinePortal(&WallPortals[i], 0);
+			RenderLinePortal(WallPortals[i], 0);
 		}
 
 		CurrentPortal = nullptr;
@@ -449,7 +449,7 @@ namespace swrenderer
 		unsigned int portalsAtEnd = WallPortals.Size();
 		for (; portalsAtStart < portalsAtEnd; portalsAtStart++)
 		{
-			RenderLinePortal(&WallPortals[portalsAtStart], depth + 1);
+			RenderLinePortal(WallPortals[portalsAtStart], depth + 1);
 		}
 		int prevuniq2 = CurrentPortalUniq;
 		CurrentPortalUniq = prevuniq;
@@ -532,6 +532,12 @@ namespace swrenderer
 		MirrorFlags = 0;
 		CurrentPortal = nullptr;
 		CurrentPortalUniq = 0;
+		WallPortals.Clear();
+	}
+
+	void RenderPortal::AddLinePortal(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip)
+	{
+		WallPortals.Push(RenderMemory::NewObject<PortalDrawseg>(linedef, x1, x2, topclip, bottomclip));
 	}
 }
 

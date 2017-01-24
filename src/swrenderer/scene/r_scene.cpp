@@ -187,7 +187,6 @@ namespace swrenderer
 
 			NetUpdate();
 		}
-		WallPortals.Clear();
 		interpolator.RestoreInterpolations();
 
 		// If we don't want shadered colormaps, NULL it now so that the

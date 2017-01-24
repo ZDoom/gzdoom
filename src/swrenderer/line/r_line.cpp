@@ -601,31 +601,7 @@ namespace swrenderer
 
 		if (rw_markportal)
 		{
-			PortalDrawseg pds;
-			pds.src = curline->linedef;
-			pds.dst = curline->linedef->special == Line_Mirror ? curline->linedef : curline->linedef->getPortalDestination();
-			pds.x1 = draw_segment->x1;
-			pds.x2 = draw_segment->x2;
-			pds.len = pds.x2 - pds.x1;
-			pds.ceilingclip.Resize(pds.len);
-			memcpy(&pds.ceilingclip[0], draw_segment->sprtopclip, pds.len * sizeof(short));
-			pds.floorclip.Resize(pds.len);
-			memcpy(&pds.floorclip[0], draw_segment->sprbottomclip, pds.len * sizeof(short));
-
-			for (int i = 0; i < pds.x2 - pds.x1; i++)
-			{
-				if (pds.ceilingclip[i] < 0)
-					pds.ceilingclip[i] = 0;
-				if (pds.ceilingclip[i] >= viewheight)
-					pds.ceilingclip[i] = viewheight - 1;
-				if (pds.floorclip[i] < 0)
-					pds.floorclip[i] = 0;
-				if (pds.floorclip[i] >= viewheight)
-					pds.floorclip[i] = viewheight - 1;
-			}
-
-			pds.mirror = curline->linedef->special == Line_Mirror;
-			WallPortals.Push(pds);
+			RenderPortal::Instance()->AddLinePortal(curline->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
 		}
 
 		return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;

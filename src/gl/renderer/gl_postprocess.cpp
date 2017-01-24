@@ -81,6 +81,9 @@ CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_base, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_speed, 0.05f, CVAR_ARCHIVE)
 
+CVAR(Float, gl_paltonemap_powtable, 1.2f, CVAR_ARCHIVE)
+CVAR(Bool, gl_paltonemap_reverselookup, false, CVAR_ARCHIVE)
+
 CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE)
 {
 	if (self < 0 || self > 5)
@@ -828,7 +831,7 @@ int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int f
 	if (firstTime)
 	{
 		firstTime = false;
-		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255,1.2);
+		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)gl_paltonemap_powtable);
 	}
 
 	for (int color = first; color < num; color++)
@@ -837,9 +840,9 @@ int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int f
 		double y = powtable[abs(g-pal[color].g)];
 		double z = powtable[abs(b-pal[color].b)];
 		fdist = x + y + z;
-		if (color == first || fdist < fbestdist)
+		if (color == first || ((gl_paltonemap_reverselookup)?(fdist <= fbestdist):(fdist < fbestdist)))
 		{
-			if (fdist == 0)
+			if (fdist == 0 && !gl_paltonemap_reverselookup)
 				return color;
 
 			fbestdist = fdist;

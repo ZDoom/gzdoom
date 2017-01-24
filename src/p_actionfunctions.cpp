@@ -6906,6 +6906,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
 		self->LinkToWorld(&ctx);
 		ACTION_RETURN_BOOL(false);
 	}
+	if (self->player && self->player->mo == self)
+	{
+		self->player->mo->FullHeight = newheight;
+	}
 
 	ACTION_RETURN_BOOL(true);
 }

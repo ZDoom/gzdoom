@@ -1036,7 +1036,6 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 	{
 		auto field = Fields[0];
 		FieldDesc *fd = nullptr;
-		FString str = FName(field->Names[0].Name);
 
 		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
 

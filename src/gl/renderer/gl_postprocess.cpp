@@ -81,8 +81,8 @@ CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_base, 0.35f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_speed, 0.05f, CVAR_ARCHIVE)
 
-CVAR(Float, gl_paltonemap_powtable, 1.2f, CVAR_ARCHIVE)
-CVAR(Bool, gl_paltonemap_reverselookup, false, CVAR_ARCHIVE)
+CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE)
+CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE)
 
 CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE)
 {

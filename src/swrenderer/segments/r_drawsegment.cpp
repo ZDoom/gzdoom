@@ -131,6 +131,26 @@ namespace swrenderer
 		}
 	}
 
+	void R_GetMaskedWallTopBottom(drawseg_t *ds, double &top, double &bot)
+	{
+		double frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1);
+		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
+		double frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2);
+		double frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2);
+		top = MAX(frontcz1, frontcz2);
+		bot = MIN(frontfz1, frontfz2);
+
+		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		if (clip3d->fake3D & FAKE3D_CLIPTOP)
+		{
+			top = MIN(top, clip3d->sclipTop);
+		}
+		if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
+		{
+			bot = MAX(bot, clip3d->sclipBottom);
+		}
+	}
+
 	void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 	{
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
@@ -426,7 +446,12 @@ namespace swrenderer
 
 			rw_offset = 0;
 			rw_pic = tex;
-			R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
+
+			double top, bot;
+			R_GetMaskedWallTopBottom(ds, top, bot);
+
+			RenderWallPart renderWallpart;
+			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 		}
 
 	clearfog:
@@ -551,7 +576,12 @@ namespace swrenderer
 
 		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
-		R_DrawDrawSeg(frontsector, curline, WallC, rw_pic, ds, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, wallshade, rw_offset, rw_light, rw_lightstep, ds->foggy, basecolormap);
+
+		double top, bot;
+		R_GetMaskedWallTopBottom(ds, top, bot);
+
+		RenderWallPart renderWallpart;
+		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors

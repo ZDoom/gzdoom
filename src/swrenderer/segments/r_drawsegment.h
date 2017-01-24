@@ -62,4 +62,5 @@ namespace swrenderer
 	void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2);
 	void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
 	void R_RenderFakeWallRange(drawseg_t *ds, int x1, int x2, int wallshade);
+	void R_GetMaskedWallTopBottom(drawseg_t *ds, double &top, double &bot);
 }

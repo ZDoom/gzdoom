@@ -13,14 +13,77 @@
 
 #pragma once
 
+#include "swrenderer/drawers/r_draw.h"
+#include "r_line.h"
+
 class FTexture;
 struct FLightNode;
 struct seg_t;
+struct FLightNode;
+struct FDynamicColormap;
 
 namespace swrenderer
 {
 	struct drawseg_t;
 	struct FWallCoords;
+	class ProjectedWallLine;
+	class ProjectedWallTexcoords;
+	struct WallSampler;
+
+	class RenderWallPart
+	{
+	public:
+		void Render(
+			sector_t *frontsector,
+			seg_t *curline,
+			const FWallCoords &WallC,
+			FTexture *rw_pic,
+			int x1,
+			int x2,
+			const short *walltop,
+			const short *wallbottom,
+			double texturemid,
+			float *swall,
+			fixed_t *lwall,
+			double yscale,
+			double top,
+			double bottom,
+			bool mask,
+			int wallshade,
+			fixed_t xoffset,
+			float light,
+			float lightstep,
+			FLightNode *light_list,
+			bool foggy,
+			FDynamicColormap *basecolormap);
+
+	private:
+		void ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, double top, double bot);
+		void ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void ProcessMaskedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, DrawerFunc drawcolumn);
+		void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc draw1column);
+
+		int x1 = 0;
+		int x2 = 0;
+		FTexture *rw_pic = nullptr;
+		sector_t *frontsector = nullptr;
+		seg_t *curline = nullptr;
+		FWallCoords WallC;
+
+		double yrepeat = 0.0;
+		int wallshade = 0;
+		fixed_t xoffset = 0;
+		float light = 0.0f;
+		float lightstep = 0.0f;
+		bool foggy = false;
+		FDynamicColormap *basecolormap = nullptr;
+		FLightNode *light_list = nullptr;
+		bool mask = false;
+	};
 
 	struct WallSampler
 	{
@@ -36,7 +99,4 @@ namespace swrenderer
 		uint32_t texturefracx;
 		uint32_t height;
 	};
-
-	void R_DrawWallSegment(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap);
-	void R_DrawDrawSeg(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *rw_pic, drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, double texturemid, float *swal, fixed_t *lwal, double yrepeat, int wallshade, fixed_t xoffset, float light, float lightstep, bool foggy, FDynamicColormap *basecolormap);
 }

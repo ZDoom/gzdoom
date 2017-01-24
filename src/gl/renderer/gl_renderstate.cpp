@@ -43,6 +43,7 @@ void gl_SetTextureMode(int type);
 FRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
+CVAR(Bool, gl_bandedswlight, true, CVAR_ARCHIVE)
 
 
 static VSMatrix identityMatrix(1);
@@ -146,6 +147,7 @@ bool FRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
+	activeShader->muPalLightLevels.Set(gl_bandedswlight);
 	activeShader->muTextureMode.Set(mTextureMode);
 	activeShader->muCameraPos.Set(mCameraPos.vec);
 	activeShader->muLightParms.Set(mLightParms);

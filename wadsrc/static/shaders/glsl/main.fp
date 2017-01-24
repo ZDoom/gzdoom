@@ -121,7 +121,11 @@ float R_DoomLightingEquation(float light)
 	/* The zdoom light equation */
 	float vis = globVis / z;
 	float shade = 64.0 - (L + 12.0) * 32.0/128.0;
-	float lightscale = clamp((shade - min(24.0, vis)) / 32.0, 0.0, 31.0/32.0);
+	float lightscale;
+	if (uPalLightLevels != 0)
+		lightscale = clamp(int(shade - min(24.0, vis)) / 32.0, 0.0, 31.0/32.0);
+	else
+		lightscale = clamp((shade - min(24.0, vis)) / 32.0, 0.0, 31.0/32.0);
 
 	// Result is the normalized colormap index (0 bright .. 1 dark)
 	return lightscale;

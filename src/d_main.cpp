@@ -2517,6 +2517,9 @@ void D_DoomMain (void)
 
 		// Create replacements for dehacked pickups
 		FinishDehPatch();
+		
+		// clean up the compiler symbols which are not needed any longer.
+		RemoveUnusedSymbols();
 
 		InitActorNumsFromMapinfo();
 		InitSpawnablesFromMapinfo();

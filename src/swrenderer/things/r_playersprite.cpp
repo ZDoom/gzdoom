@@ -71,13 +71,6 @@ namespace swrenderer
 		return &instance;
 	}
 
-	void RenderPlayerSprites::SetupSpriteScale()
-	{
-		pspritexscale = centerxwide / 160.0;
-		pspriteyscale = pspritexscale * YaspectMul;
-		pspritexiscale = 1 / pspritexscale;
-	}
-
 	void RenderPlayerSprites::Render()
 	{
 		int 		i;
@@ -247,6 +240,10 @@ namespace swrenderer
 			sx += wx;
 			sy += wy;
 		}
+
+		double pspritexscale = centerxwide / 160.0;
+		double pspriteyscale = pspritexscale * YaspectMul;
+		double pspritexiscale = 1 / pspritexscale;
 
 		// calculate edges of the shape
 		tx = sx - BASEXCENTER;

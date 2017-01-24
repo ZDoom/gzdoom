@@ -76,8 +76,6 @@ namespace swrenderer
 	public:
 		static RenderPlayerSprites *Instance();
 
-		void SetupSpriteScale();
-
 		void Render();
 		void RenderRemaining();
 
@@ -88,9 +86,5 @@ namespace swrenderer
 		enum { BASEYCENTER = 100 };
 
 		TArray<HWAccelPlayerSprite> AcceleratedSprites;
-
-		double pspritexscale = 0.0;
-		double pspritexiscale = 0.0;
-		double pspriteyscale = 0.0;
 	};
 }

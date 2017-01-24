@@ -259,6 +259,7 @@ class FShader
 
 	FBufferedUniform1f muDesaturation;
 	FBufferedUniform1i muFogEnabled;
+	FBufferedUniform1i muPalLightLevels;
 	FBufferedUniform1i muTextureMode;
 	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;

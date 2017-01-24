@@ -13,6 +13,7 @@
 #include "c_console.h"
 
 #include "sdlglvideo.h"
+#include "sdlvideo.h"
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
 #include "gl/gl_functions.h"
@@ -29,6 +30,7 @@
 
 // TYPES -------------------------------------------------------------------
 
+IMPLEMENT_CLASS(SDLBaseFB, true, false)
 IMPLEMENT_CLASS(SDLGLFB, true, false)
 
 struct MiniModeInfo
@@ -171,15 +173,15 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		SDLGLFB *fb = static_cast<SDLGLFB *> (old);
+		SDLBaseFB *fb = static_cast<SDLBaseFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height)
 		{
-			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+			bool fsnow = (SDL_GetWindowFlags (fb->GetSDLWindow()) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
 			if (fsnow != fullscreen)
 			{
-				SDL_SetWindowFullscreen (fb->Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+				SDL_SetWindowFullscreen (fb->GetSDLWindow(), fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 			}
 			return old;
 		}
@@ -192,11 +194,17 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 //		flashAmount = 0;
 	}
 	
-	SDLGLFB *fb;
+	SDLBaseFB *fb;
 	if (vid_renderer == 1)
-		fb = new OpenGLFrameBuffer (0, width, height, 32, 60, fullscreen);
+	{
+		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
+	}
 	else
-		fb = (SDLGLFB*)CreateGLSWFrameBuffer (width, height, bgra, fullscreen);
+	{
+		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+		if (!fb->IsValid())
+			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
+	}
 
 	retry = 0;
 	
@@ -240,7 +248,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 		}
 
 		++retry;
-		fb = static_cast<SDLGLFB *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
+		fb = static_cast<SDLBaseFB *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
 	}
 
 //	fb->SetFlash (flashColor, flashAmount);

@@ -149,27 +149,6 @@ const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SH
 OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) :
 	Super(hMonitor, ClampWidth(width), ClampHeight(height), bits, refreshHz, fullscreen, bgra)
 {
-	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
-	static bool first = true;
-	if (first)
-	{
-		ogl_LoadFunctions();
-	}
-	gl_LoadExtensions();
-	InitializeState();
-	if (first)
-	{
-		gl_PrintStartupLog();
-		first = false;
-	}
-
-	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
-	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
-	Super::SetVSync(vid_vsync);
-
-	Debug = std::make_shared<FGLDebug>();
-	Debug->Update();
-
 	VertexBuffer = nullptr;
 	IndexBuffer = nullptr;
 	FBTexture = nullptr;
@@ -181,7 +160,7 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	{
 		Shaders[i] = nullptr;
 	}
-	VSync = vid_vsync;
+
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
 	BlendingRect.right = Width;
@@ -214,12 +193,37 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
 
+	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
+	static bool first = true;
+	if (first)
+	{
+		ogl_LoadFunctions();
+	}
+	gl_LoadExtensions();
+	InitializeState();
+	if (first)
+	{
+		gl_PrintStartupLog();
+		first = false;
+	}
+
+	if (!glGetString)
+		return;
+
+	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
+	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
+	Super::SetVSync(vid_vsync);
+
+	Debug = std::make_shared<FGLDebug>();
+	Debug->Update();
+
 	//Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen(fullscreen));
 
 	TrueHeight = height;
 
-	CreateResources();
-	SetInitialState();
+	Valid = CreateResources();
+	if (Valid)
+		SetInitialState();
 }
 
 OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
@@ -1077,7 +1081,7 @@ int OpenGLSWFrameBuffer::GetPageCount()
 
 bool OpenGLSWFrameBuffer::IsValid()
 {
-	return true;
+	return Valid;
 }
 
 //==========================================================================

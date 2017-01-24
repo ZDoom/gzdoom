@@ -34,9 +34,17 @@ private:
 	int IteratorMode;
 	int IteratorBits;
 };
-class SDLGLFB : public DFrameBuffer
+
+class SDLBaseFB : public DFrameBuffer
 {
-	DECLARE_CLASS(SDLGLFB, DFrameBuffer)
+	DECLARE_CLASS(SDLBaseFB, DFrameBuffer)
+public:
+	virtual SDL_Window *GetSDLWindow() = 0;
+};
+
+class SDLGLFB : public SDLBaseFB
+{
+	DECLARE_CLASS(SDLGLFB, SDLBaseFB)
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
 	SDLGLFB (void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra); 
@@ -60,6 +68,8 @@ public:
 
 	int GetClientWidth();
 	int GetClientHeight();
+
+	SDL_Window *GetSDLWindow() override { return Screen; }
 
 protected:
 	bool CanUpdate();

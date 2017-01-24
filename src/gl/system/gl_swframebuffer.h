@@ -422,6 +422,7 @@ private:
 
 	template<typename T> static void SafeRelease(T &x) { if (x != nullptr) { delete x; x = nullptr; } }
 
+	bool Valid = false;
 	std::shared_ptr<FGLDebug> Debug;
 
 	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer, StreamVertexBufferBurn;
@@ -452,7 +453,6 @@ private:
 	bool UpdatePending;
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
-	bool VSync;
 	LTRBRect BlendingRect;
 	int In2D;
 	bool InScene;

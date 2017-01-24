@@ -150,6 +150,7 @@ public:
 	int			MugShotMaxHealth;
 	int			RunHealth;
 	int			PlayerFlags;
+	double		FullHeight;
 	TObjPtr<AInventory> InvFirst;		// first inventory item displayed on inventory bar
 	TObjPtr<AInventory> InvSel;			// selected inventory item
 

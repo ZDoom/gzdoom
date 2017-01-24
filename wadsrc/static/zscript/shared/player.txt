@@ -37,6 +37,7 @@ class PlayerPawn : Actor native
 	native Class<Actor> FlechetteType;
 	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	native double		ViewBob;				// [SP] ViewBob Multiplier
+	native double		FullHeight;
 	
 	Default
 	{

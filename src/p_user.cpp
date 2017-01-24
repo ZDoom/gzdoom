@@ -689,7 +689,8 @@ void APlayerPawn::Serialize(FSerializer &arc)
 		("userange", UseRange, def->UseRange)
 		("aircapacity", AirCapacity, def->AirCapacity)
 		("viewheight", ViewHeight, def->ViewHeight)
-		("viewbob", ViewBob, def->ViewBob);
+		("viewbob", ViewBob, def->ViewBob)
+		("fullheight", FullHeight, def->FullHeight);
 }
 
 //===========================================================================
@@ -714,7 +715,7 @@ void APlayerPawn::BeginPlay ()
 {
 	Super::BeginPlay ();
 	ChangeStatNum (STAT_PLAYER);
-
+	FullHeight = Height;
 	// Check whether a PWADs normal sprite is to be combined with the base WADs
 	// crouch sprite. In such a case the sprites normally don't match and it is
 	// best to disable the crouch sprite.
@@ -766,11 +767,11 @@ void APlayerPawn::Tick()
 {
 	if (player != NULL && player->mo == this && player->CanCrouch() && player->playerstate != PST_DEAD)
 	{
-		Height = GetDefault()->Height * player->crouchfactor;
+		Height = FullHeight * player->crouchfactor;
 	}
 	else
 	{
-		if (health > 0) Height = GetDefault()->Height;
+		if (health > 0) Height = FullHeight;
 	}
 	Super::Tick();
 }
@@ -2310,7 +2311,7 @@ void P_DeathThink (player_t *player)
 
 void P_CrouchMove(player_t * player, int direction)
 {
-	double defaultheight = player->mo->GetDefault()->Height;
+	double defaultheight = player->mo->FullHeight;
 	double savedheight = player->mo->Height;
 	double crouchspeed = direction * CROUCHSPEED;
 	double oldheight = player->viewheight;
@@ -3246,6 +3247,7 @@ DEFINE_FIELD(APlayerPawn, AirCapacity)
 DEFINE_FIELD(APlayerPawn, FlechetteType)
 DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
+DEFINE_FIELD(APlayerPawn, FullHeight)
 
 DEFINE_FIELD(PClassPlayerPawn, HealingRadiusType)
 DEFINE_FIELD(PClassPlayerPawn, DisplayName)

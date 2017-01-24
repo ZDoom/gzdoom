@@ -1913,10 +1913,11 @@ class FxClassTypeCast : public FxExpression
 {
 	PClass *desttype;
 	FxExpression *basex;
+	bool Explicit;
 
 public:
 
-	FxClassTypeCast(PClassPointer *dtype, FxExpression *x);
+	FxClassTypeCast(PClassPointer *dtype, FxExpression *x, bool explicitly);
 	~FxClassTypeCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -3898,3 +3898,45 @@ void FNamespaceManager::ReleaseSymbols()
 	GlobalNamespace = nullptr;
 	AllNamespaces.Clear();
 }
+
+// removes all symbols from the symbol tables.
+// After running the compiler these are not needed anymore.
+// Only the namespaces themselves are kept because the type table references them.
+int FNamespaceManager::RemoveSymbols()
+{
+	int count = 0;
+	for (auto ns : AllNamespaces)
+	{
+		count += ns->Symbols.Symbols.CountUsed();
+		ns->Symbols.ReleaseSymbols();
+	}
+	return count;
+}
+
+void RemoveUnusedSymbols()
+{
+	// Global symbols are not needed anymore after running the compiler.
+	int count = Namespaces.RemoveSymbols();
+
+	// We do not need any non-field and non-function symbols in structs and classes anymore.
+	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
+	{
+		for (PType *ty = TypeTable.TypeHash[i]; ty != NULL; ty = ty->HashNext)
+		{
+			if (ty->IsKindOf(RUNTIME_CLASS(PStruct)))
+			{
+				auto it = ty->Symbols.GetIterator();
+				PSymbolTable::MapType::Pair *pair;
+				while (it.NextPair(pair))
+				{
+					if (!pair->Value->IsKindOf(RUNTIME_CLASS(PField)) && !pair->Value->IsKindOf(RUNTIME_CLASS(PFunction)))
+					{
+						ty->Symbols.RemoveSymbol(pair->Value);
+						count++;
+					}
+				}
+			}
+		}
+	}
+	DPrintf(DMSG_SPAMMY, "%d symbols removed after compilation\n", count);
+}

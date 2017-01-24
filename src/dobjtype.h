@@ -76,6 +76,7 @@ class VMFrameStack;
 struct VMValue;
 struct VMReturn;
 class VMFunction;
+struct FNamespaceManager;
 
 // A VM function ------------------------------------------------------------
 
@@ -157,6 +158,7 @@ private:
 	MapType Symbols;
 
 	friend class DObject;
+	friend struct FNamespaceManager;
 };
 
 // A symbol for a compiler tree node ----------------------------------------
@@ -1010,6 +1012,7 @@ struct FNamespaceManager
 	PNamespace *NewNamespace(int filenum);
 	size_t MarkSymbols();
 	void ReleaseSymbols();
+	int RemoveSymbols();
 };
 
 extern FNamespaceManager Namespaces;
@@ -1047,4 +1050,7 @@ inline T *&DObject::PointerVar(FName field)
 {
 	return *(T**)ScriptVar(field, nullptr);	// pointer check is more tricky and for the handful of uses in the DECORATE parser not worth the hassle.
 }
+
+void RemoveUnusedSymbols();
+
 #endif

@@ -2645,6 +2645,8 @@ GLPREFMNU_LENS					= "Lens distortion effect";
 GLPREFMNU_SSAO					= "Ambient occlusion quality";
 GLPREFMNU_SSAO_PORTALS			= "Portals with AO";
 GLPREFMNU_FXAA					= "FXAA Quality";
+GLPREFMNU_PALTONEMAPORDER		= "Tonemap Palette Order";
+GLPREFMNU_PALTONEMAPPOWER		= "Tonemap Palette Exponent";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";
@@ -2728,3 +2730,5 @@ OPTVAL_LOW					= "Low";
 OPTVAL_MEDIUM				= "Medium";
 OPTVAL_HIGH					= "High";
 OPTVAL_EXTREME				= "Extreme";
+OPTVAL_OBVERSEFIRST			= "Obverse";
+OPTVAL_REVERSEFIRST			= "Reverse";

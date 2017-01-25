@@ -110,7 +110,7 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 // FrameBuffer implementation -----------------------------------------------
 
 SDLFB::SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin)
-	: DFrameBuffer (width, height, bgra)
+	: SDLBaseFB (width, height, bgra)
 {
 	int i;
 	

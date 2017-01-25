@@ -39,7 +39,10 @@ class SDLBaseFB : public DFrameBuffer
 {
 	DECLARE_CLASS(SDLBaseFB, DFrameBuffer)
 public:
+	using DFrameBuffer::DFrameBuffer;
 	virtual SDL_Window *GetSDLWindow() = 0;
+	
+	friend class SDLGLVideo;
 };
 
 class SDLGLFB : public SDLBaseFB

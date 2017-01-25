@@ -137,7 +137,7 @@ namespace swrenderer
 		}
 
 		// New visplane algorithm uses hash table -- killough
-		hash = isskybox ? MAXVISPLANES : CalcHash(picnum.GetIndex(), lightlevel, height);
+		hash = isskybox ? ((unsigned)MAXVISPLANES) : CalcHash(picnum.GetIndex(), lightlevel, height);
 		
 		RenderPortal *renderportal = RenderPortal::Instance();
 

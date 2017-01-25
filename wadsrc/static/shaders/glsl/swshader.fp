@@ -1,4 +1,6 @@
 
+precision mediump float;
+
 in vec4 PixelColor0;
 in vec4 PixelColor1;
 in vec4 PixelTexCoord0;
@@ -75,7 +77,7 @@ vec4 SpecialColormap(vec2 tex_coord, vec4 start, vec4 end)
 	vec4 range = end - start;
 	// We can't store values greater than 1.0 in a color register, so we multiply
 	// the final result by 2 and expect the caller to divide the start and end by 2.
-	color.rgb = 2 * (start + Grayscale(color) * range).rgb;
+	color.rgb = 2.0 * (start + Grayscale(color) * range).rgb;
 	// Duplicate alpha semantics of NormalColor.
 	color.a = start.a + color.a * end.a;
 	return color;
@@ -120,7 +122,7 @@ vec4 BurnWipe(vec4 coord)
 {
 	vec4 color = texture(NewScreen, coord.xy);
 	vec4 alpha = texture(Burn, coord.zw);
-	color.a = alpha.r * 2;
+	color.a = alpha.r * 2.0;
 	return color;
 }
 

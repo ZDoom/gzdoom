@@ -303,8 +303,11 @@ OpenGLSWFrameBuffer::HWPixelShader::~HWPixelShader()
 bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer)
 {
 	auto fb = std::make_unique<HWFrameBuffer>();
+	
+	GLint format = GL_RGBA16F;
+	if (gl.es) format = GL_RGB;
 
-	if (!CreateTexture(name, width, height, 1, GL_RGBA16F, &fb->Texture))
+	if (!CreateTexture(name, width, height, 1, format, &fb->Texture))
 	{
 		outFramebuffer = nullptr;
 		return false;
@@ -329,7 +332,7 @@ bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int 
 
 	if (result != GL_FRAMEBUFFER_COMPLETE)
 	{
-		//Printf("Framebuffer is not complete");
+		Printf("Framebuffer is not complete\n");
 		outFramebuffer = nullptr;
 		return false;
 	}
@@ -351,6 +354,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	
 	FString prefix;
 	prefix.AppendFormat("#version %d\n%s\n#line 0\n", shaderVersion, defines.GetChars());
+	//Printf("Shader prefix: %s", prefix.GetChars());
 	
 	vertexsrc = prefix + vertexsrc;
 	fragmentsrc = prefix + fragmentsrc;
@@ -400,7 +404,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 		GLsizei length = 0;
 		buffer[0] = 0;
 		glGetProgramInfoLog(shader->Program, 10000, &length, buffer);
-		//Printf("Shader compile failed: %s", buffer);
+		//Printf("Shader link failed: %s", buffer);
 	
 		*outShader = nullptr;
 		return false;
@@ -485,8 +489,9 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 	GLenum srcformat;
 	switch (format)
 	{
+	case GL_RGB: srcformat = GL_RGB; break;
 	case GL_R8: srcformat = GL_RED; break;
-	case GL_RGBA8: srcformat = GL_BGRA; break;
+	case GL_RGBA8: srcformat = gl.es ? GL_RGBA : GL_BGRA; break;
 	case GL_RGBA16F: srcformat = GL_RGBA; break;
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT: srcformat = GL_RGB; break;
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: srcformat = GL_RGBA; break;
@@ -743,6 +748,8 @@ void OpenGLSWFrameBuffer::Present()
 
 void OpenGLSWFrameBuffer::SetInitialState()
 {
+	if (gl.es) UseMappedMemBuffer = false;
+
 	AlphaBlendEnabled = false;
 	AlphaBlendOp = GL_FUNC_ADD;
 	AlphaSrcBlend = 0;
@@ -787,12 +794,11 @@ bool OpenGLSWFrameBuffer::CreateResources()
 {
 	Atlases = nullptr;
 	if (!LoadShaders())
-	{
 		return false;
-	}
 
 	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB))
 		return false;
+		
 	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
 
 	if (!CreateFBTexture() ||
@@ -1312,6 +1318,23 @@ void OpenGLSWFrameBuffer::BindFBBuffer()
 	}
 }
 
+void OpenGLSWFrameBuffer::BgraToRgba(uint32_t *dest, const uint32_t *src, int width, int height, int srcpitch)
+{
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			uint32_t r = RPART(src[x]);
+			uint32_t g = GPART(src[x]);
+			uint32_t b = BPART(src[x]);
+			uint32_t a = APART(src[x]);
+			dest[x] = r | (g << 8) | (b << 16) | (a << 24);
+		}
+		dest += width;
+		src += srcpitch;
+	}
+}
+
 void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 {
 	if (copy3d)
@@ -1327,7 +1350,11 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
 			if (dest)
 			{
-				if (Pitch == Width)
+				if (gl.es && pixelsize == 4)
+				{
+					BgraToRgba((uint32_t*)dest, (const uint32_t *)MemBuffer, Width, Height, Pitch);
+				}
+				else if (Pitch == Width)
 				{
 					memcpy(dest, MemBuffer, Width * Height * pixelsize);
 				}
@@ -1354,7 +1381,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 		glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
 		if (IsBgra())
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, gl.es ? GL_RGBA : GL_BGRA, GL_UNSIGNED_BYTE, 0);
 		else
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
 		glBindTexture(GL_TEXTURE_2D, oldBinding);
@@ -1462,6 +1489,8 @@ void OpenGLSWFrameBuffer::UploadPalette()
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, 256 * 4, nullptr, GL_STREAM_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffers[1]);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, 256 * 4, nullptr, GL_STREAM_DRAW);
+		
+		if (gl.es) PaletteTexture->MapBuffer.resize(256 * 4);
 	}
 	else
 	{
@@ -1469,7 +1498,7 @@ void OpenGLSWFrameBuffer::UploadPalette()
 		PaletteTexture->CurrentBuffer = (PaletteTexture->CurrentBuffer + 1) & 1;
 	}
 
-	uint8_t *pix = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, 256 * 4);
+	uint8_t *pix = gl.es ? PaletteTexture->MapBuffer.data() : (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, 256 * 4);
 	if (pix)
 	{
 		int i;
@@ -1490,11 +1519,21 @@ void OpenGLSWFrameBuffer::UploadPalette()
 			pix[2] = SourcePalette[i].r;
 			pix[3] = 255;
 		}
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		if (gl.es)
+		{
+			uint8_t *tempbuffer = PaletteTexture->MapBuffer.data();
+			BgraToRgba((uint32_t*)tempbuffer, (const uint32_t *)tempbuffer, 256, 1, 256);
+			glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, 256 * 4, tempbuffer);
+		}
+		else
+		{
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		}
+		
 		GLint oldBinding = 0;
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 		glBindTexture(GL_TEXTURE_2D, PaletteTexture->Texture);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, gl.es ? GL_RGBA : GL_BGRA, GL_UNSIGNED_BYTE, 0);
 		glBindTexture(GL_TEXTURE_2D, oldBinding);
 		BorderColor = ColorXRGB(SourcePalette[255].r, SourcePalette[255].g, SourcePalette[255].b);
 	}
@@ -2094,9 +2133,13 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Box->Owner->Tex->Buffers[Box->Owner->Tex->CurrentBuffer]);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, buffersize, nullptr, GL_STREAM_DRAW);
 	Box->Owner->Tex->CurrentBuffer = (Box->Owner->Tex->CurrentBuffer + 1) & 1;
+	
+	static std::vector<uint8_t> tempbuffer;
+	if (gl.es)
+		tempbuffer.resize(buffersize);
 
 	int pitch = (rect.right - rect.left) * bytesPerPixel;
-	uint8_t *bits = (uint8_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, buffersize);
+	uint8_t *bits = gl.es ? tempbuffer.data() : (uint8_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, buffersize);
 	dest = bits;
 	if (!dest)
 	{
@@ -2140,13 +2183,21 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 		// Clear bottom padding row.
 		memset(dest, 0, numbytes);
 	}
+	
+	if (gl.es && format == GL_RGBA8)
+	{
+		BgraToRgba((uint32_t*)bits, (const uint32_t *)bits, rect.right - rect.left, rect.bottom - rect.top, rect.right - rect.left);
+	}
 
-	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	if (gl.es)
+		glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, buffersize, bits);
+	else
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 	glBindTexture(GL_TEXTURE_2D, Box->Owner->Tex->Texture);
 	if (format == GL_RGBA8)
-		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, gl.es ? GL_RGBA : GL_BGRA, GL_UNSIGNED_BYTE, 0);
 	else
 		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, GL_RED, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
@@ -2302,8 +2353,12 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	}
 
 	int numEntries = MIN(Remap->NumEntries, RoundedPaletteSize);
+	
+	std::vector<uint8_t> &tempbuffer = Tex->MapBuffer;
+	if (gl.es)
+		tempbuffer.resize(numEntries * 4);
 
-	buff = (uint32_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, numEntries * 4);
+	buff = gl.es ? (uint32_t*)tempbuffer.data() : (uint32_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, numEntries * 4);
 	if (buff == nullptr)
 	{
 		return false;
@@ -2326,12 +2381,21 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 		i = numEntries - 1;
 		BorderColor = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
 	}
-
-	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	
+	if (gl.es)
+	{
+		BgraToRgba((uint32_t*)buff, (const uint32_t *)buff, numEntries, 1, numEntries);
+		glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, numEntries * 4, buff);
+	}
+	else
+	{
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	}
+	
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 	glBindTexture(GL_TEXTURE_2D, Tex->Texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, numEntries, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, numEntries, 1, gl.es ? GL_RGBA : GL_BGRA, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 

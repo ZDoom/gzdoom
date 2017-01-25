@@ -121,6 +121,8 @@ private:
 		int WrapS = 0;
 		int WrapT = 0;
 		int Format = 0;
+		
+		std::vector<uint8_t> MapBuffer;
 	};
 
 	class HWFrameBuffer
@@ -193,6 +195,8 @@ private:
 	void DrawLineList(int count);
 	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount);
 	void Present();
+	
+	static void BgraToRgba(uint32_t *dest, const uint32_t *src, int width, int height, int srcpitch);
 
 	void BindFBBuffer();
 	void *MappedMemBuffer = nullptr;

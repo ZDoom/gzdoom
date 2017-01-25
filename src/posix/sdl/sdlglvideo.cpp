@@ -63,6 +63,18 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
+#ifdef __arm__
+CUSTOM_CVAR(Bool, gl_es, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+#else
+CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Dummy screen sizes to pass when windowed
@@ -303,6 +315,14 @@ bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 	}
 	if (gl_debug)
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+		
+	if (gl_es)
+	{
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	}
+	
 	return true;
 }
 

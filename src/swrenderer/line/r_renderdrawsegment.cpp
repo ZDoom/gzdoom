@@ -48,6 +48,7 @@ namespace swrenderer
 {
 	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
+		RenderFogBoundary renderfog;
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
 		fixed_t *maskedtexturecol = nullptr;
 	
@@ -121,7 +122,7 @@ namespace swrenderer
 		// [RH] Draw fog partition
 		if (ds->bFogBoundary)
 		{
-			RenderFogBoundary::Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
+			renderfog.Render(x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
 			if (ds->maskedtexturecol == nullptr)
 			{
 				goto clearfog;

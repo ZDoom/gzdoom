@@ -145,6 +145,4 @@ namespace swrenderer
 			R_Drawers()->DrawFogBoundaryLine(y, x1, spanend[y]);
 		}
 	}
-
-	short RenderFogBoundary::spanend[MAXHEIGHT];
 }

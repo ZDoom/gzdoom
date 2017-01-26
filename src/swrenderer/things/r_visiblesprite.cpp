@@ -135,7 +135,7 @@ namespace swrenderer
 
 				int spriteshade = LIGHT2SHADE(sec->lightlevel + R_ActualExtraLight(spr->foggy));
 
-				Light.SetColormap(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
+				Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
 			}
 		}
 

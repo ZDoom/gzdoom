@@ -223,7 +223,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	int actualextralight = foggy ? 0 : extralight << 4;
 	int spriteshade = LIGHT2SHADE(owner->Sector->lightlevel + actualextralight);
 	double minz = double((2048 * 4) / double(1 << 20));
-	ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / minz, spriteshade);
+	ColormapNum = GETPALOOKUP(swrenderer::LightVisibility::Instance()->SpriteGlobVis() / minz, spriteshade);
 
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{

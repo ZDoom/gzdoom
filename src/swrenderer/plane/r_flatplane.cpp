@@ -106,7 +106,7 @@ namespace swrenderer
 		planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
 		basecolormap = colormap;
-		GlobVis = r_FloorVisibility / planeheight;
+		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis() / planeheight;
 		ds_light = 0;
 		if (fixedlightlev >= 0)
 		{

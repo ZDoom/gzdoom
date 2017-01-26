@@ -241,7 +241,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
-		args.uniforms.globvis = (float)swrenderer::r_WallVisibility;
+		args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
 		args.uniforms.color = 0;
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

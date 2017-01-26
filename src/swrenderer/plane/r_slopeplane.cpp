@@ -143,7 +143,7 @@ namespace swrenderer
 			plane_sz[0] = -plane_sz[0];
 		}
 
-		planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
+		planelightfloat = (LightVisibility::Instance()->SlopePlaneGlobVis() * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
 
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;

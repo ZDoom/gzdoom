@@ -201,8 +201,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		// Particles are slightly more visible than regular sprites.
-		vis->Light.SetColormap(tiz * r_SpriteVisibility * 0.5, shade, map, particle->bright != 0, false, false);
+		vis->Light.SetColormap(tiz * LightVisibility::Instance()->ParticleGlobVis(), shade, map, particle->bright != 0, false, false);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}

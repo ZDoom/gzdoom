@@ -119,7 +119,8 @@ namespace swrenderer
 		InitTextureMapping();
 
 		// Reset r_*Visibility vars
-		R_SetVisibility(R_GetVisibility());
+		LightVisibility *visibility = LightVisibility::Instance();
+		visibility->SetVisibility(visibility->GetVisibility());
 
 		SetupBuffer();
 	}

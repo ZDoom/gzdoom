@@ -247,7 +247,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	}
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)swrenderer::r_WallVisibility;
+	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
 	args.uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = SubsectorDepth;

@@ -223,7 +223,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->Light.SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		VisibleSpriteList::Instance()->Push(vis);
 	}

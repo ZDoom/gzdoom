@@ -904,7 +904,7 @@ namespace swrenderer
 			if (fixedcolormap == NULL && fixedlightlev < 0)
 			{
 				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel) + R_ActualExtraLight(foggy));
-				double GlobVis = r_WallVisibility;
+				double GlobVis = LightVisibility::Instance()->WallGlobVis();
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 			}

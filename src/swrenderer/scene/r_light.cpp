@@ -38,76 +38,9 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	double r_BaseVisibility;
-	double r_WallVisibility;
-	double r_FloorVisibility;
-	float r_TiltVisibility;
-	double r_SpriteVisibility;
-
 	int fixedlightlev;
 	FSWColormap *fixedcolormap;
 	FSpecialColormap *realfixedcolormap;
-
-	namespace
-	{
-		double CurrentVisibility = 8.f;
-		double MaxVisForWall;
-		double MaxVisForFloor;
-	}
-
-	// Changes how rapidly things get dark with distance
-	void R_SetVisibility(double vis)
-	{
-		// Allow negative visibilities, just for novelty's sake
-		vis = clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
-
-		CurrentVisibility = vis;
-
-		if (FocalTangent == 0 || FocalLengthY == 0)
-		{ // If r_visibility is called before the renderer is all set up, don't
-		  // divide by zero. This will be called again later, and the proper
-		  // values can be initialized then.
-			return;
-		}
-
-		r_BaseVisibility = vis;
-
-		MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * FocalTangent));
-		MaxVisForWall = 32767.0 / MaxVisForWall;
-		MaxVisForFloor = 32767.0 / (viewheight >> 2) * FocalLengthY / 160;
-
-		// Prevent overflow on walls
-		if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForWall)
-			r_WallVisibility = -MaxVisForWall;
-		else if (r_BaseVisibility > 0 && r_BaseVisibility > MaxVisForWall)
-			r_WallVisibility = MaxVisForWall;
-		else
-			r_WallVisibility = r_BaseVisibility;
-
-		r_WallVisibility = (InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
-			(viewwidth*SCREENHEIGHT * 3)) * (r_WallVisibility * FocalTangent);
-
-		// Prevent overflow on floors/ceilings. Note that the calculation of
-		// MaxVisForFloor means that planes less than two units from the player's
-		// view could still overflow, but there is no way to totally eliminate
-		// that while still using fixed point math.
-		if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForFloor)
-			r_FloorVisibility = -MaxVisForFloor;
-		else if (r_BaseVisibility > 0 && r_BaseVisibility > MaxVisForFloor)
-			r_FloorVisibility = MaxVisForFloor;
-		else
-			r_FloorVisibility = r_BaseVisibility;
-
-		r_FloorVisibility = 160.0 * r_FloorVisibility / FocalLengthY;
-
-		r_TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
-		r_SpriteVisibility = r_WallVisibility;
-	}
-
-	double R_GetVisibility()
-	{
-		return CurrentVisibility;
-	}
 
 	void R_SetupColormap(AActor *actor)
 	{
@@ -154,6 +87,62 @@ namespace swrenderer
 		}
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
+	LightVisibility *LightVisibility::Instance()
+	{
+		static LightVisibility instance;
+		return &instance;
+	}
+
+	// Changes how rapidly things get dark with distance
+	void LightVisibility::SetVisibility(double vis)
+	{
+		// Allow negative visibilities, just for novelty's sake
+		vis = clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
+
+		CurrentVisibility = vis;
+
+		if (FocalTangent == 0 || FocalLengthY == 0)
+		{ // If r_visibility is called before the renderer is all set up, don't
+		  // divide by zero. This will be called again later, and the proper
+		  // values can be initialized then.
+			return;
+		}
+
+		BaseVisibility = vis;
+
+		MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * FocalTangent));
+		MaxVisForWall = 32767.0 / MaxVisForWall;
+		MaxVisForFloor = 32767.0 / (viewheight >> 2) * FocalLengthY / 160;
+
+		// Prevent overflow on walls
+		if (BaseVisibility < 0 && BaseVisibility < -MaxVisForWall)
+			WallVisibility = -MaxVisForWall;
+		else if (BaseVisibility > 0 && BaseVisibility > MaxVisForWall)
+			WallVisibility = MaxVisForWall;
+		else
+			WallVisibility = BaseVisibility;
+
+		WallVisibility = (InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
+			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * FocalTangent);
+
+		// Prevent overflow on floors/ceilings. Note that the calculation of
+		// MaxVisForFloor means that planes less than two units from the player's
+		// view could still overflow, but there is no way to totally eliminate
+		// that while still using fixed point math.
+		if (BaseVisibility < 0 && BaseVisibility < -MaxVisForFloor)
+			FloorVisibility = -MaxVisForFloor;
+		else if (BaseVisibility > 0 && BaseVisibility > MaxVisForFloor)
+			FloorVisibility = MaxVisForFloor;
+		else
+			FloorVisibility = BaseVisibility;
+
+		FloorVisibility = 160.0 * FloorVisibility / FocalLengthY;
+
+		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
+	}
+
 	// Controls how quickly light ramps across a 1/z range. Set this, and it
 	// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
 	// currently unused).
@@ -161,11 +150,11 @@ namespace swrenderer
 	{
 		if (argv.argc() < 2)
 		{
-			Printf("Visibility is %g\n", R_GetVisibility());
+			Printf("Visibility is %g\n", LightVisibility::Instance()->GetVisibility());
 		}
 		else if (!netgame)
 		{
-			R_SetVisibility(atof(argv[1]));
+			LightVisibility::Instance()->SetVisibility(atof(argv[1]));
 		}
 		else
 		{

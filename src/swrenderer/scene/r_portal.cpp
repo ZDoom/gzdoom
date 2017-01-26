@@ -106,7 +106,7 @@ namespace swrenderer
 		DAngle savedangle = ViewAngle;
 		ptrdiff_t savedds_p = drawseglist->ds_p - drawseglist->drawsegs;
 		size_t savedinteresting = drawseglist->FirstInterestingDrawseg;
-		double savedvisibility = R_GetVisibility();
+		double savedvisibility = LightVisibility::Instance()->GetVisibility();
 		AActor *savedcamera = camera;
 		sector_t *savedsector = viewsector;
 
@@ -128,7 +128,7 @@ namespace swrenderer
 				// Don't let gun flashes brighten the sky box
 				AActor *sky = port->mSkybox;
 				extralight = 0;
-				R_SetVisibility(sky->args[0] * 0.25f);
+				LightVisibility::Instance()->SetVisibility(sky->args[0] * 0.25f);
 
 				ViewPos = sky->InterpolatedPosition(r_TicFracF);
 				ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
@@ -141,7 +141,7 @@ namespace swrenderer
 			case PORTS_PORTAL:
 			case PORTS_LINKEDPORTAL:
 				extralight = pl->extralight;
-				R_SetVisibility(pl->visibility);
+				LightVisibility::Instance()->SetVisibility(pl->visibility);
 				ViewPos.X = pl->viewpos.X + port->mDisplacement.X;
 				ViewPos.Y = pl->viewpos.Y + port->mDisplacement.Y;
 				ViewPos.Z = pl->viewpos.Z;
@@ -260,7 +260,7 @@ namespace swrenderer
 		camera = savedcamera;
 		viewsector = savedsector;
 		ViewPos = savedpos;
-		R_SetVisibility(savedvisibility);
+		LightVisibility::Instance()->SetVisibility(savedvisibility);
 		extralight = savedextralight;
 		ViewAngle = savedangle;
 		R_SetViewAngle();
@@ -523,7 +523,7 @@ namespace swrenderer
 		stacked_viewpos = ViewPos;
 		stacked_angle = ViewAngle;
 		stacked_extralight = extralight;
-		stacked_visibility = R_GetVisibility();
+		stacked_visibility = LightVisibility::Instance()->GetVisibility();
 	}
 	
 	void RenderPortal::SetMainPortal()

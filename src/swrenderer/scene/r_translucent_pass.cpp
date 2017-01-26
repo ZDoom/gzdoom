@@ -47,7 +47,7 @@ CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 namespace swrenderer
 {
 	bool RenderTranslucentPass::DrewAVoxel;
-	TArray<drawseg_t *> RenderTranslucentPass::portaldrawsegs;
+	TArray<DrawSegment *> RenderTranslucentPass::portaldrawsegs;
 
 	void RenderTranslucentPass::Deinit()
 	{
@@ -68,7 +68,7 @@ namespace swrenderer
 		// a) exit early if no relevant info is found and
 		// b) skip most of the collected drawsegs which have no portal attached.
 		portaldrawsegs.Clear();
-		for (drawseg_t* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
+		for (DrawSegment* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
 		{
 			// I don't know what makes this happen (some old top-down portal code or possibly skybox code? something adds null lines...)
 			// crashes at the first frame of the first map of Action2.wad
@@ -98,7 +98,7 @@ namespace swrenderer
 		if (renderportal->CurrentPortalInSkybox)
 			return false;
 
-		for (drawseg_t *seg : portaldrawsegs)
+		for (DrawSegment *seg : portaldrawsegs)
 		{
 			// ignore segs from other portals
 			if (seg->CurrentPortalUniq != renderportal->CurrentPortalUniq)
@@ -143,7 +143,7 @@ namespace swrenderer
 		{
 			Clip3DFloors::Instance()->fake3D |= FAKE3D_REFRESHCLIP;
 		}
-		for (drawseg_t *ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
+		for (DrawSegment *ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 		{
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)

@@ -17,7 +17,7 @@
 
 namespace swrenderer
 {
-	struct drawseg_t
+	struct DrawSegment
 	{
 		seg_t *curline;
 		float light, lightstep;
@@ -47,9 +47,9 @@ namespace swrenderer
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 	};
 	
-	extern drawseg_t *firstdrawseg;
-	extern drawseg_t *ds_p;
-	extern drawseg_t *drawsegs;
+	extern DrawSegment *firstdrawseg;
+	extern DrawSegment *ds_p;
+	extern DrawSegment *drawsegs;
 
 	extern TArray<size_t> InterestingDrawsegs; // drawsegs that have something drawn on them
 	extern size_t FirstInterestingDrawseg;
@@ -57,10 +57,10 @@ namespace swrenderer
 	void R_ClearDrawSegs();
 	void R_FreeDrawSegs();
 
-	drawseg_t *R_AddDrawSegment();
+	DrawSegment *R_AddDrawSegment();
 	void ClipMidtex(int x1, int x2);
-	void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2);
-	void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
-	void R_RenderFakeWallRange(drawseg_t *ds, int x1, int x2, int wallshade);
-	void R_GetMaskedWallTopBottom(drawseg_t *ds, double &top, double &bot);
+	void R_RenderMaskedSegRange(DrawSegment *ds, int x1, int x2);
+	void R_RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
+	void R_RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
+	void R_GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 }

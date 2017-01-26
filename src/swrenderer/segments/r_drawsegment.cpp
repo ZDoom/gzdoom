@@ -45,9 +45,9 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	drawseg_t *firstdrawseg;
-	drawseg_t *ds_p;
-	drawseg_t *drawsegs;
+	DrawSegment *firstdrawseg;
+	DrawSegment *ds_p;
+	DrawSegment *drawsegs;
 
 	size_t FirstInterestingDrawseg;
 	TArray<size_t> InterestingDrawsegs;
@@ -87,20 +87,20 @@ namespace swrenderer
 		if (drawsegs == nullptr)
 		{
 			MaxDrawSegs = 256; // [RH] Default. Increased as needed.
-			firstdrawseg = drawsegs = (drawseg_t *)M_Malloc (MaxDrawSegs * sizeof(drawseg_t));
+			firstdrawseg = drawsegs = (DrawSegment *)M_Malloc (MaxDrawSegs * sizeof(DrawSegment));
 		}
 		FirstInterestingDrawseg = 0;
 		InterestingDrawsegs.Clear ();
 		ds_p = drawsegs;
 	}
 
-	drawseg_t *R_AddDrawSegment()
+	DrawSegment *R_AddDrawSegment()
 	{
 		if (ds_p == &drawsegs[MaxDrawSegs])
 		{ // [RH] Grab some more drawsegs
 			size_t newdrawsegs = MaxDrawSegs ? MaxDrawSegs * 2 : 32;
 			ptrdiff_t firstofs = firstdrawseg - drawsegs;
-			drawsegs = (drawseg_t *)M_Realloc(drawsegs, newdrawsegs * sizeof(drawseg_t));
+			drawsegs = (DrawSegment *)M_Realloc(drawsegs, newdrawsegs * sizeof(DrawSegment));
 			firstdrawseg = drawsegs + firstofs;
 			ds_p = drawsegs + MaxDrawSegs;
 			MaxDrawSegs = newdrawsegs;
@@ -131,7 +131,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_GetMaskedWallTopBottom(drawseg_t *ds, double &top, double &bot)
+	void R_GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot)
 	{
 		double frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1);
 		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
@@ -151,7 +151,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
+	void R_RenderMaskedSegRange(DrawSegment *ds, int x1, int x2)
 	{
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
 		fixed_t *maskedtexturecol = nullptr;
@@ -478,7 +478,7 @@ namespace swrenderer
 	}
 
 	// kg3D - render one fake wall
-	void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
+	void R_RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
 	{
 		int i;
 		double xscale;
@@ -585,7 +585,7 @@ namespace swrenderer
 	}
 
 	// kg3D - walls of fake floors
-	void R_RenderFakeWallRange(drawseg_t *ds, int x1, int x2, int wallshade)
+	void R_RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade)
 	{
 		FTexture *const DONT_DRAW = ((FTexture*)(intptr_t)-1);
 		int i, j;

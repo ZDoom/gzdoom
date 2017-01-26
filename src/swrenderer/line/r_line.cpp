@@ -321,7 +321,7 @@ namespace swrenderer
 			I_FatalError("Bad R_StoreWallRange: %i to %i", start, stop);
 #endif
 
-		drawseg_t *draw_segment = R_AddDrawSegment();
+		DrawSegment *draw_segment = R_AddDrawSegment();
 
 		if (!rw_prepped)
 		{

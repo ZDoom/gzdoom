@@ -24,7 +24,7 @@ struct FDynamicColormap;
 
 namespace swrenderer
 {
-	struct drawseg_t;
+	struct DrawSegment;
 	struct FWallCoords;
 	class ProjectedWallLine;
 	class ProjectedWallTexcoords;

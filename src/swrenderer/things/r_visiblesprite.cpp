@@ -46,7 +46,7 @@ namespace swrenderer
 
 		VisibleSprite *spr = this;
 
-		drawseg_t *ds;
+		DrawSegment *ds;
 		int i;
 		int x1, x2;
 		int r1, r2;

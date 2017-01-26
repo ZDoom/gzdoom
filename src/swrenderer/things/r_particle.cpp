@@ -263,7 +263,7 @@ namespace swrenderer
 		// particle is drawn, it will be in front of them.
 		for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
 		{
-			drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
+			DrawSegment *ds = &drawsegs[InterestingDrawsegs[p]];
 			// kg3D - no fake segs
 			if (ds->fake) continue;
 			if (ds->x1 >= x2 || ds->x2 <= x1)

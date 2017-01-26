@@ -187,7 +187,7 @@ namespace swrenderer
 			}
 
 			// Create a drawseg to clip sprites to the sky plane
-			drawseg_t *draw_segment = R_AddDrawSegment();
+			DrawSegment *draw_segment = R_AddDrawSegment();
 			draw_segment->CurrentPortalUniq = CurrentPortalUniq;
 			draw_segment->siz1 = INT_MAX;
 			draw_segment->siz2 = INT_MAX;

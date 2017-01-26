@@ -47,7 +47,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
+	void RenderDecal::RenderDecals(side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
@@ -59,7 +59,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
+	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;

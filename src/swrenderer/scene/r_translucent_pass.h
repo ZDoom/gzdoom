@@ -23,7 +23,7 @@ struct FVoxel;
 namespace swrenderer
 {
 	class VisibleSprite;
-	struct drawseg_t;
+	struct DrawSegment;
 
 	class RenderTranslucentPass
 	{
@@ -40,6 +40,6 @@ namespace swrenderer
 		static void CollectPortals();
 		static void DrawMaskedSingle(bool renew);
 
-		static TArray<drawseg_t *> portaldrawsegs;
+		static TArray<DrawSegment *> portaldrawsegs;
 	};
 }

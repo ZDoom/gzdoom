@@ -15,7 +15,7 @@
 
 namespace swrenderer
 {
-	struct drawseg_t;
+	struct DrawSegment;
 	class VisibleSprite;
 
 	class VisibleSpriteList

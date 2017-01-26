@@ -18,16 +18,16 @@ class DBaseDecal;
 
 namespace swrenderer
 {
-	struct drawseg_t;
+	struct DrawSegment;
 	class ProjectedWallTexcoords;
 
 	class RenderDecal
 	{
 	public:
-		static void RenderDecals(side_t *wall, drawseg_t *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom);
+		static void RenderDecals(side_t *wall, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom);
 
 	private:
-		static void Render(side_t *wall, DBaseDecal *first, drawseg_t *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass);
+		static void Render(side_t *wall, DBaseDecal *first, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass);
 		static void DrawColumn(int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 	};
 }

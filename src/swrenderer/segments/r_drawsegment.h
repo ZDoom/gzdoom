@@ -67,32 +67,4 @@ namespace swrenderer
 	private:
 		size_t MaxDrawSegs = 0;
 	};
-	
-	class RenderDrawSegment
-	{
-	public:
-		void Render(DrawSegment *ds, int x1, int x2);
-
-	private:
-		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
-		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
-		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
-
-		sector_t *frontsector = nullptr;
-		sector_t *backsector = nullptr;
-
-		seg_t *curline = nullptr;
-
-		FWallCoords WallC;
-		FWallTmapVals WallT;
-
-		float rw_light = 0.0f;
-		float rw_lightstep = 0.0f;
-		fixed_t rw_offset = 0;
-		FTexture *rw_pic = nullptr;
-
-		ProjectedWallLine wallupper;
-		ProjectedWallLine walllower;
-	};
 }

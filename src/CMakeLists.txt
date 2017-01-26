@@ -863,6 +863,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp
 	swrenderer/line/r_fogboundary.cpp
+	swrenderer/line/r_renderdrawsegment.cpp
 	swrenderer/segments/r_clipsegment.cpp
 	swrenderer/segments/r_drawsegment.cpp
 	swrenderer/segments/r_portalsegment.cpp

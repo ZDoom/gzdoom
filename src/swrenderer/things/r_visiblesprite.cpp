@@ -29,6 +29,7 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/segments/r_drawsegment.h"
+#include "swrenderer/line/r_renderdrawsegment.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_light.h"

@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "r_visiblesprite.h"
+
 struct kvxslab_t;
 struct FVoxelMipLevel;
 struct FVoxel;

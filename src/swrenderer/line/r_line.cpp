@@ -321,7 +321,7 @@ namespace swrenderer
 			I_FatalError("Bad R_StoreWallRange: %i to %i", start, stop);
 #endif
 
-		DrawSegment *draw_segment = R_AddDrawSegment();
+		DrawSegment *draw_segment = DrawSegmentList::Instance()->Add();
 
 		if (!rw_prepped)
 		{
@@ -519,8 +519,8 @@ namespace swrenderer
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
-						size_t drawsegnum = draw_segment - drawsegs;
-						InterestingDrawsegs.Push(drawsegnum);
+						size_t drawsegnum = draw_segment - DrawSegmentList::Instance()->drawsegs;
+						DrawSegmentList::Instance()->InterestingDrawsegs.Push(drawsegnum);
 					}
 				}
 		}

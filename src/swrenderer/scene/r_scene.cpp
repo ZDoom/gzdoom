@@ -132,7 +132,7 @@ namespace swrenderer
 
 		// Clear buffers.
 		RenderClipSegment::Instance()->Clear(0, viewwidth);
-		R_ClearDrawSegs();
+		DrawSegmentList::Instance()->Clear();
 		VisiblePlaneList::Instance()->Clear();
 		RenderTranslucentPass::Clear();
 
@@ -269,7 +269,7 @@ namespace swrenderer
 	{
 		RenderTranslucentPass::Deinit();
 		Clip3DFloors::Instance()->Cleanup();
-		R_FreeDrawSegs();
+		DrawSegmentList::Instance()->Deinit();
 	}
 
 	/////////////////////////////////////////////////////////////////////////

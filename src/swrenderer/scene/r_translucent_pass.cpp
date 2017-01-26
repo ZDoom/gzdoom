@@ -68,7 +68,8 @@ namespace swrenderer
 		// a) exit early if no relevant info is found and
 		// b) skip most of the collected drawsegs which have no portal attached.
 		portaldrawsegs.Clear();
-		for (DrawSegment* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
+		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
+		for (DrawSegment* seg = drawseglist->ds_p; seg-- > drawseglist->firstdrawseg; )
 		{
 			// I don't know what makes this happen (some old top-down portal code or possibly skybox code? something adds null lines...)
 			// crashes at the first frame of the first map of Action2.wad
@@ -133,17 +134,12 @@ namespace swrenderer
 
 		// render any remaining masked mid textures
 
-		// Modified by Lee Killough:
-		// (pointer check was originally nonportable
-		// and buggy, by going past LEFT end of array):
-
-		//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
-
 		if (renew)
 		{
 			Clip3DFloors::Instance()->fake3D |= FAKE3D_REFRESHCLIP;
 		}
-		for (DrawSegment *ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
+		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
+		for (DrawSegment *ds = drawseglist->ds_p; ds-- > drawseglist->firstdrawseg; )
 		{
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
@@ -152,7 +148,8 @@ namespace swrenderer
 			if (ds->fake) continue;
 			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
-				R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
+				RenderDrawSegment renderer;
+				renderer.Render(ds, ds->x1, ds->x2);
 			}
 		}
 	}

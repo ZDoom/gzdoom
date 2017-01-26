@@ -93,6 +93,7 @@ namespace swrenderer
 		numskyboxes = 0;
 
 		VisiblePlaneList *planes = VisiblePlaneList::Instance();
+		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
 
 		if (!planes->HasPortalPlanes())
 			return;
@@ -103,8 +104,8 @@ namespace swrenderer
 		int savedextralight = extralight;
 		DVector3 savedpos = ViewPos;
 		DAngle savedangle = ViewAngle;
-		ptrdiff_t savedds_p = ds_p - drawsegs;
-		size_t savedinteresting = FirstInterestingDrawseg;
+		ptrdiff_t savedds_p = drawseglist->ds_p - drawseglist->drawsegs;
+		size_t savedinteresting = drawseglist->FirstInterestingDrawseg;
 		double savedvisibility = R_GetVisibility();
 		AActor *savedcamera = camera;
 		sector_t *savedsector = viewsector;
@@ -187,7 +188,7 @@ namespace swrenderer
 			}
 
 			// Create a drawseg to clip sprites to the sky plane
-			DrawSegment *draw_segment = R_AddDrawSegment();
+			DrawSegment *draw_segment = drawseglist->Add();
 			draw_segment->CurrentPortalUniq = CurrentPortalUniq;
 			draw_segment->siz1 = INT_MAX;
 			draw_segment->siz2 = INT_MAX;
@@ -207,11 +208,11 @@ namespace swrenderer
 			memcpy(draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 
-			firstdrawseg = draw_segment;
-			FirstInterestingDrawseg = InterestingDrawsegs.Size();
+			drawseglist->firstdrawseg = draw_segment;
+			drawseglist->FirstInterestingDrawseg = drawseglist->InterestingDrawsegs.Size();
 
-			interestingStack.Push(FirstInterestingDrawseg);
-			ptrdiff_t diffnum = firstdrawseg - drawsegs;
+			interestingStack.Push(drawseglist->FirstInterestingDrawseg);
+			ptrdiff_t diffnum = drawseglist->firstdrawseg - drawseglist->drawsegs;
 			drawsegStack.Push(diffnum);
 			VisibleSpriteList::Instance()->PushPortal();
 			viewposStack.Push(ViewPos);
@@ -228,19 +229,19 @@ namespace swrenderer
 		// Draw all the masked textures in a second pass, in the reverse order they
 		// were added. This must be done separately from the previous step for the
 		// sake of nested skyboxes.
-		while (interestingStack.Pop(FirstInterestingDrawseg))
+		while (interestingStack.Pop(drawseglist->FirstInterestingDrawseg))
 		{
 			ptrdiff_t pd = 0;
 
 			drawsegStack.Pop(pd);
-			firstdrawseg = drawsegs + pd;
+			drawseglist->firstdrawseg = drawseglist->drawsegs + pd;
 
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
 
 			RenderTranslucentPass::Render();
 
-			ds_p = firstdrawseg;
+			drawseglist->ds_p = drawseglist->firstdrawseg;
 
 			VisibleSpriteList::Instance()->PopPortal();
 
@@ -251,10 +252,10 @@ namespace swrenderer
 				pl->Render(pl->Alpha, pl->Additive, true);
 			}
 		}
-		firstdrawseg = drawsegs;
-		ds_p = drawsegs + savedds_p;
-		InterestingDrawsegs.Resize((unsigned int)FirstInterestingDrawseg);
-		FirstInterestingDrawseg = savedinteresting;
+		drawseglist->firstdrawseg = drawseglist->drawsegs;
+		drawseglist->ds_p = drawseglist->drawsegs + savedds_p;
+		drawseglist->InterestingDrawsegs.Resize((unsigned int)drawseglist->FirstInterestingDrawseg);
+		drawseglist->FirstInterestingDrawseg = savedinteresting;
 
 		camera = savedcamera;
 		viewsector = savedsector;

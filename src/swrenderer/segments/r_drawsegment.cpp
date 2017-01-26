@@ -45,35 +45,13 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	DrawSegment *firstdrawseg;
-	DrawSegment *ds_p;
-	DrawSegment *drawsegs;
-
-	size_t FirstInterestingDrawseg;
-	TArray<size_t> InterestingDrawsegs;
-
-	namespace
+	DrawSegmentList *DrawSegmentList::Instance()
 	{
-		size_t MaxDrawSegs;
-
-		sector_t *frontsector;
-		sector_t *backsector;
-
-		seg_t *curline;
-
-		FWallCoords WallC;
-		FWallTmapVals WallT;
-
-		float rw_light;
-		float rw_lightstep;
-		fixed_t rw_offset;
-		FTexture *rw_pic;
-
-		ProjectedWallLine wallupper;
-		ProjectedWallLine walllower;
+		static DrawSegmentList instance;
+		return &instance;
 	}
 
-	void R_FreeDrawSegs()
+	void DrawSegmentList::Deinit()
 	{
 		if (drawsegs != nullptr)
 		{
@@ -82,7 +60,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_ClearDrawSegs()
+	void DrawSegmentList::Clear()
 	{
 		if (drawsegs == nullptr)
 		{
@@ -94,7 +72,7 @@ namespace swrenderer
 		ds_p = drawsegs;
 	}
 
-	DrawSegment *R_AddDrawSegment()
+	DrawSegment *DrawSegmentList::Add()
 	{
 		if (ds_p == &drawsegs[MaxDrawSegs])
 		{ // [RH] Grab some more drawsegs
@@ -110,8 +88,10 @@ namespace swrenderer
 		return ds_p++;
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.
-	void ClipMidtex(int x1, int x2)
+	void RenderDrawSegment::ClipMidtex(int x1, int x2)
 	{
 		ProjectedWallLine most;
 
@@ -131,7 +111,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot)
+	void RenderDrawSegment::GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot)
 	{
 		double frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1);
 		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
@@ -151,7 +131,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_RenderMaskedSegRange(DrawSegment *ds, int x1, int x2)
+	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
 		fixed_t *maskedtexturecol = nullptr;
@@ -448,7 +428,7 @@ namespace swrenderer
 			rw_pic = tex;
 
 			double top, bot;
-			R_GetMaskedWallTopBottom(ds, top, bot);
+			GetMaskedWallTopBottom(ds, top, bot);
 
 			RenderWallPart renderWallpart;
 			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
@@ -457,7 +437,7 @@ namespace swrenderer
 	clearfog:
 		if (ds->bFakeBoundary & 3)
 		{
-			R_RenderFakeWallRange(ds, x1, x2, wallshade);
+			RenderFakeWallRange(ds, x1, x2, wallshade);
 		}
 		if (!notrelevant)
 		{
@@ -478,7 +458,7 @@ namespace swrenderer
 	}
 
 	// kg3D - render one fake wall
-	void R_RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
+	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
 	{
 		int i;
 		double xscale;
@@ -578,14 +558,14 @@ namespace swrenderer
 		walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
 
 		double top, bot;
-		R_GetMaskedWallTopBottom(ds, top, bot);
+		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart;
 		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors
-	void R_RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade)
+	void RenderDrawSegment::RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade)
 	{
 		FTexture *const DONT_DRAW = ((FTexture*)(intptr_t)-1);
 		int i, j;
@@ -800,7 +780,7 @@ namespace swrenderer
 				}
 				if (rw_pic != DONT_DRAW)
 				{
-					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
 				}
 				else rw_pic = nullptr;
 				break;
@@ -975,7 +955,7 @@ namespace swrenderer
 
 				if (rw_pic != DONT_DRAW)
 				{
-					R_RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
 				}
 				else
 				{

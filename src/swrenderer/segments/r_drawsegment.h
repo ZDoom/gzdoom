@@ -46,21 +46,53 @@ namespace swrenderer
 		int fake; // ident fake drawseg, don't draw and clip sprites backups
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 	};
-	
-	extern DrawSegment *firstdrawseg;
-	extern DrawSegment *ds_p;
-	extern DrawSegment *drawsegs;
 
-	extern TArray<size_t> InterestingDrawsegs; // drawsegs that have something drawn on them
-	extern size_t FirstInterestingDrawseg;
-	
-	void R_ClearDrawSegs();
-	void R_FreeDrawSegs();
+	class DrawSegmentList
+	{
+	public:
+		static DrawSegmentList *Instance();
 
-	DrawSegment *R_AddDrawSegment();
-	void ClipMidtex(int x1, int x2);
-	void R_RenderMaskedSegRange(DrawSegment *ds, int x1, int x2);
-	void R_RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
-	void R_RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
-	void R_GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
+		DrawSegment *firstdrawseg = nullptr;
+		DrawSegment *ds_p = nullptr;
+		DrawSegment *drawsegs = nullptr;
+
+		TArray<size_t> InterestingDrawsegs; // drawsegs that have something drawn on them
+		size_t FirstInterestingDrawseg = 0;
+
+		void Clear();
+		void Deinit();
+
+		DrawSegment *Add();
+
+	private:
+		size_t MaxDrawSegs = 0;
+	};
+	
+	class RenderDrawSegment
+	{
+	public:
+		void Render(DrawSegment *ds, int x1, int x2);
+
+	private:
+		void ClipMidtex(int x1, int x2);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
+		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
+		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
+
+		sector_t *frontsector = nullptr;
+		sector_t *backsector = nullptr;
+
+		seg_t *curline = nullptr;
+
+		FWallCoords WallC;
+		FWallTmapVals WallT;
+
+		float rw_light = 0.0f;
+		float rw_lightstep = 0.0f;
+		fixed_t rw_offset = 0;
+		FTexture *rw_pic = nullptr;
+
+		ProjectedWallLine wallupper;
+		ProjectedWallLine walllower;
+	};
 }

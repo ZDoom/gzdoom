@@ -282,7 +282,8 @@ namespace swrenderer
 
 		//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
-		for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
+		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
+		for (ds = segmentlist->ds_p; ds-- > segmentlist->firstdrawseg; )  // new -- killough
 		{
 			// [ZZ] portal handling here
 			//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
@@ -327,7 +328,10 @@ namespace swrenderer
 				// seg is behind sprite, so draw the mid texture if it has one
 				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
 					(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
-					R_RenderMaskedSegRange(ds, r1, r2);
+				{
+					RenderDrawSegment renderer;
+					renderer.Render(ds, r1, r2);
+				}
 
 				continue;
 			}

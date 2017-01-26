@@ -261,9 +261,10 @@ namespace swrenderer
 	{
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
-		for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
+		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
+		for (unsigned int p = segmentlist->InterestingDrawsegs.Size(); p-- > segmentlist->FirstInterestingDrawseg; )
 		{
-			DrawSegment *ds = &drawsegs[InterestingDrawsegs[p]];
+			DrawSegment *ds = &segmentlist->drawsegs[segmentlist->InterestingDrawsegs[p]];
 			// kg3D - no fake segs
 			if (ds->fake) continue;
 			if (ds->x1 >= x2 || ds->x2 <= x1)
@@ -274,7 +275,10 @@ namespace swrenderer
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
 				if (ds->CurrentPortalUniq == CurrentPortalUniq)
-					R_RenderMaskedSegRange(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2));
+				{
+					RenderDrawSegment renderer;
+					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2));
+				}
 			}
 		}
 	}

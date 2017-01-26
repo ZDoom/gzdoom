@@ -456,11 +456,12 @@ namespace swrenderer
 				return false;
 			colfunc = &SWPixelFormatDrawers::DrawShadedColumn;
 			drawer_needs_pal_input = true;
-			dc_color = fixedcolormap ? fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
+			CameraLight *cameraLight = CameraLight::Instance();
+			dc_color = cameraLight->fixedcolormap ? cameraLight->fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
 			basecolormap = &ShadeFakeColormap[16 - alpha];
-			if (fixedlightlev >= 0 && fixedcolormap == NULL)
+			if (cameraLight->fixedlightlev >= 0 && cameraLight->fixedcolormap == NULL)
 			{
-				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			}
 			else
 			{

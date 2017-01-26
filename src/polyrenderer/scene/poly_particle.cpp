@@ -70,12 +70,13 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	// int color = (particle->color >> 24) & 0xff; // pal index, I think
 	bool fullbrightSprite = particle->bright != 0;
+	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
 
 	PolyDrawArgs args;
 
 	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->ParticleGlobVis();
 
-	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
+	if (fullbrightSprite || cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

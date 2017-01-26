@@ -197,7 +197,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			R_SetTranslationMap(identitymap);
 	}
 
-	fixedcolormap = dc_fcolormap;
+	CameraLight::Instance()->fixedcolormap = dc_fcolormap;
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
 	if (r_swtruecolor)

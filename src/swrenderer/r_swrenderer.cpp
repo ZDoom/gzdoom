@@ -254,8 +254,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
-	FSWColormap *savecolormap = fixedcolormap;
-	FSpecialColormap *savecm = realfixedcolormap;
+	CameraLight savedCameraLight = *CameraLight::Instance();
 
 	DAngle savedfov = FieldOfView;
 	R_SetFOV ((double)fov);
@@ -315,8 +314,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	tex->SetUpdated();
 
-	fixedcolormap = savecolormap;
-	realfixedcolormap = savecm;
+	*CameraLight::Instance() = savedCameraLight;
 }
 
 sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)

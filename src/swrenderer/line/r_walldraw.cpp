@@ -326,7 +326,8 @@ namespace swrenderer
 
 		dc_wall_fracbits = r_swtruecolor ? FRACBITS : fracbits;
 
-		bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
+		CameraLight *cameraLight = CameraLight::Instance();
+		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);
 		if (fixed)
 		{
 			dc_wall_colormap[0] = dc_colormap;
@@ -339,8 +340,8 @@ namespace swrenderer
 			dc_wall_light[3] = 0;
 		}
 
-		if (fixedcolormap)
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+		if (cameraLight->fixedcolormap)
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else
 			R_SetColorMapLight(basecolormap, 0, 0);
 
@@ -455,7 +456,8 @@ namespace swrenderer
 		}
 		else
 		{
-			if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+			CameraLight *cameraLight = CameraLight::Instance();
+			if (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 			{
 				ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
 			}

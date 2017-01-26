@@ -96,8 +96,10 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
 
+	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+
 	int lightlevel = 255;
-	if (swrenderer::fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+	if (cameraLight->fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
 	{
 		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
 		//basecolormap = light->extra_colormap;
@@ -109,7 +111,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis() * 48.0f;
 	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
-	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
+	if (cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
 		args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = subsectorDepth;
@@ -300,10 +302,12 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	UVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
+	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis() * 48.0f;
 	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
+	if (cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
 		args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;

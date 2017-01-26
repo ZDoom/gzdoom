@@ -352,7 +352,8 @@ FTexture *RenderPolyWall::GetTexture()
 
 int RenderPolyWall::GetLightLevel()
 {
-	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
+	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	if (cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
 	{
 		return 255;
 	}

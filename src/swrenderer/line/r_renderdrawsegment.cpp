@@ -97,7 +97,8 @@ namespace swrenderer
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 
-		if (fixedlightlev < 0)
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedlightlev < 0)
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
@@ -139,10 +140,10 @@ namespace swrenderer
 		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 
-		if (fixedlightlev >= 0)
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-		else if (fixedcolormap != nullptr)
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+		if (cameraLight->fixedlightlev >= 0)
+			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+		else if (cameraLight->fixedcolormap != nullptr)
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		// find positioning
 		texheight = tex->GetScaledHeightDouble();
@@ -269,7 +270,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					if (fixedcolormap == nullptr && fixedlightlev < 0)
+					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
 					{
 						R_SetColorMapLight(basecolormap, rw_light, wallshade);
 					}
@@ -440,10 +441,11 @@ namespace swrenderer
 			texturemid += rowoffset;
 		}
 
-		if (fixedlightlev >= 0)
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-		else if (fixedcolormap != nullptr)
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedlightlev >= 0)
+			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+		else if (cameraLight->fixedcolormap != nullptr)
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;
@@ -665,7 +667,8 @@ namespace swrenderer
 				// correct colors now
 				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
-				if (fixedlightlev < 0)
+				CameraLight *cameraLight = CameraLight::Instance();
+				if (cameraLight->fixedlightlev < 0)
 				{
 					if ((ds->bFakeBoundary & 3) == 2)
 					{
@@ -839,7 +842,8 @@ namespace swrenderer
 				// correct colors now
 				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
-				if (fixedlightlev < 0)
+				CameraLight *cameraLight = CameraLight::Instance();
+				if (cameraLight->fixedlightlev < 0)
 				{
 					if ((ds->bFakeBoundary & 3) == 2)
 					{

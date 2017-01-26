@@ -86,7 +86,8 @@ namespace swrenderer
 		if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gzb >= clip3d->sclipTop) return;
 
 		// kg3D - correct colors now
-		if (!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (!cameraLight->fixedcolormap && cameraLight->fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{

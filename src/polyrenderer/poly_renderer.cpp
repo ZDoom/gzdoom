@@ -69,10 +69,11 @@ void PolyRenderer::RenderView(player_t *player)
 	RenderActorView(player->mo, false);
 
 	// Apply special colormap if the target cannot do it
-	if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+	CameraLight *cameraLight = CameraLight::Instance();
+	if (cameraLight->realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
 	{
 		R_BeginDrawerCommands();
-		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
+		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->realfixedcolormap, screen);
 		R_EndDrawerCommands();
 	}
 
@@ -119,7 +120,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 	R_SetupFrame(actor);
-	swrenderer::R_SetupColormap(actor);
+	swrenderer::CameraLight::Instance()->SetCamera(actor);
 	swrenderer::RenderViewport::Instance()->SetupFreelook();
 
 	ActorRenderFlags savedflags = camera->renderflags;

@@ -253,10 +253,11 @@ namespace swrenderer
 		}
 
 		light = lightleft + (x1 - savecoord.sx1) * lightstep;
-		if (fixedlightlev >= 0)
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-		else if (fixedcolormap != NULL)
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedlightlev >= 0)
+			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+		else if (cameraLight->fixedcolormap != NULL)
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
 			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 		else

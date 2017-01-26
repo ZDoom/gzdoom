@@ -326,14 +326,15 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
-		if (!noaccel && swrenderer::realfixedcolormap == nullptr &&
+		swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+		if (!noaccel && cameraLight->realfixedcolormap == nullptr &&
 			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
 			tex->UseBasePalette())
 		{
 			noaccel = true;
 		}
 		// [SP] If emulating GZDoom fullbright, disable acceleration
-		if (r_fullbrightignoresectorcolor && swrenderer::fixedlightlev >= 0)
+		if (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0)
 			mybasecolormap = &FullNormalLight;
 		if (r_fullbrightignoresectorcolor && !foggy && sprite->GetState()->GetFullbright())
 			mybasecolormap = &FullNormalLight;

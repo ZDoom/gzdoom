@@ -103,9 +103,9 @@ namespace swrenderer
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
-		if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+		if (CameraLight::Instance()->realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
 		{
-			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
+			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->realfixedcolormap, screen);
 		}
 
 		R_EndDrawerCommands();
@@ -125,7 +125,7 @@ namespace swrenderer
 		clip3d->ResetClip(); // reset clips (floor/ceiling)
 
 		R_SetupFrame(actor);
-		R_SetupColormap(actor);
+		CameraLight::Instance()->SetCamera(actor);
 		RenderViewport::Instance()->SetupFreelook();
 
 		RenderPortal::Instance()->CopyStackedViewParameters();
@@ -193,7 +193,7 @@ namespace swrenderer
 		// copy to the screen does not use a special colormap shader.
 		if (!r_shadercolormaps && !r_swtruecolor)
 		{
-			realfixedcolormap = NULL;
+			CameraLight::Instance()->realfixedcolormap = NULL;
 		}
 	}
 

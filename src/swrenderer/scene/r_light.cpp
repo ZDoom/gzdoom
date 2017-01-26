@@ -38,21 +38,23 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	int fixedlightlev;
-	FSWColormap *fixedcolormap;
-	FSpecialColormap *realfixedcolormap;
+	CameraLight *CameraLight::Instance()
+	{
+		static CameraLight instance;
+		return &instance;
+	}
 
-	void R_SetupColormap(AActor *actor)
+	void CameraLight::SetCamera(AActor *actor)
 	{
 		player_t *player = actor->player;
-		if (camera && camera->player != 0)
+		if (camera && camera->player != nullptr)
 			player = camera->player;
 
-		realfixedcolormap = NULL;
-		fixedcolormap = NULL;
+		realfixedcolormap = nullptr;
+		fixedcolormap = nullptr;
 		fixedlightlev = -1;
 
-		if (player != NULL && camera == player->mo)
+		if (player != nullptr && camera == player->mo)
 		{
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
@@ -80,7 +82,7 @@ namespace swrenderer
 			}
 		}
 		// [RH] Inverse light for shooting the Sigil
-		if (fixedcolormap == NULL && extralight == INT_MIN)
+		if (fixedcolormap == nullptr && extralight == INT_MIN)
 		{
 			fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
 			extralight = 0;
@@ -184,15 +186,16 @@ namespace swrenderer
 			basecolormap = GetSpecialLights(basecolormap->Color, basecolormap->Fade.InverseColor(), basecolormap->Desaturate);
 		}
 
-		if (fixedcolormap)
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedcolormap)
 		{
-			BaseColormap = fixedcolormap;
+			BaseColormap = cameraLight->fixedcolormap;
 			ColormapNum = 0;
 		}
-		else if (fixedlightlev >= 0)
+		else if (cameraLight->fixedlightlev >= 0)
 		{
 			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
-			ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+			ColormapNum = cameraLight->fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (fullbright)
 		{

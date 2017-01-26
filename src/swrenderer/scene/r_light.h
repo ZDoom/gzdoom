@@ -54,11 +54,17 @@ struct FSWColormap;
 
 namespace swrenderer
 {
-	extern int fixedlightlev;
-	extern FSWColormap *fixedcolormap;
-	extern FSpecialColormap *realfixedcolormap;
+	class CameraLight
+	{
+	public:
+		static CameraLight *Instance();
 
-	void R_SetupColormap(AActor *actor);
+		int fixedlightlev = 0;
+		FSWColormap *fixedcolormap = nullptr;
+		FSpecialColormap *realfixedcolormap = nullptr;
+
+		void SetCamera(AActor *actor);
+	};
 
 	class LightVisibility
 	{

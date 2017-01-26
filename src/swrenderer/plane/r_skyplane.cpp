@@ -148,21 +148,22 @@ namespace swrenderer
 		}
 
 		bool fakefixed = false;
-		if (fixedcolormap)
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedcolormap)
 		{
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		}
 		else
 		{
 			fakefixed = true;
-			fixedcolormap = &NormalLight;
-			R_SetColorMapLight(fixedcolormap, 0, 0);
+			cameraLight->fixedcolormap = &NormalLight;
+			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		}
 
 		DrawSky(pl);
 
 		if (fakefixed)
-			fixedcolormap = NULL;
+			cameraLight->fixedcolormap = nullptr;
 	}
 
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)

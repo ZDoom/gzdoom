@@ -133,12 +133,14 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
 
+	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+
 	PolyDrawArgs args;
 	args.uniforms.flags = 0;
 	args.SetColormap(front->ColorMap);
 	args.SetTexture(tex, decal->Translation, true);
 	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
-	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
+	if (fullbrightSprite || cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags |= TriUniforms::fixed_light;

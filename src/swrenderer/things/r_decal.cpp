@@ -147,6 +147,7 @@ namespace swrenderer
 		decal_left = decal_pos - edge_left * angvec - ViewPos;
 		decal_right = decal_pos + edge_right * angvec - ViewPos;
 
+		CameraLight *cameraLight;
 		double texturemid;
 
 		if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
@@ -253,7 +254,7 @@ namespace swrenderer
 		}
 
 		light = lightleft + (x1 - savecoord.sx1) * lightstep;
-		CameraLight *cameraLight = CameraLight::Instance();
+		cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != NULL)

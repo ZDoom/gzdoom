@@ -61,7 +61,6 @@ namespace swrenderer
 	void RenderTranslucentPass::Clear()
 	{
 		VisibleSpriteList::Instance()->Clear();
-		DrewAVoxel = false;
 	}
 
 	void RenderTranslucentPass::CollectPortals()
@@ -161,7 +160,7 @@ namespace swrenderer
 	void RenderTranslucentPass::Render()
 	{
 		CollectPortals();
-		VisibleSpriteList::Instance()->Sort(DrewAVoxel);
+		VisibleSpriteList::Instance()->Sort();
 
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 		if (clip3d->height_top == nullptr)

@@ -39,6 +39,7 @@ namespace swrenderer
 		Sprites.Clear();
 		StartIndices.Clear();
 		SortedSprites.Clear();
+		DrewAVoxel = false;
 	}
 
 	void VisibleSpriteList::PushPortal()
@@ -52,13 +53,17 @@ namespace swrenderer
 		StartIndices.Pop();
 	}
 
-	void VisibleSpriteList::Push(VisibleSprite *sprite)
+	void VisibleSpriteList::Push(VisibleSprite *sprite, bool isVoxel)
 	{
 		Sprites.Push(sprite);
+		if (isVoxel)
+			DrewAVoxel = true;
 	}
 
-	void VisibleSpriteList::Sort(bool compare2d)
+	void VisibleSpriteList::Sort()
 	{
+		bool compare2d = DrewAVoxel;
+
 		unsigned int first = StartIndices.Size() == 0 ? 0 : StartIndices.Last();
 		unsigned int count = Sprites.Size() - first;
 

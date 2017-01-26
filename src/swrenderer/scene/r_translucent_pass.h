@@ -34,8 +34,6 @@ namespace swrenderer
 		void Clear();
 		void Render();
 
-		bool DrewAVoxel = false;
-
 		bool ClipSpriteColumnWithPortals(int x, VisibleSprite *spr);
 
 	private:

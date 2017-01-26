@@ -177,8 +177,7 @@ namespace swrenderer
 
 		vis->Light.SetColormap(r_SpriteVisibility / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-		VisibleSpriteList::Instance()->Push(vis);
-		RenderTranslucentPass::Instance()->DrewAVoxel = true;
+		VisibleSpriteList::Instance()->Push(vis, true);
 	}
 
 	void RenderVoxel::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)

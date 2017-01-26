@@ -288,9 +288,11 @@ namespace swrenderer
 
 			if (x < x2)
 			{
+				RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
+
 				while (x < x2)
 				{
-					if (!RenderTranslucentPass::ClipSpriteColumnWithPortals(x, vis))
+					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
 						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;

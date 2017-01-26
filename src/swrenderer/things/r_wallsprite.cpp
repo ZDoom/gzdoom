@@ -226,13 +226,15 @@ namespace swrenderer
 		}
 		else
 		{
+			RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
+
 			while (x < x2)
 			{
 				if (calclighting)
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, light, shade);
 				}
-				if (!RenderTranslucentPass::ClipSpriteColumnWithPortals(x, spr))
+				if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
 					DrawColumn(x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;

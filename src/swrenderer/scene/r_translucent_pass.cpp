@@ -47,8 +47,11 @@ CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	bool RenderTranslucentPass::DrewAVoxel;
-	TArray<DrawSegment *> RenderTranslucentPass::portaldrawsegs;
+	RenderTranslucentPass *RenderTranslucentPass::Instance()
+	{
+		static RenderTranslucentPass instance;
+		return &instance;
+	}
 
 	void RenderTranslucentPass::Deinit()
 	{

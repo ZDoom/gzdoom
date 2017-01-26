@@ -134,7 +134,7 @@ namespace swrenderer
 		RenderClipSegment::Instance()->Clear(0, viewwidth);
 		DrawSegmentList::Instance()->Clear();
 		VisiblePlaneList::Instance()->Clear();
-		RenderTranslucentPass::Clear();
+		RenderTranslucentPass::Instance()->Clear();
 
 		// opening / clipping determination
 		RenderOpaquePass::Instance()->ClearClip();
@@ -182,7 +182,7 @@ namespace swrenderer
 			NetUpdate();
 
 			MaskedCycles.Clock();
-			RenderTranslucentPass::Render();
+			RenderTranslucentPass::Instance()->Render();
 			MaskedCycles.Unclock();
 
 			NetUpdate();
@@ -267,7 +267,7 @@ namespace swrenderer
 
 	void RenderScene::Deinit()
 	{
-		RenderTranslucentPass::Deinit();
+		RenderTranslucentPass::Instance()->Deinit();
 		Clip3DFloors::Instance()->Cleanup();
 		DrawSegmentList::Instance()->Deinit();
 	}

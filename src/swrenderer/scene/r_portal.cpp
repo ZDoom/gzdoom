@@ -239,7 +239,7 @@ namespace swrenderer
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
 
-			RenderTranslucentPass::Render();
+			RenderTranslucentPass::Instance()->Render();
 
 			drawseglist->ds_p = drawseglist->firstdrawseg;
 
@@ -458,7 +458,7 @@ namespace swrenderer
 		NetUpdate();
 
 		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
-		RenderTranslucentPass::Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
+		RenderTranslucentPass::Instance()->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
 		MaskedCycles.Unclock();
 
 		NetUpdate();

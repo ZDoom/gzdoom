@@ -63,7 +63,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 16)
 	{
-		Printf (TEXTCOLOR_RED"R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan[lump]->Name.GetChars());
+		Printf (TEXTCOLOR_RED "R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan[lump]->Name.GetChars());
 		return false;
 	}
 

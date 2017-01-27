@@ -1217,9 +1217,8 @@ static void ParseDamageDefinition(FScanner &sc)
 //
 //==========================================================================
 
-void ParseDecorate (FScanner &sc)
+void ParseDecorate (FScanner &sc, PNamespace *ns)
 {
-	auto ns = Namespaces.NewNamespace(sc.LumpNum);
 	// Get actor class name.
 	for(;;)
 	{
@@ -1245,7 +1244,7 @@ void ParseDecorate (FScanner &sc)
 			}
 			FScanner newscanner;
 			newscanner.Open(sc.String);
-			ParseDecorate(newscanner);
+			ParseDecorate(newscanner, ns);
 			break;
 		}
 
@@ -1308,6 +1307,7 @@ void ParseAllDecorate()
 	while ((lump = Wads.FindLump("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
-		ParseDecorate(sc);
+		auto ns = Namespaces.NewNamespace(sc.LumpNum);
+		ParseDecorate(sc, ns);
 	}
 }

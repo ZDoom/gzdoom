@@ -3535,9 +3535,9 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (mo->bouncecount>0 && --mo->bouncecount == 0)
 		{
 			if (mo->flags & MF_MISSILE)
-				P_ExplodeMissile(mo, nullptr, nullptr);
+				P_ExplodeMissile(mo, nullptr, BlockingMobj);
 			else
-				mo->CallDie(nullptr, nullptr);
+				mo->CallDie(BlockingMobj, nullptr);
 			return true;
 		}
 

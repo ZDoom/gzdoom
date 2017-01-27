@@ -1814,15 +1814,18 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	mo->effects = 0;		// [RH]
 	mo->flags &= ~MF_SHOOTABLE;
 	
-	FState *nextstate=NULL;
+	FState *nextstate = nullptr;
 	
-	if (target != NULL && ((target->flags & (MF_SHOOTABLE|MF_CORPSE)) || (target->flags6 & MF6_KILLED)) )
+	if (target != nullptr)
 	{
 		if (mo->flags7 & MF7_HITTARGET)	mo->target = target;
 		if (mo->flags7 & MF7_HITMASTER)	mo->master = target;
 		if (mo->flags7 & MF7_HITTRACER)	mo->tracer = target;
-		if (target->flags & MF_NOBLOOD) nextstate = mo->FindState(NAME_Crash);
-		if (nextstate == NULL) nextstate = mo->FindState(NAME_Death, NAME_Extreme);
+		if ((target->flags & (MF_SHOOTABLE | MF_CORPSE)) || (target->flags6 & MF6_KILLED))
+		{
+			if (target->flags & MF_NOBLOOD) nextstate = mo->FindState(NAME_Crash);
+			if (nextstate == NULL) nextstate = mo->FindState(NAME_Death, NAME_Extreme);
+		}
 	}
 	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death);
 	

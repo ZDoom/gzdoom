@@ -8202,14 +8202,16 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				// only cast implicit-string types for vararg, leave everything else as-is
 				// this was outright copypasted from FxFormat
-				ArgList[i] = ArgList[i]->Resolve(ctx);
-				if (ArgList[i]->ValueType == TypeName ||
-					ArgList[i]->ValueType == TypeSound)
+				x = ArgList[i]->Resolve(ctx);
+				if (x)
 				{
-					x = new FxStringCast(ArgList[i]);
-					x = x->Resolve(ctx);
+					if (x->ValueType == TypeName ||
+						x->ValueType == TypeSound)
+					{
+						x = new FxStringCast(ArgList[i]);
+						x = x->Resolve(ctx);
+					}
 				}
-				else x = ArgList[i];
 			}
 			else if (!(flag & (VARF_Ref|VARF_Out)))
 			{

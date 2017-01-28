@@ -43,8 +43,6 @@ EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_blendmethod)
 
-CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-
 namespace swrenderer
 {
 	RenderTranslucentPass *RenderTranslucentPass::Instance()

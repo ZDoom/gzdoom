@@ -42,8 +42,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+#include "g_levellocals.h"
 
 namespace swrenderer
 {
@@ -255,11 +254,11 @@ namespace swrenderer
 		light = lightleft + (x1 - savecoord.sx1) * lightstep;
 		cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != NULL)
 			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
 		else
 			calclighting = true;
 

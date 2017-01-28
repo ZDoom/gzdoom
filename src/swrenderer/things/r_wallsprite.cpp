@@ -57,8 +57,7 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/r_memory.h"
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+#include "g_levellocals.h"
 
 namespace swrenderer
 {
@@ -190,7 +189,7 @@ namespace swrenderer
 		else if (cameraLight->fixedcolormap != NULL)
 			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
 		else
 			calclighting = true;
 

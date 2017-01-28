@@ -30,11 +30,11 @@
 #include "d_player.h"
 #include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, st_scale)
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 
 void RenderPolyPlayerSprites::Render()
@@ -269,12 +269,12 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 			}
 			if (swrenderer::fixedlightlev >= 0)
 			{
-				BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				BaseColormap = (!level.PreserveSectorColor()) ? &FullNormalLight : mybasecolormap;
 				ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && sprite->GetState()->GetFullbright())
 			{ // full bright
-				BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
+				BaseColormap = (!level.PreserveSectorColor()) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
 				ColormapNum = 0;
 			}
 			else
@@ -334,9 +334,9 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 			noaccel = true;
 		}
 		// [SP] If emulating GZDoom fullbright, disable acceleration
-		if (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0)
+		if (!level.PreserveSectorColor() && cameraLight->fixedlightlev >= 0)
 			mybasecolormap = &FullNormalLight;
-		if (r_fullbrightignoresectorcolor && !foggy && sprite->GetState()->GetFullbright())
+		if (!level.PreserveSectorColor() && !foggy && sprite->GetState()->GetFullbright())
 			mybasecolormap = &FullNormalLight;
 		colormap_to_use = mybasecolormap;
 	}

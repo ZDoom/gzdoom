@@ -52,7 +52,6 @@
 
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
@@ -935,7 +934,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
 			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 

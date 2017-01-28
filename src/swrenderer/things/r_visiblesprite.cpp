@@ -36,8 +36,6 @@
 #include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/r_memory.h"
 
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
-
 namespace swrenderer
 {
 	void VisibleSprite::Render()

@@ -9,25 +9,28 @@
 // Charged Axe Puff
 flickerlight CAXEPUFF1
 {
-    color 0.4 0.4 1.0
-    size 40
-    secondarySize 44
+    attenuate 1
+	color 0.4 0.4 1.0
+    size 60
+    secondarysize 66
     chance 0.5
 }
 
 flickerlight CAXEPUFF2
 {
-    color 0.2 0.2 0.8
-    size 48
-    secondarySize 52
+    attenuate 1
+	color 0.2 0.2 0.8
+    size 72
+    secondarysize 78
     chance 0.5
 }
 
 flickerlight CAXEPUFF3
 {
-    color 0.0 0.0 0.5
-    size 44
-    secondarySize 48
+    attenuate 1
+	color 0.0 0.0 0.5
+    size 66
+    secondarysize 72
     chance 0.5
 }
 
@@ -45,57 +48,64 @@ object AxePuffGlow
 // Flying Hammer
 flickerlight THROWHAMMER
 {
-    color 1.0 0.2 0.0
-    size 48
-    secondarySize 52
+    attenuate 1
+	color 1.0 0.2 0.0
+    size 72
+    secondarysize 78
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X1
 {
-    color 1.0 0.7 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X2
 {
-    color 1.0 0.7 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X3
 {
-    color 1.0 0.7 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 108
+    secondarysize 120
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X4
 {
-    color 0.8 0.8 0.0
-    size 80
-    secondarySize 84
+    attenuate 1
+	color 0.8 0.8 0.0
+    size 120
+    secondarysize 132
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X5
 {
-    color 0.5 0.5 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.5 0.5 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight THROWHAMMER_X6
 {
-    color 0.2 0.2 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 0.2 0.2 0.0
+    size 60
+    secondarysize 72
     chance 0.4
 }
 
@@ -125,49 +135,55 @@ object HammerMissile
 // Fighter sword shot
 flickerlight SWORDSHOT
 {
-    color 0.0 1.0 0.0
-    size 48
-    secondarySize 44
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 72
+    secondarysize 66
     chance 0.4
 }
 
 flickerlight SWORDSHOT_X1
 {
-    color 0.0 1.0 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight SWORDSHOT_X2
 {
-    color 0.0 1.0 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight SWORDSHOT_X3
 {
-    color 0.0 0.7 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.0 0.7 0.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight SWORDSHOT_X4
 {
-    color 0.0 0.4 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 0.0 0.4 0.0
+    size 60
+    secondarysize 72
     chance 0.4
 }
 
 flickerlight SWORDSHOT_X5
 {
-    color 0.0 0.2 0.0
-    size 32
-    secondarySize 40
+    attenuate 1
+	color 0.0 0.2 0.0
+    size 48
+    secondarysize 60
     chance 0.4
 }
 
@@ -191,39 +207,44 @@ object FSwordMissile
 // Cleric Serpent Staff ball
 pointlight CSTAFFBALL
 {
-    color 0.0 1.0 0.0
-    size 40
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 60
 }
 
 flickerlight CSTAFFBALL_X1
 {
-    color 0.0 1.0 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 84
+    secondarysize 96
     chance 0.3
 }
 
 flickerlight CSTAFFBALL_X2
 {
-    color 0.0 0.7 0.0
-    size 60
-    secondarySize 68
+    attenuate 1
+	color 0.0 0.7 0.0
+    size 90
+    secondarysize 104
     chance 0.3
 }
 
 flickerlight CSTAFFBALL_X3
 {
-    color 0.0 0.5 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.0 0.5 0.0
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
 flickerlight CSTAFFBALL_X4
 {
-    color 0.0 0.3 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.0 0.3 0.0
+    size 108
+    secondarysize 120
     chance 0.3
 }
 
@@ -241,49 +262,55 @@ object CStaffMissile
 // Cleric fire hands
 flickerlight CFLAMETRAIL
 {
-    color 1.0 0.8 0.0
-    size 40
-    secondarySize 44
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 60
+    secondarysize 66
     chance 0.5
 }
 
 flickerlight CFLAME1
 {
-    color 1.0 0.8 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight CFLAME2
 {
-    color 1.0 0.8 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight CFLAME3
 {
-    color 0.7 0.4 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.7 0.4 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight CFLAME4
 {
-    color 0.5 0.2 0.0
-    size 32
-    secondarySize 40
+    attenuate 1
+	color 0.5 0.2 0.0
+    size 48
+    secondarysize 60
     chance 0.4
 }
 
 flickerlight CFLAME5
 {
-    color 0.2 0.2 0.0
-    size 24
-    secondarySize 32
+    attenuate 1
+	color 0.2 0.2 0.0
+    size 36
+    secondarysize 48
     chance 0.4
 }
 
@@ -310,9 +337,10 @@ object CFlameFloor
 // Wraithverge
 flickerlight GHOST
 {
-    color 1.0 1.0 1.0
-    size 56
-    secondarySize 52
+    attenuate 1
+	color 1.0 1.0 1.0
+    size 84
+    secondarysize 78
     chance 0.7
     subtractive 1
 }
@@ -331,26 +359,30 @@ object HolySpirit
 // Mage wand
 pointlight MWAND_X1
 {
-    color 0.3 0.3 1.0
-    size 32
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 48
 }
 
 pointlight MWAND_X2
 {
-    color 0.2 0.2 0.8
-    size 40
+    attenuate 1
+	color 0.2 0.2 0.8
+    size 60
 }
 
 pointlight MWAND_X3
 {
-    color 0.1 0.1 0.6
-    size 48
+    attenuate 1
+	color 0.1 0.1 0.6
+    size 72
 }
 
 pointlight MWAND_X4
 {
-    color 0.0 0.0 0.4
-    size 56
+    attenuate 1
+	color 0.0 0.0 0.4
+    size 84
 }
 
 object MageWandMissile
@@ -364,41 +396,46 @@ object MageWandMissile
 // Frost shards
 flickerlight MFROSTSHARD
 {
-    color 0.3 0.3 1.0
-    size 32
-    secondarySize 40
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 48
+    secondarysize 60
     chance 0.3
 }
 
 flickerlight MFROSTSHARD_X1
 {
-    color 0.3 0.3 1.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 60
+    secondarysize 72
     chance 0.3
 }
 
 flickerlight MFROSTSHARD_X2
 {
-    color 0.2 0.2 0.8
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.2 0.2 0.8
+    size 72
+    secondarysize 84
     chance 0.3
 }
 
 flickerlight MFROSTSHARD_X3
 {
-    color 0.1 0.1 0.5
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.1 0.1 0.5
+    size 84
+    secondarysize 96
     chance 0.3
 }
 
 flickerlight MFROSTSHARD_X4
 {
-    color 0.0 0.0 0.2
-    size 64
-    secondarySize 68
+    attenuate 1
+	color 0.0 0.0 0.2
+    size 96
+    secondarysize 104
     chance 0.3
 }
 
@@ -415,9 +452,10 @@ object FrostMissile
 // Mage lightning
 flickerlight MAGELIGHT
 {
-    color 0.4 0.4 1.0
-    size 48
-    secondarySize 52
+    attenuate 1
+	color 0.4 0.4 1.0
+    size 72
+    secondarysize 78
     chance 0.7
 }
 
@@ -442,41 +480,46 @@ object LightningZap
 // BloodScourge
 flickerlight BSBALL
 {
-    color 1.0 0.2 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 1.0 0.2 0.0
+    size 72
+    secondarysize 84
     chance 0.3
 }
 
 flickerlight BSBALL_X1
 {
-    color 1.0 0.4 0.0
-    size 24
-    secondarySize 28
+    attenuate 1
+	color 1.0 0.4 0.0
+    size 36
+    secondarysize 42
     chance 0.3
 }
 
 flickerlight BSBALL_X2
 {
-    color 0.7 0.3 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.7 0.3 0.0
+    size 72
+    secondarysize 84
     chance 0.3
 }
 
 flickerlight BSBALL_X3
 {
-    color 0.5 0.2 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.5 0.2 0.0
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
 flickerlight BSBALL_X4
 {
-    color 0.3 0.1 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 0.3 0.1 0.0
+    size 60
+    secondarysize 72
     chance 0.3
 }
 
@@ -500,39 +543,44 @@ object MageStaffFX2
 // Stalker slimeball
 pointlight STALKERSLIME
 {
-    color 0.0 1.0 0.0
-    size 40
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 60
 }
 
 flickerlight STALKERSLIME_X1
 {
-    color 0.0 1.0 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight STALKERSLIME_X2
 {
-    color 0.0 0.7 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.0 0.7 0.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight STALKERSLIME_X3
 {
-    color 0.0 0.5 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.0 0.5 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight STALKERSLIME_X4
 {
-    color 0.0 0.2 0.0
-    size 68
-    secondarySize 76
+    attenuate 1
+	color 0.0 0.2 0.0
+    size 104
+    secondarysize 114
     chance 0.4
 }
 
@@ -552,39 +600,44 @@ object SerpentFX
 // Centaur fireball
 pointlight TAURBALL
 {
-    color 0.2 0.2 1.0
-    size 48
+    attenuate 1
+	color 0.2 0.2 1.0
+    size 72
 }
 
 flickerlight TAURBALL_X1
 {
-    color 0.2 0.2 1.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.2 0.2 1.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight TAURBALL_X2
 {
-    color 0.2 0.2 0.7
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.2 0.2 0.7
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight TAURBALL_X3
 {
-    color 0.1 0.1 0.5
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.1 0.1 0.5
+    size 108
+    secondarysize 120
     chance 0.4
 }
 
 flickerlight TAURBALL_X4
 {
-    color 0.0 0.0 0.3
-    size 80
-    secondarySize 88
+    attenuate 1
+	color 0.0 0.0 0.3
+    size 120
+    secondarysize 132
     chance 0.4
 }
 
@@ -602,41 +655,46 @@ object CentaurFX
 // Green Chaos Serpent fireball
 flickerlight SERPENTBALL
 {
-    color 1.0 0.95 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 1.0 0.95 0.0
+    size 84
+    secondarysize 96
     chance 0.5
 }
 
 flickerlight SERPENTBALL_X1
 {
-    color 1.0 0.95 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.95 0.0
+    size 96
+    secondarysize 108
     chance 0.5
 }
 
 flickerlight SERPENTBALL_X2
 {
-    color 0.8 0.8 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.8 0.8 0.0
+    size 108
+    secondarysize 120
     chance 0.5
 }
 
 flickerlight SERPENTBALL_X3
 {
-    color 0.5 0.5 0.0
-    size 88
-    secondarySize 96
+    attenuate 1
+	color 0.5 0.5 0.0
+    size 132
+    secondarysize 144
     chance 0.5
 }
 
 flickerlight SERPENTBALL_X4
 {
-    color 0.2 0.2 0.0
-    size 96
-    secondarySize 104
+    attenuate 1
+	color 0.2 0.2 0.0
+    size 144
+    secondarysize 156
     chance 0.5
 }
 
@@ -656,39 +714,44 @@ object Demon1FX1
 // Brown Chaos Serpent gasball
 pointlight CSGASBALL
 {
-    color 0.0 1.0 0.0
-    size 48
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 72
 }
 
 flickerlight CSGASBALL_X1
 {
-    color 0.0 1.0 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 96
+    secondarysize 108
     chance 0.5
 }
 
 flickerlight CSGASBALL_X2
 {
-    color 0.0 0.8 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.0 0.8 0.0
+    size 108
+    secondarysize 120
     chance 0.5
 }
 
 flickerlight CSGASBALL_X3
 {
-    color 0.0 0.5 0.0
-    size 88
-    secondarySize 96
+    attenuate 1
+	color 0.0 0.5 0.0
+    size 132
+    secondarysize 144
     chance 0.5
 }
 
 flickerlight CSGASBALL_X4
 {
-    color 0.0 0.2 0.0
-    size 96
-    secondarySize 104
+    attenuate 1
+	color 0.0 0.2 0.0
+    size 144
+    secondarysize 156
     chance 0.5
 }
 
@@ -712,29 +775,33 @@ object Demon2FX1
 // Reaver fireball
 pointlight REAVERBALL
 {
-    color 1.0 0.5 0.0
-    size 48
+    attenuate 1
+	color 1.0 0.5 0.0
+    size 72
 }
 
 flickerlight REAVERBALL_X1
 {
-    color 1.0 0.7 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 96
+    secondarysize 108
 }
 
 flickerlight REAVERBALL_X2
 {
-    color 0.6 0.2 0.0
-    size 60
-    secondarySize 68
+    attenuate 1
+	color 0.6 0.2 0.0
+    size 90
+    secondarysize 104
 }
 
 flickerlight REAVERBALL_X3
 {
-    color 0.2 0.0 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.2 0.0 0.0
+    size 84
+    secondarysize 96
 }
 
 object WraithFX1
@@ -751,9 +818,10 @@ object WraithFX1
 // Dragon Fireball
 flickerlight DRAGONBALL
 {
-    color 1.0 1.0 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 1.0 0.0
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
@@ -775,33 +843,37 @@ object DragonFireball
 
 flickerlight DRAGONBALL_X1
 {
-    color 0.8 0.8 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.8 0.8 0.0
+    size 108
+    secondarysize 120
     chance 0.3
 }
 
 flickerlight DRAGONBALL_X2
 {
-    color 0.6 0.6 0.0
-    size 96
-    secondarySize 104
+    attenuate 1
+	color 0.6 0.6 0.0
+    size 144
+    secondarysize 156
     chance 0.3
 }
 
 flickerlight DRAGONBALL_X3
 {
-    color 0.4 0.4 0.0
-    size 88
-    secondarySize 96
+    attenuate 1
+	color 0.4 0.4 0.0
+    size 132
+    secondarysize 144
     chance 0.3
 }
 
 flickerlight DRAGONBALL_X4
 {
-    color 0.2 0.2 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.2 0.2 0.0
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
@@ -819,39 +891,44 @@ object DragonExplosion
 // Bishop fireball
 pointlight BISHOPBALL
 {
-    color 0.6 1.0 0.0
-    size 48
+    attenuate 1
+	color 0.6 1.0 0.0
+    size 72
 }
 
 flickerlight BISHOPBALL_X1
 {
-    color 0.6 1.0 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.6 1.0 0.0
+    size 84
+    secondarysize 96
     chance 0.3
 }
 
 flickerlight BISHOPBALL_X2
 {
-    color 0.2 0.8 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.2 0.8 0.0
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
 flickerlight BISHOPBALL_X3
 {
-    color 0.1 0.5 0.0
-    size 72
-    secondarySize 80
+    attenuate 1
+	color 0.1 0.5 0.0
+    size 108
+    secondarysize 120
     chance 0.3
 }
 
 flickerlight BISHOPBALL_X4
 {
-    color 0.0 0.3 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.0 0.3 0.0
+    size 84
+    secondarysize 96
     chance 0.3
 }
 
@@ -871,41 +948,46 @@ object BishopFX
 // Fire gargoyle
 flickerlight FGARG
 {
-    color 1.0 1.0 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 1.0 1.0 0.0
+    size 60
+    secondarysize 72
     chance 0.4
 }
 
 flickerlight FGARGATK
 {
-    color 1.0 1.0 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 1.0 1.0 0.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight FGARGBALL_X1
 {
-    color 0.8 0.8 0.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.8 0.8 0.0
+    size 84
+    secondarysize 96
     chance 0.4
 }
 
 flickerlight FGARGBALL_X2
 {
-    color 0.5 0.5 0.0
-    size 50
-    secondarySize 54
+    attenuate 1
+	color 0.5 0.5 0.0
+    size 75
+    secondarysize 81
     chance 0.4
 }
 
 flickerlight FGARGBALL_X3
 {
-    color 0.2 0.2 0.0
-    size 44
-    secondarySize 48
+    attenuate 1
+	color 0.2 0.2 0.0
+    size 66
+    secondarysize 72
     chance 0.4
 }
 
@@ -934,52 +1016,59 @@ object FireDemonMissile
 // Wendigo
 pointlight ICEGUYATK
 {
-    color 0.3 0.3 1.0
-    size 64
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 96
 }
 
 pointlight ICEBALL
 {
-    color 0.3 0.3 1.0
-    size 56
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 84
 }
 
 flickerlight ICEBALL_X1
 {
-    color 0.3 0.3 1.0
-    size 56
-    secondarySize 64
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 84
+    secondarysize 96
     chance 0.3
 }
 
 flickerlight ICEBALL_X2
 {
-    color 0.3 0.3 0.7
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.3 0.3 0.7
+    size 96
+    secondarysize 108
     chance 0.3
 }
 
 flickerlight ICEBALL_X3
 {
-    color 0.2 0.2 0.4
-    size 72
-    secondarySize 74
+    attenuate 1
+	color 0.2 0.2 0.4
+    size 108
+    secondarysize 111
     chance 0.3
 }
 
 flickerlight ICEBALL_X4
 {
-    color 0.0 0.0 0.2
-    size 74
-    secondarySize 80
+    attenuate 1
+	color 0.0 0.0 0.2
+    size 111
+    secondarysize 120
     chance 0.3
 }
 
 pointlight ICESHARD
 {
-    color 0.3 0.3 1.0
-    size 40
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 60
 }
 
 object IceGuyFX
@@ -1009,83 +1098,94 @@ object IceGuy
 // Heresiarch
 flickerlight HARCHATK
 {
-    color 1.0 0.0 1.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.0 1.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 pointlight HARCHBLUCUBE
 {
-    color 0.0 0.0 1.0
-    size 32
+    attenuate 1
+	color 0.0 0.0 1.0
+    size 48
 }
 
 pointlight HARCHGRNCUBE
 {
-    color 0.0 1.0 0.0
-    size 32
+    attenuate 1
+	color 0.0 1.0 0.0
+    size 48
 }
 
 pointlight HARCHPURCUBE
 {
-    color 1.0 0.0 1.0
-    size 32
+    attenuate 1
+	color 1.0 0.0 1.0
+    size 48
 }
 
 flickerlight HARCHBALL_X1
 {
-    color 0.8 0.0 0.8
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.8 0.0 0.8
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight HARCHBALL_X2
 {
-    color 0.5 0.0 0.5
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.5 0.0 0.5
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight HARCHBALL_X3
 {
-    color 0.2 0.0 0.2
-    size 72
-    secondarySize 76
+    attenuate 1
+	color 0.2 0.0 0.2
+    size 108
+    secondarysize 114
     chance 0.4
 }
 
 flickerlight HARCHBALL2_X1
 {
-    color 0.0 0.8 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 0.0 0.8 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
 flickerlight HARCHBALL2_X2
 {
-    color 0.0 0.5 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 0.0 0.5 0.0
+    size 96
+    secondarysize 108
     chance 0.4
 }
 
 flickerlight HARCHBALL2_X3
 {
-    color 0.0 0.2 0.0
-    size 72
-    secondarySize 76
+    attenuate 1
+	color 0.0 0.2 0.0
+    size 108
+    secondarysize 114
     chance 0.4
 }
 
 flickerlight HARCHHEAD
 {
-    color 1.0 0.5 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 1.0 0.5 0.0
+    size 72
+    secondarysize 84
     chance 0.4
 }
 
@@ -1154,9 +1254,10 @@ object Korax
 // Candles
 flickerlight2 HCANDLES
 {
-    color 1.0 1.0 0.0
-    size 16
-    secondarySize 20
+    attenuate 1
+	color 1.0 1.0 0.0
+    size 24
+    secondarysize 30
     interval 0.1
 }
 
@@ -1168,9 +1269,10 @@ object ZCandle
 // Twined torch
 flickerlight2 TWINETORCH
 {
-    color 1.0 0.7 0.0
-    size 46
-    secondarySize 52
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 69
+    secondarysize 78
     interval 0.1
     offset 0 64 0
 }
@@ -1203,9 +1305,10 @@ object ZTwinedTorchUnlit
 // Wall torch
 flickerlight2 WALLTORCH2
 {
-    color 1.0 0.7 0.0
-    size 24
-    secondarySize 28
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 36
+    secondarysize 42
     interval 0.1
     offset 0 24 0
 }
@@ -1239,18 +1342,20 @@ object ZWallTorchUnlit
 // Fire bull
 flickerlight2 FIREBULL
 {
-    color 1.0 0.7 0.0
-    size 64
-    secondarySize 70
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 96
+    secondarysize - 105
     interval 0.1
     offset 0 40 0
 }
 
 flickerlight2 FIREBULL2
 {
-    color 1.0 0.7 0.0
-    size 48
-    secondarySize 60
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 72
+    secondarysize 90
     interval 0.1
     offset 0 40 0
 }
@@ -1285,9 +1390,10 @@ object ZFireBullUnlit
 // Cauldron
 flickerlight2 CAULFLAME
 {
-    color 1.0 0.9 0.0
-    size 24
-    secondarySize 26
+    attenuate 1
+	color 1.0 0.9 0.0
+    size 36
+    secondarysize 39
     interval 0.1
 }
 
@@ -1316,9 +1422,10 @@ object ZCauldronUnlit
 // Blue candle
 flickerlight2 BCANDLE
 {
-    color 0.3 0.3 1.0
-    size 14
-    secondarySize 16
+    attenuate 1
+	color 0.3 0.3 1.0
+    size 21
+    secondarysize 24
     interval 0.1
 }
 
@@ -1341,9 +1448,10 @@ object FlameSmallTemp
 // Large flame
 flickerlight2 LARGEFLAME
 {
-    color 1.0 0.7 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 60
+    secondarysize 72
     interval 0.1
 }
 
@@ -1360,9 +1468,10 @@ object FlameLargeTemp
 // Chandelier
 flickerlight2 CHANDELIER
 {
-    color 1.0 1.0 0.0
-    size 64
-    secondarySize 68
+    attenuate 1
+	color 1.0 1.0 0.0
+    size 96
+    secondarysize 104
     interval 0.1
 }
 
@@ -1374,9 +1483,10 @@ object ZChandelier
 // Brass torch
 flickerlight2 BRASSTORCH
 {
-    color 1.0 0.7 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 60
+    secondarysize 72
     interval 0.1
     offset 0 32 0
 }
@@ -1395,9 +1505,10 @@ object FireThing
 // Teleport smoke
 flickerlight2 TELESMOKE
 {
-    color 1.0 0.0 0.0
-    size 64
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.0 0.0
+    size 96
+    secondarysize 108
     interval 0.1
     offset 0 44 0
 }
@@ -1410,8 +1521,9 @@ object TeleSmoke
 // Fireball
 pointlight HFIREBALL
 {
-    color 1.0 0.4 0.0
-    size 48
+    attenuate 1
+	color 1.0 0.4 0.0
+    size 72
 }
 
 object FireBall
@@ -1427,8 +1539,9 @@ object FireBall
 // Blue mana
 pointlight MANA1
 {
-    color 0.0 0.0 0.7
-    size 24
+    attenuate 1
+	color 0.0 0.0 0.7
+    size 36
     offset 0 36 0
 }
 
@@ -1440,8 +1553,9 @@ object Mana1
 // Green mana
 pointlight MANA2
 {
-    color 0.0 0.6 0.0
-    size 24
+    attenuate 1
+	color 0.0 0.6 0.0
+    size 36
     offset 0 36 0
 }
 
@@ -1453,8 +1567,9 @@ object Mana2
 // Combined mana
 pointlight MANA3
 {
-    color 0.7 0.0 0.0
-    size 24
+    attenuate 1
+	color 0.7 0.0 0.0
+    size 36
     offset 0 36 0
 }
 
@@ -1466,9 +1581,10 @@ object Mana3
 // ZXmasTree
 flickerlight2 XMASFIRE1
 {
-    color 1.0 0.7 0.0
-    size 16
-    secondarySize 24
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 24
+    secondarysize 36
     interval 0.1
     offset 0 48 0
 }
@@ -1476,9 +1592,10 @@ flickerlight2 XMASFIRE1
 
 flickerlight2 XMASFIRE2
 {
-    color 1.0 0.8 0.0
-    size 32
-    secondarySize 48
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 48
+    secondarysize 72
     interval 0.1
     offset 0 48 0
 }
@@ -1486,9 +1603,10 @@ flickerlight2 XMASFIRE2
 
 flickerlight2 XMASFIRE3
 {
-    color 1.0 0.9 0.0
-    size 48
-    secondarySize 64
+    attenuate 1
+	color 1.0 0.9 0.0
+    size 72
+    secondarysize 96
     interval 0.1
     offset 0 32 0
 }
@@ -1496,9 +1614,10 @@ flickerlight2 XMASFIRE3
 
 flickerlight2 XMASFIRE4
 {
-    color 1.0 0.8 0.0
-    size 32
-    secondarySize 40
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 48
+    secondarysize 60
     interval 0.1
     offset 0 120 0
 }
@@ -1506,9 +1625,10 @@ flickerlight2 XMASFIRE4
 
 flickerlight2 XMASFIRE5
 {
-    color 1.0 0.7 0.0
-    size 12
-    secondarySize 20
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 18
+    secondarysize 30
     interval 0.1
     offset 0 140 0
 }
@@ -1516,9 +1636,10 @@ flickerlight2 XMASFIRE5
 
 flickerlight2 XMASFIRE6
 {
-    color 1.0 0.8 0.0
-    size 10
-    secondarySize 14
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 15
+    secondarysize 21
     interval 0.1
     offset 0 148 0
 }
@@ -1541,9 +1662,10 @@ object ZXmasTree
 // TreeDestructible
 flickerlight2 TDESTRUCT1
 {
-    color 1.0 0.8 0.0
-    size 48
-    secondarySize 56
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 72
+    secondarysize 84
     interval 0.1
     offset 0 32 0
 }
@@ -1551,9 +1673,10 @@ flickerlight2 TDESTRUCT1
 
 flickerlight2 TDESTRUCT2
 {
-    color 1.0 0.9 0.0
-    size 56
-    secondarySize 72
+    attenuate 1
+	color 1.0 0.9 0.0
+    size 84
+    secondarysize 108
     interval 0.1
     offset 0 32 0
 }
@@ -1561,9 +1684,10 @@ flickerlight2 TDESTRUCT2
 
 flickerlight2 TDESTRUCT3
 {
-    color 1.0 0.8 0.0
-    size 40
-    secondarySize 48
+    attenuate 1
+	color 1.0 0.8 0.0
+    size 60
+    secondarysize 72
     interval 0.1
     offset 0 20 0
 }
@@ -1571,18 +1695,20 @@ flickerlight2 TDESTRUCT3
 
 flickerlight2 TDESTRUCT4
 {
-    color 1.0 0.7 0.0
-    size 16
-    secondarySize 24
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 24
+    secondarysize 36
     interval 0.1
     offset 0 12 0
 }
 
 flickerlight2 TDESTRUCT5
 {
-    color 1.0 0.7 0.0
-    size 8
-    secondarySize 12
+    attenuate 1
+	color 1.0 0.7 0.0
+    size 12
+    secondarysize 18
     interval 0.1
     offset 0 4 0
 }

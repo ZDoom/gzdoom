@@ -3532,7 +3532,14 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		|| ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
 		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))))
 	{
-		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
+		if (mo->bouncecount>0 && --mo->bouncecount == 0)
+		{
+			if (mo->flags & MF_MISSILE)
+				P_ExplodeMissile(mo, nullptr, BlockingMobj);
+			else
+				mo->CallDie(BlockingMobj, nullptr);
+			return true;
+		}
 
 		if (mo->flags7 & MF7_HITTARGET)	mo->target = BlockingMobj;
 		if (mo->flags7 & MF7_HITMASTER)	mo->master = BlockingMobj;

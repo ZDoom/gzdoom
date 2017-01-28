@@ -156,6 +156,7 @@ FRandom::FRandom ()
 #endif
 	Next = RNGList;
 	RNGList = this;
+	Init(0);
 }
 
 //==========================================================================
@@ -199,6 +200,7 @@ FRandom::FRandom (const char *name)
 
 	Next = probe;
 	*prev = this;
+	Init(0);
 }
 
 //==========================================================================

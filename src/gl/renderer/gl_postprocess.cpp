@@ -133,6 +133,17 @@ CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
 	if (self < 0.1f) self = 0.1f;
 }
 
+CUSTOM_CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	GLRenderer->ClearTonemapPalette();
+}
+
+CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	GLRenderer->ClearTonemapPalette();
+}
+
+
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 
@@ -533,8 +544,11 @@ void FGLRenderer::CreateTonemapPalette()
 
 void FGLRenderer::ClearTonemapPalette()
 {
-	delete mTonemapPalette;
-	mTonemapPalette = nullptr;
+	if (mTonemapPalette)
+	{
+		delete mTonemapPalette;
+		mTonemapPalette = nullptr;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -821,14 +835,16 @@ int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int f
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	static double powtable[256];
 	static bool firstTime = true;
+	static float trackpowtable = 0.;
 
 	double fbestdist, fdist;
 	int bestcolor;
 
-	if (firstTime)
+	if (firstTime || trackpowtable != gl_paltonemap_powtable)
 	{
+		trackpowtable = gl_paltonemap_powtable;
 		firstTime = false;
-		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255,1.2);
+		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)gl_paltonemap_powtable);
 	}
 
 	for (int color = first; color < num; color++)
@@ -837,9 +853,9 @@ int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int f
 		double y = powtable[abs(g-pal[color].g)];
 		double z = powtable[abs(b-pal[color].b)];
 		fdist = x + y + z;
-		if (color == first || fdist < fbestdist)
+		if (color == first || ((gl_paltonemap_reverselookup)?(fdist <= fbestdist):(fdist < fbestdist)))
 		{
-			if (fdist == 0)
+			if (fdist == 0 && !gl_paltonemap_reverselookup)
 				return color;
 
 			fbestdist = fdist;

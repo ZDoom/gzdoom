@@ -142,21 +142,25 @@ void DCorpsePointer::OnDestroy ()
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 	DCorpsePointer *first = iterator.Next ();
 
-	int prevCount = first->Count;
-
-	if (first == this)
+	// During a serialization unwind the thinker list won't be available.
+	if (first != nullptr)
 	{
-		first = iterator.Next ();
-	}
+		int prevCount = first->Count;
 
-	if (first != NULL)
-	{
-		first->Count = prevCount - 1;
-	}
+		if (first == this)
+		{
+			first = iterator.Next();
+		}
 
+		if (first != NULL)
+		{
+			first->Count = prevCount - 1;
+		}
+
+	}
 	if (Corpse != NULL)
 	{
-		Corpse->Destroy ();
+		Corpse->Destroy();
 	}
 	Super::OnDestroy();
 }

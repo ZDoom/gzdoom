@@ -135,12 +135,14 @@ CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
 
 CUSTOM_CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	GLRenderer->ClearTonemapPalette();
+	if (GLRenderer)
+		GLRenderer->ClearTonemapPalette();
 }
 
 CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	GLRenderer->ClearTonemapPalette();
+	if (GLRenderer)
+		GLRenderer->ClearTonemapPalette();
 }
 
 

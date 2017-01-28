@@ -59,7 +59,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords WallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
+	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -130,8 +130,6 @@ namespace swrenderer
 		// to a wall, we use the wall's angle instead of the decal's. This is
 		// pretty much the same as what R_AddLine() does.
 
-		FWallCoords savecoord = WallC;
-
 		double edge_right = WallSpriteTile->GetWidth();
 		double edge_left = WallSpriteTile->LeftOffset;
 		edge_right = (edge_right - edge_left) * decal->ScaleX;
@@ -150,14 +148,15 @@ namespace swrenderer
 		CameraLight *cameraLight;
 		double texturemid;
 
+		FWallCoords WallC;
 		if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
-			goto done;
+			return;
 
 		x1 = WallC.sx1;
 		x2 = WallC.sx2;
 
 		if (x1 >= clipper->x2 || x2 <= clipper->x1)
-			goto done;
+			return;
 
 		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(&WallC);
@@ -170,7 +169,7 @@ namespace swrenderer
 			{
 				if (pass != 0)
 				{
-					goto done;
+					return;
 				}
 				mceilingclip = walltop;
 				mfloorclip = wallbottom;
@@ -191,7 +190,7 @@ namespace swrenderer
 		case RF_CLIPUPPER:
 			if (pass != 0)
 			{
-				goto done;
+				return;
 			}
 			mceilingclip = walltop;
 			mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
@@ -200,7 +199,7 @@ namespace swrenderer
 		case RF_CLIPMID:
 			if (curline->backsector != NULL && pass != 2)
 			{
-				goto done;
+				return;
 			}
 			mceilingclip = clipper->sprtopclip - clipper->x1;
 			mfloorclip = clipper->sprbottomclip - clipper->x1;
@@ -209,7 +208,7 @@ namespace swrenderer
 		case RF_CLIPLOWER:
 			if (pass != 0)
 			{
-				goto done;
+				return;
 			}
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
 			mfloorclip = wallbottom;
@@ -224,7 +223,7 @@ namespace swrenderer
 		x2 = MIN<int>(clipper->x2, x2);
 		if (x1 >= x2)
 		{
-			goto done;
+			return;
 		}
 
 		ProjectedWallTexcoords walltexcoords;
@@ -311,9 +310,6 @@ namespace swrenderer
 			mceilingclip = RenderOpaquePass::Instance()->floorclip;
 			mfloorclip = wallbottom;
 		} while (needrepeat--);
-
-	done:
-		WallC = savecoord;
 	}
 
 	void RenderDecal::DrawColumn(DrawerStyle &drawerstyle, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)

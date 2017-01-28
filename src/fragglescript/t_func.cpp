@@ -3891,7 +3891,8 @@ void FParser::SF_SetColor(void)
 				for (int j = 0; j < 4; j++) level.sectors[i].SpecialColors[j] = color;
 				// simulates 'nocoloredspritelighting' settings.
 				int v = (color.r + color.g + color.b) / 3;
-				level.sectors[i].SpecialColors[sector_t::sprites] = (255 + v + v) / 3;
+				v = (255 + v + v) / 3;
+				level.sectors[i].SpecialColors[sector_t::sprites] = PalEntry(255, v, v, v);
 			}
 		}
 	}

@@ -370,7 +370,12 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// now draw the different layers of the weapon
 	gl_RenderState.EnableBrightmap(true);
-	gl_RenderState.SetObjectColor(ThingColor);
+	PalEntry finalcol(ThingColor.a,
+		ThingColor.r * viewsector->SpecialColors[sector_t::sprites].r / 255,
+		ThingColor.g * viewsector->SpecialColors[sector_t::sprites].g / 255,
+		ThingColor.b * viewsector->SpecialColors[sector_t::sprites].b / 255);
+
+	gl_RenderState.SetObjectColor(finalcol);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
@@ -412,7 +417,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					gl_SetDynSpriteLight(playermo, NULL);
 				}
-				gl_SetColor(ll, 0, cmc, trans, true);
+				gl_SetColor((viewsector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : ll, 0, cmc, trans, true);
 			}
 
 			if (psp->firstTic)

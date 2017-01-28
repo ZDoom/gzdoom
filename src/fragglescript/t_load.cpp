@@ -73,15 +73,18 @@ struct FFsOptions : public FOptionalMapinfoData
 	{
 		identifier = "fragglescript";
 		nocheckposition = false;
+		setcolormaterial = false;
 	}
 	virtual FOptionalMapinfoData *Clone() const
 	{
 		FFsOptions *newopt = new FFsOptions;
 		newopt->identifier = identifier;
 		newopt->nocheckposition = nocheckposition;
+		newopt->setcolormaterial = setcolormaterial;
 		return newopt;
 	}
 	bool nocheckposition;
+	bool setcolormaterial;
 };
 
 DEFINE_MAP_OPTION(fs_nocheckposition, false)
@@ -96,6 +99,21 @@ DEFINE_MAP_OPTION(fs_nocheckposition, false)
 	else
 	{
 		opt->nocheckposition = true;
+	}
+}
+
+DEFINE_MAP_OPTION(fs_setcolormaterial, false)
+{
+	FFsOptions *opt = info->GetOptData<FFsOptions>("fragglescript");
+
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		opt->setcolormaterial = !!parse.sc.Number;
+	}
+	else
+	{
+		opt->setcolormaterial = true;
 	}
 }
 
@@ -307,6 +325,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
 		if (opt != NULL)
 		{
 			DFraggleThinker::ActiveThinker->nocheckposition = opt->nocheckposition;
+			DFraggleThinker::ActiveThinker->setcolormaterial = opt->setcolormaterial;
 		}
 	}
 

@@ -1307,6 +1307,7 @@ public:
 		sec->sectornum = index;
 		sec->damageinterval = 32;
 		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
+		memset(sec->SpecialColors, -1, sizeof(sec->SpecialColors));
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
@@ -1458,6 +1459,26 @@ public:
 				case NAME_Fadecolor:
 					fadecolor = CheckInt(key);
 					continue;
+
+				case NAME_Color_Floor:
+					sec->SpecialColors[sector_t::floor] = CheckInt(key) || 0xff000000;
+					break;
+
+				case NAME_Color_Ceiling:
+					sec->SpecialColors[sector_t::ceiling] = CheckInt(key) || 0xff000000;
+					break;
+
+				case NAME_Color_Walltop:
+					sec->SpecialColors[sector_t::walltop] = CheckInt(key) || 0xff000000;
+					break;
+
+				case NAME_Color_Wallbottom:
+					sec->SpecialColors[sector_t::wallbottom] = CheckInt(key) || 0xff000000;
+					break;
+
+				case NAME_Color_Sprites:
+					sec->SpecialColors[sector_t::sprites] = CheckInt(key) || 0xff000000;
+					break;
 
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key));

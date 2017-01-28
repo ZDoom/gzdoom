@@ -37,7 +37,6 @@ namespace swrenderer
 	{
 		extern int dc_pitch;
 		extern lighttable_t *dc_colormap;
-		extern FSWColormap *dc_fcolormap;
 		extern ShadeConstants dc_shade_constants;
 		extern fixed_t dc_light;
 		extern int dc_x;
@@ -66,8 +65,6 @@ namespace swrenderer
 		extern FVector3 dc_viewpos_step;
 		extern TriLight *dc_lights;
 		extern int dc_num_lights;
-
-		extern bool drawer_needs_pal_input;
 
 		extern uint32_t dc_wall_texturefrac[4];
 		extern uint32_t dc_wall_iscale[4];
@@ -192,8 +189,8 @@ namespace swrenderer
 			spanfunc = &SWPixelFormatDrawers::DrawSpan;
 		}
 
-		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
-		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
+		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
+		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
 
 		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
@@ -211,5 +208,7 @@ namespace swrenderer
 
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
 		static fixed_t GetAlpha(int type, fixed_t alpha);
+
+		bool drawer_needs_pal_input = false;
 	};
 }

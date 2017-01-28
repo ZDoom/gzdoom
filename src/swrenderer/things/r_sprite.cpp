@@ -251,14 +251,7 @@ namespace swrenderer
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
 		DrawerStyle drawerstyle;
-		bool visible = drawerstyle.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
-
-		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
-		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
-		  // it is the brightest one. We need to get back to the proper light level for
-		  // this sprite.
-			R_SetColorMapLight(drawerargs::dc_fcolormap, 0, vis->Light.ColormapNum << FRACBITS);
-		}
+		bool visible = drawerstyle.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
 
 		if (visible)
 		{

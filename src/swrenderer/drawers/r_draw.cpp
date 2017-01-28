@@ -130,7 +130,6 @@ namespace swrenderer
 		const uint8_t *ds_source;
 		bool ds_source_mipmapped;
 		int ds_color;
-		bool drawer_needs_pal_input;
 	}
 
 	namespace
@@ -242,19 +241,18 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		dc_fcolormap = base_colormap;
 		if (r_swtruecolor)
 		{
-			dc_shade_constants.light_red = dc_fcolormap->Color.r * 256 / 255;
-			dc_shade_constants.light_green = dc_fcolormap->Color.g * 256 / 255;
-			dc_shade_constants.light_blue = dc_fcolormap->Color.b * 256 / 255;
-			dc_shade_constants.light_alpha = dc_fcolormap->Color.a * 256 / 255;
-			dc_shade_constants.fade_red = dc_fcolormap->Fade.r;
-			dc_shade_constants.fade_green = dc_fcolormap->Fade.g;
-			dc_shade_constants.fade_blue = dc_fcolormap->Fade.b;
-			dc_shade_constants.fade_alpha = dc_fcolormap->Fade.a;
-			dc_shade_constants.desaturate = MIN(abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
-			dc_shade_constants.simple_shade = (dc_fcolormap->Color.d == 0x00ffffff && dc_fcolormap->Fade.d == 0x00000000 && dc_fcolormap->Desaturate == 0);
+			dc_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
+			dc_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
+			dc_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
+			dc_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
+			dc_shade_constants.fade_red = base_colormap->Fade.r;
+			dc_shade_constants.fade_green = base_colormap->Fade.g;
+			dc_shade_constants.fade_blue = base_colormap->Fade.b;
+			dc_shade_constants.fade_alpha = base_colormap->Fade.a;
+			dc_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+			dc_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
 			dc_colormap = base_colormap->Maps;
 			dc_light = LIGHTSCALE(light, shade);
 		}
@@ -687,7 +685,7 @@ namespace swrenderer
 		}
 	}
 
-	bool DrawerStyle::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
+	bool DrawerStyle::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		using namespace drawerargs;
 
@@ -755,11 +753,13 @@ namespace swrenderer
 			basecolormap = &ShadeFakeColormap[16 - alpha];
 			if (cameraLight->fixedlightlev >= 0 && cameraLight->fixedcolormap == NULL)
 			{
-				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+				fixed_t shade = shadedlightshade;
+				if (shade == 0) FIXEDLIGHT2SHADE(cameraLight->fixedlightlev);
+				R_SetColorMapLight(basecolormap, 0, shade);
 			}
 			else
 			{
-				R_SetColorMapLight(basecolormap, 0, 0);
+				R_SetColorMapLight(basecolormap, 0, shadedlightshade);
 			}
 			return true;
 		}
@@ -796,9 +796,9 @@ namespace swrenderer
 		return true;
 	}
 
-	bool DrawerStyle::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
+	bool DrawerStyle::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
-		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap);
+		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
 
 	DrawerFunc DrawerStyle::GetTransMaskDrawer()

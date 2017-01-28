@@ -651,13 +651,6 @@ OptionValue Fuzziness
 	2.0, "$OPTVAL_SHADOW"
 }
 
-OptionValue SectorColor
-{
-	-1.0, "$OPTVAL_MAPSETTING"
-	 0.0, "$OPTVAL_OFF"
-	 1.0, "$OPTVAL_ON"
-}
-
 OptionMenu "OpenGLOptions"
 {
 	Title "$GLMNU_TITLE"
@@ -697,7 +690,7 @@ OptionMenu "VideoOptions"
 	}
 	
 	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
-	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_preservesectorcolor", "SectorColor"
+	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
 	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"

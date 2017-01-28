@@ -141,10 +141,9 @@ bool FRenderState::ApplyShader()
 			fogset = -gl_fogmode;
 		}
 	}
-	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
-	activeShader->muObjectColor.Set(mObjectColor);
+	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
@@ -153,6 +152,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muCameraPos.Set(mCameraPos.vec);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
+	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeight.Set(mClipHeight);

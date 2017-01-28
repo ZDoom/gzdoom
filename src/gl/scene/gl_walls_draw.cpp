@@ -24,6 +24,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"
+#include "g_levellocals.h"
 #include "gl/gl_functions.h"
 
 #include "gl/system/gl_interface.h"
@@ -326,9 +327,9 @@ void GLWall::RenderTextured(int rflags)
 	if (flags & GLWF_GLOW)
 	{
 		gl_RenderState.EnableGlow(true);
-		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
 		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
 	}
+	gl_RenderState.SetGlowPlanes(topplane, bottomplane);
 	gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
 
 	if (type == RENDERWALL_M2SNF)
@@ -339,12 +340,14 @@ void GLWall::RenderTextured(int rflags)
 		}
 		gl_SetFog(255, 0, NULL, false);
 	}
+	gl_RenderState.SetObjectColor(seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
+	gl_RenderState.SetObjectColor2(seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
 
 	float absalpha = fabsf(alpha);
 	if (lightlist == NULL)
 	{
-		gl_SetColor(lightlevel, rel, Colormap, absalpha);
 		if (type != RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
+		gl_SetColor(lightlevel, rel, Colormap, absalpha);
 		RenderWall(rflags);
 	}
 	else
@@ -374,6 +377,8 @@ void GLWall::RenderTextured(int rflags)
 
 		gl_RenderState.EnableSplit(false);
 	}
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.SetObjectColor2(0);
 	gl_RenderState.SetTextureMode(tmode);
 	gl_RenderState.EnableGlow(false);
 }

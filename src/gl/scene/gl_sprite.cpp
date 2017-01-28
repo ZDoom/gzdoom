@@ -309,6 +309,7 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, Colormap.desaturation);
 			additivefog = true;
+			lightlist = nullptr;	// the fuzz effect does not use the sector's light level so splitting is not needed.
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
 		{
@@ -320,15 +321,21 @@ void GLSprite::Draw(int pass)
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 	}
-	if (RenderStyle.BlendOp!=STYLEOP_Shadow)
+	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
 		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && !fullbright)
 		{
 			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
+		PalEntry finalcol(ThingColor.a,
+			ThingColor.r * actor->Sector->SpecialColors[sector_t::sprites].r / 255,
+			ThingColor.g * actor->Sector->SpecialColors[sector_t::sprites].g / 255,
+			ThingColor.b * actor->Sector->SpecialColors[sector_t::sprites].b / 255);
+
+		gl_RenderState.SetObjectColor(finalcol);
 		gl_SetColor(lightlevel, rel, Colormap, trans);
 	}
-	gl_RenderState.SetObjectColor(ThingColor);
+
 
 	if (gl_isBlack(Colormap.FadeColor)) foglevel=lightlevel;
 

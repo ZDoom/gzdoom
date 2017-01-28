@@ -301,6 +301,7 @@ public:
 	FMaterial *gltexture;
 
 	FColormap Colormap;	// light and fog
+	PalEntry FlatColor;
 	ERenderStyle renderstyle;
 
 	float alpha;

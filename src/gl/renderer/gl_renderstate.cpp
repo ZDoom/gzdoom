@@ -72,6 +72,7 @@ void FRenderState::Reset()
 	mModelMatrixEnabled = false;
 	mTextureMatrixEnabled = false;
 	mObjectColor = 0xffffffff;
+	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
 	mColormapState = CM_DEFAULT;
 	mSoftLight = 0;
@@ -144,6 +145,8 @@ bool FRenderState::ApplyShader()
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
+	//activeShader->muObjectColor2.Set(mObjectColor2);
+	activeShader->muObjectColor2.Set(mObjectColor2);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
@@ -166,8 +169,6 @@ bool FRenderState::ApplyShader()
 	{
 		activeShader->muGlowTopColor.Set(mGlowTop.vec);
 		activeShader->muGlowBottomColor.Set(mGlowBottom.vec);
-		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
-		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
 		activeShader->currentglowstate = 1;
 	}
 	else if (activeShader->currentglowstate)
@@ -175,9 +176,12 @@ bool FRenderState::ApplyShader()
 		// if glowing is on, disable it.
 		activeShader->muGlowTopColor.Set(nulvec);
 		activeShader->muGlowBottomColor.Set(nulvec);
-		activeShader->muGlowTopPlane.Set(nulvec);
-		activeShader->muGlowBottomPlane.Set(nulvec);
 		activeShader->currentglowstate = 0;
+	}
+	if (mGlowEnabled || mObjectColor2.a != 0)
+	{
+		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
+		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
 	}
 
 	if (mSplitEnabled)

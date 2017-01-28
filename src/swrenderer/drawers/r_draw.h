@@ -97,10 +97,6 @@ namespace swrenderer
 		extern const uint8_t *ds_source;
 		extern bool ds_source_mipmapped;
 		extern int ds_color;
-
-		extern unsigned int dc_tspans[4][MAXHEIGHT];
-		extern unsigned int *dc_ctspan[4];
-		extern unsigned int *horizspan[4];
 	}
 
 	extern int ylookup[MAXHEIGHT];

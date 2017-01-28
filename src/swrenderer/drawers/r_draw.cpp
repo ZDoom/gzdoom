@@ -131,9 +131,6 @@ namespace swrenderer
 		bool ds_source_mipmapped;
 		int ds_color;
 		bool drawer_needs_pal_input;
-		unsigned int dc_tspans[4][MAXHEIGHT];
-		unsigned int *dc_ctspan[4];
-		unsigned int *horizspan[4];
 	}
 
 	namespace

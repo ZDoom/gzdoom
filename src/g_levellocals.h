@@ -79,6 +79,7 @@ struct FLevelLocals
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
+	bool		PreserveSectorColor() const;
 };
 
 extern FLevelLocals level;

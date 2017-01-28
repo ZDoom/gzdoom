@@ -34,6 +34,7 @@ namespace swrenderer
 	{
 	public:
 		void Render(
+			const DrawerStyle &drawerstyle,
 			sector_t *frontsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
@@ -83,6 +84,8 @@ namespace swrenderer
 		FDynamicColormap *basecolormap = nullptr;
 		FLightNode *light_list = nullptr;
 		bool mask = false;
+
+		DrawerStyle drawerstyle;
 	};
 
 	struct WallSampler

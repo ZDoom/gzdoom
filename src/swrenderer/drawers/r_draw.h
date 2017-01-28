@@ -174,10 +174,6 @@ namespace swrenderer
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
-	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
-	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
-	DrawerFunc R_GetTransMaskDrawer();
-
 	void R_UpdateFuzzPos();
 
 	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
@@ -188,12 +184,36 @@ namespace swrenderer
 	void R_SetSpanTexture(FTexture *tex);
 	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
 
-	void R_DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
-	void R_DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
+	class DrawerStyle
+	{
+	public:
+		DrawerStyle()
+		{
+			colfunc = &SWPixelFormatDrawers::DrawColumn;
+			basecolfunc = &SWPixelFormatDrawers::DrawColumn;
+			fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
+			transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
+			spanfunc = &SWPixelFormatDrawers::DrawSpan;
+		}
 
-	extern DrawerFunc colfunc;
-	extern DrawerFunc basecolfunc;
-	extern DrawerFunc fuzzcolfunc;
-	extern DrawerFunc transcolfunc;
-	extern DrawerFunc spanfunc;
+		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
+		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap);
+		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
+
+		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
+
+		DrawerFunc GetTransMaskDrawer();
+
+		DrawerFunc colfunc;
+		DrawerFunc basecolfunc;
+		DrawerFunc fuzzcolfunc;
+		DrawerFunc transcolfunc;
+		DrawerFunc spanfunc;
+
+	private:
+		void DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
+
+		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
+		static fixed_t GetAlpha(int type, fixed_t alpha);
+	};
 }

@@ -188,7 +188,8 @@ namespace swrenderer
 
 		R_SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
-		bool visible = R_SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		DrawerStyle drawerstyle;
+		bool visible = drawerstyle.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
 

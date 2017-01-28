@@ -392,7 +392,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		DrawerFunc drawcol1 = R_GetTransMaskDrawer();
+		DrawerFunc drawcol1 = drawerstyle.GetTransMaskDrawer();
 		if (drawcol1 == nullptr)
 		{
 			// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
@@ -445,7 +445,7 @@ namespace swrenderer
 	{
 		if (mask)
 		{
-			if (colfunc == basecolfunc)
+			if (drawerstyle.colfunc == drawerstyle.basecolfunc)
 			{
 				ProcessMaskedWall(uwal, dwal, texturemid, swal, lwal);
 			}
@@ -540,8 +540,9 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(const DrawerStyle &drawerstyle, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
+		this->drawerstyle = drawerstyle;
 		this->x1 = x1;
 		this->x2 = x2;
 		this->frontsector = frontsector;

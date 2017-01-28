@@ -591,7 +591,8 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
 
-		bool visible = R_SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap);
+		DrawerStyle drawerstyle;
+		bool visible = drawerstyle.SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap);
 
 		if (RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
@@ -628,7 +629,7 @@ namespace swrenderer
 		fixed_t frac = startfrac;
 		for (int x = x1; x < x2; x++)
 		{
-			R_DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			drawerstyle.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 			frac += xiscale;
 		}
 

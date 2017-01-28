@@ -250,7 +250,8 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
-		bool visible = R_SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
+		DrawerStyle drawerstyle;
+		bool visible = drawerstyle.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
 
 		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 		{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
@@ -293,7 +294,7 @@ namespace swrenderer
 				while (x < x2)
 				{
 					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
-						R_DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+						drawerstyle.DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;
 				}

@@ -125,61 +125,7 @@ namespace swrenderer
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}
 
-		if (spanfunc != &SWPixelFormatDrawers::FillSpan)
-		{
-			if (masked)
-			{
-				if (alpha < OPAQUE || additive)
-				{
-					if (!additive)
-					{
-						spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedTranslucent;
-						dc_srcblend = Col2RGB8[alpha >> 10];
-						dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
-						dc_srcalpha = alpha;
-						dc_destalpha = OPAQUE - alpha;
-					}
-					else
-					{
-						spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedAddClamp;
-						dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
-						dc_destblend = Col2RGB8_LessPrecision[FRACUNIT >> 10];
-						dc_srcalpha = alpha;
-						dc_destalpha = FRACUNIT;
-					}
-				}
-				else
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpanMasked;
-				}
-			}
-			else
-			{
-				if (alpha < OPAQUE || additive)
-				{
-					if (!additive)
-					{
-						spanfunc = &SWPixelFormatDrawers::DrawSpanTranslucent;
-						dc_srcblend = Col2RGB8[alpha >> 10];
-						dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
-						dc_srcalpha = alpha;
-						dc_destalpha = OPAQUE - alpha;
-					}
-					else
-					{
-						spanfunc = &SWPixelFormatDrawers::DrawSpanAddClamp;
-						dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
-						dc_destblend = Col2RGB8_LessPrecision[FRACUNIT >> 10];
-						dc_srcalpha = alpha;
-						dc_destalpha = FRACUNIT;
-					}
-				}
-				else
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpan;
-				}
-			}
-		}
+		drawerstyle.SetSpanStyle(masked, additive, alpha);
 
 		light_list = pl->lights;
 
@@ -309,7 +255,7 @@ namespace swrenderer
 		ds_x1 = x1;
 		ds_x2 = x2;
 
-		(R_Drawers()->*spanfunc)();
+		(R_Drawers()->*drawerstyle.spanfunc)();
 	}
 
 	void RenderFlatPlane::StepColumn()

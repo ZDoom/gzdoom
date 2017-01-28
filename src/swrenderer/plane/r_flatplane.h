@@ -14,6 +14,7 @@
 #pragma once
 
 #include "r_planerenderer.h"
+#include "swrenderer/drawers/r_draw.h"
 
 namespace swrenderer
 {
@@ -40,6 +41,8 @@ namespace swrenderer
 		double xstepscale, ystepscale;
 		double basexfrac, baseyfrac;
 		VisiblePlaneLight *light_list;
+
+		DrawerStyle drawerstyle;
 
 		static float yslope[MAXHEIGHT];
 	};

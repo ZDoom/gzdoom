@@ -141,9 +141,6 @@ namespace swrenderer
 
 		NetUpdate();
 
-		colfunc = basecolfunc;
-		spanfunc = &SWPixelFormatDrawers::DrawSpan;
-
 		RenderPortal::Instance()->SetMainPortal();
 
 		this->dontmaplines = dontmaplines;

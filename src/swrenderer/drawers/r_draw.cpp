@@ -70,12 +70,6 @@ namespace swrenderer
 	short zeroarray[MAXWIDTH];
 	short screenheightarray[MAXWIDTH];
 
-	DrawerFunc colfunc;
-	DrawerFunc basecolfunc;
-	DrawerFunc fuzzcolfunc;
-	DrawerFunc transcolfunc;
-	DrawerFunc spanfunc;
-
 	namespace drawerargs
 	{
 		int dc_pitch;
@@ -160,11 +154,6 @@ namespace swrenderer
 			active_drawers = &tc_drawers;
 		else
 			active_drawers = &pal_drawers;
-
-		colfunc = basecolfunc = &SWPixelFormatDrawers::DrawColumn;
-		fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
-		transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
-		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
 	void R_InitShadeMaps()
@@ -250,282 +239,6 @@ namespace swrenderer
 				particle_texture[x + y * PARTICLE_TEXTURE_SIZE] = (int)(alpha * 128.0f + 0.5f);
 			}
 		}
-	}
-
-	namespace
-	{
-		bool R_SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
-		{
-			using namespace drawerargs;
-
-			// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
-			// just remove it completely.
-			if (!r_drawtrans || (op == STYLEOP_Add && fglevel == FRACUNIT && bglevel == 0 && !(flags & STYLEF_InvertSource)))
-			{
-				if (flags & STYLEF_ColorIsFixed)
-				{
-					colfunc = &SWPixelFormatDrawers::FillColumn;
-				}
-				else if (dc_translation == NULL)
-				{
-					colfunc = basecolfunc;
-				}
-				else
-				{
-					colfunc = transcolfunc;
-					drawer_needs_pal_input = true;
-				}
-				return true;
-			}
-			if (flags & STYLEF_InvertSource)
-			{
-				dc_srcblend = Col2RGB8_Inverse[fglevel >> 10];
-				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
-				dc_srcalpha = fglevel;
-				dc_destalpha = bglevel;
-			}
-			else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
-			{
-				dc_srcblend = Col2RGB8[fglevel >> 10];
-				dc_destblend = Col2RGB8[bglevel >> 10];
-				dc_srcalpha = fglevel;
-				dc_destalpha = bglevel;
-			}
-			else
-			{
-				dc_srcblend = Col2RGB8_LessPrecision[fglevel >> 10];
-				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
-				dc_srcalpha = fglevel;
-				dc_destalpha = bglevel;
-			}
-			switch (op)
-			{
-			case STYLEOP_Add:
-				if (fglevel == 0 && bglevel == FRACUNIT)
-				{
-					return false;
-				}
-				if (fglevel + bglevel <= FRACUNIT)
-				{ // Colors won't overflow when added
-					if (flags & STYLEF_ColorIsFixed)
-					{
-						colfunc = &SWPixelFormatDrawers::FillAddColumn;
-					}
-					else if (dc_translation == NULL)
-					{
-						colfunc = &SWPixelFormatDrawers::DrawAddColumn;
-					}
-					else
-					{
-						colfunc = &SWPixelFormatDrawers::DrawTranslatedAddColumn;
-						drawer_needs_pal_input = true;
-					}
-				}
-				else
-				{ // Colors might overflow when added
-					if (flags & STYLEF_ColorIsFixed)
-					{
-						colfunc = &SWPixelFormatDrawers::FillAddClampColumn;
-					}
-					else if (dc_translation == NULL)
-					{
-						colfunc = &SWPixelFormatDrawers::DrawAddClampColumn;
-					}
-					else
-					{
-						colfunc = &SWPixelFormatDrawers::DrawAddClampTranslatedColumn;
-						drawer_needs_pal_input = true;
-					}
-				}
-				return true;
-
-			case STYLEOP_Sub:
-				if (flags & STYLEF_ColorIsFixed)
-				{
-					colfunc = &SWPixelFormatDrawers::FillSubClampColumn;
-				}
-				else if (dc_translation == NULL)
-				{
-					colfunc = &SWPixelFormatDrawers::DrawSubClampColumn;
-				}
-				else
-				{
-					colfunc = &SWPixelFormatDrawers::DrawSubClampTranslatedColumn;
-					drawer_needs_pal_input = true;
-				}
-				return true;
-
-			case STYLEOP_RevSub:
-				if (fglevel == 0 && bglevel == FRACUNIT)
-				{
-					return false;
-				}
-				if (flags & STYLEF_ColorIsFixed)
-				{
-					colfunc = &SWPixelFormatDrawers::FillRevSubClampColumn;
-				}
-				else if (dc_translation == NULL)
-				{
-					colfunc = &SWPixelFormatDrawers::DrawRevSubClampColumn;
-				}
-				else
-				{
-					colfunc = &SWPixelFormatDrawers::DrawRevSubClampTranslatedColumn;
-					drawer_needs_pal_input = true;
-				}
-				return true;
-
-			default:
-				return false;
-			}
-		}
-
-		fixed_t GetAlpha(int type, fixed_t alpha)
-		{
-			switch (type)
-			{
-			case STYLEALPHA_Zero:		return 0;
-			case STYLEALPHA_One:		return OPAQUE;
-			case STYLEALPHA_Src:		return alpha;
-			case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
-			default:					return 0;
-			}
-		}
-	}
-
-	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
-	{
-		using namespace drawerargs;
-
-		fixed_t fglevel, bglevel;
-
-		drawer_needs_pal_input = false;
-
-		style.CheckFuzz();
-
-		if (style.BlendOp == STYLEOP_Shadow)
-		{
-			style = LegacyRenderStyles[STYLE_TranslucentStencil];
-			alpha = TRANSLUC33;
-			color = 0;
-		}
-
-		if (style.Flags & STYLEF_ForceAlpha)
-		{
-			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
-		}
-		else if (style.Flags & STYLEF_TransSoulsAlpha)
-		{
-			alpha = fixed_t(transsouls * OPAQUE);
-		}
-		else if (style.Flags & STYLEF_Alpha1)
-		{
-			alpha = FRACUNIT;
-		}
-		else
-		{
-			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
-		}
-
-		if (translation != -1)
-		{
-			dc_translation = NULL;
-			if (translation != 0)
-			{
-				FRemapTable *table = TranslationToTable(translation);
-				if (table != NULL && !table->Inactive)
-				{
-					if (r_swtruecolor)
-						dc_translation = (uint8_t*)table->Palette;
-					else
-						dc_translation = table->Remap;
-				}
-			}
-		}
-
-		// Check for special modes
-		if (style.BlendOp == STYLEOP_Fuzz)
-		{
-			colfunc = fuzzcolfunc;
-			return true;
-		}
-		else if (style == LegacyRenderStyles[STYLE_Shaded])
-		{
-			// Shaded drawer only gets 16 levels of alpha because it saves memory.
-			if ((alpha >>= 12) == 0 || basecolormap == nullptr)
-				return false;
-			colfunc = &SWPixelFormatDrawers::DrawShadedColumn;
-			drawer_needs_pal_input = true;
-			CameraLight *cameraLight = CameraLight::Instance();
-			dc_color = cameraLight->fixedcolormap ? cameraLight->fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
-			basecolormap = &ShadeFakeColormap[16 - alpha];
-			if (cameraLight->fixedlightlev >= 0 && cameraLight->fixedcolormap == NULL)
-			{
-				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-			}
-			else
-			{
-				R_SetColorMapLight(basecolormap, 0, 0);
-			}
-			return true;
-		}
-
-		fglevel = GetAlpha(style.SrcAlpha, alpha);
-		bglevel = GetAlpha(style.DestAlpha, alpha);
-
-		if (style.Flags & STYLEF_ColorIsFixed)
-		{
-			uint32_t x = fglevel >> 10;
-			uint32_t r = RPART(color);
-			uint32_t g = GPART(color);
-			uint32_t b = BPART(color);
-			// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
-			dc_color = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
-			if (style.Flags & STYLEF_InvertSource)
-			{
-				r = 255 - r;
-				g = 255 - g;
-				b = 255 - b;
-			}
-			uint32_t alpha = clamp(fglevel >> (FRACBITS - 8), 0, 255);
-			dc_srccolor_bgra = (alpha << 24) | (r << 16) | (g << 8) | b;
-			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
-			// with the alpha.
-			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
-			R_SetColorMapLight(&identitycolormap, 0, 0);
-		}
-
-		if (!R_SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
-	{
-		return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap);
-	}
-
-	DrawerFunc R_GetTransMaskDrawer()
-	{
-		if (colfunc == &SWPixelFormatDrawers::DrawAddColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallAddColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawAddClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallAddClampColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawSubClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallSubClampColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawRevSubClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallRevSubClampColumn;
-		}
-		return nullptr;
 	}
 
 	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
@@ -643,14 +356,14 @@ namespace swrenderer
 			fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
 	}
 
-	void R_DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void DrawerStyle::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		using namespace drawerargs;
 
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
 		if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
 		{
-			R_DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
+			DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
 			return;
 		}
 
@@ -722,7 +435,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void DrawerStyle::DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		using namespace drawerargs;
 
@@ -836,6 +549,337 @@ namespace swrenderer
 				(R_Drawers()->*colfunc)();
 			}
 			span++;
+		}
+	}
+
+	bool DrawerStyle::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
+	{
+		using namespace drawerargs;
+
+		// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
+		// just remove it completely.
+		if (!r_drawtrans || (op == STYLEOP_Add && fglevel == FRACUNIT && bglevel == 0 && !(flags & STYLEF_InvertSource)))
+		{
+			if (flags & STYLEF_ColorIsFixed)
+			{
+				colfunc = &SWPixelFormatDrawers::FillColumn;
+			}
+			else if (dc_translation == NULL)
+			{
+				colfunc = basecolfunc;
+			}
+			else
+			{
+				colfunc = transcolfunc;
+				drawer_needs_pal_input = true;
+			}
+			return true;
+		}
+		if (flags & STYLEF_InvertSource)
+		{
+			dc_srcblend = Col2RGB8_Inverse[fglevel >> 10];
+			dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
+			dc_srcalpha = fglevel;
+			dc_destalpha = bglevel;
+		}
+		else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
+		{
+			dc_srcblend = Col2RGB8[fglevel >> 10];
+			dc_destblend = Col2RGB8[bglevel >> 10];
+			dc_srcalpha = fglevel;
+			dc_destalpha = bglevel;
+		}
+		else
+		{
+			dc_srcblend = Col2RGB8_LessPrecision[fglevel >> 10];
+			dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
+			dc_srcalpha = fglevel;
+			dc_destalpha = bglevel;
+		}
+		switch (op)
+		{
+		case STYLEOP_Add:
+			if (fglevel == 0 && bglevel == FRACUNIT)
+			{
+				return false;
+			}
+			if (fglevel + bglevel <= FRACUNIT)
+			{ // Colors won't overflow when added
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = &SWPixelFormatDrawers::FillAddColumn;
+				}
+				else if (dc_translation == NULL)
+				{
+					colfunc = &SWPixelFormatDrawers::DrawAddColumn;
+				}
+				else
+				{
+					colfunc = &SWPixelFormatDrawers::DrawTranslatedAddColumn;
+					drawer_needs_pal_input = true;
+				}
+			}
+			else
+			{ // Colors might overflow when added
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = &SWPixelFormatDrawers::FillAddClampColumn;
+				}
+				else if (dc_translation == NULL)
+				{
+					colfunc = &SWPixelFormatDrawers::DrawAddClampColumn;
+				}
+				else
+				{
+					colfunc = &SWPixelFormatDrawers::DrawAddClampTranslatedColumn;
+					drawer_needs_pal_input = true;
+				}
+			}
+			return true;
+
+		case STYLEOP_Sub:
+			if (flags & STYLEF_ColorIsFixed)
+			{
+				colfunc = &SWPixelFormatDrawers::FillSubClampColumn;
+			}
+			else if (dc_translation == NULL)
+			{
+				colfunc = &SWPixelFormatDrawers::DrawSubClampColumn;
+			}
+			else
+			{
+				colfunc = &SWPixelFormatDrawers::DrawSubClampTranslatedColumn;
+				drawer_needs_pal_input = true;
+			}
+			return true;
+
+		case STYLEOP_RevSub:
+			if (fglevel == 0 && bglevel == FRACUNIT)
+			{
+				return false;
+			}
+			if (flags & STYLEF_ColorIsFixed)
+			{
+				colfunc = &SWPixelFormatDrawers::FillRevSubClampColumn;
+			}
+			else if (dc_translation == NULL)
+			{
+				colfunc = &SWPixelFormatDrawers::DrawRevSubClampColumn;
+			}
+			else
+			{
+				colfunc = &SWPixelFormatDrawers::DrawRevSubClampTranslatedColumn;
+				drawer_needs_pal_input = true;
+			}
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	fixed_t DrawerStyle::GetAlpha(int type, fixed_t alpha)
+	{
+		switch (type)
+		{
+		case STYLEALPHA_Zero:		return 0;
+		case STYLEALPHA_One:		return OPAQUE;
+		case STYLEALPHA_Src:		return alpha;
+		case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
+		default:					return 0;
+		}
+	}
+
+	bool DrawerStyle::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
+	{
+		using namespace drawerargs;
+
+		fixed_t fglevel, bglevel;
+
+		drawer_needs_pal_input = false;
+
+		style.CheckFuzz();
+
+		if (style.BlendOp == STYLEOP_Shadow)
+		{
+			style = LegacyRenderStyles[STYLE_TranslucentStencil];
+			alpha = TRANSLUC33;
+			color = 0;
+		}
+
+		if (style.Flags & STYLEF_ForceAlpha)
+		{
+			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
+		}
+		else if (style.Flags & STYLEF_TransSoulsAlpha)
+		{
+			alpha = fixed_t(transsouls * OPAQUE);
+		}
+		else if (style.Flags & STYLEF_Alpha1)
+		{
+			alpha = FRACUNIT;
+		}
+		else
+		{
+			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
+		}
+
+		if (translation != -1)
+		{
+			dc_translation = NULL;
+			if (translation != 0)
+			{
+				FRemapTable *table = TranslationToTable(translation);
+				if (table != NULL && !table->Inactive)
+				{
+					if (r_swtruecolor)
+						dc_translation = (uint8_t*)table->Palette;
+					else
+						dc_translation = table->Remap;
+				}
+			}
+		}
+
+		// Check for special modes
+		if (style.BlendOp == STYLEOP_Fuzz)
+		{
+			colfunc = fuzzcolfunc;
+			return true;
+		}
+		else if (style == LegacyRenderStyles[STYLE_Shaded])
+		{
+			// Shaded drawer only gets 16 levels of alpha because it saves memory.
+			if ((alpha >>= 12) == 0 || basecolormap == nullptr)
+				return false;
+			colfunc = &SWPixelFormatDrawers::DrawShadedColumn;
+			drawer_needs_pal_input = true;
+			CameraLight *cameraLight = CameraLight::Instance();
+			dc_color = cameraLight->fixedcolormap ? cameraLight->fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
+			basecolormap = &ShadeFakeColormap[16 - alpha];
+			if (cameraLight->fixedlightlev >= 0 && cameraLight->fixedcolormap == NULL)
+			{
+				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			}
+			else
+			{
+				R_SetColorMapLight(basecolormap, 0, 0);
+			}
+			return true;
+		}
+
+		fglevel = GetAlpha(style.SrcAlpha, alpha);
+		bglevel = GetAlpha(style.DestAlpha, alpha);
+
+		if (style.Flags & STYLEF_ColorIsFixed)
+		{
+			uint32_t x = fglevel >> 10;
+			uint32_t r = RPART(color);
+			uint32_t g = GPART(color);
+			uint32_t b = BPART(color);
+			// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
+			dc_color = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+			if (style.Flags & STYLEF_InvertSource)
+			{
+				r = 255 - r;
+				g = 255 - g;
+				b = 255 - b;
+			}
+			uint32_t alpha = clamp(fglevel >> (FRACBITS - 8), 0, 255);
+			dc_srccolor_bgra = (alpha << 24) | (r << 16) | (g << 8) | b;
+			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
+			// with the alpha.
+			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
+			R_SetColorMapLight(&identitycolormap, 0, 0);
+		}
+
+		if (!DrawerStyle::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	bool DrawerStyle::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap)
+	{
+		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap);
+	}
+
+	DrawerFunc DrawerStyle::GetTransMaskDrawer()
+	{
+		if (colfunc == &SWPixelFormatDrawers::DrawAddColumn)
+		{
+			return &SWPixelFormatDrawers::DrawWallAddColumn;
+		}
+		if (colfunc == &SWPixelFormatDrawers::DrawAddClampColumn)
+		{
+			return &SWPixelFormatDrawers::DrawWallAddClampColumn;
+		}
+		if (colfunc == &SWPixelFormatDrawers::DrawSubClampColumn)
+		{
+			return &SWPixelFormatDrawers::DrawWallSubClampColumn;
+		}
+		if (colfunc == &SWPixelFormatDrawers::DrawRevSubClampColumn)
+		{
+			return &SWPixelFormatDrawers::DrawWallRevSubClampColumn;
+		}
+		return nullptr;
+	}
+
+	void DrawerStyle::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
+	{
+		using namespace drawerargs;
+
+		if (masked)
+		{
+			if (alpha < OPAQUE || additive)
+			{
+				if (!additive)
+				{
+					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedTranslucent;
+					dc_srcblend = Col2RGB8[alpha >> 10];
+					dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
+				}
+				else
+				{
+					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT >> 10];
+					dc_srcalpha = alpha;
+					dc_destalpha = FRACUNIT;
+				}
+			}
+			else
+			{
+				spanfunc = &SWPixelFormatDrawers::DrawSpanMasked;
+			}
+		}
+		else
+		{
+			if (alpha < OPAQUE || additive)
+			{
+				if (!additive)
+				{
+					spanfunc = &SWPixelFormatDrawers::DrawSpanTranslucent;
+					dc_srcblend = Col2RGB8[alpha >> 10];
+					dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
+				}
+				else
+				{
+					spanfunc = &SWPixelFormatDrawers::DrawSpanAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT >> 10];
+					dc_srcalpha = alpha;
+					dc_destalpha = FRACUNIT;
+				}
+			}
+			else
+			{
+				spanfunc = &SWPixelFormatDrawers::DrawSpan;
+			}
 		}
 	}
 }

@@ -20,6 +20,7 @@ namespace swrenderer
 {
 	struct DrawSegment;
 	class ProjectedWallTexcoords;
+	class DrawerStyle;
 
 	class RenderDecal
 	{
@@ -28,6 +29,6 @@ namespace swrenderer
 
 	private:
 		static void Render(side_t *wall, DBaseDecal *first, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, FWallCoords wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass);
-		static void DrawColumn(int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+		static void DrawColumn(DrawerStyle &drawerstyle, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 	};
 }

@@ -200,10 +200,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	CameraLight::Instance()->fixedcolormap = dc_fcolormap;
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
+	DrawerStyle drawerstyle;
 	if (r_swtruecolor)
-		visible = R_SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+		visible = drawerstyle.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
-		visible = R_SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
+		visible = drawerstyle.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
 
 	BYTE *destorgsave = dc_destorg;
 	int destheightsave = dc_destheight;
@@ -291,7 +292,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		while (x < x2_i)
 		{
-			R_DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
+			drawerstyle.DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
 			x++;
 			frac += xiscale_i;
 		}

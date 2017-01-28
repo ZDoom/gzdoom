@@ -42,7 +42,8 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
-#include "g_levellocals.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {

@@ -32,9 +32,9 @@
 #include "d_player.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/scene/r_viewport.h"
-#include "g_levellocals.h"
 
 CVAR(Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
@@ -75,7 +75,7 @@ namespace swrenderer
 			{
 				fixedlightlev = player->fixedlightlevel * 256;
 				// [SP] Emulate GZDoom's light-amp goggles.
-				if (!level.PreserveSectorColor() && fixedlightlev >= 0)
+				if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
 				{
 					fixedcolormap = &FullNormalLight;
 				}
@@ -194,12 +194,12 @@ namespace swrenderer
 		}
 		else if (cameraLight->fixedlightlev >= 0)
 		{
-			BaseColormap = (!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap;
+			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
 			ColormapNum = cameraLight->fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (fullbright)
 		{
-			BaseColormap = (!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap;
+			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
 			ColormapNum = 0;
 		}
 		else

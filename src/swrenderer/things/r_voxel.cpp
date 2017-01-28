@@ -43,6 +43,8 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/r_memory.h"
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
 namespace swrenderer
 {
 	void RenderVoxel::Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)

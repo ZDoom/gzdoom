@@ -62,6 +62,7 @@
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 EXTERN_CVAR(Bool, r_drawvoxels);
 
 namespace swrenderer
@@ -493,7 +494,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (!level.PreserveSectorColor() && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
 		}
 
 		portal = frontsector->ValidatePortal(sector_t::ceiling);
@@ -531,7 +532,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (!level.PreserveSectorColor() && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
 		}
 
 		// killough 3/7/98: Add (x,y) offsets to flats, add deep water check

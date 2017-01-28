@@ -41,7 +41,8 @@
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/scene/r_viewport.h"
-#include "g_levellocals.h"
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
@@ -141,7 +142,7 @@ namespace swrenderer
 		rw_scalestep = ds->iscalestep;
 
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
 			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
@@ -444,7 +445,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
 			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 

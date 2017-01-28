@@ -56,6 +56,8 @@
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/r_memory.h"
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+
 namespace swrenderer
 {
 	void RenderParticle::Project(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)

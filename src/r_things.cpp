@@ -74,7 +74,6 @@ EXTERN_CVAR(Bool, r_deathcamera);
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_drawvoxels)
 
-CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
 
 namespace swrenderer
@@ -537,7 +536,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -1128,7 +1127,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
+			vis->colormap = (!level.PreserveSectorColor()) ? FullNormalLight.Maps : mybasecolormap->Maps;
 		}
 		else
 		{ // diminished light
@@ -1455,11 +1454,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
+				vis->colormap = (!level.PreserveSectorColor()) ? (FullNormalLight.Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
 			}
 			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
-				vis->colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->colormap = (!level.PreserveSectorColor()) ? FullNormalLight.Maps : mybasecolormap->Maps;	// [RH] use basecolormap
 			}
 			else
 			{ // local light
@@ -1506,9 +1505,9 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			noaccel = true;
 		}
 		// [SP] If emulating GZDoom fullbright, disable acceleration
-		if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+		if (!level.PreserveSectorColor() && fixedlightlev >= 0)
 			mybasecolormap = &FullNormalLight;
-		if (r_fullbrightignoresectorcolor && !foggy && pspr->GetState()->GetFullbright())
+		if (!level.PreserveSectorColor() && !foggy && pspr->GetState()->GetFullbright())
 			mybasecolormap = &FullNormalLight;
 		colormap_to_use = mybasecolormap;
 	}
@@ -2049,7 +2048,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
+				spr->colormap = (!level.PreserveSectorColor()) ? FullNormalLight.Maps : mybasecolormap->Maps;
 			}
 			else
 			{ // diminished light
@@ -2607,7 +2606,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else if (particle->bright)
 	{
-		vis->colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : map;
+		vis->colormap = (!level.PreserveSectorColor()) ? FullNormalLight.Maps : map;
 	}
 	else
 	{

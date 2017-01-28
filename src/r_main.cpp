@@ -59,6 +59,7 @@
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
 #include "r_thread.h"
+#include "g_levellocals.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
@@ -77,8 +78,6 @@ CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
 CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 extern cycle_t FrameCycles;
@@ -488,7 +487,7 @@ void R_SetupColormap(player_t *player)
 		{
 			fixedlightlev = player->fixedlightlevel * 256;
 			// [SP] Emulate GZDoom's light-amp goggles.
-			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+			if (!level.PreserveSectorColor() && fixedlightlev >= 0)
 			{
 				fixedcolormap = FullNormalLight.Maps;
 			}

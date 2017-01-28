@@ -223,6 +223,7 @@ enum ELevelFlags : unsigned int
 	
 	// More flags!
 	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
+	LEVEL3_PRESERVESECTORCOLOR	= 0x00000002,
 };
 
 

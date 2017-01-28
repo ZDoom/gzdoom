@@ -47,13 +47,13 @@
 #include "r_draw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "g_levellocals.h"
 
 #define WALLYREPEAT 8
 
 
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
@@ -291,7 +291,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -608,7 +608,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -1060,7 +1060,7 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -2303,11 +2303,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - savecoord.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+		R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 

@@ -116,7 +116,6 @@ namespace swrenderer
 		int ds_x1;
 		int ds_x2;
 		lighttable_t * ds_colormap;
-		FSWColormap *ds_fcolormap;
 		ShadeConstants ds_shade_constants;
 		dsfixed_t ds_light;
 		dsfixed_t ds_xfrac;
@@ -266,19 +265,18 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 	
-		ds_fcolormap = base_colormap;
 		if (r_swtruecolor)
 		{
-			ds_shade_constants.light_red = ds_fcolormap->Color.r * 256 / 255;
-			ds_shade_constants.light_green = ds_fcolormap->Color.g * 256 / 255;
-			ds_shade_constants.light_blue = ds_fcolormap->Color.b * 256 / 255;
-			ds_shade_constants.light_alpha = ds_fcolormap->Color.a * 256 / 255;
-			ds_shade_constants.fade_red = ds_fcolormap->Fade.r;
-			ds_shade_constants.fade_green = ds_fcolormap->Fade.g;
-			ds_shade_constants.fade_blue = ds_fcolormap->Fade.b;
-			ds_shade_constants.fade_alpha = ds_fcolormap->Fade.a;
-			ds_shade_constants.desaturate = MIN(abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
-			ds_shade_constants.simple_shade = (ds_fcolormap->Color.d == 0x00ffffff && ds_fcolormap->Fade.d == 0x00000000 && ds_fcolormap->Desaturate == 0);
+			ds_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
+			ds_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
+			ds_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
+			ds_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
+			ds_shade_constants.fade_red = base_colormap->Fade.r;
+			ds_shade_constants.fade_green = base_colormap->Fade.g;
+			ds_shade_constants.fade_blue = base_colormap->Fade.b;
+			ds_shade_constants.fade_alpha = base_colormap->Fade.a;
+			ds_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+			ds_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
 			ds_colormap = base_colormap->Maps;
 			ds_light = LIGHTSCALE(light, shade);
 		}

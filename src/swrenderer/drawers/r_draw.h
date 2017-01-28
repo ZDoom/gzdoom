@@ -80,7 +80,6 @@ namespace swrenderer
 		extern int ds_x1;
 		extern int ds_x2;
 		extern lighttable_t * ds_colormap;
-		extern FSWColormap *ds_fcolormap;
 		extern ShadeConstants ds_shade_constants;
 		extern dsfixed_t ds_light;
 		extern dsfixed_t ds_xfrac;

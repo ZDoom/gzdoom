@@ -174,7 +174,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 
 void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, int lightlevel)
+		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel)
 {
 	FMaterial *gltexture = FMaterial::ValidateTexture(texture, false);
 
@@ -191,6 +191,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	poly.mLightLevel = lightlevel;
 	poly.mVertCount = npoints;
 	poly.mVertIndex = (int)mVertices.Reserve(npoints);
+	poly.mFlatColor = flatcolor;
 
 	bool dorotate = rotation != 0;
 
@@ -438,8 +439,10 @@ void F2DDrawer::Draw()
 			cm = dsp->mColormap;
 			gl_SetColor(dsp->mLightLevel, 0, cm, 1.f);
 			gl_RenderState.SetMaterial(dsp->mTexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.SetObjectColor(dsp->mFlatColor|0xff000000);
 			gl_RenderState.Apply();
 			glDrawArrays(GL_TRIANGLE_FAN, dsp->mVertIndex, dsp->mVertCount);
+			gl_RenderState.SetObjectColor(0xffffffff);
 			break;
 		}
 

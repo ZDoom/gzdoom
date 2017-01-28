@@ -71,7 +71,7 @@ public:
 
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, int lightlevel, int bottomclip);
+		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	FNativePalette *CreatePalette(FRemapTable *remap);
 

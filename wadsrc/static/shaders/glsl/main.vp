@@ -6,7 +6,7 @@ in vec4 aColor;
 in vec4 aVertex2;
 in vec4 aNormal;
 out vec4 pixelpos;
-out vec2 glowdist;
+out vec3 glowdist;
 
 out vec4 vWorldNormal;
 out vec4 vEyeNormal;
@@ -50,9 +50,12 @@ void main()
 		pixelpos.xyz = worldcoord.xyz;
 		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 
-		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
-		glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
-
+		float topatpoint = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z);
+		float bottomatpoint = -((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
+		glowdist.x = topatpoint - worldcoord.y;
+		glowdist.y = worldcoord.y - bottomatpoint;
+		glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
+		
 		if (uSplitBottomPlane.z != 0.0)
 		{
 			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;

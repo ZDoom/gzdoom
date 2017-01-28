@@ -1504,6 +1504,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->SeqName = NAME_None;
 		ss->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		ss->prevsec = -1;	// stair retriggering until build completes
+		memset(ss->SpecialColors, -1, sizeof(ss->SpecialColors));
 
 		ss->SetAlpha(sector_t::floor, 1.);
 		ss->SetAlpha(sector_t::ceiling, 1.);

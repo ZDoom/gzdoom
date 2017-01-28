@@ -101,7 +101,6 @@ EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (String, playerclass)
-EXTERN_CVAR(Int, r_preservesectorcolor)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define DSNP_ID			MAKE_ID('d','s','N','p')
@@ -1482,20 +1481,6 @@ bool FLevelLocals::IsFreelookAllowed() const
 	if (dmflags & DF_YES_FREELOOK)
 		return true;
 	return !(level.flags & LEVEL_FREELOOK_NO);
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-bool FLevelLocals::PreserveSectorColor() const
-{
-	if (r_preservesectorcolor == 0)
-		return false;
-	if (r_preservesectorcolor == 1)
-		return true;
-	return !!(level.flags3 & LEVEL3_PRESERVESECTORCOLOR);
 }
 
 //==========================================================================

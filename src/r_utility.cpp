@@ -91,11 +91,6 @@ static TArray<DVector3a> InterpolationPath;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Int, r_preservesectorcolor, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < -1 || self > 1) self = -1;
-}
-
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)

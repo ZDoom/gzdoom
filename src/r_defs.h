@@ -659,10 +659,15 @@ public:
 	FSectorPortal *ValidatePortal(int which);
 	void CheckPortalPlane(int plane);
 
+
 	enum
 	{
 		floor,
-		ceiling
+		ceiling,
+		// only used for specialcolors array
+		walltop,
+		wallbottom,
+		sprites
 	};
 
 	struct splane
@@ -960,6 +965,7 @@ public:
 
 	// [RH] give floor and ceiling even more properties
 	FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
+	PalEntry	SpecialColors[5];
 
 
 	TObjPtr<AActor> SoundTarget;

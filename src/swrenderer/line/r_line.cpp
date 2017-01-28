@@ -932,11 +932,13 @@ namespace swrenderer
 		double yscale;
 		fixed_t xoffset = rw_offset;
 
+		DrawerStyle drawerstyle;
+
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		// clip wall to the floor and ceiling
 		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
@@ -1044,7 +1046,6 @@ namespace swrenderer
 					rw_offset = -rw_offset;
 				}
 
-				DrawerStyle drawerstyle;
 				RenderWallPart renderWallpart;
 				renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
@@ -1082,7 +1083,6 @@ namespace swrenderer
 						rw_offset = -rw_offset;
 					}
 
-					DrawerStyle drawerstyle;
 					RenderWallPart renderWallpart;
 					renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
@@ -1123,7 +1123,6 @@ namespace swrenderer
 						rw_offset = -rw_offset;
 					}
 
-					DrawerStyle drawerstyle;
 					RenderWallPart renderWallpart;
 					renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}

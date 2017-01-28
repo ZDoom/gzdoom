@@ -159,22 +159,12 @@ namespace swrenderer
 
 	typedef void(SWPixelFormatDrawers::*DrawerFunc)();
 
-	SWPixelFormatDrawers *R_Drawers();
-
 	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
 	void R_UpdateFuzzPos();
-
-	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
-	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
-	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
-	void R_SetTranslationMap(lighttable_t *translation);
-
-	void R_SetSpanTexture(FTexture *tex);
-	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
 
 	class DrawerStyle
 	{
@@ -194,6 +184,14 @@ namespace swrenderer
 
 		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
 
+		// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
+		void SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
+		void SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
+		void SetTranslationMap(lighttable_t *translation);
+
+		void SetSpanTexture(FTexture *tex);
+		void SetSpanColormap(FDynamicColormap *colormap, int shade);
+
 		DrawerFunc GetTransMaskDrawer();
 
 		DrawerFunc colfunc;
@@ -201,6 +199,38 @@ namespace swrenderer
 		DrawerFunc fuzzcolfunc;
 		DrawerFunc transcolfunc;
 		DrawerFunc spanfunc;
+
+		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
+		{
+			Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		}
+
+		void DrawFogBoundaryLine(int y, int x1, int x2)
+		{
+			Drawers()->DrawFogBoundaryLine(y, x1, x2);
+		}
+
+		void DrawColoredSpan(int y, int x1, int x2)
+		{
+			Drawers()->DrawColoredSpan(y, x1, x2);
+		}
+
+		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+		{
+			Drawers()->DrawSingleSkyColumn(solid_top, solid_bottom, fadeSky);
+		}
+
+		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+		{
+			Drawers()->DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
+		}
+
+		void FillColumn()
+		{
+			Drawers()->FillColumn();
+		}
+
+		SWPixelFormatDrawers *Drawers() const;
 
 	private:
 		void DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);

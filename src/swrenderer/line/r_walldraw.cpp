@@ -250,7 +250,7 @@ namespace swrenderer
 			dc_iscale = sampler.uv_step;
 			dc_texturefrac = sampler.uv_pos;
 			dc_textureheight = sampler.height;
-			(R_Drawers()->*draw1column)();
+			(drawerstyle.Drawers()->*draw1column)();
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -269,7 +269,7 @@ namespace swrenderer
 				dc_count = count;
 				dc_iscale = sampler.uv_step;
 				dc_texturefrac = sampler.uv_pos;
-				(R_Drawers()->*draw1column)();
+				(drawerstyle.Drawers()->*draw1column)();
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -295,7 +295,7 @@ namespace swrenderer
 					dc_count = count;
 					dc_iscale = sampler.uv_step;
 					dc_texturefrac = uv_pos;
-					(R_Drawers()->*draw1column)();
+					(drawerstyle.Drawers()->*draw1column)();
 
 					left -= count;
 					uv_pos += sampler.uv_step * count;
@@ -341,9 +341,9 @@ namespace swrenderer
 		}
 
 		if (cameraLight->fixedcolormap)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else
-			R_SetColorMapLight(basecolormap, 0, 0);
+			drawerstyle.SetColorMapLight(basecolormap, 0, 0);
 
 		float dx = WallC.tright.X - WallC.tleft.X;
 		float dy = WallC.tright.Y - WallC.tleft.Y;
@@ -362,7 +362,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				R_SetColorMapLight(basecolormap, light, wallshade);
+				drawerstyle.SetColorMapLight(basecolormap, light, wallshade);
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 

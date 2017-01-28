@@ -586,11 +586,11 @@ namespace swrenderer
 			return;
 		}
 
-		R_SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
+		DrawerStyle drawerstyle;
+		drawerstyle.SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
 
-		DrawerStyle drawerstyle;
 		bool visible = drawerstyle.SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap, Light.ColormapNum << FRACBITS);
 		if (!visible)
 			return;

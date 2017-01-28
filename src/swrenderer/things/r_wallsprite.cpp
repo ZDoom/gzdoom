@@ -178,6 +178,8 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
+		DrawerStyle drawerstyle;
+
 		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(spr->foggy));
 		double GlobVis = LightVisibility::Instance()->WallGlobVis();
 		float lightleft = float(GlobVis / spr->wallc.sz1);
@@ -185,11 +187,11 @@ namespace swrenderer
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != NULL)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
+			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
 		else
 			calclighting = true;
 
@@ -212,7 +214,6 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
 
-		DrawerStyle drawerstyle;
 		bool visible = drawerstyle.SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
@@ -233,7 +234,7 @@ namespace swrenderer
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, light, shade);
+					drawerstyle.SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
 					DrawColumn(drawerstyle, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);

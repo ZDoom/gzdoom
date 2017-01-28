@@ -114,19 +114,18 @@ namespace swrenderer
 			{ // Don't waste time on a masked texture if it isn't really masked.
 				masked = false;
 			}
-			R_SetSpanTexture(tex);
 			double xscale = xform.xScale * tex->Scale.X;
 			double yscale = xform.yScale * tex->Scale.Y;
 
 			if (!height.isSlope() && !tilt)
 			{
 				RenderFlatPlane renderer;
-				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap);
+				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap, tex);
 			}
 			else
 			{
 				RenderSlopePlane renderer;
-				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap);
+				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap, tex);
 			}
 		}
 		NetUpdate();

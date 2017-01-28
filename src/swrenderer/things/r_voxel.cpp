@@ -184,9 +184,9 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
-		R_SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
-
 		DrawerStyle drawerstyle;
+		drawerstyle.SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
+
 		bool visible = drawerstyle.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
@@ -285,7 +285,7 @@ namespace swrenderer
 							voxel_pos.Y += dirY.X * x + dirY.Y * y;
 							voxel_pos.Z += dirZ * z;
 						
-							FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+							FillBox(drawerstyle, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
 						}
 					}
 				}
@@ -308,7 +308,7 @@ namespace swrenderer
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
-	void RenderVoxel::FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
+	void RenderVoxel::FillBox(DrawerStyle &drawerstyle, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
 		double viewX, viewY, viewZ;
 		if (viewspace)
@@ -354,7 +354,7 @@ namespace swrenderer
 					dc_dest = dc_destorg + (dc_pitch * columnY1 + x) * pixelsize;
 					dc_color = color;
 					dc_count = columnY2 - columnY1;
-					R_Drawers()->FillColumn();
+					drawerstyle.FillColumn();
 				}
 			}
 		}

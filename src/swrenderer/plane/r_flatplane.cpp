@@ -44,7 +44,7 @@
 
 namespace swrenderer
 {
-	void RenderFlatPlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
+	void RenderFlatPlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
 		using namespace drawerargs;
 
@@ -52,6 +52,8 @@ namespace swrenderer
 		{
 			return;
 		}
+
+		drawerstyle.SetSpanTexture(texture);
 
 		double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
@@ -111,12 +113,12 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			R_SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
@@ -184,7 +186,7 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			R_SetDSColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
+			drawerstyle.SetDSColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
 		}
 
 		if (r_dynlights)
@@ -255,7 +257,7 @@ namespace swrenderer
 		ds_x1 = x1;
 		ds_x2 = x2;
 
-		(R_Drawers()->*drawerstyle.spanfunc)();
+		(drawerstyle.Drawers()->*drawerstyle.spanfunc)();
 	}
 
 	void RenderFlatPlane::StepColumn()
@@ -317,6 +319,6 @@ namespace swrenderer
 
 	void RenderColoredPlane::RenderLine(int y, int x1, int x2)
 	{
-		R_Drawers()->DrawColoredSpan(y, x1, x2);
+		drawerstyle.DrawColoredSpan(y, x1, x2);
 	}
 }

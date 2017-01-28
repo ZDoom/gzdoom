@@ -151,13 +151,13 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedcolormap)
 		{
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		}
 		else
 		{
 			fakefixed = true;
 			cameraLight->fixedcolormap = &NormalLight;
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		}
 
 		DrawSky(pl);
@@ -228,9 +228,9 @@ namespace swrenderer
 		bool fadeSky = (r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY));
 
 		if (!backskytex)
-			R_Drawers()->DrawSingleSkyColumn(solid_top, solid_bottom, fadeSky);
+			drawerstyle.DrawSingleSkyColumn(solid_top, solid_bottom, fadeSky);
 		else
-			R_Drawers()->DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
+			drawerstyle.DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
 	}
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2, int columns)

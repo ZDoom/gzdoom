@@ -137,7 +137,7 @@ namespace swrenderer
 		SWTruecolorDrawers tc_drawers;
 	}
 
-	SWPixelFormatDrawers *R_Drawers()
+	SWPixelFormatDrawers *DrawerStyle::Drawers() const
 	{
 		return active_drawers;
 	}
@@ -235,7 +235,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
+	void DrawerStyle::SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		using namespace drawerargs;
 
@@ -260,7 +260,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
+	void DrawerStyle::SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		using namespace drawerargs;
 	
@@ -285,7 +285,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetTranslationMap(lighttable_t *translation)
+	void DrawerStyle::SetTranslationMap(lighttable_t *translation)
 	{
 		using namespace drawerargs;
 
@@ -311,7 +311,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetSpanTexture(FTexture *tex)
+	void DrawerStyle::SetSpanTexture(FTexture *tex)
 	{
 		using namespace drawerargs;
 
@@ -331,9 +331,9 @@ namespace swrenderer
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
-	void R_SetSpanColormap(FDynamicColormap *colormap, int shade)
+	void DrawerStyle::SetSpanColormap(FDynamicColormap *colormap, int shade)
 	{
-		R_SetDSColorMapLight(colormap, 0, shade);
+		SetDSColorMapLight(colormap, 0, shade);
 	}
 
 	void R_UpdateFuzzPos()
@@ -419,7 +419,7 @@ namespace swrenderer
 				else if (dc_iscale < 0)
 					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-				(R_Drawers()->*colfunc)();
+				(Drawers()->*colfunc)();
 			}
 			span++;
 		}
@@ -536,7 +536,7 @@ namespace swrenderer
 				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-				(R_Drawers()->*colfunc)();
+				(Drawers()->*colfunc)();
 			}
 			span++;
 		}
@@ -750,11 +750,11 @@ namespace swrenderer
 			{
 				fixed_t shade = shadedlightshade;
 				if (shade == 0) FIXEDLIGHT2SHADE(cameraLight->fixedlightlev);
-				R_SetColorMapLight(basecolormap, 0, shade);
+				SetColorMapLight(basecolormap, 0, shade);
 			}
 			else
 			{
-				R_SetColorMapLight(basecolormap, 0, shadedlightshade);
+				SetColorMapLight(basecolormap, 0, shadedlightshade);
 			}
 			return true;
 		}
@@ -781,7 +781,7 @@ namespace swrenderer
 			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 			// with the alpha.
 			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
-			R_SetColorMapLight(&identitycolormap, 0, 0);
+			SetColorMapLight(&identitycolormap, 0, 0);
 		}
 
 		if (!DrawerStyle::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))

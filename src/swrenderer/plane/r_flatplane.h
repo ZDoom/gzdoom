@@ -23,7 +23,7 @@ namespace swrenderer
 	class RenderFlatPlane : PlaneRenderer
 	{
 	public:
-		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
+		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
 
 		static void SetupSlope();
 
@@ -54,5 +54,7 @@ namespace swrenderer
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;
+
+		DrawerStyle drawerstyle;
 	};
 }

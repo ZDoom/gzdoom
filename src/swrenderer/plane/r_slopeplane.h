@@ -14,13 +14,14 @@
 #pragma once
 
 #include "r_planerenderer.h"
+#include "swrenderer/drawers/r_draw.h"
 
 namespace swrenderer
 {
 	class RenderSlopePlane : PlaneRenderer
 	{
 	public:
-		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap);
+		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;
@@ -32,5 +33,6 @@ namespace swrenderer
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;
+		DrawerStyle drawerstyle;
 	};
 }

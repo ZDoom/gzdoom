@@ -252,15 +252,8 @@ namespace swrenderer
 		}
 
 		light = lightleft + (x1 - savecoord.sx1) * lightstep;
+
 		cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-		else if (cameraLight->fixedcolormap != NULL)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
-		else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
-		else
-			calclighting = true;
 
 		// Draw it
 		bool sprflipvert;
@@ -281,6 +274,16 @@ namespace swrenderer
 			int x = x1;
 
 			DrawerStyle drawerstyle;
+
+			if (cameraLight->fixedlightlev >= 0)
+				drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			else if (cameraLight->fixedcolormap != NULL)
+				drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
+				drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : usecolormap, 0, 0);
+			else
+				calclighting = true;
+
 			bool visible = drawerstyle.SetPatchStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
 
 			// R_SetPatchStyle can modify basecolormap.
@@ -295,7 +298,7 @@ namespace swrenderer
 				{
 					if (calclighting)
 					{ // calculate lighting
-						R_SetColorMapLight(usecolormap, light, wallshade);
+						drawerstyle.SetColorMapLight(usecolormap, light, wallshade);
 					}
 					DrawColumn(drawerstyle, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;

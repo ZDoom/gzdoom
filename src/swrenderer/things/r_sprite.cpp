@@ -243,12 +243,11 @@ namespace swrenderer
 			return;
 		}
 
-		fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-		R_SetColorMapLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
+		DrawerStyle drawerstyle;
+		drawerstyle.SetColorMapLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
-		DrawerStyle drawerstyle;
 		bool visible = drawerstyle.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
 
 		if (visible)

@@ -185,21 +185,22 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			translation = parms.remap->Remap;
 	}
 
+	DrawerStyle drawerstyle;
+
 	if (translation != NULL)
 	{
-		R_SetTranslationMap((lighttable_t *)translation);
+		drawerstyle.SetTranslationMap((lighttable_t *)translation);
 	}
 	else
 	{
 		if (r_swtruecolor)
-			R_SetTranslationMap(nullptr);
+			drawerstyle.SetTranslationMap(nullptr);
 		else
-			R_SetTranslationMap(identitymap);
+			drawerstyle.SetTranslationMap(identitymap);
 	}
 
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
-	DrawerStyle drawerstyle;
 	if (r_swtruecolor)
 		visible = drawerstyle.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
@@ -1388,11 +1389,12 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
-	R_SetSpanTexture(tex);
+	DrawerStyle drawerstyle;
+	drawerstyle.SetSpanTexture(tex);
 	if (colormap)
-		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+		drawerstyle.SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
-		R_SetSpanColormap(&identitycolormap, 0);
+		drawerstyle.SetSpanColormap(&identitycolormap, 0);
 	if (ds_xbits != 0)
 	{
 		scalex = double(1u << (32 - ds_xbits)) / scalex;
@@ -1491,7 +1493,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 					ds_xfrac = xs_RoundToInt(tex.X * scalex);
 					ds_yfrac = xs_RoundToInt(tex.Y * scaley);
 
-					R_Drawers()->DrawSpan();
+					(drawerstyle.Drawers()->*drawerstyle.spanfunc)();
 #endif
 				}
 				x += xinc;

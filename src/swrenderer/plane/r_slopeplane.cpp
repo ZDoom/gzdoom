@@ -48,7 +48,7 @@
 
 namespace swrenderer
 {
-	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap)
+	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
 		using namespace drawerargs;
 
@@ -71,6 +71,8 @@ namespace swrenderer
 		{
 			return;
 		}
+
+		drawerstyle.SetSpanTexture(texture);
 
 		lxscale = _xscale * ifloatpow2[ds_xbits];
 		lyscale = _yscale * ifloatpow2[ds_ybits];
@@ -153,17 +155,17 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			R_SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
 		{
-			R_SetDSColorMapLight(basecolormap, 0, 0);
+			drawerstyle.SetDSColorMapLight(basecolormap, 0, 0);
 			plane_shade = true;
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}
@@ -183,6 +185,6 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
-		R_Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		drawerstyle.DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

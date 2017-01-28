@@ -141,9 +141,9 @@ namespace swrenderer
 		rw_scalestep = ds->iscalestep;
 
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		// find positioning
 		texheight = tex->GetScaledHeightDouble();
@@ -272,7 +272,7 @@ namespace swrenderer
 				{
 					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
 					{
-						R_SetColorMapLight(basecolormap, rw_light, wallshade);
+						drawerstyle.SetColorMapLight(basecolormap, rw_light, wallshade);
 					}
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
@@ -444,9 +444,9 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			R_SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerstyle.SetColorMapLight((!level.PreserveSectorColor()) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			R_SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;

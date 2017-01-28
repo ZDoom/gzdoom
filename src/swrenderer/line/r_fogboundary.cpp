@@ -64,7 +64,7 @@ namespace swrenderer
 			fillshort(spanend + t2, b2 - t2, x);
 		}
 
-		R_SetColorMapLight(basecolormap, (float)light, wallshade);
+		drawerstyle.SetColorMapLight(basecolormap, (float)light, wallshade);
 
 		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
@@ -91,7 +91,7 @@ namespace swrenderer
 					fillshort(spanend + t2, b2 - t2, x);
 				}
 				rcolormap = lcolormap;
-				R_SetColorMapLight(basecolormap, (float)light, wallshade);
+				drawerstyle.SetColorMapLight(basecolormap, (float)light, wallshade);
 				fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 			}
 			else
@@ -102,13 +102,13 @@ namespace swrenderer
 					while (t2 < stop)
 					{
 						int y = t2++;
-						R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
+						drawerstyle.DrawFogBoundaryLine(y, xr, spanend[y]);
 					}
 					stop = MAX(b1, t2);
 					while (b2 > stop)
 					{
 						int y = --b2;
-						R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
+						drawerstyle.DrawFogBoundaryLine(y, xr, spanend[y]);
 					}
 				}
 				else
@@ -142,7 +142,7 @@ namespace swrenderer
 	{
 		for (; y < y2; ++y)
 		{
-			R_Drawers()->DrawFogBoundaryLine(y, x1, spanend[y]);
+			drawerstyle.DrawFogBoundaryLine(y, x1, spanend[y]);
 		}
 	}
 }

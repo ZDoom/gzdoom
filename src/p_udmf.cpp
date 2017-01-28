@@ -1480,6 +1480,9 @@ public:
 					sec->SpecialColors[sector_t::sprites] = CheckInt(key) || 0xff000000;
 					break;
 
+				case NAME_Color_Absolute:
+					Flag(sec->MoreFlags, SECF_SPECIALCOLORSABSOLUTE, key);
+
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key));
 					continue;

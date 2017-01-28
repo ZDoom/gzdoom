@@ -216,13 +216,22 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
 	  floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)
 	  ceiling_reflect = <float>;      // reflectiveness of ceiling (OpenGL only, not functional on sloped sectors)
-	  floorglowcolor = <integer>;     // Sector's floor glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing.
-	  floorglowheight = <float>;      // Height of floor glow. This only has an effect for the sector's own glow color, but not for a texture based glow.
-	  ceilingglowcolor = <integer>;   // Sector's ceiling glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing.
-	  ceilingglowheight = <float>;    // Height of ceiling glow. This only has an effect for the sector's own glow color, but not for a texture based glow.
 	  fogdensity = <integer>;         // Sets an explicit fog density for the sector, overriding the default calculation from the light level. Value range is 0-510,
 	                                  // 0 meaning that the default is to be used, 2 equalling the density of a light level of 250, and 255 equalling the density of
-	                                  // a light level of 0.
+	                                  // a light level of 0.  (OpenGL only)
+	  floorglowcolor = <integer>;     // Sector's floor glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
+	  floorglowheight = <float>;      // Height of floor glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
+	  ceilingglowcolor = <integer>;   // Sector's ceiling glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
+	  ceilingglowheight = <float>;    // Height of ceiling glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
+	  color_floor = <int>;            // Material color of sector's floor (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later) Default is white (0xffffff)
+	  color_ceiling = <int>;          // Material color of sector's ceiling (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later) Default is white (0xffffff)
+	  color_walltop = <int>;          // Material color of top of sector's sidedefs (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later, 
+	                                     in OpenGL 2.x this will define the entire wall's color) Default is white (0xffffff)
+	  color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
+	  color_sprites = <int>;          // Material color of sprites in sector (OpenGL only.) Default is white (0xffffff)
+	  color_absolute = <bool>         // treats the above properties as absolute, i.e. final light level is only defined by the color, the sector's light level is ignored
+	                                     for calculating the light color. The sector's light level is only used for fog density calculations.)
+									  
 
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>   // ceiling portal disabled.
@@ -413,8 +422,11 @@ Added 'moreids' for linedefs and sectors.
 added clarification about character encoding
 added sector damage properties.
 
-1.27 05.01.2016
+1.27 05.01.2017
 floor_reflect and ceiling_reflect.
+
+1.28 28.01.2017
+sector material colors.
 
 ===============================================================================
 EOF

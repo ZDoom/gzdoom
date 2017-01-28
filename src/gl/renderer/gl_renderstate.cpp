@@ -72,6 +72,7 @@ void FRenderState::Reset()
 	mModelMatrixEnabled = false;
 	mTextureMatrixEnabled = false;
 	mObjectColor = 0xffffffff;
+	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
 	mColormapState = CM_DEFAULT;
 	mSoftLight = 0;
@@ -144,6 +145,8 @@ bool FRenderState::ApplyShader()
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
+	//activeShader->muObjectColor2.Set(mObjectColor2);
+	activeShader->muObjectColor2.Set(mObjectColor2);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);

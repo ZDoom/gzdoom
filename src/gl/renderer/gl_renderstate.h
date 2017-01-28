@@ -106,6 +106,7 @@ class FRenderState
 	FStateVec4 mClipLine;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
+	PalEntry mObjectColor2;
 	FStateVec4 mDynColor;
 	float mClipSplit[2];
 
@@ -379,6 +380,11 @@ public:
 	void SetObjectColor(PalEntry pe)
 	{
 		mObjectColor = pe;
+	}
+
+	void SetObjectColor2(PalEntry pe)
+	{
+		mObjectColor2 = pe;
 	}
 
 	void SetFog(PalEntry c, float d)

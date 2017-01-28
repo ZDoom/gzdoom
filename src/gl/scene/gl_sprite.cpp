@@ -332,7 +332,7 @@ void GLSprite::Draw(int pass)
 			ThingColor.b * actor->Sector->SpecialColors[sector_t::sprites].b / 255);
 
 		gl_RenderState.SetObjectColor(finalcol);
-		gl_SetColor((actor->Sector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : lightlevel, rel, Colormap, trans);
+		gl_SetColor(lightlevel, rel, Colormap, trans);
 	}
 
 
@@ -401,7 +401,7 @@ void GLSprite::Draw(int pass)
 				thiscm.Decolorize();
 			}
 
-			gl_SetColor((actor->Sector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : thisll, rel, thiscm, trans);
+			gl_SetColor(thisll, rel, thiscm, trans);
 			if (!foglayer)
 			{
 				gl_SetFog(thislight, rel, &thiscm, additivefog);

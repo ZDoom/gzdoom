@@ -377,7 +377,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	{
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:			// Same, but also creates the dynlight data.
-		gl_SetColor((sector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : lightlevel, rel, Colormap,1.0f);
+		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
 		if (sector->special != GLSector_Skybox)
@@ -404,7 +404,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 
 	case GLPASS_TRANSLUCENT:
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		gl_SetColor((sector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : lightlevel, rel, Colormap, alpha);
+		gl_SetColor(lightlevel, rel, Colormap, alpha);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
 		if (!gltexture)

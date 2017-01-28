@@ -479,7 +479,6 @@ enum
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
 	SECF_HIDDEN			= 256,	// Do not draw on textured automap
-	SECF_SPECIALCOLORSABSOLUTE = 512,	// The special colors ignore the light level except for fog density.
 };
 
 enum

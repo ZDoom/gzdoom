@@ -347,7 +347,7 @@ void GLWall::RenderTextured(int rflags)
 	if (lightlist == NULL)
 	{
 		if (type != RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
-		gl_SetColor((seg->frontsector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE)? 255 : lightlevel, rel, Colormap, absalpha);
+		gl_SetColor(lightlevel, rel, Colormap, absalpha);
 		RenderWall(rflags);
 	}
 	else
@@ -367,7 +367,7 @@ void GLWall::RenderTextured(int rflags)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
-				gl_SetColor((seg->frontsector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : thisll, rel, thiscm, absalpha);
+				gl_SetColor(thisll, rel, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
 				gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, lowplane);
 				RenderWall(rflags);

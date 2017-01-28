@@ -417,7 +417,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					gl_SetDynSpriteLight(playermo, NULL);
 				}
-				gl_SetColor((viewsector->MoreFlags & SECF_SPECIALCOLORSABSOLUTE) ? 255 : ll, 0, cmc, trans, true);
+				gl_SetColor(ll, 0, cmc, trans, true);
 			}
 
 			if (psp->firstTic)

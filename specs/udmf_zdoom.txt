@@ -229,9 +229,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	                                     in OpenGL 2.x this will define the entire wall's color) Default is white (0xffffff)
 	  color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
 	  color_sprites = <int>;          // Material color of sprites in sector (OpenGL only.) Default is white (0xffffff)
-	  color_absolute = <bool>         // treats the above properties as absolute, i.e. final light level is only defined by the color, the sector's light level is ignored
-	                                     for calculating the light color. The sector's light level is only used for fog density calculations.)
-									  
+							  
 
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>   // ceiling portal disabled.

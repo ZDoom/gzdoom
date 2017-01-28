@@ -304,6 +304,11 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 		// uses approximations of Legacy's default settings.
 		density = fogdensity ? fogdensity : 18;
 	}
+	else if (sectorfogdensity != 0)
+	{
+		// case 2: Sector has an explicit fog density set.
+		density = sectorfogdensity;
+	}
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 1: black fog
@@ -315,11 +320,6 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 		{
 			density = 0;
 		}
-	}
-	else if (sectorfogdensity != 0)
-	{
-		// case 2: Sector has an explicit fog density set.
-		density = sectorfogdensity;
 	}
 	else if (outsidefogdensity != 0 && outsidefogcolor.a != 0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
 	{

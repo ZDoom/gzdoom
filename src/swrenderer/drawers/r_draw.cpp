@@ -74,7 +74,6 @@ namespace swrenderer
 	{
 		int dc_pitch;
 		lighttable_t *dc_colormap;
-		FSWColormap *dc_fcolormap;
 		ShadeConstants dc_shade_constants;
 		fixed_t dc_light;
 		int dc_x;
@@ -292,7 +291,6 @@ namespace swrenderer
 
 		if (r_swtruecolor)
 		{
-			dc_fcolormap = nullptr;
 			dc_colormap = nullptr;
 			dc_translation = translation;
 			dc_shade_constants.light_red = 256;
@@ -309,7 +307,6 @@ namespace swrenderer
 		}
 		else
 		{
-			dc_fcolormap = nullptr;
 			dc_colormap = translation;
 		}
 	}

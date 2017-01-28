@@ -45,6 +45,7 @@ class F2DDrawer : public FSimpleVertexBuffer
 		FMaterial *mTexture;
 		int mLightLevel;
 		FDynamicColormap *mColormap;
+		PalEntry mFlatColor;
 	};
 
 	TArray<FSimpleVertex> mVertices;
@@ -61,7 +62,7 @@ public:
 	
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
+		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel);
 		
 	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
 	void AddPixel(int x1, int y1, int palcolor, uint32 color);

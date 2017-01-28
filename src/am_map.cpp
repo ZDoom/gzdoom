@@ -1898,6 +1898,7 @@ void AM_drawSubsectors()
 	double scalex, scaley;
 	double originx, originy;
 	FDynamicColormap *colormap;
+	PalEntry flatcolor;
 	mpoint_t originpt;
 
 	screen->StartSimplePolys();
@@ -1941,6 +1942,7 @@ void AM_drawSubsectors()
 		colormap = sec->ColorMap;
 
 		FTextureID maptex = sec->GetTexture(sector_t::floor);
+		flatcolor = sec->SpecialColors[sector_t::floor];
 
 		scalex = sec->GetXScale(sector_t::floor);
 		scaley = sec->GetYScale(sector_t::floor);
@@ -1989,6 +1991,7 @@ void AM_drawSubsectors()
 				if (roverz < cmpz)
 				{
 					maptex = *(rover->top.texture);
+					flatcolor = *(rover->top.flatcolor);
 					floorplane = rover->top.plane;
 					sector_t *model = rover->top.model;
 					int selector = (rover->flags & FF_INVERTPLANES) ? sector_t::floor : sector_t::ceiling;
@@ -2049,6 +2052,7 @@ void AM_drawSubsectors()
 				scale / scaley,
 				rotation,
 				colormap,
+				flatcolor,
 				floorlight,
 				f_y + f_h
 				);

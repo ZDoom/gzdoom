@@ -3092,7 +3092,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, FDynamicColormap *colormap, int lightlevel, int bottomclip)
+	DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 	// Use an equation similar to player sprites to determine shade
 	double fadelevel = clamp((LIGHT2SHADE(lightlevel)/65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
@@ -3113,7 +3113,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	}
 	if (In2D < 2)
 	{
-		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, lightlevel, bottomclip);
+		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, bottomclip);
 		return;
 	}
 	if (!InScene)

@@ -169,8 +169,6 @@ bool FRenderState::ApplyShader()
 	{
 		activeShader->muGlowTopColor.Set(mGlowTop.vec);
 		activeShader->muGlowBottomColor.Set(mGlowBottom.vec);
-		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
-		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
 		activeShader->currentglowstate = 1;
 	}
 	else if (activeShader->currentglowstate)
@@ -178,9 +176,12 @@ bool FRenderState::ApplyShader()
 		// if glowing is on, disable it.
 		activeShader->muGlowTopColor.Set(nulvec);
 		activeShader->muGlowBottomColor.Set(nulvec);
-		activeShader->muGlowTopPlane.Set(nulvec);
-		activeShader->muGlowBottomPlane.Set(nulvec);
 		activeShader->currentglowstate = 0;
+	}
+	if (mGlowEnabled || mObjectColor2.a != 0)
+	{
+		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
+		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
 	}
 
 	if (mSplitEnabled)

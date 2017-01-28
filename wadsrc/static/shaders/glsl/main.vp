@@ -54,10 +54,7 @@ void main()
 		float bottomatpoint = -((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
 		glowdist.x = topatpoint - worldcoord.y;
 		glowdist.y = worldcoord.y - bottomatpoint;
-		glowdist.z = glowdist.x / (topatpoint - bottomatpoint);
-		
-
-		return (uGlowTopPlane.w + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
+		glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
 		
 		if (uSplitBottomPlane.z != 0.0)
 		{

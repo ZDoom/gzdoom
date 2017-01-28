@@ -3875,7 +3875,7 @@ void FParser::SF_SetColor(void)
 			color.r=intvalue(t_argv[1]);
 			color.g=intvalue(t_argv[2]);
 			color.b=intvalue(t_argv[3]);
-			color.a = (DFraggleThinker::ActiveThinker->setcolormaterial) ? 255 : 0;
+			color.a = 0;
 		}
 		else return;
 
@@ -3891,7 +3891,7 @@ void FParser::SF_SetColor(void)
 				for (int j = 0; j < 4; j++) level.sectors[i].SpecialColors[j] = color;
 				// simulates 'nocoloredspritelighting' settings.
 				int v = (color.r + color.g + color.b) / 3;
-				level.sectors[i].SpecialColors[4] = (255 + v + v) / 3;
+				level.sectors[i].SpecialColors[sector_t::sprites] = (255 + v + v) / 3;
 			}
 		}
 	}

@@ -2093,9 +2093,7 @@ void P_LoadLineDefs (MapData * map)
 	maplinedef_t *mld;
 		
 	int numlines = lumplen / sizeof(maplinedef_t);
-	level.lines.Alloc(numlines);
 	linemap.Resize(numlines);
-	memset (&level.lines[0], 0, numlines*sizeof(line_t));
 
 	mldf = new char[lumplen];
 	map->Read(ML_LINEDEFS, mldf);
@@ -2140,6 +2138,8 @@ void P_LoadLineDefs (MapData * map)
 			i++;
 		}
 	}
+	level.lines.Alloc(numlines);
+	memset(&level.lines[0], 0, numlines * sizeof(line_t));
 
 	P_AllocateSideDefs (map, sidecount);
 
@@ -2192,9 +2192,7 @@ void P_LoadLineDefs2 (MapData * map)
 	maplinedef2_t *mld;
 		
 	int numlines = lumplen / sizeof(maplinedef2_t);
-	level.lines.Alloc(numlines);
 	linemap.Resize(numlines);
-	memset (&level.lines[0], 0, numlines*sizeof(line_t));
 
 	mldf = new char[lumplen];
 	map->Read(ML_LINEDEFS, mldf);
@@ -2233,6 +2231,8 @@ void P_LoadLineDefs2 (MapData * map)
 	{
 		ForceNodeBuild = true;
 	}
+	level.lines.Alloc(numlines);
+	memset(&level.lines[0], 0, numlines * sizeof(line_t));
 
 	P_AllocateSideDefs (map, sidecount);
 

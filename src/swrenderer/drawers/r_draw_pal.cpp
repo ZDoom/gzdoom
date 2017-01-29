@@ -565,14 +565,12 @@ namespace swrenderer
 		_dest_y = args.DestY();
 		_count = args.dc_count;
 		_pitch = dc_pitch;
-		for (int col = 0; col < 4; col++)
-		{
-			_source[col] = args.dc_wall_source[col];
-			_source2[col] = args.dc_wall_source2[col];
-			_sourceheight[col] = args.dc_wall_sourceheight[col];
-			_iscale[col] = args.dc_wall_iscale[col];
-			_texturefrac[col] = args.dc_wall_texturefrac[col];
-		}
+		_source = args.dc_wall_source;
+		_source2 = args.dc_wall_source2;
+		_sourceheight[0] = args.dc_wall_sourceheight[0];
+		_sourceheight[1] = args.dc_wall_sourceheight[1];
+		_iscale = args.dc_wall_iscale;
+		_texturefrac = args.dc_wall_texturefrac;
 	}
 
 	void DrawSingleSky1PalCommand::Execute(DrawerThread *thread)
@@ -580,11 +578,11 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0 = _source[0];
+		const uint8_t *source0 = _source;
 		int textureheight0 = _sourceheight[0];
 
-		int32_t frac = _texturefrac[0];
-		int32_t fracstep = _iscale[0];
+		int32_t frac = _texturefrac;
+		int32_t fracstep = _iscale;
 
 		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
@@ -711,13 +709,13 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0 = _source[0];
-		const uint8_t *source1 = _source2[0];
+		const uint8_t *source0 = _source;
+		const uint8_t *source1 = _source2;
 		int textureheight0 = _sourceheight[0];
 		uint32_t maxtextureheight1 = _sourceheight[1] - 1;
 
-		int32_t frac = _texturefrac[0];
-		int32_t fracstep = _iscale[0];
+		int32_t frac = _texturefrac;
+		int32_t fracstep = _iscale;
 
 		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out

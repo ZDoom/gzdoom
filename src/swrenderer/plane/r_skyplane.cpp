@@ -166,53 +166,50 @@ namespace swrenderer
 			cameraLight->fixedcolormap = nullptr;
 	}
 
-	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
+	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
 
 		uint32_t height = frontskytex->GetHeight();
 
-		for (int i = 0; i < columns; i++)
+		double uv_stepd = skyiscale * yrepeat;
+		double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+		double v_step = uv_stepd / height;
+
+		uint32_t uv_pos = (uint32_t)(v * 0x01000000);
+		uint32_t uv_step = (uint32_t)(v_step * 0x01000000);
+
+		int x = start_x;
+		if (renderportal->MirrorFlags & RF_XFLIP)
+			x = (viewwidth - x);
+
+		uint32_t ang, angle1, angle2;
+
+		if (r_linearsky)
 		{
-			double uv_stepd = skyiscale * yrepeat;
-			double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
-			double v_step = uv_stepd / height;
-
-			uint32_t uv_pos = (uint32_t)(v * 0x01000000);
-			uint32_t uv_step = (uint32_t)(v_step * 0x01000000);
-
-			int x = start_x + i;
-			if (renderportal->MirrorFlags & RF_XFLIP)
-				x = (viewwidth - x);
-
-			uint32_t ang, angle1, angle2;
-
-			if (r_linearsky)
-			{
-				angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
-				ang = (skyangle + xangle) ^ skyflip;
-			}
-			else
-			{
-				ang = (skyangle + xtoviewangle[x]) ^ skyflip;
-			}
-			angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
-			angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
-
-			if (r_swtruecolor)
-			{
-				drawerargs.dc_wall_source[i] = (const uint8_t *)frontskytex->GetColumnBgra(angle1, nullptr);
-				drawerargs.dc_wall_source2[i] = backskytex ? (const uint8_t *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
-			}
-			else
-			{
-				drawerargs.dc_wall_source[i] = (const uint8_t *)frontskytex->GetColumn(angle1, nullptr);
-				drawerargs.dc_wall_source2[i] = backskytex ? (const uint8_t *)backskytex->GetColumn(angle2, nullptr) : nullptr;
-			}
-
-			drawerargs.dc_wall_iscale[i] = uv_step;
-			drawerargs.dc_wall_texturefrac[i] = uv_pos;
+			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+			ang = (skyangle + xangle) ^ skyflip;
 		}
+		else
+		{
+			ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+		}
+		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+
+		if (r_swtruecolor)
+		{
+			drawerargs.dc_wall_source = (const uint8_t *)frontskytex->GetColumnBgra(angle1, nullptr);
+			drawerargs.dc_wall_source2 = backskytex ? (const uint8_t *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
+		}
+		else
+		{
+			drawerargs.dc_wall_source = (const uint8_t *)frontskytex->GetColumn(angle1, nullptr);
+			drawerargs.dc_wall_source2 = backskytex ? (const uint8_t *)backskytex->GetColumn(angle2, nullptr) : nullptr;
+		}
+
+		drawerargs.dc_wall_iscale = uv_step;
+		drawerargs.dc_wall_texturefrac = uv_pos;
 
 		drawerargs.dc_wall_sourceheight[0] = height;
 		drawerargs.dc_wall_sourceheight[1] = backskytex ? backskytex->GetHeight() : height;
@@ -231,12 +228,12 @@ namespace swrenderer
 			drawerargs.DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
 	}
 
-	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2, int columns)
+	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)
 	{
 		if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 		{
 			double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
-			DrawSkyColumnStripe(start_x, y1, y2, columns, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
+			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
 		}
 		else
 		{
@@ -247,7 +244,7 @@ namespace swrenderer
 			double topfrac = fmod(skymid + iscale * (1 - CenterY), frontskytex->GetHeight());
 			if (topfrac < 0) topfrac += frontskytex->GetHeight();
 			double texturemid = topfrac - iscale * (1 - CenterY);
-			DrawSkyColumnStripe(start_x, y1, y2, columns, scale, texturemid, yrepeat);
+			DrawSkyColumnStripe(start_x, y1, y2, scale, texturemid, yrepeat);
 		}
 	}
 
@@ -265,7 +262,7 @@ namespace swrenderer
 			if (y2 <= y1)
 				continue;
 
-			DrawSkyColumn(x, y1, y2, 1);
+			DrawSkyColumn(x, y1, y2);
 		}
 	}
 }

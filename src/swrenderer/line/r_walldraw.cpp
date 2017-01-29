@@ -324,17 +324,6 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);
-		if (fixed)
-		{
-			drawerargs.dc_wall_colormap[0] = drawerargs.dc_colormap;
-			drawerargs.dc_wall_colormap[1] = drawerargs.dc_colormap;
-			drawerargs.dc_wall_colormap[2] = drawerargs.dc_colormap;
-			drawerargs.dc_wall_colormap[3] = drawerargs.dc_colormap;
-			drawerargs.dc_wall_light[0] = 0;
-			drawerargs.dc_wall_light[1] = 0;
-			drawerargs.dc_wall_light[2] = 0;
-			drawerargs.dc_wall_light[3] = 0;
-		}
 
 		if (cameraLight->fixedcolormap)
 			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);

@@ -304,13 +304,10 @@ namespace swrenderer
 		args.dest_y = drawerargs.DestY();
 		args.count = drawerargs.dc_count;
 		args.pitch = dc_pitch;
-		for (int i = 0; i < 4; i++)
-		{
-			args.texturefrac[i] = drawerargs.dc_wall_texturefrac[i];
-			args.iscale[i] = drawerargs.dc_wall_iscale[i];
-			args.source0[i] = (const uint32_t *)drawerargs.dc_wall_source[i];
-			args.source1[i] = (const uint32_t *)drawerargs.dc_wall_source2[i];
-		}
+		args.texturefrac[0] = drawerargs.dc_wall_texturefrac;
+		args.iscale[0] = drawerargs.dc_wall_iscale;
+		args.source0[0] = (const uint32_t *)drawerargs.dc_wall_source;
+		args.source1[0] = (const uint32_t *)drawerargs.dc_wall_source2;
 		args.textureheight0 = drawerargs.dc_wall_sourceheight[0];
 		args.textureheight1 = drawerargs.dc_wall_sourceheight[1];
 		args.top_color = solid_top;

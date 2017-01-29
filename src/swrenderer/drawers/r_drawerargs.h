@@ -86,11 +86,11 @@ namespace swrenderer
 	class SkyDrawerArgs : public DrawerArgs
 	{
 	public:
-		const uint8_t *dc_wall_source[4];
-		const uint8_t *dc_wall_source2[4];
-		uint32_t dc_wall_sourceheight[4];
-		uint32_t dc_wall_texturefrac[4];
-		uint32_t dc_wall_iscale[4];
+		const uint8_t *dc_wall_source;
+		const uint8_t *dc_wall_source2;
+		uint32_t dc_wall_sourceheight[2];
+		uint32_t dc_wall_texturefrac;
+		uint32_t dc_wall_iscale;
 		int dc_count;
 
 		void SetDest(int x, int y);
@@ -124,14 +124,6 @@ namespace swrenderer
 		const uint8_t *dc_source2;
 		int dc_count;
 
-		uint32_t dc_wall_texturefrac[4];
-		uint32_t dc_wall_iscale[4];
-		uint8_t *dc_wall_colormap[4];
-		fixed_t dc_wall_light[4];
-		const uint8_t *dc_wall_source[4];
-		const uint8_t *dc_wall_source2[4];
-		uint32_t dc_wall_texturefracx[4];
-		uint32_t dc_wall_sourceheight[4];
 		int dc_wall_fracbits;
 
 		FVector3 dc_normal;

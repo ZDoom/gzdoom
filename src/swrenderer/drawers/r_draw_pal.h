@@ -56,11 +56,11 @@ namespace swrenderer
 		int _dest_y;
 		int _count;
 		int _pitch;
-		const uint8_t *_source[4];
-		const uint8_t *_source2[4];
-		int _sourceheight[4];
-		uint32_t _iscale[4];
-		uint32_t _texturefrac[4];
+		const uint8_t *_source;
+		const uint8_t *_source2;
+		int _sourceheight[2];
+		uint32_t _iscale;
+		uint32_t _texturefrac;
 	};
 
 	class DrawSingleSky1PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };

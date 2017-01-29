@@ -25,8 +25,8 @@ namespace swrenderer
 
 	private:
 		void DrawSky(VisiblePlane *pl);
-		void DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat);
-		void DrawSkyColumn(int start_x, int y1, int y2, int columns);
+		void DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat);
+		void DrawSkyColumn(int start_x, int y1, int y2);
 
 		FTexture *frontskytex = nullptr;
 		FTexture *backskytex = nullptr;

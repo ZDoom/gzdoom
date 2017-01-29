@@ -2198,12 +2198,12 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_GIVECHEAT:
 		s = ReadString (stream);
-		cht_Give (&players[player], s, ReadWord (stream));
+		cht_Give (&players[player], s, ReadLong (stream));
 		break;
 
 	case DEM_TAKECHEAT:
 		s = ReadString (stream);
-		cht_Take (&players[player], s, ReadWord (stream));
+		cht_Take (&players[player], s, ReadLong (stream));
 		break;
 
 	case DEM_WARPCHEAT:
@@ -2721,7 +2721,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
-			skip = strlen ((char *)(*stream)) + 3;
+			skip = strlen ((char *)(*stream)) + 5;
 			break;
 
 		case DEM_SUMMON2:

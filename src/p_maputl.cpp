@@ -1177,6 +1177,11 @@ class DBlockThingsIterator : public DObject, public FMultiBlockThingsIterator
 {
 	DECLARE_CLASS(DBlockThingsIterator, DObject);
 	FPortalGroupArray check;
+protected:
+	DBlockThingsIterator()
+		:FMultiBlockThingsIterator(check)
+	{
+	}
 public:
 	FMultiBlockThingsIterator::CheckResult cres;
 
@@ -1186,7 +1191,7 @@ public:
 		return FMultiBlockThingsIterator::Next(&cres);
 	}
 
-	DBlockThingsIterator(AActor *origin = nullptr, double checkradius = -1, bool ignorerestricted = false)
+	DBlockThingsIterator(AActor *origin, double checkradius = -1, bool ignorerestricted = false)
 		: FMultiBlockThingsIterator(check, origin, checkradius, ignorerestricted)
 	{
 		cres.thing = nullptr;

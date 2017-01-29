@@ -404,9 +404,9 @@ CCMD (give)
 	Net_WriteByte (DEM_GIVECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteWord (clamp (atoi (argv[2]), 1, 32767));
+		Net_WriteLong(atoi(argv[2]));
 	else
-		Net_WriteWord (0);
+		Net_WriteLong(0);
 }
 
 CCMD (take)
@@ -417,9 +417,9 @@ CCMD (take)
 	Net_WriteByte (DEM_TAKECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteWord (clamp (atoi (argv[2]), 1, 32767));
+		Net_WriteLong(atoi (argv[2]));
 	else
-		Net_WriteWord (0);
+		Net_WriteLong (0);
 }
 
 CCMD (gameversion)

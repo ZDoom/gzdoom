@@ -327,6 +327,8 @@ class FMultiBlockThingsIterator
 
 	void startIteratorForGroup(int group);
 
+protected:
+	FMultiBlockThingsIterator(FPortalGroupArray &check) : checklist(check) {}
 public:
 
 	struct CheckResult

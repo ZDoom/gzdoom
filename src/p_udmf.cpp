@@ -1461,23 +1461,23 @@ public:
 					continue;
 
 				case NAME_Color_Floor:
-					sec->SpecialColors[sector_t::floor] = CheckInt(key) || 0xff000000;
+					sec->SpecialColors[sector_t::floor] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Color_Ceiling:
-					sec->SpecialColors[sector_t::ceiling] = CheckInt(key) || 0xff000000;
+					sec->SpecialColors[sector_t::ceiling] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Color_Walltop:
-					sec->SpecialColors[sector_t::walltop] = CheckInt(key) || 0xff000000;
+					sec->SpecialColors[sector_t::walltop] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Color_Wallbottom:
-					sec->SpecialColors[sector_t::wallbottom] = CheckInt(key) || 0xff000000;
+					sec->SpecialColors[sector_t::wallbottom] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Color_Sprites:
-					sec->SpecialColors[sector_t::sprites] = CheckInt(key) || 0xff000000;
+					sec->SpecialColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Desaturation:

@@ -194,6 +194,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = light->m_cycler.GetVal();
+		if (light->m_currentRadius <= 0) light->m_currentRadius = 1;
 	}
 
 	switch (m_attenuate)
@@ -369,7 +370,7 @@ void gl_ParsePointLight(FScanner &sc)
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
@@ -446,11 +447,11 @@ void gl_ParsePulseLight(FScanner &sc)
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 1024);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 1024);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_INTERVAL:
@@ -536,11 +537,11 @@ void gl_ParseFlickerLight(FScanner &sc)
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_CHANCE:
@@ -618,11 +619,11 @@ void gl_ParseFlickerLight2(FScanner &sc)
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_INTERVAL:
@@ -707,7 +708,7 @@ void gl_ParseSectorLight(FScanner &sc)
 				break;
 			case LIGHTTAG_SCALE:
 				floatVal = gl_ParseFloat(sc);
-				defaults->SetArg(LIGHT_SCALE, (BYTE)(floatVal * 255));
+				defaults->SetArg(LIGHT_SCALE, clamp((int)(floatVal * 255), 1, 1024));
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
 				defaults->SetSubtractive(gl_ParseInt(sc) != 0);

@@ -376,6 +376,7 @@ public:
 	AActor * actor;
 	particle_t * particle;
 	TArray<lightlist_t> *lightlist;
+	DRotator Angles;
 
 	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();

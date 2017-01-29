@@ -1318,6 +1318,14 @@ public:
 	{
 		return Prev + (ticFrac * (Pos() - Prev));
 	}
+	DRotator InterpolatedAngles(double ticFrac) const
+	{
+		DRotator result;
+		result.Yaw = PrevAngles.Yaw + deltaangle(PrevAngles.Yaw, Angles.Yaw) * ticFrac;
+		result.Pitch = PrevAngles.Pitch + deltaangle(PrevAngles.Pitch, Angles.Pitch) * ticFrac;
+		result.Roll = PrevAngles.Roll + deltaangle(PrevAngles.Roll, Angles.Roll) * ticFrac;
+		return result;
+	}
 	DVector3 PosPlusZ(double zadd) const
 	{
 		return { X(), Y(), Z() + zadd };

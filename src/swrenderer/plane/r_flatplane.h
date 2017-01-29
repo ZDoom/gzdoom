@@ -42,7 +42,7 @@ namespace swrenderer
 		double basexfrac, baseyfrac;
 		VisiblePlaneLight *light_list;
 
-		DrawerArgs drawerargs;
+		SpanDrawerArgs drawerargs;
 
 		static float yslope[MAXHEIGHT];
 	};
@@ -55,6 +55,6 @@ namespace swrenderer
 	private:
 		void RenderLine(int y, int x1, int x2) override;
 
-		DrawerArgs drawerargs;
+		SpanDrawerArgs drawerargs;
 	};
 }

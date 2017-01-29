@@ -26,6 +26,6 @@ namespace swrenderer
 		void RenderSection(int y, int y2, int x1);
 
 		short spanend[MAXHEIGHT];
-		DrawerArgs drawerargs;
+		SpanDrawerArgs drawerargs;
 	};
 }

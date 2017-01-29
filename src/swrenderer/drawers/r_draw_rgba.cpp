@@ -60,7 +60,7 @@ CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const DrawerArgs &drawerargs)
+	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
 	{
 		args.xfrac = drawerargs.ds_xfrac;
 		args.yfrac = drawerargs.ds_yfrac;
@@ -180,7 +180,7 @@ namespace swrenderer
 		return d;
 	}
 
-	DrawWall1LLVMCommand::DrawWall1LLVMCommand(const DrawerArgs &drawerargs)
+	DrawWall1LLVMCommand::DrawWall1LLVMCommand(const WallDrawerArgs &drawerargs)
 	{
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
@@ -244,7 +244,7 @@ namespace swrenderer
 		return "DrawColumn\n" + args.ToString();
 	}
 
-	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const DrawerArgs &drawerargs)
+	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const ColumnDrawerArgs &drawerargs)
 	{
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.source = drawerargs.dc_source;
@@ -298,7 +298,7 @@ namespace swrenderer
 		return d;
 	}
 
-	DrawSkyLLVMCommand::DrawSkyLLVMCommand(const DrawerArgs &drawerargs, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+	DrawSkyLLVMCommand::DrawSkyLLVMCommand(const SkyDrawerArgs &drawerargs, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
 	{
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
@@ -325,7 +325,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const DrawerArgs &drawerargs)
+	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const ColumnDrawerArgs &drawerargs)
 	{
 		_x = drawerargs.dc_x;
 		_yl = drawerargs.dc_yl;
@@ -433,7 +433,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	FillSpanRGBACommand::FillSpanRGBACommand(const DrawerArgs &drawerargs)
+	FillSpanRGBACommand::FillSpanRGBACommand(const SpanDrawerArgs &drawerargs)
 	{
 		_x1 = drawerargs.ds_x1;
 		_x2 = drawerargs.ds_x2;
@@ -463,7 +463,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLineRGBACommand::DrawFogBoundaryLineRGBACommand(const DrawerArgs &drawerargs, int y, int x, int x2)
+	DrawFogBoundaryLineRGBACommand::DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x, int x2)
 	{
 		_y = y;
 		_x = x;
@@ -531,7 +531,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanRGBACommand::DrawTiltedSpanRGBACommand(const DrawerArgs &drawerargs, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+	DrawTiltedSpanRGBACommand::DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
 		_x1 = x1;
 		_x2 = x2;
@@ -665,7 +665,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const DrawerArgs &drawerargs, int y, int x1, int x2)
+	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2)
 	{
 		_y = y;
 		_x1 = x1;

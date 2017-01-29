@@ -930,7 +930,7 @@ namespace swrenderer
 		double yscale;
 		fixed_t xoffset = rw_offset;
 
-		DrawerArgs drawerargs;
+		WallDrawerArgs drawerargs;
 
 		// [RH] Color if not texturing line
 		drawerargs.dc_color = (((int)(curline - segs) * 8) + 4) & 255;

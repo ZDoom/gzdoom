@@ -33,6 +33,6 @@ namespace swrenderer
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;
-		DrawerArgs drawerargs;
+		SpanDrawerArgs drawerargs;
 	};
 }

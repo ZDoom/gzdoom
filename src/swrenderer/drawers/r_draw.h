@@ -20,6 +20,10 @@ EXTERN_CVAR(Bool, r_dynlights);
 namespace swrenderer
 {
 	class DrawerArgs;
+	class SkyDrawerArgs;
+	class WallDrawerArgs;
+	class SpanDrawerArgs;
+	class ColumnDrawerArgs;
 
 	extern int ylookup[MAXHEIGHT];
 	extern uint8_t shadetables[/*NUMCOLORMAPS*16*256*/];
@@ -46,46 +50,46 @@ namespace swrenderer
 	{
 	public:
 		virtual ~SWPixelFormatDrawers() { }
-		virtual void DrawWallColumn(const DrawerArgs &args) = 0;
-		virtual void DrawWallMaskedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawWallAddColumn(const DrawerArgs &args) = 0;
-		virtual void DrawWallAddClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawWallSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawWallRevSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawSingleSkyColumn(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawDoubleSkyColumn(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawColumn(const DrawerArgs &args) = 0;
-		virtual void FillColumn(const DrawerArgs &args) = 0;
-		virtual void FillAddColumn(const DrawerArgs &args) = 0;
-		virtual void FillAddClampColumn(const DrawerArgs &args) = 0;
-		virtual void FillSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void FillRevSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawFuzzColumn(const DrawerArgs &args) = 0;
-		virtual void DrawAddColumn(const DrawerArgs &args) = 0;
-		virtual void DrawTranslatedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawTranslatedAddColumn(const DrawerArgs &args) = 0;
-		virtual void DrawShadedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawAddClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawAddClampTranslatedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawSubClampTranslatedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawRevSubClampColumn(const DrawerArgs &args) = 0;
-		virtual void DrawRevSubClampTranslatedColumn(const DrawerArgs &args) = 0;
-		virtual void DrawSpan(const DrawerArgs &args) = 0;
-		virtual void DrawSpanMasked(const DrawerArgs &args) = 0;
-		virtual void DrawSpanTranslucent(const DrawerArgs &args) = 0;
-		virtual void DrawSpanMaskedTranslucent(const DrawerArgs &args) = 0;
-		virtual void DrawSpanAddClamp(const DrawerArgs &args) = 0;
-		virtual void DrawSpanMaskedAddClamp(const DrawerArgs &args) = 0;
-		virtual void FillSpan(const DrawerArgs &args) = 0;
-		virtual void DrawTiltedSpan(const DrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
-		virtual void DrawColoredSpan(const DrawerArgs &args, int y, int x1, int x2) = 0;
-		virtual void DrawFogBoundaryLine(const DrawerArgs &args, int y, int x1, int x2) = 0;
+		virtual void DrawWallColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallMaskedColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallAddColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallAddClampColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallSubClampColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallRevSubClampColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void FillColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void FillAddColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void FillAddClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void FillSubClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void FillRevSubClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawFuzzColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawAddColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawTranslatedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawTranslatedAddColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawShadedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawAddClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawAddClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawSubClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawSubClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawRevSubClampColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawRevSubClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawSpan(const SpanDrawerArgs &args) = 0;
+		virtual void DrawSpanMasked(const SpanDrawerArgs &args) = 0;
+		virtual void DrawSpanTranslucent(const SpanDrawerArgs &args) = 0;
+		virtual void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) = 0;
+		virtual void DrawSpanAddClamp(const SpanDrawerArgs &args) = 0;
+		virtual void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) = 0;
+		virtual void FillSpan(const SpanDrawerArgs &args) = 0;
+		virtual void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
+		virtual void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
+		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
 	};
 
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
-	void R_UpdateFuzzPos(const DrawerArgs &args);
+	void R_UpdateFuzzPos(const ColumnDrawerArgs &args);
 }

@@ -179,7 +179,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		DrawerArgs drawerargs;
+		ColumnDrawerArgs drawerargs;
 
 		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(spr->foggy));
 		double GlobVis = LightVisibility::Instance()->WallGlobVis();
@@ -245,7 +245,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(DrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(ColumnDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

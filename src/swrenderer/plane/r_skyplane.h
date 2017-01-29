@@ -38,6 +38,6 @@ namespace swrenderer
 		double skymid = 0.0;
 		angle_t skyangle = 0;
 
-		DrawerArgs drawerargs;
+		SkyDrawerArgs drawerargs;
 	};
 }

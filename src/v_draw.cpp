@@ -184,7 +184,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			translation = parms.remap->Remap;
 	}
 
-	DrawerArgs drawerargs;
+	ColumnDrawerArgs drawerargs;
 
 	if (translation != NULL)
 	{
@@ -1387,7 +1387,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
-	DrawerArgs drawerargs;
+	SpanDrawerArgs drawerargs;
 	drawerargs.SetSpanTexture(tex);
 	if (colormap)
 		drawerargs.SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));

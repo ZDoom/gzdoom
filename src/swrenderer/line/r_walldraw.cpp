@@ -168,7 +168,7 @@ namespace swrenderer
 	}
 
 	// Draw a column with support for non-power-of-two ranges
-	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc draw1column)
+	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler, WallDrawerFunc draw1column)
 	{
 		if (r_dynlights && light_list)
 		{
@@ -306,7 +306,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, DrawerFunc drawcolumn)
+	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, WallDrawerFunc drawcolumn)
 	{
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
@@ -388,7 +388,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		DrawerFunc drawcol1 = drawerargs.GetTransMaskDrawer();
+		WallDrawerFunc drawcol1 = drawerargs.GetTransMaskDrawer();
 		if (drawcol1 == nullptr)
 		{
 			// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
@@ -536,7 +536,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const DrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
 		this->drawerargs = drawerargs;
 		this->x1 = x1;

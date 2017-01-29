@@ -67,8 +67,13 @@ namespace swrenderer
 		curline = ds->curline;
 
 		FDynamicColormap *patchstylecolormap = nullptr;
-		DrawerArgs drawerargs;
-		bool visible = drawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+
+		WallDrawerArgs walldrawerargs;
+		walldrawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
+
+		ColumnDrawerArgs columndrawerargs;
+		bool visible = columndrawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
@@ -142,9 +147,15 @@ namespace swrenderer
 		rw_scalestep = ds->iscalestep;
 
 		if (cameraLight->fixedlightlev >= 0)
-			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+		{
+			walldrawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			columndrawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+		}
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+		{
+			walldrawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			columndrawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+		}
 
 		// find positioning
 		texheight = tex->GetScaledHeightDouble();
@@ -273,7 +284,7 @@ namespace swrenderer
 				{
 					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
 					{
-						drawerargs.SetColorMapLight(basecolormap, rw_light, wallshade);
+						columndrawerargs.SetColorMapLight(basecolormap, rw_light, wallshade);
 					}
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
@@ -283,7 +294,7 @@ namespace swrenderer
 					else
 						sprtopscreen = CenterY - texturemid * spryscale;
 
-					drawerargs.DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+					columndrawerargs.DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 
 					rw_light += rw_lightstep;
 					spryscale += rw_scalestep;
@@ -349,7 +360,7 @@ namespace swrenderer
 			GetMaskedWallTopBottom(ds, top, bot);
 
 			RenderWallPart renderWallpart;
-			renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+			renderWallpart.Render(walldrawerargs, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 		}
 
 	clearfog:
@@ -383,7 +394,7 @@ namespace swrenderer
 		double yscale;
 
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
-		DrawerArgs drawerargs;
+		WallDrawerArgs drawerargs;
 		bool visible = drawerargs.SetPatchStyle(LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
 			Alpha, 0, 0, basecolormap);
 

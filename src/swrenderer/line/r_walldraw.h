@@ -34,7 +34,7 @@ namespace swrenderer
 	{
 	public:
 		void Render(
-			const DrawerArgs &drawerargs,
+			const WallDrawerArgs &drawerargs,
 			sector_t *frontsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
@@ -65,8 +65,8 @@ namespace swrenderer
 		void ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
 		void ProcessMaskedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
 		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
-		void ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, DrawerFunc drawcolumn);
-		void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc draw1column);
+		void ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, WallDrawerFunc drawcolumn);
+		void Draw1Column(int x, int y1, int y2, WallSampler &sampler, WallDrawerFunc draw1column);
 
 		int x1 = 0;
 		int x2 = 0;
@@ -85,7 +85,7 @@ namespace swrenderer
 		FLightNode *light_list = nullptr;
 		bool mask = false;
 
-		DrawerArgs drawerargs;
+		WallDrawerArgs drawerargs;
 	};
 
 	struct WallSampler

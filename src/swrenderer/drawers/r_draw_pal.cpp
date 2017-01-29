@@ -96,7 +96,7 @@ CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 namespace swrenderer
 {
-	PalWall1Command::PalWall1Command(const DrawerArgs &args)
+	PalWall1Command::PalWall1Command(const WallDrawerArgs &args)
 	{
 		_iscale = args.dc_iscale;
 		_texturefrac = args.dc_texturefrac;
@@ -559,7 +559,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
+	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
 	{
 		_dest = args.Dest();
 		_dest_y = args.DestY();
@@ -864,7 +864,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalColumnCommand::PalColumnCommand(const DrawerArgs &args)
+	PalColumnCommand::PalColumnCommand(const ColumnDrawerArgs &args)
 	{
 		_count = args.dc_count;
 		_dest = args.Dest();
@@ -1761,7 +1761,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const DrawerArgs &args)
+	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const ColumnDrawerArgs &args)
 	{
 		_yl = args.dc_yl;
 		_yh = args.dc_yh;
@@ -1848,7 +1848,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSpanCommand::PalSpanCommand(const DrawerArgs &args)
+	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
 	{
 		_source = args.ds_source;
 		_colormap = args.ds_colormap;
@@ -2623,7 +2623,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const DrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
+	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
 		_colormap = args.ds_colormap;
@@ -2869,7 +2869,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const DrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
+	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		color = args.ds_color;
 		destorg = dc_destorg;
@@ -2885,7 +2885,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const DrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
+	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		_colormap = args.dc_colormap;
 		_destorg = dc_destorg;

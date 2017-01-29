@@ -4602,8 +4602,10 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 			for(auto rover : Sector->e->XFloor.ffloors)
 			{
 				if (!(rover->flags & FF_EXISTS)) continue;
-				if(!(rover->flags & FF_SWIMMABLE) || rover->flags & FF_SOLID) continue;
+				if (rover->flags & FF_SOLID) continue;
 
+				reset = !(rover->flags & FF_SWIMMABLE);
+				if (reset && rover->alpha == 0) continue;
 				double ff_bottom=rover->bottom.plane->ZatPoint(this);
 				double ff_top=rover->top.plane->ZatPoint(this);
 
@@ -6251,7 +6253,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool check
 			double planez = rover->top.plane->ZatPoint(pos);
 				if (pos.Z > planez - 0.5 && pos.Z < planez + 0.5)	// allow minor imprecisions
 			{
-				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
+				if ((rover->flags & (FF_SOLID | FF_SWIMMABLE)) || rover->alpha > 0)
 				{
 					terrainnum = rover->model->GetTerrain(rover->top.isceiling);
 					goto foundone;

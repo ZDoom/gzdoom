@@ -326,12 +326,16 @@ void GLSprite::Draw(int pass)
 		{
 			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
-		PalEntry finalcol(ThingColor.a,
-			ThingColor.r * actor->Sector->SpecialColors[sector_t::sprites].r / 255,
-			ThingColor.g * actor->Sector->SpecialColors[sector_t::sprites].g / 255,
-			ThingColor.b * actor->Sector->SpecialColors[sector_t::sprites].b / 255);
+		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
+		if (cursec != nullptr)
+		{
+			PalEntry finalcol(ThingColor.a,
+				ThingColor.r * cursec->SpecialColors[sector_t::sprites].r / 255,
+				ThingColor.g * cursec->SpecialColors[sector_t::sprites].g / 255,
+				ThingColor.b * cursec->SpecialColors[sector_t::sprites].b / 255);
 
-		gl_RenderState.SetObjectColor(finalcol);
+			gl_RenderState.SetObjectColor(finalcol);
+		}
 		gl_SetColor(lightlevel, rel, Colormap, trans);
 	}
 

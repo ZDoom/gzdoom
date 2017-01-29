@@ -3194,34 +3194,37 @@ void PClass::Derive(PClass *newclass, FName name)
 
 void PClass::InitializeDefaults()
 {
-	assert(Defaults == NULL);
-	Defaults = (BYTE *)M_Malloc(Size);
-
-	// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
-	// Temporarily setting bSerialOverride prevents linking into the thinker chains.
-	auto s = DThinker::bSerialOverride;
-	DThinker::bSerialOverride = true;
-	ConstructNative(Defaults);
-	DThinker::bSerialOverride = s;
-	// We must unlink the defaults from the class list because it's just a static block of data to the engine.
-	DObject *optr = (DObject*)Defaults;
-	GC::Root = optr->ObjNext;
-	optr->ObjNext = nullptr;
-	optr->SetClass(this);
-
-
-	// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
-	if (ParentClass->Defaults != NULL)
+	if (IsKindOf(RUNTIME_CLASS(PClassActor)))
 	{
-		memcpy(Defaults + sizeof(DObject), ParentClass->Defaults + sizeof(DObject), ParentClass->Size - sizeof(DObject));
-		if (Size > ParentClass->Size)
+		assert(Defaults == NULL);
+		Defaults = (BYTE *)M_Malloc(Size);
+
+		// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
+		// Temporarily setting bSerialOverride prevents linking into the thinker chains.
+		auto s = DThinker::bSerialOverride;
+		DThinker::bSerialOverride = true;
+		ConstructNative(Defaults);
+		DThinker::bSerialOverride = s;
+		// We must unlink the defaults from the class list because it's just a static block of data to the engine.
+		DObject *optr = (DObject*)Defaults;
+		GC::Root = optr->ObjNext;
+		optr->ObjNext = nullptr;
+		optr->SetClass(this);
+
+
+		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
+		if (ParentClass->Defaults != NULL)
 		{
-			memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+			memcpy(Defaults + sizeof(DObject), ParentClass->Defaults + sizeof(DObject), ParentClass->Size - sizeof(DObject));
+			if (Size > ParentClass->Size)
+			{
+				memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+			}
 		}
-	}
-	else
-	{
-		memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
+		else
+		{
+			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
+		}
 	}
 
 	if (bRuntimeClass)

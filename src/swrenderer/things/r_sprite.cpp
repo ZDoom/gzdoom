@@ -245,12 +245,12 @@ namespace swrenderer
 			return;
 		}
 
-		DrawerStyle drawerstyle;
-		drawerstyle.SetColorMapLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
+		DrawerArgs drawerargs;
+		drawerargs.SetColorMapLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
-		bool visible = drawerstyle.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
+		bool visible = drawerargs.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
 
 		if (visible)
 		{
@@ -286,7 +286,7 @@ namespace swrenderer
 				while (x < x2)
 				{
 					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
-						drawerstyle.DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+						drawerargs.DrawMaskedColumn(x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 					x++;
 					frac += xiscale;
 				}

@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_planerenderer.h"
-#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_drawerargs.h"
 
 namespace swrenderer
 {
@@ -33,6 +33,6 @@ namespace swrenderer
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 	};
 }

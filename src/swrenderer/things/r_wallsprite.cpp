@@ -179,7 +179,7 @@ namespace swrenderer
 			rereadcolormap = false;
 		}
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 
 		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(spr->foggy));
 		double GlobVis = LightVisibility::Instance()->WallGlobVis();
@@ -188,11 +188,11 @@ namespace swrenderer
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != NULL)
-			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
-			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 		else
 			calclighting = true;
 
@@ -215,7 +215,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
 
-		bool visible = drawerstyle.SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
+		bool visible = drawerargs.SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
@@ -235,17 +235,17 @@ namespace swrenderer
 			{
 				if (calclighting)
 				{ // calculate lighting
-					drawerstyle.SetColorMapLight(usecolormap, light, shade);
+					drawerargs.SetColorMapLight(usecolormap, light, shade);
 				}
 				if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-					DrawColumn(drawerstyle, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 				light += lightstep;
 				x++;
 			}
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(DrawerStyle &drawerstyle, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(DrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
@@ -255,6 +255,6 @@ namespace swrenderer
 		else
 			sprtopscreen = CenterY - texturemid * spryscale;
 
-		drawerstyle.DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+		drawerargs.DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}
 }

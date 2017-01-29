@@ -33,6 +33,7 @@
 #include "po_man.h"
 #include "r_utility.h"
 #include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_drawerargs.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
@@ -186,10 +187,10 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
-		DrawerStyle drawerstyle;
-		drawerstyle.SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
+		DrawerArgs drawerargs;
+		drawerargs.SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
-		bool visible = drawerstyle.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		bool visible = drawerargs.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
 
@@ -287,7 +288,7 @@ namespace swrenderer
 							voxel_pos.Y += dirY.X * x + dirY.Y * y;
 							voxel_pos.Z += dirZ * z;
 						
-							FillBox(drawerstyle, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+							FillBox(drawerargs, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
 						}
 					}
 				}
@@ -310,7 +311,7 @@ namespace swrenderer
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
-	void RenderVoxel::FillBox(DrawerStyle &drawerstyle, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
+	void RenderVoxel::FillBox(DrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
 		double viewX, viewY, viewZ;
 		if (viewspace)
@@ -352,11 +353,10 @@ namespace swrenderer
 				int columnY2 = MIN(y2, (int)clipbottom[x]);
 				if (columnY1 < columnY2)
 				{
-					using namespace drawerargs;
-					dc_dest = dc_destorg + (dc_pitch * columnY1 + x) * pixelsize;
-					dc_color = color;
-					dc_count = columnY2 - columnY1;
-					drawerstyle.FillColumn();
+					drawerargs.SetDest(x, columnY1);
+					drawerargs.dc_color = color;
+					drawerargs.dc_count = columnY2 - columnY1;
+					drawerargs.FillColumn();
 				}
 			}
 		}

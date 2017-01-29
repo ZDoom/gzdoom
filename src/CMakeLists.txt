@@ -850,6 +850,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/drawers/r_draw.cpp
 	swrenderer/drawers/r_draw_pal.cpp
 	swrenderer/drawers/r_draw_rgba.cpp
+	swrenderer/drawers/r_drawerargs.cpp
 	swrenderer/drawers/r_drawers.cpp
 	swrenderer/drawers/r_thread.cpp
 	swrenderer/scene/r_3dfloors.cpp

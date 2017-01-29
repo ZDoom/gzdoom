@@ -34,6 +34,10 @@ namespace swrenderer
 	extern double globaldclip;
 	extern angle_t xtoviewangle[MAXWIDTH + 1];
 
+	extern uint8_t *dc_destorg;
+	extern int dc_destheight;
+	extern int dc_pitch;
+
 	class RenderViewport
 	{
 	public:

@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_visibleplane.h"
-#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_drawerargs.h"
 
 namespace swrenderer
 {
@@ -38,6 +38,6 @@ namespace swrenderer
 		double skymid = 0.0;
 		angle_t skyangle = 0;
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 	};
 }

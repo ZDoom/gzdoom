@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_planerenderer.h"
-#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_drawerargs.h"
 
 namespace swrenderer
 {
@@ -42,7 +42,7 @@ namespace swrenderer
 		double basexfrac, baseyfrac;
 		VisiblePlaneLight *light_list;
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 
 		static float yslope[MAXHEIGHT];
 	};
@@ -55,6 +55,6 @@ namespace swrenderer
 	private:
 		void RenderLine(int y, int x1, int x2) override;
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 	};
 }

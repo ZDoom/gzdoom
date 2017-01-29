@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_drawerargs.h"
 #include "r_line.h"
 
 class FTexture;
@@ -34,7 +34,7 @@ namespace swrenderer
 	{
 	public:
 		void Render(
-			const DrawerStyle &drawerstyle,
+			const DrawerArgs &drawerargs,
 			sector_t *frontsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
@@ -85,7 +85,7 @@ namespace swrenderer
 		FLightNode *light_list = nullptr;
 		bool mask = false;
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
 	};
 
 	struct WallSampler

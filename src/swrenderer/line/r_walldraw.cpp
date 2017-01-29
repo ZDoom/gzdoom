@@ -170,8 +170,6 @@ namespace swrenderer
 	// Draw a column with support for non-power-of-two ranges
 	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc draw1column)
 	{
-		using namespace drawerargs;
-
 		if (r_dynlights && light_list)
 		{
 			// Find column position in view space
@@ -180,17 +178,17 @@ namespace swrenderer
 			float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
 			float wcol = w1 * (1.0f - t) + w2 * t;
 			float zcol = 1.0f / wcol;
-			dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
-			dc_viewpos.Y = zcol;
-			dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
-			dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
+			drawerargs.dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
+			drawerargs.dc_viewpos.Y = zcol;
+			drawerargs.dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
+			drawerargs.dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
 
 			static TriLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
 
 			// Setup lights for column
-			dc_num_lights = 0;
-			dc_lights = lightbuffer + nextlightindex;
+			drawerargs.dc_num_lights = 0;
+			drawerargs.dc_lights = lightbuffer + nextlightindex;
 			FLightNode *cur_node = light_list;
 			while (cur_node && nextlightindex < 64 * 1024)
 			{
@@ -200,14 +198,14 @@ namespace swrenderer
 					double lightY = cur_node->lightsource->Y() - ViewPos.Y;
 					double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
-					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - drawerargs.dc_viewpos.X;
+					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - drawerargs.dc_viewpos.Y;
 					float lz = (float)lightZ;
 
 					// Precalculate the constant part of the dot here so the drawer doesn't have to.
 					bool is_point_light = (cur_node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 					float lconstant = lx * lx + ly * ly;
-					float nlconstant = is_point_light ? lx * dc_normal.X + ly * dc_normal.Y : 0.0f;
+					float nlconstant = is_point_light ? lx * drawerargs.dc_normal.X + ly * drawerargs.dc_normal.Y : 0.0f;
 
 					// Include light only if it touches this column
 					float radius = cur_node->lightsource->GetRadius();
@@ -218,7 +216,7 @@ namespace swrenderer
 						uint32_t blue = cur_node->lightsource->GetBlue();
 
 						nextlightindex++;
-						auto &light = dc_lights[dc_num_lights++];
+						auto &light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
 						light.x = lconstant;
 						light.y = nlconstant;
 						light.z = lz;
@@ -235,22 +233,22 @@ namespace swrenderer
 		}
 		else
 		{
-			dc_num_lights = 0;
+			drawerargs.dc_num_lights = 0;
 		}
 
 		if (r_swtruecolor)
 		{
 			int count = y2 - y1;
 
-			dc_source = sampler.source;
-			dc_source2 = sampler.source2;
-			dc_texturefracx = sampler.texturefracx;
-			dc_dest = (ylookup[y1] + x) * 4 + dc_destorg;
-			dc_count = count;
-			dc_iscale = sampler.uv_step;
-			dc_texturefrac = sampler.uv_pos;
-			dc_textureheight = sampler.height;
-			(drawerstyle.Drawers()->*draw1column)();
+			drawerargs.dc_source = sampler.source;
+			drawerargs.dc_source2 = sampler.source2;
+			drawerargs.dc_texturefracx = sampler.texturefracx;
+			drawerargs.SetDest(x, y1);
+			drawerargs.dc_count = count;
+			drawerargs.dc_iscale = sampler.uv_step;
+			drawerargs.dc_texturefrac = sampler.uv_pos;
+			drawerargs.dc_textureheight = sampler.height;
+			(drawerargs.Drawers()->*draw1column)(drawerargs);
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -262,14 +260,14 @@ namespace swrenderer
 			{
 				int count = y2 - y1;
 
-				dc_source = sampler.source;
-				dc_source2 = sampler.source2;
-				dc_texturefracx = sampler.texturefracx;
-				dc_dest = (ylookup[y1] + x) + dc_destorg;
-				dc_count = count;
-				dc_iscale = sampler.uv_step;
-				dc_texturefrac = sampler.uv_pos;
-				(drawerstyle.Drawers()->*draw1column)();
+				drawerargs.dc_source = sampler.source;
+				drawerargs.dc_source2 = sampler.source2;
+				drawerargs.dc_texturefracx = sampler.texturefracx;
+				drawerargs.SetDest(x, y1);
+				drawerargs.dc_count = count;
+				drawerargs.dc_iscale = sampler.uv_step;
+				drawerargs.dc_texturefrac = sampler.uv_pos;
+				(drawerargs.Drawers()->*draw1column)(drawerargs);
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -288,14 +286,14 @@ namespace swrenderer
 						next_uv_wrap++;
 					uint32_t count = MIN(left, next_uv_wrap);
 
-					dc_source = sampler.source;
-					dc_source2 = sampler.source2;
-					dc_texturefracx = sampler.texturefracx;
-					dc_dest = (ylookup[y1] + x) + dc_destorg;
-					dc_count = count;
-					dc_iscale = sampler.uv_step;
-					dc_texturefrac = uv_pos;
-					(drawerstyle.Drawers()->*draw1column)();
+					drawerargs.dc_source = sampler.source;
+					drawerargs.dc_source2 = sampler.source2;
+					drawerargs.dc_texturefracx = sampler.texturefracx;
+					drawerargs.SetDest(x, y1);
+					drawerargs.dc_count = count;
+					drawerargs.dc_iscale = sampler.uv_step;
+					drawerargs.dc_texturefrac = uv_pos;
+					(drawerargs.Drawers()->*draw1column)(drawerargs);
 
 					left -= count;
 					uv_pos += sampler.uv_step * count;
@@ -310,8 +308,6 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, DrawerFunc drawcolumn)
 	{
-		using namespace drawerargs;
-
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
 
@@ -324,33 +320,33 @@ namespace swrenderer
 			texturemid = 0;
 		}
 
-		dc_wall_fracbits = r_swtruecolor ? FRACBITS : fracbits;
+		drawerargs.dc_wall_fracbits = r_swtruecolor ? FRACBITS : fracbits;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);
 		if (fixed)
 		{
-			dc_wall_colormap[0] = dc_colormap;
-			dc_wall_colormap[1] = dc_colormap;
-			dc_wall_colormap[2] = dc_colormap;
-			dc_wall_colormap[3] = dc_colormap;
-			dc_wall_light[0] = 0;
-			dc_wall_light[1] = 0;
-			dc_wall_light[2] = 0;
-			dc_wall_light[3] = 0;
+			drawerargs.dc_wall_colormap[0] = drawerargs.dc_colormap;
+			drawerargs.dc_wall_colormap[1] = drawerargs.dc_colormap;
+			drawerargs.dc_wall_colormap[2] = drawerargs.dc_colormap;
+			drawerargs.dc_wall_colormap[3] = drawerargs.dc_colormap;
+			drawerargs.dc_wall_light[0] = 0;
+			drawerargs.dc_wall_light[1] = 0;
+			drawerargs.dc_wall_light[2] = 0;
+			drawerargs.dc_wall_light[3] = 0;
 		}
 
 		if (cameraLight->fixedcolormap)
-			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 		else
-			drawerstyle.SetColorMapLight(basecolormap, 0, 0);
+			drawerargs.SetColorMapLight(basecolormap, 0, 0);
 
 		float dx = WallC.tright.X - WallC.tleft.X;
 		float dy = WallC.tright.Y - WallC.tleft.Y;
 		float length = sqrt(dx * dx + dy * dy);
-		dc_normal.X = dy / length;
-		dc_normal.Y = -dx / length;
-		dc_normal.Z = 0.0f;
+		drawerargs.dc_normal.X = dy / length;
+		drawerargs.dc_normal.Y = -dx / length;
+		drawerargs.dc_normal.Z = 0.0f;
 
 		double xmagnitude = 1.0;
 
@@ -362,7 +358,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerstyle.SetColorMapLight(basecolormap, light, wallshade);
+				drawerargs.SetColorMapLight(basecolormap, light, wallshade);
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
@@ -392,7 +388,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		DrawerFunc drawcol1 = drawerstyle.GetTransMaskDrawer();
+		DrawerFunc drawcol1 = drawerargs.GetTransMaskDrawer();
 		if (drawcol1 == nullptr)
 		{
 			// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
@@ -445,7 +441,7 @@ namespace swrenderer
 	{
 		if (mask)
 		{
-			if (drawerstyle.colfunc == drawerstyle.basecolfunc)
+			if (drawerargs.colfunc == drawerargs.basecolfunc)
 			{
 				ProcessMaskedWall(uwal, dwal, texturemid, swal, lwal);
 			}
@@ -540,9 +536,9 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const DrawerStyle &drawerstyle, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(const DrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
-		this->drawerstyle = drawerstyle;
+		this->drawerargs = drawerargs;
 		this->x1 = x1;
 		this->x2 = x2;
 		this->frontsector = frontsector;

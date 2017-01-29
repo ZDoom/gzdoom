@@ -18,7 +18,7 @@
 namespace swrenderer
 {
 	class ProjectedWallTexcoords;
-	class DrawerStyle;
+	class DrawerArgs;
 
 	class RenderWallSprite : public VisibleSprite
 	{
@@ -30,7 +30,7 @@ namespace swrenderer
 		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
-		static void DrawColumn(DrawerStyle &drawerstyle, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+		static void DrawColumn(DrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 
 		FWallCoords wallc;
 		uint32_t Translation = 0;

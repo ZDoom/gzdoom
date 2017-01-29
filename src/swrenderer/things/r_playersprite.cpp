@@ -587,12 +587,12 @@ namespace swrenderer
 			return;
 		}
 
-		DrawerStyle drawerstyle;
-		drawerstyle.SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
+		DrawerArgs drawerargs;
+		drawerargs.SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
 
-		bool visible = drawerstyle.SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap, Light.ColormapNum << FRACBITS);
+		bool visible = drawerargs.SetPatchStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap, Light.ColormapNum << FRACBITS);
 		if (!visible)
 			return;
 
@@ -621,7 +621,7 @@ namespace swrenderer
 		fixed_t frac = startfrac;
 		for (int x = x1; x < x2; x++)
 		{
-			drawerstyle.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			drawerargs.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 			frac += xiscale;
 		}
 

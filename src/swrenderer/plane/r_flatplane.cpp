@@ -46,21 +46,20 @@ namespace swrenderer
 {
 	void RenderFlatPlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
-		using namespace drawerargs;
-
 		if (alpha <= 0)
 		{
 			return;
 		}
 
-		drawerstyle.SetSpanTexture(texture);
+		drawerargs.ds_color = 3;
+		drawerargs.SetSpanTexture(texture);
 
 		double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
 		double x;
 
-		xscale = xs_ToFixed(32 - ds_xbits, _xscale);
-		yscale = xs_ToFixed(32 - ds_ybits, _yscale);
+		xscale = xs_ToFixed(32 - drawerargs.ds_xbits, _xscale);
+		yscale = xs_ToFixed(32 - drawerargs.ds_ybits, _yscale);
 		if (planeang != 0)
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
@@ -109,16 +108,16 @@ namespace swrenderer
 
 		basecolormap = colormap;
 		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis() / planeheight;
-		ds_light = 0;
+		drawerargs.ds_light = 0;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			drawerstyle.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			drawerstyle.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
@@ -127,7 +126,7 @@ namespace swrenderer
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}
 
-		drawerstyle.SetSpanStyle(masked, additive, alpha);
+		drawerargs.SetSpanStyle(masked, additive, alpha);
 
 		light_list = pl->lights;
 
@@ -136,8 +135,6 @@ namespace swrenderer
 
 	void RenderFlatPlane::RenderLine(int y, int x1, int x2)
 	{
-		using namespace drawerargs;
-
 		double distance;
 
 #ifdef RANGECHECK
@@ -152,25 +149,25 @@ namespace swrenderer
 
 		distance = planeheight * yslope[y];
 
-		if (ds_xbits != 0)
+		if (drawerargs.ds_xbits != 0)
 		{
-			ds_xstep = xs_ToFixed(32 - ds_xbits, distance * xstepscale);
-			ds_xfrac = xs_ToFixed(32 - ds_xbits, distance * basexfrac) + pviewx;
+			drawerargs.ds_xstep = xs_ToFixed(32 - drawerargs.ds_xbits, distance * xstepscale);
+			drawerargs.ds_xfrac = xs_ToFixed(32 - drawerargs.ds_xbits, distance * basexfrac) + pviewx;
 		}
 		else
 		{
-			ds_xstep = 0;
-			ds_xfrac = 0;
+			drawerargs.ds_xstep = 0;
+			drawerargs.ds_xfrac = 0;
 		}
-		if (ds_ybits != 0)
+		if (drawerargs.ds_ybits != 0)
 		{
-			ds_ystep = xs_ToFixed(32 - ds_ybits, distance * ystepscale);
-			ds_yfrac = xs_ToFixed(32 - ds_ybits, distance * baseyfrac) + pviewy;
+			drawerargs.ds_ystep = xs_ToFixed(32 - drawerargs.ds_ybits, distance * ystepscale);
+			drawerargs.ds_yfrac = xs_ToFixed(32 - drawerargs.ds_ybits, distance * baseyfrac) + pviewy;
 		}
 		else
 		{
-			ds_ystep = 0;
-			ds_yfrac = 0;
+			drawerargs.ds_ystep = 0;
+			drawerargs.ds_yfrac = 0;
 		}
 
 		if (r_swtruecolor)
@@ -180,35 +177,35 @@ namespace swrenderer
 			double ymagnitude = fabs(xstepscale * (distance2 - distance) * FocalLengthX);
 			double magnitude = MAX(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
-			ds_lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			drawerargs.ds_lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
 		}
 
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerstyle.SetDSColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
+			drawerargs.SetDSColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
 		}
 
 		if (r_dynlights)
 		{
 			// Find row position in view space
 			float zspan = (float)(planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale));
-			dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
-			dc_viewpos.Y = zspan;
-			dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
-			dc_viewpos_step.X = (float)(zspan / CenterX);
+			drawerargs.dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
+			drawerargs.dc_viewpos.Y = zspan;
+			drawerargs.dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
+			drawerargs.dc_viewpos_step.X = (float)(zspan / CenterX);
 
 			static TriLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
 			
 			// Plane normal
-			dc_normal.X = 0.0f;
-			dc_normal.Y = 0.0f;
-			dc_normal.Z = (y >= CenterY) ? 1.0f : -1.0f;
+			drawerargs.dc_normal.X = 0.0f;
+			drawerargs.dc_normal.Y = 0.0f;
+			drawerargs.dc_normal.Z = (y >= CenterY) ? 1.0f : -1.0f;
 
 			// Setup lights for row
-			dc_num_lights = 0;
-			dc_lights = lightbuffer + nextlightindex;
+			drawerargs.dc_num_lights = 0;
+			drawerargs.dc_lights = lightbuffer + nextlightindex;
 			VisiblePlaneLight *cur_node = light_list;
 			while (cur_node && nextlightindex < 64 * 1024)
 			{
@@ -217,13 +214,13 @@ namespace swrenderer
 				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
 				float lx = (float)(lightX * ViewSin - lightY * ViewCos);
-				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-				float lz = (float)lightZ - dc_viewpos.Z;
+				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - drawerargs.dc_viewpos.Y;
+				float lz = (float)lightZ - drawerargs.dc_viewpos.Z;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
 				bool is_point_light = (cur_node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 				float lconstant = ly * ly + lz * lz;
-				float nlconstant = is_point_light ? lz * dc_normal.Z : 0.0f;
+				float nlconstant = is_point_light ? lz * drawerargs.dc_normal.Z : 0.0f;
 
 				// Include light only if it touches this row
 				float radius = cur_node->lightsource->GetRadius();
@@ -234,7 +231,7 @@ namespace swrenderer
 					uint32_t blue = cur_node->lightsource->GetBlue();
 
 					nextlightindex++;
-					auto &light = dc_lights[dc_num_lights++];
+					auto &light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
 					light.x = lx;
 					light.y = lconstant;
 					light.z = nlconstant;
@@ -250,14 +247,14 @@ namespace swrenderer
 		}
 		else
 		{
-			dc_num_lights = 0;
+			drawerargs.dc_num_lights = 0;
 		}
 
-		ds_y = y;
-		ds_x1 = x1;
-		ds_x2 = x2;
+		drawerargs.ds_y = y;
+		drawerargs.ds_x1 = x1;
+		drawerargs.ds_x2 = x2;
 
-		(drawerstyle.Drawers()->*drawerstyle.spanfunc)();
+		(drawerargs.Drawers()->*drawerargs.spanfunc)(drawerargs);
 	}
 
 	void RenderFlatPlane::StepColumn()
@@ -319,6 +316,6 @@ namespace swrenderer
 
 	void RenderColoredPlane::RenderLine(int y, int x1, int x2)
 	{
-		drawerstyle.DrawColoredSpan(y, x1, x2);
+		drawerargs.DrawColoredSpan(y, x1, x2);
 	}
 }

@@ -67,8 +67,8 @@ namespace swrenderer
 		curline = ds->curline;
 
 		FDynamicColormap *patchstylecolormap = nullptr;
-		DrawerStyle drawerstyle;
-		bool visible = drawerstyle.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+		DrawerArgs drawerargs;
+		bool visible = drawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
@@ -142,9 +142,9 @@ namespace swrenderer
 		rw_scalestep = ds->iscalestep;
 
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		// find positioning
 		texheight = tex->GetScaledHeightDouble();
@@ -273,7 +273,7 @@ namespace swrenderer
 				{
 					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
 					{
-						drawerstyle.SetColorMapLight(basecolormap, rw_light, wallshade);
+						drawerargs.SetColorMapLight(basecolormap, rw_light, wallshade);
 					}
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
@@ -283,7 +283,7 @@ namespace swrenderer
 					else
 						sprtopscreen = CenterY - texturemid * spryscale;
 
-					drawerstyle.DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+					drawerargs.DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 
 					rw_light += rw_lightstep;
 					spryscale += rw_scalestep;
@@ -349,7 +349,7 @@ namespace swrenderer
 			GetMaskedWallTopBottom(ds, top, bot);
 
 			RenderWallPart renderWallpart;
-			renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+			renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 		}
 
 	clearfog:
@@ -383,8 +383,8 @@ namespace swrenderer
 		double yscale;
 
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
-		DrawerStyle drawerstyle;
-		bool visible = drawerstyle.SetPatchStyle(LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
+		DrawerArgs drawerargs;
+		bool visible = drawerargs.SetPatchStyle(LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
 			Alpha, 0, 0, basecolormap);
 
 		if (!visible)
@@ -445,9 +445,9 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;
@@ -481,7 +481,7 @@ namespace swrenderer
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart;
-		renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+		renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 	}
 
 	// kg3D - walls of fake floors

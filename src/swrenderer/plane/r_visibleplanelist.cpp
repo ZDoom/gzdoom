@@ -326,8 +326,6 @@ namespace swrenderer
 		int i;
 		int vpcount = 0;
 
-		drawerargs::ds_color = 3;
-		
 		RenderPortal *renderportal = RenderPortal::Instance();
 
 		for (i = 0; i < MAXVISPLANES; i++)
@@ -351,8 +349,6 @@ namespace swrenderer
 	{
 		VisiblePlane *pl;
 		int i;
-
-		drawerargs::ds_color = 3;
 
 		DVector3 oViewPos = ViewPos;
 		DAngle oViewAngle = ViewAngle;

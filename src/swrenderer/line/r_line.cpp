@@ -72,9 +72,6 @@ namespace swrenderer
 
 		curline = line;
 
-		// [RH] Color if not texturing line
-		drawerargs::dc_color = (((int)(line - segs) * 8) + 4) & 255;
-
 		pt1 = line->v1->fPos() - ViewPos;
 		pt2 = line->v2->fPos() - ViewPos;
 
@@ -933,13 +930,16 @@ namespace swrenderer
 		double yscale;
 		fixed_t xoffset = rw_offset;
 
-		DrawerStyle drawerstyle;
+		DrawerArgs drawerargs;
+
+		// [RH] Color if not texturing line
+		drawerargs.dc_color = (((int)(curline - segs) * 8) + 4) & 255;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerstyle.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerstyle.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 
 		// clip wall to the floor and ceiling
 		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
@@ -1048,7 +1048,7 @@ namespace swrenderer
 				}
 
 				RenderWallPart renderWallpart;
-				renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+				renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
@@ -1085,7 +1085,7 @@ namespace swrenderer
 					}
 
 					RenderWallPart renderWallpart;
-					renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1125,7 +1125,7 @@ namespace swrenderer
 					}
 
 					RenderWallPart renderWallpart;
-					renderWallpart.Render(drawerstyle, frontsector, curline, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}

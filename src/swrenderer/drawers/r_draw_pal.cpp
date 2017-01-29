@@ -96,24 +96,23 @@ CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 namespace swrenderer
 {
-	PalWall1Command::PalWall1Command()
+	PalWall1Command::PalWall1Command(const DrawerArgs &args)
 	{
-		using namespace drawerargs;
-
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_colormap = dc_colormap;
-		_count = dc_count;
-		_source = dc_source;
-		_dest = dc_dest;
-		_fracbits = dc_wall_fracbits;
+		_iscale = args.dc_iscale;
+		_texturefrac = args.dc_texturefrac;
+		_colormap = args.dc_colormap;
+		_count = args.dc_count;
+		_source = args.dc_source;
+		_dest = args.Dest();
+		_dest_y = args.DestY();
+		_fracbits = args.dc_wall_fracbits;
 		_pitch = dc_pitch;
-		_srcblend = dc_srcblend;
-		_destblend = dc_destblend;
-		_dynlights = dc_lights;
-		_num_dynlights = dc_num_lights;
-		_viewpos_z = dc_viewpos.Z;
-		_step_viewpos_z = dc_viewpos_step.Z;
+		_srcblend = args.dc_srcblend;
+		_destblend = args.dc_destblend;
+		_dynlights = args.dc_lights;
+		_num_dynlights = args.dc_num_lights;
+		_viewpos_z = args.dc_viewpos.Z;
+		_step_viewpos_z = args.dc_viewpos_step.Z;
 	}
 
 	uint8_t PalWall1Command::AddLights(const TriLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
@@ -560,20 +559,19 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
+	PalSkyCommand::PalSkyCommand(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
 	{
-		using namespace drawerargs;
-
-		_dest = dc_dest;
-		_count = dc_count;
+		_dest = args.Dest();
+		_dest_y = args.DestY();
+		_count = args.dc_count;
 		_pitch = dc_pitch;
 		for (int col = 0; col < 4; col++)
 		{
-			_source[col] = dc_wall_source[col];
-			_source2[col] = dc_wall_source2[col];
-			_sourceheight[col] = dc_wall_sourceheight[col];
-			_iscale[col] = dc_wall_iscale[col];
-			_texturefrac[col] = dc_wall_texturefrac[col];
+			_source[col] = args.dc_wall_source[col];
+			_source2[col] = args.dc_wall_source2[col];
+			_sourceheight[col] = args.dc_wall_sourceheight[col];
+			_iscale[col] = args.dc_wall_iscale[col];
+			_texturefrac[col] = args.dc_wall_texturefrac[col];
 		}
 	}
 
@@ -866,24 +864,23 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalColumnCommand::PalColumnCommand()
+	PalColumnCommand::PalColumnCommand(const DrawerArgs &args)
 	{
-		using namespace drawerargs;
-
-		_count = dc_count;
-		_dest = dc_dest;
+		_count = args.dc_count;
+		_dest = args.Dest();
+		_dest_y = args.DestY();
 		_pitch = dc_pitch;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_colormap = dc_colormap;
-		_source = dc_source;
-		_translation = dc_translation;
-		_color = dc_color;
-		_srcblend = dc_srcblend;
-		_destblend = dc_destblend;
-		_srccolor = dc_srccolor;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
+		_iscale = args.dc_iscale;
+		_texturefrac = args.dc_texturefrac;
+		_colormap = args.dc_colormap;
+		_source = args.dc_source;
+		_translation = args.dc_translation;
+		_color = args.dc_color;
+		_srcblend = args.dc_srcblend;
+		_destblend = args.dc_destblend;
+		_srccolor = args.dc_srccolor;
+		_srcalpha = args.dc_srcalpha;
+		_destalpha = args.dc_destalpha;
 	}
 
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
@@ -1764,13 +1761,11 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand()
+	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const DrawerArgs &args)
 	{
-		using namespace drawerargs;
-
-		_yl = dc_yl;
-		_yh = dc_yh;
-		_x = dc_x;
+		_yl = args.dc_yl;
+		_yh = args.dc_yh;
+		_x = args.dc_x;
 		_destorg = dc_destorg;
 		_pitch = dc_pitch;
 		_fuzzpos = fuzzpos;
@@ -1853,31 +1848,29 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSpanCommand::PalSpanCommand()
+	PalSpanCommand::PalSpanCommand(const DrawerArgs &args)
 	{
-		using namespace drawerargs;
-
-		_source = ds_source;
-		_colormap = ds_colormap;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_y = ds_y;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
+		_source = args.ds_source;
+		_colormap = args.ds_colormap;
+		_xfrac = args.ds_xfrac;
+		_yfrac = args.ds_yfrac;
+		_y = args.ds_y;
+		_x1 = args.ds_x1;
+		_x2 = args.ds_x2;
 		_destorg = dc_destorg;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_srcblend = dc_srcblend;
-		_destblend = dc_destblend;
-		_color = ds_color;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_dynlights = dc_lights;
-		_num_dynlights = dc_num_lights;
-		_viewpos_x = dc_viewpos.X;
-		_step_viewpos_x = dc_viewpos_step.X;
+		_xstep = args.ds_xstep;
+		_ystep = args.ds_ystep;
+		_xbits = args.ds_xbits;
+		_ybits = args.ds_ybits;
+		_srcblend = args.dc_srcblend;
+		_destblend = args.dc_destblend;
+		_color = args.ds_color;
+		_srcalpha = args.dc_srcalpha;
+		_destalpha = args.dc_destalpha;
+		_dynlights = args.dc_lights;
+		_num_dynlights = args.dc_num_lights;
+		_viewpos_x = args.dc_viewpos.X;
+		_step_viewpos_x = args.dc_viewpos_step.X;
 	}
 
 	uint8_t PalSpanCommand::AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
@@ -2630,16 +2623,14 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
+	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const DrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
-		using namespace drawerargs;
-
-		_colormap = ds_colormap;
+		_colormap = args.ds_colormap;
 		_destorg = dc_destorg;
-		_ybits = ds_ybits;
-		_xbits = ds_xbits;
-		_source = ds_source;
+		_ybits = args.ds_ybits;
+		_xbits = args.ds_xbits;
+		_source = args.ds_source;
 		basecolormapdata = basecolormap->Maps;
 	}
 
@@ -2878,10 +2869,9 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(int y, int x1, int x2) : y(y), x1(x1), x2(x2)
+	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const DrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
-		using namespace drawerargs;
-		color = ds_color;
+		color = args.ds_color;
 		destorg = dc_destorg;
 	}
 
@@ -2895,10 +2885,9 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(int y, int x1, int x2) : y(y), x1(x1), x2(x2)
+	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const DrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
-		using namespace drawerargs;
-		_colormap = dc_colormap;
+		_colormap = args.dc_colormap;
 		_destorg = dc_destorg;
 	}
 

@@ -143,7 +143,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
         using namespace swrenderer;
-		using namespace drawerargs;
 
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
@@ -185,26 +184,26 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			translation = parms.remap->Remap;
 	}
 
-	DrawerStyle drawerstyle;
+	DrawerArgs drawerargs;
 
 	if (translation != NULL)
 	{
-		drawerstyle.SetTranslationMap((lighttable_t *)translation);
+		drawerargs.SetTranslationMap((lighttable_t *)translation);
 	}
 	else
 	{
 		if (r_swtruecolor)
-			drawerstyle.SetTranslationMap(nullptr);
+			drawerargs.SetTranslationMap(nullptr);
 		else
-			drawerstyle.SetTranslationMap(identitymap);
+			drawerargs.SetTranslationMap(identitymap);
 	}
 
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
 	if (r_swtruecolor)
-		visible = drawerstyle.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
-		visible = drawerstyle.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
+		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
 
 	BYTE *destorgsave = dc_destorg;
 	int destheightsave = dc_destheight;
@@ -292,7 +291,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		while (x < x2_i)
 		{
-			drawerstyle.DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
+			drawerargs.DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
 			x++;
 			frac += xiscale_i;
 		}
@@ -1322,7 +1321,6 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 {
 #ifndef NO_SWRENDER
         using namespace swrenderer;
-		using namespace drawerargs;
 
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
@@ -1389,31 +1387,31 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
-	DrawerStyle drawerstyle;
-	drawerstyle.SetSpanTexture(tex);
+	DrawerArgs drawerargs;
+	drawerargs.SetSpanTexture(tex);
 	if (colormap)
-		drawerstyle.SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+		drawerargs.SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
-		drawerstyle.SetSpanColormap(&identitycolormap, 0);
-	if (ds_xbits != 0)
+		drawerargs.SetSpanColormap(&identitycolormap, 0);
+	if (drawerargs.ds_xbits != 0)
 	{
-		scalex = double(1u << (32 - ds_xbits)) / scalex;
-		ds_xstep = xs_RoundToInt(cosrot * scalex);
+		scalex = double(1u << (32 - drawerargs.ds_xbits)) / scalex;
+		drawerargs.ds_xstep = xs_RoundToInt(cosrot * scalex);
 	}
 	else
 	{ // Texture is one pixel wide.
 		scalex = 0;
-		ds_xstep = 0;
+		drawerargs.ds_xstep = 0;
 	}
-	if (ds_ybits != 0)
+	if (drawerargs.ds_ybits != 0)
 	{
-		scaley = double(1u << (32 - ds_ybits)) / scaley;
-		ds_ystep = xs_RoundToInt(sinrot * scaley);
+		scaley = double(1u << (32 - drawerargs.ds_ybits)) / scaley;
+		drawerargs.ds_ystep = xs_RoundToInt(sinrot * scaley);
 	}
 	else
 	{ // Texture is one pixel tall.
 		scaley = 0;
-		ds_ystep = 0;
+		drawerargs.ds_ystep = 0;
 	}
 
 	// Travel down the right edge and create an outline of that edge.
@@ -1479,9 +1477,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 #if 0
 					memset(this->Buffer + y * this->Pitch + x1, (int)tex, x2 - x1);
 #else
-					ds_y = y;
-					ds_x1 = x1;
-					ds_x2 = x2 - 1;
+					drawerargs.ds_y = y;
+					drawerargs.ds_x1 = x1;
+					drawerargs.ds_x2 = x2 - 1;
 
 					DVector2 tex(x1 - originx, y - originy);
 					if (dorotate)
@@ -1490,10 +1488,10 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 						tex.X = t * cosrot - tex.Y * sinrot;
 						tex.Y = tex.Y * cosrot + t * sinrot;
 					}
-					ds_xfrac = xs_RoundToInt(tex.X * scalex);
-					ds_yfrac = xs_RoundToInt(tex.Y * scaley);
+					drawerargs.ds_xfrac = xs_RoundToInt(tex.X * scalex);
+					drawerargs.ds_yfrac = xs_RoundToInt(tex.Y * scaley);
 
-					(drawerstyle.Drawers()->*drawerstyle.spanfunc)();
+					(drawerargs.Drawers()->*drawerargs.spanfunc)(drawerargs);
 #endif
 				}
 				x += xinc;

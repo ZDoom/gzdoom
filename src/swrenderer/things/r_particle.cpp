@@ -208,8 +208,6 @@ namespace swrenderer
 
 	void RenderParticle::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
-		using namespace drawerargs;
-
 		auto vis = this;
 
 		int spacing;

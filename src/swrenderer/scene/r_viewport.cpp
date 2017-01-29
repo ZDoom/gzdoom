@@ -55,6 +55,10 @@ namespace swrenderer
 
 	double WallTMapScale2;
 
+	uint8_t *dc_destorg;
+	int dc_destheight;
+	int dc_pitch;
+
 	// The xtoviewangleangle[] table maps a screen pixel
 	// to the lowest viewangle that maps back to x ranges
 	// from clipangle to -clipangle.
@@ -148,8 +152,6 @@ namespace swrenderer
 
 	void RenderViewport::SetupBuffer()
 	{
-		using namespace drawerargs;
-
 		static BYTE *lastbuff = NULL;
 
 		int pitch = RenderTarget->GetPitch();

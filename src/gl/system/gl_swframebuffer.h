@@ -59,7 +59,7 @@ public:
 	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin) override;
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor) override;
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor) override;
-	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints, double originx, double originy, double scalex, double scaley, DAngle rotation, FDynamicColormap *colormap, int lightlevel, int bottomclip) override;
+	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints, double originx, double originy, double scalex, double scaley, DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
 	bool WipeStartScreen(int type) override;
 	void WipeEndScreen() override;
 	bool WipeDo(int ticks) override;

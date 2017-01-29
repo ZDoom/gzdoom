@@ -19,81 +19,7 @@ EXTERN_CVAR(Bool, r_dynlights);
 
 namespace swrenderer
 {
-	struct ShadeConstants
-	{
-		uint16_t light_alpha;
-		uint16_t light_red;
-		uint16_t light_green;
-		uint16_t light_blue;
-		uint16_t fade_alpha;
-		uint16_t fade_red;
-		uint16_t fade_green;
-		uint16_t fade_blue;
-		uint16_t desaturate;
-		bool simple_shade;
-	};
-
-	namespace drawerargs
-	{
-		extern int dc_pitch;
-		extern lighttable_t *dc_colormap;
-		extern ShadeConstants dc_shade_constants;
-		extern fixed_t dc_light;
-		extern int dc_x;
-		extern int dc_yl;
-		extern int dc_yh;
-		extern fixed_t dc_iscale;
-		extern fixed_t dc_texturefrac;
-		extern uint32_t dc_textureheight;
-		extern int dc_color;
-		extern uint32_t dc_srccolor;
-		extern uint32_t dc_srccolor_bgra;
-		extern uint32_t *dc_srcblend;
-		extern uint32_t *dc_destblend;
-		extern fixed_t dc_srcalpha;
-		extern fixed_t dc_destalpha;
-		extern const uint8_t *dc_source;
-		extern const uint8_t *dc_source2;
-		extern uint32_t dc_texturefracx;
-		extern uint8_t *dc_translation;
-		extern uint8_t *dc_dest;
-		extern uint8_t *dc_destorg;
-		extern int dc_destheight;
-		extern int dc_count;
-		extern FVector3 dc_normal;
-		extern FVector3 dc_viewpos;
-		extern FVector3 dc_viewpos_step;
-		extern TriLight *dc_lights;
-		extern int dc_num_lights;
-
-		extern uint32_t dc_wall_texturefrac[4];
-		extern uint32_t dc_wall_iscale[4];
-		extern uint8_t *dc_wall_colormap[4];
-		extern fixed_t dc_wall_light[4];
-		extern const uint8_t *dc_wall_source[4];
-		extern const uint8_t *dc_wall_source2[4];
-		extern uint32_t dc_wall_texturefracx[4];
-		extern uint32_t dc_wall_sourceheight[4];
-		extern int dc_wall_fracbits;
-
-		extern int ds_y;
-		extern int ds_x1;
-		extern int ds_x2;
-		extern lighttable_t * ds_colormap;
-		extern ShadeConstants ds_shade_constants;
-		extern dsfixed_t ds_light;
-		extern dsfixed_t ds_xfrac;
-		extern dsfixed_t ds_yfrac;
-		extern dsfixed_t ds_xstep;
-		extern dsfixed_t ds_ystep;
-		extern int ds_xbits;
-		extern int ds_ybits;
-		extern fixed_t ds_alpha;
-		extern double ds_lod;
-		extern const uint8_t *ds_source;
-		extern bool ds_source_mipmapped;
-		extern int ds_color;
-	}
+	class DrawerArgs;
 
 	extern int ylookup[MAXHEIGHT];
 	extern uint8_t shadetables[/*NUMCOLORMAPS*16*256*/];
@@ -120,124 +46,46 @@ namespace swrenderer
 	{
 	public:
 		virtual ~SWPixelFormatDrawers() { }
-		virtual void DrawWallColumn() = 0;
-		virtual void DrawWallMaskedColumn() = 0;
-		virtual void DrawWallAddColumn() = 0;
-		virtual void DrawWallAddClampColumn() = 0;
-		virtual void DrawWallSubClampColumn() = 0;
-		virtual void DrawWallRevSubClampColumn() = 0;
-		virtual void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawColumn() = 0;
-		virtual void FillColumn() = 0;
-		virtual void FillAddColumn() = 0;
-		virtual void FillAddClampColumn() = 0;
-		virtual void FillSubClampColumn() = 0;
-		virtual void FillRevSubClampColumn() = 0;
-		virtual void DrawFuzzColumn() = 0;
-		virtual void DrawAddColumn() = 0;
-		virtual void DrawTranslatedColumn() = 0;
-		virtual void DrawTranslatedAddColumn() = 0;
-		virtual void DrawShadedColumn() = 0;
-		virtual void DrawAddClampColumn() = 0;
-		virtual void DrawAddClampTranslatedColumn() = 0;
-		virtual void DrawSubClampColumn() = 0;
-		virtual void DrawSubClampTranslatedColumn() = 0;
-		virtual void DrawRevSubClampColumn() = 0;
-		virtual void DrawRevSubClampTranslatedColumn() = 0;
-		virtual void DrawSpan() = 0;
-		virtual void DrawSpanMasked() = 0;
-		virtual void DrawSpanTranslucent() = 0;
-		virtual void DrawSpanMaskedTranslucent() = 0;
-		virtual void DrawSpanAddClamp() = 0;
-		virtual void DrawSpanMaskedAddClamp() = 0;
-		virtual void FillSpan() = 0;
-		virtual void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
-		virtual void DrawColoredSpan(int y, int x1, int x2) = 0;
-		virtual void DrawFogBoundaryLine(int y, int x1, int x2) = 0;
+		virtual void DrawWallColumn(const DrawerArgs &args) = 0;
+		virtual void DrawWallMaskedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawWallAddColumn(const DrawerArgs &args) = 0;
+		virtual void DrawWallAddClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawWallSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawWallRevSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawSingleSkyColumn(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawDoubleSkyColumn(const DrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawColumn(const DrawerArgs &args) = 0;
+		virtual void FillColumn(const DrawerArgs &args) = 0;
+		virtual void FillAddColumn(const DrawerArgs &args) = 0;
+		virtual void FillAddClampColumn(const DrawerArgs &args) = 0;
+		virtual void FillSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void FillRevSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawFuzzColumn(const DrawerArgs &args) = 0;
+		virtual void DrawAddColumn(const DrawerArgs &args) = 0;
+		virtual void DrawTranslatedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawTranslatedAddColumn(const DrawerArgs &args) = 0;
+		virtual void DrawShadedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawAddClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawAddClampTranslatedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawSubClampTranslatedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawRevSubClampColumn(const DrawerArgs &args) = 0;
+		virtual void DrawRevSubClampTranslatedColumn(const DrawerArgs &args) = 0;
+		virtual void DrawSpan(const DrawerArgs &args) = 0;
+		virtual void DrawSpanMasked(const DrawerArgs &args) = 0;
+		virtual void DrawSpanTranslucent(const DrawerArgs &args) = 0;
+		virtual void DrawSpanMaskedTranslucent(const DrawerArgs &args) = 0;
+		virtual void DrawSpanAddClamp(const DrawerArgs &args) = 0;
+		virtual void DrawSpanMaskedAddClamp(const DrawerArgs &args) = 0;
+		virtual void FillSpan(const DrawerArgs &args) = 0;
+		virtual void DrawTiltedSpan(const DrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
+		virtual void DrawColoredSpan(const DrawerArgs &args, int y, int x1, int x2) = 0;
+		virtual void DrawFogBoundaryLine(const DrawerArgs &args, int y, int x1, int x2) = 0;
 	};
 
-	typedef void(SWPixelFormatDrawers::*DrawerFunc)();
-
-	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
-	void R_UpdateFuzzPos();
-
-	class DrawerStyle
-	{
-	public:
-		DrawerStyle()
-		{
-			colfunc = &SWPixelFormatDrawers::DrawColumn;
-			basecolfunc = &SWPixelFormatDrawers::DrawColumn;
-			fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
-			transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
-			spanfunc = &SWPixelFormatDrawers::DrawSpan;
-		}
-
-		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
-
-		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
-
-		// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
-		void SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
-		void SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
-		void SetTranslationMap(lighttable_t *translation);
-
-		void SetSpanTexture(FTexture *tex);
-		void SetSpanColormap(FDynamicColormap *colormap, int shade);
-
-		DrawerFunc GetTransMaskDrawer();
-
-		DrawerFunc colfunc;
-		DrawerFunc basecolfunc;
-		DrawerFunc fuzzcolfunc;
-		DrawerFunc transcolfunc;
-		DrawerFunc spanfunc;
-
-		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
-		{
-			Drawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
-		}
-
-		void DrawFogBoundaryLine(int y, int x1, int x2)
-		{
-			Drawers()->DrawFogBoundaryLine(y, x1, x2);
-		}
-
-		void DrawColoredSpan(int y, int x1, int x2)
-		{
-			Drawers()->DrawColoredSpan(y, x1, x2);
-		}
-
-		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
-		{
-			Drawers()->DrawSingleSkyColumn(solid_top, solid_bottom, fadeSky);
-		}
-
-		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
-		{
-			Drawers()->DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
-		}
-
-		void FillColumn()
-		{
-			Drawers()->FillColumn();
-		}
-
-		SWPixelFormatDrawers *Drawers() const;
-
-	private:
-		void DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
-
-		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
-		static fixed_t GetAlpha(int type, fixed_t alpha);
-
-		bool drawer_needs_pal_input = false;
-	};
+	void R_UpdateFuzzPos(const DrawerArgs &args);
 }

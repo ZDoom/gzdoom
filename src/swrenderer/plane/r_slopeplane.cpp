@@ -50,8 +50,6 @@ namespace swrenderer
 {
 	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
-		using namespace drawerargs;
-
 		static const float ifloatpow2[16] =
 		{
 			// ifloatpow2[i] = 1 / (1 << i)
@@ -72,16 +70,17 @@ namespace swrenderer
 			return;
 		}
 
-		drawerstyle.SetSpanTexture(texture);
+		drawerargs.ds_color = 3;
+		drawerargs.SetSpanTexture(texture);
 
-		lxscale = _xscale * ifloatpow2[ds_xbits];
-		lyscale = _yscale * ifloatpow2[ds_ybits];
+		lxscale = _xscale * ifloatpow2[drawerargs.ds_xbits];
+		lyscale = _yscale * ifloatpow2[drawerargs.ds_ybits];
 		xscale = 64.f / lxscale;
 		yscale = 64.f / lyscale;
 		zeroheight = pl->height.ZatPoint(ViewPos);
 
-		pviewx = xs_ToFixed(32 - ds_xbits, pl->xform.xOffs * pl->xform.xScale);
-		pviewy = xs_ToFixed(32 - ds_ybits, pl->xform.yOffs * pl->xform.yScale);
+		pviewx = xs_ToFixed(32 - drawerargs.ds_xbits, pl->xform.xOffs * pl->xform.xScale);
+		pviewy = xs_ToFixed(32 - drawerargs.ds_ybits, pl->xform.yOffs * pl->xform.yScale);
 		planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 
 		// p is the texture origin in view space
@@ -155,27 +154,27 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			drawerstyle.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			drawerstyle.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
 		{
-			drawerstyle.SetDSColorMapLight(basecolormap, 0, 0);
+			drawerargs.SetDSColorMapLight(basecolormap, 0, 0);
 			plane_shade = true;
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}
 
 		// Hack in support for 1 x Z and Z x 1 texture sizes
-		if (ds_ybits == 0)
+		if (drawerargs.ds_ybits == 0)
 		{
 			plane_sv[2] = plane_sv[1] = plane_sv[0] = 0;
 		}
-		if (ds_xbits == 0)
+		if (drawerargs.ds_xbits == 0)
 		{
 			plane_su[2] = plane_su[1] = plane_su[0] = 0;
 		}
@@ -185,6 +184,6 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
-		drawerstyle.DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		drawerargs.DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

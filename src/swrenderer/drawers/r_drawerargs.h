@@ -19,25 +19,7 @@ namespace swrenderer
 {
 	class SWPixelFormatDrawers;
 	class DrawerArgs;
-
-	struct ShadeConstants
-	{
-		uint16_t light_alpha;
-		uint16_t light_red;
-		uint16_t light_green;
-		uint16_t light_blue;
-		uint16_t fade_alpha;
-		uint16_t fade_red;
-		uint16_t fade_green;
-		uint16_t fade_blue;
-		uint16_t desaturate;
-		bool simple_shade;
-	};
-
-	typedef void(SWPixelFormatDrawers::*DrawerFunc)(const DrawerArgs &args);
-	typedef void(SWPixelFormatDrawers::*WallDrawerFunc)(const WallDrawerArgs &args);
-	typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
-	typedef void(SWPixelFormatDrawers::*SpanDrawerFunc)(const SpanDrawerArgs &args);
+	struct ShadeConstants;
 
 	class DrawerArgs
 	{
@@ -51,7 +33,8 @@ namespace swrenderer
 		ShadeConstants ColormapConstants() const;
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
-		SWPixelFormatDrawers *Drawers() const;
+	protected:
+		static SWPixelFormatDrawers *Drawers();
 
 	private:
 		FSWColormap *mBaseColormap = nullptr;
@@ -123,6 +106,7 @@ namespace swrenderer
 		int dc_num_lights = 0;
 
 	private:
+		typedef void(SWPixelFormatDrawers::*SpanDrawerFunc)(const SpanDrawerArgs &args);
 		SpanDrawerFunc spanfunc;
 	};
 
@@ -164,6 +148,7 @@ namespace swrenderer
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
 
+		typedef void(SWPixelFormatDrawers::*WallDrawerFunc)(const WallDrawerArgs &args);
 		WallDrawerFunc wallfunc = nullptr;
 	};
 
@@ -213,8 +198,21 @@ namespace swrenderer
 		int dc_dest_y = 0;
 		bool drawer_needs_pal_input = false;
 
+		typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
 		SpriteDrawerFunc colfunc;
 	};
 
-	void R_InitColumnDrawers();
+	struct ShadeConstants
+	{
+		uint16_t light_alpha;
+		uint16_t light_red;
+		uint16_t light_green;
+		uint16_t light_blue;
+		uint16_t fade_alpha;
+		uint16_t fade_red;
+		uint16_t fade_green;
+		uint16_t fade_blue;
+		uint16_t desaturate;
+		bool simple_shade;
+	};
 }

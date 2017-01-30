@@ -79,7 +79,6 @@ namespace swrenderer
 		if (r_swtruecolor != screen->IsBgra())
 		{
 			r_swtruecolor = screen->IsBgra();
-			R_InitColumnDrawers();
 		}
 
 		if (r_clearbuffer != 0)
@@ -202,7 +201,6 @@ namespace swrenderer
 		if (r_swtruecolor != canvas->IsBgra())
 		{
 			r_swtruecolor = canvas->IsBgra();
-			R_InitColumnDrawers();
 		}
 
 		R_BeginDrawerCommands();
@@ -233,11 +231,6 @@ namespace swrenderer
 
 		viewactive = savedviewactive;
 		r_swtruecolor = savedoutputformat;
-
-		if (r_swtruecolor != canvas->IsBgra())
-		{
-			R_InitColumnDrawers();
-		}
 	}
 
 	void RenderScene::ScreenResized()
@@ -259,7 +252,6 @@ namespace swrenderer
 		fillshort(zeroarray, MAXWIDTH, 0);
 
 		R_InitShadeMaps();
-		R_InitColumnDrawers();
 	}
 
 	void RenderScene::Deinit()

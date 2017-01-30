@@ -39,24 +39,18 @@
 
 namespace swrenderer
 {
-	namespace
-	{
-		SWPixelFormatDrawers *active_drawers;
-		SWPalDrawers pal_drawers;
-		SWTruecolorDrawers tc_drawers;
-	}
-
-	void R_InitColumnDrawers()
+	SWPixelFormatDrawers *DrawerArgs::Drawers()
 	{
 		if (r_swtruecolor)
-			active_drawers = &tc_drawers;
+		{
+			static SWTruecolorDrawers tc_drawers;
+			return &tc_drawers;
+		}
 		else
-			active_drawers = &pal_drawers;
-	}
-
-	SWPixelFormatDrawers *DrawerArgs::Drawers() const
-	{
-		return active_drawers;
+		{
+			static SWPalDrawers pal_drawers;
+			return &pal_drawers;
+		}
 	}
 
 	SpriteDrawerArgs::SpriteDrawerArgs()

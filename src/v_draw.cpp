@@ -147,11 +147,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
-	if (r_swtruecolor != IsBgra())
-	{
-		r_swtruecolor = IsBgra();
-		R_InitColumnDrawers();
-	}
+	r_swtruecolor = IsBgra();
 
 	if (APART(parms.colorOverlay) != 0)
 	{

@@ -360,33 +360,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		ProcessWallWorker(uwal, dwal, texturemid, swal, lwal, &SWPixelFormatDrawers::DrawWallColumn);
-	}
-
-	void RenderWallPart::ProcessMaskedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
-	{
-		if (!rw_pic->bMasked) // Textures that aren't masked can use the faster ProcessNormalWall.
-		{
-			ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
-		}
-		else
-		{
-			ProcessWallWorker(uwal, dwal, texturemid, swal, lwal, &SWPixelFormatDrawers::DrawWallMaskedColumn);
-		}
-	}
-
-	void RenderWallPart::ProcessTranslucentWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
-	{
-		WallDrawerFunc drawcol1 = drawerargs.GetTransMaskDrawer();
-		if (drawcol1 == nullptr)
-		{
-			// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
-			ProcessMaskedWall(uwal, dwal, texturemid, swal, lwal);
-		}
-		else
-		{
-			ProcessWallWorker(uwal, dwal, texturemid, swal, lwal, drawcol1);
-		}
+		ProcessWallWorker(uwal, dwal, texturemid, swal, lwal, drawerargs.wallfunc);
 	}
 
 	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
@@ -428,28 +402,20 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		if (mask)
+		// Textures that aren't masked can use the faster ProcessNormalWall.
+		if (!rw_pic->bMasked && drawerargs.wallfunc == &SWPixelFormatDrawers::DrawWallMaskedColumn)
 		{
-			if (drawerargs.colfunc == drawerargs.basecolfunc)
-			{
-				ProcessMaskedWall(uwal, dwal, texturemid, swal, lwal);
-			}
-			else
-			{
-				ProcessTranslucentWall(uwal, dwal, texturemid, swal, lwal);
-			}
+			drawerargs.SetStyle(true, false, OPAQUE);
+		}
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+		{
+			ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
 		}
 		else
 		{
-			CameraLight *cameraLight = CameraLight::Instance();
-			if (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
-			{
-				ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
-			}
-			else
-			{
-				ProcessStripedWall(uwal, dwal, texturemid, swal, lwal);
-			}
+			ProcessStripedWall(uwal, dwal, texturemid, swal, lwal);
 		}
 	}
 

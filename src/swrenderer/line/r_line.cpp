@@ -932,8 +932,7 @@ namespace swrenderer
 
 		WallDrawerArgs drawerargs;
 
-		// [RH] Color if not texturing line
-		drawerargs.dc_color = (((int)(curline - segs) * 8) + 4) & 255;
+		drawerargs.SetStyle(false, false, OPAQUE);
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)

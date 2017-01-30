@@ -59,7 +59,7 @@ namespace swrenderer
 		return active_drawers;
 	}
 
-	DrawerArgs::DrawerArgs()
+	ColumnDrawerArgs::ColumnDrawerArgs()
 	{
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 		basecolfunc = &SWPixelFormatDrawers::DrawColumn;
@@ -343,7 +343,7 @@ namespace swrenderer
 		}
 	}
 
-	bool DrawerArgs::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
+	bool ColumnDrawerArgs::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	{
 		// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
 		// just remove it completely.
@@ -353,7 +353,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillColumn;
 			}
-			else if (mTranslation == nullptr)
+			else if (TranslationMap() == nullptr)
 			{
 				colfunc = basecolfunc;
 			}
@@ -398,7 +398,7 @@ namespace swrenderer
 				{
 					colfunc = &SWPixelFormatDrawers::FillAddColumn;
 				}
-				else if (mTranslation == nullptr)
+				else if (TranslationMap() == nullptr)
 				{
 					colfunc = &SWPixelFormatDrawers::DrawAddColumn;
 				}
@@ -414,7 +414,7 @@ namespace swrenderer
 				{
 					colfunc = &SWPixelFormatDrawers::FillAddClampColumn;
 				}
-				else if (mTranslation == nullptr)
+				else if (TranslationMap() == nullptr)
 				{
 					colfunc = &SWPixelFormatDrawers::DrawAddClampColumn;
 				}
@@ -431,7 +431,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillSubClampColumn;
 			}
-			else if (mTranslation == nullptr)
+			else if (TranslationMap() == nullptr)
 			{
 				colfunc = &SWPixelFormatDrawers::DrawSubClampColumn;
 			}
@@ -451,7 +451,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillRevSubClampColumn;
 			}
-			else if (mTranslation == nullptr)
+			else if (TranslationMap() == nullptr)
 			{
 				colfunc = &SWPixelFormatDrawers::DrawRevSubClampColumn;
 			}
@@ -467,7 +467,7 @@ namespace swrenderer
 		}
 	}
 
-	fixed_t DrawerArgs::GetAlpha(int type, fixed_t alpha)
+	fixed_t ColumnDrawerArgs::GetAlpha(int type, fixed_t alpha)
 	{
 		switch (type)
 		{
@@ -479,7 +479,7 @@ namespace swrenderer
 		}
 	}
 
-	bool DrawerArgs::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool ColumnDrawerArgs::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		fixed_t fglevel, bglevel;
 
@@ -513,16 +513,16 @@ namespace swrenderer
 
 		if (translation != -1)
 		{
-			mTranslation = nullptr;
+			SetTranslationMap(nullptr);
 			if (translation != 0)
 			{
 				FRemapTable *table = TranslationToTable(translation);
 				if (table != NULL && !table->Inactive)
 				{
 					if (r_swtruecolor)
-						mTranslation = (uint8_t*)table->Palette;
+						SetTranslationMap((uint8_t*)table->Palette);
 					else
-						mTranslation = table->Remap;
+						SetTranslationMap(table->Remap);
 				}
 			}
 		}
@@ -581,14 +581,14 @@ namespace swrenderer
 			SetColorMapLight(&identitycolormap, 0, 0);
 		}
 
-		if (!DrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
+		if (!ColumnDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
 		{
 			return false;
 		}
 		return true;
 	}
 
-	bool DrawerArgs::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool ColumnDrawerArgs::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
@@ -598,27 +598,6 @@ namespace swrenderer
 		int pixelsize = r_swtruecolor ? 4 : 1;
 		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
-	}
-
-	WallDrawerFunc WallDrawerArgs::GetTransMaskDrawer()
-	{
-		if (colfunc == &SWPixelFormatDrawers::DrawAddColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallAddColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawAddClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallAddClampColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawSubClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallSubClampColumn;
-		}
-		if (colfunc == &SWPixelFormatDrawers::DrawRevSubClampColumn)
-		{
-			return &SWPixelFormatDrawers::DrawWallRevSubClampColumn;
-		}
-		return nullptr;
 	}
 
 	void SpanDrawerArgs::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
@@ -674,6 +653,37 @@ namespace swrenderer
 			{
 				spanfunc = &SWPixelFormatDrawers::DrawSpan;
 			}
+		}
+	}
+
+	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)
+	{
+		if (alpha < OPAQUE || additive)
+		{
+			if (!additive)
+			{
+				wallfunc = &SWPixelFormatDrawers::DrawWallAddColumn;
+				dc_srcblend = Col2RGB8[alpha >> 10];
+				dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
+				dc_srcalpha = alpha;
+				dc_destalpha = OPAQUE - alpha;
+			}
+			else
+			{
+				wallfunc = &SWPixelFormatDrawers::DrawWallAddClampColumn;
+				dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
+				dc_destblend = Col2RGB8_LessPrecision[FRACUNIT >> 10];
+				dc_srcalpha = alpha;
+				dc_destalpha = FRACUNIT;
+			}
+		}
+		else if (masked)
+		{
+			wallfunc = &SWPixelFormatDrawers::DrawWallMaskedColumn;
+		}
+		else
+		{
+			wallfunc = &SWPixelFormatDrawers::DrawWallColumn;
 		}
 	}
 

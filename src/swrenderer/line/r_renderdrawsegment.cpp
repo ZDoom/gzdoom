@@ -66,15 +66,15 @@ namespace swrenderer
 
 		curline = ds->curline;
 
-		FDynamicColormap *patchstylecolormap = nullptr;
+		float alpha = (float)MIN(curline->linedef->alpha, 1.);
+		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		WallDrawerArgs walldrawerargs;
-		walldrawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
-			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
+		walldrawerargs.SetStyle(true, additive, FLOAT2FIXED(alpha));
 
 		ColumnDrawerArgs columndrawerargs;
-		bool visible = columndrawerargs.SetPatchStyle(LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
-			(float)MIN(curline->linedef->alpha, 1.), 0, 0, patchstylecolormap);
+		FDynamicColormap *patchstylecolormap = nullptr;
+		bool visible = columndrawerargs.SetPatchStyle(LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 		{
@@ -394,12 +394,11 @@ namespace swrenderer
 		double yscale;
 
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
-		WallDrawerArgs drawerargs;
-		bool visible = drawerargs.SetPatchStyle(LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
-			Alpha, 0, 0, basecolormap);
-
-		if (!visible)
+		if (Alpha <= 0)
 			return;
+
+		WallDrawerArgs drawerargs;
+		drawerargs.SetStyle(true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;

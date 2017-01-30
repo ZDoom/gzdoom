@@ -35,11 +35,16 @@ class DStaticEventHandler : public DObject // make it a part of normal GC proces
 {
 	DECLARE_CLASS(DStaticEventHandler, DObject)
 public:
+	DStaticEventHandler()
+	{
+		prev = 0;
+		next = 0;
+		isFromSaveGame = false;
+	}
+
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
-	DStaticEventHandler* unregPrev;
-	DStaticEventHandler* unregNext;
-	bool isMapScope; // this is only used with IsStatic=true
+	bool isFromSaveGame; // this gets set to true if this object was received using serializator
 	virtual bool IsStatic() { return true; }
 
 	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
@@ -49,6 +54,7 @@ public:
 		if (arc.isReading())
 		{
 			Printf("DStaticEventHandler::Serialize: reading object %s\n", GetClass()->TypeName.GetChars());
+			isFromSaveGame = true;
 		}
 		else
 		{
@@ -62,8 +68,6 @@ public:
 
 	virtual void WorldLoaded();
 	virtual void WorldUnloading();
-	virtual void WorldLoadedUnsafe();
-	virtual void WorldUnloadingUnsafe();
 	virtual void RenderFrame();
 };
 class DEventHandler : public DStaticEventHandler

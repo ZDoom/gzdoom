@@ -1443,8 +1443,6 @@ void P_SpawnSpecials (void)
 			break;
 		}
 	}
-	// [ZZ] safe world load
-	E_WorldLoaded();
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
 }

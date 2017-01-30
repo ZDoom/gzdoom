@@ -19,7 +19,10 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	if (handler->next)
 		handler->next->prev = handler;
 	E_FirstEventHandler = handler;
-	if (handler->IsStatic() && !handler->isMapScope) handler->ObjectFlags |= OF_Fixed;
+	if (handler->IsStatic())
+	{
+		handler->ObjectFlags |= OF_Fixed;
+	}
 	return true;
 }
 
@@ -36,10 +39,10 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		handler->next->prev = handler->prev;
 	if (handler == E_FirstEventHandler)
 		E_FirstEventHandler = handler->next;
-	if (handler->IsStatic() && !handler->isMapScope)
+	if (handler->IsStatic())
 	{
-		handler->ObjectFlags |= OF_YesReallyDelete;
-		delete handler;
+		handler->ObjectFlags &= ~OF_Fixed;
+		handler->Destroy();
 	}
 	return true;
 }
@@ -114,13 +117,13 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 {
 	if (type == nullptr)
 	{
-		Printf("%cGWarning: unknown event handler class %s in MAPINFO!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		Printf("%cGWarning: unknown event handler class %s in MAPINFO!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
 		return;
 	}
 
-	if (!E_IsStaticType(type))
+	if (!E_IsStaticType(type) && !map)
 	{
-		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nGameInfo event handlers should inherit Static* directly!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
 		return;
 	}
 
@@ -137,21 +140,15 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 
 	if (typeExists) return;
 	DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
-	handler->isMapScope = map;
 	E_RegisterHandler(handler);
 }
 
 void E_InitStaticHandlers(bool map)
 {
-	// remove existing
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-	{
-		if (handler->IsStatic() && handler->isMapScope == map)
-			handler->Destroy();
-	}
+	if (savegamerestore)
+		return;
 
-	// add new
-	if (map)
+	if (map) // don't initialize map handlers if restoring from savegame.
 	{
 		for (unsigned int i = 0; i < level.info->EventHandlers.Size(); i++)
 		{
@@ -162,6 +159,13 @@ void E_InitStaticHandlers(bool map)
 	}
 	else
 	{
+		// delete old static handlers if any.
+		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		{
+			if (handler->IsStatic())
+				handler->Destroy();
+		}
+
 		for (unsigned int i = 0; i < gameinfo.EventHandlers.Size(); i++)
 		{
 			FString typestring = gameinfo.EventHandlers[i];
@@ -177,10 +181,47 @@ void E_InitStaticHandlers(bool map)
 		handler->name(); \
 }
 
-DEFINE_EVENT_LOOPER(WorldLoaded)
-DEFINE_EVENT_LOOPER(WorldUnloading)
-DEFINE_EVENT_LOOPER(WorldLoadedUnsafe)
-DEFINE_EVENT_LOOPER(WorldUnloadingUnsafe)
+// note for the functions below.
+// *Unsafe is executed on EVERY map load/close, including savegame loading, etc.
+// There is no point in allowing non-static handlers to receive unsafe event separately, as there is no point in having static handlers receive safe event.
+// Because the main point of safe WorldLoaded/Unloading is that it will be preserved in savegames.
+void E_WorldLoaded()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic()) continue;
+		if (handler->isFromSaveGame) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
+		handler->WorldLoaded();
+	}
+}
+
+void E_WorldUnloading()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic()) continue;
+		handler->WorldUnloading();
+	}
+}
+
+void E_WorldLoadedUnsafe()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (!handler->IsStatic()) continue;
+		handler->WorldLoaded();
+	}
+}
+
+void E_WorldUnloadingUnsafe()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (!handler->IsStatic()) continue;
+		handler->WorldUnloading();
+	}
+}
+
 DEFINE_EVENT_LOOPER(RenderFrame)
 
 // declarations
@@ -273,8 +314,6 @@ void cls::funcname(args) \
 
 DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoaded,)
 DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloading,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoadedUnsafe, )
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloadingUnsafe, )
 DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame, )
 
 //

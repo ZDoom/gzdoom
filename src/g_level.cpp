@@ -1077,6 +1077,8 @@ void G_DoLoadLevel (int position, bool autosave)
 	E_InitStaticHandlers(true);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
+	//      regular world load (savegames are handled internally)
+	E_WorldLoaded();
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)

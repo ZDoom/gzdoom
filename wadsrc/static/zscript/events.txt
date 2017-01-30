@@ -1,9 +1,7 @@
 class StaticEventHandler : Object native
 {
 	virtual native void WorldLoaded();
-    virtual native void WorldLoadedUnsafe();
 	virtual native void WorldUnloading();
-    virtual native void WorldUnloadingUnsafe();
 
 	virtual native void RenderFrame();
 }

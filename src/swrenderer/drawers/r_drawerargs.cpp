@@ -91,29 +91,6 @@ namespace swrenderer
 		}
 	}
 
-	void SpanDrawerArgs::SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
-	{
-		if (r_swtruecolor)
-		{
-			ds_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
-			ds_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
-			ds_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
-			ds_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
-			ds_shade_constants.fade_red = base_colormap->Fade.r;
-			ds_shade_constants.fade_green = base_colormap->Fade.g;
-			ds_shade_constants.fade_blue = base_colormap->Fade.b;
-			ds_shade_constants.fade_alpha = base_colormap->Fade.a;
-			ds_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
-			ds_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
-			ds_colormap = base_colormap->Maps;
-			ds_light = LIGHTSCALE(light, shade);
-		}
-		else
-		{
-			ds_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
-		}
-	}
-
 	void DrawerArgs::SetTranslationMap(lighttable_t *translation)
 	{
 		if (r_swtruecolor)
@@ -154,11 +131,6 @@ namespace swrenderer
 
 		ds_source = r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
-	}
-
-	void SpanDrawerArgs::SetSpanColormap(FDynamicColormap *colormap, int shade)
-	{
-		SetDSColorMapLight(colormap, 0, shade);
 	}
 
 	void ColumnDrawerArgs::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)

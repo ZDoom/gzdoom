@@ -108,16 +108,16 @@ namespace swrenderer
 
 		basecolormap = colormap;
 		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis() / planeheight;
-		drawerargs.ds_light = 0;
+		drawerargs.dc_light = 0;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			drawerargs.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			drawerargs.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
@@ -183,7 +183,7 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerargs.SetDSColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
+			drawerargs.SetColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
 		}
 
 		if (r_dynlights)

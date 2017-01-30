@@ -74,20 +74,20 @@ namespace swrenderer
 		args.destorg = (uint32_t*)dc_destorg;
 		args.destpitch = dc_pitch;
 		args.source = (const uint32_t*)drawerargs.ds_source;
-		args.light = LightBgra::calc_light_multiplier(drawerargs.ds_light);
-		args.light_red = drawerargs.ds_shade_constants.light_red;
-		args.light_green = drawerargs.ds_shade_constants.light_green;
-		args.light_blue = drawerargs.ds_shade_constants.light_blue;
-		args.light_alpha = drawerargs.ds_shade_constants.light_alpha;
-		args.fade_red = drawerargs.ds_shade_constants.fade_red;
-		args.fade_green = drawerargs.ds_shade_constants.fade_green;
-		args.fade_blue = drawerargs.ds_shade_constants.fade_blue;
-		args.fade_alpha = drawerargs.ds_shade_constants.fade_alpha;
-		args.desaturate = drawerargs.ds_shade_constants.desaturate;
+		args.light = LightBgra::calc_light_multiplier(drawerargs.dc_light);
+		args.light_red = drawerargs.dc_shade_constants.light_red;
+		args.light_green = drawerargs.dc_shade_constants.light_green;
+		args.light_blue = drawerargs.dc_shade_constants.light_blue;
+		args.light_alpha = drawerargs.dc_shade_constants.light_alpha;
+		args.fade_red = drawerargs.dc_shade_constants.fade_red;
+		args.fade_green = drawerargs.dc_shade_constants.fade_green;
+		args.fade_blue = drawerargs.dc_shade_constants.fade_blue;
+		args.fade_alpha = drawerargs.dc_shade_constants.fade_alpha;
+		args.desaturate = drawerargs.dc_shade_constants.desaturate;
 		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
 		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
 		args.flags = 0;
-		if (drawerargs.ds_shade_constants.simple_shade)
+		if (drawerargs.dc_shade_constants.simple_shade)
 			args.flags |= DrawSpanArgs::simple_shade;
 		if (!sampler_setup(drawerargs.ds_lod, args.source, args.xbits, args.ybits, drawerargs.ds_source_mipmapped))
 			args.flags |= DrawSpanArgs::nearest_filter;
@@ -436,7 +436,7 @@ namespace swrenderer
 		_x2 = drawerargs.ds_x2;
 		_y = drawerargs.ds_y;
 		_destorg = dc_destorg;
-		_light = drawerargs.ds_light;
+		_light = drawerargs.dc_light;
 		_color = drawerargs.ds_color;
 	}
 
@@ -534,8 +534,8 @@ namespace swrenderer
 		_x2 = x2;
 		_y = y;
 		_destorg = dc_destorg;
-		_light = drawerargs.ds_light;
-		_shade_constants = drawerargs.ds_shade_constants;
+		_light = drawerargs.dc_light;
+		_shade_constants = drawerargs.dc_shade_constants;
 		_plane_sz = plane_sz;
 		_plane_su = plane_su;
 		_plane_sv = plane_sv;
@@ -669,7 +669,7 @@ namespace swrenderer
 		_x2 = x2;
 
 		_destorg = dc_destorg;
-		_light = drawerargs.ds_light;
+		_light = drawerargs.dc_light;
 		_color = drawerargs.ds_color;
 	}
 

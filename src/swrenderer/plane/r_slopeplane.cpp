@@ -154,17 +154,17 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			drawerargs.SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			drawerargs.SetDSColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
 		{
-			drawerargs.SetDSColorMapLight(basecolormap, 0, 0);
+			drawerargs.SetColorMapLight(basecolormap, 0, 0);
 			plane_shade = true;
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}

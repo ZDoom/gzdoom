@@ -140,10 +140,7 @@ namespace swrenderer
 	class SpanDrawerArgs : public DrawerArgs
 	{
 	public:
-		void SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
-
 		void SetSpanTexture(FTexture *tex);
-		void SetSpanColormap(FDynamicColormap *colormap, int shade);
 
 		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void DrawColoredSpan(int y, int x1, int x2);
@@ -152,9 +149,6 @@ namespace swrenderer
 		int ds_y;
 		int ds_x1;
 		int ds_x2;
-		uint8_t * ds_colormap;
-		ShadeConstants ds_shade_constants;
-		dsfixed_t ds_light;
 		dsfixed_t ds_xfrac;
 		dsfixed_t ds_yfrac;
 		dsfixed_t ds_xstep;

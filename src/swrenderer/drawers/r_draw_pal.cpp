@@ -1849,7 +1849,7 @@ namespace swrenderer
 	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
 	{
 		_source = args.ds_source;
-		_colormap = args.ds_colormap;
+		_colormap = args.dc_colormap;
 		_xfrac = args.ds_xfrac;
 		_yfrac = args.ds_yfrac;
 		_y = args.ds_y;
@@ -2624,7 +2624,7 @@ namespace swrenderer
 	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
-		_colormap = args.ds_colormap;
+		_colormap = args.dc_colormap;
 		_destorg = dc_destorg;
 		_ybits = args.ds_ybits;
 		_xbits = args.ds_xbits;

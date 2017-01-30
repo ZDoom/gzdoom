@@ -58,8 +58,7 @@ bool E_CheckHandler(DStaticEventHandler* handler)
 bool E_IsStaticType(PClass* type)
 {
 	return (type->IsDescendantOf(RUNTIME_CLASS(DStaticEventHandler)) && // make sure it's from our hierarchy at all.
-			!type->IsDescendantOf(RUNTIME_CLASS(DEventHandler)) &&
-			!type->IsDescendantOf(RUNTIME_CLASS(DRenderEventHandler)));
+			!type->IsDescendantOf(RUNTIME_CLASS(DEventHandler)));
 }
 
 void E_SerializeEvents(FSerializer& arc)
@@ -245,21 +244,20 @@ DEFINE_EVENT_LOOPER(RenderFrame)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
-IMPLEMENT_CLASS(DStaticRenderEventHandler, false, false);
-IMPLEMENT_CLASS(DStaticWorldEventHandler, false, false);
 IMPLEMENT_CLASS(DEventHandler, false, false);
-IMPLEMENT_CLASS(DRenderEventHandler, false, false);
-IMPLEMENT_CLASS(DWorldEventHandler, false, false);
+IMPLEMENT_CLASS(DBaseEvent, false, false)
+IMPLEMENT_CLASS(DRenderEvent, false, false)
+IMPLEMENT_CLASS(DWorldEvent, false, false)
 
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewPos);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewAngle);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewPitch);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewRoll);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, FracTic);
-DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, Camera);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewPos);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewAngle);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewPitch);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewRoll);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, FracTic);
+DEFINE_FIELD_X(RenderEvent, DRenderEvent, Camera);
 
-DEFINE_FIELD_X(StaticWorldEventHandler, DStaticWorldEventHandler, IsSaveGame);
-DEFINE_FIELD_X(StaticWorldEventHandler, DStaticWorldEventHandler, Thing);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, IsSaveGame);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, Thing);
 
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
@@ -368,19 +366,91 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
 	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
 }
 
-#define DEFINE_EVENT_HANDLER(cls, funcname, args) void cls::funcname(args) \
+#define DEFINE_EMPTY_HANDLER(cls, funcname) DEFINE_ACTION_FUNCTION(cls, funcname) \
 { \
-	IFVIRTUAL(cls, funcname) \
-	{ \
-		VMValue params[1] = { (cls*)this }; \
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr); \
-	} \
+	PARAM_SELF_PROLOGUE(cls); \
+	return 0; \
 }
 
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoaded,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloaded,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldThingSpawned, AActor*)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame, )
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLoaded)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
+
+static DWorldEvent* E_SetupWorldEvent()
+{
+	static DWorldEvent* e = nullptr;
+	if (!e) e = (DWorldEvent*)RUNTIME_CLASS(DWorldEvent)->CreateNew();
+	e->IsSaveGame = savegamerestore;
+	e->Thing = nullptr;
+	return e;
+}
+
+void DStaticEventHandler::WorldLoaded()
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLoaded)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLoaded_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldUnloaded()
+{
+	IFVIRTUAL(DStaticEventHandler, WorldUnloaded)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldUnloaded_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldThingSpawned(AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingSpawned)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldThingSpawned_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		e->Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+static DRenderEvent* E_SetupRenderEvent()
+{
+	static DRenderEvent* e = nullptr;
+	if (!e) e = (DRenderEvent*)RUNTIME_CLASS(DRenderEvent)->CreateNew();
+	e->ViewPos = ::ViewPos;
+	e->ViewAngle = ::ViewAngle;
+	e->ViewPitch = ::ViewPitch;
+	e->ViewRoll = ::ViewRoll;
+	e->FracTic = ::r_TicFracF;
+	e->Camera = ::camera;
+	return e;
+}
+
+void DStaticEventHandler::RenderFrame()
+{
+	IFVIRTUAL(DStaticEventHandler, RenderFrame)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_RenderFrame_VMPtr)
+			return;
+		DRenderEvent* e = E_SetupRenderEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
 
 //
 void DStaticEventHandler::OnDestroy()
@@ -388,7 +458,7 @@ void DStaticEventHandler::OnDestroy()
 	E_UnregisterHandler(this);
 	Super::OnDestroy();
 }
-
+/*
 void DStaticRenderEventHandler::Setup()
 {
 	ViewPos = ::ViewPos;
@@ -428,4 +498,4 @@ void DStaticWorldEventHandler::WorldThingSpawned(AActor* actor)
 	Setup();
 	Thing = actor;
 	Super::WorldThingSpawned(actor);
-}
+}*/

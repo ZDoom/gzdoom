@@ -87,16 +87,24 @@ public:
 };
 extern DStaticEventHandler* E_FirstEventHandler;
 
-
-// ==============================================
-//
-//  RenderEventHandler - for renderer events
-//
-// ==============================================
-
-class DStaticRenderEventHandler : public DStaticEventHandler
+// we cannot call this DEvent because in ZScript, 'event' is a keyword
+class DBaseEvent : public DObject
 {
-	DECLARE_CLASS(DStaticRenderEventHandler, DStaticEventHandler)
+	DECLARE_CLASS(DBaseEvent, DObject)
+public:
+
+	DBaseEvent()
+	{
+		// each type of event is created only once to avoid new/delete hell
+		// since from what I remember object creation and deletion results in a lot of GC processing
+		// (and we aren't supposed to pass event objects around anyway)
+		this->ObjectFlags |= OF_Fixed;
+	}
+};
+
+class DRenderEvent : public DBaseEvent
+{
+	DECLARE_CLASS(DRenderEvent, DBaseEvent)
 public:
 	// these are for all render events
 	DVector3 ViewPos;
@@ -106,7 +114,7 @@ public:
 	double FracTic; // 0..1 value that describes where we are inside the current gametic, render-wise.
 	AActor* Camera;
 
-	DStaticRenderEventHandler()
+	DRenderEvent()
 	{
 		FracTic = 0;
 		Camera = nullptr;
@@ -123,34 +131,18 @@ public:
 		arc("FracTic", FracTic);
 		arc("Camera", Camera);
 	}
-
-	void RenderFrame() override;
-
-private:
-	void Setup();
-};
-class DRenderEventHandler : public DStaticRenderEventHandler
-{
-	DECLARE_CLASS(DRenderEventHandler, DStaticRenderEventHandler) // TODO: make sure this does not horribly break anythings
-public:
-	bool IsStatic() override { return false; }
 };
 
-// ==============================================
-//
-//  WorldEventHandler - for world events
-//
-// ==============================================
-class DStaticWorldEventHandler : public DStaticEventHandler
+class DWorldEvent : public DBaseEvent
 {
-	DECLARE_CLASS(DStaticWorldEventHandler, DStaticEventHandler)
+	DECLARE_CLASS(DWorldEvent, DBaseEvent)
 public:
-	// for WorldLoaded, WorldUnloaded.
-	bool IsSaveGame; // this will be true if world event was triggered during savegame loading.
-	// for WorldThingSpawned
+	// for loaded/unloaded
+	bool IsSaveGame;
+	// for thingspawned, thingdied, thingdestroyed
 	AActor* Thing;
 
-	DStaticWorldEventHandler()
+	DWorldEvent()
 	{
 		IsSaveGame = false;
 		Thing = nullptr;
@@ -162,20 +154,6 @@ public:
 		arc("IsSaveGame", IsSaveGame);
 		arc("Thing", Thing);
 	}
-
-	void WorldLoaded() override;
-	void WorldUnloaded() override;
-	void WorldThingSpawned(AActor*) override;
-
-private:
-	void Setup();
-};
-// not sure if anyone wants non-static world handler, but here it is, just in case.
-class DWorldEventHandler : public DStaticWorldEventHandler
-{
-	DECLARE_CLASS(DWorldEventHandler, DStaticWorldEventHandler)
-public:
-	bool IsStatic() override { return false; }
 };
 
 #endif

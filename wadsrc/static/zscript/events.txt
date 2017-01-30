@@ -1,3 +1,23 @@
+class BaseEvent native { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
+
+class RenderEvent : BaseEvent native
+{
+    native readonly Vector3 ViewPos;
+    native readonly double ViewAngle;
+    native readonly double ViewPitch;
+    native readonly double ViewRoll;
+    native readonly double FracTic;
+    native readonly Actor Camera;
+}
+
+class WorldEvent : BaseEvent native
+{
+    // for loaded/unloaded
+    native readonly bool IsSaveGame;
+    // for thingspawned/thingdied/thingdestroyed
+    native readonly Actor Thing;
+}
+
 class StaticEventHandler : Object native
 {
     // static event handlers CAN register other static event handlers.
@@ -9,30 +29,12 @@ class StaticEventHandler : Object native
     protected static native bool Register(StaticEventHandler handler);
     protected static native bool Unregister(StaticEventHandler handler);
 
-    // world stuff
-    virtual void WorldLoaded() {}
-    virtual void WorldUnloaded() {}
-    virtual void WorldThingSpawned() {}
-    // render stuff
-    virtual void RenderFrame() {}
-}
+    // actual handlers are here
+    virtual native void WorldLoaded(WorldEvent e);
+    virtual native void WorldUnloaded(WorldEvent e);
+    virtual native void WorldThingSpawned(WorldEvent e);
 
-class StaticRenderEventHandler : StaticEventHandler native
-{
-    // for frame and camera
-    native readonly Vector3 ViewPos;
-    native readonly double ViewAngle;
-    native readonly double ViewPitch;
-    native readonly double ViewRoll;
-    native readonly double FracTic;
-    native readonly Actor Camera;
-}
-
-class StaticWorldEventHandler : StaticEventHandler native
-{
-    // for world
-    native readonly bool IsSaveGame; // this is set to true if static WorldLoaded was triggered during savegame loading.
-    native readonly Actor Thing; // this is for WorldThingSpawned
+    virtual native void RenderFrame(RenderEvent e);
 }
 
 class EventHandler : StaticEventHandler native
@@ -44,5 +46,3 @@ class EventHandler : StaticEventHandler native
     static native bool Register(StaticEventHandler handler);
     static native bool Unregister(StaticEventHandler handler);
 }
-
-class RenderEventHandler : StaticRenderEventHandler native { }

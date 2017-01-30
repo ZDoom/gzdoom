@@ -627,6 +627,9 @@ public:
 	virtual void BeginPlay();			// Called immediately after the actor is created
 	void CallBeginPlay();
 
+	// [ZZ] custom postbeginplay (calls E_WorldThingSpawned)
+	void CallPostBeginPlay() override;
+
 	void LevelSpawned();				// Called after BeginPlay if this actor was spawned by the world
 	void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
 

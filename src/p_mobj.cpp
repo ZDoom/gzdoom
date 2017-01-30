@@ -71,6 +71,7 @@
 #include "virtual.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
+#include "events.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -4968,6 +4969,12 @@ void AActor::PostBeginPlay ()
 	}
 	PrevAngles = Angles;
 	flags7 |= MF7_HANDLENODELAY;
+}
+
+void AActor::CallPostBeginPlay()
+{
+	Super::CallPostBeginPlay();
+	E_WorldThingSpawned(this);
 }
 
 void AActor::MarkPrecacheSounds() const

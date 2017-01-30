@@ -4,6 +4,7 @@
 #include "g_levellocals.h"
 #include "gi.h"
 #include "v_text.h"
+#include "actor.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
 
@@ -232,6 +233,9 @@ void E_WorldUnloadedUnsafe()
 
 void E_WorldThingSpawned(AActor* actor)
 {
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingSpawned(actor);
 }

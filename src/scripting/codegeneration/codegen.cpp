@@ -8206,8 +8206,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				if (x)
 				{
 					if (x->ValueType == TypeName ||
-						x->ValueType == TypeSound ||
-						x->ValueType == TypeSpriteID) // spriteID can be a string too.
+						x->ValueType == TypeSound) // spriteID can be a string too.
 					{
 						x = new FxStringCast(x);
 						x = x->Resolve(ctx);

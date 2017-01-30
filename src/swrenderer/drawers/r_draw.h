@@ -23,7 +23,7 @@ namespace swrenderer
 	class SkyDrawerArgs;
 	class WallDrawerArgs;
 	class SpanDrawerArgs;
-	class ColumnDrawerArgs;
+	class SpriteDrawerArgs;
 
 	extern int ylookup[MAXHEIGHT];
 	extern uint8_t shadetables[/*NUMCOLORMAPS*16*256*/];
@@ -58,23 +58,23 @@ namespace swrenderer
 		virtual void DrawWallRevSubClampColumn(const WallDrawerArgs &args) = 0;
 		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
 		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void FillColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void FillAddColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void FillAddClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void FillSubClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void FillRevSubClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawFuzzColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawAddColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawTranslatedColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawTranslatedAddColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawShadedColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawAddClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawAddClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawSubClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawSubClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawRevSubClampColumn(const ColumnDrawerArgs &args) = 0;
-		virtual void DrawRevSubClampTranslatedColumn(const ColumnDrawerArgs &args) = 0;
+		virtual void DrawColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillAddColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillAddClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillSubClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillRevSubClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawFuzzColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawAddColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawTranslatedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawShadedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawAddClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawSubClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawRevSubClampColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawSpan(const SpanDrawerArgs &args) = 0;
 		virtual void DrawSpanMasked(const SpanDrawerArgs &args) = 0;
 		virtual void DrawSpanTranslucent(const SpanDrawerArgs &args) = 0;
@@ -91,5 +91,5 @@ namespace swrenderer
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
-	void R_UpdateFuzzPos(const ColumnDrawerArgs &args);
+	void R_UpdateFuzzPos(const SpriteDrawerArgs &args);
 }

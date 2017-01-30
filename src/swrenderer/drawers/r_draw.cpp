@@ -156,7 +156,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_UpdateFuzzPos(const ColumnDrawerArgs &args)
+	void R_UpdateFuzzPos(const SpriteDrawerArgs &args)
 	{
 		int yl = MAX(args.dc_yl, 1);
 		int yh = MIN(args.dc_yh, fuzzviewheight);

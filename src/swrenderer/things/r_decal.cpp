@@ -274,7 +274,7 @@ namespace swrenderer
 		{
 			int x = x1;
 
-			ColumnDrawerArgs drawerargs;
+			SpriteDrawerArgs drawerargs;
 
 			if (cameraLight->fixedlightlev >= 0)
 				drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
@@ -315,7 +315,7 @@ namespace swrenderer
 		} while (needrepeat--);
 	}
 
-	void RenderDecal::DrawColumn(ColumnDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

@@ -31,7 +31,7 @@ struct FVoxel;
 
 namespace swrenderer
 {
-	class ColumnDrawerArgs;
+	class SpriteDrawerArgs;
 
 	// [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 	struct FCoverageBuffer
@@ -83,7 +83,7 @@ namespace swrenderer
 
 		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
-		static void FillBox(ColumnDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch);
+		static void FillBox(SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch);
 
 		static kvxslab_t *GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
 		static kvxslab_t *GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);

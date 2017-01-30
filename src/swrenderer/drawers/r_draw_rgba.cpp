@@ -246,7 +246,7 @@ namespace swrenderer
 		return "DrawColumn\n" + args.ToString();
 	}
 
-	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const ColumnDrawerArgs &drawerargs)
+	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const SpriteDrawerArgs &drawerargs)
 	{
 		auto shade_constants = drawerargs.ColormapConstants();
 
@@ -326,7 +326,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const ColumnDrawerArgs &drawerargs)
+	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
 	{
 		_x = drawerargs.dc_x;
 		_yl = drawerargs.dc_yl;

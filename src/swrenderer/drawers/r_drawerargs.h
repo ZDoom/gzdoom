@@ -36,7 +36,7 @@ namespace swrenderer
 
 	typedef void(SWPixelFormatDrawers::*DrawerFunc)(const DrawerArgs &args);
 	typedef void(SWPixelFormatDrawers::*WallDrawerFunc)(const WallDrawerArgs &args);
-	typedef void(SWPixelFormatDrawers::*ColumnDrawerFunc)(const ColumnDrawerArgs &args);
+	typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
 	typedef void(SWPixelFormatDrawers::*SpanDrawerFunc)(const SpanDrawerArgs &args);
 
 	class DrawerArgs
@@ -163,10 +163,10 @@ namespace swrenderer
 		int dc_dest_y = 0;
 	};
 
-	class ColumnDrawerArgs : public DrawerArgs
+	class SpriteDrawerArgs : public DrawerArgs
 	{
 	public:
-		ColumnDrawerArgs();
+		SpriteDrawerArgs();
 
 		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
@@ -200,10 +200,10 @@ namespace swrenderer
 		fixed_t dc_srcalpha;
 		fixed_t dc_destalpha;
 
-		ColumnDrawerFunc colfunc;
-		ColumnDrawerFunc basecolfunc;
-		ColumnDrawerFunc fuzzcolfunc;
-		ColumnDrawerFunc transcolfunc;
+		SpriteDrawerFunc colfunc;
+		SpriteDrawerFunc basecolfunc;
+		SpriteDrawerFunc fuzzcolfunc;
+		SpriteDrawerFunc transcolfunc;
 
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);

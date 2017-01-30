@@ -187,7 +187,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
-		ColumnDrawerArgs drawerargs;
+		SpriteDrawerArgs drawerargs;
 		drawerargs.SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
 		bool visible = drawerargs.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
@@ -311,7 +311,7 @@ namespace swrenderer
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
-	void RenderVoxel::FillBox(ColumnDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
+	void RenderVoxel::FillBox(SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
 		double viewX, viewY, viewZ;
 		if (viewspace)

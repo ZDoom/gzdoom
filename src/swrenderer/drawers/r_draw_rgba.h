@@ -150,7 +150,7 @@ namespace swrenderer
 		FString DebugInfo() override;
 
 	public:
-		DrawColumnLLVMCommand(const ColumnDrawerArgs &drawerargs);
+		DrawColumnLLVMCommand(const SpriteDrawerArgs &drawerargs);
 
 		void Execute(DrawerThread *thread) override;
 	};
@@ -201,7 +201,7 @@ namespace swrenderer
 		int _fuzzviewheight;
 
 	public:
-		DrawFuzzColumnRGBACommand(const ColumnDrawerArgs &drawerargs);
+		DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override;
 	};
@@ -362,23 +362,23 @@ namespace swrenderer
 		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>(args); }
 		void DrawSingleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool skyFade) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(args, solid_top, solid_bottom, skyFade); }
 		void DrawDoubleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool skyFade) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(args, solid_top, solid_bottom, skyFade); }
-		void DrawColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>(args); }
-		void FillColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>(args); }
-		void FillAddColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>(args); }
-		void FillAddClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>(args); }
-		void FillSubClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>(args); }
-		void FillRevSubClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>(args); }
-		void DrawFuzzColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>(args); R_UpdateFuzzPos(args); }
-		void DrawAddColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>(args); }
-		void DrawTranslatedColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>(args); }
-		void DrawTranslatedAddColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>(args); }
-		void DrawShadedColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>(args); }
-		void DrawAddClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>(args); }
-		void DrawAddClampTranslatedColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>(args); }
-		void DrawSubClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>(args); }
-		void DrawSubClampTranslatedColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>(args); }
-		void DrawRevSubClampColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>(args); }
-		void DrawRevSubClampTranslatedColumn(const ColumnDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>(args); }
+		void DrawColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>(args); }
+		void FillColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>(args); }
+		void FillAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>(args); }
+		void FillAddClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>(args); }
+		void FillSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>(args); }
+		void FillRevSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>(args); }
+		void DrawFuzzColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>(args); R_UpdateFuzzPos(args); }
+		void DrawAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>(args); }
+		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>(args); }
+		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>(args); }
+		void DrawShadedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>(args); }
+		void DrawAddClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>(args); }
+		void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>(args); }
+		void DrawSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>(args); }
+		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>(args); }
+		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>(args); }
+		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>(args); }
 		void DrawSpan(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>(args); }
 		void DrawSpanMasked(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>(args); }
 		void DrawSpanTranslucent(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>(args); }

@@ -59,7 +59,7 @@ namespace swrenderer
 		return active_drawers;
 	}
 
-	ColumnDrawerArgs::ColumnDrawerArgs()
+	SpriteDrawerArgs::SpriteDrawerArgs()
 	{
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 		basecolfunc = &SWPixelFormatDrawers::DrawColumn;
@@ -151,7 +151,7 @@ namespace swrenderer
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
-	void ColumnDrawerArgs::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
 		if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
@@ -228,7 +228,7 @@ namespace swrenderer
 		}
 	}
 
-	void ColumnDrawerArgs::DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		dc_x = x;
 		dc_iscale = iscale;
@@ -343,7 +343,7 @@ namespace swrenderer
 		}
 	}
 
-	bool ColumnDrawerArgs::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
+	bool SpriteDrawerArgs::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	{
 		// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
 		// just remove it completely.
@@ -467,7 +467,7 @@ namespace swrenderer
 		}
 	}
 
-	fixed_t ColumnDrawerArgs::GetAlpha(int type, fixed_t alpha)
+	fixed_t SpriteDrawerArgs::GetAlpha(int type, fixed_t alpha)
 	{
 		switch (type)
 		{
@@ -479,7 +479,7 @@ namespace swrenderer
 		}
 	}
 
-	bool ColumnDrawerArgs::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		fixed_t fglevel, bglevel;
 
@@ -581,14 +581,14 @@ namespace swrenderer
 			SetColorMapLight(&identitycolormap, 0, 0);
 		}
 
-		if (!ColumnDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
+		if (!SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
 		{
 			return false;
 		}
 		return true;
 	}
 
-	bool ColumnDrawerArgs::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
@@ -724,12 +724,12 @@ namespace swrenderer
 		dc_dest_y = y;
 	}
 
-	void ColumnDrawerArgs::FillColumn()
+	void SpriteDrawerArgs::FillColumn()
 	{
 		Drawers()->FillColumn(*this);
 	}
 
-	void ColumnDrawerArgs::SetDest(int x, int y)
+	void SpriteDrawerArgs::SetDest(int x, int y)
 	{
 		int pixelsize = r_swtruecolor ? 4 : 1;
 		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;

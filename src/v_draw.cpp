@@ -184,7 +184,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			translation = parms.remap->Remap;
 	}
 
-	ColumnDrawerArgs drawerargs;
+	SpriteDrawerArgs drawerargs;
 
 	if (translation != NULL)
 	{

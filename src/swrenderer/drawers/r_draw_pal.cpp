@@ -862,7 +862,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalColumnCommand::PalColumnCommand(const ColumnDrawerArgs &args)
+	PalColumnCommand::PalColumnCommand(const SpriteDrawerArgs &args)
 	{
 		_count = args.dc_count;
 		_dest = args.Dest();
@@ -1759,7 +1759,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const ColumnDrawerArgs &args)
+	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const SpriteDrawerArgs &args)
 	{
 		_yl = args.dc_yl;
 		_yh = args.dc_yh;

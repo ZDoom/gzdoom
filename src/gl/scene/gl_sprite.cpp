@@ -737,7 +737,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		int clipres = GLRenderer->mClipPortal->ClipPoint(thingpos);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
-	Angles = thing->InterpolatedAngles(r_TicFracF);
+	// disabled because almost none of the actual game code is even remotely prepared for this. Sorry for the few cases where it may be desired, but the overall effect is too bad.
+	Angles = thing->Angles;// InterpolatedAngles(r_TicFracF);
 
 	player_t *player = &players[consoleplayer];
 	FloatRect r;

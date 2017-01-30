@@ -39,12 +39,12 @@ public:
 	{
 		prev = 0;
 		next = 0;
-		isFromSaveGame = false;
+		isMapScope = false;
 	}
 
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
-	bool isFromSaveGame; // this gets set to true if this object was received using serializator
+	bool isMapScope;
 	virtual bool IsStatic() { return true; }
 
 	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
@@ -54,7 +54,7 @@ public:
 		if (arc.isReading())
 		{
 			Printf("DStaticEventHandler::Serialize: reading object %s\n", GetClass()->TypeName.GetChars());
-			isFromSaveGame = true;
+			isMapScope = true; // unserialized static handler means map scope anyway. other handlers don't get serialized.
 		}
 		else
 		{

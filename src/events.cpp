@@ -121,9 +121,9 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 		return;
 	}
 
-	if (!E_IsStaticType(type) && !map)
+	if (!E_IsStaticType(type))
 	{
-		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nGameInfo event handlers should inherit Static* directly!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
 		return;
 	}
 
@@ -140,6 +140,7 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 
 	if (typeExists) return;
 	DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
+	handler->isMapScope = map;
 	E_RegisterHandler(handler);
 }
 
@@ -150,6 +151,13 @@ void E_InitStaticHandlers(bool map)
 
 	if (map) // don't initialize map handlers if restoring from savegame.
 	{
+		// delete old map static handlers if any.
+		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		{
+			if (handler->IsStatic() && handler->isMapScope)
+				handler->Destroy();
+		}
+
 		for (unsigned int i = 0; i < level.info->EventHandlers.Size(); i++)
 		{
 			FString typestring = level.info->EventHandlers[i];
@@ -162,7 +170,7 @@ void E_InitStaticHandlers(bool map)
 		// delete old static handlers if any.
 		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		{
-			if (handler->IsStatic())
+			if (handler->IsStatic() && !handler->isMapScope)
 				handler->Destroy();
 		}
 
@@ -189,8 +197,8 @@ void E_WorldLoaded()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic()) continue;
-		if (handler->isFromSaveGame) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
+		if (handler->IsStatic() && !handler->isMapScope) continue;
+		if (handler->isMapScope && savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
 		handler->WorldLoaded();
 	}
 }
@@ -199,7 +207,7 @@ void E_WorldUnloading()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic()) continue;
+		if (handler->IsStatic() && !handler->isMapScope) continue;
 		handler->WorldUnloading();
 	}
 }
@@ -208,7 +216,7 @@ void E_WorldLoadedUnsafe()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (!handler->IsStatic()) continue;
+		if (!handler->IsStatic() || handler->isMapScope) continue;
 		handler->WorldLoaded();
 	}
 }
@@ -217,7 +225,7 @@ void E_WorldUnloadingUnsafe()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (!handler->IsStatic()) continue;
+		if (!handler->IsStatic() || handler->isMapScope) continue;
 		handler->WorldUnloading();
 	}
 }

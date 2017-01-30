@@ -197,35 +197,20 @@ namespace swrenderer
 		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
-		if (r_swtruecolor)
-		{
-			drawerargs.dc_wall_source = (const uint8_t *)frontskytex->GetColumnBgra(angle1, nullptr);
-			drawerargs.dc_wall_source2 = backskytex ? (const uint8_t *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
-		}
-		else
-		{
-			drawerargs.dc_wall_source = (const uint8_t *)frontskytex->GetColumn(angle1, nullptr);
-			drawerargs.dc_wall_source2 = backskytex ? (const uint8_t *)backskytex->GetColumn(angle2, nullptr) : nullptr;
-		}
-
-		drawerargs.dc_wall_iscale = uv_step;
-		drawerargs.dc_wall_texturefrac = uv_pos;
-
-		drawerargs.dc_wall_sourceheight[0] = height;
-		drawerargs.dc_wall_sourceheight[1] = backskytex ? backskytex->GetHeight() : height;
-		int pixelsize = r_swtruecolor ? 4 : 1;
+		drawerargs.SetFrontTexture(frontskytex, angle1);
+		drawerargs.SetBackTexture(backskytex, angle2);
+		drawerargs.SetTextureVStep(uv_step);
+		drawerargs.SetTextureVPos(uv_pos);
 		drawerargs.SetDest(start_x, y1);
-		drawerargs.dc_count = y2 - y1;
-
-		uint32_t solid_top = frontskytex->GetSkyCapColor(false);
-		uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
-
-		bool fadeSky = (r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY));
+		drawerargs.SetCount(y2 - y1);
+		drawerargs.SetFadeSky(r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY));
+		drawerargs.SetSolidTop(frontskytex->GetSkyCapColor(false));
+		drawerargs.SetSolidBottom(frontskytex->GetSkyCapColor(true));
 
 		if (!backskytex)
-			drawerargs.DrawSingleSkyColumn(solid_top, solid_bottom, fadeSky);
+			drawerargs.DrawSingleSkyColumn();
 		else
-			drawerargs.DrawDoubleSkyColumn(solid_top, solid_bottom, fadeSky);
+			drawerargs.DrawDoubleSkyColumn();
 	}
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)

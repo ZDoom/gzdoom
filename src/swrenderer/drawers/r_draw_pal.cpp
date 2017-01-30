@@ -559,18 +559,21 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) : solid_top(solid_top), solid_bottom(solid_bottom), fadeSky(fadeSky)
+	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args)
 	{
 		_dest = args.Dest();
 		_dest_y = args.DestY();
-		_count = args.dc_count;
+		_count = args.Count();
 		_pitch = dc_pitch;
-		_source = args.dc_wall_source;
-		_source2 = args.dc_wall_source2;
-		_sourceheight[0] = args.dc_wall_sourceheight[0];
-		_sourceheight[1] = args.dc_wall_sourceheight[1];
-		_iscale = args.dc_wall_iscale;
-		_texturefrac = args.dc_wall_texturefrac;
+		_source = args.FrontTexturePixels();
+		_source2 = args.BackTexturePixels();
+		_sourceheight[0] = args.FrontTextureHeight();
+		_sourceheight[1] = args.BackTextureHeight();
+		_iscale = args.TextureVStep();
+		_texturefrac = args.TextureVPos();
+		solid_top = args.SolidTopColor();
+		solid_bottom = args.SolidBottomColor();
+		fadeSky = args.FadeSky();
 	}
 
 	void DrawSingleSky1PalCommand::Execute(DrawerThread *thread)

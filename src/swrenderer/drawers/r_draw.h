@@ -56,8 +56,8 @@ namespace swrenderer
 		virtual void DrawWallAddClampColumn(const WallDrawerArgs &args) = 0;
 		virtual void DrawWallSubClampColumn(const WallDrawerArgs &args) = 0;
 		virtual void DrawWallRevSubClampColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
-		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky) = 0;
+		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args) = 0;
+		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args) = 0;
 		virtual void DrawColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillAddColumn(const SpriteDrawerArgs &args) = 0;

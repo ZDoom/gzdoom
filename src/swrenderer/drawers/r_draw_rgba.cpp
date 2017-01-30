@@ -302,21 +302,21 @@ namespace swrenderer
 		return d;
 	}
 
-	DrawSkyLLVMCommand::DrawSkyLLVMCommand(const SkyDrawerArgs &drawerargs, uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+	DrawSkyLLVMCommand::DrawSkyLLVMCommand(const SkyDrawerArgs &drawerargs)
 	{
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
-		args.count = drawerargs.dc_count;
+		args.count = drawerargs.Count();
 		args.pitch = dc_pitch;
-		args.texturefrac[0] = drawerargs.dc_wall_texturefrac;
-		args.iscale[0] = drawerargs.dc_wall_iscale;
-		args.source0[0] = (const uint32_t *)drawerargs.dc_wall_source;
-		args.source1[0] = (const uint32_t *)drawerargs.dc_wall_source2;
-		args.textureheight0 = drawerargs.dc_wall_sourceheight[0];
-		args.textureheight1 = drawerargs.dc_wall_sourceheight[1];
-		args.top_color = solid_top;
-		args.bottom_color = solid_bottom;
-		args.flags = fadeSky ? DrawSkyArgs::fade_sky : 0;
+		args.texturefrac[0] = drawerargs.TextureVPos();
+		args.iscale[0] = drawerargs.TextureVStep();
+		args.source0[0] = (const uint32_t *)drawerargs.FrontTexturePixels();
+		args.source1[0] = (const uint32_t *)drawerargs.BackTexturePixels();
+		args.textureheight0 = drawerargs.FrontTextureHeight();
+		args.textureheight1 = drawerargs.BackTextureHeight();
+		args.top_color = drawerargs.SolidTopColor();
+		args.bottom_color = drawerargs.SolidBottomColor();
+		args.flags = drawerargs.FadeSky() ? DrawSkyArgs::fade_sky : 0;
 	}
 
 	FString DrawSkyLLVMCommand::DebugInfo()

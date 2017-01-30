@@ -708,14 +708,14 @@ namespace swrenderer
 		Drawers()->DrawColoredSpan(*this, y, x1, x2);
 	}
 
-	void SkyDrawerArgs::DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+	void SkyDrawerArgs::DrawSingleSkyColumn()
 	{
-		Drawers()->DrawSingleSkyColumn(*this, solid_top, solid_bottom, fadeSky);
+		Drawers()->DrawSingleSkyColumn(*this);
 	}
 
-	void SkyDrawerArgs::DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom, bool fadeSky)
+	void SkyDrawerArgs::DrawDoubleSkyColumn()
 	{
-		Drawers()->DrawDoubleSkyColumn(*this, solid_top, solid_bottom, fadeSky);
+		Drawers()->DrawDoubleSkyColumn(*this);
 	}
 
 	void SkyDrawerArgs::SetDest(int x, int y)
@@ -723,6 +723,39 @@ namespace swrenderer
 		int pixelsize = r_swtruecolor ? 4 : 1;
 		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
+	}
+
+	void SkyDrawerArgs::SetFrontTexture(FTexture *texture, uint32_t column)
+	{
+		if (r_swtruecolor)
+		{
+			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
+			dc_sourceheight = texture->GetHeight();
+		}
+		else
+		{
+			dc_source = texture->GetColumn(column, nullptr);
+			dc_sourceheight = texture->GetHeight();
+		}
+	}
+
+	void SkyDrawerArgs::SetBackTexture(FTexture *texture, uint32_t column)
+	{
+		if (texture == nullptr)
+		{
+			dc_source2 = nullptr;
+			dc_sourceheight2 = 1;
+		}
+		else if (r_swtruecolor)
+		{
+			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
+			dc_sourceheight2 = texture->GetHeight();
+		}
+		else
+		{
+			dc_source2 = texture->GetColumn(column, nullptr);
+			dc_sourceheight2 = texture->GetHeight();
+		}
 	}
 
 	void SpriteDrawerArgs::FillColumn()

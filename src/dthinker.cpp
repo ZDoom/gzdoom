@@ -710,8 +710,12 @@ class DThinkerIterator : public DObject, public FThinkerIterator
 {
 	DECLARE_CLASS(DThinkerIterator, DObject)
 
+	DThinkerIterator()
+	{
+	}
+
 public:
-	DThinkerIterator(PClass *cls = nullptr, int statnum = MAX_STATNUM + 1)
+	DThinkerIterator(PClass *cls, int statnum = MAX_STATNUM + 1)
 		: FThinkerIterator(cls, statnum)
 	{
 	}

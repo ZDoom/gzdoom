@@ -1597,7 +1597,7 @@ void DSBarInfoWrapper::OnDestroy()
 void DSBarInfoWrapper::SetScaled(bool scale, bool force)
 {
 	Super::SetScaled(scale, force);
-	core->_SetScaled(scale);
+	core->_SetScaled(Scaled);
 }
 
 void DSBarInfoWrapper::AttachToPlayer(player_t *player)

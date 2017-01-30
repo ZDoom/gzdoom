@@ -1874,7 +1874,14 @@ void ZCCCompiler::InitDefaults()
 		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->Type()->TypeName.GetChars());
-			if (c->Type()->ParentClass) c->Type()->ParentClass->DeriveData(c->Type());
+			if (c->Type()->ParentClass)
+			{
+				auto ti = static_cast<PClassActor *>(c->Type());
+				FString mename = ti->TypeName.GetChars();
+
+				ti->InitializeDefaults();
+				ti->ParentClass->DeriveData(ti);
+			}
 		}
 		else
 		{

@@ -63,8 +63,8 @@ namespace swrenderer
 		void ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
 		void ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
 		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
-		void ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, WallDrawerFunc drawcolumn);
-		void Draw1Column(int x, int y1, int y2, WallSampler &sampler, WallDrawerFunc draw1column);
+		void ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal);
+		void Draw1Column(int x, int y1, int y2, WallSampler &sampler);
 
 		int x1 = 0;
 		int x2 = 0;

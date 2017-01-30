@@ -62,9 +62,6 @@ namespace swrenderer
 	SpriteDrawerArgs::SpriteDrawerArgs()
 	{
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
-		basecolfunc = &SWPixelFormatDrawers::DrawColumn;
-		fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
-		transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
 	}
 
 	SpanDrawerArgs::SpanDrawerArgs()
@@ -355,11 +352,11 @@ namespace swrenderer
 			}
 			else if (TranslationMap() == nullptr)
 			{
-				colfunc = basecolfunc;
+				colfunc = &SWPixelFormatDrawers::DrawColumn;
 			}
 			else
 			{
-				colfunc = transcolfunc;
+				colfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
 				drawer_needs_pal_input = true;
 			}
 			return true;
@@ -530,7 +527,7 @@ namespace swrenderer
 		// Check for special modes
 		if (style.BlendOp == STYLEOP_Fuzz)
 		{
-			colfunc = fuzzcolfunc;
+			colfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
 			return true;
 		}
 		else if (style == LegacyRenderStyles[STYLE_Shaded])
@@ -598,6 +595,11 @@ namespace swrenderer
 		int pixelsize = r_swtruecolor ? 4 : 1;
 		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
+	}
+
+	void WallDrawerArgs::DrawColumn()
+	{
+		(Drawers()->*wallfunc)(*this);
 	}
 
 	void SpanDrawerArgs::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
@@ -685,6 +687,11 @@ namespace swrenderer
 		{
 			wallfunc = &SWPixelFormatDrawers::DrawWallColumn;
 		}
+	}
+
+	bool WallDrawerArgs::IsMaskedDrawer() const
+	{
+		return wallfunc == &SWPixelFormatDrawers::DrawWallMaskedColumn;
 	}
 
 	void SpanDrawerArgs::DrawSpan()

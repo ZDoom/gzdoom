@@ -168,7 +168,7 @@ namespace swrenderer
 	}
 
 	// Draw a column with support for non-power-of-two ranges
-	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler, WallDrawerFunc draw1column)
+	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler)
 	{
 		if (r_dynlights && light_list)
 		{
@@ -248,7 +248,7 @@ namespace swrenderer
 			drawerargs.dc_iscale = sampler.uv_step;
 			drawerargs.dc_texturefrac = sampler.uv_pos;
 			drawerargs.dc_textureheight = sampler.height;
-			(drawerargs.Drawers()->*draw1column)(drawerargs);
+			drawerargs.DrawColumn();
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -267,7 +267,7 @@ namespace swrenderer
 				drawerargs.dc_count = count;
 				drawerargs.dc_iscale = sampler.uv_step;
 				drawerargs.dc_texturefrac = sampler.uv_pos;
-				(drawerargs.Drawers()->*draw1column)(drawerargs);
+				drawerargs.DrawColumn();
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -293,7 +293,7 @@ namespace swrenderer
 					drawerargs.dc_count = count;
 					drawerargs.dc_iscale = sampler.uv_step;
 					drawerargs.dc_texturefrac = uv_pos;
-					(drawerargs.Drawers()->*draw1column)(drawerargs);
+					drawerargs.DrawColumn();
 
 					left -= count;
 					uv_pos += sampler.uv_step * count;
@@ -306,7 +306,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, WallDrawerFunc drawcolumn)
+	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
@@ -352,7 +352,7 @@ namespace swrenderer
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
 			WallSampler sampler(y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic);
-			Draw1Column(x, y1, y2, sampler, drawcolumn);
+			Draw1Column(x, y1, y2, sampler);
 		}
 
 		NetUpdate();
@@ -360,7 +360,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		ProcessWallWorker(uwal, dwal, texturemid, swal, lwal, drawerargs.wallfunc);
+		ProcessWallWorker(uwal, dwal, texturemid, swal, lwal);
 	}
 
 	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
@@ -403,7 +403,7 @@ namespace swrenderer
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
 		// Textures that aren't masked can use the faster ProcessNormalWall.
-		if (!rw_pic->bMasked && drawerargs.wallfunc == &SWPixelFormatDrawers::DrawWallMaskedColumn)
+		if (!rw_pic->bMasked && drawerargs.IsMaskedDrawer())
 		{
 			drawerargs.SetStyle(true, false, OPAQUE);
 		}

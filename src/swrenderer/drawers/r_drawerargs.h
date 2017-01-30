@@ -132,6 +132,10 @@ namespace swrenderer
 		void SetStyle(bool masked, bool additive, fixed_t alpha);
 		void SetDest(int x, int y);
 
+		bool IsMaskedDrawer() const;
+
+		void DrawColumn();
+
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }
 
@@ -156,11 +160,11 @@ namespace swrenderer
 		TriLight *dc_lights = nullptr;
 		int dc_num_lights = 0;
 
-		WallDrawerFunc wallfunc = nullptr;
-
 	private:
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
+
+		WallDrawerFunc wallfunc = nullptr;
 	};
 
 	class SpriteDrawerArgs : public DrawerArgs
@@ -200,11 +204,6 @@ namespace swrenderer
 		fixed_t dc_srcalpha;
 		fixed_t dc_destalpha;
 
-		SpriteDrawerFunc colfunc;
-		SpriteDrawerFunc basecolfunc;
-		SpriteDrawerFunc fuzzcolfunc;
-		SpriteDrawerFunc transcolfunc;
-
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
 		static fixed_t GetAlpha(int type, fixed_t alpha);
@@ -213,6 +212,8 @@ namespace swrenderer
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
 		bool drawer_needs_pal_input = false;
+
+		SpriteDrawerFunc colfunc;
 	};
 
 	void R_InitColumnDrawers();

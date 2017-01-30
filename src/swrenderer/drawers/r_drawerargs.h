@@ -48,9 +48,14 @@ namespace swrenderer
 		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
 
-		// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
 		void SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
 		void SetTranslationMap(lighttable_t *translation);
+
+		uint8_t *Colormap() const;
+		uint8_t *TranslationMap() const { return mTranslation; }
+
+		ShadeConstants ColormapConstants() const;
+		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
 		SWPixelFormatDrawers *Drawers() const;
 
@@ -59,12 +64,6 @@ namespace swrenderer
 		ColumnDrawerFunc fuzzcolfunc;
 		ColumnDrawerFunc transcolfunc;
 		SpanDrawerFunc spanfunc;
-
-		uint8_t *dc_colormap;
-		ShadeConstants dc_shade_constants;
-		fixed_t dc_light = 0;
-
-		uint8_t *dc_translation;
 
 		uint32_t *dc_srcblend;
 		uint32_t *dc_destblend;
@@ -81,6 +80,11 @@ namespace swrenderer
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
 		static fixed_t GetAlpha(int type, fixed_t alpha);
+
+		FSWColormap *mBaseColormap = nullptr;
+		float mLight = 0.0f;
+		int mShade = 0;
+		uint8_t *mTranslation = nullptr;
 	};
 
 	class SkyDrawerArgs : public DrawerArgs

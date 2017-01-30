@@ -70,49 +70,63 @@ namespace swrenderer
 
 	void DrawerArgs::SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
-		if (r_swtruecolor)
-		{
-			dc_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
-			dc_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
-			dc_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
-			dc_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
-			dc_shade_constants.fade_red = base_colormap->Fade.r;
-			dc_shade_constants.fade_green = base_colormap->Fade.g;
-			dc_shade_constants.fade_blue = base_colormap->Fade.b;
-			dc_shade_constants.fade_alpha = base_colormap->Fade.a;
-			dc_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
-			dc_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
-			dc_colormap = base_colormap->Maps;
-			dc_light = LIGHTSCALE(light, shade);
-		}
-		else
-		{
-			dc_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
-		}
+		mBaseColormap = base_colormap;
+		mTranslation = nullptr;
+		mLight = light;
+		mShade = shade;
 	}
 
 	void DrawerArgs::SetTranslationMap(lighttable_t *translation)
 	{
-		if (r_swtruecolor)
+		mBaseColormap = nullptr;
+		mTranslation = translation;
+	}
+
+	uint8_t *DrawerArgs::Colormap() const
+	{
+		if (mBaseColormap)
 		{
-			dc_colormap = nullptr;
-			dc_translation = translation;
-			dc_shade_constants.light_red = 256;
-			dc_shade_constants.light_green = 256;
-			dc_shade_constants.light_blue = 256;
-			dc_shade_constants.light_alpha = 256;
-			dc_shade_constants.fade_red = 0;
-			dc_shade_constants.fade_green = 0;
-			dc_shade_constants.fade_blue = 0;
-			dc_shade_constants.fade_alpha = 256;
-			dc_shade_constants.desaturate = 0;
-			dc_shade_constants.simple_shade = true;
-			dc_light = 0;
+			if (r_swtruecolor)
+				return mBaseColormap->Maps;
+			else
+				return mBaseColormap->Maps + (GETPALOOKUP(mLight, mShade) << COLORMAPSHIFT);
 		}
 		else
 		{
-			dc_colormap = translation;
+			return mTranslation;
 		}
+	}
+
+	ShadeConstants DrawerArgs::ColormapConstants() const
+	{
+		ShadeConstants shadeConstants;
+		if (mBaseColormap)
+		{
+			shadeConstants.light_red = mBaseColormap->Color.r * 256 / 255;
+			shadeConstants.light_green = mBaseColormap->Color.g * 256 / 255;
+			shadeConstants.light_blue = mBaseColormap->Color.b * 256 / 255;
+			shadeConstants.light_alpha = mBaseColormap->Color.a * 256 / 255;
+			shadeConstants.fade_red = mBaseColormap->Fade.r;
+			shadeConstants.fade_green = mBaseColormap->Fade.g;
+			shadeConstants.fade_blue = mBaseColormap->Fade.b;
+			shadeConstants.fade_alpha = mBaseColormap->Fade.a;
+			shadeConstants.desaturate = MIN(abs(mBaseColormap->Desaturate), 255) * 255 / 256;
+			shadeConstants.simple_shade = (mBaseColormap->Color.d == 0x00ffffff && mBaseColormap->Fade.d == 0x00000000 && mBaseColormap->Desaturate == 0);
+		}
+		else
+		{
+			shadeConstants.light_red = 256;
+			shadeConstants.light_green = 256;
+			shadeConstants.light_blue = 256;
+			shadeConstants.light_alpha = 256;
+			shadeConstants.fade_red = 0;
+			shadeConstants.fade_green = 0;
+			shadeConstants.fade_blue = 0;
+			shadeConstants.fade_alpha = 256;
+			shadeConstants.desaturate = 0;
+			shadeConstants.simple_shade = true;
+		}
+		return shadeConstants;
 	}
 
 	void SpanDrawerArgs::SetSpanTexture(FTexture *tex)
@@ -335,7 +349,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillColumn;
 			}
-			else if (dc_translation == NULL)
+			else if (mTranslation == nullptr)
 			{
 				colfunc = basecolfunc;
 			}
@@ -380,7 +394,7 @@ namespace swrenderer
 				{
 					colfunc = &SWPixelFormatDrawers::FillAddColumn;
 				}
-				else if (dc_translation == NULL)
+				else if (mTranslation == nullptr)
 				{
 					colfunc = &SWPixelFormatDrawers::DrawAddColumn;
 				}
@@ -396,7 +410,7 @@ namespace swrenderer
 				{
 					colfunc = &SWPixelFormatDrawers::FillAddClampColumn;
 				}
-				else if (dc_translation == NULL)
+				else if (mTranslation == nullptr)
 				{
 					colfunc = &SWPixelFormatDrawers::DrawAddClampColumn;
 				}
@@ -413,7 +427,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillSubClampColumn;
 			}
-			else if (dc_translation == NULL)
+			else if (mTranslation == nullptr)
 			{
 				colfunc = &SWPixelFormatDrawers::DrawSubClampColumn;
 			}
@@ -433,7 +447,7 @@ namespace swrenderer
 			{
 				colfunc = &SWPixelFormatDrawers::FillRevSubClampColumn;
 			}
-			else if (dc_translation == NULL)
+			else if (mTranslation == nullptr)
 			{
 				colfunc = &SWPixelFormatDrawers::DrawRevSubClampColumn;
 			}
@@ -495,16 +509,16 @@ namespace swrenderer
 
 		if (translation != -1)
 		{
-			dc_translation = NULL;
+			mTranslation = nullptr;
 			if (translation != 0)
 			{
 				FRemapTable *table = TranslationToTable(translation);
 				if (table != NULL && !table->Inactive)
 				{
 					if (r_swtruecolor)
-						dc_translation = (uint8_t*)table->Palette;
+						mTranslation = (uint8_t*)table->Palette;
 					else
-						dc_translation = table->Remap;
+						mTranslation = table->Remap;
 				}
 			}
 		}

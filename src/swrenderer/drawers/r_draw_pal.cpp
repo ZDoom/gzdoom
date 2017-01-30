@@ -100,7 +100,7 @@ namespace swrenderer
 	{
 		_iscale = args.dc_iscale;
 		_texturefrac = args.dc_texturefrac;
-		_colormap = args.dc_colormap;
+		_colormap = args.Colormap();
 		_count = args.dc_count;
 		_source = args.dc_source;
 		_dest = args.Dest();
@@ -870,9 +870,9 @@ namespace swrenderer
 		_pitch = dc_pitch;
 		_iscale = args.dc_iscale;
 		_texturefrac = args.dc_texturefrac;
-		_colormap = args.dc_colormap;
+		_colormap = args.Colormap();
 		_source = args.dc_source;
-		_translation = args.dc_translation;
+		_translation = args.TranslationMap();
 		_color = args.dc_color;
 		_srcblend = args.dc_srcblend;
 		_destblend = args.dc_destblend;
@@ -1849,7 +1849,7 @@ namespace swrenderer
 	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
 	{
 		_source = args.ds_source;
-		_colormap = args.dc_colormap;
+		_colormap = args.Colormap();
 		_xfrac = args.ds_xfrac;
 		_yfrac = args.ds_yfrac;
 		_y = args.ds_y;
@@ -2624,7 +2624,7 @@ namespace swrenderer
 	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
-		_colormap = args.dc_colormap;
+		_colormap = args.Colormap();
 		_destorg = dc_destorg;
 		_ybits = args.ds_ybits;
 		_xbits = args.ds_xbits;
@@ -2885,7 +2885,7 @@ namespace swrenderer
 
 	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
-		_colormap = args.dc_colormap;
+		_colormap = args.Colormap();
 		_destorg = dc_destorg;
 	}
 

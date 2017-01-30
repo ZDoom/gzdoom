@@ -62,6 +62,7 @@ namespace swrenderer
 {
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
 	{
+		auto shade_constants = drawerargs.ColormapConstants();
 		args.xfrac = drawerargs.ds_xfrac;
 		args.yfrac = drawerargs.ds_yfrac;
 		args.xstep = drawerargs.ds_xstep;
@@ -74,20 +75,20 @@ namespace swrenderer
 		args.destorg = (uint32_t*)dc_destorg;
 		args.destpitch = dc_pitch;
 		args.source = (const uint32_t*)drawerargs.ds_source;
-		args.light = LightBgra::calc_light_multiplier(drawerargs.dc_light);
-		args.light_red = drawerargs.dc_shade_constants.light_red;
-		args.light_green = drawerargs.dc_shade_constants.light_green;
-		args.light_blue = drawerargs.dc_shade_constants.light_blue;
-		args.light_alpha = drawerargs.dc_shade_constants.light_alpha;
-		args.fade_red = drawerargs.dc_shade_constants.fade_red;
-		args.fade_green = drawerargs.dc_shade_constants.fade_green;
-		args.fade_blue = drawerargs.dc_shade_constants.fade_blue;
-		args.fade_alpha = drawerargs.dc_shade_constants.fade_alpha;
-		args.desaturate = drawerargs.dc_shade_constants.desaturate;
+		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
+		args.light_red = shade_constants.light_red;
+		args.light_green = shade_constants.light_green;
+		args.light_blue = shade_constants.light_blue;
+		args.light_alpha = shade_constants.light_alpha;
+		args.fade_red = shade_constants.fade_red;
+		args.fade_green = shade_constants.fade_green;
+		args.fade_blue = shade_constants.fade_blue;
+		args.fade_alpha = shade_constants.fade_alpha;
+		args.desaturate = shade_constants.desaturate;
 		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
 		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
 		args.flags = 0;
-		if (drawerargs.dc_shade_constants.simple_shade)
+		if (shade_constants.simple_shade)
 			args.flags |= DrawSpanArgs::simple_shade;
 		if (!sampler_setup(drawerargs.ds_lod, args.source, args.xbits, args.ybits, drawerargs.ds_source_mipmapped))
 			args.flags |= DrawSpanArgs::nearest_filter;
@@ -182,6 +183,7 @@ namespace swrenderer
 
 	DrawWall1LLVMCommand::DrawWall1LLVMCommand(const WallDrawerArgs &drawerargs)
 	{
+		auto shade_constants = drawerargs.ColormapConstants();
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
 		args.pitch = dc_pitch;
@@ -192,20 +194,20 @@ namespace swrenderer
 		args.textureheight[0] = drawerargs.dc_textureheight;
 		args.source[0] = (const uint32 *)drawerargs.dc_source;
 		args.source2[0] = (const uint32 *)drawerargs.dc_source2;
-		args.light[0] = LightBgra::calc_light_multiplier(drawerargs.dc_light);
-		args.light_red = drawerargs.dc_shade_constants.light_red;
-		args.light_green = drawerargs.dc_shade_constants.light_green;
-		args.light_blue = drawerargs.dc_shade_constants.light_blue;
-		args.light_alpha = drawerargs.dc_shade_constants.light_alpha;
-		args.fade_red = drawerargs.dc_shade_constants.fade_red;
-		args.fade_green = drawerargs.dc_shade_constants.fade_green;
-		args.fade_blue = drawerargs.dc_shade_constants.fade_blue;
-		args.fade_alpha = drawerargs.dc_shade_constants.fade_alpha;
-		args.desaturate = drawerargs.dc_shade_constants.desaturate;
+		args.light[0] = LightBgra::calc_light_multiplier(drawerargs.Light());
+		args.light_red = shade_constants.light_red;
+		args.light_green = shade_constants.light_green;
+		args.light_blue = shade_constants.light_blue;
+		args.light_alpha = shade_constants.light_alpha;
+		args.fade_red = shade_constants.fade_red;
+		args.fade_green = shade_constants.fade_green;
+		args.fade_blue = shade_constants.fade_blue;
+		args.fade_alpha = shade_constants.fade_alpha;
+		args.desaturate = shade_constants.desaturate;
 		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
 		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
 		args.flags = 0;
-		if (drawerargs.dc_shade_constants.simple_shade)
+		if (shade_constants.simple_shade)
 			args.flags |= DrawWallArgs::simple_shade;
 		if (args.source2[0] == nullptr)
 			args.flags |= DrawWallArgs::nearest_filter;
@@ -246,11 +248,13 @@ namespace swrenderer
 
 	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const ColumnDrawerArgs &drawerargs)
 	{
+		auto shade_constants = drawerargs.ColormapConstants();
+
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.source = drawerargs.dc_source;
 		args.source2 = drawerargs.dc_source2;
-		args.colormap = drawerargs.dc_colormap;
-		args.translation = drawerargs.dc_translation;
+		args.colormap = drawerargs.Colormap();
+		args.translation = drawerargs.TranslationMap();
 		args.basecolors = (const uint32_t *)GPalette.BaseColors;
 		args.pitch = dc_pitch;
 		args.count = drawerargs.dc_count;
@@ -259,22 +263,22 @@ namespace swrenderer
 		args.texturefracx = drawerargs.dc_texturefracx;
 		args.textureheight = drawerargs.dc_textureheight;
 		args.texturefrac = drawerargs.dc_texturefrac;
-		args.light = LightBgra::calc_light_multiplier(drawerargs.dc_light);
+		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
 		args.color = LightBgra::shade_pal_index_simple(drawerargs.dc_color, args.light);
 		args.srccolor = drawerargs.dc_srccolor_bgra;
 		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
 		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
-		args.light_red = drawerargs.dc_shade_constants.light_red;
-		args.light_green = drawerargs.dc_shade_constants.light_green;
-		args.light_blue = drawerargs.dc_shade_constants.light_blue;
-		args.light_alpha = drawerargs.dc_shade_constants.light_alpha;
-		args.fade_red = drawerargs.dc_shade_constants.fade_red;
-		args.fade_green = drawerargs.dc_shade_constants.fade_green;
-		args.fade_blue = drawerargs.dc_shade_constants.fade_blue;
-		args.fade_alpha = drawerargs.dc_shade_constants.fade_alpha;
-		args.desaturate = drawerargs.dc_shade_constants.desaturate;
+		args.light_red = shade_constants.light_red;
+		args.light_green = shade_constants.light_green;
+		args.light_blue = shade_constants.light_blue;
+		args.light_alpha = shade_constants.light_alpha;
+		args.fade_red = shade_constants.fade_red;
+		args.fade_green = shade_constants.fade_green;
+		args.fade_blue = shade_constants.fade_blue;
+		args.fade_alpha = shade_constants.fade_alpha;
+		args.desaturate = shade_constants.desaturate;
 		args.flags = 0;
-		if (drawerargs.dc_shade_constants.simple_shade)
+		if (shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
 		if (args.source2 == nullptr)
 			args.flags |= DrawColumnArgs::nearest_filter;
@@ -436,7 +440,7 @@ namespace swrenderer
 		_x2 = drawerargs.ds_x2;
 		_y = drawerargs.ds_y;
 		_destorg = dc_destorg;
-		_light = drawerargs.dc_light;
+		_light = drawerargs.Light();
 		_color = drawerargs.ds_color;
 	}
 
@@ -467,8 +471,8 @@ namespace swrenderer
 		_x2 = x2;
 
 		_destorg = dc_destorg;
-		_light = drawerargs.dc_light;
-		_shade_constants = drawerargs.dc_shade_constants;
+		_light = drawerargs.Light();
+		_shade_constants = drawerargs.ColormapConstants();
 	}
 
 	void DrawFogBoundaryLineRGBACommand::Execute(DrawerThread *thread)
@@ -534,8 +538,8 @@ namespace swrenderer
 		_x2 = x2;
 		_y = y;
 		_destorg = dc_destorg;
-		_light = drawerargs.dc_light;
-		_shade_constants = drawerargs.dc_shade_constants;
+		_light = drawerargs.Light();
+		_shade_constants = drawerargs.ColormapConstants();
 		_plane_sz = plane_sz;
 		_plane_su = plane_su;
 		_plane_sv = plane_sv;
@@ -669,7 +673,7 @@ namespace swrenderer
 		_x2 = x2;
 
 		_destorg = dc_destorg;
-		_light = drawerargs.dc_light;
+		_light = drawerargs.Light();
 		_color = drawerargs.ds_color;
 	}
 

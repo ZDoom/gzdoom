@@ -108,7 +108,7 @@ namespace swrenderer
 
 		basecolormap = colormap;
 		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis() / planeheight;
-		drawerargs.dc_light = 0;
+
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{

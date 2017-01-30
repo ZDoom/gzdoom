@@ -1848,23 +1848,23 @@ namespace swrenderer
 
 	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
 	{
-		_source = args.ds_source;
+		_source = args.TexturePixels();
 		_colormap = args.Colormap();
-		_xfrac = args.ds_xfrac;
-		_yfrac = args.ds_yfrac;
-		_y = args.ds_y;
-		_x1 = args.ds_x1;
-		_x2 = args.ds_x2;
+		_xfrac = args.TextureUPos();
+		_yfrac = args.TextureVPos();
+		_y = args.DestY();
+		_x1 = args.DestX1();
+		_x2 = args.DestX2();
 		_destorg = dc_destorg;
-		_xstep = args.ds_xstep;
-		_ystep = args.ds_ystep;
-		_xbits = args.ds_xbits;
-		_ybits = args.ds_ybits;
-		_srcblend = args.dc_srcblend;
-		_destblend = args.dc_destblend;
-		_color = args.ds_color;
-		_srcalpha = args.dc_srcalpha;
-		_destalpha = args.dc_destalpha;
+		_xstep = args.TextureUStep();
+		_ystep = args.TextureVStep();
+		_xbits = args.TextureWidthBits();
+		_ybits = args.TextureHeightBits();
+		_srcblend = args.SrcBlend();
+		_destblend = args.DestBlend();
+		_color = args.SolidColor();
+		_srcalpha = args.SrcAlpha();
+		_destalpha = args.DestAlpha();
 		_dynlights = args.dc_lights;
 		_num_dynlights = args.dc_num_lights;
 		_viewpos_x = args.dc_viewpos.X;
@@ -2626,9 +2626,9 @@ namespace swrenderer
 	{
 		_colormap = args.Colormap();
 		_destorg = dc_destorg;
-		_ybits = args.ds_ybits;
-		_xbits = args.ds_xbits;
-		_source = args.ds_source;
+		_ybits = args.TextureHeightBits();
+		_xbits = args.TextureWidthBits();
+		_source = args.TexturePixels();
 		basecolormapdata = basecolormap->Maps;
 	}
 
@@ -2869,7 +2869,7 @@ namespace swrenderer
 
 	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
-		color = args.ds_color;
+		color = args.SolidColor();
 		destorg = dc_destorg;
 	}
 

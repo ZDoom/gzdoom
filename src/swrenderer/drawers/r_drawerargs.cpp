@@ -124,7 +124,7 @@ namespace swrenderer
 		return shadeConstants;
 	}
 
-	void SpanDrawerArgs::SetSpanTexture(FTexture *tex)
+	void SpanDrawerArgs::SetTexture(FTexture *tex)
 	{
 		tex->GetWidth();
 		ds_xbits = tex->WidthBits;
@@ -596,7 +596,7 @@ namespace swrenderer
 		(Drawers()->*wallfunc)(*this);
 	}
 
-	void SpanDrawerArgs::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
+	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)
 	{
 		if (masked)
 		{

@@ -63,18 +63,18 @@ namespace swrenderer
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
 	{
 		auto shade_constants = drawerargs.ColormapConstants();
-		args.xfrac = drawerargs.ds_xfrac;
-		args.yfrac = drawerargs.ds_yfrac;
-		args.xstep = drawerargs.ds_xstep;
-		args.ystep = drawerargs.ds_ystep;
-		args.x1 = drawerargs.ds_x1;
-		args.x2 = drawerargs.ds_x2;
-		args.y = drawerargs.ds_y;
-		args.xbits = drawerargs.ds_xbits;
-		args.ybits = drawerargs.ds_ybits;
+		args.xfrac = drawerargs.TextureUPos();
+		args.yfrac = drawerargs.TextureVPos();
+		args.xstep = drawerargs.TextureUStep();
+		args.ystep = drawerargs.TextureVStep();
+		args.x1 = drawerargs.DestX1();
+		args.x2 = drawerargs.DestX2();
+		args.y = drawerargs.DestY();
+		args.xbits = drawerargs.TextureWidthBits();
+		args.ybits = drawerargs.TextureHeightBits();
 		args.destorg = (uint32_t*)dc_destorg;
 		args.destpitch = dc_pitch;
-		args.source = (const uint32_t*)drawerargs.ds_source;
+		args.source = (const uint32_t*)drawerargs.TexturePixels();
 		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
 		args.light_red = shade_constants.light_red;
 		args.light_green = shade_constants.light_green;
@@ -85,12 +85,12 @@ namespace swrenderer
 		args.fade_blue = shade_constants.fade_blue;
 		args.fade_alpha = shade_constants.fade_alpha;
 		args.desaturate = shade_constants.desaturate;
-		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
-		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
+		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
+		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
 		args.flags = 0;
 		if (shade_constants.simple_shade)
 			args.flags |= DrawSpanArgs::simple_shade;
-		if (!sampler_setup(drawerargs.ds_lod, args.source, args.xbits, args.ybits, drawerargs.ds_source_mipmapped))
+		if (!sampler_setup(drawerargs.TextureLOD(), args.source, args.xbits, args.ybits, drawerargs.MipmappedTexture()))
 			args.flags |= DrawSpanArgs::nearest_filter;
 
 		args.viewpos_x = drawerargs.dc_viewpos.X;
@@ -436,12 +436,12 @@ namespace swrenderer
 
 	FillSpanRGBACommand::FillSpanRGBACommand(const SpanDrawerArgs &drawerargs)
 	{
-		_x1 = drawerargs.ds_x1;
-		_x2 = drawerargs.ds_x2;
-		_y = drawerargs.ds_y;
+		_x1 = drawerargs.DestX1();
+		_x2 = drawerargs.DestX2();
+		_y = drawerargs.DestY();
 		_destorg = dc_destorg;
 		_light = drawerargs.Light();
-		_color = drawerargs.ds_color;
+		_color = drawerargs.SolidColor();
 	}
 
 	void FillSpanRGBACommand::Execute(DrawerThread *thread)
@@ -548,9 +548,9 @@ namespace swrenderer
 		_planelightfloat = planelightfloat;
 		_pviewx = pviewx;
 		_pviewy = pviewy;
-		_source = (const uint32_t*)drawerargs.ds_source;
-		_xbits = drawerargs.ds_xbits;
-		_ybits = drawerargs.ds_ybits;
+		_source = (const uint32_t*)drawerargs.TexturePixels();
+		_xbits = drawerargs.TextureWidthBits();
+		_ybits = drawerargs.TextureHeightBits();
 	}
 
 	void DrawTiltedSpanRGBACommand::Execute(DrawerThread *thread)
@@ -674,7 +674,7 @@ namespace swrenderer
 
 		_destorg = dc_destorg;
 		_light = drawerargs.Light();
-		_color = drawerargs.ds_color;
+		_color = drawerargs.SolidColor();
 	}
 
 	void DrawColoredSpanRGBACommand::Execute(DrawerThread *thread)

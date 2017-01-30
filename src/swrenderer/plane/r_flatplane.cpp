@@ -51,15 +51,15 @@ namespace swrenderer
 			return;
 		}
 
-		drawerargs.ds_color = 3;
-		drawerargs.SetSpanTexture(texture);
+		drawerargs.SetSolidColor(3);
+		drawerargs.SetTexture(texture);
 
 		double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
 		double x;
 
-		xscale = xs_ToFixed(32 - drawerargs.ds_xbits, _xscale);
-		yscale = xs_ToFixed(32 - drawerargs.ds_ybits, _yscale);
+		xscale = xs_ToFixed(32 - drawerargs.TextureWidthBits(), _xscale);
+		yscale = xs_ToFixed(32 - drawerargs.TextureHeightBits(), _yscale);
 		if (planeang != 0)
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
@@ -126,7 +126,7 @@ namespace swrenderer
 			planeshade = LIGHT2SHADE(pl->lightlevel);
 		}
 
-		drawerargs.SetSpanStyle(masked, additive, alpha);
+		drawerargs.SetStyle(masked, additive, alpha);
 
 		light_list = pl->lights;
 
@@ -149,25 +149,26 @@ namespace swrenderer
 
 		distance = planeheight * yslope[y];
 
-		if (drawerargs.ds_xbits != 0)
+		if (drawerargs.TextureWidthBits() != 0)
 		{
-			drawerargs.ds_xstep = xs_ToFixed(32 - drawerargs.ds_xbits, distance * xstepscale);
-			drawerargs.ds_xfrac = xs_ToFixed(32 - drawerargs.ds_xbits, distance * basexfrac) + pviewx;
+			drawerargs.SetTextureUStep(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * xstepscale));
+			drawerargs.SetTextureUPos(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * basexfrac) + pviewx);
 		}
 		else
 		{
-			drawerargs.ds_xstep = 0;
-			drawerargs.ds_xfrac = 0;
+			drawerargs.SetTextureUStep(0);
+			drawerargs.SetTextureUPos(0);
 		}
-		if (drawerargs.ds_ybits != 0)
+
+		if (drawerargs.TextureHeightBits() != 0)
 		{
-			drawerargs.ds_ystep = xs_ToFixed(32 - drawerargs.ds_ybits, distance * ystepscale);
-			drawerargs.ds_yfrac = xs_ToFixed(32 - drawerargs.ds_ybits, distance * baseyfrac) + pviewy;
+			drawerargs.SetTextureVStep(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * ystepscale));
+			drawerargs.SetTextureVPos(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * baseyfrac) + pviewy);
 		}
 		else
 		{
-			drawerargs.ds_ystep = 0;
-			drawerargs.ds_yfrac = 0;
+			drawerargs.SetTextureVStep(0);
+			drawerargs.SetTextureVPos(0);
 		}
 
 		if (r_swtruecolor)
@@ -177,7 +178,7 @@ namespace swrenderer
 			double ymagnitude = fabs(xstepscale * (distance2 - distance) * FocalLengthX);
 			double magnitude = MAX(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
-			drawerargs.ds_lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			drawerargs.SetTextureLOD(MAX(log2(magnitude) + r_lod_bias, min_lod));
 		}
 
 		if (plane_shade)
@@ -250,9 +251,9 @@ namespace swrenderer
 			drawerargs.dc_num_lights = 0;
 		}
 
-		drawerargs.ds_y = y;
-		drawerargs.ds_x1 = x1;
-		drawerargs.ds_x2 = x2;
+		drawerargs.SetDestY(y);
+		drawerargs.SetDestX1(x1);
+		drawerargs.SetDestX2(x2);
 
 		drawerargs.DrawSpan();
 	}

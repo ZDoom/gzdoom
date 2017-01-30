@@ -1384,30 +1384,30 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 
 	// Setup constant texture mapping parameters.
 	SpanDrawerArgs drawerargs;
-	drawerargs.SetSpanTexture(tex);
+	drawerargs.SetTexture(tex);
 	if (colormap)
 		drawerargs.SetColorMapLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
 		drawerargs.SetColorMapLight(&identitycolormap, 0, 0);
-	if (drawerargs.ds_xbits != 0)
+	if (drawerargs.TextureWidthBits() != 0)
 	{
-		scalex = double(1u << (32 - drawerargs.ds_xbits)) / scalex;
-		drawerargs.ds_xstep = xs_RoundToInt(cosrot * scalex);
+		scalex = double(1u << (32 - drawerargs.TextureWidthBits())) / scalex;
+		drawerargs.SetTextureUStep(xs_RoundToInt(cosrot * scalex));
 	}
 	else
 	{ // Texture is one pixel wide.
 		scalex = 0;
-		drawerargs.ds_xstep = 0;
+		drawerargs.SetTextureUStep(0);
 	}
-	if (drawerargs.ds_ybits != 0)
+	if (drawerargs.TextureHeightBits() != 0)
 	{
-		scaley = double(1u << (32 - drawerargs.ds_ybits)) / scaley;
-		drawerargs.ds_ystep = xs_RoundToInt(sinrot * scaley);
+		scaley = double(1u << (32 - drawerargs.TextureHeightBits())) / scaley;
+		drawerargs.SetTextureVStep(xs_RoundToInt(sinrot * scaley));
 	}
 	else
 	{ // Texture is one pixel tall.
 		scaley = 0;
-		drawerargs.ds_ystep = 0;
+		drawerargs.SetTextureVStep(0);
 	}
 
 	// Travel down the right edge and create an outline of that edge.
@@ -1473,9 +1473,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 #if 0
 					memset(this->Buffer + y * this->Pitch + x1, (int)tex, x2 - x1);
 #else
-					drawerargs.ds_y = y;
-					drawerargs.ds_x1 = x1;
-					drawerargs.ds_x2 = x2 - 1;
+					drawerargs.SetDestY(y);
+					drawerargs.SetDestX1(x1);
+					drawerargs.SetDestX2(x2 - 1);
 
 					DVector2 tex(x1 - originx, y - originy);
 					if (dorotate)
@@ -1484,8 +1484,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 						tex.X = t * cosrot - tex.Y * sinrot;
 						tex.Y = tex.Y * cosrot + t * sinrot;
 					}
-					drawerargs.ds_xfrac = xs_RoundToInt(tex.X * scalex);
-					drawerargs.ds_yfrac = xs_RoundToInt(tex.Y * scaley);
+					drawerargs.SetTextureUPos(xs_RoundToInt(tex.X * scalex));
+					drawerargs.SetTextureVPos(xs_RoundToInt(tex.Y * scaley));
 
 					drawerargs.DrawSpan();
 #endif

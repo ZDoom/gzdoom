@@ -122,7 +122,7 @@ namespace swrenderer
 		dsfixed_t TextureUPos() const { return ds_xfrac; }
 		dsfixed_t TextureVPos() const { return ds_yfrac; }
 		dsfixed_t TextureUStep() const { return ds_xstep; }
-		dsfixed_t TextureVStep() const { return ds_xstep; }
+		dsfixed_t TextureVStep() const { return ds_ystep; }
 		int SolidColor() const { return ds_color; }
 		int TextureWidthBits() const { return ds_xbits; }
 		int TextureHeightBits() const { return ds_ybits; }

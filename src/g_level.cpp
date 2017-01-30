@@ -409,7 +409,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	// did we have any level before?
 	if (level.info != nullptr)
-		E_WorldUnloadingUnsafe();
+		E_WorldUnloadedUnsafe();
 
 	if (!savegamerestore)
 	{
@@ -661,9 +661,9 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
-	E_WorldUnloading();
+	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
-	E_WorldUnloadingUnsafe();
+	E_WorldUnloadedUnsafe();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel);

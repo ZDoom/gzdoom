@@ -20,16 +20,24 @@ void E_InitStaticHandlers(bool map);
 // called right after the map has loaded (approximately same time as OPEN ACS scripts)
 void E_WorldLoaded();
 // called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
-void E_WorldUnloading();
+void E_WorldUnloaded();
 // called right after the map has loaded (every time, UNSAFE VERSION)
 void E_WorldLoadedUnsafe();
 // called right before the map is unloaded (every time, UNSAFE VERSION)
-void E_WorldUnloadingUnsafe();
+void E_WorldUnloadedUnsafe();
+// called around PostBeginPlay of each actor.
+void E_WorldThingSpawned(AActor* actor);
 // called on each render frame once.
 void E_RenderFrame();
 
 // serialization stuff
 void E_SerializeEvents(FSerializer& arc);
+
+// ==============================================
+//
+//  EventHandler - base class
+//
+// ==============================================
 
 class DStaticEventHandler : public DObject // make it a part of normal GC process
 {
@@ -67,7 +75,8 @@ public:
 	void OnDestroy() override;
 
 	virtual void WorldLoaded();
-	virtual void WorldUnloading();
+	virtual void WorldUnloaded();
+	virtual void WorldThingSpawned(AActor*);
 	virtual void RenderFrame();
 };
 class DEventHandler : public DStaticEventHandler
@@ -77,6 +86,13 @@ public:
 	bool IsStatic() override { return false; }
 };
 extern DStaticEventHandler* E_FirstEventHandler;
+
+
+// ==============================================
+//
+//  RenderEventHandler - for renderer events
+//
+// ==============================================
 
 class DStaticRenderEventHandler : public DStaticEventHandler
 {
@@ -89,6 +105,12 @@ public:
 	DAngle ViewRoll;
 	double FracTic; // 0..1 value that describes where we are inside the current gametic, render-wise.
 	AActor* Camera;
+
+	DStaticRenderEventHandler()
+	{
+		FracTic = 0;
+		Camera = nullptr;
+	}
 
 	// serialization handler for our local stuff
 	void Serialize(FSerializer& arc) override
@@ -110,6 +132,48 @@ private:
 class DRenderEventHandler : public DStaticRenderEventHandler
 {
 	DECLARE_CLASS(DRenderEventHandler, DStaticRenderEventHandler) // TODO: make sure this does not horribly break anythings
+public:
+	bool IsStatic() override { return false; }
+};
+
+// ==============================================
+//
+//  WorldEventHandler - for world events
+//
+// ==============================================
+class DStaticWorldEventHandler : public DStaticEventHandler
+{
+	DECLARE_CLASS(DStaticWorldEventHandler, DStaticEventHandler)
+public:
+	// for WorldLoaded, WorldUnloaded.
+	bool IsSaveGame; // this will be true if world event was triggered during savegame loading.
+	// for WorldThingSpawned
+	AActor* Thing;
+
+	DStaticWorldEventHandler()
+	{
+		IsSaveGame = false;
+		Thing = nullptr;
+	}
+
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		arc("IsSaveGame", IsSaveGame);
+		arc("Thing", Thing);
+	}
+
+	void WorldLoaded() override;
+	void WorldUnloaded() override;
+	void WorldThingSpawned(AActor*) override;
+
+private:
+	void Setup();
+};
+// not sure if anyone wants non-static world handler, but here it is, just in case.
+class DWorldEventHandler : public DStaticWorldEventHandler
+{
+	DECLARE_CLASS(DWorldEventHandler, DStaticWorldEventHandler)
 public:
 	bool IsStatic() override { return false; }
 };

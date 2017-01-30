@@ -1,7 +1,8 @@
 class StaticEventHandler : Object native
 {
 	virtual native void WorldLoaded();
-	virtual native void WorldUnloading();
+	virtual native void WorldUnloaded();
+    virtual native void WorldThingSpawned();
 
 	virtual native void RenderFrame();
 }
@@ -15,6 +16,13 @@ class StaticRenderEventHandler : StaticEventHandler native
 	native readonly double ViewRoll;
 	native readonly double FracTic;
 	native readonly Actor Camera;
+}
+
+class StaticWorldEventHandler : StaticEventHandler native
+{
+    // for world
+    native readonly bool IsSaveGame; // this is set to true if static WorldLoaded was triggered during savegame loading.
+    native readonly Actor Thing; // this is for WorldThingSpawned
 }
 
 class EventHandler : StaticEventHandler native

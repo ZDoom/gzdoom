@@ -203,12 +203,12 @@ void E_WorldLoaded()
 	}
 }
 
-void E_WorldUnloading()
+void E_WorldUnloaded()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
 		if (handler->IsStatic() && !handler->isMapScope) continue;
-		handler->WorldUnloading();
+		handler->WorldUnloaded();
 	}
 }
 
@@ -221,22 +221,31 @@ void E_WorldLoadedUnsafe()
 	}
 }
 
-void E_WorldUnloadingUnsafe()
+void E_WorldUnloadedUnsafe()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
 		if (!handler->IsStatic() || handler->isMapScope) continue;
-		handler->WorldUnloading();
+		handler->WorldUnloaded();
 	}
 }
 
+void E_WorldThingSpawned(AActor* actor)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingSpawned(actor);
+}
+
+// normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
 IMPLEMENT_CLASS(DStaticRenderEventHandler, false, false);
+IMPLEMENT_CLASS(DStaticWorldEventHandler, false, false);
 IMPLEMENT_CLASS(DEventHandler, false, false);
 IMPLEMENT_CLASS(DRenderEventHandler, false, false);
+IMPLEMENT_CLASS(DWorldEventHandler, false, false);
 
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewPos);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewAngle);
@@ -244,6 +253,9 @@ DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewPitch);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, ViewRoll);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, FracTic);
 DEFINE_FIELD_X(StaticRenderEventHandler, DStaticRenderEventHandler, Camera);
+
+DEFINE_FIELD_X(StaticWorldEventHandler, DStaticWorldEventHandler, IsSaveGame);
+DEFINE_FIELD_X(StaticWorldEventHandler, DStaticWorldEventHandler, Thing);
 
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
@@ -321,7 +333,8 @@ void cls::funcname(args) \
 }
 
 DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldLoaded,)
-DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloading,)
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldUnloaded,)
+DEFINE_EVENT_HANDLER(DStaticEventHandler, WorldThingSpawned, AActor*)
 DEFINE_EVENT_HANDLER(DStaticEventHandler, RenderFrame, )
 
 //
@@ -345,4 +358,29 @@ void DStaticRenderEventHandler::RenderFrame()
 {
 	Setup();
 	Super::RenderFrame();
+}
+
+void DStaticWorldEventHandler::Setup()
+{
+	IsSaveGame = savegamerestore;
+	Thing = nullptr;
+}
+
+void DStaticWorldEventHandler::WorldLoaded()
+{
+	Setup();
+	Super::WorldLoaded();
+}
+
+void DStaticWorldEventHandler::WorldUnloaded()
+{
+	Setup();
+	Super::WorldUnloaded();
+}
+
+void DStaticWorldEventHandler::WorldThingSpawned(AActor* actor)
+{
+	Setup();
+	Thing = actor;
+	Super::WorldThingSpawned(actor);
 }

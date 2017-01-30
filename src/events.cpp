@@ -368,17 +368,10 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
 	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
 }
 
-#define DEFINE_EVENT_HANDLER(cls, funcname, args) DEFINE_ACTION_FUNCTION(cls, funcname) \
-{ \
-	PARAM_SELF_PROLOGUE(cls); \
-	return 0; \
-} \
-void cls::funcname(args) \
+#define DEFINE_EVENT_HANDLER(cls, funcname, args) void cls::funcname(args) \
 { \
 	IFVIRTUAL(cls, funcname) \
 	{ \
-		if (func == cls##_##funcname##_VMPtr) \
-			return; \
 		VMValue params[1] = { (cls*)this }; \
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr); \
 	} \

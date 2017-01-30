@@ -9,22 +9,23 @@ class StaticEventHandler : Object native
     protected static native bool Register(StaticEventHandler handler);
     protected static native bool Unregister(StaticEventHandler handler);
 
-	virtual native void WorldLoaded();
-	virtual native void WorldUnloaded();
-    virtual native void WorldThingSpawned();
-
-	virtual native void RenderFrame();
+    // world stuff
+    virtual void WorldLoaded() {}
+    virtual void WorldUnloaded() {}
+    virtual void WorldThingSpawned() {}
+    // render stuff
+    virtual void RenderFrame() {}
 }
 
 class StaticRenderEventHandler : StaticEventHandler native
 {
-	// for frame and camera
-	native readonly Vector3 ViewPos;
-	native readonly double ViewAngle;
-	native readonly double ViewPitch;
-	native readonly double ViewRoll;
-	native readonly double FracTic;
-	native readonly Actor Camera;
+    // for frame and camera
+    native readonly Vector3 ViewPos;
+    native readonly double ViewAngle;
+    native readonly double ViewPitch;
+    native readonly double ViewRoll;
+    native readonly double FracTic;
+    native readonly Actor Camera;
 }
 
 class StaticWorldEventHandler : StaticEventHandler native
@@ -36,12 +37,12 @@ class StaticWorldEventHandler : StaticEventHandler native
 
 class EventHandler : StaticEventHandler native
 {
-	static native StaticEventHandler Create(class<StaticEventHandler> type);
-	static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
-	static native StaticEventHandler Find(class<StaticEventHandler> type);
+    static native StaticEventHandler Create(class<StaticEventHandler> type);
+    static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
+    static native StaticEventHandler Find(class<StaticEventHandler> type);
 
-	static native bool Register(StaticEventHandler handler);
-	static native bool Unregister(StaticEventHandler handler);
+    static native bool Register(StaticEventHandler handler);
+    static native bool Unregister(StaticEventHandler handler);
 }
 
 class RenderEventHandler : StaticRenderEventHandler native { }

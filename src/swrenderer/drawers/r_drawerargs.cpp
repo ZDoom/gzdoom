@@ -65,6 +65,10 @@ namespace swrenderer
 		basecolfunc = &SWPixelFormatDrawers::DrawColumn;
 		fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
 		transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
+	}
+
+	SpanDrawerArgs::SpanDrawerArgs()
+	{
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
@@ -617,7 +621,7 @@ namespace swrenderer
 		return nullptr;
 	}
 
-	void DrawerArgs::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
+	void SpanDrawerArgs::SetSpanStyle(bool masked, bool additive, fixed_t alpha)
 	{
 		if (masked)
 		{
@@ -671,6 +675,11 @@ namespace swrenderer
 				spanfunc = &SWPixelFormatDrawers::DrawSpan;
 			}
 		}
+	}
+
+	void SpanDrawerArgs::DrawSpan()
+	{
+		(Drawers()->*spanfunc)(*this);
 	}
 
 	void SpanDrawerArgs::DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)

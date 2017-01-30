@@ -254,7 +254,7 @@ namespace swrenderer
 		drawerargs.ds_x1 = x1;
 		drawerargs.ds_x2 = x2;
 
-		(drawerargs.Drawers()->*drawerargs.spanfunc)(drawerargs);
+		drawerargs.DrawSpan();
 	}
 
 	void RenderFlatPlane::StepColumn()

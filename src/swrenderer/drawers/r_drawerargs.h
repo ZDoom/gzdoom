@@ -46,7 +46,6 @@ namespace swrenderer
 
 		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
 
 		void SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
 		void SetTranslationMap(lighttable_t *translation);
@@ -63,7 +62,6 @@ namespace swrenderer
 		ColumnDrawerFunc basecolfunc;
 		ColumnDrawerFunc fuzzcolfunc;
 		ColumnDrawerFunc transcolfunc;
-		SpanDrawerFunc spanfunc;
 
 		uint32_t *dc_srcblend;
 		uint32_t *dc_destblend;
@@ -144,8 +142,12 @@ namespace swrenderer
 	class SpanDrawerArgs : public DrawerArgs
 	{
 	public:
+		SpanDrawerArgs();
+
+		void SetSpanStyle(bool masked, bool additive, fixed_t alpha);
 		void SetSpanTexture(FTexture *tex);
 
+		void DrawSpan();
 		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void DrawColoredSpan(int y, int x1, int x2);
 		void DrawFogBoundaryLine(int y, int x1, int x2);
@@ -170,6 +172,9 @@ namespace swrenderer
 		FVector3 dc_viewpos_step;
 		TriLight *dc_lights = nullptr;
 		int dc_num_lights = 0;
+
+	private:
+		SpanDrawerFunc spanfunc;
 	};
 
 	class ColumnDrawerArgs : public DrawerArgs

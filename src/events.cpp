@@ -294,29 +294,6 @@ DEFINE_ACTION_FUNCTION(DEventHandler, CreateOnce)
 	ACTION_RETURN_OBJECT(t->CreateNew());
 }
 
-// for static
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, Create)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// static handlers can create any type of object.
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
-}
-
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, CreateOnce)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// static handlers can create any type of object.
-	// check if there are already registered handlers of this type.
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		if (handler->GetClass() == t) // check precise class
-			ACTION_RETURN_OBJECT(handler);
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
-}
-
 DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;
@@ -341,6 +318,40 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Unregister)
 	PARAM_OBJECT(handler, DStaticEventHandler);
 	if (handler->IsStatic()) ACTION_RETURN_BOOL(false);
 	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
+}
+
+// for static
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DStaticEventHandler);
+	// static handlers can create any type of object.
+	// generate a new object of this type.
+	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, CreateOnce)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DStaticEventHandler);
+	// static handlers can create any type of object.
+	// check if there are already registered handlers of this type.
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->GetClass() == t) // check precise class
+			ACTION_RETURN_OBJECT(handler);
+	// generate a new object of this type.
+	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+// we might later want to change this
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, Find)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DStaticEventHandler);
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->GetClass() == t) // check precise class
+			ACTION_RETURN_OBJECT(handler);
+	ACTION_RETURN_OBJECT(nullptr);
 }
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, Register)

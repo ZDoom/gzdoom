@@ -4,6 +4,7 @@ class StaticEventHandler : Object native
     // unlike EventHandler.Create that will not create them.
     protected static native StaticEventHandler Create(class<StaticEventHandler> type);
     protected static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
+    protected static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
     
     protected static native bool Register(StaticEventHandler handler);
     protected static native bool Unregister(StaticEventHandler handler);

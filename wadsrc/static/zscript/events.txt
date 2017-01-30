@@ -1,5 +1,13 @@
 class StaticEventHandler : Object native
 {
+    // static event handlers CAN register other static event handlers.
+    // unlike EventHandler.Create that will not create them.
+    protected static native StaticEventHandler Create(class<StaticEventHandler> type);
+    protected static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
+    
+    protected static native bool Register(StaticEventHandler handler);
+    protected static native bool Unregister(StaticEventHandler handler);
+
 	virtual native void WorldLoaded();
 	virtual native void WorldUnloaded();
     virtual native void WorldThingSpawned();

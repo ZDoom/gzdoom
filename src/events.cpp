@@ -289,7 +289,30 @@ DEFINE_ACTION_FUNCTION(DEventHandler, CreateOnce)
 	// check if there are already registered handlers of this type.
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		if (handler->GetClass() == t) // check precise class
-			ACTION_RETURN_OBJECT(nullptr);
+			ACTION_RETURN_OBJECT(handler);
+	// generate a new object of this type.
+	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+// for static
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DStaticEventHandler);
+	// static handlers can create any type of object.
+	// generate a new object of this type.
+	ACTION_RETURN_OBJECT(t->CreateNew());
+}
+
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, CreateOnce)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(t, DStaticEventHandler);
+	// static handlers can create any type of object.
+	// check if there are already registered handlers of this type.
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->GetClass() == t) // check precise class
+			ACTION_RETURN_OBJECT(handler);
 	// generate a new object of this type.
 	ACTION_RETURN_OBJECT(t->CreateNew());
 }
@@ -317,6 +340,20 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Unregister)
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(handler, DStaticEventHandler);
 	if (handler->IsStatic()) ACTION_RETURN_BOOL(false);
+	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
+}
+
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, Register)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(handler, DStaticEventHandler);
+	ACTION_RETURN_BOOL(E_RegisterHandler(handler));
+}
+
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(handler, DStaticEventHandler);
 	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
 }
 

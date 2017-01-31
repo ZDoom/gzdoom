@@ -73,7 +73,6 @@ namespace swrenderer
 
 	void DrawerArgs::SetTranslationMap(lighttable_t *translation)
 	{
-		mBaseColormap = nullptr;
 		mTranslation = translation;
 	}
 

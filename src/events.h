@@ -31,6 +31,8 @@ void E_WorldThingSpawned(AActor* actor);
 void E_WorldThingDied(AActor* actor, AActor* inflictor);
 // called after AActor::Revive.
 void E_WorldThingRevived(AActor* actor);
+// called before P_DamageMobj and before AActor::DamageMobj virtuals.
+void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
 // called before AActor::Destroy of each actor.
 void E_WorldThingDestroyed(AActor* actor);
 // same as ACS SCRIPT_Lightning
@@ -89,6 +91,7 @@ public:
 	virtual void WorldThingSpawned(AActor*);
 	virtual void WorldThingDied(AActor*, AActor*);
 	virtual void WorldThingRevived(AActor*);
+	virtual void WorldThingDamaged(AActor*, AActor*, AActor*, int, FName, int, DAngle);
 	virtual void WorldThingDestroyed(AActor*);
 	virtual void WorldLightning();
 	virtual void WorldTick();
@@ -136,18 +139,6 @@ public:
 		FracTic = 0;
 		Camera = nullptr;
 	}
-
-	// serialization handler for our local stuff
-	void Serialize(FSerializer& arc) override
-	{
-		Super::Serialize(arc);
-		arc("ViewPos", ViewPos);
-		arc("ViewAngle", ViewAngle);
-		arc("ViewPitch", ViewPitch);
-		arc("ViewRoll", ViewRoll);
-		arc("FracTic", FracTic);
-		arc("Camera", Camera);
-	}
 };
 
 class DWorldEvent : public DBaseEvent
@@ -160,20 +151,21 @@ public:
 	AActor* Thing;
 	// for thingdied
 	AActor* Inflictor; // can be null
+	// for damagemobj
+	int Damage;
+	AActor* DamageSource; // can be null
+	FName DamageType;
+	int DamageFlags;
+	DAngle DamageAngle;
 
 	DWorldEvent()
 	{
 		IsSaveGame = false;
 		Thing = nullptr;
 		Inflictor = nullptr;
-	}
-
-	void Serialize(FSerializer& arc) override
-	{
-		Super::Serialize(arc);
-		arc("IsSaveGame", IsSaveGame);
-		arc("Thing", Thing);
-		arc("Inflictor", Inflictor);
+		Damage = 0;
+		DamageSource = nullptr;
+		DamageFlags = 0;
 	}
 };
 

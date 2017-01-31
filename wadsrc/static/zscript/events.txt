@@ -18,6 +18,12 @@ class WorldEvent : BaseEvent native
     native readonly Actor Thing;
     // for thingdied. can be null
     native readonly Actor Inflictor;
+    // for thingdamaged.
+    native readonly int Damage;
+    native readonly Actor DamageSource;
+    native readonly Name DamageType;
+    native readonly EDmgFlags DamageFlags;
+    native readonly double DamageAngle;
 }
 
 class StaticEventHandler : Object native
@@ -37,6 +43,7 @@ class StaticEventHandler : Object native
     virtual native void WorldThingSpawned(WorldEvent e);
     virtual native void WorldThingDied(WorldEvent e);
     virtual native void WorldThingRevived(WorldEvent e);
+    virtual native void WorldThingDamaged(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
     virtual native void WorldTick(WorldEvent e);

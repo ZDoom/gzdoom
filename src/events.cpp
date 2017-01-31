@@ -259,6 +259,15 @@ void E_WorldThingRevived(AActor* actor)
 		handler->WorldThingRevived(actor);
 }
 
+void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingDamaged(actor, inflictor, source, damage, mod, flags, angle);
+}
+
 void E_WorldThingDestroyed(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -290,7 +299,11 @@ DEFINE_FIELD_X(RenderEvent, DRenderEvent, Camera);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, IsSaveGame);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Thing);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Inflictor);
-
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, Damage);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageSource);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageType);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageFlags);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageAngle);
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 {
@@ -409,6 +422,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
@@ -427,6 +441,11 @@ static DWorldEvent* E_SetupWorldEvent()
 	e->IsSaveGame = savegamerestore;
 	e->Thing = nullptr;
 	e->Inflictor = nullptr;
+	e->Damage = 0;
+	e->DamageAngle = 0.0;
+	e->DamageFlags = 0;
+	e->DamageSource = 0;
+	e->DamageType = NAME_None;
 	return e;
 }
 
@@ -494,6 +513,25 @@ void DStaticEventHandler::WorldThingRevived(AActor* actor)
 			return;
 		DWorldEvent* e = E_SetupWorldEvent();
 		e->Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingDamaged)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldThingDamaged_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		e->Thing = actor;
+		e->Damage = damage;
+		e->DamageSource = source;
+		e->DamageType = mod;
+		e->DamageFlags = flags;
+		e->DamageAngle = angle;
 		VMValue params[2] = { (DStaticEventHandler*)this, e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}

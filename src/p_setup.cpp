@@ -3423,6 +3423,17 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	MapThingsConverted.Clear();
+	MapThingsUserDataIndex.Clear();
+	MapThingsUserData.Clear();
+	linemap.Clear();
+	FCanvasTextureInfo::EmptyList();
+	R_FreePastViewers();
+	P_ClearUDMFKeys();
+
+	// [RH] Clear all ThingID hash chains.
+	AActor::ClearTIDHashes();
+
 	P_FreeMapDataBackup();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
@@ -3575,14 +3586,6 @@ void P_SetupLevel (const char *lumpname, int position)
 	level.maptype = MAPTYPE_UNKNOWN;
 	wminfo.partime = 180;
 
-	MapThingsConverted.Clear();
-	MapThingsUserDataIndex.Clear();
-	MapThingsUserData.Clear();
-	linemap.Clear();
-	FCanvasTextureInfo::EmptyList ();
-	R_FreePastViewers ();
-	P_ClearUDMFKeys();
-
 	if (!savegamerestore)
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
@@ -3612,8 +3615,6 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start ();
-	// [RH] Clear all ThingID hash chains.
-	AActor::ClearTIDHashes ();
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint (NULL, NULL);

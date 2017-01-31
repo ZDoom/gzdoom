@@ -1617,8 +1617,16 @@ void C_ArchiveCVars (FConfigFile *f, uint32 filter)
 	}
 }
 
+EXTERN_CVAR(Bool, sv_cheats);
+
 void FBaseCVar::CmdSet (const char *newval)
 {
+	if ((GetFlags() & CVAR_CHEAT) && !sv_cheats)
+	{
+		Printf("sv_cheats must be true to set this console variable.\n");
+		return;
+	}
+
 	UCVarValue val;
 
 	// Casting away the const is safe in this case.

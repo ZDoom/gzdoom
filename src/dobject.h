@@ -208,6 +208,7 @@ enum EObjectFlags
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
 	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
+	OF_Spawned			= 1 << 12,      // Thinker was spawned at all (some thinkers get deleted before spawning)
 };
 
 template<class T> class TObjPtr;

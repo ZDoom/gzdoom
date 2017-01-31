@@ -273,6 +273,10 @@ void E_WorldThingDestroyed(AActor* actor)
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
 		return;
+	// don't call anything for non-spawned things (i.e. those that were created, but immediately destroyed)
+	// this is because Destroyed should be reverse of Spawned. we don't want to catch random inventory give failures.
+	if (!(actor->ObjectFlags & OF_Spawned))
+		return;
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingDestroyed(actor);
 }

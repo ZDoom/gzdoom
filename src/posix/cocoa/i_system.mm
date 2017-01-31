@@ -36,6 +36,7 @@
 #include <fnmatch.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include "d_ticcmd.h"
 #include "doomdef.h"
@@ -98,9 +99,29 @@ void SetLanguageIDs()
 void I_InitTimer();
 void I_ShutdownTimer();
 
+double PerfToSec, PerfToMillisec;
+
+static void CalculateCPUSpeed()
+{
+	long long frequency;
+	size_t size = sizeof frequency;
+
+	if (0 == sysctlbyname("machdep.tsc.frequency", &frequency, &size, nullptr, 0) && 0 != frequency)
+	{
+		PerfToSec = 1.0 / frequency;
+		PerfToMillisec = 1000.0 / frequency;
+
+		if (!batchrun)
+		{
+			Printf("CPU speed: %.0f MHz\n", 0.001 / PerfToMillisec);
+		}
+	}
+}
+
 void I_Init(void)
 {
 	CheckCPUID(&CPU);
+	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
 
 	atterm(I_ShutdownSound);

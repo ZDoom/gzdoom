@@ -111,6 +111,8 @@ public:
 		// since from what I remember object creation and deletion results in a lot of GC processing
 		// (and we aren't supposed to pass event objects around anyway)
 		this->ObjectFlags |= OF_Fixed;
+		// we don't want to store events into the savegames because they are global.
+		this->ObjectFlags |= OF_Transient;
 	}
 };
 

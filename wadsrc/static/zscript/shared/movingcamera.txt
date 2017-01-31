@@ -287,7 +287,7 @@ class PathFollower : Actor
 
 		if (Interpolate ())
 		{
-			Time += (8. / (CurrNode.args[1] * TICRATE));
+			Time += (8. / (max(1, CurrNode.args[1]) * TICRATE));
 			if (Time > 1.)
 			{
 				Time -= 1.;

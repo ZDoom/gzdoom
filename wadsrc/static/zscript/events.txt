@@ -16,6 +16,8 @@ class WorldEvent : BaseEvent native
     native readonly bool IsSaveGame;
     // for thingspawned/thingdied/thingdestroyed
     native readonly Actor Thing;
+    // for thingdied. can be null
+    native readonly Actor Inflictor;
 }
 
 class StaticEventHandler : Object native
@@ -33,6 +35,9 @@ class StaticEventHandler : Object native
     virtual native void WorldLoaded(WorldEvent e);
     virtual native void WorldUnloaded(WorldEvent e);
     virtual native void WorldThingSpawned(WorldEvent e);
+    virtual native void WorldThingDied(WorldEvent e);
+    virtual native void WorldThingDestroyed(WorldEvent e);
+    virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
 
     virtual native void RenderFrame(RenderEvent e);
 }

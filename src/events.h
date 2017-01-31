@@ -27,6 +27,12 @@ void E_WorldLoadedUnsafe();
 void E_WorldUnloadedUnsafe();
 // called around PostBeginPlay of each actor.
 void E_WorldThingSpawned(AActor* actor);
+// called after AActor::Die of each actor.
+void E_WorldThingDied(AActor* actor, AActor* inflictor);
+// called before AActor::Destroy of each actor.
+void E_WorldThingDestroyed(AActor* actor);
+// same as ACS SCRIPT_Lightning
+void E_WorldLightning();
 // called on each render frame once.
 void E_RenderFrame();
 
@@ -77,6 +83,9 @@ public:
 	virtual void WorldLoaded();
 	virtual void WorldUnloaded();
 	virtual void WorldThingSpawned(AActor*);
+	virtual void WorldThingDied(AActor*, AActor*);
+	virtual void WorldThingDestroyed(AActor*);
+	virtual void WorldLightning();
 	virtual void RenderFrame();
 };
 class DEventHandler : public DStaticEventHandler
@@ -141,11 +150,14 @@ public:
 	bool IsSaveGame;
 	// for thingspawned, thingdied, thingdestroyed
 	AActor* Thing;
+	// for thingdied
+	AActor* Inflictor; // can be null
 
 	DWorldEvent()
 	{
 		IsSaveGame = false;
 		Thing = nullptr;
+		Inflictor = nullptr;
 	}
 
 	void Serialize(FSerializer& arc) override
@@ -153,6 +165,7 @@ public:
 		Super::Serialize(arc);
 		arc("IsSaveGame", IsSaveGame);
 		arc("Thing", Thing);
+		arc("Inflictor", Inflictor);
 	}
 };
 

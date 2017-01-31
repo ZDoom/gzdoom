@@ -60,6 +60,7 @@
 #include "a_morph.h"
 #include "virtual.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -383,6 +384,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		target = source;
 	}
+
+	// [ZZ] Fire WorldThingDied script hook.
+	E_WorldThingDied(this, inflictor);
 
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))

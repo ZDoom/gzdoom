@@ -239,8 +239,27 @@ void E_WorldThingSpawned(AActor* actor)
 		handler->WorldThingSpawned(actor);
 }
 
+void E_WorldThingDied(AActor* actor, AActor* inflictor)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingDied(actor, inflictor);
+}
+
+void E_WorldThingDestroyed(AActor* actor)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingDestroyed(actor);
+}
+
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
+DEFINE_EVENT_LOOPER(WorldLightning)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
@@ -258,6 +277,7 @@ DEFINE_FIELD_X(RenderEvent, DRenderEvent, Camera);
 
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, IsSaveGame);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Thing);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, Inflictor);
 
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
@@ -375,7 +395,16 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLoaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
+
+// ===========================================
+//
+//  Event handlers
+//
+// ===========================================
 
 static DWorldEvent* E_SetupWorldEvent()
 {
@@ -383,6 +412,7 @@ static DWorldEvent* E_SetupWorldEvent()
 	if (!e) e = (DWorldEvent*)RUNTIME_CLASS(DWorldEvent)->CreateNew();
 	e->IsSaveGame = savegamerestore;
 	e->Thing = nullptr;
+	e->Inflictor = nullptr;
 	return e;
 }
 
@@ -421,6 +451,48 @@ void DStaticEventHandler::WorldThingSpawned(AActor* actor)
 			return;
 		DWorldEvent* e = E_SetupWorldEvent();
 		e->Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingDied)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldThingDied_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		e->Thing = actor;
+		e->Inflictor = inflictor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingDestroyed)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldThingDestroyed_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		e->Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldLightning()
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLightning)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLightning_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}

@@ -102,7 +102,7 @@ private:
 
 #else
 
-// Windows
+// Windows and macOS
 #include "x86.h"
 
 extern double PerfToSec, PerfToMillisec;
@@ -126,15 +126,19 @@ inline unsigned __int64 rdtsc()
 #else
 inline unsigned long long rdtsc()
 {
-#ifndef __amd64__
+#ifdef __amd64__
+	unsigned long long tsc;
+	asm volatile ("rdtsc; shlq $32, %%rdx; orq %%rdx, %%rax" : "=a" (tsc) :: "%rdx");
+	return tsc;
+#else // i386
 	if (CPU.bRDTSC)
-#endif
 	{
 		unsigned long long tsc;
 		asm volatile ("\trdtsc\n" : "=A" (tsc));
 		return tsc;
 	}
 	return 0;
+#endif // __amd64__
 }
 #endif
 

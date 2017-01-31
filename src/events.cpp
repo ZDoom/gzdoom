@@ -23,8 +23,7 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	if (handler->IsStatic())
 	{
 		handler->ObjectFlags |= OF_Fixed;
-		if (!handler->isMapScope) // global (GameInfo) handlers are not serialized.
-			handler->ObjectFlags |= OF_Transient;
+		handler->ObjectFlags |= OF_Transient;
 	}
 	return true;
 }
@@ -149,7 +148,6 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 
 	if (typeExists) return;
 	DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
-	handler->isMapScope = map;
 	E_RegisterHandler(handler);
 }
 
@@ -189,7 +187,7 @@ void E_InitStaticHandlers(bool map)
 		// delete old static handlers if any.
 		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		{
-			if (handler->IsStatic() && !handler->isMapScope)
+			if (handler->IsStatic())
 				handler->Destroy();
 		}
 
@@ -218,8 +216,8 @@ void E_WorldLoaded()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic() && !handler->isMapScope) continue;
-		if (handler->isMapScope && savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
+		if (handler->IsStatic()) continue;
+		if (savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
 		handler->WorldLoaded();
 	}
 }
@@ -228,7 +226,7 @@ void E_WorldUnloaded()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic() && !handler->isMapScope) continue;
+		if (handler->IsStatic()) continue;
 		handler->WorldUnloaded();
 	}
 }
@@ -237,7 +235,7 @@ void E_WorldLoadedUnsafe()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (!handler->IsStatic() || handler->isMapScope) continue;
+		if (!handler->IsStatic()) continue;
 		handler->WorldLoaded();
 	}
 }
@@ -246,7 +244,7 @@ void E_WorldUnloadedUnsafe()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (!handler->IsStatic() || handler->isMapScope) continue;
+		if (!handler->IsStatic()) continue;
 		handler->WorldUnloaded();
 	}
 }

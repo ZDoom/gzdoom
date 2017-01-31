@@ -38,6 +38,7 @@ class StaticEventHandler : Object native
     virtual native void WorldThingDied(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
+    virtual native void WorldTick(WorldEvent e);
 
     virtual native void RenderFrame(RenderEvent e);
 }

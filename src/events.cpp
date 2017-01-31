@@ -262,6 +262,7 @@ void E_WorldThingDestroyed(AActor* actor)
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
+DEFINE_EVENT_LOOPER(WorldTick)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, false);
@@ -400,6 +401,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
 
 // ===========================================
@@ -500,6 +502,19 @@ void DStaticEventHandler::WorldLightning()
 	}
 }
 
+void DStaticEventHandler::WorldTick()
+{
+	IFVIRTUAL(DStaticEventHandler, WorldTick)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldTick_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
 static DRenderEvent* E_SetupRenderEvent()
 {
 	static DRenderEvent* e = nullptr;
@@ -532,44 +547,3 @@ void DStaticEventHandler::OnDestroy()
 	E_UnregisterHandler(this);
 	Super::OnDestroy();
 }
-/*
-void DStaticRenderEventHandler::Setup()
-{
-	ViewPos = ::ViewPos;
-	ViewAngle = ::ViewAngle;
-	ViewPitch = ::ViewPitch;
-	ViewRoll = ::ViewRoll;
-	FracTic = ::r_TicFracF;
-	Camera = ::camera;
-}
-
-void DStaticRenderEventHandler::RenderFrame()
-{
-	Setup();
-	Super::RenderFrame();
-}
-
-void DStaticWorldEventHandler::Setup()
-{
-	IsSaveGame = savegamerestore;
-	Thing = nullptr;
-}
-
-void DStaticWorldEventHandler::WorldLoaded()
-{
-	Setup();
-	Super::WorldLoaded();
-}
-
-void DStaticWorldEventHandler::WorldUnloaded()
-{
-	Setup();
-	Super::WorldUnloaded();
-}
-
-void DStaticWorldEventHandler::WorldThingSpawned(AActor* actor)
-{
-	Setup();
-	Thing = actor;
-	Super::WorldThingSpawned(actor);
-}*/

@@ -33,6 +33,8 @@ void E_WorldThingDied(AActor* actor, AActor* inflictor);
 void E_WorldThingDestroyed(AActor* actor);
 // same as ACS SCRIPT_Lightning
 void E_WorldLightning();
+// this executes on every tick, before everything
+void E_WorldTick();
 // called on each render frame once.
 void E_RenderFrame();
 
@@ -86,6 +88,7 @@ public:
 	virtual void WorldThingDied(AActor*, AActor*);
 	virtual void WorldThingDestroyed(AActor*);
 	virtual void WorldLightning();
+	virtual void WorldTick();
 	virtual void RenderFrame();
 };
 class DEventHandler : public DStaticEventHandler

@@ -23,6 +23,8 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	if (handler->IsStatic())
 	{
 		handler->ObjectFlags |= OF_Fixed;
+		if (!handler->isMapScope) // global (GameInfo) handlers are not serialized.
+			handler->ObjectFlags |= OF_Transient;
 	}
 	return true;
 }
@@ -42,7 +44,7 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		E_FirstEventHandler = handler->next;
 	if (handler->IsStatic())
 	{
-		handler->ObjectFlags &= ~OF_Fixed;
+		handler->ObjectFlags &= ~(OF_Fixed|OF_Transient);
 		handler->Destroy();
 	}
 	return true;

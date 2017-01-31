@@ -7472,6 +7472,9 @@ void AActor::Revive()
 	{
 		level.total_monsters++;
 	}
+
+	// [ZZ] resurrect hook
+	E_WorldThingRevived(this);
 }
 
 int AActor::GetGibHealth() const

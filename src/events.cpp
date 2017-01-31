@@ -250,6 +250,15 @@ void E_WorldThingDied(AActor* actor, AActor* inflictor)
 		handler->WorldThingDied(actor, inflictor);
 }
 
+void E_WorldThingRevived(AActor* actor)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingRevived(actor);
+}
+
 void E_WorldThingDestroyed(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -399,6 +408,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLoaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
@@ -470,6 +480,20 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 		DWorldEvent* e = E_SetupWorldEvent();
 		e->Thing = actor;
 		e->Inflictor = inflictor;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::WorldThingRevived(AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingRevived)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldThingRevived_VMPtr)
+			return;
+		DWorldEvent* e = E_SetupWorldEvent();
+		e->Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}

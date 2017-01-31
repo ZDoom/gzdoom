@@ -29,6 +29,8 @@ void E_WorldUnloadedUnsafe();
 void E_WorldThingSpawned(AActor* actor);
 // called after AActor::Die of each actor.
 void E_WorldThingDied(AActor* actor, AActor* inflictor);
+// called after AActor::Revive.
+void E_WorldThingRevived(AActor* actor);
 // called before AActor::Destroy of each actor.
 void E_WorldThingDestroyed(AActor* actor);
 // same as ACS SCRIPT_Lightning
@@ -86,6 +88,7 @@ public:
 	virtual void WorldUnloaded();
 	virtual void WorldThingSpawned(AActor*);
 	virtual void WorldThingDied(AActor*, AActor*);
+	virtual void WorldThingRevived(AActor*);
 	virtual void WorldThingDestroyed(AActor*);
 	virtual void WorldLightning();
 	virtual void WorldTick();

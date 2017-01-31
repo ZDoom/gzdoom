@@ -119,15 +119,22 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 {
 	if (type == nullptr)
 	{
-		Printf("%cGWarning: unknown event handler class %s in MAPINFO!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		I_Error("Fatal: unknown event handler class %s in MAPINFO!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
 		return;
+
 	}
 
-	if (!E_IsStaticType(type))
+	if (E_IsStaticType(type) && map)
+	{
+		I_Error("Fatal: invalid event handler class %s in MAPINFO!\nMap-specific event handlers cannot be static.\n", typestring.GetChars());
+		return;
+	}
+	/*
+	if (!E_IsStaticType(type) && !map)
 	{
 		Printf("%cGWarning: invalid event handler class %s in MAPINFO!\nMAPINFO event handlers should inherit Static* directly!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
 		return;
-	}
+	}*/
 
 	// check if type already exists, don't add twice.
 	bool typeExists = false;
@@ -153,11 +160,21 @@ void E_InitStaticHandlers(bool map)
 
 	if (map) // don't initialize map handlers if restoring from savegame.
 	{
-		// delete old map static handlers if any.
+		// delete old handlers if any.
 		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		{
-			if (handler->IsStatic() && handler->isMapScope)
+			if (!handler->IsStatic())
 				handler->Destroy();
+		}
+
+		// load non-static handlers from gameinfo
+		for (unsigned int i = 0; i < gameinfo.EventHandlers.Size(); i++)
+		{
+			FString typestring = gameinfo.EventHandlers[i];
+			PClass* type = PClass::FindClass(typestring);
+			if (!type || E_IsStaticType(type)) // don't init the really global stuff here.
+				continue;
+			E_InitStaticHandler(type, typestring, false);
 		}
 
 		for (unsigned int i = 0; i < level.info->EventHandlers.Size(); i++)
@@ -180,6 +197,8 @@ void E_InitStaticHandlers(bool map)
 		{
 			FString typestring = gameinfo.EventHandlers[i];
 			PClass* type = PClass::FindClass(typestring);
+			if (!type || !E_IsStaticType(type)) // don't init map-local global stuff here.
+				continue;
 			E_InitStaticHandler(type, typestring, false);
 		}
 	}

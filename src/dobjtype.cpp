@@ -69,6 +69,7 @@ FNamespaceManager Namespaces;
 
 FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
+TArray<VMFunction**> PClass::FunctionPtrList;
 bool PClass::bShutdown;
 bool PClass::bVMOperational;
 
@@ -2840,6 +2841,12 @@ void PClass::StaticShutdown ()
 	TArray<size_t *> uniqueFPs(64);
 	unsigned int i, j;
 
+	// delete all variables containing pointers to script functions.
+	for (auto p : FunctionPtrList)
+	{
+		*p = nullptr;
+	}
+	FunctionPtrList.Clear();
 
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects that still exist can be properly taken down.
 	GC::FullGC();
@@ -3545,6 +3552,16 @@ VMFunction *PClass::FindFunction(FName clsname, FName funcname)
 	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
 	if (!func) return nullptr;
 	return func->Variants[0].Implementation;
+}
+
+void PClass::FindFunction(VMFunction **pptr, FName clsname, FName funcname)
+{
+	auto cls = PClass::FindActor(clsname);
+	if (!cls) return;
+	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+	if (!func) return;
+	*pptr = func->Variants[0].Implementation;
+	FunctionPtrList.Push(pptr);
 }
 
 

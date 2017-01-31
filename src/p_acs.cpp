@@ -6203,7 +6203,7 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &
 static void SetMarineWeapon(AActor *marine, int weapon)
 {
 	static VMFunction *smw = nullptr;
-	if (smw == nullptr) smw = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetWeapon);
+	if (smw == nullptr) PClass::FindFunction(&smw, NAME_ScriptedMarine, NAME_SetWeapon);
 	if (smw)
 	{
 		VMValue params[2] = { marine, weapon };
@@ -6214,7 +6214,7 @@ static void SetMarineWeapon(AActor *marine, int weapon)
 static void SetMarineSprite(AActor *marine, PClassActor *source)
 {
 	static VMFunction *sms = nullptr;
-	if (sms == nullptr) sms = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetSprite);
+	if (sms == nullptr) PClass::FindFunction(&sms, NAME_ScriptedMarine, NAME_SetSprite);
 	if (sms)
 	{
 		VMValue params[2] = { marine, source };

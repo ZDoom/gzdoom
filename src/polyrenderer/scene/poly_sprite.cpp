@@ -250,7 +250,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	
-	if (!swrenderer::r_swtruecolor)
+	if (!swrenderer::RenderViewport::Instance()->r_swtruecolor)
 	{
 		uint32_t r = (args.uniforms.color >> 16) & 0xff;
 		uint32_t g = (args.uniforms.color >> 8) & 0xff;

@@ -48,7 +48,8 @@ void PolyDrawArgs::SetTexture(FTexture *texture)
 {
 	textureWidth = texture->GetWidth();
 	textureHeight = texture->GetHeight();
-	if (swrenderer::r_swtruecolor)
+	auto viewport = swrenderer::RenderViewport::Instance();
+	if (viewport->r_swtruecolor)
 		texturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
 		texturePixels = texture->GetPixels();
@@ -62,7 +63,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool fo
 		FRemapTable *table = TranslationToTable(translationID);
 		if (table != nullptr && !table->Inactive)
 		{
-			if (swrenderer::r_swtruecolor)
+			if (swrenderer::RenderViewport::Instance()->r_swtruecolor)
 				translation = (uint8_t*)table->Palette;
 			else
 				translation = table->Remap;

@@ -45,9 +45,11 @@ namespace swrenderer
 {
 	WallSampler::WallSampler(int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
-		if (!r_swtruecolor)
+		if (!viewport->r_swtruecolor)
 		{
 			height = texture->GetHeight();
 
@@ -59,7 +61,7 @@ namespace swrenderer
 				// Find start uv in [0-base_height[ range.
 				// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
 				double uv_stepd = swal * yrepeat;
-				double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+				double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / height;
 				v = v - floor(v);
 				v *= height;
 				v *= (1 << uv_fracbits);
@@ -86,7 +88,7 @@ namespace swrenderer
 				col = width + (col % width);
 			}
 
-			if (r_swtruecolor)
+			if (viewport->r_swtruecolor)
 				source = (const uint8_t *)texture->GetColumnBgra(col, nullptr);
 			else
 				source = texture->GetColumn(col, nullptr);
@@ -98,7 +100,7 @@ namespace swrenderer
 		{
 			// Normalize to 0-1 range:
 			double uv_stepd = swal * yrepeat;
-			double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / texture->GetHeight();
+			double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / texture->GetHeight();
 			v = v - floor(v);
 			double v_step = uv_stepd / texture->GetHeight();
 
@@ -172,16 +174,18 @@ namespace swrenderer
 	{
 		if (r_dynlights && light_list)
 		{
+			auto viewport = RenderViewport::Instance();
+			
 			// Find column position in view space
 			float w1 = 1.0f / WallC.sz1;
 			float w2 = 1.0f / WallC.sz2;
 			float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
 			float wcol = w1 * (1.0f - t) + w2 * t;
 			float zcol = 1.0f / wcol;
-			drawerargs.dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
+			drawerargs.dc_viewpos.X = (float)((x + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
 			drawerargs.dc_viewpos.Y = zcol;
-			drawerargs.dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
-			drawerargs.dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
+			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y1 - 0.5) / viewport->InvZtoScale * zcol);
+			drawerargs.dc_viewpos_step.Z = (float)(-zcol / viewport->InvZtoScale);
 
 			static TriLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
@@ -236,7 +240,7 @@ namespace swrenderer
 			drawerargs.dc_num_lights = 0;
 		}
 
-		if (r_swtruecolor)
+		if (RenderViewport::Instance()->r_swtruecolor)
 		{
 			int count = y2 - y1;
 
@@ -320,7 +324,7 @@ namespace swrenderer
 			texturemid = 0;
 		}
 
-		drawerargs.dc_wall_fracbits = r_swtruecolor ? FRACBITS : fracbits;
+		drawerargs.dc_wall_fracbits = RenderViewport::Instance()->r_swtruecolor ? FRACBITS : fracbits;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);

@@ -41,7 +41,7 @@ namespace swrenderer
 {
 	SWPixelFormatDrawers *DrawerArgs::Drawers()
 	{
-		if (r_swtruecolor)
+		if (RenderViewport::Instance()->r_swtruecolor)
 		{
 			static SWTruecolorDrawers tc_drawers;
 			return &tc_drawers;
@@ -80,7 +80,7 @@ namespace swrenderer
 	{
 		if (mBaseColormap)
 		{
-			if (r_swtruecolor)
+			if (RenderViewport::Instance()->r_swtruecolor)
 				return mBaseColormap->Maps;
 			else
 				return mBaseColormap->Maps + (GETPALOOKUP(mLight, mShade) << COLORMAPSHIFT);
@@ -137,14 +137,17 @@ namespace swrenderer
 			ds_ybits--;
 		}
 
-		ds_source = r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		auto viewport = RenderViewport::Instance();
+		ds_source = viewport->r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
 	void SpriteDrawerArgs::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
-		if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
+		if (viewport->r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
 		{
 			DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
 			return;
@@ -156,7 +159,7 @@ namespace swrenderer
 
 		const FTexture::Span *span;
 		const BYTE *column;
-		if (r_swtruecolor && !drawer_needs_pal_input)
+		if (viewport->r_swtruecolor && !drawer_needs_pal_input)
 			column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
 			column = tex->GetColumn(col >> FRACBITS, &span);
@@ -171,7 +174,7 @@ namespace swrenderer
 			unmaskedSpan[1].Length = 0;
 		}
 
-		int pixelsize = r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
 
 		while (span->Length != 0)
 		{
@@ -500,6 +503,8 @@ namespace swrenderer
 		{
 			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
 		if (translation != -1)
 		{
@@ -509,7 +514,7 @@ namespace swrenderer
 				FRemapTable *table = TranslationToTable(translation);
 				if (table != NULL && !table->Inactive)
 				{
-					if (r_swtruecolor)
+					if (viewport->r_swtruecolor)
 						SetTranslationMap((uint8_t*)table->Palette);
 					else
 						SetTranslationMap(table->Remap);
@@ -585,8 +590,9 @@ namespace swrenderer
 
 	void WallDrawerArgs::SetDest(int x, int y)
 	{
-		int pixelsize = r_swtruecolor ? 4 : 1;
-		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
+		auto viewport = RenderViewport::Instance();
+		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}
 
@@ -719,14 +725,15 @@ namespace swrenderer
 
 	void SkyDrawerArgs::SetDest(int x, int y)
 	{
-		int pixelsize = r_swtruecolor ? 4 : 1;
-		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
+		auto viewport = RenderViewport::Instance();
+		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}
 
 	void SkyDrawerArgs::SetFrontTexture(FTexture *texture, uint32_t column)
 	{
-		if (r_swtruecolor)
+		if (RenderViewport::Instance()->r_swtruecolor)
 		{
 			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight = texture->GetHeight();
@@ -745,7 +752,7 @@ namespace swrenderer
 			dc_source2 = nullptr;
 			dc_sourceheight2 = 1;
 		}
-		else if (r_swtruecolor)
+		else if (RenderViewport::Instance()->r_swtruecolor)
 		{
 			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight2 = texture->GetHeight();
@@ -764,8 +771,9 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::SetDest(int x, int y)
 	{
-		int pixelsize = r_swtruecolor ? 4 : 1;
-		dc_dest = dc_destorg + (ylookup[y] + x) * pixelsize;
+		auto viewport = RenderViewport::Instance();
+		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}
 }

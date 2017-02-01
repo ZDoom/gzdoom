@@ -84,7 +84,7 @@ namespace swrenderer
 		double WallVis(double screenZ) const { return WallGlobVis() / screenZ; }
 		double SpriteVis(double screenZ) const { return WallGlobVis() / screenZ; }
 		double ParticleVis(double screenZ) const { return WallGlobVis() / screenZ; }
-		double FlatPlaneVis(int screenY, double planeZ) const { return FlatPlaneGlobVis() / fabs(planeZ - ViewPos.Z) * fabs(CenterY - screenY); }
+		double FlatPlaneVis(int screenY, double planeZ) const { return FlatPlaneGlobVis() / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
 
 	private:
 		double BaseVisibility = 0.0;

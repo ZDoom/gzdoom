@@ -34,8 +34,10 @@ namespace swrenderer
 
 	ProjectedWallCull ProjectedWallLine::Project(double z1, double z2, const FWallCoords *wallc)
 	{
-		float y1 = (float)(CenterY - z1 * InvZtoScale / wallc->sz1);
-		float y2 = (float)(CenterY - z2 * InvZtoScale / wallc->sz2);
+		auto viewport = RenderViewport::Instance();
+		
+		float y1 = (float)(viewport->CenterY - z1 * viewport->InvZtoScale / wallc->sz1);
+		float y2 = (float)(viewport->CenterY - z2 * viewport->InvZtoScale / wallc->sz2);
 
 		if (y1 < 0 && y2 < 0) // entire line is above screen
 		{
@@ -151,13 +153,15 @@ namespace swrenderer
 
 	void ProjectedWallTexcoords::Project(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
-		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
-		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+		auto viewport = RenderViewport::Instance();
+		
+		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
+		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float uGradient = WallT.UoverZstep;
 		float zGradient = WallT.InvZstep;
 		float xrepeat = (float)walxrepeat;
-		float depthScale = (float)(WallT.InvZstep * WallTMapScale2);
-		float depthOrg = (float)(-WallT.UoverZstep * WallTMapScale2);
+		float depthScale = (float)(WallT.InvZstep * viewport->WallTMapScale2);
+		float depthOrg = (float)(-WallT.UoverZstep * viewport->WallTMapScale2);
 
 		if (xrepeat < 0.0f)
 		{
@@ -189,8 +193,10 @@ namespace swrenderer
 
 	void ProjectedWallTexcoords::ProjectPos(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
-		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
-		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+		auto viewport = RenderViewport::Instance();
+		
+		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
+		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float uGradient = WallT.UoverZstep;
 		float zGradient = WallT.InvZstep;
 		float xrepeat = (float)walxrepeat;

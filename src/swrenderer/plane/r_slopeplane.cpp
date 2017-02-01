@@ -69,6 +69,8 @@ namespace swrenderer
 		{
 			return;
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
 		drawerargs.SetSolidColor(3);
 		drawerargs.SetTexture(texture);
@@ -124,13 +126,13 @@ namespace swrenderer
 		plane_sv = p ^ n;
 		plane_sz = m ^ n;
 
-		plane_su.Z *= FocalLengthX;
-		plane_sv.Z *= FocalLengthX;
-		plane_sz.Z *= FocalLengthX;
+		plane_su.Z *= viewport->FocalLengthX;
+		plane_sv.Z *= viewport->FocalLengthX;
+		plane_sz.Z *= viewport->FocalLengthX;
 
-		plane_su.Y *= IYaspectMul;
-		plane_sv.Y *= IYaspectMul;
-		plane_sz.Y *= IYaspectMul;
+		plane_su.Y *= viewport->IYaspectMul;
+		plane_sv.Y *= viewport->IYaspectMul;
+		plane_sz.Y *= viewport->IYaspectMul;
 
 		// Premultiply the texture vectors with the scale factors
 		plane_su *= 4294967296.f;

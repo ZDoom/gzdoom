@@ -120,11 +120,13 @@ namespace swrenderer
 					return;
 			}
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
-		double xscale = CenterX / tz;
+		double xscale = viewport->CenterX / tz;
 
 		// [RH] Reject sprites that are off the top or bottom of the screen
-		if (globaluclip * tz > ViewPos.Z - gzb || globaldclip * tz < ViewPos.Z - gzt)
+		if (viewport->globaluclip * tz > ViewPos.Z - gzb || viewport->globaldclip * tz < ViewPos.Z - gzt)
 		{
 			return;
 		}
@@ -160,7 +162,7 @@ namespace swrenderer
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
-		vis->yscale = float(InvZtoScale * yscale / tz);
+		vis->yscale = float(viewport->InvZtoScale * yscale / tz);
 		vis->idepth = float(1 / tz);
 		vis->floorclip = thing->Floorclip / yscale;
 		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
@@ -262,18 +264,20 @@ namespace swrenderer
 			xiscale = vis->xiscale;
 			double texturemid = vis->texturemid;
 
+			auto viewport = RenderViewport::Instance();
+
 			if (vis->renderflags & RF_YFLIP)
 			{
 				sprflipvert = true;
 				spryscale = -spryscale;
 				iscale = -iscale;
 				texturemid -= vis->pic->GetHeight();
-				sprtopscreen = CenterY + texturemid * spryscale;
+				sprtopscreen = viewport->CenterY + texturemid * spryscale;
 			}
 			else
 			{
 				sprflipvert = false;
-				sprtopscreen = CenterY - texturemid * spryscale;
+				sprtopscreen = viewport->CenterY - texturemid * spryscale;
 			}
 
 			int x = vis->x1;

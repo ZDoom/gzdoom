@@ -289,22 +289,24 @@ namespace swrenderer
 
 	void RenderPortal::RenderLinePortal(PortalDrawseg* pds, int depth)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
 		if (depth >= r_portal_recursions)
 		{
 			BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 0, 0, 0, 0, 255);
-			int spacing = RenderTarget->GetPitch();
+			int spacing = viewport->RenderTarget->GetPitch();
 			for (int x = pds->x1; x < pds->x2; x++)
 			{
-				if (x < 0 || x >= RenderTarget->GetWidth())
+				if (x < 0 || x >= viewport->RenderTarget->GetWidth())
 					continue;
 
 				int Ytop = pds->ceilingclip[x - pds->x1];
 				int Ybottom = pds->floorclip[x - pds->x1];
 
-				if (r_swtruecolor)
+				if (viewport->r_swtruecolor)
 				{
-					uint32_t *dest = (uint32_t*)RenderTarget->GetBuffer() + x + Ytop * spacing;
+					uint32_t *dest = (uint32_t*)viewport->RenderTarget->GetBuffer() + x + Ytop * spacing;
 
 					uint32_t c = GPalette.BaseColors[color].d;
 					for (int y = Ytop; y <= Ybottom; y++)
@@ -315,7 +317,7 @@ namespace swrenderer
 				}
 				else
 				{
-					BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
+					BYTE *dest = viewport->RenderTarget->GetBuffer() + x + Ytop * spacing;
 
 					for (int y = Ytop; y <= Ybottom; y++)
 					{
@@ -483,16 +485,18 @@ namespace swrenderer
 		// [ZZ] NO OVERFLOW CHECKS HERE
 		//      I believe it won't break. if it does, blame me. :(
 
-		if (r_swtruecolor) // Assuming this is just a debug function
+		auto viewport = RenderViewport::Instance();
+
+		if (viewport->r_swtruecolor) // Assuming this is just a debug function
 			return;
 
 		BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
 
-		BYTE* pixels = RenderTarget->GetBuffer();
+		BYTE* pixels = viewport->RenderTarget->GetBuffer();
 		// top edge
 		for (int x = pds->x1; x < pds->x2; x++)
 		{
-			if (x < 0 || x >= RenderTarget->GetWidth())
+			if (x < 0 || x >= viewport->RenderTarget->GetWidth())
 				continue;
 
 			int p = x - pds->x1;
@@ -501,7 +505,7 @@ namespace swrenderer
 
 			if (x == pds->x1 || x == pds->x2 - 1)
 			{
-				RenderTarget->DrawLine(x, Ytop, x, Ybottom + 1, color, 0);
+				viewport->RenderTarget->DrawLine(x, Ytop, x, Ybottom + 1, color, 0);
 				continue;
 			}
 
@@ -509,12 +513,12 @@ namespace swrenderer
 			int YbottomPrev = pds->floorclip[p - 1];
 
 			if (abs(Ytop - YtopPrev) > 1)
-				RenderTarget->DrawLine(x, YtopPrev, x, Ytop, color, 0);
-			else *(pixels + Ytop * RenderTarget->GetPitch() + x) = color;
+				viewport->RenderTarget->DrawLine(x, YtopPrev, x, Ytop, color, 0);
+			else *(pixels + Ytop * viewport->RenderTarget->GetPitch() + x) = color;
 
 			if (abs(Ybottom - YbottomPrev) > 1)
-				RenderTarget->DrawLine(x, YbottomPrev, x, Ybottom, color, 0);
-			else *(pixels + Ybottom * RenderTarget->GetPitch() + x) = color;
+				viewport->RenderTarget->DrawLine(x, YbottomPrev, x, Ybottom, color, 0);
+			else *(pixels + Ybottom * viewport->RenderTarget->GetPitch() + x) = color;
 		}
 	}
 	

@@ -136,11 +136,13 @@ namespace swrenderer
 
 		if (camera->player != NULL)
 		{
-			double centerhack = CenterY;
+			auto viewport = RenderViewport::Instance();
+			
+			double centerhack = viewport->CenterY;
 			double wx, wy;
 			float bobx, boby;
 
-			CenterY = viewheight / 2;
+			viewport->CenterY = viewheight / 2;
 
 			P_BobWeapon(camera->player, &bobx, &boby, r_TicFracF);
 
@@ -181,7 +183,7 @@ namespace swrenderer
 				psp = psp->GetNext();
 			}
 
-			CenterY = centerhack;
+			viewport->CenterY = centerhack;
 		}
 	}
 
@@ -241,23 +243,25 @@ namespace swrenderer
 			sx += wx;
 			sy += wy;
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
 		double pspritexscale = centerxwide / 160.0;
-		double pspriteyscale = pspritexscale * YaspectMul;
+		double pspriteyscale = pspritexscale * viewport->YaspectMul;
 		double pspritexiscale = 1 / pspritexscale;
 
 		// calculate edges of the shape
 		tx = sx - BASEXCENTER;
 
 		tx -= tex->GetScaledLeftOffset();
-		x1 = xs_RoundToInt(CenterX + tx * pspritexscale);
+		x1 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 		// off the right side
 		if (x1 > viewwidth)
 			return;
 
 		tx += tex->GetScaledWidth();
-		x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
+		x2 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 		// off the left side
 		if (x2 <= 0)
@@ -270,14 +274,14 @@ namespace swrenderer
 
 		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 
-		if (camera->player && (RenderTarget != screen ||
-			viewheight == RenderTarget->GetHeight() ||
-			(RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
+		if (camera->player && (viewport->RenderTarget != screen ||
+			viewheight == viewport->RenderTarget->GetHeight() ||
+			(viewport->RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
 		{	// Adjust PSprite for fullscreen views
 			AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 			if (weapon != nullptr && weapon->YAdjust != 0)
 			{
-				if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
+				if (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight())
 				{
 					vis.texturemid -= weapon->YAdjust;
 				}
@@ -499,7 +503,7 @@ namespace swrenderer
 
 		// Check for hardware-assisted 2D. If it's available, and this sprite is not
 		// fuzzy, don't draw it until after the switch to 2D mode.
-		if (!noaccel && RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+		if (!noaccel && viewport->RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 		{
 			FRenderStyle style = vis.RenderStyle;
 			style.CheckFuzz();
@@ -599,6 +603,8 @@ namespace swrenderer
 		double spryscale = yscale;
 		bool sprflipvert = false;
 		fixed_t iscale = FLOAT2FIXED(1 / yscale);
+		
+		auto viewport = RenderViewport::Instance();
 
 		double sprtopscreen;
 		if (renderflags & RF_YFLIP)
@@ -606,12 +612,12 @@ namespace swrenderer
 			sprflipvert = true;
 			spryscale = -spryscale;
 			iscale = -iscale;
-			sprtopscreen = CenterY + (texturemid - pic->GetHeight()) * spryscale;
+			sprtopscreen = viewport->CenterY + (texturemid - pic->GetHeight()) * spryscale;
 		}
 		else
 		{
 			sprflipvert = false;
-			sprtopscreen = CenterY - texturemid * spryscale;
+			sprtopscreen = viewport->CenterY - texturemid * spryscale;
 		}
 
 		// clip to screen bounds

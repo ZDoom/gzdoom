@@ -48,6 +48,7 @@ namespace swrenderer
 {
 	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
+		auto viewport = RenderViewport::Instance();
 		RenderFogBoundary renderfog;
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
 		fixed_t *maskedtexturecol = nullptr;
@@ -209,12 +210,12 @@ namespace swrenderer
 			}
 
 			// [RH] Don't bother drawing segs that are completely offscreen
-			if (globaldclip * ds->sz1 < -textop && globaldclip * ds->sz2 < -textop)
+			if (viewport->globaldclip * ds->sz1 < -textop && viewport->globaldclip * ds->sz2 < -textop)
 			{ // Texture top is below the bottom of the screen
 				goto clearfog;
 			}
 
-			if (globaluclip * ds->sz1 > texheight - textop && globaluclip * ds->sz2 > texheight - textop)
+			if (viewport->globaluclip * ds->sz1 > texheight - textop && viewport->globaluclip * ds->sz2 > texheight - textop)
 			{ // Texture bottom is above the top of the screen
 				goto clearfog;
 			}
@@ -290,9 +291,9 @@ namespace swrenderer
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
 					double sprtopscreen;
 					if (sprflipvert)
-						sprtopscreen = CenterY + texturemid * spryscale;
+						sprtopscreen = viewport->CenterY + texturemid * spryscale;
 					else
-						sprtopscreen = CenterY - texturemid * spryscale;
+						sprtopscreen = viewport->CenterY - texturemid * spryscale;
 
 					columndrawerargs.DrawMaskedColumn(x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 

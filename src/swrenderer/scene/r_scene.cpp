@@ -68,30 +68,31 @@ namespace swrenderer
 
 	void RenderScene::RenderView(player_t *player)
 	{
-		RenderTarget = screen;
+		auto viewport = RenderViewport::Instance();
+		viewport->RenderTarget = screen;
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		RenderViewport::Instance()->SetViewport(width, height, trueratio);
+		viewport->SetViewport(width, height, trueratio);
 
-		if (r_swtruecolor != screen->IsBgra())
+		if (viewport->r_swtruecolor != screen->IsBgra())
 		{
-			r_swtruecolor = screen->IsBgra();
+			viewport->r_swtruecolor = screen->IsBgra();
 		}
 
 		if (r_clearbuffer != 0)
 		{
-			if (!r_swtruecolor)
+			if (!viewport->r_swtruecolor)
 			{
-				memset(RenderTarget->GetBuffer(), clearcolor, RenderTarget->GetPitch() * RenderTarget->GetHeight());
+				memset(viewport->RenderTarget->GetBuffer(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
 			else
 			{
 				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
-				int size = RenderTarget->GetPitch() * RenderTarget->GetHeight();
-				uint32_t *dest = (uint32_t *)RenderTarget->GetBuffer();
+				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
+				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetBuffer();
 				for (int i = 0; i < size; i++)
 					dest[i] = bgracolor;
 			}
@@ -102,7 +103,7 @@ namespace swrenderer
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
-		if (CameraLight::Instance()->realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+		if (CameraLight::Instance()->realfixedcolormap && viewport->r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
 		{
 			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->realfixedcolormap, screen);
 		}
@@ -187,7 +188,7 @@ namespace swrenderer
 
 		// If we don't want shadered colormaps, NULL it now so that the
 		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !r_swtruecolor)
+		if (!r_shadercolormaps && !RenderViewport::Instance()->r_swtruecolor)
 		{
 			CameraLight::Instance()->realfixedcolormap = NULL;
 		}
@@ -195,53 +196,56 @@ namespace swrenderer
 
 	void RenderScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		const bool savedviewactive = viewactive;
-		const bool savedoutputformat = r_swtruecolor;
+		const bool savedoutputformat = viewport->r_swtruecolor;
 
-		if (r_swtruecolor != canvas->IsBgra())
+		if (viewport->r_swtruecolor != canvas->IsBgra())
 		{
-			r_swtruecolor = canvas->IsBgra();
+			viewport->r_swtruecolor = canvas->IsBgra();
 		}
 
 		R_BeginDrawerCommands();
 
 		viewwidth = width;
-		RenderTarget = canvas;
-		bRenderingToCanvas = true;
+		viewport->RenderTarget = canvas;
+		viewport->bRenderingToCanvas = true;
 
 		R_SetWindow(12, width, height, height, true);
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
-		RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
+		viewport->SetViewport(width, height, WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
 
 		R_EndDrawerCommands();
 
-		RenderTarget = screen;
-		bRenderingToCanvas = false;
+		viewport->RenderTarget = screen;
+		viewport->bRenderingToCanvas = false;
 
 		R_ExecuteSetViewSize();
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
-		RenderViewport::Instance()->SetViewport(width, height, trueratio);
+		viewport->SetViewport(width, height, trueratio);
 		screen->Unlock();
 
 		viewactive = savedviewactive;
-		r_swtruecolor = savedoutputformat;
+		viewport->r_swtruecolor = savedoutputformat;
 	}
 
 	void RenderScene::ScreenResized()
 	{
-		RenderTarget = screen;
+		auto viewport = RenderViewport::Instance();
+		viewport->RenderTarget = screen;
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
-		RenderViewport::Instance()->SetViewport(SCREENWIDTH, SCREENHEIGHT, trueratio);
+		viewport->SetViewport(SCREENWIDTH, SCREENHEIGHT, trueratio);
 		screen->Unlock();
 	}
 

@@ -317,13 +317,15 @@ namespace swrenderer
 
 	void RenderDecal::DrawColumn(SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
-			sprtopscreen = CenterY + texturemid * spryscale;
+			sprtopscreen = viewport->CenterY + texturemid * spryscale;
 		else
-			sprtopscreen = CenterY - texturemid * spryscale;
+			sprtopscreen = viewport->CenterY - texturemid * spryscale;
 
 		drawerargs.DrawMaskedColumn(x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
 	}

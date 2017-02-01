@@ -59,7 +59,8 @@ namespace swrenderer
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-				if (RenderTarget == screen && (r_swtruecolor || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
+				auto viewport = RenderViewport::Instance();
+				if (viewport->RenderTarget == screen && (viewport->r_swtruecolor || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 				{
 					// Render everything fullbright. The copy to video memory will
 					// apply the special colormap, so it won't be restricted to the
@@ -105,7 +106,8 @@ namespace swrenderer
 
 		CurrentVisibility = vis;
 
-		if (FocalTangent == 0 || FocalLengthY == 0)
+		auto viewport = RenderViewport::Instance();
+		if (FocalTangent == 0 || viewport->FocalLengthY == 0)
 		{ // If r_visibility is called before the renderer is all set up, don't
 		  // divide by zero. This will be called again later, and the proper
 		  // values can be initialized then.
@@ -114,9 +116,9 @@ namespace swrenderer
 
 		BaseVisibility = vis;
 
-		MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * FocalTangent));
+		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * FocalTangent));
 		MaxVisForWall = 32767.0 / MaxVisForWall;
-		MaxVisForFloor = 32767.0 / (viewheight >> 2) * FocalLengthY / 160;
+		MaxVisForFloor = 32767.0 / (viewheight >> 2) * viewport->FocalLengthY / 160;
 
 		// Prevent overflow on walls
 		if (BaseVisibility < 0 && BaseVisibility < -MaxVisForWall)
@@ -126,7 +128,7 @@ namespace swrenderer
 		else
 			WallVisibility = BaseVisibility;
 
-		WallVisibility = (InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
+		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
 			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * FocalTangent);
 
 		// Prevent overflow on floors/ceilings. Note that the calculation of
@@ -140,7 +142,7 @@ namespace swrenderer
 		else
 			FloorVisibility = BaseVisibility;
 
-		FloorVisibility = 160.0 * FloorVisibility / FocalLengthY;
+		FloorVisibility = 160.0 * FloorVisibility / viewport->FocalLengthY;
 
 		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
 	}

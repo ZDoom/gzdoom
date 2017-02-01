@@ -169,11 +169,12 @@ namespace swrenderer
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)
 	{
 		RenderPortal *renderportal = RenderPortal::Instance();
+		auto viewport = RenderViewport::Instance();
 
 		uint32_t height = frontskytex->GetHeight();
 
 		double uv_stepd = skyiscale * yrepeat;
-		double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / height;
 		double v_step = uv_stepd / height;
 
 		uint32_t uv_pos = (uint32_t)(v * 0x01000000);
@@ -192,7 +193,7 @@ namespace swrenderer
 		}
 		else
 		{
-			ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+			ang = (skyangle + viewport->xtoviewangle[x]) ^ skyflip;
 		}
 		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
@@ -222,13 +223,14 @@ namespace swrenderer
 		}
 		else
 		{
+			auto viewport = RenderViewport::Instance();
 			double yrepeat = frontskytex->Scale.Y;
 			double scale = frontskytex->Scale.Y * skyscale;
 			double iscale = 1 / scale;
 			short drawheight = short(frontskytex->GetHeight() * scale);
-			double topfrac = fmod(skymid + iscale * (1 - CenterY), frontskytex->GetHeight());
+			double topfrac = fmod(skymid + iscale * (1 - viewport->CenterY), frontskytex->GetHeight());
 			if (topfrac < 0) topfrac += frontskytex->GetHeight();
-			double texturemid = topfrac - iscale * (1 - CenterY);
+			double texturemid = topfrac - iscale * (1 - viewport->CenterY);
 			DrawSkyColumnStripe(start_x, y1, y2, scale, texturemid, yrepeat);
 		}
 	}

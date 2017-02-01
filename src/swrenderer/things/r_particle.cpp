@@ -108,11 +108,13 @@ namespace swrenderer
 
 		if (x1 >= x2)
 			return;
+		
+		auto viewport = RenderViewport::Instance();
 
 		yscale = xscale; // YaspectMul is not needed for particles as they should always be square
 		ty = particle->Pos.Z - ViewPos.Z;
-		y1 = xs_RoundToInt(CenterY - (ty + psize) * yscale);
-		y2 = xs_RoundToInt(CenterY - (ty - psize) * yscale);
+		y1 = xs_RoundToInt(viewport->CenterY - (ty + psize) * yscale);
+		y2 = xs_RoundToInt(viewport->CenterY - (ty - psize) * yscale);
 
 		// Clip the particle now. Because it's a point and projected as its subsector is
 		// entered, we don't need to clip it to drawsegs like a normal sprite.
@@ -227,21 +229,23 @@ namespace swrenderer
 		// vis->renderflags holds translucency level (0-255)
 		fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
 		uint32_t alpha = fglevel * 256 / FRACUNIT;
+		
+		auto viewport = RenderViewport::Instance();
 
-		spacing = RenderTarget->GetPitch();
+		spacing = viewport->RenderTarget->GetPitch();
 
 		uint32_t fracstepx = PARTICLE_TEXTURE_SIZE * FRACUNIT / countbase;
 		uint32_t fracposx = fracstepx / 2;
 
 		RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
 
-		if (r_swtruecolor)
+		if (viewport->r_swtruecolor)
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
 					continue;
-				uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
+				uint32_t *dest = ylookup[yl] + x + (uint32_t*)viewport->dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 			}
 		}
@@ -251,7 +255,7 @@ namespace swrenderer
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
 					continue;
-				uint8_t *dest = ylookup[yl] + x + dc_destorg;
+				uint8_t *dest = ylookup[yl] + x + viewport->dc_destorg;
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 			}
 		}

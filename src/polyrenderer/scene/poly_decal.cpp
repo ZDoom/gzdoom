@@ -151,7 +151,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 
-	if (swrenderer::r_swtruecolor)
+	if (swrenderer::RenderViewport::Instance()->r_swtruecolor)
 	{
 		args.uniforms.color = 0xff000000 | decal->AlphaColor;
 	}

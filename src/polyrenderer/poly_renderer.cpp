@@ -53,47 +53,51 @@ PolyRenderer *PolyRenderer::Instance()
 void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
+	
+	auto viewport = RenderViewport::Instance();
 
-	swrenderer::RenderTarget = screen;
+	viewport->RenderTarget = screen;
 
-	bool saved_swtruecolor = r_swtruecolor;
-	r_swtruecolor = screen->IsBgra();
+	bool saved_swtruecolor = viewport->r_swtruecolor;
+	viewport->r_swtruecolor = screen->IsBgra();
 
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
 	int stHeight = gST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	RenderViewport::Instance()->SetViewport(width, height, trueratio);
+	viewport->SetViewport(width, height, trueratio);
 
 	RenderActorView(player->mo, false);
 
 	// Apply special colormap if the target cannot do it
 	CameraLight *cameraLight = CameraLight::Instance();
-	if (cameraLight->realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+	if (cameraLight->realfixedcolormap && viewport->r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
 	{
 		R_BeginDrawerCommands();
 		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->realfixedcolormap, screen);
 		R_EndDrawerCommands();
 	}
 
-	r_swtruecolor = saved_swtruecolor;
+	viewport->r_swtruecolor = saved_swtruecolor;
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
+	auto viewport = swrenderer::RenderViewport::Instance();
+	
 	const bool savedviewactive = viewactive;
-	const bool savedoutputformat = swrenderer::r_swtruecolor;
+	const bool savedoutputformat = viewport->r_swtruecolor;
 
 	viewwidth = width;
-	swrenderer::RenderTarget = canvas;
-	swrenderer::bRenderingToCanvas = true;
+	viewport->RenderTarget = canvas;
+	viewport->bRenderingToCanvas = true;
 	R_SetWindow(12, width, height, height, true);
-	swrenderer::RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
+	viewport->SetViewport(width, height, WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
-	swrenderer::r_swtruecolor = canvas->IsBgra();
+	viewport->r_swtruecolor = canvas->IsBgra();
 	
 	canvas->Lock(true);
 	
@@ -101,14 +105,14 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	
 	canvas->Unlock();
 
-	swrenderer::RenderTarget = screen;
-	swrenderer::bRenderingToCanvas = false;
+	viewport->RenderTarget = screen;
+	viewport->bRenderingToCanvas = false;
 	R_ExecuteSetViewSize();
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	swrenderer::RenderViewport::Instance()->SetViewport(width, height, WidescreenRatio);
+	viewport->SetViewport(width, height, WidescreenRatio);
 	viewactive = savedviewactive;
-	swrenderer::r_swtruecolor = savedoutputformat;
+	viewport->r_swtruecolor = savedoutputformat;
 }
 
 void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
@@ -157,8 +161,9 @@ void PolyRenderer::RenderRemainingPlayerSprites()
 void PolyRenderer::ClearBuffers()
 {
 	PolyVertexBuffer::Clear();
-	PolyStencilBuffer::Instance()->Clear(swrenderer::RenderTarget->GetWidth(), swrenderer::RenderTarget->GetHeight(), 0);
-	PolySubsectorGBuffer::Instance()->Resize(swrenderer::RenderTarget->GetPitch(), swrenderer::RenderTarget->GetHeight());
+	auto viewport = swrenderer::RenderViewport::Instance();
+	PolyStencilBuffer::Instance()->Clear(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), 0);
+	PolySubsectorGBuffer::Instance()->Resize(viewport->RenderTarget->GetPitch(), viewport->RenderTarget->GetHeight());
 	NextStencilValue = 0;
 	SeenLinePortals.clear();
 	SeenMirrors.clear();
@@ -167,8 +172,10 @@ void PolyRenderer::ClearBuffers()
 void PolyRenderer::SetSceneViewport()
 {
 	using namespace swrenderer;
+	
+	auto viewport = RenderViewport::Instance();
 
-	if (RenderTarget == screen) // Rendering to screen
+	if (viewport->RenderTarget == screen) // Rendering to screen
 	{
 		int height;
 		if (screenblocks >= 10)
@@ -177,11 +184,11 @@ void PolyRenderer::SetSceneViewport()
 			height = (screenblocks*SCREENHEIGHT / 10) & ~7;
 
 		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-		PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
+		PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, viewport->RenderTarget);
 	}
 	else // Rendering to camera texture
 	{
-		PolyTriangleDrawer::set_viewport(0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), RenderTarget);
+		PolyTriangleDrawer::set_viewport(0, 0, viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), viewport->RenderTarget);
 	}
 }
 

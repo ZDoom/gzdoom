@@ -1148,6 +1148,7 @@ namespace swrenderer
 		tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
 		
 		RenderPortal *renderportal = RenderPortal::Instance();
+		auto viewport = RenderViewport::Instance();
 
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
@@ -1161,7 +1162,7 @@ namespace swrenderer
 		{
 			if (tleft.X > tleft.Y) return true;	// left edge is off the right side
 			if (tleft.Y == 0) return true;
-			sx1 = xs_RoundToInt(CenterX + tleft.X * CenterX / tleft.Y);
+			sx1 = xs_RoundToInt(viewport->CenterX + tleft.X * viewport->CenterX / tleft.Y);
 			sz1 = tleft.Y;
 		}
 		else
@@ -1180,7 +1181,7 @@ namespace swrenderer
 		{
 			if (tright.X < -tright.Y) return true;	// right edge is off the left side
 			if (tright.Y == 0) return true;
-			sx2 = xs_RoundToInt(CenterX + tright.X * CenterX / tright.Y);
+			sx2 = xs_RoundToInt(viewport->CenterX + tright.X * viewport->CenterX / tright.Y);
 			sz2 = tright.Y;
 		}
 		else

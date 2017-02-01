@@ -184,6 +184,7 @@ namespace swrenderer
 	void RenderVoxel::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
 		auto sprite = this;
+		auto viewport = RenderViewport::Instance();
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
@@ -208,7 +209,7 @@ namespace swrenderer
 		double viewCos = view_angle.Sin();
 		double logmip = fabs((view_origin.X - sprite_origin.X) * viewCos - (view_origin.Y - sprite_origin.Y) * viewSin);
 		int miplevel = 0;
-		while (miplevel < voxel->NumMips - 1 && logmip >= FocalLengthX)
+		while (miplevel < voxel->NumMips - 1 && logmip >= viewport->FocalLengthX)
 		{
 			logmip *= 0.5;
 			miplevel++;
@@ -313,6 +314,8 @@ namespace swrenderer
 
 	void RenderVoxel::FillBox(SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
+		auto viewport = RenderViewport::Instance();
+		
 		double viewX, viewY, viewZ;
 		if (viewspace)
 		{
@@ -333,17 +336,17 @@ namespace swrenderer
 		if (viewZ < 0.01f)
 			return;
 
-		double screenX = CenterX + viewX / viewZ * CenterX;
-		double screenY = CenterY - viewY / viewZ * InvZtoScale;
-		double screenExtentX = extentX / viewZ * CenterX;
-		double screenExtentY = pixelstretch ? screenExtentX * YaspectMul : screenExtentX;
+		double screenX = viewport->CenterX + viewX / viewZ * viewport->CenterX;
+		double screenY = viewport->CenterY - viewY / viewZ * viewport->InvZtoScale;
+		double screenExtentX = extentX / viewZ * viewport->CenterX;
+		double screenExtentY = pixelstretch ? screenExtentX * viewport->YaspectMul : screenExtentX;
 
 		int x1 = MAX((int)(screenX - screenExtentX), 0);
 		int x2 = MIN((int)(screenX + screenExtentX + 0.5f), viewwidth - 1);
 		int y1 = MAX((int)(screenY - screenExtentY), 0);
 		int y2 = MIN((int)(screenY + screenExtentY + 0.5f), viewheight - 1);
 
-		int pixelsize = r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
 
 		if (y1 < y2)
 		{

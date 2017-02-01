@@ -44,8 +44,6 @@ namespace swrenderer
 	#define PARTICLE_TEXTURE_SIZE 64
 	extern uint32_t particle_texture[PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
-	extern bool r_swtruecolor;
-
 	class SWPixelFormatDrawers
 	{
 	public:

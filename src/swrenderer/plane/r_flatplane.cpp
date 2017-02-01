@@ -78,9 +78,11 @@ namespace swrenderer
 		// left to right mapping
 		planeang += (ViewAngle - 90).Radians();
 
+		auto viewport = RenderViewport::Instance();
+
 		// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
-		xstep = cos(planeang) / FocalLengthX;
-		ystep = -sin(planeang) / FocalLengthX;
+		xstep = cos(planeang) / viewport->FocalLengthX;
+		ystep = -sin(planeang) / viewport->FocalLengthX;
 
 		// [RH] flip for mirrors
 		RenderPortal *renderportal = RenderPortal::Instance();
@@ -170,12 +172,14 @@ namespace swrenderer
 			drawerargs.SetTextureVStep(0);
 			drawerargs.SetTextureVPos(0);
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
-		if (r_swtruecolor)
+		if (viewport->r_swtruecolor)
 		{
 			double distance2 = planeheight * yslope[(y + 1 < viewheight) ? y + 1 : y - 1];
-			double xmagnitude = fabs(ystepscale * (distance2 - distance) * FocalLengthX);
-			double ymagnitude = fabs(xstepscale * (distance2 - distance) * FocalLengthX);
+			double xmagnitude = fabs(ystepscale * (distance2 - distance) * viewport->FocalLengthX);
+			double ymagnitude = fabs(xstepscale * (distance2 - distance) * viewport->FocalLengthX);
 			double magnitude = MAX(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
 			drawerargs.SetTextureLOD(MAX(log2(magnitude) + r_lod_bias, min_lod));
@@ -184,17 +188,17 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerargs.SetColorMapLight(basecolormap, (float)(GlobVis * fabs(CenterY - y)), planeshade);
+			drawerargs.SetColorMapLight(basecolormap, (float)(GlobVis * fabs(viewport->CenterY - y)), planeshade);
 		}
 
 		if (r_dynlights)
 		{
 			// Find row position in view space
-			float zspan = (float)(planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale));
-			drawerargs.dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
+			float zspan = (float)(planeheight / (fabs(y + 0.5 - viewport->CenterY) / viewport->InvZtoScale));
+			drawerargs.dc_viewpos.X = (float)((x1 + 0.5 - viewport->CenterX) / viewport->CenterX * zspan);
 			drawerargs.dc_viewpos.Y = zspan;
-			drawerargs.dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
-			drawerargs.dc_viewpos_step.X = (float)(zspan / CenterX);
+			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y - 0.5) / viewport->InvZtoScale * zspan);
+			drawerargs.dc_viewpos_step.X = (float)(zspan / viewport->CenterX);
 
 			static TriLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
@@ -202,7 +206,7 @@ namespace swrenderer
 			// Plane normal
 			drawerargs.dc_normal.X = 0.0f;
 			drawerargs.dc_normal.Y = 0.0f;
-			drawerargs.dc_normal.Z = (y >= CenterY) ? 1.0f : -1.0f;
+			drawerargs.dc_normal.Z = (y >= viewport->CenterY) ? 1.0f : -1.0f;
 
 			// Setup lights for row
 			drawerargs.dc_num_lights = 0;
@@ -266,13 +270,13 @@ namespace swrenderer
 
 	void RenderFlatPlane::SetupSlope()
 	{
-		int e, i;
+		auto viewport = RenderViewport::Instance();
 
-		i = 0;
-		e = viewheight;
-		float focus = float(FocalLengthY);
+		int i = 0;
+		int e = viewheight;
+		float focus = float(viewport->FocalLengthY);
 		float den;
-		float cy = float(CenterY);
+		float cy = float(viewport->CenterY);
 		if (i < centery)
 		{
 			den = cy - i - 0.5f;

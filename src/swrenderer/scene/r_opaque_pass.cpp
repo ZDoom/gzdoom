@@ -348,12 +348,14 @@ namespace swrenderer
 			rx2 = t;
 			swapvalues(ry1, ry2);
 		}
+		
+		auto viewport = RenderViewport::Instance();
 
 		if (rx1 >= -ry1)
 		{
 			if (rx1 > ry1) return false;	// left edge is off the right side
 			if (ry1 == 0) return false;
-			sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
+			sx1 = xs_RoundToInt(viewport->CenterX + rx1 * viewport->CenterX / ry1);
 		}
 		else
 		{
@@ -366,7 +368,7 @@ namespace swrenderer
 		{
 			if (rx2 < -ry2) return false;	// right edge is off the left side
 			if (ry2 == 0) return false;
-			sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
+			sx2 = xs_RoundToInt(viewport->CenterX + rx2 * viewport->CenterX / ry2);
 		}
 		else
 		{
@@ -810,9 +812,10 @@ namespace swrenderer
 
 	void RenderOpaquePass::ClearClip()
 	{
+		auto viewport = RenderViewport::Instance();
 		// clip ceiling to console bottom
 		fillshort(floorclip, viewwidth, viewheight);
-		fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
+		fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !viewport->bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
 	}
 
 	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap)

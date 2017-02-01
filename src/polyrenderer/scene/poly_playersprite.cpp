@@ -140,23 +140,25 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		sx += wx;
 		sy += wy;
 	}
+	
+	auto viewport = swrenderer::RenderViewport::Instance();
 
 	double pspritexscale = centerxwide / 160.0;
-	double pspriteyscale = pspritexscale * swrenderer::YaspectMul;
+	double pspriteyscale = pspritexscale * viewport->YaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
 	// calculate edges of the shape
 	double tx = sx - BaseXCenter;
 
 	tx -= tex->GetScaledLeftOffset();
-	int x1 = xs_RoundToInt(swrenderer::CenterX + tx * pspritexscale);
+	int x1 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
 	tx += tex->GetScaledWidth();
-	int x2 = xs_RoundToInt(swrenderer::CenterX + tx * pspritexscale);
+	int x2 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
@@ -165,12 +167,12 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	double texturemid = (BaseYCenter - sy) * tex->Scale.Y + tex->TopOffset;
 
 	// Adjust PSprite for fullscreen views
-	if (camera->player && (swrenderer::RenderTarget != screen || viewheight == swrenderer::RenderTarget->GetHeight() || (swrenderer::RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
+	if (camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
 	{
 		AWeapon *weapon = dyn_cast<AWeapon>(sprite->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
-			if (swrenderer::RenderTarget != screen || viewheight == swrenderer::RenderTarget->GetHeight())
+			if (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight())
 			{
 				texturemid -= weapon->YAdjust;
 			}
@@ -343,7 +345,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && swrenderer::RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && swrenderer::RenderViewport::Instance()->RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 	{
 		FRenderStyle style = RenderStyle;
 		style.CheckFuzz();

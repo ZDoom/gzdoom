@@ -38,32 +38,6 @@ CVAR(String, r_viewsize, "", CVAR_NOSET)
 
 namespace swrenderer
 {
-	bool r_swtruecolor;
-
-	fixed_t viewingrangerecip;
-	double FocalLengthX;
-	double FocalLengthY;
-
-	DCanvas *RenderTarget;
-	bool bRenderingToCanvas;
-	double globaluclip, globaldclip;
-	double CenterX, CenterY;
-	double YaspectMul;
-	double BaseYaspectMul; // yaspectmul without a forced aspect ratio
-	double IYaspectMul;
-	double InvZtoScale;
-
-	double WallTMapScale2;
-
-	uint8_t *dc_destorg;
-	int dc_destheight;
-	int dc_pitch;
-
-	// The xtoviewangleangle[] table maps a screen pixel
-	// to the lowest viewangle that maps back to x ranges
-	// from clipangle to -clipangle.
-	angle_t xtoviewangle[MAXWIDTH + 1];
-
 	RenderViewport *RenderViewport::Instance()
 	{
 		static RenderViewport instance;

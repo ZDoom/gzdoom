@@ -106,7 +106,7 @@ namespace swrenderer
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_fracbits = args.dc_wall_fracbits;
-		_pitch = dc_pitch;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 		_srcblend = args.dc_srcblend;
 		_destblend = args.dc_destblend;
 		_dynlights = args.dc_lights;
@@ -564,7 +564,7 @@ namespace swrenderer
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_count = args.Count();
-		_pitch = dc_pitch;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 		_source = args.FrontTexturePixels();
 		_source2 = args.BackTexturePixels();
 		_sourceheight[0] = args.FrontTextureHeight();
@@ -870,7 +870,7 @@ namespace swrenderer
 		_count = args.dc_count;
 		_dest = args.Dest();
 		_dest_y = args.DestY();
-		_pitch = dc_pitch;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 		_iscale = args.dc_iscale;
 		_texturefrac = args.dc_texturefrac;
 		_colormap = args.Colormap();
@@ -1767,8 +1767,8 @@ namespace swrenderer
 		_yl = args.dc_yl;
 		_yh = args.dc_yh;
 		_x = args.dc_x;
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
+		_destorg = RenderViewport::Instance()->dc_destorg;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}
@@ -1858,7 +1858,7 @@ namespace swrenderer
 		_y = args.DestY();
 		_x1 = args.DestX1();
 		_x2 = args.DestX2();
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_xstep = args.TextureUStep();
 		_ystep = args.TextureVStep();
 		_xbits = args.TextureWidthBits();
@@ -2628,7 +2628,7 @@ namespace swrenderer
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
 		_colormap = args.Colormap();
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_ybits = args.TextureHeightBits();
 		_xbits = args.TextureWidthBits();
 		_source = args.TexturePixels();
@@ -2873,7 +2873,7 @@ namespace swrenderer
 	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		color = args.SolidColor();
-		destorg = dc_destorg;
+		destorg = RenderViewport::Instance()->dc_destorg;
 	}
 
 	void DrawColoredSpanPalCommand::Execute(DrawerThread *thread)
@@ -2889,7 +2889,7 @@ namespace swrenderer
 	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		_colormap = args.Colormap();
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 	}
 
 	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)

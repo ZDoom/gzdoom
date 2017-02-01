@@ -72,8 +72,8 @@ namespace swrenderer
 		args.y = drawerargs.DestY();
 		args.xbits = drawerargs.TextureWidthBits();
 		args.ybits = drawerargs.TextureHeightBits();
-		args.destorg = (uint32_t*)dc_destorg;
-		args.destpitch = dc_pitch;
+		args.destorg = (uint32_t*)RenderViewport::Instance()->dc_destorg;
+		args.destpitch = RenderViewport::Instance()->dc_pitch;
 		args.source = (const uint32_t*)drawerargs.TexturePixels();
 		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
 		args.light_red = shade_constants.light_red;
@@ -186,7 +186,7 @@ namespace swrenderer
 		auto shade_constants = drawerargs.ColormapConstants();
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
-		args.pitch = dc_pitch;
+		args.pitch = RenderViewport::Instance()->dc_pitch;
 		args.count = drawerargs.dc_count;
 		args.texturefrac[0] = drawerargs.dc_texturefrac;
 		args.texturefracx[0] = drawerargs.dc_texturefracx;
@@ -256,7 +256,7 @@ namespace swrenderer
 		args.colormap = drawerargs.Colormap();
 		args.translation = drawerargs.TranslationMap();
 		args.basecolors = (const uint32_t *)GPalette.BaseColors;
-		args.pitch = dc_pitch;
+		args.pitch = RenderViewport::Instance()->dc_pitch;
 		args.count = drawerargs.dc_count;
 		args.dest_y = drawerargs.DestY();
 		args.iscale = drawerargs.dc_iscale;
@@ -307,7 +307,7 @@ namespace swrenderer
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
 		args.count = drawerargs.Count();
-		args.pitch = dc_pitch;
+		args.pitch = RenderViewport::Instance()->dc_pitch;
 		args.texturefrac[0] = drawerargs.TextureVPos();
 		args.iscale[0] = drawerargs.TextureVStep();
 		args.source0[0] = (const uint32_t *)drawerargs.FrontTexturePixels();
@@ -331,8 +331,8 @@ namespace swrenderer
 		_x = drawerargs.dc_x;
 		_yl = drawerargs.dc_yl;
 		_yh = drawerargs.dc_yh;
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
+		_destorg = RenderViewport::Instance()->dc_destorg;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}
@@ -439,7 +439,7 @@ namespace swrenderer
 		_x1 = drawerargs.DestX1();
 		_x2 = drawerargs.DestX2();
 		_y = drawerargs.DestY();
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -470,7 +470,7 @@ namespace swrenderer
 		_x = x;
 		_x2 = x2;
 
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 	}
@@ -537,7 +537,7 @@ namespace swrenderer
 		_x1 = x1;
 		_x2 = x2;
 		_y = y;
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 		_plane_sz = plane_sz;
@@ -672,7 +672,7 @@ namespace swrenderer
 		_x1 = x1;
 		_x2 = x2;
 
-		_destorg = dc_destorg;
+		_destorg = RenderViewport::Instance()->dc_destorg;
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -709,8 +709,8 @@ namespace swrenderer
 		_color = color;
 		_a = a;
 
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
+		_destorg = RenderViewport::Instance()->dc_destorg;
+		_pitch = RenderViewport::Instance()->dc_pitch;
 	}
 
 	void FillTransColumnRGBACommand::Execute(DrawerThread *thread)

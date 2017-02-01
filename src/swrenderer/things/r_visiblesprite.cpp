@@ -149,8 +149,10 @@ namespace swrenderer
 		// killough 3/27/98:
 		// Clip the sprite against deep water and/or fake ceilings.
 		// [RH] rewrote this to be based on which part of the sector is really visible
+		
+		auto viewport = RenderViewport::Instance();
 
-		double scale = InvZtoScale * spr->idepth;
+		double scale = viewport->InvZtoScale * spr->idepth;
 		double hzb = DBL_MIN, hzt = DBL_MAX;
 
 		if (spr->IsVoxel() && spr->floorclip != 0)
@@ -163,7 +165,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
 				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 				{ // seen below floor: clip top
@@ -185,7 +187,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 			{
 				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 				{ // seen above ceiling: clip bottom
@@ -209,7 +211,7 @@ namespace swrenderer
 		else if (!spr->IsVoxel() && spr->floorclip)
 		{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
 		  //int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid - (spr->pic->GetHeight() << FRACBITS) + spr->floorclip, spr->yscale)) >> FRACBITS);
-			int clip = xs_RoundToInt(CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
+			int clip = xs_RoundToInt(viewport->CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
 			if (clip < botclip)
 			{
 				botclip = MAX<short>(0, clip);
@@ -229,7 +231,7 @@ namespace swrenderer
 						hz = spr->fakefloor->bottom.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
 				if (h < botclip)
 				{
 					botclip = MAX<short>(0, h);
@@ -250,7 +252,7 @@ namespace swrenderer
 						hz = spr->fakeceiling->top.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
 				if (h > topclip)
 				{
 					topclip = short(MIN(h, viewheight));

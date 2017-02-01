@@ -147,7 +147,9 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
-	r_swtruecolor = IsBgra();
+	auto viewport = RenderViewport::Instance();
+	
+	viewport->r_swtruecolor = IsBgra();
 
 	if (APART(parms.colorOverlay) != 0)
 	{
@@ -165,7 +167,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
 		// Note that this overrides DTA_Translation in software, but not in hardware.
-		if (!r_swtruecolor)
+		if (!viewport->r_swtruecolor)
 		{
 			FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255, 255, 255),
 				parms.colorOverlay & MAKEARGB(0, 255, 255, 255), 0);
@@ -174,7 +176,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	}
 	else if (parms.remap != NULL)
 	{
-		if (r_swtruecolor)
+		if (viewport->r_swtruecolor)
 			translation = (const BYTE*)parms.remap->Palette;
 		else
 			translation = parms.remap->Remap;
@@ -188,7 +190,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	}
 	else
 	{
-		if (r_swtruecolor)
+		if (viewport->r_swtruecolor)
 			drawerargs.SetTranslationMap(nullptr);
 		else
 			drawerargs.SetTranslationMap(identitymap);
@@ -196,16 +198,16 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
-	if (r_swtruecolor)
+	if (viewport->r_swtruecolor)
 		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
 		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
-
-	BYTE *destorgsave = dc_destorg;
-	int destheightsave = dc_destheight;
-	dc_destorg = screen->GetBuffer();
-	dc_destheight = screen->GetHeight();
-	if (dc_destorg == NULL)
+	
+	BYTE *destorgsave = viewport->dc_destorg;
+	int destheightsave = viewport->dc_destheight;
+	viewport->dc_destorg = screen->GetBuffer();
+	viewport->dc_destheight = screen->GetHeight();
+	if (viewport->dc_destorg == NULL)
 	{
 		I_FatalError("Attempt to write to buffer of hardware canvas");
 	}
@@ -215,8 +217,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (visible)
 	{
-		double centeryback = CenterY;
-		CenterY = 0;
+		double centeryback = viewport->CenterY;
+		viewport->CenterY = 0;
 
 		// There is not enough precision in the drawing routines to keep the full
 		// precision for y0. :(
@@ -292,11 +294,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			frac += xiscale_i;
 		}
 
-		CenterY = centeryback;
+		viewport->CenterY = centeryback;
 	}
 
-	dc_destorg = destorgsave;
-	dc_destheight = destheightsave;
+	viewport->dc_destorg = destorgsave;
+	viewport->dc_destheight = destheightsave;
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
@@ -1367,10 +1369,12 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	{
 		return;
 	}
+	
+	auto viewport = RenderViewport::Instance();
 
-	BYTE *destorgsave = dc_destorg;
-	dc_destorg = screen->GetBuffer();
-	if (dc_destorg == NULL)
+	BYTE *destorgsave = viewport->dc_destorg;
+	viewport->dc_destorg = screen->GetBuffer();
+	if (viewport->dc_destorg == NULL)
 	{
 		I_FatalError("Attempt to write to buffer of hardware canvas");
 	}
@@ -1497,7 +1501,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt1 = pt2;
 		pt2--;			if (pt2 < 0) pt2 = npoints;
 	} while (pt1 != botpt);
-	dc_destorg = destorgsave;
+	viewport->dc_destorg = destorgsave;
 #endif
 }
 

@@ -18,26 +18,6 @@
 
 namespace swrenderer
 {
-	extern DCanvas *RenderTarget;
-	extern bool bRenderingToCanvas;
-	extern fixed_t viewingrangerecip;
-	extern double FocalLengthX;
-	extern double FocalLengthY;
-	extern double InvZtoScale;
-	extern double WallTMapScale2;
-	extern double CenterX;
-	extern double CenterY;
-	extern double YaspectMul;
-	extern double IYaspectMul;
-	extern bool r_swtruecolor;
-	extern double globaluclip;
-	extern double globaldclip;
-	extern angle_t xtoviewangle[MAXWIDTH + 1];
-
-	extern uint8_t *dc_destorg;
-	extern int dc_destheight;
-	extern int dc_pitch;
-
 	class RenderViewport
 	{
 	public:
@@ -45,9 +25,35 @@ namespace swrenderer
 
 		void SetViewport(int width, int height, float trueratio);
 		void SetupFreelook();
+		
+		DCanvas *RenderTarget = nullptr;
+		bool bRenderingToCanvas = false;
+		fixed_t viewingrangerecip = 0;
+		double FocalLengthX = 0.0;
+		double FocalLengthY = 0.0;
+		double InvZtoScale = 0.0;
+		double WallTMapScale2 = 0.0;
+		double CenterX = 0.0;
+		double CenterY = 0.0;
+		double YaspectMul = 0.0;
+		double IYaspectMul = 0.0;
+		bool r_swtruecolor = false;
+		double globaluclip = 0.0;
+		double globaldclip = 0.0;
+		
+		// The xtoviewangleangle[] table maps a screen pixel
+		// to the lowest viewangle that maps back to x ranges
+		// from clipangle to -clipangle.
+		angle_t xtoviewangle[MAXWIDTH + 1];
+
+		uint8_t *dc_destorg = nullptr;
+		int dc_destheight = 0;
+		int dc_pitch = 0;
 
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();
+		
+		double BaseYaspectMul = 0.0; // yaspectmul without a forced aspect ratio
 	};
 }

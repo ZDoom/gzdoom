@@ -41,7 +41,7 @@ namespace swrenderer
 {
 	SWPixelFormatDrawers *DrawerArgs::Drawers()
 	{
-		if (RenderViewport::Instance()->r_swtruecolor)
+		if (RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			static SWTruecolorDrawers tc_drawers;
 			return &tc_drawers;
@@ -80,7 +80,7 @@ namespace swrenderer
 	{
 		if (mBaseColormap)
 		{
-			if (RenderViewport::Instance()->r_swtruecolor)
+			if (RenderViewport::Instance()->RenderTarget->IsBgra())
 				return mBaseColormap->Maps;
 			else
 				return mBaseColormap->Maps + (GETPALOOKUP(mLight, mShade) << COLORMAPSHIFT);
@@ -138,7 +138,7 @@ namespace swrenderer
 		}
 
 		auto viewport = RenderViewport::Instance();
-		ds_source = viewport->r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		ds_source = viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
@@ -147,7 +147,7 @@ namespace swrenderer
 		auto viewport = RenderViewport::Instance();
 		
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
-		if (viewport->r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
+		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
 		{
 			DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
 			return;
@@ -159,7 +159,7 @@ namespace swrenderer
 
 		const FTexture::Span *span;
 		const BYTE *column;
-		if (viewport->r_swtruecolor && !drawer_needs_pal_input)
+		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
 			column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
 			column = tex->GetColumn(col >> FRACBITS, &span);
@@ -174,7 +174,7 @@ namespace swrenderer
 			unmaskedSpan[1].Length = 0;
 		}
 
-		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 
 		while (span->Length != 0)
 		{
@@ -514,7 +514,7 @@ namespace swrenderer
 				FRemapTable *table = TranslationToTable(translation);
 				if (table != NULL && !table->Inactive)
 				{
-					if (viewport->r_swtruecolor)
+					if (viewport->RenderTarget->IsBgra())
 						SetTranslationMap((uint8_t*)table->Palette);
 					else
 						SetTranslationMap(table->Remap);
@@ -591,7 +591,7 @@ namespace swrenderer
 	void WallDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}
@@ -726,14 +726,14 @@ namespace swrenderer
 	void SkyDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}
 
 	void SkyDrawerArgs::SetFrontTexture(FTexture *texture, uint32_t column)
 	{
-		if (RenderViewport::Instance()->r_swtruecolor)
+		if (RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight = texture->GetHeight();
@@ -752,7 +752,7 @@ namespace swrenderer
 			dc_source2 = nullptr;
 			dc_sourceheight2 = 1;
 		}
-		else if (RenderViewport::Instance()->r_swtruecolor)
+		else if (RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight2 = texture->GetHeight();
@@ -772,7 +772,7 @@ namespace swrenderer
 	void SpriteDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
 		dc_dest_y = y;
 	}

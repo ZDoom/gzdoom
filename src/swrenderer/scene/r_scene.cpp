@@ -77,14 +77,9 @@ namespace swrenderer
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(width, height, trueratio);
 
-		if (viewport->r_swtruecolor != screen->IsBgra())
-		{
-			viewport->r_swtruecolor = screen->IsBgra();
-		}
-
 		if (r_clearbuffer != 0)
 		{
-			if (!viewport->r_swtruecolor)
+			if (!viewport->RenderTarget->IsBgra())
 			{
 				memset(viewport->RenderTarget->GetBuffer(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
@@ -103,7 +98,7 @@ namespace swrenderer
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
-		if (CameraLight::Instance()->realfixedcolormap && viewport->r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+		if (CameraLight::Instance()->realfixedcolormap && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
 			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->realfixedcolormap, screen);
 		}
@@ -188,7 +183,7 @@ namespace swrenderer
 
 		// If we don't want shadered colormaps, NULL it now so that the
 		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !RenderViewport::Instance()->r_swtruecolor)
+		if (!r_shadercolormaps && !RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			CameraLight::Instance()->realfixedcolormap = NULL;
 		}
@@ -199,12 +194,6 @@ namespace swrenderer
 		auto viewport = RenderViewport::Instance();
 		
 		const bool savedviewactive = viewactive;
-		const bool savedoutputformat = viewport->r_swtruecolor;
-
-		if (viewport->r_swtruecolor != canvas->IsBgra())
-		{
-			viewport->r_swtruecolor = canvas->IsBgra();
-		}
 
 		R_BeginDrawerCommands();
 
@@ -233,7 +222,6 @@ namespace swrenderer
 		screen->Unlock();
 
 		viewactive = savedviewactive;
-		viewport->r_swtruecolor = savedoutputformat;
 	}
 
 	void RenderScene::ScreenResized()

@@ -239,7 +239,7 @@ namespace swrenderer
 
 		RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
 
-		if (viewport->r_swtruecolor)
+		if (viewport->RenderTarget->IsBgra())
 		{
 			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 			{

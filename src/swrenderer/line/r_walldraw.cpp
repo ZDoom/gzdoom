@@ -49,7 +49,7 @@ namespace swrenderer
 		
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
-		if (!viewport->r_swtruecolor)
+		if (!viewport->RenderTarget->IsBgra())
 		{
 			height = texture->GetHeight();
 
@@ -88,7 +88,7 @@ namespace swrenderer
 				col = width + (col % width);
 			}
 
-			if (viewport->r_swtruecolor)
+			if (viewport->RenderTarget->IsBgra())
 				source = (const uint8_t *)texture->GetColumnBgra(col, nullptr);
 			else
 				source = texture->GetColumn(col, nullptr);
@@ -240,7 +240,7 @@ namespace swrenderer
 			drawerargs.dc_num_lights = 0;
 		}
 
-		if (RenderViewport::Instance()->r_swtruecolor)
+		if (RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			int count = y2 - y1;
 
@@ -324,7 +324,7 @@ namespace swrenderer
 			texturemid = 0;
 		}
 
-		drawerargs.dc_wall_fracbits = RenderViewport::Instance()->r_swtruecolor ? FRACBITS : fracbits;
+		drawerargs.dc_wall_fracbits = RenderViewport::Instance()->RenderTarget->IsBgra() ? FRACBITS : fracbits;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);

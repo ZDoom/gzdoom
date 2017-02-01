@@ -89,7 +89,6 @@ void FSoftwareRenderer::Init()
 {
 	gl_ParseDefs();
 
-	RenderViewport::Instance()->r_swtruecolor = screen->IsBgra();
 	RenderScene::Instance()->Init();
 }
 
@@ -251,8 +250,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 {
 	auto viewport = RenderViewport::Instance();
 	
-	BYTE *Pixels = viewport->r_swtruecolor ? (BYTE*)tex->GetPixelsBgra() : (BYTE*)tex->GetPixels();
-	DSimpleCanvas *Canvas = viewport->r_swtruecolor ? tex->GetCanvasBgra() : tex->GetCanvas();
+	BYTE *Pixels = viewport->RenderTarget->IsBgra() ? (BYTE*)tex->GetPixelsBgra() : (BYTE*)tex->GetPixels();
+	DSimpleCanvas *Canvas = viewport->RenderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
@@ -291,7 +290,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		}
 	}
 
-	if (viewport->r_swtruecolor)
+	if (viewport->RenderTarget->IsBgra())
 	{
 		// True color render still sometimes uses palette textures (for sprites, mostly).
 		// We need to make sure that both pixel buffers contain data:

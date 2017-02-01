@@ -58,9 +58,6 @@ void PolyRenderer::RenderView(player_t *player)
 
 	viewport->RenderTarget = screen;
 
-	bool saved_swtruecolor = viewport->r_swtruecolor;
-	viewport->r_swtruecolor = screen->IsBgra();
-
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
 	int stHeight = gST_Y;
@@ -72,14 +69,12 @@ void PolyRenderer::RenderView(player_t *player)
 
 	// Apply special colormap if the target cannot do it
 	CameraLight *cameraLight = CameraLight::Instance();
-	if (cameraLight->realfixedcolormap && viewport->r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+	if (cameraLight->realfixedcolormap && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 	{
 		R_BeginDrawerCommands();
 		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->realfixedcolormap, screen);
 		R_EndDrawerCommands();
 	}
-
-	viewport->r_swtruecolor = saved_swtruecolor;
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
@@ -87,7 +82,6 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	auto viewport = swrenderer::RenderViewport::Instance();
 	
 	const bool savedviewactive = viewactive;
-	const bool savedoutputformat = viewport->r_swtruecolor;
 
 	viewwidth = width;
 	viewport->RenderTarget = canvas;
@@ -97,7 +91,6 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
-	viewport->r_swtruecolor = canvas->IsBgra();
 	
 	canvas->Lock(true);
 	
@@ -112,7 +105,6 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	ActiveRatio(width, height, &trueratio);
 	viewport->SetViewport(width, height, WidescreenRatio);
 	viewactive = savedviewactive;
-	viewport->r_swtruecolor = savedoutputformat;
 }
 
 void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)

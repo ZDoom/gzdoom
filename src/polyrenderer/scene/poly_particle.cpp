@@ -90,7 +90,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	uint32_t alpha = (uint32_t)clamp(particle->alpha * 255.0f + 0.5f, 0.0f, 255.0f);
 
-	if (swrenderer::RenderViewport::Instance()->r_swtruecolor)
+	if (swrenderer::RenderViewport::Instance()->RenderTarget->IsBgra())
 	{
 		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
 	}

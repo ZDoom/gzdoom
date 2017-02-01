@@ -175,7 +175,7 @@ namespace swrenderer
 		
 		auto viewport = RenderViewport::Instance();
 
-		if (viewport->r_swtruecolor)
+		if (viewport->RenderTarget->IsBgra())
 		{
 			double distance2 = planeheight * yslope[(y + 1 < viewheight) ? y + 1 : y - 1];
 			double xmagnitude = fabs(ystepscale * (distance2 - distance) * viewport->FocalLengthX);

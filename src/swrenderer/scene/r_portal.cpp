@@ -304,7 +304,7 @@ namespace swrenderer
 				int Ytop = pds->ceilingclip[x - pds->x1];
 				int Ybottom = pds->floorclip[x - pds->x1];
 
-				if (viewport->r_swtruecolor)
+				if (viewport->RenderTarget->IsBgra())
 				{
 					uint32_t *dest = (uint32_t*)viewport->RenderTarget->GetBuffer() + x + Ytop * spacing;
 
@@ -487,7 +487,7 @@ namespace swrenderer
 
 		auto viewport = RenderViewport::Instance();
 
-		if (viewport->r_swtruecolor) // Assuming this is just a debug function
+		if (viewport->RenderTarget->IsBgra()) // Assuming this is just a debug function
 			return;
 
 		BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);

@@ -60,7 +60,7 @@ namespace swrenderer
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
 				auto viewport = RenderViewport::Instance();
-				if (viewport->RenderTarget == screen && (viewport->r_swtruecolor || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
+				if (viewport->RenderTarget == screen && (viewport->RenderTarget->IsBgra() || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 				{
 					// Render everything fullbright. The copy to video memory will
 					// apply the special colormap, so it won't be restricted to the

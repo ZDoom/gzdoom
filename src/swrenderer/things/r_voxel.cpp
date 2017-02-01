@@ -251,17 +251,19 @@ namespace swrenderer
 		double dy = (view_origin.Y - sprite_origin.Y) / sprite_xscale;
 		int backX = (int)(dx * spriteCos - dy * spriteSin + mip.Pivot.X);
 		int backY = (int)(dy * spriteCos + dx * spriteSin + mip.Pivot.Y);
-		int endX = clamp(backX, 0, mip.SizeX - 1);
-		int endY = clamp(backY, 0, mip.SizeY - 1);
-		
+		//int endX = clamp(backX, 0, mip.SizeX - 1);
+		//int endY = clamp(backY, 0, mip.SizeY - 1);
+		int endX = mip.SizeX - 1;// clamp(backX, 0, mip.SizeX - 1);
+		int endY = mip.SizeY - 1;// clamp(backY, 0, mip.SizeY - 1);
+
 		// Draw the voxel cube:
 		
-		for (int index = 0; index < 4; index++)
+		for (int index = 0; index < 1; index++)
 		{
-			if ((stepX[index] < 0 && endX >= startX[index]) ||
+			/*if ((stepX[index] < 0 && endX >= startX[index]) ||
 			    (stepX[index] > 0 && endX <= startX[index]) ||
 			    (stepY[index] < 0 && endY >= startY[index]) ||
-			    (stepY[index] > 0 && endY <= startY[index])) continue;
+			    (stepY[index] > 0 && endY <= startY[index])) continue;*/
 		
 			for (int x = startX[index]; x != endX; x += stepX[index])
 			{
@@ -346,7 +348,7 @@ namespace swrenderer
 		int y1 = MAX((int)(screenY - screenExtentY), 0);
 		int y2 = MIN((int)(screenY + screenExtentY + 0.5f), viewheight - 1);
 
-		int pixelsize = viewport->r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 
 		if (y1 < y2)
 		{

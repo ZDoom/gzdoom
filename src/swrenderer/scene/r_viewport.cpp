@@ -129,7 +129,7 @@ namespace swrenderer
 		static BYTE *lastbuff = NULL;
 
 		int pitch = RenderTarget->GetPitch();
-		int pixelsize = r_swtruecolor ? 4 : 1;
+		int pixelsize = RenderTarget->IsBgra() ? 4 : 1;
 		BYTE *lineptr = RenderTarget->GetBuffer() + (viewwindowy*pitch + viewwindowx) * pixelsize;
 
 		if (dc_pitch != pitch || lineptr != lastbuff)

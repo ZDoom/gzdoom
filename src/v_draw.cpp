@@ -149,7 +149,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	auto viewport = RenderViewport::Instance();
 	
-	viewport->r_swtruecolor = IsBgra();
+	viewport->RenderTarget = screen;
 
 	if (APART(parms.colorOverlay) != 0)
 	{
@@ -167,7 +167,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
 		// Note that this overrides DTA_Translation in software, but not in hardware.
-		if (!viewport->r_swtruecolor)
+		if (!viewport->RenderTarget->IsBgra())
 		{
 			FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255, 255, 255),
 				parms.colorOverlay & MAKEARGB(0, 255, 255, 255), 0);
@@ -176,7 +176,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	}
 	else if (parms.remap != NULL)
 	{
-		if (viewport->r_swtruecolor)
+		if (viewport->RenderTarget->IsBgra())
 			translation = (const BYTE*)parms.remap->Palette;
 		else
 			translation = parms.remap->Remap;
@@ -190,7 +190,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	}
 	else
 	{
-		if (viewport->r_swtruecolor)
+		if (viewport->RenderTarget->IsBgra())
 			drawerargs.SetTranslationMap(nullptr);
 		else
 			drawerargs.SetTranslationMap(identitymap);
@@ -198,7 +198,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
-	if (viewport->r_swtruecolor)
+	if (viewport->RenderTarget->IsBgra())
 		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	else
 		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);

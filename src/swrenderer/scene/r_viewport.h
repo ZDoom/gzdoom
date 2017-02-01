@@ -37,7 +37,6 @@ namespace swrenderer
 		double CenterY = 0.0;
 		double YaspectMul = 0.0;
 		double IYaspectMul = 0.0;
-		bool r_swtruecolor = false;
 		double globaluclip = 0.0;
 		double globaldclip = 0.0;
 		

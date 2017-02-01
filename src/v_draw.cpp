@@ -203,13 +203,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	else
 		visible = drawerargs.SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
 	
-	BYTE *destorgsave = viewport->dc_destorg;
-	viewport->dc_destorg = screen->GetBuffer();
-	if (viewport->dc_destorg == NULL)
-	{
-		I_FatalError("Attempt to write to buffer of hardware canvas");
-	}
-
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
 
@@ -294,8 +287,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		viewport->CenterY = centeryback;
 	}
-
-	viewport->dc_destorg = destorgsave;
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
@@ -1369,13 +1360,6 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	
 	auto viewport = RenderViewport::Instance();
 
-	BYTE *destorgsave = viewport->dc_destorg;
-	viewport->dc_destorg = screen->GetBuffer();
-	if (viewport->dc_destorg == NULL)
-	{
-		I_FatalError("Attempt to write to buffer of hardware canvas");
-	}
-
 	scalex /= tex->Scale.X;
 	scaley /= tex->Scale.Y;
 
@@ -1498,7 +1482,6 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt1 = pt2;
 		pt2--;			if (pt2 < 0) pt2 = npoints;
 	} while (pt1 != botpt);
-	viewport->dc_destorg = destorgsave;
 #endif
 }
 

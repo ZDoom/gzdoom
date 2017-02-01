@@ -72,7 +72,7 @@ namespace swrenderer
 		args.y = drawerargs.DestY();
 		args.xbits = drawerargs.TextureWidthBits();
 		args.ybits = drawerargs.TextureHeightBits();
-		args.destorg = (uint32_t*)RenderViewport::Instance()->dc_destorg;
+		args.destorg = (uint32_t*)RenderViewport::Instance()->GetDest(0, 0);
 		args.destpitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		args.source = (const uint32_t*)drawerargs.TexturePixels();
 		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
@@ -331,7 +331,7 @@ namespace swrenderer
 		_x = drawerargs.dc_x;
 		_yl = drawerargs.dc_yl;
 		_yh = drawerargs.dc_yh;
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_destorg = RenderViewport::Instance()->GetDest(0, 0);
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
@@ -348,7 +348,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + (uint32_t*)_destorg);
+		uint32_t *dest = thread->dest_for_thread(yl, _pitch, _pitch * yl + _x + (uint32_t*)_destorg);
 
 		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
@@ -439,7 +439,7 @@ namespace swrenderer
 		_x1 = drawerargs.DestX1();
 		_x2 = drawerargs.DestX2();
 		_y = drawerargs.DestY();
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -449,7 +449,7 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+		uint32_t *dest = (uint32_t*)_dest;
 		int count = (_x2 - _x1 + 1);
 		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
@@ -470,7 +470,7 @@ namespace swrenderer
 		_x = x;
 		_x2 = x2;
 
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_line = RenderViewport::Instance()->GetDest(0, y);
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 	}
@@ -484,7 +484,7 @@ namespace swrenderer
 		int x = _x;
 		int x2 = _x2;
 
-		uint32_t *dest = ylookup[y] + (uint32_t*)_destorg;
+		uint32_t *dest = (uint32_t*)_line;
 
 		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants constants = _shade_constants;
@@ -537,7 +537,7 @@ namespace swrenderer
 		_x1 = x1;
 		_x2 = x2;
 		_y = y;
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 		_plane_sz = plane_sz;
@@ -568,7 +568,7 @@ namespace swrenderer
 		int source_width = 1 << _xbits;
 		int source_height = 1 << _ybits;
 
-		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+		uint32_t *dest = (uint32_t*)_dest;
 		int count = _x2 - _x1 + 1;
 
 		// Depth (Z) change across the span
@@ -672,7 +672,7 @@ namespace swrenderer
 		_x1 = x1;
 		_x2 = x2;
 
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -686,7 +686,7 @@ namespace swrenderer
 		int x1 = _x1;
 		int x2 = _x2;
 
-		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)_destorg;
+		uint32_t *dest = (uint32_t*)_dest;
 		int count = (x2 - x1 + 1);
 		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
@@ -709,7 +709,7 @@ namespace swrenderer
 		_color = color;
 		_a = a;
 
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_destorg = RenderViewport::Instance()->GetDest(0, 0);
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 	}
 
@@ -738,7 +738,7 @@ namespace swrenderer
 		fg_blue *= alpha;
 
 		int spacing = _pitch * thread->num_cores;
-		uint32_t *dest = thread->dest_for_thread(y1, _pitch, ylookup[y1] + x + (uint32_t*)_destorg);
+		uint32_t *dest = thread->dest_for_thread(y1, _pitch, _pitch * y1 + x + (uint32_t*)_destorg);
 
 		for (int y = 0; y < ycount; y++)
 		{

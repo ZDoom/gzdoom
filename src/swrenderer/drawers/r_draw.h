@@ -25,7 +25,6 @@ namespace swrenderer
 	class SpanDrawerArgs;
 	class SpriteDrawerArgs;
 
-	extern int ylookup[MAXHEIGHT];
 	extern uint8_t shadetables[/*NUMCOLORMAPS*16*256*/];
 	extern FDynamicColormap ShadeFakeColormap[16];
 	extern uint8_t identitymap[256];

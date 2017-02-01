@@ -57,7 +57,6 @@ CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {
-	int ylookup[MAXHEIGHT];
 	uint8_t shadetables[NUMCOLORMAPS * 16 * 256];
 	FDynamicColormap ShadeFakeColormap[16];
 	uint8_t identitymap[256];

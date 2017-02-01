@@ -44,7 +44,7 @@ namespace swrenderer
 		// from clipangle to -clipangle.
 		angle_t xtoviewangle[MAXWIDTH + 1];
 
-		uint8_t *dc_destorg = nullptr;
+		uint8_t *GetDest(int x, int y);
 
 		bool RenderingToCanvas() const { return RenderTarget != screen; }
 

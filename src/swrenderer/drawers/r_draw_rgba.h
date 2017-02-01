@@ -211,7 +211,7 @@ namespace swrenderer
 		int _x1;
 		int _x2;
 		int _y;
-		uint8_t * RESTRICT _destorg;
+		uint8_t * RESTRICT _dest;
 		fixed_t _light;
 		int _color;
 
@@ -226,7 +226,7 @@ namespace swrenderer
 		int _y;
 		int _x;
 		int _x2;
-		uint8_t * RESTRICT _destorg;
+		uint8_t * RESTRICT _line;
 		fixed_t _light;
 		ShadeConstants _shade_constants;
 
@@ -241,7 +241,7 @@ namespace swrenderer
 		int _x1;
 		int _x2;
 		int _y;
-		uint8_t * RESTRICT _destorg;
+		uint8_t * RESTRICT _dest;
 		fixed_t _light;
 		ShadeConstants _shade_constants;
 		FVector3 _plane_sz;
@@ -267,7 +267,7 @@ namespace swrenderer
 		int _y;
 		int _x1;
 		int _x2;
-		uint8_t * RESTRICT _destorg;
+		uint8_t * RESTRICT _dest;
 		fixed_t _light;
 		int _color;
 

@@ -245,7 +245,7 @@ namespace swrenderer
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
 					continue;
-				uint32_t *dest = ylookup[yl] + x + (uint32_t*)viewport->dc_destorg;
+				uint32_t *dest = (uint32_t*)viewport->GetDest(x, yl);
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 			}
 		}
@@ -255,7 +255,7 @@ namespace swrenderer
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
 					continue;
-				uint8_t *dest = ylookup[yl] + x + viewport->dc_destorg;
+				uint8_t *dest = viewport->GetDest(x, yl);
 				DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 			}
 		}

@@ -126,19 +126,18 @@ namespace swrenderer
 
 	void RenderViewport::SetupBuffer()
 	{
+		R_InitFuzzTable(RenderTarget->GetPitch());
+		R_InitParticleTexture();
+	}
+
+	uint8_t *RenderViewport::GetDest(int x, int y)
+	{
+		x += viewwindowx;
+		y += viewwindowy;
+
 		int pitch = RenderTarget->GetPitch();
 		int pixelsize = RenderTarget->IsBgra() ? 4 : 1;
-		BYTE *lineptr = RenderTarget->GetBuffer() + (viewwindowy*pitch + viewwindowx) * pixelsize;
-
-		R_InitFuzzTable(pitch);
-
-		dc_destorg = lineptr;
-		for (int i = 0; i < RenderTarget->GetHeight(); i++)
-		{
-			ylookup[i] = i * pitch;
-		}
-
-		R_InitParticleTexture();
+		return RenderTarget->GetBuffer() + (x + y * pitch) * pixelsize;
 	}
 
 	void RenderViewport::InitTextureMapping()

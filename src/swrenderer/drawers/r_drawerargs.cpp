@@ -591,8 +591,7 @@ namespace swrenderer
 	void WallDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
-		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
+		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
 	}
 
@@ -726,8 +725,7 @@ namespace swrenderer
 	void SkyDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
-		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
+		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
 	}
 
@@ -772,8 +770,7 @@ namespace swrenderer
 	void SpriteDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();
-		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
-		dc_dest = viewport->dc_destorg + (ylookup[y] + x) * pixelsize;
+		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
 	}
 }

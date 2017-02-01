@@ -140,7 +140,7 @@ namespace swrenderer
 		int _y;
 		int _x1;
 		int _x2;
-		uint8_t *_destorg;
+		uint8_t *_dest;
 		dsfixed_t _xstep;
 		dsfixed_t _ystep;
 		int _xbits;
@@ -187,7 +187,7 @@ namespace swrenderer
 		fixed_t pviewy;
 
 		const uint8_t *_colormap;
-		uint8_t *_destorg;
+		uint8_t *_dest;
 		int _ybits;
 		int _xbits;
 		const uint8_t *_source;
@@ -206,7 +206,7 @@ namespace swrenderer
 		int x1;
 		int x2;
 		int color;
-		uint8_t *destorg;
+		uint8_t *dest;
 	};
 
 	class DrawFogBoundaryLinePalCommand : public PalSpanCommand
@@ -218,7 +218,7 @@ namespace swrenderer
 	private:
 		int y, x1, x2;
 		const uint8_t *_colormap;
-		uint8_t *_destorg;
+		uint8_t *_dest;
 	};
 	
 	class DrawParticleColumnPalCommand : public DrawerCommand

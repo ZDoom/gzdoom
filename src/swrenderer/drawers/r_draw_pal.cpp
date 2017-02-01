@@ -1767,7 +1767,7 @@ namespace swrenderer
 		_yl = args.dc_yl;
 		_yh = args.dc_yh;
 		_x = args.dc_x;
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_destorg = RenderViewport::Instance()->GetDest(0, 0);
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
@@ -1786,7 +1786,7 @@ namespace swrenderer
 
 		uint8_t *map = &NormalLight.Maps[6 * 256];
 
-		uint8_t *dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + _destorg);
+		uint8_t *dest = thread->dest_for_thread(yl, _pitch, yl * _pitch + _x + _destorg);
 
 		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
@@ -1858,7 +1858,7 @@ namespace swrenderer
 		_y = args.DestY();
 		_x1 = args.DestX1();
 		_x2 = args.DestX2();
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
 		_xstep = args.TextureUStep();
 		_ystep = args.TextureVStep();
 		_xbits = args.TextureWidthBits();
@@ -1942,7 +1942,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2030,7 +2030,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2104,7 +2104,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2227,7 +2227,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2368,7 +2368,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2491,7 +2491,7 @@ namespace swrenderer
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
-		dest = ylookup[_y] + _x1 + _destorg;
+		dest = _dest;
 
 		count = _x2 - _x1 + 1;
 
@@ -2619,7 +2619,7 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		memset(ylookup[_y] + _x1 + _destorg, _color, _x2 - _x1 + 1);
+		memset(_dest, _color, _x2 - _x1 + 1);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -2628,7 +2628,7 @@ namespace swrenderer
 		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
 		_colormap = args.Colormap();
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(x1, y);
 		_ybits = args.TextureHeightBits();
 		_xbits = args.TextureWidthBits();
 		_source = args.TexturePixels();
@@ -2668,7 +2668,7 @@ namespace swrenderer
 		uz = plane_su[2] + plane_su[1] * (centery - y) + plane_su[0] * (x1 - centerx);
 		vz = plane_sv[2] + plane_sv[1] * (centery - y) + plane_sv[0] * (x1 - centerx);
 
-		fb = ylookup[y] + x1 + _destorg;
+		fb = _dest;
 
 		uint8_t vshift = 32 - _ybits;
 		uint8_t ushift = vshift - _xbits;
@@ -2873,7 +2873,7 @@ namespace swrenderer
 	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		color = args.SolidColor();
-		destorg = RenderViewport::Instance()->dc_destorg;
+		dest = RenderViewport::Instance()->GetDest(x1, y);
 	}
 
 	void DrawColoredSpanPalCommand::Execute(DrawerThread *thread)
@@ -2881,7 +2881,7 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(y))
 			return;
 
-		memset(ylookup[y] + x1 + destorg, color, x2 - x1 + 1);
+		memset(_dest, color, x2 - x1 + 1);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -2889,7 +2889,7 @@ namespace swrenderer
 	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		_colormap = args.Colormap();
-		_destorg = RenderViewport::Instance()->dc_destorg;
+		_dest = RenderViewport::Instance()->GetDest(x1, y);
 	}
 
 	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)
@@ -2898,7 +2898,7 @@ namespace swrenderer
 			return;
 
 		const uint8_t *colormap = _colormap;
-		uint8_t *dest = ylookup[y] + _destorg;
+		uint8_t *dest = _dest;
 		int x = x1;
 		do
 		{

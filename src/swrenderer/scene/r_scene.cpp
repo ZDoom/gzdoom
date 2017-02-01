@@ -199,7 +199,6 @@ namespace swrenderer
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
-		viewport->bRenderingToCanvas = true;
 
 		R_SetWindow(12, width, height, height, true);
 		viewwindowx = x;
@@ -212,7 +211,6 @@ namespace swrenderer
 		R_EndDrawerCommands();
 
 		viewport->RenderTarget = screen;
-		viewport->bRenderingToCanvas = false;
 
 		R_ExecuteSetViewSize();
 		float trueratio;

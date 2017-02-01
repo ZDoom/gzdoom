@@ -27,7 +27,6 @@ namespace swrenderer
 		void SetupFreelook();
 		
 		DCanvas *RenderTarget = nullptr;
-		bool bRenderingToCanvas = false;
 		fixed_t viewingrangerecip = 0;
 		double FocalLengthX = 0.0;
 		double FocalLengthY = 0.0;
@@ -46,6 +45,8 @@ namespace swrenderer
 		angle_t xtoviewangle[MAXWIDTH + 1];
 
 		uint8_t *dc_destorg = nullptr;
+
+		bool RenderingToCanvas() const { return RenderTarget != screen; }
 
 	private:
 		void InitTextureMapping();

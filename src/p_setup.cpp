@@ -2978,6 +2978,15 @@ static bool P_VerifyBlockMap(int count)
 					break;
 			}
 
+			// there's some node builder which carelessly removed the initial 0-entry.
+			// Rather than second-guessing the intent, let's just discard such blockmaps entirely
+			// to be on the safe side.
+			if (*list != 0)
+			{
+				Printf(PRINT_HIGH, "P_VerifyBlockMap: first entry is not 0.\n");
+				return false;
+			}
+
 			// scan the list for out-of-range linedef indicies in list
 			for(tmplist = list; *tmplist != -1; tmplist++)
 			{

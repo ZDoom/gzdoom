@@ -1012,7 +1012,7 @@ void gl_RenderModel(GLSprite * spr)
 	// Model space => World space
 	gl_RenderState.mModelMatrix.translate(spr->x, spr->z, spr->y );	
 
-	if (spr->actor->renderflags & RF_INTERPOLATE)
+	if (spr->actor->renderflags & RF_INTERPOLATEANGLES)
 	{
 		// [Nash] use interpolated angles
 		DRotator Angles = spr->actor->InterpolatedAngles(r_TicFracF);

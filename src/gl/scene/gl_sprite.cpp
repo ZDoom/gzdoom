@@ -738,7 +738,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
-	if (thing->renderflags & RF_INTERPOLATE)
+	if (thing->renderflags & RF_INTERPOLATEANGLES)
 		Angles = thing->InterpolatedAngles(r_TicFracF);
 	else
 		Angles = thing->Angles;

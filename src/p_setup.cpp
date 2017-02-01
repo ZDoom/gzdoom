@@ -2540,7 +2540,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 	case Sector_Set3DFloor:
 		if (msd->toptexture[0]=='#')
 		{
-			sd->SetTexture(side_t::top, FNullTextureID() +(-strtol(&msd->toptexture[1], NULL, 10)));	// store the alpha as a negative texture index
+			sd->SetTexture(side_t::top, FNullTextureID() +(int)(-strtoll(&msd->toptexture[1], NULL, 10)));	// store the alpha as a negative texture index
 														// This will be sorted out by the 3D-floor code later.
 		}
 		else

@@ -103,7 +103,7 @@ loop:
 			c = *sourcep++;
 			if (c == 'x' || c == 'X')
 			{
-				yylval->val = (int)strtol(sourcep, &sourcep, 16);
+				yylval->val = (int)strtoll(sourcep, &sourcep, 16);
 				return TokenTrans[NUM];
 			}
 			else
@@ -114,7 +114,7 @@ loop:
 		char *endp;
 
 		sourcep--;
-		yylval->val = (int)strtol(sourcep, &endp, 10);
+		yylval->val = (int)strtoll(sourcep, &endp, 10);
 		if (*endp == '.')
 		{
 			// It's a float

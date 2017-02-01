@@ -554,12 +554,12 @@ bool FScanner::GetToken ()
 				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
 			{
 				TokenType = TK_UIntConst;
-				Number = strtoul(String, &stopper, 0);
+				Number = strtoull(String, &stopper, 0);
 				Float = (unsigned)Number;
 			}
 			else
 			{
-				Number = strtol(String, &stopper, 0);
+				Number = (int)strtoll(String, &stopper, 0);
 				Float = Number;
 			}
 		}
@@ -660,7 +660,7 @@ bool FScanner::GetNumber ()
 		}
 		else
 		{
-			Number = strtol (String, &stopper, 0);
+			Number = (int)strtoll (String, &stopper, 0);
 			if (*stopper != 0)
 			{
 				ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", String);
@@ -715,7 +715,7 @@ bool FScanner::CheckNumber ()
 		}
 		else
 		{
-			Number = strtol (String, &stopper, 0);
+			Number = (int)strtoll (String, &stopper, 0);
 			if (*stopper != 0)
 			{
 				UnGet();

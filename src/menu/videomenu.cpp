@@ -366,8 +366,8 @@ static bool GetSelectedSize (int *width, int *height)
 			char *breakpt;
 			if (it->GetString(FOptionMenuScreenResolutionLine::SRL_INDEX+hsel, buffer, sizeof(buffer)))
 			{
-				*width = strtol (buffer, &breakpt, 10);
-				*height = strtol (breakpt+1, NULL, 10);
+				*width = (int)strtoll (buffer, &breakpt, 10);
+				*height = (int)strtoll (breakpt+1, NULL, 10);
 				return true;
 			}
 		}

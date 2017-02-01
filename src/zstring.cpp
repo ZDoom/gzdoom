@@ -1104,12 +1104,12 @@ digits		= [0-9];
 
 long FString::ToLong (int base) const
 {
-	return strtol (Chars, NULL, base);
+	return (long)strtoll (Chars, NULL, base);
 }
 
 unsigned long FString::ToULong (int base) const
 {
-	return strtoul (Chars, NULL, base);
+	return (unsigned long)strtoull (Chars, NULL, base);
 }
 
 double FString::ToDouble () const

@@ -1086,12 +1086,12 @@ static void ReadArrayVars (FSerializer &file, FWorldGlobalArray *vars, size_t co
 		const char *arraykey;
 		while ((arraykey = file.GetKey()))
 		{
-			int i = (int)strtol(arraykey, nullptr, 10);
+			int i = (int)strtoll(arraykey, nullptr, 10);
 			if (file.BeginObject(nullptr))
 			{
 				while ((arraykey = file.GetKey()))
 				{
-					int k = (int)strtol(arraykey, nullptr, 10);
+					int k = (int)strtoll(arraykey, nullptr, 10);
 					int val;
 					file(nullptr, val);
 					vars[i].Insert(k, val);

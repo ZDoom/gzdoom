@@ -1437,7 +1437,7 @@ class CommandDrawNumber : public CommandDrawString
 				{
 					// num = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem) / TICRATE + 1;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
+					if (func == nullptr) PClass::FindFunction(&func, NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
 					int retv;
 					VMReturn ret(&retv);
@@ -2830,7 +2830,7 @@ class CommandDrawBar : public SBarInfoCommand
 					// [value, max] = statusBar.CPlayer.mo.GetEffectTicsForItem(inventoryItem);
 					// value++; max++;
 					static VMFunction *func = nullptr;
-					if (func == nullptr) func = PClass::FindFunction(NAME_PlayerPawn, "GetEffectTicsForItem");
+					if (func == nullptr) PClass::FindFunction(&func, NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, data.inventoryItem };
 					VMReturn ret[2];
 					int ival;

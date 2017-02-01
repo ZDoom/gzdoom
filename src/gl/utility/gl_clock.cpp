@@ -40,6 +40,8 @@
 #include <intrin.h>
 
 #define USE_WINDOWS_DWORD
+#elif defined __APPLE__
+#include <sys/sysctl.h>
 #endif
 
 #include "i_system.h"
@@ -113,6 +115,15 @@ void gl_CalculateCPUSpeed ()
 				(double)((__int64)count2.QuadPart - (__int64)count1.QuadPart);
 			gl_SecondsPerCycle = 1.0 / CyclesPerSecond;
 			gl_MillisecPerCycle = 1000.0 / CyclesPerSecond;
+		}
+	#elif defined __APPLE__
+		long long frequency;
+		size_t size = sizeof frequency;
+
+		if (0 == sysctlbyname("machdep.tsc.frequency", &frequency, &size, nullptr, 0) && 0 != frequency)
+		{
+			gl_SecondsPerCycle = 1.0 / frequency;
+			gl_MillisecPerCycle = 1000.0 / frequency;
 		}
 	#endif
 }

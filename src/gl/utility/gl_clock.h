@@ -7,10 +7,10 @@
 
 extern bool gl_benching;
 
-#ifdef _MSC_VER
-
 extern double gl_SecondsPerCycle;
 extern double gl_MillisecPerCycle;
+
+#ifdef _MSC_VER
 
 __forceinline long long GetClockCycle ()
 {
@@ -21,10 +21,14 @@ __forceinline long long GetClockCycle ()
 #endif
 }
 
-#elif defined(__GNUG__) && defined(__i386__)
+#elif defined __APPLE__ && (defined __i386__ || defined __x86_64__)
 
-extern double gl_SecondsPerCycle;
-extern double gl_MillisecPerCycle;
+inline long long GetClockCycle()
+{
+	return __builtin_ia32_rdtsc();
+}
+
+#elif defined(__GNUG__) && defined(__i386__)
 
 inline long long GetClockCycle()
 {
@@ -42,20 +46,11 @@ inline long long GetClockCycle()
 
 #else
 
-extern double gl_SecondsPerCycle;
-extern double gl_MillisecPerCycle;
-
 inline long long GetClockCycle ()
 {
 	return 0;
 }
 #endif
-
-#if defined (__APPLE__)
-
-typedef cycle_t glcycle_t;
-
-#else // !__APPLE__
 
 class glcycle_t
 {
@@ -99,8 +94,6 @@ public:
 private:
 	long long Counter;
 };
-
-#endif // __APPLE__
 
 extern glcycle_t RenderWall,SetupWall,ClipWall;
 extern glcycle_t RenderFlat,SetupFlat;

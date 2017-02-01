@@ -478,7 +478,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		if (player->mo != NULL && player->health >= 0)
 		{
 			static VMFunction *gsp = nullptr;
-			if (gsp == nullptr) gsp = PClass::FindFunction(NAME_Sigil, NAME_GiveSigilPiece);
+			if (gsp == nullptr) PClass::FindFunction(&gsp, NAME_Sigil, NAME_GiveSigilPiece);
 			if (gsp)
 			{
 				VMValue params[1] = { player->mo };

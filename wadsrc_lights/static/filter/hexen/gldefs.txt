@@ -1345,7 +1345,7 @@ flickerlight2 FIREBULL
     attenuate 1
 	color 1.0 0.7 0.0
     size 96
-    secondarysize - 105
+    secondarysize 130
     interval 0.1
     offset 0 40 0
 }

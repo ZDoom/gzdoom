@@ -47,7 +47,6 @@ namespace swrenderer
 
 		uint8_t *dc_destorg = nullptr;
 		int dc_destheight = 0;
-		int dc_pitch = 0;
 
 	private:
 		void InitTextureMapping();

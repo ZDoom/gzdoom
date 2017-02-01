@@ -106,7 +106,7 @@ namespace swrenderer
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_fracbits = args.dc_wall_fracbits;
-		_pitch = RenderViewport::Instance()->dc_pitch;
+		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_srcblend = args.dc_srcblend;
 		_destblend = args.dc_destblend;
 		_dynlights = args.dc_lights;
@@ -564,7 +564,7 @@ namespace swrenderer
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_count = args.Count();
-		_pitch = RenderViewport::Instance()->dc_pitch;
+		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_source = args.FrontTexturePixels();
 		_source2 = args.BackTexturePixels();
 		_sourceheight[0] = args.FrontTextureHeight();
@@ -870,7 +870,7 @@ namespace swrenderer
 		_count = args.dc_count;
 		_dest = args.Dest();
 		_dest_y = args.DestY();
-		_pitch = RenderViewport::Instance()->dc_pitch;
+		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_iscale = args.dc_iscale;
 		_texturefrac = args.dc_texturefrac;
 		_colormap = args.Colormap();
@@ -1768,7 +1768,7 @@ namespace swrenderer
 		_yh = args.dc_yh;
 		_x = args.dc_x;
 		_destorg = RenderViewport::Instance()->dc_destorg;
-		_pitch = RenderViewport::Instance()->dc_pitch;
+		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}

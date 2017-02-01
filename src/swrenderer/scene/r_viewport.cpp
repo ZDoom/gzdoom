@@ -148,10 +148,6 @@ namespace swrenderer
 		FocalLengthX = CenterX / FocalTangent;
 		FocalLengthY = FocalLengthX * YaspectMul;
 
-		// This is 1/FocalTangent before the widescreen extension of FOV.
-		viewingrangerecip = FLOAT2FIXED(1. / tan(FieldOfView.Radians() / 2));
-
-
 		// Now generate xtoviewangle for sky texture mapping.
 		// [RH] Do not generate viewangletox, because texture mapping is no
 		// longer done with trig, so it's not needed.
@@ -166,5 +162,47 @@ namespace swrenderer
 		{
 			xtoviewangle[i] = 0 - xtoviewangle[viewwidth - i - 1];
 		}
+	}
+
+	DVector2 RenderViewport::PointWorldToView(const DVector2 &worldPos) const
+	{
+		double translatedX = worldPos.X - ViewPos.X;
+		double translatedY = worldPos.Y - ViewPos.Y;
+		return {
+			translatedX * ViewSin - translatedY * ViewCos,
+			translatedX * ViewTanCos + translatedY * ViewTanSin
+		};
+	}
+
+	DVector3 RenderViewport::PointWorldToView(const DVector3 &worldPos) const
+	{
+		double translatedX = worldPos.X - ViewPos.X;
+		double translatedY = worldPos.Y - ViewPos.Y;
+		double translatedZ = worldPos.Z - ViewPos.Z;
+		return {
+			translatedX * ViewSin - translatedY * ViewCos,
+			translatedZ,
+			translatedX * ViewTanCos + translatedY * ViewTanSin
+		};
+	}
+
+	DVector3 RenderViewport::PointWorldToScreen(const DVector3 &worldPos) const
+	{
+		return PointViewToScreen(PointWorldToView(worldPos));
+	}
+
+	DVector3 RenderViewport::PointViewToScreen(const DVector3 &viewPos) const
+	{
+		double screenX = CenterX + viewPos.X / viewPos.Z * CenterX;
+		double screenY = CenterY - viewPos.Y / viewPos.Z * InvZtoScale;
+		return { screenX, screenY, viewPos.Z };
+	}
+
+	DVector2 RenderViewport::ScaleViewToScreen(const DVector2 &scale, double viewZ, bool pixelstretch) const
+	{
+		double screenScaleX = scale.X / viewZ * CenterX;
+		double screenScaleY = scale.Y / viewZ * InvZtoScale;
+		if (!pixelstretch) screenScaleY /= YaspectMul;
+		return { screenScaleX, screenScaleY };
 	}
 }

@@ -27,7 +27,7 @@ namespace swrenderer
 		void SetupFreelook();
 		
 		DCanvas *RenderTarget = nullptr;
-		fixed_t viewingrangerecip = 0;
+
 		double FocalLengthX = 0.0;
 		double FocalLengthY = 0.0;
 		double InvZtoScale = 0.0;
@@ -47,6 +47,13 @@ namespace swrenderer
 		uint8_t *GetDest(int x, int y);
 
 		bool RenderingToCanvas() const { return RenderTarget != screen; }
+
+		DVector3 PointWorldToView(const DVector3 &worldPos) const;
+		DVector3 PointWorldToScreen(const DVector3 &worldPos) const;
+		DVector3 PointViewToScreen(const DVector3 &viewPos) const;
+
+		DVector2 PointWorldToView(const DVector2 &worldPos) const;
+		DVector2 ScaleViewToScreen(const DVector2 &scale, double viewZ, bool pixelstretch = true) const;
 
 	private:
 		void InitTextureMapping();

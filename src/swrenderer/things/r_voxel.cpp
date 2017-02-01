@@ -318,35 +318,18 @@ namespace swrenderer
 	{
 		auto viewport = RenderViewport::Instance();
 		
-		double viewX, viewY, viewZ;
-		if (viewspace)
-		{
-			viewX = origin.X;
-			viewY = origin.Y;
-			viewZ = origin.Z;
-		}
-		else // world space
-		{
-			double translatedX = origin.X - ViewPos.X;
-			double translatedY = origin.Y - ViewPos.Y;
-			double translatedZ = origin.Z - ViewPos.Z;
-			viewX = translatedX * ViewSin - translatedY * ViewCos;
-			viewY = translatedZ;
-			viewZ = translatedX * ViewTanCos + translatedY * ViewTanSin;
-		}
+		DVector3 viewPos = viewport->PointWorldToView(origin);
 
-		if (viewZ < 0.01f)
+		if (viewPos.Z < 0.01f)
 			return;
 
-		double screenX = viewport->CenterX + viewX / viewZ * viewport->CenterX;
-		double screenY = viewport->CenterY - viewY / viewZ * viewport->InvZtoScale;
-		double screenExtentX = extentX / viewZ * viewport->CenterX;
-		double screenExtentY = pixelstretch ? screenExtentX * viewport->YaspectMul : screenExtentX;
+		DVector3 screenPos = viewport->PointViewToScreen(viewPos);
+		DVector2 screenExtent = viewport->ScaleViewToScreen({ extentX, extentY }, viewPos.Z, pixelstretch);
 
-		int x1 = MAX((int)(screenX - screenExtentX), 0);
-		int x2 = MIN((int)(screenX + screenExtentX + 0.5f), viewwidth - 1);
-		int y1 = MAX((int)(screenY - screenExtentY), 0);
-		int y2 = MIN((int)(screenY + screenExtentY + 0.5f), viewheight - 1);
+		int x1 = MAX((int)(screenPos.X - screenExtent.X), 0);
+		int x2 = MIN((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
+		int y1 = MAX((int)(screenPos.Y - screenExtent.Y), 0);
+		int y2 = MIN((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
 
 		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 

@@ -133,7 +133,6 @@ namespace swrenderer
 		R_InitFuzzTable(pitch);
 
 		dc_destorg = lineptr;
-		dc_destheight = RenderTarget->GetHeight() - viewwindowy;
 		for (int i = 0; i < RenderTarget->GetHeight(); i++)
 		{
 			ylookup[i] = i * pitch;

@@ -46,7 +46,6 @@ namespace swrenderer
 		angle_t xtoviewangle[MAXWIDTH + 1];
 
 		uint8_t *dc_destorg = nullptr;
-		int dc_destheight = 0;
 
 	private:
 		void InitTextureMapping();

@@ -554,7 +554,7 @@ bool FScanner::GetToken ()
 				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
 			{
 				TokenType = TK_UIntConst;
-				Number = strtoull(String, &stopper, 0);
+				Number = (int)strtoull(String, &stopper, 0);
 				Float = (unsigned)Number;
 			}
 			else

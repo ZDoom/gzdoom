@@ -1356,7 +1356,8 @@ void G_FinishTravel ()
 	}
 
 	// [ZZ] fire the reopen hook.
-	if (level.FromSnapshot)
+	//      if level is loaded from snapshot, and we don't have savegamerestore, this means we returned from a hub.
+	if (level.FromSnapshot && !savegamerestore)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
 		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);

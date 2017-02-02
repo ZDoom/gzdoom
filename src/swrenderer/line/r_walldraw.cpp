@@ -244,14 +244,12 @@ namespace swrenderer
 		{
 			int count = y2 - y1;
 
-			drawerargs.dc_source = sampler.source;
-			drawerargs.dc_source2 = sampler.source2;
-			drawerargs.dc_texturefracx = sampler.texturefracx;
+			drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
+			drawerargs.SetTextureUPos(sampler.texturefracx);
 			drawerargs.SetDest(x, y1);
-			drawerargs.dc_count = count;
-			drawerargs.dc_iscale = sampler.uv_step;
-			drawerargs.dc_texturefrac = sampler.uv_pos;
-			drawerargs.dc_textureheight = sampler.height;
+			drawerargs.SetCount(count);
+			drawerargs.SetTextureVStep(sampler.uv_step);
+			drawerargs.SetTextureVPos(sampler.uv_pos);
 			drawerargs.DrawColumn();
 
 			uint64_t step64 = sampler.uv_step;
@@ -264,13 +262,12 @@ namespace swrenderer
 			{
 				int count = y2 - y1;
 
-				drawerargs.dc_source = sampler.source;
-				drawerargs.dc_source2 = sampler.source2;
-				drawerargs.dc_texturefracx = sampler.texturefracx;
+				drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
+				drawerargs.SetTextureUPos(sampler.texturefracx);
 				drawerargs.SetDest(x, y1);
-				drawerargs.dc_count = count;
-				drawerargs.dc_iscale = sampler.uv_step;
-				drawerargs.dc_texturefrac = sampler.uv_pos;
+				drawerargs.SetCount(count);
+				drawerargs.SetTextureVStep(sampler.uv_step);
+				drawerargs.SetTextureVPos(sampler.uv_pos);
 				drawerargs.DrawColumn();
 
 				uint64_t step64 = sampler.uv_step;
@@ -290,13 +287,12 @@ namespace swrenderer
 						next_uv_wrap++;
 					uint32_t count = MIN(left, next_uv_wrap);
 
-					drawerargs.dc_source = sampler.source;
-					drawerargs.dc_source2 = sampler.source2;
-					drawerargs.dc_texturefracx = sampler.texturefracx;
+					drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
+					drawerargs.SetTextureUPos(sampler.texturefracx);
 					drawerargs.SetDest(x, y1);
-					drawerargs.dc_count = count;
-					drawerargs.dc_iscale = sampler.uv_step;
-					drawerargs.dc_texturefrac = uv_pos;
+					drawerargs.SetCount(count);
+					drawerargs.SetTextureVStep(sampler.uv_step);
+					drawerargs.SetTextureVPos(uv_pos);
 					drawerargs.DrawColumn();
 
 					left -= count;
@@ -324,15 +320,15 @@ namespace swrenderer
 			texturemid = 0;
 		}
 
-		drawerargs.dc_wall_fracbits = RenderViewport::Instance()->RenderTarget->IsBgra() ? FRACBITS : fracbits;
+		drawerargs.SetTextureFracBits(RenderViewport::Instance()->RenderTarget->IsBgra() ? FRACBITS : fracbits);
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);
 
 		if (cameraLight->fixedcolormap)
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 		else
-			drawerargs.SetColorMapLight(basecolormap, 0, 0);
+			drawerargs.SetLight(basecolormap, 0, 0);
 
 		float dx = WallC.tright.X - WallC.tleft.X;
 		float dy = WallC.tright.Y - WallC.tleft.Y;
@@ -351,7 +347,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetColorMapLight(basecolormap, light, wallshade);
+				drawerargs.SetLight(basecolormap, light, wallshade);
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 

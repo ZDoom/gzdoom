@@ -114,12 +114,12 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			drawerargs.SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			plane_shade = false;
 		}
 		else if (cameraLight->fixedcolormap)
 		{
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 			plane_shade = false;
 		}
 		else
@@ -188,7 +188,7 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerargs.SetColorMapLight(basecolormap, (float)(GlobVis * fabs(viewport->CenterY - y)), planeshade);
+			drawerargs.SetLight(basecolormap, (float)(GlobVis * fabs(viewport->CenterY - y)), planeshade);
 		}
 
 		if (r_dynlights)

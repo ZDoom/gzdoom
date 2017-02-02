@@ -98,17 +98,17 @@ namespace swrenderer
 {
 	PalWall1Command::PalWall1Command(const WallDrawerArgs &args)
 	{
-		_iscale = args.dc_iscale;
-		_texturefrac = args.dc_texturefrac;
+		_iscale = args.TextureVStep();
+		_texturefrac = args.TextureVPos();
 		_colormap = args.Colormap();
-		_count = args.dc_count;
-		_source = args.dc_source;
+		_count = args.Count();
+		_source = args.TexturePixels();
 		_dest = args.Dest();
 		_dest_y = args.DestY();
-		_fracbits = args.dc_wall_fracbits;
+		_fracbits = args.TextureFracBits();
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		_srcblend = args.dc_srcblend;
-		_destblend = args.dc_destblend;
+		_srcblend = args.SrcBlend();
+		_destblend = args.DestBlend();
 		_dynlights = args.dc_lights;
 		_num_dynlights = args.dc_num_lights;
 		_viewpos_z = args.dc_viewpos.Z;

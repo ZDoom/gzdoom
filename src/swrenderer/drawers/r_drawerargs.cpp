@@ -63,7 +63,7 @@ namespace swrenderer
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
-	void DrawerArgs::SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
+	void DrawerArgs::SetLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		mBaseColormap = base_colormap;
 		mTranslation = nullptr;
@@ -542,11 +542,11 @@ namespace swrenderer
 			{
 				fixed_t shade = shadedlightshade;
 				if (shade == 0) FIXEDLIGHT2SHADE(cameraLight->fixedlightlev);
-				SetColorMapLight(basecolormap, 0, shade);
+				SetLight(basecolormap, 0, shade);
 			}
 			else
 			{
-				SetColorMapLight(basecolormap, 0, shadedlightshade);
+				SetLight(basecolormap, 0, shadedlightshade);
 			}
 			return true;
 		}
@@ -573,7 +573,7 @@ namespace swrenderer
 			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 			// with the alpha.
 			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
-			SetColorMapLight(&identitycolormap, 0, 0);
+			SetLight(&identitycolormap, 0, 0);
 		}
 
 		if (!SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))

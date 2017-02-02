@@ -592,7 +592,7 @@ namespace swrenderer
 		}
 
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetColorMapLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
+		drawerargs.SetLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
 

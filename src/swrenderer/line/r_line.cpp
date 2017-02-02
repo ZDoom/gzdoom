@@ -936,9 +936,9 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 
 		// clip wall to the floor and ceiling
 		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;

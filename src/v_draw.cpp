@@ -1371,9 +1371,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	SpanDrawerArgs drawerargs;
 	drawerargs.SetTexture(tex);
 	if (colormap)
-		drawerargs.SetColorMapLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+		drawerargs.SetLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
-		drawerargs.SetColorMapLight(&identitycolormap, 0, 0);
+		drawerargs.SetLight(&identitycolormap, 0, 0);
 	if (drawerargs.TextureWidthBits() != 0)
 	{
 		scalex = double(1u << (32 - drawerargs.TextureWidthBits())) / scalex;

@@ -187,13 +187,13 @@ namespace swrenderer
 		args.dest = (uint32_t*)drawerargs.Dest();
 		args.dest_y = drawerargs.DestY();
 		args.pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.count = drawerargs.dc_count;
-		args.texturefrac[0] = drawerargs.dc_texturefrac;
-		args.texturefracx[0] = drawerargs.dc_texturefracx;
-		args.iscale[0] = drawerargs.dc_iscale;
-		args.textureheight[0] = drawerargs.dc_textureheight;
-		args.source[0] = (const uint32 *)drawerargs.dc_source;
-		args.source2[0] = (const uint32 *)drawerargs.dc_source2;
+		args.count = drawerargs.Count();
+		args.texturefrac[0] = drawerargs.TextureVPos();
+		args.texturefracx[0] = drawerargs.TextureUPos();
+		args.iscale[0] = drawerargs.TextureVStep();
+		args.textureheight[0] = drawerargs.TextureHeight();
+		args.source[0] = (const uint32 *)drawerargs.TexturePixels();
+		args.source2[0] = (const uint32 *)drawerargs.TexturePixels2();
 		args.light[0] = LightBgra::calc_light_multiplier(drawerargs.Light());
 		args.light_red = shade_constants.light_red;
 		args.light_green = shade_constants.light_green;
@@ -204,8 +204,8 @@ namespace swrenderer
 		args.fade_blue = shade_constants.fade_blue;
 		args.fade_alpha = shade_constants.fade_alpha;
 		args.desaturate = shade_constants.desaturate;
-		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
-		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
+		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
+		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
 		args.flags = 0;
 		if (shade_constants.simple_shade)
 			args.flags |= DrawWallArgs::simple_shade;

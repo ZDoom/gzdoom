@@ -64,7 +64,7 @@ namespace swrenderer
 			fillshort(spanend + t2, b2 - t2, x);
 		}
 
-		drawerargs.SetColorMapLight(basecolormap, (float)light, wallshade);
+		drawerargs.SetLight(basecolormap, (float)light, wallshade);
 
 		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
@@ -91,7 +91,7 @@ namespace swrenderer
 					fillshort(spanend + t2, b2 - t2, x);
 				}
 				rcolormap = lcolormap;
-				drawerargs.SetColorMapLight(basecolormap, (float)light, wallshade);
+				drawerargs.SetLight(basecolormap, (float)light, wallshade);
 				fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 			}
 			else

@@ -277,11 +277,11 @@ namespace swrenderer
 			SpriteDrawerArgs drawerargs;
 
 			if (cameraLight->fixedlightlev >= 0)
-				drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 			else if (cameraLight->fixedcolormap != NULL)
-				drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+				drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 			else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-				drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
+				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 			else
 				calclighting = true;
 
@@ -299,7 +299,7 @@ namespace swrenderer
 				{
 					if (calclighting)
 					{ // calculate lighting
-						drawerargs.SetColorMapLight(usecolormap, light, wallshade);
+						drawerargs.SetLight(usecolormap, light, wallshade);
 					}
 					DrawColumn(drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;

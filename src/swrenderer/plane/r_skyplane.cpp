@@ -151,13 +151,13 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedcolormap)
 		{
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 		}
 		else
 		{
 			fakefixed = true;
 			cameraLight->fixedcolormap = &NormalLight;
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 		}
 
 		DrawSky(pl);

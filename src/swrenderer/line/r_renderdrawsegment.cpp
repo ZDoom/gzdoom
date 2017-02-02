@@ -149,13 +149,13 @@ namespace swrenderer
 
 		if (cameraLight->fixedlightlev >= 0)
 		{
-			walldrawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-			columndrawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			columndrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		}
 		else if (cameraLight->fixedcolormap != nullptr)
 		{
-			walldrawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
-			columndrawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			walldrawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+			columndrawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 		}
 
 		// find positioning
@@ -285,7 +285,7 @@ namespace swrenderer
 				{
 					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
 					{
-						columndrawerargs.SetColorMapLight(basecolormap, rw_light, wallshade);
+						columndrawerargs.SetLight(basecolormap, rw_light, wallshade);
 					}
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
@@ -456,9 +456,9 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedlightlev >= 0)
-			drawerargs.SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
 		else if (cameraLight->fixedcolormap != nullptr)
-			drawerargs.SetColorMapLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
 
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;

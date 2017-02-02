@@ -189,7 +189,7 @@ namespace swrenderer
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetColorMapLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
+		drawerargs.SetLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
 		bool visible = drawerargs.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)

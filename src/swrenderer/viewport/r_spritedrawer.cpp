@@ -372,7 +372,7 @@ namespace swrenderer
 		}
 	}
 
-	bool SpriteDrawerArgs::SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		fixed_t fglevel, bglevel;
 
@@ -483,9 +483,9 @@ namespace swrenderer
 		return true;
 	}
 
-	bool SpriteDrawerArgs::SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
-		return SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
+		return SetStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
 
 	void SpriteDrawerArgs::FillColumn()

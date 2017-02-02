@@ -34,7 +34,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_draw_args.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 
 void PolyDrawArgs::SetClipPlane(float a, float b, float c, float d)
 {

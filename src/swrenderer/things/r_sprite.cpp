@@ -252,7 +252,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 
-		bool visible = drawerargs.SetPatchStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
+		bool visible = drawerargs.SetStyle(vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
 
 		if (visible)
 		{

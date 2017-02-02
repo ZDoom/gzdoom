@@ -33,15 +33,15 @@
 #include "po_man.h"
 #include "r_utility.h"
 #include "swrenderer/drawers/r_draw.h"
-#include "swrenderer/drawers/r_drawerargs.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
+#include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/viewport/r_spritedrawer.h"
 #include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
@@ -191,7 +191,7 @@ namespace swrenderer
 		SpriteDrawerArgs drawerargs;
 		drawerargs.SetLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
 
-		bool visible = drawerargs.SetPatchStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
 			return;
 

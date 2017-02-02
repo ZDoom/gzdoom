@@ -215,7 +215,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
 
-		bool visible = drawerargs.SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)

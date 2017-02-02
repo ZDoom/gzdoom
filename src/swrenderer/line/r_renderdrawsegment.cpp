@@ -76,7 +76,7 @@ namespace swrenderer
 
 		SpriteDrawerArgs columndrawerargs;
 		FDynamicColormap *patchstylecolormap = nullptr;
-		bool visible = columndrawerargs.SetPatchStyle(LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
+		bool visible = columndrawerargs.SetStyle(LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 		{

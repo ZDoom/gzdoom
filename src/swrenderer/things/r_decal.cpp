@@ -286,7 +286,7 @@ namespace swrenderer
 			else
 				calclighting = true;
 
-			bool visible = drawerargs.SetPatchStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
+			bool visible = drawerargs.SetStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
 
 			// R_SetPatchStyle can modify basecolormap.
 			if (rereadcolormap)

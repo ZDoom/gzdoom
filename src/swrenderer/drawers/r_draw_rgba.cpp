@@ -251,23 +251,23 @@ namespace swrenderer
 		auto shade_constants = drawerargs.ColormapConstants();
 
 		args.dest = (uint32_t*)drawerargs.Dest();
-		args.source = drawerargs.dc_source;
-		args.source2 = drawerargs.dc_source2;
+		args.source = drawerargs.TexturePixels();
+		args.source2 = drawerargs.TexturePixels2();
 		args.colormap = drawerargs.Colormap();
 		args.translation = drawerargs.TranslationMap();
 		args.basecolors = (const uint32_t *)GPalette.BaseColors;
 		args.pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.count = drawerargs.dc_count;
+		args.count = drawerargs.Count();
 		args.dest_y = drawerargs.DestY();
-		args.iscale = drawerargs.dc_iscale;
-		args.texturefracx = drawerargs.dc_texturefracx;
-		args.textureheight = drawerargs.dc_textureheight;
-		args.texturefrac = drawerargs.dc_texturefrac;
+		args.iscale = drawerargs.TextureVStep();
+		args.texturefracx = drawerargs.TextureUPos();
+		args.textureheight = drawerargs.TextureHeight();
+		args.texturefrac = drawerargs.TextureVPos();
 		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
-		args.color = LightBgra::shade_pal_index_simple(drawerargs.dc_color, args.light);
-		args.srccolor = drawerargs.dc_srccolor_bgra;
-		args.srcalpha = drawerargs.dc_srcalpha >> (FRACBITS - 8);
-		args.destalpha = drawerargs.dc_destalpha >> (FRACBITS - 8);
+		args.color = LightBgra::shade_pal_index_simple(drawerargs.SolidColor(), args.light);
+		args.srccolor = drawerargs.SrcColorBgra();
+		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
+		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
 		args.light_red = shade_constants.light_red;
 		args.light_green = shade_constants.light_green;
 		args.light_blue = shade_constants.light_blue;
@@ -328,9 +328,9 @@ namespace swrenderer
 
 	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
 	{
-		_x = drawerargs.dc_x;
-		_yl = drawerargs.dc_yl;
-		_yh = drawerargs.dc_yh;
+		_x = drawerargs.FuzzX();
+		_yl = drawerargs.FuzzY1();
+		_yh = drawerargs.FuzzY2();
 		_destorg = RenderViewport::Instance()->GetDest(0, 0);
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;

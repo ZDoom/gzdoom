@@ -342,8 +342,8 @@ namespace swrenderer
 				if (columnY1 < columnY2)
 				{
 					drawerargs.SetDest(x, columnY1);
-					drawerargs.dc_color = color;
-					drawerargs.dc_count = columnY2 - columnY1;
+					drawerargs.SetSolidColor(color);
+					drawerargs.SetCount(columnY2 - columnY1);
 					drawerargs.FillColumn();
 				}
 			}

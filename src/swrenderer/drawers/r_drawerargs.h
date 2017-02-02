@@ -192,11 +192,11 @@ namespace swrenderer
 		uint32_t TextureUPos() const { return dc_texturefracx; }
 		fixed_t TextureVPos() const { return dc_texturefrac; }
 		fixed_t TextureVStep() const { return dc_iscale; }
-		uint32_t TextureHeight() const { return dc_textureheight; }
-		
+
 		const uint8_t *TexturePixels() const { return dc_source; }
 		const uint8_t *TexturePixels2() const { return dc_source2; }
-		
+		uint32_t TextureHeight() const { return dc_textureheight; }
+
 		int TextureFracBits() const { return dc_wall_fracbits; }
 
 		FVector3 dc_normal;
@@ -234,35 +234,37 @@ namespace swrenderer
 
 		bool SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		bool SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
+		void SetDest(int x, int y);
+		void SetCount(int count) { dc_count = count; }
+		void SetSolidColor(int color) { dc_color = color; }
 
 		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
 		void FillColumn();
 
-		void SetDest(int x, int y);
-
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }
+		int Count() const { return dc_count; }
 
-		int dc_x;
-		int dc_yl;
-		int dc_yh;
+		int FuzzX() const { return dc_x; }
+		int FuzzY1() const { return dc_yl; }
+		int FuzzY2() const { return dc_yh; }
 
-		fixed_t dc_iscale;
-		fixed_t dc_texturefrac;
-		uint32_t dc_texturefracx;
-		uint32_t dc_textureheight;
-		const uint8_t *dc_source;
-		const uint8_t *dc_source2;
-		int dc_count;
+		uint32_t TextureUPos() const { return dc_texturefracx; }
+		fixed_t TextureVPos() const { return dc_texturefrac; }
+		fixed_t TextureVStep() const { return dc_iscale; }
 
-		int dc_color = 0;
-		uint32_t dc_srccolor;
-		uint32_t dc_srccolor_bgra;
+		int SolidColor() const { return dc_color; }
+		uint32_t SrcColorIndex() const { return dc_srccolor; }
+		uint32_t SrcColorBgra() const { return dc_srccolor_bgra; }
 
-		uint32_t *dc_srcblend;
-		uint32_t *dc_destblend;
-		fixed_t dc_srcalpha;
-		fixed_t dc_destalpha;
+		const uint8_t *TexturePixels() const { return dc_source; }
+		const uint8_t *TexturePixels2() const { return dc_source2; }
+		uint32_t TextureHeight() const { return dc_textureheight; }
+
+		uint32_t *SrcBlend() const { return dc_srcblend; }
+		uint32_t *DestBlend() const { return dc_destblend; }
+		fixed_t SrcAlpha() const { return dc_srcalpha; }
+		fixed_t DestAlpha() const { return dc_destalpha; }
 
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
@@ -271,7 +273,29 @@ namespace swrenderer
 
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
+		int dc_count = 0;
+
+		fixed_t dc_iscale;
+		fixed_t dc_texturefrac;
+		uint32_t dc_texturefracx;
+
+		uint32_t dc_textureheight = 0;
+		const uint8_t *dc_source = nullptr;
+		const uint8_t *dc_source2 = nullptr;
 		bool drawer_needs_pal_input = false;
+
+		uint32_t *dc_srcblend = nullptr;
+		uint32_t *dc_destblend = nullptr;
+		fixed_t dc_srcalpha = OPAQUE;
+		fixed_t dc_destalpha = 0;
+
+		int dc_x = 0;
+		int dc_yl = 0;
+		int dc_yh = 0;
+
+		int dc_color = 0;
+		uint32_t dc_srccolor = 0;
+		uint32_t dc_srccolor_bgra = 0;
 
 		typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
 		SpriteDrawerFunc colfunc;

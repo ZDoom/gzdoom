@@ -157,8 +157,8 @@ namespace swrenderer
 
 	void R_UpdateFuzzPos(const SpriteDrawerArgs &args)
 	{
-		int yl = MAX(args.dc_yl, 1);
-		int yh = MIN(args.dc_yh, fuzzviewheight);
+		int yl = MAX(args.FuzzY1(), 1);
+		int yh = MIN(args.FuzzY2(), fuzzviewheight);
 		if (yl <= yh)
 			fuzzpos = (fuzzpos + yh - yl + 1) % FUZZTABLE;
 	}

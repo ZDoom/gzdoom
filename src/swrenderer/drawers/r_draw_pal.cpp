@@ -867,21 +867,21 @@ namespace swrenderer
 
 	PalColumnCommand::PalColumnCommand(const SpriteDrawerArgs &args)
 	{
-		_count = args.dc_count;
+		_count = args.Count();
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		_iscale = args.dc_iscale;
-		_texturefrac = args.dc_texturefrac;
+		_iscale = args.TextureVStep();
+		_texturefrac = args.TextureVPos();
 		_colormap = args.Colormap();
-		_source = args.dc_source;
+		_source = args.TexturePixels();
 		_translation = args.TranslationMap();
-		_color = args.dc_color;
-		_srcblend = args.dc_srcblend;
-		_destblend = args.dc_destblend;
-		_srccolor = args.dc_srccolor;
-		_srcalpha = args.dc_srcalpha;
-		_destalpha = args.dc_destalpha;
+		_color = args.SolidColor();
+		_srcblend = args.SrcBlend();
+		_destblend = args.DestBlend();
+		_srccolor = args.SrcColorIndex();
+		_srcalpha = args.SrcAlpha();
+		_destalpha = args.DestAlpha();
 	}
 
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
@@ -1764,9 +1764,9 @@ namespace swrenderer
 
 	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const SpriteDrawerArgs &args)
 	{
-		_yl = args.dc_yl;
-		_yh = args.dc_yh;
-		_x = args.dc_x;
+		_yl = args.FuzzY1();
+		_yh = args.FuzzY2();
+		_x = args.FuzzX();
 		_destorg = RenderViewport::Instance()->GetDest(0, 0);
 		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;

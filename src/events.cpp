@@ -337,6 +337,30 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
+void E_PlayerEntered(int num)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->PlayerEntered(num);
+}
+
+void E_PlayerRespawned(int num)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->PlayerRespawned(num);
+}
+
+void E_PlayerDied(int num)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->PlayerDied(num);
+}
+
+void E_PlayerDisconnected(int num)
+{
+	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+		handler->PlayerDisconnected(num);
+}
+
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
@@ -348,6 +372,7 @@ IMPLEMENT_CLASS(DEventHandler, false, false);
 IMPLEMENT_CLASS(DBaseEvent, false, false)
 IMPLEMENT_CLASS(DRenderEvent, false, false)
 IMPLEMENT_CLASS(DWorldEvent, false, false)
+IMPLEMENT_CLASS(DPlayerEvent, false, false)
 
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewPos);
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewAngle);
@@ -357,6 +382,7 @@ DEFINE_FIELD_X(RenderEvent, DRenderEvent, FracTic);
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, Camera);
 
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, IsSaveGame);
+DEFINE_FIELD_X(WorldEvent, DWorldEvent, IsReopen);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Thing);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Inflictor);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, Damage);
@@ -364,6 +390,9 @@ DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageSource);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageType);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageFlags);
 DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageAngle);
+
+DEFINE_FIELD_X(PlayerEvent, DPlayerEvent, PlayerNumber);
+DEFINE_FIELD_X(PlayerEvent, DPlayerEvent, IsReturn);
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 {
@@ -486,7 +515,13 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
+
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
+
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerEntered)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerRespawned)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDied)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, GetOrder)
 {
@@ -505,6 +540,7 @@ static DWorldEvent* E_SetupWorldEvent()
 	static DWorldEvent* e = nullptr;
 	if (!e) e = (DWorldEvent*)RUNTIME_CLASS(DWorldEvent)->CreateNew();
 	e->IsSaveGame = savegamerestore;
+	e->IsReopen = level.FromSnapshot;
 	e->Thing = nullptr;
 	e->Inflictor = nullptr;
 	e->Damage = 0;
@@ -664,6 +700,71 @@ void DStaticEventHandler::RenderFrame()
 		if (func == DStaticEventHandler_RenderFrame_VMPtr)
 			return;
 		DRenderEvent* e = E_SetupRenderEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+static DPlayerEvent* E_SetupPlayerEvent()
+{
+	static DPlayerEvent* e = nullptr;
+	if (!e) e = (DPlayerEvent*)RUNTIME_CLASS(DPlayerEvent)->CreateNew();
+	e->PlayerNumber = -1;
+	e->IsReturn = level.FromSnapshot;
+	return e;
+}
+
+void DStaticEventHandler::PlayerEntered(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerEntered)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PlayerEntered_VMPtr)
+			return;
+		DPlayerEvent* e = E_SetupPlayerEvent();
+		e->PlayerNumber = num;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::PlayerRespawned(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerRespawned)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PlayerRespawned_VMPtr)
+			return;
+		DPlayerEvent* e = E_SetupPlayerEvent();
+		e->PlayerNumber = num;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::PlayerDied(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerDied)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PlayerDied_VMPtr)
+			return;
+		DPlayerEvent* e = E_SetupPlayerEvent();
+		e->PlayerNumber = num;
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::PlayerDisconnected(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerDisconnected)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PlayerDisconnected_VMPtr)
+			return;
+		DPlayerEvent* e = E_SetupPlayerEvent();
+		e->PlayerNumber = num;
 		VMValue params[2] = { (DStaticEventHandler*)this, e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}

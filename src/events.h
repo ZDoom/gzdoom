@@ -41,6 +41,14 @@ void E_WorldLightning();
 void E_WorldTick();
 // called on each render frame once.
 void E_RenderFrame();
+// this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
+void E_PlayerEntered(int num);
+// this executes when a player respawns. includes resurrect cheat.
+void E_PlayerRespawned(int num);
+// this executes when a player dies (partially duplicating worldthingdied, but whatever)
+void E_PlayerDied(int num);
+// this executes when a player leaves the game
+void E_PlayerDisconnected(int num);
 
 // serialization stuff
 void E_SerializeEvents(FSerializer& arc);
@@ -89,6 +97,7 @@ public:
 	// destroy handler. this unlinks EventHandler from the list automatically.
 	void OnDestroy() override;
 
+	//
 	virtual void WorldLoaded();
 	virtual void WorldUnloaded();
 	virtual void WorldThingSpawned(AActor*);
@@ -98,7 +107,15 @@ public:
 	virtual void WorldThingDestroyed(AActor*);
 	virtual void WorldLightning();
 	virtual void WorldTick();
+
+	//
 	virtual void RenderFrame();
+
+	//
+	virtual void PlayerEntered(int num);
+	virtual void PlayerRespawned(int num);
+	virtual void PlayerDied(int num);
+	virtual void PlayerDisconnected(int num);
 
 	// gets the order of this item.
 	int GetOrder();
@@ -153,6 +170,7 @@ class DWorldEvent : public DBaseEvent
 public:
 	// for loaded/unloaded
 	bool IsSaveGame;
+	bool IsReopen;
 	// for thingspawned, thingdied, thingdestroyed
 	AActor* Thing;
 	// for thingdied
@@ -167,11 +185,31 @@ public:
 	DWorldEvent()
 	{
 		IsSaveGame = false;
+		IsReopen = false;
 		Thing = nullptr;
 		Inflictor = nullptr;
 		Damage = 0;
 		DamageSource = nullptr;
 		DamageFlags = 0;
+	}
+};
+
+class DPlayerEvent : public DBaseEvent
+{
+	DECLARE_CLASS(DPlayerEvent, DBaseEvent)
+public:
+	// we currently have only one member: player index
+	// in ZScript, we have global players[] array from which we can
+	//  get both the player itself and player's body,
+	//  so no need to pass it here.
+	int PlayerNumber;
+	// we set this to true if level was reopened (RETURN scripts)
+	bool IsReturn;
+
+	DPlayerEvent()
+	{
+		PlayerNumber = -1;
+		IsReturn = false;
 	}
 };
 

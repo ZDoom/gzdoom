@@ -14,6 +14,8 @@ class WorldEvent : BaseEvent native
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
+    // this will be true if we are re-entering the hub level.
+    native readonly bool IsReopen;
     // for thingspawned/thingdied/thingdestroyed
     native readonly Actor Thing;
     // for thingdied. can be null
@@ -24,6 +26,15 @@ class WorldEvent : BaseEvent native
     native readonly Name DamageType;
     native readonly EDmgFlags DamageFlags;
     native readonly double DamageAngle;
+}
+
+class PlayerEvent : BaseEvent native
+{
+    // this is the player number that caused the event.
+    // note: you can get player struct from this by using players[e.PlayerNumber]
+    native readonly int PlayerNumber;
+    // this will be true if we are re-entering the hub level.
+    native readonly bool IsReturn;
 }
 
 class StaticEventHandler : Object native
@@ -48,7 +59,14 @@ class StaticEventHandler : Object native
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
     virtual native void WorldTick(WorldEvent e);
 
+    //
     virtual native void RenderFrame(RenderEvent e);
+    
+    //
+    virtual native void PlayerEntered(PlayerEvent e);
+    virtual native void PlayerRespawned(PlayerEvent e);
+    virtual native void PlayerDied(PlayerEvent e);
+    virtual native void PlayerDisconnected(PlayerEvent e);
     
     // this function should return a value that will be queried on Register() to decide the relative order of this handler to every other.
     // this is most useful in UI systems.

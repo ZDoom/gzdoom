@@ -1706,7 +1706,6 @@ void D3DFB::NewRefreshRate ()
 
 void D3DFB::Blank ()
 {
-	// Only used by movie player, which isn't working with D3D9 yet.
 }
 
 void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)

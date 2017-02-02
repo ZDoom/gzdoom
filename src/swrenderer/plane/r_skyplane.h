@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_visibleplane.h"
-#include "swrenderer/drawers/r_drawerargs.h"
+#include "swrenderer/viewport/r_skydrawer.h"
 
 namespace swrenderer
 {

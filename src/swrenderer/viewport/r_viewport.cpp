@@ -28,7 +28,7 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "r_utility.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/things/r_playersprite.h"

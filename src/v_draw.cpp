@@ -46,7 +46,7 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/scene/r_light.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 #endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"

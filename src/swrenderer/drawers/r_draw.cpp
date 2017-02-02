@@ -50,7 +50,6 @@
 #include "r_draw_rgba.h"
 #include "r_draw_pal.h"
 #include "r_thread.h"
-#include "r_drawerargs.h"
 #include "swrenderer/scene/r_light.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);

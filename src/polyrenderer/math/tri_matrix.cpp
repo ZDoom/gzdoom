@@ -37,7 +37,7 @@
 #include "tri_matrix.h"
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 
 TriMatrix TriMatrix::null()
 {

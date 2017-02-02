@@ -47,7 +47,7 @@
 #include "r_draw.h"
 #include "v_video.h"
 #include "r_draw_pal.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 
 // [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)

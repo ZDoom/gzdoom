@@ -54,8 +54,8 @@
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_translucent_pass.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
 
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)

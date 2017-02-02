@@ -33,10 +33,9 @@
 */
 
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 #include "v_palette.h"
 #include "v_video.h"

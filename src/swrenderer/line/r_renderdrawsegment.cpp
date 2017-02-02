@@ -40,7 +40,8 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/scene/r_light.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/viewport/r_spritedrawer.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 

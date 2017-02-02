@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "swrenderer/drawers/r_drawerargs.h"
+#include "swrenderer/viewport/r_walldrawer.h"
 #include "r_line.h"
 
 class FTexture;

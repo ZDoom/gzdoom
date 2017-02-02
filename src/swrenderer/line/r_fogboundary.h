@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/viewport/r_spandrawer.h"
 
 namespace swrenderer
 {

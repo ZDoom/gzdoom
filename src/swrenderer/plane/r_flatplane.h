@@ -14,7 +14,7 @@
 #pragma once
 
 #include "r_planerenderer.h"
-#include "swrenderer/drawers/r_drawerargs.h"
+#include "swrenderer/viewport/r_spandrawer.h"
 
 namespace swrenderer
 {

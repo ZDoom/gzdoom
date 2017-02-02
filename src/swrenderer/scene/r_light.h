@@ -18,7 +18,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_utility.h"
-#include "r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 
 // Lighting.
 //

@@ -33,9 +33,9 @@
 #include "po_man.h"
 #include "st_stuff.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
+#include "swrenderer/viewport/r_viewport.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)

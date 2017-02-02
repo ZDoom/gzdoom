@@ -38,7 +38,7 @@
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 #include "gl/data/gl_matrix.h"
-#include "swrenderer/scene/r_viewport.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 
 #include "gi.h"

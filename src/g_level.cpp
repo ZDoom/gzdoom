@@ -1370,13 +1370,6 @@ void G_FinishTravel ()
 			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
 		}
 	}
-	else
-	{
-		for (int i = 0; i < pawnsnum; i++)
-		{
-			E_PlayerEntered(pawns[i]->player - players, false);
-		}
-	}
 
 	bglobal.FinishTravel ();
 

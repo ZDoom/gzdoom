@@ -5426,6 +5426,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
+			// [ZZ] fire non-hub ENTER event
+			//      level.time is a hack to make sure that we don't call it on dummy player initialization during hub return.
+			if (!level.time) E_PlayerEntered(p - players, false);
 			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)

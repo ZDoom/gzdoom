@@ -1370,7 +1370,7 @@ void G_FinishTravel ()
 			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
 		}
 	}
-	else
+	else if (!level.FromSnapshot)
 	{
 		for (int i = 0; i < pawnsnum; i++)
 		{

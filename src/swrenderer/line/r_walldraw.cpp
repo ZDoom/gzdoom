@@ -339,7 +339,8 @@ namespace swrenderer
 
 		double xmagnitude = 1.0;
 
-		for (int x = x1; x < x2; x++, light += lightstep)
+		float curlight = light;
+		for (int x = x1; x < x2; x++, curlight += lightstep)
 		{
 			int y1 = uwal[x];
 			int y2 = dwal[x];
@@ -347,7 +348,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetLight(basecolormap, light, wallshade);
+				drawerargs.SetLight(basecolormap, curlight, wallshade);
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 

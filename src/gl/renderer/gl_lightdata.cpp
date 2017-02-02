@@ -552,7 +552,7 @@ CCMD(skyfog)
 {
 	if (argv.argc()>1)
 	{
-		skyfog=strtol(argv[1],NULL,0);
+		skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
 	}
 }
 

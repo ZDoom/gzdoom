@@ -982,7 +982,12 @@ CCMD (dump3df)
 {
 	if (argv.argc() > 1) 
 	{
-		int sec = strtol(argv[1], NULL, 10);
+		int sec = (int)strtoll(argv[1], NULL, 10);
+		if ((unsigned)sec >= level.sectors.Size())
+		{
+			Printf("Sector %d does not exist.\n", sec);
+			return;
+		}
 		sector_t *sector = &level.sectors[sec];
 		TArray<F3DFloor*> & ffloors=sector->e->XFloor.ffloors;
 

@@ -1190,7 +1190,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 		{
 			if (string[1] == 'S' || string[1] == 's')
 			{
-				auto secnum = strtoul(string+2, (char**)&string, 10);
+				auto secnum = (unsigned)strtoull(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
 				if (thislevel && secnum < level.sectors.Size())
 				{
@@ -1201,7 +1201,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 			}
 			else if (string[1] == 'T' || string[1] == 't')
 			{
-				long tid = strtol(string+2, (char**)&string, 10);
+				long tid = (long)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
 				FActorIterator it(tid);
 				AActor *actor;

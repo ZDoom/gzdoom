@@ -2731,7 +2731,7 @@ static bool ReadResponse (HWND hDlg, char *header, SOCKET sock, char *buf, int b
 		char *lenhead = strstr (header, "content-length: ");
 		if (lenhead != 0)
 		{
-			len = strtol (lenhead + 16, NULL, 10);
+			len = (int)strtoll (lenhead + 16, NULL, 10);
 			if (file != INVALID_HANDLE_VALUE)
 			{
 				ShowWindow (GetDlgItem (hDlg, IDC_BOINGPROGRESS), SW_SHOW);

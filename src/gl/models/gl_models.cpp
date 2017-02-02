@@ -38,6 +38,7 @@
 #include "r_state.h"
 #include "d_player.h"
 #include "g_levellocals.h"
+#include "r_utility.h"
 //#include "resources/voxels.h"
 //#include "gl/gl_intern.h"
 
@@ -1010,6 +1011,13 @@ void gl_RenderModel(GLSprite * spr)
 
 	// Model space => World space
 	gl_RenderState.mModelMatrix.translate(spr->x, spr->z, spr->y );	
+
+	if (spr->actor->renderflags & RF_INTERPOLATEANGLES)
+	{
+		// [Nash] use interpolated angles
+		DRotator Angles = spr->actor->InterpolatedAngles(r_TicFracF);
+		angle = Angles.Yaw.Degrees;
+	}
 	
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model

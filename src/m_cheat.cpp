@@ -49,6 +49,7 @@
 #include "a_morph.h"
 #include "g_levellocals.h"
 #include "virtual.h"
+#include "events.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -346,6 +347,12 @@ void cht_DoCheat (player_t *player, int cheat)
 				{
 					P_UndoPlayerMorph(player, player);
 				}
+
+				// player is now alive.
+				// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
+				E_PlayerRespawned(player - players);
+				//
+				FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, player->mo, true);
 
 			}
 		}

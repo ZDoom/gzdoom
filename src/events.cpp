@@ -7,6 +7,7 @@
 #include "actor.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
+DStaticEventHandler* E_LastEventHandler = nullptr;
 
 bool E_RegisterHandler(DStaticEventHandler* handler)
 {
@@ -14,17 +15,53 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 		return false;
 	if (E_CheckHandler(handler))
 		return false;
+	
 	// link into normal list
-	handler->prev = nullptr;
-	handler->next = E_FirstEventHandler;
-	if (handler->next)
-		handler->next->prev = handler;
-	E_FirstEventHandler = handler;
+	// update: link at specific position based on order.
+	DStaticEventHandler* before = nullptr;
+	for (DStaticEventHandler* existinghandler = E_FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
+	{
+		if (existinghandler->GetOrder() > handler->GetOrder())
+		{
+			before = existinghandler;
+			break;
+		}
+	}
+
+	// 1. MyHandler2->1:
+	//    E_FirstEventHandler = MyHandler2, E_LastEventHandler = MyHandler2
+	// 2. MyHandler3->2:
+	//    E_FirstEventHandler = MyHandler2, E_LastEventHandler = MyHandler3
+
+	if (before != nullptr)
+	{
+		// if before is not null, link it before the existing handler.
+		// note that before can be first handler, check for this.
+		handler->next = before;
+		handler->prev = before->prev;
+		before->prev = handler;
+		if (before == E_FirstEventHandler)
+			E_FirstEventHandler = handler;
+	}
+	else
+	{
+		// so if before is null, it means add last.
+		// it can also mean that we have no handlers at all yet.
+		handler->prev = E_LastEventHandler;
+		handler->next = nullptr;
+		if (E_FirstEventHandler == nullptr)
+			E_FirstEventHandler = handler;
+		E_LastEventHandler = handler;
+		if (handler->prev != nullptr)
+			handler->prev->next = handler;
+	}
+
 	if (handler->IsStatic())
 	{
 		handler->ObjectFlags |= OF_Fixed;
 		handler->ObjectFlags |= OF_Transient;
 	}
+
 	return true;
 }
 
@@ -41,6 +78,8 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		handler->next->prev = handler->prev;
 	if (handler == E_FirstEventHandler)
 		E_FirstEventHandler = handler->next;
+	if (handler == E_LastEventHandler)
+		E_LastEventHandler = handler->prev;
 	if (handler->IsStatic())
 	{
 		handler->ObjectFlags &= ~(OF_Fixed|OF_Transient);
@@ -224,7 +263,7 @@ void E_WorldLoaded()
 
 void E_WorldUnloaded()
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 	{
 		if (handler->IsStatic()) continue;
 		handler->WorldUnloaded();
@@ -242,7 +281,7 @@ void E_WorldLoadedUnsafe()
 
 void E_WorldUnloadedUnsafe()
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 	{
 		if (!handler->IsStatic()) continue;
 		handler->WorldUnloaded();
@@ -294,7 +333,7 @@ void E_WorldThingDestroyed(AActor* actor)
 	// this is because Destroyed should be reverse of Spawned. we don't want to catch random inventory give failures.
 	if (!(actor->ObjectFlags & OF_Spawned))
 		return;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 		handler->WorldThingDestroyed(actor);
 }
 
@@ -448,6 +487,12 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
+
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, GetOrder)
+{
+	PARAM_SELF_PROLOGUE(DStaticEventHandler);
+	ACTION_RETURN_INT(0);
+}
 
 // ===========================================
 //
@@ -629,4 +674,23 @@ void DStaticEventHandler::OnDestroy()
 {
 	E_UnregisterHandler(this);
 	Super::OnDestroy();
+}
+
+//
+int DStaticEventHandler::GetOrder()
+{
+	// if we have cached order, return it.
+	// otherwise call VM.
+	if (haveorder) 
+		return order;
+
+	IFVIRTUAL(DStaticEventHandler, GetOrder)
+	{
+		VMReturn results[1] = { &order };
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, results, 1, nullptr);
+		haveorder = true;
+	}
+
+	return order;
 }

@@ -59,11 +59,17 @@ public:
 	{
 		prev = 0;
 		next = 0;
+		order = 0;
+		haveorder = false;
 	}
 
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
 	virtual bool IsStatic() { return true; }
+
+	// order is cached to avoid calling the VM for sorting too much
+	int order;
+	bool haveorder;
 
 	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
 	void Serialize(FSerializer& arc) override
@@ -93,6 +99,9 @@ public:
 	virtual void WorldLightning();
 	virtual void WorldTick();
 	virtual void RenderFrame();
+
+	// gets the order of this item.
+	int GetOrder();
 };
 class DEventHandler : public DStaticEventHandler
 {

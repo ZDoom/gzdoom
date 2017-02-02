@@ -337,10 +337,15 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
-void E_PlayerEntered(int num)
+void E_PlayerEntered(int num, bool fromhub)
 {
+	// this event can happen during savegamerestore. make sure that local handlers don't receive it.
+	// actually, global handlers don't want it too.
+	if (savegamerestore && !fromhub)
+		return;
+
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->PlayerEntered(num);
+		handler->PlayerEntered(num, fromhub);
 }
 
 void E_PlayerRespawned(int num)
@@ -540,7 +545,7 @@ static DWorldEvent* E_SetupWorldEvent()
 	static DWorldEvent* e = nullptr;
 	if (!e) e = (DWorldEvent*)RUNTIME_CLASS(DWorldEvent)->CreateNew();
 	e->IsSaveGame = savegamerestore;
-	e->IsReopen = level.FromSnapshot;
+	e->IsReopen = level.FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
 	e->Thing = nullptr;
 	e->Inflictor = nullptr;
 	e->Damage = 0;
@@ -710,11 +715,11 @@ static DPlayerEvent* E_SetupPlayerEvent()
 	static DPlayerEvent* e = nullptr;
 	if (!e) e = (DPlayerEvent*)RUNTIME_CLASS(DPlayerEvent)->CreateNew();
 	e->PlayerNumber = -1;
-	e->IsReturn = level.FromSnapshot;
+	e->IsReturn = false;
 	return e;
 }
 
-void DStaticEventHandler::PlayerEntered(int num)
+void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 {
 	IFVIRTUAL(DStaticEventHandler, PlayerEntered)
 	{
@@ -722,6 +727,7 @@ void DStaticEventHandler::PlayerEntered(int num)
 		if (func == DStaticEventHandler_PlayerEntered_VMPtr)
 			return;
 		DPlayerEvent* e = E_SetupPlayerEvent();
+		e->IsReturn = fromhub;
 		e->PlayerNumber = num;
 		VMValue params[2] = { (DStaticEventHandler*)this, e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);

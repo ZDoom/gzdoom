@@ -1256,6 +1256,10 @@ void G_FinishTravel ()
 	FPlayerStart *start;
 	int pnum;
 
+	// 
+	APlayerPawn* pawns[MAXPLAYERS];
+	int pawnsnum = 0;
+
 	next = it.Next ();
 	while ( (pawn = next) != NULL)
 	{
@@ -1347,16 +1351,30 @@ void G_FinishTravel ()
 		{
 			pawn->Speed = pawn->GetDefault()->Speed;
 		}
-		if (level.FromSnapshot)
-		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);
-		}
+		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
+		pawns[pawnsnum++] = pawn;
 	}
 
+	// [ZZ] fire the reopen hook.
 	if (level.FromSnapshot)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
 		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+
+		for (int i = 0; i < pawnsnum; i++)
+		{
+			// [ZZ] fire the enter hook.
+			E_PlayerEntered(pawns[i]->player - players, true);
+			//
+			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < pawnsnum; i++)
+		{
+			E_PlayerEntered(pawns[i]->player - players, false);
+		}
 	}
 
 	bglobal.FinishTravel ();

@@ -42,7 +42,7 @@ void E_WorldTick();
 // called on each render frame once.
 void E_RenderFrame();
 // this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
-void E_PlayerEntered(int num);
+void E_PlayerEntered(int num, bool fromhub);
 // this executes when a player respawns. includes resurrect cheat.
 void E_PlayerRespawned(int num);
 // this executes when a player dies (partially duplicating worldthingdied, but whatever)
@@ -112,7 +112,7 @@ public:
 	virtual void RenderFrame();
 
 	//
-	virtual void PlayerEntered(int num);
+	virtual void PlayerEntered(int num, bool fromhub);
 	virtual void PlayerRespawned(int num);
 	virtual void PlayerDied(int num);
 	virtual void PlayerDisconnected(int num);

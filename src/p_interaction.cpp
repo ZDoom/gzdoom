@@ -610,6 +610,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		// [RH] Death messages
 		ClientObituary (this, inflictor, source, dmgflags);
 
+		// [ZZ] fire player death hook
+		E_PlayerDied(player - players);
+
 		// Death script execution, care of Skull Tag
 		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
 

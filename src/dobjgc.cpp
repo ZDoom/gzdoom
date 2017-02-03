@@ -324,7 +324,7 @@ static void MarkRoot()
 	Mark(Args);
 	Mark(screen);
 	Mark(StatusBar);
-	Mark(DMenu::CurrentMenu);
+	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();

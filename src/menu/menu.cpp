@@ -87,6 +87,35 @@ static bool		MenuEnabled = true;
 
 //============================================================================
 //
+//
+//
+//============================================================================
+
+size_t FListMenuDescriptor::PropagateMark()
+{
+	for (auto item : mItems) GC::Mark(item);
+	return 0;
+}
+
+size_t FOptionMenuDescriptor::PropagateMark()
+{
+	for (auto item : mItems) GC::Mark(item);
+	return 0;
+}
+
+void M_MarkMenus()
+{
+	MenuDescriptorList::Iterator it(MenuDescriptors);
+	MenuDescriptorList::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		//GC::Mark(pair->Value);	// once the descriptors have been made objects.
+		pair->Value->PropagateMark();
+	}
+	GC::Mark(DMenu::CurrentMenu);
+}
+//============================================================================
+//
 // DMenu base class
 //
 //============================================================================

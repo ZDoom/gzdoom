@@ -124,8 +124,10 @@ int DOptionMenu::FirstSelectable()
 //
 //
 //=============================================================================
+IMPLEMENT_CLASS(DOptionMenuItem, true, false)
 
-FOptionMenuItem *DOptionMenu::GetItem(FName name)
+
+DOptionMenuItem *DOptionMenu::GetItem(FName name)
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
@@ -476,21 +478,17 @@ void DOptionMenu::Drawer ()
 //
 //=============================================================================
 
-FOptionMenuItem::~FOptionMenuItem()
-{
-}
-
-int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+int DOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 {
 	return indent;
 }
 
-bool FOptionMenuItem::Selectable()
+bool DOptionMenuItem::Selectable()
 {
 	return true;
 }
 
-bool FOptionMenuItem::MouseEvent(int type, int x, int y)
+bool DOptionMenuItem::MouseEvent(int type, int x, int y)
 {
 	if (Selectable() && type == DMenu::MOUSE_Release)
 	{
@@ -499,7 +497,7 @@ bool FOptionMenuItem::MouseEvent(int type, int x, int y)
 	return false;
 }
 
-int  FOptionMenuItem::GetIndent()
+int  DOptionMenuItem::GetIndent()
 {
 	if (mCentered)
 	{
@@ -510,7 +508,7 @@ int  FOptionMenuItem::GetIndent()
 	return SmallFont->StringWidth(label);
 }
 
-void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)
+void DOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)
 {
 	const char *label = mLabel.GetChars();
 	if (*label == '$') label = GStrings(label+1);
@@ -545,7 +543,7 @@ void FOptionMenuDescriptor::CalcIndent()
 //
 //=============================================================================
 
-FOptionMenuItem *FOptionMenuDescriptor::GetItem(FName name)
+DOptionMenuItem *FOptionMenuDescriptor::GetItem(FName name)
 {
 	for(unsigned i=0;i<mItems.Size(); i++)
 	{

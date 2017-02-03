@@ -692,7 +692,6 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 	{
 		event.type    = EV_GUI_Event;
 		event.subtype = delta > 0.0f ? EV_GUI_WheelUp : EV_GUI_WheelDown;
-		event.data3   = delta;
 		event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 	}
 	else

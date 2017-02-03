@@ -1,0 +1,66 @@
+//=============================================================================
+//
+// base class for menu items
+//
+//=============================================================================
+
+class MenuItemBase : Object native
+{
+	protected int mXpos, mYpos;
+	protected Name mAction;
+
+	bool mEnabled;
+
+	protected void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
+	{
+		mXpos = xpos;
+		mYpos = ypos;
+		mAction = actionname;
+		mEnabled = true;
+	}
+
+	virtual bool CheckCoordinate(int x, int y) { return false; }
+	virtual void Ticker() {}
+	virtual void Drawer(bool selected) {}
+	virtual bool Selectable() {return false; }
+	virtual bool Activate() { return false; }
+	virtual Name, int GetAction() { return mAction, 0; }
+	virtual bool SetString(int i, String s) { return false; }
+	virtual bool, String GetString(int i) { return false, ""; }
+	virtual bool SetValue(int i, int value) { return false; }
+	virtual bool, int GetValue(int i)  { return false, 0; }
+	virtual void Enable(bool on) { mEnabled = on; }
+	virtual bool MenuEvent (int mkey, bool fromcontroller) { return false; }
+	virtual bool MouseEvent(int type, int x, int y) { return false; }
+	virtual bool CheckHotkey(int c) { return false; }
+	virtual int GetWidth() { return 0; }
+	virtual void OffsetPositionY(int ydelta) { mYpos += ydelta; }
+	virtual int GetY() { return mYpos; }
+	virtual int GetX() { return mXpos; }
+	virtual void SetX(int x) { mXpos = x; }
+	
+	/*
+	virtual void DrawSelector(int xofs, int yofs, TextureID tex)
+	{
+		if (tex.isNull())
+		{
+			if ((Menu.MenuTime() % 8) < 6)
+			{
+				screen.DrawText(ConFont, OptionSettings.mFontColorSelection,
+					(mXpos + xofs - 160) * CleanXfac + screen.GetWidth() / 2,
+					(mYpos + yofs - 100) * CleanYfac + screen.GetHeight() / 2,
+					"\xd",
+					DTA_CellX, 8 * CleanXfac,
+					DTA_CellY, 8 * CleanYfac,
+					TAG_DONE);
+			}
+		}
+		else
+		{
+			screen.DrawTexture (tex, mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
+		}
+	}
+	*/
+	
+}
+

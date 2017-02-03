@@ -91,6 +91,17 @@ CVAR (Bool, hud_scale, true, CVAR_ARCHIVE);
 static int LastPal = -1;
 static uint32 LastRGB;
 
+DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(screen->GetWidth());
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(screen->GetHeight());
+}
 
 static int PalFromRGB(uint32 rgb)
 {

@@ -63,7 +63,14 @@ struct Screen native
 		NUM_TEXT_COLORS
 	};
 
+	native static int GetWidth();
+	native static int GetHeight();
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
+}
+
+struct Font native
+{
+	native static Font FindFont(String name);
 }
 
 struct Console native

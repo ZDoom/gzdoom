@@ -525,6 +525,13 @@ FFont *FFont::FindFont (const char *name)
 	return font;
 }
 
+DEFINE_ACTION_FUNCTION(FFont, FindFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	ACTION_RETURN_POINTER(FFont::FindFont(name));
+}
+
 //==========================================================================
 //
 // RecordTextureColors

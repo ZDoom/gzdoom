@@ -116,11 +116,9 @@ class UiEvent : BaseEvent native
     native readonly int MouseX;
     native readonly int MouseY;
     //
-    /* // this can't be exposed yet: SDL driver doesn't set these at all
     native readonly bool IsShift;
     native readonly bool IsCtrl;
     native readonly bool IsAlt;
-    */
 }
 
 class InputEvent : BaseEvent native

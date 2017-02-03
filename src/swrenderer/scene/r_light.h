@@ -88,8 +88,8 @@ namespace swrenderer
 
 		// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros
 		double WallVis(double screenZ) const { return WallGlobVis() / screenZ; }
-		double SpriteVis(double screenZ) const { return WallGlobVis() / screenZ; }
-		double ParticleVis(double screenZ) const { return WallGlobVis() / screenZ; }
+		double SpriteVis(double screenZ) const { return SpriteGlobVis() / screenZ; }
+		double ParticleVis(double screenZ) const { return ParticleGlobVis() / screenZ; }
 		double FlatPlaneVis(int screenY, double planeZ) const { return FlatPlaneGlobVis() / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
 
 	private:

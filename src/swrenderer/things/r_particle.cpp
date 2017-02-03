@@ -266,9 +266,10 @@ namespace swrenderer
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
 		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
-		for (unsigned int p = segmentlist->InterestingDrawsegs.Size(); p-- > segmentlist->FirstInterestingDrawseg; )
+		for (unsigned int index = segmentlist->BeginInterestingIndex(); index != segmentlist->EndInterestingIndex(); index++)
 		{
-			DrawSegment *ds = &segmentlist->drawsegs[segmentlist->InterestingDrawsegs[p]];
+			DrawSegment *ds = segmentlist->InterestingSegment(index);
+
 			// kg3D - no fake segs
 			if (ds->fake) continue;
 			if (ds->x1 >= x2 || ds->x2 <= x1)

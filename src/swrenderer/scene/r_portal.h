@@ -55,8 +55,6 @@ namespace swrenderer
 		void RenderLinePortal(PortalDrawseg* pds, int depth);
 		void RenderLinePortalHighlight(PortalDrawseg* pds);
 		
-		TArray<size_t> interestingStack;
-		TArray<ptrdiff_t> drawsegStack;
 		TArray<DVector3> viewposStack;
 		TArray<VisiblePlane *> visplaneStack;
 		TArray<PortalDrawseg *> WallPortals;

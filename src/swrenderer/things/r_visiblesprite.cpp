@@ -47,7 +47,6 @@ namespace swrenderer
 
 		VisibleSprite *spr = this;
 
-		DrawSegment *ds;
 		int i;
 		int x1, x2;
 		int r1, r2;
@@ -280,15 +279,11 @@ namespace swrenderer
 		// Scan drawsegs from end to start for obscuring segs.
 		// The first drawseg that is closer than the sprite is the clip seg.
 
-		// Modified by Lee Killough:
-		// (pointer check was originally nonportable
-		// and buggy, by going past LEFT end of array):
-
-		//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
-
 		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
-		for (ds = segmentlist->ds_p; ds-- > segmentlist->firstdrawseg; )  // new -- killough
+		for (unsigned int index = segmentlist->BeginIndex(); index != segmentlist->EndIndex(); index++)
 		{
+			DrawSegment *ds = segmentlist->Segment(index);
+
 			// [ZZ] portal handling here
 			//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
 			//	continue;

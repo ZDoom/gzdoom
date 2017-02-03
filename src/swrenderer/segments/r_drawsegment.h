@@ -52,19 +52,25 @@ namespace swrenderer
 	public:
 		static DrawSegmentList *Instance();
 
-		DrawSegment *firstdrawseg = nullptr;
-		DrawSegment *ds_p = nullptr;
-		DrawSegment *drawsegs = nullptr;
+		unsigned int BeginIndex() const { return StartIndices.Last(); }
+		unsigned int EndIndex() const { return Segments.Size(); }
+		DrawSegment *Segment(int index) const { return Segments[Segments.Size() - 1 - index]; }
 
-		TArray<size_t> InterestingDrawsegs; // drawsegs that have something drawn on them
-		size_t FirstInterestingDrawseg = 0;
+		unsigned int BeginInterestingIndex() const { return StartInterestingIndices.Last(); }
+		unsigned int EndInterestingIndex() const { return InterestingSegments.Size(); }
+		DrawSegment *InterestingSegment(int index) const { return InterestingSegments[Segments.Size() - 1 - index]; }
 
 		void Clear();
-		void Deinit();
-
-		DrawSegment *Add();
+		void PushPortal();
+		void PopPortal();
+		void Push(DrawSegment *segment);
+		void PushInteresting(DrawSegment *segment);
 
 	private:
-		size_t MaxDrawSegs = 0;
+		TArray<DrawSegment *> Segments;
+		TArray<unsigned int> StartIndices;
+
+		TArray<DrawSegment *> InterestingSegments; // drawsegs that have something drawn on them
+		TArray<unsigned int> StartInterestingIndices;
 	};
 }

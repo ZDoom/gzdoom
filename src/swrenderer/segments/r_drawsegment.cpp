@@ -49,40 +49,39 @@ namespace swrenderer
 		return &instance;
 	}
 
-	void DrawSegmentList::Deinit()
-	{
-		if (drawsegs != nullptr)
-		{
-			M_Free(drawsegs);
-			drawsegs = nullptr;
-		}
-	}
-
 	void DrawSegmentList::Clear()
 	{
-		if (drawsegs == nullptr)
-		{
-			MaxDrawSegs = 256; // [RH] Default. Increased as needed.
-			firstdrawseg = drawsegs = (DrawSegment *)M_Malloc (MaxDrawSegs * sizeof(DrawSegment));
-		}
-		FirstInterestingDrawseg = 0;
-		InterestingDrawsegs.Clear ();
-		ds_p = drawsegs;
+		Segments.Clear();
+		StartIndices.Clear();
+		StartIndices.Push(0);
+
+		InterestingSegments.Clear();
+		StartInterestingIndices.Clear();
+		StartInterestingIndices.Push(0);
 	}
 
-	DrawSegment *DrawSegmentList::Add()
+	void DrawSegmentList::PushPortal()
 	{
-		if (ds_p == &drawsegs[MaxDrawSegs])
-		{ // [RH] Grab some more drawsegs
-			size_t newdrawsegs = MaxDrawSegs ? MaxDrawSegs * 2 : 32;
-			ptrdiff_t firstofs = firstdrawseg - drawsegs;
-			drawsegs = (DrawSegment *)M_Realloc(drawsegs, newdrawsegs * sizeof(DrawSegment));
-			firstdrawseg = drawsegs + firstofs;
-			ds_p = drawsegs + MaxDrawSegs;
-			MaxDrawSegs = newdrawsegs;
-			DPrintf(DMSG_NOTIFY, "MaxDrawSegs increased to %zu\n", MaxDrawSegs);
-		}
+		StartIndices.Push(Segments.Size());
+		StartInterestingIndices.Push(InterestingSegments.Size());
+	}
 
-		return ds_p++;
+	void DrawSegmentList::PopPortal()
+	{
+		Segments.Resize(StartIndices.Last());
+		StartIndices.Pop();
+
+		StartInterestingIndices.Resize(StartInterestingIndices.Last());
+		StartInterestingIndices.Pop();
+	}
+
+	void DrawSegmentList::Push(DrawSegment *segment)
+	{
+		Segments.Push(segment);
+	}
+
+	void DrawSegmentList::PushInteresting(DrawSegment *segment)
+	{
+		InterestingSegments.Push(segment);
 	}
 }

@@ -248,7 +248,6 @@ namespace swrenderer
 	{
 		RenderTranslucentPass::Instance()->Deinit();
 		Clip3DFloors::Instance()->Cleanup();
-		DrawSegmentList::Instance()->Deinit();
 	}
 
 	/////////////////////////////////////////////////////////////////////////

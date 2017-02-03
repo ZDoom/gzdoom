@@ -318,8 +318,6 @@ namespace swrenderer
 			I_FatalError("Bad R_StoreWallRange: %i to %i", start, stop);
 #endif
 
-		DrawSegment *draw_segment = DrawSegmentList::Instance()->Add();
-
 		if (!rw_prepped)
 		{
 			rw_prepped = true;
@@ -330,6 +328,9 @@ namespace swrenderer
 		rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 		
 		RenderPortal *renderportal = RenderPortal::Instance();
+
+		DrawSegment *draw_segment = RenderMemory::NewObject<DrawSegment>();
+		DrawSegmentList::Instance()->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->sx1 = WallC.sx1;
@@ -516,8 +517,7 @@ namespace swrenderer
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
-						size_t drawsegnum = draw_segment - DrawSegmentList::Instance()->drawsegs;
-						DrawSegmentList::Instance()->InterestingDrawsegs.Push(drawsegnum);
+						DrawSegmentList::Instance()->PushInteresting(draw_segment);
 					}
 				}
 		}

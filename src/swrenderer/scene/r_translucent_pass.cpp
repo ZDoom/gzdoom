@@ -72,8 +72,10 @@ namespace swrenderer
 		// b) skip most of the collected drawsegs which have no portal attached.
 		portaldrawsegs.Clear();
 		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
-		for (DrawSegment* seg = drawseglist->ds_p; seg-- > drawseglist->firstdrawseg; )
+		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
 		{
+			DrawSegment *seg = drawseglist->Segment(index);
+
 			// I don't know what makes this happen (some old top-down portal code or possibly skybox code? something adds null lines...)
 			// crashes at the first frame of the first map of Action2.wad
 			if (!seg->curline) continue;
@@ -141,9 +143,12 @@ namespace swrenderer
 		{
 			Clip3DFloors::Instance()->fake3D |= FAKE3D_REFRESHCLIP;
 		}
+
 		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
-		for (DrawSegment *ds = drawseglist->ds_p; ds-- > drawseglist->firstdrawseg; )
+		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
 		{
+			DrawSegment *ds = drawseglist->Segment(index);
+
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;

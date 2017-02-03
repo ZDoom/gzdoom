@@ -1021,6 +1021,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.maptime = 0;
+
 	P_SetupLevel (level.MapName, position);
 
 	AM_LevelInit();
@@ -1062,6 +1063,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.starttime = gametic;
+
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
 	// For each player, if they are viewing through a player, make sure it is themselves.
@@ -1073,8 +1075,6 @@ void G_DoLoadLevel (int position, bool autosave)
 		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
-	// [ZZ] init per-map static handlers
-	E_InitStaticHandlers(true);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)

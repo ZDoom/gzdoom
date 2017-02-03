@@ -197,6 +197,8 @@ void E_InitStaticHandlers(bool map)
 
 	if (map) // don't initialize map handlers if restoring from savegame.
 	{
+		Printf("Initializing map handlers\n");
+
 		// delete old handlers if any.
 		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		{
@@ -211,6 +213,7 @@ void E_InitStaticHandlers(bool map)
 			PClass* type = PClass::FindClass(typestring);
 			if (!type || E_IsStaticType(type)) // don't init the really global stuff here.
 				continue;
+			Printf("global -> %s\n", typestring.GetChars());
 			E_InitStaticHandler(type, typestring, false);
 		}
 
@@ -218,6 +221,7 @@ void E_InitStaticHandlers(bool map)
 		{
 			FString typestring = level.info->EventHandlers[i];
 			PClass* type = PClass::FindClass(typestring);
+			Printf("level -> %s\n", typestring.GetChars());
 			E_InitStaticHandler(type, typestring, true);
 		}
 	}

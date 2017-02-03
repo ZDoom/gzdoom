@@ -60,6 +60,8 @@ bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
 
 // check if there is anything that should receive GUI events
 bool E_CheckUiProcessors();
+// check if we need native mouse due to UiProcessors
+bool E_CheckRequireMouse();
 
 // serialization stuff
 void E_SerializeEvents(FSerializer& arc);
@@ -89,6 +91,7 @@ public:
 	//
 	int Order;
 	bool IsUiProcessor;
+	bool RequireMouse;
 
 	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
 	void Serialize(FSerializer& arc) override
@@ -105,6 +108,7 @@ public:
 
 		arc("Order", Order);
 		arc("IsUiProcessor", IsUiProcessor);
+		arc("RequireMouse", RequireMouse);
 	}
 
 	// destroy handler. this unlinks EventHandler from the list automatically.

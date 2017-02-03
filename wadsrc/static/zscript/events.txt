@@ -317,6 +317,8 @@ class StaticEventHandler : Object native
     native int Order;
     // this value will be queried on user input to decide whether to send UiProcess to this handler.
     native bool IsUiProcessor;
+    // this value determines whether mouse input is required.
+    native bool RequireMouse;
 }
 
 class EventHandler : StaticEventHandler native

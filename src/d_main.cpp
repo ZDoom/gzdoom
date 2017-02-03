@@ -310,8 +310,7 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling
-		)
+	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_CheckUiProcessors())
 	{
 		if (Button_Mlook.bDown || freelook)
 		{

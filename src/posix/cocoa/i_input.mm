@@ -186,6 +186,9 @@ void CheckNativeMouse()
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
 
+	if (!wantNative && E_CheckRequireMouse())
+		wantNative = true;
+
 	I_SetNativeMouse(wantNative);
 }
 

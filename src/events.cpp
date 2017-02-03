@@ -386,7 +386,7 @@ bool E_Responder(event_t* ev)
 		// not sure if we want to handle device changes, but whatevs.
 		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 		{
-			if (!handler->IsUiProcessor && handler->InputProcess(ev))
+			if (handler->InputProcess(ev))
 				return true; // event was processed
 		}
 	}
@@ -397,15 +397,18 @@ bool E_Responder(event_t* ev)
 bool E_CheckUiProcessors()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-	{
 		if (handler->IsUiProcessor)
-		{
-			//Printf("E_CheckUiProcessors = true\n");
 			return true;
-		}
-	}
 
-	//Printf("E_CheckUiProcessors = false\n");
+	return false;
+}
+
+bool E_CheckRequireMouse()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		if (handler->IsUiProcessor && handler->RequireMouse)
+			return true;
+
 	return false;
 }
 
@@ -427,6 +430,7 @@ IMPLEMENT_CLASS(DInputEvent, false, false)
 
 DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, Order);
 DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, IsUiProcessor);
+DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, RequireMouse);
 
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewPos);
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewAngle);

@@ -468,6 +468,18 @@ DEFINE_FIELD_X(InputEvent, DInputEvent, KeyChar);
 DEFINE_FIELD_X(InputEvent, DInputEvent, MouseX);
 DEFINE_FIELD_X(InputEvent, DInputEvent, MouseY);
 
+DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
+{
+	PARAM_SELF_PROLOGUE(DStaticEventHandler);
+	PARAM_INT(order);
+
+	if (E_CheckHandler(self))
+		return 0;
+
+	self->Order = order;
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 {
 	PARAM_PROLOGUE;

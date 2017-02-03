@@ -314,7 +314,8 @@ class StaticEventHandler : Object native
     // this value will be queried on Register() to decide the relative order of this handler to every other.
     // this is most useful in UI systems.
     // default is 0.
-    native int Order;
+    native readonly int Order;
+    native void SetOrder(int order);
     // this value will be queried on user input to decide whether to send UiProcess to this handler.
     native bool IsUiProcessor;
     // this value determines whether mouse input is required.

@@ -3,6 +3,8 @@
 
 #include "dobject.h"
 #include "serializer.h"
+#include "d_event.h"
+#include "d_gui.h"
 
 class DStaticEventHandler;
 
@@ -49,6 +51,11 @@ void E_PlayerRespawned(int num);
 void E_PlayerDied(int num);
 // this executes when a player leaves the game
 void E_PlayerDisconnected(int num);
+// this executes on events.
+bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
+
+// check if there is anything that should receive GUI events
+bool E_CheckUiProcessors();
 
 // serialization stuff
 void E_SerializeEvents(FSerializer& arc);
@@ -67,17 +74,17 @@ public:
 	{
 		prev = 0;
 		next = 0;
-		order = 0;
-		haveorder = false;
+		Order = 0;
+		IsUiProcessor = false;
 	}
 
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
 	virtual bool IsStatic() { return true; }
 
-	// order is cached to avoid calling the VM for sorting too much
-	int order;
-	bool haveorder;
+	//
+	int Order;
+	bool IsUiProcessor;
 
 	// serialization handler. let's keep it here so that I don't get lost in serialized/not serialized fields
 	void Serialize(FSerializer& arc) override
@@ -91,34 +98,42 @@ public:
 		{
 			Printf("DStaticEventHandler::Serialize: store object %s\n", GetClass()->TypeName.GetChars());
 		}
-		/* do nothing */
+
+		arc("Order", Order);
+		arc("IsUiProcessor", IsUiProcessor);
 	}
 
 	// destroy handler. this unlinks EventHandler from the list automatically.
 	void OnDestroy() override;
 
 	//
-	virtual void WorldLoaded();
-	virtual void WorldUnloaded();
-	virtual void WorldThingSpawned(AActor*);
-	virtual void WorldThingDied(AActor*, AActor*);
-	virtual void WorldThingRevived(AActor*);
-	virtual void WorldThingDamaged(AActor*, AActor*, AActor*, int, FName, int, DAngle);
-	virtual void WorldThingDestroyed(AActor*);
-	virtual void WorldLightning();
-	virtual void WorldTick();
+	void OnRegister(); // you can set order and IsUi here.
+	void OnUnregister();
 
 	//
-	virtual void RenderFrame();
+	void WorldLoaded();
+	void WorldUnloaded();
+	void WorldThingSpawned(AActor*);
+	void WorldThingDied(AActor*, AActor*);
+	void WorldThingRevived(AActor*);
+	void WorldThingDamaged(AActor*, AActor*, AActor*, int, FName, int, DAngle);
+	void WorldThingDestroyed(AActor*);
+	void WorldLightning();
+	void WorldTick();
 
 	//
-	virtual void PlayerEntered(int num, bool fromhub);
-	virtual void PlayerRespawned(int num);
-	virtual void PlayerDied(int num);
-	virtual void PlayerDisconnected(int num);
+	void RenderFrame();
 
-	// gets the order of this item.
-	int GetOrder();
+	//
+	void PlayerEntered(int num, bool fromhub);
+	void PlayerRespawned(int num);
+	void PlayerDied(int num);
+	void PlayerDisconnected(int num);
+
+	//
+	// return true if handled.
+	virtual bool InputProcess(event_t* ev);
+	virtual bool UiProcess(event_t* ev);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -210,6 +225,49 @@ public:
 	{
 		PlayerNumber = -1;
 		IsReturn = false;
+	}
+};
+
+class DUiEvent : public DBaseEvent
+{
+	DECLARE_CLASS(DUiEvent, DBaseEvent)
+public:
+	// this essentially translates event_t UI events to ZScript.
+	EGUIEvent Type;
+	// for keys/chars/whatever
+	FString KeyString;
+	int KeyChar;
+	// for mouse
+	int MouseX;
+	int MouseY;
+	// global (?)
+	bool IsShift;
+	bool IsCtrl;
+	bool IsAlt;
+
+	DUiEvent()
+	{
+		Type = EV_GUI_None;
+	}
+};
+
+class DInputEvent : public DBaseEvent
+{
+	DECLARE_CLASS(DInputEvent, DBaseEvent)
+public:
+	// this translates regular event_t events to ZScript (not UI, UI events are sent via DUiEvent and only if requested!)
+	EGenericEvent Type;
+	// for keys
+	int KeyScan;
+	FString KeyString;
+	int KeyChar;
+	// for mouse
+	int MouseX;
+	int MouseY;
+
+	DInputEvent()
+	{
+		Type = EV_None;
 	}
 };
 

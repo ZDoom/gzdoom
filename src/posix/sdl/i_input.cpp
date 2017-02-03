@@ -17,6 +17,7 @@
 #include "dikeys.h"
 #include "templates.h"
 #include "s_sound.h"
+#include "events.h"
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -153,6 +154,10 @@ static void I_CheckGUICapture ()
 	{
 		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
+
+	// [ZZ] check active event handlers that want the UI processing
+	if (!wantCapt && E_CheckUiProcessors())
+		wantCapt = true;
 
 	if (wantCapt != GUICapture)
 	{

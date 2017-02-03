@@ -15,13 +15,15 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 		return false;
 	if (E_CheckHandler(handler))
 		return false;
+
+	handler->OnRegister();
 	
 	// link into normal list
 	// update: link at specific position based on order.
 	DStaticEventHandler* before = nullptr;
 	for (DStaticEventHandler* existinghandler = E_FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
 	{
-		if (existinghandler->GetOrder() > handler->GetOrder())
+		if (existinghandler->Order > handler->Order)
 		{
 			before = existinghandler;
 			break;
@@ -71,6 +73,9 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		return false;
 	if (!E_CheckHandler(handler))
 		return false;
+
+	handler->OnUnregister();
+
 	// link out of normal list
 	if (handler->prev)
 		handler->prev->next = handler->next;
@@ -197,8 +202,6 @@ void E_InitStaticHandlers(bool map)
 
 	if (map) // don't initialize map handlers if restoring from savegame.
 	{
-		Printf("Initializing map handlers\n");
-
 		// delete old handlers if any.
 		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 		{
@@ -213,7 +216,6 @@ void E_InitStaticHandlers(bool map)
 			PClass* type = PClass::FindClass(typestring);
 			if (!type || E_IsStaticType(type)) // don't init the really global stuff here.
 				continue;
-			Printf("global -> %s\n", typestring.GetChars());
 			E_InitStaticHandler(type, typestring, false);
 		}
 
@@ -221,7 +223,6 @@ void E_InitStaticHandlers(bool map)
 		{
 			FString typestring = level.info->EventHandlers[i];
 			PClass* type = PClass::FindClass(typestring);
-			Printf("level -> %s\n", typestring.GetChars());
 			E_InitStaticHandler(type, typestring, true);
 		}
 	}
@@ -370,6 +371,45 @@ void E_PlayerDisconnected(int num)
 		handler->PlayerDisconnected(num);
 }
 
+bool E_Responder(event_t* ev)
+{
+	if (ev->type == EV_GUI_Event)
+	{
+		// iterate handlers back to front by order, and give them this event.
+		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+		{
+			if (handler->IsUiProcessor && handler->UiProcess(ev))
+				return true; // event was processed
+		}
+	}
+	else
+	{
+		// not sure if we want to handle device changes, but whatevs.
+		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+		{
+			if (!handler->IsUiProcessor && handler->InputProcess(ev))
+				return true; // event was processed
+		}
+	}
+
+	return false;
+}
+
+bool E_CheckUiProcessors()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsUiProcessor)
+		{
+			//Printf("E_CheckUiProcessors = true\n");
+			return true;
+		}
+	}
+
+	//Printf("E_CheckUiProcessors = false\n");
+	return false;
+}
+
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
@@ -382,6 +422,11 @@ IMPLEMENT_CLASS(DBaseEvent, false, false)
 IMPLEMENT_CLASS(DRenderEvent, false, false)
 IMPLEMENT_CLASS(DWorldEvent, false, false)
 IMPLEMENT_CLASS(DPlayerEvent, false, false)
+IMPLEMENT_CLASS(DUiEvent, false, false)
+IMPLEMENT_CLASS(DInputEvent, false, false)
+
+DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, Order);
+DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, IsUiProcessor);
 
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewPos);
 DEFINE_FIELD_X(RenderEvent, DRenderEvent, ViewAngle);
@@ -402,6 +447,22 @@ DEFINE_FIELD_X(WorldEvent, DWorldEvent, DamageAngle);
 
 DEFINE_FIELD_X(PlayerEvent, DPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, DPlayerEvent, IsReturn);
+
+DEFINE_FIELD_X(UiEvent, DUiEvent, Type);
+DEFINE_FIELD_X(UiEvent, DUiEvent, KeyString);
+DEFINE_FIELD_X(UiEvent, DUiEvent, KeyChar);
+DEFINE_FIELD_X(UiEvent, DUiEvent, MouseX);
+DEFINE_FIELD_X(UiEvent, DUiEvent, MouseY);
+DEFINE_FIELD_X(UiEvent, DUiEvent, IsShift);
+DEFINE_FIELD_X(UiEvent, DUiEvent, IsAlt);
+DEFINE_FIELD_X(UiEvent, DUiEvent, IsCtrl);
+
+DEFINE_FIELD_X(InputEvent, DInputEvent, Type);
+DEFINE_FIELD_X(InputEvent, DInputEvent, KeyScan);
+DEFINE_FIELD_X(InputEvent, DInputEvent, KeyString);
+DEFINE_FIELD_X(InputEvent, DInputEvent, KeyChar);
+DEFINE_FIELD_X(InputEvent, DInputEvent, MouseX);
+DEFINE_FIELD_X(InputEvent, DInputEvent, MouseY);
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 {
@@ -515,6 +576,9 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
 	return 0; \
 }
 
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, OnRegister)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, OnUnregister)
+
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLoaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
@@ -532,17 +596,38 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerRespawned)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, GetOrder)
-{
-	PARAM_SELF_PROLOGUE(DStaticEventHandler);
-	ACTION_RETURN_INT(0);
-}
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
 
 // ===========================================
 //
 //  Event handlers
 //
 // ===========================================
+
+void DStaticEventHandler::OnRegister()
+{
+	IFVIRTUAL(DStaticEventHandler, OnRegister)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_OnRegister_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::OnUnregister()
+{
+	IFVIRTUAL(DStaticEventHandler, OnUnregister)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_OnUnregister_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+}
 
 static DWorldEvent* E_SetupWorldEvent()
 {
@@ -780,28 +865,125 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 	}
 }
 
+static DUiEvent* E_SetupUiEvent()
+{
+	static DUiEvent* e = nullptr;
+	if (!e) e = (DUiEvent*)RUNTIME_CLASS(DUiEvent)->CreateNew();
+	e->Type = EV_GUI_None;
+	e->IsShift = false;
+	e->IsAlt = false;
+	e->IsCtrl = false;
+	e->MouseX = e->MouseY = 0;
+	e->KeyChar = 0;
+	e->KeyString = "";
+	return e;
+}
+
+bool DStaticEventHandler::UiProcess(event_t* ev)
+{
+	IFVIRTUAL(DStaticEventHandler, UiProcess)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_UiProcess_VMPtr)
+			return false;
+		DUiEvent* e = E_SetupUiEvent();
+
+		//
+		e->Type = (EGUIEvent)ev->subtype;
+		// we don't want the modders to remember what weird fields mean what for what events.
+		switch (e->Type)
+		{
+		case EV_GUI_None:
+			break;
+		case EV_GUI_KeyDown:
+		case EV_GUI_KeyRepeat:
+		case EV_GUI_KeyUp:
+			e->KeyChar = ev->data1;
+			e->KeyString.Format("%c", e->KeyChar);
+			e->IsShift = !!(ev->data3 & GKM_SHIFT);
+			e->IsAlt = !!(ev->data3 & GKM_ALT);
+			e->IsCtrl = !!(ev->data3 & GKM_CTRL);
+			break;
+		case EV_GUI_Char:
+			e->KeyChar = ev->data1;
+			e->KeyString.Format("%c", e->KeyChar);
+			e->IsAlt = !!ev->data2; // only true for Win32, not sure about SDL
+			break;
+		default: // mouse event
+			     // note: SDL input doesn't seem to provide these at all
+			e->MouseX = ev->x;
+			e->MouseY = ev->y;
+			e->IsShift = !!(ev->data3 & GKM_SHIFT);
+			e->IsAlt = !!(ev->data3 & GKM_ALT);
+			e->IsCtrl = !!(ev->data3 & GKM_CTRL);
+			break;
+		}
+
+		int processed;
+		VMReturn results[1] = { &processed };
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, results, 1, nullptr);
+		return !!processed;
+	}
+
+	return false;
+}
+
+static DInputEvent* E_SetupInputEvent()
+{
+	static DInputEvent* e = nullptr;
+	if (!e) e = (DInputEvent*)RUNTIME_CLASS(DInputEvent)->CreateNew();
+	e->Type = EV_None;
+	e->KeyScan = 0;
+	e->KeyChar = 0;
+	e->KeyString = "";
+	e->MouseX = e->MouseY = 0;
+	return e;
+}
+
+bool DStaticEventHandler::InputProcess(event_t* ev)
+{
+	IFVIRTUAL(DStaticEventHandler, InputProcess)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_InputProcess_VMPtr)
+			return false;
+		DInputEvent* e = E_SetupInputEvent();
+
+		//
+		e->Type = (EGenericEvent)ev->type;
+		// we don't want the modders to remember what weird fields mean what for what events.
+		switch (e->Type)
+		{
+		case EV_None:
+			break;
+		case EV_KeyDown:
+		case EV_KeyUp:
+			e->KeyScan = ev->data1;
+			e->KeyChar = ev->data2;
+			e->KeyString.Format("%c", e->KeyChar);
+			break;
+		case EV_Mouse:
+			e->MouseX = ev->x;
+			e->MouseY = ev->y;
+			break;
+		default:
+			break; // EV_DeviceChange = wat?
+		}
+
+		int processed;
+		VMReturn results[1] = { &processed };
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, results, 1, nullptr);
+		return !!processed;
+	}
+
+	return false;
+}
+
 //
 void DStaticEventHandler::OnDestroy()
 {
 	E_UnregisterHandler(this);
 	Super::OnDestroy();
-}
-
-//
-int DStaticEventHandler::GetOrder()
-{
-	// if we have cached order, return it.
-	// otherwise call VM.
-	if (haveorder) 
-		return order;
-
-	IFVIRTUAL(DStaticEventHandler, GetOrder)
-	{
-		VMReturn results[1] = { &order };
-		VMValue params[1] = { (DStaticEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, results, 1, nullptr);
-		haveorder = true;
-	}
-
-	return order;
 }

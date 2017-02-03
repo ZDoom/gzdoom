@@ -287,6 +287,9 @@ void D_ProcessEvents (void)
 			continue;				// console ate the event
 		if (M_Responder (ev))
 			continue;				// menu ate the event
+		// check events
+		if (E_Responder(ev)) // [ZZ] ZScript ate the event
+			continue;
 		G_Responder (ev);
 	}
 }

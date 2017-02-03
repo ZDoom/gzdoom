@@ -941,8 +941,9 @@ bool DStaticEventHandler::UiProcess(event_t* ev)
 			break;
 		default: // mouse event
 			     // note: SDL input doesn't seem to provide these at all
-			e->MouseX = ev->x;
-			e->MouseY = ev->y;
+			//Printf("Mouse data: %d, %d, %d, %d\n", ev->x, ev->y, ev->data1, ev->data2);
+			e->MouseX = ev->data1;
+			e->MouseY = ev->data2;
 			e->IsShift = !!(ev->data3 & GKM_SHIFT);
 			e->IsAlt = !!(ev->data3 & GKM_ALT);
 			e->IsCtrl = !!(ev->data3 & GKM_CTRL);

@@ -759,6 +759,14 @@ begin:
 		assert(0);
 		NEXTOP;
 
+	OP(NEW_K):
+	OP(NEW):
+	{
+		PClass *cls = (PClass*)(op == OP_NEW ? reg.a[C] : konsta[C].v);
+		reg.a[B] = cls->CreateNew();
+		NEXTOP;
+	}
+
 	OP(TRY):
 		assert(try_depth < MAX_TRY_DEPTH);
 		if (try_depth >= MAX_TRY_DEPTH)

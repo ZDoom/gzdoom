@@ -147,7 +147,6 @@ namespace swrenderer
 			backpos = int(fmod(backdpos, sky2cyl * 65536.0));
 		}
 
-		bool fakefixed = false;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->fixedcolormap)
 		{
@@ -155,15 +154,10 @@ namespace swrenderer
 		}
 		else
 		{
-			fakefixed = true;
-			cameraLight->fixedcolormap = &NormalLight;
-			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(&NormalLight, 0, 0);
 		}
 
 		DrawSky(pl);
-
-		if (fakefixed)
-			cameraLight->fixedcolormap = nullptr;
 	}
 
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)

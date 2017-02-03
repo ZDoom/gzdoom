@@ -45,6 +45,8 @@ void E_WorldLightning();
 void E_WorldTick();
 // called on each render frame once.
 void E_RenderFrame();
+// called after everything's been rendered, but before console/menus
+void E_RenderOverlay();
 // this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
 void E_PlayerEntered(int num, bool fromhub);
 // this executes when a player respawns. includes resurrect cheat.
@@ -125,6 +127,7 @@ public:
 
 	//
 	void RenderFrame();
+	void RenderOverlay();
 
 	//
 	void PlayerEntered(int num, bool fromhub);

@@ -301,6 +301,7 @@ class StaticEventHandler : Object native
 
     //
     virtual native void RenderFrame(RenderEvent e);
+    virtual native void RenderOverlay(RenderEvent e);
     
     //
     virtual native void PlayerEntered(PlayerEvent e);

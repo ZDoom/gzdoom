@@ -411,6 +411,7 @@ bool E_CheckUiProcessors()
 
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
+DEFINE_EVENT_LOOPER(RenderOverlay)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 
@@ -589,6 +590,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderOverlay)
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerEntered)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerRespawned)
@@ -791,6 +793,19 @@ void DStaticEventHandler::RenderFrame()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_RenderFrame_VMPtr)
+			return;
+		DRenderEvent* e = E_SetupRenderEvent();
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+void DStaticEventHandler::RenderOverlay()
+{
+	IFVIRTUAL(DStaticEventHandler, RenderOverlay)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_RenderOverlay_VMPtr)
 			return;
 		DRenderEvent* e = E_SetupRenderEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, e };

@@ -87,7 +87,7 @@ namespace swrenderer
 
 		// kg3D - correct colors now
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (!cameraLight->fixedcolormap && cameraLight->fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
+		if (!cameraLight->FixedColormap() && cameraLight->FixedLightLevel() < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{

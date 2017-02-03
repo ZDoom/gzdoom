@@ -899,7 +899,7 @@ namespace swrenderer
 			walltexcoords.Project(sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
 
 			CameraLight *cameraLight = CameraLight::Instance();
-			if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
+			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
 				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel) + R_ActualExtraLight(foggy));
 				double GlobVis = LightVisibility::Instance()->WallGlobVis();
@@ -916,7 +916,7 @@ namespace swrenderer
 
 	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const
 	{
-		return r_fogboundary && CameraLight::Instance()->fixedcolormap == nullptr && front->ColorMap->Fade &&
+		return r_fogboundary && CameraLight::Instance()->FixedColormap() == nullptr && front->ColorMap->Fade &&
 			front->ColorMap->Fade != back->ColorMap->Fade &&
 			(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 	}
@@ -935,10 +935,10 @@ namespace swrenderer
 		drawerargs.SetStyle(false, false, OPAQUE);
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedlightlev >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-		else if (cameraLight->fixedcolormap != nullptr)
-			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+		else if (cameraLight->FixedColormap() != nullptr)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
 		// clip wall to the floor and ceiling
 		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;

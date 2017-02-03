@@ -483,7 +483,7 @@ namespace swrenderer
 		// kg3D - fake lights
 		CameraLight *cameraLight = CameraLight::Instance();
 		FDynamicColormap *basecolormap;
-		if (cameraLight->fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
 			light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
 			basecolormap = light->extra_colormap;
@@ -496,7 +496,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : frontsector->ColorMap;
 		}
 
 		portal = frontsector->ValidatePortal(sector_t::ceiling);
@@ -521,7 +521,7 @@ namespace swrenderer
 		if (ceilingplane)
 			ceilingplane->AddLights(frontsector->lighthead);
 
-		if (cameraLight->fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
 			light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
 			basecolormap = light->extra_colormap;
@@ -534,7 +534,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : frontsector->ColorMap;
 		}
 
 		// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
@@ -606,7 +606,7 @@ namespace swrenderer
 					else position = sector_t::floor;
 					frontsector = &tempsec;
 
-					if (cameraLight->fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
 						light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
 						basecolormap = light->extra_colormap;
@@ -671,7 +671,7 @@ namespace swrenderer
 					frontsector = &tempsec;
 
 					tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
-					if (cameraLight->fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
 						light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
 						basecolormap = light->extra_colormap;

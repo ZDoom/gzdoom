@@ -102,7 +102,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
-	if (fullbrightSprite || cameraLight->fixedlightlev >= 0 || cameraLight->fixedcolormap)
+	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

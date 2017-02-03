@@ -59,11 +59,17 @@ namespace swrenderer
 	public:
 		static CameraLight *Instance();
 
+		int FixedLightLevel() const { return fixedlightlev; }
+		FSWColormap *FixedColormap() const { return fixedcolormap; }
+		FSpecialColormap *ShaderColormap() const { return realfixedcolormap; }
+
+		void SetCamera(AActor *actor);
+		void ClearShaderColormap() { realfixedcolormap = nullptr; }
+		
+	private:
 		int fixedlightlev = 0;
 		FSWColormap *fixedcolormap = nullptr;
 		FSpecialColormap *realfixedcolormap = nullptr;
-
-		void SetCamera(AActor *actor);
 	};
 
 	class LightVisibility

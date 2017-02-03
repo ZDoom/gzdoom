@@ -1405,7 +1405,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			auto &map = swrenderer::CameraLight::Instance()->realfixedcolormap;
+			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 			if (map == NULL)
 			{
 				color0 = 0;

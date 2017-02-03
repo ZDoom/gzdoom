@@ -189,15 +189,15 @@ namespace swrenderer
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedcolormap)
+		if (cameraLight->FixedColormap())
 		{
-			BaseColormap = cameraLight->fixedcolormap;
+			BaseColormap = cameraLight->FixedColormap();
 			ColormapNum = 0;
 		}
-		else if (cameraLight->fixedlightlev >= 0)
+		else if (cameraLight->FixedLightLevel() >= 0)
 		{
 			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
-			ColormapNum = cameraLight->fixedlightlev >> COLORMAPSHIFT;
+			ColormapNum = cameraLight->FixedLightLevel() >> COLORMAPSHIFT;
 		}
 		else if (fullbright)
 		{

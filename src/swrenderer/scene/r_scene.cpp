@@ -98,9 +98,9 @@ namespace swrenderer
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
-		if (CameraLight::Instance()->realfixedcolormap && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
+		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
-			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->realfixedcolormap, screen);
+			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 		}
 
 		R_EndDrawerCommands();
@@ -185,7 +185,7 @@ namespace swrenderer
 		// copy to the screen does not use a special colormap shader.
 		if (!r_shadercolormaps && !RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
-			CameraLight::Instance()->realfixedcolormap = NULL;
+			CameraLight::Instance()->ClearShaderColormap();
 		}
 	}
 

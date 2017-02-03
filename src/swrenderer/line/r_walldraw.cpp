@@ -323,10 +323,10 @@ namespace swrenderer
 		drawerargs.SetTextureFracBits(RenderViewport::Instance()->RenderTarget->IsBgra() ? FRACBITS : fracbits);
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		bool fixed = (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0);
+		bool fixed = (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0);
 
-		if (cameraLight->fixedcolormap)
-			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+		if (cameraLight->FixedColormap())
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 		else
 			drawerargs.SetLight(basecolormap, 0, 0);
 
@@ -410,7 +410,7 @@ namespace swrenderer
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedcolormap != NULL || cameraLight->fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
 			ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
 		}

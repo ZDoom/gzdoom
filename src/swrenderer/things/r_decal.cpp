@@ -277,10 +277,10 @@ namespace swrenderer
 
 			SpriteDrawerArgs drawerargs;
 
-			if (cameraLight->fixedlightlev >= 0)
-				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-			else if (cameraLight->fixedcolormap != NULL)
-				drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+			if (cameraLight->FixedLightLevel() >= 0)
+				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			else if (cameraLight->FixedColormap() != NULL)
+				drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 			else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
 				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 			else

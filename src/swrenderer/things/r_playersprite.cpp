@@ -91,7 +91,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size())
+		if (cameraLight->FixedLightLevel() < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size())
 		{
 			for (i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
@@ -486,7 +486,7 @@ namespace swrenderer
 			// If the main colormap has fixed lights, and this sprite is being drawn with that
 			// colormap, disable acceleration so that the lights can remain fixed.
 			CameraLight *cameraLight = CameraLight::Instance();
-			if (!noaccel && cameraLight->realfixedcolormap == nullptr &&
+			if (!noaccel && cameraLight->ShaderColormap() == nullptr &&
 				NormalLightHasFixedLights && vis.Light.BaseColormap == &NormalLight &&
 				vis.pic->UseBasePalette())
 			{

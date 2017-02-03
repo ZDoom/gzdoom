@@ -106,7 +106,7 @@ namespace swrenderer
 		Clip3DFloors *clip3d = Clip3DFloors::Instance();
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedlightlev < 0)
+		if (cameraLight->FixedLightLevel() < 0)
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
@@ -148,15 +148,15 @@ namespace swrenderer
 		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		rw_scalestep = ds->iscalestep;
 
-		if (cameraLight->fixedlightlev >= 0)
+		if (cameraLight->FixedLightLevel() >= 0)
 		{
-			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-			columndrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
+			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			columndrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
 		}
-		else if (cameraLight->fixedcolormap != nullptr)
+		else if (cameraLight->FixedColormap() != nullptr)
 		{
-			walldrawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
-			columndrawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+			walldrawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
+			columndrawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 		}
 
 		// find positioning
@@ -284,7 +284,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					if (cameraLight->fixedcolormap == nullptr && cameraLight->fixedlightlev < 0)
+					if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 					{
 						columndrawerargs.SetLight(basecolormap, rw_light, wallshade);
 					}
@@ -456,10 +456,10 @@ namespace swrenderer
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedlightlev >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->fixedlightlev));
-		else if (cameraLight->fixedcolormap != nullptr)
-			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+		else if (cameraLight->FixedColormap() != nullptr)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;
@@ -682,7 +682,7 @@ namespace swrenderer
 				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
-				if (cameraLight->fixedlightlev < 0)
+				if (cameraLight->FixedLightLevel() < 0)
 				{
 					if ((ds->bFakeBoundary & 3) == 2)
 					{
@@ -857,7 +857,7 @@ namespace swrenderer
 				FDynamicColormap *basecolormap = frontsector->ColorMap;
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
-				if (cameraLight->fixedlightlev < 0)
+				if (cameraLight->FixedLightLevel() < 0)
 				{
 					if ((ds->bFakeBoundary & 3) == 2)
 					{

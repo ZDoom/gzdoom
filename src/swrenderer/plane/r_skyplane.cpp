@@ -148,9 +148,9 @@ namespace swrenderer
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->fixedcolormap)
+		if (cameraLight->FixedColormap())
 		{
-			drawerargs.SetLight(cameraLight->fixedcolormap, 0, 0);
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 		}
 		else
 		{

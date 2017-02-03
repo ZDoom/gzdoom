@@ -1409,7 +1409,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 		uint32_t color0, color1;
 		if (Accel2D)
 		{
-			auto &map = swrenderer::CameraLight::Instance()->realfixedcolormap;
+			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 			if (map == nullptr)
 			{
 				color0 = 0;

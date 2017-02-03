@@ -69,10 +69,10 @@ void PolyRenderer::RenderView(player_t *player)
 
 	// Apply special colormap if the target cannot do it
 	CameraLight *cameraLight = CameraLight::Instance();
-	if (cameraLight->realfixedcolormap && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
+	if (cameraLight->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 	{
 		R_BeginDrawerCommands();
-		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->realfixedcolormap, screen);
+		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
 		R_EndDrawerCommands();
 	}
 }

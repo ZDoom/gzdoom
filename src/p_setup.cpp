@@ -3424,6 +3424,8 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	// [ZZ] delete per-map event handlers
+	E_Shutdown(true);
 	P_FreeMapDataBackup();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
@@ -4189,6 +4191,8 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
+	// [ZZ] delete global event handlers
+	E_Shutdown(false);
 	R_DeinitSpriteData ();
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();

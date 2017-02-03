@@ -200,15 +200,11 @@ void E_InitStaticHandlers(bool map)
 	if (savegamerestore)
 		return;
 
+	// just make sure
+	E_Shutdown(map);
+
 	if (map) // don't initialize map handlers if restoring from savegame.
 	{
-		// delete old handlers if any.
-		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		{
-			if (!handler->IsStatic())
-				handler->Destroy();
-		}
-
 		// load non-static handlers from gameinfo
 		for (unsigned int i = 0; i < gameinfo.EventHandlers.Size(); i++)
 		{
@@ -228,13 +224,6 @@ void E_InitStaticHandlers(bool map)
 	}
 	else
 	{
-		// delete old static handlers if any.
-		for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		{
-			if (handler->IsStatic())
-				handler->Destroy();
-		}
-
 		for (unsigned int i = 0; i < gameinfo.EventHandlers.Size(); i++)
 		{
 			FString typestring = gameinfo.EventHandlers[i];
@@ -243,6 +232,16 @@ void E_InitStaticHandlers(bool map)
 				continue;
 			E_InitStaticHandler(type, typestring, false);
 		}
+	}
+}
+
+void E_Shutdown(bool map)
+{
+	// delete handlers.
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic() == !map)
+			handler->Destroy();
 	}
 }
 

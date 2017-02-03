@@ -18,6 +18,8 @@ bool E_CheckHandler(DStaticEventHandler* handler);
 bool E_IsStaticType(PClass* type);
 // init static handlers
 void E_InitStaticHandlers(bool map);
+// shutdown handlers
+void E_Shutdown(bool map);
 
 // called right after the map has loaded (approximately same time as OPEN ACS scripts)
 void E_WorldLoaded();

@@ -54,11 +54,11 @@ namespace swrenderer
 
 		unsigned int BeginIndex() const { return StartIndices.Last(); }
 		unsigned int EndIndex() const { return Segments.Size(); }
-		DrawSegment *Segment(int index) const { return Segments[Segments.Size() - 1 - index]; }
+		DrawSegment *Segment(unsigned int index) const { return Segments[Segments.Size() - 1 - index]; }
 
 		unsigned int BeginInterestingIndex() const { return StartInterestingIndices.Last(); }
 		unsigned int EndInterestingIndex() const { return InterestingSegments.Size(); }
-		DrawSegment *InterestingSegment(int index) const { return InterestingSegments[Segments.Size() - 1 - index]; }
+		DrawSegment *InterestingSegment(unsigned int index) const { return InterestingSegments[InterestingSegments.Size() - 1 - index]; }
 
 		void Clear();
 		void PushPortal();

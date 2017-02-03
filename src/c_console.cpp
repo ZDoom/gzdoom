@@ -1338,7 +1338,7 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 {
 	PARAM_PROLOGUE;
 	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
-	Printf("%s\n", s);
+	Printf("%s\n", s.GetChars());
 	return 0;
 }
 

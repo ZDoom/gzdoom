@@ -126,7 +126,7 @@ class PlayerPawn : Actor native
 			let powerup = Powerup(FindInventory(powerupType));
 			if(powerup != null) 
 			{
-				let maxtics = GetDefaultByType(powerupType).EffectTics;
+				let maxtics = GetDefaultByType(pg).EffectTics;
 				if (maxtics == 0) maxtics = powerup.default.EffectTics;
 				return powerup.EffectTics, maxtics;
 			}

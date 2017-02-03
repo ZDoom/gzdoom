@@ -55,6 +55,7 @@
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, st_scale)
@@ -65,10 +66,9 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	RenderPlayerSprites *RenderPlayerSprites::Instance()
+	RenderPlayerSprites::RenderPlayerSprites(RenderThread *thread)
 	{
-		static RenderPlayerSprites instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	void RenderPlayerSprites::Render()
@@ -121,7 +121,7 @@ namespace swrenderer
 		else
 		{	// This used to use camera->Sector but due to interpolation that can be incorrect
 			// when the interpolated viewpoint is in a different sector than the camera.
-			sec = RenderOpaquePass::Instance()->FakeFlat(viewsector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
+			sec = Thread->OpaquePass->FakeFlat(viewsector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
 
 			// [RH] set basecolormap
 			basecolormap = sec->ColorMap;

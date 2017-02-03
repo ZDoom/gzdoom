@@ -18,10 +18,15 @@
 
 namespace swrenderer
 {
+	class RenderThread;
+
 	class RenderSlopePlane : PlaneRenderer
 	{
 	public:
+		RenderSlopePlane(RenderThread *thread);
 		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;

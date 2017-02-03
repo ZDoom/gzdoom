@@ -34,12 +34,6 @@
 
 namespace swrenderer
 {
-	RenderClipSegment *RenderClipSegment::Instance()
-	{
-		static RenderClipSegment instance;
-		return &instance;
-	}
-
 	void RenderClipSegment::Clear(short left, short right)
 	{
 		solidsegs[0].first = -0x7fff;

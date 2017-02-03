@@ -22,11 +22,13 @@ extern cycle_t FrameCycles;
 namespace swrenderer
 {
 	extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+
+	class RenderThread;
 	
 	class RenderScene
 	{
 	public:
-		static RenderScene *Instance();
+		RenderScene(RenderThread *thread);
 
 		void Init();
 		void ScreenResized();
@@ -38,6 +40,8 @@ namespace swrenderer
 		void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 	
 		bool DontMapLines() const { return dontmaplines; }
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderActorView(AActor *actor, bool dontmaplines = false);

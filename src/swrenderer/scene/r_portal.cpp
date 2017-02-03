@@ -57,6 +57,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
 CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
@@ -67,10 +68,9 @@ CVAR(Bool, r_skyboxes, true, 0)
 
 namespace swrenderer
 {
-	RenderPortal *RenderPortal::Instance()
+	RenderPortal::RenderPortal(RenderThread *thread)
 	{
-		static RenderPortal renderportal;
-		return &renderportal;
+		Thread = thread;
 	}
 
 	// Draws any recorded sky boxes and then frees them.
@@ -92,13 +92,13 @@ namespace swrenderer
 	{
 		numskyboxes = 0;
 
-		VisiblePlaneList *planes = VisiblePlaneList::Instance();
-		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
+		VisiblePlaneList *planes = Thread->PlaneList.get();
+		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
 
 		if (!planes->HasPortalPlanes())
 			return;
 
-		Clip3DFloors::Instance()->EnterSkybox();
+		Thread->Clip3DFloors->EnterSkybox();
 		CurrentPortalInSkybox = true;
 
 		int savedextralight = extralight;
@@ -112,7 +112,7 @@ namespace swrenderer
 		{
 			if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES || pl->portal == nullptr)
 			{
-				pl->Render(OPAQUE, false, false);
+				pl->Render(Thread, OPAQUE, false, false);
 				continue;
 			}
 
@@ -151,7 +151,7 @@ namespace swrenderer
 				// not implemented yet
 
 			default:
-				pl->Render(OPAQUE, false, false);
+				pl->Render(Thread, OPAQUE, false, false);
 				numskyboxes--;
 				continue;
 			}
@@ -165,12 +165,12 @@ namespace swrenderer
 			validcount++;	// Make sure we see all sprites
 
 			planes->ClearKeepFakePlanes();
-			RenderClipSegment::Instance()->Clear(pl->left, pl->right);
+			Thread->ClipSegments->Clear(pl->left, pl->right);
 			WindowLeft = pl->left;
 			WindowRight = pl->right;
 
-			auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
-			auto floorclip = RenderOpaquePass::Instance()->floorclip;
+			auto ceilingclip = Thread->OpaquePass->ceilingclip;
+			auto floorclip = Thread->OpaquePass->floorclip;
 			for (int i = pl->left; i < pl->right; i++)
 			{
 				if (pl->top[i] == 0x7fff)
@@ -208,12 +208,12 @@ namespace swrenderer
 			drawseglist->Push(draw_segment);
 
 			drawseglist->PushPortal();
-			VisibleSpriteList::Instance()->PushPortal();
+			Thread->SpriteList->PushPortal();
 			viewposStack.Push(ViewPos);
 			visplaneStack.Push(pl);
 
-			RenderOpaquePass::Instance()->RenderScene();
-			Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
+			Thread->OpaquePass->RenderScene();
+			Thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
 			planes->Render();
 
 			port->mFlags &= ~PORTSF_INSKYBOX;
@@ -228,16 +228,16 @@ namespace swrenderer
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
 
-			RenderTranslucentPass::Instance()->Render();
+			Thread->TranslucentPass->Render();
 
 			VisiblePlane *pl;
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
 			{
-				pl->Render(pl->Alpha, pl->Additive, true);
+				pl->Render(Thread, pl->Alpha, pl->Additive, true);
 			}
 
-			VisibleSpriteList::Instance()->PopPortal();
+			Thread->SpriteList->PopPortal();
 			drawseglist->PopPortal();
 		}
 
@@ -250,9 +250,9 @@ namespace swrenderer
 		R_SetViewAngle();
 
 		CurrentPortalInSkybox = false;
-		Clip3DFloors::Instance()->LeaveSkybox();
+		Thread->Clip3DFloors->LeaveSkybox();
 
-		if (Clip3DFloors::Instance()->fakeActive) return;
+		if (Thread->Clip3DFloors->fakeActive) return;
 
 		planes->ClearPortalPlanes();
 	}
@@ -395,8 +395,8 @@ namespace swrenderer
 		PortalDrawseg* prevpds = CurrentPortal;
 		CurrentPortal = pds;
 
-		VisiblePlaneList::Instance()->ClearKeepFakePlanes();
-		RenderClipSegment::Instance()->Clear(pds->x1, pds->x2);
+		Thread->PlaneList->ClearKeepFakePlanes();
+		Thread->ClipSegments->Clear(pds->x1, pds->x2);
 
 		WindowLeft = pds->x1;
 		WindowRight = pds->x2;
@@ -411,21 +411,21 @@ namespace swrenderer
 		}
 
 		// some portals have height differences, account for this here
-		Clip3DFloors::Instance()->EnterSkybox(); // push 3D floor height map
+		Thread->Clip3DFloors->EnterSkybox(); // push 3D floor height map
 		CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
 
 		// first pass, set clipping
-		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
-		auto floorclip = RenderOpaquePass::Instance()->floorclip;
+		auto ceilingclip = Thread->OpaquePass->ceilingclip;
+		auto floorclip = Thread->OpaquePass->floorclip;
 		memcpy(ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len * sizeof(*ceilingclip));
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
-		RenderOpaquePass::Instance()->RenderScene();
-		Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
+		Thread->OpaquePass->RenderScene();
+		Thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 
 		PlaneCycles.Clock();
-		VisiblePlaneList::Instance()->Render();
+		Thread->PlaneList->Render();
 		RenderPlanePortals();
 		PlaneCycles.Unclock();
 
@@ -444,12 +444,12 @@ namespace swrenderer
 		NetUpdate();
 
 		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
-		RenderTranslucentPass::Instance()->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
+		Thread->TranslucentPass->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
 		MaskedCycles.Unclock();
 
 		NetUpdate();
 
-		Clip3DFloors::Instance()->LeaveSkybox(); // pop 3D floor height map
+		Thread->Clip3DFloors->LeaveSkybox(); // pop 3D floor height map
 		CurrentPortalUniq = prevuniq2;
 
 		// draw a red line around a portal if it's being highlighted
@@ -529,10 +529,11 @@ namespace swrenderer
 		WallPortals.Push(RenderMemory::NewObject<PortalDrawseg>(linedef, x1, x2, topclip, bottomclip));
 	}
 }
-
+/*
 ADD_STAT(skyboxes)
 {
 	FString out;
 	out.Format("%d skybox planes", swrenderer::RenderPortal::Instance()->numskyboxes);
 	return out;
 }
+*/

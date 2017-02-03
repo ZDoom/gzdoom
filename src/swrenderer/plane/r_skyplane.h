@@ -21,7 +21,11 @@ namespace swrenderer
 	class RenderSkyPlane
 	{
 	public:
+		RenderSkyPlane(RenderThread *thread);
+
 		void Render(VisiblePlane *pl);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void DrawSky(VisiblePlane *pl);

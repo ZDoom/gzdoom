@@ -25,6 +25,7 @@ struct FDynamicColormap;
 
 namespace swrenderer
 {
+	class RenderThread;
 	struct VisiblePlane;
 
 	struct FWallCoords
@@ -35,7 +36,7 @@ namespace swrenderer
 		float		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 		short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
 
-		bool Init(const DVector2 &pt1, const DVector2 &pt2, double too_close);
+		bool Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close);
 	};
 
 	struct FWallTmapVals
@@ -43,14 +44,17 @@ namespace swrenderer
 		float		UoverZorg, UoverZstep;
 		float		InvZorg, InvZstep;
 
-		void InitFromWallCoords(const FWallCoords *wallc);
-		void InitFromLine(const DVector2 &left, const DVector2 &right);
+		void InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc);
+		void InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right);
 	};
 
 	class SWRenderLine
 	{
 	public:
+		SWRenderLine(RenderThread *thread);
 		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		bool RenderWallSegment(int x1, int x2);

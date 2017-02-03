@@ -13,15 +13,15 @@
 #include "c_cvars.h"
 #include "r_3dfloors.h"
 #include "r_utility.h"
+#include "swrenderer/r_renderthread.h"
 
 CVAR(Int, r_3dfloors, true, 0);
 
 namespace swrenderer
 {
-	Clip3DFloors *Clip3DFloors::Instance()
+	Clip3DFloors::Clip3DFloors(RenderThread *thread)
 	{
-		static Clip3DFloors clip;
-		return &clip;
+		Thread = thread;
 	}
 
 	void Clip3DFloors::Cleanup()
@@ -102,8 +102,8 @@ namespace swrenderer
 
 		curr = (ClipStack*)M_Malloc(sizeof(ClipStack));
 		curr->next = 0;
-		memcpy(curr->floorclip, RenderOpaquePass::Instance()->floorclip, sizeof(short) * MAXWIDTH);
-		memcpy(curr->ceilingclip, RenderOpaquePass::Instance()->ceilingclip, sizeof(short) * MAXWIDTH);
+		memcpy(curr->floorclip, Thread->OpaquePass->floorclip, sizeof(short) * MAXWIDTH);
+		memcpy(curr->ceilingclip, Thread->OpaquePass->ceilingclip, sizeof(short) * MAXWIDTH);
 		curr->ffloor = fakeFloor;
 		assert(fakeFloor->floorclip == nullptr);
 		assert(fakeFloor->ceilingclip == nullptr);

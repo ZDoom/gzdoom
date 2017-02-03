@@ -57,12 +57,13 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		FWallCoords wallc;
 		double x1, x2;
@@ -87,10 +88,10 @@ namespace swrenderer
 		right.Y = right.Y + x2 * angsin;
 
 		// Is it off-screen?
-		if (wallc.Init(left, right, TOO_CLOSE_Z))
+		if (wallc.Init(thread, left, right, TOO_CLOSE_Z))
 			return;
 			
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 
 		if (wallc.sx1 >= renderportal->WindowRight || wallc.sx2 <= renderportal->WindowLeft)
 			return;
@@ -134,10 +135,10 @@ namespace swrenderer
 
 		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
 
-		VisibleSpriteList::Instance()->Push(vis);
+		thread->SpriteList->Push(vis);
 	}
 
-	void RenderWallSprite::Render(short *mfloorclip, short *mceilingclip, int, int)
+	void RenderWallSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
 	{
 		auto spr = this;
 
@@ -151,7 +152,7 @@ namespace swrenderer
 			return;
 
 		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(&spr->wallc);
+		WallT.InitFromWallCoords(thread, &spr->wallc);
 
 		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project(spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
@@ -229,7 +230,7 @@ namespace swrenderer
 		}
 		else
 		{
-			RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
+			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 			while (x < x2)
 			{

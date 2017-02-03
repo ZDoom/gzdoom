@@ -23,11 +23,11 @@ namespace swrenderer
 	class RenderWallSprite : public VisibleSprite
 	{
 	public:
-		static void Project(AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
+		static void Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
 
 	protected:
 		bool IsWallSprite() const override { return true; }
-		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
 		static void DrawColumn(SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);

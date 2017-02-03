@@ -50,7 +50,7 @@ namespace swrenderer
 	class DrawSegmentList
 	{
 	public:
-		static DrawSegmentList *Instance();
+		DrawSegmentList(RenderThread *thread);
 
 		unsigned int BeginIndex() const { return StartIndices.Last(); }
 		unsigned int EndIndex() const { return Segments.Size(); }
@@ -65,6 +65,8 @@ namespace swrenderer
 		void PopPortal();
 		void Push(DrawSegment *segment);
 		void PushInteresting(DrawSegment *segment);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		TArray<DrawSegment *> Segments;

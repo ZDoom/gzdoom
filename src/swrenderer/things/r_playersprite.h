@@ -74,10 +74,12 @@ namespace swrenderer
 	class RenderPlayerSprites
 	{
 	public:
-		static RenderPlayerSprites *Instance();
+		RenderPlayerSprites(RenderThread *thread);
 
 		void Render();
 		void RenderRemaining();
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);

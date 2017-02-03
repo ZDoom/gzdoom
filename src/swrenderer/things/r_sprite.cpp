@@ -55,12 +55,13 @@
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -75,7 +76,7 @@ namespace swrenderer
 		double tx = tr_x * ViewSin - tr_y * ViewCos;
 
 		// [RH] Flip for mirrors
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			tx = -tx;
@@ -227,10 +228,10 @@ namespace swrenderer
 
 		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-		VisibleSpriteList::Instance()->Push(vis);
+		thread->SpriteList->Push(vis);
 	}
 
-	void RenderSprite::Render(short *mfloorclip, short *mceilingclip, int, int)
+	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
 	{
 		auto vis = this;
 
@@ -285,7 +286,7 @@ namespace swrenderer
 
 			if (x < x2)
 			{
-				RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
+				RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 				while (x < x2)
 				{

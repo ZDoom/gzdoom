@@ -40,6 +40,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_wallsetup.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
@@ -376,7 +377,7 @@ namespace swrenderer
 		assert(WallC.sx1 <= x1);
 		assert(WallC.sx2 >= x2);
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		// kg3D - fake floors instead of zdoom light list
 		for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
@@ -519,5 +520,10 @@ namespace swrenderer
 		{
 			ProcessWall(walltop, wallbottom, texturemid, swall, lwall);
 		}
+	}
+
+	RenderWallPart::RenderWallPart(RenderThread *thread)
+	{
+		Thread = thread;
 	}
 }

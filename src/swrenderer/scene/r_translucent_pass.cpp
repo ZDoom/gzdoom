@@ -38,6 +38,7 @@
 #include "swrenderer/line/r_renderdrawsegment.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_drawvoxels)
@@ -47,10 +48,9 @@ CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	RenderTranslucentPass *RenderTranslucentPass::Instance()
+	RenderTranslucentPass::RenderTranslucentPass(RenderThread *thread)
 	{
-		static RenderTranslucentPass instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	void RenderTranslucentPass::Deinit()
@@ -60,7 +60,7 @@ namespace swrenderer
 
 	void RenderTranslucentPass::Clear()
 	{
-		VisibleSpriteList::Instance()->Clear();
+		Thread->SpriteList->Clear();
 	}
 
 	void RenderTranslucentPass::CollectPortals()
@@ -71,7 +71,7 @@ namespace swrenderer
 		// a) exit early if no relevant info is found and
 		// b) skip most of the collected drawsegs which have no portal attached.
 		portaldrawsegs.Clear();
-		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
+		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
 		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
 		{
 			DrawSegment *seg = drawseglist->Segment(index);
@@ -98,7 +98,7 @@ namespace swrenderer
 
 	bool RenderTranslucentPass::ClipSpriteColumnWithPortals(int x, VisibleSprite *spr)
 	{
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
 		if (renderportal->CurrentPortalInSkybox)
@@ -126,14 +126,14 @@ namespace swrenderer
 
 	void RenderTranslucentPass::DrawMaskedSingle(bool renew)
 	{
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
-		auto &sortedSprites = VisibleSpriteList::Instance()->SortedSprites;
+		auto &sortedSprites = Thread->SpriteList->SortedSprites;
 		for (int i = sortedSprites.Size(); i > 0; i--)
 		{
 			if (sortedSprites[i - 1]->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
 			{
-				sortedSprites[i - 1]->Render();
+				sortedSprites[i - 1]->Render(Thread);
 			}
 		}
 
@@ -141,10 +141,10 @@ namespace swrenderer
 
 		if (renew)
 		{
-			Clip3DFloors::Instance()->fake3D |= FAKE3D_REFRESHCLIP;
+			Thread->Clip3DFloors->fake3D |= FAKE3D_REFRESHCLIP;
 		}
 
-		DrawSegmentList *drawseglist = DrawSegmentList::Instance();
+		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
 		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
 		{
 			DrawSegment *ds = drawseglist->Segment(index);
@@ -156,7 +156,7 @@ namespace swrenderer
 			if (ds->fake) continue;
 			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
-				RenderDrawSegment renderer;
+				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2);
 			}
 		}
@@ -165,9 +165,9 @@ namespace swrenderer
 	void RenderTranslucentPass::Render()
 	{
 		CollectPortals();
-		VisibleSpriteList::Instance()->Sort();
+		Thread->SpriteList->Sort();
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		if (clip3d->height_top == nullptr)
 		{ // kg3D - no visible 3D floors, normal rendering
 			DrawMaskedSingle(false);
@@ -188,7 +188,7 @@ namespace swrenderer
 				}
 				clip3d->sclipBottom = hl->height;
 				DrawMaskedSingle(true);
-				VisiblePlaneList::Instance()->RenderHeight(hl->height);
+				Thread->PlaneList->RenderHeight(hl->height);
 			}
 
 			// floors
@@ -197,7 +197,7 @@ namespace swrenderer
 			DrawMaskedSingle(true);
 			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < ViewPos.Z; hl = hl->next)
 			{
-				VisiblePlaneList::Instance()->RenderHeight(hl->height);
+				Thread->PlaneList->RenderHeight(hl->height);
 				if (hl->next)
 				{
 					clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;
@@ -214,6 +214,6 @@ namespace swrenderer
 			clip3d->fake3D = 0;
 		}
 
-		RenderPlayerSprites::Instance()->Render();
+		Thread->PlayerSprites->Render();
 	}
 }

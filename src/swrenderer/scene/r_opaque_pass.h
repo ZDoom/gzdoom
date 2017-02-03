@@ -23,6 +23,7 @@ struct FVoxelDef;
 
 namespace swrenderer
 {
+	class RenderThread;
 	struct VisiblePlane;
 
 	// The 3072 below is just an arbitrary value picked to avoid
@@ -51,7 +52,7 @@ namespace swrenderer
 	class RenderOpaquePass
 	{
 	public:
-		static RenderOpaquePass *Instance();
+		RenderOpaquePass(RenderThread *thread);
 
 		void ClearClip();
 		void RenderScene();
@@ -61,6 +62,8 @@ namespace swrenderer
 
 		short floorclip[MAXWIDTH];
 		short ceilingclip[MAXWIDTH];
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderBSPNode(void *node);
@@ -72,7 +75,7 @@ namespace swrenderer
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
 
-		static bool IsPotentiallyVisible(AActor *thing);
+		bool IsPotentiallyVisible(AActor *thing);
 		static bool GetThingSprite(AActor *thing, ThingSprite &sprite);
 
 		subsector_t *InSubsector = nullptr;

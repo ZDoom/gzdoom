@@ -20,8 +20,6 @@ namespace swrenderer
 	class RenderClipSegment
 	{
 	public:
-		static RenderClipSegment *Instance();
-
 		void Clear(short left, short right);
 		bool Clip(int x1, int x2, bool solid, VisibleSegmentCallback callback);
 		bool Check(int first, int last);

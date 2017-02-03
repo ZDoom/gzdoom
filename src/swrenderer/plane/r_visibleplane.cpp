@@ -87,14 +87,14 @@ namespace swrenderer
 		}
 	}
 
-	void VisiblePlane::Render(fixed_t alpha, bool additive, bool masked)
+	void VisiblePlane::Render(RenderThread *thread, fixed_t alpha, bool additive, bool masked)
 	{
 		if (left >= right)
 			return;
 
 		if (picnum == skyflatnum) // sky flat
 		{
-			RenderSkyPlane renderer;
+			RenderSkyPlane renderer(thread);
 			renderer.Render(this);
 		}
 		else // regular flat
@@ -119,12 +119,12 @@ namespace swrenderer
 
 			if (!height.isSlope() && !tilt)
 			{
-				RenderFlatPlane renderer;
+				RenderFlatPlane renderer(thread);
 				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap, tex);
 			}
 			else
 			{
-				RenderSlopePlane renderer;
+				RenderSlopePlane renderer(thread);
 				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap, tex);
 			}
 		}

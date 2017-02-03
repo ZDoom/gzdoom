@@ -35,12 +35,13 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void VisibleSprite::Render()
+	void VisibleSprite::Render(RenderThread *thread)
 	{
 		static short clipbot[MAXWIDTH];
 		static short cliptop[MAXWIDTH];
@@ -56,7 +57,7 @@ namespace swrenderer
 		int colormapnum = spr->Light.ColormapNum;
 		F3DFloor *rover;
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = thread->Clip3DFloors.get();
 
 		// [RH] Check for particles
 		if (spr->IsParticle())
@@ -65,7 +66,7 @@ namespace swrenderer
 			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= clip3d->sclipBottom) return;
 			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gpos.Z >= clip3d->sclipTop) return;
 
-			spr->Render(nullptr, nullptr, 0, 0);
+			spr->Render(thread, nullptr, nullptr, 0, 0);
 			return;
 		}
 
@@ -279,7 +280,7 @@ namespace swrenderer
 		// Scan drawsegs from end to start for obscuring segs.
 		// The first drawseg that is closer than the sprite is the clip seg.
 
-		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
+		DrawSegmentList *segmentlist = thread->DrawSegments.get();
 		for (unsigned int index = segmentlist->BeginIndex(); index != segmentlist->EndIndex(); index++)
 		{
 			DrawSegment *ds = segmentlist->Segment(index);
@@ -322,13 +323,13 @@ namespace swrenderer
 				(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
 				(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
 			{
-				RenderPortal *renderportal = RenderPortal::Instance();
+				RenderPortal *renderportal = thread->Portal.get();
 
 				// seg is behind sprite, so draw the mid texture if it has one
 				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
 					(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
 				{
-					RenderDrawSegment renderer;
+					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, r1, r2);
 				}
 
@@ -373,7 +374,7 @@ namespace swrenderer
 
 		if (!spr->IsVoxel())
 		{
-			spr->Render(clipbot, cliptop, 0, 0);
+			spr->Render(thread, clipbot, cliptop, 0, 0);
 		}
 		else
 		{
@@ -406,7 +407,7 @@ namespace swrenderer
 			}
 			int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
-			spr->Render(cliptop, clipbot, minvoxely, maxvoxely);
+			spr->Render(thread, cliptop, clipbot, minvoxely, maxvoxely);
 		}
 		spr->Light.BaseColormap = colormap;
 		spr->Light.ColormapNum = colormapnum;

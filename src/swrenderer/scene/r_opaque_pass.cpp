@@ -44,6 +44,7 @@
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/r_renderthread.h"
 #include "r_3dfloors.h"
 #include "r_portal.h"
 #include "a_sharedglobal.h"
@@ -67,10 +68,9 @@ EXTERN_CVAR(Bool, r_drawvoxels);
 
 namespace swrenderer
 {
-	RenderOpaquePass *RenderOpaquePass::Instance()
+	RenderOpaquePass::RenderOpaquePass(RenderThread *thread) : renderline(thread)
 	{
-		static RenderOpaquePass instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	sector_t *RenderOpaquePass::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2)
@@ -341,7 +341,7 @@ namespace swrenderer
 		ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
 		ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
 
-		if (RenderPortal::Instance()->MirrorFlags & RF_XFLIP)
+		if (Thread->Portal->MirrorFlags & RF_XFLIP)
 		{
 			double t = -rx1;
 			rx1 = -rx2;
@@ -380,7 +380,7 @@ namespace swrenderer
 		// Find the first clippost that touches the source post
 		//	(adjacent pixels are touching).
 
-		return RenderClipSegment::Instance()->IsVisible(sx1, sx2);
+		return Thread->ClipSegments->IsVisible(sx1, sx2);
 	}
 
 	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)
@@ -507,7 +507,7 @@ namespace swrenderer
 			(frontsector->heightsec &&
 				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
-			VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+			Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 				frontsector->GetTexture(sector_t::ceiling),
 				ceilinglightlevel + R_ActualExtraLight(foggy),				// killough 4/11/98
 				frontsector->GetAlpha(sector_t::ceiling),
@@ -548,7 +548,7 @@ namespace swrenderer
 			(frontsector->heightsec &&
 				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
-			VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
+			Thread->PlaneList->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),
 				floorlightlevel + R_ActualExtraLight(foggy),				// killough 3/16/98
 				frontsector->GetAlpha(sector_t::floor),
@@ -568,7 +568,7 @@ namespace swrenderer
 			backupfp = floorplane;
 			backupcp = ceilingplane;
 
-			Clip3DFloors *clip3d = Clip3DFloors::Instance();
+			Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 
 			// first check all floors
 			for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
@@ -614,7 +614,7 @@ namespace swrenderer
 					}
 
 					ceilingplane = nullptr;
-					floorplane = VisiblePlaneList::Instance()->FindPlane(frontsector->floorplane,
+					floorplane = Thread->PlaneList->FindPlane(frontsector->floorplane,
 						frontsector->GetTexture(sector_t::floor),
 						floorlightlevel + R_ActualExtraLight(foggy),				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
@@ -680,7 +680,7 @@ namespace swrenderer
 					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
 
 					floorplane = nullptr;
-					ceilingplane = VisiblePlaneList::Instance()->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+					ceilingplane = Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 						frontsector->GetTexture(sector_t::ceiling),
 						ceilinglightlevel + R_ActualExtraLight(foggy),				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
@@ -720,7 +720,7 @@ namespace swrenderer
 			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + R_ActualExtraLight(foggy));
 			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
+				RenderParticle::Project(Thread, Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
 			}
 		}
 
@@ -738,7 +738,7 @@ namespace swrenderer
 					backupcp = ceilingplane;
 					floorplane = nullptr;
 					ceilingplane = nullptr;
-					Clip3DFloors *clip3d = Clip3DFloors::Instance();
+					Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 					for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 					{
 						clip3d->fakeFloor = line->backsector->e->XFloor.ffloors[i];
@@ -886,15 +886,15 @@ namespace swrenderer
 
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						RenderWallSprite::Project(thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, thingShade, foggy, thingColormap);
+						RenderWallSprite::Project(Thread, thing, sprite.pos, sprite.picnum, sprite.spriteScale, sprite.renderflags, thingShade, foggy, thingColormap);
 					}
 					else if (sprite.voxel)
 					{
-						RenderVoxel::Project(thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						RenderVoxel::Project(Thread, thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
 					else
 					{
-						RenderSprite::Project(thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
 				}
 			}
@@ -915,7 +915,7 @@ namespace swrenderer
 
 		// [ZZ] Or less definitely not visible (hue)
 		// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
 			return false;
 

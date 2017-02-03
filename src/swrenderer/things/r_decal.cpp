@@ -43,16 +43,17 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
+	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, 0);
+			Render(thread, sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, 0);
 		}
 	}
 
@@ -60,7 +61,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void RenderDecal::Render(side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
+	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -150,7 +151,7 @@ namespace swrenderer
 		double texturemid;
 
 		FWallCoords WallC;
-		if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
+		if (WallC.Init(thread, decal_left, decal_right, TOO_CLOSE_Z))
 			return;
 
 		x1 = WallC.sx1;
@@ -160,7 +161,7 @@ namespace swrenderer
 			return;
 
 		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(&WallC);
+		WallT.InitFromWallCoords(thread, &WallC);
 
 		// Get the top and bottom clipping arrays
 		switch (decal->RenderFlags & RF_CLIPMASK)
@@ -178,7 +179,7 @@ namespace swrenderer
 			else if (pass == 0)
 			{
 				mceilingclip = walltop;
-				mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
+				mfloorclip = thread->OpaquePass->ceilingclip;
 				needrepeat = 1;
 			}
 			else
@@ -194,7 +195,7 @@ namespace swrenderer
 				return;
 			}
 			mceilingclip = walltop;
-			mfloorclip = RenderOpaquePass::Instance()->ceilingclip;
+			mfloorclip = thread->OpaquePass->ceilingclip;
 			break;
 
 		case RF_CLIPMID:
@@ -211,7 +212,7 @@ namespace swrenderer
 			{
 				return;
 			}
-			mceilingclip = RenderOpaquePass::Instance()->floorclip;
+			mceilingclip = thread->OpaquePass->floorclip;
 			mfloorclip = wallbottom;
 			break;
 		}
@@ -302,7 +303,7 @@ namespace swrenderer
 					{ // calculate lighting
 						drawerargs.SetLight(usecolormap, light, wallshade);
 					}
-					DrawColumn(drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
 					light += lightstep;
 					x++;
 				}
@@ -311,12 +312,12 @@ namespace swrenderer
 			// If this sprite is RF_CLIPFULL on a two-sided line, needrepeat will
 			// be set 1 if we need to draw on the lower wall. In all other cases,
 			// needrepeat will be 0, and the while will fail.
-			mceilingclip = RenderOpaquePass::Instance()->floorclip;
+			mceilingclip = thread->OpaquePass->floorclip;
 			mfloorclip = wallbottom;
 		} while (needrepeat--);
 	}
 
-	void RenderDecal::DrawColumn(SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
 		auto viewport = RenderViewport::Instance();
 		

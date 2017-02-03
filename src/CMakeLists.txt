@@ -848,6 +848,7 @@ set( NOT_COMPILED_SOURCE_FILES
 set( FASTMATH_PCH_SOURCES
 	swrenderer/r_swrenderer.cpp
 	swrenderer/r_memory.cpp
+	swrenderer/r_renderthread.cpp
 	swrenderer/drawers/r_draw.cpp
 	swrenderer/drawers/r_draw_pal.cpp
 	swrenderer/drawers/r_draw_rgba.cpp

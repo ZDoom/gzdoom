@@ -20,12 +20,13 @@ struct FSectorPortal;
 
 namespace swrenderer
 {
+	class RenderThread;
 	struct VisiblePlane;
 
 	class VisiblePlaneList
 	{
 	public:
-		static VisiblePlaneList *Instance();
+		VisiblePlaneList(RenderThread *thread);
 
 		void Clear();
 		void ClearKeepFakePlanes();
@@ -39,6 +40,8 @@ namespace swrenderer
 
 		int Render();
 		void RenderHeight(double height);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		VisiblePlaneList();

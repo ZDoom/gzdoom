@@ -47,6 +47,7 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
@@ -55,10 +56,9 @@ namespace swrenderer
 {
 	cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 	
-	RenderScene *RenderScene::Instance()
+	RenderScene::RenderScene(RenderThread *thread)
 	{
-		static RenderScene instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	void RenderScene::SetClearColor(int color)
@@ -115,7 +115,7 @@ namespace swrenderer
 		
 		RenderMemory::Clear();
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		clip3d->Cleanup();
 		clip3d->ResetClip(); // reset clips (floor/ceiling)
 
@@ -123,25 +123,25 @@ namespace swrenderer
 		CameraLight::Instance()->SetCamera(actor);
 		RenderViewport::Instance()->SetupFreelook();
 
-		RenderPortal::Instance()->CopyStackedViewParameters();
+		Thread->Portal->CopyStackedViewParameters();
 
 		// Clear buffers.
-		RenderClipSegment::Instance()->Clear(0, viewwidth);
-		DrawSegmentList::Instance()->Clear();
-		VisiblePlaneList::Instance()->Clear();
-		RenderTranslucentPass::Instance()->Clear();
+		Thread->ClipSegments->Clear(0, viewwidth);
+		Thread->DrawSegments->Clear();
+		Thread->PlaneList->Clear();
+		Thread->TranslucentPass->Clear();
 
 		// opening / clipping determination
-		RenderOpaquePass::Instance()->ClearClip();
+		Thread->OpaquePass->ClearClip();
 
 		NetUpdate();
 
-		RenderPortal::Instance()->SetMainPortal();
+		Thread->Portal->SetMainPortal();
 
 		this->dontmaplines = dontmaplines;
 
 		// [RH] Hack to make windows into underwater areas possible
-		RenderOpaquePass::Instance()->ResetFakingUnderwater();
+		Thread->OpaquePass->ResetFakingUnderwater();
 
 		// [RH] Setup particles for this frame
 		P_FindParticleSubsectors();
@@ -155,8 +155,8 @@ namespace swrenderer
 		}
 		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 		PO_LinkToSubsectors();
-		RenderOpaquePass::Instance()->RenderScene();
-		Clip3DFloors::Instance()->ResetClip(); // reset clips (floor/ceiling)
+		Thread->OpaquePass->RenderScene();
+		Thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
 		camera->renderflags = savedflags;
 		WallCycles.Unclock();
 
@@ -165,16 +165,16 @@ namespace swrenderer
 		if (viewactive)
 		{
 			PlaneCycles.Clock();
-			VisiblePlaneList::Instance()->Render();
-			RenderPortal::Instance()->RenderPlanePortals();
+			Thread->PlaneList->Render();
+			Thread->Portal->RenderPlanePortals();
 			PlaneCycles.Unclock();
 
-			RenderPortal::Instance()->RenderLinePortals();
+			Thread->Portal->RenderLinePortals();
 
 			NetUpdate();
 
 			MaskedCycles.Clock();
-			RenderTranslucentPass::Instance()->Render();
+			Thread->TranslucentPass->Render();
 			MaskedCycles.Unclock();
 
 			NetUpdate();
@@ -237,7 +237,6 @@ namespace swrenderer
 
 	void RenderScene::Init()
 	{
-		atterm([]() { RenderScene::Instance()->Deinit(); });
 		// viewwidth / viewheight are set by the defaults
 		fillshort(zeroarray, MAXWIDTH, 0);
 
@@ -246,8 +245,8 @@ namespace swrenderer
 
 	void RenderScene::Deinit()
 	{
-		RenderTranslucentPass::Instance()->Deinit();
-		Clip3DFloors::Instance()->Cleanup();
+		Thread->TranslucentPass->Deinit();
+		Thread->Clip3DFloors->Cleanup();
 	}
 
 	/////////////////////////////////////////////////////////////////////////

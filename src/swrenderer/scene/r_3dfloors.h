@@ -7,6 +7,8 @@ EXTERN_CVAR(Int, r_3dfloors);
 
 namespace swrenderer
 {
+	class RenderThread;
+
 	struct HeightLevel
 	{
 		double height;
@@ -52,7 +54,7 @@ namespace swrenderer
 	class Clip3DFloors
 	{
 	public:
-		static Clip3DFloors *Instance();
+		Clip3DFloors(RenderThread *thread);
 
 		void Cleanup();
 
@@ -62,6 +64,8 @@ namespace swrenderer
 		void ResetClip();
 		void EnterSkybox();
 		void LeaveSkybox();
+
+		RenderThread *Thread = nullptr;
 
 		int fake3D = 0;
 

@@ -55,12 +55,13 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderParticle::Project(particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)
+	void RenderParticle::Project(RenderThread *thread, particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -69,7 +70,7 @@ namespace swrenderer
 		int 				x1, x2, y1, y2;
 		sector_t*			heightsec = NULL;
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
 		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
@@ -120,8 +121,8 @@ namespace swrenderer
 		// entered, we don't need to clip it to drawsegs like a normal sprite.
 
 		// Clip particles behind walls.
-		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
-		auto floorclip = RenderOpaquePass::Instance()->floorclip;
+		auto ceilingclip = thread->OpaquePass->ceilingclip;
+		auto floorclip = thread->OpaquePass->floorclip;
 		if (y1 <  ceilingclip[x1])		y1 = ceilingclip[x1];
 		if (y1 <  ceilingclip[x2 - 1])	y1 = ceilingclip[x2 - 1];
 		if (y2 >= floorclip[x1])		y2 = floorclip[x1] - 1;
@@ -205,10 +206,10 @@ namespace swrenderer
 
 		vis->Light.SetColormap(tiz * LightVisibility::Instance()->ParticleGlobVis(), shade, map, particle->bright != 0, false, false);
 
-		VisibleSpriteList::Instance()->Push(vis);
+		thread->SpriteList->Push(vis);
 	}
 
-	void RenderParticle::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderParticle::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
 		auto vis = this;
 
@@ -222,7 +223,7 @@ namespace swrenderer
 		if (ycount <= 0 || countbase <= 0)
 			return;
 
-		DrawMaskedSegsBehindParticle();
+		DrawMaskedSegsBehindParticle(thread);
 
 		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Light.ColormapNum << FRACBITS)));
 
@@ -237,7 +238,7 @@ namespace swrenderer
 		uint32_t fracstepx = PARTICLE_TEXTURE_SIZE * FRACUNIT / countbase;
 		uint32_t fracposx = fracstepx / 2;
 
-		RenderTranslucentPass *translucentPass = RenderTranslucentPass::Instance();
+		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 		if (viewport->RenderTarget->IsBgra())
 		{
@@ -261,11 +262,11 @@ namespace swrenderer
 		}
 	}
 
-	void RenderParticle::DrawMaskedSegsBehindParticle()
+	void RenderParticle::DrawMaskedSegsBehindParticle(RenderThread *thread)
 	{
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
-		DrawSegmentList *segmentlist = DrawSegmentList::Instance();
+		DrawSegmentList *segmentlist = thread->DrawSegments.get();
 		for (unsigned int index = segmentlist->BeginInterestingIndex(); index != segmentlist->EndInterestingIndex(); index++)
 		{
 			DrawSegment *ds = segmentlist->InterestingSegment(index);
@@ -281,7 +282,7 @@ namespace swrenderer
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
 				if (ds->CurrentPortalUniq == CurrentPortalUniq)
 				{
-					RenderDrawSegment renderer;
+					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2));
 				}
 			}

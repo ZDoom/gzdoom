@@ -41,13 +41,13 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
-	VisiblePlaneList *VisiblePlaneList::Instance()
+	VisiblePlaneList::VisiblePlaneList(RenderThread *thread)
 	{
-		static VisiblePlaneList instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	VisiblePlaneList::VisiblePlaneList()
@@ -129,7 +129,7 @@ namespace swrenderer
 			// kg3D - hack, store alpha in sky
 			// i know there is ->alpha, but this also allows to identify fake plane
 			// and ->alpha is for stacked sectors
-			Clip3DFloors *clip3d = Clip3DFloors::Instance();
+			Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 			if (clip3d->fake3D & (FAKE3D_FAKEFLOOR | FAKE3D_FAKECEILING)) sky = 0x80000000 | clip3d->fakeAlpha;
 			else sky = 0;	// not skyflatnum so it can't be a sky
 			portal = nullptr;
@@ -139,7 +139,7 @@ namespace swrenderer
 		// New visplane algorithm uses hash table -- killough
 		hash = isskybox ? ((unsigned)MAXVISPLANES) : CalcHash(picnum.GetIndex(), lightlevel, height);
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		for (check = visplanes[hash]; check; check = check->next)	// killough
 		{
@@ -190,7 +190,7 @@ namespace swrenderer
 					sky == check->sky &&
 					renderportal->CurrentPortalUniq == check->CurrentPortalUniq &&
 					renderportal->MirrorFlags == check->MirrorFlags &&
-					Clip3DFloors::Instance()->CurrentSkybox == check->CurrentSkybox &&
+					Thread->Clip3DFloors->CurrentSkybox == check->CurrentSkybox &&
 					ViewPos == check->viewpos
 					)
 				{
@@ -215,7 +215,7 @@ namespace swrenderer
 		check->Additive = additive;
 		check->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		check->MirrorFlags = renderportal->MirrorFlags;
-		check->CurrentSkybox = Clip3DFloors::Instance()->CurrentSkybox;
+		check->CurrentSkybox = Thread->Clip3DFloors->CurrentSkybox;
 
 		return check;
 	}
@@ -326,19 +326,19 @@ namespace swrenderer
 		int i;
 		int vpcount = 0;
 
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		for (i = 0; i < MAXVISPLANES; i++)
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
 				// kg3D - draw only correct planes
-				if (pl->CurrentPortalUniq != renderportal->CurrentPortalUniq || pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox)
+				if (pl->CurrentPortalUniq != renderportal->CurrentPortalUniq || pl->CurrentSkybox != Thread->Clip3DFloors->CurrentSkybox)
 					continue;
 				// kg3D - draw only real planes now
 				if (pl->sky >= 0) {
 					vpcount++;
-					pl->Render(OPAQUE, false, false);
+					pl->Render(Thread, OPAQUE, false, false);
 				}
 			}
 		}
@@ -353,13 +353,13 @@ namespace swrenderer
 		DVector3 oViewPos = ViewPos;
 		DAngle oViewAngle = ViewAngle;
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		for (i = 0; i < MAXVISPLANES; i++)
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
-				if (pl->CurrentSkybox != Clip3DFloors::Instance()->CurrentSkybox || pl->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+				if (pl->CurrentSkybox != Thread->Clip3DFloors->CurrentSkybox || pl->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 					continue;
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)
@@ -368,7 +368,7 @@ namespace swrenderer
 					ViewAngle = pl->viewangle;
 					renderportal->MirrorFlags = pl->MirrorFlags;
 
-					pl->Render(pl->sky & 0x7FFFFFFF, pl->Additive, true);
+					pl->Render(Thread, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 				}
 			}
 		}

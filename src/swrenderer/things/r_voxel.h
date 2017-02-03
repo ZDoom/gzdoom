@@ -58,13 +58,13 @@ namespace swrenderer
 	class RenderVoxel : public VisibleSprite
 	{
 	public:
-		static void Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
+		static void Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap);
 
 		static void Deinit();
 
 	protected:
 		bool IsVoxel() const override { return true; }
-		void Render(short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
 		struct posang

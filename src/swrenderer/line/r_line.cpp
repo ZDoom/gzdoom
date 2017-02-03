@@ -49,6 +49,7 @@
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/things/r_decal.h"
+#include "swrenderer/r_renderthread.h"
 
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
@@ -56,6 +57,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
+	SWRenderLine::SWRenderLine(RenderThread *thread)
+	{
+		Thread = thread;
+	}
+
 	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap)
 	{
 		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
@@ -79,17 +85,17 @@ namespace swrenderer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 			return;
 
-		if (WallC.Init(pt1, pt2, 32.0 / (1 << 12)))
+		if (WallC.Init(Thread, pt1, pt2, 32.0 / (1 << 12)))
 			return;
 
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		if (WallC.sx1 >= renderportal->WindowRight || WallC.sx2 <= renderportal->WindowLeft)
 			return;
 
 		if (line->linedef == NULL)
 		{
-			if (RenderClipSegment::Instance()->Check(WallC.sx1, WallC.sx2))
+			if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
 			{
 				InSubsector->flags |= SSECF_DRAWN;
 			}
@@ -107,7 +113,7 @@ namespace swrenderer
 
 		if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
 		{ // The seg is the entire wall.
-			WallT.InitFromWallCoords(&WallC);
+			WallT.InitFromWallCoords(Thread, &WallC);
 		}
 		else
 		{ // The seg is only part of the wall.
@@ -115,10 +121,10 @@ namespace swrenderer
 			{
 				swapvalues(v1, v2);
 			}
-			WallT.InitFromLine(v1->fPos() - ViewPos, v2->fPos() - ViewPos);
+			WallT.InitFromLine(Thread, v1->fPos() - ViewPos, v2->fPos() - ViewPos);
 		}
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 
 		if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 		{
@@ -142,7 +148,7 @@ namespace swrenderer
 			// kg3D - its fake, no transfer_heights
 			if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-				backsector = RenderOpaquePass::Instance()->FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
+				backsector = Thread->OpaquePass->FakeFlat(backsector, &tempsec, nullptr, nullptr, curline, WallC.sx1, WallC.sx2, rw_frontcz1, rw_frontcz2);
 			}
 			doorclosed = false;		// killough 4/16/98
 
@@ -255,7 +261,7 @@ namespace swrenderer
 				// mark their subsectors as visible for automap texturing.
 				if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
 				{
-					if (RenderClipSegment::Instance()->Check(WallC.sx1, WallC.sx2))
+					if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
 					{
 						InSubsector->flags |= SSECF_DRAWN;
 					}
@@ -279,7 +285,7 @@ namespace swrenderer
 		}
 
 		static SWRenderLine *self = this;
-		bool visible = RenderClipSegment::Instance()->Clip(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
+		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
 		{
 			return self->RenderWallSegment(x1, x2);
 		});
@@ -327,10 +333,10 @@ namespace swrenderer
 		rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 		rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		DrawSegment *draw_segment = RenderMemory::NewObject<DrawSegment>();
-		DrawSegmentList::Instance()->Push(draw_segment);
+		Thread->DrawSegments->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->sx1 = WallC.sx1;
@@ -351,7 +357,7 @@ namespace swrenderer
 		draw_segment->bFakeBoundary = false;
 		draw_segment->foggy = foggy;
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
 		else draw_segment->fake = 0;
 
@@ -448,7 +454,7 @@ namespace swrenderer
 
 					// kg3D - backup for mid and fake walls
 					draw_segment->bkup = RenderMemory::AllocMemory<short>(stop - start);
-					memcpy(draw_segment->bkup, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(frontsector, backsector);
 					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->bFakeBoundary)
@@ -517,7 +523,7 @@ namespace swrenderer
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
-						DrawSegmentList::Instance()->PushInteresting(draw_segment);
+						Thread->DrawSegments->PushInteresting(draw_segment);
 					}
 				}
 		}
@@ -527,7 +533,7 @@ namespace swrenderer
 		{
 			if (ceilingplane)
 			{	// killough 4/11/98: add NULL ptr checks
-				ceilingplane = VisiblePlaneList::Instance()->GetRange(ceilingplane, start, stop);
+				ceilingplane = Thread->PlaneList->GetRange(ceilingplane, start, stop);
 			}
 			else
 			{
@@ -539,7 +545,7 @@ namespace swrenderer
 		{
 			if (floorplane)
 			{	// killough 4/11/98: add NULL ptr checks
-				floorplane = VisiblePlaneList::Instance()->GetRange(floorplane, start, stop);
+				floorplane = Thread->PlaneList->GetRange(floorplane, start, stop);
 			}
 			else
 			{
@@ -558,13 +564,13 @@ namespace swrenderer
 		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
 		{
 			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprtopclip, &RenderOpaquePass::Instance()->ceilingclip[start], sizeof(short)*(stop - start));
+			memcpy(draw_segment->sprtopclip, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == nullptr)
 		{
 			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprbottomclip, &RenderOpaquePass::Instance()->floorclip[start], sizeof(short)*(stop - start));
+			memcpy(draw_segment->sprbottomclip, &Thread->OpaquePass->floorclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
@@ -576,12 +582,12 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!rw_markportal)
 		{
-			RenderDecal::RenderDecals(curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC, foggy, basecolormap, walltop.ScreenY, wallbottom.ScreenY);
+			RenderDecal::RenderDecals(Thread, curline->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, curline, WallC, foggy, basecolormap, walltop.ScreenY, wallbottom.ScreenY);
 		}
 
 		if (rw_markportal)
 		{
-			RenderPortal::Instance()->AddLinePortal(curline->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
+			Thread->Portal->AddLinePortal(curline->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
 		}
 
 		return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
@@ -598,7 +604,7 @@ namespace swrenderer
 		linedef = curline->linedef;
 
 		// mark the segment as visible for auto map
-		if (!RenderScene::Instance()->DontMapLines()) linedef->flags |= ML_MAPPED;
+		if (!Thread->Scene->DontMapLines()) linedef->flags |= ML_MAPPED;
 
 		midtexture = toptexture = bottomtexture = 0;
 
@@ -686,8 +692,7 @@ namespace swrenderer
 				  // wall but nothing to draw for it.
 				  // Recalculate walltop so that the wall is clipped by the back sector's
 				  // ceiling instead of the front sector's ceiling.
-				  	RenderPortal *renderportal = RenderPortal::Instance();
-					walltop.Project(backsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+					walltop.Project(backsector->ceilingplane, &WallC, curline, Thread->Portal->MirrorFlags & RF_XFLIP);
 				}
 				// Putting sky ceilings on the front and back of a line alters the way unpegged
 				// positioning works.
@@ -941,8 +946,8 @@ namespace swrenderer
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
 		// clip wall to the floor and ceiling
-		auto ceilingclip = RenderOpaquePass::Instance()->ceilingclip;
-		auto floorclip = RenderOpaquePass::Instance()->floorclip;
+		auto ceilingclip = Thread->OpaquePass->ceilingclip;
+		auto floorclip = Thread->OpaquePass->floorclip;
 		for (x = x1; x < x2; ++x)
 		{
 			if (walltop.ScreenY[x] < ceilingclip[x])
@@ -955,7 +960,7 @@ namespace swrenderer
 			}
 		}
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 
 		// mark ceiling areas
 		if (markceiling)
@@ -1046,7 +1051,7 @@ namespace swrenderer
 					rw_offset = -rw_offset;
 				}
 
-				RenderWallPart renderWallpart;
+				RenderWallPart renderWallpart(Thread);
 				renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
@@ -1083,7 +1088,7 @@ namespace swrenderer
 						rw_offset = -rw_offset;
 					}
 
-					RenderWallPart renderWallpart;
+					RenderWallPart renderWallpart(Thread);
 					renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
@@ -1123,7 +1128,7 @@ namespace swrenderer
 						rw_offset = -rw_offset;
 					}
 
-					RenderWallPart renderWallpart;
+					RenderWallPart renderWallpart(Thread);
 					renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
@@ -1139,7 +1144,7 @@ namespace swrenderer
 	////////////////////////////////////////////////////////////////////////////
 
 	// Transform and clip coordinates. Returns true if it was clipped away
-	bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_close)
+	bool FWallCoords::Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close)
 	{
 		tleft.X = float(pt1.X * ViewSin - pt1.Y * ViewCos);
 		tright.X = float(pt2.X * ViewSin - pt2.Y * ViewCos);
@@ -1147,7 +1152,7 @@ namespace swrenderer
 		tleft.Y = float(pt1.X * ViewTanCos + pt1.Y * ViewTanSin);
 		tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 		auto viewport = RenderViewport::Instance();
 
 		if (renderportal->MirrorFlags & RF_XFLIP)
@@ -1201,12 +1206,12 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void FWallTmapVals::InitFromWallCoords(const FWallCoords *wallc)
+	void FWallTmapVals::InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc)
 	{
 		const FVector2 *left = &wallc->tleft;
 		const FVector2 *right = &wallc->tright;
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
@@ -1218,7 +1223,7 @@ namespace swrenderer
 		InvZstep = right->Y - left->Y;
 	}
 
-	void FWallTmapVals::InitFromLine(const DVector2 &left, const DVector2 &right)
+	void FWallTmapVals::InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right)
 	{
 		// Coordinates should have already had viewx,viewy subtracted
 
@@ -1227,7 +1232,7 @@ namespace swrenderer
 		double fully1 = left.X * ViewTanCos + left.Y * ViewTanSin;
 		double fully2 = right.X * ViewTanCos + right.Y * ViewTanSin;
 		
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{

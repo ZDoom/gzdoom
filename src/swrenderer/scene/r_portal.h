@@ -17,12 +17,13 @@
 
 namespace swrenderer
 {
+	class RenderThread;
 	struct VisiblePlane;
 
 	class RenderPortal
 	{
 	public:
-		static RenderPortal *Instance();
+		RenderPortal(RenderThread *thread);
 		
 		void SetMainPortal();
 		void CopyStackedViewParameters();
@@ -31,6 +32,8 @@ namespace swrenderer
 		void RenderLinePortals();
 
 		void AddLinePortal(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip);
+
+		RenderThread *Thread = nullptr;
 	
 		int WindowLeft = 0;
 		int WindowRight = 0;

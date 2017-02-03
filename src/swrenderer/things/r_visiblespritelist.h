@@ -21,8 +21,6 @@ namespace swrenderer
 	class VisibleSpriteList
 	{
 	public:
-		static VisibleSpriteList *Instance();
-
 		void Clear();
 		void PushPortal();
 		void PopPortal();

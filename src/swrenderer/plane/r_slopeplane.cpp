@@ -39,8 +39,9 @@
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
 #include "swrenderer/plane/r_visibleplane.h"
+#include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -48,6 +49,11 @@
 
 namespace swrenderer
 {
+	RenderSlopePlane::RenderSlopePlane(RenderThread *thread)
+	{
+		Thread = thread;
+	}
+
 	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
 		static const float ifloatpow2[16] =
@@ -138,7 +144,7 @@ namespace swrenderer
 		plane_su *= 4294967296.f;
 		plane_sv *= 4294967296.f;
 
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			plane_su[0] = -plane_su[0];

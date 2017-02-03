@@ -29,6 +29,7 @@
 #include "r_data/colormaps.h"
 #include "d_net.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_opaque_pass.h"
@@ -47,6 +48,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
+	RenderDrawSegment::RenderDrawSegment(RenderThread *thread)
+	{
+		Thread = thread;
+	}
+
 	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
 		auto viewport = RenderViewport::Instance();
@@ -95,7 +101,7 @@ namespace swrenderer
 		}
 
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
-		sec = RenderOpaquePass::Instance()->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+		sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		FDynamicColormap *basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 
@@ -103,7 +109,7 @@ namespace swrenderer
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() < 0)
@@ -361,7 +367,7 @@ namespace swrenderer
 			double top, bot;
 			GetMaskedWallTopBottom(ds, top, bot);
 
-			RenderWallPart renderWallpart;
+			RenderWallPart renderWallpart(Thread);
 			renderWallpart.Render(walldrawerargs, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 		}
 
@@ -471,7 +477,7 @@ namespace swrenderer
 		WallC.tright.Y = ds->cy + ds->cdy;
 		WallT = ds->tmapvals;
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
 		walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
 
@@ -492,7 +498,7 @@ namespace swrenderer
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
-		RenderWallPart renderWallpart;
+		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 	}
 
@@ -525,7 +531,7 @@ namespace swrenderer
 		floorHeight = backsector->CenterFloor();
 		ceilingHeight = backsector->CenterCeiling();
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 
 		// maybe fix clipheights
 		if (!(clip3d->fake3D & FAKE3D_CLIPBOTTOM)) clip3d->sclipBottom = floorHeight;
@@ -906,7 +912,7 @@ namespace swrenderer
 	{
 		ProjectedWallLine most;
 
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 
 		most.Project(curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
@@ -931,7 +937,7 @@ namespace swrenderer
 		top = MAX(frontcz1, frontcz2);
 		bot = MIN(frontfz1, frontfz2);
 
-		Clip3DFloors *clip3d = Clip3DFloors::Instance();
+		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		if (clip3d->fake3D & FAKE3D_CLIPTOP)
 		{
 			top = MIN(top, clip3d->sclipTop);

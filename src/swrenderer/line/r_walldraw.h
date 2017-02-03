@@ -24,6 +24,7 @@ struct FDynamicColormap;
 
 namespace swrenderer
 {
+	class RenderThread;
 	struct DrawSegment;
 	struct FWallCoords;
 	class ProjectedWallLine;
@@ -33,6 +34,8 @@ namespace swrenderer
 	class RenderWallPart
 	{
 	public:
+		RenderWallPart(RenderThread *thread);
+
 		void Render(
 			const WallDrawerArgs &drawerargs,
 			sector_t *frontsector,
@@ -57,6 +60,8 @@ namespace swrenderer
 			FLightNode *light_list,
 			bool foggy,
 			FDynamicColormap *basecolormap);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, double top, double bot);

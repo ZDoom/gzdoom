@@ -43,10 +43,9 @@
 
 namespace swrenderer
 {
-	DrawSegmentList *DrawSegmentList::Instance()
+	DrawSegmentList::DrawSegmentList(RenderThread *thread)
 	{
-		static DrawSegmentList instance;
-		return &instance;
+		Thread = thread;
 	}
 
 	void DrawSegmentList::Clear()

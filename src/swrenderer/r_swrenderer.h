@@ -2,6 +2,7 @@
 #pragma once
 
 #include "r_renderer.h"
+#include "r_renderthread.h"
 
 struct FSoftwareRenderer : public FRenderer
 {
@@ -41,4 +42,6 @@ struct FSoftwareRenderer : public FRenderer
 
 private:
 	void PrecacheTexture(FTexture *tex, int cache);
+
+	swrenderer::RenderThread mMainThread;
 };

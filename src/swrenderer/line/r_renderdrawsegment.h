@@ -17,10 +17,15 @@
 
 namespace swrenderer
 {
+	class RenderThread;
+
 	class RenderDrawSegment
 	{
 	public:
+		RenderDrawSegment(RenderThread *thread);
 		void Render(DrawSegment *ds, int x1, int x2);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void ClipMidtex(int x1, int x2);

@@ -41,9 +41,15 @@
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
+	RenderFlatPlane::RenderFlatPlane(RenderThread *thread)
+	{
+		Thread = thread;
+	}
+
 	void RenderFlatPlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
 	{
 		if (alpha <= 0)
@@ -85,7 +91,7 @@ namespace swrenderer
 		ystep = -sin(planeang) / viewport->FocalLengthX;
 
 		// [RH] flip for mirrors
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			xstep = -xstep;

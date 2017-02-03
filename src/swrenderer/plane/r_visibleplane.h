@@ -25,6 +25,8 @@ struct FSectorPortal;
 
 namespace swrenderer
 {
+	class RenderThread;
+
 	struct VisiblePlaneLight
 	{
 		ADynamicLight *lightsource;
@@ -36,7 +38,7 @@ namespace swrenderer
 		VisiblePlane();
 
 		void AddLights(FLightNode *node);
-		void Render(fixed_t alpha, bool additive, bool masked);
+		void Render(RenderThread *thread, fixed_t alpha, bool additive, bool masked);
 
 		VisiblePlane *next = nullptr;		// Next visplane in hash chain -- killough
 

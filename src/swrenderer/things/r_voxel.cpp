@@ -43,12 +43,13 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderVoxel::Project(AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - ViewPos.X;
@@ -58,7 +59,7 @@ namespace swrenderer
 		double tx = tr_x * ViewSin - tr_y * ViewCos;
 
 		// [RH] Flip for mirrors
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = thread->Portal.get();
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
 			tx = -tx;
@@ -178,10 +179,10 @@ namespace swrenderer
 
 		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-		VisibleSpriteList::Instance()->Push(vis, true);
+		thread->SpriteList->Push(vis, true);
 	}
 
-	void RenderVoxel::Render(short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
 		auto sprite = this;
 		auto viewport = RenderViewport::Instance();

@@ -22,19 +22,22 @@ struct FVoxel;
 
 namespace swrenderer
 {
+	class RenderThread;
 	class VisibleSprite;
 	struct DrawSegment;
 
 	class RenderTranslucentPass
 	{
 	public:
-		static RenderTranslucentPass *Instance();
+		RenderTranslucentPass(RenderThread *thread);
 
 		void Deinit();
 		void Clear();
 		void Render();
 
 		bool ClipSpriteColumnWithPortals(int x, VisibleSprite *spr);
+
+		RenderThread *Thread = nullptr;
 
 	private:
 		void CollectPortals();

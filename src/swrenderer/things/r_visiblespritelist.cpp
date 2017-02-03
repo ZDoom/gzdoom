@@ -28,12 +28,6 @@
 
 namespace swrenderer
 {
-	VisibleSpriteList *VisibleSpriteList::Instance()
-	{
-		static VisibleSpriteList instance;
-		return &instance;
-	}
-
 	void VisibleSpriteList::Clear()
 	{
 		Sprites.Clear();

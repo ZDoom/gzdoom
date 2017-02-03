@@ -42,6 +42,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
 
 CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -49,6 +50,11 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer
 {
+	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
+	{
+		Thread = thread;
+	}
+
 	void RenderSkyPlane::Render(VisiblePlane *pl)
 	{
 		FTextureID sky1tex, sky2tex;
@@ -162,7 +168,7 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)
 	{
-		RenderPortal *renderportal = RenderPortal::Instance();
+		RenderPortal *renderportal = Thread->Portal.get();
 		auto viewport = RenderViewport::Instance();
 
 		uint32_t height = frontskytex->GetHeight();

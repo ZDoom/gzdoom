@@ -731,7 +731,7 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 		*pt = '\0';
 		offset = pt + 1;
 	}
-	v = offset ? strtol (offset, NULL, 0) : 0;
+	v = offset ? (int)strtoll (offset, NULL, 0) : 0;
 
 	// Get the state's address.
 	if (type == mytype)

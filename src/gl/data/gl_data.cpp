@@ -413,7 +413,7 @@ void InitGLRMapinfoData()
 
 	if (opt != NULL)
 	{
-		gl_SetFogParams(opt->fogdensity, level.info->outsidefog, opt->outsidefogdensity, opt->skyfog);
+		gl_SetFogParams(clamp(opt->fogdensity, 0, 255), level.info->outsidefog, clamp(opt->outsidefogdensity, 0, 255), opt->skyfog);
 		glset.map_lightmode = opt->lightmode;
 		glset.map_lightadditivesurfaces = opt->lightadditivesurfaces;
 		glset.map_attenuate = opt->attenuate;

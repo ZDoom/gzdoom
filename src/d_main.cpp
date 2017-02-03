@@ -1069,6 +1069,7 @@ void D_PageTicker (void)
 
 void D_PageDrawer (void)
 {
+	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	if (Page != NULL)
 	{
 		screen->DrawTexture (Page, 0, 0,
@@ -1076,11 +1077,9 @@ void D_PageDrawer (void)
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
 			TAG_DONE);
-		screen->FillBorder (NULL);
 	}
 	else
 	{
-		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 		if (!PageBlank)
 		{
 			screen->DrawText (SmallFont, CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
@@ -1404,6 +1403,10 @@ void ParseCVarInfo()
 				else if (stricmp(sc.String, "noarchive") == 0)
 				{
 					cvarflags &= ~CVAR_ARCHIVE;
+				}
+				else if (stricmp(sc.String, "cheat") == 0)
+				{
+					cvarflags |= CVAR_CHEAT;
 				}
 				else
 				{
@@ -2714,6 +2717,7 @@ void D_DoomMain (void)
 		S_Shutdown();					// free all channels and delete playlist
 		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
+		FS_Close();						// destroy the global FraggleScript.
 
 		GC::FullGC();					// clean up before taking down the object list.
 

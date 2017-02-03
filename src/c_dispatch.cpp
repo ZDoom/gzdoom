@@ -705,7 +705,7 @@ void AddCommandString (char *cmd, int keynum)
 
 					if (cmd[4] == ' ')
 					{
-						tics = strtol (cmd + 5, NULL, 0);
+						tics = (int)strtoll (cmd + 5, NULL, 0);
 					}
 					else
 					{

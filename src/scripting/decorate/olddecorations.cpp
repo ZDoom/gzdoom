@@ -635,7 +635,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 			char *stop;
 
 			*colon = 0;
-			rate = strtol (token, &stop, 10);
+			rate = (int)strtoll (token, &stop, 10);
 			if (stop == token || rate < 1 || rate > 65534)
 			{
 				sc.ScriptError ("Rates must be in the range [0,65534]");

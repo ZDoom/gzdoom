@@ -192,7 +192,7 @@ void FS_EmulateCmd(char * string)
 		else if (sc.Compare("gr_fogcolor"))
 		{
 			sc.MustGetString();
-			level.fadeto = strtol(sc.String, NULL, 16);
+			level.fadeto = (uint32_t)strtoull(sc.String, NULL, 16);
 		}
 
 		else

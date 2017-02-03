@@ -200,7 +200,7 @@ bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 		else if (stricmp (value.String, "false") == 0)
 			return false;
 		else
-			return !!strtol (value.String, NULL, 0);
+			return !!strtoll (value.String, NULL, 0);
 
 	case CVAR_GUID:
 		return false;
@@ -233,7 +233,7 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 			else if (stricmp (value.String, "false") == 0)
 				res = 0;
 			else
-				res = strtol (value.String, NULL, 0); 
+				res = (int)strtoll (value.String, NULL, 0); 
 			break;
 		}
 	case CVAR_GUID:			res = 0; break;
@@ -458,7 +458,7 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		else if (stricmp (value, "false") == 0)
 			ret.Bool = false;
 		else
-			ret.Bool = strtol (value, NULL, 0) != 0;
+			ret.Bool = strtoll (value, NULL, 0) != 0;
 		break;
 
 	case CVAR_Int:
@@ -467,7 +467,7 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		else if (stricmp (value, "false") == 0)
 			ret.Int = 0;
 		else
-			ret.Int = strtol (value, NULL, 0);
+			ret.Int = (int)strtoll (value, NULL, 0);
 		break;
 
 	case CVAR_Float:
@@ -1617,8 +1617,16 @@ void C_ArchiveCVars (FConfigFile *f, uint32 filter)
 	}
 }
 
+EXTERN_CVAR(Bool, sv_cheats);
+
 void FBaseCVar::CmdSet (const char *newval)
 {
+	if ((GetFlags() & CVAR_CHEAT) && !sv_cheats)
+	{
+		Printf("sv_cheats must be true to set this console variable.\n");
+		return;
+	}
+
 	UCVarValue val;
 
 	// Casting away the const is safe in this case.

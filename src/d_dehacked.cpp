@@ -885,7 +885,7 @@ static int PatchThing (int thingy)
 	while ((result = GetLine ()) == 1)
 	{
 		char *endptr;
-		unsigned long val = strtoul (Line2, &endptr, 10);
+		unsigned long val = (unsigned long)strtoull (Line2, &endptr, 10);
 		size_t linelen = strlen (Line1);
 
 		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
@@ -1064,11 +1064,7 @@ static int PatchThing (int thingy)
 				{
 					if (IsNum (strval))
 					{
-						// I have no idea why everyone insists on using strtol here even though it fails
-						// dismally if a value is parsed where the highest bit it set. Do people really
-						// use negative values here? Let's better be safe and check both.
-						if (strchr(strval, '-')) value[0] |= (unsigned long)strtol(strval, NULL, 10);
-						else value[0] |= (unsigned long)strtoul(strval, NULL, 10);
+						value[0] |= (unsigned long)strtoll(strval, NULL, 10);
 						vchanged[0] = true;
 					}
 					else

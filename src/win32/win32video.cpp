@@ -336,7 +336,7 @@ bool Win32Video::GoFullscreen (bool yes)
 	HRESULT hr[2];
 	int count;
 
-	// FIXME: Do this right for D3D. (This function is only called by the movie player when using D3D.)
+	// FIXME: Do this right for D3D.
 	if (D3D != NULL)
 	{
 		return yes;
@@ -372,7 +372,7 @@ bool Win32Video::GoFullscreen (bool yes)
 	return false;
 }
 
-// Flips to the GDI surface and clears it; used by the movie player
+// Flips to the GDI surface and clears it
 void Win32Video::BlankForGDI ()
 {
 	static_cast<BaseWinFB *> (screen)->Blank ();

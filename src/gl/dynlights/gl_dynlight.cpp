@@ -126,8 +126,8 @@ public:
    void ApplyProperties(ADynamicLight * light) const;
    FName GetName() const { return m_Name; }
    void SetParameter(double p) { m_Param = p; }
-   void SetArg(int arg, BYTE val) { m_Args[arg] = val; }
-   BYTE GetArg(int arg) { return m_Args[arg]; }
+   void SetArg(int arg, int val) { m_Args[arg] = val; }
+   int GetArg(int arg) { return m_Args[arg]; }
    uint8_t GetAttenuate() const { return m_attenuate; }
    void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
    void SetSubtractive(bool subtract) { m_subtractive = subtract; }
@@ -648,7 +648,7 @@ void gl_ParseFlickerLight2(FScanner &sc)
 		}
 		if (defaults->GetArg(LIGHT_SECONDARY_INTENSITY) < defaults->GetArg(LIGHT_INTENSITY))
 		{
-			BYTE v = defaults->GetArg(LIGHT_SECONDARY_INTENSITY);
+			int v = defaults->GetArg(LIGHT_SECONDARY_INTENSITY);
 			defaults->SetArg(LIGHT_SECONDARY_INTENSITY, defaults->GetArg(LIGHT_INTENSITY));
 			defaults->SetArg(LIGHT_INTENSITY, v);
 		}

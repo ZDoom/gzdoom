@@ -2049,7 +2049,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 		}
 	}
 
-	if (self->target)
+	if (self->target && self->SeeState)
 	{
 		self->SetState (self->SeeState);
 	}

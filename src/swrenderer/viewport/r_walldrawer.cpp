@@ -25,7 +25,7 @@ namespace swrenderer
 
 	void WallDrawerArgs::DrawColumn()
 	{
-		(Drawers()->*wallfunc)(*this);
+		(RenderViewport::Instance()->Drawers()->*wallfunc)(*this);
 	}
 
 	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)

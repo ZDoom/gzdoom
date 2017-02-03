@@ -115,7 +115,7 @@ namespace swrenderer
 				else if (dc_iscale < 0)
 					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-				(Drawers()->*colfunc)(*this);
+				(RenderViewport::Instance()->Drawers()->*colfunc)(*this);
 			}
 			span++;
 		}
@@ -230,7 +230,7 @@ namespace swrenderer
 				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-				(Drawers()->*colfunc)(*this);
+				(RenderViewport::Instance()->Drawers()->*colfunc)(*this);
 			}
 			span++;
 		}
@@ -490,7 +490,7 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::FillColumn()
 	{
-		Drawers()->FillColumn(*this);
+		RenderViewport::Instance()->Drawers()->FillColumn(*this);
 	}
 
 	void SpriteDrawerArgs::SetDest(int x, int y)

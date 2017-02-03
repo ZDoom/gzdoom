@@ -33,9 +33,6 @@ namespace swrenderer
 		ShadeConstants ColormapConstants() const;
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
-	protected:
-		static SWPixelFormatDrawers *Drawers();
-
 	private:
 		FSWColormap *mBaseColormap = nullptr;
 		float mLight = 0.0f;

@@ -33,6 +33,8 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/plane/r_flatplane.h"
+#include "swrenderer/drawers/r_draw_pal.h"
+#include "swrenderer/drawers/r_draw_rgba.h"
 
 CVAR(String, r_viewsize, "", CVAR_NOSET)
 
@@ -42,6 +44,24 @@ namespace swrenderer
 	{
 		static RenderViewport instance;
 		return &instance;
+	}
+
+	RenderViewport::RenderViewport()
+	{
+		tc_drawers = std::make_unique<SWTruecolorDrawers>();
+		pal_drawers = std::make_unique<SWPalDrawers>();
+	}
+	
+	RenderViewport::~RenderViewport()
+	{
+	}
+
+	SWPixelFormatDrawers *RenderViewport::Drawers()
+	{
+		if (RenderTarget->IsBgra())
+			return tc_drawers.get();
+		else
+			return pal_drawers.get();
 	}
 
 	void RenderViewport::SetViewport(int fullWidth, int fullHeight, float trueratio)

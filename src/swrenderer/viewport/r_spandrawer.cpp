@@ -98,21 +98,21 @@ namespace swrenderer
 
 	void SpanDrawerArgs::DrawSpan()
 	{
-		(Drawers()->*spanfunc)(*this);
+		(RenderViewport::Instance()->Drawers()->*spanfunc)(*this);
 	}
 
 	void SpanDrawerArgs::DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 	{
-		Drawers()->DrawTiltedSpan(*this, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		RenderViewport::Instance()->Drawers()->DrawTiltedSpan(*this, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 
 	void SpanDrawerArgs::DrawFogBoundaryLine(int y, int x1, int x2)
 	{
-		Drawers()->DrawFogBoundaryLine(*this, y, x1, x2);
+		RenderViewport::Instance()->Drawers()->DrawFogBoundaryLine(*this, y, x1, x2);
 	}
 
 	void SpanDrawerArgs::DrawColoredSpan(int y, int x1, int x2)
 	{
-		Drawers()->DrawColoredSpan(*this, y, x1, x2);
+		RenderViewport::Instance()->Drawers()->DrawColoredSpan(*this, y, x1, x2);
 	}
 }

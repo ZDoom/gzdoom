@@ -13,25 +13,9 @@
 
 #include <stddef.h>
 #include "r_drawerargs.h"
-#include "swrenderer/drawers/r_draw_pal.h"
-#include "swrenderer/drawers/r_draw_rgba.h"
 
 namespace swrenderer
 {
-	SWPixelFormatDrawers *DrawerArgs::Drawers()
-	{
-		if (RenderViewport::Instance()->RenderTarget->IsBgra())
-		{
-			static SWTruecolorDrawers tc_drawers;
-			return &tc_drawers;
-		}
-		else
-		{
-			static SWPalDrawers pal_drawers;
-			return &pal_drawers;
-		}
-	}
-
 	void DrawerArgs::SetLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		mBaseColormap = base_colormap;

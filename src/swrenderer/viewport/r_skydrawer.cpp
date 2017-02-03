@@ -18,12 +18,12 @@ namespace swrenderer
 {
 	void SkyDrawerArgs::DrawSingleSkyColumn()
 	{
-		Drawers()->DrawSingleSkyColumn(*this);
+		RenderViewport::Instance()->Drawers()->DrawSingleSkyColumn(*this);
 	}
 
 	void SkyDrawerArgs::DrawDoubleSkyColumn()
 	{
-		Drawers()->DrawDoubleSkyColumn(*this);
+		RenderViewport::Instance()->Drawers()->DrawDoubleSkyColumn(*this);
 	}
 
 	void SkyDrawerArgs::SetDest(int x, int y)

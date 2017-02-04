@@ -523,8 +523,6 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	// doubles when passed as function arguments.)
 	while (tag != TAG_DONE)
 	{
-		DWORD data;
-
 		switch (tag)
 		{
 		default:

@@ -50,7 +50,7 @@ PolyRenderer *PolyRenderer::Instance()
 	return &scene;
 }
 
-PolyRenderer::PolyRenderer()
+PolyRenderer::PolyRenderer() : Thread(nullptr)
 {
 }
 

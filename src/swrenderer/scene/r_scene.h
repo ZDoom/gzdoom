@@ -14,6 +14,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <memory>
 #include "r_defs.h"
 #include "d_player.h"
 
@@ -28,7 +29,7 @@ namespace swrenderer
 	class RenderScene
 	{
 	public:
-		RenderScene(RenderThread *thread);
+		RenderScene();
 
 		void Init();
 		void ScreenResized();
@@ -41,12 +42,14 @@ namespace swrenderer
 	
 		bool DontMapLines() const { return dontmaplines; }
 
-		RenderThread *Thread = nullptr;
+		RenderThread *MainThread() { return Threads.front().get(); }
 
 	private:
 		void RenderActorView(AActor *actor, bool dontmaplines = false);
 		
 		bool dontmaplines = false;
 		int clearcolor = 0;
+
+		std::vector<std::unique_ptr<RenderThread>> Threads;
 	};
 }

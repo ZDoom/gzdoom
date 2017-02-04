@@ -279,7 +279,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
-		static RenderThread thread;
+		static RenderThread thread(nullptr);
 		thread.DrawQueue->ThreadedRender = false;
 		while (x < x2_i)
 		{
@@ -1430,7 +1430,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt2++;			if (pt2 > npoints) pt2 = 0;
 	} while (pt1 != botpt);
 	
-	static RenderThread thread;
+	static RenderThread thread(nullptr);
 	thread.DrawQueue->ThreadedRender = false;
 
 	// Travel down the left edge and fill it in.

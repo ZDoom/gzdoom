@@ -47,8 +47,10 @@ namespace swrenderer
 	class RenderThread
 	{
 	public:
-		RenderThread();
+		RenderThread(RenderScene *scene);
 		~RenderThread();
+
+		RenderScene *Scene;
 
 		std::unique_ptr<RenderMemory> FrameMemory;
 		std::unique_ptr<RenderOpaquePass> OpaquePass;
@@ -58,7 +60,6 @@ namespace swrenderer
 		std::unique_ptr<Clip3DFloors> Clip3DFloors;
 		std::unique_ptr<RenderPlayerSprites> PlayerSprites;
 		std::unique_ptr<VisiblePlaneList> PlaneList;
-		std::unique_ptr<RenderScene> Scene;
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		DrawerCommandQueuePtr DrawQueue;

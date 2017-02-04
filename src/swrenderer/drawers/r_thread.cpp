@@ -282,5 +282,5 @@ DrawerCommandQueue::DrawerCommandQueue(swrenderer::RenderThread *renderthread) :
 
 void *DrawerCommandQueue::AllocMemory(size_t size)
 {
-	return renderthread->FrameMemory->AllocMemory<uint8_t>(size);
+	return renderthread->FrameMemory->AllocMemory<uint8_t>((int)size);
 }

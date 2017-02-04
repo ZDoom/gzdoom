@@ -88,7 +88,7 @@ void FSoftwareRenderer::Init()
 {
 	gl_ParseDefs();
 
-	mMainThread.Scene->Init();
+	mScene.Init();
 }
 
 bool FSoftwareRenderer::UsesColormap() const
@@ -178,7 +178,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderView(player);
 	else
-		mMainThread.Scene->RenderView(player);
+		mScene.RenderView(player);
 
 	FCanvasTextureInfo::UpdateAll();
 }
@@ -202,7 +202,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
 	else
-		mMainThread.Scene->RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
+		mScene.RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
@@ -215,7 +215,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
 	if (!r_polyrenderer)
 	{
-		mMainThread.PlayerSprites->RenderRemaining();
+		mScene.MainThread()->PlayerSprites->RenderRemaining();
 	}
 	else
 	{
@@ -237,12 +237,12 @@ bool FSoftwareRenderer::RequireGLNodes()
 
 void FSoftwareRenderer::OnModeSet ()
 {
-	mMainThread.Scene->ScreenResized();
+	mScene.ScreenResized();
 }
 
 void FSoftwareRenderer::SetClearColor(int color)
 {
-	mMainThread.Scene->SetClearColor(color);
+	mScene.SetClearColor(color);
 }
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)
@@ -262,7 +262,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
-		mMainThread.Scene->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 
 	R_SetFOV (savedfov);
 
@@ -319,7 +319,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
 {
-	return mMainThread.OpaquePass->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
+	return mScene.MainThread()->OpaquePass->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
 }
 
 void FSoftwareRenderer::StateChanged(AActor *actor)

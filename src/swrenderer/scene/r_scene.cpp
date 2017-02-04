@@ -56,9 +56,9 @@ namespace swrenderer
 {
 	cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 	
-	RenderScene::RenderScene(RenderThread *thread)
+	RenderScene::RenderScene()
 	{
-		Thread = thread;
+		Threads.push_back(std::make_unique<RenderThread>(this));
 	}
 
 	void RenderScene::SetClearColor(int color)
@@ -98,10 +98,10 @@ namespace swrenderer
 		// Apply special colormap if the target cannot do it
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
-			Thread->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
+			MainThread()->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 		}
 		
-		DrawerThreads::Execute({ Thread->DrawQueue });
+		DrawerThreads::Execute({ MainThread()->DrawQueue });
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -111,9 +111,9 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
 		
-		Thread->FrameMemory->Clear();
+		MainThread()->FrameMemory->Clear();
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = MainThread()->Clip3DFloors.get();
 		clip3d->Cleanup();
 		clip3d->ResetClip(); // reset clips (floor/ceiling)
 
@@ -121,25 +121,25 @@ namespace swrenderer
 		CameraLight::Instance()->SetCamera(actor);
 		RenderViewport::Instance()->SetupFreelook();
 
-		Thread->Portal->CopyStackedViewParameters();
+		MainThread()->Portal->CopyStackedViewParameters();
 
 		// Clear buffers.
-		Thread->ClipSegments->Clear(0, viewwidth);
-		Thread->DrawSegments->Clear();
-		Thread->PlaneList->Clear();
-		Thread->TranslucentPass->Clear();
+		MainThread()->ClipSegments->Clear(0, viewwidth);
+		MainThread()->DrawSegments->Clear();
+		MainThread()->PlaneList->Clear();
+		MainThread()->TranslucentPass->Clear();
 
 		// opening / clipping determination
-		Thread->OpaquePass->ClearClip();
+		MainThread()->OpaquePass->ClearClip();
 
 		NetUpdate();
 
-		Thread->Portal->SetMainPortal();
+		MainThread()->Portal->SetMainPortal();
 
 		this->dontmaplines = dontmaplines;
 
 		// [RH] Hack to make windows into underwater areas possible
-		Thread->OpaquePass->ResetFakingUnderwater();
+		MainThread()->OpaquePass->ResetFakingUnderwater();
 
 		// [RH] Setup particles for this frame
 		P_FindParticleSubsectors();
@@ -153,8 +153,8 @@ namespace swrenderer
 		}
 		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 		PO_LinkToSubsectors();
-		Thread->OpaquePass->RenderScene();
-		Thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+		MainThread()->OpaquePass->RenderScene();
+		MainThread()->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
 		camera->renderflags = savedflags;
 		WallCycles.Unclock();
 
@@ -163,16 +163,16 @@ namespace swrenderer
 		if (viewactive)
 		{
 			PlaneCycles.Clock();
-			Thread->PlaneList->Render();
-			Thread->Portal->RenderPlanePortals();
+			MainThread()->PlaneList->Render();
+			MainThread()->Portal->RenderPlanePortals();
 			PlaneCycles.Unclock();
 
-			Thread->Portal->RenderLinePortals();
+			MainThread()->Portal->RenderLinePortals();
 
 			NetUpdate();
 
 			MaskedCycles.Clock();
-			Thread->TranslucentPass->Render();
+			MainThread()->TranslucentPass->Render();
 			MaskedCycles.Unclock();
 
 			NetUpdate();
@@ -204,7 +204,7 @@ namespace swrenderer
 
 		RenderActorView(actor, dontmaplines);
 
-		DrawerThreads::Execute({ Thread->DrawQueue });
+		DrawerThreads::Execute({ MainThread()->DrawQueue });
 		
 		viewport->RenderTarget = screen;
 
@@ -241,8 +241,8 @@ namespace swrenderer
 
 	void RenderScene::Deinit()
 	{
-		Thread->TranslucentPass->Deinit();
-		Thread->Clip3DFloors->Cleanup();
+		MainThread()->TranslucentPass->Deinit();
+		MainThread()->Clip3DFloors->Cleanup();
 	}
 
 	/////////////////////////////////////////////////////////////////////////

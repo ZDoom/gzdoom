@@ -56,8 +56,9 @@
 
 namespace swrenderer
 {
-	RenderThread::RenderThread()
+	RenderThread::RenderThread(RenderScene *scene)
 	{
+		Scene = scene;
 		FrameMemory = std::make_unique<RenderMemory>();
 		DrawQueue = std::make_shared<DrawerCommandQueue>(this);
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);
@@ -67,7 +68,6 @@ namespace swrenderer
 		Clip3DFloors = std::make_unique<swrenderer::Clip3DFloors>(this);
 		PlayerSprites = std::make_unique<RenderPlayerSprites>(this);
 		PlaneList = std::make_unique<VisiblePlaneList>(this);
-		Scene = std::make_unique<RenderScene>(this);
 		DrawSegments = std::make_unique<DrawSegmentList>(this);
 		ClipSegments = std::make_unique<RenderClipSegment>();
 		tc_drawers = std::make_unique<SWTruecolorDrawers>(DrawQueue);

@@ -360,13 +360,14 @@ DListMenuItemPlayerDisplay::DListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 {
 	mOwner = menu;
 
+	FRemapTable *bdremap = translationtables[TRANSLATION_Players][MAXPLAYERS + 1];
 	for (int i = 0; i < 256; i++)
 	{
 		int r = c1.r + c2.r * i / 255;
 		int g = c1.g + c2.g * i / 255;
 		int b = c1.b + c2.b * i / 255;
-		mRemap.Remap[i] = ColorMatcher.Pick (r, g, b);
-		mRemap.Palette[i] = PalEntry(255, r, g, b);
+		bdremap->Remap[i] = ColorMatcher.Pick (r, g, b);
+		bdremap->Palette[i] = PalEntry(255, r, g, b);
 	}
 	mBackdrop = new FBackdropTexture;
 	mPlayerClass = NULL;
@@ -574,10 +575,10 @@ void DListMenuItemPlayerDisplay::Drawer(bool selected)
 	int x = (mXpos - 160) * CleanXfac + (SCREENWIDTH>>1);
 	int y = (mYpos - 100) * CleanYfac + (SCREENHEIGHT>>1);
 
-	screen->DrawTexture (mBackdrop, x, y - 1,
+	screen->DrawTexture(mBackdrop, x, y - 1,
 		DTA_DestWidth, 72 * CleanXfac,
 		DTA_DestHeight, 80 * CleanYfac,
-		DTA_Translation, &mRemap,
+		DTA_TranslationIndex, TRANSLATION(TRANSLATION_Players, MAXPLAYERS + 1),
 		DTA_Masked, true,
 		TAG_DONE);
 

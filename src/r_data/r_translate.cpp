@@ -740,6 +740,8 @@ void R_InitTranslationTables ()
 	}
 	// The menu player also gets a separate translation table
 	PushIdentityTable(TRANSLATION_Players);
+	// This one is for the backdrop in the menu
+	PushIdentityTable(TRANSLATION_Players);
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.

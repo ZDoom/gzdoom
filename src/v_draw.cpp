@@ -472,11 +472,6 @@ static inline double ListGetDouble(va_list &tags)
 	return va_arg(tags, double);
 }
 
-static inline FRemapTable* ListGetTranslation(va_list &tags)
-{
-	return va_arg(tags, FRemapTable*);
-}
-
 // These two options are only being used by the D3D version of the HUD weapon drawer, they serve no purpose anywhere else.
 static inline FSpecialColormap * ListGetSpecialColormap(va_list &tags)
 {
@@ -510,12 +505,6 @@ static inline double ListGetDouble(VMVa_List &tags)
 	}
 	ThrowAbortException(X_OTHER, "Invalid parameter in draw function, float expected");
 	return 0;
-}
-
-static inline FRemapTable* ListGetTranslation(VMVa_List &tags)
-{
-	ThrowAbortException(X_OTHER, "Invalid tag in draw function");
-	return nullptr;
 }
 
 static inline FSpecialColormap * ListGetSpecialColormap(VMVa_List &tags)
@@ -729,10 +718,6 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 		case DTA_FillColor:
 			parms->fillcolor = ListGetInt(tags);
 			fillcolorset = true;
-			break;
-
-		case DTA_Translation:
-			parms->remap = ListGetTranslation(tags);
 			break;
 
 		case DTA_TranslationIndex:

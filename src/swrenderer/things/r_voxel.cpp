@@ -107,7 +107,7 @@ namespace swrenderer
 			}
 		}
 
-		RenderVoxel *vis = RenderMemory::NewObject<RenderVoxel>();
+		RenderVoxel *vis = thread->FrameMemory->NewObject<RenderVoxel>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);

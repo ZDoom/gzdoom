@@ -105,7 +105,7 @@ namespace swrenderer
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
-		RenderWallSprite *vis = RenderMemory::NewObject<RenderWallSprite>();
+		RenderWallSprite *vis = thread->FrameMemory->NewObject<RenderWallSprite>();
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 >= renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;

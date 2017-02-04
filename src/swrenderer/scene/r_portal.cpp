@@ -186,7 +186,7 @@ namespace swrenderer
 			}
 
 			// Create a drawseg to clip sprites to the sky plane
-			DrawSegment *draw_segment = RenderMemory::NewObject<DrawSegment>();
+			DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
 			draw_segment->CurrentPortalUniq = CurrentPortalUniq;
 			draw_segment->siz1 = INT_MAX;
 			draw_segment->siz2 = INT_MAX;
@@ -195,8 +195,8 @@ namespace swrenderer
 			draw_segment->x1 = pl->left;
 			draw_segment->x2 = pl->right;
 			draw_segment->silhouette = SIL_BOTH;
-			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(pl->right - pl->left);
-			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(pl->right - pl->left);
+			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
+			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
 			draw_segment->maskedtexturecol = nullptr;
 			draw_segment->swall = nullptr;
 			draw_segment->bFogBoundary = false;
@@ -526,7 +526,7 @@ namespace swrenderer
 
 	void RenderPortal::AddLinePortal(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip)
 	{
-		WallPortals.Push(RenderMemory::NewObject<PortalDrawseg>(linedef, x1, x2, topclip, bottomclip));
+		WallPortals.Push(Thread->FrameMemory->NewObject<PortalDrawseg>(Thread, linedef, x1, x2, topclip, bottomclip));
 	}
 }
 /*

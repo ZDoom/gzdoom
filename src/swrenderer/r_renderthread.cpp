@@ -47,11 +47,13 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/segments/r_clipsegment.h"
+#include "r_memory.h"
 
 namespace swrenderer
 {
 	RenderThread::RenderThread()
 	{
+		FrameMemory = std::make_unique<RenderMemory>();
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);
 		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
 		SpriteList = std::make_unique<VisibleSpriteList>();

@@ -113,7 +113,7 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
 		
-		RenderMemory::Clear();
+		Thread->FrameMemory->Clear();
 
 		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		clip3d->Cleanup();

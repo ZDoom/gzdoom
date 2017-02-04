@@ -36,6 +36,7 @@ namespace swrenderer
 	class VisiblePlaneList;
 	class DrawSegmentList;
 	class RenderClipSegment;
+	class RenderMemory;
 
 	class RenderThread
 	{
@@ -43,6 +44,7 @@ namespace swrenderer
 		RenderThread();
 		~RenderThread();
 
+		std::unique_ptr<RenderMemory> FrameMemory;
 		std::unique_ptr<RenderOpaquePass> OpaquePass;
 		std::unique_ptr<RenderTranslucentPass> TranslucentPass;
 		std::unique_ptr<VisibleSpriteList> SpriteList;

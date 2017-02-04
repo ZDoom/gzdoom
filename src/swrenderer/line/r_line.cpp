@@ -335,7 +335,7 @@ namespace swrenderer
 		
 		RenderPortal *renderportal = Thread->Portal.get();
 
-		DrawSegment *draw_segment = RenderMemory::NewObject<DrawSegment>();
+		DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
 		Thread->DrawSegments->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
@@ -373,8 +373,8 @@ namespace swrenderer
 		}
 		else if (backsector == NULL)
 		{
-			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
-			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
 			fillshort(draw_segment->sprtopclip, stop - start, viewheight);
 			memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
 			draw_segment->silhouette = SIL_BOTH;
@@ -407,13 +407,13 @@ namespace swrenderer
 			{
 				if (doorclosed || (rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2))
 				{
-					draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+					draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
 					memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
 					draw_segment->silhouette |= SIL_BOTTOM;
 				}
 				if (doorclosed || (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 				{						// killough 1/17/98, 2/8/98
-					draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
+					draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
 					fillshort(draw_segment->sprtopclip, stop - start, viewheight);
 					draw_segment->silhouette |= SIL_TOP;
 				}
@@ -453,7 +453,7 @@ namespace swrenderer
 					maskedtexture = true;
 
 					// kg3D - backup for mid and fake walls
-					draw_segment->bkup = RenderMemory::AllocMemory<short>(stop - start);
+					draw_segment->bkup = Thread->FrameMemory->AllocMemory<short>(stop - start);
 					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(frontsector, backsector);
@@ -462,8 +462,8 @@ namespace swrenderer
 						if (sidedef->GetTexture(side_t::mid).isValid())
 							draw_segment->bFakeBoundary |= 4; // it is also mid texture
 
-						draw_segment->maskedtexturecol = RenderMemory::AllocMemory<fixed_t>(stop - start);
-						draw_segment->swall = RenderMemory::AllocMemory<float>(stop - start);
+						draw_segment->maskedtexturecol = Thread->FrameMemory->AllocMemory<fixed_t>(stop - start);
+						draw_segment->swall = Thread->FrameMemory->AllocMemory<float>(stop - start);
 
 						lwal = draw_segment->maskedtexturecol;
 						swal = draw_segment->swall;
@@ -563,13 +563,13 @@ namespace swrenderer
 		// save sprite clipping info
 		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
 		{
-			draw_segment->sprtopclip = RenderMemory::AllocMemory<short>(stop - start);
+			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
 			memcpy(draw_segment->sprtopclip, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == nullptr)
 		{
-			draw_segment->sprbottomclip = RenderMemory::AllocMemory<short>(stop - start);
+			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
 			memcpy(draw_segment->sprbottomclip, &Thread->OpaquePass->floorclip[start], sizeof(short)*(stop - start));
 		}
 

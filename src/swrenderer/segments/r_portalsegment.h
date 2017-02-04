@@ -15,10 +15,12 @@
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	/* portal structure, this is used in r_ code in order to store drawsegs with portals (and mirrors) */
 	struct PortalDrawseg
 	{
-		PortalDrawseg(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip);
+		PortalDrawseg(RenderThread *thread, line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip);
 
 		line_t* src = nullptr; // source line (the one drawn) this doesn't change over render loops
 		line_t* dst = nullptr; // destination line (the one that the portal is linked with, equals 'src' for mirrors)

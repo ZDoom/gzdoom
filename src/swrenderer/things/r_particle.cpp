@@ -182,7 +182,7 @@ namespace swrenderer
 			return;
 
 		// store information in a vissprite
-		RenderParticle *vis = RenderMemory::NewObject<RenderParticle>();
+		RenderParticle *vis = thread->FrameMemory->NewObject<RenderParticle>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->heightsec = heightsec;

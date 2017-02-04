@@ -159,7 +159,7 @@ namespace swrenderer
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
 		// store information in a vissprite
-		RenderSprite *vis = RenderMemory::NewObject<RenderSprite>();
+		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();
 
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);

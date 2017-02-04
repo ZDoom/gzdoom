@@ -58,7 +58,7 @@ namespace swrenderer
 
 	VisiblePlane *VisiblePlaneList::Add(unsigned hash)
 	{
-		VisiblePlane *newplane = RenderMemory::NewObject<VisiblePlane>();
+		VisiblePlane *newplane = Thread->FrameMemory->NewObject<VisiblePlane>(Thread);
 		newplane->next = visplanes[hash];
 		visplanes[hash] = newplane;
 		return newplane;

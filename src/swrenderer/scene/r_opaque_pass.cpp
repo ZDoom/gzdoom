@@ -519,7 +519,7 @@ namespace swrenderer
 			) : nullptr;
 
 		if (ceilingplane)
-			ceilingplane->AddLights(frontsector->lighthead);
+			ceilingplane->AddLights(Thread, frontsector->lighthead);
 
 		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
@@ -560,7 +560,7 @@ namespace swrenderer
 			) : nullptr;
 
 		if (floorplane)
-			floorplane->AddLights(frontsector->lighthead);
+			floorplane->AddLights(Thread, frontsector->lighthead);
 
 		// kg3D - fake planes rendering
 		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
@@ -625,7 +625,7 @@ namespace swrenderer
 						basecolormap);
 
 					if (floorplane)
-						floorplane->AddLights(frontsector->lighthead);
+						floorplane->AddLights(Thread, frontsector->lighthead);
 
 					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap);
 					clip3d->fake3D = 0;
@@ -691,7 +691,7 @@ namespace swrenderer
 						basecolormap);
 
 					if (ceilingplane)
-						ceilingplane->AddLights(frontsector->lighthead);
+						ceilingplane->AddLights(Thread, frontsector->lighthead);
 
 					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap);
 					clip3d->fake3D = 0;

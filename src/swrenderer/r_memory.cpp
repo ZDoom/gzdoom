@@ -68,7 +68,4 @@ namespace swrenderer
 			FreeBlocks.push_back(std::move(block));
 		}
 	}
-	
-	std::vector<std::unique_ptr<RenderMemory::MemoryBlock>> RenderMemory::UsedBlocks;
-	std::vector<std::unique_ptr<RenderMemory::MemoryBlock>> RenderMemory::FreeBlocks;
 }

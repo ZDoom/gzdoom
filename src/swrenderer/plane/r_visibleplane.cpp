@@ -29,6 +29,7 @@
 #include "g_level.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
@@ -43,19 +44,19 @@ CVAR(Bool, tilt, false, 0);
 
 namespace swrenderer
 {
-	VisiblePlane::VisiblePlane()
+	VisiblePlane::VisiblePlane(RenderThread *thread)
 	{
 		picnum.SetNull();
 		height.set(0.0, 0.0, 1.0, 0.0);
 
-		bottom = RenderMemory::AllocMemory<uint16_t>(viewwidth);
-		top = RenderMemory::AllocMemory<uint16_t>(viewwidth);
+		bottom = thread->FrameMemory->AllocMemory<uint16_t>(viewwidth);
+		top = thread->FrameMemory->AllocMemory<uint16_t>(viewwidth);
 
 		fillshort(bottom, viewwidth, 0);
 		fillshort(top, viewwidth, 0x7fff);
 	}
 
-	void VisiblePlane::AddLights(FLightNode *node)
+	void VisiblePlane::AddLights(RenderThread *thread, FLightNode *node)
 	{
 		if (!r_dynlights)
 			return;
@@ -77,7 +78,7 @@ namespace swrenderer
 				}
 				if (!found)
 				{
-					VisiblePlaneLight *newlight = RenderMemory::NewObject<VisiblePlaneLight>();
+					VisiblePlaneLight *newlight = thread->FrameMemory->NewObject<VisiblePlaneLight>();
 					newlight->next = lights;
 					newlight->lightsource = node->lightsource;
 					lights = newlight;

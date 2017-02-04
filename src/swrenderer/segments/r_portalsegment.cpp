@@ -32,17 +32,18 @@
 #include "r_data/colormaps.h"
 #include "swrenderer/segments/r_portalsegment.h"
 #include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
-	PortalDrawseg::PortalDrawseg(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip) : x1(x1), x2(x2)
+	PortalDrawseg::PortalDrawseg(RenderThread *thread, line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip) : x1(x1), x2(x2)
 	{
 		src = linedef;
 		dst = linedef->special == Line_Mirror ? linedef : linedef->getPortalDestination();
 		len = x2 - x1;
 
-		ceilingclip = RenderMemory::AllocMemory<short>(len);
-		floorclip = RenderMemory::AllocMemory<short>(len);
+		ceilingclip = thread->FrameMemory->AllocMemory<short>(len);
+		floorclip = thread->FrameMemory->AllocMemory<short>(len);
 		memcpy(ceilingclip, topclip, len * sizeof(short));
 		memcpy(floorclip, bottomclip, len * sizeof(short));
 

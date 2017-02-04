@@ -35,9 +35,9 @@ namespace swrenderer
 
 	struct VisiblePlane
 	{
-		VisiblePlane();
+		VisiblePlane(RenderThread *thread);
 
-		void AddLights(FLightNode *node);
+		void AddLights(RenderThread *thread, FLightNode *node);
 		void Render(RenderThread *thread, fixed_t alpha, bool additive, bool masked);
 
 		VisiblePlane *next = nullptr;		// Next visplane in hash chain -- killough

@@ -261,7 +261,7 @@ void ADynamicLight::Tick()
 
 	case FlickerLight:
 	{
-		BYTE rnd = randLight();
+		int rnd = randLight();
 		float pct = specialf1 / 360.f;
 		
 		m_currentRadius = float(args[LIGHT_INTENSITY + (rnd >= pct * 255)]);
@@ -288,7 +288,7 @@ void ADynamicLight::Tick()
 	// These need some more work elsewhere
 	case ColorFlickerLight:
 	{
-		BYTE rnd = randLight();
+		int rnd = randLight();
 		float pct = specialf1/360.f;
 		
 		m_currentRadius = m_Radius[rnd >= pct * 255];

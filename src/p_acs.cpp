@@ -54,7 +54,6 @@
 #include "c_dispatch.h"
 #include "s_sndseq.h"
 #include "i_system.h"
-#include "i_movie.h"
 #include "sbar.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
@@ -8801,7 +8800,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYMOVIE:
-			STACK(1) = I_PlayMovie (FBehavior::StaticLookupString (STACK(1)));
+			STACK(1) = -1;
 			break;
 
 		case PCD_SETACTORPOSITION:

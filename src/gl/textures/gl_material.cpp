@@ -592,8 +592,16 @@ bool FMaterial::TrimBorders(int *rect)
 	}
 
 	int size = w*h;
-	if (size == 1) return false;
-
+	if (size == 1)
+	{
+		// nothing to be done here.
+		rect[0] = 0;
+		rect[1] = 0;
+		rect[2] = 1;
+		rect[3] = 1;
+		delete[] buffer;
+		return true;
+	}
 	int first, last;
 
 	for(first = 0; first < size; first++)

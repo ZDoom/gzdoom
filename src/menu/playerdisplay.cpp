@@ -349,9 +349,10 @@ void FBackdropTexture::Render()
 //
 //
 //=============================================================================
+IMPLEMENT_CLASS(DListMenuItemPlayerDisplay, false, false)
 
-FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
-: FListMenuItem(x, y, action)
+DListMenuItemPlayerDisplay::DListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
+: DListMenuItem(x, y, action)
 {
 	mOwner = menu;
 
@@ -383,7 +384,7 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 //
 //=============================================================================
 
-FListMenuItemPlayerDisplay::~FListMenuItemPlayerDisplay()
+void DListMenuItemPlayerDisplay::OnDestroy()
 {
 	delete mBackdrop;
 }
@@ -394,7 +395,7 @@ FListMenuItemPlayerDisplay::~FListMenuItemPlayerDisplay()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::UpdateRandomClass()
+void DListMenuItemPlayerDisplay::UpdateRandomClass()
 {
 	if (--mRandomTimer < 0)
 	{
@@ -420,7 +421,7 @@ void FListMenuItemPlayerDisplay::UpdateRandomClass()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::UpdateTranslation()
+void DListMenuItemPlayerDisplay::UpdateTranslation()
 {
 	int PlayerColor = players[consoleplayer].userinfo.GetColor();
 	int	PlayerSkin = players[consoleplayer].userinfo.GetSkin();
@@ -440,7 +441,7 @@ void FListMenuItemPlayerDisplay::UpdateTranslation()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
+void DListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
 {
 	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
 	{
@@ -470,7 +471,7 @@ void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
 //
 //=============================================================================
 
-bool FListMenuItemPlayerDisplay::UpdatePlayerClass()
+bool DListMenuItemPlayerDisplay::UpdatePlayerClass()
 {
 	if (mOwner->mSelectedItem >= 0)
 	{
@@ -492,7 +493,7 @@ bool FListMenuItemPlayerDisplay::UpdatePlayerClass()
 //
 //=============================================================================
 
-bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
+bool DListMenuItemPlayerDisplay::SetValue(int i, int value)
 {
 	switch (i)
 	{
@@ -524,7 +525,7 @@ bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::Ticker()
+void DListMenuItemPlayerDisplay::Ticker()
 {
 	if (mClassNum < 0) UpdateRandomClass();
 
@@ -544,7 +545,7 @@ void FListMenuItemPlayerDisplay::Ticker()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::Drawer(bool selected)
+void DListMenuItemPlayerDisplay::Drawer(bool selected)
 {
 	if (mMode == 0 && !UpdatePlayerClass())
 	{

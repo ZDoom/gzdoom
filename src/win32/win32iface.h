@@ -136,7 +136,6 @@ protected:
 
 	bool Windowed;
 
-	friend int I_PlayMovie (const char *name);
 	friend class Win32Video;
 
 	BaseWinFB() {}

@@ -635,7 +635,6 @@ set( PLAT_WIN32_SOURCES
 	win32/i_rawps2.cpp
 	win32/i_xinput.cpp
 	win32/i_main.cpp
-	win32/i_movie.cpp
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
@@ -643,7 +642,6 @@ set( PLAT_WIN32_SOURCES
 	win32/win32video.cpp )
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
-	posix/i_movie.cpp
 	posix/i_steam.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c

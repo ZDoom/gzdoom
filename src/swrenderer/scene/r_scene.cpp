@@ -111,51 +111,48 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
 		
-		MainThread()->FrameMemory->Clear();
-
-		Clip3DFloors *clip3d = MainThread()->Clip3DFloors.get();
-		clip3d->Cleanup();
-		clip3d->ResetClip(); // reset clips (floor/ceiling)
-
 		R_SetupFrame(actor);
 		CameraLight::Instance()->SetCamera(actor);
 		RenderViewport::Instance()->SetupFreelook();
 
-		MainThread()->Portal->CopyStackedViewParameters();
-
-		// Clear buffers.
-		MainThread()->ClipSegments->Clear(0, viewwidth);
-		MainThread()->DrawSegments->Clear();
-		MainThread()->PlaneList->Clear();
-		MainThread()->TranslucentPass->Clear();
-
-		// opening / clipping determination
-		MainThread()->OpaquePass->ClearClip();
-
 		NetUpdate();
 
-		MainThread()->Portal->SetMainPortal();
-
 		this->dontmaplines = dontmaplines;
-
-		// [RH] Hack to make windows into underwater areas possible
-		MainThread()->OpaquePass->ResetFakingUnderwater();
 
 		// [RH] Setup particles for this frame
 		P_FindParticleSubsectors();
 
-		WallCycles.Clock();
+		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
+		PO_LinkToSubsectors();
+
 		ActorRenderFlags savedflags = camera->renderflags;
 		// Never draw the player unless in chasecam mode
 		if (!r_showviewer)
 		{
 			camera->renderflags |= RF_INVISIBLE;
 		}
-		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
-		PO_LinkToSubsectors();
+
+		MainThread()->FrameMemory->Clear();
+		MainThread()->Clip3DFloors->Cleanup();
+		MainThread()->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+		MainThread()->Portal->CopyStackedViewParameters();
+		MainThread()->ClipSegments->Clear(0, viewwidth);
+		MainThread()->DrawSegments->Clear();
+		MainThread()->PlaneList->Clear();
+		MainThread()->TranslucentPass->Clear();
+		MainThread()->OpaquePass->ClearClip();
+		MainThread()->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
+		MainThread()->Portal->SetMainPortal();
+
+		// Cull things outside the range seen by this thread
+		if (MainThread()->X1 > 0)
+			MainThread()->ClipSegments->Clip(0, MainThread()->X1, true, [](int, int) { return true; });
+		if (MainThread()->X2 < viewwidth)
+			MainThread()->ClipSegments->Clip(MainThread()->X2, viewwidth, true, [](int, int) { return true; });
+
+		WallCycles.Clock();
 		MainThread()->OpaquePass->RenderScene();
 		MainThread()->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
-		camera->renderflags = savedflags;
 		WallCycles.Unclock();
 
 		NetUpdate();
@@ -177,6 +174,8 @@ namespace swrenderer
 
 			NetUpdate();
 		}
+
+		camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
 
 		// If we don't want shadered colormaps, NULL it now so that the

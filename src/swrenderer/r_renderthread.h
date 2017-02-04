@@ -51,6 +51,8 @@ namespace swrenderer
 		~RenderThread();
 
 		RenderScene *Scene;
+		int X1 = 0;
+		int X2 = MAXWIDTH;
 
 		std::unique_ptr<RenderMemory> FrameMemory;
 		std::unique_ptr<RenderOpaquePass> OpaquePass;

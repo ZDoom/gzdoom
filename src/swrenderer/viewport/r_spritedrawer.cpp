@@ -45,6 +45,9 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
+		if (x < thread->X1 || x >= thread->X2)
+			return;
+
 		auto viewport = RenderViewport::Instance();
 		
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.

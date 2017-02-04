@@ -209,6 +209,18 @@ begin:
 		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
+	OP(LOS):
+		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB,KC,X_READ_NIL);
+		reg.a[a] = *(DObject **)ptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+	OP(LOS_R):
+		ASSERTA(a); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB,RC,X_READ_NIL);
+		reg.a[a] = *(DObject **)ptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
 	OP(LP):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);

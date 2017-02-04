@@ -285,70 +285,20 @@ namespace swrenderer
 		// The first drawseg that is closer than the sprite is the clip seg.
 
 		DrawSegmentList *segmentlist = thread->DrawSegments.get();
-		for (unsigned int index = segmentlist->BeginIndex(); index != segmentlist->EndIndex(); index++)
+		for (unsigned int groupIndex = 0; groupIndex < segmentlist->SegmentGroups.Size(); groupIndex++)
 		{
-			DrawSegment *ds = segmentlist->Segment(index);
-
-			// [ZZ] portal handling here
-			//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
-			//	continue;
-			// [ZZ] WARNING: uncommenting the two above lines, totally breaks sprite clipping
-
-			// kg3D - no clipping on fake segs
-			if (ds->fake) continue;
-			// determine if the drawseg obscures the sprite
-			if (ds->x1 >= x2 || ds->x2 <= x1 ||
-				(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&
-					!ds->bFogBoundary))
-			{
-				// does not cover sprite
+			auto &group = segmentlist->SegmentGroups[groupIndex];
+			if (group.x1 >= x2 || group.x2 <= x1)
 				continue;
-			}
 
-			r1 = MAX<int>(ds->x1, x1);
-			r2 = MIN<int>(ds->x2, x2);
-
-			float neardepth, fardepth;
-			if (!spr->IsWallSprite())
+			if (group.fardepth < spr->depth) 
 			{
-				if (ds->sz1 < ds->sz2)
-				{
-					neardepth = ds->sz1, fardepth = ds->sz2;
-				}
-				else
-				{
-					neardepth = ds->sz2, fardepth = ds->sz1;
-				}
-			}
+				r1 = MAX<int>(group.x1, x1);
+				r2 = MIN<int>(group.x2, x2);
 
-
-			// Check if sprite is in front of draw seg:
-			if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
-				(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
-				(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
-			{
-				RenderPortal *renderportal = thread->Portal.get();
-
-				// seg is behind sprite, so draw the mid texture if it has one
-				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
-					(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
-				{
-					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, r1, r2);
-				}
-
-				continue;
-			}
-
-			// clip this piece of the sprite
-			// killough 3/27/98: optimized and made much shorter
-			// [RH] Optimized further (at least for VC++;
-			// other compilers should be at least as good as before)
-
-			if (ds->silhouette & SIL_BOTTOM) //bottom sil
-			{
+				// Clip bottom
 				clip1 = clipbot + r1;
-				clip2 = ds->sprbottomclip + r1 - ds->x1;
+				clip2 = group.sprbottomclip + r1 - group.x1;
 				i = r2 - r1;
 				do
 				{
@@ -357,12 +307,10 @@ namespace swrenderer
 					clip1++;
 					clip2++;
 				} while (--i);
-			}
 
-			if (ds->silhouette & SIL_TOP)   // top sil
-			{
+				// Clip top
 				clip1 = cliptop + r1;
-				clip2 = ds->sprtopclip + r1 - ds->x1;
+				clip2 = group.sprtopclip + r1 - group.x1;
 				i = r2 - r1;
 				do
 				{
@@ -371,6 +319,97 @@ namespace swrenderer
 					clip1++;
 					clip2++;
 				} while (--i);
+			}
+			else
+			{
+				//for (unsigned int index = segmentlist->BeginIndex(); index != segmentlist->EndIndex(); index++)
+				for (unsigned int index = group.BeginIndex; index != group.EndIndex; index++)
+				{
+					DrawSegment *ds = segmentlist->Segment(index);
+
+					// [ZZ] portal handling here
+					//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
+					//	continue;
+					// [ZZ] WARNING: uncommenting the two above lines, totally breaks sprite clipping
+
+					// kg3D - no clipping on fake segs
+					if (ds->fake) continue;
+					// determine if the drawseg obscures the sprite
+					if (ds->x1 >= x2 || ds->x2 <= x1 ||
+						(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&
+							!ds->bFogBoundary))
+					{
+						// does not cover sprite
+						continue;
+					}
+
+					r1 = MAX<int>(ds->x1, x1);
+					r2 = MIN<int>(ds->x2, x2);
+
+					float neardepth, fardepth;
+					if (!spr->IsWallSprite())
+					{
+						if (ds->sz1 < ds->sz2)
+						{
+							neardepth = ds->sz1, fardepth = ds->sz2;
+						}
+						else
+						{
+							neardepth = ds->sz2, fardepth = ds->sz1;
+						}
+					}
+
+					// Check if sprite is in front of draw seg:
+					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
+						(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
+						(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
+					{
+						RenderPortal *renderportal = thread->Portal.get();
+
+						// seg is behind sprite, so draw the mid texture if it has one
+						if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
+							(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
+						{
+							RenderDrawSegment renderer(thread);
+							renderer.Render(ds, r1, r2);
+						}
+
+						continue;
+					}
+
+					// clip this piece of the sprite
+					// killough 3/27/98: optimized and made much shorter
+					// [RH] Optimized further (at least for VC++;
+					// other compilers should be at least as good as before)
+
+					if (ds->silhouette & SIL_BOTTOM) //bottom sil
+					{
+						clip1 = clipbot + r1;
+						clip2 = ds->sprbottomclip + r1 - ds->x1;
+						i = r2 - r1;
+						do
+						{
+							if (*clip1 > *clip2)
+								*clip1 = *clip2;
+							clip1++;
+							clip2++;
+						} while (--i);
+					}
+
+					if (ds->silhouette & SIL_TOP)   // top sil
+					{
+						clip1 = cliptop + r1;
+						clip2 = ds->sprtopclip + r1 - ds->x1;
+						i = r2 - r1;
+						do
+						{
+							if (*clip1 < *clip2)
+								*clip1 = *clip2;
+							clip1++;
+							clip2++;
+						} while (--i);
+					}
+				}
 			}
 		}
 

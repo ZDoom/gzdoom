@@ -165,6 +165,7 @@ namespace swrenderer
 	{
 		CollectPortals();
 		Thread->SpriteList->Sort();
+		Thread->DrawSegments->BuildSegmentGroups();
 
 		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 		if (clip3d->height_top == nullptr)

@@ -47,10 +47,22 @@ namespace swrenderer
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 	};
 
+	struct DrawSegmentGroup
+	{
+		short x1, x2;
+		float neardepth, fardepth;
+		short *sprtopclip;
+		short *sprbottomclip;
+		unsigned int BeginIndex;
+		unsigned int EndIndex;
+	};
+
 	class DrawSegmentList
 	{
 	public:
 		DrawSegmentList(RenderThread *thread);
+
+		TArray<DrawSegmentGroup> SegmentGroups;
 
 		unsigned int BeginIndex() const { return StartIndices.Last(); }
 		unsigned int EndIndex() const { return Segments.Size(); }
@@ -66,6 +78,8 @@ namespace swrenderer
 		void Push(DrawSegment *segment);
 		void PushInteresting(DrawSegment *segment);
 
+		void BuildSegmentGroups();
+
 		RenderThread *Thread = nullptr;
 
 	private:
@@ -74,5 +88,9 @@ namespace swrenderer
 
 		TArray<DrawSegment *> InterestingSegments; // drawsegs that have something drawn on them
 		TArray<unsigned int> StartInterestingIndices;
+
+		// For building segment groups
+		short cliptop[MAXWIDTH];
+		short clipbottom[MAXWIDTH];
 	};
 }

@@ -1270,7 +1270,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_AlphaF, Alpha,
+						DTA_Alpha, Alpha,
 						DTA_AlphaChannel, alphaMap,
 						DTA_FillColor, 0,
 						TAG_DONE);
@@ -1287,7 +1287,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_AlphaF, Alpha,
+						DTA_Alpha, Alpha,
 						TAG_DONE);
 				}
 			}
@@ -1347,7 +1347,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_AlphaF, Alpha,
+						DTA_Alpha, Alpha,
 						DTA_AlphaChannel, alphaMap,
 						DTA_FillColor, 0,
 						TAG_DONE);
@@ -1364,7 +1364,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_AlphaF, Alpha,
+						DTA_Alpha, Alpha,
 						TAG_DONE);
 				}
 			}
@@ -1487,7 +1487,7 @@ public:
 				screen->DrawTexture(character, srx, sry,
 					DTA_DestWidthF, rw,
 					DTA_DestHeightF, rh,
-					DTA_AlphaF, salpha,
+					DTA_Alpha, salpha,
 					DTA_FillColor, 0,
 					TAG_DONE);
 			}
@@ -1495,7 +1495,7 @@ public:
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
 				DTA_Translation, remap,
-				DTA_AlphaF, Alpha,
+				DTA_Alpha, Alpha,
 				TAG_DONE);
 			if(script->spacingCharacter == '\0')
 				ax += width + spacing - (character->LeftOffset+1);

@@ -451,7 +451,7 @@ private:
 				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
 					DTA_Bottom320x200, Scaled,
-					DTA_AlphaF, 1. - ItemFlash,
+					DTA_Alpha, 1. - ItemFlash,
 					TAG_DONE);
 			}
 			if (item->Icon.isValid())
@@ -523,7 +523,7 @@ private:
 						DTA_HUDRules, HUD_Normal,
 						DTA_LeftOffset, cursor->GetWidth(),
 						DTA_TopOffset, cursor->GetHeight(),
-						DTA_AlphaF, ItemFlash,
+						DTA_Alpha, ItemFlash,
 						TAG_DONE);
 				}
 				DrINumberOuter (CPlayer->mo->InvSel->Amount, -51, -10, false, 7);
@@ -547,7 +547,7 @@ private:
 					{
 						screen->DrawTexture (Images[CursorImage], -100+i*35, -21,
 							DTA_HUDRules, HUD_HorizCenter,
-							DTA_Alpha, TRANSLUC75,
+							DTA_Alpha, 0.75,
 							TAG_DONE);
 					}
 					if (item->Icon.isValid())
@@ -580,7 +580,7 @@ private:
 		left = screen->GetWidth()/2 - 160*CleanXfac;
 		top = bottom + height * yscale;
 
-		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_AlphaF, 0.75, TAG_DONE);
+		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_Alpha, 0.75, TAG_DONE);
 		screen->DrawTexture (Images[bars], left, top, DTA_CleanNoMove, true, TAG_DONE);
 
 
@@ -874,7 +874,7 @@ void DStrifeStatusBar::DrINumberOuter(signed int val, int x, int y, bool center,
 	else if (val == 0)
 	{
 		screen->DrawTexture(Images[imgINumbers], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		screen->DrawTexture(Images[imgINumbers], x, y,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
@@ -888,7 +888,7 @@ void DStrifeStatusBar::DrINumberOuter(signed int val, int x, int y, bool center,
 	while (val != 0)
 	{
 		screen->DrawTexture(Images[imgINumbers + val % 10], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		x -= w;
 		val /= 10;
@@ -896,7 +896,7 @@ void DStrifeStatusBar::DrINumberOuter(signed int val, int x, int y, bool center,
 	if (negative)
 	{
 		screen->DrawTexture(Images[imgNEGATIVE], x + 1, y + 1,
-			DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 	}
 
@@ -947,7 +947,7 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		pic = BigFont->GetChar('0', &v);
 		screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
 			DTA_HUDRules, HUD_Normal,
-			DTA_AlphaF, HR_SHADOW,
+			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
 			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
@@ -972,7 +972,7 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		pic = BigFont->GetChar('0' + val % 10, &v);
 		screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
 			DTA_HUDRules, HUD_Normal,
-			DTA_AlphaF, HR_SHADOW,
+			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
 			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
@@ -986,7 +986,7 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		{
 			screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
 				DTA_HUDRules, HUD_Normal,
-				DTA_AlphaF, HR_SHADOW,
+				DTA_Alpha, HR_SHADOW,
 				DTA_FillColor, 0,
 				DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 				TAG_DONE);

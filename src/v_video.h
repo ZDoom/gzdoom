@@ -75,7 +75,6 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
-	DTA_AlphaF,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
 	DTA_Translation,	// translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
@@ -163,7 +162,7 @@ struct DrawParms
 	uint32 colorOverlay;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
-	fixed_t shadowAlpha;
+	float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
 	INTBOOL masked;

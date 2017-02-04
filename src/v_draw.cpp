@@ -733,10 +733,6 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 
 		case DTA_Translation:
 			parms->remap = ListGetTranslation(tags);
-			if (parms->remap != NULL && parms->remap->Inactive)
-			{ // If it's inactive, pretend we were passed NULL instead.
-				parms->remap = NULL;
-			}
 			break;
 
 		case DTA_ColorOverlay:
@@ -910,6 +906,11 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 		tag = ListGetInt(tags);
 	}
 	ListEnd(tags);
+
+	if (parms->remap != nullptr && parms->remap->Inactive)
+	{ // If it's inactive, pretend we were passed NULL instead.
+		parms->remap = nullptr;
+	}
 
 	if (parms->uclip >= parms->dclip || parms->lclip >= parms->rclip)
 	{

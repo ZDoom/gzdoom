@@ -945,15 +945,13 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 	if (val == 0)
 	{
 		pic = BigFont->GetChar('0', &v);
-		screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
+		screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2, '0',
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
-		screen->DrawTexture(pic, xpos - v / 2, y,
+		screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2, y, '0',
 			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
 		return;
 	}
@@ -970,11 +968,10 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 	while (val != 0)
 	{
 		pic = BigFont->GetChar('0' + val % 10, &v);
-		screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
+		screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2,
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
 		val /= 10;
 		xpos -= w;
@@ -984,11 +981,10 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		pic = BigFont->GetChar('-', &v);
 		if (pic != NULL)
 		{
-			screen->DrawTexture(pic, xpos - v / 2 + 2, y + 2,
+			screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2, '-',
 				DTA_HUDRules, HUD_Normal,
 				DTA_Alpha, HR_SHADOW,
 				DTA_FillColor, 0,
-				DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 				TAG_DONE);
 		}
 	}
@@ -999,9 +995,8 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 	while (val != 0)
 	{
 		pic = BigFont->GetChar('0' + val % 10, &v);
-		screen->DrawTexture(pic, xpos - v / 2, y,
+		screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2, y, '0',
 			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 			TAG_DONE);
 		val /= 10;
 		xpos -= w;
@@ -1011,9 +1006,8 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 		pic = BigFont->GetChar('-', &v);
 		if (pic != NULL)
 		{
-			screen->DrawTexture(pic, xpos - v / 2, y,
+			screen->DrawChar(BigFont, CR_UNTRANSLATED, xpos - v / 2, y, '-',
 				DTA_HUDRules, HUD_Normal,
-				DTA_Translation, BigFont->GetColorTranslation(CR_UNTRANSLATED),
 				TAG_DONE);
 		}
 	}

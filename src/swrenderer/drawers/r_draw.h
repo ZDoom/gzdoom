@@ -2,6 +2,7 @@
 #pragma once
 
 #include "r_defs.h"
+#include <memory>
 
 struct FSWColormap;
 struct FLightNode;

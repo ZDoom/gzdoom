@@ -43,8 +43,8 @@ namespace swrenderer
 {
 	void VisibleSprite::Render(RenderThread *thread)
 	{
-		static short clipbot[MAXWIDTH];
-		static short cliptop[MAXWIDTH];
+		short *clipbot = thread->clipbot;
+		short *cliptop = thread->cliptop;
 
 		VisibleSprite *spr = this;
 

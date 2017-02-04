@@ -17,11 +17,18 @@ namespace swrenderer
 {
 	typedef bool(*VisibleSegmentCallback)(int x1, int x2);
 
+	class VisibleSegmentRenderer
+	{
+	public:
+		virtual ~VisibleSegmentRenderer() { }
+		virtual bool RenderWallSegment(int x1, int x2) { return true; }
+	};
+
 	class RenderClipSegment
 	{
 	public:
 		void Clear(short left, short right);
-		bool Clip(int x1, int x2, bool solid, VisibleSegmentCallback callback);
+		bool Clip(int x1, int x2, bool solid, VisibleSegmentRenderer *visitor);
 		bool Check(int first, int last);
 		bool IsVisible(int x1, int x2);
 		

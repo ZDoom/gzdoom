@@ -46,6 +46,9 @@ namespace swrenderer
 
 	private:
 		void RenderActorView(AActor *actor, bool dontmaplines = false);
+		void RenderDrawQueues();
+		void RenderThreadSlices();
+		void RenderThreadSlice(RenderThread *thread);
 		
 		bool dontmaplines = false;
 		int clearcolor = 0;

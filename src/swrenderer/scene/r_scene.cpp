@@ -52,6 +52,8 @@
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
+CVAR(Bool, r_scene_multithreaded, false, 0);
+
 namespace swrenderer
 {
 	cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
@@ -100,8 +102,19 @@ namespace swrenderer
 		{
 			MainThread()->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 		}
-		
-		DrawerThreads::Execute({ MainThread()->DrawQueue });
+
+		RenderDrawQueues();
+	}
+
+	void RenderScene::RenderDrawQueues()
+	{
+		// Use reverse order so main thread is drawn last
+		std::vector<DrawerCommandQueuePtr> queues;
+		for (auto it = Threads.rbegin(); it != Threads.rend(); ++it)
+		{
+			queues.push_back((*it)->DrawQueue);
+		}
+		DrawerThreads::Execute(queues);
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -132,48 +145,7 @@ namespace swrenderer
 			camera->renderflags |= RF_INVISIBLE;
 		}
 
-		MainThread()->FrameMemory->Clear();
-		MainThread()->Clip3DFloors->Cleanup();
-		MainThread()->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
-		MainThread()->Portal->CopyStackedViewParameters();
-		MainThread()->ClipSegments->Clear(0, viewwidth);
-		MainThread()->DrawSegments->Clear();
-		MainThread()->PlaneList->Clear();
-		MainThread()->TranslucentPass->Clear();
-		MainThread()->OpaquePass->ClearClip();
-		MainThread()->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
-		MainThread()->Portal->SetMainPortal();
-
-		// Cull things outside the range seen by this thread
-		if (MainThread()->X1 > 0)
-			MainThread()->ClipSegments->Clip(0, MainThread()->X1, true, [](int, int) { return true; });
-		if (MainThread()->X2 < viewwidth)
-			MainThread()->ClipSegments->Clip(MainThread()->X2, viewwidth, true, [](int, int) { return true; });
-
-		WallCycles.Clock();
-		MainThread()->OpaquePass->RenderScene();
-		MainThread()->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
-		WallCycles.Unclock();
-
-		NetUpdate();
-
-		if (viewactive)
-		{
-			PlaneCycles.Clock();
-			MainThread()->PlaneList->Render();
-			MainThread()->Portal->RenderPlanePortals();
-			PlaneCycles.Unclock();
-
-			MainThread()->Portal->RenderLinePortals();
-
-			NetUpdate();
-
-			MaskedCycles.Clock();
-			MainThread()->TranslucentPass->Render();
-			MaskedCycles.Unclock();
-
-			NetUpdate();
-		}
+		RenderThreadSlices();
 
 		camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
@@ -183,6 +155,94 @@ namespace swrenderer
 		if (!r_shadercolormaps && !RenderViewport::Instance()->RenderTarget->IsBgra())
 		{
 			CameraLight::Instance()->ClearShaderColormap();
+		}
+	}
+
+	void RenderScene::RenderThreadSlices()
+	{
+		int numThreads = r_scene_multithreaded ? 8 : 1;
+
+		while (Threads.size() > (size_t)numThreads)
+		{
+			Threads.pop_back();
+		}
+
+		while (Threads.size() < (size_t)numThreads)
+		{
+			Threads.push_back(std::make_unique<RenderThread>(this));
+		}
+
+		for (int i = 0; i < numThreads; i++)
+		{
+			Threads[i]->X1 = viewwidth * i / numThreads;
+			Threads[i]->X2 = viewwidth * (i + 1) / numThreads;
+		}
+
+		for (int i = 0; i < numThreads; i++)
+		{
+			RenderThreadSlice(Threads[i].get());
+		}
+	}
+
+	void RenderScene::RenderThreadSlice(RenderThread *thread)
+	{
+		thread->FrameMemory->Clear();
+		thread->Clip3DFloors->Cleanup();
+		thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+		thread->Portal->CopyStackedViewParameters();
+		thread->ClipSegments->Clear(0, viewwidth);
+		thread->DrawSegments->Clear();
+		thread->PlaneList->Clear();
+		thread->TranslucentPass->Clear();
+		thread->OpaquePass->ClearClip();
+		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
+		thread->Portal->SetMainPortal();
+
+		// Cull things outside the range seen by this thread
+		VisibleSegmentRenderer visitor;
+		if (thread->X1 > 0)
+			thread->ClipSegments->Clip(0, thread->X1, true, &visitor);
+		if (thread->X2 < viewwidth)
+			thread->ClipSegments->Clip(thread->X2, viewwidth, true, &visitor);
+
+		if (thread->MainThread)
+			WallCycles.Clock();
+
+		thread->OpaquePass->RenderScene();
+		thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+
+		if (thread == MainThread())
+			WallCycles.Unclock();
+
+		if (thread->MainThread)
+			NetUpdate();
+
+		if (viewactive)
+		{
+			if (thread->MainThread)
+				PlaneCycles.Clock();
+
+			thread->PlaneList->Render();
+			thread->Portal->RenderPlanePortals();
+
+			if (thread->MainThread)
+				PlaneCycles.Unclock();
+
+			thread->Portal->RenderLinePortals();
+
+			if (thread->MainThread)
+				NetUpdate();
+
+			if (thread->MainThread)
+				MaskedCycles.Clock();
+
+			thread->TranslucentPass->Render();
+
+			if (thread->MainThread)
+				MaskedCycles.Unclock();
+
+			if (thread->MainThread)
+				NetUpdate();
 		}
 	}
 
@@ -202,8 +262,7 @@ namespace swrenderer
 		viewport->SetViewport(width, height, WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
-
-		DrawerThreads::Execute({ MainThread()->DrawQueue });
+		RenderDrawQueues();
 		
 		viewport->RenderTarget = screen;
 

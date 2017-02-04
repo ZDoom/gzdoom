@@ -56,9 +56,10 @@
 
 namespace swrenderer
 {
-	RenderThread::RenderThread(RenderScene *scene)
+	RenderThread::RenderThread(RenderScene *scene, bool mainThread)
 	{
 		Scene = scene;
+		MainThread = mainThread;
 		FrameMemory = std::make_unique<RenderMemory>();
 		DrawQueue = std::make_shared<DrawerCommandQueue>(this);
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);

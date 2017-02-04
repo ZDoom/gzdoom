@@ -15,6 +15,7 @@
 
 #include "vectors.h"
 #include "r_wallsetup.h"
+#include "swrenderer/segments/r_clipsegment.h"
 
 struct seg_t;
 struct subsector_t;
@@ -48,7 +49,7 @@ namespace swrenderer
 		void InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right);
 	};
 
-	class SWRenderLine
+	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
 		SWRenderLine(RenderThread *thread);
@@ -57,7 +58,7 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWallSegment(int x1, int x2);
+		bool RenderWallSegment(int x1, int x2) override;
 		void SetWallVariables(bool needlights);
 		void RenderWallSegmentTextures(int x1, int x2);
 
@@ -133,5 +134,7 @@ namespace swrenderer
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;
 		ProjectedWallTexcoords walltexcoords;
+
+		sector_t tempsec; // killough 3/8/98: ceiling/water hack
 	};
 }

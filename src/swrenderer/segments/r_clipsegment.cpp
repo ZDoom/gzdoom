@@ -86,7 +86,7 @@ namespace swrenderer
 		return true;
 	}
 
-	bool RenderClipSegment::Clip(int first, int last, bool solid, VisibleSegmentCallback callback)
+	bool RenderClipSegment::Clip(int first, int last, bool solid, VisibleSegmentRenderer *visitor)
 	{
 		cliprange_t *next, *start;
 		int i, j;
@@ -104,7 +104,7 @@ namespace swrenderer
 			if (last <= start->first)
 			{
 				// Post is entirely visible (above start).
-				if (!callback(first, last))
+				if (!visitor->RenderWallSegment(first, last))
 					return true;
 
 				// Insert a new clippost for solid walls.
@@ -131,7 +131,7 @@ namespace swrenderer
 			}
 
 			// There is a fragment above *start.
-			if (callback(first, start->first) && solid)
+			if (visitor->RenderWallSegment(first, start->first) && solid)
 			{
 				start->first = first; // Adjust the clip size for solid walls
 			}
@@ -146,7 +146,7 @@ namespace swrenderer
 		while (last >= (next + 1)->first)
 		{
 			// There is a fragment between two posts.
-			clipsegment = callback(next->last, (next + 1)->first);
+			clipsegment = visitor->RenderWallSegment(next->last, (next + 1)->first);
 			next++;
 
 			if (last <= next->last)
@@ -158,7 +158,7 @@ namespace swrenderer
 		}
 
 		// There is a fragment after *next.
-		clipsegment = callback(next->last, last);
+		clipsegment = visitor->RenderWallSegment(next->last, last);
 
 	crunch:
 		if (!clipsegment)

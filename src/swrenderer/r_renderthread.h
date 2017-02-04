@@ -47,12 +47,13 @@ namespace swrenderer
 	class RenderThread
 	{
 	public:
-		RenderThread(RenderScene *scene);
+		RenderThread(RenderScene *scene, bool mainThread = true);
 		~RenderThread();
 
 		RenderScene *Scene;
 		int X1 = 0;
 		int X2 = MAXWIDTH;
+		bool MainThread = false;
 
 		std::unique_ptr<RenderMemory> FrameMemory;
 		std::unique_ptr<RenderOpaquePass> OpaquePass;
@@ -65,7 +66,11 @@ namespace swrenderer
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		DrawerCommandQueuePtr DrawQueue;
-		
+
+		// VisibleSprite working buffers
+		short clipbot[MAXWIDTH];
+		short cliptop[MAXWIDTH];
+
 		SWPixelFormatDrawers *Drawers();
 		
 	private:

@@ -64,7 +64,6 @@ namespace swrenderer
 
 	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap)
 	{
-		static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 		bool			solid;
 		DVector2		pt1, pt2;
 
@@ -284,11 +283,7 @@ namespace swrenderer
 			rw_floorstat = wallbottom.Project(frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		}
 
-		static SWRenderLine *self = this;
-		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, solid, [](int x1, int x2) -> bool
-		{
-			return self->RenderWallSegment(x1, x2);
-		});
+		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, solid, this);
 
 		if (visible)
 		{

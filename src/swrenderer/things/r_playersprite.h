@@ -88,5 +88,6 @@ namespace swrenderer
 		enum { BASEYCENTER = 100 };
 
 		TArray<HWAccelPlayerSprite> AcceleratedSprites;
+		sector_t tempsec;
 	};
 }

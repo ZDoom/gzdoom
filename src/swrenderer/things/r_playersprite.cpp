@@ -78,7 +78,6 @@ namespace swrenderer
 		DPSprite*	psp;
 		DPSprite*	weapon;
 		sector_t*	sec = NULL;
-		static sector_t tempsec;
 		int			floorlight, ceilinglight;
 		F3DFloor *rover;
 

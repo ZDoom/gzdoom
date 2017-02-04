@@ -41,6 +41,7 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/r_renderthread.h"
+#include "swrenderer/r_memory.h"
 
 namespace swrenderer
 {
@@ -188,14 +189,22 @@ namespace swrenderer
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y1 - 0.5) / viewport->InvZtoScale * zcol);
 			drawerargs.dc_viewpos_step.Z = (float)(-zcol / viewport->InvZtoScale);
 
-			static TriLight lightbuffer[64 * 1024];
-			static int nextlightindex = 0;
+			// Calculate max lights that can touch column so we can allocate memory for the list
+			int max_lights = 0;
+			FLightNode *cur_node = light_list;
+			while (cur_node)
+			{
+				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+					max_lights++;
+				cur_node = cur_node->nextLight;
+			}
+
+			drawerargs.dc_num_lights = 0;
+			drawerargs.dc_lights = Thread->FrameMemory->AllocMemory<TriLight>(max_lights);
 
 			// Setup lights for column
-			drawerargs.dc_num_lights = 0;
-			drawerargs.dc_lights = lightbuffer + nextlightindex;
-			FLightNode *cur_node = light_list;
-			while (cur_node && nextlightindex < 64 * 1024)
+			cur_node = light_list;
+			while (cur_node)
 			{
 				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 				{
@@ -220,7 +229,6 @@ namespace swrenderer
 						uint32_t green = cur_node->lightsource->GetGreen();
 						uint32_t blue = cur_node->lightsource->GetBlue();
 
-						nextlightindex++;
 						auto &light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
 						light.x = lconstant;
 						light.y = nlconstant;
@@ -232,9 +240,6 @@ namespace swrenderer
 
 				cur_node = cur_node->nextLight;
 			}
-
-			if (nextlightindex == 64 * 1024)
-				nextlightindex = 0;
 		}
 		else
 		{

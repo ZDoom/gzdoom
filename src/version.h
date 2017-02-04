@@ -84,12 +84,12 @@ const char *GetVersionString();
 #define DYNLIGHT
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "GZDOOM"
-#define BASEWAD "gzdoom.pk3"
+#define GAMESIG "AENGINE"
+#define BASEWAD "aengine_data.pk3"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "GZDoom"
-#define GAMENAMELOWERCASE "gzdoom"
+#define GAMENAME "aEngine"
+#define GAMENAMELOWERCASE "aengine"
 #define FORUM_URL "http://forum.drdteam.org"
 #define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
 

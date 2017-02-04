@@ -28,7 +28,6 @@
 #include "swrenderer/things/r_particle.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/things/r_wallsprite.h"
-#include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_translucent_pass.h"
@@ -213,7 +212,5 @@ namespace swrenderer
 			clip3d->DeleteHeights();
 			clip3d->fake3D = 0;
 		}
-
-		Thread->PlayerSprites->Render();
 	}
 }

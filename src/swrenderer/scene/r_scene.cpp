@@ -48,6 +48,7 @@
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
+#include "swrenderer/things/r_playersprite.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
@@ -153,6 +154,7 @@ namespace swrenderer
 		}
 
 		RenderThreadSlices();
+		MainThread()->PlayerSprites->Render();
 		RenderDrawQueues();
 
 		camera->renderflags = savedflags;

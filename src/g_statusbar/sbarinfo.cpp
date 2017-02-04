@@ -1267,7 +1267,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
-						DTA_Translation, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1284,7 +1284,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
-						DTA_Translation, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1344,7 +1344,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_Translation, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1361,7 +1361,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_Translation, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1382,7 +1382,7 @@ public:
 
 		const BYTE* str = (const BYTE*) cstring;
 		const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
-		FRemapTable *remap = font->GetColorTranslation(translation);
+		int fontcolor = translation;
 
 		if(fullScreenOffsets)
 		{
@@ -1408,7 +1408,7 @@ public:
 			{
 				EColorRange newColor = V_ParseFontColor(++str, translation, boldTranslation);
 				if(newColor != CR_UNDEFINED)
-					remap = font->GetColorTranslation(newColor);
+					fontcolor = newColor;
 				continue;
 			}
 
@@ -1417,20 +1417,22 @@ public:
 				width = font->GetCharWidth((unsigned char) *str);
 			else
 				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
-			FTexture* character = font->GetChar((unsigned char) *str, &width);
-			if(character == NULL) //missing character.
+			FTexture* c = font->GetChar((unsigned char) *str, &width);
+			if(c == NULL) //missing character.
 			{
 				str++;
 				continue;
 			}
+			int character = (unsigned char)*str;
+
 			if(script->spacingCharacter == '\0') //If we are monospaced lets use the offset
-				ax += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
+				ax += (c->LeftOffset+1); //ignore x offsets since we adapt to character size
 
 			double rx, ry, rw, rh;
 			rx = ax + xOffset;
 			ry = ay + yOffset;
-			rw = character->GetScaledWidthDouble();
-			rh = character->GetScaledHeightDouble();
+			rw = c->GetScaledWidthDouble();
+			rh = c->GetScaledHeightDouble();
 
 			if(script->spacingCharacter != '\0')
 			{
@@ -1484,32 +1486,31 @@ public:
 				double salpha = (Alpha *HR_SHADOW);
 				double srx = rx + (shadowX*xScale);
 				double sry = ry + (shadowY*yScale);
-				screen->DrawTexture(character, srx, sry,
+				screen->DrawChar(font, CR_UNTRANSLATED, srx, sry, character,
 					DTA_DestWidthF, rw,
 					DTA_DestHeightF, rh,
 					DTA_Alpha, salpha,
 					DTA_FillColor, 0,
 					TAG_DONE);
 			}
-			screen->DrawTexture(character, rx, ry,
+			screen->DrawChar(font, fontcolor, rx, ry, character,
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
-				DTA_Translation, remap,
 				DTA_Alpha, Alpha,
 				TAG_DONE);
 			if(script->spacingCharacter == '\0')
-				ax += width + spacing - (character->LeftOffset+1);
+				ax += width + spacing - (c->LeftOffset+1);
 			else //width gets changed at the call to GetChar()
 				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
 			str++;
 		}
 	}
 
-	FRemapTable* GetTranslation() const
+	uint32_t GetTranslation() const
 	{
 		if(gameinfo.gametype & GAME_Raven)
-			return translationtables[TRANSLATION_PlayersExtra][int(CPlayer - players)];
-		return translationtables[TRANSLATION_Players][int(CPlayer - players)];
+			return TRANSLATION(TRANSLATION_PlayersExtra, int(CPlayer - players));
+		return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
 	}
 
 	AInventory *ammo1, *ammo2;

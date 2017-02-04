@@ -388,15 +388,8 @@ void DIntermissionScreenText::Drawer ()
 			w *= CleanXfac;
 			if (cx + w > SCREENWIDTH)
 				continue;
-			if (pic != NULL)
-			{
-				screen->DrawTexture (pic,
-					cx,
-					cy,
-					DTA_Translation, range,
-					DTA_CleanNoMove, true,
-					TAG_DONE);
-			}
+
+			screen->DrawChar(SmallFont, mTextColor, cx, cy, c, DTA_CleanNoMove, true, TAG_DONE);
 			cx += w;
 		}
 	}
@@ -432,16 +425,15 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
 	{
 		advplayerstate = mDefaults->MissileState;
-		casttranslation = translationtables[TRANSLATION_Players][consoleplayer];
+		casttranslation = TRANSLATION(TRANSLATION_Players, consoleplayer);
 	}
 	else
 	{
 		advplayerstate = NULL;
-		casttranslation = NULL;
+		casttranslation = 0;
 		if (mDefaults->Translation != 0)
 		{
-			casttranslation = translationtables[GetTranslationType(mDefaults->Translation)]
-												[GetTranslationIndex(mDefaults->Translation)];
+			casttranslation = mDefaults->Translation;
 		}
 	}
 	castdeath = false;
@@ -631,7 +623,7 @@ void DIntermissionScreenCast::Drawer ()
 			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
 			DTA_Alpha, mDefaults->Alpha,
-			DTA_Translation, casttranslation,
+			DTA_TranslationIndex, casttranslation,
 			TAG_DONE);
 	}
 }

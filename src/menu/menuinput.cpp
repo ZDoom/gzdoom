@@ -336,15 +336,11 @@ void DTextEnterMenu::Drawer ()
 
 				// The highlighted character is yellow; the rest are dark gray.
 				color = (x == InputGridX && y == InputGridY) ? CR_YELLOW : CR_DARKGRAY;
-				remap = SmallFont->GetColorTranslation(color);
 
 				if (pic != NULL)
 				{
 					// Draw a normal character.
-					screen->DrawTexture(pic, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding,
-						DTA_Translation, remap,
-						DTA_CleanNoMove, true,
-						TAG_DONE);
+					screen->DrawChar(SmallFont, color, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding, ch, DTA_CleanNoMove, true, TAG_DONE);
 				}
 				else if (ch == ' ')
 				{

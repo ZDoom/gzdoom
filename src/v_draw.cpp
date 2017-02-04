@@ -201,7 +201,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		{
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
-		// Note that this overrides DTA_Translation in software, but not in hardware.
+		// Note that this overrides the translation in software, but not in hardware.
 		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
 			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
 		translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
@@ -733,6 +733,10 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 
 		case DTA_Translation:
 			parms->remap = ListGetTranslation(tags);
+			break;
+
+		case DTA_TranslationIndex:
+			parms->remap = TranslationToTable(ListGetInt(tags));
 			break;
 
 		case DTA_ColorOverlay:

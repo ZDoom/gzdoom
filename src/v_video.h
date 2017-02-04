@@ -77,6 +77,7 @@ enum
 	DTA_Alpha,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
 	DTA_Translation,	// translation table to recolor the source
+	DTA_TranslationIndex,
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
@@ -270,7 +271,7 @@ public:
 #endif
 	// 2D Text drawing
 	void DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
-	void DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
+	void DrawChar (FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
 
 protected:
 	BYTE *Buffer;

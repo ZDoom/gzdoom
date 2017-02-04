@@ -849,7 +849,7 @@ private:
 	void DrINumberOuter(signed int val, int x, int y, bool center = false, int w = 9) const;
 	void DrBNumberOuterFont(signed int val, int x, int y, int w = 3) const;
 	void DrawDimImage(FTexture *image, int x, int y, bool dimmed) const;
-	void DrawImage(FTexture *image, int x, int y, FRemapTable *translation = NULL) const;
+	void DrawImage(FTexture *image, int x, int y/*, FRemapTable *translation = NULL*/) const;
 
 };
 
@@ -1022,12 +1022,11 @@ void DStrifeStatusBar::DrBNumberOuterFont(signed int val, int x, int y, int size
 //---------------------------------------------------------------------------
 
 void DStrifeStatusBar::DrawImage(FTexture *img,
-	int x, int y, FRemapTable *translation) const
+	int x, int y) const
 {
 	if (img != NULL)
 	{
 		screen->DrawTexture(img, x + ST_X, y + ST_Y,
-			DTA_Translation, translation,
 			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}

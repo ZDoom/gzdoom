@@ -605,13 +605,12 @@ void DListMenuItemPlayerDisplay::Drawer(bool selected)
 		FTexture *tex = TexMan(sprframe->Texture[mRotation]);
 		if (tex != NULL && tex->UseType != FTexture::TEX_Null)
 		{
-			FRemapTable *trans = NULL;
-			if (mTranslate) trans = translationtables[TRANSLATION_Players](MAXPLAYERS);
+			int trans = mTranslate? TRANSLATION(TRANSLATION_Players, MAXPLAYERS) : 0;
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
 				DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * Scale.X,
 				DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * Scale.Y,
-				DTA_Translation, trans,
+				DTA_TranslationIndex, trans,
 				DTA_FlipX, sprframe->Flip & (1 << mRotation),
 				TAG_DONE);
 		}

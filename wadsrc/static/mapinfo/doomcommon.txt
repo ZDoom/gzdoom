@@ -57,7 +57,7 @@ gameinfo
 	playerclasses = "DoomPlayer"
 	pausesign = "M_PAUSE"
 	gibfactor = 1
-	cursorpic = "doomcurs"
+	cursorpic = "cursor"
 	textscreenx = 10
 	textscreeny = 10
 	defaultendsequence = "Inter_Cast"

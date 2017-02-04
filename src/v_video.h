@@ -177,6 +177,12 @@ struct DrawParms
 	bool virtBottom;
 };
 
+struct VMVa_List
+{
+	VMValue *args;
+	int curindex;
+	int numargs;
+};
 //
 // VIDEO
 //
@@ -251,6 +257,7 @@ public:
 	// 2D Texture drawing
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
+	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
 
@@ -275,7 +282,9 @@ protected:
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list& tags, DrawParms *parms, bool fortext) const;
+
+	template<class T>
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 

@@ -554,6 +554,10 @@ CVMAbortException::CVMAbortException(EVMAbortException reason, const char *morei
 		AppendMessage("string format failed.");
 		break;
 
+	case X_OTHER:
+		// no prepended message.
+		break;
+
 	default:
 	{
 		size_t len = strlen(m_Message);

@@ -251,7 +251,7 @@ namespace swrenderer
 			drawerargs.SetCount(count);
 			drawerargs.SetTextureVStep(sampler.uv_step);
 			drawerargs.SetTextureVPos(sampler.uv_pos);
-			drawerargs.DrawColumn();
+			drawerargs.DrawColumn(Thread);
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -269,7 +269,7 @@ namespace swrenderer
 				drawerargs.SetCount(count);
 				drawerargs.SetTextureVStep(sampler.uv_step);
 				drawerargs.SetTextureVPos(sampler.uv_pos);
-				drawerargs.DrawColumn();
+				drawerargs.DrawColumn(Thread);
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -294,7 +294,7 @@ namespace swrenderer
 					drawerargs.SetCount(count);
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
-					drawerargs.DrawColumn();
+					drawerargs.DrawColumn(Thread);
 
 					left -= count;
 					uv_pos += sampler.uv_step * count;

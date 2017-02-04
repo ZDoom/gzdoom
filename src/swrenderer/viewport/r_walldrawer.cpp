@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include "r_walldrawer.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
@@ -23,9 +24,9 @@ namespace swrenderer
 		dc_dest_y = y;
 	}
 
-	void WallDrawerArgs::DrawColumn()
+	void WallDrawerArgs::DrawColumn(RenderThread *thread)
 	{
-		(RenderViewport::Instance()->Drawers()->*wallfunc)(*this);
+		(thread->Drawers()->*wallfunc)(*this);
 	}
 
 	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)

@@ -209,9 +209,9 @@ namespace swrenderer
 		drawerargs.SetSolidBottom(frontskytex->GetSkyCapColor(true));
 
 		if (!backskytex)
-			drawerargs.DrawSingleSkyColumn();
+			drawerargs.DrawSingleSkyColumn(Thread);
 		else
-			drawerargs.DrawDoubleSkyColumn();
+			drawerargs.DrawDoubleSkyColumn(Thread);
 	}
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)

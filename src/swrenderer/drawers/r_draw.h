@@ -17,6 +17,9 @@ EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
 EXTERN_CVAR(Bool, r_dynlights);
 
+class DrawerCommandQueue;
+typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
+
 namespace swrenderer
 {
 	class DrawerArgs;
@@ -46,6 +49,7 @@ namespace swrenderer
 	class SWPixelFormatDrawers
 	{
 	public:
+		SWPixelFormatDrawers(DrawerCommandQueuePtr queue) : Queue(queue) { }
 		virtual ~SWPixelFormatDrawers() { }
 		virtual void DrawWallColumn(const WallDrawerArgs &args) = 0;
 		virtual void DrawWallMaskedColumn(const WallDrawerArgs &args) = 0;
@@ -82,6 +86,8 @@ namespace swrenderer
 		virtual void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
 		virtual void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
 		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
+		
+		DrawerCommandQueuePtr Queue;
 	};
 
 	void R_InitShadeMaps();

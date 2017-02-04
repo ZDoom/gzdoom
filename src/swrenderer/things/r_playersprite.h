@@ -45,7 +45,7 @@ namespace swrenderer
 
 		short renderflags = 0;
 
-		void Render();
+		void Render(RenderThread *thread);
 	};
 
 	class HWAccelPlayerSprite

@@ -33,12 +33,6 @@
 // Use multiple threads when drawing
 EXTERN_CVAR(Bool, r_multithreaded)
 
-// Redirect drawer commands to worker threads
-void R_BeginDrawerCommands();
-
-// Wait until all drawers finished executing
-void R_EndDrawerCommands();
-
 // Worker data for each thread executing drawer commands
 class DrawerThread
 {
@@ -117,20 +111,30 @@ public:
 
 void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal));
 
-// Manages queueing up commands and executing them on worker threads
-class DrawerCommandQueue
+class DrawerCommandQueue;
+typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
+
+class DrawerThreads
 {
-	enum { memorypool_size = 16 * 1024 * 1024 };
-	char memorypool[memorypool_size];
-	size_t memorypool_pos = 0;
+public:
+	// Runs the collected commands on worker threads
+	static void Execute(const std::vector<DrawerCommandQueuePtr> &queues);
+	
+private:
+	DrawerThreads();
+	~DrawerThreads();
+	
+	void StartThreads();
+	void StopThreads();
 
-	std::vector<DrawerCommand *> commands;
-
+	static DrawerThreads *Instance();
+	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
+	
 	std::vector<DrawerThread> threads;
 
 	std::mutex start_mutex;
 	std::condition_variable start_condition;
-	std::vector<DrawerCommand *> active_commands;
+	std::vector<DrawerCommandQueuePtr> active_commands;
 	bool shutdown_flag = false;
 	int run_id = 0;
 
@@ -144,53 +148,45 @@ class DrawerCommandQueue
 	DrawerThread single_core_thread;
 	int num_passes = 1;
 	int rows_in_pass = MAXHEIGHT;
+	
+	friend class DrawerCommandQueue;
+};
 
-	void StartThreads();
-	void StopThreads();
-	void Finish();
+namespace swrenderer { class RenderThread; }
 
-	static DrawerCommandQueue *Instance();
-	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
-
-	DrawerCommandQueue();
-	~DrawerCommandQueue();
-
+class DrawerCommandQueue
+{
 public:
-	// Allocate memory valid for the duration of a command execution
-	static void* AllocMemory(size_t size);
-
+	DrawerCommandQueue(swrenderer::RenderThread *renderthread);
+	
+	void Clear() { commands.clear(); }
+	
 	// Queue command to be executed by drawer worker threads
 	template<typename T, typename... Types>
-	static void QueueCommand(Types &&... args)
+	void Push(Types &&... args)
 	{
-		auto queue = Instance();
-		if (queue->threaded_render == 0 || !r_multithreaded)
+		DrawerThreads *threads = DrawerThreads::Instance();
+		if (ThreadedRender && r_multithreaded)
 		{
-			T command(std::forward<Types>(args)...);
-			command.Execute(&Instance()->single_core_thread);
+			void *ptr = AllocMemory(sizeof(T));
+			T *command = new (ptr)T(std::forward<Types>(args)...);
+			commands.push_back(command);
 		}
 		else
 		{
-			void *ptr = AllocMemory(sizeof(T));
-			if (!ptr) // Out of memory - render what we got
-			{
-				queue->Finish();
-				ptr = AllocMemory(sizeof(T));
-				if (!ptr)
-					return;
-			}
-			T *command = new (ptr)T(std::forward<Types>(args)...);
-			queue->commands.push_back(command);
+			T command(std::forward<Types>(args)...);
+			command.Execute(&threads->single_core_thread);
 		}
 	}
-
-	// Redirects all drawing commands to worker threads until End is called
-	// Begin/End blocks can be nested.
-	static void Begin();
-
-	// End redirection and wait until all worker threads finished executing
-	static void End();
-
-	// Waits until all worker threads finished executing
-	static void WaitForWorkers();
+	
+	bool ThreadedRender = true;
+	
+private:
+	// Allocate memory valid for the duration of a command execution
+	void *AllocMemory(size_t size);
+	
+	std::vector<DrawerCommand *> commands;
+	swrenderer::RenderThread *renderthread;
+	
+	friend class DrawerThreads;
 };

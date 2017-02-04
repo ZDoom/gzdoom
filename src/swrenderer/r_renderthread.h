@@ -24,6 +24,9 @@
 
 #include <memory>
 
+class DrawerCommandQueue;
+typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
+
 namespace swrenderer
 {
 	class VisibleSpriteList;
@@ -37,6 +40,9 @@ namespace swrenderer
 	class DrawSegmentList;
 	class RenderClipSegment;
 	class RenderMemory;
+	class SWPixelFormatDrawers;
+	class SWTruecolorDrawers;
+	class SWPalDrawers;
 
 	class RenderThread
 	{
@@ -55,5 +61,12 @@ namespace swrenderer
 		std::unique_ptr<RenderScene> Scene;
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
+		DrawerCommandQueuePtr DrawQueue;
+		
+		SWPixelFormatDrawers *Drawers();
+		
+	private:
+		std::unique_ptr<SWTruecolorDrawers> tc_drawers;
+		std::unique_ptr<SWPalDrawers> pal_drawers;
 	};
 }

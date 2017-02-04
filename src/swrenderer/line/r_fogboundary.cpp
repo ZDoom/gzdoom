@@ -45,7 +45,7 @@
 
 namespace swrenderer
 {
-	void RenderFogBoundary::Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap)
+	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that
@@ -82,7 +82,7 @@ namespace swrenderer
 				if (t2 < b2 && rcolormap != 0)
 				{ // Colormap 0 is always the identity map, so rendering it is
 				  // just a waste of time.
-					RenderSection(t2, b2, xr);
+					RenderSection(thread, t2, b2, xr);
 				}
 				if (t1 < t2) t2 = t1;
 				if (b1 > b2) b2 = b1;
@@ -102,13 +102,13 @@ namespace swrenderer
 					while (t2 < stop)
 					{
 						int y = t2++;
-						drawerargs.DrawFogBoundaryLine(y, xr, spanend[y]);
+						drawerargs.DrawFogBoundaryLine(thread, y, xr, spanend[y]);
 					}
 					stop = MAX(b1, t2);
 					while (b2 > stop)
 					{
 						int y = --b2;
-						drawerargs.DrawFogBoundaryLine(y, xr, spanend[y]);
+						drawerargs.DrawFogBoundaryLine(thread, y, xr, spanend[y]);
 					}
 				}
 				else
@@ -134,15 +134,15 @@ namespace swrenderer
 		}
 		if (t2 < b2 && rcolormap != 0)
 		{
-			RenderSection(t2, b2, x1);
+			RenderSection(thread, t2, b2, x1);
 		}
 	}
 
-	void RenderFogBoundary::RenderSection(int y, int y2, int x1)
+	void RenderFogBoundary::RenderSection(RenderThread *thread, int y, int y2, int x1)
 	{
 		for (; y < y2; ++y)
 		{
-			drawerargs.DrawFogBoundaryLine(y, x1, spanend[y]);
+			drawerargs.DrawFogBoundaryLine(thread, y, x1, spanend[y]);
 		}
 	}
 }

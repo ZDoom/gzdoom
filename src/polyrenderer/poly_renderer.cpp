@@ -50,6 +50,10 @@ PolyRenderer *PolyRenderer::Instance()
 	return &scene;
 }
 
+PolyRenderer::PolyRenderer()
+{
+}
+
 void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
@@ -71,10 +75,10 @@ void PolyRenderer::RenderView(player_t *player)
 	CameraLight *cameraLight = CameraLight::Instance();
 	if (cameraLight->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 	{
-		R_BeginDrawerCommands();
-		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
-		R_EndDrawerCommands();
+		Thread.DrawQueue->Push<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
 	}
+	
+	DrawerThreads::Execute({ Thread.DrawQueue });
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
@@ -94,6 +98,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	canvas->Lock(true);
 	
 	RenderActorView(actor, dontmaplines);
+	DrawerThreads::Execute({ Thread.DrawQueue });
 	
 	canvas->Unlock();
 
@@ -122,8 +127,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	if (!r_showviewer)
 		camera->renderflags |= RF_INVISIBLE;
 
-	R_BeginDrawerCommands();
-
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
@@ -135,10 +138,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
-	
-	NetUpdate();
-	
-	R_EndDrawerCommands();
 	
 	NetUpdate();
 }

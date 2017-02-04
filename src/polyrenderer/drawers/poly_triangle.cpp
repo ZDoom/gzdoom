@@ -34,6 +34,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"
+#include "polyrenderer/poly_renderer.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 
@@ -81,7 +82,7 @@ void PolyTriangleDrawer::toggle_mirror()
 
 void PolyTriangleDrawer::draw(const PolyDrawArgs &args)
 {
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, mirror);
+	PolyRenderer::Instance()->Thread.DrawQueue->Push<DrawPolyTrianglesCommand>(args, mirror);
 }
 
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadData *thread)

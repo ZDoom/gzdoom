@@ -17,13 +17,15 @@
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	class RenderFogBoundary
 	{
 	public:
-		void Render(int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap);
+		void Render(RenderThread *thread, int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap);
 
 	private:
-		void RenderSection(int y, int y2, int x1);
+		void RenderSection(RenderThread *thread, int y, int y2, int x1);
 
 		short spanend[MAXHEIGHT];
 		SpanDrawerArgs drawerargs;

@@ -9,6 +9,8 @@ struct TriLight;
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	class WallDrawerArgs : public DrawerArgs
 	{
 	public:
@@ -28,7 +30,7 @@ namespace swrenderer
 
 		bool IsMaskedDrawer() const;
 
-		void DrawColumn();
+		void DrawColumn(RenderThread *thread);
 
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }

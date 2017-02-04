@@ -13,17 +13,18 @@
 
 #include <stddef.h>
 #include "r_skydrawer.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
-	void SkyDrawerArgs::DrawSingleSkyColumn()
+	void SkyDrawerArgs::DrawSingleSkyColumn(RenderThread *thread)
 	{
-		RenderViewport::Instance()->Drawers()->DrawSingleSkyColumn(*this);
+		thread->Drawers()->DrawSingleSkyColumn(*this);
 	}
 
-	void SkyDrawerArgs::DrawDoubleSkyColumn()
+	void SkyDrawerArgs::DrawDoubleSkyColumn(RenderThread *thread)
 	{
-		RenderViewport::Instance()->Drawers()->DrawDoubleSkyColumn(*this);
+		thread->Drawers()->DrawDoubleSkyColumn(*this);
 	}
 
 	void SkyDrawerArgs::SetDest(int x, int y)

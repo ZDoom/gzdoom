@@ -93,17 +93,15 @@ namespace swrenderer
 			}
 		}
 
-		R_BeginDrawerCommands();
-
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
-			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
+			Thread->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 		}
-
-		R_EndDrawerCommands();
+		
+		DrawerThreads::Execute({ Thread->DrawQueue });
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -195,8 +193,6 @@ namespace swrenderer
 		
 		const bool savedviewactive = viewactive;
 
-		R_BeginDrawerCommands();
-
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
 
@@ -208,8 +204,8 @@ namespace swrenderer
 
 		RenderActorView(actor, dontmaplines);
 
-		R_EndDrawerCommands();
-
+		DrawerThreads::Execute({ Thread->DrawQueue });
+		
 		viewport->RenderTarget = screen;
 
 		R_ExecuteSetViewSize();

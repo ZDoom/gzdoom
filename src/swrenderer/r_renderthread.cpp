@@ -47,6 +47,11 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/segments/r_clipsegment.h"
+#include "swrenderer/drawers/r_thread.h"
+#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_draw_rgba.h"
+#include "swrenderer/drawers/r_draw_pal.h"
+#include "swrenderer/viewport/r_viewport.h"
 #include "r_memory.h"
 
 namespace swrenderer
@@ -54,6 +59,7 @@ namespace swrenderer
 	RenderThread::RenderThread()
 	{
 		FrameMemory = std::make_unique<RenderMemory>();
+		DrawQueue = std::make_shared<DrawerCommandQueue>(this);
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);
 		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
 		SpriteList = std::make_unique<VisibleSpriteList>();
@@ -64,9 +70,19 @@ namespace swrenderer
 		Scene = std::make_unique<RenderScene>(this);
 		DrawSegments = std::make_unique<DrawSegmentList>(this);
 		ClipSegments = std::make_unique<RenderClipSegment>();
+		tc_drawers = std::make_unique<SWTruecolorDrawers>(DrawQueue);
+		pal_drawers = std::make_unique<SWPalDrawers>(DrawQueue);
 	}
 
 	RenderThread::~RenderThread()
 	{
+	}
+	
+	SWPixelFormatDrawers *RenderThread::Drawers()
+	{
+		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+			return tc_drawers.get();
+		else
+			return pal_drawers.get();
 	}
 }

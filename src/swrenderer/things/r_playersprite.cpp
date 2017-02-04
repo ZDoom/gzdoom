@@ -550,7 +550,7 @@ namespace swrenderer
 			}
 		}
 
-		vis.Render();
+		vis.Render(Thread);
 	}
 
 	void RenderPlayerSprites::RenderRemaining()
@@ -584,7 +584,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void NoAccelPlayerSprite::Render()
+	void NoAccelPlayerSprite::Render(RenderThread *thread)
 	{
 		if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
 		{ // scaled to 0; can't see
@@ -627,7 +627,7 @@ namespace swrenderer
 		fixed_t frac = startfrac;
 		for (int x = x1; x < x2; x++)
 		{
-			drawerargs.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 			frac += xiscale;
 		}
 

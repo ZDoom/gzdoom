@@ -30,7 +30,7 @@ namespace swrenderer
 		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
 
 	private:
-		static void DrawColumn(SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
+		static void DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip);
 
 		FWallCoords wallc;
 		uint32_t Translation = 0;

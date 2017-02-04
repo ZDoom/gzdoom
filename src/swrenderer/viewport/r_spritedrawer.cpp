@@ -34,6 +34,7 @@
 
 #include <stddef.h>
 #include "r_spritedrawer.h"
+#include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
@@ -42,14 +43,14 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		auto viewport = RenderViewport::Instance();
 		
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
 		{
-			DrawMaskedColumnBgra(x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
+			DrawMaskedColumnBgra(thread, x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
 			return;
 		}
 
@@ -115,13 +116,13 @@ namespace swrenderer
 				else if (dc_iscale < 0)
 					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-				(RenderViewport::Instance()->Drawers()->*colfunc)(*this);
+				(thread->Drawers()->*colfunc)(*this);
 			}
 			span++;
 		}
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		dc_x = x;
 		dc_iscale = iscale;
@@ -230,7 +231,7 @@ namespace swrenderer
 				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-				(RenderViewport::Instance()->Drawers()->*colfunc)(*this);
+				(thread->Drawers()->*colfunc)(*this);
 			}
 			span++;
 		}
@@ -488,9 +489,9 @@ namespace swrenderer
 		return SetStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
 
-	void SpriteDrawerArgs::FillColumn()
+	void SpriteDrawerArgs::FillColumn(RenderThread *thread)
 	{
-		RenderViewport::Instance()->Drawers()->FillColumn(*this);
+		thread->Drawers()->FillColumn(*this);
 	}
 
 	void SpriteDrawerArgs::SetDest(int x, int y)

@@ -19,10 +19,6 @@
 
 namespace swrenderer
 {
-	class SWPixelFormatDrawers;
-	class SWTruecolorDrawers;
-	class SWPalDrawers;
-	
 	class RenderViewport
 	{
 	public:
@@ -63,15 +59,10 @@ namespace swrenderer
 		DVector2 PointWorldToView(const DVector2 &worldPos) const;
 		DVector2 ScaleViewToScreen(const DVector2 &scale, double viewZ, bool pixelstretch = true) const;
 		
-		SWPixelFormatDrawers *Drawers();
-
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();
 		
 		double BaseYaspectMul = 0.0; // yaspectmul without a forced aspect ratio
-		
-		std::unique_ptr<SWTruecolorDrawers> tc_drawers;
-		std::unique_ptr<SWPalDrawers> pal_drawers;
 	};
 }

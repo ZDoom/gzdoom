@@ -9,6 +9,8 @@ struct TriLight;
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	class SkyDrawerArgs : public DrawerArgs
 	{
 	public:
@@ -38,8 +40,8 @@ namespace swrenderer
 		int FrontTextureHeight() const { return dc_sourceheight; }
 		int BackTextureHeight() const { return dc_sourceheight2; }
 
-		void DrawSingleSkyColumn();
-		void DrawDoubleSkyColumn();
+		void DrawSingleSkyColumn(RenderThread *thread);
+		void DrawDoubleSkyColumn(RenderThread *thread);
 
 	private:
 		uint8_t *dc_dest = nullptr;

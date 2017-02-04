@@ -244,53 +244,55 @@ namespace swrenderer
 	class SWPalDrawers : public SWPixelFormatDrawers
 	{
 	public:
-		void DrawWallColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>(args); }
-		void DrawWallMaskedColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>(args); }
+		using SWPixelFormatDrawers::SWPixelFormatDrawers;
+		
+		void DrawWallColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWall1PalCommand>(args); }
+		void DrawWallMaskedColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallMasked1PalCommand>(args); }
 
 		void DrawWallAddColumn(const WallDrawerArgs &args) override
 		{
 			if (args.dc_num_lights == 0)
-				DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>(args);
+				Queue->Push<DrawWallAdd1PalCommand>(args);
 			else
-				DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>(args);
+				Queue->Push<DrawWallAddClamp1PalCommand>(args);
 		}
 
-		void DrawWallAddClampColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>(args); }
-		void DrawWallSubClampColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>(args); }
-		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>(args); }
-		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(args); }
-		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(args); }
-		void DrawColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>(args); }
-		void FillColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnPalCommand>(args); }
-		void FillAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>(args); }
-		void FillAddClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnAddClampPalCommand>(args); }
-		void FillSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnSubClampPalCommand>(args); }
-		void FillRevSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>(args); }
-		void DrawFuzzColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>(args); R_UpdateFuzzPos(args); }
-		void DrawAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddPalCommand>(args); }
-		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTranslatedPalCommand>(args); }
-		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddPalCommand>(args); }
-		void DrawShadedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnShadedPalCommand>(args); }
-		void DrawAddClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampPalCommand>(args); }
-		void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedPalCommand>(args); }
-		void DrawSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampPalCommand>(args); }
-		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedPalCommand>(args); }
-		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampPalCommand>(args); }
-		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedPalCommand>(args); }
-		void DrawSpan(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanPalCommand>(args); }
-		void DrawSpanMasked(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedPalCommand>(args); }
-		void DrawSpanTranslucent(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanTranslucentPalCommand>(args); }
-		void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentPalCommand>(args); }
-		void DrawSpanAddClamp(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanAddClampPalCommand>(args); }
-		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>(args); }
-		void FillSpan(const SpanDrawerArgs &args) override { DrawerCommandQueue::QueueCommand<FillSpanPalCommand>(args); }
+		void DrawWallAddClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallAddClamp1PalCommand>(args); }
+		void DrawWallSubClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallSubClamp1PalCommand>(args); }
+		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallRevSubClamp1PalCommand>(args); }
+		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawSingleSky1PalCommand>(args); }
+		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawDoubleSky1PalCommand>(args); }
+		void DrawColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnPalCommand>(args); }
+		void FillColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnPalCommand>(args); }
+		void FillAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnAddPalCommand>(args); }
+		void FillAddClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnAddClampPalCommand>(args); }
+		void FillSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnSubClampPalCommand>(args); }
+		void FillRevSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnRevSubClampPalCommand>(args); }
+		void DrawFuzzColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawFuzzColumnPalCommand>(args); R_UpdateFuzzPos(args); }
+		void DrawAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddPalCommand>(args); }
+		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTranslatedPalCommand>(args); }
+		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTlatedAddPalCommand>(args); }
+		void DrawShadedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnShadedPalCommand>(args); }
+		void DrawAddClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddClampPalCommand>(args); }
+		void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddClampTranslatedPalCommand>(args); }
+		void DrawSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnSubClampPalCommand>(args); }
+		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnSubClampTranslatedPalCommand>(args); }
+		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnRevSubClampPalCommand>(args); }
+		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnRevSubClampTranslatedPalCommand>(args); }
+		void DrawSpan(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanPalCommand>(args); }
+		void DrawSpanMasked(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedPalCommand>(args); }
+		void DrawSpanTranslucent(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanTranslucentPalCommand>(args); }
+		void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedTranslucentPalCommand>(args); }
+		void DrawSpanAddClamp(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanAddClampPalCommand>(args); }
+		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedAddClampPalCommand>(args); }
+		void FillSpan(const SpanDrawerArgs &args) override { Queue->Push<FillSpanPalCommand>(args); }
 
 		void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
 		{
-			DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(args, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+			Queue->Push<DrawTiltedSpanPalCommand>(args, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 		}
 
-		void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) override { DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(args, y, x1, x2); }
-		void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) override { DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(args, y, x1, x2); }
+		void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) override { Queue->Push<DrawColoredSpanPalCommand>(args, y, x1, x2); }
+		void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) override { Queue->Push<DrawFogBoundaryLinePalCommand>(args, y, x1, x2); }
 	};
 }

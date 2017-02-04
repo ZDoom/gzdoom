@@ -47,6 +47,7 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/r_renderthread.h"
 #endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"
@@ -278,9 +279,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
+		static RenderThread thread;
+		thread.DrawQueue->ThreadedRender = false;
 		while (x < x2_i)
 		{
-			drawerargs.DrawMaskedColumn(x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
+			drawerargs.DrawMaskedColumn(&thread, x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
 			x++;
 			frac += xiscale_i;
 		}
@@ -1426,6 +1429,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt1 = pt2;
 		pt2++;			if (pt2 > npoints) pt2 = 0;
 	} while (pt1 != botpt);
+	
+	static RenderThread thread;
+	thread.DrawQueue->ThreadedRender = false;
 
 	// Travel down the left edge and fill it in.
 	pt1 = toppt;
@@ -1472,7 +1478,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 					drawerargs.SetTextureUPos(xs_RoundToInt(tex.X * scalex));
 					drawerargs.SetTextureVPos(xs_RoundToInt(tex.Y * scaley));
 
-					drawerargs.DrawSpan();
+					drawerargs.DrawSpan(&thread);
 #endif
 				}
 				x += xinc;

@@ -292,7 +292,7 @@ namespace swrenderer
 							voxel_pos.Y += dirY.X * x + dirY.Y * y;
 							voxel_pos.Z += dirZ * z;
 						
-							FillBox(drawerargs, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+							FillBox(thread, drawerargs, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
 						}
 					}
 				}
@@ -315,7 +315,7 @@ namespace swrenderer
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
-	void RenderVoxel::FillBox(SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
+	void RenderVoxel::FillBox(RenderThread *thread, SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
 		auto viewport = RenderViewport::Instance();
 		
@@ -345,7 +345,7 @@ namespace swrenderer
 					drawerargs.SetDest(x, columnY1);
 					drawerargs.SetSolidColor(color);
 					drawerargs.SetCount(columnY2 - columnY1);
-					drawerargs.FillColumn();
+					drawerargs.FillColumn(thread);
 				}
 			}
 		}

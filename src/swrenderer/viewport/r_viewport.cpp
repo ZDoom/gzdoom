@@ -48,20 +48,10 @@ namespace swrenderer
 
 	RenderViewport::RenderViewport()
 	{
-		tc_drawers = std::make_unique<SWTruecolorDrawers>();
-		pal_drawers = std::make_unique<SWPalDrawers>();
 	}
 	
 	RenderViewport::~RenderViewport()
 	{
-	}
-
-	SWPixelFormatDrawers *RenderViewport::Drawers()
-	{
-		if (RenderTarget->IsBgra())
-			return tc_drawers.get();
-		else
-			return pal_drawers.get();
 	}
 
 	void RenderViewport::SetViewport(int fullWidth, int fullHeight, float trueratio)

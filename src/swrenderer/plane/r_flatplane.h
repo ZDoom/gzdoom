@@ -54,7 +54,10 @@ namespace swrenderer
 	class RenderColoredPlane : PlaneRenderer
 	{
 	public:
+		RenderColoredPlane(RenderThread *thread);
 		void Render(VisiblePlane *pl);
+		
+		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;

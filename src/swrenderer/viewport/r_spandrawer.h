@@ -9,6 +9,8 @@ struct TriLight;
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	class SpanDrawerArgs : public DrawerArgs
 	{
 	public:
@@ -26,10 +28,10 @@ namespace swrenderer
 		void SetTextureVStep(dsfixed_t vstep) { ds_ystep = vstep; }
 		void SetSolidColor(int colorIndex) { ds_color = colorIndex; }
 
-		void DrawSpan();
-		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
-		void DrawColoredSpan(int y, int x1, int x2);
-		void DrawFogBoundaryLine(int y, int x1, int x2);
+		void DrawSpan(RenderThread *thread);
+		void DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
+		void DrawColoredSpan(RenderThread *thread, int y, int x1, int x2);
+		void DrawFogBoundaryLine(RenderThread *thread, int y, int x1, int x2);
 
 		uint32_t *SrcBlend() const { return dc_srcblend; }
 		uint32_t *DestBlend() const { return dc_destblend; }

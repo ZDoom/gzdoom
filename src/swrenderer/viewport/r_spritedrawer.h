@@ -9,6 +9,8 @@ struct TriLight;
 
 namespace swrenderer
 {
+	class RenderThread;
+	
 	class SpriteDrawerArgs : public DrawerArgs
 	{
 	public:
@@ -20,8 +22,8 @@ namespace swrenderer
 		void SetCount(int count) { dc_count = count; }
 		void SetSolidColor(int color) { dc_color = color; }
 
-		void DrawMaskedColumn(int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
-		void FillColumn();
+		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
+		void FillColumn(RenderThread *thread);
 
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }
@@ -51,7 +53,7 @@ namespace swrenderer
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
 		static fixed_t GetAlpha(int type, fixed_t alpha);
-		void DrawMaskedColumnBgra(int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
+		void DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked);
 
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;

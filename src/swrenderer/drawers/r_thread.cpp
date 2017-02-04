@@ -31,80 +31,42 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "r_thread.h"
+#include "swrenderer/r_memory.h"
+#include "swrenderer/r_renderthread.h"
 
 CVAR(Bool, r_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-void R_BeginDrawerCommands()
-{
-	DrawerCommandQueue::Begin();
-}
-
-void R_EndDrawerCommands()
-{
-	DrawerCommandQueue::End();
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
-DrawerCommandQueue *DrawerCommandQueue::Instance()
+DrawerThreads *DrawerThreads::Instance()
 {
-	static DrawerCommandQueue queue;
-	return &queue;
+	static DrawerThreads threads;
+	return &threads;
 }
 
-DrawerCommandQueue::DrawerCommandQueue()
+DrawerThreads::DrawerThreads()
 {
 }
 
-DrawerCommandQueue::~DrawerCommandQueue()
+DrawerThreads::~DrawerThreads()
 {
 	StopThreads();
 }
 
-void* DrawerCommandQueue::AllocMemory(size_t size)
+void DrawerThreads::Execute(const std::vector<DrawerCommandQueuePtr> &queues)
 {
-	// Make sure allocations remain 16-byte aligned
-	size = (size + 15) / 16 * 16;
-
-	auto queue = Instance();
-	if (queue->memorypool_pos + size > memorypool_size)
-		return nullptr;
-
-	void *data = queue->memorypool + queue->memorypool_pos;
-	queue->memorypool_pos += size;
-	return data;
-}
-
-void DrawerCommandQueue::Begin()
-{
-	auto queue = Instance();
-	queue->Finish();
-	queue->threaded_render++;
-}
-
-void DrawerCommandQueue::End()
-{
-	auto queue = Instance();
-	queue->Finish();
-	if (queue->threaded_render > 0)
-		queue->threaded_render--;
-}
-
-void DrawerCommandQueue::WaitForWorkers()
-{
-	Instance()->Finish();
-}
-
-void DrawerCommandQueue::Finish()
-{
-	auto queue = Instance();
-	if (queue->commands.empty())
+	bool hasWork = false;
+	for (const auto &queue : queues)
+		hasWork = hasWork || !queue->commands.empty();
+	if (!hasWork)
 		return;
+	
+	auto queue = Instance();
 
 	// Give worker threads something to do:
 
 	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
-	queue->active_commands.swap(queue->commands);
+	queue->active_commands = queues;
 	queue->run_id++;
 	start_lock.unlock();
 
@@ -119,13 +81,15 @@ void DrawerCommandQueue::Finish()
 
 	struct TryCatchData
 	{
-		DrawerCommandQueue *queue;
+		DrawerThreads *queue;
 		DrawerThread *thread;
+		size_t list_index;
 		size_t command_index;
 	} data;
 
 	data.queue = queue;
 	data.thread = &thread;
+	data.list_index = 0;
 	data.command_index = 0;
 	VectoredTryCatch(&data,
 	[](void *data)
@@ -139,18 +103,22 @@ void DrawerCommandQueue::Finish()
 			if (pass + 1 == d->queue->num_passes)
 				d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
 
-			size_t size = d->queue->active_commands.size();
-			for (d->command_index = 0; d->command_index < size; d->command_index++)
+			for (auto &list : d->queue->active_commands)
 			{
-				auto &command = d->queue->active_commands[d->command_index];
-				command->Execute(d->thread);
+				size_t size = list->commands.size();
+				for (d->command_index = 0; d->command_index < size; d->command_index++)
+				{
+					auto &command = list->commands[d->command_index];
+					command->Execute(d->thread);
+				}
+				d->list_index++;
 			}
 		}
 	},
 	[](void *data, const char *reason, bool fatal)
 	{
 		TryCatchData *d = (TryCatchData*)data;
-		ReportDrawerError(d->queue->active_commands[d->command_index], true, reason, fatal);
+		ReportDrawerError(d->queue->active_commands[d->list_index]->commands[d->command_index], true, reason, fatal);
 	});
 
 	// Wait for everyone to finish:
@@ -170,14 +138,17 @@ void DrawerCommandQueue::Finish()
 
 	// Clean up batch:
 
-	for (auto &command : queue->active_commands)
-		command->~DrawerCommand();
+	for (auto &list : queue->active_commands)
+	{
+		for (auto &command : list->commands)
+			command->~DrawerCommand();
+		list->Clear();
+	}
 	queue->active_commands.clear();
-	queue->memorypool_pos = 0;
 	queue->finished_threads = 0;
 }
 
-void DrawerCommandQueue::StartThreads()
+void DrawerThreads::StartThreads()
 {
 	if (!threads.empty())
 		return;
@@ -190,7 +161,7 @@ void DrawerCommandQueue::StartThreads()
 
 	for (int i = 0; i < num_threads - 1; i++)
 	{
-		DrawerCommandQueue *queue = this;
+		DrawerThreads *queue = this;
 		DrawerThread *thread = &threads[i];
 		thread->core = i + 1;
 		thread->num_cores = num_threads;
@@ -211,13 +182,15 @@ void DrawerCommandQueue::StartThreads()
 
 				struct TryCatchData
 				{
-					DrawerCommandQueue *queue;
+					DrawerThreads *queue;
 					DrawerThread *thread;
+					size_t list_index;
 					size_t command_index;
 				} data;
 
 				data.queue = queue;
 				data.thread = thread;
+				data.list_index = 0;
 				data.command_index = 0;
 				VectoredTryCatch(&data,
 				[](void *data)
@@ -231,18 +204,22 @@ void DrawerCommandQueue::StartThreads()
 						if (pass + 1 == d->queue->num_passes)
 							d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
 
-						size_t size = d->queue->active_commands.size();
-						for (d->command_index = 0; d->command_index < size; d->command_index++)
+						for (auto &list : d->queue->active_commands)
 						{
-							auto &command = d->queue->active_commands[d->command_index];
-							command->Execute(d->thread);
+							size_t size = list->commands.size();
+							for (d->command_index = 0; d->command_index < size; d->command_index++)
+							{
+								auto &command = list->commands[d->command_index];
+								command->Execute(d->thread);
+							}
+							d->list_index++;
 						}
 					}
 				},
 				[](void *data, const char *reason, bool fatal)
 				{
 					TryCatchData *d = (TryCatchData*)data;
-					ReportDrawerError(d->queue->active_commands[d->command_index], true, reason, fatal);
+					ReportDrawerError(d->queue->active_commands[d->list_index]->commands[d->command_index], true, reason, fatal);
 				});
 
 				// Notify main thread that we finished:
@@ -255,7 +232,7 @@ void DrawerCommandQueue::StartThreads()
 	}
 }
 
-void DrawerCommandQueue::StopThreads()
+void DrawerThreads::StopThreads()
 {
 	std::unique_lock<std::mutex> lock(start_mutex);
 	shutdown_flag = true;
@@ -268,7 +245,7 @@ void DrawerCommandQueue::StopThreads()
 	shutdown_flag = false;
 }
 
-void DrawerCommandQueue::ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal)
+void DrawerThreads::ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal)
 {
 	if (worker_thread)
 	{
@@ -298,3 +275,12 @@ void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)
 }
 
 #endif
+
+DrawerCommandQueue::DrawerCommandQueue(swrenderer::RenderThread *renderthread) : renderthread(renderthread)
+{
+}
+
+void *DrawerCommandQueue::AllocMemory(size_t size)
+{
+	return renderthread->FrameMemory->AllocMemory<uint8_t>(size);
+}

@@ -265,7 +265,7 @@ namespace swrenderer
 		drawerargs.SetDestX1(x1);
 		drawerargs.SetDestX2(x2);
 
-		drawerargs.DrawSpan();
+		drawerargs.DrawSpan(Thread);
 	}
 
 	void RenderFlatPlane::StepColumn()
@@ -319,6 +319,11 @@ namespace swrenderer
 	float RenderFlatPlane::yslope[MAXHEIGHT];
 
 	/////////////////////////////////////////////////////////////////////////
+	
+	RenderColoredPlane::RenderColoredPlane(RenderThread *thread)
+	{
+		Thread = thread;
+	}
 
 	void RenderColoredPlane::Render(VisiblePlane *pl)
 	{
@@ -327,6 +332,6 @@ namespace swrenderer
 
 	void RenderColoredPlane::RenderLine(int y, int x1, int x2)
 	{
-		drawerargs.DrawColoredSpan(y, x1, x2);
+		drawerargs.DrawColoredSpan(Thread, y, x1, x2);
 	}
 }

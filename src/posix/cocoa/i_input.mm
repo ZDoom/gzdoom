@@ -481,6 +481,7 @@ void ProcessMouseMoveInMenu(NSEvent* theEvent)
 
 	event.type    = EV_GUI_Event;
 	event.subtype = EV_GUI_MouseMove;
+	event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 
 	NSEventToGameMousePosition(theEvent, &event);
 
@@ -641,7 +642,8 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 
 	if (GUICapture)
 	{
-		event.type = EV_GUI_Event;
+		event.type  = EV_GUI_Event;
+		event.data3 = ModifierFlagsToGUIKeyModifiers(theEvent);
 
 		switch (cocoaEventType)
 		{
@@ -700,7 +702,6 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 	{
 		event.type    = EV_GUI_Event;
 		event.subtype = delta > 0.0f ? EV_GUI_WheelUp : EV_GUI_WheelDown;
-		event.data3   = delta;
 		event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 	}
 	else

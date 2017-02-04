@@ -66,11 +66,11 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy);
 //
 //=============================================================================
 
-class FOptionMenuSliderJoySensitivity : public FOptionMenuSliderBase
+class DOptionMenuSliderJoySensitivity : public DOptionMenuSliderBase
 {
 public:
-	FOptionMenuSliderJoySensitivity(const char *label, double min, double max, double step, int showval)
-		: FOptionMenuSliderBase(label, min, max, step, showval)
+	DOptionMenuSliderJoySensitivity(const char *label, double min, double max, double step, int showval)
+		: DOptionMenuSliderBase(label, min, max, step, showval)
 	{
 	}
 
@@ -91,14 +91,14 @@ public:
 //
 //=============================================================================
 
-class FOptionMenuSliderJoyScale : public FOptionMenuSliderBase
+class DOptionMenuSliderJoyScale : public DOptionMenuSliderBase
 {
 	int mAxis;
 	int mNeg;
 	
 public:
-	FOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval)
-		: FOptionMenuSliderBase(label, min, max, step, showval)
+	DOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval)
+		: DOptionMenuSliderBase(label, min, max, step, showval)
 	{
 		mAxis = axis;
 		mNeg = 1;
@@ -123,14 +123,14 @@ public:
 //
 //=============================================================================
 
-class FOptionMenuSliderJoyDeadZone : public FOptionMenuSliderBase
+class DOptionMenuSliderJoyDeadZone : public DOptionMenuSliderBase
 {
 	int mAxis;
 	int mNeg;
 	
 public:
-	FOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval)
-		: FOptionMenuSliderBase(label, min, max, step, showval)
+	DOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval)
+		: DOptionMenuSliderBase(label, min, max, step, showval)
 	{
 		mAxis = axis;
 		mNeg = 1;
@@ -155,13 +155,13 @@ public:
 //
 //=============================================================================
 
-class FOptionMenuItemJoyMap : public FOptionMenuItemOptionBase
+class DOptionMenuItemJoyMap : public DOptionMenuItemOptionBase
 {
 	int mAxis;
 public:
 
-	FOptionMenuItemJoyMap(const char *label, int axis, const char *values, int center)
-		: FOptionMenuItemOptionBase(label, "none", values, NULL, center)
+	DOptionMenuItemJoyMap(const char *label, int axis, const char *values, int center)
+		: DOptionMenuItemOptionBase(label, "none", values, NULL, center)
 	{
 		mAxis = axis;
 	}
@@ -206,13 +206,13 @@ public:
 //
 //=============================================================================
 
-class FOptionMenuItemInverter : public FOptionMenuItemOptionBase
+class DOptionMenuItemInverter : public DOptionMenuItemOptionBase
 {
 	int mAxis;
 public:
 
-	FOptionMenuItemInverter(const char *label, int axis, int center)
-		: FOptionMenuItemOptionBase(label, "none", "YesNo", NULL, center)
+	DOptionMenuItemInverter(const char *label, int axis, int center)
+		: DOptionMenuItemOptionBase(label, "none", "YesNo", NULL, center)
 	{
 		mAxis = axis;
 	}
@@ -244,12 +244,13 @@ IMPLEMENT_CLASS(DJoystickConfigMenu, false, false)
 //
 //=============================================================================
 
-class FOptionMenuItemJoyConfigMenu : public FOptionMenuItemSubmenu
+class DOptionMenuItemJoyConfigMenu : public DOptionMenuItemSubmenu
 {
+	DECLARE_CLASS(DOptionMenuItemJoyConfigMenu, DOptionMenuItemSubmenu)
 	IJoystickConfig *mJoy;
 public:
-	FOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy)
-		: FOptionMenuItemSubmenu(label, "JoystickConfigMenu")
+	DOptionMenuItemJoyConfigMenu(const char *label = nullptr, IJoystickConfig *joy = nullptr)
+		: DOptionMenuItemSubmenu(label, "JoystickConfigMenu")
 	{
 		mJoy = joy;
 	}
@@ -257,9 +258,11 @@ public:
 	bool Activate()
 	{
 		UpdateJoystickConfigMenu(mJoy);
-		return FOptionMenuItemSubmenu::Activate();
+		return DOptionMenuItemSubmenu::Activate();
 	}
 };
+
+IMPLEMENT_CLASS(DOptionMenuItemJoyConfigMenu, false, false)
 
 
 /*=======================================
@@ -274,16 +277,12 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
 	{
 		FOptionMenuDescriptor *opt = (FOptionMenuDescriptor *)*desc;
-		FOptionMenuItem *it;
-		for(unsigned i=0;i<opt->mItems.Size();i++)
-		{
-			delete opt->mItems[i];
-			opt->mItems.Clear();
-		}
+		DOptionMenuItem *it;
+		opt->mItems.Clear();
 		if (joy == NULL)
 		{
 			opt->mTitle = "Configure Controller";
-			it = new FOptionMenuItemStaticText("Invalid controller specified for menu", false);
+			it = new DOptionMenuItemStaticText("Invalid controller specified for menu", false);
 			opt->mItems.Push(it);
 		}
 		else
@@ -292,34 +291,34 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 
 			SELECTED_JOYSTICK = joy;
 
-			it = new FOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 3);
+			it = new DOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 3);
 			opt->mItems.Push(it);
-			it = new FOptionMenuItemStaticText(" ", false);
+			it = new DOptionMenuItemStaticText(" ", false);
 			opt->mItems.Push(it);
 
 			if (joy->GetNumAxes() > 0)
 			{
-				it = new FOptionMenuItemStaticText("Axis Configuration", true);
+				it = new DOptionMenuItemStaticText("Axis Configuration", true);
 				opt->mItems.Push(it);
 
 				for (int i = 0; i < joy->GetNumAxes(); ++i)
 				{
-					it = new FOptionMenuItemStaticText(" ", false);
+					it = new DOptionMenuItemStaticText(" ", false);
 					opt->mItems.Push(it);
 
-					it = new FOptionMenuItemJoyMap(joy->GetAxisName(i), i, "JoyAxisMapNames", false);
+					it = new DOptionMenuItemJoyMap(joy->GetAxisName(i), i, "JoyAxisMapNames", false);
 					opt->mItems.Push(it);
-					it = new FOptionMenuSliderJoyScale("Overall sensitivity", i, 0, 4, 0.1, 3);
+					it = new DOptionMenuSliderJoyScale("Overall sensitivity", i, 0, 4, 0.1, 3);
 					opt->mItems.Push(it);
-					it = new FOptionMenuItemInverter("Invert", i, false);
+					it = new DOptionMenuItemInverter("Invert", i, false);
 					opt->mItems.Push(it);
-					it = new FOptionMenuSliderJoyDeadZone("Dead Zone", i, 0, 0.9, 0.05, 3);
+					it = new DOptionMenuSliderJoyDeadZone("Dead Zone", i, 0, 0.9, 0.05, 3);
 					opt->mItems.Push(it);
 				}
 			}
 			else
 			{
-				it = new FOptionMenuItemStaticText("No configurable axes", false);
+				it = new DOptionMenuItemStaticText("No configurable axes", false);
 				opt->mItems.Push(it);
 			}
 		}
@@ -341,11 +340,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
 	{
 		FOptionMenuDescriptor *opt = (FOptionMenuDescriptor *)*desc;
-		FOptionMenuItem *it;
-		for(unsigned i=0;i<opt->mItems.Size();i++)
-		{
-			delete opt->mItems[i];
-		}
+		DOptionMenuItem *it;
 		opt->mItems.Clear();
 
 		int i;
@@ -369,40 +364,40 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		}
 
 		// Todo: Block joystick for changing this one.
-		it = new FOptionMenuItemOption("Enable controller support", "use_joystick", "YesNo", NULL, false);
+		it = new DOptionMenuItemOption("Enable controller support", "use_joystick", "YesNo", NULL, false);
 		opt->mItems.Push(it);
 		#ifdef _WIN32
-			it = new FOptionMenuItemOption("Enable DirectInput controllers", "joy_dinput", "YesNo", NULL, false);
+			it = new DOptionMenuItemOption("Enable DirectInput controllers", "joy_dinput", "YesNo", NULL, false);
 			opt->mItems.Push(it);
-			it = new FOptionMenuItemOption("Enable XInput controllers", "joy_xinput", "YesNo", NULL, false);
+			it = new DOptionMenuItemOption("Enable XInput controllers", "joy_xinput", "YesNo", NULL, false);
 			opt->mItems.Push(it);
-			it = new FOptionMenuItemOption("Enable raw PlayStation 2 adapters", "joy_ps2raw", "YesNo", NULL, false);
+			it = new DOptionMenuItemOption("Enable raw PlayStation 2 adapters", "joy_ps2raw", "YesNo", NULL, false);
 			opt->mItems.Push(it);
 		#endif
 
-		it = new FOptionMenuItemStaticText(" ", false);
+		it = new DOptionMenuItemStaticText(" ", false);
 		opt->mItems.Push(it);
 
 		if (Joysticks.Size() == 0)
 		{
-			it = new FOptionMenuItemStaticText("No controllers detected", false);
+			it = new DOptionMenuItemStaticText("No controllers detected", false);
 			opt->mItems.Push(it);
 			if (!use_joystick)
 			{
-				it = new FOptionMenuItemStaticText("Controller support must be", false);
+				it = new DOptionMenuItemStaticText("Controller support must be", false);
 				opt->mItems.Push(it);
-				it = new FOptionMenuItemStaticText("enabled to detect any", false);
+				it = new DOptionMenuItemStaticText("enabled to detect any", false);
 				opt->mItems.Push(it);
 			}
 		}
 		else
 		{
-			it = new FOptionMenuItemStaticText("Configure controllers:", false);
+			it = new DOptionMenuItemStaticText("Configure controllers:", false);
 			opt->mItems.Push(it);
 
 			for (int i = 0; i < (int)Joysticks.Size(); ++i)
 			{
-				it = new FOptionMenuItemJoyConfigMenu(Joysticks[i]->GetName(), Joysticks[i]);
+				it = new DOptionMenuItemJoyConfigMenu(Joysticks[i]->GetName(), Joysticks[i]);
 				opt->mItems.Push(it);
 				if (i == itemnum) opt->mSelectedItem = opt->mItems.Size();
 			}

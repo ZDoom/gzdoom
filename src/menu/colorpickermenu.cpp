@@ -81,14 +81,14 @@ public:
 		// This menu uses some featurs that are hard to implement in an external control lump
 		// so it creates its own list of menu items.
 		desc->mItems.Resize(mStartItem+8);
-		desc->mItems[mStartItem+0] = new FOptionMenuItemStaticText(name, false);
-		desc->mItems[mStartItem+1] = new FOptionMenuItemStaticText(" ", false);
-		desc->mItems[mStartItem+2] = new FOptionMenuSliderVar("Red", &mRed, 0, 255, 15, 0);
-		desc->mItems[mStartItem+3] = new FOptionMenuSliderVar("Green", &mGreen, 0, 255, 15, 0);
-		desc->mItems[mStartItem+4] = new FOptionMenuSliderVar("Blue", &mBlue, 0, 255, 15, 0);
-		desc->mItems[mStartItem+5] = new FOptionMenuItemStaticText(" ", false);
-		desc->mItems[mStartItem+6] = new FOptionMenuItemCommand("Undo changes", "undocolorpic");
-		desc->mItems[mStartItem+7] = new FOptionMenuItemStaticText(" ", false);
+		desc->mItems[mStartItem+0] = new DOptionMenuItemStaticText(name, false);
+		desc->mItems[mStartItem+1] = new DOptionMenuItemStaticText(" ", false);
+		desc->mItems[mStartItem+2] = new DOptionMenuSliderVar("Red", &mRed, 0, 255, 15, 0);
+		desc->mItems[mStartItem+3] = new DOptionMenuSliderVar("Green", &mGreen, 0, 255, 15, 0);
+		desc->mItems[mStartItem+4] = new DOptionMenuSliderVar("Blue", &mBlue, 0, 255, 15, 0);
+		desc->mItems[mStartItem+5] = new DOptionMenuItemStaticText(" ", false);
+		desc->mItems[mStartItem+6] = new DOptionMenuItemCommand("Undo changes", "undocolorpic");
+		desc->mItems[mStartItem+7] = new DOptionMenuItemStaticText(" ", false);
 		desc->mSelectedItem = mStartItem + 2;
 		Init(parent, desc);
 		desc->mIndent = 0;
@@ -99,11 +99,7 @@ public:
 	{
 		if (mStartItem >= 0)
 		{
-			for(unsigned i=0;i<8;i++)
-			{
-				delete mDesc->mItems[mStartItem+i];
-				mDesc->mItems.Resize(mStartItem);
-			}
+			mDesc->mItems.Resize(mStartItem);
 			UCVarValue val;
 			val.Int = MAKERGB(int(mRed), int(mGreen), int(mBlue));
 			if (mCVar != NULL) mCVar->SetGenericRep (val, CVAR_Int);

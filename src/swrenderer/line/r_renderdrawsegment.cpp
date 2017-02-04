@@ -89,7 +89,8 @@ namespace swrenderer
 			return;
 		}
 
-		NetUpdate();
+		if (Thread->MainThread)
+			NetUpdate();
 
 		frontsector = curline->frontsector;
 		backsector = curline->backsector;

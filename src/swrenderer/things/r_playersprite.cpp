@@ -630,6 +630,7 @@ namespace swrenderer
 			frac += xiscale;
 		}
 
-		NetUpdate();
+		if (thread->MainThread)
+			NetUpdate();
 	}
 }

@@ -14,6 +14,7 @@
 #include "r_3dfloors.h"
 #include "r_utility.h"
 #include "swrenderer/r_renderthread.h"
+#include "swrenderer/r_memory.h"
 
 CVAR(Int, r_3dfloors, true, 0);
 
@@ -24,8 +25,20 @@ namespace swrenderer
 		Thread = thread;
 	}
 
+	void Clip3DFloors::SetFakeFloor(F3DFloor *newFakeFloor)
+	{
+		auto &clip = FakeFloors[newFakeFloor];
+		if (clip == nullptr)
+		{
+			clip = Thread->FrameMemory->NewObject<FakeFloorClip>(newFakeFloor);
+		}
+		fakeFloor = clip;
+	}
+
 	void Clip3DFloors::Cleanup()
 	{
+		FakeFloors.clear();
+
 		fakeActive = false;
 		fake3D = 0;
 		while (CurrentSkybox)

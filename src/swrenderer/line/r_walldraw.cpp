@@ -362,7 +362,8 @@ namespace swrenderer
 			Draw1Column(x, y1, y2, sampler);
 		}
 
-		NetUpdate();
+		if (Thread->MainThread)
+			NetUpdate();
 	}
 
 	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)

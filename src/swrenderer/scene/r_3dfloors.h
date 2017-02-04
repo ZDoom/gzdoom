@@ -2,12 +2,14 @@
 #pragma once
 
 #include "p_3dfloors.h"
+#include <unordered_map>
 
 EXTERN_CVAR(Int, r_3dfloors);
 
 namespace swrenderer
 {
 	class RenderThread;
+	class FakeFloorClip;
 
 	struct HeightLevel
 	{
@@ -27,7 +29,7 @@ namespace swrenderer
 	{
 		short floorclip[MAXWIDTH];
 		short ceilingclip[MAXWIDTH];
-		F3DFloor *ffloor;
+		FakeFloorClip *ffloor;
 		ClipStack *next;
 	};
 
@@ -51,6 +53,17 @@ namespace swrenderer
 		FAKE3D_DOWN2UP      = 8,  // rendering from down to up (floors)
 	};
 
+	class FakeFloorClip
+	{
+	public:
+		FakeFloorClip(F3DFloor *fakeFloor) : fakeFloor(fakeFloor) { }
+
+		F3DFloor *fakeFloor = nullptr;
+		short *floorclip = nullptr;
+		short *ceilingclip = nullptr;
+		int	validcount = -1;
+	};
+
 	class Clip3DFloors
 	{
 	public:
@@ -64,12 +77,13 @@ namespace swrenderer
 		void ResetClip();
 		void EnterSkybox();
 		void LeaveSkybox();
+		void SetFakeFloor(F3DFloor *fakeFloor);
 
 		RenderThread *Thread = nullptr;
 
 		int fake3D = 0;
 
-		F3DFloor *fakeFloor = nullptr;
+		FakeFloorClip *fakeFloor = nullptr;
 		fixed_t fakeAlpha = 0;
 		bool fakeActive = false;
 		double sclipBottom = 0;
@@ -83,5 +97,7 @@ namespace swrenderer
 		TArray<HeightStack> toplist;
 		ClipStack *clip_top = nullptr;
 		ClipStack *clip_cur = nullptr;
+
+		std::unordered_map<F3DFloor *, FakeFloorClip *> FakeFloors;
 	};
 }

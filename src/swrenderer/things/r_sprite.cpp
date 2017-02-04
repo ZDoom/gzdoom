@@ -298,6 +298,7 @@ namespace swrenderer
 			}
 		}
 
-		NetUpdate();
+		if (thread->MainThread)
+			NetUpdate();
 	}
 }

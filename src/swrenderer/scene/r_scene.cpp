@@ -267,7 +267,7 @@ namespace swrenderer
 	{
 		while (Threads.size() < (size_t)numThreads)
 		{
-			auto thread = std::make_unique<RenderThread>(this);
+			auto thread = std::make_unique<RenderThread>(this, false);
 			auto renderthread = thread.get();
 			int start_run_id = run_id;
 			thread->thread = std::thread([=]()

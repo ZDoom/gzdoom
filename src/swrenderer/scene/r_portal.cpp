@@ -441,13 +441,15 @@ namespace swrenderer
 		int prevuniq2 = CurrentPortalUniq;
 		CurrentPortalUniq = prevuniq;
 
-		NetUpdate();
+		if (Thread->MainThread)
+			NetUpdate();
 
 		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
 		Thread->TranslucentPass->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
 		MaskedCycles.Unclock();
 
-		NetUpdate();
+		if (Thread->MainThread)
+			NetUpdate();
 
 		Thread->Clip3DFloors->LeaveSkybox(); // pop 3D floor height map
 		CurrentPortalUniq = prevuniq2;

@@ -573,32 +573,32 @@ namespace swrenderer
 			// first check all floors
 			for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
 			{
-				clip3d->fakeFloor = frontsector->e->XFloor.ffloors[i];
-				if (!(clip3d->fakeFloor->flags & FF_EXISTS)) continue;
-				if (!clip3d->fakeFloor->model) continue;
-				if (clip3d->fakeFloor->bottom.plane->isSlope()) continue;
-				if (!(clip3d->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+				if (!clip3d->fakeFloor->fakeFloor->model) continue;
+				if (clip3d->fakeFloor->fakeFloor->bottom.plane->isSlope()) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
 				{
-					clip3d->AddHeight(clip3d->fakeFloor->top.plane, frontsector);
+					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->top.plane, frontsector);
 				}
-				if (!(clip3d->fakeFloor->flags & FF_RENDERPLANES)) continue;
-				if (clip3d->fakeFloor->alpha == 0) continue;
-				if (clip3d->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->flags & FF_INVERTSECTOR) continue;
-				clip3d->fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
+				if (clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR) continue;
+				clip3d->fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
 				if (clip3d->fakeFloor->validcount != validcount)
 				{
 					clip3d->fakeFloor->validcount = validcount;
 					clip3d->NewClip();
 				}
-				double fakeHeight = clip3d->fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+				double fakeHeight = clip3d->fakeFloor->fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
 				if (fakeHeight < ViewPos.Z &&
 					fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
 				{
 					clip3d->fake3D = FAKE3D_FAKEFLOOR;
-					tempsec = *clip3d->fakeFloor->model;
-					tempsec.floorplane = *clip3d->fakeFloor->top.plane;
-					tempsec.ceilingplane = *clip3d->fakeFloor->bottom.plane;
-					if (!(clip3d->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->flags & FF_INVERTSECTOR))
+					tempsec = *clip3d->fakeFloor->fakeFloor->model;
+					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+					if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
 					{
 						tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
 						position = sector_t::ceiling;
@@ -618,7 +618,7 @@ namespace swrenderer
 						frontsector->GetTexture(sector_t::floor),
 						floorlightlevel + R_ActualExtraLight(foggy),				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
-						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
+						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
 						frontsector->sky,
 						nullptr,
@@ -635,34 +635,34 @@ namespace swrenderer
 			// and now ceilings
 			for (unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
 			{
-				clip3d->fakeFloor = frontsector->e->XFloor.ffloors[i];
-				if (!(clip3d->fakeFloor->flags & FF_EXISTS)) continue;
-				if (!clip3d->fakeFloor->model) continue;
-				if (clip3d->fakeFloor->top.plane->isSlope()) continue;
-				if (!(clip3d->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+				if (!clip3d->fakeFloor->fakeFloor->model) continue;
+				if (clip3d->fakeFloor->fakeFloor->top.plane->isSlope()) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
 				{
-					clip3d->AddHeight(clip3d->fakeFloor->bottom.plane, frontsector);
+					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->bottom.plane, frontsector);
 				}
-				if (!(clip3d->fakeFloor->flags & FF_RENDERPLANES)) continue;
-				if (clip3d->fakeFloor->alpha == 0) continue;
-				if (!(clip3d->fakeFloor->flags & FF_THISINSIDE) && (clip3d->fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
-				clip3d->fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && (clip3d->fakeFloor->fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
+				clip3d->fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
 
 				if (clip3d->fakeFloor->validcount != validcount)
 				{
 					clip3d->fakeFloor->validcount = validcount;
 					clip3d->NewClip();
 				}
-				double fakeHeight = clip3d->fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+				double fakeHeight = clip3d->fakeFloor->fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
 				if (fakeHeight > ViewPos.Z &&
 					fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
 				{
 					clip3d->fake3D = FAKE3D_FAKECEILING;
-					tempsec = *clip3d->fakeFloor->model;
-					tempsec.floorplane = *clip3d->fakeFloor->top.plane;
-					tempsec.ceilingplane = *clip3d->fakeFloor->bottom.plane;
-					if ((!(clip3d->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->flags & FF_INVERTSECTOR)) ||
-						(clip3d->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->flags & FF_INVERTSECTOR))
+					tempsec = *clip3d->fakeFloor->fakeFloor->model;
+					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+					if ((!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR)) ||
+						(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
 					{
 						tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
 						position = sector_t::floor;
@@ -684,7 +684,7 @@ namespace swrenderer
 						frontsector->GetTexture(sector_t::ceiling),
 						ceilinglightlevel + R_ActualExtraLight(foggy),				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
-						!!(clip3d->fakeFloor->flags & FF_ADDITIVETRANS),
+						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
 						frontsector->sky,
 						nullptr,
@@ -741,14 +741,14 @@ namespace swrenderer
 					Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
 					for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 					{
-						clip3d->fakeFloor = line->backsector->e->XFloor.ffloors[i];
-						if (!(clip3d->fakeFloor->flags & FF_EXISTS)) continue;
-						if (!(clip3d->fakeFloor->flags & FF_RENDERPLANES)) continue;
-						if (!clip3d->fakeFloor->model) continue;
+						clip3d->SetFakeFloor(line->backsector->e->XFloor.ffloors[i]);
+						if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+						if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+						if (!clip3d->fakeFloor->fakeFloor->model) continue;
 						clip3d->fake3D = FAKE3D_FAKEBACK;
-						tempsec = *clip3d->fakeFloor->model;
-						tempsec.floorplane = *clip3d->fakeFloor->top.plane;
-						tempsec.ceilingplane = *clip3d->fakeFloor->bottom.plane;
+						tempsec = *clip3d->fakeFloor->fakeFloor->model;
+						tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+						tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
 						if (clip3d->fakeFloor->validcount != validcount)
 						{
 							clip3d->fakeFloor->validcount = validcount;

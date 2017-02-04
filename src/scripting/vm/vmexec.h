@@ -774,7 +774,7 @@ begin:
 	OP(NEW_K):
 	OP(NEW):
 	{
-		PClass *cls = (PClass*)(op == OP_NEW ? reg.a[C] : konsta[C].v);
+		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[C] : konsta[C].v);
 		reg.a[B] = cls->CreateNew();
 		NEXTOP;
 	}

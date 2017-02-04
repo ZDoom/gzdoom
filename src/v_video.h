@@ -275,7 +275,7 @@ protected:
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list tags, DrawParms *parms, bool fortext) const;
+	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 

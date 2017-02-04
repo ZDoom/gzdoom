@@ -462,7 +462,7 @@ static inline FColormapStyle * ListGetColormapStyle(va_list &tags)
 	return va_arg(tags, FColormapStyle *);
 }
 
-bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool fortext) const
+bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list& tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;

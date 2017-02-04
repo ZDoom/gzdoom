@@ -23,6 +23,7 @@
 #pragma once
 
 #include <memory>
+#include <thread>
 
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
@@ -66,6 +67,8 @@ namespace swrenderer
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		DrawerCommandQueuePtr DrawQueue;
+
+		std::thread thread;
 
 		// VisibleSprite working buffers
 		short clipbot[MAXWIDTH];

@@ -14,7 +14,11 @@
 #pragma once
 
 #include <stddef.h>
+#include <vector>
 #include <memory>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "r_defs.h"
 #include "d_player.h"
 
@@ -30,6 +34,7 @@ namespace swrenderer
 	{
 	public:
 		RenderScene();
+		~RenderScene();
 
 		void Init();
 		void ScreenResized();
@@ -49,10 +54,20 @@ namespace swrenderer
 		void RenderDrawQueues();
 		void RenderThreadSlices();
 		void RenderThreadSlice(RenderThread *thread);
+
+		void StartThreads(size_t numThreads);
+		void StopThreads();
 		
 		bool dontmaplines = false;
 		int clearcolor = 0;
 
 		std::vector<std::unique_ptr<RenderThread>> Threads;
+		std::mutex start_mutex;
+		std::condition_variable start_condition;
+		bool shutdown_flag = false;
+		int run_id = 0;
+		std::mutex end_mutex;
+		std::condition_variable end_condition;
+		size_t finished_threads = 0;
 	};
 }

@@ -63,6 +63,11 @@ namespace swrenderer
 		Threads.push_back(std::make_unique<RenderThread>(this));
 	}
 
+	RenderScene::~RenderScene()
+	{
+		StopThreads();
+	}
+
 	void RenderScene::SetClearColor(int color)
 	{
 		clearcolor = color;
@@ -161,26 +166,38 @@ namespace swrenderer
 	void RenderScene::RenderThreadSlices()
 	{
 		int numThreads = r_scene_multithreaded ? 8 : 1;
-
-		while (Threads.size() > (size_t)numThreads)
+		if (numThreads != Threads.size())
 		{
-			Threads.pop_back();
+			StopThreads();
+			StartThreads(numThreads);
 		}
 
-		while (Threads.size() < (size_t)numThreads)
-		{
-			Threads.push_back(std::make_unique<RenderThread>(this));
-		}
-
+		// Setup threads:
+		std::unique_lock<std::mutex> start_lock(start_mutex);
 		for (int i = 0; i < numThreads; i++)
 		{
 			Threads[i]->X1 = viewwidth * i / numThreads;
 			Threads[i]->X2 = viewwidth * (i + 1) / numThreads;
 		}
+		run_id++;
+		start_lock.unlock();
 
-		for (int i = 0; i < numThreads; i++)
+		// Notify threads to run
+		if (Threads.size() > 1)
 		{
-			RenderThreadSlice(Threads[i].get());
+			start_condition.notify_all();
+		}
+
+		// Do the main thread ourselves:
+		RenderThreadSlice(MainThread());
+
+		// Wait for everyone to finish:
+		if (Threads.size() > 1)
+		{
+			std::unique_lock<std::mutex> end_lock(end_mutex);
+			finished_threads++;
+			end_condition.wait(end_lock, [&]() { return finished_threads == Threads.size(); });
+			finished_threads = 0;
 		}
 	}
 
@@ -244,6 +261,54 @@ namespace swrenderer
 			if (thread->MainThread)
 				NetUpdate();
 		}
+	}
+
+	void RenderScene::StartThreads(size_t numThreads)
+	{
+		while (Threads.size() < (size_t)numThreads)
+		{
+			auto thread = std::make_unique<RenderThread>(this);
+			auto renderthread = thread.get();
+			int start_run_id = run_id;
+			thread->thread = std::thread([=]()
+			{
+				int last_run_id = start_run_id;
+				while (true)
+				{
+					// Wait until we are signalled to run:
+					std::unique_lock<std::mutex> start_lock(start_mutex);
+					start_condition.wait(start_lock, [&]() { return run_id != last_run_id || shutdown_flag; });
+					if (shutdown_flag)
+						break;
+					last_run_id = run_id;
+					start_lock.unlock();
+
+					RenderThreadSlice(renderthread);
+
+					// Notify main thread that we finished:
+					std::unique_lock<std::mutex> end_lock(end_mutex);
+					finished_threads++;
+					end_lock.unlock();
+					end_condition.notify_all();
+				}
+			});
+			Threads.push_back(std::move(thread));
+		}
+	}
+
+	void RenderScene::StopThreads()
+	{
+		std::unique_lock<std::mutex> lock(start_mutex);
+		shutdown_flag = true;
+		lock.unlock();
+		start_condition.notify_all();
+		while (Threads.size() > 1)
+		{
+			Threads.back()->thread.join();
+			Threads.pop_back();
+		}
+		lock.lock();
+		shutdown_flag = false;
 	}
 
 	void RenderScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)

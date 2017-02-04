@@ -65,11 +65,11 @@ bool DBot::Move (ticcmd_t *cmd)
 	bool try_ok;
 	int good;
 
-	if (player->mo->movedir == DI_NODIR)
+	if (player->mo->movedir >= DI_NODIR)
+	{
+		player->mo->movedir = DI_NODIR;	// make sure it's valid.
 		return false;
-
-	if ((unsigned)player->mo->movedir >= 8)
-		I_Error ("Weird bot movedir!");
+	}
 
 	tryx = player->mo->X() + 8*xspeed[player->mo->movedir];
 	tryy = player->mo->Y() + 8*yspeed[player->mo->movedir];

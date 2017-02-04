@@ -138,7 +138,7 @@ void SetHUDIcon(PClassInventory *cls, FTextureID tex)
 // center of the box. The image is scaled down if it doesn't fit
 //
 //---------------------------------------------------------------------------
-static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans=0xc000)
+static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, double trans = 0.75)
 {
 	double scale1, scale2;
 
@@ -174,7 +174,7 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans
 //
 //---------------------------------------------------------------------------
 
-static void DrawHudText(FFont *font, int color, char * text, int x, int y, int trans=0xc000)
+static void DrawHudText(FFont *font, int color, char * text, int x, int y, double trans = 0.75)
 {
 	int zerowidth;
 	FTexture *tex_zero = font->GetChar('0', &zerowidth);
@@ -207,7 +207,7 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, int t
 //
 //---------------------------------------------------------------------------
 
-static void DrawHudNumber(FFont *font, int color, int num, int x, int y, int trans=0xc000)
+static void DrawHudNumber(FFont *font, int color, int num, int x, int y, double trans = 0.75)
 {
 	char text[15];
 
@@ -227,11 +227,11 @@ static void DrawStatLine(int x, int &y, const char *prefix, const char *string)
 	y -= SmallFont->GetHeight()-1;
 	screen->DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75, TAG_DONE);
 
 	screen->DrawText(SmallFont, hudcolor_stats, x+statspace, y, string,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75, TAG_DONE);
 }
 
 static void DrawStatus(player_t * CPlayer, int x, int y)
@@ -654,7 +654,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;
 
-		int trans= (wi && (type==wi->AmmoType1 || type==wi->AmmoType2)) ? 0xc000:0x6000;
+		double trans= (wi && (type==wi->AmmoType1 || type==wi->AmmoType2)) ? 0.75 : 0.375;
 
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
@@ -731,16 +731,16 @@ FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale=NULL
 
 static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 {
-	int trans;
+	double trans;
 
 	// Powered up weapons and inherited sister weapons are not displayed.
 	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
 	if (weapon->SisterWeapon && weapon->IsKindOf(weapon->SisterWeapon->GetClass())) return;
 
-	trans=0x6666;
+	trans=0.4;
 	if (CPlayer->ReadyWeapon)
 	{
-		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans=0xd999;
+		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans = 0.85;
 	}
 
 	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);
@@ -809,7 +809,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 		{
 			screen->DrawTexture(invgems[!!(level.time&4)], x-10, y,
 				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0x6666, TAG_DONE);
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
 		}
 
 		for(i=0;i<numitems && rover;rover=rover->NextInv())
@@ -820,7 +820,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 
 				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
-					int trans = rover==CPlayer->mo->InvSel ? 0x10000 : 0x6666;
+					double trans = rover==CPlayer->mo->InvSel ? 1.0 : 0.4;
 
 					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
 					if (rover->Amount>1)
@@ -845,7 +845,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 		{
 			screen->DrawTexture(invgems[2 + !!(level.time&4)], x-10, y,
 				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0x6666, TAG_DONE);
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
 		}
 	}
 }

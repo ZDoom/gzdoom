@@ -101,7 +101,7 @@ void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
-DListMenuItem *DListMenu::GetItem(FName name)
+DMenuItemBase *DListMenu::GetItem(FName name)
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
@@ -274,27 +274,27 @@ void DListMenu::Drawer ()
 // base class for menu items
 //
 //=============================================================================
-IMPLEMENT_CLASS(DListMenuItem, true, false)
+IMPLEMENT_CLASS(DMenuItemBase, true, false)
 
-bool DListMenuItem::CheckCoordinate(int x, int y)
+bool DMenuItemBase::CheckCoordinate(int x, int y)
 {
 	return false;
 }
 
-void DListMenuItem::Ticker()
+void DMenuItemBase::Ticker()
 {
 }
 
-void DListMenuItem::Drawer(bool selected)
+void DMenuItemBase::Drawer(bool selected)
 {
 }
 
-bool DListMenuItem::Selectable()
+bool DMenuItemBase::Selectable()
 {
 	return false;
 }
 
-void DListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
+void DMenuItemBase::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
 	if (tex.isNull())
 	{
@@ -315,57 +315,57 @@ void DListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 	}
 }
 
-bool DListMenuItem::Activate()
+bool DMenuItemBase::Activate()
 {
 	return false;	// cannot be activated
 }
 
-FName DListMenuItem::GetAction(int *pparam)
+FName DMenuItemBase::GetAction(int *pparam)
 {
 	return mAction;
 }
 
-bool DListMenuItem::SetString(int i, const char *s)
+bool DMenuItemBase::SetString(int i, const char *s)
 {
 	return false;
 }
 
-bool DListMenuItem::GetString(int i, char *s, int len)
+bool DMenuItemBase::GetString(int i, char *s, int len)
 {
 	return false;
 }
 
-bool DListMenuItem::SetValue(int i, int value)
+bool DMenuItemBase::SetValue(int i, int value)
 {
 	return false;
 }
 
-bool DListMenuItem::GetValue(int i, int *pvalue)
+bool DMenuItemBase::GetValue(int i, int *pvalue)
 {
 	return false;
 }
 
-void DListMenuItem::Enable(bool on)
+void DMenuItemBase::Enable(bool on)
 {
 	mEnabled = on;
 }
 
-bool DListMenuItem::MenuEvent(int mkey, bool fromcontroller)
+bool DMenuItemBase::MenuEvent(int mkey, bool fromcontroller)
 {
 	return false;
 }
 
-bool DListMenuItem::MouseEvent(int type, int x, int y)
+bool DMenuItemBase::MouseEvent(int type, int x, int y)
 {
 	return false;
 }
 
-bool DListMenuItem::CheckHotkey(int c) 
+bool DMenuItemBase::CheckHotkey(int c) 
 { 
 	return false; 
 }
 
-int DListMenuItem::GetWidth() 
+int DMenuItemBase::GetWidth() 
 { 
 	return 0; 
 }
@@ -379,7 +379,7 @@ int DListMenuItem::GetWidth()
 IMPLEMENT_CLASS(DListMenuItemStaticPatch, false, false)
 
 DListMenuItemStaticPatch::DListMenuItemStaticPatch(int x, int y, FTextureID patch, bool centered)
-: DListMenuItem(x, y)
+: DMenuItemBase(x, y)
 {
 	mTexture = patch;
 	mCentered = centered;
@@ -415,7 +415,7 @@ void DListMenuItemStaticPatch::Drawer(bool selected)
 IMPLEMENT_CLASS(DListMenuItemStaticText, false, false)
 
 DListMenuItemStaticText::DListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered)
-: DListMenuItem(x, y)
+: DMenuItemBase(x, y)
 {
 	mText = text;
 	mFont = font;
@@ -452,7 +452,7 @@ void DListMenuItemStaticText::Drawer(bool selected)
 IMPLEMENT_CLASS(DListMenuItemSelectable, false, false)
 
 DListMenuItemSelectable::DListMenuItemSelectable(int x, int y, int height, FName action, int param)
-: DListMenuItem(x, y, action)
+: DMenuItemBase(x, y, action)
 {
 	mHeight = height;
 	mParam = param;

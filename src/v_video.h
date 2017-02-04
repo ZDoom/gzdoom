@@ -75,7 +75,6 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
-	DTA_AlphaF,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
 	DTA_Translation,	// translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
@@ -163,7 +162,7 @@ struct DrawParms
 	uint32 colorOverlay;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
-	fixed_t shadowAlpha;
+	float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
 	INTBOOL masked;
@@ -276,7 +275,7 @@ protected:
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list tags, DrawParms *parms, bool fortext) const;
+	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 

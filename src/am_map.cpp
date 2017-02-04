@@ -2935,7 +2935,7 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		DTA_ClipRight, f_x + f_w,
 		DTA_FlipX, flip,
 		DTA_Translation, TranslationToTable(translation),
-		DTA_AlphaF, alpha,
+		DTA_Alpha, alpha,
 		DTA_FillColor, fillcolor,
 		DTA_RenderStyle, DWORD(renderstyle),
 		TAG_DONE);

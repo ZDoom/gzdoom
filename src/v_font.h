@@ -66,7 +66,8 @@ enum EColorRange
 	CR_PURPLE,
 	CR_DARKGRAY,
 	CR_CYAN,
-	NUM_TEXT_COLORS
+	NUM_TEXT_COLORS,
+	FORCE_DWORD = 0x7fffffff	// required for script access.
 };
 
 extern int NumTextColors;

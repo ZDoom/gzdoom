@@ -570,8 +570,9 @@ bool P_Move (AActor *actor)
 		return true;
 	}
 
-	if (actor->movedir == DI_NODIR)
+	if (actor->movedir >= DI_NODIR)
 	{
+		actor->movedir = DI_NODIR;	// make sure it's valid.
 		return false;
 	}
 
@@ -584,9 +585,6 @@ bool P_Move (AActor *actor)
 	{
 		return false;
 	}
-
-	if ((unsigned)actor->movedir >= 8)
-		I_Error ("Weird actor->movedir!");
 
 	// killough 10/98: allow dogs to drop off of taller ledges sometimes.
 	// dropoff==1 means always allow it, dropoff==2 means only up to 128 high,

@@ -355,9 +355,8 @@ void FBackdropTexture::Render()
 //
 //=============================================================================
 IMPLEMENT_CLASS(DListMenuItemPlayerDisplay, false, false)
-
 DListMenuItemPlayerDisplay::DListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
-: DListMenuItem(x, y, action)
+: DMenuItemBase(x, y, action)
 {
 	mOwner = menu;
 

@@ -1720,7 +1720,7 @@ void R_DrawRemainingPlayerSprites()
 			DTA_ClipTop, viewwindowy,
 			DTA_ClipRight, viewwindowx + viewwidth,
 			DTA_ClipBottom, viewwindowy + viewheight,
-			DTA_AlphaF, vis->Style.Alpha,
+			DTA_Alpha, vis->Style.Alpha,
 			DTA_RenderStyle, vis->RenderStyle,
 			DTA_FillColor, vis->FillColor,
 			DTA_SpecialColormap, special,

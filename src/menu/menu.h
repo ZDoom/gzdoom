@@ -92,12 +92,12 @@ struct FMenuDescriptor
 	virtual size_t PropagateMark() { return 0;  }
 };
 
-class DListMenuItem;
+class DMenuItemBase;
 class DOptionMenuItem;
 
 struct FListMenuDescriptor : public FMenuDescriptor
 {
-	TArray<DListMenuItem *> mItems;
+	TArray<DMenuItemBase *> mItems;
 	int mSelectedItem;
 	int mSelectOfsX;
 	int mSelectOfsY;
@@ -255,9 +255,9 @@ public:
 //
 //=============================================================================
 
-class DListMenuItem : public DObject
+class DMenuItemBase : public DObject
 {
-	DECLARE_CLASS(DListMenuItem, DObject)
+	DECLARE_CLASS(DMenuItemBase, DObject)
 protected:
 	int mXpos, mYpos;
 	FName mAction;
@@ -265,7 +265,7 @@ protected:
 public:
 	bool mEnabled;
 
-	DListMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None)
+	DMenuItemBase(int xpos = 0, int ypos = 0, FName action = NAME_None)
 	{
 		mXpos = xpos;
 		mYpos = ypos;
@@ -295,9 +295,9 @@ public:
 	void SetX(int x) { mXpos = x; }
 };	
 
-class DListMenuItemStaticPatch : public DListMenuItem
+class DListMenuItemStaticPatch : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemStaticPatch, DListMenuItem)
+	DECLARE_CLASS(DListMenuItemStaticPatch, DMenuItemBase)
 protected:
 	FTextureID mTexture;
 	bool mCentered;
@@ -308,9 +308,9 @@ public:
 	void Drawer(bool selected);
 };
 
-class DListMenuItemStaticText : public DListMenuItem
+class DListMenuItemStaticText : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemStaticText, DListMenuItem)
+	DECLARE_CLASS(DListMenuItemStaticText, DMenuItemBase)
 protected:
 	FString mText;
 	FFont *mFont;
@@ -329,9 +329,9 @@ public:
 //
 //=============================================================================
 
-class DListMenuItemPlayerDisplay : public DListMenuItem
+class DListMenuItemPlayerDisplay : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemPlayerDisplay, DListMenuItem)
+	DECLARE_CLASS(DListMenuItemPlayerDisplay, DMenuItemBase)
 
 	FListMenuDescriptor *mOwner;
 	FTexture *mBackdrop;
@@ -379,9 +379,9 @@ public:
 //
 //=============================================================================
 
-class DListMenuItemSelectable : public DListMenuItem
+class DListMenuItemSelectable : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemSelectable, DListMenuItem)
+	DECLARE_CLASS(DListMenuItemSelectable, DMenuItemBase)
 protected:
 	int mHotkey;
 	int mHeight;
@@ -523,22 +523,22 @@ class DListMenu : public DMenu
 
 protected:
 	FListMenuDescriptor *mDesc;
-	DListMenuItem *mFocusControl;
+	DMenuItemBase *mFocusControl;
 
 public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	DListMenuItem *GetItem(FName name);
+	DMenuItemBase *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
-	void SetFocus(DListMenuItem *fc)
+	void SetFocus(DMenuItemBase *fc)
 	{
 		mFocusControl = fc;
 	}
-	bool CheckFocus(DListMenuItem *fc)
+	bool CheckFocus(DMenuItemBase *fc)
 	{
 		return mFocusControl == fc;
 	}
@@ -555,9 +555,9 @@ public:
 //
 //=============================================================================
 
-class DOptionMenuItem : public DListMenuItem
+class DOptionMenuItem : public DMenuItemBase
 {
-	DECLARE_ABSTRACT_CLASS(DOptionMenuItem, DListMenuItem)
+	DECLARE_ABSTRACT_CLASS(DOptionMenuItem, DMenuItemBase)
 protected:
 	FString mLabel;
 	bool mCentered;
@@ -566,7 +566,7 @@ protected:
 public:
 
 	DOptionMenuItem(const char *text = nullptr, FName action = NAME_None, bool center = false)
-		: DListMenuItem(0, 0, action)
+		: DMenuItemBase(0, 0, action)
 	{
 		mLabel = text;
 		mCentered = center;

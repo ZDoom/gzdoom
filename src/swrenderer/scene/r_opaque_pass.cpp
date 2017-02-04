@@ -773,6 +773,9 @@ namespace swrenderer
 
 	void RenderOpaquePass::RenderScene()
 	{
+		SeenSpriteSectors.clear();
+		SeenActors.clear();
+
 		InSubsector = nullptr;
 		RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 	}
@@ -824,11 +827,12 @@ namespace swrenderer
 		// A sector might have been split into several
 		//	subsectors during BSP building.
 		// Thus we check whether it was already added.
-		if (sec->touching_renderthings == nullptr || sec->validcount == validcount)
+		if (sec->touching_renderthings == nullptr || SeenSpriteSectors.find(sec) != SeenSpriteSectors.end()/*|| sec->validcount == validcount*/)
 			return;
 
 		// Well, now it will be done.
-		sec->validcount = validcount;
+		//sec->validcount = validcount;
+		SeenSpriteSectors.insert(sec);
 
 		int spriteshade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
 
@@ -836,8 +840,10 @@ namespace swrenderer
 		for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
 		{
 			auto thing = p->m_thing;
-			if (thing->validcount == validcount) continue;
-			thing->validcount = validcount;
+			if (SeenActors.find(thing) != SeenActors.end()) continue;
+			SeenActors.insert(thing);
+			//if (thing->validcount == validcount) continue;
+			//thing->validcount = validcount;
 
 			FIntCVar *cvar = thing->GetClass()->distancecheck;
 			if (cvar != nullptr && *cvar >= 0)

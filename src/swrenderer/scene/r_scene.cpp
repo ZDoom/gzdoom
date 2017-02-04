@@ -106,9 +106,8 @@ namespace swrenderer
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
 			MainThread()->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
+			RenderDrawQueues();
 		}
-
-		RenderDrawQueues();
 	}
 
 	void RenderScene::RenderDrawQueues()
@@ -120,6 +119,9 @@ namespace swrenderer
 			queues.push_back((*it)->DrawQueue);
 		}
 		DrawerThreads::Execute(queues);
+
+		//using namespace std::chrono_literals;
+		//std::this_thread::sleep_for(0.5s);
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -151,6 +153,7 @@ namespace swrenderer
 		}
 
 		RenderThreadSlices();
+		RenderDrawQueues();
 
 		camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
@@ -165,7 +168,13 @@ namespace swrenderer
 
 	void RenderScene::RenderThreadSlices()
 	{
-		int numThreads = r_scene_multithreaded ? 8 : 1;
+		int numThreads = std::thread::hardware_concurrency();
+		if (numThreads == 0)
+			numThreads = 4;
+
+		if (!r_scene_multithreaded)
+			numThreads = 1;
+
 		if (numThreads != Threads.size())
 		{
 			StopThreads();
@@ -327,7 +336,6 @@ namespace swrenderer
 		viewport->SetViewport(width, height, WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
-		RenderDrawQueues();
 		
 		viewport->RenderTarget = screen;
 

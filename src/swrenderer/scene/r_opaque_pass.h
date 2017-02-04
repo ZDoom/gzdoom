@@ -18,6 +18,7 @@
 #include "r_defs.h"
 #include "swrenderer/line/r_line.h"
 #include "swrenderer/scene/r_3dfloors.h"
+#include <set>
 
 struct FVoxelDef;
 
@@ -84,5 +85,7 @@ namespace swrenderer
 		bool r_fakingunderwater = false;
 
 		SWRenderLine renderline;
+		std::set<sector_t*> SeenSpriteSectors;
+		std::set<AActor*> SeenActors;
 	};
 }

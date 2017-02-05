@@ -281,8 +281,8 @@ unsigned VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
 	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
-		// There should only be one tag associated with a memory location.
-		assert(locp->Tag == tag);
+		// There should only be one tag associated with a memory location. Exceptions are made for null pointers that got allocated through constant arrays.
+		assert(ptr == nullptr || locp->Tag == tag);
 		return locp->KonstNum;
 	}
 	else

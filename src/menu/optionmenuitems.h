@@ -402,7 +402,7 @@ public:
 		if (mParentMenu->IsKindOf(RUNTIME_CLASS(DOptionMenu)))
 		{
 			DOptionMenu *m = barrier_cast<DOptionMenu*>(mParentMenu);
-			DListMenuItem *it = m->GetItem(NAME_Controlmessage);
+			DMenuItemBase *it = m->GetItem(NAME_Controlmessage);
 			if (it != NULL)
 			{
 				it->SetValue(0, which);
@@ -1242,7 +1242,7 @@ IMPLEMENT_CLASS(DOptionMenuTextField, false, false)
 
 //=============================================================================
 //
-// [TP] DOptionMenuNumberField
+// [TP] FOptionMenuNumberField
 //
 // A numeric input field widget, for use with number CVars where sliders are inappropriate (i.e.
 // where the user is interested in the exact value specifically)

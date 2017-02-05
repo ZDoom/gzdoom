@@ -1005,23 +1005,23 @@ void FNotifyBuffer::Draw()
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_CleanNoMove, true, DTA_AlphaF, alpha, TAG_DONE);
+						DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
 						SmallFont->StringWidth (notify.Text)*CleanXfac)/2,
 						line, notify.Text, DTA_CleanNoMove, true,
-						DTA_AlphaF, alpha, TAG_DONE);
+						DTA_Alpha, alpha, TAG_DONE);
 			}
 			else if (active_con_scaletext() == 1)
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_AlphaF, alpha, TAG_DONE);
+						DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
 						SmallFont->StringWidth (notify.Text))/2,
 						line, notify.Text,
-						DTA_AlphaF, alpha, TAG_DONE);
+						DTA_Alpha, alpha, TAG_DONE);
 			}
 			else
 			{
@@ -1030,7 +1030,7 @@ void FNotifyBuffer::Draw()
 						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
 						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
-						DTA_AlphaF, alpha, TAG_DONE);
+						DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (screen->GetWidth() -
 						SmallFont->StringWidth (notify.Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
@@ -1038,7 +1038,7 @@ void FNotifyBuffer::Draw()
 						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
 						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
-						DTA_AlphaF, alpha, TAG_DONE);
+						DTA_Alpha, alpha, TAG_DONE);
 			}
 			line += lineadv;
 			canskip = false;
@@ -1119,7 +1119,7 @@ void C_DrawConsole (bool hw2d)
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_ColorOverlay, conshade,
-			DTA_AlphaF, (hw2d && gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
+			DTA_Alpha, (hw2d && gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())
@@ -1762,11 +1762,10 @@ void C_MidPrintBold (FFont *font, const char *msg)
 DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(font);
+	PARAM_POINTER_NOT_NULL(fnt, FFont);
 	PARAM_STRING(text);
 	PARAM_BOOL_DEF(bold);
 
-	FFont *fnt = FFont::FindFont(font);
 	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
 	if (!bold) C_MidPrint(fnt, txt);
 	else C_MidPrintBold(fnt, txt);

@@ -44,6 +44,8 @@ xx(LS,		ls,		RSRPKI,		LS_R,	4, REGT_INT),	// load string
 xx(LS_R,	ls,		RSRPRI,		NOP,	0, 0),
 xx(LO,		lo,		RPRPKI,		LO_R,	4, REGT_INT),	// load object
 xx(LO_R,	lo,		RPRPRI,		NOP,	0, 0),
+xx(LOS,		los,	RPRPKI,		LOS_R,	4, REGT_INT),	// load object (stack version without read barrier)
+xx(LOS_R,	lo,		RPRPRI,		NOP,	0, 0),
 xx(LP,		lp,		RPRPKI,		LP_R,	4, REGT_INT),	// load pointer
 xx(LP_R,	lp,		RPRPRI,		NOP,	0, 0),
 xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT),	// load vector2
@@ -104,6 +106,8 @@ xx(TAIL_K,	tail,	KPI8,		TAIL,	1, REGT_POINTER),
 xx(RESULT,	result,	__BCP,		NOP,	0, 0),		// Result should go in register encoded in BC (in caller, after CALL)
 xx(RET,		ret,	I8BCP,		NOP,	0, 0),		// Copy value from register encoded in BC to return value A, possibly returning
 xx(RETI,	reti,	I8I16,		NOP,	0, 0),		// Copy immediate from BC to return value A, possibly returning
+xx(NEW,		new,	RPRP,		NOP,	0, 0),
+xx(NEW_K,	new,	RPKP,		NOP,	0, 0),
 xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
 xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB

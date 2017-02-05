@@ -1422,6 +1422,76 @@ ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+FxFontCast::FxFontCast(FxExpression *x)
+	: FxExpression(EFX_FontCast, x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeSound;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFontCast::~FxFontCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFontCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeFont)
+	{
+		FxExpression *x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	// This intentionally does not convert non-constants.
+	// The sole reason for this cast is to allow passing both font pointers and string constants to printing functions and have the font names checked at compile time.
+	else if ((basex->ValueType == TypeString || basex->ValueType == TypeName) && basex->isConstant())
+	{
+		ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+		FFont *font = V_GetFont(constval.GetString());
+		// Font must exist. Most internal functions working with fonts do not like null pointers.
+		// If checking is needed scripts will have to call Font.GetFont themselves.
+		if (font == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unknown font '%s'", constval.GetString().GetChars());
+			delete this;
+			return nullptr;
+		}
+
+		FxExpression *x = new FxConstant(font, ScriptPosition);
+		delete this;
+		return x;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to font");
+		delete this;
+		return nullptr;
+	}
+}
+
+
+//==========================================================================
+//
 // generic type cast operator
 //
 //==========================================================================
@@ -1648,6 +1718,14 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	else if (AreCompatiblePointerTypes(ValueType, basex->ValueType))
 	{
 		goto basereturn;
+	}
+	else if (ValueType == TypeFont)
+	{
+		FxExpression *x = new FxFontCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
 	}
 	// todo: pointers to class objects. 
 	// All other types are only compatible to themselves and have already been handled above by the equality check.
@@ -4920,6 +4998,70 @@ ExpEmit FxATan2::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+FxNew::FxNew(FxExpression *v)
+	: FxExpression(EFX_New, v->ScriptPosition)
+{
+	val = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), v, false);
+	ValueType = NewPointer(RUNTIME_CLASS(DObject));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxNew::~FxNew()
+{
+	SAFE_DELETE(val);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxNew::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(val, ctx);
+
+	if (!val->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Class type expected");
+		delete this;
+		return nullptr;
+	}
+	if (val->isConstant())
+	{
+		auto cls = static_cast<PClass *>(static_cast<FxConstant*>(val)->GetValue().GetPointer());
+		ValueType = NewPointer(cls);
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxNew::Emit(VMFunctionBuilder *build)
+{
+	assert(ValueType == val->ValueType);
+	ExpEmit from = val->Emit(build);
+	from.Free(build);
+	ExpEmit to(build, REGT_POINTER);
+	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum);
+	return to;
+}
+
+//==========================================================================
+//
 // The atan2 opcode only takes registers as parameters, so any constants
 // must be loaded into registers first.
 //
@@ -6489,7 +6631,9 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 	if (membervar->BitValue == -1)
 	{
 		if (offsetreg == -1) offsetreg = build->GetConstantInt(0);
-		build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, build->FramePointer.RegNum, offsetreg);
+		auto op = membervar->Type->GetLoadOp();
+		if (op == OP_LO) op = OP_LOS;
+		build->Emit(op, loc.RegNum, build->FramePointer.RegNum, offsetreg);
 	}
 	else
 	{
@@ -7427,6 +7571,15 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			ArgList[0] = ArgList[1] = nullptr;
 		}
 		break;
+
+	case NAME_New:
+		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
+		{
+			func = new FxNew(ArgList[0]);
+			ArgList[0] = nullptr;
+		}
+		break;
+
 
 	default:
 		ScriptPosition.Message(MSG_ERROR, "Call to unknown function '%s'", MethodName.GetChars());

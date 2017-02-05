@@ -1,0 +1,17 @@
+
+class Menu : Object native
+{
+	//native static int MenuTime();
+}
+
+struct FOptionMenuSettings
+{
+	int mTitleColor;
+	int mFontColor;
+	int mFontColorValue;
+	int mFontColorMore;
+	int mFontColorHeader;
+	int mFontColorHighlight;
+	int mFontColorSelection;
+	int mLinespacing;
+}

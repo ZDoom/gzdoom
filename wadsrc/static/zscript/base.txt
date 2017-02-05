@@ -68,6 +68,13 @@ struct Screen native
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
 }
 
+class BrokenLines : Object native
+{
+	native int Count();
+	native int StringWidth(int line);
+	native String StringAt(int line);
+}
+
 struct Font native
 {
 	native int GetCharWidth(int code);
@@ -75,6 +82,7 @@ struct Font native
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
+	native static BrokenLines BreakLines(String text, int maxlen);
 }
 
 struct Console native

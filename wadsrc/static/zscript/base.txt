@@ -70,6 +70,9 @@ struct Screen native
 
 struct Font native
 {
+	native int GetCharWidth(int code);
+	native int StringWidth(String code);
+	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 }

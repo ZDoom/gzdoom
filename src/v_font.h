@@ -134,7 +134,6 @@ protected:
 	friend struct FontsDeleter;
 
 	friend void V_ClearFonts();
-	friend void V_RetranslateFonts();
 };
 
 
@@ -147,6 +146,5 @@ PalEntry V_LogColorFromColorRange (EColorRange range);
 EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int boldcolor);
 FFont *V_GetFont(const char *);
 void V_InitFontColors();
-void V_RetranslateFonts();
 
 #endif //__V_FONT_H__

@@ -168,48 +168,6 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 
 
 //
-// Find string width using this font
-//
-int FFont::StringWidth (const BYTE *string) const
-{
-	int w = 0;
-	int maxw = 0;
-		
-	while (*string)
-	{
-		if (*string == TEXTCOLOR_ESCAPE)
-		{
-			++string;
-			if (*string == '[')
-			{
-				while (*string != '\0' && *string != ']')
-				{
-					++string;
-				}
-			}
-			if (*string != '\0')
-			{
-				++string;
-			}
-			continue;
-		}
-		else if (*string == '\n')
-		{
-			if (w > maxw)
-				maxw = w;
-			w = 0;
-			++string;
-		}
-		else
-		{
-			w += GetCharWidth (*string++) + GlobalKerning;
-		}
-	}
-				
-	return MAX (maxw, w);
-}
-
-//
 // Break long lines of text into multiple lines no longer than maxwidth pixels
 //
 static void breakit (FBrokenLines *line, FFont *font, const BYTE *start, const BYTE *stop, FString &linecolor)

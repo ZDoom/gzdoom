@@ -94,6 +94,7 @@ The FON2 header is followed by variable length data:
 #include "r_data/r_translate.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -843,6 +844,65 @@ int FFont::GetCharWidth (int code) const
 {
 	code = GetCharCode(code, false);
 	return (code < 0) ? SpaceWidth : Chars[code - FirstChar].XMove;
+}
+
+DEFINE_ACTION_FUNCTION(FFont, GetCharWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_INT(self->GetCharWidth(code));
+}
+
+//==========================================================================
+//
+// Find string width using this font
+//
+//==========================================================================
+
+int FFont::StringWidth(const BYTE *string) const
+{
+	int w = 0;
+	int maxw = 0;
+
+	while (*string)
+	{
+		if (*string == TEXTCOLOR_ESCAPE)
+		{
+			++string;
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (*string == '\n')
+		{
+			if (w > maxw)
+				maxw = w;
+			w = 0;
+			++string;
+		}
+		else
+		{
+			w += GetCharWidth(*string++) + GlobalKerning;
+		}
+	}
+
+	return MAX(maxw, w);
+}
+
+DEFINE_ACTION_FUNCTION(FFont, StringWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(self->StringWidth(str));
 }
 
 //==========================================================================
@@ -2492,6 +2552,13 @@ EColorRange V_FindFontColor (FName name)
 	return CR_UNTRANSLATED;
 }
 
+DEFINE_ACTION_FUNCTION(FFont, FindFontColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_NAME(code);
+	ACTION_RETURN_INT((int)V_FindFontColor(code));
+}
+
 //==========================================================================
 //
 // V_LogColorFromColorRange
@@ -2666,12 +2733,3 @@ void V_ClearFonts()
 	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = NULL;
 }
 
-void V_RetranslateFonts()
-{
-	FFont *font = FFont::FirstFont;
-	while(font)
-	{
-		font->LoadTranslations();
-		font = font->Next;
-	}
-}

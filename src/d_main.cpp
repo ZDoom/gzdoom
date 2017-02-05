@@ -2467,6 +2467,9 @@ void D_DoomMain (void)
 		TexMan.Init();
 		C_InitConback();
 
+		StartScreen->Progress();
+		V_InitFonts();
+
 		// [CW] Parse any TEAMINFO lumps.
 		if (!batchrun) Printf ("ParseTeamInfo: Load team definitions.\n");
 		TeamLibrary.ParseTeamInfo ();

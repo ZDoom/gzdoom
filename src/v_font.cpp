@@ -340,6 +340,14 @@ FFont *V_GetFont(const char *name)
 	return font;
 }
 
+DEFINE_ACTION_FUNCTION(FFont, GetFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(V_GetFont(name.GetChars()));
+}
+
+
 //==========================================================================
 //
 // FFont :: FFont
@@ -366,7 +374,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	LastChar = first + count - 1;
 	FontHeight = 0;
 	GlobalKerning = false;
-	Name = copystring (name);
+	FontName = name;
 	Next = FirstFont;
 	FirstFont = this;
 	Cursor = '_';
@@ -478,11 +486,6 @@ FFont::~FFont ()
 		delete[] PatchRemap;
 		PatchRemap = NULL;
 	}
-	if (Name)
-	{
-		delete[] Name;
-		Name = NULL;
-	}
 
 	FFont **prev = &FirstFont;
 	FFont *font = *prev;
@@ -508,27 +511,26 @@ FFont::~FFont ()
 //
 //==========================================================================
 
-FFont *FFont::FindFont (const char *name)
+FFont *FFont::FindFont (FName name)
 {
-	if (name == NULL)
+	if (name == NAME_None)
 	{
-		return NULL;
+		return nullptr;
 	}
 	FFont *font = FirstFont;
 
-	while (font != NULL)
+	while (font != nullptr)
 	{
-		if (stricmp (font->Name, name) == 0)
-			break;
+		if (font->FontName == name) return font;
 		font = font->Next;
 	}
-	return font;
+	return nullptr;
 }
 
 DEFINE_ACTION_FUNCTION(FFont, FindFont)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(name);
+	PARAM_NAME(name);
 	ACTION_RETURN_POINTER(FFont::FindFont(name));
 }
 
@@ -935,7 +937,7 @@ FFont::FFont (int lump)
 	Lump = lump;
 	Chars = NULL;
 	PatchRemap = NULL;
-	Name = NULL;
+	FontName = NAME_None;
 	Cursor = '_';
 }
 
@@ -951,7 +953,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 {
 	assert(lump >= 0);
 
-	Name = copystring (name);
+	FontName = name;
 
 	FMemLump data1 = Wads.ReadLump (lump);
 	const BYTE *data = (const BYTE *)data1.GetMem();
@@ -1189,7 +1191,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		if (destSize < 0)
 		{
 			i += FirstChar;
-			I_FatalError ("Overflow decompressing char %d (%c) of %s", i, i, Name);
+			I_FatalError ("Overflow decompressing char %d (%c) of %s", i, i, FontName.GetChars());
 		}
 	}
 
@@ -1491,7 +1493,7 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 
 	FTexture *pic = TexMan[picnum];
 
-	Name = copystring(picname);
+	FontName = picname;
 	FontHeight = pic->GetScaledHeight();
 	SpaceWidth = pic->GetScaledWidth();
 	GlobalKerning = 0;
@@ -1903,7 +1905,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 	memcpy(this->notranslate, notranslate, 256*sizeof(bool));
 
-	Name = copystring(name);
+	FontName = name;
 	Chars = new CharData[count];
 	charlumps = new FTexture*[count];
 	PatchRemap = new BYTE[256];

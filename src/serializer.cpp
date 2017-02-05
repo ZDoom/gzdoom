@@ -2187,13 +2187,13 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 {
 	if (arc.isWriting())
 	{
-		const char *n = font->GetName();
-		return arc.StringPtr(key, n);
+		FName n = font->GetName();
+		return arc(key, n);
 	}
 	else
 	{
-		const char *n;
-		arc.StringPtr(key, n);
+		FName n;
+		arc(key, n);
 		font = V_GetFont(n);
 		if (font == nullptr)
 		{

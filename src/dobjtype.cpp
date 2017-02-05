@@ -88,6 +88,7 @@ PColor *TypeColor;
 PTextureID *TypeTextureID;
 PSpriteID *TypeSpriteID;
 PStatePointer *TypeState;
+PPointer *TypeFont;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
@@ -437,6 +438,7 @@ void PType::StaticInit()
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 	TypeStringStruct = NewNativeStruct("Stringstruct", nullptr);
+	TypeFont = NewPointer(NewNativeStruct("Font", nullptr));
 #ifdef __BIG_ENDIAN__
 	TypeColorStruct->AddField(NAME_a, TypeUInt8);
 	TypeColorStruct->AddField(NAME_r, TypeUInt8);

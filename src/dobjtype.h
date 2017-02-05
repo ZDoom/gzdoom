@@ -940,6 +940,7 @@ extern PStruct *TypeVector3;
 extern PStruct *TypeColorStruct;
 extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;
+extern PPointer *TypeFont;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;
 extern PPointer *TypeVoidPtr;

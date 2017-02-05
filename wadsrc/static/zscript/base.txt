@@ -70,13 +70,14 @@ struct Screen native
 
 struct Font native
 {
-	native static Font FindFont(String name);
+	native static Font FindFont(Name fontname);
+	native static Font GetFont(Name fontname);
 }
 
 struct Console native
 {
 	native static void HideConsole();
-	native static void MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
+	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
 }
 
 struct DamageTypeDefinition native

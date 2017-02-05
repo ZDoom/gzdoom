@@ -358,6 +358,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 			screenSprite.Width = tex->GetWidth() * xscale;
 			screenSprite.Height = tex->GetHeight() * yscale;
 			screenSprite.Translation = TranslationToTable(translation);
+			//screenSprite.Translation = translation;
 			screenSprite.Flip = xiscale < 0;
 			screenSprite.Alpha = Alpha;
 			screenSprite.RenderStyle = RenderStyle;
@@ -426,7 +427,7 @@ void PolyScreenSprite::Render()
 		Y1,
 		DTA_DestWidthF, Width,
 		DTA_DestHeightF, Height,
-		DTA_Translation, Translation,
+		DTA_TranslationIndex, Translation,
 		DTA_FlipX, Flip,
 		DTA_TopOffset, 0,
 		DTA_LeftOffset, 0,
@@ -434,7 +435,7 @@ void PolyScreenSprite::Render()
 		DTA_ClipTop, viewwindowy,
 		DTA_ClipRight, viewwindowx + viewwidth,
 		DTA_ClipBottom, viewwindowy + viewheight,
-		DTA_AlphaF, Alpha,
+		DTA_Alpha, Alpha,
 		DTA_RenderStyle, RenderStyle,
 		DTA_FillColor, FillColor,
 		DTA_SpecialColormap, special,

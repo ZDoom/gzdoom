@@ -972,7 +972,7 @@ public:
 	{
 		SetOrigin(Pos() + vel, true);
 	}
-	void SetOrigin(double x, double y, double z, bool moving);
+	virtual void SetOrigin(double x, double y, double z, bool moving);
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
 		SetOrigin(npos.X, npos.Y, npos.Z, moving);

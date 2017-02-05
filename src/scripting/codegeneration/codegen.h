@@ -294,6 +294,7 @@ enum EFxType
 	EFX_StrLen,
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
+	EFX_FontCast,
 	EFX_COUNT
 };
 
@@ -488,6 +489,13 @@ public:
 		isresolved = true;
 	}
 
+	FxConstant(FFont *state, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.pointer = state;
+		ValueType = value.Type = TypeFont;
+		isresolved = true;
+	}
+
 	FxConstant(const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = nullptr;
@@ -663,6 +671,18 @@ public:
 
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
+
+class FxFontCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxFontCast(FxExpression *x);
+	~FxFontCast();
+	FxExpression *Resolve(FCompileContext&);
+};
+
 
 //==========================================================================
 //

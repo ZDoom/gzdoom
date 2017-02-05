@@ -89,6 +89,10 @@ public:
 		desc->mItems[mStartItem+5] = new DOptionMenuItemStaticText(" ", false);
 		desc->mItems[mStartItem+6] = new DOptionMenuItemCommand("Undo changes", "undocolorpic");
 		desc->mItems[mStartItem+7] = new DOptionMenuItemStaticText(" ", false);
+		for (auto &p : desc->mItems)
+		{
+			GC::WriteBarrier(p);
+		}
 		desc->mSelectedItem = mStartItem + 2;
 		Init(parent, desc);
 		desc->mIndent = 0;

@@ -475,6 +475,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.ScriptError("Unknown keyword '%s'", sc.String);
 		}
 	}
+	for (auto &p : desc->mItems)
+	{
+		GC::WriteBarrier(p);
+	}
 }
 
 //=============================================================================
@@ -927,6 +931,10 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.ScriptError("Unknown keyword '%s'", sc.String);
 		}
 	}
+	for (auto &p : desc->mItems)
+	{
+		GC::WriteBarrier(p);
+	}
 }
 
 //=============================================================================
@@ -1101,6 +1109,10 @@ static void BuildEpisodeMenu()
 					ld->mAutoselect = ld->mSelectedItem;
 				}
 				success = true;
+				for (auto &p : ld->mItems)
+				{
+					GC::WriteBarrier(p);
+				}
 			}
 		}
 	}
@@ -1125,6 +1137,7 @@ static void BuildEpisodeMenu()
 		{
 			DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
 			od->mItems.Push(it);
+			GC::WriteBarrier(it);
 		}
 	}
 }
@@ -1230,6 +1243,10 @@ static void BuildPlayerclassMenu()
 					}
 				}
 				success = true;
+				for (auto &p : ld->mItems)
+				{
+					GC::WriteBarrier(p);
+				}
 			}
 		}
 	}
@@ -1261,11 +1278,13 @@ static void BuildPlayerclassMenu()
 				{
 					DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu(pname, "Episodemenu", i);
 					od->mItems.Push(it);
+					GC::WriteBarrier(it);
 				}
 			}
 		}
 		DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu("Random", "Episodemenu", -1);
 		od->mItems.Push(it);
+		GC::WriteBarrier(it);
 	}
 }
 
@@ -1354,6 +1373,10 @@ static void InitKeySections()
 					item = new DOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
 					menu->mItems.Push(item);
 				}
+			}
+			for (auto &p : menu->mItems)
+			{
+				GC::WriteBarrier(p);
 			}
 		}
 	}
@@ -1488,6 +1511,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, i);
 				}
 				ld->mItems.Push(li);
+				GC::WriteBarrier(li);
 				y += ld->mLinespacing;
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
@@ -1541,6 +1565,7 @@ fail:
 		}
 		li = new DOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
 		od->mItems.Push(li);
+		GC::WriteBarrier(li);
 		if (!done)
 		{
 			done = true;

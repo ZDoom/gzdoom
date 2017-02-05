@@ -632,7 +632,7 @@ class RaiseAlarm : DummyStrifeItem
 			dropper.target.SoundAlert(dropper.target);
 			if (dropper.target.CheckLocalView(consoleplayer))
 			{
-				A_Log("You Fool!  You've set off the alarm.");
+				Console.MidPrint(SmallFont, "$TXT_YOUFOOL");
 			}
 		}
 		Destroy ();
@@ -672,7 +672,7 @@ class CloseDoor222 : DummyStrifeItem
 		{
 			if (dropper.target.CheckLocalView(consoleplayer))
 			{
-				A_Log("You're dead!  You set off the alarm.");
+				Console.MidPrint(SmallFont, "$TXT_YOUREDEAD");
 			}
 			dropper.target.SoundAlert(dropper.target);
 		}

@@ -68,15 +68,27 @@ struct Screen native
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
 }
 
+class BrokenLines : Object native
+{
+	native int Count();
+	native int StringWidth(int line);
+	native String StringAt(int line);
+}
+
 struct Font native
 {
-	native static Font FindFont(String name);
+	native int GetCharWidth(int code);
+	native int StringWidth(String code);
+	native static int FindFontColor(Name color);
+	native static Font FindFont(Name fontname);
+	native static Font GetFont(Name fontname);
+	native static BrokenLines BreakLines(String text, int maxlen);
 }
 
 struct Console native
 {
 	native static void HideConsole();
-	native static void MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
+	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
 }
 
 struct DamageTypeDefinition native

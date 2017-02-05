@@ -520,6 +520,7 @@ public:
 class DListMenu : public DMenu
 {
 	DECLARE_CLASS(DListMenu, DMenu)
+	HAS_OBJECT_POINTERS;
 
 protected:
 	FListMenuDescriptor *mDesc;
@@ -609,6 +610,7 @@ extern FOptionMap OptionValues;
 class DOptionMenu : public DMenu
 {
 	DECLARE_CLASS(DOptionMenu, DMenu)
+	HAS_OBJECT_POINTERS;
 
 	bool CanScrollUp;
 	bool CanScrollDown;

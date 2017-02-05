@@ -338,8 +338,6 @@ void R_Init ()
 	atterm (R_Shutdown);
 
 	StartScreen->Progress();
-	V_InitFonts();
-	StartScreen->Progress();
 	// Colormap init moved back to InitPalette()
 	//R_InitColormaps ();
 	//StartScreen->Progress();

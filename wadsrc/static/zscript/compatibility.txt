@@ -9,7 +9,9 @@ extend class Object
 	
 	deprecated static void C_MidPrint(string fontname, string textlabel, bool bold = false) // deprecated for 2.4.x
 	{
-		return Console.MidPrint(fontname, textlabel, bold);
+		let f = Font.GetFont(fontname);
+		if (f == null) return;
+		return Console.MidPrint(f, textlabel, bold);
 	}
 
 }

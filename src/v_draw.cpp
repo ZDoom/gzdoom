@@ -126,6 +126,7 @@ static int PalFromRGB(uint32 rgb)
 	return LastPal;
 }
 
+
 void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
 {
 	va_list tags;
@@ -139,6 +140,31 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 		return;
 	}
 	DrawTextureParms(img, parms);
+}
+
+static int ListGetInt(VMVa_List &tags);
+
+void DCanvas::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
+{
+	DrawParms parms;
+	uint32_t tag = ListGetInt(args);
+	bool res = ParseDrawTextureTags(img, x, y, tag, args, &parms, false);
+	if (!res) return;
+	DrawTextureParms(img, parms);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	PARAM_BOOL(animate);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	FTexture *tex = animate ? TexMan(FSetTextureID(texid)) : TexMan[FSetTextureID(texid)];
+	VMVa_List args = { param + 4, 0, numparam - 4 };
+	screen->DrawTexture(tex, x, y, args);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawHUDTexture)
@@ -175,7 +201,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		{
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
-		// Note that this overrides DTA_Translation in software, but not in hardware.
+		// Note that this overrides the translation in software, but not in hardware.
 		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
 			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
 		translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
@@ -446,11 +472,6 @@ static inline double ListGetDouble(va_list &tags)
 	return va_arg(tags, double);
 }
 
-static inline FRemapTable* ListGetTranslation(va_list &tags)
-{
-	return va_arg(tags, FRemapTable*);
-}
-
 // These two options are only being used by the D3D version of the HUD weapon drawer, they serve no purpose anywhere else.
 static inline FSpecialColormap * ListGetSpecialColormap(va_list &tags)
 {
@@ -462,7 +483,44 @@ static inline FColormapStyle * ListGetColormapStyle(va_list &tags)
 	return va_arg(tags, FColormapStyle *);
 }
 
-bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list& tags, DrawParms *parms, bool fortext) const
+static void ListEnd(VMVa_List &tags)
+{
+}
+
+static int ListGetInt(VMVa_List &tags)
+{
+	if (tags.curindex < tags.numargs && tags.args[tags.curindex].Type == REGT_INT)
+	{
+		return tags.args[tags.curindex++].i;
+	}
+	ThrowAbortException(X_OTHER, "Invalid parameter in draw function, int expected");
+	return 0;
+}
+
+static inline double ListGetDouble(VMVa_List &tags)
+{
+	if (tags.curindex < tags.numargs && tags.args[tags.curindex].Type == REGT_FLOAT)
+	{
+		return tags.args[tags.curindex++].f;
+	}
+	ThrowAbortException(X_OTHER, "Invalid parameter in draw function, float expected");
+	return 0;
+}
+
+static inline FSpecialColormap * ListGetSpecialColormap(VMVa_List &tags)
+{
+	ThrowAbortException(X_OTHER, "Invalid tag in draw function");
+	return nullptr;
+}
+
+static inline FColormapStyle * ListGetColormapStyle(VMVa_List &tags)
+{
+	ThrowAbortException(X_OTHER, "Invalid tag in draw function");
+	return nullptr;
+}
+
+template<class T>
+bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;
@@ -626,7 +684,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			parms->cleanmode = DTA_Base;
 			parms->virtWidth = ListGetDouble(tags);
 			break;
-			
+
 		case DTA_VirtualHeight:
 			parms->cleanmode = DTA_Base;
 			parms->virtHeight = ListGetInt(tags);
@@ -662,12 +720,8 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			fillcolorset = true;
 			break;
 
-		case DTA_Translation:
-			parms->remap = ListGetTranslation(tags);
-			if (parms->remap != NULL && parms->remap->Inactive)
-			{ // If it's inactive, pretend we were passed NULL instead.
-				parms->remap = NULL;
-			}
+		case DTA_TranslationIndex:
+			parms->remap = TranslationToTable(ListGetInt(tags));
 			break;
 
 		case DTA_ColorOverlay:
@@ -840,7 +894,12 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 		}
 		tag = ListGetInt(tags);
 	}
-	va_end (tags);
+	ListEnd(tags);
+
+	if (parms->remap != nullptr && parms->remap->Inactive)
+	{ // If it's inactive, pretend we were passed NULL instead.
+		parms->remap = nullptr;
+	}
 
 	if (parms->uclip >= parms->dclip || parms->lclip >= parms->rclip)
 	{
@@ -885,6 +944,10 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	}
 	return true;
 }
+// explicitly instantiate both versions for v_text.cpp.
+
+template bool DCanvas::ParseDrawTextureTags<va_list>(FTexture *img, double x, double y, DWORD tag, va_list& tags, DrawParms *parms, bool fortext) const;
+template bool DCanvas::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, DWORD tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
 
 void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const

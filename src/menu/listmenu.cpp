@@ -44,6 +44,10 @@
 
 IMPLEMENT_CLASS(DListMenu, false, false)
 
+IMPLEMENT_POINTERS_START(DListMenu)
+IMPLEMENT_POINTER(mFocusControl)
+IMPLEMENT_POINTERS_END
+
 //=============================================================================
 //
 //

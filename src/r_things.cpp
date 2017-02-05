@@ -1712,7 +1712,7 @@ void R_DrawRemainingPlayerSprites()
 			viewwindowy + viewheight/2 - vis->texturemid * vis->yscale - 0.5,
 			DTA_DestWidthF, FIXED2DBL(vis->pic->GetWidth() * vis->xscale),
 			DTA_DestHeightF, vis->pic->GetHeight() * vis->yscale,
-			DTA_Translation, TranslationToTable(vis->Translation),
+			DTA_TranslationIndex, vis->Translation,
 			DTA_FlipX, flip,
 			DTA_TopOffset, 0,
 			DTA_LeftOffset, 0,

@@ -47,6 +47,8 @@
 #include "doomstat.h"
 #include "templates.h"
 
+int ListGetInt(VMVa_List &tags);
+
 //==========================================================================
 //
 // DrawChar
@@ -82,6 +84,42 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, double x, double y, int ch
 	}
 }
 
+void DCanvas::DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args)
+{
+	if (font == NULL)
+		return;
+
+	if (normalcolor >= NumTextColors)
+		normalcolor = CR_UNTRANSLATED;
+
+	FTexture *pic;
+	int dummy;
+
+	if (NULL != (pic = font->GetChar(character, &dummy)))
+	{
+		DrawParms parms;
+		uint32_t tag = ListGetInt(args);
+		bool res = ParseDrawTextureTags(pic, x, y, tag, args, &parms, false);
+		if (!res) return;
+		parms.remap = font->GetColorTranslation((EColorRange)normalcolor);
+		DrawTextureParms(pic, parms);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawChar)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(font, FFont);
+	PARAM_INT(cr);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(chr);
+
+	VMVa_List args = { param + 5, 0, numparam - 5 };
+	screen->DrawChar(font, cr, x, y, chr, args);
+	return 0;
+}
+
 //==========================================================================
 //
 // DrawText
@@ -90,32 +128,17 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, double x, double y, int ch
 //
 //==========================================================================
 
-void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...)
+void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms)
 {
 	int 		w;
 	const BYTE *ch;
 	int 		c;
-	int 		cx;
-	int 		cy;
+	double 		cx;
+	double 		cy;
 	int			boldcolor;
 	FRemapTable *range;
 	int			kerning;
 	FTexture *pic;
-	DrawParms parms;
-
-	va_list tags;
-
-	if (font == NULL || string == NULL)
-		return;
-
-	va_start(tags, tag_first);
-	bool res = ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
-	va_end(tags);
-	if (!res)
-	{
-		return;
-	}
-
 
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly *= parms.scaley;
@@ -124,15 +147,15 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 		normalcolor = CR_UNTRANSLATED;
 	boldcolor = normalcolor ? normalcolor - 1 : NumTextColors - 1;
 
-	range = font->GetColorTranslation ((EColorRange)normalcolor);
+	range = font->GetColorTranslation((EColorRange)normalcolor);
 
-	kerning = font->GetDefaultKerning ();
+	kerning = font->GetDefaultKerning();
 
 	ch = (const BYTE *)string;
 	cx = x;
 	cy = y;
 
-		
+
 	while ((const char *)ch - string < parms.maxstrlen)
 	{
 		c = *ch++;
@@ -141,14 +164,14 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 
 		if (c == TEXTCOLOR_ESCAPE)
 		{
-			EColorRange newcolor = V_ParseFontColor (ch, normalcolor, boldcolor);
+			EColorRange newcolor = V_ParseFontColor(ch, normalcolor, boldcolor);
 			if (newcolor != CR_UNDEFINED)
 			{
-				range = font->GetColorTranslation (newcolor);
+				range = font->GetColorTranslation(newcolor);
 			}
 			continue;
 		}
-		
+
 		if (c == '\n')
 		{
 			cx = x;
@@ -156,7 +179,7 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 			continue;
 		}
 
-		if (NULL != (pic = font->GetChar (c, &w)))
+		if (NULL != (pic = font->GetChar(c, &w)))
 		{
 			parms.remap = range;
 			SetTextureParms(&parms, pic, cx, cy);
@@ -170,6 +193,54 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 		}
 		cx += (w + kerning) * parms.scalex;
 	}
+}
+
+void DCanvas::DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...)
+{
+	va_list tags;
+	DrawParms parms;
+
+	if (font == NULL || string == NULL)
+		return;
+
+	va_start(tags, tag_first);
+	bool res = ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
+	va_end(tags);
+	if (!res)
+	{
+		return;
+	}
+	DrawTextCommon(font, normalcolor, x, y, string, parms);
+}
+
+void DCanvas::DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args)
+{
+	DrawParms parms;
+
+	if (font == NULL || string == NULL)
+		return;
+
+	uint32_t tag = ListGetInt(args);
+	bool res = ParseDrawTextureTags(nullptr, 0, 0, tag, args, &parms, true);
+	if (!res)
+	{
+		return;
+	}
+	DrawTextCommon(font, normalcolor, x, y, string, parms);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawText)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(font, FFont);
+	PARAM_INT(cr);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_STRING(chr);
+
+	VMVa_List args = { param + 5, 0, numparam - 5 };
+	screen->DrawText(font, cr, x, y, chr, args);
+	return 0;
 }
 
 

@@ -142,7 +142,7 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 	DrawTextureParms(img, parms);
 }
 
-static int ListGetInt(VMVa_List &tags);
+int ListGetInt(VMVa_List &tags);
 
 void DCanvas::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
 {
@@ -487,7 +487,7 @@ static void ListEnd(VMVa_List &tags)
 {
 }
 
-static int ListGetInt(VMVa_List &tags)
+int ListGetInt(VMVa_List &tags)
 {
 	if (tags.curindex < tags.numargs && tags.args[tags.curindex].Type == REGT_INT)
 	{

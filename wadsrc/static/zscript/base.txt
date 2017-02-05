@@ -66,6 +66,10 @@ struct Screen native
 	native static int GetWidth();
 	native static int GetHeight();
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
+	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+
 }
 
 class BrokenLines : Object native
@@ -357,7 +361,7 @@ struct StringStruct native
 {
 	native void Replace(String pattern, String replacement);
 	native static vararg String Format(String fmt, ...);
-        native vararg void AppendFormat(String fmt, ...);
+	native vararg void AppendFormat(String fmt, ...);
 }
 
 class Floor : Thinker native

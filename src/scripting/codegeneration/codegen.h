@@ -242,6 +242,7 @@ enum EFxType
 	EFX_Conditional,
 	EFX_Abs,
 	EFX_ATan2,
+	EFX_New,
 	EFX_MinMax,
 	EFX_Random,
 	EFX_RandomPick,
@@ -1176,6 +1177,26 @@ public:
 private:
 	ExpEmit ToReg(VMFunctionBuilder *build, FxExpression *val);
 };
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxNew : public FxExpression
+{
+	FxExpression *val;
+
+public:
+
+	FxNew(FxExpression *v);
+	~FxNew();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
 //==========================================================================
 //
 //

@@ -66,6 +66,10 @@ void M_DrawConText (int color, int x, int y, const char *str)
 
 IMPLEMENT_CLASS(DOptionMenu, false, false)
 
+IMPLEMENT_POINTERS_START(DOptionMenu)
+IMPLEMENT_POINTER(mFocusControl)
+IMPLEMENT_POINTERS_END
+
 //=============================================================================
 //
 //

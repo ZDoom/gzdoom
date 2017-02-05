@@ -193,6 +193,7 @@ enum
 
 enum EVMAbortException
 {
+	X_OTHER,
 	X_READ_NIL,
 	X_WRITE_NIL,
 	X_TOO_MANY_TRIES,

@@ -499,11 +499,11 @@ class DPlayerMenu : public DListMenu
 	void UpdateTranslation();
 	void SendNewColor (int red, int green, int blue);
 
-	void PlayerNameChanged(DListMenuItem *li);
-	void ColorSetChanged (DListMenuItem *li);
-	void ClassChanged (DListMenuItem *li);
-	void AutoaimChanged (DListMenuItem *li);
-	void SkinChanged (DListMenuItem *li);
+	void PlayerNameChanged(DMenuItemBase *li);
+	void ColorSetChanged (DMenuItemBase *li);
+	void ClassChanged (DMenuItemBase *li);
+	void AutoaimChanged (DMenuItemBase *li);
+	void SkinChanged (DMenuItemBase *li);
 
 
 public:
@@ -527,7 +527,7 @@ IMPLEMENT_CLASS(DPlayerMenu, false, false)
 
 void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 {
-	DListMenuItem *li;
+	DMenuItemBase *li;
 
 	Super::Init(parent, desc);
 	PickPlayerClass();
@@ -655,7 +655,7 @@ bool DPlayerMenu::Responder (event_t *ev)
 	{
 		// turn the player sprite around
 		mRotation = 8 - mRotation;
-		DListMenuItem *li = GetItem(NAME_Playerdisplay);
+		DMenuItemBase *li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
 			li->SetValue(DListMenuItemPlayerDisplay::PDF_ROTATION, mRotation);
@@ -745,7 +745,7 @@ void DPlayerMenu::SendNewColor (int red, int green, int blue)
 
 void DPlayerMenu::UpdateColorsets()
 {
-	DListMenuItem *li = GetItem(NAME_Color);
+	DMenuItemBase *li = GetItem(NAME_Color);
 	if (li != NULL)
 	{
 		int sel = 0;
@@ -781,7 +781,7 @@ void DPlayerMenu::UpdateSkins()
 {
 	int sel = 0;
 	int skin;
-	DListMenuItem *li = GetItem(NAME_Skin);
+	DMenuItemBase *li = GetItem(NAME_Skin);
 	if (li != NULL)
 	{
 		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
@@ -824,7 +824,7 @@ void DPlayerMenu::UpdateSkins()
 //
 //=============================================================================
 
-void DPlayerMenu::PlayerNameChanged(DListMenuItem *li)
+void DPlayerMenu::PlayerNameChanged(DMenuItemBase *li)
 {
 	char pp[MAXPLAYERNAME+1];
 	const char *p;
@@ -852,7 +852,7 @@ void DPlayerMenu::PlayerNameChanged(DListMenuItem *li)
 //
 //=============================================================================
 
-void DPlayerMenu::ColorSetChanged (DListMenuItem *li)
+void DPlayerMenu::ColorSetChanged (DMenuItemBase *li)
 {
 	int	sel;
 
@@ -862,9 +862,9 @@ void DPlayerMenu::ColorSetChanged (DListMenuItem *li)
 
 		if (sel > 0) mycolorset = PlayerColorSets[sel-1];
 
-		DListMenuItem *red   = GetItem(NAME_Red);
-		DListMenuItem *green = GetItem(NAME_Green);
-		DListMenuItem *blue  = GetItem(NAME_Blue);
+		DMenuItemBase *red   = GetItem(NAME_Red);
+		DMenuItemBase *green = GetItem(NAME_Green);
+		DMenuItemBase *blue  = GetItem(NAME_Blue);
 
 		// disable the sliders if a valid colorset is selected
 		if (red != NULL) red->Enable(mycolorset == -1);
@@ -885,7 +885,7 @@ void DPlayerMenu::ColorSetChanged (DListMenuItem *li)
 //
 //=============================================================================
 
-void DPlayerMenu::ClassChanged (DListMenuItem *li)
+void DPlayerMenu::ClassChanged (DMenuItemBase *li)
 {
 	if (PlayerClasses.Size () == 1)
 	{
@@ -919,7 +919,7 @@ void DPlayerMenu::ClassChanged (DListMenuItem *li)
 //
 //=============================================================================
 
-void DPlayerMenu::SkinChanged (DListMenuItem *li)
+void DPlayerMenu::SkinChanged (DMenuItemBase *li)
 {
 	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
 		players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
@@ -950,7 +950,7 @@ void DPlayerMenu::SkinChanged (DListMenuItem *li)
 //
 //=============================================================================
 
-void DPlayerMenu::AutoaimChanged (DListMenuItem *li)
+void DPlayerMenu::AutoaimChanged (DMenuItemBase *li)
 {
 	int	sel;
 
@@ -971,7 +971,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 	int v;
 	if (mDesc->mSelectedItem >= 0)
 	{
-		DListMenuItem *li = mDesc->mItems[mDesc->mSelectedItem];
+		DMenuItemBase *li = mDesc->mItems[mDesc->mSelectedItem];
 		if (li->MenuEvent(mkey, fromcontroller))
 		{
 			FName current = li->GetAction(NULL);
@@ -1067,7 +1067,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 bool DPlayerMenu::MouseEvent(int type, int x, int y)
 {
 	int v;
-	DListMenuItem *li = mFocusControl;
+	DMenuItemBase *li = mFocusControl;
 	bool res = Super::MouseEvent(type, x, y);
 	if (li == NULL) li = mFocusControl;
 	if (li != NULL)

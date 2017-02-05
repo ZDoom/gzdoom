@@ -1211,6 +1211,7 @@ set (PCH_SOURCES
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
 	sfmt/SFMT.cpp
+	events.cpp
 )
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 

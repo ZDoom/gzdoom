@@ -39,6 +39,7 @@
 #include "d_event.h"
 #include "g_level.h"
 #include "gstrings.h"
+#include "events.h"
 
 #include "i_system.h"
 #include "m_argv.h"
@@ -1442,6 +1443,8 @@ void P_SpawnSpecials (void)
 			break;
 		}
 	}
+	// [ZZ] safe world load
+	E_WorldLoaded();
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
 }

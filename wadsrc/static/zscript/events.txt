@@ -1,0 +1,32 @@
+class StaticEventHandler : Object native
+{
+	virtual native void WorldLoaded();
+    virtual native void WorldLoadedUnsafe();
+	virtual native void WorldUnloading();
+    virtual native void WorldUnloadingUnsafe();
+
+	virtual native void RenderFrame();
+}
+
+class StaticRenderEventHandler : StaticEventHandler native
+{
+	// for frame and camera
+	native readonly Vector3 ViewPos;
+	native readonly double ViewAngle;
+	native readonly double ViewPitch;
+	native readonly double ViewRoll;
+	native readonly double FracTic;
+	native readonly Actor Camera;
+}
+
+class EventHandler : StaticEventHandler native
+{
+	static native StaticEventHandler Create(class<StaticEventHandler> type);
+	static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
+	static native StaticEventHandler Find(class<StaticEventHandler> type);
+
+	static native bool Register(StaticEventHandler handler);
+	static native bool Unregister(StaticEventHandler handler);
+}
+
+class RenderEventHandler : StaticRenderEventHandler native { }

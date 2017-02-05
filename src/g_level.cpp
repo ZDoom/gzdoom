@@ -85,6 +85,7 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "virtual.h"
+#include "events.h"
 
 #include "gi.h"
 
@@ -406,6 +407,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	// did we have any level before?
+	if (level.info != nullptr)
+		E_WorldUnloadingUnsafe();
+
 	if (!savegamerestore)
 	{
 		G_ClearHubInfo();
@@ -655,6 +660,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	// [RH] Give scripts a chance to do something
 	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	// [ZZ] safe world unload
+	E_WorldUnloading();
+	// [ZZ] unsafe world unload (changemap != map)
+	E_WorldUnloadingUnsafe();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel);
@@ -1064,6 +1073,10 @@ void G_DoLoadLevel (int position, bool autosave)
 		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
+	// [ZZ] init per-map static handlers
+	E_InitStaticHandlers(true);
+	//      unsafe world load
+	E_WorldLoadedUnsafe();
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)

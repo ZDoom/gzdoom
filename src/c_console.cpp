@@ -69,6 +69,8 @@
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 
+FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
+
 #include "gi.h"
 
 #define LEFTMARGIN 8
@@ -1329,6 +1331,14 @@ void C_HideConsole ()
 DEFINE_ACTION_FUNCTION(_Console, HideConsole)
 {
 	C_HideConsole();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, Printf)
+{
+	PARAM_PROLOGUE;
+	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	Printf("%s", s);
 	return 0;
 }
 

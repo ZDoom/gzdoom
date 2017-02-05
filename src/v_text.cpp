@@ -71,10 +71,10 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, double x, double y, int ch
 	if (NULL != (pic = font->GetChar (character, &dummy)))
 	{
 		DrawParms parms;
-		va_list tags;
-		va_start(tags, tag_first);
+		Va_List tags;
+		va_start(tags.list, tag_first);
 		bool res = ParseDrawTextureTags(pic, x, y, tag_first, tags, &parms, false);
-		va_end(tags);
+		va_end(tags.list);
 		if (!res)
 		{
 			return;
@@ -197,15 +197,15 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 
 void DCanvas::DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...)
 {
-	va_list tags;
+	Va_List tags;
 	DrawParms parms;
 
 	if (font == NULL || string == NULL)
 		return;
 
-	va_start(tags, tag_first);
+	va_start(tags.list, tag_first);
 	bool res = ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
-	va_end(tags);
+	va_end(tags.list);
 	if (!res)
 	{
 		return;

@@ -177,6 +177,11 @@ struct DrawParms
 	bool virtBottom;
 };
 
+struct Va_List
+{
+	va_list list;
+};
+
 struct VMVa_List
 {
 	VMValue *args;

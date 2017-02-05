@@ -32,6 +32,64 @@ struct TexMan
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 }
 
+enum DrawTextureTags
+{
+	TAG_USER = (1<<30),
+	DTA_Base = TAG_USER + 5000,
+	DTA_DestWidth,		// width of area to draw to
+	DTA_DestHeight,		// height of area to draw to
+	DTA_Alpha,			// alpha value for translucency
+	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
+	DTA_TranslationIndex, // translation table to recolor the source
+	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
+	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
+	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
+	DTA_Bottom320x200,	// bool: same as DTA_320x200 but centers virtual screen on bottom for 1280x1024 targets
+	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
+	DTA_CleanNoMove_1,	// bool: like DTA_CleanNoMove, but uses Clean[XY]fac_1 instead
+	DTA_FlipX,			// bool: flip image horizontally	//FIXME: Does not work with DTA_Window(Left|Right)
+	DTA_ShadowColor,	// color of shadow
+	DTA_ShadowAlpha,	// alpha of shadow
+	DTA_Shadow,			// set shadow color and alphas to defaults
+	DTA_VirtualWidth,	// pretend the canvas is this wide
+	DTA_VirtualHeight,	// pretend the canvas is this tall
+	DTA_TopOffset,		// override texture's top offset
+	DTA_LeftOffset,		// override texture's left offset
+	DTA_CenterOffset,	// bool: override texture's left and top offsets and set them for the texture's middle
+	DTA_CenterBottomOffset,// bool: override texture's left and top offsets and set them for the texture's bottom middle
+	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
+	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
+	DTA_ClipTop,		// don't draw anything above this row (on dest, not source)
+	DTA_ClipBottom,		// don't draw anything at or below this row (on dest, not source)
+	DTA_ClipLeft,		// don't draw anything to the left of this column (on dest, not source)
+	DTA_ClipRight,		// don't draw anything at or to the right of this column (on dest, not source)
+	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
+	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
+	DTA_HUDRulesC,		// only used internally for marking HUD_HorizCenter
+	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
+	DTA_RenderStyle,	// same as render style for actors
+	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
+	DTA_Internal1,
+	DTA_Internal2,
+	DTA_Internal3,
+	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
+
+	// floating point duplicates of some of the above:
+	DTA_DestWidthF,
+	DTA_DestHeightF,
+	DTA_TopOffsetF,
+	DTA_LeftOffsetF,
+	DTA_VirtualWidthF,
+	DTA_VirtualHeightF,
+	DTA_WindowLeftF,
+	DTA_WindowRightF,
+
+	// For DrawText calls only:
+	DTA_TextLen,		// stop after this many characters, even if \0 not hit
+	DTA_CellX,			// horizontal size of character cell
+	DTA_CellY,			// vertical size of character cell
+};
+
 struct Screen native
 {
 	enum EColorRange

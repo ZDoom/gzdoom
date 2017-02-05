@@ -322,6 +322,10 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 				opt->mItems.Push(it);
 			}
 		}
+		for (auto &p : opt->mItems)
+		{
+			GC::WriteBarrier(p);
+		}
 		opt->mScrollPos = 0;
 		opt->mSelectedItem = -1;
 		opt->mIndent = 0;
@@ -401,6 +405,10 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				opt->mItems.Push(it);
 				if (i == itemnum) opt->mSelectedItem = opt->mItems.Size();
 			}
+		}
+		for (auto &p : opt->mItems)
+		{
+			GC::WriteBarrier(p);
 		}
 		if (opt->mSelectedItem >= (int)opt->mItems.Size())
 		{

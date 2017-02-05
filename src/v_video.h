@@ -177,6 +177,11 @@ struct DrawParms
 	bool virtBottom;
 };
 
+struct Va_List
+{
+	va_list list;
+};
+
 struct VMVa_List
 {
 	VMValue *args;
@@ -270,8 +275,10 @@ public:
 #undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
 	// 2D Text drawing
-	void DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
-	void DrawChar (FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 protected:
 	BYTE *Buffer;
@@ -280,6 +287,8 @@ protected:
 	int Pitch;
 	int LockCount;
 	bool Bgra;
+
+	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;

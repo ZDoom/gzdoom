@@ -1530,7 +1530,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	cy1 = MAX(cheight / designheight, 1);
 	cx2 = MAX(realwidth / designwidth, 1);
 	cy2 = MAX(realheight / designheight, 1);
-	if (abs(cx1 - cy1) <= abs(cx2 - cy2))
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || cx1 >= 4)
 	{ // e.g. 640x360 looks better with this.
 		*cleanx = cx1;
 		*cleany = cy1;

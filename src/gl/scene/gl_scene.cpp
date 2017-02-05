@@ -866,6 +866,14 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();
 			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+			if (!toscreen)
+			{
+				gl_RenderState.mViewMatrix.loadIdentity();
+				gl_RenderState.mProjectionMatrix.ortho(mScreenViewport.left, mScreenViewport.width, mScreenViewport.height, mScreenViewport.top, -1.0f, 1.0f);
+				gl_RenderState.ApplyMatrices();
+			}
+
 			DrawBlend(lviewsector);
 		}
 		mDrawingScene2D = false;

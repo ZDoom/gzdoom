@@ -79,6 +79,7 @@
 #include "thingdef.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "r_utility.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -6912,4 +6913,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
 	}
 
 	ACTION_RETURN_BOOL(true);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetCamera)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_OBJECT(cam, AActor);
+	PARAM_BOOL_DEF(revert);
+
+	if (self->player == nullptr || self->player->mo != self) return 0;
+
+	if (camera == nullptr)
+	{
+		camera = self;
+		revert = false;
+	}
+	AActor *oldcamera = self->player->camera;
+	self->player->camera = camera;
+	if (revert) self->player->cheats |= CF_REVERTPLEASE;
+
+	if (oldcamera != camera)
+	{
+		R_ClearPastViewer(camera);
+	}
+	return 0;
 }

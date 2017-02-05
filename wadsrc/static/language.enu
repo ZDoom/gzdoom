@@ -1417,6 +1417,9 @@ TXT_KILLED_ORACLE = "You've Killed The Oracle!";
 TXT_KILLED_MACIL = "You Killed Macil!";
 TXT_KILLED_LOREMASTER = "You've Killed the Loremaster!";
 
+TXT_YOUFOOL = "You Fool!  You've set off the alarm.";
+TXT_YOUREDEAD = "You're dead!  You set off the alarm.";
+
 // Strife pickup messages
 
 TXT_METALARMOR = "You picked up the Metal Armor.";

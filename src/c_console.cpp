@@ -1756,11 +1756,10 @@ void C_MidPrintBold (FFont *font, const char *msg)
 DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(font);
+	PARAM_POINTER_NOT_NULL(fnt, FFont);
 	PARAM_STRING(text);
 	PARAM_BOOL_DEF(bold);
 
-	FFont *fnt = FFont::FindFont(font);
 	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
 	if (!bold) C_MidPrint(fnt, txt);
 	else C_MidPrintBold(fnt, txt);

@@ -1089,11 +1089,17 @@ CCMD(event)
 
 CCMD(netevent)
 {
+	if (gamestate != GS_LEVEL/* && gamestate != GS_TITLELEVEL*/) // not sure if this should work in title level, but probably not, because this is for actual playing
+	{
+		Printf("netevent cannot be used outside of a map.\n");
+		return;
+	}
+
 	int argc = argv.argc();
 
 	if (argc < 2 || argc > 5)
 	{
-		Printf("Usage: event <name> [arg1] [arg2] [arg3]\n");
+		Printf("Usage: netevent <name> [arg1] [arg2] [arg3]\n");
 	}
 	else
 	{

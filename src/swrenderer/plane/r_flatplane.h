@@ -27,28 +27,23 @@ namespace swrenderer
 		RenderFlatPlane(RenderThread *thread);
 		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
 
-		static void SetupSlope();
-
 		RenderThread *Thread = nullptr;
 
 	private:
 		void RenderLine(int y, int x1, int x2) override;
-		void StepColumn() override;
 
+		int minx;
 		double planeheight;
 		bool plane_shade;
 		int planeshade;
 		double GlobVis;
 		FDynamicColormap *basecolormap;
-		fixed_t pviewx, pviewy;
-		fixed_t xscale, yscale;
+		double pviewx, pviewy;
 		double xstepscale, ystepscale;
 		double basexfrac, baseyfrac;
 		VisiblePlaneLight *light_list;
 
 		SpanDrawerArgs drawerargs;
-
-		static float yslope[MAXHEIGHT];
 	};
 
 	class RenderColoredPlane : PlaneRenderer

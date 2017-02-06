@@ -130,8 +130,6 @@ namespace swrenderer
 		centery = xs_ToInt(CenterY);
 		globaluclip = -CenterY / InvZtoScale;
 		globaldclip = (viewheight - CenterY) / InvZtoScale;
-
-		RenderFlatPlane::SetupSlope();
 	}
 
 	void RenderViewport::SetupBuffer()

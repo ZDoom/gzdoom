@@ -58,6 +58,14 @@ namespace swrenderer
 
 		DVector2 PointWorldToView(const DVector2 &worldPos) const;
 		DVector2 ScaleViewToScreen(const DVector2 &scale, double viewZ, bool pixelstretch = true) const;
+
+		double PlaneDepth(int screenY, double planeHeight) const
+		{
+			if (screenY + 0.5 < CenterY)
+				return FocalLengthY / (CenterY - screenY - 0.5) * planeHeight;
+			else
+				return FocalLengthY / (screenY + 0.5 - CenterY) * planeHeight;
+		}
 		
 	private:
 		void InitTextureMapping();

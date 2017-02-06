@@ -64,22 +64,20 @@ namespace swrenderer
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
 		double x;
 
-		xscale = xs_ToFixed(32 - drawerargs.TextureWidthBits(), _xscale);
-		yscale = xs_ToFixed(32 - drawerargs.TextureHeightBits(), _yscale);
 		if (planeang != 0)
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
-			pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
-			pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
+			pviewx = pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine;
+			pviewy = pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine;
 		}
 		else
 		{
-			pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X);
-			pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.Y);
+			pviewx = pl->xform.xOffs + ViewPos.X;
+			pviewy = pl->xform.yOffs - ViewPos.Y;
 		}
 
-		pviewx = FixedMul(xscale, pviewx);
-		pviewy = FixedMul(yscale, pviewy);
+		pviewx = _xscale * pviewx;
+		pviewy = _yscale * pviewy;
 
 		// left to right mapping
 		planeang += (ViewAngle - 90).Radians();
@@ -100,17 +98,19 @@ namespace swrenderer
 
 		planeang += M_PI / 2;
 		double cosine = cos(planeang), sine = -sin(planeang);
-		x = pl->right - centerx - 0.5;
+		x = pl->right - viewport->CenterX - 0.5;
 		rightxfrac = _xscale * (cosine + x * xstep);
 		rightyfrac = _yscale * (sine + x * ystep);
-		x = pl->left - centerx - 0.5;
+		x = pl->left - viewport->CenterX + 0.5;
 		leftxfrac = _xscale * (cosine + x * xstep);
 		leftyfrac = _yscale * (sine + x * ystep);
 
-		basexfrac = rightxfrac;
-		baseyfrac = rightyfrac;
-		xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left);
-		ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left);
+		basexfrac = leftxfrac;
+		baseyfrac = leftyfrac;
+		xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left + 1);
+		ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left + 1);
+
+		minx = pl->left;
 
 		planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
@@ -143,8 +143,6 @@ namespace swrenderer
 
 	void RenderFlatPlane::RenderLine(int y, int x1, int x2)
 	{
-		double distance;
-
 #ifdef RANGECHECK
 		if (x2 < x1 || x1<0 || x2 >= viewwidth || (unsigned)y >= (unsigned)viewheight)
 		{
@@ -152,15 +150,17 @@ namespace swrenderer
 		}
 #endif
 
-		// [RH] Notice that I dumped the caching scheme used by Doom.
-		// It did not offer any appreciable speedup.
+		auto viewport = RenderViewport::Instance();
 
-		distance = planeheight * yslope[y];
+		double curxfrac = basexfrac + xstepscale * (x1 + 0.5 - minx);
+		double curyfrac = baseyfrac + ystepscale * (x1 + 0.5 - minx);
+
+		double distance = viewport->PlaneDepth(y, planeheight);
 
 		if (drawerargs.TextureWidthBits() != 0)
 		{
 			drawerargs.SetTextureUStep(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * xstepscale));
-			drawerargs.SetTextureUPos(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * basexfrac) + pviewx);
+			drawerargs.SetTextureUPos(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * curxfrac + pviewx));
 		}
 		else
 		{
@@ -171,7 +171,7 @@ namespace swrenderer
 		if (drawerargs.TextureHeightBits() != 0)
 		{
 			drawerargs.SetTextureVStep(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * ystepscale));
-			drawerargs.SetTextureVPos(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * baseyfrac) + pviewy);
+			drawerargs.SetTextureVPos(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * curyfrac + pviewy));
 		}
 		else
 		{
@@ -179,11 +179,9 @@ namespace swrenderer
 			drawerargs.SetTextureVPos(0);
 		}
 		
-		auto viewport = RenderViewport::Instance();
-
 		if (viewport->RenderTarget->IsBgra())
 		{
-			double distance2 = planeheight * yslope[(y + 1 < viewheight) ? y + 1 : y - 1];
+			double distance2 = viewport->PlaneDepth(y + 1, planeheight);
 			double xmagnitude = fabs(ystepscale * (distance2 - distance) * viewport->FocalLengthX);
 			double ymagnitude = fabs(xstepscale * (distance2 - distance) * viewport->FocalLengthX);
 			double magnitude = MAX(ymagnitude, xmagnitude);
@@ -267,56 +265,6 @@ namespace swrenderer
 
 		drawerargs.DrawSpan(Thread);
 	}
-
-	void RenderFlatPlane::StepColumn()
-	{
-		basexfrac -= xstepscale;
-		baseyfrac -= ystepscale;
-	}
-
-	void RenderFlatPlane::SetupSlope()
-	{
-		auto viewport = RenderViewport::Instance();
-
-		int i = 0;
-		int e = viewheight;
-		float focus = float(viewport->FocalLengthY);
-		float den;
-		float cy = float(viewport->CenterY);
-		if (i < centery)
-		{
-			den = cy - i - 0.5f;
-			if (e <= centery)
-			{
-				do {
-					yslope[i] = focus / den;
-					den -= 1;
-				} while (++i < e);
-			}
-			else
-			{
-				do {
-					yslope[i] = focus / den;
-					den -= 1;
-				} while (++i < centery);
-				den = i - cy + 0.5f;
-				do {
-					yslope[i] = focus / den;
-					den += 1;
-				} while (++i < e);
-			}
-		}
-		else
-		{
-			den = i - cy + 0.5f;
-			do {
-				yslope[i] = focus / den;
-				den += 1;
-			} while (++i < e);
-		}
-	}
-
-	float RenderFlatPlane::yslope[MAXHEIGHT];
 
 	/////////////////////////////////////////////////////////////////////////
 	

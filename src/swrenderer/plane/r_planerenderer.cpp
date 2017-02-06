@@ -85,8 +85,6 @@ namespace swrenderer
 
 			t2 = pl->top[x];
 			b2 = pl->bottom[x];
-
-			StepColumn();
 		}
 		// Draw any spans that are still open
 		while (t2 < b2)

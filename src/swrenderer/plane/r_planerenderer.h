@@ -26,7 +26,6 @@ namespace swrenderer
 		void RenderLines(VisiblePlane *pl);
 
 		virtual void RenderLine(int y, int x1, int x2) = 0;
-		virtual void StepColumn() { }
 
 	private:
 		short spanend[MAXHEIGHT];

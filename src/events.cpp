@@ -6,6 +6,7 @@
 #include "v_text.h"
 #include "actor.h"
 #include "c_dispatch.h"
+#include "d_net.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
 DStaticEventHandler* E_LastEventHandler = nullptr;
@@ -1088,5 +1089,23 @@ CCMD(event)
 
 CCMD(netevent)
 {
+	int argc = argv.argc();
 
+	if (argc < 2 || argc > 5)
+	{
+		Printf("Usage: event <name> [arg1] [arg2] [arg3]\n");
+	}
+	else
+	{
+		int arg[3] = { 0, 0, 0 };
+		int argn = MIN<int>(argc - 2, countof(arg));
+		for (int i = 0; i < argn; i++)
+			arg[i] = atoi(argv[2 + i]);
+		// call networked
+		Net_WriteByte(DEM_NETEVENT);
+		Net_WriteString(argv[1]);
+		Net_WriteByte(argn);
+		for (int i = 0; i < argn; i++)
+			Net_WriteLong(arg[i]);
+	}
 }

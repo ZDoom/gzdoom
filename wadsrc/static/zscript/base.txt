@@ -417,9 +417,14 @@ enum EPickStart
 // Although String is a builtin type, this is a convenient way to attach methods to it.
 struct StringStruct native
 {
-	native void Replace(String pattern, String replacement);
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
+
+	native void Replace(String pattern, String replacement);
+	native String Mid(int pos = 0, int len = 2147483647);
+	native int Len();
+	native String CharAt(int pos);
+	native int CharCodeAt(int pos);
 }
 
 class Floor : Thinker native

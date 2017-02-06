@@ -1141,13 +1141,16 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	PARAM_INT(len);
+	PARAM_INT(ipos);
+	PARAM_INT(ilen);
 	// validate. we don't want to crash if someone passes negative values.
 	// with size_t it's handled naturally I think, as it's unsigned, but not in ZScript.
-	if (pos < 0) pos = 0;
-	if (len < 0) len = 0;
-	int slen = self->Len();
+	if (ipos < 0) ipos = 0;
+	if (ilen < 0) ilen = 0;
+	// convert to size_t to prevent overflows here
+	size_t slen = self->Len();
+	size_t pos = (size_t)ipos;
+	size_t len = (size_t)ilen;
 	if (pos > slen) pos = slen - 1;
 	if (pos + len > slen)
 		len = slen - pos;

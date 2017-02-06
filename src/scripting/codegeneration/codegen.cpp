@@ -6368,11 +6368,8 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
-	: FxExpression(EFX_GlobalVariable, pos)
+	: FxMemberBase(EFX_GlobalVariable, mem, pos)
 {
-	membervar = mem;
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6548,11 +6545,8 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition &pos)
-	: FxExpression(EFX_StackVariable, pos)
+	: FxMemberBase(EFX_StackVariable, new PField(NAME_None, type, 0, offset), pos)
 {
-	membervar = new PField(NAME_None, type, 0, offset);
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6651,14 +6645,16 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
+FxMemberBase::FxMemberBase(EFxType type, PField *f, const FScriptPosition &p)
+	:FxExpression(type, p), membervar(f)
+{
+}
+
 
 FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-	: FxExpression(EFX_StructMember, pos)
+	: FxMemberBase(EFX_StructMember, mem, pos)
 {
 	classx = x;
-	membervar = mem;
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6730,35 +6726,13 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	else if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 	{
 		// if this is a struct within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember)
+		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember || classx->ExprType == EFX_GlobalVariable || classx->ExprType == EFX_StackVariable)
 		{
-			auto parentfield = static_cast<FxStructMember *>(classx)->membervar;
+			auto parentfield = static_cast<FxMemberBase *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
 			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
 			newfield->BitValue = membervar->BitValue;
-			static_cast<FxStructMember *>(classx)->membervar = newfield;
-			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = classx->Resolve(ctx);
-			classx = nullptr;
-			return x;
-		}
-		else if (classx->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
-			newfield->BitValue = membervar->BitValue;
-			static_cast<FxGlobalVariable *>(classx)->membervar = newfield;
-			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = classx->Resolve(ctx);
-			classx = nullptr;
-			return x;
-		}
-		else if (classx->ExprType == EFX_StackVariable)
-		{
-			auto parentfield = static_cast<FxStackVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
-			newfield->BitValue = membervar->BitValue;
-			static_cast<FxStackVariable *>(classx)->ReplaceField(newfield);
+			static_cast<FxMemberBase *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
 			classx = nullptr;
@@ -6977,19 +6951,9 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	if (Array->IsResizableArray())
 	{
 		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember || Array->ExprType == EFX_GlobalVariable || Array->ExprType == EFX_StackVariable)
 		{
-			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + sizeof(void*);
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + sizeof(void*);
-		}
-		else if (Array->ExprType == EFX_StackVariable)
-		{
-			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
+			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
 		else
@@ -7011,32 +6975,12 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		}
 
 		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember || Array->ExprType == EFX_GlobalVariable || Array->ExprType == EFX_StackVariable)
 		{
-			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
+			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
 			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxStructMember *>(Array)->membervar = newfield;
-			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = Array->Resolve(ctx);
-			Array = nullptr;
-			return x;
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
-			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = Array->Resolve(ctx);
-			Array = nullptr;
-			return x;
-		}
-		else if (Array->ExprType == EFX_StackVariable)
-		{
-			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
-			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
+			static_cast<FxMemberBase *>(Array)->membervar = newfield;
 			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = Array->Resolve(ctx);
 			Array = nullptr;
@@ -7083,17 +7027,8 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
 		auto f = new PField(NAME_None, TypeUInt32, 0, SizeAddr);
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
-		{
-			static_cast<FxStructMember *>(Array)->membervar = f;
-			static_cast<FxStructMember *>(Array)->AddressRequested = false;
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			static_cast<FxGlobalVariable *>(Array)->membervar = f;
-			static_cast<FxGlobalVariable *>(Array)->AddressRequested = false;
-		}
-
+		static_cast<FxMemberBase *>(Array)->membervar = f;
+		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
 		Array->ValueType = TypeUInt32;
 		bound = Array->Emit(build);
 	}
@@ -7849,9 +7784,9 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					a->ValueType = NewPointer(backingtype);
 
 					// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
-					if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember)
+					if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StackVariable)
 					{
-						auto member = static_cast<FxStructMember*>(a);
+						auto member = static_cast<FxMemberBase*>(a);
 						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
 						member->membervar = newfield;
 						Self = nullptr;
@@ -7859,17 +7794,6 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 						member->ValueType = TypeUInt32;
 						return member;
 					}
-					else if (Self->ExprType == EFX_StackVariable)
-					{
-						auto member = static_cast<FxStackVariable*>(Self);
-						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
-						member->membervar = newfield;
-						Self = nullptr;
-						delete this;
-						member->ValueType = TypeUInt32;
-						return member;
-					}
-
 				}
 				else if (a->IsPointer() && Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 				{
@@ -7908,19 +7832,9 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			else
 			{
 				// Resizable arrays can only be defined in C code and they can only exist in pointer form to reduce their impact on the code generator.
-				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember)
+				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_GlobalVariable)
 				{
-					auto member = static_cast<FxStructMember*>(Self);
-					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
-					member->membervar = newfield;
-					Self = nullptr;
-					delete this;
-					member->ValueType = TypeUInt32;
-					return member;
-				}
-				else if (Self->ExprType == EFX_GlobalVariable)
-				{
-					auto member = static_cast<FxGlobalVariable*>(Self);
+					auto member = static_cast<FxMemberBase*>(Self);
 					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
 					member->membervar = newfield;
 					Self = nullptr;

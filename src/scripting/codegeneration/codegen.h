@@ -1316,17 +1316,28 @@ public:
 
 //==========================================================================
 //
+//	FxMemberBase
+//
+//==========================================================================
+
+class FxMemberBase : public FxExpression
+{
+public:
+	PField *membervar;
+	bool AddressRequested = false;
+	bool AddressWritable = true;
+	FxMemberBase(EFxType type, PField *f, const FScriptPosition &p);
+};
+
+//==========================================================================
+//
 //	FxGlobalVariaböe
 //
 //==========================================================================
 
-class FxGlobalVariable : public FxExpression
+class FxGlobalVariable : public FxMemberBase
 {
 public:
-	PField *membervar;
-	bool AddressRequested;
-	bool AddressWritable;
-
 	FxGlobalVariable(PField*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
@@ -1343,19 +1354,17 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+
 //==========================================================================
 //
 //	FxClassMember
 //
 //==========================================================================
 
-class FxStructMember : public FxExpression
+class FxStructMember : public FxMemberBase
 {
 public:
 	FxExpression *classx;
-	PField *membervar;
-	bool AddressRequested;
-	bool AddressWritable;
 
 	FxStructMember(FxExpression*, PField*, const FScriptPosition&);
 	~FxStructMember();
@@ -1403,13 +1412,9 @@ public:
 //
 //==========================================================================
 
-class FxStackVariable : public FxExpression
+class FxStackVariable : public FxMemberBase
 {
 public:
-	PField *membervar;
-	bool AddressRequested;
-	bool AddressWritable;
-
 	FxStackVariable(PType *type, int offset, const FScriptPosition&);
 	~FxStackVariable();
 	void ReplaceField(PField *newfield);

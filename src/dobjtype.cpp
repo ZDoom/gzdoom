@@ -2012,8 +2012,8 @@ PDynArray::PDynArray()
 //
 //==========================================================================
 
-PDynArray::PDynArray(PType *etype)
-: ElementType(etype)
+PDynArray::PDynArray(PType *etype,PStruct *backing)
+: ElementType(etype), BackingType(backing)
 {
 	mDescriptiveName.Format("DynArray<%s>", etype->DescriptiveName());
 	Size = sizeof(FArray);
@@ -2061,7 +2061,33 @@ PDynArray *NewDynArray(PType *type)
 	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PDynArray), (intptr_t)type, 0, &bucket);
 	if (atype == NULL)
 	{
-		atype = new PDynArray(type);
+		FString backingname;
+
+		switch (type->GetRegType())
+		{
+		case REGT_INT:
+			backingname.Format("DynArray_I%d", type->Size * 8);
+			break;
+
+		case REGT_FLOAT:
+			backingname.Format("DynArray_F%d", type->Size * 8);
+			break;
+
+		case REGT_STRING:
+			backingname = "DynArray_String";
+			break;
+
+		case REGT_POINTER:
+			backingname = "DynArray_Ptr";
+			break;
+
+		default:
+			I_Error("Unsupported dynamic array requested");
+			break;
+		}
+
+		auto backing = NewNativeStruct(backingname, nullptr);
+		atype = new PDynArray(type, backing);
 		TypeTable.AddType(atype, RUNTIME_CLASS(PDynArray), (intptr_t)type, 0, bucket);
 	}
 	return (PDynArray *)atype;

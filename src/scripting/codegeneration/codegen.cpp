@@ -6946,19 +6946,32 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		return nullptr;
 	}
 
-	PArray *arraytype = dyn_cast<PArray>(Array->ValueType);
-	if (arraytype == nullptr)
+	PArray *arraytype = nullptr;
+	PType *elementtype = nullptr;
+	if (Array->IsDynamicArray())
 	{
-		// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
-		PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
-		if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
-		{
-			ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
-			delete this;
-			return nullptr;
-		}
-		arraytype = static_cast<PArray*>(ptype->PointedType);
+		PDynArray *darraytype = static_cast<PDynArray*>(Array->ValueType);
+		elementtype = darraytype->ElementType;
+		Array->ValueType = NewPointer(NewResizableArray(elementtype));	// change type so that this can use the code for resizable arrays unchanged.
 		arrayispointer = true;
+	}
+	else
+	{
+		arraytype = dyn_cast<PArray>(Array->ValueType);
+		if (arraytype == nullptr)
+		{
+			// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
+			PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
+			if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
+				delete this;
+				return nullptr;
+			}
+			arraytype = static_cast<PArray*>(ptype->PointedType);
+			arrayispointer = true;
+		}
+		elementtype = arraytype->ElementType;
 	}
 
 	if (Array->IsResizableArray())
@@ -6967,12 +6980,17 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
 		{
 			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + parentfield->Type->Align;
+			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
 		else if (Array->ExprType == EFX_GlobalVariable)
 		{
 			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + parentfield->Type->Align;
+			SizeAddr = parentfield->Offset + sizeof(void*);
+		}
+		else if (Array->ExprType == EFX_StackVariable)
+		{
+			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
+			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
 		else
 		{
@@ -6981,54 +6999,52 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 	}
-	else if (index->isConstant())
+	// constant indices can only be resolved at compile time for statically sized arrays.
+	else if (index->isConstant() && arraytype != nullptr && !arrayispointer)
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		if (indexval >= arraytype->ElementCount && !Array->IsResizableArray())
+		if (indexval >= arraytype->ElementCount)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Array index out of bounds");
 			delete this;
 			return nullptr;
 		}
 
-		if (!arrayispointer)
+		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
 		{
-			// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-			if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
-			{
-				auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-				// PFields are garbage collected so this will be automatically taken care of later.
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxStructMember *>(Array)->membervar = newfield;
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
-			else if (Array->ExprType == EFX_GlobalVariable)
-			{
-				auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
-			else if (Array->ExprType == EFX_StackVariable)
-			{
-				auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
+			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
+			// PFields are garbage collected so this will be automatically taken care of later.
+			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxStructMember *>(Array)->membervar = newfield;
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
+		}
+		else if (Array->ExprType == EFX_GlobalVariable)
+		{
+			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
+			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
+		}
+		else if (Array->ExprType == EFX_StackVariable)
+		{
+			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
+			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
 		}
 	}
 
-	ValueType = arraytype->ElementType;
+	ValueType = elementtype;
 	if (!Array->RequestAddress(ctx, &AddressWritable))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Unable to dereference array.");
@@ -7803,6 +7819,72 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		// same for String methods. It also uses a hidden struct type to define them.
 		Self->ValueType = TypeStringStruct;
+	}
+	else if (Self->IsDynamicArray())
+	{
+		if (MethodName == NAME_Size)
+		{
+			FxExpression *x = new FxMemberIdentifier(Self, NAME_Size, ScriptPosition);	// todo: obfuscate the name to prevent direct access.
+			Self = nullptr;
+			delete this;
+			return x->Resolve(ctx);
+		}
+		else
+		{
+			auto elementType = static_cast<PDynArray*>(Self->ValueType)->ElementType;
+			Self->ValueType = static_cast<PDynArray*>(Self->ValueType)->BackingType;
+			// this requires some added type checks for the passed types.
+			for (auto &a : ArgList)
+			{
+				a = a->Resolve(ctx);
+				if (a == nullptr)
+				{
+					delete this;
+					return nullptr;
+				}
+				if (a->IsDynamicArray())
+				{
+					// Copy and Move must turn their parameter into a pointer to the backing struct type.
+					auto backingtype = static_cast<PDynArray*>(a->ValueType)->BackingType;
+					a->ValueType = NewPointer(backingtype);
+
+					// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
+					if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember)
+					{
+						auto member = static_cast<FxStructMember*>(a);
+						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
+						member->membervar = newfield;
+						Self = nullptr;
+						delete this;
+						member->ValueType = TypeUInt32;
+						return member;
+					}
+					else if (Self->ExprType == EFX_StackVariable)
+					{
+						auto member = static_cast<FxStackVariable*>(Self);
+						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
+						member->membervar = newfield;
+						Self = nullptr;
+						delete this;
+						member->ValueType = TypeUInt32;
+						return member;
+					}
+
+				}
+				else if (a->IsPointer() && Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+				{
+					// the only case which must be checked up front is for pointer arrays receiving a new element.
+					// Since there is only one native backing class it uses a neutral void pointer as its argument,
+					// meaning that FxMemberFunctionCall is unable to do a proper check. So we have to do it here.
+					if (a->ValueType != elementType)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument. Got %s, expected %s", a->ValueType->DescriptiveName(), elementType->DescriptiveName());
+						delete this;
+						return nullptr;
+					}
+				}
+			}
+		}
 	}
 	else if (Self->IsArray())
 	{

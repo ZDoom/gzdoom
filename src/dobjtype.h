@@ -6,6 +6,7 @@
 #endif
 
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
+class PStruct;
 
 #include "vm.h"
 
@@ -649,9 +650,10 @@ class PDynArray : public PCompoundType
 	DECLARE_CLASS(PDynArray, PCompoundType);
 	HAS_OBJECT_POINTERS;
 public:
-	PDynArray(PType *etype);
+	PDynArray(PType *etype, PStruct *backing);
 
 	PType *ElementType;
+	PStruct *BackingType;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;

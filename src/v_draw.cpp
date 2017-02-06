@@ -129,12 +129,12 @@ static int PalFromRGB(uint32 rgb)
 
 void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
 {
-	va_list tags;
-	va_start(tags, tags_first);
+	Va_List tags;
+	va_start(tags.list, tags_first);
 	DrawParms parms;
 
 	bool res = ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false);
-	va_end(tags);
+	va_end(tags.list);
 	if (!res)
 	{
 		return;
@@ -142,7 +142,7 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 	DrawTextureParms(img, parms);
 }
 
-static int ListGetInt(VMVa_List &tags);
+int ListGetInt(VMVa_List &tags);
 
 void DCanvas::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
 {
@@ -457,37 +457,37 @@ bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double
 	return false;
 }
 
-static void ListEnd(va_list &tags)
+static void ListEnd(Va_List &tags)
 {
-	va_end(tags);
+	va_end(tags.list);
 }
 
-static int ListGetInt(va_list &tags)
+static int ListGetInt(Va_List &tags)
 {
-	return va_arg(tags, int);
+	return va_arg(tags.list, int);
 }
 
-static inline double ListGetDouble(va_list &tags)
+static inline double ListGetDouble(Va_List &tags)
 {
-	return va_arg(tags, double);
+	return va_arg(tags.list, double);
 }
 
 // These two options are only being used by the D3D version of the HUD weapon drawer, they serve no purpose anywhere else.
-static inline FSpecialColormap * ListGetSpecialColormap(va_list &tags)
+static inline FSpecialColormap * ListGetSpecialColormap(Va_List &tags)
 {
-	return va_arg(tags, FSpecialColormap *);
+	return va_arg(tags.list, FSpecialColormap *);
 }
 
-static inline FColormapStyle * ListGetColormapStyle(va_list &tags)
+static inline FColormapStyle * ListGetColormapStyle(Va_List &tags)
 {
-	return va_arg(tags, FColormapStyle *);
+	return va_arg(tags.list, FColormapStyle *);
 }
 
 static void ListEnd(VMVa_List &tags)
 {
 }
 
-static int ListGetInt(VMVa_List &tags)
+int ListGetInt(VMVa_List &tags)
 {
 	if (tags.curindex < tags.numargs && tags.args[tags.curindex].Type == REGT_INT)
 	{
@@ -946,7 +946,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool DCanvas::ParseDrawTextureTags<va_list>(FTexture *img, double x, double y, DWORD tag, va_list& tags, DrawParms *parms, bool fortext) const;
+template bool DCanvas::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, DWORD tag, Va_List& tags, DrawParms *parms, bool fortext) const;
 template bool DCanvas::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, DWORD tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
 
 void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,

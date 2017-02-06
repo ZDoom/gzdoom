@@ -215,8 +215,8 @@ namespace swrenderer
 	void RenderScene::RenderThreadSlice(RenderThread *thread)
 	{
 		thread->FrameMemory->Clear();
-		thread->Clip3DFloors->Cleanup();
-		thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+		thread->Clip3D->Cleanup();
+		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 		thread->Portal->CopyStackedViewParameters();
 		thread->ClipSegments->Clear(0, viewwidth);
 		thread->DrawSegments->Clear();
@@ -237,7 +237,7 @@ namespace swrenderer
 			WallCycles.Clock();
 
 		thread->OpaquePass->RenderScene();
-		thread->Clip3DFloors->ResetClip(); // reset clips (floor/ceiling)
+		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 
 		if (thread == MainThread())
 			WallCycles.Unclock();
@@ -375,7 +375,7 @@ namespace swrenderer
 	void RenderScene::Deinit()
 	{
 		MainThread()->TranslucentPass->Deinit();
-		MainThread()->Clip3DFloors->Cleanup();
+		MainThread()->Clip3D->Cleanup();
 	}
 
 	/////////////////////////////////////////////////////////////////////////

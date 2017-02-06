@@ -123,7 +123,7 @@ namespace swrenderer
 			WallT.InitFromLine(Thread, v1->fPos() - ViewPos, v2->fPos() - ViewPos);
 		}
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 		{
@@ -352,7 +352,7 @@ namespace swrenderer
 		draw_segment->bFakeBoundary = false;
 		draw_segment->foggy = foggy;
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
 		else draw_segment->fake = 0;
 
@@ -955,7 +955,7 @@ namespace swrenderer
 			}
 		}
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// mark ceiling areas
 		if (markceiling)

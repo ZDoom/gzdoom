@@ -568,7 +568,7 @@ namespace swrenderer
 			backupfp = floorplane;
 			backupcp = ceilingplane;
 
-			Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 			// first check all floors
 			for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
@@ -738,7 +738,7 @@ namespace swrenderer
 					backupcp = ceilingplane;
 					floorplane = nullptr;
 					ceilingplane = nullptr;
-					Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+					Clip3DFloors *clip3d = Thread->Clip3D.get();
 					for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 					{
 						clip3d->SetFakeFloor(line->backsector->e->XFloor.ffloors[i]);

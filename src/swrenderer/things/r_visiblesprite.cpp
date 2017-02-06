@@ -57,7 +57,7 @@ namespace swrenderer
 		int colormapnum = spr->Light.ColormapNum;
 		F3DFloor *rover;
 
-		Clip3DFloors *clip3d = thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = thread->Clip3D.get();
 
 		// [RH] Check for particles
 		if (spr->IsParticle())

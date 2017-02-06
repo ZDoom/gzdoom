@@ -140,7 +140,7 @@ namespace swrenderer
 
 		if (renew)
 		{
-			Thread->Clip3DFloors->fake3D |= FAKE3D_REFRESHCLIP;
+			Thread->Clip3D->fake3D |= FAKE3D_REFRESHCLIP;
 		}
 
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
@@ -167,7 +167,7 @@ namespace swrenderer
 		Thread->SpriteList->Sort();
 		Thread->DrawSegments->BuildSegmentGroups();
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		if (clip3d->height_top == nullptr)
 		{ // kg3D - no visible 3D floors, normal rendering
 			DrawMaskedSingle(false);

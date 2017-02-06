@@ -110,7 +110,7 @@ namespace swrenderer
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() < 0)
@@ -478,7 +478,7 @@ namespace swrenderer
 		WallC.tright.Y = ds->cy + ds->cdy;
 		WallT = ds->tmapvals;
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
 		walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
 
@@ -532,7 +532,7 @@ namespace swrenderer
 		floorHeight = backsector->CenterFloor();
 		ceilingHeight = backsector->CenterCeiling();
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// maybe fix clipheights
 		if (!(clip3d->fake3D & FAKE3D_CLIPBOTTOM)) clip3d->sclipBottom = floorHeight;
@@ -938,7 +938,7 @@ namespace swrenderer
 		top = MAX(frontcz1, frontcz2);
 		bot = MIN(frontfz1, frontfz2);
 
-		Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		if (clip3d->fake3D & FAKE3D_CLIPTOP)
 		{
 			top = MIN(top, clip3d->sclipTop);

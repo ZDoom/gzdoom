@@ -129,7 +129,7 @@ namespace swrenderer
 			// kg3D - hack, store alpha in sky
 			// i know there is ->alpha, but this also allows to identify fake plane
 			// and ->alpha is for stacked sectors
-			Clip3DFloors *clip3d = Thread->Clip3DFloors.get();
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
 			if (clip3d->fake3D & (FAKE3D_FAKEFLOOR | FAKE3D_FAKECEILING)) sky = 0x80000000 | clip3d->fakeAlpha;
 			else sky = 0;	// not skyflatnum so it can't be a sky
 			portal = nullptr;
@@ -190,7 +190,7 @@ namespace swrenderer
 					sky == check->sky &&
 					renderportal->CurrentPortalUniq == check->CurrentPortalUniq &&
 					renderportal->MirrorFlags == check->MirrorFlags &&
-					Thread->Clip3DFloors->CurrentSkybox == check->CurrentSkybox &&
+					Thread->Clip3D->CurrentSkybox == check->CurrentSkybox &&
 					ViewPos == check->viewpos
 					)
 				{
@@ -215,7 +215,7 @@ namespace swrenderer
 		check->Additive = additive;
 		check->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		check->MirrorFlags = renderportal->MirrorFlags;
-		check->CurrentSkybox = Thread->Clip3DFloors->CurrentSkybox;
+		check->CurrentSkybox = Thread->Clip3D->CurrentSkybox;
 
 		return check;
 	}
@@ -333,7 +333,7 @@ namespace swrenderer
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
 				// kg3D - draw only correct planes
-				if (pl->CurrentPortalUniq != renderportal->CurrentPortalUniq || pl->CurrentSkybox != Thread->Clip3DFloors->CurrentSkybox)
+				if (pl->CurrentPortalUniq != renderportal->CurrentPortalUniq || pl->CurrentSkybox != Thread->Clip3D->CurrentSkybox)
 					continue;
 				// kg3D - draw only real planes now
 				if (pl->sky >= 0) {
@@ -359,7 +359,7 @@ namespace swrenderer
 		{
 			for (pl = visplanes[i]; pl; pl = pl->next)
 			{
-				if (pl->CurrentSkybox != Thread->Clip3DFloors->CurrentSkybox || pl->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+				if (pl->CurrentSkybox != Thread->Clip3D->CurrentSkybox || pl->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 					continue;
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)

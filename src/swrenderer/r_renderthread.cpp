@@ -66,7 +66,7 @@ namespace swrenderer
 		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
 		SpriteList = std::make_unique<VisibleSpriteList>();
 		Portal = std::make_unique<RenderPortal>(this);
-		Clip3DFloors = std::make_unique<swrenderer::Clip3DFloors>(this);
+		Clip3D = std::make_unique<Clip3DFloors>(this);
 		PlayerSprites = std::make_unique<RenderPlayerSprites>(this);
 		PlaneList = std::make_unique<VisiblePlaneList>(this);
 		DrawSegments = std::make_unique<DrawSegmentList>(this);

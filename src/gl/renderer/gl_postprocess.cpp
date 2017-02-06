@@ -60,6 +60,7 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
+#include "gl/shaders/gl_lensflareshader.h"
 #include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
@@ -166,6 +167,22 @@ void FGLRenderer::PostProcessScene()
 	ColormapScene();
 	LensDistortScene();
 	ApplyFXAA();
+	LensFlareScene();
+}
+
+void FGLRenderer::LensFlareScene() {
+	FGLDebug::PushGroup("LensFlareScene");
+	
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+
+	mLensFlareShader->Bind();
+
+	mLensFlareShader->InputTexture.Set(0);
+
+	RenderScreenQuad();
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------

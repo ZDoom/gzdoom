@@ -7781,18 +7781,27 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				{
 					// Copy and Move must turn their parameter into a pointer to the backing struct type.
 					auto backingtype = static_cast<PDynArray*>(a->ValueType)->BackingType;
+					if (elementType != static_cast<PDynArray*>(a->ValueType)->ElementType)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+						delete this;
+						return nullptr;
+					}
+					bool writable;
+					if (!a->RequestAddress(ctx, &writable))
+					{
+						ScriptPosition.Message(MSG_ERROR, "Unable to dereference array variable");
+						delete this;
+						return nullptr;
+					}
 					a->ValueType = NewPointer(backingtype);
 
 					// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
 					if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StackVariable)
 					{
-						auto member = static_cast<FxMemberBase*>(a);
+						auto member = static_cast<FxMemberBase*>(Self);
 						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
 						member->membervar = newfield;
-						Self = nullptr;
-						delete this;
-						member->ValueType = TypeUInt32;
-						return member;
 					}
 				}
 				else if (a->IsPointer() && Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))

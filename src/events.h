@@ -57,6 +57,8 @@ void E_PlayerDied(int num);
 void E_PlayerDisconnected(int num);
 // this executes on events.
 bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
+// this executes on console/net events.
+void E_Console(int player, FString name, int arg1, int arg2, int arg3);
 
 // check if there is anything that should receive GUI events
 bool E_CheckUiProcessors();
@@ -139,10 +141,12 @@ public:
 	void PlayerDied(int num);
 	void PlayerDisconnected(int num);
 
-	//
 	// return true if handled.
-	virtual bool InputProcess(event_t* ev);
-	virtual bool UiProcess(event_t* ev);
+	bool InputProcess(event_t* ev);
+	bool UiProcess(event_t* ev);
+	
+	// 
+	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -277,6 +281,22 @@ public:
 	DInputEvent()
 	{
 		Type = EV_None;
+	}
+};
+
+class DConsoleEvent : public DBaseEvent
+{
+	DECLARE_CLASS(DConsoleEvent, DBaseEvent)
+public:
+	// player that activated this event. note that it's always -1 for non-playsim events (i.e. these not called with netevent)
+	int Player;
+	//
+	FString Name;
+	int Args[3];
+
+	DConsoleEvent()
+	{
+		Player = -1;
 	}
 };
 

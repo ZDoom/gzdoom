@@ -5,6 +5,7 @@
 #include "gi.h"
 #include "v_text.h"
 #include "actor.h"
+#include "c_dispatch.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
 DStaticEventHandler* E_LastEventHandler = nullptr;
@@ -394,6 +395,12 @@ bool E_Responder(event_t* ev)
 	return false;
 }
 
+void E_Console(int player, FString name, int arg1, int arg2, int arg3)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->ConsoleProcess(player, name, arg1, arg2, arg3);
+}
+
 bool E_CheckUiProcessors()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
@@ -427,6 +434,7 @@ IMPLEMENT_CLASS(DWorldEvent, false, false)
 IMPLEMENT_CLASS(DPlayerEvent, false, false)
 IMPLEMENT_CLASS(DUiEvent, false, false)
 IMPLEMENT_CLASS(DInputEvent, false, false)
+IMPLEMENT_CLASS(DConsoleEvent, false, false)
 
 DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, Order);
 DEFINE_FIELD_X(StaticEventHandler, DStaticEventHandler, IsUiProcessor);
@@ -467,6 +475,10 @@ DEFINE_FIELD_X(InputEvent, DInputEvent, KeyString);
 DEFINE_FIELD_X(InputEvent, DInputEvent, KeyChar);
 DEFINE_FIELD_X(InputEvent, DInputEvent, MouseX);
 DEFINE_FIELD_X(InputEvent, DInputEvent, MouseY);
+
+DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Player)
+DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Name)
+DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Args)
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
@@ -615,6 +627,8 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
+
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 
 // ===========================================
 //
@@ -1012,9 +1026,67 @@ bool DStaticEventHandler::InputProcess(event_t* ev)
 	return false;
 }
 
+static DConsoleEvent* E_SetupConsoleEvent()
+{
+	static DConsoleEvent* e = nullptr;
+	if (!e) e = (DConsoleEvent*)RUNTIME_CLASS(DConsoleEvent)->CreateNew();
+	e->Player = -1;
+	e->Name = "";
+	for (int i = 0; i < countof(e->Args); i++)
+		e->Args[i] = 0;
+	return e;
+}
+
+void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3)
+{
+	IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
+			return;
+		DConsoleEvent* e = E_SetupConsoleEvent();
+
+		//
+		e->Player = player;
+		e->Name = name;
+		e->Args[0] = arg1;
+		e->Args[1] = arg2;
+		e->Args[2] = arg3;
+
+		VMValue params[2] = { (DStaticEventHandler*)this, e };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+}
+
 //
 void DStaticEventHandler::OnDestroy()
 {
 	E_UnregisterHandler(this);
 	Super::OnDestroy();
+}
+
+// console stuff
+// this is kinda like puke, except it distinguishes between local events and playsim events.
+CCMD(event)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 5)
+	{
+		Printf("Usage: event <name> [arg1] [arg2] [arg3]\n");
+	}
+	else
+	{
+		int arg[3] = { 0, 0, 0 };
+		int argn = MIN<int>(argc - 2, countof(arg));
+		for (int i = 0; i < argn; i++)
+			arg[i] = atoi(argv[2 + i]);
+		// call locally
+		E_Console(-1, argv[1], arg[0], arg[1], arg[2]);
+	}
+}
+
+CCMD(netevent)
+{
+
 }

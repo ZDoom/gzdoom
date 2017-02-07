@@ -3,10 +3,9 @@ out vec4 FragColor;
 
 uniform sampler2D InputTexture;
 
+uniform vec4 Scale;
+uniform vec4 Bias;
+
 void main() {
-	vec3 c;
-	c.r = texture(InputTexture, TexCoord).r;
-	c.g = texture(InputTexture, TexCoord).g * 0;
-	c.b = texture(InputTexture, TexCoord).b * 0;
-	FragColor = vec4(c, 1.0);
+	FragColor = texture(InputTexture, TexCoord);//max(vec4(0.0), texture(InputTexture, TexCoord) + Bias) * Scale;
 }

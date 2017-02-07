@@ -71,11 +71,16 @@
 // CVARs
 //
 //==========================================================================
-CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE);
+CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE)
 CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
 {
 	if (self < 0.1f) self = 0.1f;
 }
+
+CVAR(Int, gl_lensflare_samples, 5, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_disp, 0.37f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_halowidth, 0.36f, CVAR_ARCHIVE)
+//CVAR(Float, gl_lensflare_ghostsdisp, 1.0f, CVAR_ARCHIVE)
 
 CVAR(Float, gl_exposure_scale, 1.3f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
@@ -172,15 +177,44 @@ void FGLRenderer::PostProcessScene()
 
 void FGLRenderer::LensFlareScene() {
 	FGLDebug::PushGroup("LensFlareScene");
+
+	/*float scale[4] = {
+		gl_lensflare_scale, gl_lensflare_scale, gl_lensflare_scale, 1.0
+	};
+
+	float bias[4] = {
+		gl_lensflare_bias, gl_lensflare_bias, gl_lensflare_bias, 0.0
+	};
 	
+	/*mBuffers->BindSceneFB(false);
+	mBuffers->BindSceneColorTexture(0);
+
+	mLensFlareDownSampleShader->Bind();
+
+	mLensFlareDownSampleShader->InputTexture.Set(0);
+	mLensFlareDownSampleShader->Scale.Set(scale);
+	mLensFlareDownSampleShader->Bias.Set(bias);*/
+
+	//RenderScreenQuad();
+
+	float chroma[3] = {
+		0.11, 0.103333, 0.0833333
+	};
+
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
 
-	mLensFlareShader->Bind();
+	mLensFlareGhostShader->Bind();
 
-	mLensFlareShader->InputTexture.Set(0);
+	mLensFlareGhostShader->InputTexture.Set(0);
+	mLensFlareGhostShader->nSamples.Set(gl_lensflare_samples);
+	mLensFlareGhostShader->flareDispersal.Set(gl_lensflare_disp);
+	mLensFlareGhostShader->flareHaloWidth.Set(gl_lensflare_halowidth);
+	mLensFlareGhostShader->flareChromaticDistortion.Set(chroma);
 
 	RenderScreenQuad();
+
+	mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
 }

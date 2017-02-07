@@ -10,7 +10,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_lensflareshader.h"
 
-void FLensFlareShader::Bind() {
+void FLensFlareDownSampleShader::Bind() {
 	if (!mShader)
 	{
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
@@ -19,6 +19,26 @@ void FLensFlareShader::Bind() {
 		mShader.Link("shaders/glsl/lensflare");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		InputTexture.Init(mShader, "InputTexture");
+		Scale.Init(mShader, "Scale");
+		Bias.Init(mShader, "Bias");
+		//FlareTexture.Init(mShader, "FlareTexture");;
+	}
+	mShader.Bind();
+}
+
+void FLensFlareGhostShader::Bind() {
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensflare_ghost.fp", "", 330);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/lensflare_ghost");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		InputTexture.Init(mShader, "InputTexture");
+		nSamples.Init(mShader, "nSamples");
+		flareDispersal.Init(mShader, "flareDispersal");
+		flareHaloWidth.Init(mShader, "flareHaloWidth");
+		flareChromaticDistortion.Init(mShader, "flareChromaticDistortion");
 		//FlareTexture.Init(mShader, "FlareTexture");;
 	}
 	mShader.Bind();

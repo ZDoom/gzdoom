@@ -126,7 +126,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mSSAOCombineShader = nullptr;
 	mFXAAShader = nullptr;
 	mFXAALumaShader = nullptr;
-	mLensFlareShader = nullptr;
+	mLensFlareDownSampleShader = nullptr;
+	mLensFlareGhostShader = nullptr;
 }
 
 void gl_LoadModels();
@@ -155,7 +156,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dCheckerShader = new FPresent3DCheckerShader();
 	mPresent3dColumnShader = new FPresent3DColumnShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
-	mLensFlareShader = new FLensFlareShader();
+	mLensFlareDownSampleShader = new FLensFlareDownSampleShader();
+	mLensFlareGhostShader = new FLensFlareGhostShader();
 	m2DDrawer = new F2DDrawer;
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
@@ -226,7 +228,8 @@ FGLRenderer::~FGLRenderer()
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;
 	if (mLensShader) delete mLensShader;
-	if (mLensFlareShader) delete mLensFlareShader;
+	if (mLensFlareDownSampleShader) delete mLensFlareDownSampleShader;
+	if (mLensFlareGhostShader) delete mLensFlareGhostShader;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
 }

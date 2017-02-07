@@ -215,6 +215,7 @@ public:
 	typedef PClassType MetaClass;
 	MetaClass *GetClass() const;
 
+	PClass *TypeTableType;			// The type to use for hashing into the type table
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
@@ -875,9 +876,6 @@ class PClassType : public PClass
 protected:
 public:
 	PClassType();
-	virtual void DeriveData(PClass *newclass);
-
-	PClass *TypeTableType;	// The type to use for hashing into the type table
 };
 
 inline PType::MetaClass *PType::GetClass() const

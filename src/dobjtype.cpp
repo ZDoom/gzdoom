@@ -162,21 +162,7 @@ IMPLEMENT_CLASS(PClassType, false, false)
 //==========================================================================
 
 PClassType::PClassType()
-: TypeTableType(nullptr)
 {
-}
-
-//==========================================================================
-//
-// PClassType :: DeriveData
-//
-//==========================================================================
-
-void PClassType::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassType)));
-	Super::DeriveData(newclass);
-	static_cast<PClassType *>(newclass)->TypeTableType = TypeTableType;
 }
 
 /* PClassClass ************************************************************/
@@ -187,14 +173,10 @@ IMPLEMENT_CLASS(PClassClass, false, false)
 //
 // PClassClass Constructor
 //
-// The only thing we want to do here is automatically set TypeTableType
-// to PClass.
-//
 //==========================================================================
 
 PClassClass::PClassClass()
 {
-	TypeTableType = RUNTIME_CLASS(PClass);
 }
 
 /* PType ******************************************************************/
@@ -383,40 +365,10 @@ const char *PType::DescriptiveName() const
 //
 // PType :: StaticInit												STATIC
 //
-// Set up TypeTableType values for every PType child and create basic types.
-//
 //==========================================================================
 
 void PType::StaticInit()
 {
-	// Add types to the global symbol table.
-
-	// Set up TypeTable hash keys.
-	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
-	RUNTIME_CLASS(PVoidType)->TypeTableType = RUNTIME_CLASS(PVoidType);
-	RUNTIME_CLASS(PInt)->TypeTableType = RUNTIME_CLASS(PInt);
-	RUNTIME_CLASS(PBool)->TypeTableType = RUNTIME_CLASS(PBool);
-	RUNTIME_CLASS(PFloat)->TypeTableType = RUNTIME_CLASS(PFloat);
-	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
-	RUNTIME_CLASS(PName)->TypeTableType = RUNTIME_CLASS(PName);
-	RUNTIME_CLASS(PSound)->TypeTableType = RUNTIME_CLASS(PSound);
-	RUNTIME_CLASS(PSpriteID)->TypeTableType = RUNTIME_CLASS(PSpriteID);
-	RUNTIME_CLASS(PTextureID)->TypeTableType = RUNTIME_CLASS(PTextureID);
-	RUNTIME_CLASS(PColor)->TypeTableType = RUNTIME_CLASS(PColor);
-	RUNTIME_CLASS(PPointer)->TypeTableType = RUNTIME_CLASS(PPointer);
-	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PClassPointer);
-	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
-	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
-	RUNTIME_CLASS(PResizableArray)->TypeTableType = RUNTIME_CLASS(PResizableArray);
-	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
-	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
-	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
-	RUNTIME_CLASS(PNativeStruct)->TypeTableType = RUNTIME_CLASS(PNativeStruct);
-	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
-	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
-	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
-	RUNTIME_CLASS(PStateLabel)->TypeTableType = RUNTIME_CLASS(PStateLabel);
-
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
 	TypeTable.AddType(TypeAuto = new PErrorType(2));
@@ -1503,13 +1455,18 @@ void PPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) 
 
 void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClassClass)))
+	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		ar(key, *(PClass **)addr);
-	}
-	else if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		ar(key, *(DObject **)addr);
+		auto pt = static_cast<PClass*>(PointedType);
+
+		if (pt->IsDescendantOf(RUNTIME_CLASS(PClass)))
+		{
+			ar(key, *(PClass **)addr);
+		}
+		else
+		{
+			ar(key, *(DObject **)addr);
+		}
 	}
 	else
 	{
@@ -1526,16 +1483,19 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 
 bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClassClass)))
+	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		bool res = false;
-		::Serialize(ar, key, *(PClass **)addr, (PClass**)nullptr);
-		return res;
-	}
-	else if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		bool res = false;
-		::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
+		auto pt = static_cast<PClass*>(PointedType);
+		bool res = true;
+
+		if (pt->IsDescendantOf(RUNTIME_CLASS(PClass)))
+		{
+			::Serialize(ar, key, *(PClass **)addr, (PClass**)nullptr);
+		}
+		else
+		{
+			::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
+		}
 		return res;
 	}
 	return false;
@@ -3071,8 +3031,6 @@ void PClass::StaticBootstrap()
 	// The PClassClass constructor initialized these to nullptr, because the
 	// PClass metadata had not been created yet. Now it has, so we know what
 	// they should be and can insert them into the type table successfully.
-	clscls->TypeTableType = cls;
-	cls->TypeTableType = cls;
 	clscls->InsertIntoHash();
 	cls->InsertIntoHash();
 
@@ -3794,7 +3752,7 @@ PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, si
 	}
 	for (PType *type = TypeHash[bucket]; type != nullptr; type = type->HashNext)
 	{
-		if (type->GetClass()->TypeTableType == metatype && type->IsMatch(parm1, parm2))
+		if (type->TypeTableType == metatype && type->IsMatch(parm1, parm2))
 		{
 			return type;
 		}
@@ -3837,10 +3795,10 @@ void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t
 {
 #ifdef _DEBUG
 	size_t bucketcheck;
-	assert(metatype == type->GetClass()->TypeTableType && "Metatype does not match passed object");
 	assert(FindType(metatype, parm1, parm2, &bucketcheck) == nullptr && "Type must not be inserted more than once");
 	assert(bucketcheck == bucket && "Passed bucket was wrong");
 #endif
+	type->TypeTableType = metatype;
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
 	GC::WriteBarrier(type);
@@ -3854,11 +3812,12 @@ void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t
 
 void FTypeTable::AddType(PType *type)
 {
-	PClass *metatype;
 	intptr_t parm1, parm2;
 	size_t bucket;
 
-	metatype = type->GetClass()->TypeTableType;
+	// Type table stuff id only needed to let all classes hash to the same group. For all other types this is pointless.
+	type->TypeTableType = type->GetClass();
+	PClass *metatype = type->TypeTableType;
 	type->GetTypeIDs(parm1, parm2);
 	bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
 	assert(FindType(metatype, parm1, parm2, nullptr) == nullptr && "Type must not be inserted more than once");

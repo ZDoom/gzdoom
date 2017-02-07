@@ -429,20 +429,20 @@ void PClassActor::SetDropItems(DDropItem *drops)
 //
 //==========================================================================
 
-void PClassActor::Finalize(FStateDefinitions &statedef)
+void AActor::Finalize(FStateDefinitions &statedef)
 {
-	AActor *defaults = (AActor*)Defaults;
+	AActor *defaults = this;
 
 	try
 	{
-		statedef.FinishStates(this, defaults);
+		statedef.FinishStates(GetClass(), defaults);
 	}
 	catch (CRecoverableError &)
 	{
 		statedef.MakeStateDefines(NULL);
 		throw;
 	}
-	statedef.InstallStates(this, defaults);
+	statedef.InstallStates(GetClass(), defaults);
 	statedef.MakeStateDefines(NULL);
 }
 

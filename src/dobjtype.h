@@ -199,22 +199,14 @@ public:
 //   Prototype                     *+     *+
 
 struct ZCC_ExprConstant;
-class PClassType;
 class PType : public PTypeBase
 {
-	//DECLARE_ABSTRACT_CLASS_WITH_META(PType, DObject, PClassType);
-	// We need to unravel the _WITH_META macro, since PClassType isn't defined yet,
-	// and we can't define it until we've defined PClass. But we can't define that
-	// without defining PType.
 	DECLARE_ABSTRACT_CLASS(PType, PTypeBase)
 	HAS_OBJECT_POINTERS;
 protected:
-	enum { MetaClassNum = CLASSREG_PClassType };
 
 public:
-	typedef PClassType MetaClass;
-	MetaClass *GetClass() const;
-
+	PClass *TypeTableType;			// The type to use for hashing into the type table
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
@@ -247,6 +239,7 @@ public:
 	// object is destroyed.
 	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
 	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
+	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
 
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
@@ -534,7 +527,7 @@ class PClassPointer : public PPointer
 	DECLARE_CLASS(PClassPointer, PPointer);
 	HAS_OBJECT_POINTERS;
 public:
-	PClassPointer(class PClass *restrict);
+	PClassPointer(class PClass *restrict = nullptr);
 
 	class PClass *ClassRestriction;
 
@@ -542,8 +535,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-protected:
-	PClassPointer();
 };
 
 // Struct/class fields ------------------------------------------------------
@@ -657,6 +648,14 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
+	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
+
 protected:
 	PDynArray();
 };
@@ -769,22 +768,17 @@ enum
 	TentativeClass = UINT_MAX,
 };
 
-class PClassClass;
 class PClass : public PNativeStruct
 {
 	DECLARE_CLASS(PClass, PNativeStruct);
 	HAS_OBJECT_POINTERS;
 protected:
 	// We unravel _WITH_META here just as we did for PType.
-	enum { MetaClassNum = CLASSREG_PClassClass };
 	TArray<FTypeAndOffset> SpecialInits;
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults) const;
 	void SetSuper();
 public:
-	typedef PClassClass MetaClass;
-	MetaClass *GetClass() const;
-
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -801,6 +795,7 @@ public:
 	PClass				*ParentClass;	// the class this class derives from
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
+	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
@@ -818,6 +813,7 @@ public:
 	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
+	void BuildArrayPointers();
 	void DestroySpecials(void *addr) const;
 	const PClass *NativeClass() const;
 
@@ -859,34 +855,6 @@ public:
 	static bool bShutdown;
 	static bool bVMOperational;
 };
-
-class PClassType : public PClass
-{
-	DECLARE_CLASS(PClassType, PClass);
-protected:
-public:
-	PClassType();
-	virtual void DeriveData(PClass *newclass);
-
-	PClass *TypeTableType;	// The type to use for hashing into the type table
-};
-
-inline PType::MetaClass *PType::GetClass() const
-{
-	return static_cast<MetaClass *>(DObject::GetClass());
-}
-
-class PClassClass : public PClassType
-{
-	DECLARE_CLASS(PClassClass, PClassType);
-public:
-	PClassClass();
-};
-
-inline PClass::MetaClass *PClass::GetClass() const
-{
-	return static_cast<MetaClass *>(DObject::GetClass());
-}
 
 // Type tables --------------------------------------------------------------
 

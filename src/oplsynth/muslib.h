@@ -83,25 +83,8 @@ class FileReader;
 
 /* Global Definitions */
 
-#define MLVERSION	0x0175
-#define MLVERSIONSTR	"1.75"
-extern char MLversion[];
-extern char MLcopyright[];
-
 #define CHANNELS	16		// total channels 0..CHANNELS-1
 #define PERCUSSION	15		// percussion channel
-
-/* MUS file header structure */
-struct MUSheader {
-	char	ID[4];			// identifier "MUS" 0x1A
-	WORD	scoreLen;		// score length
-	WORD	scoreStart;		// score start
-	WORD	channels;		// primary channels
-	WORD	sec_channels;	// secondary channels (??)
-	WORD    instrCnt;		// used instrument count
-	WORD	dummy;
-//	WORD	instruments[...];	// table of used instruments
-};
 
 /* OPL2 instrument */
 struct OPL2instrument {
@@ -131,7 +114,6 @@ struct OP2instrEntry {
 };
 
 #define FL_FIXED_PITCH	0x0001		// note has fixed pitch (see below)
-#define FL_UNKNOWN		0x0002		// ??? (used in instrument #65 only)
 #define FL_DOUBLE_VOICE	0x0004		// use two voices instead of one
 
 

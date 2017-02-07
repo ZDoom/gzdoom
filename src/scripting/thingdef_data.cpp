@@ -1141,19 +1141,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(ipos);
-	PARAM_INT(ilen);
-	// validate. we don't want to crash if someone passes negative values.
-	// with size_t it's handled naturally I think, as it's unsigned, but not in ZScript.
-	if (ipos < 0) ipos = 0;
-	if (ilen < 0) ilen = 0;
-	// convert to size_t to prevent overflows here
-	size_t slen = self->Len();
-	size_t pos = (size_t)ipos;
-	size_t len = (size_t)ilen;
-	if (pos > slen) pos = slen - 1;
-	if (pos + len > slen)
-		len = slen - pos;
+	PARAM_UINT(pos);
+	PARAM_UINT(len);
 	FString s = self->Mid(pos, len);
 	ACTION_RETURN_STRING(s);
 }
@@ -1161,7 +1150,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 DEFINE_ACTION_FUNCTION(FStringStruct, Len)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_INT(self->Len());
+	ACTION_RETURN_INT((int)self->Len());
 }
 
 // CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
@@ -1169,7 +1158,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, CharAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_INT(pos);
-	int slen = self->Len();
+	int slen = (int)self->Len();
 	if (pos < 0 || pos >= slen)
 		ACTION_RETURN_STRING("");
 	ACTION_RETURN_STRING(FString((*self)[pos]));
@@ -1179,7 +1168,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, CharCodeAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_INT(pos);
-	int slen = self->Len();
+	int slen = (int)self->Len();
 	if (pos < 0 || pos >= slen)
 		ACTION_RETURN_INT(0);
 	ACTION_RETURN_INT((*self)[pos]);

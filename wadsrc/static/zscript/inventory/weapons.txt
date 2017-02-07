@@ -43,6 +43,8 @@ class Weapon : StateProvider native
 		Weapon.BobSpeed 1.0;
 		Weapon.BobRangeX 1.0;
 		Weapon.BobRangeY 1.0;
+		Weapon.SlotNumber -1;
+		Weapon.SlotPriority 32767;
 		+WEAPONSPAWN
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
 	}

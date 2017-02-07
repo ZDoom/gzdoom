@@ -347,6 +347,17 @@ begin:
 		GETADDR(PA,RC,X_WRITE_NIL);
 		*(void **)ptr = reg.a[B];
 		NEXTOP;
+	OP(SO):
+		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		*(void **)ptr = reg.a[B];
+		GC::WriteBarrier((DObject*)*(void **)ptr);
+		NEXTOP;
+	OP(SO_R):
+		ASSERTA(a); ASSERTA(B); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		GC::WriteBarrier((DObject*)*(void **)ptr);
+		NEXTOP;
 	OP(SV2):
 		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);

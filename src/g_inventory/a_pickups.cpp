@@ -73,10 +73,10 @@ size_t PClassInventory::PointerSubstitution(DObject *oldclass, DObject *newclass
 	return changed;
 }
 
-void PClassInventory::Finalize(FStateDefinitions &statedef)
+void AInventory::Finalize(FStateDefinitions &statedef)
 {
 	Super::Finalize(statedef);
-	((AActor*)Defaults)->flags |= MF_SPECIAL;
+	flags |= MF_SPECIAL;
 }
 
 IMPLEMENT_CLASS(AInventory, false, true)

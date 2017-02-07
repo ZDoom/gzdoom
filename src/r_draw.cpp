@@ -383,7 +383,7 @@ namespace swrenderer
 		if (style.BlendOp == STYLEOP_Shadow)
 		{
 			style = LegacyRenderStyles[STYLE_TranslucentStencil];
-			alpha = TRANSLUC33;
+			alpha = OPAQUE / 3;
 			color = 0;
 		}
 
@@ -393,7 +393,7 @@ namespace swrenderer
 		}
 		else if (style.Flags & STYLEF_Alpha1)
 		{
-			alpha = FRACUNIT;
+			alpha = OPAQUE;
 		}
 		else
 		{

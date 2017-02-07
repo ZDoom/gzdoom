@@ -103,7 +103,7 @@ double GetAlpha(int type, double alpha)
 	switch (type)
 	{
 	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return OPAQUE;
+	case STYLEALPHA_One:		return 1.;
 	case STYLEALPHA_Src:		return alpha;
 	case STYLEALPHA_InvSrc:		return 1. - alpha;
 	default:					return 0;

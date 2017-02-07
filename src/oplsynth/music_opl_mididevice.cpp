@@ -289,7 +289,7 @@ FString OPLMIDIDevice::GetStats()
 {
 	FString out;
 	char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
-	for (uint i = 0; i < io->OPLchannels; ++i)
+	for (uint32_t i = 0; i < io->OPLchannels; ++i)
 	{
 		if (channels[i].flags & CH_FREE)
 		{

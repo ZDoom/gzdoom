@@ -397,6 +397,23 @@ size_t DObject::PropagateMark()
 			GC::Mark((DObject **)((BYTE *)this + *offsets));
 			offsets++;
 		}
+
+		offsets = info->ArrayPointers;
+		if (offsets == NULL)
+		{
+			const_cast<PClass *>(info)->BuildArrayPointers();
+			offsets = info->ArrayPointers;
+		}
+		while (*offsets != ~(size_t)0)
+		{
+			auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+			for (auto &p : *aray)
+			{
+				GC::Mark(&p);
+			}
+			offsets++;
+		}
+
 		return info->Size;
 	}
 	return 0;
@@ -427,6 +444,28 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		}
 		offsets++;
 	}
+
+	offsets = info->ArrayPointers;
+	if (offsets == NULL)
+	{
+		const_cast<PClass *>(info)->BuildArrayPointers();
+		offsets = info->ArrayPointers;
+	}
+	while (*offsets != ~(size_t)0)
+	{
+		auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+		for (auto &p : *aray)
+		{
+			if (p == old)
+			{
+				p = notOld;
+				changed++;
+			}
+		}
+		offsets++;
+	}
+
+
 	return changed;
 }
 

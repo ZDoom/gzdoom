@@ -2447,19 +2447,6 @@ void ZCCCompiler::CompileStates()
 			continue;
 		}
 
-		// Same here, hack in the DVMObject as they weren't in the list originally
-		// TODO: process them in a non hackish way obviously
-		if (c->Type()->bRuntimeClass == true && c->Type()->ParentClass->bRuntimeClass == false)
-		{
-			auto vmtype = static_cast<PClassActor *>(c->Type()->ParentClass);
-			if (vmtype->StateList == nullptr)
-			{
-				FStateDefinitions vmstates;
-				vmstates.MakeStateDefines(dyn_cast<PClassActor>(vmtype->ParentClass));
-				vmtype->Finalize(vmstates);
-			}
-		}
-
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(dyn_cast<PClassActor>(c->Type()->ParentClass));
@@ -2658,7 +2645,7 @@ void ZCCCompiler::CompileStates()
 		}
 		try
 		{
-			static_cast<PClassActor *>(c->Type())->Finalize(statedef);
+			GetDefaultByType(c->Type())->Finalize(statedef);
 		}
 		catch (CRecoverableError &err)
 		{

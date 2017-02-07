@@ -72,6 +72,7 @@ class AInventory : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	
+	virtual void Finalize(FStateDefinitions &statedef) override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void MarkPrecacheSounds() const override;
 	virtual void OnDestroy() override;

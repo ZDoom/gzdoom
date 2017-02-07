@@ -542,7 +542,7 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 		{
 			tag = ATAG_STATE;
 		}
-		else if (value.Type->GetLoadOp() == OP_LO)
+		else if (value.Type->GetLoadOp() != OP_LP)
 		{
 			tag = ATAG_OBJECT;
 		}
@@ -6356,7 +6356,7 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 	ob.Free(build);
 	ExpEmit meta(build, REGT_POINTER);
 	build->Emit(OP_META, meta.RegNum, ob.RegNum);
-	build->Emit(OP_LO, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LOS, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return meta;
 
 }
@@ -8874,7 +8874,7 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 		op.Free(build);
 	}
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
+	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
 	return to;
 }
 
@@ -8946,7 +8946,7 @@ ExpEmit FxGetDefaultByType::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LKP, to.RegNum, op.RegNum);
 		op = to;
 	}
-	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return to;
 }
 
@@ -10683,8 +10683,7 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 
 				case REGT_POINTER:
 				{
-					bool isobject = ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)));
-					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), isobject ? ATAG_OBJECT : ATAG_GENERIC));
+					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), ValueType->GetLoadOp() != OP_LP ? ATAG_OBJECT : ATAG_GENERIC));
 					break;
 				}
 				case REGT_STRING:
@@ -10824,7 +10823,7 @@ ExpEmit FxStaticArray::Emit(VMFunctionBuilder *build)
 	{
 		TArray<void*> cvalues;
 		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetPointer());
-		StackOffset = build->AllocConstantsAddress(cvalues.Size(), &cvalues[0], ElementType->GetLoadOp() == OP_LO ? ATAG_OBJECT : ATAG_GENERIC);
+		StackOffset = build->AllocConstantsAddress(cvalues.Size(), &cvalues[0], ElementType->GetLoadOp() != OP_LP ? ATAG_OBJECT : ATAG_GENERIC);
 		break;
 	}
 	}

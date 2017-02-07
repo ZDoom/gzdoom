@@ -560,7 +560,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
+	*defaults = *GetDefault<AActor>();
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 
@@ -2065,8 +2065,7 @@ DEFINE_CLASS_PROPERTY(bobrangey, F, Weapon)
 DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotNumber = i;
+	defaults->SlotNumber = i;
 }
 
 //==========================================================================
@@ -2075,8 +2074,7 @@ DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotPriority = int(i*65536);
+	defaults->SlotPriority = int(i*65536);
 }
 
 //==========================================================================

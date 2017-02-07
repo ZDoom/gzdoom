@@ -94,10 +94,7 @@ enum
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
 	CLASSREG_PClassInventory,
-	CLASSREG_PClassWeapon,
 	CLASSREG_PClassPlayerPawn,
-	CLASSREG_PClassType,
-	CLASSREG_PClassClass,
 };
 
 struct ClassReg

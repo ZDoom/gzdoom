@@ -259,7 +259,6 @@ public:
 	size_t PropagateMark();
 	bool SetReplacement(FName replaceName);
 	void SetDropItems(DDropItem *drops);
-	virtual void Finalize(FStateDefinitions &statedef);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);

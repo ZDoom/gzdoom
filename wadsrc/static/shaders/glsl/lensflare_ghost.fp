@@ -17,14 +17,19 @@ vec3 textureDistorted(sampler2D tex, vec2 sample_center, vec2 sample_vector, vec
 }
 
 void main(){
+	vec2 texcoord = -TexCoord + vec2(1.0);
     vec2 imageCenter = vec2(0.5);
-    vec2 sampleVector = (imageCenter - TexCoord) * flareDispersal;
+    vec2 sampleVector = (imageCenter - texcoord) * flareDispersal;
     vec2 haloVector = normalize(sampleVector) * flareHaloWidth;
+    float haloweight = length(vec2(0.5) - fract(texcoord + haloVector)) / length(vec2(0.5));
+	haloweight = pow(1.0 - haloweight, 5.0);
     
-    vec3 color = texture(InputTexture, TexCoord).rgb;//textureDistorted(InputTexture, TexCoord + haloVector, haloVector, flareChromaticDistortion).rgb * 3.0;
+    vec3 color = texture(InputTexture, TexCoord).rgb;
+    color += textureDistorted(InputTexture, texcoord + haloVector, haloVector, flareChromaticDistortion).rgb * haloweight;
     for(int i = 0; i < nSamples; i++){
         vec2 offset = sampleVector * float(i);
-        color += max(vec3(0.0), textureDistorted(InputTexture, abs(TexCoord + offset - 0.5), offset, flareChromaticDistortion).rgb * 0.5 - 0.2);
+        float weight = -(1.0-max(abs(length(vec2(0.5) - offset)), 1.0));
+        color += max(vec3(0.0), textureDistorted(InputTexture, texcoord, offset, flareChromaticDistortion).rgb * 0.5 - 0.2) * weight;
     }
         
     FragColor = vec4(color, 1.);

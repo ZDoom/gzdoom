@@ -997,6 +997,7 @@ void NullParam(const char *varname);
 
 // For required parameters.
 #define PARAM_INT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); int x = param[p].i;
+#define PARAM_UINT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); unsigned x = param[p].i;
 #define PARAM_BOOL_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); bool x = !!param[p].i;
 #define PARAM_NAME_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FName x = ENamedName(param[p].i);
 #define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FSoundID x = param[p].i;
@@ -1040,6 +1041,7 @@ void NullParam(const char *varname);
 #define PARAM_PROLOGUE				int paramnum = -1;
 
 #define PARAM_INT(x)				++paramnum; PARAM_INT_AT(paramnum,x)
+#define PARAM_UINT(x)				++paramnum; PARAM_UINT_AT(paramnum,x)
 #define PARAM_BOOL(x)				++paramnum; PARAM_BOOL_AT(paramnum,x)
 #define PARAM_NAME(x)				++paramnum; PARAM_NAME_AT(paramnum,x)
 #define PARAM_SOUND(x)				++paramnum; PARAM_SOUND_AT(paramnum,x)

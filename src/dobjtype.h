@@ -247,6 +247,7 @@ public:
 	// object is destroyed.
 	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
 	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
+	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
 
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
@@ -534,7 +535,7 @@ class PClassPointer : public PPointer
 	DECLARE_CLASS(PClassPointer, PPointer);
 	HAS_OBJECT_POINTERS;
 public:
-	PClassPointer(class PClass *restrict);
+	PClassPointer(class PClass *restrict = nullptr);
 
 	class PClass *ClassRestriction;
 
@@ -542,8 +543,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-protected:
-	PClassPointer();
 };
 
 // Struct/class fields ------------------------------------------------------
@@ -657,6 +656,14 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
+	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
+
 protected:
 	PDynArray();
 };
@@ -801,6 +808,7 @@ public:
 	PClass				*ParentClass;	// the class this class derives from
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
+	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
@@ -818,6 +826,7 @@ public:
 	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
+	void BuildArrayPointers();
 	void DestroySpecials(void *addr) const;
 	const PClass *NativeClass() const;
 

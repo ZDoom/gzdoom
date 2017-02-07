@@ -70,6 +70,8 @@ xx(SS,		ss,		RPRSKI,		SS_R,	4, REGT_INT),		// store string
 xx(SS_R,	ss,		RPRSRI,		NOP,	0, 0),
 xx(SP,		sp,		RPRPKI,		SP_R,	4, REGT_INT),		// store pointer
 xx(SP_R,	sp,		RPRPRI,		NOP,	0, 0),
+xx(SO,		sp,		RPRPKI,		SO_R,	4, REGT_INT),		// store object pointer with write barrier (only needed for non thinkers and non types
+xx(SO_R,	sp,		RPRPRI,		NOP,	0, 0),
 xx(SV2,		sv2,	RPRVKI,		SV2_R,	4, REGT_INT),		// store vector2
 xx(SV2_R,	sv2,	RPRVRI,		NOP,	0, 0),
 xx(SV3,		sv3,	RPRVKI,		SV3_R,	4, REGT_INT),		// store vector3

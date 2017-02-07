@@ -79,7 +79,7 @@ CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
 
 CVAR(Int, gl_lensflare_samples, 5, CVAR_ARCHIVE)
 CVAR(Float, gl_lensflare_disp, 0.37f, CVAR_ARCHIVE)
-CVAR(Float, gl_lensflare_halowidth, 0.36f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_halowidth, 0.7f, CVAR_ARCHIVE)
 //CVAR(Float, gl_lensflare_ghostsdisp, 1.0f, CVAR_ARCHIVE)
 
 CVAR(Float, gl_exposure_scale, 1.3f, CVAR_ARCHIVE)
@@ -197,9 +197,15 @@ void FGLRenderer::LensFlareScene() {
 
 	//RenderScreenQuad();
 
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	glDisable(GL_DEPTH_TEST);
+
 	float chroma[3] = {
 		0.11, 0.103333, 0.0833333
 	};
+
+	FGLPostProcessState savedState;
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
@@ -211,6 +217,8 @@ void FGLRenderer::LensFlareScene() {
 	mLensFlareGhostShader->flareDispersal.Set(gl_lensflare_disp);
 	mLensFlareGhostShader->flareHaloWidth.Set(gl_lensflare_halowidth);
 	mLensFlareGhostShader->flareChromaticDistortion.Set(chroma);
+
+	//mBuffers->BindSceneFB(false);
 
 	RenderScreenQuad();
 

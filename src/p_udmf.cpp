@@ -1097,7 +1097,7 @@ public:
 		{
 			ld->alpha = 0.75;
 		}
-		if (strifetrans2 && ld->alpha == OPAQUE)
+		if (strifetrans2 && ld->alpha == 1.)
 		{
 			ld->alpha = 0.25;
 		}

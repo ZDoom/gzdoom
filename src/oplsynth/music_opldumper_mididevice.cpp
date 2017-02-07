@@ -336,7 +336,7 @@ DiskWriterIO::~DiskWriterIO()
 //
 //==========================================================================
 
-int DiskWriterIO::OPLinit(uint numchips, bool, bool initopl3)
+int DiskWriterIO::OPLinit(uint32_t numchips, bool, bool initopl3)
 {
 	FILE *file = fopen(Filename, "wb");
 	if (file == NULL)

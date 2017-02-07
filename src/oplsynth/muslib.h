@@ -76,7 +76,7 @@ Voice-mail (Czech language only, not recommended; weekends only):
 #define __MUSLIB_H_
 
 #ifndef __DEFTYPES_H_
-  #include "deftypes.h"
+  #include "doomtype.h"
 #endif
 
 class FileReader;
@@ -119,7 +119,7 @@ struct OPL2instrument {
 /*0B*/	BYTE	scale_2;		/* OP 2: key scale level */
 /*0C*/	BYTE	level_2;		/* OP 2: output level */
 /*0D*/	BYTE	unused;
-/*0E*/	sshort	basenote;		/* base note offset */
+/*0E*/	int16_t	basenote;		/* base note offset */
 };
 
 /* OP2 instrument file entry */
@@ -152,41 +152,41 @@ struct OP2instrEntry {
 #define CH_FREE			0x80
 
 struct OPLdata {
-	uint	channelInstr[CHANNELS];			// instrument #
-	uchar	channelVolume[CHANNELS];		// volume
-	uchar	channelLastVolume[CHANNELS];	// last volume
-	schar	channelPan[CHANNELS];			// pan, 0=normal
-	schar	channelPitch[CHANNELS];			// pitch wheel, 64=normal
-	uchar	channelSustain[CHANNELS];		// sustain pedal value
-	uchar	channelModulation[CHANNELS];	// modulation pot value
-	ushort	channelPitchSens[CHANNELS];		// pitch sensitivity, 2=default
-	ushort	channelRPN[CHANNELS];			// RPN number for data entry
-	uchar	channelExpression[CHANNELS];	// expression
+	uint32_t	channelInstr[CHANNELS];			// instrument #
+	uint8_t	channelVolume[CHANNELS];		// volume
+	uint8_t	channelLastVolume[CHANNELS];	// last volume
+	int8_t	channelPan[CHANNELS];			// pan, 0=normal
+	int8_t	channelPitch[CHANNELS];			// pitch wheel, 64=normal
+	uint8_t	channelSustain[CHANNELS];		// sustain pedal value
+	uint8_t	channelModulation[CHANNELS];	// modulation pot value
+	uint16_t	channelPitchSens[CHANNELS];		// pitch sensitivity, 2=default
+	uint16_t	channelRPN[CHANNELS];			// RPN number for data entry
+	uint8_t	channelExpression[CHANNELS];	// expression
 };
 
 struct OPLio {
 	virtual ~OPLio();
 
-	void	OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2);
-	void	OPLwriteValue(uint regbase, uint channel, uchar value);
-	void	OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon);
-	uint	OPLconvertVolume(uint data, uint volume);
-	uint	OPLpanVolume(uint volume, int pan);
-	void	OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volume);
-	void	OPLwritePan(uint channel, struct OPL2instrument *instr, int pan);
-	void	OPLwriteInstrument(uint channel, struct OPL2instrument *instr);
+	void	OPLwriteChannel(uint32_t regbase, uint32_t channel, uint8_t data1, uint8_t data2);
+	void	OPLwriteValue(uint32_t regbase, uint32_t channel, uint8_t value);
+	void	OPLwriteFreq(uint32_t channel, uint32_t freq, uint32_t octave, uint32_t keyon);
+	uint32_t	OPLconvertVolume(uint32_t data, uint32_t volume);
+	uint32_t	OPLpanVolume(uint32_t volume, int pan);
+	void	OPLwriteVolume(uint32_t channel, struct OPL2instrument *instr, uint32_t volume);
+	void	OPLwritePan(uint32_t channel, struct OPL2instrument *instr, int pan);
+	void	OPLwriteInstrument(uint32_t channel, struct OPL2instrument *instr);
 	void	OPLshutup(void);
 	void	OPLwriteInitState(bool initopl3);
 
-	virtual int		OPLinit(uint numchips, bool stereo=false, bool initopl3=false);
+	virtual int		OPLinit(uint32_t numchips, bool stereo=false, bool initopl3=false);
 	virtual void	OPLdeinit(void);
-	virtual void	OPLwriteReg(int which, uint reg, uchar data);
+	virtual void	OPLwriteReg(int which, uint32_t reg, uint8_t data);
 	virtual void	SetClockRate(double samples_per_tick);
 	virtual void	WriteDelay(int ticks);
 
 	class OPLEmul *chips[MAXOPL2CHIPS];
-	uint OPLchannels;
-	uint NumChips;
+	uint32_t OPLchannels;
+	uint32_t NumChips;
 	bool IsOPL3;
 };
 
@@ -195,7 +195,7 @@ struct DiskWriterIO : public OPLio
 	DiskWriterIO(const char *filename);
 	~DiskWriterIO();
 
-	int OPLinit(uint numchips, bool notused, bool initopl3);
+	int OPLinit(uint32_t numchips, bool notused, bool initopl3);
 	void SetClockRate(double samples_per_tick);
 	void WriteDelay(int ticks);
 
@@ -214,14 +214,14 @@ struct musicBlock {
 
 	struct OP2instrEntry *OPLinstruments;
 
-	ulong MLtime;
+	uint32_t MLtime;
 
-	void OPLplayNote(uint channel, uchar note, int volume);
-	void OPLreleaseNote(uint channel, uchar note);
-	void OPLpitchWheel(uint channel, int pitch);
-	void OPLchangeControl(uint channel, uchar controller, int value);
-	void OPLprogramChange(uint channel, int value);
-	void OPLresetControllers(uint channel, int vol);
+	void OPLplayNote(uint32_t channel, uint8_t note, int volume);
+	void OPLreleaseNote(uint32_t channel, uint8_t note);
+	void OPLpitchWheel(uint32_t channel, int pitch);
+	void OPLchangeControl(uint32_t channel, uint8_t controller, int value);
+	void OPLprogramChange(uint32_t channel, int value);
+	void OPLresetControllers(uint32_t channel, int vol);
 	void OPLplayMusic(int vol);
 	void OPLstopMusic();
 
@@ -230,27 +230,27 @@ struct musicBlock {
 protected:
 	/* OPL channel (voice) data */
 	struct channelEntry {
-		uchar	channel;		/* MUS channel number */
-		uchar	note;			/* note number */
-		uchar	flags;			/* see CH_xxx below */
-		uchar	realnote;		/* adjusted note number */
-		schar	finetune;		/* frequency fine-tune */
-		sint	pitch;			/* pitch-wheel value */
-		uint	volume;			/* note volume */
-		uint	realvolume;		/* adjusted note volume */
+		uint8_t	channel;		/* MUS channel number */
+		uint8_t	note;			/* note number */
+		uint8_t	flags;			/* see CH_xxx below */
+		uint8_t	realnote;		/* adjusted note number */
+		int8_t	finetune;		/* frequency fine-tune */
+		int	pitch;				/* pitch-wheel value */
+		uint32_t	volume;			/* note volume */
+		uint32_t	realvolume;		/* adjusted note volume */
 		struct OPL2instrument *instr;	/* current instrument */
-		ulong	time;			/* note start time */
+		uint32_t	time;			/* note start time */
 	} channels[MAXCHANNELS];
 
-	void writeFrequency(uint slot, uint note, int pitch, uint keyOn);
-	void writeModulation(uint slot, struct OPL2instrument *instr, int state);
-	uint calcVolume(uint channelVolume, uint channelExpression, uint noteVolume);
-	int occupyChannel(uint slot, uint channel,
-						 int note, int volume, struct OP2instrEntry *instrument, uchar secondary);
-	int releaseChannel(uint slot, uint killed);
-	int releaseSustain(uint channel);
-	int findFreeChannel(uint flag, uint channel, uchar note);
-	struct OP2instrEntry *getInstrument(uint channel, uchar note);
+	void writeFrequency(uint32_t slot, uint32_t note, int pitch, uint32_t keyOn);
+	void writeModulation(uint32_t slot, struct OPL2instrument *instr, int state);
+	uint32_t calcVolume(uint32_t channelVolume, uint32_t channelExpression, uint32_t noteVolume);
+	int occupyChannel(uint32_t slot, uint32_t channel,
+						 int note, int volume, struct OP2instrEntry *instrument, uint8_t secondary);
+	int releaseChannel(uint32_t slot, uint32_t killed);
+	int releaseSustain(uint32_t channel);
+	int findFreeChannel(uint32_t flag, uint32_t channel, uint8_t note);
+	struct OP2instrEntry *getInstrument(uint32_t channel, uint8_t note);
 
 	friend class Stat_opl;
 

@@ -22,7 +22,7 @@
 *	Oct-30-1994	V1.40	V.Arnost
 *		Added BLASTER variable parsing
 *	Apr-14-1995	V1.50	V.Arnost
-*              Some declarations moved from adlib.h to deftypes.h
+*              Some declarations moved from adlib.h to doomtype.h
 *	Jul-22-1995	V1.60	V.Arnost
 *		Ported to Watcom C
 *		Simplified WriteChannel() and WriteValue()
@@ -63,7 +63,7 @@ void OPLio::WriteDelay(int ticks)
 {
 }
 
-void OPLio::OPLwriteReg(int which, uint reg, uchar data)
+void OPLio::OPLwriteReg(int which, uint32_t reg, uint8_t data)
 {
 	if (IsOPL3)
 	{
@@ -80,13 +80,13 @@ void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 * Write to an operator pair. To be used for register bases of 0x20, 0x40,
 * 0x60, 0x80 and 0xE0.
 */
-void OPLio::OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
+void OPLio::OPLwriteChannel(uint32_t regbase, uint32_t channel, uint8_t data1, uint8_t data2)
 {
-	static const uint op_num[OPL2CHANNELS] = {
+	static const uint32_t op_num[OPL2CHANNELS] = {
 		0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12};
 
-	uint which = channel / OPL2CHANNELS;
-	uint reg = regbase + op_num[channel % OPL2CHANNELS];
+	uint32_t which = channel / OPL2CHANNELS;
+	uint32_t reg = regbase + op_num[channel % OPL2CHANNELS];
 	OPLwriteReg (which, reg, data1);
 	OPLwriteReg (which, reg+3, data2);
 }
@@ -95,10 +95,10 @@ void OPLio::OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2
 * Write to channel a single value. To be used for register bases of
 * 0xA0, 0xB0 and 0xC0.
 */
-void OPLio::OPLwriteValue(uint regbase, uint channel, uchar value)
+void OPLio::OPLwriteValue(uint32_t regbase, uint32_t channel, uint8_t value)
 {
-	uint which = channel / OPL2CHANNELS;
-	uint reg = regbase + (channel % OPL2CHANNELS);
+	uint32_t which = channel / OPL2CHANNELS;
+	uint32_t reg = regbase + (channel % OPL2CHANNELS);
 	OPLwriteReg (which, reg, value);
 }
 
@@ -174,7 +174,7 @@ static WORD frequencies[] =
 * That last byte in the table doesn't look right, either, but that's what
 * it really is.
 */
-void OPLio::OPLwriteFreq(uint channel, uint note, uint pitch, uint keyon)
+void OPLio::OPLwriteFreq(uint32_t channel, uint32_t note, uint32_t pitch, uint32_t keyon)
 {
 	int octave = 0;
 	int j = (note << 5) + pitch;
@@ -202,9 +202,9 @@ void OPLio::OPLwriteFreq(uint channel, uint note, uint pitch, uint keyon)
 /*
 * Adjust volume value (register 0x40)
 */
-inline uint OPLio::OPLconvertVolume(uint data, uint volume)
+inline uint32_t OPLio::OPLconvertVolume(uint32_t data, uint32_t volume)
 {
-	static uchar volumetable[128] = {
+	static uint8_t volumetable[128] = {
 		0,   1,   3,   5,   6,   8,  10,  11,
 		13,  14,  16,  17,  19,  20,  22,  23,
 		25,  26,  27,  29,  30,  32,  33,  34,
@@ -223,11 +223,11 @@ inline uint OPLio::OPLconvertVolume(uint data, uint volume)
 		124, 124, 125, 125, 126, 126, 127, 127};
 
 	return 0x3F - (((0x3F - data) *
-		(uint)volumetable[volume <= 127 ? volume : 127]) >> 7);
+		(uint32_t)volumetable[volume <= 127 ? volume : 127]) >> 7);
 
 }
 
-uint OPLio::OPLpanVolume(uint volume, int pan)
+uint32_t OPLio::OPLpanVolume(uint32_t volume, int pan)
 {
 	if (pan >= 0)
 		return volume;
@@ -238,7 +238,7 @@ uint OPLio::OPLpanVolume(uint volume, int pan)
 /*
 * Write volume data to a channel
 */
-void OPLio::OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volume)
+void OPLio::OPLwriteVolume(uint32_t channel, struct OPL2instrument *instr, uint32_t volume)
 {
 	if (instr != 0)
 	{
@@ -251,11 +251,11 @@ void OPLio::OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volu
 /*
 * Write pan (balance) data to a channel
 */
-void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
+void OPLio::OPLwritePan(uint32_t channel, struct OPL2instrument *instr, int pan)
 {
 	if (instr != 0)
 	{
-		uchar bits;
+		uint8_t bits;
 		if (pan < -36) bits = 0x10;		// left
 		else if (pan > 36) bits = 0x20;	// right
 		else bits = 0x30;			// both
@@ -292,7 +292,7 @@ void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 *    data[5]    data[12]  reg. 0x40 - output level (bottom 6 bits only)
 *          data[6]        reg. 0xC0 - feedback/AM-FM (both operators)
 */
-void OPLio::OPLwriteInstrument(uint channel, struct OPL2instrument *instr)
+void OPLio::OPLwriteInstrument(uint32_t channel, struct OPL2instrument *instr)
 {
 	OPLwriteChannel(0x40, channel, 0x3F, 0x3F);		// no volume
 	OPLwriteChannel(0x20, channel, instr->trem_vibr_1, instr->trem_vibr_2);
@@ -307,7 +307,7 @@ void OPLio::OPLwriteInstrument(uint channel, struct OPL2instrument *instr)
 */
 void OPLio::OPLshutup(void)
 {
-	uint i;
+	uint32_t i;
 
 	for(i = 0; i < OPLchannels; i++)
 	{
@@ -321,10 +321,10 @@ void OPLio::OPLshutup(void)
 /*
 * Initialize hardware upon startup
 */
-int OPLio::OPLinit(uint numchips, bool stereo, bool initopl3)
+int OPLio::OPLinit(uint32_t numchips, bool stereo, bool initopl3)
 {
 	assert(numchips >= 1 && numchips <= countof(chips));
-	uint i;
+	uint32_t i;
 	IsOPL3 = (current_opl_core == 1 || current_opl_core == 2 || current_opl_core == 3);
 
 	memset(chips, 0, sizeof(chips));
@@ -349,7 +349,7 @@ int OPLio::OPLinit(uint numchips, bool stereo, bool initopl3)
 
 void OPLio::OPLwriteInitState(bool initopl3)
 {
-	for (uint i = 0; i < NumChips; ++i)
+	for (uint32_t i = 0; i < NumChips; ++i)
 	{
 		int chip = i << (int)IsOPL3;
 		if (IsOPL3 && initopl3)

@@ -529,6 +529,10 @@ namespace swrenderer
 				{
 					accelSprite.special = static_cast<FSpecialColormap*>(vis.Light.BaseColormap);
 				}
+				else if (CameraLight::Instance()->ShaderColormap())
+				{
+					accelSprite.special = CameraLight::Instance()->ShaderColormap();
+				}
 				else if (colormap_to_use->Color == PalEntry(255, 255, 255) &&
 					colormap_to_use->Desaturate == 0)
 				{

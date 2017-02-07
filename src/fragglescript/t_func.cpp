@@ -2675,8 +2675,8 @@ void FParser::SF_PlayerWeapon()
 			script_error("weaponnum out of range! %d\n", weaponnum);
 			return;
 		}
-		PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
-		if (!ti)
+		auto ti = PClass::FindActor(WeaponNames[weaponnum]);
+		if (!ti || !ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
 			script_error("incompatibility in playerweapon %d\n", weaponnum);
 			return;
@@ -2686,7 +2686,7 @@ void FParser::SF_PlayerWeapon()
 		{
 			AActor * wp = players[playernum].mo->FindInventory(ti);
 			t_return.type = svt_int;
-			t_return.value.i = wp!=NULL;;
+			t_return.value.i = wp!=NULL;
 			return;
 		}
 		else
@@ -2756,8 +2756,8 @@ void FParser::SF_PlayerSelectedWeapon()
 				script_error("weaponnum out of range! %d\n", weaponnum);
 				return;
 			}
-			PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
-			if (!ti)
+			auto ti = PClass::FindActor(WeaponNames[weaponnum]);
+			if (!ti || !ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 			{
 				script_error("incompatibility in playerweapon %d\n", weaponnum);
 				return;

@@ -3030,6 +3030,13 @@ void PClass::StaticShutdown ()
 	FlatpointerArena.FreeAllBlocks();
 	bShutdown = true;
 
+	for (unsigned i = 0; i < PClass::AllClasses.Size(); ++i)
+	{
+		PClass *type = PClass::AllClasses[i];
+		PClass::AllClasses[i] = NULL;
+		type->Destroy();
+	}
+
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();
 
@@ -3129,7 +3136,6 @@ PClass *ClassReg::RegisterClass()
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
-		&PClassWeapon::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
 		&PClassType::RegistrationInfo,
 		&PClassClass::RegistrationInfo,

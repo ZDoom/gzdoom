@@ -560,7 +560,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
+	*defaults = *GetDefault<AActor>();
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 

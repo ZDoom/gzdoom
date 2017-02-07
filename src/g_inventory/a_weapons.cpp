@@ -155,13 +155,14 @@ void PClassWeapon::DeriveData(PClass *newclass)
 //
 //===========================================================================
 
-void PClassWeapon::Finalize(FStateDefinitions &statedef)
+void AWeapon::Finalize(FStateDefinitions &statedef)
 {
 	Super::Finalize(statedef);
 	FState *ready = FindState(NAME_Ready);
 	FState *select = FindState(NAME_Select);
 	FState *deselect = FindState(NAME_Deselect);
 	FState *fire = FindState(NAME_Fire);
+	auto TypeName = GetClass()->TypeName;
 
 	// Consider any weapon without any valid state abstract and don't output a warning
 	// This is for creating base classes for weapon groups that only set up some properties.

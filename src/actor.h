@@ -596,6 +596,7 @@ public:
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
+	virtual void Finalize(FStateDefinitions &statedef);
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void PostSerialize() override;

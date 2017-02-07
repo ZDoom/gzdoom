@@ -94,7 +94,6 @@ protected:
 	virtual void DeriveData(PClass *newclass);
 public:
 	PClassWeapon();
-	void Finalize(FStateDefinitions &statedef);
 
 	int SlotNumber;
 	int SlotPriority;
@@ -135,7 +134,8 @@ public:
 
 	virtual void MarkPrecacheSounds() const;
 	
-	virtual void Serialize(FSerializer &arc) override;
+	void Finalize(FStateDefinitions &statedef) override;
+	void Serialize(FSerializer &arc) override;
 
 	void PostMorphWeapon();
 

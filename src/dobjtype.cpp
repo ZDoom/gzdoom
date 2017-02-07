@@ -151,34 +151,6 @@ void DumpTypeTable()
 		Printf("Buckets of len %d: %d (%.2f%%)\n", j, lens[j], j!=0?double(lens[j])/used*100:-1.0);
 }
 
-/* PClassType *************************************************************/
-
-IMPLEMENT_CLASS(PClassType, false, false)
-
-//==========================================================================
-//
-// PClassType Constructor
-//
-//==========================================================================
-
-PClassType::PClassType()
-{
-}
-
-/* PClassClass ************************************************************/
-
-IMPLEMENT_CLASS(PClassClass, false, false)
-
-//==========================================================================
-//
-// PClassClass Constructor
-//
-//==========================================================================
-
-PClassClass::PClassClass()
-{
-}
-
 /* PType ******************************************************************/
 
 IMPLEMENT_CLASS(PType, true, true)
@@ -3014,28 +2986,19 @@ void PClass::StaticShutdown ()
 //
 // PClass :: StaticBootstrap										STATIC
 //
-// PClass and PClassClass have intermingling dependencies on their
-// definitions. To sort this out, we explicitly define them before
-// proceeding with the RegisterClass loop in StaticInit().
-//
 //==========================================================================
 
 void PClass::StaticBootstrap()
 {
-	PClassClass *clscls = new PClassClass;
-	PClassClass::RegistrationInfo.SetupClass(clscls);
-
-	PClassClass *cls = new PClassClass;
+	PClass *cls = new PClass;
 	PClass::RegistrationInfo.SetupClass(cls);
 
 	// The PClassClass constructor initialized these to nullptr, because the
 	// PClass metadata had not been created yet. Now it has, so we know what
 	// they should be and can insert them into the type table successfully.
-	clscls->InsertIntoHash();
 	cls->InsertIntoHash();
 
 	// Create parent objects before we go so that these definitions are complete.
-	clscls->ParentClass = PClassType::RegistrationInfo.ParentType->RegisterClass();
 	cls->ParentClass = PClass::RegistrationInfo.ParentType->RegisterClass();
 }
 
@@ -3095,8 +3058,6 @@ PClass *ClassReg::RegisterClass()
 		&PClassActor::RegistrationInfo,
 		&PClassInventory::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
-		&PClassType::RegistrationInfo,
-		&PClassClass::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered

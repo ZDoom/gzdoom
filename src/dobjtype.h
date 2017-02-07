@@ -199,22 +199,13 @@ public:
 //   Prototype                     *+     *+
 
 struct ZCC_ExprConstant;
-class PClassType;
 class PType : public PTypeBase
 {
-	//DECLARE_ABSTRACT_CLASS_WITH_META(PType, DObject, PClassType);
-	// We need to unravel the _WITH_META macro, since PClassType isn't defined yet,
-	// and we can't define it until we've defined PClass. But we can't define that
-	// without defining PType.
 	DECLARE_ABSTRACT_CLASS(PType, PTypeBase)
 	HAS_OBJECT_POINTERS;
 protected:
-	enum { MetaClassNum = CLASSREG_PClassType };
 
 public:
-	typedef PClassType MetaClass;
-	MetaClass *GetClass() const;
-
 	PClass *TypeTableType;			// The type to use for hashing into the type table
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
@@ -777,22 +768,17 @@ enum
 	TentativeClass = UINT_MAX,
 };
 
-class PClassClass;
 class PClass : public PNativeStruct
 {
 	DECLARE_CLASS(PClass, PNativeStruct);
 	HAS_OBJECT_POINTERS;
 protected:
 	// We unravel _WITH_META here just as we did for PType.
-	enum { MetaClassNum = CLASSREG_PClassClass };
 	TArray<FTypeAndOffset> SpecialInits;
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults) const;
 	void SetSuper();
 public:
-	typedef PClassClass MetaClass;
-	MetaClass *GetClass() const;
-
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -869,31 +855,6 @@ public:
 	static bool bShutdown;
 	static bool bVMOperational;
 };
-
-class PClassType : public PClass
-{
-	DECLARE_CLASS(PClassType, PClass);
-protected:
-public:
-	PClassType();
-};
-
-inline PType::MetaClass *PType::GetClass() const
-{
-	return static_cast<MetaClass *>(DObject::GetClass());
-}
-
-class PClassClass : public PClassType
-{
-	DECLARE_CLASS(PClassClass, PClassType);
-public:
-	PClassClass();
-};
-
-inline PClass::MetaClass *PClass::GetClass() const
-{
-	return static_cast<MetaClass *>(DObject::GetClass());
-}
 
 // Type tables --------------------------------------------------------------
 

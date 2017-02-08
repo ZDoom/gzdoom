@@ -2029,7 +2029,7 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 
 void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) const
 {
-	if (ElementType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ElementType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (ElementType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ElementType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && static_cast<PPointer*>(ElementType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
 		// Add to the list of pointer arrays for this class.
 		special->Push(offset);
@@ -3238,48 +3238,31 @@ void PClass::DeriveData(PClass *newclass)
 
 PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 {
-	assert (size >= Size);
+	assert(size >= Size);
 	PClass *type;
 	bool notnew;
-	size_t bucket;
 
-	PClass *existclass = static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass), /*FIXME:Outer*/0, name, &bucket));
+	const PClass *existclass = FindClass(name);
 
 	// This is a placeholder so fill it in
-	if (existclass != nullptr)
+	if (existclass != NULL && existclass->Size == (unsigned)-1)
 	{
-		if (existclass->Size == TentativeClass)
+		type = const_cast<PClass*>(existclass);
+		if (!IsDescendantOf(type->ParentClass))
 		{
-			if (!IsDescendantOf(existclass->ParentClass))
-			{
-				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), existclass->ParentClass->TypeName.GetChars());
-			}
-
-			if (size == TentativeClass)
-			{
-				// see if we can reuse the existing class. This is only possible if the inheritance is identical. Otherwise it needs to be replaced.
-				if (this == existclass->ParentClass)
-				{
-					existclass->ObjectFlags &= OF_Transient;
-					return existclass;
-				}
-			}
-			notnew = true;
+			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
 		}
-		else
-		{
-			// a different class with the same name already exists. Let the calling code deal with this.
-			return nullptr;
-		}
+		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
+		notnew = true;
 	}
 	else
 	{
+		type = static_cast<PClass *>(GetClass()->CreateNew());
 		notnew = false;
 	}
 
-	// Create a new type object of the same type as us. (We may be a derived class of PClass.)
-	type = static_cast<PClass *>(GetClass()->CreateNew());
-
+	type->TypeName = name;
+	type->bRuntimeClass = true;
 	Derive(type, name);
 	type->Size = size;
 	if (size != TentativeClass)
@@ -3288,21 +3271,12 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 		type->Virtuals = Virtuals;
 		DeriveData(type);
 	}
+	else
+		type->ObjectFlags &= OF_Transient;
+
 	if (!notnew)
 	{
 		type->InsertIntoHash();
-	}
-	else
-	{
-		TypeTable.ReplaceType(type, existclass, bucket);
-		StaticPointerSubstitution(existclass, type, true);	// replace the old one, also in the actor defaults.
-		// Delete the old class from the class lists, both the full one and the actor list.
-		auto index = PClassActor::AllActorClasses.Find(static_cast<PClassActor*>(existclass));
-		if (index < PClassActor::AllActorClasses.Size()) PClassActor::AllActorClasses.Delete(index);
-		index = PClass::AllClasses.Find(existclass);
-		if (index < PClass::AllClasses.Size()) PClass::AllClasses.Delete(index);
-		// Now we can destroy the old class as nothing should reference it anymore
-		existclass->Destroy();
 	}
 	return type;
 }

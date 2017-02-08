@@ -396,8 +396,9 @@ void LoadActors()
 			{
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;
-				DObject::StaticPointerSubstitution(ti, nullptr);
-				PClassActor::AllActorClasses.Delete(i);
+				// the class must be rendered harmless so that it won't cause problems.
+				ti->ParentClass = RUNTIME_CLASS(AActor);
+				ti->Size = sizeof(AActor);
 			}
 			else
 			{

@@ -517,7 +517,7 @@ void R_InitSkins (void)
 	int lastlump;
 	int aliasid;
 	bool remove;
-	PClassPlayerPawn *basetype, *transtype;
+	PClassActor *basetype, *transtype;
 
 	key[sizeof(key)-1] = 0;
 	i = PlayerClasses.Size () - 1;
@@ -602,11 +602,11 @@ void R_InitSkins (void)
 			else if (0 == stricmp (key, "game"))
 			{
 				if (gameinfo.gametype == GAME_Heretic)
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
+					basetype = PClass::FindActor(NAME_HereticPlayer);
 				else if (gameinfo.gametype == GAME_Strife)
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_StrifePlayer));
+					basetype = PClass::FindActor(NAME_StrifePlayer);
 				else
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+					basetype = PClass::FindActor(NAME_DoomPlayer);
 
 				transtype = basetype;
 
@@ -614,7 +614,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype & GAME_DoomChex)
 					{
-						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
+						transtype = PClass::FindActor(NAME_HereticPlayer);
 						skins[i].othergame = true;
 					}
 					else if (gameinfo.gametype != GAME_Heretic)
@@ -633,7 +633,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype == GAME_Heretic)
 					{
-						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+						transtype = PClass::FindActor(NAME_DoomPlayer);
 						skins[i].othergame = true;
 					}
 					else if (!(gameinfo.gametype & GAME_DoomChex))
@@ -709,12 +709,12 @@ void R_InitSkins (void)
 		{
 			if (gameinfo.gametype & GAME_DoomChex)
 			{
-				basetype = transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+				basetype = transtype = PClass::FindActor(NAME_DoomPlayer);
 			}
 			else if (gameinfo.gametype == GAME_Heretic)
 			{
-				basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
-				transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+				basetype = PClass::FindActor(NAME_HereticPlayer);
+				transtype = PClass::FindActor(NAME_DoomPlayer);
 				skins[i].othergame = true;
 			}
 			else
@@ -734,7 +734,7 @@ void R_InitSkins (void)
 			remove = true;
 			for (j = 0; j < (int)PlayerClasses.Size (); j++)
 			{
-				PClassPlayerPawn *type = PlayerClasses[j].Type;
+				auto type = PlayerClasses[j].Type;
 				auto type_def = ((APlayerPawn*)GetDefaultByType(type));
 
 				if (type->IsDescendantOf (basetype) &&

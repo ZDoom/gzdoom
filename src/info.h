@@ -235,7 +235,6 @@ private:
 };
 
 class DDropItem;
-class PClassPlayerPawn;
 
 class PClassActor : public PClass
 {
@@ -287,7 +286,7 @@ public:
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
 
-	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
+	TArray<PClassActor *> VisibleToPlayerClass;
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
@@ -319,8 +318,11 @@ public:
 
 	// These are only valid for inventory items.
 	FString PickupMsg;
-	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
-	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
+	TArray<PClassActor *> RestrictedToPlayerClass;
+	TArray<PClassActor *> ForbiddenToPlayerClass;
+
+	// This is from PClassPlayerPawn
+	FString DisplayName;
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

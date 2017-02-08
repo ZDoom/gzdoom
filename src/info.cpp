@@ -354,6 +354,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
 	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
 
+	newa->DisplayName = DisplayName;
 }
 
 //==========================================================================
@@ -638,7 +639,7 @@ size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 	{
 		if (VisibleToPlayerClass[i] == oldclass)
 		{
-			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			VisibleToPlayerClass[i] = static_cast<PClassActor*>(newclass);
 			changed++;
 		}
 	}
@@ -647,7 +648,7 @@ size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 	{
 		if (ForbiddenToPlayerClass[i] == oldclass)
 		{
-			ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			ForbiddenToPlayerClass[i] = static_cast<PClassActor*>(newclass);
 			changed++;
 		}
 	}
@@ -655,7 +656,7 @@ size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 	{
 		if (RestrictedToPlayerClass[i] == oldclass)
 		{
-			RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			RestrictedToPlayerClass[i] = static_cast<PClassActor*>(newclass);
 			changed++;
 		}
 	}

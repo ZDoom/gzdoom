@@ -148,7 +148,7 @@ bool FPlayerClass::CheckSkin (int skin)
 //
 //===========================================================================
 
-FString GetPrintableDisplayName(PClassPlayerPawn *cls)
+FString GetPrintableDisplayName(PClassActor *cls)
 { 
 	// Fixme; This needs a decent way to access the string table without creating a mess.
 	// [RH] ????
@@ -167,7 +167,7 @@ bool ValidatePlayerClass(PClassActor *ti, const char *name)
 		Printf("Invalid player class '%s'\n", name);
 		return false;
 	}
-	else if (static_cast<PClassPlayerPawn *>(ti)->DisplayName.IsEmpty())
+	else if (ti->DisplayName.IsEmpty())
 	{
 		Printf ("Missing displayname for player class '%s'\n", name);
 		return false;
@@ -186,7 +186,7 @@ void SetupPlayerClasses ()
 		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i]))
 		{
 			newclass.Flags = 0;
-			newclass.Type = static_cast<PClassPlayerPawn *>(cls);
+			newclass.Type = cls;
 			if ((GetDefaultByType(cls)->flags6 & MF6_NOMENU))
 			{
 				newclass.Flags |= PCF_NOMENU;
@@ -214,7 +214,7 @@ CCMD (addplayerclass)
 		{
 			FPlayerClass newclass;
 
-			newclass.Type = static_cast<PClassPlayerPawn *>(ti);
+			newclass.Type = ti;
 			newclass.Flags = 0;
 
 			int arg = 2;
@@ -533,27 +533,6 @@ int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
-}
-
-//===========================================================================
-//
-// PClassPlayerPawn
-//
-//===========================================================================
-
-IMPLEMENT_CLASS(PClassPlayerPawn, false, false)
-
-PClassPlayerPawn::PClassPlayerPawn()
-{
-}
-
-void PClassPlayerPawn::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	Super::DeriveData(newclass);
-	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
-
-	newp->DisplayName = DisplayName;
 }
 
 //===========================================================================
@@ -1247,7 +1226,7 @@ const char *APlayerPawn::GetSoundClass() const
 	}
 
 	// [GRB]
-	PClassPlayerPawn *pclass = GetClass();
+	auto pclass = GetClass();
 	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
 }
 
@@ -1729,7 +1708,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 	// [GRB] Parameterized version
 	if (spawntype == NULL || !spawntype->IsDescendantOf("PlayerChunk"))
 	{
-		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
+		spawntype = PClass::FindActor("BloodySkull");
 		if (spawntype == NULL)
 			return 0;
 	}
@@ -3276,7 +3255,7 @@ DEFINE_FIELD(APlayerPawn, HexenArmor)
 DEFINE_FIELD(APlayerPawn, ColorRangeStart)
 DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
 
-DEFINE_FIELD(PClassPlayerPawn, DisplayName)
+DEFINE_FIELD(PClassActor, DisplayName)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

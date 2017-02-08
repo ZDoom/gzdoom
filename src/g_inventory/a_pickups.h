@@ -9,7 +9,6 @@
 
 class player_t;
 class FConfigFile;
-class PClassPlayerPawn;
 struct visstyle_t;
 
 /************************************************************************/

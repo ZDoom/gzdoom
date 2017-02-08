@@ -1058,7 +1058,7 @@ void FWeaponSlots::SetFromGameInfo()
 //
 //===========================================================================
 
-void FWeaponSlots::StandardSetup(PClassPlayerPawn *type)
+void FWeaponSlots::StandardSetup(PClassActor *type)
 {
 	SetFromPlayer(type);
 	AddExtraWeapons();
@@ -1151,7 +1151,7 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 //
 //===========================================================================
 
-void FWeaponSlots::SetFromPlayer(PClassPlayerPawn *type)
+void FWeaponSlots::SetFromPlayer(PClassActor *type)
 {
 	Clear();
 	auto Slot = ((APlayerPawn*)GetDefaultByType(type))->Slot;

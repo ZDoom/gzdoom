@@ -246,11 +246,6 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimat
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
 
-template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, PClassPlayerPawn *&clst, PClassPlayerPawn **def)
-{
-	return Serialize(arc, key, (PClassActor *&)clst, (PClassActor **)def);
-}
-
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
 {

@@ -65,8 +65,8 @@ struct FWeaponSlots
 	ESlotDef AddDefaultWeapon (int slot, PClassActor *type);
 	void AddExtraWeapons();
 	void SetFromGameInfo();
-	void SetFromPlayer(PClassPlayerPawn *type);
-	void StandardSetup(PClassPlayerPawn *type);
+	void SetFromPlayer(PClassActor *type);
+	void StandardSetup(PClassActor *type);
 	void LocalSetup(PClassActor *type);
 	void SendDifferences(int playernum, const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);

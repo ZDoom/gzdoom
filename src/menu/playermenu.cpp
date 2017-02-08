@@ -899,7 +899,7 @@ void DPlayerMenu::ClassChanged (DMenuItemBase *li)
 		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->DisplayName.GetChars());
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : GetPrintableDisplayName(PlayerClass->Type).GetChars());
 
 		UpdateSkins();
 		UpdateColorsets();

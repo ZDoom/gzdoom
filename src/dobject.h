@@ -93,7 +93,6 @@ enum
 {
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
-	CLASSREG_PClassPlayerPawn,
 };
 
 struct ClassReg

@@ -29,12 +29,12 @@
 
 // [RH] Functions that actually perform the cheating
 class player_t;
-class PClassPlayerPawn;
+class PClassActor;
 
 void cht_DoCheat (player_t *player, int cheat);
 void cht_Give (player_t *player, const char *item, int amount=1);
 void cht_Take (player_t *player, const char *item, int amount=1);
 void cht_Suicide (player_t *player);
-const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quickundo);
+const char *cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo);
 
 #endif

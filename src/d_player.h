@@ -72,21 +72,11 @@ typedef TArray<std::tuple<PClass*, int, FPlayerColorSet>> ColorSetList;
 extern PainFlashList PainFlashes;
 extern ColorSetList ColorSets;
 
-class PClassPlayerPawn : public PClassActor
-{
-	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
-protected:
-public:
-	PClassPlayerPawn();
-	virtual void DeriveData(PClass *newclass);
-
-	FString DisplayName;	// Display name (used in menus, etc.)
-};
-FString GetPrintableDisplayName(PClassPlayerPawn *cls);
+FString GetPrintableDisplayName(PClassActor *cls);
 
 class APlayerPawn : public AActor
 {
-	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
+	DECLARE_CLASS(APlayerPawn, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	
@@ -271,7 +261,7 @@ public:
 
 	bool CheckSkin (int skin);
 
-	PClassPlayerPawn *Type;
+	PClassActor *Type;
 	DWORD Flags;
 	TArray<int> Skins;
 };
@@ -343,7 +333,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));
 	}
-	PClassPlayerPawn *GetPlayerClassType() const
+	PClassActor *GetPlayerClassType() const
 	{
 		return PlayerClasses[GetPlayerClassNum()].Type;
 	}
@@ -401,7 +391,7 @@ public:
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
-	PClassPlayerPawn *cls;				// class of associated PlayerPawn
+	PClassActor *cls;				// class of associated PlayerPawn
 
 	float		DesiredFOV;				// desired field of vision
 	float		FOV;					// current field of vision
@@ -459,7 +449,7 @@ public:
 	short		fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	short		fixedlightlevel;
 	int			morphTics;				// player is a chicken/pig if > 0
-	PClassPlayerPawn *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
+	PClassActor *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle;				// which effects to apply for this player instance when morphed
 	PClassActor *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
 	TObjPtr<AWeapon>	PremorphWeapon;		// ready weapon before morphing

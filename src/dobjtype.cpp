@@ -2955,7 +2955,6 @@ PClass *ClassReg::RegisterClass()
 	{
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
-		&PClassPlayerPawn::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered

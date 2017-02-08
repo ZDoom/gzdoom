@@ -2277,8 +2277,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 DEFINE_CLASS_PROPERTY_PREFIX(player, displayname, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->DisplayName = str;
+	info->DisplayName = str;
 }
 
 //==========================================================================

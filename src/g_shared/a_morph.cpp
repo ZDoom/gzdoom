@@ -33,7 +33,7 @@ void InitAllPowerupEffects(AInventory *item);
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
+bool P_MorphPlayer (player_t *activator, player_t *p, PClassActor *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
 {
 	AInventory *item;
 	APlayerPawn *morphed;

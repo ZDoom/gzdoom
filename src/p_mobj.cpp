@@ -7492,7 +7492,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
 }
 
 
-DDropItem *AActor::GetDropItems() const
+FDropItem *AActor::GetDropItems() const
 {
 	return GetClass()->DropItems;
 }
@@ -8100,16 +8100,10 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 //
 //----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDropItem, false, true)
-
-IMPLEMENT_POINTERS_START(DDropItem)
-IMPLEMENT_POINTER(Next)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD(DDropItem, Next)
-DEFINE_FIELD(DDropItem, Name)
-DEFINE_FIELD(DDropItem, Probability)
-DEFINE_FIELD(DDropItem, Amount)
+DEFINE_FIELD(FDropItem, Next)
+DEFINE_FIELD(FDropItem, Name)
+DEFINE_FIELD(FDropItem, Probability)
+DEFINE_FIELD(FDropItem, Amount)
 
 void PrintMiscActorInfo(AActor *query)
 {

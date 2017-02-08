@@ -8,6 +8,8 @@
 #include "doomerrors.h"
 #include "memarena.h"
 
+extern FMemArena ClassDataAllocator;
+
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
 
@@ -716,7 +718,7 @@ public:
 
 	void *operator new(size_t size)
 	{
-		return Allocator.Alloc(size);
+		return ClassDataAllocator.Alloc(size);
 	}
 
 	void operator delete(void *block) {}
@@ -729,7 +731,6 @@ public:
 		}
 		AllFunctions.Clear();
 	}
-	static FMemArena Allocator;
 	static TArray<VMFunction *> AllFunctions;
 protected:
 };

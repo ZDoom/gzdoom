@@ -921,7 +921,7 @@ DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 		bag.DropItemList = NULL;
 	}
 
-	DDropItem *di = new DDropItem;
+	FDropItem *di = (FDropItem*)ClassDataAllocator.Alloc(sizeof(FDropItem));
 
 	di->Name = type;
 	di->Probability = 255;
@@ -939,7 +939,6 @@ DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
-	GC::WriteBarrier(di);
 }
 
 //==========================================================================
@@ -2685,7 +2684,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 		bag.DropItemList = NULL;
 	}
 
-	DDropItem *di = new DDropItem;
+	FDropItem *di = (FDropItem*)ClassDataAllocator.Alloc(sizeof(FDropItem));
 
 	di->Name = str;
 	di->Probability = 255;
@@ -2697,7 +2696,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
-	GC::WriteBarrier(di);
 }
 
 //==========================================================================

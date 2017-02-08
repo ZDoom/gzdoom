@@ -234,12 +234,11 @@ private:
 	static DamageTypeDefinition *Get(FName type);
 };
 
-class DDropItem;
+struct FDropItem;
 
 class PClassActor : public PClass
 {
 	DECLARE_CLASS(PClassActor, PClass);
-	HAS_OBJECT_POINTERS;
 protected:
 public:
 	static void StaticInit ();
@@ -256,7 +255,7 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	bool SetReplacement(FName replaceName);
-	void SetDropItems(DDropItem *drops);
+	void SetDropItems(FDropItem *drops);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
@@ -303,7 +302,7 @@ public:
 	FName BloodType2;		// Bloopsplatter replacement type
 	FName BloodType3;		// AxeBlood replacement type
 
-	DDropItem *DropItems;
+	FDropItem *DropItems;
 	FString SourceLumpName;
 	FIntCVar *distancecheck;
 

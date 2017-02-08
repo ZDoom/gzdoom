@@ -1384,7 +1384,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition
-	DDropItem *di = GetDropItems();
+	auto di = GetDropItems();
 
 	while (di)
 	{
@@ -1514,7 +1514,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 				AInventory *item;
 
 				// kgDROP - start - modified copy from a_action.cpp
-				DDropItem *di = weap->GetDropItems();
+				auto di = weap->GetDropItems();
 
 				if (di != NULL)
 				{

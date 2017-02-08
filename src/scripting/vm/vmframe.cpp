@@ -43,7 +43,6 @@ int VMCalls[10];
 
 IMPLEMENT_CLASS(VMException, false, false)
 
-FMemArena VMFunction::Allocator(32768);
 TArray<VMFunction *> VMFunction::AllFunctions;
 
 
@@ -95,7 +94,7 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 	assert(numkonsts >= 0 && numkonsts <= 65535);
 	assert(numkonsta >= 0 && numkonsta <= 65535);
 	assert(numlinenumbers >= 0 && numlinenumbers <= 65535);
-	void *mem = Allocator.Alloc(numops * sizeof(VMOP) +
+	void *mem = ClassDataAllocator.Alloc(numops * sizeof(VMOP) +
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +
 						 numkonsts * sizeof(FString) +

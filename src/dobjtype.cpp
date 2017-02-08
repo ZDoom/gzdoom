@@ -64,8 +64,7 @@
 EXTERN_CVAR(Bool, strictdecorate);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FMemArena FlatpointerArena;	// stores the flat pointers because freeing them individually is rather messy.
+FMemArena ClassDataAllocator(32768);	// use this for all static class data that can be released in bulk when the type system is shut down.
 
 FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
@@ -2858,7 +2857,7 @@ void PClass::StaticShutdown ()
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	TypeTable.Clear();
 	Namespaces.ReleaseSymbols();
-	FlatpointerArena.FreeAllBlocks();
+	ClassDataAllocator.FreeAllBlocks();
 	bShutdown = true;
 
 	for (unsigned i = 0; i < PClass::AllClasses.Size(); ++i)
@@ -3448,7 +3447,7 @@ void PClass::BuildFlatPointers ()
 			{ }
 
 			// Concatenate them into a new array
-			size_t *flat = (size_t*)FlatpointerArena.Alloc(sizeof(size_t) * (numPointers + numSuperPointers + ScriptPointers.Size() + 1));
+			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numPointers + numSuperPointers + ScriptPointers.Size() + 1));
 			if (numSuperPointers > 0)
 			{
 				memcpy (flat, ParentClass->FlatPointers, sizeof(size_t)*numSuperPointers);
@@ -3514,7 +3513,7 @@ void PClass::BuildArrayPointers()
 			}
 
 			// Concatenate them into a new array
-			size_t *flat = (size_t*)FlatpointerArena.Alloc(sizeof(size_t) * (numSuperPointers + ScriptPointers.Size() + 1));
+			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numSuperPointers + ScriptPointers.Size() + 1));
 			if (numSuperPointers > 0)
 			{
 				memcpy(flat, ParentClass->ArrayPointers, sizeof(size_t)*numSuperPointers);

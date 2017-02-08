@@ -1983,7 +1983,7 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		DDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
 		while (di != NULL)
 		{
 			if (di->Name == NAME_Clip)

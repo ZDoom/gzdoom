@@ -176,11 +176,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
 	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
 }
 
-IMPLEMENT_CLASS(PClassActor, false, true)
-
-IMPLEMENT_POINTERS_START(PClassActor)
-	IMPLEMENT_POINTER(DropItems)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClassActor, false, false)
 
 //==========================================================================
 //
@@ -394,10 +390,9 @@ bool PClassActor::SetReplacement(FName replaceName)
 //
 //==========================================================================
 
-void PClassActor::SetDropItems(DDropItem *drops)
+void PClassActor::SetDropItems(FDropItem *drops)
 {
 	DropItems = drops;
-	GC::WriteBarrier(this, DropItems);
 }
 
 

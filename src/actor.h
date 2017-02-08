@@ -572,12 +572,9 @@ struct FLinkContext
 	msecnode_t *render_list = nullptr;
 };
 
-class DDropItem : public DObject
+struct FDropItem
 {
-	DECLARE_CLASS(DDropItem, DObject)
-	HAS_OBJECT_POINTERS
-public:
-	DDropItem *Next;
+	FDropItem *Next;
 	FName Name;
 	int Probability;
 	int Amount;
@@ -610,7 +607,7 @@ public:
 		return (AActor *)(this->GetClass()->Defaults);
 	}
 
-	DDropItem *GetDropItems() const;
+	FDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
 	bool SuggestMissileAttack (double dist);

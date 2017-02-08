@@ -110,7 +110,7 @@ FScriptPosition & GetStateSource(FState *state);
 // Extra info maintained while defining an actor.
 //
 //==========================================================================
-class DDropItem;
+class FDropItem;
 
 struct Baggage
 {
@@ -126,7 +126,7 @@ struct Baggage
 	int Lumpnum;
 	FStateDefinitions statedef;
 
-	DDropItem *DropItemList;
+	FDropItem *DropItemList;
 
 	FScriptPosition ScriptPosition;
 };

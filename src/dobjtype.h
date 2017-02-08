@@ -224,7 +224,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-	virtual FString QualifiedName() const;
 };
 
 // Basic types --------------------------------------------------------------

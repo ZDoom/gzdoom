@@ -19,23 +19,12 @@ class PTypeBase : public DObject
 	DECLARE_ABSTRACT_CLASS(PTypeBase, DObject)
 
 public:
-	virtual FString QualifiedName() const
-	{
-		return "";
-	}
 };
 
-class PSymbol : public PTypeBase
+class PSymbol : public DObject
 {
-	DECLARE_ABSTRACT_CLASS(PSymbol, PTypeBase);
+	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
 public:
-	virtual ~PSymbol();
-
-	virtual FString QualifiedName() const
-	{
-		return SymbolName.GetChars();
-	}
-
 	FName SymbolName;
 
 protected:

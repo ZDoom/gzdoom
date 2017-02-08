@@ -65,16 +65,6 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-PSymbol::~PSymbol()
-{
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 PSymbolConstString::PSymbolConstString(FName name, const FString &str)
 	: PSymbolConst(name, TypeString), Str(str) 
 {

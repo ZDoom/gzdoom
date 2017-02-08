@@ -489,20 +489,6 @@ void PNamedType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 	id2 = TypeName;
 }
 
-//==========================================================================
-//
-// PNamedType :: QualifiedName
-//
-//==========================================================================
-
-FString PNamedType::QualifiedName() const
-{
-	FString out;
-	if (Outer != nullptr) out = Outer->QualifiedName();
-	out << "::" << TypeName;
-	return out;
-}
-
 /* PInt *******************************************************************/
 
 IMPLEMENT_CLASS(PInt, false, false)

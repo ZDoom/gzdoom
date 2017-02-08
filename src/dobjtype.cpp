@@ -2698,7 +2698,6 @@ size_t PFunction::PropagateMark()
 	for (unsigned i = 0; i < Variants.Size(); ++i)
 	{
 		GC::Mark(Variants[i].Proto);
-		GC::Mark(Variants[i].Implementation);
 	}
 	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
 }
@@ -2947,6 +2946,7 @@ void PClass::StaticShutdown ()
 		*p = nullptr;
 	}
 	FunctionPtrList.Clear();
+	VMFunction::DeleteAll();
 
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects 
 	// that still exist are properly taken down before the low level data is deleted.

@@ -256,7 +256,6 @@ public:
 	void RegisterIDs();
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
-	size_t PropagateMark();
 	bool SetReplacement(FName replaceName);
 	void SetDropItems(DDropItem *drops);
 

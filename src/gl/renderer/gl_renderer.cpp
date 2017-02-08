@@ -155,6 +155,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dCheckerShader = new FPresent3DCheckerShader();
 	mPresent3dColumnShader = new FPresent3DColumnShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
+	mLensFlareDownSampleShader = new FLensFlareDownSampleShader();
 	mLensFlareGhostShader = new FLensFlareGhostShader();
 	m2DDrawer = new F2DDrawer;
 
@@ -226,6 +227,7 @@ FGLRenderer::~FGLRenderer()
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;
 	if (mLensShader) delete mLensShader;
+	if (mLensFlareDownSampleShader) delete mLensFlareDownSampleShader;
 	if (mLensFlareGhostShader) delete mLensFlareGhostShader;
 	delete mFXAAShader;
 	delete mFXAALumaShader;

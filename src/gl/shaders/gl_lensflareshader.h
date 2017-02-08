@@ -2,20 +2,6 @@
 
 #include "gl_shaderprogram.h"
 
-class FLensFlareDownSampleShader
-{
-public:
-	void Bind();
-
-	//FBufferedUniformSampler FlareTexture;
-	FBufferedUniformSampler InputTexture;
-	FBufferedUniform4f Scale;
-	FBufferedUniform4f Bias;
-
-private:
-	FShaderProgram mShader;
-};
-
 class FLensFlareGhostShader
 {
 public:

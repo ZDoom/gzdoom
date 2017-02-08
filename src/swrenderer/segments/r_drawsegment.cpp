@@ -71,7 +71,7 @@ namespace swrenderer
 		Segments.Resize(StartIndices.Last());
 		StartIndices.Pop();
 
-		StartInterestingIndices.Resize(StartInterestingIndices.Last());
+		InterestingSegments.Resize(StartInterestingIndices.Last());
 		StartInterestingIndices.Pop();
 	}
 

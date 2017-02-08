@@ -6558,21 +6558,8 @@ FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition 
 
 FxStackVariable::~FxStackVariable()
 {
-	// Q: Is this good or bad? Needs testing if this is fine or better left to the GC anyway. DObject's destructor is anything but cheap.
 	membervar->ObjectFlags |= OF_YesReallyDelete;
 	delete membervar;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void FxStackVariable::ReplaceField(PField *newfield)
-{
-	membervar->ObjectFlags |= OF_YesReallyDelete;
-	delete membervar;
-	membervar = newfield;
 }
 
 //==========================================================================

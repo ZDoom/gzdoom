@@ -277,7 +277,9 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 void Mark(DObject **obj)
 {
 	DObject *lobj = *obj;
-	if (lobj != NULL)
+
+	assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
+	if (lobj != nullptr && !(lobj->ObjectFlags & OF_Released))
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)
 		{
@@ -551,6 +553,8 @@ void Barrier(DObject *pointing, DObject *pointed)
 	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
 	assert(State != GCS_Finalize && State != GCS_Pause);
+	assert(!(pointed->ObjectFlags & OF_Released));	// if a released object gets here, something must be wrong.
+	if (pointed->ObjectFlags & OF_Released) return;	// don't do anything with non-GC'd objects.
 	// The invariant only needs to be maintained in the propagate state.
 	if (State == GCS_Propagate)
 	{

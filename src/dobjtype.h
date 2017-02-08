@@ -171,8 +171,6 @@ public:
 
 	const char *DescriptiveName() const;
 
-	size_t PropagateMark();
-
 	static void StaticInit();
 };
 
@@ -519,8 +517,6 @@ public:
 
 	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
 	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);
-
-	size_t PropagateMark();
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;

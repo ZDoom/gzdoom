@@ -468,6 +468,9 @@ public:
 		Class = NULL;
 	}
 
+	// Releases the object from the GC, letting the caller care of any maintenance.
+	void Release();
+
 	// For catching Serialize functions in derived classes
 	// that don't call their base class.
 	void CheckIfSerialized () const;

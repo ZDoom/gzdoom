@@ -187,18 +187,6 @@ PType::~PType()
 
 //==========================================================================
 //
-// PType :: PropagateMark
-//
-//==========================================================================
-
-size_t PType::PropagateMark()
-{
-	size_t marked = Symbols.MarkSymbols();
-	return marked + Super::PropagateMark();
-}
-
-//==========================================================================
-//
 // PType :: WriteValue
 //
 //==========================================================================
@@ -2413,7 +2401,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 
 	if (Symbols.AddSymbol(field) == nullptr)
 	{ // name is already in use
-		delete field;
+		field->Destroy();
 		return nullptr;
 	}
 	Fields.Push(field);
@@ -2442,18 +2430,6 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD f
 	Fields.Push(field);
 	HasNativeFields = true;
 	return field;
-}
-
-//==========================================================================
-//
-// PStruct :: PropagateMark
-//
-//==========================================================================
-
-size_t PStruct::PropagateMark()
-{
-	GC::MarkArray(Fields);
-	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
 }
 
 //==========================================================================

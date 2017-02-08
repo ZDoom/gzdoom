@@ -149,34 +149,19 @@ PSymbolTable::~PSymbolTable ()
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-size_t PSymbolTable::MarkSymbols()
-{
-	size_t count = 0;
-	MapType::Iterator it(Symbols);
-	MapType::Pair *pair;
-
-	while (it.NextPair(pair))
-	{
-		GC::Mark(pair->Value);
-		count++;
-	}
-	return count * sizeof(*pair);
-}
-
-//==========================================================================
-//
-//
+// this must explicitly delete all content because the symbols have
+// been released from the GC.
 //
 //==========================================================================
 
 void PSymbolTable::ReleaseSymbols()
 {
-	// The GC will take care of deleting the symbols. We just need to
-	// clear our references to them.
+	auto it = GetIterator();
+	MapType::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		delete pair->Value;
+	}
 	Symbols.Clear();
 }
 
@@ -243,6 +228,7 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 		return nullptr;
 	}
 	Symbols.Insert(sym->SymbolName, sym);
+	sym->Release();	// no more GC, please!
 	return sym;
 }
 
@@ -257,6 +243,7 @@ void PSymbolTable::RemoveSymbol(PSymbol *sym)
 	auto mysym = Symbols.CheckKey(sym->SymbolName);
 	if (mysym == nullptr || *mysym != sym) return;
 	Symbols.Remove(sym->SymbolName);
+	delete sym;
 }
 
 //==========================================================================
@@ -265,20 +252,20 @@ void PSymbolTable::RemoveSymbol(PSymbol *sym)
 //
 //==========================================================================
 
-PSymbol *PSymbolTable::ReplaceSymbol(PSymbol *newsym)
+void PSymbolTable::ReplaceSymbol(PSymbol *newsym)
 {
 	// If a symbol with a matching name exists, take its place and return it.
 	PSymbol **symslot = Symbols.CheckKey(newsym->SymbolName);
 	if (symslot != nullptr)
 	{
 		PSymbol *oldsym = *symslot;
+		delete oldsym;
 		*symslot = newsym;
-		return oldsym;
 	}
 	// Else, just insert normally and return nullptr since there was no
 	// symbol to replace.
+	newsym->Release();	// no more GC, please!
 	Symbols.Insert(newsym->SymbolName, newsym);
-	return nullptr;
 }
 
 //==========================================================================
@@ -298,18 +285,6 @@ PNamespace::PNamespace(int filenum, PNamespace *parent)
 	Parent = parent;
 	if (parent) Symbols.SetParentTable(&parent->Symbols);
 	FileNum = filenum;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-size_t PNamespace::PropagateMark()
-{
-	GC::Mark(Parent);
-	return Symbols.MarkSymbols() + 1;
 }
 
 //==========================================================================
@@ -370,6 +345,7 @@ size_t FNamespaceManager::MarkSymbols()
 
 void FNamespaceManager::ReleaseSymbols()
 {
+	RemoveSymbols();
 	GlobalNamespace = nullptr;
 	AllNamespaces.Clear();
 }

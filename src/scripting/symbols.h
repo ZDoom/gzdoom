@@ -192,8 +192,6 @@ struct PSymbolTable
 	PSymbolTable(PSymbolTable *parent);
 	~PSymbolTable();
 
-	size_t MarkSymbols();
-
 	// Sets the table to use for searches if this one doesn't contain the
 	// requested symbol.
 	void SetParentTable (PSymbolTable *parent);
@@ -218,7 +216,7 @@ struct PSymbolTable
 
 	// Similar to AddSymbol but always succeeds. Returns the symbol that used
 	// to be in the table with this name, if any.
-	PSymbol *ReplaceSymbol(PSymbol *sym);
+	void ReplaceSymbol(PSymbol *sym);
 
 	void RemoveSymbol(PSymbol *sym);
 
@@ -255,7 +253,6 @@ public:
 
 	PNamespace() {}
 	PNamespace(int filenum, PNamespace *parent);
-	size_t PropagateMark();
 };
 
 struct FNamespaceManager

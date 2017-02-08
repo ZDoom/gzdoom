@@ -32,7 +32,7 @@
 */
 
 #include "vmbuilder.h"
-#include "codegeneration/codegen.h"
+#include "codegen.h"
 #include "info.h"
 #include "m_argv.h"
 #include "thingdef.h"

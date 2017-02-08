@@ -73,7 +73,7 @@
 #include "thingdef.h"
 #include "info.h"
 #include "v_text.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO

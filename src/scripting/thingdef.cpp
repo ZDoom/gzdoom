@@ -60,9 +60,9 @@
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
-#include "codegeneration/codegen.h"
+#include "backend/codegen.h"
 #include "a_sharedglobal.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 #include "stats.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

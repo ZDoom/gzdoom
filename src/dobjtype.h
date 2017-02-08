@@ -84,7 +84,6 @@ struct FNamespaceManager;
 class PSymbolVMFunction : public PSymbol
 {
 	DECLARE_CLASS(PSymbolVMFunction, PSymbol);
-	HAS_OBJECT_POINTERS;
 public:
 	VMFunction *Function;
 

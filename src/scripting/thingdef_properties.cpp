@@ -66,7 +66,7 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 

@@ -3877,11 +3877,7 @@ IMPLEMENT_POINTERS_START(PSymbolType)
 	IMPLEMENT_POINTER(Type)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(PSymbolVMFunction, false, true)
-
-IMPLEMENT_POINTERS_START(PSymbolVMFunction)
-	IMPLEMENT_POINTER(Function)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 
 //==========================================================================
 //

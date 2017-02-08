@@ -783,7 +783,7 @@ CCMD(gc)
 	else if (stricmp(argv[1], "count") == 0)
 	{
 		int cnt = 0;
-		for (DObject *obj = GC::Root; obj; obj = obj->ObjNext, cnt++)
+		for (DObject *obj = GC::Root; obj; obj = obj->ObjNext, cnt++);
 		Printf("%d active objects counted\n", cnt);
 	}
 	else if (stricmp(argv[1], "pause") == 0)

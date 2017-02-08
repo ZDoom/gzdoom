@@ -126,7 +126,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mSSAOCombineShader = nullptr;
 	mFXAAShader = nullptr;
 	mFXAALumaShader = nullptr;
-	mLensFlareDownSampleShader = nullptr;
 	mLensFlareGhostShader = nullptr;
 }
 

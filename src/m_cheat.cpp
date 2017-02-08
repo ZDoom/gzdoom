@@ -317,7 +317,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_RESSURECT:
 		if (player->playerstate != PST_LIVE && player->mo != nullptr)
 		{
-			if (player->mo->IsKindOf(PClass::FindActor("PlayerChunk")))
+			if (player->mo->IsKindOf("PlayerChunk"))
 			{
 				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
 			}
@@ -421,7 +421,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				lastinvp = invp;
 				invp = &(*invp)->Inventory;
-				if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+				if (item->IsKindOf(NAME_Weapon))
 				{
 					AWeapon *weap = static_cast<AWeapon *> (item);
 					if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||

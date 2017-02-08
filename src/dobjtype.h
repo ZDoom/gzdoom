@@ -622,9 +622,22 @@ public:
 		}
 		return false;
 	}
+
 	inline bool IsDescendantOf(const PClass *ti) const
 	{
 		return ti->IsAncestorOf(this);
+	}
+
+	inline bool IsDescendantOf(FName ti) const
+	{
+		auto me = this;
+		while (me)
+		{
+			if (me->TypeName == ti)
+				return true;
+			me = me->ParentClass;
+		}
+		return false;
 	}
 
 	// Find a type, given its name.

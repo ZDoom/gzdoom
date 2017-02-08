@@ -612,7 +612,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		// Now check for the remaining weapons that are in the inventory but not in the weapon slots
 		for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
 		{
-			if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			if (inv->IsKindOf(NAME_Weapon))
 			{
 				AddAmmoToList((AWeapon*)inv);
 			}
@@ -713,7 +713,7 @@ FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale=NULL
 			}
 		}
 		// no spawn state - now try the ready state if it's weapon
-		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(RUNTIME_CLASS(AWeapon)) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite!=0)
+		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(NAME_Weapon) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite!=0)
 		{
 			state = ReadyState;
 		}
@@ -767,7 +767,7 @@ static void DrawWeapons(player_t *CPlayer, int x, int y)
 	// First draw all weapons in the inventory that are not assigned to a weapon slot
 	for(inv = CPlayer->mo->Inventory; inv; inv = inv->Inventory)
 	{
-		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)) && 
+		if (inv->IsKindOf(NAME_Weapon) && 
 			!CPlayer->weapons.LocateWeapon(static_cast<AWeapon*>(inv)->GetClass(), NULL, NULL))
 		{
 			DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));

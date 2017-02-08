@@ -2096,9 +2096,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 	int alpha;
 	PalEntry *pBlendColor;
-	bool isgiver = info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver));
+	bool isgiver = info->IsDescendantOf(NAME_PowerupGiver);
 
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || isgiver)
+	if (info->IsDescendantOf(NAME_Powerup) || isgiver)
 	{
 		pBlendColor = &defaults->ColorVar(NAME_BlendColor);
 	}
@@ -2148,7 +2148,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry BlendColor;
 
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.colormap\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2183,7 +2183,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.duration\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2198,7 +2198,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2214,7 +2214,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.mode\" requires an actor of type \"Powerup\"\n");
 		return;

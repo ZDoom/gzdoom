@@ -2387,7 +2387,7 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 		{
 			return false;
 		}
-		if (item->IsKindOf(PClass::FindActor(NAME_Health)))
+		if (item->IsKindOf(NAME_Health))
 		{
 			item->Amount *= amount;
 		}
@@ -3123,7 +3123,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 
 	AWeapon *weaponitem = static_cast<AWeapon*>(self->FindInventory(cls));
 
-	if (weaponitem != NULL && weaponitem->IsKindOf(RUNTIME_CLASS(AWeapon)))
+	if (weaponitem != NULL && weaponitem->IsKindOf(NAME_Weapon))
 	{
 		if (self->player->ReadyWeapon != weaponitem)
 		{
@@ -5668,7 +5668,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
 			AInventory *gift = static_cast<AInventory *>(Spawn(item));
-			if (gift->IsKindOf(PClass::FindActor(NAME_Health)))
+			if (gift->IsKindOf(NAME_Health))
 			{
 				gift->Amount *= amount;
 			}

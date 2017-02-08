@@ -1331,7 +1331,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
-			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+			if (reply->GiveType->IsDescendantOf(NAME_Weapon))
 			{
 				if (player->mo->FindInventory(reply->GiveType) != NULL)
 				{
@@ -1357,7 +1357,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				}
 			}
 		
-			if (reply->GiveType->IsDescendantOf(PClass::FindActor("SlideshowStarter")))
+			if (reply->GiveType->IsDescendantOf("SlideshowStarter"))
 				gameaction = ga_slideshow;
 		}
 		else

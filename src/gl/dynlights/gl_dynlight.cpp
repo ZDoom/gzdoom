@@ -77,7 +77,7 @@ void gl_ParseVavoomSkybox();
 inline PClassActor * GetRealType(PClassActor * ti)
 {
 	PClassActor *rep = ti->GetReplacement(false);
-	if (rep != ti && rep != NULL && rep->IsDescendantOf(PClass::FindActor(NAME_DehackedPickup)))
+	if (rep != ti && rep != NULL && rep->IsDescendantOf(NAME_DehackedPickup))
 	{
 		return rep;
 	}

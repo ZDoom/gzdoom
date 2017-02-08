@@ -110,7 +110,7 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 			const char *callinfo = "";
 			if (info != nullptr && info->mStateType == STATE_Psprite)
 			{
-				if (stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)) && stateowner != self) callinfo = "weapon ";
+				if (stateowner->IsKindOf(NAME_Weapon) && stateowner != self) callinfo = "weapon ";
 				else callinfo = "overlay ";
 			}
 			err.stacktrace.AppendFormat("Called from %sstate %s.%d in %s\n", callinfo, owner->TypeName.GetChars(), offs, stateowner->GetClass()->TypeName.GetChars());

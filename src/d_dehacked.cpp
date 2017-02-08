@@ -2916,7 +2916,7 @@ static bool LoadDehSupp ()
 					else
 					{
 						auto cls = PClass::FindActor(sc.String);
-						if (cls == NULL || !cls->IsDescendantOf(PClass::FindActor(NAME_Ammo)))
+						if (cls == NULL || !cls->IsDescendantOf(NAME_Ammo))
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
@@ -2934,7 +2934,7 @@ static bool LoadDehSupp ()
 				{
 					sc.MustGetString();
 					PClass *cls = PClass::FindClass(sc.String);
-					if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+					if (cls == NULL || !cls->IsDescendantOf(NAME_Weapon))
 					{
 						sc.ScriptError("Unknown weapon type '%s'", sc.String);
 					}

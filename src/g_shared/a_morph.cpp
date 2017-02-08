@@ -337,7 +337,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	if (correctweapon)
 	{ // Better "lose morphed weapon" semantics
 		PClassActor *morphweapon = PClass::FindActor(pmo->MorphWeapon);
-		if (morphweapon != nullptr && morphweapon->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (morphweapon != nullptr && morphweapon->IsDescendantOf(NAME_Weapon))
 		{
 			AWeapon *OriginalMorphWeapon = static_cast<AWeapon *>(mo->FindInventory (morphweapon));
 			if ((OriginalMorphWeapon != nullptr) && (OriginalMorphWeapon->GivenAsMorphWeapon))

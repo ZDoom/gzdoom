@@ -458,6 +458,7 @@ public:
 	virtual ~DObject ();
 
 	inline bool IsKindOf (const PClass *base) const;
+	inline bool IsKindOf(FName base) const;
 	inline bool IsA (const PClass *type) const;
 
 	void SerializeUserVars(FSerializer &arc);
@@ -613,6 +614,11 @@ static inline void GC::WriteBarrier(DObject *pointed)
 inline bool DObject::IsKindOf (const PClass *base) const
 {
 	return base->IsAncestorOf (GetClass ());
+}
+
+inline bool DObject::IsKindOf(FName base) const
+{
+	return GetClass()->IsDescendantOf(base);
 }
 
 inline bool DObject::IsA (const PClass *type) const

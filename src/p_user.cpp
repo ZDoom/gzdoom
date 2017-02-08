@@ -963,7 +963,7 @@ AWeapon *APlayerPawn::BestWeapon(PClassInventory *ammotype)
 	// Find the best weapon the player has.
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
-		if (!item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+		if (!item->IsKindOf(NAME_Weapon))
 			continue;
 
 		weap = static_cast<AWeapon *> (item);
@@ -1136,29 +1136,29 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 
 			if ((dmflags & DF_COOP_LOSE_KEYS) &&
 				defitem == NULL &&
-				item->IsKindOf(PClass::FindActor(NAME_Key)))
+				item->IsKindOf(NAME_Key))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_WEAPONS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+				item->IsKindOf(NAME_Weapon))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(PClass::FindActor(NAME_Armor)))
+				item->IsKindOf(NAME_Armor))
 			{
 				if (defitem == NULL)
 				{
 					item->Destroy();
 				}
-				else if (item->IsKindOf(PClass::FindActor(NAME_BasicArmor)))
+				else if (item->IsKindOf(NAME_BasicArmor))
 				{
 					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
 					item->Amount = defitem->Amount;
 				}
-				else if (item->IsKindOf(PClass::FindActor(NAME_HexenArmor)))
+				else if (item->IsKindOf(NAME_HexenArmor))
 				{
 					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
 					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
@@ -1167,12 +1167,12 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
 				defitem == NULL &&
-				item->IsKindOf(PClass::FindActor(NAME_PowerupGiver)))
+				item->IsKindOf(NAME_PowerupGiver))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(PClass::FindActor(NAME_Ammo)))
+				item->IsKindOf(NAME_Ammo))
 			{
 				if (defitem == NULL)
 				{
@@ -1412,7 +1412,7 @@ void APlayerPawn::GiveDefaultInventory ()
 					item = static_cast<AInventory *>(Spawn(ti));
 					item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
 					item->Amount = di->Amount;
-					if (item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+					if (item->IsKindOf(NAME_Weapon))
 					{
 						// To allow better control any weapon is emptied of
 						// ammo before being given to the player.
@@ -1432,7 +1432,7 @@ void APlayerPawn::GiveDefaultInventory ()
 						item = NULL;
 					}
 				}
-				if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)) &&
+				if (item != NULL && item->IsKindOf(NAME_Weapon) &&
 					static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
 				{
 					player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
@@ -1536,7 +1536,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
 				{
 					item = P_DropItem (this, weap->GetClass(), -1, 256);
-					if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+					if (item != NULL && item->IsKindOf(NAME_Weapon))
 					{
 						if (weap->AmmoGive1 && weap->Ammo1)
 						{
@@ -1709,7 +1709,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (spawntype == NULL || !spawntype->IsDescendantOf(PClass::FindActor("PlayerChunk")))
+	if (spawntype == NULL || !spawntype->IsDescendantOf("PlayerChunk"))
 	{
 		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
 		if (spawntype == NULL)

@@ -2648,6 +2648,10 @@ GLPREFMNU_FXAA					= "FXAA Quality";
 GLPREFMNU_PALTONEMAPORDER		= "Tonemap Palette Order";
 GLPREFMNU_PALTONEMAPPOWER		= "Tonemap Palette Exponent";
 GLPREFMNU_SWLMBANDED			= "Banded SW Lightmode";
+GLPREFMNU_LENSFLARE             = "Lens flare effect";
+GLPREFMNU_LENSFLARESAMPLES      = "Lens flare samples";
+GLPREFMNU_LENSFLAREDISP         = "Lens flare dispersion factor";
+GLPREFMNU_LENSFLAREHALOWIDTH    = "Lens flare halo width";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";

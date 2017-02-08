@@ -657,7 +657,6 @@ IMPLEMENT_CLASS(APlayerPawn, false, true)
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)
 	IMPLEMENT_POINTER(InvSel)
-	IMPLEMENT_POINTER(FlechetteType)
 IMPLEMENT_POINTERS_END
 
 void APlayerPawn::Serialize(FSerializer &arc)

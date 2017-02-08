@@ -353,32 +353,6 @@ void PClassActor::DeriveData(PClass *newclass)
 
 //==========================================================================
 //
-// PClassActor :: PropagateMark
-//
-//==========================================================================
-
-size_t PClassActor::PropagateMark()
-{
-	// Mark state functions
-	for (int i = 0; i < NumOwnedStates; ++i)
-	{
-		if (OwnedStates[i].ActionFunc != NULL)
-		{
-			GC::Mark(OwnedStates[i].ActionFunc);
-		}
-	}
-	// Mark damage function
-	if (Defaults != NULL)
-	{
-		GC::Mark(((AActor *)Defaults)->DamageFunc);
-	}
-
-//	marked += ActorInfo->NumOwnedStates * sizeof(FState);
-	return Super::PropagateMark();
-}
-
-//==========================================================================
-//
 // PClassActor :: SetReplacement
 //
 // Sets as a replacement class for another class.

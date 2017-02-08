@@ -361,17 +361,6 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
-	// Mark action functions
-	if (!FinalGC)
-	{
-		FAutoSegIterator probe(ARegHead, ARegTail);
-
-		while (*++probe != NULL)
-		{
-			AFuncDesc *afunc = (AFuncDesc *)*probe;
-			Mark(*(afunc->VMPointer));
-		}
-	}
 	// Mark types
 	TypeTable.Mark();
 	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
@@ -776,7 +765,7 @@ CCMD(gc)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Usage: gc stop|now|full|pause [size]|stepmul [size]\n");
+		Printf ("Usage: gc stop|now|full|count|pause [size]|stepmul [size]\n");
 		return;
 	}
 	if (stricmp(argv[1], "stop") == 0)
@@ -790,6 +779,12 @@ CCMD(gc)
 	else if (stricmp(argv[1], "full") == 0)
 	{
 		GC::FullGC();
+	}
+	else if (stricmp(argv[1], "count") == 0)
+	{
+		int cnt = 0;
+		for (DObject *obj = GC::Root; obj; obj = obj->ObjNext, cnt++)
+		Printf("%d active objects counted\n", cnt);
 	}
 	else if (stricmp(argv[1], "pause") == 0)
 	{
@@ -814,3 +809,4 @@ CCMD(gc)
 		}
 	}
 }
+

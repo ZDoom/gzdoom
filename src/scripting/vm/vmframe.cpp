@@ -42,14 +42,10 @@ cycle_t VMCycles[10];
 int VMCalls[10];
 
 IMPLEMENT_CLASS(VMException, false, false)
-IMPLEMENT_CLASS(VMFunction, true, true)
 
-IMPLEMENT_POINTERS_START(VMFunction)
-	IMPLEMENT_POINTER(Proto)
-IMPLEMENT_POINTERS_END
+FMemArena VMFunction::Allocator(32768);
+TArray<VMFunction *> VMFunction::AllFunctions;
 
-IMPLEMENT_CLASS(VMScriptFunction, false, false)
-IMPLEMENT_CLASS(VMNativeFunction, false, false)
 
 VMScriptFunction::VMScriptFunction(FName name)
 {
@@ -87,7 +83,6 @@ VMScriptFunction::~VMScriptFunction()
 				KonstS[i].~FString();
 			}
 		}
-		M_Free(Code);
 	}
 }
 
@@ -100,7 +95,7 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 	assert(numkonsts >= 0 && numkonsts <= 65535);
 	assert(numkonsta >= 0 && numkonsta <= 65535);
 	assert(numlinenumbers >= 0 && numlinenumbers <= 65535);
-	void *mem = M_Malloc(numops * sizeof(VMOP) +
+	void *mem = Allocator.Alloc(numops * sizeof(VMOP) +
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +
 						 numkonsts * sizeof(FString) +
@@ -164,24 +159,6 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 	NumKonstF = numkonstf;
 	NumKonstS = numkonsts;
 	NumKonstA = numkonsta;
-}
-
-size_t VMScriptFunction::PropagateMark()
-{
-	if (KonstA != NULL)
-	{
-		FVoidObj *konsta = KonstA;
-		VM_UBYTE *atag = KonstATags();
-		for (int count = NumKonstA; count > 0; --count)
-		{
-			if (*atag++ == ATAG_OBJECT)
-			{
-				GC::Mark(konsta->o);
-			}
-			konsta++;
-		}
-	}
-	return NumKonstA * sizeof(void *) + Super::PropagateMark();
 }
 
 void VMScriptFunction::InitExtra(void *addr)

@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "cmdlib.h"
 #include "doomerrors.h"
+#include "memarena.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
@@ -193,6 +194,7 @@ enum
 
 enum EVMAbortException
 {
+	X_OTHER,
 	X_READ_NIL,
 	X_WRITE_NIL,
 	X_TOO_MANY_TRIES,
@@ -692,10 +694,8 @@ do_double:		if (inexact)
 	}
 };
 
-class VMFunction : public DObject
+class VMFunction
 {
-	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
-	HAS_OBJECT_POINTERS;
 public:
 	bool Native;
 	bool Final = false;				// cannot be overridden
@@ -708,7 +708,30 @@ public:
 
 	class PPrototype *Proto;
 
-	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) {}
+	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) 
+	{
+		AllFunctions.Push(this);
+	}
+	virtual ~VMFunction() {}
+
+	void *operator new(size_t size)
+	{
+		return Allocator.Alloc(size);
+	}
+
+	void operator delete(void *block) {}
+	void operator delete[](void *block) {}
+	static void DeleteAll()
+	{
+		for (auto f : AllFunctions)
+		{
+			f->~VMFunction();
+		}
+		AllFunctions.Clear();
+	}
+	static FMemArena Allocator;
+	static TArray<VMFunction *> AllFunctions;
+protected:
 };
 
 // VM frame layout:
@@ -837,11 +860,9 @@ struct FStatementInfo
 
 class VMScriptFunction : public VMFunction
 {
-	DECLARE_CLASS(VMScriptFunction, VMFunction);
 public:
 	VMScriptFunction(FName name=NAME_None);
 	~VMScriptFunction();
-	size_t PropagateMark();
 	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta, int numlinenumbers);
 
 	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
@@ -909,7 +930,6 @@ private:
 
 class VMNativeFunction : public VMFunction
 {
-	DECLARE_CLASS(VMNativeFunction, VMFunction);
 public:
 	typedef int (*NativeCallType)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
@@ -996,6 +1016,7 @@ void NullParam(const char *varname);
 
 // For required parameters.
 #define PARAM_INT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); int x = param[p].i;
+#define PARAM_UINT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); unsigned x = param[p].i;
 #define PARAM_BOOL_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); bool x = !!param[p].i;
 #define PARAM_NAME_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FName x = ENamedName(param[p].i);
 #define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FSoundID x = param[p].i;
@@ -1039,6 +1060,7 @@ void NullParam(const char *varname);
 #define PARAM_PROLOGUE				int paramnum = -1;
 
 #define PARAM_INT(x)				++paramnum; PARAM_INT_AT(paramnum,x)
+#define PARAM_UINT(x)				++paramnum; PARAM_UINT_AT(paramnum,x)
 #define PARAM_BOOL(x)				++paramnum; PARAM_BOOL_AT(paramnum,x)
 #define PARAM_NAME(x)				++paramnum; PARAM_NAME_AT(paramnum,x)
 #define PARAM_SOUND(x)				++paramnum; PARAM_SOUND_AT(paramnum,x)

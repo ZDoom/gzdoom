@@ -40,7 +40,7 @@ extend class Actor
 
 	void AdjustPlayerAngle(FTranslatedLineTarget t)
 	{
-		double difference = t.angleFromSource;
+		double difference = deltaangle(angle, t.angleFromSource);
 		if (abs(difference) > MAX_ANGLE_ADJUST)
 		{
 			if (difference > 0)

@@ -789,7 +789,7 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	item->ClearCounters();
 	if (!givecheat || amount > 0)
 	{
-		if (type->IsDescendantOf (PClass::FindActor(NAME_BasicArmorPickup)) || type->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
+		if (type->IsDescendantOf (NAME_BasicArmorPickup) || type->IsDescendantOf(NAME_BasicArmorBonus))
 		{
 			item->IntVar(NAME_SaveAmount) *= amount;
 		}
@@ -903,7 +903,7 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 	// and infinite ammo is on
 	if (notakeinfinite &&
 	((dmflags & DF_INFINITE_AMMO) || (player && player->cheats & CF_INFINITEAMMO)) &&
-		item->IsKindOf(PClass::FindActor(NAME_Ammo)))
+		item->IsKindOf(NAME_Ammo))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
 		result = false;
@@ -3196,6 +3196,7 @@ void P_NightmareRespawn (AActor *mobj)
 
 	// spawn it
 	mo = AActor::StaticSpawn(mobj->GetClass(), DVector3(mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z), NO_REPLACE, true);
+	mo->health = mobj->SpawnHealth();
 
 	if (z == ONFLOORZ)
 	{

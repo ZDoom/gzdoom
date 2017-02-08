@@ -2629,7 +2629,7 @@ void FParser::SF_MaxPlayerAmmo()
 
 			for (AInventory *item = players[playernum].mo->Inventory; item != NULL; item = item->Inventory)
 			{
-				if (item->IsKindOf(PClass::FindClass(NAME_BackpackItem)))
+				if (item->IsKindOf(NAME_BackpackItem))
 				{
 					if (t_argc>=4) amount = intvalue(t_argv[3]);
 					else amount*=2;
@@ -2675,8 +2675,8 @@ void FParser::SF_PlayerWeapon()
 			script_error("weaponnum out of range! %d\n", weaponnum);
 			return;
 		}
-		PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
-		if (!ti)
+		auto ti = PClass::FindActor(WeaponNames[weaponnum]);
+		if (!ti || !ti->IsDescendantOf(NAME_Weapon))
 		{
 			script_error("incompatibility in playerweapon %d\n", weaponnum);
 			return;
@@ -2686,7 +2686,7 @@ void FParser::SF_PlayerWeapon()
 		{
 			AActor * wp = players[playernum].mo->FindInventory(ti);
 			t_return.type = svt_int;
-			t_return.value.i = wp!=NULL;;
+			t_return.value.i = wp!=NULL;
 			return;
 		}
 		else
@@ -2712,7 +2712,7 @@ void FParser::SF_PlayerWeapon()
 			{
 				if (!wp) 
 				{
-					AWeapon * pw=players[playernum].PendingWeapon;
+					auto pw=players[playernum].PendingWeapon;
 					players[playernum].mo->GiveInventoryType(ti);
 					players[playernum].PendingWeapon=pw;
 				}
@@ -2756,8 +2756,8 @@ void FParser::SF_PlayerSelectedWeapon()
 				script_error("weaponnum out of range! %d\n", weaponnum);
 				return;
 			}
-			PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
-			if (!ti)
+			auto ti = PClass::FindActor(WeaponNames[weaponnum]);
+			if (!ti || !ti->IsDescendantOf(NAME_Weapon))
 			{
 				script_error("incompatibility in playerweapon %d\n", weaponnum);
 				return;
@@ -2862,7 +2862,7 @@ void FParser::SF_SetWeapon()
 		{
 			AInventory *item = players[playernum].mo->FindInventory (PClass::FindActor (stringvalue(t_argv[1])));
 
-			if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			if (item == NULL || !item->IsKindOf(NAME_Weapon))
 			{
 			}
 			else if (players[playernum].ReadyWeapon == item)
@@ -2874,7 +2874,7 @@ void FParser::SF_SetWeapon()
 			}
 			else
 			{
-				AWeapon *weap = static_cast<AWeapon *> (item);
+				auto weap = static_cast<AWeapon *> (item);
 
 				if (weap->CheckAmmo (AWeapon::EitherFire, false))
 				{

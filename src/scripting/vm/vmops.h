@@ -44,6 +44,8 @@ xx(LS,		ls,		RSRPKI,		LS_R,	4, REGT_INT),	// load string
 xx(LS_R,	ls,		RSRPRI,		NOP,	0, 0),
 xx(LO,		lo,		RPRPKI,		LO_R,	4, REGT_INT),	// load object
 xx(LO_R,	lo,		RPRPRI,		NOP,	0, 0),
+xx(LOS,		los,	RPRPKI,		LOS_R,	4, REGT_INT),	// load object (stack version without read barrier)
+xx(LOS_R,	lo,		RPRPRI,		NOP,	0, 0),
 xx(LP,		lp,		RPRPKI,		LP_R,	4, REGT_INT),	// load pointer
 xx(LP_R,	lp,		RPRPRI,		NOP,	0, 0),
 xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT),	// load vector2
@@ -68,6 +70,8 @@ xx(SS,		ss,		RPRSKI,		SS_R,	4, REGT_INT),		// store string
 xx(SS_R,	ss,		RPRSRI,		NOP,	0, 0),
 xx(SP,		sp,		RPRPKI,		SP_R,	4, REGT_INT),		// store pointer
 xx(SP_R,	sp,		RPRPRI,		NOP,	0, 0),
+xx(SO,		sp,		RPRPKI,		SO_R,	4, REGT_INT),		// store object pointer with write barrier (only needed for non thinkers and non types
+xx(SO_R,	sp,		RPRPRI,		NOP,	0, 0),
 xx(SV2,		sv2,	RPRVKI,		SV2_R,	4, REGT_INT),		// store vector2
 xx(SV2_R,	sv2,	RPRVRI,		NOP,	0, 0),
 xx(SV3,		sv3,	RPRVKI,		SV3_R,	4, REGT_INT),		// store vector3

@@ -47,7 +47,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
-#include "codegeneration/codegen.h"
+#include "backend/codegen.h"
 #include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------

@@ -69,12 +69,12 @@ musicBlock::~musicBlock ()
 	if (OPLinstruments != NULL) free(OPLinstruments);
 }
 
-void musicBlock::writeFrequency(uint slot, uint note, int pitch, uint keyOn)
+void musicBlock::writeFrequency(uint32_t slot, uint32_t note, int pitch, uint32_t keyOn)
 {
 	io->OPLwriteFreq (slot, note, pitch, keyOn);
 }
 
-void musicBlock::writeModulation(uint slot, struct OPL2instrument *instr, int state)
+void musicBlock::writeModulation(uint32_t slot, struct OPL2instrument *instr, int state)
 {
 	if (state)
 		state = 0x40;	/* enable Frequency Vibrato */
@@ -83,17 +83,17 @@ void musicBlock::writeModulation(uint slot, struct OPL2instrument *instr, int st
 		instr->trem_vibr_2 | state);
 }
 
-uint musicBlock::calcVolume(uint channelVolume, uint channelExpression, uint noteVolume)
+uint32_t musicBlock::calcVolume(uint32_t channelVolume, uint32_t channelExpression, uint32_t noteVolume)
 {
-	noteVolume = ((ulong)channelVolume * channelExpression * noteVolume) / (127*127);
+	noteVolume = ((uint64_t)channelVolume * channelExpression * noteVolume) / (127*127);
 	if (noteVolume > 127)
 		return 127;
 	else
 		return noteVolume;
 }
 
-int musicBlock::occupyChannel(uint slot, uint channel,
-						 int note, int volume, struct OP2instrEntry *instrument, uchar secondary)
+int musicBlock::occupyChannel(uint32_t slot, uint32_t channel,
+						 int note, int volume, struct OP2instrEntry *instrument, uint8_t secondary)
 {
 	struct OPL2instrument *instr;
 	struct channelEntry *ch = &channels[slot];
@@ -142,7 +142,7 @@ int musicBlock::occupyChannel(uint slot, uint channel,
 	return slot;
 }
 
-int musicBlock::releaseChannel(uint slot, uint killed)
+int musicBlock::releaseChannel(uint32_t slot, uint32_t killed)
 {
 	struct channelEntry *ch = &channels[slot];
 	writeFrequency(slot, ch->realnote, ch->pitch, 0);
@@ -157,10 +157,10 @@ int musicBlock::releaseChannel(uint slot, uint killed)
 	return slot;
 }
 
-int musicBlock::releaseSustain(uint channel)
+int musicBlock::releaseSustain(uint32_t channel)
 {
-	uint i;
-	uint id = channel;
+	uint32_t i;
+	uint32_t id = channel;
 
 	for(i = 0; i < io->OPLchannels; i++)
 	{
@@ -170,16 +170,16 @@ int musicBlock::releaseSustain(uint channel)
 	return 0;
 }
 
-int musicBlock::findFreeChannel(uint flag, uint channel, uchar note)
+int musicBlock::findFreeChannel(uint32_t flag, uint32_t channel, uint8_t note)
 {
-	uint i;
+	uint32_t i;
 
-	ulong bestfit = 0;
-	uint bestvoice = 0;
+	uint32_t bestfit = 0;
+	uint32_t bestvoice = 0;
 
 	for (i = 0; i < io->OPLchannels; ++i)
 	{
-		ulong magic;
+		uint32_t magic;
 
 		magic = ((channels[i].flags & CH_FREE) << 24) |
 				((channels[i].note == note &&
@@ -200,9 +200,9 @@ int musicBlock::findFreeChannel(uint flag, uint channel, uchar note)
 	return bestvoice;
 }
 
-struct OP2instrEntry *musicBlock::getInstrument(uint channel, uchar note)
+struct OP2instrEntry *musicBlock::getInstrument(uint32_t channel, uint8_t note)
 {
-	uint instrnumber;
+	uint32_t instrnumber;
 
 	if (channel == PERCUSSION)
 	{
@@ -225,7 +225,7 @@ struct OP2instrEntry *musicBlock::getInstrument(uint channel, uchar note)
 // code 1: play note
 CVAR (Bool, opl_singlevoice, 0, 0)
 
-void musicBlock::OPLplayNote(uint channel, uchar note, int volume)
+void musicBlock::OPLplayNote(uint32_t channel, uint8_t note, int volume)
 {
 	int i;
 	struct OP2instrEntry *instr;
@@ -251,11 +251,11 @@ void musicBlock::OPLplayNote(uint channel, uchar note, int volume)
 }
 
 // code 0: release note
-void musicBlock::OPLreleaseNote(uint channel, uchar note)
+void musicBlock::OPLreleaseNote(uint32_t channel, uint8_t note)
 {
-	uint i;
-	uint id = channel;
-	uint sustain = driverdata.channelSustain[channel];
+	uint32_t i;
+	uint32_t id = channel;
+	uint32_t sustain = driverdata.channelSustain[channel];
 
 	for(i = 0; i < io->OPLchannels; i++)
 	{
@@ -270,10 +270,10 @@ void musicBlock::OPLreleaseNote(uint channel, uchar note)
 }
 
 // code 2: change pitch wheel (bender)
-void musicBlock::OPLpitchWheel(uint channel, int pitch)
+void musicBlock::OPLpitchWheel(uint32_t channel, int pitch)
 {
-	uint i;
-	uint id = channel;
+	uint32_t i;
+	uint32_t id = channel;
 
 	// Convert pitch from 14-bit to 7-bit, then scale it, since the player
 	// code only understands sensitivities of 2 semitones.
@@ -292,10 +292,10 @@ void musicBlock::OPLpitchWheel(uint channel, int pitch)
 }
 
 // code 4: change control
-void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
+void musicBlock::OPLchangeControl(uint32_t channel, uint8_t controller, int value)
 {
-	uint i;
-	uint id = channel;
+	uint32_t i;
+	uint32_t id = channel;
 
 	switch (controller)
 	{
@@ -310,7 +310,7 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 			struct channelEntry *ch = &channels[i];
 			if (ch->channel == id)
 			{
-				uchar flags = ch->flags;
+				uint8_t flags = ch->flags;
 				ch->time = MLtime;
 				if (value >= MOD_MIN)
 				{
@@ -418,7 +418,7 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 	}
 }
 
-void musicBlock::OPLresetControllers(uint chan, int vol)
+void musicBlock::OPLresetControllers(uint32_t chan, int vol)
 {
 	driverdata.channelVolume[chan] = vol;
 	driverdata.channelExpression[chan] = 127;
@@ -429,14 +429,14 @@ void musicBlock::OPLresetControllers(uint chan, int vol)
 	driverdata.channelPitchSens[chan] = 200;
 }
 
-void musicBlock::OPLprogramChange(uint channel, int value)
+void musicBlock::OPLprogramChange(uint32_t channel, int value)
 {
 	driverdata.channelInstr[channel] = value;
 }
 
 void musicBlock::OPLplayMusic(int vol)
 {
-	uint i;
+	uint32_t i;
 
 	for (i = 0; i < CHANNELS; i++)
 	{
@@ -446,7 +446,7 @@ void musicBlock::OPLplayMusic(int vol)
 
 void musicBlock::OPLstopMusic()
 {
-	uint i;
+	uint32_t i;
 	for(i = 0; i < io->OPLchannels; i++)
 		if (!(channels[i].flags & CH_FREE))
 			releaseChannel(i, 1);
@@ -454,10 +454,10 @@ void musicBlock::OPLstopMusic()
 
 int musicBlock::OPLloadBank (FileReader &data)
 {
-	static const uchar masterhdr[8] = { '#','O','P','L','_','I','I','#' };
+	static const uint8_t masterhdr[8] = { '#','O','P','L','_','I','I','#' };
 	struct OP2instrEntry *instruments;
 
-	uchar filehdr[8];
+	uint8_t filehdr[8];
 
 	data.Read (filehdr, 8);
 	if (memcmp(filehdr, masterhdr, 8))

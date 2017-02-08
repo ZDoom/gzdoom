@@ -148,6 +148,26 @@ void FMemArena::FreeAllBlocks()
 
 //==========================================================================
 //
+// FMemArena :: DumpInfo
+//
+// Prints some info about this arena
+//
+//==========================================================================
+
+void FMemArena::DumpInfo()
+{
+	size_t allocated = 0;
+	size_t used = 0;
+	for (auto block = TopBlock; block != NULL; block = block->NextBlock)
+	{
+		allocated += BlockSize;
+		used += BlockSize - ((char*)block->Limit - (char*)block->Avail);
+	}
+	Printf("%zu bytes allocated, %zu bytes in use\n", allocated, used);
+}
+
+//==========================================================================
+//
 // FMemArena :: FreeBlockChain
 //
 // Frees a chain of blocks.

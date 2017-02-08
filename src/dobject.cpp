@@ -301,42 +301,17 @@ DObject::~DObject ()
 		PClass *type = GetClass();
 		if (!(ObjectFlags & OF_Cleanup) && !PClass::bShutdown)
 		{
-			DObject **probe;
-
-			if (!(ObjectFlags & OF_YesReallyDelete))
+			if (!(ObjectFlags & (OF_YesReallyDelete|OF_Released)))
 			{
 				Printf("Warning: '%s' is freed outside the GC process.\n",
 					type != NULL ? type->TypeName.GetChars() : "==some object==");
 			}
 
-			// Find all pointers that reference this object and NULL them.
-			StaticPointerSubstitution(this, NULL);
-
-			// Now unlink this object from the GC list.
-			for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
+			if (!(ObjectFlags & OF_Released))
 			{
-				if (*probe == this)
-				{
-					*probe = ObjNext;
-					if (&ObjNext == GC::SweepPos)
-					{
-						GC::SweepPos = probe;
-					}
-					break;
-				}
-			}
-
-			// If it's gray, also unlink it from the gray list.
-			if (this->IsGray())
-			{
-				for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
-				{
-					if (*probe == this)
-					{
-						*probe = GCNext;
-						break;
-					}
-				}
+				// Find all pointers that reference this object and NULL them.
+				StaticPointerSubstitution(this, NULL);
+				Release();
 			}
 		}
 		
@@ -345,6 +320,41 @@ DObject::~DObject ()
 			type->DestroySpecials(this);
 		}
 	}
+}
+
+void DObject::Release()
+{
+	DObject **probe;
+
+	// Unlink this object from the GC list.
+	for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
+	{
+		if (*probe == this)
+		{
+			*probe = ObjNext;
+			if (&ObjNext == GC::SweepPos)
+			{
+				GC::SweepPos = probe;
+			}
+			break;
+		}
+	}
+
+	// If it's gray, also unlink it from the gray list.
+	if (this->IsGray())
+	{
+		for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
+		{
+			if (*probe == this)
+			{
+				*probe = GCNext;
+				break;
+			}
+		}
+	}
+	ObjNext = nullptr;
+	GCNext = nullptr;
+	ObjectFlags |= OF_Released;
 }
 
 //==========================================================================
@@ -397,6 +407,23 @@ size_t DObject::PropagateMark()
 			GC::Mark((DObject **)((BYTE *)this + *offsets));
 			offsets++;
 		}
+
+		offsets = info->ArrayPointers;
+		if (offsets == NULL)
+		{
+			const_cast<PClass *>(info)->BuildArrayPointers();
+			offsets = info->ArrayPointers;
+		}
+		while (*offsets != ~(size_t)0)
+		{
+			auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+			for (auto &p : *aray)
+			{
+				GC::Mark(&p);
+			}
+			offsets++;
+		}
+
 		return info->Size;
 	}
 	return 0;
@@ -427,6 +454,28 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		}
 		offsets++;
 	}
+
+	offsets = info->ArrayPointers;
+	if (offsets == NULL)
+	{
+		const_cast<PClass *>(info)->BuildArrayPointers();
+		offsets = info->ArrayPointers;
+	}
+	while (*offsets != ~(size_t)0)
+	{
+		auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+		for (auto &p : *aray)
+		{
+			if (p == old)
+			{
+				p = notOld;
+				changed++;
+			}
+		}
+		offsets++;
+	}
+
+
 	return changed;
 }
 

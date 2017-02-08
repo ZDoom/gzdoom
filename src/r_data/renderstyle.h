@@ -44,10 +44,6 @@
 enum
 {
 	OPAQUE = 65536,
-	TRANSLUC25 = (OPAQUE / 4),
-	TRANSLUC33 = (OPAQUE / 3),
-	TRANSLUC66 = ((OPAQUE * 2) / 3),
-	TRANSLUC75 = ((OPAQUE * 3) / 4),
 };
 
 // Legacy render styles

@@ -2857,7 +2857,7 @@ void AM_drawThings ()
 						// Find the key's own color.
 						// Only works correctly if single-key locks have lower numbers than any-key locks.
 						// That is the case for all default keys, however.
-						if (t->IsKindOf(PClass::FindActor(NAME_Key)))
+						if (t->IsKindOf(NAME_Key))
 						{
 							if (G_SkillProperty(SKILLP_EasyKey))
 							{
@@ -2934,8 +2934,8 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		DTA_ClipLeft, f_x,
 		DTA_ClipRight, f_x + f_w,
 		DTA_FlipX, flip,
-		DTA_Translation, TranslationToTable(translation),
-		DTA_AlphaF, alpha,
+		DTA_TranslationIndex, translation,
+		DTA_Alpha, alpha,
 		DTA_FillColor, fillcolor,
 		DTA_RenderStyle, DWORD(renderstyle),
 		TAG_DONE);

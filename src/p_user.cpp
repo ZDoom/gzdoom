@@ -542,12 +542,6 @@ IMPLEMENT_CLASS(PClassPlayerPawn, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
-	for (size_t i = 0; i < countof(HexenArmor); ++i)
-	{
-		HexenArmor[i] = 0;
-	}
-	ColorRangeStart = 0;
-	ColorRangeEnd = 0;
 }
 
 void PClassPlayerPawn::DeriveData(PClass *newclass)
@@ -555,24 +549,9 @@ void PClassPlayerPawn::DeriveData(PClass *newclass)
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	Super::DeriveData(newclass);
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
-	size_t i;
 
 	newp->DisplayName = DisplayName;
-	newp->SoundClass = SoundClass;
-	newp->Face = Face;
-	newp->InvulMode = InvulMode;
-	newp->HealingRadiusType = HealingRadiusType;
-	newp->ColorRangeStart = ColorRangeStart;
-	newp->ColorRangeEnd = ColorRangeEnd;
 	newp->ColorSets = ColorSets;
-	for (i = 0; i < countof(HexenArmor); ++i)
-	{
-		newp->HexenArmor[i] = HexenArmor[i];
-	}
-	for (i = 0; i < countof(Slot); ++i)
-	{
-		newp->Slot[i] = Slot[i];
-	}
 }
 
 static int intcmp(const void *a, const void *b)
@@ -963,7 +942,7 @@ AWeapon *APlayerPawn::BestWeapon(PClassInventory *ammotype)
 	// Find the best weapon the player has.
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
-		if (!item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+		if (!item->IsKindOf(NAME_Weapon))
 			continue;
 
 		weap = static_cast<AWeapon *> (item);
@@ -1136,29 +1115,29 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 
 			if ((dmflags & DF_COOP_LOSE_KEYS) &&
 				defitem == NULL &&
-				item->IsKindOf(PClass::FindActor(NAME_Key)))
+				item->IsKindOf(NAME_Key))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_WEAPONS) &&
 				defitem == NULL &&
-				item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+				item->IsKindOf(NAME_Weapon))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(PClass::FindActor(NAME_Armor)))
+				item->IsKindOf(NAME_Armor))
 			{
 				if (defitem == NULL)
 				{
 					item->Destroy();
 				}
-				else if (item->IsKindOf(PClass::FindActor(NAME_BasicArmor)))
+				else if (item->IsKindOf(NAME_BasicArmor))
 				{
 					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
 					item->Amount = defitem->Amount;
 				}
-				else if (item->IsKindOf(PClass::FindActor(NAME_HexenArmor)))
+				else if (item->IsKindOf(NAME_HexenArmor))
 				{
 					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
 					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
@@ -1167,12 +1146,12 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
 				defitem == NULL &&
-				item->IsKindOf(PClass::FindActor(NAME_PowerupGiver)))
+				item->IsKindOf(NAME_PowerupGiver))
 			{
 				item->Destroy();
 			}
 			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(PClass::FindActor(NAME_Ammo)))
+				item->IsKindOf(NAME_Ammo))
 			{
 				if (defitem == NULL)
 				{
@@ -1230,7 +1209,7 @@ const char *APlayerPawn::GetSoundClass() const
 
 	// [GRB]
 	PClassPlayerPawn *pclass = GetClass();
-	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass.GetChars() : "player";
+	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
 }
 
 //===========================================================================
@@ -1373,10 +1352,10 @@ void APlayerPawn::GiveDefaultInventory ()
 
 	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
 	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
-	Slots[4] = myclass->HexenArmor[0];
+	Slots[4] = HexenArmor[0];
 	for (int i = 0; i < 4; ++i)
 	{
-		SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+		SlotsIncrement[i] = HexenArmor[i + 1];
 	}
 
 	// BasicArmor must come right after that. It should not affect any
@@ -1412,7 +1391,7 @@ void APlayerPawn::GiveDefaultInventory ()
 					item = static_cast<AInventory *>(Spawn(ti));
 					item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
 					item->Amount = di->Amount;
-					if (item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+					if (item->IsKindOf(NAME_Weapon))
 					{
 						// To allow better control any weapon is emptied of
 						// ammo before being given to the player.
@@ -1432,7 +1411,7 @@ void APlayerPawn::GiveDefaultInventory ()
 						item = NULL;
 					}
 				}
-				if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)) &&
+				if (item != NULL && item->IsKindOf(NAME_Weapon) &&
 					static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
 				{
 					player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
@@ -1536,7 +1515,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
 				{
 					item = P_DropItem (this, weap->GetClass(), -1, 256);
-					if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+					if (item != NULL && item->IsKindOf(NAME_Weapon))
 					{
 						if (weap->AmmoGive1 && weap->Ammo1)
 						{
@@ -1709,7 +1688,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (spawntype == NULL || !spawntype->IsDescendantOf(PClass::FindActor("PlayerChunk")))
+	if (spawntype == NULL || !spawntype->IsDescendantOf("PlayerChunk"))
 	{
 		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
 		if (spawntype == NULL)
@@ -3248,16 +3227,17 @@ DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
 
-DEFINE_FIELD(PClassPlayerPawn, HealingRadiusType)
+DEFINE_FIELD(APlayerPawn, HealingRadiusType)
+DEFINE_FIELD(APlayerPawn, SoundClass)
+DEFINE_FIELD(APlayerPawn, Face)
+DEFINE_FIELD(APlayerPawn, Portrait)
+DEFINE_FIELD(APlayerPawn, Slot)
+DEFINE_FIELD(APlayerPawn, InvulMode)
+DEFINE_FIELD(APlayerPawn, HexenArmor)
+DEFINE_FIELD(APlayerPawn, ColorRangeStart)
+DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
+
 DEFINE_FIELD(PClassPlayerPawn, DisplayName)
-DEFINE_FIELD(PClassPlayerPawn, SoundClass)
-DEFINE_FIELD(PClassPlayerPawn, Face)
-DEFINE_FIELD(PClassPlayerPawn, Portrait)
-DEFINE_FIELD(PClassPlayerPawn, Slot)
-DEFINE_FIELD(PClassPlayerPawn, InvulMode)
-DEFINE_FIELD(PClassPlayerPawn, HexenArmor)
-DEFINE_FIELD(PClassPlayerPawn, ColorRangeStart)
-DEFINE_FIELD(PClassPlayerPawn, ColorRangeEnd)
 DEFINE_FIELD(PClassPlayerPawn, ColorSets)
 DEFINE_FIELD(PClassPlayerPawn, PainFlashes)
 

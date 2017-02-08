@@ -1,10 +1,10 @@
 /*
 ** dynarray.cpp
 **
-** Compiler backend / code generation for dynamic arrays
+** internal data types for dynamic arrays
 **
 **---------------------------------------------------------------------------
-** Copyright 2016 Christoph Oelckers
+** Copyright 2016-2017 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

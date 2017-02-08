@@ -596,6 +596,7 @@ public:
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
+	virtual void Finalize(FStateDefinitions &statedef);
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void PostSerialize() override;
@@ -972,7 +973,7 @@ public:
 	{
 		SetOrigin(Pos() + vel, true);
 	}
-	void SetOrigin(double x, double y, double z, bool moving);
+	virtual void SetOrigin(double x, double y, double z, bool moving);
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
 		SetOrigin(npos.X, npos.Y, npos.Z, moving);

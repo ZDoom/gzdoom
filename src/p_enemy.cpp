@@ -570,8 +570,9 @@ bool P_Move (AActor *actor)
 		return true;
 	}
 
-	if (actor->movedir == DI_NODIR)
+	if (actor->movedir >= DI_NODIR)
 	{
+		actor->movedir = DI_NODIR;	// make sure it's valid.
 		return false;
 	}
 
@@ -584,9 +585,6 @@ bool P_Move (AActor *actor)
 	{
 		return false;
 	}
-
-	if ((unsigned)actor->movedir >= 8)
-		I_Error ("Weird actor->movedir!");
 
 	// killough 10/98: allow dogs to drop off of taller ledges sometimes.
 	// dropoff==1 means always allow it, dropoff==2 means only up to 128 high,
@@ -3228,7 +3226,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 
 	if (dropamount > 0)
 	{
-		if (flagmask != 0 && inv->IsKindOf(PClass::FindActor(NAME_Ammo)))
+		if (flagmask != 0 && inv->IsKindOf(NAME_Ammo))
 		{
 			inv->Amount = int(dropamount * dropammofactor);
 			inv->ItemFlags |= IF_IGNORESKILL;
@@ -3254,7 +3252,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		inv->FloatVar("AmmoFactor") = dropammofactor;
 		inv->ItemFlags |= flagmask;
 	}
-	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
+	else if (inv->IsKindOf(NAME_Weapon))
 	{
 		// The same goes for ammo from a weapon.
 		static_cast<AWeapon *>(inv)->AmmoGive1 = int(static_cast<AWeapon *>(inv)->AmmoGive1 * dropammofactor);

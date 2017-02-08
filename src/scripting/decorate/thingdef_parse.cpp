@@ -49,7 +49,7 @@
 #include "v_palette.h"
 #include "doomerrors.h"
 #include "i_system.h"
-#include "codegeneration/codegen.h"
+#include "backend/codegen.h"
 #include "w_wad.h"
 #include "v_video.h"
 #include "version.h"
@@ -1155,7 +1155,7 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 	}
 	try
 	{
-		info->Finalize(bag.statedef);
+		GetDefaultByType(info)->Finalize(bag.statedef);
 	}
 	catch (CRecoverableError &err)
 	{

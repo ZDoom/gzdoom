@@ -858,7 +858,8 @@ void P_Spawn3DFloors (void)
 		{
 		case ExtraFloor_LightOnly:
 			if (line.args[1] < 0 || line.args[1] > 2) line.args[1] = 0;
-			P_Set3DFloor(&line, 3, flagvals[line.args[1]], 0);
+			if (line.args[0] != 0)
+				P_Set3DFloor(&line, 3, flagvals[line.args[1]], 0);
 			break;
 
 		case Sector_Set3DFloor:
@@ -877,7 +878,8 @@ void P_Spawn3DFloors (void)
 					line.args[4]=0;
 				}
 			}
-			P_Set3DFloor(&line, line.args[1]&~8, line.args[2], line.args[3]);
+			if (line.args[0] != 0)
+				P_Set3DFloor(&line, line.args[1]&~8, line.args[2], line.args[3]);
 			break;
 
 		default:

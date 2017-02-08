@@ -66,7 +66,7 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 
@@ -560,7 +560,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
+	*defaults = *GetDefault<AActor>();
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 
@@ -2065,8 +2065,7 @@ DEFINE_CLASS_PROPERTY(bobrangey, F, Weapon)
 DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotNumber = i;
+	defaults->SlotNumber = i;
 }
 
 //==========================================================================
@@ -2075,8 +2074,7 @@ DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotPriority = int(i*65536);
+	defaults->SlotPriority = int(i*65536);
 }
 
 //==========================================================================
@@ -2098,9 +2096,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 	int alpha;
 	PalEntry *pBlendColor;
-	bool isgiver = info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver));
+	bool isgiver = info->IsDescendantOf(NAME_PowerupGiver);
 
-	if (info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) || isgiver)
+	if (info->IsDescendantOf(NAME_Powerup) || isgiver)
 	{
 		pBlendColor = &defaults->ColorVar(NAME_BlendColor);
 	}
@@ -2150,7 +2148,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry BlendColor;
 
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.colormap\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2185,7 +2183,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.duration\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2200,7 +2198,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2216,7 +2214,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 
-	if (!info->IsDescendantOf(PClass::FindActor(NAME_Powerup)) && !info->IsDescendantOf(PClass::FindActor(NAME_PowerupGiver)))
+	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
 		I_Error("\"powerup.mode\" requires an actor of type \"Powerup\"\n");
 		return;
@@ -2276,8 +2274,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, soundclass, S, PlayerPawn)
 
 	FString tmp = str;
 	tmp.ReplaceChars (' ', '_');
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->SoundClass = tmp;
+	defaults->SoundClass = tmp.IsNotEmpty()? FName(tmp) : NAME_None;
 }
 
 //==========================================================================
@@ -2288,21 +2285,23 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	PROP_STRING_PARM(str, 0);
 	FString tmp = str;
 
-	tmp.ToUpper();
-	bool valid = (tmp.Len() == 3 &&
-		(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
-		(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
-		(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
-		);
-	if (!valid)
+	if (tmp.Len() == 0) defaults->Face = NAME_None;
+	else
 	{
-		bag.ScriptPosition.Message(MSG_OPTERROR,
-			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
-			tmp.GetChars(), info->TypeName.GetChars ());
+		tmp.ToUpper();
+		bool valid = (tmp.Len() == 3 &&
+			(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
+			(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
+			(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
+			);
+		if (!valid)
+		{
+			bag.ScriptPosition.Message(MSG_OPTERROR,
+				"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
+				tmp.GetChars(), info->TypeName.GetChars());
+		}
+		defaults->Face = tmp;
 	}
-	
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->Face = tmp;
 }
 
 //==========================================================================
@@ -2316,9 +2315,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	if (start > end)
 		swapvalues (start, end);
 
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->ColorRangeStart = start;
-	static_cast<PClassPlayerPawn *>(info)->ColorRangeEnd = end;
+	defaults->ColorRangeStart = start;
+	defaults->ColorRangeEnd = end;
 }
 
 //==========================================================================
@@ -2695,8 +2693,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->InvulMode = str;
+	defaults->InvulMode = str;
 }
 
 //==========================================================================
@@ -2706,7 +2703,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->HealingRadiusType = str;
+	defaults->HealingRadiusType = str;
 }
 
 //==========================================================================
@@ -2718,7 +2715,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 	for (int i = 0; i < 5; i++)
 	{
 		PROP_DOUBLE_PARM(val, i);
-		static_cast<PClassPlayerPawn *>(info)->HexenArmor[i] = val;
+		defaults->HexenArmor[i] = val;
 	}
 }
 
@@ -2729,7 +2726,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
 {
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	PROP_STRING_PARM(val, 0);
-	static_cast<PClassPlayerPawn *>(info)->Portrait = val;
+	defaults->Portrait = val;
 }
 
 //==========================================================================
@@ -2753,7 +2750,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 			PROP_STRING_PARM(str, i);
 			weapons << ' ' << str;
 		}
-		static_cast<PClassPlayerPawn *>(info)->Slot[slot] = &weapons[1];
+		defaults->Slot[slot] = weapons.IsEmpty()? NAME_None : FName(weapons);
 	}
 }
 

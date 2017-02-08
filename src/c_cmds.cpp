@@ -1210,7 +1210,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				{
 					while ((actor = it.Next()))
 					{
-						if (!actor->IsKindOf(PClass::FindClass("SecretTrigger"))) continue;
+						if (!actor->IsKindOf("SecretTrigger")) continue;
 						foundone = true;
 						break;
 					}

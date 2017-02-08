@@ -542,7 +542,7 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 		{
 			tag = ATAG_STATE;
 		}
-		else if (value.Type->GetLoadOp() == OP_LO)
+		else if (value.Type->GetLoadOp() != OP_LP)
 		{
 			tag = ATAG_OBJECT;
 		}
@@ -1422,6 +1422,76 @@ ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+FxFontCast::FxFontCast(FxExpression *x)
+	: FxExpression(EFX_FontCast, x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeSound;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFontCast::~FxFontCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFontCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeFont)
+	{
+		FxExpression *x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	// This intentionally does not convert non-constants.
+	// The sole reason for this cast is to allow passing both font pointers and string constants to printing functions and have the font names checked at compile time.
+	else if ((basex->ValueType == TypeString || basex->ValueType == TypeName) && basex->isConstant())
+	{
+		ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+		FFont *font = V_GetFont(constval.GetString());
+		// Font must exist. Most internal functions working with fonts do not like null pointers.
+		// If checking is needed scripts will have to call Font.GetFont themselves.
+		if (font == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unknown font '%s'", constval.GetString().GetChars());
+			delete this;
+			return nullptr;
+		}
+
+		FxExpression *x = new FxConstant(font, ScriptPosition);
+		delete this;
+		return x;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to font");
+		delete this;
+		return nullptr;
+	}
+}
+
+
+//==========================================================================
+//
 // generic type cast operator
 //
 //==========================================================================
@@ -1648,6 +1718,14 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	else if (AreCompatiblePointerTypes(ValueType, basex->ValueType))
 	{
 		goto basereturn;
+	}
+	else if (ValueType == TypeFont)
+	{
+		FxExpression *x = new FxFontCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
 	}
 	// todo: pointers to class objects. 
 	// All other types are only compatible to themselves and have already been handled above by the equality check.
@@ -6278,7 +6356,7 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 	ob.Free(build);
 	ExpEmit meta(build, REGT_POINTER);
 	build->Emit(OP_META, meta.RegNum, ob.RegNum);
-	build->Emit(OP_LO, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LOS, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return meta;
 
 }
@@ -6290,11 +6368,8 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
-	: FxExpression(EFX_GlobalVariable, pos)
+	: FxMemberBase(EFX_GlobalVariable, mem, pos)
 {
-	membervar = mem;
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6470,11 +6545,8 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition &pos)
-	: FxExpression(EFX_StackVariable, pos)
+	: FxMemberBase(EFX_StackVariable, new PField(NAME_None, type, 0, offset), pos)
 {
-	membervar = new PField(NAME_None, type, 0, offset);
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6486,21 +6558,8 @@ FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition 
 
 FxStackVariable::~FxStackVariable()
 {
-	// Q: Is this good or bad? Needs testing if this is fine or better left to the GC anyway. DObject's destructor is anything but cheap.
 	membervar->ObjectFlags |= OF_YesReallyDelete;
 	delete membervar;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void FxStackVariable::ReplaceField(PField *newfield)
-{
-	membervar->ObjectFlags |= OF_YesReallyDelete;
-	delete membervar;
-	membervar = newfield;
 }
 
 //==========================================================================
@@ -6553,7 +6612,9 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 	if (membervar->BitValue == -1)
 	{
 		if (offsetreg == -1) offsetreg = build->GetConstantInt(0);
-		build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, build->FramePointer.RegNum, offsetreg);
+		auto op = membervar->Type->GetLoadOp();
+		if (op == OP_LO) op = OP_LOS;
+		build->Emit(op, loc.RegNum, build->FramePointer.RegNum, offsetreg);
 	}
 	else
 	{
@@ -6571,14 +6632,16 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
+FxMemberBase::FxMemberBase(EFxType type, PField *f, const FScriptPosition &p)
+	:FxExpression(type, p), membervar(f)
+{
+}
+
 
 FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-	: FxExpression(EFX_StructMember, pos)
+	: FxMemberBase(EFX_StructMember, mem, pos)
 {
 	classx = x;
-	membervar = mem;
-	AddressRequested = false;
-	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -6650,35 +6713,13 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	else if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 	{
 		// if this is a struct within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember)
+		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember || classx->ExprType == EFX_GlobalVariable || classx->ExprType == EFX_StackVariable)
 		{
-			auto parentfield = static_cast<FxStructMember *>(classx)->membervar;
+			auto parentfield = static_cast<FxMemberBase *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
 			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
 			newfield->BitValue = membervar->BitValue;
-			static_cast<FxStructMember *>(classx)->membervar = newfield;
-			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = classx->Resolve(ctx);
-			classx = nullptr;
-			return x;
-		}
-		else if (classx->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
-			newfield->BitValue = membervar->BitValue;
-			static_cast<FxGlobalVariable *>(classx)->membervar = newfield;
-			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = classx->Resolve(ctx);
-			classx = nullptr;
-			return x;
-		}
-		else if (classx->ExprType == EFX_StackVariable)
-		{
-			auto parentfield = static_cast<FxStackVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
-			newfield->BitValue = membervar->BitValue;
-			static_cast<FxStackVariable *>(classx)->ReplaceField(newfield);
+			static_cast<FxMemberBase *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
 			classx = nullptr;
@@ -6866,33 +6907,41 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		return nullptr;
 	}
 
-	PArray *arraytype = dyn_cast<PArray>(Array->ValueType);
-	if (arraytype == nullptr)
+	PArray *arraytype = nullptr;
+	PType *elementtype = nullptr;
+	if (Array->IsDynamicArray())
 	{
-		// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
-		PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
-		if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
-		{
-			ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
-			delete this;
-			return nullptr;
-		}
-		arraytype = static_cast<PArray*>(ptype->PointedType);
+		PDynArray *darraytype = static_cast<PDynArray*>(Array->ValueType);
+		elementtype = darraytype->ElementType;
+		Array->ValueType = NewPointer(NewResizableArray(elementtype));	// change type so that this can use the code for resizable arrays unchanged.
 		arrayispointer = true;
+	}
+	else
+	{
+		arraytype = dyn_cast<PArray>(Array->ValueType);
+		if (arraytype == nullptr)
+		{
+			// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
+			PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
+			if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
+				delete this;
+				return nullptr;
+			}
+			arraytype = static_cast<PArray*>(ptype->PointedType);
+			arrayispointer = true;
+		}
+		elementtype = arraytype->ElementType;
 	}
 
 	if (Array->IsResizableArray())
 	{
 		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember || Array->ExprType == EFX_GlobalVariable || Array->ExprType == EFX_StackVariable)
 		{
-			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + parentfield->Type->Align;
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			SizeAddr = parentfield->Offset + parentfield->Type->Align;
+			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
+			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
 		else
 		{
@@ -6901,54 +6950,32 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 	}
-	else if (index->isConstant())
+	// constant indices can only be resolved at compile time for statically sized arrays.
+	else if (index->isConstant() && arraytype != nullptr && !arrayispointer)
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		if (indexval >= arraytype->ElementCount && !Array->IsResizableArray())
+		if (indexval >= arraytype->ElementCount)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Array index out of bounds");
 			delete this;
 			return nullptr;
 		}
 
-		if (!arrayispointer)
+		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember || Array->ExprType == EFX_GlobalVariable || Array->ExprType == EFX_StackVariable)
 		{
-			// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-			if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
-			{
-				auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-				// PFields are garbage collected so this will be automatically taken care of later.
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxStructMember *>(Array)->membervar = newfield;
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
-			else if (Array->ExprType == EFX_GlobalVariable)
-			{
-				auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
-			else if (Array->ExprType == EFX_StackVariable)
-			{
-				auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
-				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-				static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
-				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-				auto x = Array->Resolve(ctx);
-				Array = nullptr;
-				return x;
-			}
+			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
+			// PFields are garbage collected so this will be automatically taken care of later.
+			auto newfield = new PField(NAME_None, elementtype, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxMemberBase *>(Array)->membervar = newfield;
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
 		}
 	}
 
-	ValueType = arraytype->ElementType;
+	ValueType = elementtype;
 	if (!Array->RequestAddress(ctx, &AddressWritable))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Unable to dereference array.");
@@ -6987,17 +7014,8 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
 		auto f = new PField(NAME_None, TypeUInt32, 0, SizeAddr);
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
-		{
-			static_cast<FxStructMember *>(Array)->membervar = f;
-			static_cast<FxStructMember *>(Array)->AddressRequested = false;
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			static_cast<FxGlobalVariable *>(Array)->membervar = f;
-			static_cast<FxGlobalVariable *>(Array)->AddressRequested = false;
-		}
-
+		static_cast<FxMemberBase *>(Array)->membervar = f;
+		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
 		Array->ValueType = TypeUInt32;
 		bound = Array->Emit(build);
 	}
@@ -7724,6 +7742,70 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		// same for String methods. It also uses a hidden struct type to define them.
 		Self->ValueType = TypeStringStruct;
 	}
+	else if (Self->IsDynamicArray())
+	{
+		if (MethodName == NAME_Size)
+		{
+			FxExpression *x = new FxMemberIdentifier(Self, NAME_Size, ScriptPosition);	// todo: obfuscate the name to prevent direct access.
+			Self = nullptr;
+			delete this;
+			return x->Resolve(ctx);
+		}
+		else
+		{
+			auto elementType = static_cast<PDynArray*>(Self->ValueType)->ElementType;
+			Self->ValueType = static_cast<PDynArray*>(Self->ValueType)->BackingType;
+			// this requires some added type checks for the passed types.
+			for (auto &a : ArgList)
+			{
+				a = a->Resolve(ctx);
+				if (a == nullptr)
+				{
+					delete this;
+					return nullptr;
+				}
+				if (a->IsDynamicArray())
+				{
+					// Copy and Move must turn their parameter into a pointer to the backing struct type.
+					auto backingtype = static_cast<PDynArray*>(a->ValueType)->BackingType;
+					if (elementType != static_cast<PDynArray*>(a->ValueType)->ElementType)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+						delete this;
+						return nullptr;
+					}
+					bool writable;
+					if (!a->RequestAddress(ctx, &writable))
+					{
+						ScriptPosition.Message(MSG_ERROR, "Unable to dereference array variable");
+						delete this;
+						return nullptr;
+					}
+					a->ValueType = NewPointer(backingtype);
+
+					// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
+					if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StackVariable)
+					{
+						auto member = static_cast<FxMemberBase*>(Self);
+						auto newfield = new PField(NAME_None, backingtype, 0, member->membervar->Offset);
+						member->membervar = newfield;
+					}
+				}
+				else if (a->IsPointer() && Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+				{
+					// the only case which must be checked up front is for pointer arrays receiving a new element.
+					// Since there is only one native backing class it uses a neutral void pointer as its argument,
+					// meaning that FxMemberFunctionCall is unable to do a proper check. So we have to do it here.
+					if (a->ValueType != elementType)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument. Got %s, expected %s", a->ValueType->DescriptiveName(), elementType->DescriptiveName());
+						delete this;
+						return nullptr;
+					}
+				}
+			}
+		}
+	}
 	else if (Self->IsArray())
 	{
 		if (MethodName == NAME_Size)
@@ -7746,19 +7828,9 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			else
 			{
 				// Resizable arrays can only be defined in C code and they can only exist in pointer form to reduce their impact on the code generator.
-				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember)
+				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_GlobalVariable)
 				{
-					auto member = static_cast<FxStructMember*>(Self);
-					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
-					member->membervar = newfield;
-					Self = nullptr;
-					delete this;
-					member->ValueType = TypeUInt32;
-					return member;
-				}
-				else if (Self->ExprType == EFX_GlobalVariable)
-				{
-					auto member = static_cast<FxGlobalVariable*>(Self);
+					auto member = static_cast<FxMemberBase*>(Self);
 					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
 					member->membervar = newfield;
 					Self = nullptr;
@@ -8789,7 +8861,7 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 		op.Free(build);
 	}
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
+	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
 	return to;
 }
 
@@ -8861,7 +8933,7 @@ ExpEmit FxGetDefaultByType::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LKP, to.RegNum, op.RegNum);
 		op = to;
 	}
-	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return to;
 }
 
@@ -10598,8 +10670,7 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 
 				case REGT_POINTER:
 				{
-					bool isobject = ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)));
-					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), isobject ? ATAG_OBJECT : ATAG_GENERIC));
+					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), ValueType->GetLoadOp() != OP_LP ? ATAG_OBJECT : ATAG_GENERIC));
 					break;
 				}
 				case REGT_STRING:
@@ -10739,7 +10810,7 @@ ExpEmit FxStaticArray::Emit(VMFunctionBuilder *build)
 	{
 		TArray<void*> cvalues;
 		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetPointer());
-		StackOffset = build->AllocConstantsAddress(cvalues.Size(), &cvalues[0], ElementType->GetLoadOp() == OP_LO ? ATAG_OBJECT : ATAG_GENERIC);
+		StackOffset = build->AllocConstantsAddress(cvalues.Size(), &cvalues[0], ElementType->GetLoadOp() != OP_LP ? ATAG_OBJECT : ATAG_GENERIC);
 		break;
 	}
 	}

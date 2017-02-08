@@ -75,9 +75,8 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
-	DTA_AlphaF,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
-	DTA_Translation,	// translation table to recolor the source
+	DTA_TranslationIndex, // translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
@@ -163,7 +162,7 @@ struct DrawParms
 	uint32 colorOverlay;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
-	fixed_t shadowAlpha;
+	float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
 	INTBOOL masked;
@@ -178,6 +177,17 @@ struct DrawParms
 	bool virtBottom;
 };
 
+struct Va_List
+{
+	va_list list;
+};
+
+struct VMVa_List
+{
+	VMValue *args;
+	int curindex;
+	int numargs;
+};
 //
 // VIDEO
 //
@@ -252,6 +262,7 @@ public:
 	// 2D Texture drawing
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
+	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
 
@@ -263,8 +274,10 @@ public:
 #undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
 	// 2D Text drawing
-	void DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
-	void DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 protected:
 	BYTE *Buffer;
@@ -273,10 +286,14 @@ protected:
 	int Pitch;
 	int LockCount;
 
+	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list tags, DrawParms *parms, bool fortext) const;
+
+	template<class T>
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 

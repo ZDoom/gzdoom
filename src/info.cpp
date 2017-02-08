@@ -110,7 +110,7 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 			const char *callinfo = "";
 			if (info != nullptr && info->mStateType == STATE_Psprite)
 			{
-				if (stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)) && stateowner != self) callinfo = "weapon ";
+				if (stateowner->IsKindOf(NAME_Weapon) && stateowner != self) callinfo = "weapon ";
 				else callinfo = "overlay ";
 			}
 			err.stacktrace.AppendFormat("Called from %sstate %s.%d in %s\n", callinfo, owner->TypeName.GetChars(), offs, stateowner->GetClass()->TypeName.GetChars());
@@ -353,32 +353,6 @@ void PClassActor::DeriveData(PClass *newclass)
 
 //==========================================================================
 //
-// PClassActor :: PropagateMark
-//
-//==========================================================================
-
-size_t PClassActor::PropagateMark()
-{
-	// Mark state functions
-	for (int i = 0; i < NumOwnedStates; ++i)
-	{
-		if (OwnedStates[i].ActionFunc != NULL)
-		{
-			GC::Mark(OwnedStates[i].ActionFunc);
-		}
-	}
-	// Mark damage function
-	if (Defaults != NULL)
-	{
-		GC::Mark(((AActor *)Defaults)->DamageFunc);
-	}
-
-//	marked += ActorInfo->NumOwnedStates * sizeof(FState);
-	return Super::PropagateMark();
-}
-
-//==========================================================================
-//
 // PClassActor :: SetReplacement
 //
 // Sets as a replacement class for another class.
@@ -429,20 +403,20 @@ void PClassActor::SetDropItems(DDropItem *drops)
 //
 //==========================================================================
 
-void PClassActor::Finalize(FStateDefinitions &statedef)
+void AActor::Finalize(FStateDefinitions &statedef)
 {
-	AActor *defaults = (AActor*)Defaults;
+	AActor *defaults = this;
 
 	try
 	{
-		statedef.FinishStates(this, defaults);
+		statedef.FinishStates(GetClass(), defaults);
 	}
 	catch (CRecoverableError &)
 	{
 		statedef.MakeStateDefines(NULL);
 		throw;
 	}
-	statedef.InstallStates(this, defaults);
+	statedef.InstallStates(GetClass(), defaults);
 	statedef.MakeStateDefines(NULL);
 }
 

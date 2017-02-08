@@ -209,6 +209,18 @@ begin:
 		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
+	OP(LOS):
+		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB,KC,X_READ_NIL);
+		reg.a[a] = *(DObject **)ptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+	OP(LOS_R):
+		ASSERTA(a); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB,RC,X_READ_NIL);
+		reg.a[a] = *(DObject **)ptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
 	OP(LP):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
@@ -334,6 +346,17 @@ begin:
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
 		*(void **)ptr = reg.a[B];
+		NEXTOP;
+	OP(SO):
+		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		*(void **)ptr = reg.a[B];
+		GC::WriteBarrier((DObject*)*(void **)ptr);
+		NEXTOP;
+	OP(SO_R):
+		ASSERTA(a); ASSERTA(B); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		GC::WriteBarrier((DObject*)*(void **)ptr);
 		NEXTOP;
 	OP(SV2):
 		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
@@ -762,7 +785,7 @@ begin:
 	OP(NEW_K):
 	OP(NEW):
 	{
-		PClass *cls = (PClass*)(op == OP_NEW ? reg.a[C] : konsta[C].v);
+		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[C] : konsta[C].v);
 		reg.a[B] = cls->CreateNew();
 		NEXTOP;
 	}

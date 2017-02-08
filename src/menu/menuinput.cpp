@@ -332,29 +332,25 @@ void DTextEnterMenu::Drawer ()
 				const int ch = InputGridChars[y * INPUTGRID_WIDTH + x];
 				FTexture *pic = SmallFont->GetChar(ch, &width);
 				EColorRange color;
-				FRemapTable *remap;
 
 				// The highlighted character is yellow; the rest are dark gray.
 				color = (x == InputGridX && y == InputGridY) ? CR_YELLOW : CR_DARKGRAY;
-				remap = SmallFont->GetColorTranslation(color);
 
 				if (pic != NULL)
 				{
 					// Draw a normal character.
-					screen->DrawTexture(pic, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding,
-						DTA_Translation, remap,
-						DTA_CleanNoMove, true,
-						TAG_DONE);
+					screen->DrawChar(SmallFont, color, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding, ch, DTA_CleanNoMove, true, TAG_DONE);
 				}
 				else if (ch == ' ')
 				{
+					FRemapTable *remap = SmallFont->GetColorTranslation(color);
 					// Draw the space as a box outline. We also draw it 50% wider than it really is.
 					const int x1 = xx + cell_width/2 - width * CleanXfac * 3 / 4;
 					const int x2 = x1 + width * 3 * CleanXfac / 2;
 					const int y1 = yy + top_padding;
 					const int y2 = y1 + SmallFont->GetHeight() * CleanYfac;
-					const int palentry = remap->Remap[remap->NumEntries*2/3];
-					const uint32 palcolor = remap->Palette[remap->NumEntries*2/3];
+					const int palentry = remap->Remap[remap->NumEntries * 2 / 3];
+					const uint32 palcolor = remap->Palette[remap->NumEntries * 2 / 3];
 					screen->Clear(x1, y1, x2, y1+CleanYfac, palentry, palcolor);	// top
 					screen->Clear(x1, y2, x2, y2+CleanYfac, palentry, palcolor);	// bottom
 					screen->Clear(x1, y1+CleanYfac, x1+CleanXfac, y2, palentry, palcolor);	// left

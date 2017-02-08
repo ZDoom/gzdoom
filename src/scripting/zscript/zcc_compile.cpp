@@ -48,7 +48,7 @@
 #include "p_lnspec.h"
 #include "i_system.h"
 #include "gdtoa.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 #include "version.h"
 
 static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
@@ -1358,9 +1358,16 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 	case AST_DynArrayType:
 		if (allowarraytypes)
 		{
-			Error(field, "%s: Dynamic array types not implemented yet", name.GetChars());
 			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
-			retval = NewDynArray(DetermineType(outertype, field, name, atype->ElementType, false, false));
+			auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
+			if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
+			{
+				Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+			}
+			else
+			{
+				retval = NewDynArray(ftype);
+			}
 			break;
 		}
 		break;
@@ -2440,19 +2447,6 @@ void ZCCCompiler::CompileStates()
 			continue;
 		}
 
-		// Same here, hack in the DVMObject as they weren't in the list originally
-		// TODO: process them in a non hackish way obviously
-		if (c->Type()->bRuntimeClass == true && c->Type()->ParentClass->bRuntimeClass == false)
-		{
-			auto vmtype = static_cast<PClassActor *>(c->Type()->ParentClass);
-			if (vmtype->StateList == nullptr)
-			{
-				FStateDefinitions vmstates;
-				vmstates.MakeStateDefines(dyn_cast<PClassActor>(vmtype->ParentClass));
-				vmtype->Finalize(vmstates);
-			}
-		}
-
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(dyn_cast<PClassActor>(c->Type()->ParentClass));
@@ -2651,7 +2645,7 @@ void ZCCCompiler::CompileStates()
 		}
 		try
 		{
-			static_cast<PClassActor *>(c->Type())->Finalize(statedef);
+			GetDefaultByType(c->Type())->Finalize(statedef);
 		}
 		catch (CRecoverableError &err)
 		{

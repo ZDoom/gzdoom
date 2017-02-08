@@ -603,6 +603,7 @@ static inline void GC::WriteBarrier(DObject *pointed)
 	}
 }
 
+#include "symbols.h"
 #include "dobjtype.h"
 
 inline bool DObject::IsKindOf (const PClass *base) const

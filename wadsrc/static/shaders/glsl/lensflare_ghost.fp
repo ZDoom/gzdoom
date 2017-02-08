@@ -17,7 +17,7 @@ vec3 textureDistorted(sampler2D tex, vec2 sample_center, vec2 sample_vector, vec
 }
 
 void main(){
-	vec2 texcoord = -TexCoord + vec2(1.0);
+	vec2 texcoord = TexCoord; //-TexCoord + vec2(1.0);
     vec2 imageCenter = vec2(0.5);
     vec2 sampleVector = (imageCenter - texcoord) * flareDispersal;
     vec2 haloVector = normalize(sampleVector) * flareHaloWidth;

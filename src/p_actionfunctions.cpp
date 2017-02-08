@@ -6923,18 +6923,18 @@ DEFINE_ACTION_FUNCTION(AActor, SetCamera)
 
 	if (self->player == nullptr || self->player->mo != self) return 0;
 
-	if (camera == nullptr)
+	if (cam == nullptr)
 	{
-		camera = self;
+		cam = self;
 		revert = false;
 	}
 	AActor *oldcamera = self->player->camera;
-	self->player->camera = camera;
+	self->player->camera = cam;
 	if (revert) self->player->cheats |= CF_REVERTPLEASE;
 
-	if (oldcamera != camera)
+	if (oldcamera != cam)
 	{
-		R_ClearPastViewer(camera);
+		R_ClearPastViewer(cam);
 	}
 	return 0;
 }

@@ -77,6 +77,7 @@ CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
 	if (self < 0.1f) self = 0.1f;
 }
 
+CVAR(Bool, gl_lensflare, false, CVAR_ARCHIVE)
 CVAR(Int, gl_lensflare_samples, 5, CVAR_ARCHIVE)
 CVAR(Float, gl_lensflare_disp, 0.37f, CVAR_ARCHIVE)
 CVAR(Float, gl_lensflare_halowidth, 0.7f, CVAR_ARCHIVE)
@@ -176,6 +177,8 @@ void FGLRenderer::PostProcessScene()
 }
 
 void FGLRenderer::LensFlareScene() {
+	if(!gl_lensflare) return;
+
 	FGLDebug::PushGroup("LensFlareScene");
 
 	/*float scale[4] = {

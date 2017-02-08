@@ -122,16 +122,6 @@ static int statspace;
 DVector2 AM_GetPosition();
 int active_con_scaletext();
 
-FTextureID GetHUDIcon(PClassInventory *cls)
-{
-	return cls->AltHUDIcon;
-}
-
-void SetHUDIcon(PClassInventory *cls, FTextureID tex)
-{
-	cls->AltHUDIcon = tex;
-}
-
 //---------------------------------------------------------------------------
 //
 // Draws an image into a box with its bottom center at the bottom
@@ -437,7 +427,7 @@ static void SetKeyTypes()
 static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
 {
 	FTextureID icon = FNullTextureID();
-	FTextureID AltIcon = GetHUDIcon(inv->GetClass());
+	FTextureID AltIcon = inv->AltHUDIcon;
 
 	if (!AltIcon.Exists()) return;
 
@@ -516,27 +506,27 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 // Drawing Ammo
 //
 //---------------------------------------------------------------------------
-static TArray<PClassInventory *> orderedammos;
+static TArray<PClassActor *> orderedammos;
 
 static void AddAmmoToList(AWeapon * weapdef)
 {
 
-	for(int i=0; i<2;i++)
+	for (int i = 0; i < 2; i++)
 	{
-		PClassInventory * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
+		auto ti = i == 0 ? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
-			auto ammodef=(AInventory*)GetDefaultByType(ti);
+			auto ammodef = (AInventory*)GetDefaultByType(ti);
 
 			if (ammodef && !(ammodef->ItemFlags&IF_INVBAR))
 			{
 				unsigned int j;
 
-				for(j=0;j<orderedammos.Size();j++)
+				for (j = 0; j < orderedammos.Size(); j++)
 				{
 					if (ti == orderedammos[j]) break;
 				}
-				if (j==orderedammos.Size()) orderedammos.Push(ti);
+				if (j == orderedammos.Size()) orderedammos.Push(ti);
 			}
 		}
 	}
@@ -646,11 +636,11 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
 
-		PClassInventory * type = orderedammos[i];
+		auto type = orderedammos[i];
 		auto ammoitem = CPlayer->mo->FindInventory(type);
 
 		auto inv = ammoitem? ammoitem : (AInventory*)GetDefaultByType(orderedammos[i]);
-		FTextureID AltIcon = GetHUDIcon(type);
+		FTextureID AltIcon = inv->AltHUDIcon;
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;
 
@@ -682,7 +672,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 //---------------------------------------------------------------------------
 FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale=NULL)	// This function is also used by SBARINFO
 {
-	FTextureID picnum, AltIcon = GetHUDIcon(item->GetClass());
+	FTextureID picnum, AltIcon = item->AltHUDIcon;
 	FState * state=NULL, *ReadyState;
 	
 	picnum.SetNull();
@@ -816,7 +806,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 		{
 			if (rover->Amount>0)
 			{
-				FTextureID AltIcon = GetHUDIcon(rover->GetClass());
+				FTextureID AltIcon = rover->AltHUDIcon;
 
 				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
@@ -1285,7 +1275,7 @@ void HUD_InitHud()
 				}
 				else tex.SetInvalid();
 
-				if (ti) SetHUDIcon(static_cast<PClassInventory*>(ti), tex);
+				if (ti) ((AInventory*)GetDefaultByType(ti))->AltHUDIcon = tex;
 			}
 		}
 	}

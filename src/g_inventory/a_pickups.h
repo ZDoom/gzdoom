@@ -60,8 +60,6 @@ public:
 	void Finalize(FStateDefinitions &statedef);
 
 	FString PickupMsg;
-	int GiveQuest;			// Optionally give one of the quest items.
-	FTextureID AltHUDIcon;
 	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
 	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
 };
@@ -104,6 +102,8 @@ public:
 	FTextureID Icon;			// Icon to show on status bar or HUD
 	int DropTime;				// Countdown after dropping
 	PClassActor *SpawnPointClass;	// For respawning like Heretic's mace
+	int GiveQuest;				// Optionally give one of the quest items.
+	FTextureID AltHUDIcon;
 
 	DWORD ItemFlags;
 	PClassActor *PickupFlash;	// actor to spawn as pickup flash

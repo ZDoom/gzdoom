@@ -24,7 +24,7 @@ class Inventory : Actor native
 	native bool bCreateCopyMoved;
 	native bool bInitEffectFailed;
 	native meta String PickupMsg;
-	native meta int GiveQuest;
+	native /*meta*/ int GiveQuest;
 	
 	Default
 	{

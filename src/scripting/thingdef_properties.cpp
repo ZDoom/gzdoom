@@ -1734,29 +1734,45 @@ DEFINE_CLASS_PROPERTY(amount, I, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(icon, S, Inventory)
+static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 {
-	PROP_STRING_PARM(i, 0);
-
 	if (i == NULL || i[0] == '\0')
 	{
-		defaults->Icon.SetNull();
+		icon.SetNull();
 	}
 	else
 	{
-		defaults->Icon = TexMan.CheckForTexture(i, FTexture::TEX_MiscPatch);
-		if (!defaults->Icon.isValid())
+		icon = TexMan.CheckForTexture(i, FTexture::TEX_MiscPatch);
+		if (!icon.isValid())
 		{
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
-			if ((info->GameFilter == GAME_Any || info->GameFilter & gameinfo.gametype) &&
+			if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
 				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,
-					"Icon '%s' for '%s' not found\n", i, info->TypeName.GetChars());
+					"Icon '%s' for '%s' not found\n", i, bag.Info->TypeName.GetChars());
 			}
 		}
 	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(icon, S, Inventory)
+{
+	PROP_STRING_PARM(i, 0);
+	SetIcon(defaults->Icon, bag, i);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
+{
+	PROP_STRING_PARM(i, 0);
+	SetIcon(defaults->AltHUDIcon, bag, i);
 }
 
 //==========================================================================
@@ -1845,8 +1861,7 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 {
 	PROP_INT_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	static_cast<PClassInventory *>(info)->GiveQuest = i;
+	defaults->GiveQuest = i;
 }
 
 //==========================================================================
@@ -2651,7 +2666,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 		PROP_STRING_PARM(type, 3);
 
 		color.a = BYTE(255 * clamp<double>(a, 0.f, 1.f));
-		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 		static_cast<PClassPlayerPawn *>(info)->PainFlashes.Insert(type, color);
 	}
 }
@@ -2702,7 +2716,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	defaults->HealingRadiusType = str;
 }
 
@@ -2711,7 +2724,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 {
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	for (int i = 0; i < 5; i++)
 	{
 		PROP_DOUBLE_PARM(val, i);
@@ -2724,7 +2736,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
 {
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	PROP_STRING_PARM(val, 0);
 	defaults->Portrait = val;
 }
@@ -2736,7 +2747,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 {
 	PROP_INT_PARM(slot, 0);
 
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	if (slot < 0 || slot > 9)
 	{
 		I_Error("Slot must be between 0 and 9.");

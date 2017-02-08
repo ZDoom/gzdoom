@@ -29,8 +29,6 @@ IMPLEMENT_CLASS(PClassInventory, false, false)
 
 PClassInventory::PClassInventory()
 {
-	GiveQuest = 0;
-	AltHUDIcon.SetNull();
 }
 
 void PClassInventory::DeriveData(PClass *newclass)
@@ -40,8 +38,6 @@ void PClassInventory::DeriveData(PClass *newclass)
 	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
 
 	newc->PickupMsg = PickupMsg;
-	newc->GiveQuest = GiveQuest;
-	newc->AltHUDIcon = AltHUDIcon;
 	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
 	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
 }
@@ -98,8 +94,8 @@ DEFINE_FIELD(AInventory, DropTime)
 DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
+DEFINE_FIELD(AInventory, GiveQuest)
 DEFINE_FIELD(PClassInventory, PickupMsg)
-DEFINE_FIELD(PClassInventory, GiveQuest)
 
 //===========================================================================
 //
@@ -163,7 +159,8 @@ void AInventory::Serialize(FSerializer &arc)
 		("icon", Icon, def->Icon)
 		("pickupsound", PickupSound, def->PickupSound)
 		("spawnpointclass", SpawnPointClass, def->SpawnPointClass)
-		("droptime", DropTime, def->DropTime);
+		("droptime", DropTime, def->DropTime)
+		("givequest", GiveQuest, def->GiveQuest);
 }
 
 //===========================================================================

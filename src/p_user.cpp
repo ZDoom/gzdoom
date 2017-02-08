@@ -542,12 +542,6 @@ IMPLEMENT_CLASS(PClassPlayerPawn, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
-	for (size_t i = 0; i < countof(HexenArmor); ++i)
-	{
-		HexenArmor[i] = 0;
-	}
-	ColorRangeStart = 0;
-	ColorRangeEnd = 0;
 }
 
 void PClassPlayerPawn::DeriveData(PClass *newclass)
@@ -555,24 +549,9 @@ void PClassPlayerPawn::DeriveData(PClass *newclass)
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	Super::DeriveData(newclass);
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
-	size_t i;
 
 	newp->DisplayName = DisplayName;
-	newp->SoundClass = SoundClass;
-	newp->Face = Face;
-	newp->InvulMode = InvulMode;
-	newp->HealingRadiusType = HealingRadiusType;
-	newp->ColorRangeStart = ColorRangeStart;
-	newp->ColorRangeEnd = ColorRangeEnd;
 	newp->ColorSets = ColorSets;
-	for (i = 0; i < countof(HexenArmor); ++i)
-	{
-		newp->HexenArmor[i] = HexenArmor[i];
-	}
-	for (i = 0; i < countof(Slot); ++i)
-	{
-		newp->Slot[i] = Slot[i];
-	}
 }
 
 static int intcmp(const void *a, const void *b)
@@ -1230,7 +1209,7 @@ const char *APlayerPawn::GetSoundClass() const
 
 	// [GRB]
 	PClassPlayerPawn *pclass = GetClass();
-	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass.GetChars() : "player";
+	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
 }
 
 //===========================================================================
@@ -1373,10 +1352,10 @@ void APlayerPawn::GiveDefaultInventory ()
 
 	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
 	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
-	Slots[4] = myclass->HexenArmor[0];
+	Slots[4] = HexenArmor[0];
 	for (int i = 0; i < 4; ++i)
 	{
-		SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+		SlotsIncrement[i] = HexenArmor[i + 1];
 	}
 
 	// BasicArmor must come right after that. It should not affect any
@@ -3248,16 +3227,17 @@ DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
 
-DEFINE_FIELD(PClassPlayerPawn, HealingRadiusType)
+DEFINE_FIELD(APlayerPawn, HealingRadiusType)
+DEFINE_FIELD(APlayerPawn, SoundClass)
+DEFINE_FIELD(APlayerPawn, Face)
+DEFINE_FIELD(APlayerPawn, Portrait)
+DEFINE_FIELD(APlayerPawn, Slot)
+DEFINE_FIELD(APlayerPawn, InvulMode)
+DEFINE_FIELD(APlayerPawn, HexenArmor)
+DEFINE_FIELD(APlayerPawn, ColorRangeStart)
+DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
+
 DEFINE_FIELD(PClassPlayerPawn, DisplayName)
-DEFINE_FIELD(PClassPlayerPawn, SoundClass)
-DEFINE_FIELD(PClassPlayerPawn, Face)
-DEFINE_FIELD(PClassPlayerPawn, Portrait)
-DEFINE_FIELD(PClassPlayerPawn, Slot)
-DEFINE_FIELD(PClassPlayerPawn, InvulMode)
-DEFINE_FIELD(PClassPlayerPawn, HexenArmor)
-DEFINE_FIELD(PClassPlayerPawn, ColorRangeStart)
-DEFINE_FIELD(PClassPlayerPawn, ColorRangeEnd)
 DEFINE_FIELD(PClassPlayerPawn, ColorSets)
 DEFINE_FIELD(PClassPlayerPawn, PainFlashes)
 

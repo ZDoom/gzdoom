@@ -2274,8 +2274,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, soundclass, S, PlayerPawn)
 
 	FString tmp = str;
 	tmp.ReplaceChars (' ', '_');
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->SoundClass = tmp;
+	defaults->SoundClass = tmp.IsNotEmpty()? FName(tmp) : NAME_None;
 }
 
 //==========================================================================
@@ -2286,21 +2285,23 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	PROP_STRING_PARM(str, 0);
 	FString tmp = str;
 
-	tmp.ToUpper();
-	bool valid = (tmp.Len() == 3 &&
-		(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
-		(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
-		(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
-		);
-	if (!valid)
+	if (tmp.Len() == 0) defaults->Face = NAME_None;
+	else
 	{
-		bag.ScriptPosition.Message(MSG_OPTERROR,
-			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
-			tmp.GetChars(), info->TypeName.GetChars ());
+		tmp.ToUpper();
+		bool valid = (tmp.Len() == 3 &&
+			(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
+			(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
+			(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
+			);
+		if (!valid)
+		{
+			bag.ScriptPosition.Message(MSG_OPTERROR,
+				"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
+				tmp.GetChars(), info->TypeName.GetChars());
+		}
+		defaults->Face = tmp;
 	}
-	
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->Face = tmp;
 }
 
 //==========================================================================
@@ -2314,9 +2315,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	if (start > end)
 		swapvalues (start, end);
 
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->ColorRangeStart = start;
-	static_cast<PClassPlayerPawn *>(info)->ColorRangeEnd = end;
+	defaults->ColorRangeStart = start;
+	defaults->ColorRangeEnd = end;
 }
 
 //==========================================================================
@@ -2693,8 +2693,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->InvulMode = str;
+	defaults->InvulMode = str;
 }
 
 //==========================================================================
@@ -2704,7 +2703,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	static_cast<PClassPlayerPawn *>(info)->HealingRadiusType = str;
+	defaults->HealingRadiusType = str;
 }
 
 //==========================================================================
@@ -2716,7 +2715,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 	for (int i = 0; i < 5; i++)
 	{
 		PROP_DOUBLE_PARM(val, i);
-		static_cast<PClassPlayerPawn *>(info)->HexenArmor[i] = val;
+		defaults->HexenArmor[i] = val;
 	}
 }
 
@@ -2727,7 +2726,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
 {
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	PROP_STRING_PARM(val, 0);
-	static_cast<PClassPlayerPawn *>(info)->Portrait = val;
+	defaults->Portrait = val;
 }
 
 //==========================================================================
@@ -2751,7 +2750,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 			PROP_STRING_PARM(str, i);
 			weapons << ' ' << str;
 		}
-		static_cast<PClassPlayerPawn *>(info)->Slot[slot] = &weapons[1];
+		defaults->Slot[slot] = weapons.IsEmpty()? NAME_None : FName(weapons);
 	}
 }
 

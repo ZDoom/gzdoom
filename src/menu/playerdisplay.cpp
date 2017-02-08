@@ -557,11 +557,11 @@ void DListMenuItemPlayerDisplay::Drawer(bool selected)
 		return;
 	}
 
-	FString portrait = mPlayerClass->Type->Portrait;
+	FName portrait = ((APlayerPawn*)GetDefaultByType(mPlayerClass->Type))->Portrait;
 
-	if (portrait.IsNotEmpty() && !mNoportrait)
+	if (portrait != NAME_None && !mNoportrait)
 	{
-		FTextureID texid = TexMan.CheckForTexture(portrait, FTexture::TEX_MiscPatch);
+		FTextureID texid = TexMan.CheckForTexture(portrait.GetChars(), FTexture::TEX_MiscPatch);
 		if (texid.isValid())
 		{
 			FTexture *tex = TexMan(texid);

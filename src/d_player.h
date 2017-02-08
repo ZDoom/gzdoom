@@ -82,15 +82,6 @@ public:
 	bool GetPainFlash(FName type, PalEntry *color) const;
 
 	FString DisplayName;	// Display name (used in menus, etc.)
-	FString SoundClass;		// Sound class
-	FString Face;			// Doom status bar face (when used)
-	FString Portrait;
-	FString Slot[10];
-	FName InvulMode;
-	FName HealingRadiusType;
-	double HexenArmor[5];
-	BYTE ColorRangeStart;	// Skin color range
-	BYTE ColorRangeEnd;
 	FPlayerColorSetMap ColorSets;
 	PainFlashList PainFlashes;
 };
@@ -175,6 +166,17 @@ public:
 
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
+
+	// Former class properties that were moved into the object to get rid of the meta class.
+	FName SoundClass;		// Sound class
+	FName Face;			// Doom status bar face (when used)
+	FName Portrait;
+	FName Slot[10];
+	FName InvulMode;
+	FName HealingRadiusType;
+	double HexenArmor[5];
+	BYTE ColorRangeStart;	// Skin color range
+	BYTE ColorRangeEnd;
 
 };
 

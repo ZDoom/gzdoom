@@ -1154,11 +1154,12 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 void FWeaponSlots::SetFromPlayer(PClassPlayerPawn *type)
 {
 	Clear();
+	auto Slot = ((APlayerPawn*)GetDefaultByType(type))->Slot;
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
-		if (!type->Slot[i].IsEmpty())
+		if (Slot[i] != NAME_None)
 		{
-			Slots[i].AddWeaponList(type->Slot[i], false);
+			Slots[i].AddWeaponList(Slot[i], false);
 		}
 	}
 }

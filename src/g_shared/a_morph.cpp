@@ -290,8 +290,8 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	// and for the original DOOM status bar.
 	if (player == &players[consoleplayer])
 	{
-		FString face = pmo->GetClass()->Face;
-		if (face.IsNotEmpty() && strcmp(face, "None") != 0)
+		FName face = pmo->Face;
+		if (face != NAME_None)
 		{
 			// Assume root-level base skin to begin with
 			size_t skinindex = 0;
@@ -367,7 +367,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	if (hxarmor != nullptr)
 	{
 		double *Slots = (double*)hxarmor->ScriptVar(NAME_Slots, nullptr);
-		Slots[4] = mo->GetClass()->HexenArmor[0];
+		Slots[4] = mo->HexenArmor[0];
 	}
 	return true;
 }

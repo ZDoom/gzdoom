@@ -340,7 +340,7 @@ inline int T_FindFirstSectorFromTag(int tagnum)
 // Doom index is only supported for the 4 original ammo types
 //
 //==========================================================================
-static PClassInventory * T_GetAmmo(const svalue_t &t)
+static PClassActor * T_GetAmmo(const svalue_t &t)
 {
 	const char * p;
 
@@ -361,8 +361,8 @@ static PClassInventory * T_GetAmmo(const svalue_t &t)
 		}
 		p=DefAmmo[ammonum];
 	}
-	PClassInventory * am=dyn_cast<PClassInventory>(PClass::FindActor(p));
-	if (am == NULL)
+	auto am = PClass::FindActor(p);
+	if (am == NULL || !am->IsKindOf(PClass::FindClass(NAME_Ammo)))
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -2434,8 +2434,8 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	PClassInventory * info = dyn_cast<PClassInventory>(PClass::FindActor (type));
-	if (info == NULL)
+	auto info = PClass::FindActor (type);
+	if (info == NULL || !info->IsKindOf(RUNTIME_CLASS(AInventory)))
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;
@@ -2564,7 +2564,7 @@ void FParser::SF_PlayerKeys(void)
 void FParser::SF_PlayerAmmo(void)
 {
 	int playernum, amount;
-	PClassInventory * ammotype;
+	PClassActor * ammotype;
 	
 	if (CheckArgs(2))
 	{
@@ -2600,7 +2600,7 @@ void FParser::SF_PlayerAmmo(void)
 void FParser::SF_MaxPlayerAmmo()
 {
 	int playernum, amount;
-	PClassInventory * ammotype;
+	PClassActor * ammotype;
 
 	if (CheckArgs(2))
 	{

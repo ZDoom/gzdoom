@@ -931,7 +931,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::BestWeapon(PClassInventory *ammotype)
+AWeapon *APlayerPawn::BestWeapon(PClassActor *ammotype)
 {
 	AWeapon *bestMatch = NULL;
 	int bestOrder = INT_MAX;
@@ -993,7 +993,7 @@ AWeapon *APlayerPawn::BestWeapon(PClassInventory *ammotype)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::PickNewWeapon(PClassInventory *ammotype)
+AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 {
 	AWeapon *best = BestWeapon (ammotype);
 
@@ -1021,7 +1021,7 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassInventory *ammotype)
 //
 //===========================================================================
 
-void APlayerPawn::CheckWeaponSwitch(PClassInventory *ammotype)
+void APlayerPawn::CheckWeaponSwitch(PClassActor *ammotype)
 {
 	if (!player->userinfo.GetNeverSwitch() &&
 		player->PendingWeapon == WP_NOCHANGE && 
@@ -1040,7 +1040,7 @@ void APlayerPawn::CheckWeaponSwitch(PClassInventory *ammotype)
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponSwitch)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_OBJECT(ammotype, PClassInventory);
+	PARAM_OBJECT(ammotype, PClassActor);
 	self->CheckWeaponSwitch(ammotype);
 	return 0;
 }
@@ -1346,7 +1346,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	// HexenArmor must always be the first item in the inventory because
 	// it provides player class based protection that should not affect
 	// any other protection item.
-	PClassPlayerPawn *myclass = GetClass();
+	auto myclass = GetClass();
 	GiveInventoryType(PClass::FindActor(NAME_HexenArmor));
 	auto harmor = FindInventory(NAME_HexenArmor);
 

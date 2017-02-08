@@ -767,9 +767,11 @@ DEFINE_ACTION_FUNCTION(AActor, AddInventory)
 //
 //============================================================================
 
-bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
+bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 {
 	bool result = true;
+
+	if (type != nullptr || !type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
 
 	AWeapon *savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
 	bool hadweap = player != NULL ? player->ReadyWeapon != NULL : true;
@@ -789,7 +791,7 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	item->ClearCounters();
 	if (!givecheat || amount > 0)
 	{
-		if (type->IsDescendantOf (NAME_BasicArmorPickup) || type->IsDescendantOf(NAME_BasicArmorBonus))
+		if (type->IsDescendantOf (PClass::FindActor(NAME_BasicArmorPickup)) || type->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
 		{
 			item->IntVar(NAME_SaveAmount) *= amount;
 		}
@@ -1146,10 +1148,12 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (PClassInventory *type, int amount)
+bool AActor::GiveAmmo (PClassActor *type, int amount)
 {
 	if (type != NULL)
 	{
+		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
+
 		AInventory *item = static_cast<AInventory *>(Spawn (type));
 		if (item)
 		{
@@ -1542,7 +1546,7 @@ bool AActor::IsVisibleToPlayer() const
 		bool visible = false;
 		for(unsigned int i = 0;i < GetClass()->VisibleToPlayerClass.Size();++i)
 		{
-			PClassPlayerPawn *cls = GetClass()->VisibleToPlayerClass[i];
+			auto cls = GetClass()->VisibleToPlayerClass[i];
 			if (cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
 			{
 				visible = true;

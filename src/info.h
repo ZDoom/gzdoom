@@ -317,6 +317,11 @@ public:
 	FName MissileName;
 	double MissileHeight;
 
+	// These are only valid for inventory items.
+	FString PickupMsg;
+	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
+	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
+
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;
 };

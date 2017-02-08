@@ -2955,7 +2955,6 @@ PClass *ClassReg::RegisterClass()
 	{
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
-		&PClassInventory::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
 	};
 

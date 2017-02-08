@@ -25,50 +25,6 @@
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-IMPLEMENT_CLASS(PClassInventory, false, false)
-
-PClassInventory::PClassInventory()
-{
-}
-
-void PClassInventory::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	Super::DeriveData(newclass);
-	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
-
-	newc->PickupMsg = PickupMsg;
-	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
-	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
-}
-
-size_t PClassInventory::PointerSubstitution(DObject *oldclass, DObject *newclass)
-{
-	size_t changed = Super::PointerSubstitution(oldclass, newclass);
-	AInventory *def = (AInventory*)Defaults;
-	if (def != NULL)
-	{
-		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
-		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
-		{
-			if (ForbiddenToPlayerClass[i] == oldclass)
-			{
-				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-				changed++;
-			}
-		}
-		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
-		{
-			if (RestrictedToPlayerClass[i] == oldclass)
-			{
-				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-				changed++;
-			}
-		}
-	}
-	return changed;
-}
-
 void AInventory::Finalize(FStateDefinitions &statedef)
 {
 	Super::Finalize(statedef);
@@ -95,7 +51,7 @@ DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
 DEFINE_FIELD(AInventory, GiveQuest)
-DEFINE_FIELD(PClassInventory, PickupMsg)
+DEFINE_FIELD(PClassActor, PickupMsg)
 
 //===========================================================================
 //
@@ -545,7 +501,7 @@ DEFINE_ACTION_FUNCTION(AInventory, CanPickup)
 	if (!toucher)
 		ACTION_RETURN_BOOL(false);
 
-	PClassInventory *ai = self->GetClass();
+	auto ai = self->GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{

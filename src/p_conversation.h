@@ -12,7 +12,7 @@ struct FBrokenLines;
 
 struct FStrifeDialogueItemCheck
 {
-	PClassInventory *Item;
+	PClassActor *Item;
 	int Amount;
 };
 

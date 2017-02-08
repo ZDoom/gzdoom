@@ -97,7 +97,7 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool 
 }
 static AInventory::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
 {
-	return static_cast<PClassInventory *>(FindClassTentative(name, PClass::FindActor(NAME_Ammo), optional));
+	return static_cast<AInventory::MetaClass *>(FindClassTentative(name, PClass::FindActor(NAME_Ammo), optional));
 }
 static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optional = false)
 {
@@ -1699,12 +1699,12 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
-	static_cast<PClassInventory*>(info)->RestrictedToPlayerClass.Clear();
+	static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassInventory*>(info)->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1713,12 +1713,12 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
-	static_cast<PClassInventory*>(info)->ForbiddenToPlayerClass.Clear();
+	static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassInventory*>(info)->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1817,8 +1817,8 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	static_cast<PClassInventory *>(info)->PickupMsg = str;
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->PickupMsg = str;
 }
 
 //==========================================================================

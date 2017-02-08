@@ -369,7 +369,9 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j].Item = dyn_cast<PClassInventory>(GetStrifeType(speech.ItemCheck[j]));
+		auto inv = GetStrifeType(speech.ItemCheck[j]);
+		if (!inv->IsDescendantOf(RUNTIME_CLASS(AInventory))) inv = nullptr;
+		node->ItemCheck[j].Item = inv;
 		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = speech.Link;
@@ -513,7 +515,9 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->ItemCheck.Resize(3);
 		for (k = 0; k < 3; ++k)
 		{
-			reply->ItemCheck[k].Item = dyn_cast<PClassInventory>(GetStrifeType(rsp->Item[k]));
+			auto inv = GetStrifeType(rsp->Item[k]);
+			if (!inv->IsDescendantOf(RUNTIME_CLASS(AInventory))) inv = nullptr;
+			reply->ItemCheck[k].Item = inv;
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
 		reply->ItemCheckRequire.Clear();

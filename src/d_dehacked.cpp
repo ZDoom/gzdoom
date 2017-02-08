@@ -1658,7 +1658,7 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = (PClassInventory*)AmmoNames[val];
+				info->AmmoType1 = AmmoNames[val];
 				if (info->AmmoType1 != NULL)
 				{
 					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;

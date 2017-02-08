@@ -50,23 +50,9 @@ enum
 };
 
 
-class PClassInventory : public PClassActor
-{
-	DECLARE_CLASS(PClassInventory, PClassActor)
-public:
-	PClassInventory();
-	virtual void DeriveData(PClass *newclass);
-	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
-	void Finalize(FStateDefinitions &statedef);
-
-	FString PickupMsg;
-	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
-	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
-};
-
 class AInventory : public AActor
 {
-	DECLARE_CLASS_WITH_META(AInventory, AActor, PClassInventory)
+	DECLARE_CLASS(AInventory, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	

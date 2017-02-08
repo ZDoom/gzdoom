@@ -1193,12 +1193,12 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				players[i].mo->GiveInventory(static_cast<PClassInventory *>(info), amount);
+				players[i].mo->GiveInventory(info, amount);
 		}
 	}
 	else
 	{
-		activator->GiveInventory(static_cast<PClassInventory *>(info), amount);
+		activator->GiveInventory(info, amount);
 	}
 }
 

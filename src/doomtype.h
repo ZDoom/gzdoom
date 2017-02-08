@@ -155,12 +155,9 @@ struct PalEntry
 #endif
 };
 
-class PClassInventory;
-
 class FTextureID
 {
 	friend class FTextureManager;
-	friend FTextureID GetHUDIcon(PClassInventory *cls);
 	friend void R_InitSpriteDefs();
 
 public:

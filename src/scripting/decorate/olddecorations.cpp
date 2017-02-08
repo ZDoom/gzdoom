@@ -541,7 +541,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			static_cast<PClassInventory *>(bag.Info)->PickupMsg = sc.String;
+			bag.Info->PickupMsg = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{

@@ -349,6 +349,11 @@ void PClassActor::DeriveData(PClass *newclass)
 		*newa->PainChances = *PainChances;
 	}
 
+	// Inventory stuff
+	newa->PickupMsg = PickupMsg;
+	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
+	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
+
 }
 
 //==========================================================================
@@ -637,6 +642,29 @@ size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 			changed++;
 		}
 	}
+
+	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
+	{
+		if (ForbiddenToPlayerClass[i] == oldclass)
+		{
+			ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			changed++;
+		}
+	}
+	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
+	{
+		if (RestrictedToPlayerClass[i] == oldclass)
+		{
+			RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			changed++;
+		}
+	}
+	AInventory *def = dyn_cast<AInventory>((AActor*)Defaults);
+	if (def != NULL)
+	{
+		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
+	}
+
 	return changed;
 }
 

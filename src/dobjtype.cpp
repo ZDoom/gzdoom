@@ -151,11 +151,7 @@ void DumpTypeTable()
 
 /* PType ******************************************************************/
 
-IMPLEMENT_CLASS(PType, true, true)
-
-IMPLEMENT_POINTERS_START(PType)
-	IMPLEMENT_POINTER(HashNext)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PType, true, false)
 
 //==========================================================================
 //
@@ -444,11 +440,7 @@ IMPLEMENT_CLASS(PCompoundType, true, false)
 
 /* PNamedType *************************************************************/
 
-IMPLEMENT_CLASS(PNamedType, true, true)
-
-IMPLEMENT_POINTERS_START(PNamedType)
-	IMPLEMENT_POINTER(Outer)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PNamedType, true, false)
 
 //==========================================================================
 //
@@ -1303,11 +1295,7 @@ PStateLabel::PStateLabel()
 
 /* PPointer ***************************************************************/
 
-IMPLEMENT_CLASS(PPointer, false, true)
-
-IMPLEMENT_POINTERS_START(PPointer)
-	IMPLEMENT_POINTER(PointedType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PPointer, false, false)
 
 //==========================================================================
 //
@@ -1510,11 +1498,7 @@ bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 
 /* PClassPointer **********************************************************/
 
-IMPLEMENT_CLASS(PClassPointer,false, true)
-
-IMPLEMENT_POINTERS_START(PClassPointer)
-	IMPLEMENT_POINTER(ClassRestriction)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClassPointer,false, false)
 
 //==========================================================================
 //
@@ -1595,11 +1579,7 @@ PClassPointer *NewClassPointer(PClass *restrict)
 
 /* PEnum ******************************************************************/
 
-IMPLEMENT_CLASS(PEnum, false, true)
-
-IMPLEMENT_POINTERS_START(PEnum)
-	IMPLEMENT_POINTER(Outer)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PEnum, false, false)
 
 //==========================================================================
 //
@@ -1651,11 +1631,7 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_CLASS(PArray, false, true)
-
-IMPLEMENT_POINTERS_START(PArray)
-	IMPLEMENT_POINTER(ElementType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PArray, false, false)
 
 //==========================================================================
 //
@@ -1888,11 +1864,7 @@ PResizableArray *NewResizableArray(PType *type)
 
 /* PDynArray **************************************************************/
 
-IMPLEMENT_CLASS(PDynArray, false, true)
-
-IMPLEMENT_POINTERS_START(PDynArray)
-	IMPLEMENT_POINTER(ElementType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PDynArray, false, false)
 
 //==========================================================================
 //
@@ -2143,12 +2115,7 @@ PDynArray *NewDynArray(PType *type)
 
 /* PMap *******************************************************************/
 
-IMPLEMENT_CLASS(PMap, false, true)
-
-IMPLEMENT_POINTERS_START(PMap)
-	IMPLEMENT_POINTER(KeyType)
-	IMPLEMENT_POINTER(ValueType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PMap, false, false)
 
 //==========================================================================
 //
@@ -2645,11 +2612,7 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 /* PClass *****************************************************************/
 
-IMPLEMENT_CLASS(PClass, false, true)
-
-IMPLEMENT_POINTERS_START(PClass)
-	IMPLEMENT_POINTER(ParentClass)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClass, false, false)
 
 //==========================================================================
 //
@@ -2855,18 +2818,10 @@ void PClass::StaticShutdown ()
 	bVMOperational = false;
 
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
+	bShutdown = true;
 	TypeTable.Clear();
 	Namespaces.ReleaseSymbols();
 	ClassDataAllocator.FreeAllBlocks();
-	bShutdown = true;
-
-	for (unsigned i = 0; i < PClass::AllClasses.Size(); ++i)
-	{
-		PClass *type = PClass::AllClasses[i];
-		PClass::AllClasses[i] = NULL;
-		type->Destroy();
-	}
-
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();
 
@@ -3593,31 +3548,6 @@ PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, si
 
 //==========================================================================
 //
-// FTypeTable :: ReplaceType
-//
-// Replaces an existing type in the table with a new version of the same
-// type. For use when redefining actors in DECORATE. Does nothing if the
-// old version is not in the table.
-//
-//==========================================================================
-
-void FTypeTable::ReplaceType(PType *newtype, PType *oldtype, size_t bucket)
-{
-	for (PType **type_p = &TypeHash[bucket]; *type_p != nullptr; type_p = &(*type_p)->HashNext)
-	{
-		PType *type = *type_p;
-		if (type == oldtype)
-		{
-			newtype->HashNext = type->HashNext;
-			type->HashNext = nullptr;
-			*type_p = newtype;
-			break;
-		}
-	}
-}
-
-//==========================================================================
-//
 // FTypeTable :: AddType - Fully Parameterized Version
 //
 //==========================================================================
@@ -3632,7 +3562,7 @@ void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t
 	type->TypeTableType = metatype;
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	GC::WriteBarrier(type);
+	type->Release();
 }
 
 //==========================================================================
@@ -3655,7 +3585,7 @@ void FTypeTable::AddType(PType *type)
 
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	GC::WriteBarrier(type);
+	type->Release();
 }
 
 //==========================================================================
@@ -3696,34 +3626,21 @@ size_t FTypeTable::Hash(const PClass *p1, intptr_t p2, intptr_t p3)
 
 //==========================================================================
 //
-// FTypeTable :: Mark
-//
-// Mark all types in this table for the garbage collector.
-//
-//==========================================================================
-
-void FTypeTable::Mark()
-{
-	for (int i = HASH_SIZE - 1; i >= 0; --i)
-	{
-		if (TypeHash[i] != nullptr)
-		{
-			GC::Mark(TypeHash[i]);
-		}
-	}
-}
-
-//==========================================================================
-//
 // FTypeTable :: Clear
-//
-// Removes everything from the table. We let the garbage collector worry
-// about deleting them.
 //
 //==========================================================================
 
 void FTypeTable::Clear()
 {
+	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
+	{
+		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr;)
+		{
+			auto next = ty->HashNext;
+			delete ty;
+			ty = next;
+		}
+	}
 	memset(TypeHash, 0, sizeof(TypeHash));
 }
 

@@ -254,6 +254,14 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 
 				curr->Destroy();
 			}
+			/*
+			if (curr->IsKindOf(RUNTIME_CLASS(PSymbol)))
+				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PSymbol*>(curr)->SymbolName.GetChars());
+			else if (curr->IsKindOf(RUNTIME_CLASS(PType)))
+				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PType*>(curr)->DescriptiveName());
+			else
+				Printf("Collecting %s\n", curr->GetClass()->TypeName.GetChars());
+			*/
 			curr->ObjectFlags |= OF_Cleanup;
 			delete curr;
 			finalized++;
@@ -363,12 +371,6 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
-	// Mark types
-	TypeTable.Mark();
-	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
-	{
-		Mark(PClass::AllClasses[i]);
-	}
 	// Mark global symbols
 	Namespaces.MarkSymbols();
 	// Mark bot stuff.
@@ -449,8 +451,8 @@ static size_t SingleStep()
 		{ // Nothing more to sweep?
 			State = GCS_Finalize;
 		}
-		assert(old >= AllocBytes);
-		Estimate -= old - AllocBytes;
+		//assert(old >= AllocBytes);
+		Estimate -= MAX<size_t>(0, old - AllocBytes);
 		return (GCSWEEPMAX - finalize_count) * GCSWEEPCOST + finalize_count * GCFINALIZECOST;
 	  }
 
@@ -550,6 +552,7 @@ void FullGC()
 
 void Barrier(DObject *pointing, DObject *pointed)
 {
+	assert(pointed->GetClass() < (void*)0x1000000000000000);
 	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
 	assert(State != GCS_Finalize && State != GCS_Pause);

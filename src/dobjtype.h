@@ -77,7 +77,6 @@ struct ZCC_ExprConstant;
 class PType : public PTypeBase
 {
 	DECLARE_ABSTRACT_CLASS(PType, PTypeBase)
-	HAS_OBJECT_POINTERS;
 protected:
 
 public:
@@ -208,7 +207,6 @@ class PCompoundType : public PType
 class PNamedType : public PCompoundType
 {
 	DECLARE_ABSTRACT_CLASS(PNamedType, PCompoundType);
-	HAS_OBJECT_POINTERS;
 public:
 	PTypeBase		*Outer;			// object this type is contained within
 	FName			TypeName;		// this type's name
@@ -364,7 +362,6 @@ public:
 class PPointer : public PBasicType
 {
 	DECLARE_CLASS(PPointer, PBasicType);
-	HAS_OBJECT_POINTERS;
 public:
 	PPointer();
 	PPointer(PType *pointsat, bool isconst = false);
@@ -397,7 +394,6 @@ public:
 class PClassPointer : public PPointer
 {
 	DECLARE_CLASS(PClassPointer, PPointer);
-	HAS_OBJECT_POINTERS;
 public:
 	PClassPointer(class PClass *restrict = nullptr);
 
@@ -414,7 +410,6 @@ public:
 class PEnum : public PInt
 {
 	DECLARE_CLASS(PEnum, PInt);
-	HAS_OBJECT_POINTERS;
 public:
 	PEnum(FName name, PTypeBase *outer);
 
@@ -427,7 +422,6 @@ protected:
 class PArray : public PCompoundType
 {
 	DECLARE_CLASS(PArray, PCompoundType);
-	HAS_OBJECT_POINTERS;
 public:
 	PArray(PType *etype, unsigned int ecount);
 
@@ -451,7 +445,6 @@ protected:
 class PResizableArray : public PArray
 {
 	DECLARE_CLASS(PResizableArray, PArray);
-	HAS_OBJECT_POINTERS;
 public:
 	PResizableArray(PType *etype);
 
@@ -465,7 +458,6 @@ protected:
 class PDynArray : public PCompoundType
 {
 	DECLARE_CLASS(PDynArray, PCompoundType);
-	HAS_OBJECT_POINTERS;
 public:
 	PDynArray(PType *etype, PStruct *backing);
 
@@ -489,7 +481,6 @@ protected:
 class PMap : public PCompoundType
 {
 	DECLARE_CLASS(PMap, PCompoundType);
-	HAS_OBJECT_POINTERS;
 public:
 	PMap(PType *keytype, PType *valtype);
 
@@ -565,7 +556,6 @@ enum
 class PClass : public PNativeStruct
 {
 	DECLARE_CLASS(PClass, PNativeStruct);
-	HAS_OBJECT_POINTERS;
 protected:
 	// We unravel _WITH_META here just as we did for PType.
 	TArray<FTypeAndOffset> SpecialInits;
@@ -672,10 +662,8 @@ struct FTypeTable
 	PType *TypeHash[HASH_SIZE];
 
 	PType *FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
-	void ReplaceType(PType *newtype, PType *oldtype, size_t bucket);
 	void AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket);
 	void AddType(PType *type);
-	void Mark();
 	void Clear();
 
 	static size_t Hash(const PClass *p1, intptr_t p2, intptr_t p3);

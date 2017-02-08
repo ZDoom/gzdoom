@@ -25,7 +25,7 @@ void main(){
 	haloweight = pow(1.0 - haloweight, 5.0);
     
     vec3 color = texture(InputTexture, TexCoord).rgb;
-    color += textureDistorted(InputTexture, texcoord + haloVector, haloVector, flareChromaticDistortion).rgb * haloweight;
+    color += max(vec3(0.0), textureDistorted(InputTexture, texcoord + haloVector, haloVector, flareChromaticDistortion).rgb * 0.5 - 0.2) * haloweight;
     for(int i = 0; i < nSamples; i++){
         vec2 offset = sampleVector * float(i);
         float weight = -(1.0-max(abs(length(vec2(0.5) - offset)), 1.0));

@@ -49,7 +49,7 @@
 #include "thingdef.h"
 #include "p_lnspec.h"
 #include "doomstat.h"
-#include "codegeneration/codegen.h"
+#include "backend/codegen.h"
 
 FRandom pr_exrandom ("EX_Random");
 

@@ -254,6 +254,14 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 
 				curr->Destroy();
 			}
+			/*
+			if (curr->IsKindOf(RUNTIME_CLASS(PSymbol)))
+				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PSymbol*>(curr)->SymbolName.GetChars());
+			else if (curr->IsKindOf(RUNTIME_CLASS(PType)))
+				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PType*>(curr)->DescriptiveName());
+			else
+				Printf("Collecting %s\n", curr->GetClass()->TypeName.GetChars());
+			*/
 			curr->ObjectFlags |= OF_Cleanup;
 			delete curr;
 			finalized++;
@@ -277,7 +285,9 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 void Mark(DObject **obj)
 {
 	DObject *lobj = *obj;
-	if (lobj != NULL)
+
+	assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
+	if (lobj != nullptr && !(lobj->ObjectFlags & OF_Released))
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)
 		{
@@ -361,23 +371,6 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
-	// Mark action functions
-	if (!FinalGC)
-	{
-		FAutoSegIterator probe(ARegHead, ARegTail);
-
-		while (*++probe != NULL)
-		{
-			AFuncDesc *afunc = (AFuncDesc *)*probe;
-			Mark(*(afunc->VMPointer));
-		}
-	}
-	// Mark types
-	TypeTable.Mark();
-	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
-	{
-		Mark(PClass::AllClasses[i]);
-	}
 	// Mark global symbols
 	Namespaces.MarkSymbols();
 	// Mark bot stuff.
@@ -458,8 +451,8 @@ static size_t SingleStep()
 		{ // Nothing more to sweep?
 			State = GCS_Finalize;
 		}
-		assert(old >= AllocBytes);
-		Estimate -= old - AllocBytes;
+		//assert(old >= AllocBytes);
+		Estimate -= MAX<size_t>(0, old - AllocBytes);
 		return (GCSWEEPMAX - finalize_count) * GCSWEEPCOST + finalize_count * GCFINALIZECOST;
 	  }
 
@@ -559,9 +552,12 @@ void FullGC()
 
 void Barrier(DObject *pointing, DObject *pointed)
 {
+	assert(pointed->GetClass() < (void*)0x1000000000000000);
 	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
 	assert(State != GCS_Finalize && State != GCS_Pause);
+	assert(!(pointed->ObjectFlags & OF_Released));	// if a released object gets here, something must be wrong.
+	if (pointed->ObjectFlags & OF_Released) return;	// don't do anything with non-GC'd objects.
 	// The invariant only needs to be maintained in the propagate state.
 	if (State == GCS_Propagate)
 	{
@@ -776,7 +772,7 @@ CCMD(gc)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Usage: gc stop|now|full|pause [size]|stepmul [size]\n");
+		Printf ("Usage: gc stop|now|full|count|pause [size]|stepmul [size]\n");
 		return;
 	}
 	if (stricmp(argv[1], "stop") == 0)
@@ -790,6 +786,12 @@ CCMD(gc)
 	else if (stricmp(argv[1], "full") == 0)
 	{
 		GC::FullGC();
+	}
+	else if (stricmp(argv[1], "count") == 0)
+	{
+		int cnt = 0;
+		for (DObject *obj = GC::Root; obj; obj = obj->ObjNext, cnt++);
+		Printf("%d active objects counted\n", cnt);
 	}
 	else if (stricmp(argv[1], "pause") == 0)
 	{
@@ -814,3 +816,4 @@ CCMD(gc)
 		}
 	}
 }
+

@@ -42,7 +42,7 @@ void A_Unblock(AActor *self, bool drop)
 	// If the actor has attached metadata for items to drop, drop those.
 	if (drop && !self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
-		DDropItem *di = self->GetDropItems();
+		auto di = self->GetDropItems();
 
 		if (di != NULL)
 		{

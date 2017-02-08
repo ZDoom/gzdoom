@@ -252,7 +252,7 @@ class Weapon : StateProvider native
 	
 	//===========================================================================
 	//
-	// AWeapon :: TryPickup
+	// Weapon :: TryPickup
 	//
 	// If you can't see the weapon when it's active, then you can't pick it up.
 	//
@@ -277,7 +277,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: TryPickup
+	// Weapon :: TryPickup
 	//
 	//===========================================================================
 
@@ -293,7 +293,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: Use
+	// Weapon :: Use
 	//
 	// Make the player switch to self weapon.
 	//
@@ -324,7 +324,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: Destroy
+	// Weapon :: Destroy
 	//
 	//===========================================================================
 
@@ -347,7 +347,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: HandlePickup
+	// Weapon :: HandlePickup
 	//
 	// Try to leach ammo from the weapon if you have it already.
 	//
@@ -372,7 +372,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: PickupForAmmo
+	// Weapon :: PickupForAmmo
 	//
 	// The player already has self weapon, so try to pick it up for ammo.
 	//
@@ -411,7 +411,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: CreateCopy
+	// Weapon :: CreateCopy
 	//
 	//===========================================================================
 
@@ -428,7 +428,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: CreateTossable
+	// Weapon :: CreateTossable
 	//
 	// A weapon that's tossed out should contain no ammo, so you can't cheat
 	// by dropping it and then picking it back up.
@@ -464,7 +464,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: AttachToOwner
+	// Weapon :: AttachToOwner
 	//
 	//===========================================================================
 
@@ -491,7 +491,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: AddAmmo
+	// Weapon :: AddAmmo
 	//
 	// Give some ammo to the owner, even if it's just 0.
 	//
@@ -536,7 +536,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: AddExistingAmmo
+	// Weapon :: AddExistingAmmo
 	//
 	// Give the owner some more ammo he already has.
 	//
@@ -563,7 +563,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: AddWeapon
+	// Weapon :: AddWeapon
 	//
 	// Give the owner a weapon if they don't have it already.
 	//
@@ -588,7 +588,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: ShouldStay
+	// Weapon :: ShouldStay
 	//
 	//===========================================================================
 
@@ -606,7 +606,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: EndPowerUp
+	// Weapon :: EndPowerUp
 	//
 	// The Tome of Power just expired.
 	//

@@ -9,17 +9,16 @@ class PlayerPawn : Actor native
 	native Inventory	InvFirst;		// first inventory item displayed on inventory bar
 	native Inventory	InvSel;			// selected inventory item
 	native meta String 	DisplayName;	// Display name (used in menus, etc.)
-	native meta String 	SoundClass;		// Sound class
-	native meta String 	Face;			// Doom status bar face (when used)
-	native meta String 	Portrait;
-	native meta String 	Slot[10];
-	native meta Name	InvulMode;
-	native meta Name	HealingRadiusType;
-	native meta double 	HexenArmor[5];
-	native meta uint8	ColorRangeStart;	// Skin color range
-	native meta uint8	ColorRangeEnd;
-	//FPlayerColorSetMap ColorSets;
-	//PainFlashList PainFlashes;
+
+	native /*meta*/ Name 	SoundClass;		// Sound class
+	native /*meta*/ Name 	Face;			// Doom status bar face (when used)
+	native /*meta*/ Name 	Portrait;
+	native /*meta*/ Name 	Slot[10];
+	native /*meta*/ Name	InvulMode;
+	native /*meta*/ Name	HealingRadiusType;
+	native /*meta*/ double 	HexenArmor[5];
+	native /*meta*/ uint8	ColorRangeStart;	// Skin color range
+	native /*meta*/ uint8	ColorRangeEnd;
 	
 	// [GRB] Player class properties
 	native double		JumpZ;

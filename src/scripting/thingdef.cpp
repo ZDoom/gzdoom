@@ -60,9 +60,9 @@
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
-#include "codegeneration/codegen.h"
+#include "backend/codegen.h"
 #include "a_sharedglobal.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 #include "stats.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -246,7 +246,7 @@ static void CheckForUnsafeStates(PClassActor *obj)
 	TMap<FState *, bool> checked;
 	ENamedName *test;
 
-	if (obj->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (obj->IsDescendantOf(NAME_Weapon))
 	{
 		if (obj->Size == RUNTIME_CLASS(AWeapon)->Size) return;	// This class cannot have user variables.
 		test = weaponstates;
@@ -336,11 +336,11 @@ static void CheckStates(PClassActor *obj)
 
 	CheckStateLabels(obj, actorstates, SUF_ACTOR, "actor sprites");
 
-	if (obj->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (obj->IsDescendantOf(NAME_Weapon))
 	{
 		CheckStateLabels(obj, weaponstates, SUF_WEAPON, "weapon sprites");
 	}
-	else if (obj->IsDescendantOf(PClass::FindActor(NAME_CustomInventory)))
+	else if (obj->IsDescendantOf(NAME_CustomInventory))
 	{
 		CheckStateLabels(obj, pickupstates, SUF_ITEM, "CustomInventory state chain");
 	}
@@ -396,8 +396,9 @@ void LoadActors()
 			{
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;
-				DObject::StaticPointerSubstitution(ti, nullptr);
-				PClassActor::AllActorClasses.Delete(i);
+				// the class must be rendered harmless so that it won't cause problems.
+				ti->ParentClass = RUNTIME_CLASS(AActor);
+				ti->Size = sizeof(AActor);
 			}
 			else
 			{

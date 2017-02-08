@@ -767,9 +767,11 @@ DEFINE_ACTION_FUNCTION(AActor, AddInventory)
 //
 //============================================================================
 
-bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
+bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 {
 	bool result = true;
+
+	if (type != nullptr || !type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
 
 	AWeapon *savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
 	bool hadweap = player != NULL ? player->ReadyWeapon != NULL : true;
@@ -903,7 +905,7 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 	// and infinite ammo is on
 	if (notakeinfinite &&
 	((dmflags & DF_INFINITE_AMMO) || (player && player->cheats & CF_INFINITEAMMO)) &&
-		item->IsKindOf(PClass::FindActor(NAME_Ammo)))
+		item->IsKindOf(NAME_Ammo))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
 		result = false;
@@ -1146,10 +1148,12 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (PClassInventory *type, int amount)
+bool AActor::GiveAmmo (PClassActor *type, int amount)
 {
 	if (type != NULL)
 	{
+		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
+
 		AInventory *item = static_cast<AInventory *>(Spawn (type));
 		if (item)
 		{
@@ -1542,7 +1546,7 @@ bool AActor::IsVisibleToPlayer() const
 		bool visible = false;
 		for(unsigned int i = 0;i < GetClass()->VisibleToPlayerClass.Size();++i)
 		{
-			PClassPlayerPawn *cls = GetClass()->VisibleToPlayerClass[i];
+			auto cls = GetClass()->VisibleToPlayerClass[i];
 			if (cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
 			{
 				visible = true;
@@ -7488,7 +7492,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
 }
 
 
-DDropItem *AActor::GetDropItems() const
+FDropItem *AActor::GetDropItems() const
 {
 	return GetClass()->DropItems;
 }
@@ -8096,16 +8100,10 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 //
 //----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDropItem, false, true)
-
-IMPLEMENT_POINTERS_START(DDropItem)
-IMPLEMENT_POINTER(Next)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD(DDropItem, Next)
-DEFINE_FIELD(DDropItem, Name)
-DEFINE_FIELD(DDropItem, Probability)
-DEFINE_FIELD(DDropItem, Amount)
+DEFINE_FIELD(FDropItem, Next)
+DEFINE_FIELD(FDropItem, Name)
+DEFINE_FIELD(FDropItem, Probability)
+DEFINE_FIELD(FDropItem, Amount)
 
 void PrintMiscActorInfo(AActor *query)
 {

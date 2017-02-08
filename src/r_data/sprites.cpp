@@ -517,7 +517,7 @@ void R_InitSkins (void)
 	int lastlump;
 	int aliasid;
 	bool remove;
-	PClassPlayerPawn *basetype, *transtype;
+	PClassActor *basetype, *transtype;
 
 	key[sizeof(key)-1] = 0;
 	i = PlayerClasses.Size () - 1;
@@ -602,11 +602,11 @@ void R_InitSkins (void)
 			else if (0 == stricmp (key, "game"))
 			{
 				if (gameinfo.gametype == GAME_Heretic)
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
+					basetype = PClass::FindActor(NAME_HereticPlayer);
 				else if (gameinfo.gametype == GAME_Strife)
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_StrifePlayer));
+					basetype = PClass::FindActor(NAME_StrifePlayer);
 				else
-					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+					basetype = PClass::FindActor(NAME_DoomPlayer);
 
 				transtype = basetype;
 
@@ -614,7 +614,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype & GAME_DoomChex)
 					{
-						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
+						transtype = PClass::FindActor(NAME_HereticPlayer);
 						skins[i].othergame = true;
 					}
 					else if (gameinfo.gametype != GAME_Heretic)
@@ -633,7 +633,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype == GAME_Heretic)
 					{
-						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+						transtype = PClass::FindActor(NAME_DoomPlayer);
 						skins[i].othergame = true;
 					}
 					else if (!(gameinfo.gametype & GAME_DoomChex))
@@ -709,12 +709,12 @@ void R_InitSkins (void)
 		{
 			if (gameinfo.gametype & GAME_DoomChex)
 			{
-				basetype = transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+				basetype = transtype = PClass::FindActor(NAME_DoomPlayer);
 			}
 			else if (gameinfo.gametype == GAME_Heretic)
 			{
-				basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
-				transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
+				basetype = PClass::FindActor(NAME_HereticPlayer);
+				transtype = PClass::FindActor(NAME_DoomPlayer);
 				skins[i].othergame = true;
 			}
 			else
@@ -725,18 +725,22 @@ void R_InitSkins (void)
 
 		if (!remove)
 		{
-			skins[i].range0start = transtype->ColorRangeStart;
-			skins[i].range0end = transtype->ColorRangeEnd;
+			auto transdef = ((APlayerPawn*)GetDefaultByType(transtype));
+			auto basedef = ((APlayerPawn*)GetDefaultByType(basetype));
+
+			skins[i].range0start = transdef->ColorRangeStart;
+			skins[i].range0end = transdef->ColorRangeEnd;
 
 			remove = true;
 			for (j = 0; j < (int)PlayerClasses.Size (); j++)
 			{
-				PClassPlayerPawn *type = PlayerClasses[j].Type;
+				auto type = PlayerClasses[j].Type;
+				auto type_def = ((APlayerPawn*)GetDefaultByType(type));
 
 				if (type->IsDescendantOf (basetype) &&
 					GetDefaultByType(type)->SpawnState->sprite == GetDefaultByType(basetype)->SpawnState->sprite &&
-					type->ColorRangeStart == basetype->ColorRangeStart &&
-					type->ColorRangeEnd == basetype->ColorRangeEnd)
+					type_def->ColorRangeStart == basedef->ColorRangeStart &&
+					type_def->ColorRangeEnd == basedef->ColorRangeEnd)
 				{
 					PlayerClasses[j].Skins.Push ((int)i);
 					remove = false;
@@ -935,10 +939,10 @@ void R_InitSprites ()
 	memset (skins, 0, sizeof(*skins) * numskins);
 	for (i = 0; i < numskins; i++)
 	{ // Assume Doom skin by default
-		PClassPlayerPawn *type = PlayerClasses[0].Type;
+		auto type = ((APlayerPawn*)GetDefaultByType(PlayerClasses[0].Type));
 		skins[i].range0start = type->ColorRangeStart;
 		skins[i].range0end = type->ColorRangeEnd;
-		skins[i].Scale = GetDefaultByType (type)->Scale;
+		skins[i].Scale = type->Scale;
 	}
 
 	R_InitSpriteDefs ();
@@ -950,11 +954,10 @@ void R_InitSprites ()
 	// [GRB] Each player class has its own base skin
 	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
-		PClassPlayerPawn *basetype = PlayerClasses[i].Type;
-		FString classface = basetype->Face;
+		auto basetype = ((APlayerPawn*)GetDefaultByType(PlayerClasses[i].Type));
 
 		strcpy (skins[i].name, "Base");
-		if (classface.IsEmpty() || strcmp(classface, "None") == 0)
+		if (basetype->Face == NAME_None)
 		{
 			skins[i].face[0] = 'S';
 			skins[i].face[1] = 'T';
@@ -963,12 +966,12 @@ void R_InitSprites ()
 		}
 		else
 		{
-			strcpy(skins[i].face, classface);
+			strcpy(skins[i].face, basetype->Face);
 		}
 		skins[i].range0start = basetype->ColorRangeStart;
 		skins[i].range0end = basetype->ColorRangeEnd;
-		skins[i].Scale = GetDefaultByType (basetype)->Scale;
-		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite;
+		skins[i].Scale = basetype->Scale;
+		skins[i].sprite = basetype->SpawnState->sprite;
 		skins[i].namespc = ns_global;
 
 		PlayerClasses[i].Skins.Push (i);

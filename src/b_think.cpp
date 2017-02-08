@@ -328,7 +328,7 @@ void DBot::WhatToGet (AActor *item)
 	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
 //	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
 //		return;	// don't know how to use artifacts
-	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+	if (item->IsKindOf(NAME_Weapon))
 	{
 		// FIXME
 		AWeapon *heldWeapon;

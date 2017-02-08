@@ -64,9 +64,7 @@
 EXTERN_CVAR(Bool, strictdecorate);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FMemArena FlatpointerArena;	// stores the flat pointers because freeing them individually is rather messy.
-FNamespaceManager Namespaces;
+FMemArena ClassDataAllocator(32768);	// use this for all static class data that can be released in bulk when the type system is shut down.
 
 FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
@@ -153,11 +151,7 @@ void DumpTypeTable()
 
 /* PType ******************************************************************/
 
-IMPLEMENT_CLASS(PType, true, true)
-
-IMPLEMENT_POINTERS_START(PType)
-	IMPLEMENT_POINTER(HashNext)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PType, true, false)
 
 //==========================================================================
 //
@@ -184,18 +178,6 @@ PType::PType(unsigned int size, unsigned int align)
 
 PType::~PType()
 {
-}
-
-//==========================================================================
-//
-// PType :: PropagateMark
-//
-//==========================================================================
-
-size_t PType::PropagateMark()
-{
-	size_t marked = Symbols.MarkSymbols();
-	return marked + Super::PropagateMark();
 }
 
 //==========================================================================
@@ -458,11 +440,7 @@ IMPLEMENT_CLASS(PCompoundType, true, false)
 
 /* PNamedType *************************************************************/
 
-IMPLEMENT_CLASS(PNamedType, true, true)
-
-IMPLEMENT_POINTERS_START(PNamedType)
-	IMPLEMENT_POINTER(Outer)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PNamedType, true, false)
 
 //==========================================================================
 //
@@ -488,20 +466,6 @@ void PNamedType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)Outer;
 	id2 = TypeName;
-}
-
-//==========================================================================
-//
-// PNamedType :: QualifiedName
-//
-//==========================================================================
-
-FString PNamedType::QualifiedName() const
-{
-	FString out;
-	if (Outer != nullptr) out = Outer->QualifiedName();
-	out << "::" << TypeName;
-	return out;
 }
 
 /* PInt *******************************************************************/
@@ -1331,11 +1295,7 @@ PStateLabel::PStateLabel()
 
 /* PPointer ***************************************************************/
 
-IMPLEMENT_CLASS(PPointer, false, true)
-
-IMPLEMENT_POINTERS_START(PPointer)
-	IMPLEMENT_POINTER(PointedType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PPointer, false, false)
 
 //==========================================================================
 //
@@ -1538,11 +1498,7 @@ bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 
 /* PClassPointer **********************************************************/
 
-IMPLEMENT_CLASS(PClassPointer,false, true)
-
-IMPLEMENT_POINTERS_START(PClassPointer)
-	IMPLEMENT_POINTER(ClassRestriction)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClassPointer,false, false)
 
 //==========================================================================
 //
@@ -1623,11 +1579,7 @@ PClassPointer *NewClassPointer(PClass *restrict)
 
 /* PEnum ******************************************************************/
 
-IMPLEMENT_CLASS(PEnum, false, true)
-
-IMPLEMENT_POINTERS_START(PEnum)
-	IMPLEMENT_POINTER(Outer)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PEnum, false, false)
 
 //==========================================================================
 //
@@ -1679,11 +1631,7 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_CLASS(PArray, false, true)
-
-IMPLEMENT_POINTERS_START(PArray)
-	IMPLEMENT_POINTER(ElementType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PArray, false, false)
 
 //==========================================================================
 //
@@ -1916,11 +1864,7 @@ PResizableArray *NewResizableArray(PType *type)
 
 /* PDynArray **************************************************************/
 
-IMPLEMENT_CLASS(PDynArray, false, true)
-
-IMPLEMENT_POINTERS_START(PDynArray)
-	IMPLEMENT_POINTER(ElementType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PDynArray, false, false)
 
 //==========================================================================
 //
@@ -2056,7 +2000,7 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 
 void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) const
 {
-	if (ElementType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ElementType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (ElementType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ElementType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && static_cast<PPointer*>(ElementType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
 		// Add to the list of pointer arrays for this class.
 		special->Push(offset);
@@ -2171,12 +2115,7 @@ PDynArray *NewDynArray(PType *type)
 
 /* PMap *******************************************************************/
 
-IMPLEMENT_CLASS(PMap, false, true)
-
-IMPLEMENT_POINTERS_START(PMap)
-	IMPLEMENT_POINTER(KeyType)
-	IMPLEMENT_POINTER(ValueType)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PMap, false, false)
 
 //==========================================================================
 //
@@ -2428,7 +2367,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 
 	if (Symbols.AddSymbol(field) == nullptr)
 	{ // name is already in use
-		delete field;
+		field->Destroy();
 		return nullptr;
 	}
 	Fields.Push(field);
@@ -2457,18 +2396,6 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD f
 	Fields.Push(field);
 	HasNativeFields = true;
 	return field;
-}
-
-//==========================================================================
-//
-// PStruct :: PropagateMark
-//
-//==========================================================================
-
-size_t PStruct::PropagateMark()
-{
-	GC::MarkArray(Fields);
-	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
 }
 
 //==========================================================================
@@ -2683,76 +2610,9 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 	return static_cast<PPrototype *>(proto);
 }
 
-/* PFunction **************************************************************/
-
-IMPLEMENT_CLASS(PFunction, false, false)
-
-//==========================================================================
-//
-// PFunction :: PropagataMark
-//
-//==========================================================================
-
-size_t PFunction::PropagateMark()
-{
-	for (unsigned i = 0; i < Variants.Size(); ++i)
-	{
-		GC::Mark(Variants[i].Proto);
-		GC::Mark(Variants[i].Implementation);
-	}
-	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
-}
-
-//==========================================================================
-//
-// PFunction :: AddVariant
-//
-// Adds a new variant for this function. Does not check if a matching
-// variant already exists.
-//
-//==========================================================================
-
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
-{
-	Variant variant;
-
-	// I do not think we really want to deal with overloading here...
-	assert(Variants.Size() == 0);
-
-	variant.Flags = flags;
-	variant.UseFlags = useflags;
-	variant.Proto = proto;
-	variant.ArgFlags = std::move(argflags);
-	variant.ArgNames = std::move(argnames);
-	variant.Implementation = impl;
-	if (impl != nullptr) impl->Proto = proto;
-
-	// SelfClass can differ from OwningClass, but this is variant-dependent.
-	// Unlike the owner there can be cases where different variants can have different SelfClasses.
-	// (Of course only if this ever gets enabled...)
-	if (flags & VARF_Method)
-	{
-		assert(proto->ArgumentTypes.Size() > 0);
-		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
-		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PStruct>(selftypeptr->PointedType);
-		assert(variant.SelfClass != nullptr);
-	}
-	else
-	{
-		variant.SelfClass = nullptr;
-	}
-
-	return Variants.Push(variant);
-}
-
 /* PClass *****************************************************************/
 
-IMPLEMENT_CLASS(PClass, false, true)
-
-IMPLEMENT_POINTERS_START(PClass)
-	IMPLEMENT_POINTER(ParentClass)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClass, false, false)
 
 //==========================================================================
 //
@@ -2947,6 +2807,7 @@ void PClass::StaticShutdown ()
 		*p = nullptr;
 	}
 	FunctionPtrList.Clear();
+	VMFunction::DeleteAll();
 
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects 
 	// that still exist are properly taken down before the low level data is deleted.
@@ -2957,18 +2818,10 @@ void PClass::StaticShutdown ()
 	bVMOperational = false;
 
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
+	bShutdown = true;
 	TypeTable.Clear();
 	Namespaces.ReleaseSymbols();
-	FlatpointerArena.FreeAllBlocks();
-	bShutdown = true;
-
-	for (unsigned i = 0; i < PClass::AllClasses.Size(); ++i)
-	{
-		PClass *type = PClass::AllClasses[i];
-		PClass::AllClasses[i] = NULL;
-		type->Destroy();
-	}
-
+	ClassDataAllocator.FreeAllBlocks();
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();
 
@@ -3056,8 +2909,6 @@ PClass *ClassReg::RegisterClass()
 	{
 		&PClass::RegistrationInfo,
 		&PClassActor::RegistrationInfo,
-		&PClassInventory::RegistrationInfo,
-		&PClassPlayerPawn::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered
@@ -3341,48 +3192,31 @@ void PClass::DeriveData(PClass *newclass)
 
 PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 {
-	assert (size >= Size);
+	assert(size >= Size);
 	PClass *type;
 	bool notnew;
-	size_t bucket;
 
-	PClass *existclass = static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass), /*FIXME:Outer*/0, name, &bucket));
+	const PClass *existclass = FindClass(name);
 
 	// This is a placeholder so fill it in
-	if (existclass != nullptr)
+	if (existclass != NULL && existclass->Size == (unsigned)-1)
 	{
-		if (existclass->Size == TentativeClass)
+		type = const_cast<PClass*>(existclass);
+		if (!IsDescendantOf(type->ParentClass))
 		{
-			if (!IsDescendantOf(existclass->ParentClass))
-			{
-				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), existclass->ParentClass->TypeName.GetChars());
-			}
-
-			if (size == TentativeClass)
-			{
-				// see if we can reuse the existing class. This is only possible if the inheritance is identical. Otherwise it needs to be replaced.
-				if (this == existclass->ParentClass)
-				{
-					existclass->ObjectFlags &= OF_Transient;
-					return existclass;
-				}
-			}
-			notnew = true;
+			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
 		}
-		else
-		{
-			// a different class with the same name already exists. Let the calling code deal with this.
-			return nullptr;
-		}
+		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
+		notnew = true;
 	}
 	else
 	{
+		type = static_cast<PClass *>(GetClass()->CreateNew());
 		notnew = false;
 	}
 
-	// Create a new type object of the same type as us. (We may be a derived class of PClass.)
-	type = static_cast<PClass *>(GetClass()->CreateNew());
-
+	type->TypeName = name;
+	type->bRuntimeClass = true;
 	Derive(type, name);
 	type->Size = size;
 	if (size != TentativeClass)
@@ -3391,21 +3225,12 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 		type->Virtuals = Virtuals;
 		DeriveData(type);
 	}
+	else
+		type->ObjectFlags &= OF_Transient;
+
 	if (!notnew)
 	{
 		type->InsertIntoHash();
-	}
-	else
-	{
-		TypeTable.ReplaceType(type, existclass, bucket);
-		StaticPointerSubstitution(existclass, type, true);	// replace the old one, also in the actor defaults.
-		// Delete the old class from the class lists, both the full one and the actor list.
-		auto index = PClassActor::AllActorClasses.Find(static_cast<PClassActor*>(existclass));
-		if (index < PClassActor::AllActorClasses.Size()) PClassActor::AllActorClasses.Delete(index);
-		index = PClass::AllClasses.Find(existclass);
-		if (index < PClass::AllClasses.Size()) PClass::AllClasses.Delete(index);
-		// Now we can destroy the old class as nothing should reference it anymore
-		existclass->Destroy();
 	}
 	return type;
 }
@@ -3577,7 +3402,7 @@ void PClass::BuildFlatPointers ()
 			{ }
 
 			// Concatenate them into a new array
-			size_t *flat = (size_t*)FlatpointerArena.Alloc(sizeof(size_t) * (numPointers + numSuperPointers + ScriptPointers.Size() + 1));
+			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numPointers + numSuperPointers + ScriptPointers.Size() + 1));
 			if (numSuperPointers > 0)
 			{
 				memcpy (flat, ParentClass->FlatPointers, sizeof(size_t)*numSuperPointers);
@@ -3643,7 +3468,7 @@ void PClass::BuildArrayPointers()
 			}
 
 			// Concatenate them into a new array
-			size_t *flat = (size_t*)FlatpointerArena.Alloc(sizeof(size_t) * (numSuperPointers + ScriptPointers.Size() + 1));
+			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numSuperPointers + ScriptPointers.Size() + 1));
 			if (numSuperPointers > 0)
 			{
 				memcpy(flat, ParentClass->ArrayPointers, sizeof(size_t)*numSuperPointers);
@@ -3723,31 +3548,6 @@ PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, si
 
 //==========================================================================
 //
-// FTypeTable :: ReplaceType
-//
-// Replaces an existing type in the table with a new version of the same
-// type. For use when redefining actors in DECORATE. Does nothing if the
-// old version is not in the table.
-//
-//==========================================================================
-
-void FTypeTable::ReplaceType(PType *newtype, PType *oldtype, size_t bucket)
-{
-	for (PType **type_p = &TypeHash[bucket]; *type_p != nullptr; type_p = &(*type_p)->HashNext)
-	{
-		PType *type = *type_p;
-		if (type == oldtype)
-		{
-			newtype->HashNext = type->HashNext;
-			type->HashNext = nullptr;
-			*type_p = newtype;
-			break;
-		}
-	}
-}
-
-//==========================================================================
-//
 // FTypeTable :: AddType - Fully Parameterized Version
 //
 //==========================================================================
@@ -3762,7 +3562,7 @@ void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t
 	type->TypeTableType = metatype;
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	GC::WriteBarrier(type);
+	type->Release();
 }
 
 //==========================================================================
@@ -3785,7 +3585,7 @@ void FTypeTable::AddType(PType *type)
 
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	GC::WriteBarrier(type);
+	type->Release();
 }
 
 //==========================================================================
@@ -3826,34 +3626,21 @@ size_t FTypeTable::Hash(const PClass *p1, intptr_t p2, intptr_t p3)
 
 //==========================================================================
 //
-// FTypeTable :: Mark
-//
-// Mark all types in this table for the garbage collector.
-//
-//==========================================================================
-
-void FTypeTable::Mark()
-{
-	for (int i = HASH_SIZE - 1; i >= 0; --i)
-	{
-		if (TypeHash[i] != nullptr)
-		{
-			GC::Mark(TypeHash[i]);
-		}
-	}
-}
-
-//==========================================================================
-//
 // FTypeTable :: Clear
-//
-// Removes everything from the table. We let the garbage collector worry
-// about deleting them.
 //
 //==========================================================================
 
 void FTypeTable::Clear()
 {
+	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
+	{
+		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr;)
+		{
+			auto next = ty->HashNext;
+			delete ty;
+			ty = next;
+		}
+	}
 	memset(TypeHash, 0, sizeof(TypeHash));
 }
 
@@ -3863,232 +3650,3 @@ CCMD(typetable)
 	DumpTypeTable();
 }
 
-// Symbol tables ------------------------------------------------------------
-
-IMPLEMENT_CLASS(PTypeBase, true, false);
-IMPLEMENT_CLASS(PSymbol, true, false);
-IMPLEMENT_CLASS(PSymbolConst, false, false);
-IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
-IMPLEMENT_CLASS(PSymbolConstString, false, false);
-IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
-IMPLEMENT_CLASS(PSymbolType, false, true)
-
-IMPLEMENT_POINTERS_START(PSymbolType)
-	IMPLEMENT_POINTER(Type)
-IMPLEMENT_POINTERS_END
-
-IMPLEMENT_CLASS(PSymbolVMFunction, false, true)
-
-IMPLEMENT_POINTERS_START(PSymbolVMFunction)
-	IMPLEMENT_POINTER(Function)
-IMPLEMENT_POINTERS_END
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-PSymbol::~PSymbol()
-{
-}
-
-PSymbolTable::PSymbolTable()
-: ParentSymbolTable(nullptr)
-{
-}
-
-PSymbolTable::PSymbolTable(PSymbolTable *parent)
-: ParentSymbolTable(parent)
-{
-}
-
-PSymbolTable::~PSymbolTable ()
-{
-	ReleaseSymbols();
-}
-
-size_t PSymbolTable::MarkSymbols()
-{
-	size_t count = 0;
-	MapType::Iterator it(Symbols);
-	MapType::Pair *pair;
-
-	while (it.NextPair(pair))
-	{
-		GC::Mark(pair->Value);
-		count++;
-	}
-	return count * sizeof(*pair);
-}
-
-void PSymbolTable::ReleaseSymbols()
-{
-	// The GC will take care of deleting the symbols. We just need to
-	// clear our references to them.
-	Symbols.Clear();
-}
-
-void PSymbolTable::SetParentTable (PSymbolTable *parent)
-{
-	ParentSymbolTable = parent;
-}
-
-PSymbol *PSymbolTable::FindSymbol (FName symname, bool searchparents) const
-{
-	PSymbol * const *value = Symbols.CheckKey(symname);
-	if (value == nullptr && searchparents && ParentSymbolTable != nullptr)
-	{
-		return ParentSymbolTable->FindSymbol(symname, searchparents);
-	}
-	return value != nullptr ? *value : nullptr;
-}
-
-PSymbol *PSymbolTable::FindSymbolInTable(FName symname, PSymbolTable *&symtable)
-{
-	PSymbol * const *value = Symbols.CheckKey(symname);
-	if (value == nullptr)
-	{
-		if (ParentSymbolTable != nullptr)
-		{
-			return ParentSymbolTable->FindSymbolInTable(symname, symtable);
-		}
-		symtable = nullptr;
-		return nullptr;
-	}
-	symtable = this;
-	return *value;
-}
-
-PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
-{
-	// Symbols that already exist are not inserted.
-	if (Symbols.CheckKey(sym->SymbolName) != nullptr)
-	{
-		return nullptr;
-	}
-	Symbols.Insert(sym->SymbolName, sym);
-	return sym;
-}
-
-void PSymbolTable::RemoveSymbol(PSymbol *sym)
-{
-	auto mysym = Symbols.CheckKey(sym->SymbolName);
-	if (mysym == nullptr || *mysym != sym) return;
-	Symbols.Remove(sym->SymbolName);
-}
-
-PSymbol *PSymbolTable::ReplaceSymbol(PSymbol *newsym)
-{
-	// If a symbol with a matching name exists, take its place and return it.
-	PSymbol **symslot = Symbols.CheckKey(newsym->SymbolName);
-	if (symslot != nullptr)
-	{
-		PSymbol *oldsym = *symslot;
-		*symslot = newsym;
-		return oldsym;
-	}
-	// Else, just insert normally and return nullptr since there was no
-	// symbol to replace.
-	Symbols.Insert(newsym->SymbolName, newsym);
-	return nullptr;
-}
-
-IMPLEMENT_CLASS(PNamespace, false, true)
-
-IMPLEMENT_POINTERS_START(PNamespace)
-IMPLEMENT_POINTER(Parent)
-IMPLEMENT_POINTERS_END
-
-PNamespace::PNamespace(int filenum, PNamespace *parent)
-{
-	Parent = parent;
-	if (parent) Symbols.SetParentTable(&parent->Symbols);
-	FileNum = filenum;
-}
-
-size_t PNamespace::PropagateMark()
-{
-	GC::Mark(Parent);
-	return Symbols.MarkSymbols() + 1;
-}
-
-FNamespaceManager::FNamespaceManager()
-{
-	GlobalNamespace = nullptr;
-}
-
-PNamespace *FNamespaceManager::NewNamespace(int filenum)
-{
-	PNamespace *parent = nullptr;
-	// The parent will be the last namespace with this or a lower filenum.
-	// This ensures that DECORATE won't see the symbols of later files.
-	for (int i = AllNamespaces.Size() - 1; i >= 0; i--)
-	{
-		if (AllNamespaces[i]->FileNum <= filenum)
-		{
-			parent = AllNamespaces[i];
-			break;
-		}
-	}
-	auto newns = new PNamespace(filenum, parent);
-	AllNamespaces.Push(newns);
-	return newns;
-}
-
-size_t FNamespaceManager::MarkSymbols()
-{
-	for (auto ns : AllNamespaces)
-	{
-		GC::Mark(ns);
-	}
-	return AllNamespaces.Size();
-}
-
-void FNamespaceManager::ReleaseSymbols()
-{
-	GlobalNamespace = nullptr;
-	AllNamespaces.Clear();
-}
-
-// removes all symbols from the symbol tables.
-// After running the compiler these are not needed anymore.
-// Only the namespaces themselves are kept because the type table references them.
-int FNamespaceManager::RemoveSymbols()
-{
-	int count = 0;
-	for (auto ns : AllNamespaces)
-	{
-		count += ns->Symbols.Symbols.CountUsed();
-		ns->Symbols.ReleaseSymbols();
-	}
-	return count;
-}
-
-void RemoveUnusedSymbols()
-{
-	// Global symbols are not needed anymore after running the compiler.
-	int count = Namespaces.RemoveSymbols();
-
-	// We do not need any non-field and non-function symbols in structs and classes anymore.
-	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
-	{
-		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr; ty = ty->HashNext)
-		{
-			if (ty->IsKindOf(RUNTIME_CLASS(PStruct)))
-			{
-				auto it = ty->Symbols.GetIterator();
-				PSymbolTable::MapType::Pair *pair;
-				while (it.NextPair(pair))
-				{
-					if (!pair->Value->IsKindOf(RUNTIME_CLASS(PField)) && !pair->Value->IsKindOf(RUNTIME_CLASS(PFunction)))
-					{
-						ty->Symbols.RemoveSymbol(pair->Value);
-						count++;
-					}
-				}
-			}
-		}
-	}
-	DPrintf(DMSG_SPAMMY, "%d symbols removed after compilation\n", count);
-}

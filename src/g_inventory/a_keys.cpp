@@ -187,7 +187,7 @@ static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 			keygroup->anykeylist.Push (k);
 
 			//... but only keys get key numbers!
-			if (mi->IsDescendantOf(PClass::FindActor(NAME_Key)))
+			if (mi->IsDescendantOf(NAME_Key))
 			{
 				if (!ignorekey &&
 					GetDefaultByType(mi)->special1 == 0)

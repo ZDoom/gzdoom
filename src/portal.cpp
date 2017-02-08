@@ -670,7 +670,7 @@ unsigned P_GetSkyboxPortal(AActor *actor)
 	unsigned i = level.sectorPortals.Reserve(1);
 	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
 	level.sectorPortals[i].mType = PORTS_SKYVIEWPOINT;
-	level.sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf(PClass::FindActor("SkyCamCompat")) ? 0 : PORTSF_SKYFLATONLY;
+	level.sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf("SkyCamCompat") ? 0 : PORTSF_SKYFLATONLY;
 	level.sectorPortals[i].mSkybox = actor;
 	level.sectorPortals[i].mDestination = actor->Sector;
 	return i;

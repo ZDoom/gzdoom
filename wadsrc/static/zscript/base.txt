@@ -256,7 +256,7 @@ class BlockThingsIterator : Object native
 	native bool Next();
 }
 
-class DropItem : Object native
+struct DropItem native
 {
 	native readonly DropItem Next;
 	native readonly name Name;

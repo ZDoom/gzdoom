@@ -156,7 +156,7 @@ int D_PlayerClassToInt (const char *classname)
 	{
 		for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
 		{
-			PClassPlayerPawn *type = PlayerClasses[i].Type;
+			auto type = PlayerClasses[i].Type;
 
 			if (type->DisplayName.IsNotEmpty() && stricmp(type->DisplayName, classname) == 0)
 			{
@@ -180,7 +180,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 
 	if (players[player].mo != NULL)
 	{
-		colorset = players[player].mo->GetClass()->GetColorSet(info->GetColorSet());
+		colorset = GetColorSet(players[player].mo->GetClass(), info->GetColorSet());
 	}
 	if (colorset != NULL)
 	{

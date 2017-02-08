@@ -498,7 +498,7 @@ class Actor : Thinker native
 	native bool UsePuzzleItem(int PuzzleItemType);
 	native float AccuracyFactor();
 	native bool MorphMonster (Class<Actor> spawntype, int duration, int style, Class<Actor> enter_flash, Class<Actor> exit_flash);
-	native void SetCamera(Actor cam, bool revert = false);
+	action native void SetCamera(Actor cam, bool revert = false);
 
 	// DECORATE compatible functions
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);

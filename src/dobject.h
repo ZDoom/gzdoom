@@ -93,8 +93,6 @@ enum
 {
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
-	CLASSREG_PClassInventory,
-	CLASSREG_PClassPlayerPawn,
 };
 
 struct ClassReg
@@ -205,6 +203,7 @@ enum EObjectFlags
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
 	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
+	OF_Released			= 1 << 12,		// Object was released from the GC system and should not be processed by GC function
 };
 
 template<class T> class TObjPtr;
@@ -457,6 +456,7 @@ public:
 	virtual ~DObject ();
 
 	inline bool IsKindOf (const PClass *base) const;
+	inline bool IsKindOf(FName base) const;
 	inline bool IsA (const PClass *type) const;
 
 	void SerializeUserVars(FSerializer &arc);
@@ -466,6 +466,9 @@ public:
 	{
 		Class = NULL;
 	}
+
+	// Releases the object from the GC, letting the caller care of any maintenance.
+	void Release();
 
 	// For catching Serialize functions in derived classes
 	// that don't call their base class.
@@ -603,11 +606,17 @@ static inline void GC::WriteBarrier(DObject *pointed)
 	}
 }
 
+#include "symbols.h"
 #include "dobjtype.h"
 
 inline bool DObject::IsKindOf (const PClass *base) const
 {
 	return base->IsAncestorOf (GetClass ());
+}
+
+inline bool DObject::IsKindOf(FName base) const
+{
+	return GetClass()->IsDescendantOf(base);
 }
 
 inline bool DObject::IsA (const PClass *type) const

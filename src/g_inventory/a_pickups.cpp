@@ -25,54 +25,6 @@
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-IMPLEMENT_CLASS(PClassInventory, false, false)
-
-PClassInventory::PClassInventory()
-{
-	GiveQuest = 0;
-	AltHUDIcon.SetNull();
-}
-
-void PClassInventory::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	Super::DeriveData(newclass);
-	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
-
-	newc->PickupMsg = PickupMsg;
-	newc->GiveQuest = GiveQuest;
-	newc->AltHUDIcon = AltHUDIcon;
-	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
-	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
-}
-
-size_t PClassInventory::PointerSubstitution(DObject *oldclass, DObject *newclass)
-{
-	size_t changed = Super::PointerSubstitution(oldclass, newclass);
-	AInventory *def = (AInventory*)Defaults;
-	if (def != NULL)
-	{
-		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
-		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
-		{
-			if (ForbiddenToPlayerClass[i] == oldclass)
-			{
-				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-				changed++;
-			}
-		}
-		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
-		{
-			if (RestrictedToPlayerClass[i] == oldclass)
-			{
-				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-				changed++;
-			}
-		}
-	}
-	return changed;
-}
-
 void AInventory::Finalize(FStateDefinitions &statedef)
 {
 	Super::Finalize(statedef);
@@ -98,8 +50,8 @@ DEFINE_FIELD(AInventory, DropTime)
 DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
-DEFINE_FIELD(PClassInventory, PickupMsg)
-DEFINE_FIELD(PClassInventory, GiveQuest)
+DEFINE_FIELD(AInventory, GiveQuest)
+DEFINE_FIELD(PClassActor, PickupMsg)
 
 //===========================================================================
 //
@@ -163,7 +115,8 @@ void AInventory::Serialize(FSerializer &arc)
 		("icon", Icon, def->Icon)
 		("pickupsound", PickupSound, def->PickupSound)
 		("spawnpointclass", SpawnPointClass, def->SpawnPointClass)
-		("droptime", DropTime, def->DropTime);
+		("droptime", DropTime, def->DropTime)
+		("givequest", GiveQuest, def->GiveQuest);
 }
 
 //===========================================================================
@@ -548,7 +501,7 @@ DEFINE_ACTION_FUNCTION(AInventory, CanPickup)
 	if (!toucher)
 		ACTION_RETURN_BOOL(false);
 
-	PClassInventory *ai = self->GetClass();
+	auto ai = self->GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{

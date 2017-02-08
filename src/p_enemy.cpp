@@ -3226,7 +3226,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 
 	if (dropamount > 0)
 	{
-		if (flagmask != 0 && inv->IsKindOf(PClass::FindActor(NAME_Ammo)))
+		if (flagmask != 0 && inv->IsKindOf(NAME_Ammo))
 		{
 			inv->Amount = int(dropamount * dropammofactor);
 			inv->ItemFlags |= IF_IGNORESKILL;
@@ -3252,7 +3252,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		inv->FloatVar("AmmoFactor") = dropammofactor;
 		inv->ItemFlags |= flagmask;
 	}
-	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
+	else if (inv->IsKindOf(NAME_Weapon))
 	{
 		// The same goes for ammo from a weapon.
 		static_cast<AWeapon *>(inv)->AmmoGive1 = int(static_cast<AWeapon *>(inv)->AmmoGive1 * dropammofactor);

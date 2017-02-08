@@ -2704,6 +2704,8 @@ void D_DoomMain (void)
 
 		// delete all data that cannot be left until reinitialization
 		V_ClearFonts();					// must clear global font pointers
+		ColorSets.Clear();
+		PainFlashes.Clear();
 		R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
 		gameinfo.~gameinfo_t();
 		new (&gameinfo) gameinfo_t;		// Reset gameinfo
@@ -2714,7 +2716,7 @@ void D_DoomMain (void)
 
 		GC::FullGC();					// clean up before taking down the object list.
 
-		// Delete the VM functions here. The garbage collector will not do this automatically because they are referenced from the global action function definitions.
+		// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.
 		FAutoSegIterator probe(ARegHead, ARegTail);
 		while (*++probe != NULL)
 		{

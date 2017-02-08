@@ -6558,21 +6558,8 @@ FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition 
 
 FxStackVariable::~FxStackVariable()
 {
-	// Q: Is this good or bad? Needs testing if this is fine or better left to the GC anyway. DObject's destructor is anything but cheap.
 	membervar->ObjectFlags |= OF_YesReallyDelete;
 	delete membervar;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void FxStackVariable::ReplaceField(PField *newfield)
-{
-	membervar->ObjectFlags |= OF_YesReallyDelete;
-	delete membervar;
-	membervar = newfield;
 }
 
 //==========================================================================
@@ -6730,7 +6717,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			auto parentfield = static_cast<FxMemberBase *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			auto newfield = new PField(NAME_None, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
 			newfield->BitValue = membervar->BitValue;
 			static_cast<FxMemberBase *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.

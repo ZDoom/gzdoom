@@ -234,13 +234,11 @@ private:
 	static DamageTypeDefinition *Get(FName type);
 };
 
-class DDropItem;
-class PClassPlayerPawn;
+struct FDropItem;
 
 class PClassActor : public PClass
 {
 	DECLARE_CLASS(PClassActor, PClass);
-	HAS_OBJECT_POINTERS;
 protected:
 public:
 	static void StaticInit ();
@@ -256,9 +254,8 @@ public:
 	void RegisterIDs();
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
-	size_t PropagateMark();
 	bool SetReplacement(FName replaceName);
-	void SetDropItems(DDropItem *drops);
+	void SetDropItems(FDropItem *drops);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
@@ -288,7 +285,7 @@ public:
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
 
-	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
+	TArray<PClassActor *> VisibleToPlayerClass;
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
@@ -305,7 +302,7 @@ public:
 	FName BloodType2;		// Bloopsplatter replacement type
 	FName BloodType3;		// AxeBlood replacement type
 
-	DDropItem *DropItems;
+	FDropItem *DropItems;
 	FString SourceLumpName;
 	FIntCVar *distancecheck;
 
@@ -317,6 +314,14 @@ public:
 	FSoundID MeleeSound;
 	FName MissileName;
 	double MissileHeight;
+
+	// These are only valid for inventory items.
+	FString PickupMsg;
+	TArray<PClassActor *> RestrictedToPlayerClass;
+	TArray<PClassActor *> ForbiddenToPlayerClass;
+
+	// This is from PClassPlayerPawn
+	FString DisplayName;
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

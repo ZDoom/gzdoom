@@ -64,9 +64,6 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(Ammo1)
 	IMPLEMENT_POINTER(Ammo2)
 	IMPLEMENT_POINTER(SisterWeapon)
-	IMPLEMENT_POINTER(AmmoType1)
-	IMPLEMENT_POINTER(AmmoType2)
-	IMPLEMENT_POINTER(SisterWeaponType)
 IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(AWeapon, WeaponFlags)
@@ -528,7 +525,7 @@ bool FWeaponSlot::AddWeapon(PClassActor *type)
 		return false;
 	}
 	
-	if (!type->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (!type->IsDescendantOf(NAME_Weapon))
 	{
 		Printf("Can't add non-weapon %s to weapon slots\n", type->TypeName.GetChars());
 		return false;
@@ -635,7 +632,7 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
 				{
 					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
 
-					if (weap != nullptr && weap->IsKindOf(RUNTIME_CLASS(AWeapon)))
+					if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
 					{
 						if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
 						{
@@ -650,7 +647,7 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
 	{
 		AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[i].Type));
 
-		if (weap != nullptr && weap->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
 		{
 			if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
 			{
@@ -982,7 +979,7 @@ void FWeaponSlots::AddExtraWeapons()
 	{
 		PClassActor *cls = PClassActor::AllActorClasses[i];
 
-		if (!cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (!cls->IsDescendantOf(NAME_Weapon))
 		{
 			continue;
 		}
@@ -1058,7 +1055,7 @@ void FWeaponSlots::SetFromGameInfo()
 //
 //===========================================================================
 
-void FWeaponSlots::StandardSetup(PClassPlayerPawn *type)
+void FWeaponSlots::StandardSetup(PClassActor *type)
 {
 	SetFromPlayer(type);
 	AddExtraWeapons();
@@ -1151,14 +1148,15 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 //
 //===========================================================================
 
-void FWeaponSlots::SetFromPlayer(PClassPlayerPawn *type)
+void FWeaponSlots::SetFromPlayer(PClassActor *type)
 {
 	Clear();
+	auto Slot = ((APlayerPawn*)GetDefaultByType(type))->Slot;
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
-		if (!type->Slot[i].IsEmpty())
+		if (Slot[i] != NAME_None)
 		{
-			Slots[i].AddWeaponList(type->Slot[i], false);
+			Slots[i].AddWeaponList(Slot[i], false);
 		}
 	}
 }
@@ -1342,7 +1340,7 @@ CCMD (weaponsection)
 //===========================================================================
 void FWeaponSlots::AddSlotDefault(int slot, PClassActor *type, bool feedback)
 {
-	if (type != nullptr && type->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (type != nullptr && type->IsDescendantOf(NAME_Weapon))
 	{
 		switch (AddDefaultWeapon(slot, type))
 		{
@@ -1441,7 +1439,7 @@ void P_SetupWeapons_ntohton()
 	{
 		PClassActor *cls = PClassActor::AllActorClasses[i];
 
-		if (cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (cls->IsDescendantOf(NAME_Weapon))
 		{
 			Weapons_ntoh.Push(static_cast<PClassActor *>(cls));
 		}

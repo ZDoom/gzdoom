@@ -57,21 +57,23 @@ class USDFParser : public UDMFParserBase
 
 	PClassActor *CheckActorType(const char *key)
 	{
+		PClassActor *type = nullptr;
 		if (namespace_bits == St)
 		{
-			return GetStrifeType(CheckInt(key));
+			type = GetStrifeType(CheckInt(key));
 		}
 		else if (namespace_bits == Zd)
 		{
 			PClassActor *cls = PClass::FindActor(CheckString(key));
-			if (cls == NULL)
+			if (cls == nullptr)
 			{
 				sc.ScriptMessage("Unknown actor class '%s'", key);
-				return NULL;
+				return nullptr;
 			}
-			return cls;
+			type = cls;
 		}
-		return NULL;
+		if (type && type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return type;
+		return nullptr;
 	}
 
 	//===========================================================================
@@ -92,7 +94,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = dyn_cast<PClassInventory>(CheckActorType(key));
+				check.Item = CheckActorType(key);
 				break;
 
 			case NAME_Amount:
@@ -266,7 +268,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = dyn_cast<PClassInventory>(CheckActorType(key));
+				check.Item = CheckActorType(key);
 				break;
 
 			case NAME_Count:

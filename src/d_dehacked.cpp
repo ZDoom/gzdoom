@@ -73,7 +73,7 @@
 #include "thingdef.h"
 #include "info.h"
 #include "v_text.h"
-#include "vmbuilder.h"
+#include "backend/vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -1658,7 +1658,7 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = (PClassInventory*)AmmoNames[val];
+				info->AmmoType1 = AmmoNames[val];
 				if (info->AmmoType1 != NULL)
 				{
 					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;
@@ -1983,7 +1983,7 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		DDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
 		while (di != NULL)
 		{
 			if (di->Name == NAME_Clip)
@@ -2916,7 +2916,7 @@ static bool LoadDehSupp ()
 					else
 					{
 						auto cls = PClass::FindActor(sc.String);
-						if (cls == NULL || !cls->IsDescendantOf(PClass::FindActor(NAME_Ammo)))
+						if (cls == NULL || !cls->IsDescendantOf(NAME_Ammo))
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
@@ -2934,7 +2934,7 @@ static bool LoadDehSupp ()
 				{
 					sc.MustGetString();
 					PClass *cls = PClass::FindClass(sc.String);
-					if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+					if (cls == NULL || !cls->IsDescendantOf(NAME_Weapon))
 					{
 						sc.ScriptError("Unknown weapon type '%s'", sc.String);
 					}

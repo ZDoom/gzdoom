@@ -66,39 +66,17 @@ struct FPlayerColorSet
 	ExtraRange Extra[6];
 };
 
-typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
-typedef TMap<FName, PalEntry> PainFlashList;
+typedef TArray<std::tuple<PClass*, FName, PalEntry>> PainFlashList;
+typedef TArray<std::tuple<PClass*, int, FPlayerColorSet>> ColorSetList;
 
-class PClassPlayerPawn : public PClassActor
-{
-	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
-protected:
-public:
-	PClassPlayerPawn();
-	virtual void DeriveData(PClass *newclass);
-	void EnumColorSets(TArray<int> *out);
-	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
-	void SetPainFlash(FName type, PalEntry color);
-	bool GetPainFlash(FName type, PalEntry *color) const;
+extern PainFlashList PainFlashes;
+extern ColorSetList ColorSets;
 
-	FString DisplayName;	// Display name (used in menus, etc.)
-	FString SoundClass;		// Sound class
-	FString Face;			// Doom status bar face (when used)
-	FString Portrait;
-	FString Slot[10];
-	FName InvulMode;
-	FName HealingRadiusType;
-	double HexenArmor[5];
-	BYTE ColorRangeStart;	// Skin color range
-	BYTE ColorRangeEnd;
-	FPlayerColorSetMap ColorSets;
-	PainFlashList PainFlashes;
-};
-FString GetPrintableDisplayName(PClassPlayerPawn *cls);
+FString GetPrintableDisplayName(PClassActor *cls);
 
 class APlayerPawn : public AActor
 {
-	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
+	DECLARE_CLASS(APlayerPawn, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	
@@ -119,9 +97,9 @@ public:
 	void TweakSpeeds (double &forwardmove, double &sidemove);
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
-	AWeapon *PickNewWeapon (PClassInventory *ammotype);
-	AWeapon *BestWeapon (PClassInventory *ammotype);
-	void CheckWeaponSwitch(PClassInventory *ammotype);
+	AWeapon *PickNewWeapon (PClassActor *ammotype);
+	AWeapon *BestWeapon (PClassActor *ammotype);
+	void CheckWeaponSwitch(PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
 	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
@@ -175,6 +153,17 @@ public:
 
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
+
+	// Former class properties that were moved into the object to get rid of the meta class.
+	FName SoundClass;		// Sound class
+	FName Face;			// Doom status bar face (when used)
+	FName Portrait;
+	FName Slot[10];
+	FName InvulMode;
+	FName HealingRadiusType;
+	double HexenArmor[5];
+	BYTE ColorRangeStart;	// Skin color range
+	BYTE ColorRangeEnd;
 
 };
 
@@ -272,7 +261,7 @@ public:
 
 	bool CheckSkin (int skin);
 
-	PClassPlayerPawn *Type;
+	PClassActor *Type;
 	DWORD Flags;
 	TArray<int> Skins;
 };
@@ -344,7 +333,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));
 	}
-	PClassPlayerPawn *GetPlayerClassType() const
+	PClassActor *GetPlayerClassType() const
 	{
 		return PlayerClasses[GetPlayerClassNum()].Type;
 	}
@@ -402,7 +391,7 @@ public:
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
-	PClassPlayerPawn *cls;				// class of associated PlayerPawn
+	PClassActor *cls;				// class of associated PlayerPawn
 
 	float		DesiredFOV;				// desired field of vision
 	float		FOV;					// current field of vision
@@ -460,7 +449,7 @@ public:
 	short		fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	short		fixedlightlevel;
 	int			morphTics;				// player is a chicken/pig if > 0
-	PClassPlayerPawn *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
+	PClassActor *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle;				// which effects to apply for this player instance when morphed
 	PClassActor *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
 	TObjPtr<AWeapon>	PremorphWeapon;		// ready weapon before morphing
@@ -539,12 +528,16 @@ public:
 	// Make sure that a state is properly set after calling this unless
 	// you are 100% sure the context already implies the layer exists.
 	DPSprite *GetPSprite(PSPLayers layer);
+
+	bool GetPainFlash(FName type, PalEntry *color) const;
 };
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
 void P_CheckPlayerSprite(AActor *mo, int &spritenum, DVector2 &scale);
+void EnumColorSets(PClassActor *pc, TArray<int> *out);
+FPlayerColorSet *GetColorSet(PClassActor *pc, int setnum);
 
 inline void AActor::SetFriendPlayer(player_t *player)
 {

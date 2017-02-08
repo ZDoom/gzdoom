@@ -2857,7 +2857,7 @@ void AM_drawThings ()
 						// Find the key's own color.
 						// Only works correctly if single-key locks have lower numbers than any-key locks.
 						// That is the case for all default keys, however.
-						if (t->IsKindOf(PClass::FindActor(NAME_Key)))
+						if (t->IsKindOf(NAME_Key))
 						{
 							if (G_SkillProperty(SKILLP_EasyKey))
 							{

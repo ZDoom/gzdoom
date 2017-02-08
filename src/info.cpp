@@ -110,7 +110,7 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 			const char *callinfo = "";
 			if (info != nullptr && info->mStateType == STATE_Psprite)
 			{
-				if (stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)) && stateowner != self) callinfo = "weapon ";
+				if (stateowner->IsKindOf(NAME_Weapon) && stateowner != self) callinfo = "weapon ";
 				else callinfo = "overlay ";
 			}
 			err.stacktrace.AppendFormat("Called from %sstate %s.%d in %s\n", callinfo, owner->TypeName.GetChars(), offs, stateowner->GetClass()->TypeName.GetChars());
@@ -176,11 +176,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
 	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
 }
 
-IMPLEMENT_CLASS(PClassActor, false, true)
-
-IMPLEMENT_POINTERS_START(PClassActor)
-	IMPLEMENT_POINTER(DropItems)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_CLASS(PClassActor, false, false)
 
 //==========================================================================
 //
@@ -349,32 +345,12 @@ void PClassActor::DeriveData(PClass *newclass)
 		*newa->PainChances = *PainChances;
 	}
 
-}
+	// Inventory stuff
+	newa->PickupMsg = PickupMsg;
+	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
+	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
 
-//==========================================================================
-//
-// PClassActor :: PropagateMark
-//
-//==========================================================================
-
-size_t PClassActor::PropagateMark()
-{
-	// Mark state functions
-	for (int i = 0; i < NumOwnedStates; ++i)
-	{
-		if (OwnedStates[i].ActionFunc != NULL)
-		{
-			GC::Mark(OwnedStates[i].ActionFunc);
-		}
-	}
-	// Mark damage function
-	if (Defaults != NULL)
-	{
-		GC::Mark(((AActor *)Defaults)->DamageFunc);
-	}
-
-//	marked += ActorInfo->NumOwnedStates * sizeof(FState);
-	return Super::PropagateMark();
+	newa->DisplayName = DisplayName;
 }
 
 //==========================================================================
@@ -414,10 +390,9 @@ bool PClassActor::SetReplacement(FName replaceName)
 //
 //==========================================================================
 
-void PClassActor::SetDropItems(DDropItem *drops)
+void PClassActor::SetDropItems(FDropItem *drops)
 {
 	DropItems = drops;
-	GC::WriteBarrier(this, DropItems);
 }
 
 
@@ -659,10 +634,33 @@ size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 	{
 		if (VisibleToPlayerClass[i] == oldclass)
 		{
-			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			VisibleToPlayerClass[i] = static_cast<PClassActor*>(newclass);
 			changed++;
 		}
 	}
+
+	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
+	{
+		if (ForbiddenToPlayerClass[i] == oldclass)
+		{
+			ForbiddenToPlayerClass[i] = static_cast<PClassActor*>(newclass);
+			changed++;
+		}
+	}
+	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
+	{
+		if (RestrictedToPlayerClass[i] == oldclass)
+		{
+			RestrictedToPlayerClass[i] = static_cast<PClassActor*>(newclass);
+			changed++;
+		}
+	}
+	AInventory *def = dyn_cast<AInventory>((AActor*)Defaults);
+	if (def != NULL)
+	{
+		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
+	}
+
 	return changed;
 }
 

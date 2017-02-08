@@ -340,7 +340,7 @@ inline int T_FindFirstSectorFromTag(int tagnum)
 // Doom index is only supported for the 4 original ammo types
 //
 //==========================================================================
-static PClassInventory * T_GetAmmo(const svalue_t &t)
+static PClassActor * T_GetAmmo(const svalue_t &t)
 {
 	const char * p;
 
@@ -361,8 +361,8 @@ static PClassInventory * T_GetAmmo(const svalue_t &t)
 		}
 		p=DefAmmo[ammonum];
 	}
-	PClassInventory * am=dyn_cast<PClassInventory>(PClass::FindActor(p));
-	if (am == NULL)
+	auto am = PClass::FindActor(p);
+	if (am == NULL || !am->IsKindOf(PClass::FindClass(NAME_Ammo)))
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -2434,8 +2434,8 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	PClassInventory * info = dyn_cast<PClassInventory>(PClass::FindActor (type));
-	if (info == NULL)
+	auto info = PClass::FindActor (type);
+	if (info == NULL || !info->IsKindOf(RUNTIME_CLASS(AInventory)))
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;
@@ -2564,7 +2564,7 @@ void FParser::SF_PlayerKeys(void)
 void FParser::SF_PlayerAmmo(void)
 {
 	int playernum, amount;
-	PClassInventory * ammotype;
+	PClassActor * ammotype;
 	
 	if (CheckArgs(2))
 	{
@@ -2600,7 +2600,7 @@ void FParser::SF_PlayerAmmo(void)
 void FParser::SF_MaxPlayerAmmo()
 {
 	int playernum, amount;
-	PClassInventory * ammotype;
+	PClassActor * ammotype;
 
 	if (CheckArgs(2))
 	{
@@ -2629,7 +2629,7 @@ void FParser::SF_MaxPlayerAmmo()
 
 			for (AInventory *item = players[playernum].mo->Inventory; item != NULL; item = item->Inventory)
 			{
-				if (item->IsKindOf(PClass::FindClass(NAME_BackpackItem)))
+				if (item->IsKindOf(NAME_BackpackItem))
 				{
 					if (t_argc>=4) amount = intvalue(t_argv[3]);
 					else amount*=2;
@@ -2676,7 +2676,7 @@ void FParser::SF_PlayerWeapon()
 			return;
 		}
 		auto ti = PClass::FindActor(WeaponNames[weaponnum]);
-		if (!ti || !ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (!ti || !ti->IsDescendantOf(NAME_Weapon))
 		{
 			script_error("incompatibility in playerweapon %d\n", weaponnum);
 			return;
@@ -2712,7 +2712,7 @@ void FParser::SF_PlayerWeapon()
 			{
 				if (!wp) 
 				{
-					AWeapon * pw=players[playernum].PendingWeapon;
+					auto pw=players[playernum].PendingWeapon;
 					players[playernum].mo->GiveInventoryType(ti);
 					players[playernum].PendingWeapon=pw;
 				}
@@ -2757,7 +2757,7 @@ void FParser::SF_PlayerSelectedWeapon()
 				return;
 			}
 			auto ti = PClass::FindActor(WeaponNames[weaponnum]);
-			if (!ti || !ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+			if (!ti || !ti->IsDescendantOf(NAME_Weapon))
 			{
 				script_error("incompatibility in playerweapon %d\n", weaponnum);
 				return;
@@ -2862,7 +2862,7 @@ void FParser::SF_SetWeapon()
 		{
 			AInventory *item = players[playernum].mo->FindInventory (PClass::FindActor (stringvalue(t_argv[1])));
 
-			if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			if (item == NULL || !item->IsKindOf(NAME_Weapon))
 			{
 			}
 			else if (players[playernum].ReadyWeapon == item)
@@ -2874,7 +2874,7 @@ void FParser::SF_SetWeapon()
 			}
 			else
 			{
-				AWeapon *weap = static_cast<AWeapon *> (item);
+				auto weap = static_cast<AWeapon *> (item);
 
 				if (weap->CheckAmmo (AWeapon::EitherFire, false))
 				{

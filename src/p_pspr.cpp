@@ -170,7 +170,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
 
-	if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) || Caller->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
 }
 
@@ -357,7 +357,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		}
 		else if (!(newstate->UseFlags & SUF_WEAPON))
 		{
-			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			if (Caller->IsKindOf(NAME_Weapon))
 			{
 				auto so = FState::StaticFindStateOwner(newstate);
 				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
@@ -1399,7 +1399,7 @@ void player_t::TickPSprites()
 		// or if it's from an inventory item that the player no longer owns. 
 		if ((pspr->Caller == nullptr ||
 			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AInventory)) && barrier_cast<AInventory *>(pspr->Caller)->Owner != pspr->Owner->mo) ||
-			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && pspr->Caller != pspr->Owner->ReadyWeapon)))
+			(pspr->Caller->IsKindOf(NAME_Weapon) && pspr->Caller != pspr->Owner->ReadyWeapon)))
 		{
 			pspr->Destroy();
 		}

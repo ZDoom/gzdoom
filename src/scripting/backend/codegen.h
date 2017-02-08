@@ -1417,7 +1417,6 @@ class FxStackVariable : public FxMemberBase
 public:
 	FxStackVariable(PType *type, int offset, const FScriptPosition&);
 	~FxStackVariable();
-	void ReplaceField(PField *newfield);
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);

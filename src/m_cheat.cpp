@@ -170,7 +170,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MORPH:
-		msg = cht_Morph (player, static_cast<PClassPlayerPawn *>(PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer)), true);
+		msg = cht_Morph (player, PClass::FindActor (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer), true);
 		break;
 
 	case CHT_NOTARGET:
@@ -317,7 +317,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_RESSURECT:
 		if (player->playerstate != PST_LIVE && player->mo != nullptr)
 		{
-			if (player->mo->IsKindOf(PClass::FindActor("PlayerChunk")))
+			if (player->mo->IsKindOf("PlayerChunk"))
 			{
 				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
 			}
@@ -421,7 +421,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				lastinvp = invp;
 				invp = &(*invp)->Inventory;
-				if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+				if (item->IsKindOf(NAME_Weapon))
 				{
 					AWeapon *weap = static_cast<AWeapon *> (item);
 					if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||
@@ -548,13 +548,13 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }
 
-const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quickundo)
+const char *cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo)
 {
 	if (player->mo == NULL)
 	{
 		return "";
 	}
-	PClassPlayerPawn *oldclass = player->mo->GetClass();
+	auto oldclass = player->mo->GetClass();
 
 	// Set the standard morph style for the current game
 	int style = MORPH_UNDOBYTOMEOFPOWER;

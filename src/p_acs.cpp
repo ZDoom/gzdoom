@@ -1193,12 +1193,12 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				players[i].mo->GiveInventory(static_cast<PClassInventory *>(info), amount);
+				players[i].mo->GiveInventory(info, amount);
 		}
 	}
 	else
 	{
-		activator->GiveInventory(static_cast<PClassInventory *>(info), amount);
+		activator->GiveInventory(info, amount);
 	}
 }
 
@@ -5716,7 +5716,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				PClassActor *powerupclass = PClass::FindActor(FBehavior::StaticLookupString(args[1]));
-				if (powerupclass == NULL || !powerupclass->IsDescendantOf(PClass::FindActor(NAME_Powerup)))
+				if (powerupclass == NULL || !powerupclass->IsDescendantOf(NAME_Powerup))
 				{
 					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
 					return 0;
@@ -9042,7 +9042,7 @@ scriptwait:
 				AInventory *item = activator->FindInventory (dyn_cast<PClassActor>(
 					PClass::FindClass (FBehavior::StaticLookupString (STACK(1)))));
 
-				if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+				if (item == NULL || !item->IsKindOf(NAME_Weapon))
 				{
 					STACK(1) = 0;
 				}
@@ -9110,7 +9110,7 @@ scriptwait:
 					}
 					else
 					{
-						if (activator != nullptr && activator->IsKindOf(PClass::FindClass("ScriptedMarine")))
+						if (activator != nullptr && activator->IsKindOf("ScriptedMarine"))
 						{
 							SetMarineSprite(activator, type);
 						}
@@ -9491,7 +9491,7 @@ scriptwait:
 			{
 				int tag = STACK(7);
 				FName playerclass_name = FBehavior::StaticLookupString(STACK(6));
-				PClassPlayerPawn *playerclass = dyn_cast<PClassPlayerPawn>(PClass::FindClass (playerclass_name));
+				auto playerclass = PClass::FindActor (playerclass_name);
 				FName monsterclass_name = FBehavior::StaticLookupString(STACK(5));
 				PClassActor *monsterclass = PClass::FindActor(monsterclass_name);
 				int duration = STACK(4);

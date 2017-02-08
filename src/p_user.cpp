@@ -84,6 +84,9 @@ CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCO
 	P_PredictionLerpReset();
 }
 
+ColorSetList ColorSets;
+PainFlashList PainFlashes;
+
 struct PredictPos
 {
 	int gametic;
@@ -551,23 +554,38 @@ void PClassPlayerPawn::DeriveData(PClass *newclass)
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
 
 	newp->DisplayName = DisplayName;
-	newp->ColorSets = ColorSets;
 }
+
+//===========================================================================
+//
+// EnumColorsets
+//
+// Only used by the menu so it doesn't really matter that it's a bit
+// inefficient.
+//
+//===========================================================================
 
 static int intcmp(const void *a, const void *b)
 {
 	return *(const int *)a - *(const int *)b;
 }
 
-void PClassPlayerPawn::EnumColorSets(TArray<int> *out)
+void EnumColorSets(PClassActor *cls, TArray<int> *out)
 {
-	out->Clear();
-	FPlayerColorSetMap::Iterator it(ColorSets);
-	FPlayerColorSetMap::Pair *pair;
+	TArray<int> deleteds;
 
-	while (it.NextPair(pair))
+	out->Clear();
+	for (int i = ColorSets.Size() - 1; i >= 0; i--)
 	{
-		out->Push(pair->Key);
+		if (std::get<0>(ColorSets[i])->IsAncestorOf(cls))
+		{
+			int v = std::get<1>(ColorSets[i]);
+			if (out->Find(v) == out->Size() && deleteds.Find(v) == deleteds.Size())
+			{
+				if (std::get<2>(ColorSets[i]).Name == NAME_None) deleteds.Push(v);
+				else out->Push(v);
+			}
+		}
 	}
 	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
 }
@@ -577,20 +595,41 @@ void PClassPlayerPawn::EnumColorSets(TArray<int> *out)
 //
 //==========================================================================
 
-bool PClassPlayerPawn::GetPainFlash(FName type, PalEntry *color) const
+FPlayerColorSet *GetColorSet(PClassActor *cls, int setnum)
 {
-	const PClassPlayerPawn *info = this;
-
-	while (info != NULL)
+	for (int i = ColorSets.Size() - 1; i >= 0; i--)
 	{
-		const PalEntry *flash = info->PainFlashes.CheckKey(type);
-		if (flash != NULL)
+		if (std::get<1>(ColorSets[i]) == setnum &&
+			std::get<0>(ColorSets[i])->IsAncestorOf(cls))
 		{
-			*color = *flash;
+			auto c = &std::get<2>(ColorSets[i]);
+			return c->Name != NAME_None ? c : nullptr;
+		}
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool player_t::GetPainFlash(FName type, PalEntry *color) const
+{
+	PClass *info = mo->GetClass();
+
+	// go backwards through the list and return the first item with a 
+	// matching damage type for an ancestor of our class. 
+	// This will always return the best fit because any parent class
+	// must be processed before its children.
+	for (int i = PainFlashes.Size() - 1; i >= 0; i--)
+	{
+		if (std::get<1>(PainFlashes[i]) == type &&
+			std::get<0>(PainFlashes[i])->IsAncestorOf(info))
+		{
+			*color = std::get<2>(PainFlashes[i]);
 			return true;
 		}
-		// Try parent class
-		info = dyn_cast<PClassPlayerPawn>(info->ParentClass);
 	}
 	return false;
 }
@@ -3238,8 +3277,6 @@ DEFINE_FIELD(APlayerPawn, ColorRangeStart)
 DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
 
 DEFINE_FIELD(PClassPlayerPawn, DisplayName)
-DEFINE_FIELD(PClassPlayerPawn, ColorSets)
-DEFINE_FIELD(PClassPlayerPawn, PainFlashes)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

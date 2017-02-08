@@ -66,8 +66,11 @@ struct FPlayerColorSet
 	ExtraRange Extra[6];
 };
 
-typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
-typedef TMap<FName, PalEntry> PainFlashList;
+typedef TArray<std::tuple<PClass*, FName, PalEntry>> PainFlashList;
+typedef TArray<std::tuple<PClass*, int, FPlayerColorSet>> ColorSetList;
+
+extern PainFlashList PainFlashes;
+extern ColorSetList ColorSets;
 
 class PClassPlayerPawn : public PClassActor
 {
@@ -76,14 +79,8 @@ protected:
 public:
 	PClassPlayerPawn();
 	virtual void DeriveData(PClass *newclass);
-	void EnumColorSets(TArray<int> *out);
-	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
-	void SetPainFlash(FName type, PalEntry color);
-	bool GetPainFlash(FName type, PalEntry *color) const;
 
 	FString DisplayName;	// Display name (used in menus, etc.)
-	FPlayerColorSetMap ColorSets;
-	PainFlashList PainFlashes;
 };
 FString GetPrintableDisplayName(PClassPlayerPawn *cls);
 
@@ -541,12 +538,16 @@ public:
 	// Make sure that a state is properly set after calling this unless
 	// you are 100% sure the context already implies the layer exists.
 	DPSprite *GetPSprite(PSPLayers layer);
+
+	bool GetPainFlash(FName type, PalEntry *color) const;
 };
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
 void P_CheckPlayerSprite(AActor *mo, int &spritenum, DVector2 &scale);
+void EnumColorSets(PClassActor *pc, TArray<int> *out);
+FPlayerColorSet *GetColorSet(PClassActor *pc, int setnum);
 
 inline void AActor::SetFriendPlayer(player_t *player)
 {

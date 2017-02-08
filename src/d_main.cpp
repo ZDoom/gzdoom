@@ -2707,6 +2707,8 @@ void D_DoomMain (void)
 
 		// delete all data that cannot be left until reinitialization
 		V_ClearFonts();					// must clear global font pointers
+		ColorSets.Clear();
+		PainFlashes.Clear();
 		R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
 		gameinfo.~gameinfo_t();
 		new (&gameinfo) gameinfo_t;		// Reset gameinfo

@@ -435,7 +435,7 @@ void DListMenuItemPlayerDisplay::UpdateTranslation()
 	if (mPlayerClass != NULL)
 	{
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(mPlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation(PlayerColor, mPlayerClass->Type->GetColorSet(PlayerColorset),
+		R_GetPlayerTranslation(PlayerColor, GetColorSet(mPlayerClass->Type, PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }

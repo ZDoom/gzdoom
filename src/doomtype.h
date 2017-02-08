@@ -41,6 +41,8 @@
 #endif
 
 #include <limits.h>
+#include <tuple>
+#include <algorithm>
 #include "tarray.h"
 #include "name.h"
 #include "zstring.h"

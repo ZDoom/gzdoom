@@ -69,6 +69,7 @@
 #include "backend/vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
+#include "d_player.h"
 
 //==========================================================================
 //
@@ -2386,8 +2387,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIIIiiiiiiiiiiiiiiiiiiiiiiii, Pl
 	}
 	else
 	{
-		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
+		ColorSets.Push(std::make_tuple(info, setnum, color));
 	}
 }
 
@@ -2413,8 +2413,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	}
 	else if (color.Lump >= 0)
 	{
-		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
+		ColorSets.Push(std::make_tuple(info, setnum, color));
 	}
 }
 
@@ -2431,8 +2430,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 	}
 	else
 	{
-		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-		static_cast<PClassPlayerPawn *>(info)->ColorSets.Remove(setnum);
+		FPlayerColorSet color;
+		memset(&color, 0, sizeof(color));
+		ColorSets.Push(std::make_tuple(info, setnum, color));
 	}
 }
 
@@ -2666,7 +2666,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 		PROP_STRING_PARM(type, 3);
 
 		color.a = BYTE(255 * clamp<double>(a, 0.f, 1.f));
-		static_cast<PClassPlayerPawn *>(info)->PainFlashes.Insert(type, color);
+		PainFlashes.Push(std::make_tuple(info, type, color));
 	}
 }
 

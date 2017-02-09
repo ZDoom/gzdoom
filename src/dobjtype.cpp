@@ -2817,6 +2817,13 @@ void PClass::StaticShutdown ()
 	// This flags DObject::Destroy not to call any scripted OnDestroy methods anymore.
 	bVMOperational = false;
 
+	// PendingWeapon must be cleared manually because it is not subjected to the GC if it contains WP_NOCHANGE, which is just RUNTIME_CLASS(AWWeapon).
+	// But that will get cleared here, confusing the GC if the value is left in.
+	for (auto &p : players)
+	{
+		p.PendingWeapon = nullptr;
+	}
+
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	bShutdown = true;
 	TypeTable.Clear();

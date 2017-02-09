@@ -261,7 +261,10 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_PALTONEMAPORDER",		gl_paltonemap_reverselookup,	"LookupOrder"
 	StaticText " "
 	Option "$GLPREFMNU_LENSFLARE",              gl_lensflare,                   "OnOff"
+	Option "$GLPREFMNU_LENSFLAREHALO",          gl_lensflare_haloenabled,       "OnOff"
 	Slider "$GLPREFMNU_LENSFLARESAMPLES",       gl_lensflare_samples,           0.0, 24.0, 1.0, 0
 	Slider "$GLPREFMNU_LENSFLAREDISP",          gl_lensflare_disp,              0.0, 1.0, 0.01, 2
 	Slider "$GLPREFMNU_LENSFLAREHALOWIDTH",     gl_lensflare_halowidth,         0.0, 1.0, 0.01, 2
+	Slider "$GLPREFMNU_LENSFLAREMUL",           gl_lensflare_mul,               0.0, 1.0, 0.01, 2
+	Slider "$GLPREFMNU_LENSFLAREBIAS",          gl_lensflare_bias,              -1.0, 1.0, 0.01, 2
 }

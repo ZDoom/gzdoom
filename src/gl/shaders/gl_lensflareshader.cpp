@@ -23,6 +23,9 @@ void FLensFlareGhostShader::Bind() {
 		flareDispersal.Init(mShader, "flareDispersal");
 		flareHaloWidth.Init(mShader, "flareHaloWidth");
 		flareChromaticDistortion.Init(mShader, "flareChromaticDistortion");
+		flareMode.Init(mShader, "flareMode");
+		flareBias.Init(mShader, "flareBias");
+		flareMul.Init(mShader, "flareMul");
 		//FlareTexture.Init(mShader, "FlareTexture");;
 	}
 	mShader.Bind();

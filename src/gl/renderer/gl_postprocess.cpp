@@ -78,9 +78,12 @@ CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
 }
 
 CVAR(Bool, gl_lensflare, false, CVAR_ARCHIVE)
-CVAR(Int, gl_lensflare_samples, 5, CVAR_ARCHIVE)
+CVAR(Int, gl_lensflare_samples, 7, CVAR_ARCHIVE)
 CVAR(Float, gl_lensflare_disp, 0.37f, CVAR_ARCHIVE)
-CVAR(Float, gl_lensflare_halowidth, 0.7f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_halowidth, 0.36f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_bias, -0.83f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_mul, 1.0f, CVAR_ARCHIVE)
+CVAR(Bool, gl_lensflare_haloenabled, true, CVAR_ARCHIVE)
 //CVAR(Float, gl_lensflare_ghostsdisp, 1.0f, CVAR_ARCHIVE)
 
 CVAR(Float, gl_exposure_scale, 1.3f, CVAR_ARCHIVE)
@@ -216,6 +219,9 @@ void FGLRenderer::LensFlareScene() {
 	mLensFlareGhostShader->Bind();
 
 	mLensFlareGhostShader->InputTexture.Set(0);
+	mLensFlareGhostShader->flareMode.Set(gl_lensflare_haloenabled ? 1 : 0);
+	mLensFlareGhostShader->flareBias.Set(gl_lensflare_bias);
+	mLensFlareGhostShader->flareMul.Set(gl_lensflare_mul);
 	mLensFlareGhostShader->nSamples.Set(gl_lensflare_samples);
 	mLensFlareGhostShader->flareDispersal.Set(gl_lensflare_disp);
 	mLensFlareGhostShader->flareHaloWidth.Set(gl_lensflare_halowidth);

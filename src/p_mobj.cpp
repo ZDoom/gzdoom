@@ -771,7 +771,7 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 {
 	bool result = true;
 
-	if (type != nullptr || !type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
+	if (type == nullptr || !type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
 
 	AWeapon *savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
 	bool hadweap = player != NULL ? player->ReadyWeapon != NULL : true;

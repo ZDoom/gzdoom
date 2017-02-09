@@ -370,6 +370,7 @@ enum
 	MDL_USEACTORPITCH				= 32,
 	MDL_USEACTORROLL				= 64,
 	MDL_BADROTATION					= 128,
+	MDL_DONTCULLBACKFACES			= 256,
 };
 
 struct FSpriteModelFrame

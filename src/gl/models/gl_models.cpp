@@ -1017,6 +1017,9 @@ void gl_RenderModel(GLSprite * spr)
 	// Model space => World space
 	gl_RenderState.mModelMatrix.translate(spr->x, spr->z, spr->y );	
 
+	// [Nash] take SpriteRotation into account
+	angle += spr->actor->SpriteRotation.Degrees;
+
 	if (spr->actor->renderflags & RF_INTERPOLATEANGLES)
 	{
 		// [Nash] use interpolated angles

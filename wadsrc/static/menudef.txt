@@ -1849,6 +1849,13 @@ OptionValue RatiosTFT
 	6.0, "21:9"
 	 -1, "$OPTVAL_ALL"
 }
+OptionValue ScaleModes
+{
+	0, "$OPTVAL_OFF"
+	1, "320x200"
+	2, "640x400"
+	3, "0.5x"
+}
 
 OptionMenu VideoModeMenu protected
 {
@@ -1862,6 +1869,7 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_5X4ASPECTRATIO",	"vid_tft", "YesNo"
+	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	StaticText " "
 	ScreenResolution "res_0"
 	ScreenResolution "res_1"

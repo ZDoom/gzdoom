@@ -74,6 +74,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 
 EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Int, vid_scalemode)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 
@@ -300,7 +301,7 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	mSceneViewport.height = height;
 
 	// Scale viewports to fit letterbox
-	if ((gl_scale_viewport && !framebuffer->IsFullscreen()) || !FGLRenderBuffers::IsEnabled())
+	if ((gl_scale_viewport && !framebuffer->IsFullscreen() && vid_scalemode == 0) || !FGLRenderBuffers::IsEnabled())
 	{
 		mScreenViewport.width = mOutputLetterbox.width;
 		mScreenViewport.height = mOutputLetterbox.height;

@@ -151,8 +151,8 @@ CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
-	NewWidth      = screen->GetWidth();
-	NewHeight     = screen->GetHeight();
+	NewWidth      = screen->VideoWidth;
+	NewHeight     = screen->VideoHeight;
 	NewBits       = DisplayBits;
 	setmodeneeded = true;
 }

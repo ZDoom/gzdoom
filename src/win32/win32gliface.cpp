@@ -1260,8 +1260,8 @@ void Win32GLFrameBuffer::NewRefreshRate ()
 	if (m_Fullscreen)
 	{
 		setmodeneeded = true;
-		NewWidth = screen->GetWidth();
-		NewHeight = screen->GetHeight();
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
 		NewBits = DisplayBits;
 	}
 }

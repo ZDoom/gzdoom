@@ -123,6 +123,37 @@ CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}	
 }
 
+CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 3)
+	{
+		self = 0;
+	}
+}
+
+int ViewportScaledWidth(int width)
+{
+	switch (vid_scalemode)
+	{
+	default:
+	case 0: return width;
+	case 1: return 320;
+	case 2: return 640;
+	case 3: return (int)roundf(width * 0.5f);
+	}
+}
+
+int ViewportScaledHeight(int height)
+{
+	switch (vid_scalemode)
+	{
+	default:
+	case 0: return height;
+	case 1: return 200;
+	case 2: return 400;
+	case 3: return (int)roundf(height * 0.5f);
+	}
+}
 
 //=============================================================================
 //

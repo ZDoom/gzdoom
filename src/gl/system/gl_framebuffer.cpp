@@ -55,6 +55,7 @@
 EXTERN_CVAR (Float, vid_brightness)
 EXTERN_CVAR (Float, vid_contrast)
 EXTERN_CVAR (Bool, vid_vsync)
+EXTERN_CVAR(Int, vid_scalemode)
 
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
@@ -63,6 +64,8 @@ FGLRenderer *GLRenderer;
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
 void gl_SetupMenu();
+int ViewportScaledWidth(int width);
+int ViewportScaledHeight(int height);
 
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -180,18 +183,15 @@ void OpenGLFrameBuffer::Update()
 	Unlock();
 	CheckBench();
 
-	if (!IsFullscreen())
+	int clientWidth = ViewportScaledWidth(IsFullscreen() ? VideoWidth : GetClientWidth());
+	int clientHeight = ViewportScaledHeight(IsFullscreen() ? VideoHeight : GetClientHeight());
+	if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 	{
-		int clientWidth = GetClientWidth();
-		int clientHeight = GetClientHeight();
-		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
-		{
-			// Do not call Resize here because it's only for software canvases
-			Pitch = Width = clientWidth;
-			Height = clientHeight;
-			V_OutputResized(Width, Height);
-			GLRenderer->mVBO->OutputResized(Width, Height);
-		}
+		// Do not call Resize here because it's only for software canvases
+		Pitch = Width = clientWidth;
+		Height = clientHeight;
+		V_OutputResized(Width, Height);
+		GLRenderer->mVBO->OutputResized(Width, Height);
 	}
 
 	GLRenderer->SetOutputViewport(nullptr);

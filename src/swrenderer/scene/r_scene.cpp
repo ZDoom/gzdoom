@@ -177,7 +177,7 @@ namespace swrenderer
 		if (!r_scene_multithreaded)
 			numThreads = 1;
 
-		if (numThreads != Threads.size())
+		if (numThreads != (int)Threads.size())
 		{
 			StopThreads();
 			StartThreads(numThreads);

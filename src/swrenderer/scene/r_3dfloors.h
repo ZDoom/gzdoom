@@ -78,6 +78,7 @@ namespace swrenderer
 		void EnterSkybox();
 		void LeaveSkybox();
 		void SetFakeFloor(F3DFloor *fakeFloor);
+		void ClearFakeFloors() { FakeFloors.clear(); }
 
 		RenderThread *Thread = nullptr;
 

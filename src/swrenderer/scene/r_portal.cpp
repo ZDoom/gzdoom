@@ -162,7 +162,8 @@ namespace swrenderer
 			viewsector = port->mDestination;
 			assert(viewsector != nullptr);
 			R_SetViewAngle();
-			validcount++;	// Make sure we see all sprites
+			Thread->OpaquePass->ClearSeenSprites();
+			Thread->Clip3D->ClearFakeFloors();
 
 			planes->ClearKeepFakePlanes();
 			Thread->ClipSegments->Clear(pl->left, pl->right);
@@ -184,6 +185,11 @@ namespace swrenderer
 					floorclip[i] = pl->bottom[i];
 				}
 			}
+
+			drawseglist->PushPortal();
+			Thread->SpriteList->PushPortal();
+			viewposStack.Push(ViewPos);
+			visplaneStack.Push(pl);
 
 			// Create a drawseg to clip sprites to the sky plane
 			DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
@@ -207,11 +213,6 @@ namespace swrenderer
 			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			drawseglist->Push(draw_segment);
 
-			drawseglist->PushPortal();
-			Thread->SpriteList->PushPortal();
-			viewposStack.Push(ViewPos);
-			visplaneStack.Push(pl);
-
 			Thread->OpaquePass->RenderScene();
 			Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 			planes->Render();
@@ -227,7 +228,7 @@ namespace swrenderer
 		{
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(ViewPos);
-
+			
 			Thread->TranslucentPass->Render();
 
 			VisiblePlane *pl;
@@ -236,7 +237,7 @@ namespace swrenderer
 			{
 				pl->Render(Thread, pl->Alpha, pl->Additive, true);
 			}
-
+			
 			Thread->SpriteList->PopPortal();
 			drawseglist->PopPortal();
 		}

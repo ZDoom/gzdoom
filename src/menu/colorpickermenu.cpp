@@ -55,6 +55,8 @@ class DColorPickerMenu : public DOptionMenu
 {
 	DECLARE_CLASS(DColorPickerMenu, DOptionMenu)
 
+public:
+
 	float mRed;
 	float mGreen;
 	float mBlue;
@@ -65,8 +67,6 @@ class DColorPickerMenu : public DOptionMenu
 	int mStartItem;
 
 	FColorCVar *mCVar;
-
-public:
 
 	DColorPickerMenu(DMenu *parent, const char *name, DOptionMenuDescriptor *desc, FColorCVar *cvar)
 	{
@@ -116,93 +116,6 @@ public:
 		mRed = (float)RPART(DWORD(*mCVar));
 		mGreen = (float)GPART(DWORD(*mCVar));
 		mBlue = (float)BPART(DWORD(*mCVar));
-	}
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	bool MenuEvent (int mkey, bool fromcontroller)
-	{
-		int &mSelectedItem = mDesc->mSelectedItem;
-
-		switch (mkey)
-		{
-		case MKEY_Down:
-			if (mSelectedItem == mStartItem+6)	// last valid item
-			{
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				mGridPosY = 0;
-				// let it point to the last static item so that the super class code still has a valid item
-				mSelectedItem = mStartItem+7;	
-				return true;
-			}
-			else if (mSelectedItem == mStartItem+7)
-			{
-				if (mGridPosY < 15)
-				{
-					S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-					mGridPosY++;
-				}
-				return true;
-			}
-			break;
-
-		case MKEY_Up:
-			if (mSelectedItem == mStartItem+7)
-			{
-				if (mGridPosY > 0)
-				{
-					S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-					mGridPosY--;
-				}
-				else
-				{
-					S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-					mSelectedItem = mStartItem+6;
-				}
-				return true;
-			}
-			break;
-
-		case MKEY_Left:
-			if (mSelectedItem == mStartItem+7)
-			{
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				if (--mGridPosX < 0) mGridPosX = 15;
-				return true;
-			}
-			break;
-
-		case MKEY_Right:
-			if (mSelectedItem == mStartItem+7)
-			{
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				if (++mGridPosX > 15) mGridPosX = 0;
-				return true;
-			}
-			break;
-
-		case MKEY_Enter:
-			if (mSelectedItem == mStartItem+7)
-			{
-				// Choose selected palette entry
-				int index = mGridPosX + mGridPosY * 16;
-				mRed = GPalette.BaseColors[index].r;
-				mGreen = GPalette.BaseColors[index].g;
-				mBlue = GPalette.BaseColors[index].b;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-				return true;
-			}
-			break;
-		}
-		if (mSelectedItem >= 0 && mSelectedItem < mStartItem+7) 
-		{
-			if (mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
-		}
-		return Super::MenuEvent(mkey, fromcontroller);
 	}
 
 	//=============================================================================
@@ -355,3 +268,11 @@ DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar)
 	}
 }
 
+
+DEFINE_FIELD(DColorPickerMenu, mRed);
+DEFINE_FIELD(DColorPickerMenu, mGreen);
+DEFINE_FIELD(DColorPickerMenu, mBlue);
+DEFINE_FIELD(DColorPickerMenu, mGridPosX);
+DEFINE_FIELD(DColorPickerMenu, mGridPosY);
+DEFINE_FIELD(DColorPickerMenu, mStartItem);
+DEFINE_FIELD(DColorPickerMenu, mCVar);

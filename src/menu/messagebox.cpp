@@ -157,7 +157,7 @@ void DMessageBoxMenu::HandleResult(bool res)
 		{
 			if (mAction == NAME_None) 
 			{
-				mParentMenu->MenuEvent(res? MKEY_MBYes : MKEY_MBNo, false);
+				mParentMenu->CallMenuEvent(res? MKEY_MBYes : MKEY_MBNo, false);
 				Close();
 			}
 			else 

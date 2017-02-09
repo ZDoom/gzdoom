@@ -242,6 +242,9 @@ public:
 	virtual bool TranslateKeyboardEvents();
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);
+
+	bool CallMenuEvent(int mkey, bool fromcontroller);
+
 	bool MouseEventBack(int type, int x, int y);
 	void SetCapture();
 	void ReleaseCapture();

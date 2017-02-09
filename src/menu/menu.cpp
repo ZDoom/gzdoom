@@ -55,6 +55,7 @@
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
+#include "virtual.h"
 
 //
 // Todo: Move these elsewhere
@@ -208,6 +209,18 @@ DEFINE_ACTION_FUNCTION(DMenu, MenuEvent)
 	ACTION_RETURN_BOOL(self->MenuEvent(key, fromcontroller));
 }
 
+bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
+{
+	IFVIRTUAL(DMenu, MenuEvent)
+	{
+		VMValue params[] = { (DObject*)this, mkey, fromcontroller };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		return retval;
+	}
+	else return MenuEvent(mkey, fromcontroller);
+}
 //=============================================================================
 //
 //
@@ -260,7 +273,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
 				if (m_use_mouse == 2) mBackbuttonSelected = false;
-				MenuEvent(MKEY_Back, true);
+				CallMenuEvent(MKEY_Back, true);
 			}
 			return mBackbuttonSelected;
 		}
@@ -661,7 +674,7 @@ bool M_Responder (event_t *ev)
 				{
 					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
 				}
-				DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+				DMenu::CurrentMenu->CallMenuEvent(mkey, fromcontroller);
 				return true;
 			}
 		}

@@ -418,7 +418,7 @@ public:
 			menuactive = MENU_On;
 			SetMenuMessage(0);
 			Close();
-			mParentMenu->MenuEvent((ev->data1 == KEY_ESCAPE)? MKEY_Abort : MKEY_Input, 0);
+			mParentMenu->CallMenuEvent((ev->data1 == KEY_ESCAPE)? MKEY_Abort : MKEY_Input, 0);
 			return true;
 		}
 		return false;

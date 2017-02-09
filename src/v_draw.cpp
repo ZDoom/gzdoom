@@ -103,6 +103,15 @@ DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
 	ACTION_RETURN_INT(screen->GetHeight());
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	if (index < 0 || index > 255) index = 0;
+	else index = GPalette.BaseColors[index];
+	ACTION_RETURN_INT(index);
+}
+
 static int PalFromRGB(uint32 rgb)
 {
 	if (LastPal >= 0 && LastRGB == rgb)

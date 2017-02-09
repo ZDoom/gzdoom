@@ -496,7 +496,7 @@ bool DOptionMenuItem::MouseEvent(int type, int x, int y)
 {
 	if (Selectable() && type == DMenu::MOUSE_Release)
 	{
-		return DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true);
+		return DMenu::CurrentMenu->CallMenuEvent(MKEY_Enter, true);
 	}
 	return false;
 }

@@ -1,4 +1,25 @@
 
+enum EMenuKey
+{
+	MKEY_Up,
+	MKEY_Down,
+	MKEY_Left,
+	MKEY_Right,
+	MKEY_PageUp,
+	MKEY_PageDown,
+	MKEY_Enter,
+	MKEY_Back,
+	MKEY_Clear,
+	NUM_MKEYS,
+
+	// These are not buttons but events sent from other menus 
+
+	MKEY_Input,
+	MKEY_Abort,
+	MKEY_MBYes,
+	MKEY_MBNo,
+}
+
 class Menu : Object native
 {
 	//native static int MenuTime();
@@ -25,7 +46,8 @@ class MenuItemBase : object native
 	native Name mAction;
 	native bool mEnabled;
 	
-	native virtual bool MenuEvent (int mkey, bool fromcontroller);
+	// making this virtual now would require exporting all classes at once.
+	native /*virtual*/ bool MenuEvent (int mkey, bool fromcontroller);
 	
 }
 

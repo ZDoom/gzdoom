@@ -64,12 +64,10 @@ namespace swrenderer
 
 		TArray<DrawSegmentGroup> SegmentGroups;
 
-		unsigned int BeginIndex() const { return StartIndices.Last(); }
-		unsigned int EndIndex() const { return Segments.Size(); }
+		unsigned int SegmentsCount() const { return Segments.Size() - StartIndices.Last(); }
 		DrawSegment *Segment(unsigned int index) const { return Segments[Segments.Size() - 1 - index]; }
 
-		unsigned int BeginInterestingIndex() const { return StartInterestingIndices.Last(); }
-		unsigned int EndInterestingIndex() const { return InterestingSegments.Size(); }
+		unsigned int InterestingSegmentsCount() const { return InterestingSegments.Size() - StartInterestingIndices.Last(); }
 		DrawSegment *InterestingSegment(unsigned int index) const { return InterestingSegments[InterestingSegments.Size() - 1 - index]; }
 
 		void Clear();

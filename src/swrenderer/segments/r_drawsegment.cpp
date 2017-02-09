@@ -90,13 +90,13 @@ namespace swrenderer
 		SegmentGroups.Clear();
 
 		unsigned int groupSize = 100;
-		for (unsigned int index = BeginIndex(); index < EndIndex(); index += groupSize)
+		for (unsigned int index = 0; index < SegmentsCount(); index += groupSize)
 		{
 			auto ds = Segment(index);
 
 			DrawSegmentGroup group;
 			group.BeginIndex = index;
-			group.EndIndex = MIN(index + groupSize, EndIndex());
+			group.EndIndex = MIN(index + groupSize, SegmentsCount());
 			group.x1 = ds->x1;
 			group.x2 = ds->x2;
 			group.neardepth = MIN(ds->sz1, ds->sz2);

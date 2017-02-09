@@ -71,7 +71,7 @@ namespace swrenderer
 		// b) skip most of the collected drawsegs which have no portal attached.
 		portaldrawsegs.Clear();
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
-		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
+		for (auto index = 0; index != drawseglist->SegmentsCount(); index++)
 		{
 			DrawSegment *seg = drawseglist->Segment(index);
 
@@ -144,7 +144,7 @@ namespace swrenderer
 		}
 
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
-		for (auto index = drawseglist->BeginIndex(); index != drawseglist->EndIndex(); index++)
+		for (auto index = 0; index != drawseglist->SegmentsCount(); index++)
 		{
 			DrawSegment *ds = drawseglist->Segment(index);
 

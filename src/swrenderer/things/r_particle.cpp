@@ -267,7 +267,7 @@ namespace swrenderer
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
 		DrawSegmentList *segmentlist = thread->DrawSegments.get();
-		for (unsigned int index = segmentlist->BeginInterestingIndex(); index != segmentlist->EndInterestingIndex(); index++)
+		for (unsigned int index = 0; index != segmentlist->InterestingSegmentsCount(); index++)
 		{
 			DrawSegment *ds = segmentlist->InterestingSegment(index);
 

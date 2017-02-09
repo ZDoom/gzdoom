@@ -787,6 +787,10 @@ void gl_InitModels()
 							map[c]=1;
 						}
 					}
+					else if (sc.Compare("dontcullbackfaces"))
+					{
+						smf.flags |= MDL_DONTCULLBACKFACES;
+					}
 					else
 					{
 						sc.ScriptMessage("Unrecognized string \"%s\"", sc.String);
@@ -949,8 +953,9 @@ void gl_RenderModel(GLSprite * spr)
 	gl_RenderState.EnableTexture(true);
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
+	// [Nash] Don't do back face culling if explicitly specified in MODELDEF
 	// TO-DO: Implement proper depth sorting.
-	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
+	if (!(spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
 		glFrontFace(GL_CW);

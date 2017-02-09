@@ -322,6 +322,8 @@ namespace swrenderer
 		DVector3 startpos = ViewPos;
 		DVector3 savedpath[2] = { ViewPath[0], ViewPath[1] };
 		ActorRenderFlags savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+		
+		camera->renderflags &= ~RF_INVISIBLE;
 
 		CurrentPortalUniq++;
 

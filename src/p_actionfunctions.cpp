@@ -5012,7 +5012,7 @@ enum T_Flags
 DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_STATE_DEF		(teleport_state)			
+	PARAM_STATE_ACTION_DEF	(teleport_state)			
 	PARAM_CLASS_DEF		(target_type, ASpecialSpot)	
 	PARAM_CLASS_DEF		(fog_type, AActor)			
 	PARAM_INT_DEF		(flags)						
@@ -5449,7 +5449,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Warp)
 	PARAM_FLOAT_DEF(zofs)				
 	PARAM_ANGLE_DEF(angle)				
 	PARAM_INT_DEF(flags)				
-	PARAM_STATE_DEF(success_state)		
+	PARAM_STATE_ACTION_DEF(success_state)		
 	PARAM_FLOAT_DEF(heightoffset)		
 	PARAM_FLOAT_DEF(radiusoffset)		
 	PARAM_ANGLE_DEF(pitch)				

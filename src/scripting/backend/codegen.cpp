@@ -7863,7 +7863,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 	
-	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
 		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))

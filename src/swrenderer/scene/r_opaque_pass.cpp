@@ -939,6 +939,11 @@ namespace swrenderer
 		sprite.spriteScale = thing->Scale;
 		sprite.renderflags = thing->renderflags;
 
+		if (thing->player != nullptr)
+		{
+			P_CheckPlayerSprite(thing, sprite.spritenum, sprite.spriteScale);
+		}
+
 		if (thing->picnum.isValid())
 		{
 			sprite.picnum = thing->picnum;
@@ -1033,10 +1038,6 @@ namespace swrenderer
 			{
 				sprite.spriteScale.Y = -sprite.spriteScale.Y;
 				sprite.renderflags ^= RF_YFLIP;
-			}
-			if (thing->player != nullptr)
-			{
-				P_CheckPlayerSprite(thing, sprite.spritenum, sprite.spriteScale);
 			}
 			if (sprite.spriteScale.X < 0)
 			{

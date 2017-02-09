@@ -441,4 +441,15 @@ enum EDmgFlags
 //
 bool P_AlignFlat (int linenum, int side, int fc);
 
+enum ETexReplaceFlags
+{
+	NOT_BOTTOM			= 1,
+	NOT_MIDDLE			= 2,
+	NOT_TOP				= 4,
+	NOT_FLOOR			= 8,
+	NOT_CEILING			= 16
+};
+
+void P_ReplaceTextures(const char *fromname, const char *toname, int flags);
+
 #endif	// __P_LOCAL__

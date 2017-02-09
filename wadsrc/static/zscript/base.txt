@@ -28,8 +28,20 @@ struct TexMan
 		ShortNameOnly = 16,
 		DontCreate = 32
 	};
+	
+	enum ETexReplaceFlags
+	{
+		NOT_BOTTOM			= 1,
+		NOT_MIDDLE			= 2,
+		NOT_TOP				= 4,
+		NOT_FLOOR			= 8,
+		NOT_CEILING			= 16,
+		NOT_WALL			= 7,
+		NOT_FLAT			= 24
+	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
+	native static void ReplaceTextures(String from, String to, int flags);
 }
 
 enum DrawTextureTags

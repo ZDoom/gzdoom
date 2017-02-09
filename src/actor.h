@@ -417,7 +417,8 @@ enum ActorRenderFlag
 	RF_FLATSPRITE		= 0x2000,	// Flat sprite
 	RF_VOXELSPRITE		= 0x3000,	// Voxel object
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
-	RF_MAYBEINVISIBLE	= 0x10000,
+	RF_FORCEYBILLBOARD	= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
+	RF_FORCEXYBILLBOARD	= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
 	RF_ROLLSPRITE		= 0x40000,	//[marrub]roll the sprite billboard
 	RF_DONTFLIP			= 0x80000,	// Don't flip it when viewed from behind.
 	RF_ROLLCENTER		= 0x00100000, // Rotate from the center of sprite instead of offsets
@@ -425,9 +426,7 @@ enum ActorRenderFlag
 	RF_ABSMASKANGLE		= 0x00400000, // [MC] The mask rotation does not offset by the actor's angle.
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
-
-	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
-	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
+	RF_MAYBEINVISIBLE	= 0x02000000,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

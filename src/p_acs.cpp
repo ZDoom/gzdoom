@@ -114,13 +114,6 @@ FRandom pr_acs ("ACS");
 #define HUDMSG_VISIBILITY_MASK		(0x00070000)
 // See HUDMSG visibility enumerations in sbar.h
 
-// Flags for ReplaceTextures
-#define NOT_BOTTOM			1
-#define NOT_MIDDLE			2
-#define NOT_TOP				4
-#define NOT_FLOOR			8
-#define NOT_CEILING			16
-
 // LineAttack flags
 #define FHF_NORANDOMPUFFZ	1
 #define FHF_NOIMPACTDECAL	2
@@ -3319,47 +3312,6 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 			break;
 		}
 
-	}
-}
-
-void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
-{
-	const char *fromname = FBehavior::StaticLookupString (fromnamei);
-	const char *toname = FBehavior::StaticLookupString (tonamei);
-	FTextureID picnum1, picnum2;
-
-	if (fromname == NULL)
-		return;
-
-	if ((flags ^ (NOT_BOTTOM | NOT_MIDDLE | NOT_TOP)) != 0)
-	{
-		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-
-		for (auto &side : level.sides)
-		{
-			for(int j=0;j<3;j++)
-			{
-				static BYTE bits[]={NOT_TOP, NOT_MIDDLE, NOT_BOTTOM};
-				if (!(flags & bits[j]) && side.GetTexture(j) == picnum1)
-				{
-					side.SetTexture(j, picnum2);
-				}
-			}
-		}
-	}
-	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
-	{
-		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
-
-		for (auto &sec : level.sectors)
-		{
-			if (!(flags & NOT_FLOOR) && sec.GetTexture(sector_t::floor) == picnum1) 
-				sec.SetTexture(sector_t::floor, picnum2);
-			if (!(flags & NOT_CEILING) && sec.GetTexture(sector_t::ceiling) == picnum1)	
-				sec.SetTexture(sector_t::ceiling, picnum2);
-		}
 	}
 }
 
@@ -8352,9 +8304,14 @@ scriptwait:
 			break;
 
 		case PCD_REPLACETEXTURES:
-			ReplaceTextures (STACK(3), STACK(2), STACK(1));
+		{
+			const char *fromname = FBehavior::StaticLookupString(STACK(3));
+			const char *toname = FBehavior::StaticLookupString(STACK(2));
+
+			P_ReplaceTextures(fromname, toname, STACK(1));
 			sp -= 3;
 			break;
+		}
 
 		case PCD_SETLINEBLOCKING:
 			{

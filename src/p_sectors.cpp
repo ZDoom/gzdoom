@@ -2120,6 +2120,63 @@ bool P_AlignFlat (int linenum, int side, int fc)
 	return true;
 }
 
+
+
+//==========================================================================
+//
+// P_ReplaceTextures
+//
+//==========================================================================
+
+void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
+{
+	FTextureID picnum1, picnum2;
+
+	if (fromname == nullptr)
+		return;
+
+	if ((flags ^ (NOT_BOTTOM | NOT_MIDDLE | NOT_TOP)) != 0)
+	{
+		picnum1 = TexMan.GetTexture(fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTexture(toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+
+		for (auto &side : level.sides)
+		{
+			for (int j = 0; j<3; j++)
+			{
+				static uint8_t bits[] = { NOT_TOP, NOT_MIDDLE, NOT_BOTTOM };
+				if (!(flags & bits[j]) && side.GetTexture(j) == picnum1)
+				{
+					side.SetTexture(j, picnum2);
+				}
+			}
+		}
+	}
+	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
+	{
+		picnum1 = TexMan.GetTexture(fromname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTexture(toname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+
+		for (auto &sec : level.sectors)
+		{
+			if (!(flags & NOT_FLOOR) && sec.GetTexture(sector_t::floor) == picnum1)
+				sec.SetTexture(sector_t::floor, picnum2);
+			if (!(flags & NOT_CEILING) && sec.GetTexture(sector_t::ceiling) == picnum1)
+				sec.SetTexture(sector_t::ceiling, picnum2);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_TexMan, ReplaceTextures)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(from);
+	PARAM_STRING(to);
+	PARAM_INT(flags);
+	P_ReplaceTextures(from, to, flags);
+	return 0;
+}
+
 //==========================================================================
 //
 // P_BuildPolyBSP

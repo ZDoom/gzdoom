@@ -76,7 +76,7 @@ IMPLEMENT_POINTERS_END
 //
 //=============================================================================
 
-DOptionMenu::DOptionMenu(DMenu *parent, FOptionMenuDescriptor *desc)
+DOptionMenu::DOptionMenu(DMenu *parent, DOptionMenuDescriptor *desc)
 : DMenu(parent)
 {
 	CanScrollUp = false;
@@ -92,7 +92,7 @@ DOptionMenu::DOptionMenu(DMenu *parent, FOptionMenuDescriptor *desc)
 //
 //=============================================================================
 
-void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
+void DOptionMenu::Init(DMenu *parent, DOptionMenuDescriptor *desc)
 {
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
@@ -482,7 +482,7 @@ void DOptionMenu::Drawer ()
 //
 //=============================================================================
 
-int DOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+int DOptionMenuItem::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 {
 	return indent;
 }
@@ -528,7 +528,7 @@ void DOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool graye
 
 
 
-void FOptionMenuDescriptor::CalcIndent()
+void DOptionMenuDescriptor::CalcIndent()
 {
 	// calculate the menu indent
 	int widest = 0, thiswidth;
@@ -547,7 +547,7 @@ void FOptionMenuDescriptor::CalcIndent()
 //
 //=============================================================================
 
-DOptionMenuItem *FOptionMenuDescriptor::GetItem(FName name)
+DOptionMenuItem *DOptionMenuDescriptor::GetItem(FName name)
 {
 	for(unsigned i=0;i<mItems.Size(); i++)
 	{

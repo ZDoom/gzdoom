@@ -66,7 +66,7 @@
 static void BuildModesList (int hiwidth, int hiheight, int hi_id);
 static bool GetSelectedSize (int *width, int *height);
 static void SetModesMenu (int w, int h, int bits);
-FOptionMenuDescriptor *GetVideoModeMenu();
+DOptionMenuDescriptor *GetVideoModeMenu();
 
 extern bool setmodeneeded;
 extern int NewWidth, NewHeight, NewBits;
@@ -101,7 +101,7 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 
 CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	FOptionMenuDescriptor *opt = GetVideoModeMenu();
+	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
 	{
 		DOptionMenuItem *it = opt->GetItem("menu_screenratios");
@@ -192,12 +192,12 @@ IMPLEMENT_CLASS(DVideoModeMenu, false, false)
 //
 //=============================================================================
 
-FOptionMenuDescriptor *GetVideoModeMenu()
+DOptionMenuDescriptor *GetVideoModeMenu()
 {
-	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_VideoModeMenu);
-	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_VideoModeMenu);
+	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
-		return (FOptionMenuDescriptor *)*desc;
+		return (DOptionMenuDescriptor *)*desc;
 	}
 	return NULL;
 }
@@ -231,7 +231,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 		Video->StartModeIterator (showbits, screen->IsFullscreen());
 	}
 
-	FOptionMenuDescriptor *opt = GetVideoModeMenu();
+	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
 	{
 		for (i = NAME_res_0; i<= NAME_res_9; i++)
@@ -354,7 +354,7 @@ void M_InitVideoModesMenu ()
 
 static bool GetSelectedSize (int *width, int *height)
 {
-	FOptionMenuDescriptor *opt = GetVideoModeMenu();
+	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL && (unsigned)opt->mSelectedItem < opt->mItems.Size())
 	{
 		int line = opt->mSelectedItem;
@@ -420,7 +420,7 @@ static void SetModesMenu (int w, int h, int bits)
 {
 	DummyDepthCvar = FindBits (bits);
 
-	FOptionMenuDescriptor *opt = GetVideoModeMenu();
+	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
 	{
 		DOptionMenuItem *it;

@@ -58,7 +58,7 @@
 static TArray<IJoystickConfig *> Joysticks;
 IJoystickConfig *SELECTED_JOYSTICK;
 
-FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy);
+DOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy);
 
 //=============================================================================
 //
@@ -271,12 +271,12 @@ IMPLEMENT_CLASS(DOptionMenuItemJoyConfigMenu, false, false)
  *
  *=======================================*/
 
-FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
+DOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 {
-	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickConfigMenu);
-	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickConfigMenu);
+	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
-		FOptionMenuDescriptor *opt = (FOptionMenuDescriptor *)*desc;
+		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
 		DOptionMenuItem *it;
 		opt->mItems.Clear();
 		if (joy == NULL)
@@ -340,10 +340,10 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {
-	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickOptions);
-	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickOptions);
+	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
-		FOptionMenuDescriptor *opt = (FOptionMenuDescriptor *)*desc;
+		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
 		DOptionMenuItem *it;
 		opt->mItems.Clear();
 

@@ -68,7 +68,7 @@ class DColorPickerMenu : public DOptionMenu
 
 public:
 
-	DColorPickerMenu(DMenu *parent, const char *name, FOptionMenuDescriptor *desc, FColorCVar *cvar)
+	DColorPickerMenu(DMenu *parent, const char *name, DOptionMenuDescriptor *desc, FColorCVar *cvar)
 	{
 		mStartItem = desc->mItems.Size();
 		mRed = (float)RPART(DWORD(*cvar));
@@ -344,10 +344,10 @@ CCMD(undocolorpic)
 
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar)
 {
-	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Colorpickermenu);
-	if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Colorpickermenu);
+	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
-		return new DColorPickerMenu(parent, name, (FOptionMenuDescriptor*)(*desc), cvar);
+		return new DColorPickerMenu(parent, name, (DOptionMenuDescriptor*)(*desc), cvar);
 	}
 	else
 	{

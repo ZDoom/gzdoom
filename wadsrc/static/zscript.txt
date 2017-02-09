@@ -7,7 +7,7 @@
 #include "zscript/actor_checks.txt"
 
 #include "zscript/menu/menu.txt"
-#include "zscript/menu/menuitembase.txt"
+//#include "zscript/menu/menuitembase.txt"
 
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"

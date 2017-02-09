@@ -2,6 +2,31 @@
 class Menu : Object native
 {
 	//native static int MenuTime();
+	
+	native virtual bool MenuEvent (int mkey, bool fromcontroller);
+	
+	void MenuSound(Sound snd)
+	{
+		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
+	}
+	
+}
+
+class MenuDescriptor : Object native
+{
+	native Name mMenuName;
+	native String mNetgameMessage;
+	native Class<Menu> mClass;
+}
+
+class MenuItemBase : object native
+{
+	native int mXpos, mYpos;
+	native Name mAction;
+	native bool mEnabled;
+	
+	native virtual bool MenuEvent (int mkey, bool fromcontroller);
+	
 }
 
 struct FOptionMenuSettings
@@ -15,3 +40,45 @@ struct FOptionMenuSettings
 	int mFontColorSelection;
 	int mLinespacing;
 }
+
+class OptionMenuDescriptor : MenuDescriptor native
+{
+	native Array<OptionMenuItem> mItems;
+	native String mTitle;
+	native int mSelectedItem;
+	native int mDrawTop;
+	native int mScrollTop;
+	native int mScrollPos;
+	native int mIndent;
+	native int mPosition;
+	native bool mDontDim;
+
+	//native void CalcIndent();
+	//native OptionMenuItem GetItem(Name iname);
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mPosition = 0;
+		mScrollTop = 0;
+		mIndent = 0;
+		mDontDim = 0;
+	}
+}
+
+class OptionMenuItem : MenuItemBase native
+{
+	native String mLabel;
+	native bool mCentered;
+	
+	//native void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
+}
+
+class OptionMenu : Menu native
+{
+	native bool CanScrollUp;
+	native bool CanScrollDown;
+	native int VisBottom;
+	native OptionMenuItem mFocusControl;
+	native OptionMenuDescriptor mDesc;
+}
+

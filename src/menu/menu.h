@@ -75,28 +75,25 @@ struct FSaveGameNode
 //
 //=============================================================================
 
-enum EMenuDescriptorType
+class DMenuDescriptor : public DObject
 {
-	MDESC_ListMenu,
-	MDESC_OptionsMenu,
-};
-
-struct FMenuDescriptor
-{
+	DECLARE_CLASS(DMenuDescriptor, DObject)
+public:
 	FName mMenuName;
 	FString mNetgameMessage;
-	int mType;
 	const PClass *mClass;
 
-	virtual ~FMenuDescriptor() {}
 	virtual size_t PropagateMark() { return 0;  }
 };
 
 class DMenuItemBase;
 class DOptionMenuItem;
 
-struct FListMenuDescriptor : public FMenuDescriptor
+class DListMenuDescriptor : public DMenuDescriptor
 {
+	DECLARE_CLASS(DListMenuDescriptor, DMenuDescriptor)
+
+public:
 	TArray<DMenuItemBase *> mItems;
 	int mSelectedItem;
 	int mSelectOfsX;
@@ -110,7 +107,6 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	FFont *mFont;
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
-	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
 	bool mCenter;
 
 	void Reset()
@@ -144,8 +140,11 @@ struct FOptionMenuSettings
 	int mLinespacing;
 };
 
-struct FOptionMenuDescriptor : public FMenuDescriptor
+class DOptionMenuDescriptor : public DMenuDescriptor
 {
+	DECLARE_CLASS(DOptionMenuDescriptor, DMenuDescriptor)
+
+public:
 	TArray<DOptionMenuItem *> mItems;
 	FString mTitle;
 	int mSelectedItem;
@@ -167,10 +166,13 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 		mDontDim = 0;
 	}
 	size_t PropagateMark() override;
+	~DOptionMenuDescriptor()
+	{
+	}
 };
 						
 
-typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
+typedef TMap<FName, DMenuDescriptor *> MenuDescriptorList;
 
 extern FOptionMenuSettings OptionSettings;
 extern MenuDescriptorList MenuDescriptors;
@@ -258,11 +260,10 @@ public:
 class DMenuItemBase : public DObject
 {
 	DECLARE_CLASS(DMenuItemBase, DObject)
-protected:
+public:
 	int mXpos, mYpos;
 	FName mAction;
 
-public:
 	bool mEnabled;
 
 	DMenuItemBase(int xpos = 0, int ypos = 0, FName action = NAME_None)
@@ -333,7 +334,7 @@ class DListMenuItemPlayerDisplay : public DMenuItemBase
 {
 	DECLARE_CLASS(DListMenuItemPlayerDisplay, DMenuItemBase)
 
-	FListMenuDescriptor *mOwner;
+	DListMenuDescriptor *mOwner;
 	FTexture *mBackdrop;
 	FRemapTable mRemap;
 	FPlayerClass *mPlayerClass;
@@ -365,7 +366,7 @@ public:
 		PDF_TRANSLATE = 0x10005,
 	};
 
-	DListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
+	DListMenuItemPlayerDisplay(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
 	void OnDestroy() override;
 	virtual void Ticker();
 	virtual void Drawer(bool selected);
@@ -513,7 +514,7 @@ public:
 
 //=============================================================================
 //
-// list menu class runs a menu described by a FListMenuDescriptor
+// list menu class runs a menu described by a DListMenuDescriptor
 //
 //=============================================================================
 
@@ -523,12 +524,12 @@ class DListMenu : public DMenu
 	HAS_OBJECT_POINTERS;
 
 protected:
-	FListMenuDescriptor *mDesc;
+	DListMenuDescriptor *mDesc;
 	DMenuItemBase *mFocusControl;
 
 public:
-	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	virtual void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	DListMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
+	virtual void Init(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	DMenuItemBase *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
@@ -559,12 +560,11 @@ public:
 class DOptionMenuItem : public DMenuItemBase
 {
 	DECLARE_ABSTRACT_CLASS(DOptionMenuItem, DMenuItemBase)
-protected:
+public:
 	FString mLabel;
 	bool mCentered;
 
 	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
-public:
 
 	DOptionMenuItem(const char *text = nullptr, FName action = NAME_None, bool center = false)
 		: DMenuItemBase(0, 0, action)
@@ -573,7 +573,7 @@ public:
 		mCentered = center;
 	}
 
-	virtual int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected);
+	virtual int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected);
 	virtual bool Selectable();
 	virtual int GetIndent();
 	virtual bool MouseEvent(int type, int x, int y);
@@ -603,7 +603,7 @@ extern FOptionMap OptionValues;
 
 //=============================================================================
 //
-// Option menu class runs a menu described by a FOptionMenuDescriptor
+// Option menu class runs a menu described by a DOptionMenuDescriptor
 //
 //=============================================================================
 
@@ -612,25 +612,24 @@ class DOptionMenu : public DMenu
 	DECLARE_CLASS(DOptionMenu, DMenu)
 	HAS_OBJECT_POINTERS;
 
+public: // needs to be public for script access
 	bool CanScrollUp;
 	bool CanScrollDown;
 	int VisBottom;
 	DOptionMenuItem *mFocusControl;
+	DOptionMenuDescriptor *mDesc;
 
-protected:
-	FOptionMenuDescriptor *mDesc;
-
-public:
+//public:
 	DOptionMenuItem *GetItem(FName name);
-	DOptionMenu(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
-	virtual void Init(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
+	DOptionMenu(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
+	virtual void Init(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
 	int FirstSelectable();
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
-	const FOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
+	const DOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
 	void SetFocus(DOptionMenuItem *fc)
 	{
 		mFocusControl = fc;

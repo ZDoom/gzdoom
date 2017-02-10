@@ -77,14 +77,14 @@ struct FBackdropTexture : public FTexture
 public:
 	FBackdropTexture();
 
-	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels();
+	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels();
 	void Unload();
 	bool CheckModified();
 
 protected:
 	uint32_t costab[COS_SIZE];
-	BYTE Pixels[144*160];
+	uint8_t *Pixels;
 	static const Span DummySpan[2];
 	int LastRenderTic;
 
@@ -97,7 +97,7 @@ protected:
 
 
 // A 32x32 cloud rendered with Photoshop, plus some other filters
-static BYTE pattern1[1024] =
+static uint8_t pattern1[1024] =
 {
 	 5, 9, 7,10, 9,15, 9, 7, 8,10, 5, 3, 5, 7, 9, 8,14, 8, 4, 7, 8, 9, 5, 7,14, 7, 0, 7,13,13, 9, 6,
 	 2, 7, 9, 7, 7,10, 8, 8,11,10, 6, 7,10, 7, 5, 6, 6, 4, 7,13,15,16,11,15,11, 8, 0, 4,13,22,17,11,
@@ -134,7 +134,7 @@ static BYTE pattern1[1024] =
 };
 
 // Just a 32x32 cloud rendered with the standard Photoshop filter
-static BYTE pattern2[1024] =
+static uint8_t pattern2[1024] =
 {
 	  9, 9, 8, 8, 8, 8, 6, 6,13,13,11,21,19,21,23,18,23,24,19,19,24,17,18,12, 9,14, 8,12,12, 5, 8, 6,
 	 11,10, 6, 7, 8, 8, 9,13,10,11,17,15,23,22,23,22,20,26,27,26,17,21,20,14,12, 8,11, 8,11, 7, 8, 7,
@@ -180,6 +180,7 @@ const FTexture::Span FBackdropTexture::DummySpan[2] = { { 0, 160 }, { 0, 0 } };
 
 FBackdropTexture::FBackdropTexture()
 {
+	Pixels = nullptr;
 	Width = 144;
 	Height = 160;
 	WidthBits = 8;
@@ -215,6 +216,8 @@ bool FBackdropTexture::CheckModified()
 
 void FBackdropTexture::Unload()
 {
+	if (Pixels != nullptr) delete[] Pixels;
+	Pixels = nullptr;
 }
 
 //=============================================================================
@@ -223,14 +226,14 @@ void FBackdropTexture::Unload()
 //
 //=============================================================================
 
-const BYTE *FBackdropTexture::GetColumn(unsigned int column, const Span **spans_out)
+const uint8_t *FBackdropTexture::GetColumn(unsigned int column, const Span **spans_out)
 {
 	if (LastRenderTic != gametic)
 	{
 		Render();
 	}
 	column = clamp(column, 0u, 143u);
-	if (spans_out != NULL)
+	if (spans_out != nullptr)
 	{
 		*spans_out = DummySpan;
 	}
@@ -243,7 +246,7 @@ const BYTE *FBackdropTexture::GetColumn(unsigned int column, const Span **spans_
 //
 //=============================================================================
 
-const BYTE *FBackdropTexture::GetPixels()
+const uint8_t *FBackdropTexture::GetPixels()
 {
 	if (LastRenderTic != gametic)
 	{
@@ -260,9 +263,10 @@ const BYTE *FBackdropTexture::GetPixels()
 
 void FBackdropTexture::Render()
 {
-	BYTE *from;
+	uint8_t *from;
 	int width, height, pitch;
 
+	if (Pixels == nullptr) Pixels = new uint8_t[160 * 144];
 	width = 160;
 	height = 144;
 	pitch = width;

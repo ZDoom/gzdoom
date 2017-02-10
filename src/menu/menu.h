@@ -19,7 +19,7 @@ EXTERN_CVAR(Int, m_use_mouse);
 struct event_t;
 class FTexture;
 class FFont;
-enum EColorRange;
+enum EColorRange : int;
 class FPlayerClass;
 class FKeyBindings;
 

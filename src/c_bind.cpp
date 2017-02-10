@@ -44,6 +44,7 @@
 #include "i_system.h"
 #include "d_event.h"
 #include "w_wad.h"
+#include "templates.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -261,6 +262,21 @@ static const char *ConfigKeyName(int keynum)
 //
 //=============================================================================
 
+DEFINE_ACTION_FUNCTION(FKeyBindings, SetBind)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_INT(k);
+	PARAM_STRING(cmd);
+	self->SetBind(k, cmd);
+	return 0;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void C_NameKeys (char *str, int first, int second)
 {
 	int c = 0;
@@ -282,6 +298,16 @@ void C_NameKeys (char *str, int first, int second)
 
 	if (!c)
 		*str = '\0';
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(k1);
+	PARAM_INT(k2);
+	char buffer[120];
+	C_NameKeys(buffer, k1, k2);
+	ACTION_RETURN_STRING(buffer);
 }
 
 //=============================================================================
@@ -445,6 +471,17 @@ int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 	return c;
 }
 
+DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+	int k1, k2, c;
+	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
+	if (numret > 0) ret[0].SetInt(k1);
+	if (numret > 1) ret[1].SetInt(k1);
+	return MIN(numret, 2);
+}
+
 //=============================================================================
 //
 //
@@ -462,6 +499,14 @@ void FKeyBindings::UnbindACommand (const char *str)
 			Binds[i] = "";
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+	self->UnbindACommand(cmd);
+	return 0;
 }
 
 //=============================================================================

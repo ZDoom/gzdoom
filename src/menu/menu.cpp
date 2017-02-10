@@ -70,6 +70,12 @@ CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 DMenu *DMenu::CurrentMenu;
+
+DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
+{
+	ACTION_RETURN_POINTER(DMenu::CurrentMenu);
+}
+
 int DMenu::MenuTime;
 
 FGameStartup GameStartupInfo;
@@ -559,6 +565,14 @@ void M_SetMenu(FName menu, int param)
 	M_ClearMenus();
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, SetMenu)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(menu);
+	PARAM_INT(mparam);
+	M_SetMenu(menu, mparam);
+	return 0;
+}
 //=============================================================================
 //
 //

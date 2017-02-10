@@ -54,6 +54,8 @@
 
 #include "optionmenuitems.h"
 
+
+
 void ClearSaveGames();
 
 MenuDescriptorList MenuDescriptors;
@@ -64,6 +66,71 @@ FOptionMap OptionValues;
 bool mustPrintErrors;
 
 void I_BuildALDeviceList(FOptionValues *opt);
+
+DEFINE_ACTION_FUNCTION(FOptionValues, GetCount)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	int cnt = 0;
+	FOptionValues **pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		cnt = (*pGrp)->mValues.Size();
+	}
+	ACTION_RETURN_INT(cnt);
+}
+
+DEFINE_ACTION_FUNCTION(FOptionValues, GetValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	PARAM_UINT(index);
+	double val = 0;
+	FOptionValues **pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		if (index < (*pGrp)->mValues.Size())
+		{
+			val = (*pGrp)->mValues[index].Value;
+		}
+	}
+	ACTION_RETURN_FLOAT(val);
+}
+
+DEFINE_ACTION_FUNCTION(FOptionValues, GetTextValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	PARAM_UINT(index);
+	FString val;
+	FOptionValues **pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		if (index < (*pGrp)->mValues.Size())
+		{
+			val = (*pGrp)->mValues[index].TextValue;
+		}
+	}
+	ACTION_RETURN_STRING(val);
+}
+
+DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	PARAM_UINT(index);
+	FString val;
+	FOptionValues **pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		if (index < (*pGrp)->mValues.Size())
+		{
+			val = (*pGrp)->mValues[index].Text;
+		}
+	}
+	ACTION_RETURN_STRING(val);
+}
+
 
 static void DeinitMenus()
 {
@@ -724,7 +791,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			FString label = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemSubmenu(label, sc.String);
+			DOptionMenuItem *it = new DOptionMenuItemSubmenu_(label, sc.String);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Option"))
@@ -749,7 +816,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 					center = sc.Number;
 				}
 			}
-			DOptionMenuItem *it = new DOptionMenuItemOption(label, cvar, values, check, center);
+			DOptionMenuItem *it = new DOptionMenuItemOption_(label, cvar, values, check, center);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Command"))
@@ -758,7 +825,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			FString label = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemCommand(label, sc.String);
+			DOptionMenuItem *it = new DOptionMenuItemCommand_(label, sc.String);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("SafeCommand"))
@@ -775,7 +842,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 				sc.MustGetString();
 				prompt = sc.String;
 			}
-			DOptionMenuItem *it = new DOptionMenuItemSafeCommand(label, command, prompt);
+			DOptionMenuItem *it = new DOptionMenuItemSafeCommand_(label, command, prompt);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Control") || sc.Compare("MapControl"))
@@ -785,7 +852,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			FString label = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemControl(label, sc.String, map? &AutomapBindings : &Bindings);
+			DOptionMenuItem *it = new DOptionMenuItemControl_(label, sc.String, map? &AutomapBindings : &Bindings);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("ColorPicker"))
@@ -794,7 +861,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			FString label = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemColorPicker(label, sc.String);
+			DOptionMenuItem *it = new DOptionMenuItemColorPicker_(label, sc.String);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("StaticText"))
@@ -802,7 +869,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			sc.MustGetString();
 			FString label = sc.String;
 			EColorRange cr = ParseOptionColor(sc, desc);
-			DOptionMenuItem *it = new DOptionMenuItemStaticText(label, cr);
+			DOptionMenuItem *it = new DOptionMenuItemStaticText_(label, cr);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("StaticTextSwitchable"))
@@ -816,7 +883,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			sc.MustGetString();
 			FName action = sc.String;
 			EColorRange cr = ParseOptionColor(sc, desc);
-			DOptionMenuItem *it = new DOptionMenuItemStaticTextSwitchable(label, label2, action, cr);
+			DOptionMenuItem *it = new DOptionMenuItemStaticTextSwitchable_(label, label2, action, cr);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Slider"))
@@ -841,13 +908,13 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 				sc.MustGetNumber();
 				showvalue = sc.Number;
 			}
-			DOptionMenuItem *it = new DOptionMenuSliderCVar(text, action, min, max, step, showvalue);
+			DOptionMenuItem *it = new DOptionMenuSliderCVar_(text, action, min, max, step, showvalue);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("screenresolution"))
 		{
 			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuScreenResolutionLine(sc.String);
+			DOptionMenuItem *it = new DOptionMenuScreenResolutionLine_(sc.String);
 			desc->mItems.Push(it);
 		}
 		// [TP] -- Text input widget
@@ -866,7 +933,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 				check = sc.String;
 			}
 
-			DOptionMenuItem* it = new DOptionMenuTextField( label, cvar, check );
+			DOptionMenuItem* it = new DOptionMenuTextField_( label, cvar, check );
 			desc->mItems.Push( it );
 		}
 		// [TP] -- Number input widget
@@ -903,7 +970,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 				}
 			}
 
-			DOptionMenuItem* it = new DOptionMenuNumberField( label, cvar,
+			DOptionMenuItem* it = new DOptionMenuNumberField_( label, cvar,
 				minimum, maximum, step, check );
 			desc->mItems.Push( it );
 		}
@@ -1118,7 +1185,7 @@ static void BuildEpisodeMenu()
 		GC::WriteBarrier(od);
 		for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 		{
-			DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
+			DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
 			od->mItems.Push(it);
 			GC::WriteBarrier(od, it);
 		}
@@ -1257,13 +1324,13 @@ static void BuildPlayerclassMenu()
 				const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 				if (pname != nullptr)
 				{
-					DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu(pname, "Episodemenu", i);
+					DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_(pname, "Episodemenu", i);
 					od->mItems.Push(it);
 					GC::WriteBarrier(od, it);
 				}
 			}
 		}
-		DOptionMenuItemSubmenu *it = new DOptionMenuItemSubmenu("Random", "Episodemenu", -1);
+		DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_("Random", "Episodemenu", -1);
 		od->mItems.Push(it);
 		GC::WriteBarrier(od, it);
 	}
@@ -1344,14 +1411,14 @@ static void InitKeySections()
 			for (unsigned i = 0; i < KeySections.Size(); i++)
 			{
 				FKeySection *sect = &KeySections[i];
-				DOptionMenuItem *item = new DOptionMenuItemStaticText(" ", false);
+				DOptionMenuItem *item = new DOptionMenuItemStaticText_(" ", false);
 				menu->mItems.Push(item);
-				item = new DOptionMenuItemStaticText(sect->mTitle, true);
+				item = new DOptionMenuItemStaticText_(sect->mTitle, true);
 				menu->mItems.Push(item);
 				for (unsigned j = 0; j < sect->mActions.Size(); j++)
 				{
 					FKeyAction *act = &sect->mActions[j];
-					item = new DOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
+					item = new DOptionMenuItemControl_(act->mTitle, act->mAction, &Bindings);
 					menu->mItems.Push(item);
 				}
 			}
@@ -1542,7 +1609,7 @@ fail:
 		{
 			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 		}
-		li = new DOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
+		li = new DOptionMenuItemSubmenu_(pItemText? *pItemText : skill.MenuName, action, i);
 		od->mItems.Push(li);
 		GC::WriteBarrier(od, li);
 		if (!done)

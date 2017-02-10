@@ -32,6 +32,35 @@
 **
 */
 
+
+//=============================================================================
+//
+// This is only used by the color picker
+//
+//=============================================================================
+
+class OptionMenuSliderVar : OptionMenuSliderBase
+{
+	int mIndex;
+
+	void Init(String label, int index, double min, double max, double step, int showval)
+	{
+		Super.Init(label, min, max, step, showval);
+		mIndex = index;
+	}
+
+	override double GetSliderValue()
+	{
+		return ColorpickerMenu(Menu.GetCurrentMenu()).GetColor(mIndex);
+	}
+
+	override void SetSliderValue(double val)
+	{
+		ColorpickerMenu(Menu.GetCurrentMenu()).setColor(mIndex, val);
+	}
+}
+
+
 class ColorpickerMenu : Menu native
 {
 	native float mRed;
@@ -45,6 +74,18 @@ class ColorpickerMenu : Menu native
 
 	native CVar mCVar;
 	
+	double GetColor(int index)
+	{
+		double v = index == 0? mRed : index == 1? mGreen : mBlue;
+		return v;
+	}
+	
+	void SetColor(int index, double val)
+	{
+		if (index == 0) mRed = val;
+		else if (index == 1) mGreen = val;
+		else mBlue = val;
+	}
 	//=============================================================================
 	//
 	//

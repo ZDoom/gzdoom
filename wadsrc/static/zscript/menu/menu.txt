@@ -1,4 +1,48 @@
 
+struct KeyBindings native
+{
+	native static String NameKeys(int k1, int k2);
+
+	native int, int GetKeysForCommand(String cmd);
+	native void SetBind(int key, String cmd);
+	native void UnbindACommand (String str);
+}
+
+struct OptionValues native
+{
+	native static int GetCount(Name group);
+	native static String GetText(Name group, int index);
+	native static double GetValue(Name group, int index);
+	native static String GetTextValue(Name group, int index);
+}
+
+struct JoystickConfig native
+{
+	enum EJoyAxis
+	{
+		JOYAXIS_None = -1,
+		JOYAXIS_Yaw,
+		JOYAXIS_Pitch,
+		JOYAXIS_Forward,
+		JOYAXIS_Side,
+		JOYAXIS_Up,
+	//	JOYAXIS_Roll,		// Ha ha. No roll for you.
+		NUM_JOYAXIS,
+	};
+
+	native float GetSensitivity();
+	native void SetSensitivity(float scale);
+
+	native float GetAxisScale(int axis);
+	native void SetAxisScale(int axis, float scale);
+
+	native float GetAxisDeadZone(int axis);
+	native void SetAxisDeadZone(int axis, float zone);
+	
+	native int GetAxisMap(int axis);
+	native void SetAxisMap(int axis, int gameaxis);
+}
+
 class Menu : Object native
 {
 	enum EMenuKey
@@ -30,16 +74,27 @@ class Menu : Object native
 	};
 
 	//native static int MenuTime();
+	native static void SetVideoMode();
+	native static Menu GetCurrentMenu();
+	native static JoystickConfig GetCurrentJoystickConfig();
+	native static void SetMenu(Name mnu, int param = 0);
+	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
+	
 	
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
 	native virtual void Drawer();
 	
-	void MenuSound(Sound snd)
+	static void MenuSound(Sound snd)
 	{
 		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
 	}
 	
+	static void DrawConText (int color, int x, int y, String str)
+	{
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac_1, DTA_CellY, 8 * CleanYfac_1);
+	}
+
 }
 
 class MenuDescriptor : Object native
@@ -47,17 +102,6 @@ class MenuDescriptor : Object native
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
-}
-
-class MenuItemBase : object native
-{
-	native int mXpos, mYpos;
-	native Name mAction;
-	native bool mEnabled;
-	
-	// making this virtual now would require exporting all classes at once.
-	native /*virtual*/ bool MenuEvent (int mkey, bool fromcontroller);
-	
 }
 
 struct FOptionMenuSettings
@@ -96,14 +140,6 @@ class OptionMenuDescriptor : MenuDescriptor native
 	}
 }
 
-class OptionMenuItem : MenuItemBase native
-{
-	native String mLabel;
-	native bool mCentered;
-	
-	//native void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
-}
-
 class OptionMenu : Menu native
 {
 	native bool CanScrollUp;
@@ -111,5 +147,22 @@ class OptionMenu : Menu native
 	native int VisBottom;
 	native OptionMenuItem mFocusControl;
 	native OptionMenuDescriptor mDesc;
+	
+	
+	void SetFocus(OptionMenuItem fc)
+	{
+		mFocusControl = fc;
+	}
+	
+	bool CheckFocus(OptionMenuItem fc)
+	{
+		return mFocusControl == fc;
+	}
+	
+	void ReleaseFocus()
+	{
+		mFocusControl = null;
+	}
+	
 }
 

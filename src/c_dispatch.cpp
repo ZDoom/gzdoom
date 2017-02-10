@@ -662,6 +662,14 @@ void C_DoCommand (const char *cmd, int keynum)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Console, DoCommand)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(cmd);
+	C_DoCommand(cmd);
+	return 0;
+}
+
 void AddCommandString (char *cmd, int keynum)
 {
 	char *brkpt;

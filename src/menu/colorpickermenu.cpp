@@ -81,14 +81,14 @@ public:
 		// This menu uses some featurs that are hard to implement in an external control lump
 		// so it creates its own list of menu items.
 		desc->mItems.Resize(mStartItem+8);
-		desc->mItems[mStartItem+0] = new DOptionMenuItemStaticText(name, false);
-		desc->mItems[mStartItem+1] = new DOptionMenuItemStaticText(" ", false);
-		desc->mItems[mStartItem+2] = new DOptionMenuSliderVar("Red", &mRed, 0, 255, 15, 0);
-		desc->mItems[mStartItem+3] = new DOptionMenuSliderVar("Green", &mGreen, 0, 255, 15, 0);
-		desc->mItems[mStartItem+4] = new DOptionMenuSliderVar("Blue", &mBlue, 0, 255, 15, 0);
-		desc->mItems[mStartItem+5] = new DOptionMenuItemStaticText(" ", false);
-		desc->mItems[mStartItem+6] = new DOptionMenuItemCommand("Undo changes", "undocolorpic");
-		desc->mItems[mStartItem+7] = new DOptionMenuItemStaticText(" ", false);
+		desc->mItems[mStartItem+0] = new DOptionMenuItemStaticText_(name, false);
+		desc->mItems[mStartItem+1] = new DOptionMenuItemStaticText_(" ", false);
+		desc->mItems[mStartItem+2] = new DOptionMenuSliderVar_("Red", &mRed, 0, 255, 15, 0);
+		desc->mItems[mStartItem+3] = new DOptionMenuSliderVar_("Green", &mGreen, 0, 255, 15, 0);
+		desc->mItems[mStartItem+4] = new DOptionMenuSliderVar_("Blue", &mBlue, 0, 255, 15, 0);
+		desc->mItems[mStartItem+5] = new DOptionMenuItemStaticText_(" ", false);
+		desc->mItems[mStartItem+6] = new DOptionMenuItemCommand_("Undo changes", "undocolorpic");
+		desc->mItems[mStartItem+7] = new DOptionMenuItemStaticText_(" ", false);
 		for (auto &p : desc->mItems)
 		{
 			GC::WriteBarrier(p);

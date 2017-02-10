@@ -1,0 +1,191 @@
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoySensitivity : OptionMenuSliderBase
+{
+	void Init(String label, double min, double max, double step, int showval)
+	{
+		Super.Init(label, min, max, step, showval);
+	}
+
+	override double GetSliderValue()
+	{
+		return Menu.GetCurrentJoystickConfig().GetSensitivity();
+	}
+
+	override void SetSliderValue(double val)
+	{
+		Menu.GetCurrentJoystickConfig().SetSensitivity(val);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyScale : OptionMenuSliderBase
+{
+	int mAxis;
+	int mNeg;
+	
+	void Init(String label, int axis, double min, double max, double step, int showval)
+	{
+		Super.Init(label, min, max, step, showval);
+		mAxis = axis;
+		mNeg = 1;
+	}
+
+	override double GetSliderValue()
+	{
+		double d = Menu.GetCurrentJoystickConfig().GetAxisScale(mAxis);
+		mNeg = d < 0? -1:1;
+		return d;
+	}
+
+	override void SetSliderValue(double val)
+	{
+		Menu.GetCurrentJoystickConfig().SetAxisScale(mAxis, val * mNeg);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyDeadZone : OptionMenuSliderBase
+{
+	int mAxis;
+	int mNeg;
+	
+
+	void Init(String label, int axis, double min, double max, double step, int showval)
+	{
+		Super.Init(label, min, max, step, showval);
+		mAxis = axis;
+		mNeg = 1;
+	}
+
+	override double GetSliderValue()
+	{
+		double d = Menu.GetCurrentJoystickConfig().GetAxisDeadZone(mAxis);
+		mNeg = d < 0? -1:1;
+		return d;
+	}
+
+	override void SetSliderValue(double val)
+	{
+		Menu.GetCurrentJoystickConfig().SetAxisDeadZone(mAxis, val * mNeg);
+	}
+}
+
+//=============================================================================
+//
+// 
+//
+//=============================================================================
+
+class OptionMenuItemJoyMap : OptionMenuItemOptionBase
+{
+	int mAxis;
+
+	void Init(String label, int axis, String values, int center)
+	{
+		Super.Init(label, 'none', values, null, center);
+		mAxis = axis;
+	}
+
+	override int GetSelection()
+	{
+		double f = Menu.GetCurrentJoystickConfig().GetAxisMap(mAxis);
+		let opt = OptionValues.GetCount(mValues);
+		if (opt > 0)
+		{
+			// Map from joystick axis to menu selection.
+			for(int i = 0; i < opt; i++)
+			{
+				if (f ~== OptionValues.GetValue(mValues, i))
+				{
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	override void SetSelection(int selection)
+	{
+		let opt = OptionValues.GetCount(mValues);
+		// Map from menu selection to joystick axis.
+		if (opt == 0 || selection >= opt)
+		{
+			selection = JoystickConfig.JOYAXIS_None;
+		}
+		else
+		{
+			selection = OptionValues.GetValue(mValues, selection);
+		}
+		Menu.GetCurrentJoystickConfig().SetAxisMap(mAxis, selection);
+	}
+}
+
+//=============================================================================
+//
+// 
+//
+//=============================================================================
+
+class OptionMenuItemInverter : OptionMenuItemOptionBase
+{
+	int mAxis;
+
+
+	void Init(String label, int axis, int center)
+	{
+		Super.Init(label, "none", "YesNo", NULL, center);
+		mAxis = axis;
+	}
+
+	override int GetSelection()
+	{
+		float f = Menu.GetCurrentJoystickConfig().GetAxisScale(mAxis);
+		return f > 0? 0:1;
+	}
+
+	override void SetSelection(int Selection)
+	{
+		let f = abs(Menu.GetCurrentJoystickConfig().GetAxisScale(mAxis));
+		if (Selection) f*=-1;
+		Menu.GetCurrentJoystickConfig().SetAxisScale(mAxis, f);
+	}
+}
+
+//=============================================================================
+//
+// Executes a CCMD, action is a CCMD name
+//
+//=============================================================================
+
+class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
+{
+	JoystickConfig mJoy;
+
+	void Init(String label = "", JoystickConfig joy = null)
+	{
+		Super.Init(label, "JoystickConfigMenu");
+		mJoy = joy;
+	}
+
+	override bool Activate()
+	{
+		//UpdateJoystickConfigMenu(mJoy);
+		return Super.Activate();
+	}
+}
+

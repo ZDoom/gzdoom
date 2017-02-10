@@ -6,12 +6,11 @@
 
 class MenuItemBase : Object native
 {
-	protected int mXpos, mYpos;
-	protected Name mAction;
+	protected native int mXpos, mYpos;
+	protected native Name mAction;
+	native bool mEnabled;
 
-	bool mEnabled;
-
-	protected void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
+	void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
 	{
 		mXpos = xpos;
 		mYpos = ypos;
@@ -30,7 +29,8 @@ class MenuItemBase : Object native
 	virtual bool SetValue(int i, int value) { return false; }
 	virtual bool, int GetValue(int i)  { return false, 0; }
 	virtual void Enable(bool on) { mEnabled = on; }
-	virtual bool MenuEvent (int mkey, bool fromcontroller) { return false; }
+	// this can only be made scripted once all items are converted, because it is called from the colorpicker menu.
+native	virtual bool MenuEvent (int mkey, bool fromcontroller);// { return false; }
 	virtual bool MouseEvent(int type, int x, int y) { return false; }
 	virtual bool CheckHotkey(int c) { return false; }
 	virtual int GetWidth() { return 0; }

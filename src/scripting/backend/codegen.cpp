@@ -154,6 +154,7 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 		{
 			if (ReturnProto->ReturnTypes[i] != proto->ReturnTypes[i])
 			{ // Incompatible
+				Printf("Return type %s mismatch with %s\n", ReturnProto->ReturnTypes[i]->DescriptiveName(), proto->ReturnTypes[i]->DescriptiveName());
 				fail = true;
 				break;
 			}

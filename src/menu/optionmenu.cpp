@@ -64,6 +64,7 @@ void M_DrawConText (int color, int x, int y, const char *str)
 		TAG_DONE);
 }
 
+
 IMPLEMENT_CLASS(DOptionMenu, false, false)
 
 IMPLEMENT_POINTERS_START(DOptionMenu)
@@ -475,13 +476,6 @@ void DOptionMenu::Drawer ()
 	Super::Drawer();
 }
 
-
-//=============================================================================
-//
-// base class for menu items
-//
-//=============================================================================
-
 int DOptionMenuItem::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 {
 	return indent;
@@ -525,7 +519,6 @@ void DOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool graye
 	else x = (screen->GetWidth() - w) / 2;
 	screen->DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 }
-
 
 
 void DOptionMenuDescriptor::CalcIndent()

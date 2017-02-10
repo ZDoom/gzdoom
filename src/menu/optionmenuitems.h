@@ -46,15 +46,15 @@ void M_SetVideoMode();
 //
 //=============================================================================
 
-class DOptionMenuItemSubmenu : public DOptionMenuItem
+class DOptionMenuItemSubmenu_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuItemSubmenu, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuItemSubmenu_, DOptionMenuItem)
 
 	int mParam;
 protected:
-	DOptionMenuItemSubmenu() { }
+	DOptionMenuItemSubmenu_() { }
 public:
-	DOptionMenuItemSubmenu(const char *label, const char *menu, int param = 0)
+	DOptionMenuItemSubmenu_(const char *label, const char *menu, int param = 0)
 		: DOptionMenuItem(label, menu)
 	{
 		mParam = param;
@@ -75,7 +75,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemSubmenu, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemSubmenu_, false, false)
 #endif
 
 //=============================================================================
@@ -84,14 +84,14 @@ IMPLEMENT_CLASS(DOptionMenuItemSubmenu, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemCommand : public DOptionMenuItemSubmenu
+class DOptionMenuItemCommand_ : public DOptionMenuItemSubmenu_
 {
-	DECLARE_CLASS(DOptionMenuItemCommand, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuItemCommand_, DOptionMenuItem)
 protected:
-	DOptionMenuItemCommand() { }
+	DOptionMenuItemCommand_() { }
 public:
-	DOptionMenuItemCommand(const char *label, const char *menu)
-		: DOptionMenuItemSubmenu(label, menu)
+	DOptionMenuItemCommand_(const char *label, const char *menu)
+		: DOptionMenuItemSubmenu_(label, menu)
 	{
 	}
 
@@ -105,7 +105,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemCommand, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemCommand_, false, false)
 #endif
 
 //=============================================================================
@@ -114,17 +114,17 @@ IMPLEMENT_CLASS(DOptionMenuItemCommand, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemSafeCommand : public DOptionMenuItemCommand
+class DOptionMenuItemSafeCommand_ : public DOptionMenuItemCommand_
 {
-	DECLARE_CLASS(DOptionMenuItemSafeCommand, DOptionMenuItemCommand)
+	DECLARE_CLASS(DOptionMenuItemSafeCommand_, DOptionMenuItemCommand_)
 	// action is a CCMD
-	DOptionMenuItemSafeCommand() { }
+	DOptionMenuItemSafeCommand_() { }
 protected:
 	FString mPrompt;
 
 public:
-	DOptionMenuItemSafeCommand(const char *label, const char *menu, const char *prompt)
-		: DOptionMenuItemCommand(label, menu)
+	DOptionMenuItemSafeCommand_(const char *label, const char *menu, const char *prompt)
+		: DOptionMenuItemCommand_(label, menu)
 		, mPrompt(prompt)
 	{
 	}
@@ -136,7 +136,7 @@ public:
 			C_DoCommand(mAction);
 			return true;
 		}
-		return DOptionMenuItemCommand::MenuEvent(mkey, fromcontroller);
+		return DOptionMenuItemCommand_::MenuEvent(mkey, fromcontroller);
 	}
 
 	bool Activate()
@@ -165,7 +165,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemSafeCommand, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemSafeCommand_, false, false)
 #endif
 
 //=============================================================================
@@ -174,16 +174,16 @@ IMPLEMENT_CLASS(DOptionMenuItemSafeCommand, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemOptionBase : public DOptionMenuItem
+class DOptionMenuItemOptionBase_ : public DOptionMenuItem
 {
-	DECLARE_ABSTRACT_CLASS(DOptionMenuItemOptionBase, DOptionMenuItem)
+	DECLARE_ABSTRACT_CLASS(DOptionMenuItemOptionBase_, DOptionMenuItem)
 protected:
 	// action is a CVAR
 	FName mValues;	// Entry in OptionValues table
 	FBaseCVar *mGrayCheck;
 	int mCenter;
 
-	DOptionMenuItemOptionBase() {}
+	DOptionMenuItemOptionBase_() {}
 public:
 
 	enum
@@ -191,7 +191,7 @@ public:
 		OP_VALUES = 0x11001
 	};
 
-	DOptionMenuItemOptionBase(const char *label, const char *menu, const char *values, const char *graycheck, int center)
+	DOptionMenuItemOptionBase_(const char *label, const char *menu, const char *values, const char *graycheck, int center)
 		: DOptionMenuItem(label, menu)
 	{
 		mValues = values;
@@ -286,7 +286,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemOptionBase, true, false)
+IMPLEMENT_CLASS(DOptionMenuItemOptionBase_, true, false)
 #endif
 
 //=============================================================================
@@ -295,17 +295,17 @@ IMPLEMENT_CLASS(DOptionMenuItemOptionBase, true, false)
 //
 //=============================================================================
 
-class DOptionMenuItemOption : public DOptionMenuItemOptionBase
+class DOptionMenuItemOption_ : public DOptionMenuItemOptionBase_
 {
-	DECLARE_CLASS(DOptionMenuItemOption, DOptionMenuItemOptionBase)
+	DECLARE_CLASS(DOptionMenuItemOption_, DOptionMenuItemOptionBase_)
 	// action is a CVAR
 	FBaseCVar *mCVar;
 
-	DOptionMenuItemOption() {}
+	DOptionMenuItemOption_() {}
 public:
 
-	DOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck, int center)
-		: DOptionMenuItemOptionBase(label, menu, values, graycheck, center)
+	DOptionMenuItemOption_(const char *label, const char *menu, const char *values, const char *graycheck, int center)
+		: DOptionMenuItemOptionBase_(label, menu, values, graycheck, center)
 	{
 		mCVar = FindCVar(mAction, NULL);
 	}
@@ -367,7 +367,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemOption, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemOption_, false, false)
 #endif
 
 //=============================================================================
@@ -440,17 +440,17 @@ IMPLEMENT_CLASS(DEnterKey, true, false)
 //
 //=============================================================================
 
-class DOptionMenuItemControl : public DOptionMenuItem
+class DOptionMenuItemControl_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuItemControl, DOptionMenuItemOption)
+	DECLARE_CLASS(DOptionMenuItemControl_, DOptionMenuItemOption_)
 	FKeyBindings *mBindings;
 	int mInput;
 	bool mWaiting;
 
-	DOptionMenuItemControl() {}
+	DOptionMenuItemControl_() {}
 public:
 
-	DOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings)
+	DOptionMenuItemControl_(const char *label, const char *menu, FKeyBindings *bindings)
 		: DOptionMenuItem(label, menu)
 	{
 		mBindings = bindings;
@@ -514,7 +514,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemControl, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemControl_, false, false)
 #endif
 //=============================================================================
 //
@@ -522,20 +522,20 @@ IMPLEMENT_CLASS(DOptionMenuItemControl, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemStaticText : public DOptionMenuItem
+class DOptionMenuItemStaticText_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuItemStaticText, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuItemStaticText_, DOptionMenuItem)
 	EColorRange mColor;
 
-	DOptionMenuItemStaticText() {}
+	DOptionMenuItemStaticText_() {}
 public:
-	DOptionMenuItemStaticText(const char *label, bool header)
+	DOptionMenuItemStaticText_(const char *label, bool header)
 		: DOptionMenuItem(label, NAME_None, true)
 	{
 		mColor = header ? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
 	}
 
-	DOptionMenuItemStaticText(const char *label, EColorRange cr)
+	DOptionMenuItemStaticText_(const char *label, EColorRange cr)
 		: DOptionMenuItem(label, NAME_None, true)
 	{
 		mColor = cr;
@@ -555,7 +555,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemStaticText, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemStaticText_, false, false)
 #endif
 
 //=============================================================================
@@ -564,16 +564,16 @@ IMPLEMENT_CLASS(DOptionMenuItemStaticText, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemStaticTextSwitchable : public DOptionMenuItem
+class DOptionMenuItemStaticTextSwitchable_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuItemStaticTextSwitchable, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuItemStaticTextSwitchable_, DOptionMenuItem)
 	EColorRange mColor;
 	FString mAltText;
 	int mCurrent;
 
-	DOptionMenuItemStaticTextSwitchable() {}
+	DOptionMenuItemStaticTextSwitchable_() {}
 public:
-	DOptionMenuItemStaticTextSwitchable(const char *label, const char *label2, FName action, EColorRange cr)
+	DOptionMenuItemStaticTextSwitchable_(const char *label, const char *label2, FName action, EColorRange cr)
 		: DOptionMenuItem(label, action, true)
 	{
 		mColor = cr;
@@ -618,7 +618,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemStaticTextSwitchable, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemStaticTextSwitchable_, false, false)
 #endif
 
 //=============================================================================
@@ -627,9 +627,9 @@ IMPLEMENT_CLASS(DOptionMenuItemStaticTextSwitchable, false, false)
 //
 //=============================================================================
 
-class DOptionMenuSliderBase : public DOptionMenuItem
+class DOptionMenuSliderBase_ : public DOptionMenuItem
 {
-	DECLARE_ABSTRACT_CLASS(DOptionMenuSliderBase, DOptionMenuItem)
+	DECLARE_ABSTRACT_CLASS(DOptionMenuSliderBase_, DOptionMenuItem)
 	// action is a CVAR
 	double mMin, mMax, mStep;
 	int mShowValue;
@@ -637,9 +637,9 @@ class DOptionMenuSliderBase : public DOptionMenuItem
 	int mSliderShort;
 
 protected:
-	DOptionMenuSliderBase() {}
+	DOptionMenuSliderBase_() {}
 public:
-	DOptionMenuSliderBase(const char *label, double min, double max, double step, int showval)
+	DOptionMenuSliderBase_(const char *label, double min, double max, double step, int showval)
 		: DOptionMenuItem(label, NAME_None)
 	{
 		mMin = min;
@@ -768,7 +768,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuSliderBase, true, false)
+IMPLEMENT_CLASS(DOptionMenuSliderBase_, true, false)
 #endif
 
 //=============================================================================
@@ -777,15 +777,15 @@ IMPLEMENT_CLASS(DOptionMenuSliderBase, true, false)
 //
 //=============================================================================
 
-class DOptionMenuSliderCVar : public DOptionMenuSliderBase
+class DOptionMenuSliderCVar_ : public DOptionMenuSliderBase_
 {
-	DECLARE_CLASS(DOptionMenuSliderCVar, DOptionMenuSliderBase)
+	DECLARE_CLASS(DOptionMenuSliderCVar_, DOptionMenuSliderBase_)
 	FBaseCVar *mCVar;
 
-	DOptionMenuSliderCVar() {}
+	DOptionMenuSliderCVar_() {}
 public:
-	DOptionMenuSliderCVar(const char *label, const char *menu, double min, double max, double step, int showval)
-		: DOptionMenuSliderBase(label, min, max, step, showval)
+	DOptionMenuSliderCVar_(const char *label, const char *menu, double min, double max, double step, int showval)
+		: DOptionMenuSliderBase_(label, min, max, step, showval)
 	{
 		mCVar = FindCVar(menu, NULL);
 	}
@@ -814,7 +814,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuSliderCVar, false, false)
+IMPLEMENT_CLASS(DOptionMenuSliderCVar_, false, false)
 #endif
 
 //=============================================================================
@@ -823,16 +823,16 @@ IMPLEMENT_CLASS(DOptionMenuSliderCVar, false, false)
 //
 //=============================================================================
 
-class DOptionMenuSliderVar : public DOptionMenuSliderBase
+class DOptionMenuSliderVar_ : public DOptionMenuSliderBase_
 {
-	DECLARE_CLASS(DOptionMenuSliderVar, DOptionMenuSliderBase)
+	DECLARE_CLASS(DOptionMenuSliderVar_, DOptionMenuSliderBase_)
 	float *mPVal;
 
-	DOptionMenuSliderVar() {}
+	DOptionMenuSliderVar_() {}
 public:
 
-	DOptionMenuSliderVar(const char *label, float *pVal, double min, double max, double step, int showval)
-		: DOptionMenuSliderBase(label, min, max, step, showval)
+	DOptionMenuSliderVar_(const char *label, float *pVal, double min, double max, double step, int showval)
+		: DOptionMenuSliderBase_(label, min, max, step, showval)
 	{
 		mPVal = pVal;
 	}
@@ -849,7 +849,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuSliderVar, false, false)
+IMPLEMENT_CLASS(DOptionMenuSliderVar_, false, false)
 #endif
 
 //=============================================================================
@@ -858,12 +858,12 @@ IMPLEMENT_CLASS(DOptionMenuSliderVar, false, false)
 //
 //=============================================================================
 
-class DOptionMenuItemColorPicker : public DOptionMenuItem
+class DOptionMenuItemColorPicker_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuItemColorPicker, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuItemColorPicker_, DOptionMenuItem)
 	FColorCVar *mCVar;
 
-	DOptionMenuItemColorPicker() {}
+	DOptionMenuItemColorPicker_() {}
 public:
 
 	enum
@@ -871,7 +871,7 @@ public:
 		CPF_RESET = 0x20001,
 	};
 
-	DOptionMenuItemColorPicker(const char *label, const char *menu)
+	DOptionMenuItemColorPicker_(const char *label, const char *menu)
 		: DOptionMenuItem(label, menu)
 	{
 		FBaseCVar *cv = FindCVar(menu, NULL);
@@ -924,19 +924,19 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuItemColorPicker, false, false)
+IMPLEMENT_CLASS(DOptionMenuItemColorPicker_, false, false)
 #endif
 
-class DOptionMenuScreenResolutionLine : public DOptionMenuItem
+class DOptionMenuScreenResolutionLine_ : public DOptionMenuItem
 {
-	DECLARE_CLASS(DOptionMenuScreenResolutionLine, DOptionMenuItem)
+	DECLARE_CLASS(DOptionMenuScreenResolutionLine_, DOptionMenuItem)
 
 	FString mResTexts[3];
 	int mSelection;
 	int mHighlight;
 	int mMaxValid;
 
-	DOptionMenuScreenResolutionLine() {}
+	DOptionMenuScreenResolutionLine_() {}
 public:
 
 	enum
@@ -946,7 +946,7 @@ public:
 		SRL_HIGHLIGHT = 0x30004,
 	};
 
-	DOptionMenuScreenResolutionLine(const char *action)
+	DOptionMenuScreenResolutionLine_(const char *action)
 		: DOptionMenuItem("", action)
 	{
 		mSelection = 0;
@@ -1072,25 +1072,25 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuScreenResolutionLine, false, false)
+IMPLEMENT_CLASS(DOptionMenuScreenResolutionLine_, false, false)
 #endif
 
 //=============================================================================
 //
-// [TP] DOptionMenuFieldBase
+// [TP] DOptionMenuFieldBase_
 //
 // Base class for input fields
 //
 //=============================================================================
 
-class DOptionMenuFieldBase : public DOptionMenuItem
+class DOptionMenuFieldBase_ : public DOptionMenuItem
 {
-	DECLARE_ABSTRACT_CLASS(DOptionMenuFieldBase, DOptionMenuItem)
+	DECLARE_ABSTRACT_CLASS(DOptionMenuFieldBase_, DOptionMenuItem)
 
 protected:
-	DOptionMenuFieldBase() {}
+	DOptionMenuFieldBase_() {}
 public:
-	DOptionMenuFieldBase ( const char* label, const char* menu, const char* graycheck ) :
+	DOptionMenuFieldBase_ ( const char* label, const char* menu, const char* graycheck ) :
 		DOptionMenuItem ( label, menu ),
 		mCVar ( FindCVar( mAction, NULL )),
 		mGrayCheck (( graycheck && strlen( graycheck )) ? FindCVar( graycheck, NULL ) : NULL ) {}
@@ -1155,25 +1155,25 @@ protected:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuFieldBase, true, false)
+IMPLEMENT_CLASS(DOptionMenuFieldBase_, true, false)
 #endif
 
 //=============================================================================
 //
-// [TP] DOptionMenuTextField
+// [TP] DOptionMenuTextField_
 //
 // A text input field widget, for use with string CVars.
 //
 //=============================================================================
 
-class DOptionMenuTextField : public DOptionMenuFieldBase
+class DOptionMenuTextField_ : public DOptionMenuFieldBase_
 {
-	DECLARE_CLASS(DOptionMenuTextField, DOptionMenuFieldBase)
+	DECLARE_CLASS(DOptionMenuTextField_, DOptionMenuFieldBase_)
 
-	DOptionMenuTextField() {}
+	DOptionMenuTextField_() {}
 public:
-	DOptionMenuTextField ( const char *label, const char* menu, const char* graycheck ) :
-		DOptionMenuFieldBase ( label, menu, graycheck ),
+	DOptionMenuTextField_ ( const char *label, const char* menu, const char* graycheck ) :
+		DOptionMenuFieldBase_ ( label, menu, graycheck ),
 		mEntering ( false ) {}
 
 	FString Represent()
@@ -1196,7 +1196,7 @@ public:
 			int newindent = screen->GetWidth() - tlen - CURSORSPACE;
 			if (newindent < indent) indent = newindent;
 		}
-		return DOptionMenuFieldBase::Draw(desc, y, indent, selected);
+		return DOptionMenuFieldBase_::Draw(desc, y, indent, selected);
 	}
 
 	bool MenuEvent ( int mkey, bool fromcontroller )
@@ -1237,7 +1237,7 @@ private:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuTextField, false, false)
+IMPLEMENT_CLASS(DOptionMenuTextField_, false, false)
 #endif
 
 //=============================================================================
@@ -1249,15 +1249,15 @@ IMPLEMENT_CLASS(DOptionMenuTextField, false, false)
 //
 //=============================================================================
 
-class DOptionMenuNumberField : public DOptionMenuFieldBase
+class DOptionMenuNumberField_ : public DOptionMenuFieldBase_
 {
-	DECLARE_CLASS(DOptionMenuNumberField, DOptionMenuFieldBase)
+	DECLARE_CLASS(DOptionMenuNumberField_, DOptionMenuFieldBase_)
 
-	DOptionMenuNumberField() {}
+	DOptionMenuNumberField_() {}
 public:
-	DOptionMenuNumberField ( const char *label, const char* menu, float minimum, float maximum,
+	DOptionMenuNumberField_ ( const char *label, const char* menu, float minimum, float maximum,
 		float step, const char* graycheck )
-		: DOptionMenuFieldBase ( label, menu, graycheck ),
+		: DOptionMenuFieldBase_ ( label, menu, graycheck ),
 		mMinimum ( minimum ),
 		mMaximum ( maximum ),
 		mStep ( step )
@@ -1308,5 +1308,5 @@ private:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DOptionMenuNumberField, false, false)
+IMPLEMENT_CLASS(DOptionMenuNumberField_, false, false)
 #endif

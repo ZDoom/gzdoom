@@ -357,6 +357,26 @@ void DMenu::Drawer ()
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(DMenu, Drawer)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Drawer();
+	return 0;
+}
+
+void DMenu::CallDrawer()
+{
+	IFVIRTUAL(DMenu, Drawer)
+	{
+		VMValue params[] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else Drawer();
+}
+
+
+
 bool DMenu::DimAllowed()
 {
 	return true;
@@ -800,7 +820,7 @@ void M_Drawer (void)
 			screen->Dim(fade);
 			V_SetBorderNeedRefresh();
 		}
-		DMenu::CurrentMenu->Drawer();
+		DMenu::CurrentMenu->CallDrawer();
 	}
 }
 

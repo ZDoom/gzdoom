@@ -245,6 +245,7 @@ public:
 
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	bool CallMouseEvent(int type, int x, int y);
+	void CallDrawer();
 
 	bool MouseEventBack(int type, int x, int y);
 	void SetCapture();

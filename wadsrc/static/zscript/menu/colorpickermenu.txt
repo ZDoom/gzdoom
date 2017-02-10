@@ -1,3 +1,36 @@
+/*
+** colorpickermenu.txt
+** The color picker menu
+**
+**---------------------------------------------------------------------------
+** Copyright 2010-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 class ColorpickerMenu : Menu native
 {
@@ -147,5 +180,81 @@ class ColorpickerMenu : Menu native
 		return res;
 	}
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer()
+	{
+		Super.Drawer();
+
+		if (mCVar == null) return;
+		int y = (-mDesc.mPosition + BigFont.GetHeight() + mDesc.mItems.Size() * OptionMenuSettings.mLinespacing) * CleanYfac_1;
+		int fh = OptionMenuSettings.mLinespacing * CleanYfac_1;
+		int h = (screen.GetHeight() - y) / 16;
+		int w = fh;
+		int yy = y;
+
+		if (h > fh) h = fh;
+		else if (h < 4) return;	// no space to draw it.
+		
+		int indent = (screen.GetWidth() / 2);
+		int p = 0;
+
+		for(int i = 0; i < 16; i++)
+		{
+			int box_x, box_y;
+			int x1;
+
+			box_y = y - 2 * CleanYfac_1;
+			box_x = indent - 16*w;
+			for (x1 = 0; x1 < 16; ++x1)
+			{
+				screen.Clear (box_x, box_y, box_x + w, box_y + h, 0, p);
+				if ((mDesc.mSelectedItem == mStartItem+7) && 
+					(/*p == CurrColorIndex ||*/ (i == mGridPosY && x1 == mGridPosX)))
+				{
+					int r, g, b;
+					Color col;
+					double blinky;
+					if (i == mGridPosY && x1 == mGridPosX)
+					{
+						r = 255; g = 128; b = 0;
+					}
+					else
+					{
+						r = 200; g = 200; b = 255;
+					}
+					// Make sure the cursors stand out against similar colors
+					// by pulsing them.
+					blinky = abs(sin(MSTime()/1000.0)) * 0.5 + 0.5;
+					col = Color(255, int(r*blinky), int(g*blinky), int(b*blinky));
+
+					screen.Clear (box_x, box_y, box_x + w, box_y + 1, col);
+					screen.Clear (box_x, box_y + h-1, box_x + w, box_y + h, col);
+					screen.Clear (box_x, box_y, box_x + 1, box_y + h, col);
+					screen.Clear (box_x + w - 1, box_y, box_x + w, box_y + h, col);
+				}
+				box_x += w;
+				p++;
+			}
+			y += h;
+		}
+		y = yy;
+		color newColor = Color(255, int(mRed), int(mGreen), int(mBlue));
+		color oldColor = mCVar.GetInt() | 0xFF000000;
+
+		int x = screen.GetWidth()*2/3;
+
+		screen.Clear (x, y, x + 48*CleanXfac_1, y + 48*CleanYfac_1, oldColor);
+		screen.Clear (x + 48*CleanXfac_1, y, x + 48*2*CleanXfac_1, y + 48*CleanYfac_1, newColor);
+
+		y += 49*CleanYfac_1;
+		screen.DrawText (SmallFont, Font.CR_GRAY, x+(24-SmallFont.StringWidth("Old")/2)*CleanXfac_1, y, "Old", DTA_CleanNoMove_1, true);
+		screen.DrawText (SmallFont, Font.CR_WHITE, x+(48+24-SmallFont.StringWidth("New")/2)*CleanXfac_1, y, "New", DTA_CleanNoMove_1, true);
+	}
+	
 	
 }

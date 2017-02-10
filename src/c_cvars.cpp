@@ -181,6 +181,27 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_CVar, GetInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_Int);
+	ACTION_RETURN_INT(v.Int);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_Float);
+	ACTION_RETURN_FLOAT(v.Int);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_String);
+	ACTION_RETURN_STRING(v.String);
+}
+
 bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 {
 	switch (type)

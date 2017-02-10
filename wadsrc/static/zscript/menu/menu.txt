@@ -33,6 +33,7 @@ class Menu : Object native
 	
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
+	native virtual void Drawer();
 	
 	void MenuSound(Sound snd)
 	{

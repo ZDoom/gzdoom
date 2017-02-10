@@ -426,7 +426,7 @@ public:
 
 	void Drawer()
 	{
-		mParentMenu->Drawer();
+		mParentMenu->CallDrawer();
 	}
 };
 

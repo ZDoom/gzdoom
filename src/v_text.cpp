@@ -46,6 +46,7 @@
 
 #include "doomstat.h"
 #include "templates.h"
+#include "gstrings.h"
 
 int ListGetInt(VMVa_List &tags);
 
@@ -239,7 +240,8 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 	PARAM_STRING(chr);
 
 	VMVa_List args = { param + 5, 0, numparam - 5 };
-	screen->DrawText(font, cr, x, y, chr, args);
+	const char *txt = chr[0] == '$' ? GStrings(chr) : chr.GetChars();
+	screen->DrawText(font, cr, x, y, txt, args);
 	return 0;
 }
 

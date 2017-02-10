@@ -297,7 +297,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 
 void DTextEnterMenu::Drawer ()
 {
-	mParentMenu->Drawer();
+	mParentMenu->CallDrawer();
 	if (mInputGridOkay)
 	{
 		const int cell_width = 18 * CleanXfac;

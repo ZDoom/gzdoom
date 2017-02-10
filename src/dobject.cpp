@@ -616,6 +616,10 @@ DEFINE_ACTION_FUNCTION(DObject, GetClassName)
 	ACTION_RETURN_INT(self->GetClass()->TypeName);
 }
 
+DEFINE_ACTION_FUNCTION(DObject, MSTime)
+{
+	ACTION_RETURN_INT(I_MSTime());
+}
 
 void *DObject::ScriptVar(FName field, PType *type)
 {

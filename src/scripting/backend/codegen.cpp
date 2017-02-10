@@ -7747,6 +7747,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		if (MethodName == NAME_Size)
 		{
 			FxExpression *x = new FxMemberIdentifier(Self, NAME_Size, ScriptPosition);	// todo: obfuscate the name to prevent direct access.
+			Self->ValueType = static_cast<PDynArray*>(Self->ValueType)->BackingType;
 			Self = nullptr;
 			delete this;
 			return x->Resolve(ctx);

@@ -124,55 +124,6 @@ public:
 	//
 	//=============================================================================
 
-	bool MouseEvent(int type, int mx, int my)
-	{
-		int olditem = mDesc->mSelectedItem;
-		bool res = Super::MouseEvent(type, mx, my);
-
-		if (mDesc->mSelectedItem == -1 || mDesc->mSelectedItem == mStartItem+7)
-		{
-			int y = (-mDesc->mPosition + BigFont->GetHeight() + mDesc->mItems.Size() * OptionSettings.mLinespacing) * CleanYfac_1;
-			int h = (screen->GetHeight() - y) / 16;
-			int fh = OptionSettings.mLinespacing * CleanYfac_1;
-			int w = fh;
-			int yy = y + 2 * CleanYfac_1;
-			int indent = (screen->GetWidth() / 2);
-
-			if (h > fh) h = fh;
-			else if (h < 4) return res;	// no space to draw it.
-
-			int box_y = y - 2 * CleanYfac_1;
-			int box_x = indent - 16*w;
-
-			if (mx >= box_x && mx < box_x + 16*w && my >= box_y && my < box_y + 16*h)
-			{
-				int cell_x = (mx - box_x) / w;
-				int cell_y = (my - box_y) / h;
-
-				if (olditem != mStartItem+7 || cell_x != mGridPosX || cell_y != mGridPosY)
-				{
-					mGridPosX = cell_x;
-					mGridPosY = cell_y;
-					//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				}
-				mDesc->mSelectedItem = mStartItem+7;
-				if (type == MOUSE_Release)
-				{
-					MenuEvent(MKEY_Enter, true);
-					if (m_use_mouse == 2) mDesc->mSelectedItem = -1;
-				}
-				res = true;
-			}
-		}
-		return res;
-	}
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
 	void Drawer()
 	{
 		Super::Drawer();

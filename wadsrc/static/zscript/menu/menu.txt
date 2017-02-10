@@ -1,30 +1,38 @@
 
-enum EMenuKey
-{
-	MKEY_Up,
-	MKEY_Down,
-	MKEY_Left,
-	MKEY_Right,
-	MKEY_PageUp,
-	MKEY_PageDown,
-	MKEY_Enter,
-	MKEY_Back,
-	MKEY_Clear,
-	NUM_MKEYS,
-
-	// These are not buttons but events sent from other menus 
-
-	MKEY_Input,
-	MKEY_Abort,
-	MKEY_MBYes,
-	MKEY_MBNo,
-}
-
 class Menu : Object native
 {
+	enum EMenuKey
+	{
+		MKEY_Up,
+		MKEY_Down,
+		MKEY_Left,
+		MKEY_Right,
+		MKEY_PageUp,
+		MKEY_PageDown,
+		MKEY_Enter,
+		MKEY_Back,
+		MKEY_Clear,
+		NUM_MKEYS,
+
+		// These are not buttons but events sent from other menus 
+
+		MKEY_Input,
+		MKEY_Abort,
+		MKEY_MBYes,
+		MKEY_MBNo,
+	}
+
+	enum EMenuMouse
+	{
+		MOUSE_Click,
+		MOUSE_Move,
+		MOUSE_Release
+	};
+
 	//native static int MenuTime();
 	
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
+	native virtual bool MouseEvent(int type, int mx, int my);
 	
 	void MenuSound(Sound snd)
 	{

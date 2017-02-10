@@ -132,7 +132,12 @@ struct Screen native
 		CR_CYAN,
 		NUM_TEXT_COLORS
 	};
-
+	
+	int CleanWidth, CleanHeight;
+	int CleanXFac, CleanYFac;
+	int CleanWidth_1, CleanHeight_1;
+	int CleanXFac_1, CleanYFac_1;
+	
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
@@ -154,6 +159,8 @@ struct Font native
 {
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
+	native int GetHeight();
+
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);

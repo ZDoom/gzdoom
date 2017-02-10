@@ -976,6 +976,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 // FTextureManager :: Init
 //
 //==========================================================================
+FTexture *GetBackdropTexture();
 
 void FTextureManager::Init()
 {
@@ -987,6 +988,7 @@ void FTextureManager::Init()
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
 	AddTexture (new FDummyTexture);
+	AddTexture(GetBackdropTexture());
 
 	int wadcnt = Wads.GetNumWads();
 	for(int i = 0; i< wadcnt; i++)

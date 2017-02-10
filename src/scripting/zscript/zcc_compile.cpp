@@ -69,7 +69,7 @@ static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
 {
 	ex = new FxStringCast(ex);
 	ex = ex->Resolve(ctx);
-	return static_cast<FxConstant*>(ex)->GetValue().GetString();
+	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetString() : FString();
 }
 
 int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)

@@ -54,7 +54,7 @@ IMPLEMENT_POINTERS_END
 //
 //=============================================================================
 
-DListMenu::DListMenu(DMenu *parent, FListMenuDescriptor *desc)
+DListMenu::DListMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DMenu(parent)
 {
 	mDesc = NULL;
@@ -67,7 +67,7 @@ DListMenu::DListMenu(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
-void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
+void DListMenu::Init(DMenu *parent, DListMenuDescriptor *desc)
 {
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
@@ -358,6 +358,15 @@ bool DMenuItemBase::MenuEvent(int mkey, bool fromcontroller)
 {
 	return false;
 }
+
+DEFINE_ACTION_FUNCTION(DMenuItemBase, MenuEvent)
+{
+	PARAM_SELF_PROLOGUE(DMenuItemBase);
+	PARAM_INT(key);
+	PARAM_BOOL(fromcontroller);
+	ACTION_RETURN_BOOL(self->MenuEvent(key, fromcontroller));
+}
+
 
 bool DMenuItemBase::MouseEvent(int type, int x, int y)
 {

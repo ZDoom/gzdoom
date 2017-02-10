@@ -102,7 +102,7 @@ protected:
 	bool mEntering;
 	char savegamestring[SAVESTRINGSIZE];
 
-	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	DLoadSaveMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	void OnDestroy() override;
 
 	int RemoveSaveSlot (int index);
@@ -432,7 +432,7 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 //
 //=============================================================================
 
-DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
+DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DListMenu(parent, desc)
 {
 	ReadSaveStrings();
@@ -927,7 +927,7 @@ class DSaveMenu : public DLoadSaveMenu
 
 public:
 
-	DSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	DSaveMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	void OnDestroy() override;
 	void DoSave (FSaveGameNode *node);
 	bool Responder (event_t *ev);
@@ -944,7 +944,7 @@ IMPLEMENT_CLASS(DSaveMenu, false, false)
 //
 //=============================================================================
 
-DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
+DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
 	strcpy (NewSaveNode.Title, GStrings["NEWSAVE"]);
@@ -1099,7 +1099,7 @@ class DLoadMenu : public DLoadSaveMenu
 
 public:
 
-	DLoadMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	DLoadMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 
 	bool MenuEvent (int mkey, bool fromcontroller);
 };
@@ -1113,7 +1113,7 @@ IMPLEMENT_CLASS(DLoadMenu, false, false)
 //
 //=============================================================================
 
-DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
+DLoadMenu::DLoadMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
 	TopItem = 0;

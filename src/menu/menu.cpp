@@ -55,6 +55,7 @@
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
+#include "virtual.h"
 
 //
 // Todo: Move these elsewhere
@@ -91,13 +92,18 @@ static bool		MenuEnabled = true;
 //
 //============================================================================
 
-size_t FListMenuDescriptor::PropagateMark()
+IMPLEMENT_CLASS(DMenuDescriptor, false, false)
+IMPLEMENT_CLASS(DListMenuDescriptor, false, false)
+IMPLEMENT_CLASS(DOptionMenuDescriptor, false, false)
+
+
+size_t DListMenuDescriptor::PropagateMark()
 {
 	for (auto item : mItems) GC::Mark(item);
 	return 0;
 }
 
-size_t FOptionMenuDescriptor::PropagateMark()
+size_t DOptionMenuDescriptor::PropagateMark()
 {
 	for (auto item : mItems) GC::Mark(item);
 	return 0;
@@ -109,8 +115,7 @@ void M_MarkMenus()
 	MenuDescriptorList::Pair *pair;
 	while (it.NextPair(pair))
 	{
-		//GC::Mark(pair->Value);	// once the descriptors have been made objects.
-		pair->Value->PropagateMark();
+		GC::Mark(pair->Value);
 	}
 	GC::Mark(DMenu::CurrentMenu);
 }
@@ -189,13 +194,33 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		Close();
 		S_Sound (CHAN_VOICE | CHAN_UI, 
-			DMenu::CurrentMenu != NULL? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
+			DMenu::CurrentMenu != nullptr? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
 		return true;
 	}
 	}
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, MenuEvent)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_INT(key);
+	PARAM_BOOL(fromcontroller);
+	ACTION_RETURN_BOOL(self->MenuEvent(key, fromcontroller));
+}
+
+bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
+{
+	IFVIRTUAL(DMenu, MenuEvent)
+	{
+		VMValue params[] = { (DObject*)this, mkey, fromcontroller };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		return retval;
+	}
+	else return MenuEvent(mkey, fromcontroller);
+}
 //=============================================================================
 //
 //
@@ -207,7 +232,7 @@ void DMenu::Close ()
 	assert(DMenu::CurrentMenu == this);
 	DMenu::CurrentMenu = mParentMenu;
 	Destroy();
-	if (DMenu::CurrentMenu != NULL)
+	if (DMenu::CurrentMenu != nullptr)
 	{
 		GC::WriteBarrier(DMenu::CurrentMenu);
 	}
@@ -239,7 +264,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 	if (m_show_backbutton >= 0)
 	{
 		FTexture *tex = TexMan(gameinfo.mBackButton);
-		if (tex != NULL)
+		if (tex != nullptr)
 		{
 			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
 			if (m_show_backbutton&2) y -= screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
@@ -248,7 +273,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
 				if (m_use_mouse == 2) mBackbuttonSelected = false;
-				MenuEvent(MKEY_Back, true);
+				CallMenuEvent(MKEY_Back, true);
 			}
 			return mBackbuttonSelected;
 		}
@@ -329,7 +354,7 @@ bool DMenu::TranslateKeyboardEvents()
 void M_StartControlPanel (bool makeSound)
 {
 	// intro might call this repeatedly
-	if (DMenu::CurrentMenu != NULL)
+	if (DMenu::CurrentMenu != nullptr)
 		return;
 
 	ResetButtonStates ();
@@ -361,7 +386,7 @@ void M_StartControlPanel (bool makeSound)
 void M_ActivateMenu(DMenu *menu)
 {
 	if (menuactive == MENU_Off) menuactive = MENU_On;
-	if (DMenu::CurrentMenu != NULL) DMenu::CurrentMenu->ReleaseCapture();
+	if (DMenu::CurrentMenu != nullptr) DMenu::CurrentMenu->ReleaseCapture();
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
 }
@@ -382,7 +407,7 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.Skill = -1;
 		GameStartupInfo.Episode = -1;
 		GameStartupInfo.PlayerClass = 
-			param == -1000? NULL :
+			param == -1000? nullptr :
 			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
 		break;
 
@@ -437,8 +462,8 @@ void M_SetMenu(FName menu, int param)
 
 	// End of special checks
 
-	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
-	if (desc != NULL)
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
+	if (desc != nullptr)
 	{
 		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
 		{
@@ -446,9 +471,9 @@ void M_SetMenu(FName menu, int param)
 			return;
 		}
 
-		if ((*desc)->mType == MDESC_ListMenu)
+		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
-			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
 			if (ld->mAutoselect >= 0 && ld->mAutoselect < (int)ld->mItems.Size())
 			{
 				// recursively activate the autoselected item without ever creating this menu.
@@ -456,17 +481,17 @@ void M_SetMenu(FName menu, int param)
 			}
 			else
 			{
-				const PClass *cls = ld->mClass == NULL? RUNTIME_CLASS(DListMenu) : ld->mClass;
+				const PClass *cls = ld->mClass == nullptr? RUNTIME_CLASS(DListMenu) : ld->mClass;
 
 				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
 				newmenu->Init(DMenu::CurrentMenu, ld);
 				M_ActivateMenu(newmenu);
 			}
 		}
-		else if ((*desc)->mType == MDESC_OptionsMenu)
+		else if ((*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 		{
-			FOptionMenuDescriptor *ld = static_cast<FOptionMenuDescriptor*>(*desc);
-			const PClass *cls = ld->mClass == NULL? RUNTIME_CLASS(DOptionMenu) : ld->mClass;
+			DOptionMenuDescriptor *ld = static_cast<DOptionMenuDescriptor*>(*desc);
+			const PClass *cls = ld->mClass == nullptr? RUNTIME_CLASS(DOptionMenu) : ld->mClass;
 
 			DOptionMenu *newmenu = (DOptionMenu *)cls->CreateNew();
 			newmenu->Init(DMenu::CurrentMenu, ld);
@@ -477,7 +502,7 @@ void M_SetMenu(FName menu, int param)
 	else
 	{
 		const PClass *menuclass = PClass::FindClass(menu);
-		if (menuclass != NULL)
+		if (menuclass != nullptr)
 		{
 			if (menuclass->IsDescendantOf(RUNTIME_CLASS(DMenu)))
 			{
@@ -510,7 +535,7 @@ bool M_Responder (event_t *ev)
 		return false;
 	}
 
-	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
+	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		// There are a few input sources we are interested in:
 		//
@@ -649,7 +674,7 @@ bool M_Responder (event_t *ev)
 				{
 					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
 				}
-				DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+				DMenu::CurrentMenu->CallMenuEvent(mkey, fromcontroller);
 				return true;
 			}
 		}
@@ -670,7 +695,7 @@ bool M_Responder (event_t *ev)
 			// what it's bound to. (for those who don't bother to read the docs)
 			if (devparm && ev->data1 == KEY_F1)
 			{
-				G_ScreenShot(NULL);
+				G_ScreenShot(nullptr);
 				return true;
 			}
 			return false;
@@ -695,7 +720,7 @@ bool M_Responder (event_t *ev)
 void M_Ticker (void) 
 {
 	DMenu::MenuTime++;
-	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
+	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		DMenu::CurrentMenu->Ticker();
 
@@ -736,9 +761,9 @@ void M_Drawer (void)
 	AActor *camera = player->camera;
 	PalEntry fade = 0;
 
-	if (!screen->Accel2D && camera != NULL && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
+	if (!screen->Accel2D && camera != nullptr && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
 	{
-		if (camera->player != NULL)
+		if (camera->player != nullptr)
 		{
 			player = camera->player;
 		}
@@ -746,7 +771,7 @@ void M_Drawer (void)
 	}
 
 
-	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
+	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		if (DMenu::CurrentMenu->DimAllowed())
 		{
@@ -766,10 +791,10 @@ void M_Drawer (void)
 void M_ClearMenus ()
 {
 	M_DemoNoPlay = false;
-	if (DMenu::CurrentMenu != NULL)
+	if (DMenu::CurrentMenu != nullptr)
 	{
 		DMenu::CurrentMenu->Destroy();
-		DMenu::CurrentMenu = NULL;
+		DMenu::CurrentMenu = nullptr;
 	}
 	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;
@@ -1002,3 +1027,38 @@ CCMD(reset2saved)
 	GameConfig->DoModSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }
+
+
+
+//native void OptionMenuDescriptor.CalcIndent();
+//native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
+//native void OptionMenuItem.drawLabel(int indent, int y, EColorRange color, bool grayed = false);
+
+DEFINE_FIELD(DMenuDescriptor, mMenuName) 
+DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
+DEFINE_FIELD(DMenuDescriptor, mClass)
+
+DEFINE_FIELD(DMenuItemBase, mXpos)
+DEFINE_FIELD(DMenuItemBase, mYpos)
+DEFINE_FIELD(DMenuItemBase, mAction)
+DEFINE_FIELD(DMenuItemBase, mEnabled)
+
+DEFINE_FIELD(DOptionMenuDescriptor, mItems)
+DEFINE_FIELD(DOptionMenuDescriptor, mTitle)
+DEFINE_FIELD(DOptionMenuDescriptor, mSelectedItem)
+DEFINE_FIELD(DOptionMenuDescriptor, mDrawTop)
+DEFINE_FIELD(DOptionMenuDescriptor, mScrollTop)
+DEFINE_FIELD(DOptionMenuDescriptor, mScrollPos)
+DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
+DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
+DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
+
+DEFINE_FIELD(DOptionMenuItem, mLabel)
+DEFINE_FIELD(DOptionMenuItem, mCentered)
+
+DEFINE_FIELD(DOptionMenu, CanScrollUp)
+DEFINE_FIELD(DOptionMenu, CanScrollDown)
+DEFINE_FIELD(DOptionMenu, VisBottom)
+DEFINE_FIELD(DOptionMenu, mFocusControl)
+DEFINE_FIELD(DOptionMenu, mDesc)
+

@@ -254,14 +254,6 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 
 				curr->Destroy();
 			}
-			/*
-			if (curr->IsKindOf(RUNTIME_CLASS(PSymbol)))
-				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PSymbol*>(curr)->SymbolName.GetChars());
-			else if (curr->IsKindOf(RUNTIME_CLASS(PType)))
-				Printf("Collecting %s, name = %s\n", curr->GetClass()->TypeName.GetChars(), static_cast<PType*>(curr)->DescriptiveName());
-			else
-				Printf("Collecting %s\n", curr->GetClass()->TypeName.GetChars());
-			*/
 			curr->ObjectFlags |= OF_Cleanup;
 			delete curr;
 			finalized++;

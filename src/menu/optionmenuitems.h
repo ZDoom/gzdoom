@@ -60,7 +60,7 @@ public:
 		mParam = param;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColorMore);
 		return indent;
@@ -221,7 +221,7 @@ public:
 	virtual void SetSelection(int Selection) = 0;
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		bool grayed = mGrayCheck != NULL && !(mGrayCheck->GetGenericRep(CVAR_Bool).Bool);
 
@@ -418,7 +418,7 @@ public:
 			menuactive = MENU_On;
 			SetMenuMessage(0);
 			Close();
-			mParentMenu->MenuEvent((ev->data1 == KEY_ESCAPE)? MKEY_Abort : MKEY_Input, 0);
+			mParentMenu->CallMenuEvent((ev->data1 == KEY_ESCAPE)? MKEY_Abort : MKEY_Input, 0);
 			return true;
 		}
 		return false;
@@ -459,7 +459,7 @@ public:
 
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, mWaiting? OptionSettings.mFontColorHighlight: 
 			(selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor));
@@ -541,7 +541,7 @@ public:
 		mColor = cr;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, mColor);
 		return -1;
@@ -581,7 +581,7 @@ public:
 		mCurrent = 0;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		const char *txt = mCurrent? mAltText.GetChars() : mLabel.GetChars();
 		if (*txt == '$') txt = GStrings(txt + 1);
@@ -700,7 +700,7 @@ public:
 
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 		mDrawX = indent + CURSORSPACE;
@@ -883,7 +883,7 @@ public:
 	}
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 
@@ -1038,7 +1038,7 @@ public:
 		return true;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		int colwidth = screen->GetWidth() / 3;
 		EColorRange color;
@@ -1108,7 +1108,7 @@ public:
 		return GetCVarString();
 	}
 
-	int Draw ( FOptionMenuDescriptor*, int y, int indent, bool selected )
+	int Draw ( DOptionMenuDescriptor*, int y, int indent, bool selected )
 	{
 		bool grayed = mGrayCheck != NULL && !( mGrayCheck->GetGenericRep( CVAR_Bool ).Bool );
 		drawLabel( indent, y, selected ? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, grayed );
@@ -1186,7 +1186,7 @@ public:
 		return text;
 	}
 
-	int Draw(FOptionMenuDescriptor*desc, int y, int indent, bool selected)
+	int Draw(DOptionMenuDescriptor*desc, int y, int indent, bool selected)
 	{
 		if (mEntering)
 		{

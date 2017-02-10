@@ -138,7 +138,7 @@ bool DTextEnterMenu::Responder(event_t *ev)
 			{
 				DMenu *parent = mParentMenu;
 				Close();
-				parent->MenuEvent(MKEY_Abort, false);
+				parent->CallMenuEvent(MKEY_Abort, false);
 				return true;
 			}
 			else if (ch == '\r')
@@ -151,7 +151,7 @@ bool DTextEnterMenu::Responder(event_t *ev)
 
 					DMenu *parent = mParentMenu;
 					Close();
-					parent->MenuEvent(MKEY_Input, false);
+					parent->CallMenuEvent(MKEY_Input, false);
 					return true;
 				}
 			}
@@ -183,7 +183,7 @@ bool DTextEnterMenu::MouseEvent(int type, int x, int y)
 		InputGridY = (y - screen_y) / cell_height;
 		if (type == DMenu::MOUSE_Release)
 		{
-			if (MenuEvent(MKEY_Enter, true))
+			if (CallMenuEvent(MKEY_Enter, true))
 			{
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 				if (m_use_mouse == 2) InputGridX = InputGridY = -1;
@@ -210,7 +210,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 {
 	if (key == MKEY_Back)
 	{
-		mParentMenu->MenuEvent(MKEY_Abort, false);
+		mParentMenu->CallMenuEvent(MKEY_Abort, false);
 		return Super::MenuEvent(key, fromcontroller);
 	}
 	if (fromcontroller)
@@ -262,7 +262,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 					{
 						DMenu *parent = mParentMenu;
 						Close();
-						parent->MenuEvent(MKEY_Input, false);
+						parent->CallMenuEvent(MKEY_Input, false);
 						return true;
 					}
 				}

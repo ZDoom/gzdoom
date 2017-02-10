@@ -133,6 +133,7 @@ struct Screen native
 		NUM_TEXT_COLORS
 	};
 
+	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
@@ -168,6 +169,10 @@ struct Console native
 struct DamageTypeDefinition native
 {
 	native static bool IgnoreArmor(Name type);
+}
+
+struct CVar native
+{
 }
 
 struct GameInfoStruct native

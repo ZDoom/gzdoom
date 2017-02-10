@@ -509,7 +509,7 @@ class DPlayerMenu : public DListMenu
 public:
 
 	DPlayerMenu() {}
-	void Init(DMenu *parent, FListMenuDescriptor *desc);
+	void Init(DMenu *parent, DListMenuDescriptor *desc);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
@@ -525,7 +525,7 @@ IMPLEMENT_CLASS(DPlayerMenu, false, false)
 //
 //=============================================================================
 
-void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
+void DPlayerMenu::Init(DMenu *parent, DListMenuDescriptor *desc)
 {
 	DMenuItemBase *li;
 

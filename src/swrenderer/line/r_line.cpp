@@ -64,9 +64,6 @@ namespace swrenderer
 
 	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap)
 	{
-		bool			solid;
-		DVector2		pt1, pt2;
-
 		mSubsector = subsector;
 		mFrontSector = sector;
 		mBackSector = fakebacksector;
@@ -76,8 +73,8 @@ namespace swrenderer
 		basecolormap = colormap;
 		mLineSegment = line;
 
-		pt1 = line->v1->fPos() - ViewPos;
-		pt2 = line->v2->fPos() - ViewPos;
+		DVector2 pt1 = line->v1->fPos() - ViewPos;
+		DVector2 pt2 = line->v2->fPos() - ViewPos;
 
 		// Reject lines not facing viewer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
@@ -87,11 +84,10 @@ namespace swrenderer
 			return;
 
 		RenderPortal *renderportal = Thread->Portal.get();
-
 		if (WallC.sx1 >= renderportal->WindowRight || WallC.sx2 <= renderportal->WindowLeft)
 			return;
 
-		if (line->linedef == NULL)
+		if (line->linedef == nullptr)
 		{
 			if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
 			{
@@ -105,9 +101,8 @@ namespace swrenderer
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, ViewPos))
 			return;
 
-		vertex_t *v1, *v2;
-		v1 = line->linedef->v1;
-		v2 = line->linedef->v2;
+		vertex_t *v1 = line->linedef->v1;
+		vertex_t *v2 = line->linedef->v2;
 
 		if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
 		{ // The seg is the entire wall.
@@ -134,6 +129,8 @@ namespace swrenderer
 		mFrontFloorZ2 = mFrontSector->floorplane.ZatPoint(line->v2);
 
 		rw_havehigh = rw_havelow = false;
+
+		bool solid;
 
 		// Single sided line?
 		if (mBackSector == NULL)
@@ -268,18 +265,6 @@ namespace swrenderer
 		}
 
 		rw_prepped = false;
-
-		if (line->linedef->special == Line_Horizon)
-		{
-			// Be aware: Line_Horizon does not work properly with sloped planes
-			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-		}
-		else
-		{
-			mCeilingClipped = walltop.Project(mFrontSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
-			mFloorClipped = wallbottom.Project(mFrontSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
-		}
 
 		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, solid, this);
 
@@ -722,8 +707,18 @@ namespace swrenderer
 
 	void SWRenderLine::SetWallVariables(bool needlights)
 	{
-		double rowoffset;
-		double yrepeat;
+		if (mLineSegment->linedef->special == Line_Horizon)
+		{
+			// Be aware: Line_Horizon does not work properly with sloped planes
+			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		}
+		else
+		{
+			RenderPortal *renderportal = Thread->Portal.get();
+			mCeilingClipped = walltop.Project(mFrontSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+			mFloorClipped = wallbottom.Project(mFrontSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+		}
 
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
@@ -752,10 +747,10 @@ namespace swrenderer
 			{
 				midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
 				rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
-				rowoffset = sidedef->GetTextureYOffset(side_t::mid);
+				double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 				rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
 				rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-				yrepeat = midtexture->Scale.Y * rw_midtexturescaley;
+				double yrepeat = midtexture->Scale.Y * rw_midtexturescaley;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -828,10 +823,10 @@ namespace swrenderer
 				toptexture = TexMan(sidedef->GetTexture(side_t::top), true);
 
 				rw_offset_top = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
-				rowoffset = sidedef->GetTextureYOffset(side_t::top);
+				double rowoffset = sidedef->GetTextureYOffset(side_t::top);
 				rw_toptexturescalex = sidedef->GetTextureXScale(side_t::top);
 				rw_toptexturescaley = sidedef->GetTextureYScale(side_t::top);
-				yrepeat = toptexture->Scale.Y * rw_toptexturescaley;
+				double yrepeat = toptexture->Scale.Y * rw_toptexturescaley;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGTOP)
@@ -873,10 +868,10 @@ namespace swrenderer
 				bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom), true);
 
 				rw_offset_bottom = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
-				rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
+				double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
 				rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
 				rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
-				yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
+				double yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGBOTTOM)

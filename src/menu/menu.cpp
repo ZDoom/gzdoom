@@ -149,7 +149,7 @@ bool DMenu::Responder (event_t *ev)
 			res = MouseEventBack(MOUSE_Click, ev->data1, ev->data2);
 			// make the menu's mouse handler believe that the current coordinate is outside the valid range
 			if (res) ev->data2 = -1;	
-			res |= MouseEvent(MOUSE_Click, ev->data1, ev->data2);
+			res |= CallMouseEvent(MOUSE_Click, ev->data1, ev->data2);
 			if (res)
 			{
 				SetCapture();
@@ -163,7 +163,7 @@ bool DMenu::Responder (event_t *ev)
 			{
 				res = MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
 				if (res) ev->data2 = -1;	
-				res |= MouseEvent(MOUSE_Move, ev->data1, ev->data2);
+				res |= CallMouseEvent(MOUSE_Move, ev->data1, ev->data2);
 			}
 		}
 		else if (ev->subtype == EV_GUI_LButtonUp)
@@ -173,7 +173,7 @@ bool DMenu::Responder (event_t *ev)
 				ReleaseCapture();
 				res = MouseEventBack(MOUSE_Release, ev->data1, ev->data2);
 				if (res) ev->data2 = -1;	
-				res |= MouseEvent(MOUSE_Release, ev->data1, ev->data2);
+				res |= CallMouseEvent(MOUSE_Release, ev->data1, ev->data2);
 			}
 		}
 	}
@@ -217,7 +217,7 @@ bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 		int retval;
 		VMReturn ret(&retval);
 		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
-		return retval;
+		return !!retval;
 	}
 	else return MenuEvent(mkey, fromcontroller);
 }
@@ -251,6 +251,28 @@ void DMenu::Close ()
 bool DMenu::MouseEvent(int type, int x, int y)
 {
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, MouseEvent)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_INT(type);
+	PARAM_INT(x);
+	PARAM_INT(y);
+	ACTION_RETURN_BOOL(self->MouseEvent(type, x, y));
+}
+
+bool DMenu::CallMouseEvent(int type, int x, int y)
+{
+	IFVIRTUAL(DMenu, MouseEvent)
+	{
+		VMValue params[] = { (DObject*)this, type, x, y };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
+		return !!retval;
+	}
+	else return MouseEvent (type, x, y);
 }
 
 //=============================================================================
@@ -334,6 +356,26 @@ void DMenu::Drawer ()
 		}
 	}
 }
+
+
+DEFINE_ACTION_FUNCTION(DMenu, Drawer)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Drawer();
+	return 0;
+}
+
+void DMenu::CallDrawer()
+{
+	IFVIRTUAL(DMenu, Drawer)
+	{
+		VMValue params[] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else Drawer();
+}
+
+
 
 bool DMenu::DimAllowed()
 {
@@ -778,7 +820,7 @@ void M_Drawer (void)
 			screen->Dim(fade);
 			V_SetBorderNeedRefresh();
 		}
-		DMenu::CurrentMenu->Drawer();
+		DMenu::CurrentMenu->CallDrawer();
 	}
 }
 
@@ -1034,7 +1076,7 @@ CCMD(reset2saved)
 //native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
 //native void OptionMenuItem.drawLabel(int indent, int y, EColorRange color, bool grayed = false);
 
-DEFINE_FIELD(DMenuDescriptor, mMenuName) 
+DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
 DEFINE_FIELD(DMenuDescriptor, mClass)
 
@@ -1062,3 +1104,11 @@ DEFINE_FIELD(DOptionMenu, VisBottom)
 DEFINE_FIELD(DOptionMenu, mFocusControl)
 DEFINE_FIELD(DOptionMenu, mDesc)
 
+DEFINE_FIELD(FOptionMenuSettings, mTitleColor)
+DEFINE_FIELD(FOptionMenuSettings, mFontColor)
+DEFINE_FIELD(FOptionMenuSettings, mFontColorValue)
+DEFINE_FIELD(FOptionMenuSettings, mFontColorMore)
+DEFINE_FIELD(FOptionMenuSettings, mFontColorHeader)
+DEFINE_FIELD(FOptionMenuSettings, mFontColorHighlight)
+DEFINE_FIELD(FOptionMenuSettings, mFontColorSelection)
+DEFINE_FIELD(FOptionMenuSettings, mLinespacing)

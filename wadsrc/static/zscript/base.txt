@@ -104,6 +104,32 @@ enum DrawTextureTags
 
 struct Screen native
 {
+	int CleanWidth, CleanHeight;
+	int CleanXFac, CleanYFac;
+	int CleanWidth_1, CleanHeight_1;
+	int CleanXFac_1, CleanYFac_1;
+	
+	native static Color PaletteColor(int index);
+	native static int GetWidth();
+	native static int GetHeight();
+	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+
+	native static void DrawHUDTexture(TextureID tex, double x, double y);
+	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+
+}
+
+class BrokenLines : Object native
+{
+	native int Count();
+	native int StringWidth(int line);
+	native String StringAt(int line);
+}
+
+struct Font native
+{
 	enum EColorRange
 	{
 		CR_UNDEFINED = -1,
@@ -133,27 +159,10 @@ struct Screen native
 		NUM_TEXT_COLORS
 	};
 
-	native static Color PaletteColor(int index);
-	native static int GetWidth();
-	native static int GetHeight();
-	native static void DrawHUDTexture(TextureID tex, double x, double y);
-	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
-	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
-	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-
-}
-
-class BrokenLines : Object native
-{
-	native int Count();
-	native int StringWidth(int line);
-	native String StringAt(int line);
-}
-
-struct Font native
-{
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
+	native int GetHeight();
+
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
@@ -173,6 +182,9 @@ struct DamageTypeDefinition native
 
 struct CVar native
 {
+	native int GetInt();
+	native double GetFloat();
+	native String GetString();
 }
 
 struct GameInfoStruct native
@@ -200,6 +212,7 @@ class Object native
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
+	native static uint MSTime();
 
 	native Name GetClassName();
 	native void Destroy();

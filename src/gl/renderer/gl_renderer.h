@@ -211,9 +211,6 @@ public:
 	bool StartOffscreen();
 	void EndOffscreen();
 
-	void StartSimplePolys();
-	void FinishSimplePolys();
-
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);

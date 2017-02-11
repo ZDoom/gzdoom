@@ -1052,6 +1052,11 @@ void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
 		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 		if (gltex) gltex->Precache();
 	}
+	else
+	{
+		// make sure that software pixel buffers do not stick around for unneeded textures.
+		tex->Unload();
+	}
 }
 
 //==========================================================================

@@ -40,7 +40,7 @@ class DCanvas;
 struct FRemapTable;
 class FTexture;
 
-enum EColorRange
+enum EColorRange : int
 {
 	CR_UNDEFINED = -1,
 	CR_BRICK,
@@ -67,7 +67,6 @@ enum EColorRange
 	CR_DARKGRAY,
 	CR_CYAN,
 	NUM_TEXT_COLORS,
-	FORCE_DWORD = 0x7fffffff	// required for script access.
 };
 
 extern int NumTextColors;

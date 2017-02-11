@@ -19,7 +19,7 @@ EXTERN_CVAR(Int, m_use_mouse);
 struct event_t;
 class FTexture;
 class FFont;
-enum EColorRange;
+enum EColorRange : int;
 class FPlayerClass;
 class FKeyBindings;
 
@@ -244,6 +244,8 @@ public:
 	virtual bool MouseEvent(int type, int x, int y);
 
 	bool CallMenuEvent(int mkey, bool fromcontroller);
+	bool CallMouseEvent(int type, int x, int y);
+	void CallDrawer();
 
 	bool MouseEventBack(int type, int x, int y);
 	void SetCapture();

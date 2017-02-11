@@ -853,6 +853,12 @@ DEFINE_ACTION_FUNCTION(FFont, GetCharWidth)
 	ACTION_RETURN_INT(self->GetCharWidth(code));
 }
 
+DEFINE_ACTION_FUNCTION(FFont, GetHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetHeight());
+}
+
 //==========================================================================
 //
 // Find string width using this font

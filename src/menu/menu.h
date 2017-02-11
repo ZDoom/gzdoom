@@ -22,6 +22,7 @@ class FFont;
 enum EColorRange : int;
 class FPlayerClass;
 class FKeyBindings;
+struct FBrokenLines;
 
 enum EMenuKey
 {
@@ -66,7 +67,37 @@ struct FSaveGameNode
 	FSaveGameNode() { bNoDelete = false; }
 };
 
+struct SavegameManager
+{
+	TArray<FSaveGameNode*> SaveGames;
+	int LastSaved = -1;
+	int LastAccessed = -1;
+	int WindowSize = 0;
+	FSaveGameNode *quickSaveSlot = nullptr;
 
+	FileReader *currentSavePic = nullptr;
+	TArray<char> SavePicData;
+
+	FTexture *SavePic = nullptr;
+	FBrokenLines *SaveComment = nullptr;
+
+	void ClearSaveGames();
+	int InsertSaveNode(FSaveGameNode *node);
+	int RemoveSaveSlot(int index);
+	void ReadSaveStrings();
+	void NotifyNewSave(const char *file, const char *title, bool okForQuicksave);
+	void LoadSavegame(int Selected);
+	void DoSave(int Selected, const char *savegamestring);
+	void DeleteEntry(int Selected);
+	void ExtractSaveData(int index);
+	void UnloadSaveData();
+	void ClearSaveStuff();
+	bool DrawSavePic(int x, int y, int w, int h);
+	void SetFileInfo(int Selected);
+
+};
+
+extern SavegameManager savegameManager;
 
 //=============================================================================
 //
@@ -707,7 +738,6 @@ void M_StartupSkillMenu(FGameStartup *gs);
 int M_GetDefaultSkill();
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
-void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
 void M_RefreshModesList ();

@@ -47,7 +47,6 @@
 #include "g_game.h"
 
 
-extern FSaveGameNode *quickSaveSlot;
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 
 class DMessageBoxMenu : public DMenu
@@ -549,7 +548,7 @@ DQuickSaveMenu::DQuickSaveMenu(bool playsound)
 {
 	FString tempstring;
 
-	tempstring.Format(GStrings("QSPROMPT"), quickSaveSlot->Title);
+	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->Title);
 	Init(NULL, tempstring, 0, playsound);
 }
 
@@ -563,7 +562,7 @@ void DQuickSaveMenu::HandleResult(bool res)
 {
 	if (res)
 	{
-		G_SaveGame (quickSaveSlot->Filename.GetChars(), quickSaveSlot->Title);
+		G_SaveGame (savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->Title);
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	}
@@ -591,7 +590,7 @@ CCMD (quicksave)
 	if (gamestate != GS_LEVEL)
 		return;
 		
-	if (quickSaveSlot == NULL)
+	if (savegameManager.quickSaveSlot == NULL)
 	{
 		S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
@@ -602,7 +601,7 @@ CCMD (quicksave)
 	// [mxd]. Just save the game, no questions asked.
 	if (!saveloadconfirmation)
 	{
-		G_SaveGame(quickSaveSlot->Filename.GetChars(), quickSaveSlot->Title);
+		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->Title);
 		return;
 	}
 
@@ -645,7 +644,7 @@ DQuickLoadMenu::DQuickLoadMenu(bool playsound)
 {
 	FString tempstring;
 
-	tempstring.Format(GStrings("QLPROMPT"), quickSaveSlot->Title);
+	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->Title);
 	Init(NULL, tempstring, 0, playsound);
 }
 
@@ -659,7 +658,7 @@ void DQuickLoadMenu::HandleResult(bool res)
 {
 	if (res)
 	{
-		G_LoadGame (quickSaveSlot->Filename.GetChars());
+		G_LoadGame (savegameManager.quickSaveSlot->Filename.GetChars());
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	}
@@ -685,11 +684,11 @@ CCMD (quickload)
 		return;
 	}
 		
-	if (quickSaveSlot == NULL)
+	if (savegameManager.quickSaveSlot == NULL)
 	{
 		M_StartControlPanel(true);
 		// signal that whatever gets loaded should be the new quicksave
-		quickSaveSlot = (FSaveGameNode *)1;
+		savegameManager.quickSaveSlot = (FSaveGameNode *)1;
 		M_SetMenu(NAME_Loadgamemenu);
 		return;
 	}
@@ -697,7 +696,7 @@ CCMD (quickload)
 	// [mxd]. Just load the game, no questions asked.
 	if (!saveloadconfirmation)
 	{
-		G_LoadGame(quickSaveSlot->Filename.GetChars());
+		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
 		return;
 	}
 

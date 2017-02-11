@@ -2307,7 +2307,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	WriteZip(filename, savegame_filenames, savegame_content);
 
-	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
+	savegameManager.NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.

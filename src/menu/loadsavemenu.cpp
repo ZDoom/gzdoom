@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2001-2010 Randy Heit
-** Copyright 2010 Christoph Oelckers
+** Copyright 2010-2017 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -50,116 +50,47 @@
 #include "resourcefiles/resourcefile.h"
 
 
-
-
-class DLoadSaveMenu : public DListMenu
-{
-	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
-	friend void ClearSaveGames();
-
-protected:
-	static TArray<FSaveGameNode*> SaveGames;
-	static int LastSaved;
-	static int LastAccessed;
-
-	int Selected;
-	int TopItem;
-
-
-	int savepicLeft;
-	int savepicTop;
-	int savepicWidth;
-	int savepicHeight;
-
-	int rowHeight;
-	int listboxLeft;
-	int listboxTop;
-	int listboxWidth;
-	
-	int listboxRows;
-	int listboxHeight;
-	int listboxRight;
-	int listboxBottom;
-
-	int commentLeft;
-	int commentTop;
-	int commentWidth;
-	int commentHeight;
-	int commentRight;
-	int commentBottom;
-
-	// this needs to be kept in memory so that the texture can access it when it needs to.
-	FileReader *currentSavePic;
-	TArray<char> SavePicData;
-
-
-	static int InsertSaveNode (FSaveGameNode *node);
-	static void ReadSaveStrings ();
-
-
-	FTexture *SavePic;
-	FBrokenLines *SaveComment;
-	bool mEntering;
-	char savegamestring[SAVESTRINGSIZE];
-
-	DLoadSaveMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
-	void OnDestroy() override;
-
-	int RemoveSaveSlot (int index);
-	void UnloadSaveData ();
-	void ClearSaveStuff ();
-	void ExtractSaveData (int index);
-	void Drawer ();
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	bool Responder(event_t *ev);
-
-public:
-	static void NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
-
-};
-
-IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
-
-TArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
-int DLoadSaveMenu::LastSaved = -1;
-int DLoadSaveMenu::LastAccessed = -1;
-
-FSaveGameNode *quickSaveSlot;
-
 //=============================================================================
 //
-// Save data maintenance (stored statically)
+// This should remain native because exposing 'remove' would allow
+// the creation of actual malware mods!
 //
 //=============================================================================
 
-void ClearSaveGames()
+void SavegameManager::DeleteEntry(int Selected)
 {
-	for(unsigned i=0;i<DLoadSaveMenu::SaveGames.Size(); i++)
-	{
-		if(!DLoadSaveMenu::SaveGames[i]->bNoDelete)
-			delete DLoadSaveMenu::SaveGames[i];
-	}
-	DLoadSaveMenu::SaveGames.Clear();
+	remove(SaveGames[Selected]->Filename.GetChars());
 }
 
 //=============================================================================
 //
-// Save data maintenance (stored statically)
+// Save data maintenance 
 //
 //=============================================================================
 
-int DLoadSaveMenu::RemoveSaveSlot (int index)
+void SavegameManager::ClearSaveGames()
+{
+	for (unsigned i = 0; i<SaveGames.Size(); i++)
+	{
+		if (!SaveGames[i]->bNoDelete)
+			delete SaveGames[i];
+	}
+	SaveGames.Clear();
+}
+
+//=============================================================================
+//
+// Save data maintenance 
+//
+//=============================================================================
+
+int SavegameManager::RemoveSaveSlot(int index)
 {
 	FSaveGameNode *file = SaveGames[index];
 
 	if (quickSaveSlot == SaveGames[index])
 	{
-		quickSaveSlot = NULL;
-	}
-	if (Selected == index)
-	{
-		Selected = -1;
+		quickSaveSlot = nullptr;
 	}
 	if (!file->bNoDelete) delete file;
 	SaveGames.Delete(index);
@@ -173,7 +104,7 @@ int DLoadSaveMenu::RemoveSaveSlot (int index)
 //
 //=============================================================================
 
-int DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
+int SavegameManager::InsertSaveNode(FSaveGameNode *node)
 {
 	if (SaveGames.Size() == 0)
 	{
@@ -187,10 +118,10 @@ int DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
 	else
 	{	// Add node at top of list
 		unsigned int i;
-		for(i = 0; i < SaveGames.Size(); i++)
+		for (i = 0; i < SaveGames.Size(); i++)
 		{
 			if (SaveGames[i]->bOldVersion ||
-				stricmp (node->Title, SaveGames[i]->Title) <= 0)
+				stricmp(node->Title, SaveGames[i]->Title) <= 0)
 			{
 				break;
 			}
@@ -200,7 +131,6 @@ int DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
 	}
 }
 
-
 //=============================================================================
 //
 // M_ReadSaveStrings
@@ -209,7 +139,7 @@ int DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
 //
 //=============================================================================
 
-void DLoadSaveMenu::ReadSaveStrings ()
+void SavegameManager::ReadSaveStrings()
 {
 	if (SaveGames.Size() == 0)
 	{
@@ -218,15 +148,15 @@ void DLoadSaveMenu::ReadSaveStrings ()
 		FString filter;
 
 		LastSaved = LastAccessed = -1;
-		quickSaveSlot = NULL;
-		filter = G_BuildSaveName ("*." SAVEGAME_EXT, -1);
-		filefirst = I_FindFirst (filter.GetChars(), &c_file);
+		quickSaveSlot = nullptr;
+		filter = G_BuildSaveName("*." SAVEGAME_EXT, -1);
+		filefirst = I_FindFirst(filter.GetChars(), &c_file);
 		if (filefirst != ((void *)(-1)))
 		{
 			do
 			{
 				// I_FindName only returns the file's name and not its full path
-				FString filepath = G_BuildSaveName (I_FindName(&c_file), -1);
+				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
 				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, nullptr, true, true);
 				if (savegame != nullptr)
@@ -290,12 +220,12 @@ void DLoadSaveMenu::ReadSaveStrings ()
 				}
 				else // check for old formats.
 				{
-					FILE *file = fopen (filepath, "rb");
-					if (file != NULL)
+					FILE *file = fopen(filepath, "rb");
+					if (file != nullptr)
 					{
 						PNGHandle *png;
 						char sig[16];
-						char title[SAVESTRINGSIZE+1];
+						char title[SAVESTRINGSIZE + 1];
 						bool oldVer = true;
 						bool addIt = false;
 						bool missing = false;
@@ -310,10 +240,10 @@ void DLoadSaveMenu::ReadSaveStrings ()
 						title[SAVESTRINGSIZE] = 0;
 
 
-						if (NULL != (png = M_VerifyPNG (file)))
+						if (nullptr != (png = M_VerifyPNG(file)))
 						{
-							char *ver = M_GetPNGText (png, "ZDoom Save Version");
-							if (ver != NULL)
+							char *ver = M_GetPNGText(png, "ZDoom Save Version");
+							if (ver != nullptr)
 							{
 								// An old version
 								if (!M_GetPNGText(png, "Title", title, SAVESTRINGSIZE))
@@ -327,23 +257,23 @@ void DLoadSaveMenu::ReadSaveStrings ()
 						}
 						else
 						{
-							fseek (file, 0, SEEK_SET);
-							if (fread (sig, 1, 16, file) == 16)
+							fseek(file, 0, SEEK_SET);
+							if (fread(sig, 1, 16, file) == 16)
 							{
 
-								if (strncmp (sig, "ZDOOMSAVE", 9) == 0)
+								if (strncmp(sig, "ZDOOMSAVE", 9) == 0)
 								{
-									if (fread (title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
+									if (fread(title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
 									{
 										addIt = true;
 									}
 								}
 								else
 								{
-									memcpy (title, sig, 16);
-									if (fread (title + 16, 1, SAVESTRINGSIZE-16, file) == SAVESTRINGSIZE-16 &&
-										fread (sig, 1, 16, file) == 16 &&
-										strncmp (sig, "ZDOOMSAVE", 9) == 0)
+									memcpy(title, sig, 16);
+									if (fread(title + 16, 1, SAVESTRINGSIZE - 16, file) == SAVESTRINGSIZE - 16 &&
+										fread(sig, 1, 16, file) == 16 &&
+										strncmp(sig, "ZDOOMSAVE", 9) == 0)
 									{
 										addIt = true;
 									}
@@ -357,50 +287,49 @@ void DLoadSaveMenu::ReadSaveStrings ()
 							node->Filename = filepath;
 							node->bOldVersion = true;
 							node->bMissingWads = false;
-							memcpy (node->Title, title, SAVESTRINGSIZE);
-							InsertSaveNode (node);
+							memcpy(node->Title, title, SAVESTRINGSIZE);
+							InsertSaveNode(node);
 						}
-						fclose (file);
+						fclose(file);
 					}
 				}
-			} while (I_FindNext (filefirst, &c_file) == 0);
-			I_FindClose (filefirst);
+			} while (I_FindNext(filefirst, &c_file) == 0);
+			I_FindClose(filefirst);
 		}
 	}
 }
 
-
 //=============================================================================
 //
 //
 //
 //=============================================================================
 
-void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
+void SavegameManager::NotifyNewSave(const char *file, const char *title, bool okForQuicksave)
 {
 	FSaveGameNode *node;
 
-	if (file == NULL)
+	if (file == nullptr)
 		return;
 
-	ReadSaveStrings ();
+	ReadSaveStrings();
 
 	// See if the file is already in our list
-	for (unsigned i=0; i<SaveGames.Size(); i++)
+	for (unsigned i = 0; i<SaveGames.Size(); i++)
 	{
 		FSaveGameNode *node = SaveGames[i];
 #ifdef __unix__
-		if (node->Filename.Compare (file) == 0)
+		if (node->Filename.Compare(file) == 0)
 #else
-		if (node->Filename.CompareNoCase (file) == 0)
+		if (node->Filename.CompareNoCase(file) == 0)
 #endif
 		{
-			strcpy (node->Title, title);
+			strcpy(node->Title, title);
 			node->bOldVersion = false;
 			node->bMissingWads = false;
 			if (okForQuicksave)
 			{
-				if (quickSaveSlot == NULL) quickSaveSlot = node;
+				if (quickSaveSlot == nullptr) quickSaveSlot = node;
 				LastAccessed = LastSaved = i;
 			}
 			return;
@@ -408,107 +337,71 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 	}
 
 	node = new FSaveGameNode;
-	strcpy (node->Title, title);
+	strcpy(node->Title, title);
 	node->Filename = file;
 	node->bOldVersion = false;
 	node->bMissingWads = false;
-	int index = InsertSaveNode (node);
+	int index = InsertSaveNode(node);
 
 	if (okForQuicksave)
 	{
-		if (quickSaveSlot == NULL) quickSaveSlot = node;
+		if (quickSaveSlot == nullptr) quickSaveSlot = node;
 		LastAccessed = LastSaved = index;
 	}
 }
 
-void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
+//=============================================================================
+//
+// Loads the savegame
+//
+//=============================================================================
+
+void SavegameManager::LoadSavegame(int Selected)
 {
-	DLoadSaveMenu::NotifyNewSave(file, title, okForQuicksave);
-}
-
-//=============================================================================
-//
-// End of static savegame maintenance code
-//
-//=============================================================================
-
-DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
-: DListMenu(parent, desc)
-{
-	ReadSaveStrings();
-
-	savepicLeft = 10;
-	savepicTop = 54*CleanYfac;
-	savepicWidth = 216*screen->GetWidth()/640;
-	savepicHeight = 135*screen->GetHeight()/400;
-
-	rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
-	listboxLeft = savepicLeft + savepicWidth + 14;
-	listboxTop = savepicTop;
-	listboxWidth = screen->GetWidth() - listboxLeft - 10;
-	int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
-	listboxRows = (listboxHeight1 - 1) / rowHeight;
-	listboxHeight = listboxRows * rowHeight + 1;
-	listboxRight = listboxLeft + listboxWidth;
-	listboxBottom = listboxTop + listboxHeight;
-	currentSavePic = nullptr;
-
-	commentLeft = savepicLeft;
-	commentTop = savepicTop + savepicHeight + 16;
-	commentWidth = savepicWidth;
-	commentHeight = (51+(screen->GetHeight()>200?10:0))*CleanYfac;
-	commentRight = commentLeft + commentWidth;
-	commentBottom = commentTop + commentHeight;
-}
-
-void DLoadSaveMenu::OnDestroy()
-{
-	if (currentSavePic != nullptr) delete currentSavePic;
-	currentSavePic = nullptr;
-	ClearSaveStuff ();
-	Super::OnDestroy();
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DLoadSaveMenu::UnloadSaveData ()
-{
-	if (SavePic != nullptr)
-	{
-		delete SavePic;
-	}
-	if (SaveComment != nullptr)
-	{
-		V_FreeBrokenLines (SaveComment);
-	}
-	if (currentSavePic != nullptr)
-	{
-		delete currentSavePic;
-	}
-
-	SavePic = nullptr;
-	SaveComment = nullptr;
-	currentSavePic = nullptr;
-	SavePicData.Clear();
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DLoadSaveMenu::ClearSaveStuff ()
-{
-	UnloadSaveData();
+	G_LoadGame(SaveGames[Selected]->Filename.GetChars(), true);
 	if (quickSaveSlot == (FSaveGameNode*)1)
 	{
-		quickSaveSlot = NULL;
+		quickSaveSlot = SaveGames[Selected];
 	}
+	M_ClearMenus();
+	V_SetBorderNeedRefresh();
+	LastAccessed = Selected;
+}
+
+//=============================================================================
+//
+// 
+//
+//=============================================================================
+
+void SavegameManager::DoSave(int Selected, const char *savegamestring)
+{
+	if (Selected != 0)
+	{
+		auto node = SaveGames[Selected];
+		G_SaveGame(node->Filename.GetChars(), savegamestring);
+	}
+	else
+	{
+		// Find an unused filename and save as that
+		FString filename;
+		int i;
+		FILE *test;
+
+		for (i = 0;; ++i)
+		{
+			filename = G_BuildSaveName("save", i);
+			test = fopen(filename, "rb");
+			if (test == nullptr)
+			{
+				break;
+			}
+			fclose(test);
+		}
+		G_SaveGame(filename, savegamestring);
+	}
+	M_ClearMenus();
+	V_SetBorderNeedRefresh();
 }
 
 //=============================================================================
@@ -517,12 +410,12 @@ void DLoadSaveMenu::ClearSaveStuff ()
 //
 //=============================================================================
 
-void DLoadSaveMenu::ExtractSaveData (int index)
+void SavegameManager::ExtractSaveData(int index)
 {
 	FResourceFile *resf;
 	FSaveGameNode *node;
 
-	UnloadSaveData ();
+	UnloadSaveData();
 
 	if ((unsigned)index < SaveGames.Size() &&
 		(node = SaveGames[index]) &&
@@ -548,8 +441,8 @@ void DLoadSaveMenu::ExtractSaveData (int index)
 			comment = time;
 			if (time.Len() > 0) comment += "\n\n";
 			comment += pcomment;
-			
-			SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, comment.GetChars());
+
+			SaveComment = V_BreakLines(SmallFont, WindowSize, comment.GetChars());
 
 			// Extract pic
 			FResourceLump *pic = resf->FindLump("savepic.png");
@@ -592,6 +485,181 @@ void DLoadSaveMenu::ExtractSaveData (int index)
 //
 //=============================================================================
 
+void SavegameManager::UnloadSaveData()
+{
+	if (SavePic != nullptr)
+	{
+		delete SavePic;
+	}
+	if (SaveComment != nullptr)
+	{
+		V_FreeBrokenLines(SaveComment);
+	}
+	if (currentSavePic != nullptr)
+	{
+		delete currentSavePic;
+	}
+
+	SavePic = nullptr;
+	SaveComment = nullptr;
+	currentSavePic = nullptr;
+	SavePicData.Clear();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void SavegameManager::ClearSaveStuff()
+{
+	UnloadSaveData();
+	if (quickSaveSlot == (FSaveGameNode*)1)
+	{
+		quickSaveSlot = nullptr;
+	}
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool SavegameManager::DrawSavePic(int x, int y, int w, int h)
+{
+	if (SavePic == nullptr) return false;
+	screen->DrawTexture(SavePic, x, y, 	DTA_DestWidth, w, DTA_DestHeight, h, DTA_Masked, false,	TAG_DONE);
+	return true;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void SavegameManager::SetFileInfo(int Selected)
+{
+	if (!SaveGames[Selected]->Filename.IsEmpty())
+	{
+		char workbuf[512];
+
+		mysnprintf(workbuf, countof(workbuf), "File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
+		if (SaveComment != nullptr)
+		{
+			V_FreeBrokenLines(SaveComment);
+		}
+		SaveComment = V_BreakLines(SmallFont, WindowSize, workbuf);
+	}
+}
+
+SavegameManager savegameManager;
+
+
+
+
+class DLoadSaveMenu : public DListMenu
+{
+	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
+
+protected:
+
+	SavegameManager *manager;
+
+	int Selected;
+	int TopItem;
+
+
+	int savepicLeft;
+	int savepicTop;
+	int savepicWidth;
+	int savepicHeight;
+
+	int rowHeight;
+	int listboxLeft;
+	int listboxTop;
+	int listboxWidth;
+	
+	int listboxRows;
+	int listboxHeight;
+	int listboxRight;
+	int listboxBottom;
+
+	int commentLeft;
+	int commentTop;
+	int commentWidth;
+	int commentHeight;
+	int commentRight;
+	int commentBottom;
+
+	// this needs to be kept in memory so that the texture can access it when it needs to.
+	bool mEntering;
+	char savegamestring[SAVESTRINGSIZE];
+
+	DLoadSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
+	void OnDestroy() override;
+
+	void Drawer ();
+	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
+	bool Responder(event_t *ev);
+};
+
+IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
+
+
+
+//=============================================================================
+//
+// End of static savegame maintenance code
+//
+//=============================================================================
+
+DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
+: DListMenu(parent, desc)
+{
+	manager = &savegameManager;
+	manager->ReadSaveStrings();
+
+	savepicLeft = 10;
+	savepicTop = 54*CleanYfac;
+	savepicWidth = 216*screen->GetWidth()/640;
+	savepicHeight = 135*screen->GetHeight()/400;
+	manager->WindowSize = savepicWidth;
+
+	rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
+	listboxLeft = savepicLeft + savepicWidth + 14;
+	listboxTop = savepicTop;
+	listboxWidth = screen->GetWidth() - listboxLeft - 10;
+	int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+	listboxRows = (listboxHeight1 - 1) / rowHeight;
+	listboxHeight = listboxRows * rowHeight + 1;
+	listboxRight = listboxLeft + listboxWidth;
+	listboxBottom = listboxTop + listboxHeight;
+
+	commentLeft = savepicLeft;
+	commentTop = savepicTop + savepicHeight + 16;
+	commentWidth = savepicWidth;
+	commentHeight = (51+(screen->GetHeight()>200?10:0))*CleanYfac;
+	commentRight = commentLeft + commentWidth;
+	commentBottom = commentTop + commentHeight;
+}
+
+void DLoadSaveMenu::OnDestroy()
+{
+	manager->ClearSaveStuff ();
+	Super::OnDestroy();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void DLoadSaveMenu::Drawer ()
 {
 	Super::Drawer();
@@ -608,23 +676,15 @@ void DLoadSaveMenu::Drawer ()
 	}
 
 	V_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
-	if (SavePic != NULL)
-	{
-		screen->DrawTexture(SavePic, savepicLeft, savepicTop,
-			DTA_DestWidth, savepicWidth,
-			DTA_DestHeight, savepicHeight,
-			DTA_Masked, false,
-			TAG_DONE);
-	}
-	else
+	if (!manager->DrawSavePic(savepicLeft, savepicTop, savepicWidth, savepicHeight))
 	{
 		screen->Clear (savepicLeft, savepicTop,
 			savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
 
-		if (SaveGames.Size() > 0)
+		if (manager->SaveGames.Size() > 0)
 		{
 			const char *text =
-				(Selected == -1 || !SaveGames[Selected]->bOldVersion)
+				(Selected == -1 || !manager->SaveGames[Selected]->bOldVersion)
 				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
@@ -637,15 +697,15 @@ void DLoadSaveMenu::Drawer ()
 	// Draw comment area
 	V_DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
 	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
-	if (SaveComment != NULL)
+	if (manager->SaveComment != nullptr)
 	{
-		// I'm not sure why SaveComment would go NULL in this loop, but I got
-		// a crash report where it was NULL when i reached 1, so now I check
+		// I'm not sure why SaveComment would go nullptr in this loop, but I got
+		// a crash report where it was nullptr when i reached 1, so now I check
 		// for that.
-		for (i = 0; SaveComment != NULL && SaveComment[i].Width >= 0 && i < 6; ++i)
+		for (i = 0; manager->SaveComment != nullptr && manager->SaveComment[i].Width >= 0 && i < 6; ++i)
 		{
 			screen->DrawText (SmallFont, CR_GOLD, commentLeft, commentTop
-				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].Text,
+				+ SmallFont->GetHeight()*i*CleanYfac, manager->SaveComment[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
@@ -654,7 +714,7 @@ void DLoadSaveMenu::Drawer ()
 	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
 	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
 
-	if (SaveGames.Size() == 0)
+	if (manager->SaveGames.Size() == 0)
 	{
 		const char * text = GStrings("MNU_NOFILES");
 		const int textlen = SmallFont->StringWidth (text)*CleanXfac;
@@ -665,10 +725,10 @@ void DLoadSaveMenu::Drawer ()
 		return;
 	}
 
-	for (i = 0, j = TopItem; i < listboxRows && j < SaveGames.Size(); i++,j++)
+	for (i = 0, j = TopItem; i < listboxRows && j < manager->SaveGames.Size(); i++,j++)
 	{
 		int color;
-		node = SaveGames[j];
+		node = manager->SaveGames[j];
 		if (node->bOldVersion)
 		{
 			color = CR_BLUE;
@@ -732,59 +792,59 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
-		if (SaveGames.Size() > 1)
+		if (manager->SaveGames.Size() > 1)
 		{
 			if (Selected == -1) Selected = TopItem;
 			else
 			{
-				if (--Selected < 0) Selected = SaveGames.Size()-1;
+				if (--Selected < 0) Selected = manager->SaveGames.Size()-1;
 				if (Selected < TopItem) TopItem = Selected;
 				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			}
-			UnloadSaveData ();
-			ExtractSaveData (Selected);
+			manager->UnloadSaveData ();
+			manager->ExtractSaveData (Selected);
 		}
 		return true;
 
 	case MKEY_Down:
-		if (SaveGames.Size() > 1)
+		if (manager->SaveGames.Size() > 1)
 		{
 			if (Selected == -1) Selected = TopItem;
 			else
 			{
-				if (unsigned(++Selected) >= SaveGames.Size()) Selected = 0;
+				if (unsigned(++Selected) >= manager->SaveGames.Size()) Selected = 0;
 				if (Selected < TopItem) TopItem = Selected;
 				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			}
-			UnloadSaveData ();
-			ExtractSaveData (Selected);
+			manager->UnloadSaveData ();
+			manager->ExtractSaveData (Selected);
 		}
 		return true;
 
 	case MKEY_PageDown:
-		if (SaveGames.Size() > 1)
+		if (manager->SaveGames.Size() > 1)
 		{
-			if (TopItem >= (int)SaveGames.Size() - listboxRows)
+			if (TopItem >= (int)manager->SaveGames.Size() - listboxRows)
 			{
 				TopItem = 0;
 				if (Selected != -1) Selected = 0;
 			}
 			else
 			{
-				TopItem = MIN<int>(TopItem + listboxRows, SaveGames.Size() - listboxRows);
+				TopItem = MIN<int>(TopItem + listboxRows, manager->SaveGames.Size() - listboxRows);
 				if (TopItem > Selected && Selected != -1) Selected = TopItem;
 			}
-			UnloadSaveData ();
-			ExtractSaveData (Selected);
+			manager->UnloadSaveData ();
+			manager->ExtractSaveData (Selected);
 		}
 		return true;
 
 	case MKEY_PageUp:
-		if (SaveGames.Size() > 1)
+		if (manager->SaveGames.Size() > 1)
 		{
 			if (TopItem == 0)
 			{
-				TopItem = SaveGames.Size() - listboxRows;
+				TopItem = manager->SaveGames.Size() - listboxRows;
 				if (Selected != -1) Selected = TopItem;
 			}
 			else
@@ -792,8 +852,8 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 				TopItem = MAX(TopItem - listboxRows, 0);
 				if (Selected >= TopItem + listboxRows) Selected = TopItem;
 			}
-			UnloadSaveData ();
-			ExtractSaveData (Selected);
+			manager->UnloadSaveData ();
+			manager->ExtractSaveData (Selected);
 		}
 		return true;
 
@@ -802,18 +862,18 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	case MKEY_MBYes:
 	{
-		if ((unsigned)Selected < SaveGames.Size())
+		if ((unsigned)Selected < manager->SaveGames.Size())
 		{
-			int listindex = SaveGames[0]->bNoDelete? Selected-1 : Selected;
-			remove (SaveGames[Selected]->Filename.GetChars());
-			UnloadSaveData ();
-			Selected = RemoveSaveSlot (Selected);
-			ExtractSaveData (Selected);
+			int listindex = manager->SaveGames[0]->bNoDelete? Selected-1 : Selected;
+			manager->DeleteEntry(Selected);
+			manager->UnloadSaveData ();
+			Selected = manager->RemoveSaveSlot (Selected);
+			manager->ExtractSaveData (Selected);
 
-			if (LastSaved == listindex) LastSaved = -1;
-			else if (LastSaved > listindex) LastSaved--;
-			if (LastAccessed == listindex) LastAccessed = -1;
-			else if (LastAccessed > listindex) LastAccessed--;
+			if (manager->LastSaved == listindex) manager->LastSaved = -1;
+			else if (manager->LastSaved > listindex) manager->LastSaved--;
+			if (manager->LastAccessed == listindex) manager->LastAccessed = -1;
+			else if (manager->LastAccessed > listindex) manager->LastAccessed--;
 		}
 		return true;
 	}
@@ -836,11 +896,11 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 	{
 		int lineno = (y - listboxTop) / rowHeight;
 
-		if (TopItem + lineno < (int)SaveGames.Size())
+		if (TopItem + lineno < (int)manager->SaveGames.Size())
 		{
 			Selected = TopItem + lineno;
-			UnloadSaveData ();
-			ExtractSaveData (Selected);
+			manager->UnloadSaveData ();
+			manager->ExtractSaveData (Selected);
 			if (type == MOUSE_Release)
 			{
 				if (MenuEvent(MKEY_Enter, true))
@@ -868,22 +928,12 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_KeyDown)
 		{
-			if ((unsigned)Selected < SaveGames.Size())
+			if ((unsigned)Selected < manager->SaveGames.Size())
 			{
 				switch (ev->data1)
 				{
 				case GK_F1:
-					if (!SaveGames[Selected]->Filename.IsEmpty())
-					{
-						char workbuf[512];
-
-						mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
-						if (SaveComment != NULL)
-						{
-							V_FreeBrokenLines (SaveComment);
-						}
-						SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
-					}
+					manager->SetFileInfo(Selected);
 					return true;
 
 				case GK_DEL:
@@ -891,7 +941,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 					{
 						FString EndString;
 						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-							GStrings("MNU_DELETESG"), SaveGames[Selected]->Title, GStrings("PRESSYN"));
+							GStrings("MNU_DELETESG"), manager->SaveGames[Selected]->Title, GStrings("PRESSYN"));
 						M_StartMessage (EndString, 0);
 					}
 					return true;
@@ -905,7 +955,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 		}
 		else if (ev->subtype == EV_GUI_WheelDown)
 		{
-			if (TopItem < (int)SaveGames.Size() - listboxRows) TopItem++;
+			if (TopItem < (int)manager->SaveGames.Size() - listboxRows) TopItem++;
 			return true;
 		}
 	}
@@ -927,9 +977,8 @@ class DSaveMenu : public DLoadSaveMenu
 
 public:
 
-	DSaveMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
+	DSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
 	void OnDestroy() override;
-	void DoSave (FSaveGameNode *node);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 
@@ -949,17 +998,17 @@ DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 {
 	strcpy (NewSaveNode.Title, GStrings["NEWSAVE"]);
 	NewSaveNode.bNoDelete = true;
-	SaveGames.Insert(0, &NewSaveNode);
+	manager->SaveGames.Insert(0, &NewSaveNode);
 	TopItem = 0;
-	if (LastSaved == -1)
+	if (manager->LastSaved == -1)
 	{
 		Selected = 0;
 	}
 	else
 	{
-		Selected = LastSaved + 1;
+		Selected = manager->LastSaved + 1;
 	}
-	ExtractSaveData (Selected);
+	manager->ExtractSaveData (Selected);
 }
 
 //=============================================================================
@@ -970,48 +1019,13 @@ DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 
 void DSaveMenu::OnDestroy()
 {
-	if (SaveGames[0] == &NewSaveNode)
+	if (manager->SaveGames[0] == &NewSaveNode)
 	{
-		SaveGames.Delete(0);
+		manager->SaveGames.Delete(0);
 		if (Selected == 0) Selected = -1;
 		else Selected--;
 	}
 	Super::OnDestroy();
-}
-
-//=============================================================================
-//
-// 
-//
-//=============================================================================
-
-void DSaveMenu::DoSave (FSaveGameNode *node)
-{
-	if (node != &NewSaveNode)
-	{
-		G_SaveGame (node->Filename.GetChars(), savegamestring);
-	}
-	else
-	{
-		// Find an unused filename and save as that
-		FString filename;
-		int i;
-		FILE *test;
-
-		for (i = 0;; ++i)
-		{
-			filename = G_BuildSaveName ("save", i);
-			test = fopen (filename, "rb");
-			if (test == NULL)
-			{
-				break;
-			}
-			fclose (test);
-		}
-		G_SaveGame (filename, savegamestring);
-	}
-	M_ClearMenus();
-	V_SetBorderNeedRefresh();
 }
 
 //=============================================================================
@@ -1035,7 +1049,7 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (Selected != 0)
 		{
-			strcpy (savegamestring, SaveGames[Selected]->Title);
+			strcpy (savegamestring, manager->SaveGames[Selected]->Title);
 		}
 		else
 		{
@@ -1048,7 +1062,7 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	else if (mkey == MKEY_Input)
 	{
 		mEntering = false;
-		DoSave(SaveGames[Selected]);
+		manager->DoSave(Selected, savegamestring);
 	}
 	else if (mkey == MKEY_Abort)
 	{
@@ -1079,7 +1093,7 @@ bool DSaveMenu::Responder (event_t *ev)
 
 			case 'N':
 				Selected = TopItem = 0;
-				UnloadSaveData ();
+				manager->UnloadSaveData ();
 				return true;
 			}
 		}
@@ -1099,7 +1113,7 @@ class DLoadMenu : public DLoadSaveMenu
 
 public:
 
-	DLoadMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
+	DLoadMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
 
 	bool MenuEvent (int mkey, bool fromcontroller);
 };
@@ -1117,11 +1131,11 @@ DLoadMenu::DLoadMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
 	TopItem = 0;
-	if (LastAccessed != -1)
+	if (manager->LastAccessed != -1)
 	{
-		Selected = LastAccessed;
+		Selected = manager->LastAccessed;
 	}
-	ExtractSaveData (Selected);
+	manager->ExtractSaveData (Selected);
 
 }
 
@@ -1137,21 +1151,14 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		return true;
 	}
-	if (Selected == -1 || SaveGames.Size() == 0)
+	if (Selected == -1 || manager->SaveGames.Size() == 0)
 	{
 		return false;
 	}
 
 	if (mkey == MKEY_Enter)
 	{
-		G_LoadGame (SaveGames[Selected]->Filename.GetChars(), true);
-		if (quickSaveSlot == (FSaveGameNode*)1)
-		{
-			quickSaveSlot = SaveGames[Selected];
-		}
-		M_ClearMenus();
-		V_SetBorderNeedRefresh();
-		LastAccessed = Selected;
+		manager->LoadSavegame(Selected);
 		return true;
 	}
 	return false;

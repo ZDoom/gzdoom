@@ -65,6 +65,10 @@ namespace swrenderer
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
 		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;
 
+		bool IsInvisibleLine() const;
+		bool IsDoorClosed() const;
+		bool IsSolid() const;
+
 		bool ShouldMarkFloor() const;
 		bool ShouldMarkCeiling() const;
 		bool ShouldMarkPortal() const;

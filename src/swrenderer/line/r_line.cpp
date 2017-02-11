@@ -130,21 +130,13 @@ namespace swrenderer
 
 		rw_havehigh = rw_havelow = false;
 
-		bool solid;
-
-		// Single sided line?
-		if (mBackSector == NULL)
-		{
-			solid = true;
-		}
-		else
+		if (mBackSector)
 		{
 			// kg3D - its fake, no transfer_heights
 			if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
 				mBackSector = Thread->OpaquePass->FakeFlat(mBackSector, &tempsec, nullptr, nullptr, mLineSegment, WallC.sx1, WallC.sx2, mFrontCeilingZ1, mFrontCeilingZ2);
 			}
-			mDoorClosed = false;		// killough 4/16/98
 
 			mBackCeilingZ1 = mBackSector->ceilingplane.ZatPoint(line->v1);
 			mBackFloorZ1 = mBackSector->floorplane.ZatPoint(line->v1);
@@ -175,103 +167,122 @@ namespace swrenderer
 				rw_havelow = true;
 				walllower.Project(mBackSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 			}
+		}
 
-			// Portal
-			if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0])
+		mDoorClosed = IsDoorClosed();
+
+		if (IsInvisibleLine())
+		{
+			// When using GL nodes, do a clipping test for these lines so we can
+			// mark their subsectors as visible for automap texturing.
+			if (hasglnodes && !(mSubsector->flags & SSECF_DRAWN))
 			{
-				solid = true;
-			}
-			// Closed door.
-			else if ((mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) ||
-				(mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
-			{
-				solid = true;
-			}
-			else if (
-				// properly render skies (consider door "open" if both ceilings are sky):
-				(mBackSector->GetTexture(sector_t::ceiling) != skyflatnum || mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
-
-				// if door is closed because back is shut:
-				&& mBackCeilingZ1 <= mBackFloorZ1 && mBackCeilingZ2 <= mBackFloorZ2
-
-				// preserve a kind of transparent door/lift special effect:
-				&& ((mBackCeilingZ1 >= mFrontCeilingZ1 && mBackCeilingZ2 >= mFrontCeilingZ2) || line->sidedef->GetTexture(side_t::top).isValid())
-				&& ((mBackFloorZ1 <= mFrontFloorZ1 && mBackFloorZ2 <= mFrontFloorZ2) || line->sidedef->GetTexture(side_t::bottom).isValid()))
-			{
-				// killough 1/18/98 -- This function is used to fix the automap bug which
-				// showed lines behind closed doors simply because the door had a dropoff.
-				//
-				// It assumes that Doom has already ruled out a door being closed because
-				// of front-back closure (e.g. front floor is taller than back ceiling).
-
-				// This fixes the automap floor height bug -- killough 1/18/98:
-				// killough 4/7/98: optimize: save result in doorclosed for use in r_segs.c
-				mDoorClosed = true;
-				solid = true;
-			}
-			else if (mFrontSector->ceilingplane != mBackSector->ceilingplane ||
-				mFrontSector->floorplane != mBackSector->floorplane)
-			{
-				// Window.
-				solid = false;
-			}
-			else if (SkyboxCompare(mFrontSector, mBackSector))
-			{
-				solid = false;
-			}
-			else if (mBackSector->lightlevel != mFrontSector->lightlevel
-				|| mBackSector->GetTexture(sector_t::floor) != mFrontSector->GetTexture(sector_t::floor)
-				|| mBackSector->GetTexture(sector_t::ceiling) != mFrontSector->GetTexture(sector_t::ceiling)
-				|| mLineSegment->sidedef->GetTexture(side_t::mid).isValid()
-
-				// killough 3/7/98: Take flats offsets into account:
-				|| mBackSector->planes[sector_t::floor].xform != mFrontSector->planes[sector_t::floor].xform
-				|| mBackSector->planes[sector_t::ceiling].xform != mFrontSector->planes[sector_t::ceiling].xform
-
-				|| mBackSector->GetPlaneLight(sector_t::floor) != mFrontSector->GetPlaneLight(sector_t::floor)
-				|| mBackSector->GetPlaneLight(sector_t::ceiling) != mFrontSector->GetPlaneLight(sector_t::ceiling)
-				|| mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)
-				|| mBackSector->GetVisFlags(sector_t::ceiling) != mFrontSector->GetVisFlags(sector_t::ceiling)
-
-				// [RH] Also consider colormaps
-				|| mBackSector->ColorMap != mFrontSector->ColorMap
-
-
-
-				// kg3D - and fake lights
-				|| (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size())
-				|| (mBackSector->e && mBackSector->e->XFloor.lightlist.Size())
-				)
-			{
-				solid = false;
-			}
-			else
-			{
-				// Reject empty lines used for triggers and special events.
-				// Identical floor and ceiling on both sides, identical light levels
-				// on both sides, and no middle texture.
-
-				// When using GL nodes, do a clipping test for these lines so we can
-				// mark their subsectors as visible for automap texturing.
-				if (hasglnodes && !(mSubsector->flags & SSECF_DRAWN))
+				if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
 				{
-					if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
-					{
-						mSubsector->flags |= SSECF_DRAWN;
-					}
+					mSubsector->flags |= SSECF_DRAWN;
 				}
-				return;
 			}
+			return;
 		}
 
 		rw_prepped = false;
 
-		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, solid, this);
+		bool visible = Thread->ClipSegments->Clip(WallC.sx1, WallC.sx2, IsSolid(), this);
 
 		if (visible)
 		{
 			mSubsector->flags |= SSECF_DRAWN;
 		}
+	}
+
+	bool SWRenderLine::IsInvisibleLine() const
+	{
+		// Reject empty lines used for triggers and special events.
+		// Identical floor and ceiling on both sides, identical light levels
+		// on both sides, and no middle texture.
+
+		if (!mBackSector) return false;
+
+		// Portal
+		if (mLineSegment->linedef->isVisualPortal() && mLineSegment->sidedef == mLineSegment->linedef->sidedef[0]) return false;
+
+		// Closed door.
+		if (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) return false;
+		if (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2) return false;
+		if (IsDoorClosed()) return false;
+
+		// Window.
+		if (mFrontSector->ceilingplane != mBackSector->ceilingplane || mFrontSector->floorplane != mBackSector->floorplane) return false;
+		if (SkyboxCompare(mFrontSector, mBackSector)) return false;
+
+		if (mBackSector->lightlevel != mFrontSector->lightlevel) return false;
+		if (mBackSector->GetTexture(sector_t::floor) != mFrontSector->GetTexture(sector_t::floor)) return false;
+		if (mBackSector->GetTexture(sector_t::ceiling) != mFrontSector->GetTexture(sector_t::ceiling)) return false;
+		if (mLineSegment->sidedef->GetTexture(side_t::mid).isValid()) return false;
+
+		if (mBackSector->planes[sector_t::floor].xform != mFrontSector->planes[sector_t::floor].xform) return false;
+		if (mBackSector->planes[sector_t::ceiling].xform != mFrontSector->planes[sector_t::ceiling].xform) return false;
+
+		if (mBackSector->GetPlaneLight(sector_t::floor) != mFrontSector->GetPlaneLight(sector_t::floor)) return false;
+		if (mBackSector->GetPlaneLight(sector_t::ceiling) != mFrontSector->GetPlaneLight(sector_t::ceiling)) return false;
+		if (mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)) return false;
+		if (mBackSector->GetVisFlags(sector_t::ceiling) != mFrontSector->GetVisFlags(sector_t::ceiling)) return false;
+
+		if (mBackSector->ColorMap != mFrontSector->ColorMap) return false;
+
+		if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return false;
+		if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return false;
+
+		return true;
+	}
+
+	bool SWRenderLine::IsSolid() const
+	{
+		// One sided
+		if (mBackSector == nullptr) return true;
+
+		// Portal
+		if (mLineSegment->linedef->isVisualPortal() && mLineSegment->sidedef == mLineSegment->linedef->sidedef[0]) return true;
+
+		// Closed door
+		if (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) return true;
+		if (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2) return true;
+		if (IsDoorClosed()) return true;
+
+		return false;
+	}
+
+	bool SWRenderLine::IsDoorClosed() const
+	{
+		// Portal
+		if (mLineSegment->linedef->isVisualPortal() && mLineSegment->sidedef == mLineSegment->linedef->sidedef[0]) return false;
+
+		// Closed door.
+		if (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) return false;
+		if (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2) return false;
+
+		// properly render skies (consider door "open" if both ceilings are sky)
+		if (mBackSector->GetTexture(sector_t::ceiling) == skyflatnum && mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
+
+		// if door is closed because back is shut:
+		if (!(mBackCeilingZ1 <= mBackFloorZ1 && mBackCeilingZ2 <= mBackFloorZ2)) return false;
+
+		// preserve a kind of transparent door/lift special effect:
+		if (((mBackCeilingZ1 >= mFrontCeilingZ1 && mBackCeilingZ2 >= mFrontCeilingZ2) || mLineSegment->sidedef->GetTexture(side_t::top).isValid())
+			&& ((mBackFloorZ1 <= mFrontFloorZ1 && mBackFloorZ2 <= mFrontFloorZ2) || mLineSegment->sidedef->GetTexture(side_t::bottom).isValid()))
+		{
+			// killough 1/18/98 -- This function is used to fix the automap bug which
+			// showed lines behind closed doors simply because the door had a dropoff.
+			//
+			// It assumes that Doom has already ruled out a door being closed because
+			// of front-back closure (e.g. front floor is taller than back ceiling).
+
+			// This fixes the automap floor height bug -- killough 1/18/98:
+			// killough 4/7/98: optimize: save result in doorclosed for use in r_segs.c
+			return true;
+		}
+
+		return false;
 	}
 
 	bool SWRenderLine::SkyboxCompare(sector_t *frontsector, sector_t *backsector) const

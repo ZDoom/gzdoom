@@ -558,7 +558,6 @@ namespace swrenderer
 								for (int x = xxl; x < xxr; ++x)
 								{
 									drawerargs.SetDest(lxt + x, z1);
-									drawerargs.SetSolidColor(100);
 									drawerargs.SetCount(z2 - z1);
 									drawerargs.DrawVoxelColumn(thread, yplc[xxl], yinc, col, zleng);
 								}

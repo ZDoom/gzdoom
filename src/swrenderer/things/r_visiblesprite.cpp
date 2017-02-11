@@ -157,7 +157,7 @@ namespace swrenderer
 		auto viewport = RenderViewport::Instance();
 
 		double scale = viewport->InvZtoScale * spr->idepth;
-		double hzb = DBL_MIN, hzt = DBL_MAX;
+		double hzb = -DBL_MAX, hzt = DBL_MAX;
 
 		if (spr->IsVoxel() && spr->floorclip != 0)
 		{

@@ -57,11 +57,6 @@ class OptionMenuItem : MenuItemBase native
 		screen.DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
 	}
 	
-	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
-	{
-		return indent;
-	}
-
 	int CursorSpace()
 	{
 		return (14 * CleanXfac_1);
@@ -195,7 +190,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 
 	const OP_VALUES = 0x11001;
 
-	void Init(String label, Name command, Name values, CVar graycheck, int center)
+	protected void Init(String label, Name command, Name values, CVar graycheck, int center)
 	{
 		Super.Init(label, command);
 		mValues = values;
@@ -295,7 +290,7 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 {
 	CVar mCVar;
 
-	void Init(String label, Name command, String values, CVar graycheck, int center)
+	void Init(String label, Name command, Name values, CVar graycheck = null, int center = 0)
 	{
 		Super.Init(label, command, values, graycheck, center);
 		mCVar = CVar.FindCVar(mAction);
@@ -590,7 +585,7 @@ class OptionMenuSliderBase : OptionMenuItem
 	int mDrawX;
 	int mSliderShort;
 
-	void Init(String label, double min, double max, double step, int showval)
+	protected void Init(String label, double min, double max, double step, int showval)
 	{
 		Super.Init(label, 'None');
 		mMin = min;
@@ -731,11 +726,11 @@ class OptionMenuSliderBase : OptionMenuItem
 //
 //=============================================================================
 
-class OptionMenuSliderCVar : OptionMenuSliderBase
+class OptionMenuItemSlider : OptionMenuSliderBase
 {
 	CVar mCVar;
 	
-	void Init(String label, Name command, double min, double max, double step, int showval)
+	void Init(String label, Name command, double min, double max, double step, int showval = 1)
 	{
 		Super.Init(label, min, max, step, showval);
 		mCVar =CVar.FindCVar(command);
@@ -825,7 +820,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 }
 
 
-class OptionMenuScreenResolutionLine : OptionMenuItem
+class OptionMenuItemScreenResolution : OptionMenuItem
 {
 	String mResTexts[3];
 	int mSelection;
@@ -1033,7 +1028,7 @@ class OptionMenuFieldBase : OptionMenuItem
 //
 //=============================================================================
 
-class OptionMenuTextField : OptionMenuFieldBase
+class OptionMenuItemTextField : OptionMenuFieldBase
 {
 	void Init (String label, Name command, CVar graycheck = null)
 	{
@@ -1102,9 +1097,9 @@ class OptionMenuTextField : OptionMenuFieldBase
 //
 //=============================================================================
 
-class OptionMenuNumberField : OptionMenuFieldBase
+class OptionMenuItemNumberField : OptionMenuFieldBase
 {
-	void Init (String label, Name command, float minimum, float maximum, float step, CVar graycheck = null)
+	void Init (String label, Name command, float minimum = 0, float maximum = 100, float step = 1, CVar graycheck = null)
 	{
 		Super.Init(label, command, graycheck);
 		mMinimum = min(minimum, maximum);

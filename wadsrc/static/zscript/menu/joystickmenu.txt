@@ -129,7 +129,7 @@ class OptionMenuItemJoyMap : OptionMenuItemOptionBase
 {
 	int mAxis;
 
-	void Init(String label, int axis, String values, int center)
+	void Init(String label, int axis, Name values, int center)
 	{
 		Super.Init(label, 'none', values, null, center);
 		mAxis = axis;

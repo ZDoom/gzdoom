@@ -1093,7 +1093,6 @@ CCMD(reset2saved)
 
 //native void OptionMenuDescriptor.CalcIndent();
 //native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
-//native void OptionMenuItem.drawLabel(int indent, int y, EColorRange color, bool grayed = false);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -1131,8 +1130,8 @@ DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
 
-DEFINE_FIELD(DOptionMenuItem, mLabel)
-DEFINE_FIELD(DOptionMenuItem, mCentered)
+//DEFINE_FIELD(DMenuItemBase, mLabel)
+//DEFINE_FIELD(DMenuItemBase, mCentered)
 
 DEFINE_FIELD(DOptionMenu, CanScrollUp)
 DEFINE_FIELD(DOptionMenu, CanScrollDown)
@@ -1148,3 +1147,19 @@ DEFINE_FIELD(FOptionMenuSettings, mFontColorHeader)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorHighlight)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorSelection)
 DEFINE_FIELD(FOptionMenuSettings, mLinespacing)
+
+
+struct IJoystickConfig;
+DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
+DMenuItemBase * CreateOptionMenuSliderVar(const char *name, int index, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuItemCommand(const char * label, FName cmd);
+DMenuItemBase * CreateOptionMenuItemOption(const char * label, FName cmd, FName values, FBaseCVar *graycheck, bool center);
+DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
+DMenuItemBase * CreateOptionMenuItemJoyMap(const char *label, int axis, FName values, bool center);
+DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center);
+DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval);
+
+DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
+DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);

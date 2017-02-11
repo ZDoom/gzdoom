@@ -129,10 +129,8 @@ int DOptionMenu::FirstSelectable()
 //
 //
 //=============================================================================
-IMPLEMENT_CLASS(DOptionMenuItem, true, false)
 
-
-DOptionMenuItem *DOptionMenu::GetItem(FName name)
+DMenuItemBase *DOptionMenu::GetItem(FName name)
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
@@ -476,51 +474,6 @@ void DOptionMenu::Drawer ()
 	Super::Drawer();
 }
 
-int DOptionMenuItem::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
-{
-	return indent;
-}
-
-bool DOptionMenuItem::Selectable()
-{
-	return true;
-}
-
-bool DOptionMenuItem::MouseEvent(int type, int x, int y)
-{
-	if (Selectable() && type == DMenu::MOUSE_Release)
-	{
-		return DMenu::CurrentMenu->CallMenuEvent(MKEY_Enter, true);
-	}
-	return false;
-}
-
-int  DOptionMenuItem::GetIndent()
-{
-	if (mCentered)
-	{
-		return 0;
-	}
-	const char *label = mLabel.GetChars();
-	if (*label == '$') label = GStrings(label+1);
-	return SmallFont->StringWidth(label);
-}
-
-void DOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)
-{
-	const char *label = mLabel.GetChars();
-	if (*label == '$') label = GStrings(label+1);
-
-	int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
-
-	int x;
-	int w = SmallFont->StringWidth(label) * CleanXfac_1;
-	if (!mCentered) x = indent - w;
-	else x = (screen->GetWidth() - w) / 2;
-	screen->DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
-}
-
-
 void DOptionMenuDescriptor::CalcIndent()
 {
 	// calculate the menu indent
@@ -540,7 +493,7 @@ void DOptionMenuDescriptor::CalcIndent()
 //
 //=============================================================================
 
-DOptionMenuItem *DOptionMenuDescriptor::GetItem(FName name)
+DMenuItemBase *DOptionMenuDescriptor::GetItem(FName name)
 {
 	for(unsigned i=0;i<mItems.Size(); i++)
 	{

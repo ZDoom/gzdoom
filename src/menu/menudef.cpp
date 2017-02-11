@@ -785,198 +785,114 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			sc.MustGetNumber();
 			desc->mIndent = sc.Number;
 		}
-		else if (sc.Compare("Submenu"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemSubmenu_(label, sc.String);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("Option"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString cvar = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString values = sc.String;
-			FString check;
-			int center = 0;
-			if (sc.CheckString(","))
-			{
-				sc.MustGetString();
-				if (*sc.String != 0) check = sc.String;
-				if (sc.CheckString(","))
-				{
-					sc.MustGetNumber();
-					center = sc.Number;
-				}
-			}
-			DOptionMenuItem *it = new DOptionMenuItemOption_(label, cvar, values, check, center);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("Command"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemCommand_(label, sc.String);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("SafeCommand"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString command = sc.String;
-			FString prompt;
-			// Check for optional custom prompt
-			if (sc.CheckString(","))
-			{
-				sc.MustGetString();
-				prompt = sc.String;
-			}
-			DOptionMenuItem *it = new DOptionMenuItemSafeCommand_(label, command, prompt);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("Control") || sc.Compare("MapControl"))
-		{
-			bool map = sc.Compare("MapControl");
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemControl_(label, sc.String, map? &AutomapBindings : &Bindings);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("ColorPicker"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuItemColorPicker_(label, sc.String);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("StaticText"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			EColorRange cr = ParseOptionColor(sc, desc);
-			DOptionMenuItem *it = new DOptionMenuItemStaticText_(label, cr);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("StaticTextSwitchable"))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString label2 = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FName action = sc.String;
-			EColorRange cr = ParseOptionColor(sc, desc);
-			DOptionMenuItem *it = new DOptionMenuItemStaticTextSwitchable_(label, label2, action, cr);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("Slider"))
-		{
-			sc.MustGetString();
-			FString text = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString action = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetFloat();
-			double min = sc.Float;
-			sc.MustGetStringName(",");
-			sc.MustGetFloat();
-			double max = sc.Float;
-			sc.MustGetStringName(",");
-			sc.MustGetFloat();
-			double step = sc.Float;
-			int showvalue = 1;
-			if (sc.CheckString(","))
-			{
-				sc.MustGetNumber();
-				showvalue = sc.Number;
-			}
-			DOptionMenuItem *it = new DOptionMenuSliderCVar_(text, action, min, max, step, showvalue);
-			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("screenresolution"))
-		{
-			sc.MustGetString();
-			DOptionMenuItem *it = new DOptionMenuScreenResolutionLine_(sc.String);
-			desc->mItems.Push(it);
-		}
-		// [TP] -- Text input widget
-		else if ( sc.Compare( "TextField" ))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName( "," );
-			sc.MustGetString();
-			FString cvar = sc.String;
-			FString check;
-			
-			if ( sc.CheckString( "," ))
-			{
-				sc.MustGetString();
-				check = sc.String;
-			}
-
-			DOptionMenuItem* it = new DOptionMenuTextField_( label, cvar, check );
-			desc->mItems.Push( it );
-		}
-		// [TP] -- Number input widget
-		else if ( sc.Compare( "NumberField" ))
-		{
-			sc.MustGetString();
-			FString label = sc.String;
-			sc.MustGetStringName( "," );
-			sc.MustGetString();
-			FString cvar = sc.String;
-			float minimum = 0.0f;
-			float maximum = 100.0f;
-			float step = 1.0f;
-			FString check;
-
-			if ( sc.CheckString( "," ))
-			{
-				sc.MustGetFloat();
-				minimum = (float) sc.Float;
-				sc.MustGetStringName( "," );
-				sc.MustGetFloat();
-				maximum = (float) sc.Float;
-
-				if ( sc.CheckString( "," ))
-				{
-					sc.MustGetFloat();
-					step = (float) sc.Float;
-
-					if ( sc.CheckString( "," ))
-					{
-						sc.MustGetString();
-						check = sc.String;
-					}
-				}
-			}
-
-			DOptionMenuItem* it = new DOptionMenuNumberField_( label, cvar,
-				minimum, maximum, step, check );
-			desc->mItems.Push( it );
-		}
 		else
 		{
-			sc.ScriptError("Unknown keyword '%s'", sc.String);
+			bool success = false;
+			FStringf buildname("OptionMenuItem%s", sc.String);
+			// Handle one special case: MapControl maps to Control with one parameter different
+			FKeyBindings *bind = sc.Compare("MapControl") ? &AutomapBindings : &Bindings;
+			PClass *cls = PClass::FindClass(buildname);
+			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
+			{
+				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", false));
+				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
+				{
+					auto &args = func->Variants[0].Proto->ArgumentTypes;
+					TArray<VMValue> params;
+
+					params.Push(0);
+					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+					auto TypeBind = NewPointer(NewNativeStruct("KeyBindings", nullptr));
+					for (unsigned i = 1; i < args.Size(); i++)
+					{
+						sc.MustGetString();
+						if (args[i] == TypeString)
+						{
+							params.Push(sc.String);
+						}
+						else if (args[i] == TypeName)
+						{
+							params.Push(FName(sc.String).GetIndex());
+						}
+						else if (args[i] == TypeColor)
+						{
+							params.Push(V_GetColor(nullptr, sc));
+						}
+						else if (args[i]->IsKindOf(RUNTIME_CLASS(PInt)))
+						{
+							char *endp;
+							int v = (int)strtoll(sc.String, &endp, 0);
+							if (*endp != 0)
+							{
+								// special check for font color ranges.
+								v = V_FindFontColor(sc.String);
+								if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+								{
+									// todo: check other data types that may get used.
+									sc.ScriptError("Integer expected, got %s", sc.String);
+								}
+							}
+							if (args[i] == TypeBool) v = !!v;
+							params.Push(v);
+						}
+						else if (args[i]->IsKindOf(RUNTIME_CLASS(PInt)))
+						{
+							char *endp;
+							double v = strtod(sc.String, &endp);
+							if (*endp != 0)
+							{
+								sc.ScriptError("Float expected, got %s", sc.String);
+							}
+							params.Push(v);
+						}
+						else if (args[i] == TypeCVar)
+						{
+							auto cv = FindCVar(sc.String, nullptr);
+							if (cv == nullptr && *sc.String)
+							{
+								sc.ScriptError("Unknown CVar %s", sc.String);
+							}
+							params.Push(cv);
+						}
+						else
+						{
+							sc.ScriptError("Invalid parameter type %s for menu item", args[i]->DescriptiveName());
+						}
+						if (sc.CheckString(","))
+						{
+							if (i == args.Size() - 1)
+							{
+								sc.ScriptError("Too many parameters for %s", cls->TypeName.GetChars());
+							}
+						}
+						else
+						{
+							if (args[i + 1] == TypeBind)
+							{
+								// Bindings are not parsed, they just get tacked on.
+								params.Push(bind);
+								i++;
+							}
+							if (i < args.Size() - 1 && !(func->Variants[0].ArgFlags[i + 1] & VARF_Optional))
+							{
+								sc.ScriptError("Insufficient parameters for %s", cls->TypeName.GetChars());
+							}
+							break;
+						}
+					}
+					/*
+					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
+					params[0] = item;
+					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					desc->mItems.Push((DMenuItemBase*)item);
+					*/
+					success = true;
+				}
+			}
+			if (!success)
+			{
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
+			}
 		}
 	}
 	for (auto &p : desc->mItems)
@@ -1185,7 +1101,7 @@ static void BuildEpisodeMenu()
 		GC::WriteBarrier(od);
 		for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 		{
-			DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
+			auto it = CreateOptionMenuItemSubmenu(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
 			od->mItems.Push(it);
 			GC::WriteBarrier(od, it);
 		}
@@ -1324,13 +1240,13 @@ static void BuildPlayerclassMenu()
 				const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 				if (pname != nullptr)
 				{
-					DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_(pname, "Episodemenu", i);
+					auto it = CreateOptionMenuItemSubmenu(pname, "Episodemenu", i);
 					od->mItems.Push(it);
 					GC::WriteBarrier(od, it);
 				}
 			}
 		}
-		DOptionMenuItemSubmenu_ *it = new DOptionMenuItemSubmenu_("Random", "Episodemenu", -1);
+		auto it = CreateOptionMenuItemSubmenu("Random", "Episodemenu", -1);
 		od->mItems.Push(it);
 		GC::WriteBarrier(od, it);
 	}
@@ -1411,14 +1327,14 @@ static void InitKeySections()
 			for (unsigned i = 0; i < KeySections.Size(); i++)
 			{
 				FKeySection *sect = &KeySections[i];
-				DOptionMenuItem *item = new DOptionMenuItemStaticText_(" ", false);
+				DMenuItemBase *item = CreateOptionMenuItemStaticText(" ", false);
 				menu->mItems.Push(item);
-				item = new DOptionMenuItemStaticText_(sect->mTitle, true);
+				item = CreateOptionMenuItemStaticText(sect->mTitle, true);
 				menu->mItems.Push(item);
 				for (unsigned j = 0; j < sect->mActions.Size(); j++)
 				{
 					FKeyAction *act = &sect->mActions[j];
-					item = new DOptionMenuItemControl_(act->mTitle, act->mAction, &Bindings);
+					item = CreateOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
 					menu->mItems.Push(item);
 				}
 			}
@@ -1599,7 +1515,7 @@ fail:
 	for(unsigned int i = 0; i < AllSkills.Size(); i++)
 	{
 		FSkillInfo &skill = AllSkills[i];
-		DOptionMenuItem *li;
+		DMenuItemBase *li;
 		// Using a different name for skills that must be confirmed makes handling this easier.
 		const char *action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
 			"StartgameConfirm" : "Startgame";
@@ -1609,7 +1525,7 @@ fail:
 		{
 			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 		}
-		li = new DOptionMenuItemSubmenu_(pItemText? *pItemText : skill.MenuName, action, i);
+		li = CreateOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
 		od->mItems.Push(li);
 		GC::WriteBarrier(od, li);
 		if (!done)

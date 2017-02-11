@@ -38,5 +38,8 @@ native	virtual bool MenuEvent (int mkey, bool fromcontroller);// { return false;
 	virtual int GetY() { return mYpos; }
 	virtual int GetX() { return mXpos; }
 	virtual void SetX(int x) { mXpos = x; }
+	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
+
+	
 }
 

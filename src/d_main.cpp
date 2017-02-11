@@ -2523,7 +2523,10 @@ void D_DoomMain (void)
 
 		// Create replacements for dehacked pickups
 		FinishDehPatch();
-		
+
+		if (!batchrun) Printf("M_Init: Init menus.\n");
+		M_Init();
+
 		// clean up the compiler symbols which are not needed any longer.
 		RemoveUnusedSymbols();
 
@@ -2540,9 +2543,6 @@ void D_DoomMain (void)
 		}
 		bglobal.spawn_tries = 0;
 		bglobal.wanted_botnum = bglobal.getspawned.Size();
-
-		if (!batchrun) Printf ("M_Init: Init menus.\n");
-		M_Init ();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);

@@ -118,7 +118,6 @@ public:
 };
 
 class DMenuItemBase;
-class DOptionMenuItem;
 
 class DListMenuDescriptor : public DMenuDescriptor
 {
@@ -176,7 +175,7 @@ class DOptionMenuDescriptor : public DMenuDescriptor
 	DECLARE_CLASS(DOptionMenuDescriptor, DMenuDescriptor)
 
 public:
-	TArray<DOptionMenuItem *> mItems;
+	TArray<DMenuItemBase *> mItems;
 	FString mTitle;
 	int mSelectedItem;
 	int mDrawTop;
@@ -187,7 +186,7 @@ public:
 	bool mDontDim;
 
 	void CalcIndent();
-	DOptionMenuItem *GetItem(FName name);
+	DMenuItemBase *GetItem(FName name);
 	void Reset()
 	{
 		// Reset the default settings (ignore all other values in the struct)
@@ -330,11 +329,14 @@ public:
 	virtual bool MouseEvent(int type, int x, int y);
 	virtual bool CheckHotkey(int c);
 	virtual int GetWidth();
+	virtual int GetIndent() { return 0; }
+	virtual int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected) { return indent; }
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
 	int GetY() { return mYpos; }
 	int GetX() { return mXpos; }
 	void SetX(int x) { mXpos = x; }
+
 };	
 
 class DListMenuItemStaticPatch_ : public DMenuItemBase
@@ -598,16 +600,17 @@ public:
 //
 //=============================================================================
 
-class DOptionMenuItem : public DMenuItemBase
+/*
+class DMenuItemBase : public DMenuItemBase
 {
-	DECLARE_ABSTRACT_CLASS(DOptionMenuItem, DMenuItemBase)
+	DECLARE_ABSTRACT_CLASS(DMenuItemBase, DMenuItemBase)
 public:
 	FString mLabel;
 	bool mCentered;
 
 	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
 
-	DOptionMenuItem(const char *text = nullptr, FName action = NAME_None, bool center = false)
+	DMenuItemBase(const char *text = nullptr, FName action = NAME_None, bool center = false)
 		: DMenuItemBase(0, 0, action)
 	{
 		mLabel = text;
@@ -618,7 +621,8 @@ public:
 	virtual bool Selectable();
 	virtual int GetIndent();
 	virtual bool MouseEvent(int type, int x, int y);
-};	
+};
+*/
 
 //=============================================================================
 //
@@ -657,11 +661,11 @@ public: // needs to be public for script access
 	bool CanScrollUp;
 	bool CanScrollDown;
 	int VisBottom;
-	DOptionMenuItem *mFocusControl;
+	DMenuItemBase *mFocusControl;
 	DOptionMenuDescriptor *mDesc;
 
 //public:
-	DOptionMenuItem *GetItem(FName name);
+	DMenuItemBase *GetItem(FName name);
 	DOptionMenu(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
 	int FirstSelectable();
@@ -671,11 +675,11 @@ public: // needs to be public for script access
 	void Ticker ();
 	void Drawer ();
 	const DOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
-	void SetFocus(DOptionMenuItem *fc)
+	void SetFocus(DMenuItemBase *fc)
 	{
 		mFocusControl = fc;
 	}
-	bool CheckFocus(DOptionMenuItem *fc)
+	bool CheckFocus(DMenuItemBase *fc)
 	{
 		return mFocusControl == fc;
 	}
@@ -744,5 +748,19 @@ void M_RefreshModesList ();
 void M_InitVideoModesMenu ();
 void M_MarkMenus();
 
+
+struct IJoystickConfig;
+DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
+DMenuItemBase * CreateOptionMenuSliderVar(const char *name, int index, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuItemCommand(const char * label, FName cmd);
+DMenuItemBase * CreateOptionMenuItemOption(const char * label, FName cmd, FName values, FBaseCVar *graycheck, bool center);
+DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
+DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
+DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
+DMenuItemBase * CreateOptionMenuItemJoyMap(const char *label, int axis, FName values, bool center);
+DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval);
+DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center);
+DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval);
 
 #endif

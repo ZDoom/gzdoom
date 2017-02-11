@@ -348,7 +348,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			sc.MustGetString();
 			FTextureID tex = GetMenuTexture(sc.String);
 
-			DMenuItemBase *it = new DListMenuItemStaticPatch(x, y, tex, centered);
+			DMenuItemBase *it = new DListMenuItemStaticPatch_(x, y, tex, centered);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("StaticText") || sc.Compare("StaticTextCentered"))
@@ -369,7 +369,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				cr = V_FindFontColor(sc.String);
 				if (cr == CR_UNTRANSLATED && !sc.Compare("untranslated")) cr = desc->mFontColor;
 			}
-			DMenuItemBase *it = new DListMenuItemStaticText(x, y, label, desc->mFont, cr, centered);
+			DMenuItemBase *it = new DListMenuItemStaticText_(x, y, label, desc->mFont, cr, centered);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("PatchItem"))
@@ -389,7 +389,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				param = sc.Number;
 			}
 
-			DMenuItemBase *it = new DListMenuItemPatch(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, tex, action, param);
+			DMenuItemBase *it = new DListMenuItemPatch_(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, tex, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -411,7 +411,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				param = sc.Number;
 			}
 
-			DMenuItemBase *it = new DListMenuItemText(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, param);
+			DMenuItemBase *it = new DListMenuItemText_(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -468,7 +468,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					action = sc.String;
 				}
 			}
-			DListMenuItemPlayerDisplay *it = new DListMenuItemPlayerDisplay(desc, x, y, c1, c2, noportrait, action);
+			DListMenuItemPlayerDisplay_ *it = new DListMenuItemPlayerDisplay_(desc, x, y, c1, c2, noportrait, action);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("PlayerNameBox"))
@@ -480,7 +480,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			int ofs = sc.Number;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DMenuItemBase *it = new DPlayerNameBox(desc->mXpos, desc->mYpos, desc->mLinespacing, ofs, text, desc->mFont, desc->mFontColor, sc.String);
+			DMenuItemBase *it = new DPlayerNameBox_(desc->mXpos, desc->mYpos, desc->mLinespacing, ofs, text, desc->mFont, desc->mFontColor, sc.String);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -498,7 +498,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				sc.MustGetString();
 				values = sc.String;
 			}
-			DMenuItemBase *it = new DValueTextItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, values);
+			DMenuItemBase *it = new DValueTextItem_(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, values);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -519,7 +519,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetNumber();
 			int step = sc.Number;
-			DMenuItemBase *it = new DSliderItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, action, min, max, step);
+			DMenuItemBase *it = new DSliderItem_(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, action, min, max, step);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -1144,12 +1144,12 @@ static void BuildEpisodeMenu()
 					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
-						it = new DListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						it = new DListMenuItemPatch_(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 							tex, NAME_Skillmenu, i);
 					}
 					else
 					{
-						it = new DListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						it = new DListMenuItemText_(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);
@@ -1242,7 +1242,7 @@ static void BuildPlayerclassMenu()
 			if (numclassitems <= 1)
 			{
 				// create a dummy item that auto-chooses the default class.
-				DListMenuItemText *it = new DListMenuItemText(0, 0, 0, 'p', "player", 
+				DListMenuItemText_ *it = new DListMenuItemText_(0, 0, 0, 'p', "player", 
 					ld->mFont,ld->mFontColor, ld->mFontColor2, NAME_Episodemenu, -1000);
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
@@ -1268,7 +1268,7 @@ static void BuildPlayerclassMenu()
 						const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 						if (pname != nullptr)
 						{
-							DListMenuItemText *it = new DListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
+							DListMenuItemText_ *it = new DListMenuItemText_(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
 								pname, ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, i);
 							ld->mItems.Push(it);
 							ld->mYpos += ld->mLinespacing;
@@ -1278,7 +1278,7 @@ static void BuildPlayerclassMenu()
 				}
 				if (n > 1 && !gameinfo.norandomplayerclass)
 				{
-					DListMenuItemText *it = new DListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, 'r',
+					DListMenuItemText_ *it = new DListMenuItemText_(ld->mXpos, ld->mYpos, ld->mLinespacing, 'r',
 						"$MNU_RANDOM", ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, -1);
 					ld->mItems.Push(it);
 				}
@@ -1287,7 +1287,7 @@ static void BuildPlayerclassMenu()
 					const char *pname = GetPrintableDisplayName(PlayerClasses[0].Type);
 					if (pname != nullptr)
 					{
-						DListMenuItemText *it = new DListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
+						DListMenuItemText_ *it = new DListMenuItemText_(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
 							pname, ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, 0);
 						ld->mItems.Push(it);
 					}
@@ -1548,13 +1548,13 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					li = new DListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, i);
+					li = new DListMenuItemPatch_(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, i);
 				}
 				else
 				{
 					EColorRange color = (EColorRange)skill.GetTextColor();
 					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
-					li = new DListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
+					li = new DListMenuItemText_(x, y, ld->mLinespacing, skill.Shortcut, 
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, i);
 				}
 				ld->mItems.Push(li);

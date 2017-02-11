@@ -42,6 +42,8 @@ struct TexMan
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 	native static void ReplaceTextures(String from, String to, int flags);
+	native static int, int GetSize(TextureID tex);
+	native static Vector2 GetScaledSize(TextureID tex);
 }
 
 enum DrawTextureTags
@@ -118,7 +120,7 @@ struct Screen native
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-
+	native static void DrawFrame(int x, int y, int w, int h);
 }
 
 class BrokenLines : Object native
@@ -193,11 +195,24 @@ struct Font native
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
 	native int GetHeight();
+	native String GetCursor();
 
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native static BrokenLines BreakLines(String text, int maxlen);
+}
+
+struct Translation
+{
+	Color colors[256];
+	
+	native bool SetTranslation(int group, int num);
+	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
+	static int MakeID(int group, int num)
+	{
+		return (group << 16) + num;
+	}
 }
 
 struct Console native
@@ -429,6 +444,7 @@ struct State native
 	
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();
+	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
 }
 
 struct F3DFloor native

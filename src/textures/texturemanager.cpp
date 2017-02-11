@@ -1189,6 +1189,40 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	return 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan[FSetTextureID(texid)];
+	int x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetWidth();
+		y = tex->GetHeight();
+	}
+	else x = y = -1;
+	if (numret > 0) ret[0].SetInt(x);
+	if (numret > 1) ret[1].SetInt(x);
+	return MIN(numret, 2);
+}
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan[FSetTextureID(texid)];
+	if (tex != nullptr)
+	{
+		ACTION_RETURN_VEC2(DVector2(tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()));
+	}
+	ACTION_RETURN_VEC2(DVector2(-1, -1));
+}
 
 //==========================================================================
 //

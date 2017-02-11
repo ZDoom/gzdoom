@@ -73,13 +73,16 @@ class Menu : Object native
 		MOUSE_Release
 	};
 
-	//native static int MenuTime();
+	native static int MenuTime();
 	native static void SetVideoMode();
 	native static Menu GetCurrentMenu();
 	native static JoystickConfig GetCurrentJoystickConfig();
 	native static void SetMenu(Name mnu, int param = 0);
 	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
 	
+	virtual void SetFocus(MenuItemBase fc) {}
+	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
+	virtual void ReleaseFocus() {}
 	
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
@@ -102,6 +105,40 @@ class MenuDescriptor : Object native
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
+}
+
+class ListMenuDescriptor : MenuDescriptor native
+{
+	native Array<ListMenuItem> mItems;
+	native int mSelectedItem;
+	native int mSelectOfsX;
+	native int mSelectOfsY;
+	native TextureID mSelector;
+	native int mDisplayTop;
+	native int mXpos, mYpos;
+	native int mWLeft, mWRight;
+	native int mLinespacing;	// needs to be stored for dynamically created menus
+	native int mAutoselect;	// this can only be set by internal menu creation functions
+	native Font mFont;
+	native int mFontColor;
+	native int mFontColor2;
+	native bool mCenter;
+
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mSelectOfsX = 0;
+		mSelectOfsY = 0;
+		mSelector.SetInvalid();
+		mDisplayTop = 0;
+		mXpos = 0;
+		mYpos = 0;
+		mLinespacing = 0;
+		mNetgameMessage = "";
+		mFont = NULL;
+		mFontColor = Font.CR_UNTRANSLATED;
+		mFontColor2 = Font.CR_UNTRANSLATED;
+	}
 }
 
 struct FOptionMenuSettings
@@ -148,20 +185,17 @@ class OptionMenu : Menu native
 	native OptionMenuItem mFocusControl;
 	native OptionMenuDescriptor mDesc;
 	
-	
-	void SetFocus(OptionMenuItem fc)
+	override void SetFocus(MenuItemBase fc)
 	{
-		mFocusControl = fc;
+		mFocusControl = OptionMenuItem(fc);
 	}
-	
-	bool CheckFocus(OptionMenuItem fc)
+	override bool CheckFocus(MenuItemBase fc)
 	{
 		return mFocusControl == fc;
 	}
-	
-	void ReleaseFocus()
+	override void ReleaseFocus()
 	{
-		mFocusControl = null;
+		mFocusControl = NULL;
 	}
 	
 }

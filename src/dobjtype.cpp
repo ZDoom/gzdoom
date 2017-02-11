@@ -3167,11 +3167,14 @@ void PClass::InitializeDefaults()
 		assert(ParentClass != nullptr);
 		ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
 
-		for (const PField *field : Fields)
+		if (Defaults != nullptr)
 		{
-			if (!(field->Flags & VARF_Native))
+			for (const PField *field : Fields)
 			{
-				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+				if (!(field->Flags & VARF_Native))
+				{
+					field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+				}
 			}
 		}
 	}

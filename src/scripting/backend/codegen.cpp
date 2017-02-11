@@ -2456,7 +2456,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
 	static const BYTE loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
-	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
+	assert(Base->ValueType->GetRegType() == Right->ValueType->GetRegType());
 
 	ExpEmit pointer = Base->Emit(build);
 	Address = pointer;
@@ -2971,6 +2971,12 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 	RESOLVE(right, ctx);
 	if (!left || !right)
 	{
+		delete this;
+		return nullptr;
+	}
+	if (!left->ValueType || !right->ValueType)
+	{
+		ScriptPosition.Message(MSG_ERROR, "ValueType not set");
 		delete this;
 		return nullptr;
 	}
@@ -3551,6 +3557,16 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 			{
 				goto error;
 			}
+		}
+		else if (left->IsPointer() && static_cast<PPointer*>(left->ValueType)->PointedType == right->ValueType)
+		{
+			bool writable;
+			if (!right->RequestAddress(ctx, &writable)) goto error;
+		}
+		else if (right->IsPointer() && static_cast<PPointer*>(right->ValueType)->PointedType == left->ValueType)
+		{
+			bool writable;
+			if (!left->RequestAddress(ctx, &writable)) goto error;
 		}
 		else
 		{

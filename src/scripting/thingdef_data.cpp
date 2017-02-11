@@ -754,6 +754,10 @@ void InitThingdef()
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
+	auto playerclassstruct = NewNativeStruct("PlayerClass", nullptr);
+	playerclassstruct->Size = sizeof(FPlayerClass);
+	playerclassstruct->Align = alignof(FPlayerClass);
+
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
 	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
@@ -788,6 +792,10 @@ void InitThingdef()
 	auto aact = NewPointer(NewResizableArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
 	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(aacf);
+
+	auto plrcls = NewPointer(NewResizableArray(playerclassstruct), false);
+	PField *plrclsf = new PField("PlayerClasses", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PlayerClasses);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);

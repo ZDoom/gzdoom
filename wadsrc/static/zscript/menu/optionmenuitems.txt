@@ -1043,7 +1043,7 @@ class OptionMenuTextField : OptionMenuFieldBase
 
 	override String Represent()
 	{
-		if (mEntering) return mEditName .. ((gameinfo.gametype & GAME_DoomStrifeChex) ? "_" : "[");
+		if (mEntering) return mEditName .. SmallFont.GetCursor();
 		else return GetCVarString();
 	}
 

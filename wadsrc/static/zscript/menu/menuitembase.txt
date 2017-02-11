@@ -38,29 +38,5 @@ native	virtual bool MenuEvent (int mkey, bool fromcontroller);// { return false;
 	virtual int GetY() { return mYpos; }
 	virtual int GetX() { return mXpos; }
 	virtual void SetX(int x) { mXpos = x; }
-	
-	/*
-	virtual void DrawSelector(int xofs, int yofs, TextureID tex)
-	{
-		if (tex.isNull())
-		{
-			if ((Menu.MenuTime() % 8) < 6)
-			{
-				screen.DrawText(ConFont, OptionSettings.mFontColorSelection,
-					(mXpos + xofs - 160) * CleanXfac + screen.GetWidth() / 2,
-					(mYpos + yofs - 100) * CleanYfac + screen.GetHeight() / 2,
-					"\xd",
-					DTA_CellX, 8 * CleanXfac,
-					DTA_CellY, 8 * CleanYfac,
-					TAG_DONE);
-			}
-		}
-		else
-		{
-			screen.DrawTexture (tex, mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
-		}
-	}
-	*/
-	
 }
 

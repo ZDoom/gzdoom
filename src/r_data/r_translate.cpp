@@ -1200,6 +1200,63 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL, NULL);
 }
 
+
+DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(tgroup);
+	PARAM_UINT(tnum);
+	PARAM_UINT(pnum);
+	PARAM_POINTER(cls, FPlayerClass);
+
+	if (pnum >= MAXPLAYERS || tgroup >= NUM_TRANSLATION_TABLES || tnum >= translationtables[tgroup].Size())
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	auto self = &players[pnum];
+	int PlayerColor = self->userinfo.GetColor();
+	int	PlayerSkin = self->userinfo.GetSkin();
+	int PlayerColorset = self->userinfo.GetColorSet();
+
+	if (cls != nullptr)
+	{
+		PlayerSkin = R_FindSkin(skins[PlayerSkin].name, int(cls - &PlayerClasses[0]));
+		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
+			&skins[PlayerSkin], translationtables[tgroup][tnum]);
+	}
+	ACTION_RETURN_BOOL(true);
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+struct FTranslation
+{
+	PalEntry colors[256];
+};
+
+DEFINE_ACTION_FUNCTION(_Translation, SetTranslation)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslation);
+	PARAM_UINT(tgroup);
+	PARAM_UINT(tnum);
+	if (tgroup >= NUM_TRANSLATION_TABLES || tnum >= translationtables[tgroup].Size())
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	auto remap = translationtables[tgroup][tnum];
+	int i = 0;
+	for (auto p : self->colors)
+	{
+		remap->Palette[i] = p;
+		remap->Remap[i] = ColorMatcher.Pick(p);
+	}
+	ACTION_RETURN_BOOL(true);
+}
+
 //----------------------------------------------------------------------------
 //
 //

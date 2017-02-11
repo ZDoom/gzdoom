@@ -78,6 +78,11 @@ DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
 
 int DMenu::MenuTime;
 
+DEFINE_ACTION_FUNCTION(DMenu, MenuTime)
+{
+	ACTION_RETURN_INT(DMenu::MenuTime);
+}
+
 FGameStartup GameStartupInfo;
 EMenuState		menuactive;
 bool			M_DemoNoPlay;
@@ -1098,6 +1103,23 @@ DEFINE_FIELD(DMenuItemBase, mXpos)
 DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
+
+DEFINE_FIELD(DListMenuDescriptor, mItems)
+DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)
+DEFINE_FIELD(DListMenuDescriptor, mSelectOfsX)
+DEFINE_FIELD(DListMenuDescriptor, mSelectOfsY)
+DEFINE_FIELD(DListMenuDescriptor, mSelector)
+DEFINE_FIELD(DListMenuDescriptor, mDisplayTop)
+DEFINE_FIELD(DListMenuDescriptor, mXpos)
+DEFINE_FIELD(DListMenuDescriptor, mYpos)
+DEFINE_FIELD(DListMenuDescriptor, mWLeft)
+DEFINE_FIELD(DListMenuDescriptor, mWRight)
+DEFINE_FIELD(DListMenuDescriptor, mLinespacing)
+DEFINE_FIELD(DListMenuDescriptor, mAutoselect)
+DEFINE_FIELD(DListMenuDescriptor, mFont)
+DEFINE_FIELD(DListMenuDescriptor, mFontColor)
+DEFINE_FIELD(DListMenuDescriptor, mFontColor2)
+DEFINE_FIELD(DListMenuDescriptor, mCenter)
 
 DEFINE_FIELD(DOptionMenuDescriptor, mItems)
 DEFINE_FIELD(DOptionMenuDescriptor, mTitle)

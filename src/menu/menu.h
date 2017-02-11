@@ -243,6 +243,11 @@ public:
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);
 
+	virtual void SetFocus(DMenuItemBase *fc) {}
+	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
+	virtual void ReleaseFocus() {}
+
+
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	bool CallMouseEvent(int type, int x, int y);
 	void CallDrawer();
@@ -301,31 +306,31 @@ public:
 	void SetX(int x) { mXpos = x; }
 };	
 
-class DListMenuItemStaticPatch : public DMenuItemBase
+class DListMenuItemStaticPatch_ : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemStaticPatch, DMenuItemBase)
+	DECLARE_CLASS(DListMenuItemStaticPatch_, DMenuItemBase)
 protected:
 	FTextureID mTexture;
 	bool mCentered;
 
-	DListMenuItemStaticPatch() {}
+	DListMenuItemStaticPatch_() {}
 public:
-	DListMenuItemStaticPatch(int x, int y, FTextureID patch, bool centered);
+	DListMenuItemStaticPatch_(int x, int y, FTextureID patch, bool centered);
 	void Drawer(bool selected);
 };
 
-class DListMenuItemStaticText : public DMenuItemBase
+class DListMenuItemStaticText_ : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemStaticText, DMenuItemBase)
+	DECLARE_CLASS(DListMenuItemStaticText_, DMenuItemBase)
 protected:
 	FString mText;
 	FFont *mFont;
 	EColorRange mColor;
 	bool mCentered;
 
-	DListMenuItemStaticText() {}
+	DListMenuItemStaticText_() {}
 public:
-	DListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
+	DListMenuItemStaticText_(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
 	void Drawer(bool selected);
 };
 
@@ -335,9 +340,9 @@ public:
 //
 //=============================================================================
 
-class DListMenuItemPlayerDisplay : public DMenuItemBase
+class DListMenuItemPlayerDisplay_ : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemPlayerDisplay, DMenuItemBase)
+	DECLARE_CLASS(DListMenuItemPlayerDisplay_, DMenuItemBase)
 
 	DListMenuDescriptor *mOwner;
 	FTexture *mBackdrop;
@@ -359,7 +364,7 @@ class DListMenuItemPlayerDisplay : public DMenuItemBase
 	void UpdateRandomClass();
 	void UpdateTranslation();
 
-	DListMenuItemPlayerDisplay() {}
+	DListMenuItemPlayerDisplay_() {}
 public:
 
 	enum
@@ -371,7 +376,7 @@ public:
 		PDF_TRANSLATE = 0x10005,
 	};
 
-	DListMenuItemPlayerDisplay(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
+	DListMenuItemPlayerDisplay_(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
 	void OnDestroy() override;
 	virtual void Ticker();
 	virtual void Drawer(bool selected);
@@ -385,17 +390,17 @@ public:
 //
 //=============================================================================
 
-class DListMenuItemSelectable : public DMenuItemBase
+class DListMenuItemSelectable_ : public DMenuItemBase
 {
-	DECLARE_CLASS(DListMenuItemSelectable, DMenuItemBase)
+	DECLARE_CLASS(DListMenuItemSelectable_, DMenuItemBase)
 protected:
 	int mHotkey;
 	int mHeight;
 	int mParam;
 
-	DListMenuItemSelectable() {}
+	DListMenuItemSelectable_() {}
 public:
-	DListMenuItemSelectable(int x, int y, int height, FName childmenu, int mParam = -1);
+	DListMenuItemSelectable_(int x, int y, int height, FName childmenu, int mParam = -1);
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();
 	bool CheckHotkey(int c);
@@ -404,30 +409,30 @@ public:
 	FName GetAction(int *pparam);
 };
 
-class DListMenuItemText : public DListMenuItemSelectable
+class DListMenuItemText_ : public DListMenuItemSelectable_
 {
-	DECLARE_CLASS(DListMenuItemText, DListMenuItemSelectable)
+	DECLARE_CLASS(DListMenuItemText_, DListMenuItemSelectable_)
 	const char *mText;
 	FFont *mFont;
 	EColorRange mColor;
 	EColorRange mColorSelected;
 
-	DListMenuItemText() {}
+	DListMenuItemText_() {}
 public:
-	DListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param = 0);
+	DListMenuItemText_(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param = 0);
 	void OnDestroy() override;
 	void Drawer(bool selected);
 	int GetWidth();
 };
 
-class DListMenuItemPatch : public DListMenuItemSelectable
+class DListMenuItemPatch_ : public DListMenuItemSelectable_
 {
-	DECLARE_CLASS(DListMenuItemPatch, DListMenuItemSelectable)
+	DECLARE_CLASS(DListMenuItemPatch_, DListMenuItemSelectable_)
 	FTextureID mTexture;
 
-	DListMenuItemPatch() {}
+	DListMenuItemPatch_() {}
 public:
-	DListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
+	DListMenuItemPatch_(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
 	void Drawer(bool selected);
 	int GetWidth();
 };
@@ -438,9 +443,9 @@ public:
 //
 //=============================================================================
 
-class DPlayerNameBox : public DListMenuItemSelectable
+class DPlayerNameBox_ : public DListMenuItemSelectable_
 {
-	DECLARE_CLASS(DPlayerNameBox, DListMenuItemSelectable)
+	DECLARE_CLASS(DPlayerNameBox_, DListMenuItemSelectable_)
 	FString mText;
 	FFont *mFont;
 	EColorRange mFontColor;
@@ -451,10 +456,10 @@ class DPlayerNameBox : public DListMenuItemSelectable
 
 	void DrawBorder (int x, int y, int len);
 
-	DPlayerNameBox() {}
+	DPlayerNameBox_() {}
 public:
 
-	DPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
+	DPlayerNameBox_(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
 	bool SetString(int i, const char *s);
 	bool GetString(int i, char *s, int len);
 	void Drawer(bool selected);
@@ -467,9 +472,9 @@ public:
 //
 //=============================================================================
 
-class DValueTextItem : public DListMenuItemSelectable
+class DValueTextItem_ : public DListMenuItemSelectable_
 {
-	DECLARE_CLASS(DValueTextItem, DListMenuItemSelectable)
+	DECLARE_CLASS(DValueTextItem_, DListMenuItemSelectable_)
 	TArray<FString> mSelections;
 	FString mText;
 	int mSelection;
@@ -477,10 +482,10 @@ class DValueTextItem : public DListMenuItemSelectable
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
 
-	DValueTextItem() {}
+	DValueTextItem_() {}
 public:
 
-	DValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values);
+	DValueTextItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values);
 	bool SetString(int i, const char *s);
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
@@ -494,9 +499,9 @@ public:
 //
 //=============================================================================
 
-class DSliderItem : public DListMenuItemSelectable
+class DSliderItem_ : public DListMenuItemSelectable_
 {
-	DECLARE_CLASS(DSliderItem, DListMenuItemSelectable)
+	DECLARE_CLASS(DSliderItem_, DListMenuItemSelectable_)
 	FString mText;
 	FFont *mFont;
 	EColorRange mFontColor;
@@ -506,10 +511,10 @@ class DSliderItem : public DListMenuItemSelectable
 
 	void DrawSlider (int x, int y);
 
-	DSliderItem() {}
+	DSliderItem_() {}
 public:
 
-	DSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
+	DSliderItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
 	bool MenuEvent (int mkey, bool fromcontroller);

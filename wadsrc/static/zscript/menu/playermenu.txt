@@ -1,0 +1,470 @@
+/*
+** playermenu.txt
+** The player setup menu
+**
+**---------------------------------------------------------------------------
+** Copyright 2001-2010 Randy Heit
+** Copyright 2010-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class PlayerNameBox : ListMenuItemSelectable
+{
+	String mText;
+	Font mFont;
+	int mFontColor;
+	int mFrameSize;
+	String mPlayerName;
+	String mEditName;
+	bool mEntering;
+
+	//=============================================================================
+	//
+	// Player's name
+	//
+	//=============================================================================
+
+	void Init(int x, int y, int height, int frameofs, String text, Font font, int color, Name command)
+	{
+		Super.Init(x, y, height, command);
+		mText = text;
+		mFont = font;
+		mFontColor = color;
+		mFrameSize = frameofs;
+		mPlayerName = "";
+		mEntering = false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool SetString(int i, String s)
+	{
+		if (i == 0)
+		{
+			mPlayerName = s.Mid(0, MAXPLAYERNAME);
+			return true;
+		}
+		return false;
+	}
+
+	override bool, String GetString(int i)
+	{
+		if (i == 0)
+		{
+			return true, mPlayerName;
+		}
+		return false, "";
+	}
+
+	//=============================================================================
+	//
+	// [RH] Width of the border is variable
+	//
+	//=============================================================================
+
+	protected void DrawBorder (int x, int y, int len)
+	{
+		let left = TexMan.CheckForTexture("M_LSLEFT", TexMan.Type_MiscPatch);
+		let mid = TexMan.CheckForTexture("M_LSCNTR", TexMan.Type_MiscPatch);
+		let right = TexMan.CheckForTexture("M_LSRGHT", TexMan.Type_MiscPatch);
+		if (left.IsValid() && right.IsValid() && mid.IsValid())
+		{
+			int i;
+
+			screen.DrawTexture (left, false, x-8, y+7, DTA_Clean, true);
+
+			for (i = 0; i < len; i++)
+			{
+				screen.DrawTexture (mid, false, x, y+7, DTA_Clean, true);
+				x += 8;
+			}
+
+			screen.DrawTexture (right, false, x, y+7, DTA_Clean, true);
+		}
+		else
+		{
+			let slot = TexMan.CheckForTexture("M_FSLOT", TexMan.Type_MiscPatch);
+			if (slot.IsValid())
+			{
+				screen.DrawTexture (slot, false, x, y+1, DTA_Clean, true);
+			}
+			else
+			{
+				screen.Clear(x, y, x + len, y + SmallFont.GetHeight() * 3/2, 0);
+			}
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer(bool selected)
+	{
+		String text = StringTable.Localize(mText);
+		if (text.Length() > 0)
+		{
+			screen.DrawText(mFont, selected? OptionMenuSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true);
+		}
+
+		// Draw player name box
+		int x = mXpos + mFont.StringWidth(text) + 16 + mFrameSize;
+		DrawBorder (x, mYpos - mFrameSize, MAXPLAYERNAME+1);
+		if (!mEntering)
+		{
+			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, x + mFrameSize, mYpos, mPlayerName, DTA_Clean, true);
+		}
+		else
+		{
+			let printit = mEditName .. SmallFont.GetCursor();
+			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, x + mFrameSize, mYpos, printit, DTA_Clean, true);
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (mkey == Menu.MKEY_Enter)
+		{
+			Menu.MenuSound ("menu/choose");
+			mEditName = mPlayerName;
+			mEntering = true;
+			//DMenu *input = new DTextEnterMenu(Menu.CurrentMenu, mEditName, MAXPLAYERNAME, 2, fromcontroller);
+			//M_ActivateMenu(input);
+			return true;
+		}
+		else if (mkey == Menu.MKEY_Input)
+		{
+			mPlayerName = mEditName;
+			mEntering = false;
+			return true;
+		}
+		else if (mkey == Menu.MKEY_Abort)
+		{
+			mEntering = false;
+			return true;
+		}
+		return false;
+	}
+
+}
+
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class DValueTextItem : ListMenuItemSelectable
+{
+	Array<String> mSelections;
+	String mText;
+	int mSelection;
+	Font mFont;
+	int mFontColor;
+	int mFontColor2;
+
+	//=============================================================================
+	//
+	// items for the player menu
+	//
+	//=============================================================================
+
+	void Init(int x, int y, int height, String text, Font font, int color, int valuecolor, Name command, Name values)
+	{
+		Super.Init(x, y, height, command);
+		mText = text;
+		mFont = font;
+		mFontColor = color;
+		mFontColor2 = valuecolor;
+		mSelection = 0;
+		let cnt = OptionValues.GetCount(values);
+		for(int i = 0; i < cnt; i++)
+		{
+			SetString(i, OptionValues.GetText(values, i));
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool SetString(int i, String s)
+	{
+		// should actually use the index...
+		if (i==0) mSelections.Clear();
+		mSelections.Push(s);
+		return true;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool SetValue(int i, int value)
+	{
+		if (i == 0)
+		{
+			mSelection = value;
+			return true;
+		}
+		return false;
+	}
+
+	override bool, int GetValue(int i)
+	{
+		if (i == 0)
+		{
+			return true, mSelection;
+		}
+		return false, 0;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		if (mSelections.Size() > 1)
+		{
+			if (mkey == Menu.MKEY_Left)
+			{
+				Menu.MenuSound("menu/change");
+				if (--mSelection < 0) mSelection = mSelections.Size() - 1;
+				return true;
+			}
+			else if (mkey == Menu.MKEY_Right || mkey == Menu.MKEY_Enter)
+			{
+				Menu.MenuSound("menu/change");
+				if (++mSelection >= mSelections.Size()) mSelection = 0;
+				return true;
+			}
+		}
+		return (mkey == Menu.MKEY_Enter);	// needs to eat enter keys so that Activate won't get called
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer(bool selected)
+	{
+		String text = Stringtable.Localize(mText);
+		screen.DrawText(mFont, selected? OptionMenuSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true);
+
+		int x = mXpos + mFont.StringWidth(text) + 8;
+		if (mSelections.Size() > 0)
+		{
+			screen.DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true);
+		}
+	}
+
+}
+
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class DSliderItem : ListMenuItemSelectable
+{
+	String mText;
+	Font mFont;
+	int mFontColor;
+	int mMinrange, mMaxrange;
+	int mStep;
+	int mSelection;
+
+	//=============================================================================
+	//
+	// items for the player menu
+	//
+	//=============================================================================
+
+	void Init(int x, int y, int height, String text, Font font, int color, Name command, int min, int max, int step)
+	{
+		Super.Init(x, y, height, command);
+		mText = text;
+		mFont = font;
+		mFontColor = color;
+		mSelection = 0;
+		mMinrange = min;
+		mMaxrange = max;
+		mStep = step;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool SetValue(int i, int value)
+	{
+		if (i == 0)
+		{
+			mSelection = value;
+			return true;
+		}
+		return false;
+	}
+
+	override bool, int GetValue(int i)
+	{
+		if (i == 0)
+		{
+			return true, mSelection;
+		}
+		return false, 0;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		if (mkey == Menu.MKEY_Left)
+		{
+			Menu.MenuSound("menu/change");
+			if ((mSelection -= mStep) < mMinrange) mSelection = mMinrange;
+			return true;
+		}
+		else if (mkey == Menu.MKEY_Right || mkey == Menu.MKEY_Enter)
+		{
+			Menu.MenuSound("menu/change");
+			if ((mSelection += mStep) > mMaxrange) mSelection = mMaxrange;
+			return true;
+		}
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MouseEvent(int type, int x, int y)
+	{
+		let lm = Menu.GetCurrentMenu();
+		if (type != Menu.MOUSE_Click)
+		{
+			if (!lm.CheckFocus(self)) return false;
+		}
+		if (type == Menu.MOUSE_Release)
+		{
+			lm.ReleaseFocus();
+		}
+
+		int slide_left = SmallFont.StringWidth ("Green") + 8 + mXpos;
+		int slide_right = slide_left + 12*8;	// 12 char cells with 8 pixels each.
+
+		if (type == Menu.MOUSE_Click)
+		{
+			if (x < slide_left || x >= slide_right) return true;
+		}
+
+		x = clamp(x, slide_left, slide_right);
+		int v = mMinrange + (x - slide_left) * (mMaxrange - mMinrange) / (slide_right - slide_left);
+		if (v != mSelection)
+		{
+			mSelection = v;
+			Menu.MenuSound("menu/change");
+		}
+		if (type == Menu.MOUSE_Click)
+		{
+			lm.SetFocus(self);
+		}
+		return true;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	protected void DrawSlider (int x, int y)
+	{
+		int range = mMaxrange - mMinrange;
+		int cur = mSelection - mMinrange;
+
+		x = (x - 160) * CleanXfac + screen.GetWidth() / 2;
+		y = (y - 100) * CleanYfac + screen.GetHeight() / 2;
+
+		screen.DrawText (ConFont, Font.CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+		screen.DrawText (ConFont, Font.CR_ORANGE, x + (5 + (int)((cur * 78) / range)) * CleanXfac, y, "\x13", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer(bool selected)
+	{
+		String text = StringTable.Localize(mText);
+
+		screen.DrawText(mFont, selected? OptionMenuSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true);
+
+		int x = SmallFont.StringWidth ("Green") + 8 + mXpos;
+		int x2 = SmallFont.StringWidth (text) + 8 + mXpos;
+		DrawSlider (MAX(x2, x), mYpos);
+	}
+}

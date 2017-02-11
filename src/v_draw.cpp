@@ -1716,6 +1716,17 @@ void V_DrawFrame (int left, int top, int width, int height)
 	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	V_DrawFrame(x, y, w, h);
+	return 0;
+}
+
 //==========================================================================
 //
 // V_DrawBorder

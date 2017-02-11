@@ -60,10 +60,10 @@ EXTERN_CVAR (Bool, cl_run)
 // Player's name
 //
 //=============================================================================
-IMPLEMENT_CLASS(DPlayerNameBox, false, false)
+IMPLEMENT_CLASS(DPlayerNameBox_, false, false)
 
-DPlayerNameBox::DPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
-: DListMenuItemSelectable(x, y, height, action)
+DPlayerNameBox_::DPlayerNameBox_(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
+: DListMenuItemSelectable_(x, y, height, action)
 {
 	mText = text;
 	mFont = font;
@@ -79,7 +79,7 @@ DPlayerNameBox::DPlayerNameBox(int x, int y, int height, int frameofs, const cha
 //
 //=============================================================================
 
-bool DPlayerNameBox::SetString(int i, const char *s)
+bool DPlayerNameBox_::SetString(int i, const char *s)
 {
 	if (i == 0)
 	{
@@ -90,8 +90,8 @@ bool DPlayerNameBox::SetString(int i, const char *s)
 	return false;
 }
 
-bool DPlayerNameBox::GetString(int i, char *s, int len)
-{
+bool DPlayerNameBox_::GetString(int i, char *s, int len)
+{	
 	if (i == 0)
 	{
 		strncpy(s, mPlayerName, len);
@@ -107,7 +107,7 @@ bool DPlayerNameBox::GetString(int i, char *s, int len)
 //
 //=============================================================================
 
-void DPlayerNameBox::DrawBorder (int x, int y, int len)
+void DPlayerNameBox_::DrawBorder (int x, int y, int len)
 {
 	FTexture *left = TexMan[TexMan.CheckForTexture("M_LSLEFT", FTexture::TEX_MiscPatch)];
 	FTexture *mid = TexMan[TexMan.CheckForTexture("M_LSCNTR", FTexture::TEX_MiscPatch)];
@@ -146,7 +146,7 @@ void DPlayerNameBox::DrawBorder (int x, int y, int len)
 //
 //=============================================================================
 
-void DPlayerNameBox::Drawer(bool selected)
+void DPlayerNameBox_::Drawer(bool selected)
 {
 	const char *text = mText;
 	if (text != NULL)
@@ -182,7 +182,7 @@ void DPlayerNameBox::Drawer(bool selected)
 //
 //=============================================================================
 
-bool DPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
+bool DPlayerNameBox_::MenuEvent(int mkey, bool fromcontroller)
 {
 	if (mkey == MKEY_Enter)
 	{
@@ -212,10 +212,10 @@ bool DPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
 // items for the player menu
 //
 //=============================================================================
-IMPLEMENT_CLASS(DValueTextItem, false, false)
+IMPLEMENT_CLASS(DValueTextItem_, false, false)
 
-DValueTextItem::DValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values)
-: DListMenuItemSelectable(x, y, height, action)
+DValueTextItem_::DValueTextItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values)
+: DListMenuItemSelectable_(x, y, height, action)
 {
 	mText = text;
 	mFont = font;
@@ -241,7 +241,7 @@ DValueTextItem::DValueTextItem(int x, int y, int height, const char *text, FFont
 //
 //=============================================================================
 
-bool DValueTextItem::SetString(int i, const char *s)
+bool DValueTextItem_::SetString(int i, const char *s)
 {
 	// should actually use the index...
 	FString str = s;
@@ -256,7 +256,7 @@ bool DValueTextItem::SetString(int i, const char *s)
 //
 //=============================================================================
 
-bool DValueTextItem::SetValue(int i, int value)
+bool DValueTextItem_::SetValue(int i, int value)
 {
 	if (i == 0)
 	{
@@ -266,7 +266,7 @@ bool DValueTextItem::SetValue(int i, int value)
 	return false;
 }
 
-bool DValueTextItem::GetValue(int i, int *pvalue)
+bool DValueTextItem_::GetValue(int i, int *pvalue)
 {
 	if (i == 0)
 	{
@@ -282,7 +282,7 @@ bool DValueTextItem::GetValue(int i, int *pvalue)
 //
 //=============================================================================
 
-bool DValueTextItem::MenuEvent (int mkey, bool fromcontroller)
+bool DValueTextItem_::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (mSelections.Size() > 1)
 	{
@@ -308,7 +308,7 @@ bool DValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 //
 //=============================================================================
 
-void DValueTextItem::Drawer(bool selected)
+void DValueTextItem_::Drawer(bool selected)
 {
 	const char *text = mText;
 
@@ -329,10 +329,10 @@ void DValueTextItem::Drawer(bool selected)
 // items for the player menu
 //
 //=============================================================================
-IMPLEMENT_CLASS(DSliderItem, false, false)
+IMPLEMENT_CLASS(DSliderItem_, false, false)
 
-DSliderItem::DSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
-: DListMenuItemSelectable(x, y, height, action)
+DSliderItem_::DSliderItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
+: DListMenuItemSelectable_(x, y, height, action)
 {
 	mText = text;
 	mFont = font;
@@ -349,7 +349,7 @@ DSliderItem::DSliderItem(int x, int y, int height, const char *text, FFont *font
 //
 //=============================================================================
 
-bool DSliderItem::SetValue(int i, int value)
+bool DSliderItem_::SetValue(int i, int value)
 {
 	if (i == 0)
 	{
@@ -359,7 +359,7 @@ bool DSliderItem::SetValue(int i, int value)
 	return false;
 }
 
-bool DSliderItem::GetValue(int i, int *pvalue)
+bool DSliderItem_::GetValue(int i, int *pvalue)
 {
 	if (i == 0)
 	{
@@ -375,7 +375,7 @@ bool DSliderItem::GetValue(int i, int *pvalue)
 //
 //=============================================================================
 
-bool DSliderItem::MenuEvent (int mkey, bool fromcontroller)
+bool DSliderItem_::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (mkey == MKEY_Left)
 	{
@@ -398,7 +398,7 @@ bool DSliderItem::MenuEvent (int mkey, bool fromcontroller)
 //
 //=============================================================================
 
-bool DSliderItem::MouseEvent(int type, int x, int y)
+bool DSliderItem_::MouseEvent(int type, int x, int y)
 {
 	DListMenu *lm = static_cast<DListMenu*>(DMenu::CurrentMenu);
 	if (type != DMenu::MOUSE_Click)
@@ -438,7 +438,7 @@ bool DSliderItem::MouseEvent(int type, int x, int y)
 //
 //=============================================================================
 
-void DSliderItem::DrawSlider (int x, int y)
+void DSliderItem_::DrawSlider (int x, int y)
 {
 	int range = mMaxrange - mMinrange;
 	int cur = mSelection - mMinrange;
@@ -464,7 +464,7 @@ void DSliderItem::DrawSlider (int x, int y)
 //
 //=============================================================================
 
-void DSliderItem::Drawer(bool selected)
+void DSliderItem_::Drawer(bool selected)
 {
 	const char *text = mText;
 
@@ -536,14 +536,14 @@ void DPlayerMenu::Init(DMenu *parent, DListMenuDescriptor *desc)
 	li = GetItem(NAME_Playerdisplay);
 	if (li != NULL)
 	{
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_ROTATION, 0);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_MODE, 1);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
+		li->SetValue(DListMenuItemPlayerDisplay_::PDF_ROTATION, 0);
+		li->SetValue(DListMenuItemPlayerDisplay_::PDF_MODE, 1);
+		li->SetValue(DListMenuItemPlayerDisplay_::PDF_TRANSLATE, 1);
+		li->SetValue(DListMenuItemPlayerDisplay_::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		if (PlayerClass != NULL && !(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
 			players[consoleplayer].userinfo.GetPlayerClassNum() != -1)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.GetSkin());
+			li->SetValue(DListMenuItemPlayerDisplay_::PDF_SKIN, players[consoleplayer].userinfo.GetSkin());
 		}
 	}
 
@@ -658,7 +658,7 @@ bool DPlayerMenu::Responder (event_t *ev)
 		DMenuItemBase *li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_ROTATION, mRotation);
+			li->SetValue(DListMenuItemPlayerDisplay_::PDF_ROTATION, mRotation);
 		}
 		return true;
 	}
@@ -812,7 +812,7 @@ void DPlayerMenu::UpdateSkins()
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, skin);
+			li->SetValue(DListMenuItemPlayerDisplay_::PDF_SKIN, skin);
 		}
 	}
 	UpdateTranslation();
@@ -908,7 +908,7 @@ void DPlayerMenu::ClassChanged (DMenuItemBase *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
+			li->SetValue(DListMenuItemPlayerDisplay_::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		}
 	}
 }
@@ -939,7 +939,7 @@ void DPlayerMenu::SkinChanged (DMenuItemBase *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, sel);
+			li->SetValue(DListMenuItemPlayerDisplay_::PDF_SKIN, sel);
 		}
 	}
 }

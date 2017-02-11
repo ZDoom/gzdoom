@@ -54,8 +54,8 @@
 //
 //
 //=============================================================================
-IMPLEMENT_CLASS(DListMenuItemPlayerDisplay, false, false)
-DListMenuItemPlayerDisplay::DListMenuItemPlayerDisplay(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
+IMPLEMENT_CLASS(DListMenuItemPlayerDisplay_, false, false)
+DListMenuItemPlayerDisplay_::DListMenuItemPlayerDisplay_(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
 : DMenuItemBase(x, y, action)
 {
 	mOwner = menu;
@@ -90,7 +90,7 @@ DListMenuItemPlayerDisplay::DListMenuItemPlayerDisplay(DListMenuDescriptor *menu
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::OnDestroy()
+void DListMenuItemPlayerDisplay_::OnDestroy()
 {
 }
 
@@ -100,7 +100,7 @@ void DListMenuItemPlayerDisplay::OnDestroy()
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::UpdateRandomClass()
+void DListMenuItemPlayerDisplay_::UpdateRandomClass()
 {
 	if (--mRandomTimer < 0)
 	{
@@ -126,7 +126,7 @@ void DListMenuItemPlayerDisplay::UpdateRandomClass()
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::UpdateTranslation()
+void DListMenuItemPlayerDisplay_::UpdateTranslation()
 {
 	int PlayerColor = players[consoleplayer].userinfo.GetColor();
 	int	PlayerSkin = players[consoleplayer].userinfo.GetSkin();
@@ -146,7 +146,7 @@ void DListMenuItemPlayerDisplay::UpdateTranslation()
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
+void DListMenuItemPlayerDisplay_::SetPlayerClass(int classnum, bool force)
 {
 	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
 	{
@@ -176,7 +176,7 @@ void DListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
 //
 //=============================================================================
 
-bool DListMenuItemPlayerDisplay::UpdatePlayerClass()
+bool DListMenuItemPlayerDisplay_::UpdatePlayerClass()
 {
 	if (mOwner->mSelectedItem >= 0)
 	{
@@ -198,7 +198,7 @@ bool DListMenuItemPlayerDisplay::UpdatePlayerClass()
 //
 //=============================================================================
 
-bool DListMenuItemPlayerDisplay::SetValue(int i, int value)
+bool DListMenuItemPlayerDisplay_::SetValue(int i, int value)
 {
 	switch (i)
 	{
@@ -230,7 +230,7 @@ bool DListMenuItemPlayerDisplay::SetValue(int i, int value)
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::Ticker()
+void DListMenuItemPlayerDisplay_::Ticker()
 {
 	if (mClassNum < 0) UpdateRandomClass();
 
@@ -250,7 +250,7 @@ void DListMenuItemPlayerDisplay::Ticker()
 //
 //=============================================================================
 
-void DListMenuItemPlayerDisplay::Drawer(bool selected)
+void DListMenuItemPlayerDisplay_::Drawer(bool selected)
 {
 	if (mMode == 0 && !UpdatePlayerClass())
 	{

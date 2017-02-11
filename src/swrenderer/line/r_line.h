@@ -106,8 +106,6 @@ namespace swrenderer
 		fixed_t rw_offset_bottom;
 
 		bool rw_prepped;
-		bool rw_havehigh;
-		bool rw_havelow;
 
 		int wallshade;
 		float rw_light;

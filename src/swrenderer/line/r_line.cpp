@@ -117,18 +117,17 @@ namespace swrenderer
 			WallT.InitFromLine(Thread, v1->fPos() - ViewPos, v2->fPos() - ViewPos);
 		}
 
+		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
+		mFrontFloorZ1 = mFrontSector->floorplane.ZatPoint(line->v1);
+		mFrontCeilingZ2 = mFrontSector->ceilingplane.ZatPoint(line->v2);
+		mFrontFloorZ2 = mFrontSector->floorplane.ZatPoint(line->v2);
+
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
 		{
 			mBackSector = line->backsector;
 		}
-		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
-		mFrontFloorZ1 = mFrontSector->floorplane.ZatPoint(line->v1);
-		mFrontCeilingZ2 = mFrontSector->ceilingplane.ZatPoint(line->v2);
-		mFrontFloorZ2 = mFrontSector->floorplane.ZatPoint(line->v2);
-
-		rw_havehigh = rw_havelow = false;
 
 		if (mBackSector)
 		{
@@ -153,19 +152,6 @@ namespace swrenderer
 				{
 					clip3d->fake3D |= FAKE3D_CLIPTOPFRONT;
 				}
-			}
-
-			// Cannot make these walls solid, because it can result in
-			// sprite clipping problems for sprites near the wall
-			if (mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2)
-			{
-				rw_havehigh = true;
-				wallupper.Project(mBackSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
-			}
-			if (mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2)
-			{
-				rw_havelow = true;
-				walllower.Project(mBackSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 			}
 		}
 
@@ -254,6 +240,8 @@ namespace swrenderer
 
 	bool SWRenderLine::IsDoorClosed() const
 	{
+		if (!mBackSector) return false;
+
 		// Portal
 		if (mLineSegment->linedef->isVisualPortal() && mLineSegment->sidedef == mLineSegment->linedef->sidedef[0]) return false;
 
@@ -718,6 +706,26 @@ namespace swrenderer
 
 	void SWRenderLine::SetWallVariables(bool needlights)
 	{
+		RenderPortal *renderportal = Thread->Portal.get();
+
+		bool rw_havehigh = false;
+		bool rw_havelow = false;
+		if (mBackSector)
+		{
+			// Cannot make these walls solid, because it can result in
+			// sprite clipping problems for sprites near the wall
+			if (mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2)
+			{
+				rw_havehigh = true;
+				wallupper.Project(mBackSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+			}
+			if (mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2)
+			{
+				rw_havelow = true;
+				walllower.Project(mBackSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+			}
+		}
+
 		if (mLineSegment->linedef->special == Line_Horizon)
 		{
 			// Be aware: Line_Horizon does not work properly with sloped planes
@@ -726,7 +734,6 @@ namespace swrenderer
 		}
 		else
 		{
-			RenderPortal *renderportal = Thread->Portal.get();
 			mCeilingClipped = walltop.Project(mFrontSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 			mFloorClipped = wallbottom.Project(mFrontSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 		}

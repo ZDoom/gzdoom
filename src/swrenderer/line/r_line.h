@@ -65,43 +65,49 @@ namespace swrenderer
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
 		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;
 
-		subsector_t *InSubsector;
-		sector_t *frontsector;
-		sector_t *backsector;
-		VisiblePlane *floorplane;
-		VisiblePlane *ceilingplane;
+		// Line variables:
 
-		seg_t *curline;
-		side_t *sidedef;
-		line_t *linedef;
+		subsector_t *mSubsector;
+		sector_t *mFrontSector;
+		sector_t *mBackSector;
+		VisiblePlane *mFloorPlane;
+		VisiblePlane *mCeilingPlane;
+		seg_t *mLineSegment;
+
+		double mBackCeilingZ1;
+		double mBackCeilingZ2;
+		double mBackFloorZ1;
+		double mBackFloorZ2;
+		double mFrontCeilingZ1;
+		double mFrontCeilingZ2;
+		double mFrontFloorZ1;
+		double mFrontFloorZ2;
+
+		bool mDoorClosed;
 
 		FWallCoords WallC;
 		FWallTmapVals WallT;
 
-		double rw_backcz1;
-		double rw_backcz2;
-		double rw_backfz1;
-		double rw_backfz2;
-		double rw_frontcz1;
-		double rw_frontcz2;
-		double rw_frontfz1;
-		double rw_frontfz2;
+		bool foggy;
+		FDynamicColormap *basecolormap;
+
+		// Wall segment variables:
 
 		fixed_t rw_offset_top;
 		fixed_t rw_offset_mid;
 		fixed_t rw_offset_bottom;
 
-		ProjectedWallCull rw_ceilstat, rw_floorstat;
-		bool rw_mustmarkfloor, rw_mustmarkceiling;
 		bool rw_prepped;
 		bool rw_markportal;
 		bool rw_havehigh;
 		bool rw_havelow;
 
+		int wallshade;
 		float rw_light;
 		float rw_lightstep;
 		float rw_lightleft;
 
+		double lwallscale;
 		fixed_t rw_offset;
 		double rw_midtexturemid;
 		double rw_toptexturemid;
@@ -113,21 +119,14 @@ namespace swrenderer
 		double rw_bottomtexturescalex;
 		double rw_bottomtexturescaley;
 
-		FTexture *rw_pic;
-
-		bool doorclosed;
-		int wallshade;
-
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
 		FTexture *toptexture;
 		FTexture *bottomtexture;
 		FTexture *midtexture;
 
-		bool foggy;
-		FDynamicColormap *basecolormap;
-
-		double lwallscale;
+		ProjectedWallCull mCeilingClipped;
+		ProjectedWallCull mFloorClipped;
 
 		ProjectedWallLine walltop;
 		ProjectedWallLine wallbottom;

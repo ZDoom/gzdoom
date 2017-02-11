@@ -42,7 +42,10 @@ namespace swrenderer
 		double IYaspectMul = 0.0;
 		double globaluclip = 0.0;
 		double globaldclip = 0.0;
-		
+
+		fixed_t viewingrangerecip = 0;
+		double BaseYaspectMul = 0.0; // yaspectmul without a forced aspect ratio
+
 		// The xtoviewangleangle[] table maps a screen pixel
 		// to the lowest viewangle that maps back to x ranges
 		// from clipangle to -clipangle.
@@ -70,7 +73,5 @@ namespace swrenderer
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();
-		
-		double BaseYaspectMul = 0.0; // yaspectmul without a forced aspect ratio
 	};
 }

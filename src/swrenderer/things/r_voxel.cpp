@@ -1,25 +1,26 @@
-/*
-**  Voxel rendering
-**  Copyright (c) 1998-2016 Randy Heit
-**  Copyright (c) 2016 Magnus Norddahl
-**
-**  This software is provided 'as-is', without any express or implied
-**  warranty.  In no event will the authors be held liable for any damages
-**  arising from the use of this software.
-**
-**  Permission is granted to anyone to use this software for any purpose,
-**  including commercial applications, and to alter it and redistribute it
-**  freely, subject to the following restrictions:
-**
-**  1. The origin of this software must not be misrepresented; you must not
-**     claim that you wrote the original software. If you use this software
-**     in a product, an acknowledgment in the product documentation would be
-**     appreciated but is not required.
-**  2. Altered source versions must be plainly marked as such, and must not be
-**     misrepresented as being the original software.
-**  3. This notice may not be removed or altered from any source distribution.
-**
-*/
+// 
+//---------------------------------------------------------------------------
+//
+// Voxel rendering
+// Copyright(c) 1993 - 1997 Ken Silverman
+// Copyright(c) 1998 - 2016 Randy Heit
+// All rights reserved.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//--------------------------------------------------------------------------
+//
 
 #include <stdlib.h>
 #include "templates.h"
@@ -152,7 +153,7 @@ namespace swrenderer
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
 		vis->Light.ColormapNum = 0;
-		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
+		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
 		vis->voxel = voxel->Voxel;
@@ -184,122 +185,422 @@ namespace swrenderer
 
 	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
-		auto sprite = this;
+		auto spr = this;
 		auto viewport = RenderViewport::Instance();
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
-
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
+		drawerargs.SetLight(spr->Light.BaseColormap, 0, spr->Light.ColormapNum << FRACBITS);
 
-		bool visible = drawerargs.SetStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		FDynamicColormap *basecolormap = (FDynamicColormap*)spr->Light.BaseColormap;
+		bool visible = drawerargs.SetStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 		if (!visible)
 			return;
 
-		DVector3 view_origin = { sprite->pa.vpos.X, sprite->pa.vpos.Y, sprite->pa.vpos.Z };
-		FAngle view_angle = sprite->pa.vang;
-		DVector3 sprite_origin = { sprite->gpos.X, sprite->gpos.Y, sprite->gpos.Z };
-		DAngle sprite_angle = sprite->Angle;
-		double sprite_xscale = FIXED2DBL(sprite->xscale);
-		double sprite_yscale = sprite->yscale;
-		FVoxel *voxel = sprite->voxel;
-		
-		// Select mipmap level:
-		
-		double viewSin = view_angle.Cos();
-		double viewCos = view_angle.Sin();
-		double logmip = fabs((view_origin.X - sprite_origin.X) * viewCos - (view_origin.Y - sprite_origin.Y) * viewSin);
-		int miplevel = 0;
-		while (miplevel < voxel->NumMips - 1 && logmip >= viewport->FocalLengthX)
+		int flags = 0;
+
+		/*
+		if (colfunc == fuzzcolfunc || colfunc == R_FillColumn)
 		{
-			logmip *= 0.5;
-			miplevel++;
+			flags = DVF_OFFSCREEN | DVF_SPANSONLY;
 		}
-		
-		const FVoxelMipLevel &mip = voxel->Mips[miplevel];
-		if (mip.SlabData == nullptr)
-			return;
-
-		minZ >>= miplevel;
-		maxZ >>= miplevel;
-		sprite_xscale *= (1 << miplevel);
-		sprite_yscale *= (1 << miplevel);
-		
-		// Find voxel cube eigenvectors and origin in world space:
-
-		double spriteSin = sprite_angle.Sin();
-		double spriteCos = sprite_angle.Cos();
-		
-		DVector2 dirX(spriteSin * sprite_xscale, -spriteCos * sprite_xscale);
-		DVector2 dirY(spriteCos * sprite_xscale, spriteSin * sprite_xscale);
-		double dirZ = -sprite_yscale;
-		
-		DVector3 voxel_origin = sprite_origin;
-		voxel_origin.X -= dirX.X * mip.Pivot.X + dirX.Y * mip.Pivot.Y;
-		voxel_origin.Y -= dirY.X * mip.Pivot.X + dirY.Y * mip.Pivot.Y;
-		voxel_origin.Z -= dirZ * mip.Pivot.Z;
-		
-		// Voxel cube walking directions:
-		
-		int startX[4] = { 0, mip.SizeX - 1,             0, mip.SizeX - 1 };
-		int startY[4] = { 0,             0, mip.SizeY - 1, mip.SizeY - 1 };
-		int stepX[4] = { 1, -1,  1, -1 };
-		int stepY[4] = { 1,  1, -1, -1 };
-		
-		// The point in cube mipmap local space where voxel sides change from front to backfacing:
-		
-		double dx = (view_origin.X - sprite_origin.X) / sprite_xscale;
-		double dy = (view_origin.Y - sprite_origin.Y) / sprite_xscale;
-		int backX = (int)(dx * spriteCos - dy * spriteSin + mip.Pivot.X);
-		int backY = (int)(dy * spriteCos + dx * spriteSin + mip.Pivot.Y);
-		//int endX = clamp(backX, 0, mip.SizeX - 1);
-		//int endY = clamp(backY, 0, mip.SizeY - 1);
-		int endX = mip.SizeX - 1;// clamp(backX, 0, mip.SizeX - 1);
-		int endY = mip.SizeY - 1;// clamp(backY, 0, mip.SizeY - 1);
-
-		// Draw the voxel cube:
-		
-		for (int index = 0; index < 1; index++)
+		else if (colfunc != basecolfunc)
 		{
-			/*if ((stepX[index] < 0 && endX >= startX[index]) ||
-			    (stepX[index] > 0 && endX <= startX[index]) ||
-			    (stepY[index] < 0 && endY >= startY[index]) ||
-			    (stepY[index] > 0 && endY <= startY[index])) continue;*/
-		
-			for (int x = startX[index]; x != endX; x += stepX[index])
+			flags = DVF_OFFSCREEN;
+		}
+		if (flags != 0)
+		{
+			CheckOffscreenBuffer(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
+		}
+		if (spr->bInMirror)
+		{
+			flags |= DVF_MIRRORED;
+		}
+		*/
+
+		// Render the voxel, either directly to the screen or offscreen.
+		DrawVoxel(thread, drawerargs, spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
+			spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, cliptop, clipbottom,
+			minZ, maxZ, flags);
+
+		/*
+		// Blend the voxel, if that's what we need to do.
+		if ((flags & ~DVF_MIRRORED) != 0)
+		{
+			int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
+			for (int x = 0; x < viewwidth; ++x)
 			{
-				for (int y = startY[index]; y != endY; y += stepY[index])
+				if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
 				{
-					kvxslab_t *slab_start = GetSlabStart(mip, x, y);
-					kvxslab_t *slab_end = GetSlabEnd(mip, x, y);
-				
-					for (kvxslab_t *slab = slab_start; slab != slab_end; slab = NextSlab(slab))
+					rt_initcols(OffscreenColorBuffer + x * OffscreenBufferHeight);
+				}
+				for (FCoverageBuffer::Span *span = OffscreenCoverageBuffer->Spans[x]; span != NULL; span = span->NextSpan)
+				{
+					if (flags & DVF_SPANSONLY)
 					{
-						// To do: check slab->backfacecull
-						
-						int ztop = slab->ztop;
-						int zbottom = ztop + slab->zleng;
-						
-						//ztop = MAX(ztop, minZ);
-						//zbottom = MIN(zbottom, maxZ);
-						
-						for (int z = ztop; z < zbottom; z++)
+						dc_x = x;
+						dc_yl = span->Start;
+						dc_yh = span->Stop - 1;
+						dc_count = span->Stop - span->Start;
+						dc_dest = (ylookup[span->Start] + x) * pixelsize + dc_destorg;
+						colfunc();
+					}
+					else
+					{
+						rt_span_coverage(x, span->Start, span->Stop - 1);
+					}
+				}
+				if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)
+				{
+					rt_draw4cols(x - 3);
+				}
+			}
+		}
+		*/
+	}
+
+	void RenderVoxel::DrawVoxel(
+		RenderThread *thread, SpriteDrawerArgs &drawerargs,
+		const FVector3 &globalpos, FAngle viewangle, const FVector3 &dasprpos, DAngle dasprang, fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
+		short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
+	{
+		int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
+		fixed_t cosang, sinang, sprcosang, sprsinang;
+		int backx, backy, gxinc, gyinc;
+		int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
+		int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yinc=0;
+		int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
+		kvxslab_t *voxptr, *voxend;
+		FVoxelMipLevel *mip;
+		int z1a[64], z2a[64], yplc[64];
+
+		auto viewport = RenderViewport::Instance();
+
+		const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
+		const int xdimenscale = FLOAT2FIXED(centerxwide * viewport->YaspectMul / 160);
+		const double centerxwide_f = centerxwide;
+		const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+
+		// Convert to Build's coordinate system.
+		fixed_t globalposx = xs_Fix<4>::ToFix(globalpos.X);
+		fixed_t globalposy = xs_Fix<4>::ToFix(-globalpos.Y);
+		fixed_t globalposz = xs_Fix<8>::ToFix(-globalpos.Z);
+
+		fixed_t dasprx = xs_Fix<4>::ToFix(dasprpos.X);
+		fixed_t daspry = xs_Fix<4>::ToFix(-dasprpos.Y);
+		fixed_t dasprz = xs_Fix<8>::ToFix(-dasprpos.Z);
+
+		// Shift the scales from 16 bits of fractional precision to 6.
+		// Also do some magic voodoo scaling to make them the right size.
+		daxscale = daxscale / (0xC000 >> 6);
+		dayscale = dayscale / (0xC000 >> 6);
+		if (daxscale <= 0 || dayscale <= 0)
+		{
+			// won't be visible.
+			return;
+		}
+
+		angle_t viewang = viewangle.BAMs();
+		cosang = FLOAT2FIXED(viewangle.Cos()) >> 2;
+		sinang = FLOAT2FIXED(-viewangle.Sin()) >> 2;
+		sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
+		sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
+
+		// Select mip level
+		i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
+		i = DivScale6(i, MIN(daxscale, dayscale));
+		j = xs_Fix<13>::ToFix(viewport->FocalLengthX);
+		for (k = 0; i >= j && k < voxobj->NumMips; ++k)
+		{
+			i >>= 1;
+		}
+		if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
+
+		mip = &voxobj->Mips[k];		if (mip->SlabData == NULL) return;
+
+		minslabz >>= k;
+		maxslabz >>= k;
+
+		daxscale <<= (k+8); dayscale <<= (k+8);
+		dazscale = FixedDiv(dayscale, FLOAT2FIXED(viewport->BaseYaspectMul));
+		daxscale = fixed_t(daxscale / viewport->YaspectMul);
+		daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
+		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewport->viewingrangerecip), centerxwide << 9);
+
+		daxscalerecip = (1<<30) / daxscale;
+		dayscalerecip = (1<<30) / dayscale;
+
+		fixed_t piv_x = fixed_t(mip->Pivot.X*256.);
+		fixed_t piv_y = fixed_t(mip->Pivot.Y*256.);
+		fixed_t piv_z = fixed_t(mip->Pivot.Z*256.);
+
+		x = FixedMul(globalposx - dasprx, daxscalerecip);
+		y = FixedMul(globalposy - daspry, daxscalerecip);
+		backx = (DMulScale10(x, sprcosang, y,  sprsinang) + piv_x) >> 8;
+		backy = (DMulScale10(y, sprcosang, x, -sprsinang) + piv_y) >> 8;
+		cbackx = clamp(backx, 0, mip->SizeX - 1);
+		cbacky = clamp(backy, 0, mip->SizeY - 1);
+
+		sprcosang = MulScale14(daxscale, sprcosang);
+		sprsinang = MulScale14(daxscale, sprsinang);
+
+		x = (dasprx - globalposx) - DMulScale18(piv_x, sprcosang, piv_y, -sprsinang);
+		y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x,  sprsinang);
+
+		cosang = FixedMul(cosang, dayscalerecip);
+		sinang = FixedMul(sinang, dayscalerecip);
+
+		gxstart = y*cosang - x*sinang;
+		gystart = x*cosang + y*sinang;
+		gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
+		gyinc = DMulScale10(sprcosang, cosang, sprsinang,  sinang);
+		if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
+
+		x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
+		fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
+		fixed_t *ggyinc = ggxinc + (j + 1);
+		for (i = 0; i <= j; i++)
+		{
+			ggxinc[i] = x; x += gxinc;
+			ggyinc[i] = y; y += gyinc;
+		}
+
+		syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (piv_z << 7);
+		yoff = (abs(gxinc) + abs(gyinc)) >> 1;
+
+		for (cnt = 0; cnt < 8; cnt++)
+		{
+			switch (cnt)
+			{
+				case 0: xs = 0;				ys = 0;				xi =  1; yi =  1; break;
+				case 1: xs = mip->SizeX-1;	ys = 0;				xi = -1; yi =  1; break;
+				case 2: xs = 0;				ys = mip->SizeY-1;	xi =  1; yi = -1; break;
+				case 3: xs = mip->SizeX-1;	ys = mip->SizeY-1;	xi = -1; yi = -1; break;
+				case 4: xs = 0;				ys = cbacky;		xi =  1; yi =  2; break;
+				case 5: xs = mip->SizeX-1;	ys = cbacky;		xi = -1; yi =  2; break;
+				case 6: xs = cbackx;		ys = 0;				xi =  2; yi =  1; break;
+				case 7: xs = cbackx;		ys = mip->SizeY-1;	xi =  2; yi = -1; break;
+			}
+			xe = cbackx; ye = cbacky;
+			if (cnt < 4)
+			{
+				if ((xi < 0) && (xe >= xs)) continue;
+				if ((xi > 0) && (xe <= xs)) continue;
+				if ((yi < 0) && (ye >= ys)) continue;
+				if ((yi > 0) && (ye <= ys)) continue;
+			}
+			else
+			{
+				if ((xi < 0) && (xe > xs)) continue;
+				if ((xi > 0) && (xe < xs)) continue;
+				if ((yi < 0) && (ye > ys)) continue;
+				if ((yi > 0) && (ye < ys)) continue;
+				xe += xi; ye += yi;
+			}
+
+			i = sgn(ys - backy) + sgn(xs - backx) * 3 + 4;
+			switch(i)
+			{
+				case 6: case 7: x1 = 0;				y1 = 0;				break;
+				case 8: case 5: x1 = gxinc;			y1 = gyinc;			break;
+				case 0: case 3: x1 = gyinc;			y1 = -gxinc;		break;
+				case 2: case 1: x1 = gxinc+gyinc;	y1 = gyinc-gxinc;	break;
+			}
+			switch(i)
+			{
+				case 2: case 5: x2 = 0;				y2 = 0;				break;
+				case 0: case 1: x2 = gxinc;			y2 = gyinc;			break;
+				case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
+				case 6: case 3: x2 = gxinc+gyinc;	y2 = gyinc-gxinc;	break;
+			}
+			BYTE oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
+			BYTE oand16 = oand + 16;
+			BYTE oand32 = oand + 32;
+
+			if (yi > 0) { dagxinc =  gxinc; dagyinc =  FixedMul(gyinc, viewport->viewingrangerecip); }
+				   else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewport->viewingrangerecip); }
+
+				/* Fix for non 90 degree viewing ranges */
+			nxoff = FixedMul(x2 - x1, viewport->viewingrangerecip);
+			x1 = FixedMul(x1, viewport->viewingrangerecip);
+
+			ggxstart = gxstart + ggyinc[ys];
+			ggystart = gystart - ggxinc[ys];
+
+			for (x = xs; x != xe; x += xi)
+			{
+				BYTE *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
+				short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
+
+				nx = FixedMul(ggxstart + ggxinc[x], viewport->viewingrangerecip) + x1;
+				ny = ggystart + ggyinc[x];
+				for (y = ys; y != ye; y += yi, nx += dagyinc, ny -= dagxinc)
+				{
+					if ((ny <= nytooclose) || (ny >= nytoofar)) continue;
+					voxptr = (kvxslab_t *)(slabxoffs + xyoffs[y]);
+					voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
+					if (voxptr >= voxend) continue;
+
+					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + centerx;
+					if (lx < 0) lx = 0;
+					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
+					if (rx > viewwidth) rx = viewwidth;
+					if (rx <= lx) continue;
+
+					if (flags & DVF_MIRRORED)
+					{
+						int t = viewwidth - lx;
+						lx = viewwidth - rx;
+						rx = t;
+					}
+
+					fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
+					fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));
+					for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
+					{
+						const BYTE *col = voxptr->col;
+						int zleng = voxptr->zleng;
+						int ztop = voxptr->ztop;
+						fixed_t z1, z2;
+
+						if (ztop < minslabz)
 						{
-							uint8_t color = slab->col[z - slab->ztop];
-						
-							DVector3 voxel_pos = voxel_origin;
-							voxel_pos.X += dirX.X * x + dirX.Y * y;
-							voxel_pos.Y += dirY.X * x + dirY.Y * y;
-							voxel_pos.Z += dirZ * z;
-						
-							FillBox(thread, drawerargs, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+							int diff = minslabz - ztop;
+							ztop = minslabz;
+							col += diff;
+							zleng -= diff;
+						}
+						if (ztop + zleng > maxslabz)
+						{
+							int diff = ztop + zleng - maxslabz;
+							zleng -= diff;
+						}
+						if (zleng <= 0) continue;
+
+						j = (ztop << 15) - syoff;
+						if (j < 0)
+						{
+							k = j + (zleng << 15);
+							if (k < 0)
+							{
+								if ((voxptr->backfacecull & oand32) == 0) continue;
+								z2 = MulScale32(l2, k) + centery;					/* Below slab */
+							}
+							else
+							{
+								if ((voxptr->backfacecull & oand) == 0) continue;	/* Middle of slab */
+								z2 = MulScale32(l1, k) + centery;
+							}
+							z1 = MulScale32(l1, j) + centery;
+						}
+						else
+						{
+							if ((voxptr->backfacecull & oand16) == 0) continue;
+							z1 = MulScale32(l2, j) + centery;						/* Above slab */
+							z2 = MulScale32(l1, j + (zleng << 15)) + centery;
+						}
+
+						if (z2 <= z1) continue;
+
+						if (zleng == 1)
+						{
+							yinc = 0;
+						}
+						else
+						{
+							if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
+							else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
+						}
+						// [RH] Clip each column separately, not just by the first one.
+						for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
+							lxt < rx;
+							(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
+						{
+							// Calculate top and bottom pixels locations
+							for (int xxx = 0; xxx < stripwidth; ++xxx)
+							{
+								if (zleng == 1)
+								{
+									yplc[xxx] = 0;
+									z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
+								}
+								else
+								{
+									if (z1 < daumost[lxt + xxx])
+									{
+										yplc[xxx] = yinc * (daumost[lxt + xxx] - z1);
+										z1a[xxx] = daumost[lxt + xxx];
+									}
+									else
+									{
+										yplc[xxx] = 0;
+										z1a[xxx] = z1;
+									}
+								}
+								z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
+							}
+							// Find top and bottom pixels that match and draw them as one strip
+							for (int xxl = 0, xxr; xxl < stripwidth; )
+							{
+								if (z1a[xxl] >= z2a[xxl])
+								{ // No column here
+									xxl++;
+									continue;
+								}
+								int z1 = z1a[xxl];
+								int z2 = z2a[xxl];
+								// How many columns share the same extents?
+								for (xxr = xxl + 1; xxr < stripwidth; ++xxr)
+								{
+									if (z1a[xxr] != z1 || z2a[xxr] != z2)
+										break;
+								}
+
+								for (int x = xxl; x < xxr; ++x)
+								{
+									drawerargs.SetDest(lxt + x, z1);
+									drawerargs.SetSolidColor(100);
+									drawerargs.SetCount(z2 - z1);
+									drawerargs.DrawVoxelColumn(thread, yplc[xxl], yinc, col, zleng);
+								}
+
+								/*
+								if (!(flags & DVF_OFFSCREEN))
+								{
+									// Draw directly to the screen.
+									R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, (ylookup[z1] + lxt + xxl) * pixelsize + dc_destorg);
+								}
+								else
+								{
+									// Record the area covered and possibly draw to an offscreen buffer.
+									dc_yl = z1;
+									dc_yh = z2 - 1;
+									dc_count = z2 - z1;
+									dc_iscale = yinc;
+									for (int x = xxl; x < xxr; ++x)
+									{
+										OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z2);
+										if (!(flags & DVF_SPANSONLY))
+										{
+											dc_x = lxt + x;
+											rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
+											dc_source = col;
+											dc_source2 = nullptr;
+											dc_texturefrac = yplc[xxl];
+											hcolfunc_pre();
+										}
+									}
+								}
+								*/
+
+								xxl = xxr;
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-	
+
 	kvxslab_t *RenderVoxel::GetSlabStart(const FVoxelMipLevel &mip, int x, int y)
 	{
 		return (kvxslab_t *)&mip.SlabData[mip.OffsetX[x] + (int)mip.OffsetXY[x * (mip.SizeY + 1) + y]];
@@ -313,42 +614,6 @@ namespace swrenderer
 	kvxslab_t *RenderVoxel::NextSlab(kvxslab_t *slab)
 	{
 		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
-	}
-
-	void RenderVoxel::FillBox(RenderThread *thread, SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
-	{
-		auto viewport = RenderViewport::Instance();
-		
-		DVector3 viewPos = viewport->PointWorldToView(origin);
-
-		if (viewPos.Z < 0.01f)
-			return;
-
-		DVector3 screenPos = viewport->PointViewToScreen(viewPos);
-		DVector2 screenExtent = viewport->ScaleViewToScreen({ extentX, extentY }, viewPos.Z, pixelstretch);
-
-		int x1 = MAX((int)(screenPos.X - screenExtent.X), 0);
-		int x2 = MIN((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
-		int y1 = MAX((int)(screenPos.Y - screenExtent.Y), 0);
-		int y2 = MIN((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
-
-		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
-
-		if (y1 < y2)
-		{
-			for (int x = x1; x < x2; x++)
-			{
-				int columnY1 = MAX(y1, (int)cliptop[x]);
-				int columnY2 = MIN(y2, (int)clipbottom[x]);
-				if (columnY1 < columnY2)
-				{
-					drawerargs.SetDest(x, columnY1);
-					drawerargs.SetSolidColor(color);
-					drawerargs.SetCount(columnY2 - columnY1);
-					drawerargs.FillColumn(thread);
-				}
-			}
-		}
 	}
 
 	void RenderVoxel::Deinit()
@@ -550,416 +815,156 @@ namespace swrenderer
 		return span;
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-	// Old BUILD implementation follows:
-	//
-	// This file contains some code from the Build Engine.
-	//
-	// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-	// Ken Silverman's official web site: "http://www.advsys.net/ken"
-	// See the included license file "BUILDLIC.TXT" for license info.
-
 #if 0
-	void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
+	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
 	{
-		int flags = 0;
+		auto sprite = this;
+		auto viewport = RenderViewport::Instance();
 
-		// Do setup for blending.
-		R_SetColorMapLight(spr->BaseColormap, 0, spr->ColormapNum << FRACBITS);
-		bool visible = R_SetPatchStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor);
+		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
 
+		SpriteDrawerArgs drawerargs;
+		drawerargs.SetLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
+
+		bool visible = drawerargs.SetStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
 		if (!visible)
-		{
 			return;
-		}
-		if (colfunc == fuzzcolfunc || colfunc == R_FillColumn)
-		{
-			flags = DVF_OFFSCREEN | DVF_SPANSONLY;
-		}
-		else if (colfunc != basecolfunc)
-		{
-			flags = DVF_OFFSCREEN;
-		}
-		if (flags != 0)
-		{
-			R_CheckOffscreenBuffer(RenderTarget->GetWidth(), RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
-		}
-		if (spr->bInMirror)
-		{
-			flags |= DVF_MIRRORED;
-		}
 
-		// Render the voxel, either directly to the screen or offscreen.
-		R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
-			spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->BaseColormap, spr->ColormapNum, cliptop, clipbot,
-			minslabz, maxslabz, flags);
-
-		// Blend the voxel, if that's what we need to do.
-		if ((flags & ~DVF_MIRRORED) != 0)
+		DVector3 view_origin = { sprite->pa.vpos.X, sprite->pa.vpos.Y, sprite->pa.vpos.Z };
+		FAngle view_angle = sprite->pa.vang;
+		DVector3 sprite_origin = { sprite->gpos.X, sprite->gpos.Y, sprite->gpos.Z };
+		DAngle sprite_angle = sprite->Angle;
+		double sprite_xscale = FIXED2DBL(sprite->xscale);
+		double sprite_yscale = sprite->yscale;
+		FVoxel *voxel = sprite->voxel;
+		
+		// Select mipmap level:
+		
+		double viewSin = view_angle.Cos();
+		double viewCos = view_angle.Sin();
+		double logmip = fabs((view_origin.X - sprite_origin.X) * viewCos - (view_origin.Y - sprite_origin.Y) * viewSin);
+		int miplevel = 0;
+		while (miplevel < voxel->NumMips - 1 && logmip >= viewport->FocalLengthX)
 		{
-			int pixelsize = r_swtruecolor ? 4 : 1;
-			for (int x = 0; x < viewwidth; ++x)
+			logmip *= 0.5;
+			miplevel++;
+		}
+		
+		const FVoxelMipLevel &mip = voxel->Mips[miplevel];
+		if (mip.SlabData == nullptr)
+			return;
+
+		minZ >>= miplevel;
+		maxZ >>= miplevel;
+		sprite_xscale *= (1 << miplevel);
+		sprite_yscale *= (1 << miplevel);
+		
+		// Find voxel cube eigenvectors and origin in world space:
+
+		double spriteSin = sprite_angle.Sin();
+		double spriteCos = sprite_angle.Cos();
+		
+		DVector2 dirX(spriteSin * sprite_xscale, -spriteCos * sprite_xscale);
+		DVector2 dirY(spriteCos * sprite_xscale, spriteSin * sprite_xscale);
+		double dirZ = -sprite_yscale;
+		
+		DVector3 voxel_origin = sprite_origin;
+		voxel_origin.X -= dirX.X * mip.Pivot.X + dirX.Y * mip.Pivot.Y;
+		voxel_origin.Y -= dirY.X * mip.Pivot.X + dirY.Y * mip.Pivot.Y;
+		voxel_origin.Z -= dirZ * mip.Pivot.Z;
+		
+		// Voxel cube walking directions:
+		
+		int startX[4] = { 0, mip.SizeX - 1,             0, mip.SizeX - 1 };
+		int startY[4] = { 0,             0, mip.SizeY - 1, mip.SizeY - 1 };
+		int stepX[4] = { 1, -1,  1, -1 };
+		int stepY[4] = { 1,  1, -1, -1 };
+		
+		// The point in cube mipmap local space where voxel sides change from front to backfacing:
+		
+		double dx = (view_origin.X - sprite_origin.X) / sprite_xscale;
+		double dy = (view_origin.Y - sprite_origin.Y) / sprite_xscale;
+		int backX = (int)(dx * spriteCos - dy * spriteSin + mip.Pivot.X);
+		int backY = (int)(dy * spriteCos + dx * spriteSin + mip.Pivot.Y);
+		//int endX = clamp(backX, 0, mip.SizeX - 1);
+		//int endY = clamp(backY, 0, mip.SizeY - 1);
+		int endX = mip.SizeX - 1;// clamp(backX, 0, mip.SizeX - 1);
+		int endY = mip.SizeY - 1;// clamp(backY, 0, mip.SizeY - 1);
+
+		// Draw the voxel cube:
+		
+		for (int index = 0; index < 1; index++)
+		{
+			/*if ((stepX[index] < 0 && endX >= startX[index]) ||
+			    (stepX[index] > 0 && endX <= startX[index]) ||
+			    (stepY[index] < 0 && endY >= startY[index]) ||
+			    (stepY[index] > 0 && endY <= startY[index])) continue;*/
+		
+			for (int x = startX[index]; x != endX; x += stepX[index])
 			{
-				if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
+				for (int y = startY[index]; y != endY; y += stepY[index])
 				{
-					rt_initcols(OffscreenColorBuffer + x * OffscreenBufferHeight);
-				}
-				for (FCoverageBuffer::Span *span = OffscreenCoverageBuffer->Spans[x]; span != NULL; span = span->NextSpan)
-				{
-					if (flags & DVF_SPANSONLY)
+					kvxslab_t *slab_start = GetSlabStart(mip, x, y);
+					kvxslab_t *slab_end = GetSlabEnd(mip, x, y);
+				
+					for (kvxslab_t *slab = slab_start; slab != slab_end; slab = NextSlab(slab))
 					{
-						dc_x = x;
-						dc_yl = span->Start;
-						dc_yh = span->Stop - 1;
-						dc_count = span->Stop - span->Start;
-						dc_dest = (ylookup[span->Start] + x) * pixelsize + dc_destorg;
-						colfunc();
+						// To do: check slab->backfacecull
+						
+						int ztop = slab->ztop;
+						int zbottom = ztop + slab->zleng;
+						
+						//ztop = MAX(ztop, minZ);
+						//zbottom = MIN(zbottom, maxZ);
+						
+						for (int z = ztop; z < zbottom; z++)
+						{
+							uint8_t color = slab->col[z - slab->ztop];
+						
+							DVector3 voxel_pos = voxel_origin;
+							voxel_pos.X += dirX.X * x + dirX.Y * y;
+							voxel_pos.Y += dirY.X * x + dirY.Y * y;
+							voxel_pos.Z += dirZ * z;
+						
+							FillBox(thread, drawerargs, voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+						}
 					}
-					else
-					{
-						rt_span_coverage(x, span->Start, span->Stop - 1);
-					}
-				}
-				if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)
-				{
-					rt_draw4cols(x - 3);
 				}
 			}
 		}
-
-		R_FinishSetPatchStyle();
-		NetUpdate();
 	}
 
-	void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
-		const FVector3 &dasprpos, DAngle dasprang,
-		fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-		FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
+	void RenderVoxel::FillBox(RenderThread *thread, SpriteDrawerArgs &drawerargs, DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)
 	{
-		int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
-		fixed_t cosang, sinang, sprcosang, sprsinang;
-		int backx, backy, gxinc, gyinc;
-		int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
-		int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yinc=0;
-		int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
-		kvxslab_t *voxptr, *voxend;
-		FVoxelMipLevel *mip;
-		int z1a[64], z2a[64], yplc[64];
+		auto viewport = RenderViewport::Instance();
 
-		const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
-		const int xdimenscale = FLOAT2FIXED(centerxwide * YaspectMul / 160);
-		const double centerxwide_f = centerxwide;
-		const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+		DVector3 viewPos = viewport->PointWorldToView(origin);
 
-		// Convert to Build's coordinate system.
-		fixed_t globalposx = xs_Fix<4>::ToFix(globalpos.X);
-		fixed_t globalposy = xs_Fix<4>::ToFix(-globalpos.Y);
-		fixed_t globalposz = xs_Fix<8>::ToFix(-globalpos.Z);
-
-		fixed_t dasprx = xs_Fix<4>::ToFix(dasprpos.X);
-		fixed_t daspry = xs_Fix<4>::ToFix(-dasprpos.Y);
-		fixed_t dasprz = xs_Fix<8>::ToFix(-dasprpos.Z);
-
-		// Shift the scales from 16 bits of fractional precision to 6.
-		// Also do some magic voodoo scaling to make them the right size.
-		daxscale = daxscale / (0xC000 >> 6);
-		dayscale = dayscale / (0xC000 >> 6);
-		if (daxscale <= 0 || dayscale <= 0)
-		{
-			// won't be visible.
+		if (viewPos.Z < 0.01f)
 			return;
-		}
 
-		angle_t viewang = viewangle.BAMs();
-		cosang = FLOAT2FIXED(viewangle.Cos()) >> 2;
-		sinang = FLOAT2FIXED(-viewangle.Sin()) >> 2;
-		sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
-		sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
+		DVector3 screenPos = viewport->PointViewToScreen(viewPos);
+		DVector2 screenExtent = viewport->ScaleViewToScreen({ extentX, extentY }, viewPos.Z, pixelstretch);
 
-		R_SetupDrawSlab(colormap, 0.0f, colormapnum << FRACBITS);
+		int x1 = MAX((int)(screenPos.X - screenExtent.X), 0);
+		int x2 = MIN((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
+		int y1 = MAX((int)(screenPos.Y - screenExtent.Y), 0);
+		int y2 = MIN((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
 
-		int pixelsize = r_swtruecolor ? 4 : 1;
+		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 
-		// Select mip level
-		i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
-		i = DivScale6(i, MIN(daxscale, dayscale));
-		j = xs_Fix<13>::ToFix(FocalLengthX);
-		for (k = 0; i >= j && k < voxobj->NumMips; ++k)
+		if (y1 < y2)
 		{
-			i >>= 1;
-		}
-		if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
-
-		mip = &voxobj->Mips[k];		if (mip->SlabData == NULL) return;
-
-		minslabz >>= k;
-		maxslabz >>= k;
-
-		daxscale <<= (k+8); dayscale <<= (k+8);
-		dazscale = FixedDiv(dayscale, FLOAT2FIXED(BaseYaspectMul));
-		daxscale = fixed_t(daxscale / YaspectMul);
-		daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
-		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), centerxwide << 9);
-
-		daxscalerecip = (1<<30) / daxscale;
-		dayscalerecip = (1<<30) / dayscale;
-
-		fixed_t piv_x = fixed_t(mip->Pivot.X*256.);
-		fixed_t piv_y = fixed_t(mip->Pivot.Y*256.);
-		fixed_t piv_z = fixed_t(mip->Pivot.Z*256.);
-
-		x = FixedMul(globalposx - dasprx, daxscalerecip);
-		y = FixedMul(globalposy - daspry, daxscalerecip);
-		backx = (DMulScale10(x, sprcosang, y,  sprsinang) + piv_x) >> 8;
-		backy = (DMulScale10(y, sprcosang, x, -sprsinang) + piv_y) >> 8;
-		cbackx = clamp(backx, 0, mip->SizeX - 1);
-		cbacky = clamp(backy, 0, mip->SizeY - 1);
-
-		sprcosang = MulScale14(daxscale, sprcosang);
-		sprsinang = MulScale14(daxscale, sprsinang);
-
-		x = (dasprx - globalposx) - DMulScale18(piv_x, sprcosang, piv_y, -sprsinang);
-		y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x,  sprsinang);
-
-		cosang = FixedMul(cosang, dayscalerecip);
-		sinang = FixedMul(sinang, dayscalerecip);
-
-		gxstart = y*cosang - x*sinang;
-		gystart = x*cosang + y*sinang;
-		gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
-		gyinc = DMulScale10(sprcosang, cosang, sprsinang,  sinang);
-		if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
-
-		x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
-		fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
-		fixed_t *ggyinc = ggxinc + (j + 1);
-		for (i = 0; i <= j; i++)
-		{
-			ggxinc[i] = x; x += gxinc;
-			ggyinc[i] = y; y += gyinc;
-		}
-
-		syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (piv_z << 7);
-		yoff = (abs(gxinc) + abs(gyinc)) >> 1;
-
-		for (cnt = 0; cnt < 8; cnt++)
-		{
-			switch (cnt)
+			for (int x = x1; x < x2; x++)
 			{
-				case 0: xs = 0;				ys = 0;				xi =  1; yi =  1; break;
-				case 1: xs = mip->SizeX-1;	ys = 0;				xi = -1; yi =  1; break;
-				case 2: xs = 0;				ys = mip->SizeY-1;	xi =  1; yi = -1; break;
-				case 3: xs = mip->SizeX-1;	ys = mip->SizeY-1;	xi = -1; yi = -1; break;
-				case 4: xs = 0;				ys = cbacky;		xi =  1; yi =  2; break;
-				case 5: xs = mip->SizeX-1;	ys = cbacky;		xi = -1; yi =  2; break;
-				case 6: xs = cbackx;		ys = 0;				xi =  2; yi =  1; break;
-				case 7: xs = cbackx;		ys = mip->SizeY-1;	xi =  2; yi = -1; break;
-			}
-			xe = cbackx; ye = cbacky;
-			if (cnt < 4)
-			{
-				if ((xi < 0) && (xe >= xs)) continue;
-				if ((xi > 0) && (xe <= xs)) continue;
-				if ((yi < 0) && (ye >= ys)) continue;
-				if ((yi > 0) && (ye <= ys)) continue;
-			}
-			else
-			{
-				if ((xi < 0) && (xe > xs)) continue;
-				if ((xi > 0) && (xe < xs)) continue;
-				if ((yi < 0) && (ye > ys)) continue;
-				if ((yi > 0) && (ye < ys)) continue;
-				xe += xi; ye += yi;
-			}
-
-			i = sgn(ys - backy) + sgn(xs - backx) * 3 + 4;
-			switch(i)
-			{
-				case 6: case 7: x1 = 0;				y1 = 0;				break;
-				case 8: case 5: x1 = gxinc;			y1 = gyinc;			break;
-				case 0: case 3: x1 = gyinc;			y1 = -gxinc;		break;
-				case 2: case 1: x1 = gxinc+gyinc;	y1 = gyinc-gxinc;	break;
-			}
-			switch(i)
-			{
-				case 2: case 5: x2 = 0;				y2 = 0;				break;
-				case 0: case 1: x2 = gxinc;			y2 = gyinc;			break;
-				case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
-				case 6: case 3: x2 = gxinc+gyinc;	y2 = gyinc-gxinc;	break;
-			}
-			BYTE oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
-			BYTE oand16 = oand + 16;
-			BYTE oand32 = oand + 32;
-
-			if (yi > 0) { dagxinc =  gxinc; dagyinc =  FixedMul(gyinc, viewingrangerecip); }
-				   else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewingrangerecip); }
-
-				/* Fix for non 90 degree viewing ranges */
-			nxoff = FixedMul(x2 - x1, viewingrangerecip);
-			x1 = FixedMul(x1, viewingrangerecip);
-
-			ggxstart = gxstart + ggyinc[ys];
-			ggystart = gystart - ggxinc[ys];
-
-			for (x = xs; x != xe; x += xi)
-			{
-				BYTE *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
-				short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
-
-				nx = FixedMul(ggxstart + ggxinc[x], viewingrangerecip) + x1;
-				ny = ggystart + ggyinc[x];
-				for (y = ys; y != ye; y += yi, nx += dagyinc, ny -= dagxinc)
+				int columnY1 = MAX(y1, (int)cliptop[x]);
+				int columnY2 = MIN(y2, (int)clipbottom[x]);
+				if (columnY1 < columnY2)
 				{
-					if ((ny <= nytooclose) || (ny >= nytoofar)) continue;
-					voxptr = (kvxslab_t *)(slabxoffs + xyoffs[y]);
-					voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
-					if (voxptr >= voxend) continue;
-
-					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + centerx;
-					if (lx < 0) lx = 0;
-					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
-					if (rx > viewwidth) rx = viewwidth;
-					if (rx <= lx) continue;
-
-					if (flags & DVF_MIRRORED)
-					{
-						int t = viewwidth - lx;
-						lx = viewwidth - rx;
-						rx = t;
-					}
-
-					fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
-					fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));
-					for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
-					{
-						const BYTE *col = voxptr->col;
-						int zleng = voxptr->zleng;
-						int ztop = voxptr->ztop;
-						fixed_t z1, z2;
-
-						if (ztop < minslabz)
-						{
-							int diff = minslabz - ztop;
-							ztop = minslabz;
-							col += diff;
-							zleng -= diff;
-						}
-						if (ztop + zleng > maxslabz)
-						{
-							int diff = ztop + zleng - maxslabz;
-							zleng -= diff;
-						}
-						if (zleng <= 0) continue;
-
-						j = (ztop << 15) - syoff;
-						if (j < 0)
-						{
-							k = j + (zleng << 15);
-							if (k < 0)
-							{
-								if ((voxptr->backfacecull & oand32) == 0) continue;
-								z2 = MulScale32(l2, k) + centery;					/* Below slab */
-							}
-							else
-							{
-								if ((voxptr->backfacecull & oand) == 0) continue;	/* Middle of slab */
-								z2 = MulScale32(l1, k) + centery;
-							}
-							z1 = MulScale32(l1, j) + centery;
-						}
-						else
-						{
-							if ((voxptr->backfacecull & oand16) == 0) continue;
-							z1 = MulScale32(l2, j) + centery;						/* Above slab */
-							z2 = MulScale32(l1, j + (zleng << 15)) + centery;
-						}
-
-						if (z2 <= z1) continue;
-
-						if (zleng == 1)
-						{
-							yinc = 0;
-						}
-						else
-						{
-							if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
-							else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
-						}
-						// [RH] Clip each column separately, not just by the first one.
-						for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
-							lxt < rx;
-							(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
-						{
-							// Calculate top and bottom pixels locations
-							for (int xxx = 0; xxx < stripwidth; ++xxx)
-							{
-								if (zleng == 1)
-								{
-									yplc[xxx] = 0;
-									z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
-								}
-								else
-								{
-									if (z1 < daumost[lxt + xxx])
-									{
-										yplc[xxx] = yinc * (daumost[lxt + xxx] - z1);
-										z1a[xxx] = daumost[lxt + xxx];
-									}
-									else
-									{
-										yplc[xxx] = 0;
-										z1a[xxx] = z1;
-									}
-								}
-								z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
-							}
-							// Find top and bottom pixels that match and draw them as one strip
-							for (int xxl = 0, xxr; xxl < stripwidth; )
-							{
-								if (z1a[xxl] >= z2a[xxl])
-								{ // No column here
-									xxl++;
-									continue;
-								}
-								int z1 = z1a[xxl];
-								int z2 = z2a[xxl];
-								// How many columns share the same extents?
-								for (xxr = xxl + 1; xxr < stripwidth; ++xxr)
-								{
-									if (z1a[xxr] != z1 || z2a[xxr] != z2)
-										break;
-								}
-
-								if (!(flags & DVF_OFFSCREEN))
-								{
-									// Draw directly to the screen.
-									R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, (ylookup[z1] + lxt + xxl) * pixelsize + dc_destorg);
-								}
-								else
-								{
-									// Record the area covered and possibly draw to an offscreen buffer.
-									dc_yl = z1;
-									dc_yh = z2 - 1;
-									dc_count = z2 - z1;
-									dc_iscale = yinc;
-									for (int x = xxl; x < xxr; ++x)
-									{
-										OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z2);
-										if (!(flags & DVF_SPANSONLY))
-										{
-											dc_x = lxt + x;
-											rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
-											dc_source = col;
-											dc_source2 = nullptr;
-											dc_texturefrac = yplc[xxl];
-											hcolfunc_pre();
-										}
-									}
-								}
-								xxl = xxr;
-							}
-						}
-					}
+					drawerargs.SetDest(x, columnY1);
+					drawerargs.SetSolidColor(color);
+					drawerargs.SetCount(columnY2 - columnY1);
+					drawerargs.FillColumn(thread);
 				}
 			}
 		}

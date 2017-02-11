@@ -24,6 +24,7 @@ namespace swrenderer
 
 		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
 		void FillColumn(RenderThread *thread);
+		void DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount);
 
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }

@@ -497,6 +497,17 @@ namespace swrenderer
 		thread->Drawers()->FillColumn(*this);
 	}
 
+	void SpriteDrawerArgs::DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount)
+	{
+		dc_iscale = vStep;
+		dc_texturefrac = vPos;
+		dc_texturefracx = 0;
+		dc_source = voxels;
+		dc_source2 = 0;
+		dc_textureheight = voxelsCount;
+		(thread->Drawers()->*colfunc)(*this);
+	}
+
 	void SpriteDrawerArgs::SetDest(int x, int y)
 	{
 		auto viewport = RenderViewport::Instance();

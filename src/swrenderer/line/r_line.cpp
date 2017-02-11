@@ -362,7 +362,9 @@ namespace swrenderer
 		draw_segment->bkup = nullptr;
 		draw_segment->swall = nullptr;
 
-		if (rw_markportal)
+		bool markportal = ShouldMarkPortal();
+
+		if (markportal)
 		{
 			draw_segment->silhouette = SIL_BOTH;
 		}
@@ -575,12 +577,12 @@ namespace swrenderer
 
 		// [RH] Draw any decals bound to the seg
 		// [ZZ] Only if not an active mirror
-		if (!rw_markportal)
+		if (!markportal)
 		{
 			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, wallshade, rw_lightleft, rw_lightstep, mLineSegment, WallC, foggy, basecolormap, walltop.ScreenY, wallbottom.ScreenY);
 		}
 
-		if (rw_markportal)
+		if (markportal)
 		{
 			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
 		}
@@ -588,12 +590,140 @@ namespace swrenderer
 		return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
 	}
 
+	bool SWRenderLine::ShouldMarkFloor() const
+	{
+		// deep water check
+		if (mFrontSector->GetHeightSec() == nullptr)
+		{
+			int planeside = mFrontSector->floorplane.PointOnSide(ViewPos);
+			if (mFrontSector->floorplane.fC() < 0)	// 3D floors have the floor backwards
+				planeside = -planeside;
+			if (planeside <= 0)		// above view plane
+				return false;
+		}
+
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors))
+		{
+			return true;
+		}
+		else if (mBackSector == nullptr) // single sided line
+		{
+			return true;
+		}
+		else // two-sided line
+		{
+			if (linedef->isVisualPortal()) return true;
+
+			// closed door
+			if (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) return true;
+			if (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2) return true;
+
+			if (mBackSector->floorplane != mFrontSector->floorplane) return true;
+			if (mBackSector->lightlevel != mFrontSector->lightlevel) return true;
+			if (mBackSector->GetTexture(sector_t::floor) != mFrontSector->GetTexture(sector_t::floor)) return true;
+			if (mBackSector->GetPlaneLight(sector_t::floor) != mFrontSector->GetPlaneLight(sector_t::floor)) return true;
+
+			// Add checks for (x,y) offsets
+			if (mBackSector->planes[sector_t::floor].xform != mFrontSector->planes[sector_t::floor].xform) return true;
+			if (mBackSector->GetAlpha(sector_t::floor) != mFrontSector->GetAlpha(sector_t::floor)) return true;
+
+			// prevent 2s normals from bleeding through deep water
+			if (mFrontSector->heightsec) return true;
+
+			if (mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)) return true;
+			if (mBackSector->ColorMap != mFrontSector->ColorMap) return true;
+			if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return true;
+			if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return true;
+
+			if (sidedef->GetTexture(side_t::mid).isValid() && ((linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) || sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX))) return true;
+
+			return false;
+		}
+	}
+
+	bool SWRenderLine::ShouldMarkCeiling() const
+	{
+		// deep water check
+		if (mFrontSector->GetHeightSec() == nullptr && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
+		{
+			int planeside = mFrontSector->ceilingplane.PointOnSide(ViewPos);
+			if (mFrontSector->ceilingplane.fC() > 0) // 3D floors have the ceiling backwards
+				planeside = -planeside;
+			if (planeside <= 0) // below view plane
+				return false;
+		}
+
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors))
+		{
+			return true;
+		}
+		else if (mBackSector == nullptr) // single sided line
+		{
+			return true;
+		}
+		else // two-sided line
+		{
+			if (linedef->isVisualPortal()) return true;
+
+			// closed door
+			if (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) return true;
+			if (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2) return true;
+
+			if (mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum || mBackSector->GetTexture(sector_t::ceiling) != skyflatnum)
+			{
+				if (mBackSector->ceilingplane != mFrontSector->ceilingplane) return true;
+				if (mBackSector->lightlevel != mFrontSector->lightlevel) return true;
+				if (mBackSector->GetTexture(sector_t::ceiling) != mFrontSector->GetTexture(sector_t::ceiling)) return true;
+
+				// Add checks for (x,y) offsets
+				if (mBackSector->planes[sector_t::ceiling].xform != mFrontSector->planes[sector_t::ceiling].xform) return true;
+				if (mBackSector->GetAlpha(sector_t::ceiling) != mFrontSector->GetAlpha(sector_t::ceiling)) return true;
+
+				// prevent 2s normals from bleeding through fake ceilings
+				if (mFrontSector->heightsec && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum) return true;
+
+				if (mBackSector->GetPlaneLight(sector_t::ceiling) != mFrontSector->GetPlaneLight(sector_t::ceiling)) return true;
+				if (mBackSector->GetFlags(sector_t::ceiling) != mFrontSector->GetFlags(sector_t::ceiling)) return true;
+
+				if (mBackSector->ColorMap != mFrontSector->ColorMap) return true;
+				if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return true;
+				if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return true;
+
+				if (sidedef->GetTexture(side_t::mid).isValid())
+				{
+					if (linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) return true;
+					if (sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX)) return true;
+				}
+			}
+			return false;
+		}
+	}
+
+	bool SWRenderLine::ShouldMarkPortal() const
+	{
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors))
+		{
+			return true;
+		}
+		else
+		{
+			return linedef->isVisualPortal();
+		}
+	}
+
 	void SWRenderLine::SetWallVariables(bool needlights)
 	{
 		double rowoffset;
 		double yrepeat;
-
-		rw_markportal = false;
 
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
@@ -601,23 +731,22 @@ namespace swrenderer
 		// mark the segment as visible for auto map
 		if (!Thread->Scene->DontMapLines()) linedef->flags |= ML_MAPPED;
 
+		markfloor = ShouldMarkFloor();
+		markceiling = ShouldMarkCeiling();
+
 		midtexture = toptexture = bottomtexture = 0;
 
 		if (sidedef == linedef->sidedef[0] &&
 			(linedef->special == Line_Mirror && r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
 		{
-			markfloor = markceiling = true; // act like a one-sided wall here (todo: check how does this work with transparency)
-			rw_markportal = true;
 		}
 		else if (mBackSector == NULL)
 		{
 			// single sided line
-			// a single sided line is terminal, so it must mark ends
-			markfloor = markceiling = true;
+
 			// [RH] Horizon lines do not need to be textured
 			if (linedef->isVisualPortal())
 			{
-				rw_markportal = true;
 			}
 			else if (linedef->special != Line_Horizon)
 			{
@@ -692,78 +821,6 @@ namespace swrenderer
 				// Putting sky ceilings on the front and back of a line alters the way unpegged
 				// positioning works.
 				rw_frontlowertop = mBackSector->GetPlaneTexZ(sector_t::ceiling);
-			}
-
-			if (linedef->isVisualPortal())
-			{
-				markceiling = markfloor = true;
-			}
-			else if ((mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2) ||
-				(mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
-			{
-				// closed door
-				markceiling = markfloor = true;
-			}
-			else
-			{
-				markfloor =
-					   mBackSector->floorplane != mFrontSector->floorplane
-					|| mBackSector->lightlevel != mFrontSector->lightlevel
-					|| mBackSector->GetTexture(sector_t::floor) != mFrontSector->GetTexture(sector_t::floor)
-					|| mBackSector->GetPlaneLight(sector_t::floor) != mFrontSector->GetPlaneLight(sector_t::floor)
-
-					// killough 3/7/98: Add checks for (x,y) offsets
-					|| mBackSector->planes[sector_t::floor].xform != mFrontSector->planes[sector_t::floor].xform
-					|| mBackSector->GetAlpha(sector_t::floor) != mFrontSector->GetAlpha(sector_t::floor)
-
-					// killough 4/15/98: prevent 2s normals
-					// from bleeding through deep water
-					|| mFrontSector->heightsec
-
-					|| mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)
-
-					// [RH] Add checks for colormaps
-					|| mBackSector->ColorMap != mFrontSector->ColorMap
-
-
-					// kg3D - add fake lights
-					|| (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size())
-					|| (mBackSector->e && mBackSector->e->XFloor.lightlist.Size())
-
-					|| (sidedef->GetTexture(side_t::mid).isValid() &&
-					((linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) ||
-						(sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX))))
-					;
-
-				markceiling = (mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum ||
-					mBackSector->GetTexture(sector_t::ceiling) != skyflatnum) &&
-					(
-						   mBackSector->ceilingplane != mFrontSector->ceilingplane
-						|| mBackSector->lightlevel != mFrontSector->lightlevel
-						|| mBackSector->GetTexture(sector_t::ceiling) != mFrontSector->GetTexture(sector_t::ceiling)
-
-						// killough 3/7/98: Add checks for (x,y) offsets
-						|| mBackSector->planes[sector_t::ceiling].xform != mFrontSector->planes[sector_t::ceiling].xform
-						|| mBackSector->GetAlpha(sector_t::ceiling) != mFrontSector->GetAlpha(sector_t::ceiling)
-
-						// killough 4/15/98: prevent 2s normals
-						// from bleeding through fake ceilings
-						|| (mFrontSector->heightsec && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
-
-						|| mBackSector->GetPlaneLight(sector_t::ceiling) != mFrontSector->GetPlaneLight(sector_t::ceiling)
-						|| mBackSector->GetFlags(sector_t::ceiling) != mFrontSector->GetFlags(sector_t::ceiling)
-
-						// [RH] Add check for colormaps
-						|| mBackSector->ColorMap != mFrontSector->ColorMap
-
-						// kg3D - add fake lights
-						|| (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size())
-						|| (mBackSector->e && mBackSector->e->XFloor.lightlist.Size())
-
-						|| (sidedef->GetTexture(side_t::mid).isValid() &&
-						((linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) ||
-							(sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX))))
-						);
 			}
 
 			if (rw_havehigh)
@@ -855,31 +912,6 @@ namespace swrenderer
 				{
 					rw_bottomtexturemid += rowoffset;
 				}
-			}
-			rw_markportal = linedef->isVisualPortal();
-		}
-
-		// if a floor / ceiling plane is on the wrong side of the view plane,
-		// it is definitely invisible and doesn't need to be marked.
-
-		// killough 3/7/98: add deep water check
-		if (mFrontSector->GetHeightSec() == NULL)
-		{
-			int planeside;
-
-			planeside = mFrontSector->floorplane.PointOnSide(ViewPos);
-			if (mFrontSector->floorplane.fC() < 0)	// 3D floors have the floor backwards
-				planeside = -planeside;
-			if (planeside <= 0)		// above view plane
-				markfloor = false;
-
-			if (mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
-			{
-				planeside = mFrontSector->ceilingplane.PointOnSide(ViewPos);
-				if (mFrontSector->ceilingplane.fC() > 0)	// 3D floors have the ceiling backwards
-					planeside = -planeside;
-				if (planeside <= 0)		// below view plane
-					markceiling = false;
 			}
 		}
 

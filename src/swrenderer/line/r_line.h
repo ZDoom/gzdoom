@@ -65,6 +65,10 @@ namespace swrenderer
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
 		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;
 
+		bool ShouldMarkFloor() const;
+		bool ShouldMarkCeiling() const;
+		bool ShouldMarkPortal() const;
+
 		// Line variables:
 
 		subsector_t *mSubsector;
@@ -98,7 +102,6 @@ namespace swrenderer
 		fixed_t rw_offset_bottom;
 
 		bool rw_prepped;
-		bool rw_markportal;
 		bool rw_havehigh;
 		bool rw_havelow;
 

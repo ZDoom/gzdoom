@@ -47,6 +47,7 @@ class OptionMenuItem : MenuItemBase
 	protected void drawLabel(int indent, int y, int color, bool grayed = false)
 	{
 		String label = Stringtable.Localize(mLabel);
+		
 		int overlay = grayed? Color(96,48,0,0) : 0;
 
 		int x;
@@ -302,7 +303,7 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 		int cnt = OptionValues.GetCount(mValues);
 		if (cnt > 0 && mCVar != null)
 		{
-			if (OptionValues.GetText(mValues, 0).Length() > 0)
+			if (OptionValues.GetTextValue(mValues, 0).Length() == 0)
 			{
 				let f = mCVar.GetFloat();
 				for(int i = 0; i < cnt; i++)
@@ -335,7 +336,7 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 		int cnt = OptionValues.GetCount(mValues);
 		if (cnt > 0 && mCVar != null)
 		{
-			if (OptionValues.GetText(mValues, 0).Length() > 0)
+			if (OptionValues.GetTextValue(mValues, 0).Length() == 0)
 			{
 				mCVar.SetFloat(OptionValues.GetValue(mValues, Selection));
 			}

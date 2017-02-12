@@ -409,7 +409,7 @@ struct LevelLocals native
 
 struct StringTable native
 {
-	native static String Localize(String val, bool prefixed = false);
+	native static String Localize(String val, bool prefixed = true);
 }
 
 // a few values of this need to be readable by the play code.

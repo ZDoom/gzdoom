@@ -141,6 +141,8 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 	int			kerning;
 	FTexture *pic;
 
+	assert(string[0] != '$');
+
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly *= parms.scaley;
 
@@ -240,7 +242,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 	PARAM_STRING(chr);
 
 	VMVa_List args = { param + 5, 0, numparam - 5 };
-	const char *txt = chr[0] == '$' ? GStrings(chr) : chr.GetChars();
+	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
 	screen->DrawText(font, cr, x, y, txt, args);
 	return 0;
 }

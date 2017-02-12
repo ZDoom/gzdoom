@@ -538,6 +538,18 @@ namespace swrenderer
 								}
 								z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
 							}
+
+							const uint8_t *columnColors = col;
+							bool bgra = viewport->RenderTarget->IsBgra();
+							if (bgra)
+							{
+								// The true color slab data array is identical, except its using uint32 instead of uint8.
+								//
+								// We can find the same slab column by calculating the offset from the start of SlabData
+								// and use that to offset into the BGRA version of the same data.
+								columnColors = (const uint8_t *)(&mip->SlabDataBgra[0] + (ptrdiff_t)(col - mip->SlabData));
+							}
+
 							// Find top and bottom pixels that match and draw them as one strip
 							for (int xxl = 0, xxr; xxl < stripwidth; )
 							{
@@ -559,7 +571,7 @@ namespace swrenderer
 								{
 									drawerargs.SetDest(lxt + x, z1);
 									drawerargs.SetCount(z2 - z1);
-									drawerargs.DrawVoxelColumn(thread, yplc[xxl], yinc, col, zleng);
+									drawerargs.DrawVoxelColumn(thread, yplc[xxl], yinc, columnColors, zleng);
 								}
 
 								/*

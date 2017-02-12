@@ -499,8 +499,19 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount)
 	{
-		dc_iscale = vStep;
-		dc_texturefrac = vPos;
+		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		{
+			double v = vPos / (double)voxelsCount / FRACUNIT;
+			double vstep = vStep / (double)voxelsCount / FRACUNIT;
+			dc_texturefrac = (int)(v * (1 << 30));
+			dc_iscale = (int)(vstep * (1 << 30));
+		}
+		else
+		{
+			dc_texturefrac = vPos;
+			dc_iscale = vStep;
+		}
+
 		dc_texturefracx = 0;
 		dc_source = voxels;
 		dc_source2 = 0;

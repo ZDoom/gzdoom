@@ -187,6 +187,7 @@ void FSoftwareRenderer::RemapVoxels()
 {
 	for (unsigned i=0; i<Voxels.Size(); i++)
 	{
+		Voxels[i]->CreateBgraSlabData();
 		Voxels[i]->Remap();
 	}
 }

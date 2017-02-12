@@ -384,12 +384,12 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					}
 					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
 
-					for (unsigned i = 1; i < args.Size(); i++)
+					for (unsigned i = start; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
 						{
-							params.Push(sc.String);
+							params.Push(FString(sc.String));
 						}
 						else if (args[i] == TypeName)
 						{
@@ -401,7 +401,21 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						}
 						else if (args[i] == TypeFont)
 						{
-							params.Push(FFont::FindFont(sc.String));
+							auto f = FFont::FindFont(sc.String);
+							if (f == nullptr)
+							{
+								sc.ScriptError("Unknown font %s", sc.String);
+							}
+							params.Push(f);
+						}
+						else if (args[i] == TypeTextureID)
+						{
+							auto f = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+							if (!f.isValid())
+							{
+								sc.ScriptError("Unknown texture %s", sc.String);
+							}
+							params.Push(f.GetIndex());
 						}
 						else if (args[i]->IsKindOf(RUNTIME_CLASS(PInt)))
 						{
@@ -459,12 +473,11 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 							break;
 						}
 					}
-					/*
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
 					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
-					*/
+
 					if (cls->IsDescendantOf("ListMenuItemSelectable"))
 					{
 						desc->mYpos += desc->mLinespacing;
@@ -477,11 +490,6 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			{
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
-
-		}
-
-		{
-			sc.ScriptError("Unknown keyword '%s'", sc.String);
 		}
 	}
 	for (auto &p : desc->mItems)
@@ -664,21 +672,6 @@ static void ParseOptionSettings(FScanner &sc)
 //
 //=============================================================================
 
-static EColorRange ParseOptionColor(FScanner &sc, DOptionMenuDescriptor *desc)
-{
-	EColorRange cr = OptionSettings.mFontColor;
-	if (sc.CheckString(","))
-	{
-		sc.MustGetString();
-		cr = V_FindFontColor(sc.String);
-		if (cr == CR_UNTRANSLATED && !sc.Compare("untranslated") && isdigit(sc.String[0]))
-		{
-			if (strtoll(sc.String, nullptr, 0)) cr = OptionSettings.mFontColorHeader;
-		}
-	}
-	return cr;
-}
-
 static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 {
 	sc.MustGetStringName("{");
@@ -745,7 +738,6 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			bool success = false;
 			FStringf buildname("OptionMenuItem%s", sc.String);
 			// Handle one special case: MapControl maps to Control with one parameter different
-			FKeyBindings *bind = sc.Compare("MapControl") ? &AutomapBindings : &Bindings;
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
 			{
@@ -757,13 +749,12 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 
 					params.Push(0);
 					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
-					auto TypeBind = NewPointer(NewNativeStruct("KeyBindings", nullptr));
 					for (unsigned i = 1; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
 						{
-							params.Push(sc.String);
+							params.Push(FString(sc.String));
 						}
 						else if (args[i] == TypeName)
 						{
@@ -786,6 +777,8 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 									// todo: check other data types that may get used.
 									sc.ScriptError("Integer expected, got %s", sc.String);
 								}
+								// Color ranges need to be marked for option menu items to support an older feature where a boolean number could be passed instead.
+								v |= 0x12340000;
 							}
 							if (args[i] == TypeBool) v = !!v;
 							params.Push(v);
@@ -822,12 +815,6 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 						}
 						else
 						{
-							if (args[i + 1] == TypeBind)
-							{
-								// Bindings are not parsed, they just get tacked on.
-								params.Push(bind);
-								i++;
-							}
 							if (i < args.Size() - 1 && !(func->Variants[0].ArgFlags[i + 1] & VARF_Optional))
 							{
 								sc.ScriptError("Insufficient parameters for %s", cls->TypeName.GetChars());
@@ -835,12 +822,12 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 							break;
 						}
 					}
-					/*
+
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
 					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
-					*/
+
 					success = true;
 				}
 			}

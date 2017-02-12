@@ -68,7 +68,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	//
 	//
 	//=============================================================================
-	void Init(ListMenuDescriptor menu, Name command, int x, int y, Color c1, Color c2, bool np = false)
+	void Init(ListMenuDescriptor menu, int x, int y, Color c1, Color c2, bool np = false, Name command = 'None' )
 	{
 		Super.Init(x, y, command);
 		mOwner = menu;

@@ -33,6 +33,7 @@ class MenuItemBase : Object native
 	virtual bool MouseEvent(int type, int x, int y) { return false; }
 	virtual bool CheckHotkey(int c) { return false; }
 	virtual int GetWidth() { return 0; }
+	virtual int GetIndent() { return 0; }
 	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
 
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
@@ -41,3 +42,8 @@ class MenuItemBase : Object native
 	void SetX(int x) { mXpos = x; }
 }
 
+// this is only used to parse font color ranges in MENUDEF
+enum MenudefColorRange
+{
+	NO_COLOR = -1
+}

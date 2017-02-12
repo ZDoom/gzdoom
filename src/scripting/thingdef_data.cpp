@@ -55,6 +55,7 @@
 #include "r_sky.h"
 #include "v_font.h"
 #include "v_video.h"
+#include "c_bind.h"
 #include "menu/menu.h"
 
 static TArray<FPropertyInfo*> properties;
@@ -796,6 +797,12 @@ void InitThingdef()
 	auto plrcls = NewPointer(NewResizableArray(playerclassstruct), false);
 	PField *plrclsf = new PField("PlayerClasses", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PlayerClasses);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
+
+	auto bindcls = NewNativeStruct("KeyBindings", nullptr);
+	PField *binding = new PField("Bindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&Bindings);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
+	binding = new PField("AutomapBindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&AutomapBindings);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);

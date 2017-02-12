@@ -278,4 +278,4 @@ void DListMenu::Drawer ()
 // base class for menu items
 //
 //=============================================================================
-IMPLEMENT_CLASS(DMenuItemBase, true, false)
+IMPLEMENT_CLASS(DMenuItemBase, false, false)

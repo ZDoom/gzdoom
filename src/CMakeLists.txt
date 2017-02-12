@@ -848,7 +848,6 @@ set( FASTMATH_PCH_SOURCES
 	menu/menuinput.cpp
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
-	menu/playerdisplay.cpp
 	menu/playermenu.cpp
 	menu/readthis.cpp
 	menu/videomenu.cpp

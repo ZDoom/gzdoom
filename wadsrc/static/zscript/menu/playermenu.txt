@@ -59,8 +59,8 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	{
 		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, command);
 		mText = text;
-		mFont = font;
-		mFontColor = color;
+		mFont = desc.mFont;
+		mFontColor = desc.mFontColor;
 		mFrameSize = frameofs;
 		mPlayerName = "";
 		mEntering = false;
@@ -72,7 +72,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void Init(int x, int y, int height, int frameofs, String text, Font font, int color, Name command)
+	void InitDirect(int x, int y, int height, int frameofs, String text, Font font, int color, Name command)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;
@@ -371,7 +371,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void Init(ListMenuItemDescriptor desc, String text, Name command, int min, int max, int step)
+	void Init(ListMenuDescriptor desc, String text, Name command, int min, int max, int step)
 	{
 		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, command);
 		mText = text;

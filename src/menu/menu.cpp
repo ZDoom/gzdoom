@@ -1130,9 +1130,6 @@ DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
 
-//DEFINE_FIELD(DMenuItemBase, mLabel)
-//DEFINE_FIELD(DMenuItemBase, mCentered)
-
 DEFINE_FIELD(DOptionMenu, CanScrollUp)
 DEFINE_FIELD(DOptionMenu, CanScrollDown)
 DEFINE_FIELD(DOptionMenu, VisBottom)
@@ -1272,7 +1269,7 @@ DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBi
 
 DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param)
 {
-	auto c = PClass::FindClass("ListMenuItemPatch");
+	auto c = PClass::FindClass("ListMenuItemPatchItem");
 	auto p = c->CreateNew();
 	VMValue params[] = { p, x, y, height, tex.GetIndex(), hotkey, command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
@@ -1282,7 +1279,7 @@ DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FT
 
 DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param)
 {
-	auto c = PClass::FindClass("ListMenuItemText");
+	auto c = PClass::FindClass("ListMenuItemTextItem");
 	auto p = c->CreateNew();
 	VMValue params[] = { p, x, y, height, hotkey, text, font, int(color1.d), int(color2.d), command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
@@ -1314,7 +1311,7 @@ void DMenuItemBase::Ticker()
 
 void DMenuItemBase::Drawer(bool selected)
 {
-	IFVIRTUAL(DMenuItemBase, Ticker)
+	IFVIRTUAL(DMenuItemBase, Drawer)
 	{
 		VMValue params[] = { (DObject*)this, selected };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);

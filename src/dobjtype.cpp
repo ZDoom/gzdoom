@@ -1985,7 +1985,7 @@ void PDynArray::DestroyValue(void *addr) const
 
 void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
 {
-	memset((char*)base + offset, 0, sizeof(FArray));	// same as constructing an empty array.
+	if (base != nullptr) memset((char*)base + offset, 0, sizeof(FArray));	// same as constructing an empty array.
 	if (special != nullptr)
 	{
 		special->Push(std::make_pair(this, offset));
@@ -3047,6 +3047,10 @@ DObject *PClass::CreateNew() const
 	else
 		memset (mem, 0, Size);
 
+	if (ConstructNative == nullptr)
+	{
+		I_Error("Attempt to instantiate abstract class %s.", TypeName.GetChars());
+	}
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
 	InitializeSpecials(mem, Defaults);
@@ -3165,16 +3169,12 @@ void PClass::InitializeDefaults()
 	{
 		// Copy parent values from the parent defaults.
 		assert(ParentClass != nullptr);
-		ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
-
-		if (Defaults != nullptr)
+		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
+		for (const PField *field : Fields)
 		{
-			for (const PField *field : Fields)
+			if (!(field->Flags & VARF_Native))
 			{
-				if (!(field->Flags & VARF_Native))
-				{
-					field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
-				}
+				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 			}
 		}
 	}

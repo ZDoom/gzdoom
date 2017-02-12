@@ -32,11 +32,10 @@
 **
 */
 
-class OptionMenuItem : MenuItemBase native
+class OptionMenuItem : MenuItemBase
 {
-
-	native String mLabel;
-	native bool mCentered;
+	String mLabel;
+	bool mCentered;
 	
 	void Init(String label, String command, bool center = false)
 	{
@@ -67,7 +66,7 @@ class OptionMenuItem : MenuItemBase native
 		return true;
 	}
 	
-	virtual int GetIndent()
+	override int GetIndent()
 	{
 		if (mCentered) return 0;
 		return SmallFont.StringWidth(Stringtable.Localize(mLabel));
@@ -145,7 +144,7 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 	String mPrompt;
 
 
-	void Init(String label, Name command, String prompt)
+	void Init(String label, Name command, String prompt = "")
 	{
 		Super.Init(label, command);
 		mPrompt = prompt;
@@ -420,7 +419,7 @@ IMPLEMENT_CLASS(DEnterKey, true, false)
 //
 //=============================================================================
 
-class OptionMenuItemControl : OptionMenuItem
+class OptionMenuItemControlBase : OptionMenuItem
 {
 	KeyBindings mBindings;
 	int mInput;
@@ -487,6 +486,22 @@ class OptionMenuItemControl : OptionMenuItem
 	}
 }
 
+class OptionMenuItemControl : OptionMenuItemControlBase
+{
+	void Init(String label, Name command)
+	{
+		Super.Init(label, command, Bindings);
+	}
+}
+
+class OptionMenuItemMapControl : OptionMenuItemControlBase
+{
+	void Init(String label, Name command)
+	{
+		Super.Init(label, command, AutomapBindings);
+	}
+}
+
 //=============================================================================
 //
 //
@@ -497,10 +512,19 @@ class OptionMenuItemStaticText : OptionMenuItem
 {
 	int mColor;
 
-	void Init(String label, int cr = -1, bool header = false)
+	// this function is only for use from MENUDEF, it needs to do some strange things with the color for backwards compatibility.
+	void Init(String label, int cr = -1)
 	{
 		Super.Init(label, 'None', true);
-		mColor = cr >= 0? cr : header ? OptionMenuSettings.mFontColorHeader : OptionMenuSettings.mFontColor;
+		mColor = OptionMenuSettings.mFontColor;
+		if ((cr & 0xffff0000) == 0x12340000) mColor = cr & 0xffff;
+		else if (cr > 0) mColor = OptionMenuSettings.mFontColorHeader;
+	}
+
+	void InitDirect(String label, int cr)
+	{
+		Super.Init(label, 'None', true);
+		mColor = cr;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
@@ -528,7 +552,19 @@ class OptionMenuItemStaticTextSwitchable : OptionMenuItem
 	String mAltText;
 	int mCurrent;
 
-	void Init(String label, String label2, Name command, int cr)
+	// this function is only for use from MENUDEF, it needs to do some strange things with the color for backwards compatibility.
+	void Init(String label, String label2, Name command, int cr = -1)
+	{
+		Super.Init(label, command, true);
+		mAltText = label2;
+		mCurrent = 0;
+
+		mColor = OptionMenuSettings.mFontColor;
+		if ((cr & 0xffff0000) == 0x12340000) mColor = cr & 0xffff;
+		else if (cr > 0) mColor = OptionMenuSettings.mFontColorHeader;
+	}
+
+	void InitDirect(String label, String label2, Name command, int cr)
 	{
 		Super.Init(label, command, true);
 		mColor = cr;

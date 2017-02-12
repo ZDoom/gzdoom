@@ -1,0 +1,31 @@
+
+
+
+
+
+
+class GameplayMenu : OptionMenu
+{
+	override void Drawer ()
+	{
+		Super.Drawer();
+
+		String s = String.Format("dmflags = %d   dmflags2 = %d", dmflags, dmflags2);
+		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - SmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+			DTA_CleanNoMove_1, true);
+	}
+}
+
+class CompatibilityMenu : OptionMenu
+{
+	override void Drawer ()
+	{
+		Super.Drawer();
+
+		String s = String.Format("compatflags = %d  compatflags2 = %d", compatflags, compatflags2);
+		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - SmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+			DTA_CleanNoMove_1, true);
+	}
+}

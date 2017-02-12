@@ -9,6 +9,7 @@
 #include "zscript/menu/menuitembase.txt"
 #include "zscript/menu/menu.txt"
 #include "zscript/menu/listmenuitems.txt"
+#include "zscript/menu/optionmenu.txt"
 #include "zscript/menu/optionmenuitems.txt"
 #include "zscript/menu/colorpickermenu.txt"
 #include "zscript/menu/joystickmenu.txt"

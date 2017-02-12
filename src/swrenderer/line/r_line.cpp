@@ -309,8 +309,6 @@ namespace swrenderer
 
 		side_t *sidedef = mLineSegment->sidedef;
 
-		rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
-		
 		RenderPortal *renderportal = Thread->Portal.get();
 
 		DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
@@ -485,7 +483,7 @@ namespace swrenderer
 							draw_segment->iscalestep = 0;
 						}
 					}
-					draw_segment->light = rw_light;
+					draw_segment->light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 					draw_segment->lightstep = rw_lightstep;
 
 					// Masked mMiddlePart.Textures should get the light level from the sector they reference,
@@ -519,6 +517,7 @@ namespace swrenderer
 			mFloorPlane = Thread->PlaneList->GetRange(mFloorPlane, start, stop);
 		}
 
+		ClipSegmentTopBottom(start, stop);
 		RenderWallSegmentTextures(start, stop);
 
 		if (clip3d->fake3D & FAKE3D_FAKEMASK)
@@ -958,6 +957,24 @@ namespace swrenderer
 			front->ColorMap->Fade != back->ColorMap->Fade &&
 			(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 	}
+	
+	void SWRenderLine::ClipSegmentTopBottom(int x1, int x2)
+	{
+		// clip wall to the floor and ceiling
+		auto ceilingclip = Thread->OpaquePass->ceilingclip;
+		auto floorclip = Thread->OpaquePass->floorclip;
+		for (int x = x1; x < x2; ++x)
+		{
+			if (walltop.ScreenY[x] < ceilingclip[x])
+			{
+				walltop.ScreenY[x] = ceilingclip[x];
+			}
+			if (wallbottom.ScreenY[x] > floorclip[x])
+			{
+				wallbottom.ScreenY[x] = floorclip[x];
+			}
+		}
+	}
 
 	// Draws zero, one, or two textures for walls.
 	// Can draw or mark the starting pixel of floor and ceiling textures.
@@ -966,6 +983,9 @@ namespace swrenderer
 		int x;
 		double xscale;
 		double yscale;
+		
+		auto ceilingclip = Thread->OpaquePass->ceilingclip;
+		auto floorclip = Thread->OpaquePass->floorclip;
 
 		WallDrawerArgs drawerargs;
 
@@ -977,21 +997,8 @@ namespace swrenderer
 		else if (cameraLight->FixedColormap() != nullptr)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
-		// clip wall to the floor and ceiling
-		auto ceilingclip = Thread->OpaquePass->ceilingclip;
-		auto floorclip = Thread->OpaquePass->floorclip;
-		for (x = x1; x < x2; ++x)
-		{
-			if (walltop.ScreenY[x] < ceilingclip[x])
-			{
-				walltop.ScreenY[x] = ceilingclip[x];
-			}
-			if (wallbottom.ScreenY[x] > floorclip[x])
-			{
-				wallbottom.ScreenY[x] = floorclip[x];
-			}
-		}
-
+		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+	
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// mark ceiling areas

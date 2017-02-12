@@ -69,6 +69,7 @@ namespace swrenderer
 	private:
 		bool RenderWallSegment(int x1, int x2) override;
 		void SetWallVariables(bool needlights);
+		void ClipSegmentTopBottom(int x1, int x2);
 		void RenderWallSegmentTextures(int x1, int x2);
 
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
@@ -113,7 +114,6 @@ namespace swrenderer
 		bool rw_prepped;
 
 		int wallshade;
-		float rw_light;
 		float rw_lightstep;
 		float rw_lightleft;
 

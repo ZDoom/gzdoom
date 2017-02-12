@@ -243,12 +243,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			drawerargs.SetTranslationMap(identitymap);
 	}
 
-	bool visible;
 	FDynamicColormap *basecolormap = nullptr;
-	if (viewport->RenderTarget->IsBgra())
-		visible = drawerargs.SetStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
-	else
-		visible = drawerargs.SetStyle(parms.style, parms.Alpha, 0, parms.fillcolor, basecolormap);
+	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 	
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;

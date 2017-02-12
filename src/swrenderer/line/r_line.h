@@ -69,6 +69,9 @@ namespace swrenderer
 	private:
 		bool RenderWallSegment(int x1, int x2) override;
 		void SetWallVariables(bool needlights);
+		void SetTopTexture();
+		void SetMiddleTexture();
+		void SetBottomTexture();
 		void ClipSegmentTopBottom(int x1, int x2);
 		void RenderWallSegmentTextures(int x1, int x2);
 

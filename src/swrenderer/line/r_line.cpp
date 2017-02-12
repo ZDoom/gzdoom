@@ -693,7 +693,7 @@ namespace swrenderer
 			return linedef->isVisualPortal();
 		}
 	}
-
+	
 	void SWRenderLine::SetWallVariables(bool needlights)
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
@@ -737,75 +737,13 @@ namespace swrenderer
 		markfloor = ShouldMarkFloor();
 		markceiling = ShouldMarkCeiling();
 
-		mTopPart.Texture = nullptr;
-		mMiddlePart.Texture = nullptr;
-		mBottomPart.Texture = nullptr;
+		SetTopTexture();
+		SetMiddleTexture();
+		SetBottomTexture();
 
-		if (sidedef == linedef->sidedef[0] &&
-			(linedef->special == Line_Mirror && r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
+		if (mBackSector && !(sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)))
 		{
-		}
-		else if (mBackSector == NULL)
-		{
-			// single sided line
-
-			// [RH] Horizon lines do not need to be textured
-			if (linedef->isVisualPortal())
-			{
-			}
-			else if (linedef->special != Line_Horizon)
-			{
-				mMiddlePart.Texture = TexMan(sidedef->GetTexture(side_t::mid), true);
-				mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
-				double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
-				mMiddlePart.TextureScaleU = sidedef->GetTextureXScale(side_t::mid);
-				mMiddlePart.TextureScaleV = sidedef->GetTextureYScale(side_t::mid);
-				double yrepeat = mMiddlePart.Texture->Scale.Y * mMiddlePart.TextureScaleV;
-				if (yrepeat >= 0)
-				{ // normal orientation
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // bottom of texture at bottom
-						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
-					}
-					else
-					{ // top of texture at top
-						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && mMiddlePart.Texture != NULL)
-						{
-							rowoffset += mMiddlePart.Texture->GetHeight();
-						}
-					}
-				}
-				else
-				{ // upside down
-					rowoffset = -rowoffset;
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // top of texture at bottom
-						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
-					}
-					else
-					{ // bottom of texture at top
-						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
-					}
-				}
-				if (mMiddlePart.Texture->bWorldPanning)
-				{
-					mMiddlePart.TextureMid += rowoffset * yrepeat;
-				}
-				else
-				{
-					// rowoffset is added outside the multiply so that it positions the texture
-					// by texels instead of world units.
-					mMiddlePart.TextureMid += rowoffset;
-				}
-			}
-		}
-		else
-		{ // two-sided line
-		  // hack to allow height changes in outdoor areas
-
-			double rw_frontlowertop = mFrontSector->GetPlaneTexZ(sector_t::ceiling);
-
+			// skyhack to allow height changes in outdoor areas
 			if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum &&
 				mBackSector->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
@@ -822,100 +760,6 @@ namespace swrenderer
 				  // Recalculate walltop so that the wall is clipped by the back sector's
 				  // ceiling instead of the front sector's ceiling.
 					walltop.Project(mBackSector->ceilingplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
-				}
-				// Putting sky ceilings on the front and back of a line alters the way unpegged
-				// positioning works.
-				rw_frontlowertop = mBackSector->GetPlaneTexZ(sector_t::ceiling);
-			}
-
-			if (rw_havehigh)
-			{ // top texture
-				mTopPart.Texture = TexMan(sidedef->GetTexture(side_t::top), true);
-
-				mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
-				double rowoffset = sidedef->GetTextureYOffset(side_t::top);
-				mTopPart.TextureScaleU = sidedef->GetTextureXScale(side_t::top);
-				mTopPart.TextureScaleV = sidedef->GetTextureYScale(side_t::top);
-				double yrepeat = mTopPart.Texture->Scale.Y * mTopPart.TextureScaleV;
-				if (yrepeat >= 0)
-				{ // normal orientation
-					if (linedef->flags & ML_DONTPEGTOP)
-					{ // top of texture at top
-						mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && mTopPart.Texture != NULL)
-						{
-							rowoffset += mTopPart.Texture->GetHeight();
-						}
-					}
-					else
-					{ // bottom of texture at bottom
-						mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
-					}
-				}
-				else
-				{ // upside down
-					rowoffset = -rowoffset;
-					if (linedef->flags & ML_DONTPEGTOP)
-					{ // bottom of texture at top
-						mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
-					}
-					else
-					{ // top of texture at bottom
-						mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
-					}
-				}
-				if (mTopPart.Texture->bWorldPanning)
-				{
-					mTopPart.TextureMid += rowoffset * yrepeat;
-				}
-				else
-				{
-					mTopPart.TextureMid += rowoffset;
-				}
-			}
-			if (rw_havelow)
-			{ // bottom texture
-				mBottomPart.Texture = TexMan(sidedef->GetTexture(side_t::bottom), true);
-
-				mBottomPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
-				double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
-				mBottomPart.TextureScaleU = sidedef->GetTextureXScale(side_t::bottom);
-				mBottomPart.TextureScaleV = sidedef->GetTextureYScale(side_t::bottom);
-				double yrepeat = mBottomPart.Texture->Scale.Y * mBottomPart.TextureScaleV;
-				if (yrepeat >= 0)
-				{ // normal orientation
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // bottom of texture at bottom
-						mBottomPart.TextureMid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
-					}
-					else
-					{ // top of texture at top
-						mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && mBottomPart.Texture != NULL)
-						{
-							rowoffset += mBottomPart.Texture->GetHeight();
-						}
-					}
-				}
-				else
-				{ // upside down
-					rowoffset = -rowoffset;
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // top of texture at bottom
-						mBottomPart.TextureMid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
-					}
-					else
-					{ // bottom of texture at top
-						mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
-					}
-				}
-				if (mBottomPart.Texture->bWorldPanning)
-				{
-					mBottomPart.TextureMid += rowoffset * yrepeat;
-				}
-				else
-				{
-					mBottomPart.TextureMid += rowoffset;
 				}
 			}
 		}
@@ -948,6 +792,182 @@ namespace swrenderer
 				rw_lightleft = 1;
 				rw_lightstep = 0;
 			}
+		}
+	}
+
+	void SWRenderLine::SetTopTexture()
+	{
+		mTopPart.Texture = nullptr;
+
+		if (!(mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2)) return;
+
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
+		if (!mBackSector) return;
+		
+		mTopPart.Texture = TexMan(sidedef->GetTexture(side_t::top), true);
+
+		mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
+		double rowoffset = sidedef->GetTextureYOffset(side_t::top);
+		mTopPart.TextureScaleU = sidedef->GetTextureXScale(side_t::top);
+		mTopPart.TextureScaleV = sidedef->GetTextureYScale(side_t::top);
+		double yrepeat = mTopPart.Texture->Scale.Y * mTopPart.TextureScaleV;
+		if (yrepeat >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGTOP)
+			{ // top of texture at top
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+				if (rowoffset < 0 && mTopPart.Texture != NULL)
+				{
+					rowoffset += mTopPart.Texture->GetHeight();
+				}
+			}
+			else
+			{ // bottom of texture at bottom
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+			}
+		}
+		else
+		{ // upside down
+			rowoffset = -rowoffset;
+			if (linedef->flags & ML_DONTPEGTOP)
+			{ // bottom of texture at top
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+			}
+			else
+			{ // top of texture at bottom
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+			}
+		}
+		if (mTopPart.Texture->bWorldPanning)
+		{
+			mTopPart.TextureMid += rowoffset * yrepeat;
+		}
+		else
+		{
+			mTopPart.TextureMid += rowoffset;
+		}
+	}
+	
+	void SWRenderLine::SetMiddleTexture()
+	{
+		mMiddlePart.Texture = nullptr;
+		
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
+		if (mBackSector) return;
+		
+		// [RH] Horizon lines do not need to be textured
+		if (linedef->isVisualPortal()) return;
+		if (linedef->special == Line_Horizon) return;
+			
+		mMiddlePart.Texture = TexMan(sidedef->GetTexture(side_t::mid), true);
+		mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
+		double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
+		mMiddlePart.TextureScaleU = sidedef->GetTextureXScale(side_t::mid);
+		mMiddlePart.TextureScaleV = sidedef->GetTextureYScale(side_t::mid);
+		double yrepeat = mMiddlePart.Texture->Scale.Y * mMiddlePart.TextureScaleV;
+		if (yrepeat >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // bottom of texture at bottom
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+			}
+			else
+			{ // top of texture at top
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+				if (rowoffset < 0 && mMiddlePart.Texture != NULL)
+				{
+					rowoffset += mMiddlePart.Texture->GetHeight();
+				}
+			}
+		}
+		else
+		{ // upside down
+			rowoffset = -rowoffset;
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // top of texture at bottom
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+			}
+			else
+			{ // bottom of texture at top
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+			}
+		}
+		if (mMiddlePart.Texture->bWorldPanning)
+		{
+			mMiddlePart.TextureMid += rowoffset * yrepeat;
+		}
+		else
+		{
+			// rowoffset is added outside the multiply so that it positions the texture
+			// by texels instead of world units.
+			mMiddlePart.TextureMid += rowoffset;
+		}
+	}
+	
+	void SWRenderLine::SetBottomTexture()
+	{
+		mBottomPart.Texture = nullptr;
+		
+		if (!(mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2)) return;
+		
+		side_t *sidedef = mLineSegment->sidedef;
+		line_t *linedef = mLineSegment->linedef;
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
+		if (!mBackSector) return;
+		
+		double frontlowertop = mFrontSector->GetPlaneTexZ(sector_t::ceiling);
+		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum)
+		{
+			// Putting sky ceilings on the front and back of a line alters the way unpegged
+			// positioning works.
+			frontlowertop = mBackSector->GetPlaneTexZ(sector_t::ceiling);
+		}
+		
+		mBottomPart.Texture = TexMan(sidedef->GetTexture(side_t::bottom), true);
+
+		mBottomPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
+		double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
+		mBottomPart.TextureScaleU = sidedef->GetTextureXScale(side_t::bottom);
+		mBottomPart.TextureScaleV = sidedef->GetTextureYScale(side_t::bottom);
+		double yrepeat = mBottomPart.Texture->Scale.Y * mBottomPart.TextureScaleV;
+		if (yrepeat >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // bottom of texture at bottom
+				mBottomPart.TextureMid = (frontlowertop - ViewPos.Z) * yrepeat;
+			}
+			else
+			{ // top of texture at top
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+				if (rowoffset < 0 && mBottomPart.Texture != NULL)
+				{
+					rowoffset += mBottomPart.Texture->GetHeight();
+				}
+			}
+		}
+		else
+		{ // upside down
+			rowoffset = -rowoffset;
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // top of texture at bottom
+				mBottomPart.TextureMid = (frontlowertop - ViewPos.Z) * yrepeat;
+			}
+			else
+			{ // bottom of texture at top
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
+			}
+		}
+		if (mBottomPart.Texture->bWorldPanning)
+		{
+			mBottomPart.TextureMid += rowoffset * yrepeat;
+		}
+		else
+		{
+			mBottomPart.TextureMid += rowoffset;
 		}
 	}
 

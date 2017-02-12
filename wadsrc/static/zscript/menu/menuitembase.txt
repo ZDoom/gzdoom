@@ -29,17 +29,15 @@ class MenuItemBase : Object native
 	virtual bool SetValue(int i, int value) { return false; }
 	virtual bool, int GetValue(int i)  { return false, 0; }
 	virtual void Enable(bool on) { mEnabled = on; }
-	// this can only be made scripted once all items are converted, because it is called from the colorpicker menu.
-native	virtual bool MenuEvent (int mkey, bool fromcontroller);// { return false; }
+	virtual bool MenuEvent (int mkey, bool fromcontroller) { return false; }
 	virtual bool MouseEvent(int type, int x, int y) { return false; }
 	virtual bool CheckHotkey(int c) { return false; }
 	virtual int GetWidth() { return 0; }
-	virtual void OffsetPositionY(int ydelta) { mYpos += ydelta; }
-	virtual int GetY() { return mYpos; }
-	virtual int GetX() { return mXpos; }
-	virtual void SetX(int x) { mXpos = x; }
 	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
 
-	
+	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
+	int GetY() { return mYpos; }
+	int GetX() { return mXpos; }
+	void SetX(int x) { mXpos = x; }
 }
 

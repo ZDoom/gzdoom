@@ -68,7 +68,7 @@ class ListMenuItemStaticPatch : ListMenuItem
 	TextureID mTexture;
 	bool mCentered;
 
-	void Init(int x, int y, TextureID patch, bool centered)
+	void Init(int x, int y, TextureID patch, bool centered = false)
 	{
 		Super.Init(x, y);
 		mTexture = patch;
@@ -98,6 +98,14 @@ class ListMenuItemStaticPatch : ListMenuItem
 	}
 }
 
+class ListMenuItemStatucPatchCentered : ListMenuItemStaticPatch
+{
+	void Init(int x, int y, TextureID patch)
+	{
+		Super.Init(x, y, patch, true);
+	}
+}
+
 //=============================================================================
 //
 // static text
@@ -111,7 +119,7 @@ class ListMenuItemStaticText : ListMenuItem
 	int mColor;
 	bool mCentered;
 
-	void Init(int x, int y, String text, Font font, int color, bool centered)
+	void Init(int x, int y, String text, Font font, int color, bool centered = false)
 	{
 		Super.Init(x, y);
 		mText = text;
@@ -141,6 +149,14 @@ class ListMenuItemStaticText : ListMenuItem
 	}
 }
 
+class ListMenuItemStatucTextCentered : ListMenuItemStaticText
+{
+	void Init(int x, int y, String text, Font font, int color)
+	{
+		Super.Init(x, y, text, font, color, true);
+	}
+}
+
 //=============================================================================
 //
 // selectable items
@@ -153,7 +169,7 @@ class ListMenuItemSelectable : ListMenuItem
 	int mHeight;
 	int mParam;
 
-	void Init(int x, int y, int height, Name childmenu, int param = -1)
+	protected void Init(int x, int y, int height, Name childmenu, int param = -1)
 	{
 		Super.Init(x, y, childmenu);
 		mHeight = height;
@@ -207,21 +223,31 @@ class ListMenuItemSelectable : ListMenuItem
 //
 //=============================================================================
 
-class ListMenuItemText : ListMenuItemSelectable
+class ListMenuItemTextItem : ListMenuItemSelectable
 {
 	String mText;
 	Font mFont;
 	int mColor;
 	int mColorSelected;
 
-	void Init(int x, int y, int height, int hotkey, String text, Font font, int color, int color2, Name child, int param = 0)
+	void Init(ListMenuDescriptor desc, String text, String hotkey, Name child, int param = 0)
+	{
+		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, child, param);
+		mText = text;
+		mFont = desc.mFont;
+		mColor = desc.mFontColor;
+		mColorSelected = desc.mFontcolor2;
+		mHotkey = hotkey.CharAt(0);
+	}
+	
+	void InitDirect(int x, int y, int height, String hotkey, String text, Font font, int color, int color2, Name child, int param = 0)
 	{
 		Super.Init(x, y, height, child, param);
 		mText = text;
 		mFont = font;
 		mColor = color;
 		mColorSelected = color2;
-		mHotkey = hotkey;
+		mHotkey = hotkey.CharAt(0);
 	}
 	
 	override void Drawer(bool selected)
@@ -241,14 +267,21 @@ class ListMenuItemText : ListMenuItemSelectable
 //
 //=============================================================================
 
-class ListMenuItemPatch : ListMenuItemSelectable
+class ListMenuItemPatchItem : ListMenuItemSelectable
 {
 	TextureID mTexture;
 
-	void Init(int x, int y, int height, int hotkey, TextureID patch, Name child, int param = 0)
+	void Init(ListMenuDescriptor desc, TextureID patch, String hotkey, Name child, int param = 0)
+	{
+		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, child, param);
+		mHotkey = hotkey.CharAt(0);
+		mTexture = patch;
+	}
+	
+	void InitDirect(int x, int y, int height, TextureID patch, String hotkey, Name child, int param = 0)
 	{
 		Super.Init(x, y, height, child, param);
-		mHotkey = hotkey;
+		mHotkey = hotkey.CharAt(0);
 		mTexture = patch;
 	}
 	

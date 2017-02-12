@@ -39,7 +39,7 @@
 //
 //=============================================================================
 
-class PlayerNameBox : ListMenuItemSelectable
+class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 {
 	String mText;
 	Font mFont;
@@ -48,6 +48,23 @@ class PlayerNameBox : ListMenuItemSelectable
 	String mPlayerName;
 	String mEditName;
 	bool mEntering;
+
+	//=============================================================================
+	//
+	// Player's name
+	//
+	//=============================================================================
+
+	void Init(ListMenuDescriptor desc, String text, int frameofs, Name command)
+	{
+		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, command);
+		mText = text;
+		mFont = font;
+		mFontColor = color;
+		mFrameSize = frameofs;
+		mPlayerName = "";
+		mEntering = false;
+	}
 
 	//=============================================================================
 	//
@@ -197,7 +214,7 @@ class PlayerNameBox : ListMenuItemSelectable
 //
 //=============================================================================
 
-class DValueTextItem : ListMenuItemSelectable
+class ListMenuItemValueText : ListMenuItemSelectable
 {
 	Array<String> mSelections;
 	String mText;
@@ -212,7 +229,28 @@ class DValueTextItem : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void Init(int x, int y, int height, String text, Font font, int color, int valuecolor, Name command, Name values)
+	void Init(ListMenuDescriptor desc, String text, Name command, Name values = 'None')
+	{
+		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, command);
+		mText = text;
+		mFont = desc.mFont;
+		mFontColor = desc.mFontColor;
+		mFontColor2 = desc.mFontColor2;
+		mSelection = 0;
+		let cnt = OptionValues.GetCount(values);
+		for(int i = 0; i < cnt; i++)
+		{
+			SetString(i, OptionValues.GetText(values, i));
+		}
+	}
+
+	//=============================================================================
+	//
+	// items for the player menu
+	//
+	//=============================================================================
+
+	void InitDirect(int x, int y, int height, String text, Font font, int color, int valuecolor, Name command, Name values)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;
@@ -318,7 +356,7 @@ class DValueTextItem : ListMenuItemSelectable
 //
 //=============================================================================
 
-class DSliderItem : ListMenuItemSelectable
+class ListMenuItemSlider : ListMenuItemSelectable
 {
 	String mText;
 	Font mFont;
@@ -333,7 +371,25 @@ class DSliderItem : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void Init(int x, int y, int height, String text, Font font, int color, Name command, int min, int max, int step)
+	void Init(ListMenuItemDescriptor desc, String text, Name command, int min, int max, int step)
+	{
+		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, command);
+		mText = text;
+		mFont = desc.mFont;
+		mFontColor = desc.mFontColor;
+		mSelection = 0;
+		mMinrange = min;
+		mMaxrange = max;
+		mStep = step;
+	}
+
+	//=============================================================================
+	//
+	// items for the player menu
+	//
+	//=============================================================================
+
+	void InitDirect(int x, int y, int height, String text, Font font, int color, Name command, int min, int max, int step)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;

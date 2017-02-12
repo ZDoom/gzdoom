@@ -302,258 +302,34 @@ class DMenuItemBase : public DObject
 	DECLARE_CLASS(DMenuItemBase, DObject)
 public:
 	int mXpos, mYpos;
-	FName mAction;
-
+	FNameNoInit mAction;
 	bool mEnabled;
 
-	DMenuItemBase(int xpos = 0, int ypos = 0, FName action = NAME_None)
-	{
-		mXpos = xpos;
-		mYpos = ypos;
-		mAction = action;
-		mEnabled = true;
-	}
-
-	virtual bool CheckCoordinate(int x, int y);
-	virtual void Ticker();
-	virtual void Drawer(bool selected);
-	virtual bool Selectable();
-	virtual bool Activate();
-	virtual FName GetAction(int *pparam);
-	virtual bool SetString(int i, const char *s);
-	virtual bool GetString(int i, char *s, int len);
-	virtual bool SetValue(int i, int value);
-	virtual bool GetValue(int i, int *pvalue);
-	virtual void Enable(bool on);
-	virtual bool MenuEvent (int mkey, bool fromcontroller);
-	virtual bool MouseEvent(int type, int x, int y);
-	virtual bool CheckHotkey(int c);
-	virtual int GetWidth();
-	virtual int GetIndent() { return 0; }
-	virtual int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected) { return indent; }
-	void DrawSelector(int xofs, int yofs, FTextureID tex);
+	bool CheckCoordinate(int x, int y);
+	void Ticker();
+	void Drawer(bool selected);
+	bool Selectable();
+	bool Activate();
+	FName GetAction(int *pparam);
+	bool SetString(int i, const char *s);
+	bool GetString(int i, char *s, int len);
+	bool SetValue(int i, int value);
+	bool GetValue(int i, int *pvalue);
+	void Enable(bool on);
+	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
+	bool CheckHotkey(int c);
+	int GetWidth();
+	int GetIndent();
+	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
 	int GetY() { return mYpos; }
 	int GetX() { return mXpos; }
 	void SetX(int x) { mXpos = x; }
 
+	void DrawSelector(int xofs, int yofs, FTextureID tex);
+
 };	
-
-class DListMenuItemStaticPatch_ : public DMenuItemBase
-{
-	DECLARE_CLASS(DListMenuItemStaticPatch_, DMenuItemBase)
-protected:
-	FTextureID mTexture;
-	bool mCentered;
-
-	DListMenuItemStaticPatch_() {}
-public:
-	DListMenuItemStaticPatch_(int x, int y, FTextureID patch, bool centered);
-	void Drawer(bool selected);
-};
-
-class DListMenuItemStaticText_ : public DMenuItemBase
-{
-	DECLARE_CLASS(DListMenuItemStaticText_, DMenuItemBase)
-protected:
-	FString mText;
-	FFont *mFont;
-	EColorRange mColor;
-	bool mCentered;
-
-	DListMenuItemStaticText_() {}
-public:
-	DListMenuItemStaticText_(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
-	void Drawer(bool selected);
-};
-
-//=============================================================================
-//
-// the player sprite window
-//
-//=============================================================================
-
-class DListMenuItemPlayerDisplay_ : public DMenuItemBase
-{
-	DECLARE_CLASS(DListMenuItemPlayerDisplay_, DMenuItemBase)
-
-	DListMenuDescriptor *mOwner;
-	FTexture *mBackdrop;
-	FRemapTable mRemap;
-	FPlayerClass *mPlayerClass;
-	FState *mPlayerState;
-	int mPlayerTics;
-	bool mNoportrait;
-	BYTE mRotation;
-	BYTE mMode;	// 0: automatic (used by class selection), 1: manual (used by player setup)
-	BYTE mTranslate;
-	int mSkin;
-	int mRandomClass;
-	int mRandomTimer;
-	int mClassNum;
-
-	void SetPlayerClass(int classnum, bool force = false);
-	bool UpdatePlayerClass();
-	void UpdateRandomClass();
-	void UpdateTranslation();
-
-	DListMenuItemPlayerDisplay_() {}
-public:
-
-	enum
-	{
-		PDF_ROTATION = 0x10001,
-		PDF_SKIN = 0x10002,
-		PDF_CLASS = 0x10003,
-		PDF_MODE = 0x10004,
-		PDF_TRANSLATE = 0x10005,
-	};
-
-	DListMenuItemPlayerDisplay_(DListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
-	void OnDestroy() override;
-	virtual void Ticker();
-	virtual void Drawer(bool selected);
-	bool SetValue(int i, int value);
-};
-
-
-//=============================================================================
-//
-// selectable items
-//
-//=============================================================================
-
-class DListMenuItemSelectable_ : public DMenuItemBase
-{
-	DECLARE_CLASS(DListMenuItemSelectable_, DMenuItemBase)
-protected:
-	int mHotkey;
-	int mHeight;
-	int mParam;
-
-	DListMenuItemSelectable_() {}
-public:
-	DListMenuItemSelectable_(int x, int y, int height, FName childmenu, int mParam = -1);
-	bool CheckCoordinate(int x, int y);
-	bool Selectable();
-	bool CheckHotkey(int c);
-	bool Activate();
-	bool MouseEvent(int type, int x, int y);
-	FName GetAction(int *pparam);
-};
-
-class DListMenuItemText_ : public DListMenuItemSelectable_
-{
-	DECLARE_CLASS(DListMenuItemText_, DListMenuItemSelectable_)
-	const char *mText;
-	FFont *mFont;
-	EColorRange mColor;
-	EColorRange mColorSelected;
-
-	DListMenuItemText_() {}
-public:
-	DListMenuItemText_(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param = 0);
-	void OnDestroy() override;
-	void Drawer(bool selected);
-	int GetWidth();
-};
-
-class DListMenuItemPatch_ : public DListMenuItemSelectable_
-{
-	DECLARE_CLASS(DListMenuItemPatch_, DListMenuItemSelectable_)
-	FTextureID mTexture;
-
-	DListMenuItemPatch_() {}
-public:
-	DListMenuItemPatch_(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
-	void Drawer(bool selected);
-	int GetWidth();
-};
-
-//=============================================================================
-//
-// items for the player menu
-//
-//=============================================================================
-
-class DPlayerNameBox_ : public DListMenuItemSelectable_
-{
-	DECLARE_CLASS(DPlayerNameBox_, DListMenuItemSelectable_)
-	FString mText;
-	FFont *mFont;
-	EColorRange mFontColor;
-	int mFrameSize;
-	char mPlayerName[MAXPLAYERNAME+1];
-	char mEditName[MAXPLAYERNAME+2];
-	bool mEntering;
-
-	void DrawBorder (int x, int y, int len);
-
-	DPlayerNameBox_() {}
-public:
-
-	DPlayerNameBox_(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
-	bool SetString(int i, const char *s);
-	bool GetString(int i, char *s, int len);
-	void Drawer(bool selected);
-	bool MenuEvent (int mkey, bool fromcontroller);
-};
-
-//=============================================================================
-//
-// items for the player menu
-//
-//=============================================================================
-
-class DValueTextItem_ : public DListMenuItemSelectable_
-{
-	DECLARE_CLASS(DValueTextItem_, DListMenuItemSelectable_)
-	TArray<FString> mSelections;
-	FString mText;
-	int mSelection;
-	FFont *mFont;
-	EColorRange mFontColor;
-	EColorRange mFontColor2;
-
-	DValueTextItem_() {}
-public:
-
-	DValueTextItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values);
-	bool SetString(int i, const char *s);
-	bool SetValue(int i, int value);
-	bool GetValue(int i, int *pvalue);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	void Drawer(bool selected);
-};
-
-//=============================================================================
-//
-// items for the player menu
-//
-//=============================================================================
-
-class DSliderItem_ : public DListMenuItemSelectable_
-{
-	DECLARE_CLASS(DSliderItem_, DListMenuItemSelectable_)
-	FString mText;
-	FFont *mFont;
-	EColorRange mFontColor;
-	int mMinrange, mMaxrange;
-	int mStep;
-	int mSelection;
-
-	void DrawSlider (int x, int y);
-
-	DSliderItem_() {}
-public:
-
-	DSliderItem_(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
-	bool SetValue(int i, int value);
-	bool GetValue(int i, int *pvalue);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	void Drawer(bool selected);
-	bool MouseEvent(int type, int x, int y);
-};
 
 //=============================================================================
 //
@@ -593,36 +369,6 @@ public:
 	}
 };
 
-
-//=============================================================================
-//
-// base class for menu items
-//
-//=============================================================================
-
-/*
-class DMenuItemBase : public DMenuItemBase
-{
-	DECLARE_ABSTRACT_CLASS(DMenuItemBase, DMenuItemBase)
-public:
-	FString mLabel;
-	bool mCentered;
-
-	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
-
-	DMenuItemBase(const char *text = nullptr, FName action = NAME_None, bool center = false)
-		: DMenuItemBase(0, 0, action)
-	{
-		mLabel = text;
-		mCentered = center;
-	}
-
-	virtual int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected);
-	virtual bool Selectable();
-	virtual int GetIndent();
-	virtual bool MouseEvent(int type, int x, int y);
-};
-*/
 
 //=============================================================================
 //
@@ -762,5 +508,7 @@ DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double 
 DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval);
 DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center);
 DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval);
+DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param);
+DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 
 #endif

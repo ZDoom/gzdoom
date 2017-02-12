@@ -18,6 +18,35 @@ struct InputEvent native
 		DeviceChange,// a device has been connected or removed
 	}
 	
+	enum EGUIEvent
+	{
+		GUI_None,
+		GUI_KeyDown,			// data1: unshifted ASCII, data2: shifted ASCII, data3: modifiers
+		GUI_KeyRepeat,		// same
+		GUI_KeyUp,			// same
+		GUI_Char,			// data1: translated character (for user text input), data2: alt down?
+		GUI_FirstMouseEvent,
+			GUI_MouseMove,
+			GUI_LButtonDown,
+			GUI_LButtonUp,
+			GUI_LButtonDblClick,
+			GUI_MButtonDown,
+			GUI_MButtonUp,
+			GUI_MButtonDblClick,
+			GUI_RButtonDown,
+			GUI_RButtonUp,
+			GUI_RButtonDblClick,
+			GUI_WheelUp,			// data3: shift/ctrl/alt
+			GUI_WheelDown,		// "
+			GUI_WheelRight,		// "
+			GUI_WheelLeft,		// "
+			GUI_BackButtonDown,
+			GUI_BackButtonUp,
+			GUI_FwdButtonDown,
+			GUI_FwdButtonUp,
+		GUI_LastMouseEvent,
+	};
+	
 	const KEY_ESCAPE = 0x01;
 }
 
@@ -580,7 +609,7 @@ class Floor : Thinker native
 		waitStair,
 		resetStair,
 
-		// Not to be used as parameters to EV_DoFloor()
+		// Not to be used as parameters to DoFloor()
 		genFloorChg0,
 		genFloorChgT,
 		genFloorChg

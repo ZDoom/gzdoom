@@ -15,6 +15,7 @@
 #include "zscript/menu/playerdisplay.txt"
 #include "zscript/menu/playermenu.txt"
 #include "zscript/menu/textentermenu.txt"
+#include "zscript/menu/videomenu.txt"
 
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"

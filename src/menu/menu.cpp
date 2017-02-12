@@ -93,6 +93,8 @@ int				BackbuttonTime;
 float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
 
+void M_InitVideoModes();
+
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
 #define KEY_REPEAT_RATE		(3)
@@ -568,6 +570,11 @@ void M_SetMenu(FName menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return;
 		}
+
+	case NAME_VideoModeMenu:
+		M_InitVideoModes();
+		break;
+
 	}
 
 	// End of special checks

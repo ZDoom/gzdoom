@@ -138,60 +138,6 @@ struct OptionMenuItemScreenResolution	// temporary workaround
 		SRL_HIGHLIGHT = 0x30004,
 	};
 };
-class DVideoModeMenu : public DOptionMenu
-{
-	DECLARE_CLASS(DVideoModeMenu, DOptionMenu)
-
-public:
-
-	DVideoModeMenu()
-	{
-		SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
-	}
-
-	bool MenuEvent(int mkey, bool fromcontroller)
-	{
-		if ((mkey == MKEY_Up || mkey == MKEY_Down) && mDesc->mSelectedItem >= 0 && 
-			mDesc->mSelectedItem < (int)mDesc->mItems.Size())
-		{
-			int sel;
-			bool selected = mDesc->mItems[mDesc->mSelectedItem]->GetValue(OptionMenuItemScreenResolution::SRL_SELECTION, &sel);
-			bool res = Super::MenuEvent(mkey, fromcontroller);
-			if (selected) mDesc->mItems[mDesc->mSelectedItem]->SetValue(OptionMenuItemScreenResolution::SRL_SELECTION, sel);
-			return res;
-		}
-		return Super::MenuEvent(mkey, fromcontroller);
-	}
-
-	bool Responder(event_t *ev)
-	{
-		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown &&
-			(ev->data1 == 't' || ev->data1 == 'T'))
-		{
-			if (!GetSelectedSize (&NewWidth, &NewHeight))
-			{
-				NewWidth = screen->VideoWidth;
-				NewHeight = screen->VideoHeight;
-			}
-			else
-			{
-				OldWidth = screen->VideoWidth;
-				OldHeight = screen->VideoHeight;
-				OldBits = DisplayBits;
-				NewBits = BitTranslate[DummyDepthCvar];
-				setmodeneeded = true;
-				testingmode = I_GetTime(false) + 5 * TICRATE;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-				SetModesMenu (NewWidth, NewHeight, NewBits);
-				return true;
-			}
-		}
-		return Super::Responder(ev);
-	}
-};
-
-IMPLEMENT_CLASS(DVideoModeMenu, false, false)
-
 
 //=============================================================================
 //
@@ -382,6 +328,27 @@ static bool GetSelectedSize (int *width, int *height)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(DVideoModeMenu, SetSelectedSize)
+{
+	if (!GetSelectedSize (&NewWidth, &NewHeight))
+	{
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
+		ACTION_RETURN_BOOL(false);
+	}
+	else
+	{
+		OldWidth = screen->VideoWidth;
+		OldHeight = screen->VideoHeight;
+		OldBits = DisplayBits;
+		NewBits = BitTranslate[DummyDepthCvar];
+		setmodeneeded = true;
+		testingmode = I_GetTime(false) + 5 * TICRATE;
+		SetModesMenu (NewWidth, NewHeight, NewBits);
+		ACTION_RETURN_BOOL(true);
+	}
+}	
+
 //=============================================================================
 //
 //
@@ -459,4 +426,9 @@ static void SetModesMenu (int w, int h, int bits)
 		}
 	}
 	BuildModesList (w, h, bits);
+}
+
+void M_InitVideoModes()
+{
+	SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 }

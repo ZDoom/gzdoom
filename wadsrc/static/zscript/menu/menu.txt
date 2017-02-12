@@ -99,6 +99,7 @@ class Menu : Object native
 	virtual void SetFocus(MenuItemBase fc) {}
 	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
 	virtual void ReleaseFocus() {}
+	virtual void ResetColor() {}
 
 	native virtual bool Responder(InputEvent ev);
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
@@ -125,6 +126,8 @@ class MenuDescriptor : Object native
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
+
+	native static MenuDescriptor GetDescriptor(Name n);
 }
 
 class ListMenuDescriptor : MenuDescriptor native
@@ -185,7 +188,7 @@ class OptionMenuDescriptor : MenuDescriptor native
 	native int mPosition;
 	native bool mDontDim;
 
-	//native void CalcIndent();
+	native void CalcIndent();
 	//native OptionMenuItem GetItem(Name iname);
 	void Reset()
 	{
@@ -199,24 +202,64 @@ class OptionMenuDescriptor : MenuDescriptor native
 
 class OptionMenu : Menu native
 {
+	native OptionMenuDescriptor mDesc;
 	native bool CanScrollUp;
 	native bool CanScrollDown;
 	native int VisBottom;
 	native OptionMenuItem mFocusControl;
-	native OptionMenuDescriptor mDesc;
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void Init(Menu parent, OptionMenuDescriptor desc)
+	{
+		mParentMenu = parent;
+		mDesc = desc;
+		if (mDesc != NULL && mDesc.mSelectedItem == -1) mDesc.mSelectedItem = FirstSelectable();
+
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	int FirstSelectable()
+	{
+		if (mDesc != NULL)
+		{
+			// Go down to the first selectable item
+			int i = -1;
+			do
+			{
+				i++;
+			}
+			while (i < mDesc.mItems.Size() && !mDesc.mItems[i].Selectable());
+			if (i>=0 && i < mDesc.mItems.Size()) return i;
+		}
+		return -1;
+	}
+
 	
 	override void SetFocus(MenuItemBase fc)
 	{
 		mFocusControl = OptionMenuItem(fc);
 	}
+	
 	override bool CheckFocus(MenuItemBase fc)
 	{
 		return mFocusControl == fc;
 	}
+	
 	override void ReleaseFocus()
 	{
 		mFocusControl = NULL;
 	}
+	
 	
 }
 

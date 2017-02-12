@@ -589,6 +589,7 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
 						}
+						else DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->Type()->ParentClass->TypeName.GetChars());
 					}
 					catch (CRecoverableError &err)
 					{

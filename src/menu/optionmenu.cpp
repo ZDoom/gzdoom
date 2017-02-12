@@ -487,6 +487,13 @@ void DOptionMenuDescriptor::CalcIndent()
 	mIndent =  widest + 4;
 }
 
+DEFINE_ACTION_FUNCTION(DOptionMenuDescriptor, CalcIndent)
+{
+	PARAM_SELF_PROLOGUE(DOptionMenuDescriptor);
+	self->CalcIndent();
+	return 0;
+}
+
 //=============================================================================
 //
 //

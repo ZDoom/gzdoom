@@ -107,6 +107,14 @@ IMPLEMENT_CLASS(DMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DListMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DOptionMenuDescriptor, false, false)
 
+DEFINE_ACTION_FUNCTION(DMenuDescriptor, GetDescriptor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(name);
+	auto retn = desc ? *desc : nullptr;
+	ACTION_RETURN_POINTER(retn);
+}
 
 size_t DListMenuDescriptor::PropagateMark()
 {
@@ -1137,6 +1145,21 @@ CCMD(reset2saved)
 	GameConfig->DoModSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }
+
+
+// This really should be in the script but we can't do scripted CCMDs yet.
+CCMD(undocolorpic)
+{
+	if (DMenu::CurrentMenu != NULL)
+	{
+		IFVIRTUALPTR(DMenu::CurrentMenu, DMenu, ResetColor)
+		{
+			VMValue params[] = { (DObject*)DMenu::CurrentMenu };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
+		}
+	}
+}
+
 
 
 

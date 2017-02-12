@@ -839,7 +839,6 @@ set( FASTMATH_PCH_SOURCES
 	SkylineBinPack.cpp
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
-	menu/colorpickermenu.cpp
 	menu/joystickmenu.cpp
 	menu/listmenu.cpp
 	menu/loadsavemenu.cpp

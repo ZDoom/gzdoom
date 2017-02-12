@@ -37,7 +37,7 @@ class OptionMenuItem : MenuItemBase
 	String mLabel;
 	bool mCentered;
 	
-	void Init(String label, String command, bool center = false)
+	protected void Init(String label, String command, bool center = false)
 	{
 		Super.Init(0, 0, command);
 		mLabel = label;
@@ -92,10 +92,11 @@ class OptionMenuItem : MenuItemBase
 class OptionMenuItemSubmenu : OptionMenuItem
 {
 	int mParam;
-	void Init(String label, Name command, int param = 0)
+	OptionMenuItemSubmenu Init(String label, Name command, int param = 0)
 	{
 		Super.init(label, command);
 		mParam = param;
+		return self;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
@@ -120,9 +121,10 @@ class OptionMenuItemSubmenu : OptionMenuItem
 
 class OptionMenuItemCommand : OptionMenuItemSubmenu
 {
-	void Init(String label, Name command)
+	OptionMenuItemCommand Init(String label, Name command)
 	{
 		Super.Init(label, command);
+		return self;
 	}
 
 	override bool Activate()
@@ -145,10 +147,11 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 	String mPrompt;
 
 
-	void Init(String label, Name command, String prompt = "")
+	OptionMenuItemSafeCommand Init(String label, Name command, String prompt = "")
 	{
 		Super.Init(label, command);
 		mPrompt = prompt;
+		return self;
 	}
 
 	override bool MenuEvent (int mkey, bool fromcontroller)
@@ -289,10 +292,11 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 {
 	CVar mCVar;
 
-	void Init(String label, Name command, Name values, CVar graycheck = null, int center = 0)
+	OptionMenuItemOption Init(String label, Name command, Name values, CVar graycheck = null, int center = 0)
 	{
 		Super.Init(label, command, values, graycheck, center);
 		mCVar = CVar.FindCVar(mAction);
+		return self;
 	}
 
 	//=============================================================================
@@ -417,7 +421,7 @@ class OptionMenuItemControlBase : OptionMenuItem
 	int mInput;
 	bool mWaiting;
 
-	void Init(String label, Name command, KeyBindings bindings)
+	protected void Init(String label, Name command, KeyBindings bindings)
 	{
 		Super.init(label, command);
 		mBindings = bindings;
@@ -486,17 +490,19 @@ class OptionMenuItemControlBase : OptionMenuItem
 
 class OptionMenuItemControl : OptionMenuItemControlBase
 {
-	void Init(String label, Name command)
+	OptionMenuItemControl Init(String label, Name command)
 	{
 		Super.Init(label, command, Bindings);
+		return self;
 	}
 }
 
 class OptionMenuItemMapControl : OptionMenuItemControlBase
 {
-	void Init(String label, Name command)
+	OptionMenuItemMapControl Init(String label, Name command)
 	{
 		Super.Init(label, command, AutomapBindings);
+		return self;
 	}
 }
 
@@ -511,18 +517,20 @@ class OptionMenuItemStaticText : OptionMenuItem
 	int mColor;
 
 	// this function is only for use from MENUDEF, it needs to do some strange things with the color for backwards compatibility.
-	void Init(String label, int cr = -1)
+	OptionMenuItemStaticText Init(String label, int cr = -1)
 	{
 		Super.Init(label, 'None', true);
 		mColor = OptionMenuSettings.mFontColor;
 		if ((cr & 0xffff0000) == 0x12340000) mColor = cr & 0xffff;
 		else if (cr > 0) mColor = OptionMenuSettings.mFontColorHeader;
+		return self;
 	}
 
-	void InitDirect(String label, int cr)
+	OptionMenuItemStaticText InitDirect(String label, int cr)
 	{
 		Super.Init(label, 'None', true);
 		mColor = cr;
+		return self;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
@@ -551,7 +559,7 @@ class OptionMenuItemStaticTextSwitchable : OptionMenuItem
 	int mCurrent;
 
 	// this function is only for use from MENUDEF, it needs to do some strange things with the color for backwards compatibility.
-	void Init(String label, String label2, Name command, int cr = -1)
+	OptionMenuItemStaticTextSwitchable Init(String label, String label2, Name command, int cr = -1)
 	{
 		Super.Init(label, command, true);
 		mAltText = label2;
@@ -560,14 +568,16 @@ class OptionMenuItemStaticTextSwitchable : OptionMenuItem
 		mColor = OptionMenuSettings.mFontColor;
 		if ((cr & 0xffff0000) == 0x12340000) mColor = cr & 0xffff;
 		else if (cr > 0) mColor = OptionMenuSettings.mFontColorHeader;
+		return self;
 	}
 
-	void InitDirect(String label, String label2, Name command, int cr)
+	OptionMenuItemStaticTextSwitchable InitDirect(String label, String label2, Name command, int cr)
 	{
 		Super.Init(label, command, true);
 		mColor = cr;
 		mAltText = label2;
 		mCurrent = 0;
+		return self;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
@@ -764,10 +774,11 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 {
 	CVar mCVar;
 	
-	void Init(String label, Name command, double min, double max, double step, int showval = 1)
+	OptionMenuItemSlider Init(String label, Name command, double min, double max, double step, int showval = 1)
 	{
 		Super.Init(label, min, max, step, showval);
 		mCVar =CVar.FindCVar(command);
+		return self;
 	}
 
 	override double GetSliderValue()
@@ -803,12 +814,13 @@ class OptionMenuItemColorPicker : OptionMenuItem
 
 	const CPF_RESET = 0x20001;
 
-	void Init(String label, Name command)
+	OptionMenuItemColorPicker Init(String label, Name command)
 	{
 		Super.Init(label, command);
 		CVar cv = CVar.FindCVar(command);
 		if (cv != null && cv.GetRealType() != CVar.CVAR_Color) cv = null;
 		mCVar = cv;
+		return self;
 	}
 
 	//=============================================================================
@@ -840,19 +852,25 @@ class OptionMenuItemColorPicker : OptionMenuItem
 		if (mCVar != null)
 		{
 			Menu.MenuSound("menu/choose");
-			/*
-			Menu *picker = StartPickerMenu(Menu.CurrentMenu, mLabel, mCVar);
-			if (picker != null)
+			let desc = MenuDescriptor.GetDescriptor('Colorpickermenu');
+			// New color pickers must inherit from the internal one to work here.
+			if (desc != NULL && (desc.mClass == null || desc.mClass is "ColorPickerMenu"))
 			{
-				M_ActivateMenu(picker);
-				return true;
+				let odesc = OptionMenuDescriptor(desc);
+				if (odesc != null)
+				{
+					let cls = desc.mClass;
+					if (cls == null) cls = "ColorpickerMenu";
+					let picker = ColorpickerMenu(new(cls));
+					picker.Init(Menu.GetCurrentMenu(), mLabel, odesc, mCVar);
+					picker.ActivateMenu();
+					return true;
+				}
 			}
-			*/
 		}
 		return false;
 	}
 }
-
 
 class OptionMenuItemScreenResolution : OptionMenuItem
 {
@@ -868,11 +886,12 @@ class OptionMenuItemScreenResolution : OptionMenuItem
 		SRL_HIGHLIGHT = 0x30004,
 	};
 
-	void Init(String command)
+	OptionMenuItemScreenResolution Init(String command)
 	{
 		Super.Init("", command);
 		mSelection = 0;
 		mHighlight = -1;
+		return self;
 	}
 
 	override bool SetValue(int i, int v)
@@ -1064,10 +1083,11 @@ class OptionMenuFieldBase : OptionMenuItem
 
 class OptionMenuItemTextField : OptionMenuFieldBase
 {
-	void Init (String label, Name command, CVar graycheck = null)
+	OptionMenuItemTextField Init (String label, Name command, CVar graycheck = null)
 	{
 		Super.Init(label, command, graycheck);
 		mEntering = false;
+		return self;
 	}
 
 	override String Represent()
@@ -1132,12 +1152,13 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 
 class OptionMenuItemNumberField : OptionMenuFieldBase
 {
-	void Init (String label, Name command, float minimum = 0, float maximum = 100, float step = 1, CVar graycheck = null)
+	OptionMenuItemNumberField Init (String label, Name command, float minimum = 0, float maximum = 100, float step = 1, CVar graycheck = null)
 	{
 		Super.Init(label, command, graycheck);
 		mMinimum = min(minimum, maximum);
 		mMaximum = max(minimum, maximum);
 		mStep = max(1, step);
+		return self;
 	}
 
 	override String Represent()

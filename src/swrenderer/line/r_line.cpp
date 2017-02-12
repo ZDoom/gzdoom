@@ -806,6 +806,9 @@ namespace swrenderer
 		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
 		if (!mBackSector) return;
 		
+		// No top texture for skyhack lines
+		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum) return;
+		
 		mTopPart.Texture = TexMan(sidedef->GetTexture(side_t::top), true);
 
 		mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));

@@ -124,13 +124,6 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisMap)
 
 DOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy);
 
-class DJoystickConfigMenu : public DOptionMenu
-{
-	DECLARE_CLASS(DJoystickConfigMenu, DOptionMenu)
-};
-
-IMPLEMENT_CLASS(DJoystickConfigMenu, false, false)
-
 /*=======================================
  *
  * Joystick Menu
@@ -295,7 +288,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		if (i == (int)Joysticks.Size())
 		{
 			SELECTED_JOYSTICK = NULL;
-			if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DJoystickConfigMenu)))
+			if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu"))
 			{
 				DMenu::CurrentMenu->Close();
 			}

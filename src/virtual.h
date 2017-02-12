@@ -22,7 +22,7 @@ inline unsigned GetVirtualIndex(PClass *cls, const char *funcname)
 #define IFVIRTUALPTRNAME(self, cls, funcname) \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
-		VIndex = GetVirtualIndex(PClass::FindActor(cls), #funcname); \
+		VIndex = GetVirtualIndex(PClass::FindClass(cls), #funcname); \
 		assert(VIndex != ~0u); \
 	} \
 	auto clss = self->GetClass(); \

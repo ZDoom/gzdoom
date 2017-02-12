@@ -378,6 +378,24 @@ void DMenu::Ticker ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, Ticker)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Drawer();
+	return 0;
+}
+
+void DMenu::CallTicker()
+{
+	IFVIRTUAL(DMenu, Ticker)
+	{
+		VMValue params[] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else Drawer();
+}
+
+
 void DMenu::Drawer () 
 {
 	if (this == DMenu::CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
@@ -608,10 +626,14 @@ void M_SetMenu(FName menu, int param)
 		else if ((*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 		{
 			DOptionMenuDescriptor *ld = static_cast<DOptionMenuDescriptor*>(*desc);
-			const PClass *cls = ld->mClass == nullptr? RUNTIME_CLASS(DOptionMenu) : ld->mClass;
+			const PClass *cls = ld->mClass == nullptr? PClass::FindClass("OptionMenu") : ld->mClass;
 
-			DOptionMenu *newmenu = (DOptionMenu *)cls->CreateNew();
-			newmenu->Init(DMenu::CurrentMenu, ld);
+			DMenu *newmenu = (DMenu*)cls->CreateNew();
+			IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)
+			{
+				VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
+				GlobalVMStack.Call(func, params, 3, nullptr, 0);
+			}
 			M_ActivateMenu(newmenu);
 		}
 		return;
@@ -847,7 +869,7 @@ void M_Ticker (void)
 	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		DMenu::CurrentMenu->Ticker();
+		DMenu::CurrentMenu->CallTicker();
 
 		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
@@ -856,7 +878,7 @@ void M_Ticker (void)
 				if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
 				{
 					MenuButtonTickers[i] = KEY_REPEAT_RATE;
-					DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+					DMenu::CurrentMenu->CallMenuEvent(i, MenuButtonOrigin[i]);
 				}
 			}
 		}
@@ -1170,9 +1192,6 @@ CCMD(undocolorpic)
 
 
 
-//native void OptionMenuDescriptor.CalcIndent();
-//native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
-
 DEFINE_FIELD(DMenu, mParentMenu)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
@@ -1210,12 +1229,6 @@ DEFINE_FIELD(DOptionMenuDescriptor, mScrollPos)
 DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
-
-DEFINE_FIELD(DOptionMenu, CanScrollUp)
-DEFINE_FIELD(DOptionMenu, CanScrollDown)
-DEFINE_FIELD(DOptionMenu, VisBottom)
-DEFINE_FIELD(DOptionMenu, mFocusControl)
-DEFINE_FIELD(DOptionMenu, mDesc)
 
 DEFINE_FIELD(FOptionMenuSettings, mTitleColor)
 DEFINE_FIELD(FOptionMenuSettings, mFontColor)

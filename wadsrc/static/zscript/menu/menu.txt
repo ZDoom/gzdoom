@@ -104,6 +104,7 @@ class Menu : Object native
 	native virtual bool Responder(InputEvent ev);
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
+	native virtual void Ticker();
 	native virtual void Drawer();
 	native void Close();
 	native MenuItemBase GetItem(Name n);
@@ -198,68 +199,5 @@ class OptionMenuDescriptor : MenuDescriptor native
 		mIndent = 0;
 		mDontDim = 0;
 	}
-}
-
-class OptionMenu : Menu native
-{
-	native OptionMenuDescriptor mDesc;
-	native bool CanScrollUp;
-	native bool CanScrollDown;
-	native int VisBottom;
-	native OptionMenuItem mFocusControl;
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	virtual void Init(Menu parent, OptionMenuDescriptor desc)
-	{
-		mParentMenu = parent;
-		mDesc = desc;
-		if (mDesc != NULL && mDesc.mSelectedItem == -1) mDesc.mSelectedItem = FirstSelectable();
-
-	}
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	int FirstSelectable()
-	{
-		if (mDesc != NULL)
-		{
-			// Go down to the first selectable item
-			int i = -1;
-			do
-			{
-				i++;
-			}
-			while (i < mDesc.mItems.Size() && !mDesc.mItems[i].Selectable());
-			if (i>=0 && i < mDesc.mItems.Size()) return i;
-		}
-		return -1;
-	}
-
-	
-	override void SetFocus(MenuItemBase fc)
-	{
-		mFocusControl = OptionMenuItem(fc);
-	}
-	
-	override bool CheckFocus(MenuItemBase fc)
-	{
-		return mFocusControl == fc;
-	}
-	
-	override void ReleaseFocus()
-	{
-		mFocusControl = NULL;
-	}
-	
-	
 }
 

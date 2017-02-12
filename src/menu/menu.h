@@ -282,6 +282,7 @@ public:
 	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	bool CallMouseEvent(int type, int x, int y);
+	void CallTicker();
 	void CallDrawer();
 
 	bool MouseEventBack(int type, int x, int y);
@@ -392,50 +393,6 @@ struct FOptionValues
 typedef TMap< FName, FOptionValues* > FOptionMap;
 
 extern FOptionMap OptionValues;
-
-
-//=============================================================================
-//
-// Option menu class runs a menu described by a DOptionMenuDescriptor
-//
-//=============================================================================
-
-class DOptionMenu : public DMenu
-{
-	DECLARE_CLASS(DOptionMenu, DMenu)
-	HAS_OBJECT_POINTERS;
-
-public: // needs to be public for script access
-	bool CanScrollUp;
-	bool CanScrollDown;
-	int VisBottom;
-	DMenuItemBase *mFocusControl;
-	DOptionMenuDescriptor *mDesc;
-
-//public:
-	DMenuItemBase *GetItem(FName name);
-	DOptionMenu(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
-	virtual void Init(DMenu *parent = NULL, DOptionMenuDescriptor *desc = NULL);
-	int FirstSelectable();
-	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	void Ticker ();
-	void Drawer ();
-	const DOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
-	void SetFocus(DMenuItemBase *fc)
-	{
-		mFocusControl = fc;
-	}
-	bool CheckFocus(DMenuItemBase *fc)
-	{
-		return mFocusControl == fc;
-	}
-	void ReleaseFocus()
-	{
-		mFocusControl = NULL;
-	}
-};
 
 
 //=============================================================================

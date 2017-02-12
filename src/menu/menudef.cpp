@@ -700,7 +700,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 		{
 			sc.MustGetString();
 			const PClass *cls = PClass::FindClass(sc.String);
-			if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(DOptionMenu)))
+			if (cls == nullptr || !cls->IsDescendantOf("OptionMenu"))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
 			}

@@ -192,7 +192,7 @@ DEFINE_ACTION_FUNCTION(_CVar, GetFloat)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
 	auto v = self->GetGenericRep(CVAR_Float);
-	ACTION_RETURN_FLOAT(v.Int);
+	ACTION_RETURN_FLOAT(v.Float);
 }
 
 DEFINE_ACTION_FUNCTION(_CVar, GetString)

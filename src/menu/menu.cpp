@@ -1402,7 +1402,7 @@ bool DMenuItemBase::GetValue(int i, int *pvalue)
 {
 	IFVIRTUAL(DMenuItemBase, GetValue)
 	{
-		VMValue params[] = { (DObject*)this };
+		VMValue params[] = { (DObject*)this, i };
 		int retval[2];
 		VMReturn ret[2]; ret[0].IntAt(&retval[0]); ret[1].IntAt(&retval[1]);
 		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);

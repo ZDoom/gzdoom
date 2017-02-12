@@ -168,8 +168,7 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 		String actionLabel = StringTable.localize(mLabel);
 
 		String FullString;
-		FullString.Format("%s%s%s\n\n%s", TEXTCOLOR_WHITE, actionLabel, TEXTCOLOR_NORMAL, msg);
-
+		FullString = String.Format("%s%s%s\n\n%s", TEXTCOLOR_WHITE, actionLabel, TEXTCOLOR_NORMAL, msg);
 		Menu.StartMessage(FullString, 0);
 		return true;
 	}
@@ -187,7 +186,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	Name mValues;	// Entry in OptionValues table
 	CVar mGrayCheck;
 	int mCenter;
-
+	
 	const OP_VALUES = 0x11001;
 
 	protected void Init(String label, Name command, Name values, CVar graycheck, int center)
@@ -650,7 +649,7 @@ class OptionMenuSliderBase : OptionMenuItem
 
 	private void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
 	{
-		String formater = String.format("%%.%f", fracdigits);	// The format function cannot do the '%.*f' syntax.
+		String formater = String.format("%%.%df", fracdigits);	// The format function cannot do the '%.*f' syntax.
 		String textbuf;
 		double range;
 		int maxlen = 0;
@@ -810,7 +809,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 	{
 		Super.Init(label, command);
 		CVar cv = CVar.FindCVar(command);
-		if (cv != null && cv.GetRealType() == CVar.CVAR_Color) cv = null;
+		if (cv != null && cv.GetRealType() != CVar.CVAR_Color) cv = null;
 		mCVar = cv;
 	}
 
@@ -823,7 +822,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 		{
 			int box_x = indent + CursorSpace();
 			int box_y = y + CleanYfac_1;
-			screen.Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + OptionMenuSettings.mLinespacing*CleanYfac_1, -1, mCVar.GetInt() | 0xff000000);
+			screen.Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + OptionMenuSettings.mLinespacing*CleanYfac_1, mCVar.GetInt() | 0xff000000);
 		}
 		return indent;
 	}
@@ -1102,7 +1101,6 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 			
 			//Menu* input = new DTextEnterMenu (Menu.CurrentMenu, mEditName, sizeof mEditName, 2, fromcontroller);
 			//M_ActivateMenu(input);
-			//OpenTextEnterMenu(mEditName, 2, fromcontroller);	// needs a native workaround until menu creation is scriptable.
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)

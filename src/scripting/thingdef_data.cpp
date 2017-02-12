@@ -1009,7 +1009,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Replace)
 	return 0;
 }
 
-static FString FStringFormat(VM_ARGS)
+FString FStringFormat(VM_ARGS)
 {
 	assert(param[0].Type == REGT_STRING);
 	FString fmtstring = param[0].s().GetChars();

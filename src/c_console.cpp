@@ -1332,6 +1332,14 @@ DEFINE_ACTION_FUNCTION(_Console, HideConsole)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Console, Printf)
+{
+	PARAM_PROLOGUE;
+	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	Printf("%s\n", s.GetChars());
+	return 0;
+}
+
 static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 {
 	int data1 = ev->data1;

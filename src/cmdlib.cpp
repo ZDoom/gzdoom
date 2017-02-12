@@ -614,16 +614,16 @@ int strbin (char *str)
 				case '6':
 				case '7':
 					c = 0;
-					for (i = 0; i < 3; i++) {
-						c <<= 3;
+					for (i = 0; i < 2; i++)
+					{
+						p++;
 						if (*p >= '0' && *p <= '7')
-							c += *p-'0';
+							c = (c << 3) + *p - '0';
 						else
 						{
 							p--;
 							break;
 						}
-						p++;
 					}
 					*str++ = c;
 					break;
@@ -717,16 +717,16 @@ FString strbin1 (const char *start)
 				case '6':
 				case '7':
 					c = 0;
-					for (i = 0; i < 3; i++) {
-						c <<= 3;
+					for (i = 0; i < 2; i++)
+					{
+						p++;
 						if (*p >= '0' && *p <= '7')
-							c += *p-'0';
+							c = (c << 3) + *p - '0';
 						else
 						{
 							p--;
 							break;
 						}
-						p++;
 					}
 					result << c;
 					break;

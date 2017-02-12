@@ -207,7 +207,7 @@ struct Translation
 {
 	Color colors[256];
 	
-	native bool SetTranslation(int group, int num);
+	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	static int MakeID(int group, int num)
 	{

@@ -53,6 +53,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	int mRandomClass;
 	int mRandomTimer;
 	int mClassNum;
+	int mTranslation;
 
 	enum EPDFlags
 	{
@@ -81,7 +82,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 			int b = c1.b + c2.b * i / 255;
 			trans.colors[i] = Color(255, r, g, b);
 		}
-		trans.SetTranslation(TRANSLATION_Players, MAXPLAYERS + 1);
+		mTranslation = trans.AddTranslation();
 
 		mBackdrop = TexMan.CheckForTexture("PlayerBackdrop", TexMan.Type_MiscPatch);
 		mPlayerClass = NULL;
@@ -249,37 +250,40 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 			TextureID texid = TexMan.CheckForTexture(portrait, TexMan.Type_MiscPatch);
 			screen.DrawTexture (texid, true, mXpos, mYpos, DTA_Clean, true);
 		}
-		int x = (mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
-		int y = (mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
-
-		screen.DrawTexture(mBackdrop, false, x, y - 1,
-			DTA_DestWidth, 72 * CleanXfac,
-			DTA_DestHeight, 80 * CleanYfac,
-			DTA_TranslationIndex, Translation.MakeID(TRANSLATION_Players, MAXPLAYERS + 1),
-			DTA_Masked, true);
-
-		Screen.DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
-
-		if (mPlayerState != NULL)
+		else
 		{
-			Vector2 Scale;
-			TextureID sprite;
-			bool flip;
-			
-			[sprite, flip, Scale] = mPlayerState.GetSpriteTexture(mRotation, mSkin, playdef.Scale);
-		
-			if (sprite.IsValid())
+			int x = (mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
+			int y = (mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
+
+			screen.DrawTexture(mBackdrop, false, x, y - 1,
+				DTA_DestWidth, 72 * CleanXfac,
+				DTA_DestHeight, 80 * CleanYfac,
+				DTA_TranslationIndex, mTranslation,
+				DTA_Masked, true);
+
+			Screen.DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
+
+			if (mPlayerState != NULL)
 			{
-				int trans = mTranslate? Translation.MakeID(TRANSLATION_Players, MAXPLAYERS) : 0;
-				let tscale = TexMan.GetScaledSize(sprite);
-				Scale.X *= CleanXfac * tscale.X;
-				Scale.Y *= CleanYfac * tscale.Y;
+				Vector2 Scale;
+				TextureID sprite;
+				bool flip;
 				
-				screen.DrawTexture (sprite, false,
-					x + 36*CleanXfac, y + 71*CleanYfac,
-					DTA_DestWidthF, Scale.X, DTA_DestHeightF, Scale.Y,
-					DTA_TranslationIndex, trans,
-					DTA_FlipX, flip);
+				[sprite, flip, Scale] = mPlayerState.GetSpriteTexture(mRotation, mSkin, playdef.Scale);
+			
+				if (sprite.IsValid())
+				{
+					int trans = mTranslate? Translation.MakeID(TRANSLATION_Players, MAXPLAYERS) : 0;
+					let tscale = TexMan.GetScaledSize(sprite);
+					Scale.X *= CleanXfac * tscale.X;
+					Scale.Y *= CleanYfac * tscale.Y;
+					
+					screen.DrawTexture (sprite, false,
+						x + 36*CleanXfac, y + 71*CleanYfac,
+						DTA_DestWidthF, Scale.X, DTA_DestHeightF, Scale.Y,
+						DTA_TranslationIndex, trans,
+						DTA_FlipX, flip);
+				}
 			}
 		}
 	}

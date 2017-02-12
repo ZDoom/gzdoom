@@ -1271,7 +1271,7 @@ DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FT
 {
 	auto c = PClass::FindClass("ListMenuItemPatchItem");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, x, y, height, tex.GetIndex(), hotkey, command.GetIndex(), param };
+	VMValue params[] = { p, x, y, height, tex.GetIndex(), FString(char(hotkey)), command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1281,7 +1281,7 @@ DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, con
 {
 	auto c = PClass::FindClass("ListMenuItemTextItem");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, x, y, height, hotkey, text, font, int(color1.d), int(color2.d), command.GetIndex(), param };
+	VMValue params[] = { p, x, y, height, FString(char(hotkey)), text, font, int(color1.d), int(color2.d), command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1351,7 +1351,7 @@ FName DMenuItemBase::GetAction(int *pparam)
 		int retval[2];
 		VMReturn ret[2]; ret[0].IntAt(&retval[0]); ret[1].IntAt(&retval[1]);
 		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);
-		return !!retval;
+		return ENamedName(retval[0]);
 	}
 	return NAME_None;
 }

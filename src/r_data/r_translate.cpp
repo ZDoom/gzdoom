@@ -740,8 +740,6 @@ void R_InitTranslationTables ()
 	}
 	// The menu player also gets a separate translation table
 	PushIdentityTable(TRANSLATION_Players);
-	// This one is for the backdrop in the menu
-	PushIdentityTable(TRANSLATION_Players);
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
@@ -1232,36 +1230,6 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 //
 //
 //----------------------------------------------------------------------------
-
-struct FTranslation
-{
-	PalEntry colors[256];
-};
-
-DEFINE_ACTION_FUNCTION(_Translation, SetTranslation)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FTranslation);
-	PARAM_UINT(tgroup);
-	PARAM_UINT(tnum);
-	if (tgroup >= NUM_TRANSLATION_TABLES || tnum >= translationtables[tgroup].Size())
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-	auto remap = translationtables[tgroup][tnum];
-	int i = 0;
-	for (auto p : self->colors)
-	{
-		remap->Palette[i] = p;
-		remap->Remap[i] = ColorMatcher.Pick(p);
-	}
-	ACTION_RETURN_BOOL(true);
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
 static TMap<FName, int> customTranslationMap;
 
 int R_FindCustomTranslation(FName name)
@@ -1364,3 +1332,29 @@ void R_ParseTrnslate()
 		}
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+struct FTranslation
+{
+	PalEntry colors[256];
+};
+
+DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslation);
+
+	FRemapTable NewTranslation;
+	memcpy(&NewTranslation.Palette[0], self->colors, 256 * sizeof(PalEntry));
+	for (int i = 0; i < 256; i++)
+	{
+		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
+	}
+	int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
+	ACTION_RETURN_INT(trans);
+}
+

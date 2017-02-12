@@ -142,7 +142,7 @@ std2:
 		'true'						{ RET(TK_True); }
 		'false'						{ RET(TK_False); }
 		'none'						{ RET(TK_None); }
-		'new'						{ RET(TK_New); }
+		//'new'						{ RET(TK_New); } // [ZZ] no.
 		'instanceof'				{ RET(TK_InstanceOf); }
 		'auto'						{ RET(TK_Auto); }
 		'exec'						{ RET(TK_Exec); }

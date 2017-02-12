@@ -489,7 +489,7 @@ namespace swrenderer
 					draw_segment->light = rw_light;
 					draw_segment->lightstep = rw_lightstep;
 
-					// Masked midtextures should get the light level from the sector they reference,
+					// Masked mMiddlePart.Textures should get the light level from the sector they reference,
 					// not from the current subsector, which is what the current wallshade value
 					// comes from. We make an exeption for polyobjects, however, since their "home"
 					// sector should be whichever one they move into.
@@ -512,26 +512,12 @@ namespace swrenderer
 		// render it
 		if (markceiling)
 		{
-			if (mCeilingPlane)
-			{	// killough 4/11/98: add NULL ptr checks
-				mCeilingPlane = Thread->PlaneList->GetRange(mCeilingPlane, start, stop);
-			}
-			else
-			{
-				markceiling = false;
-			}
+			mCeilingPlane = Thread->PlaneList->GetRange(mCeilingPlane, start, stop);
 		}
 
 		if (markfloor)
 		{
-			if (mFloorPlane)
-			{	// killough 4/11/98: add NULL ptr checks
-				mFloorPlane = Thread->PlaneList->GetRange(mFloorPlane, start, stop);
-			}
-			else
-			{
-				markfloor = false;
-			}
+			mFloorPlane = Thread->PlaneList->GetRange(mFloorPlane, start, stop);
 		}
 
 		RenderWallSegmentTextures(start, stop);
@@ -576,6 +562,9 @@ namespace swrenderer
 
 	bool SWRenderLine::ShouldMarkFloor() const
 	{
+		if (!mFloorPlane)
+			return false;
+		
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr)
 		{
@@ -630,6 +619,9 @@ namespace swrenderer
 
 	bool SWRenderLine::ShouldMarkCeiling() const
 	{
+		if (!mCeilingPlane)
+			return false;
+		
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
@@ -747,7 +739,9 @@ namespace swrenderer
 		markfloor = ShouldMarkFloor();
 		markceiling = ShouldMarkCeiling();
 
-		midtexture = toptexture = bottomtexture = 0;
+		mTopPart.Texture = nullptr;
+		mMiddlePart.Texture = nullptr;
+		mBottomPart.Texture = nullptr;
 
 		if (sidedef == linedef->sidedef[0] &&
 			(linedef->special == Line_Mirror && r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
@@ -763,24 +757,24 @@ namespace swrenderer
 			}
 			else if (linedef->special != Line_Horizon)
 			{
-				midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
-				rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
+				mMiddlePart.Texture = TexMan(sidedef->GetTexture(side_t::mid), true);
+				mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 				double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
-				rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
-				rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-				double yrepeat = midtexture->Scale.Y * rw_midtexturescaley;
+				mMiddlePart.TextureScaleU = sidedef->GetTextureXScale(side_t::mid);
+				mMiddlePart.TextureScaleV = sidedef->GetTextureYScale(side_t::mid);
+				double yrepeat = mMiddlePart.Texture->Scale.Y * mMiddlePart.TextureScaleV;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGBOTTOM)
 					{ // bottom of texture at bottom
-						rw_midtexturemid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
+						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 					}
 					else
 					{ // top of texture at top
-						rw_midtexturemid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && midtexture != NULL)
+						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+						if (rowoffset < 0 && mMiddlePart.Texture != NULL)
 						{
-							rowoffset += midtexture->GetHeight();
+							rowoffset += mMiddlePart.Texture->GetHeight();
 						}
 					}
 				}
@@ -789,22 +783,22 @@ namespace swrenderer
 					rowoffset = -rowoffset;
 					if (linedef->flags & ML_DONTPEGBOTTOM)
 					{ // top of texture at bottom
-						rw_midtexturemid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
 					}
 					else
 					{ // bottom of texture at top
-						rw_midtexturemid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
+						mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 					}
 				}
-				if (midtexture->bWorldPanning)
+				if (mMiddlePart.Texture->bWorldPanning)
 				{
-					rw_midtexturemid += rowoffset * yrepeat;
+					mMiddlePart.TextureMid += rowoffset * yrepeat;
 				}
 				else
 				{
 					// rowoffset is added outside the multiply so that it positions the texture
 					// by texels instead of world units.
-					rw_midtexturemid += rowoffset;
+					mMiddlePart.TextureMid += rowoffset;
 				}
 			}
 		}
@@ -838,26 +832,26 @@ namespace swrenderer
 
 			if (rw_havehigh)
 			{ // top texture
-				toptexture = TexMan(sidedef->GetTexture(side_t::top), true);
+				mTopPart.Texture = TexMan(sidedef->GetTexture(side_t::top), true);
 
-				rw_offset_top = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
+				mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
 				double rowoffset = sidedef->GetTextureYOffset(side_t::top);
-				rw_toptexturescalex = sidedef->GetTextureXScale(side_t::top);
-				rw_toptexturescaley = sidedef->GetTextureYScale(side_t::top);
-				double yrepeat = toptexture->Scale.Y * rw_toptexturescaley;
+				mTopPart.TextureScaleU = sidedef->GetTextureXScale(side_t::top);
+				mTopPart.TextureScaleV = sidedef->GetTextureYScale(side_t::top);
+				double yrepeat = mTopPart.Texture->Scale.Y * mTopPart.TextureScaleV;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGTOP)
 					{ // top of texture at top
-						rw_toptexturemid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && toptexture != NULL)
+						mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+						if (rowoffset < 0 && mTopPart.Texture != NULL)
 						{
-							rowoffset += toptexture->GetHeight();
+							rowoffset += mTopPart.Texture->GetHeight();
 						}
 					}
 					else
 					{ // bottom of texture at bottom
-						rw_toptexturemid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
+						mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 					}
 				}
 				else
@@ -865,43 +859,43 @@ namespace swrenderer
 					rowoffset = -rowoffset;
 					if (linedef->flags & ML_DONTPEGTOP)
 					{ // bottom of texture at top
-						rw_toptexturemid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
+						mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 					}
 					else
 					{ // top of texture at bottom
-						rw_toptexturemid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+						mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 					}
 				}
-				if (toptexture->bWorldPanning)
+				if (mTopPart.Texture->bWorldPanning)
 				{
-					rw_toptexturemid += rowoffset * yrepeat;
+					mTopPart.TextureMid += rowoffset * yrepeat;
 				}
 				else
 				{
-					rw_toptexturemid += rowoffset;
+					mTopPart.TextureMid += rowoffset;
 				}
 			}
 			if (rw_havelow)
 			{ // bottom texture
-				bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom), true);
+				mBottomPart.Texture = TexMan(sidedef->GetTexture(side_t::bottom), true);
 
-				rw_offset_bottom = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
+				mBottomPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
 				double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
-				rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
-				rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
-				double yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
+				mBottomPart.TextureScaleU = sidedef->GetTextureXScale(side_t::bottom);
+				mBottomPart.TextureScaleV = sidedef->GetTextureYScale(side_t::bottom);
+				double yrepeat = mBottomPart.Texture->Scale.Y * mBottomPart.TextureScaleV;
 				if (yrepeat >= 0)
 				{ // normal orientation
 					if (linedef->flags & ML_DONTPEGBOTTOM)
 					{ // bottom of texture at bottom
-						rw_bottomtexturemid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
+						mBottomPart.TextureMid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
 					}
 					else
 					{ // top of texture at top
-						rw_bottomtexturemid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
-						if (rowoffset < 0 && bottomtexture != NULL)
+						mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+						if (rowoffset < 0 && mBottomPart.Texture != NULL)
 						{
-							rowoffset += bottomtexture->GetHeight();
+							rowoffset += mBottomPart.Texture->GetHeight();
 						}
 					}
 				}
@@ -910,35 +904,35 @@ namespace swrenderer
 					rowoffset = -rowoffset;
 					if (linedef->flags & ML_DONTPEGBOTTOM)
 					{ // top of texture at bottom
-						rw_bottomtexturemid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
+						mBottomPart.TextureMid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
 					}
 					else
 					{ // bottom of texture at top
-						rw_bottomtexturemid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + bottomtexture->GetHeight();
+						mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
 					}
 				}
-				if (bottomtexture->bWorldPanning)
+				if (mBottomPart.Texture->bWorldPanning)
 				{
-					rw_bottomtexturemid += rowoffset * yrepeat;
+					mBottomPart.TextureMid += rowoffset * yrepeat;
 				}
 				else
 				{
-					rw_bottomtexturemid += rowoffset;
+					mBottomPart.TextureMid += rowoffset;
 				}
 			}
 		}
 
 		FTexture *midtex = TexMan(sidedef->GetTexture(side_t::mid), true);
 
-		bool segtextured = midtex != NULL || toptexture != NULL || bottomtexture != NULL;
+		bool segtextured = midtex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
 
 		// calculate light table
 		if (needlights && (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector))))
 		{
 			lwallscale =
 				midtex ? (midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
-				toptexture ? (toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
-				bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
+				mTopPart.Texture ? (mTopPart.Texture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
+				mBottomPart.Texture ? (mBottomPart.Texture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 				1.;
 
 			walltexcoords.Project(sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
@@ -1066,25 +1060,25 @@ namespace swrenderer
 		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
 
 		// draw the wall tiers
-		if (midtexture)
+		if (mMiddlePart.Texture)
 		{ // one sided line
-			if (midtexture->UseType != FTexture::TEX_Null && viewactive)
+			if (mMiddlePart.Texture->UseType != FTexture::TEX_Null && viewactive)
 			{
-				FTexture *rw_pic = midtexture;
-				xscale = rw_pic->Scale.X * rw_midtexturescalex;
-				yscale = rw_pic->Scale.Y * rw_midtexturescaley;
+				FTexture *rw_pic = mMiddlePart.Texture;
+				xscale = rw_pic->Scale.X * mMiddlePart.TextureScaleU;
+				yscale = rw_pic->Scale.Y * mMiddlePart.TextureScaleV;
 				if (xscale != lwallscale)
 				{
 					walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 					lwallscale = xscale;
 				}
-				if (midtexture->bWorldPanning)
+				if (mMiddlePart.Texture->bWorldPanning)
 				{
-					rw_offset = xs_RoundToInt(rw_offset_mid * xscale);
+					rw_offset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
 				}
 				else
 				{
-					rw_offset = rw_offset_mid;
+					rw_offset = mMiddlePart.TextureOffsetU;
 				}
 				if (xscale < 0)
 				{
@@ -1092,14 +1086,14 @@ namespace swrenderer
 				}
 
 				RenderWallPart renderWallpart(Thread);
-				renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, rw_midtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+				renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 			}
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
 		}
 		else
 		{ // two sided line
-			if (toptexture != NULL && toptexture->UseType != FTexture::TEX_Null)
+			if (mTopPart.Texture != NULL && mTopPart.Texture->UseType != FTexture::TEX_Null)
 			{ // top wall
 				for (x = x1; x < x2; ++x)
 				{
@@ -1107,21 +1101,21 @@ namespace swrenderer
 				}
 				if (viewactive)
 				{
-					FTexture *rw_pic = toptexture;
-					xscale = rw_pic->Scale.X * rw_toptexturescalex;
-					yscale = rw_pic->Scale.Y * rw_toptexturescaley;
+					FTexture *rw_pic = mTopPart.Texture;
+					xscale = rw_pic->Scale.X * mTopPart.TextureScaleU;
+					yscale = rw_pic->Scale.Y * mTopPart.TextureScaleV;
 					if (xscale != lwallscale)
 					{
 						walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
-					if (toptexture->bWorldPanning)
+					if (mTopPart.Texture->bWorldPanning)
 					{
-						rw_offset = xs_RoundToInt(rw_offset_top * xscale);
+						rw_offset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
 					}
 					else
 					{
-						rw_offset = rw_offset_top;
+						rw_offset = mTopPart.TextureOffsetU;
 					}
 					if (xscale < 0)
 					{
@@ -1129,7 +1123,7 @@ namespace swrenderer
 					}
 
 					RenderWallPart renderWallpart(Thread);
-					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, rw_toptexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1139,7 +1133,7 @@ namespace swrenderer
 			}
 
 
-			if (bottomtexture != NULL && bottomtexture->UseType != FTexture::TEX_Null)
+			if (mBottomPart.Texture != NULL && mBottomPart.Texture->UseType != FTexture::TEX_Null)
 			{ // bottom wall
 				for (x = x1; x < x2; ++x)
 				{
@@ -1147,21 +1141,21 @@ namespace swrenderer
 				}
 				if (viewactive)
 				{
-					FTexture *rw_pic = bottomtexture;
-					xscale = rw_pic->Scale.X * rw_bottomtexturescalex;
-					yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
+					FTexture *rw_pic = mBottomPart.Texture;
+					xscale = rw_pic->Scale.X * mBottomPart.TextureScaleU;
+					yscale = rw_pic->Scale.Y * mBottomPart.TextureScaleV;
 					if (xscale != lwallscale)
 					{
 						walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 						lwallscale = xscale;
 					}
-					if (bottomtexture->bWorldPanning)
+					if (mBottomPart.Texture->bWorldPanning)
 					{
-						rw_offset = xs_RoundToInt(rw_offset_bottom * xscale);
+						rw_offset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
 					}
 					else
 					{
-						rw_offset = rw_offset_bottom;
+						rw_offset = mBottomPart.TextureOffsetU;
 					}
 					if (xscale < 0)
 					{
@@ -1169,7 +1163,7 @@ namespace swrenderer
 					}
 
 					RenderWallPart renderWallpart(Thread);
-					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, rw_bottomtexturemid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, rw_offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}

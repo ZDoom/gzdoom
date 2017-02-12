@@ -49,6 +49,15 @@ namespace swrenderer
 		void InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right);
 	};
 
+	struct WallPartTexture
+	{
+		fixed_t TextureOffsetU;
+		double TextureMid;
+		double TextureScaleU;
+		double TextureScaleV;
+		FTexture *Texture;
+	};
+
 	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
@@ -101,10 +110,6 @@ namespace swrenderer
 
 		// Wall segment variables:
 
-		fixed_t rw_offset_top;
-		fixed_t rw_offset_mid;
-		fixed_t rw_offset_bottom;
-
 		bool rw_prepped;
 
 		int wallshade;
@@ -114,21 +119,13 @@ namespace swrenderer
 
 		double lwallscale;
 		fixed_t rw_offset;
-		double rw_midtexturemid;
-		double rw_toptexturemid;
-		double rw_bottomtexturemid;
-		double rw_midtexturescalex;
-		double rw_midtexturescaley;
-		double rw_toptexturescalex;
-		double rw_toptexturescaley;
-		double rw_bottomtexturescalex;
-		double rw_bottomtexturescaley;
 
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
-		FTexture *toptexture;
-		FTexture *bottomtexture;
-		FTexture *midtexture;
+		
+		WallPartTexture mTopPart;
+		WallPartTexture mMiddlePart;
+		WallPartTexture mBottomPart;
 
 		ProjectedWallCull mCeilingClipped;
 		ProjectedWallCull mFloorClipped;

@@ -118,7 +118,6 @@ namespace swrenderer
 		float rw_lightleft;
 
 		double lwallscale;
-		fixed_t rw_offset;
 
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;

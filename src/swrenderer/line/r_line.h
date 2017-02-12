@@ -73,7 +73,13 @@ namespace swrenderer
 		void SetMiddleTexture();
 		void SetBottomTexture();
 		void ClipSegmentTopBottom(int x1, int x2);
-		void RenderWallSegmentTextures(int x1, int x2);
+		void MarkCeilingPlane(int x1, int x2);
+		void MarkFloorPlane(int x1, int x2);
+		void Mark3DFloors(int x1, int x2);
+		void MarkOpaquePassClip(int x1, int x2);
+		void RenderTopTexture(int x1, int x2);
+		void RenderMiddleTexture(int x1, int x2);
+		void RenderBottomTexture(int x1, int x2);
 
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
 		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;

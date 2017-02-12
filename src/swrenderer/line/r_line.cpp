@@ -506,24 +506,18 @@ namespace swrenderer
 				}
 		}
 
-		// render it
-		if (markceiling)
-		{
-			mCeilingPlane = Thread->PlaneList->GetRange(mCeilingPlane, start, stop);
-		}
-
-		if (markfloor)
-		{
-			mFloorPlane = Thread->PlaneList->GetRange(mFloorPlane, start, stop);
-		}
-
 		ClipSegmentTopBottom(start, stop);
-		RenderWallSegmentTextures(start, stop);
+
+		MarkCeilingPlane(start, stop);
+		MarkFloorPlane(start, stop);
+		Mark3DFloors(start, stop);
 
 		if (clip3d->fake3D & FAKE3D_FAKEMASK)
 		{
 			return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
 		}
+
+		MarkOpaquePassClip(start, stop);
 
 		// save sprite clipping info
 		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
@@ -542,6 +536,10 @@ namespace swrenderer
 		{
 			draw_segment->silhouette |= SIL_TOP | SIL_BOTTOM;
 		}
+
+		RenderMiddleTexture(start, stop);
+		RenderTopTexture(start, stop);
+		RenderBottomTexture(start, stop);
 
 		// [RH] Draw any decals bound to the seg
 		// [ZZ] Only if not an active mirror
@@ -999,35 +997,18 @@ namespace swrenderer
 		}
 	}
 
-	// Draws zero, one, or two textures for walls.
-	// Can draw or mark the starting pixel of floor and ceiling textures.
-	void SWRenderLine::RenderWallSegmentTextures(int x1, int x2)
+	void SWRenderLine::MarkCeilingPlane(int x1, int x2)
 	{
-		int x;
-		double xscale;
-		double yscale;
-		
-		auto ceilingclip = Thread->OpaquePass->ceilingclip;
-		auto floorclip = Thread->OpaquePass->floorclip;
-
-		WallDrawerArgs drawerargs;
-
-		drawerargs.SetStyle(false, false, OPAQUE);
-
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
-		else if (cameraLight->FixedColormap() != nullptr)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-
-		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
-	
-		Clip3DFloors *clip3d = Thread->Clip3D.get();
-
 		// mark ceiling areas
 		if (markceiling)
 		{
-			for (x = x1; x < x2; ++x)
+			mCeilingPlane = Thread->PlaneList->GetRange(mCeilingPlane, x1, x2);
+
+			auto ceilingclip = Thread->OpaquePass->ceilingclip;
+			auto floorclip = Thread->OpaquePass->floorclip;
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
+
+			for (int x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKECEILING) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
 				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
@@ -1038,11 +1019,19 @@ namespace swrenderer
 				}
 			}
 		}
+	}
 
-		// mark floor areas
+	void SWRenderLine::MarkFloorPlane(int x1, int x2)
+	{
 		if (markfloor)
 		{
-			for (x = x1; x < x2; ++x)
+			mFloorPlane = Thread->PlaneList->GetRange(mFloorPlane, x1, x2);
+
+			auto ceilingclip = Thread->OpaquePass->ceilingclip;
+			auto floorclip = Thread->OpaquePass->floorclip;
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
+
+			for (int x = x1; x < x2; ++x)
 			{
 				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKEFLOOR) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
@@ -1054,17 +1043,25 @@ namespace swrenderer
 				}
 			}
 		}
+	}
+
+	void SWRenderLine::Mark3DFloors(int x1, int x2)
+	{
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// kg3D - fake planes clipping
 		if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
 		{
+			auto ceilingclip = Thread->OpaquePass->ceilingclip;
+			auto floorclip = Thread->OpaquePass->floorclip;
+
 			if (clip3d->fake3D & FAKE3D_CLIPBOTFRONT)
 			{
 				memcpy(clip3d->fakeFloor->floorclip + x1, wallbottom.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 			else
 			{
-				for (x = x1; x < x2; ++x)
+				for (int x = x1; x < x2; ++x)
 				{
 					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
@@ -1076,47 +1073,22 @@ namespace swrenderer
 			}
 			else
 			{
-				for (x = x1; x < x2; ++x)
+				for (int x = x1; x < x2; ++x)
 				{
 					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 		}
-		if (clip3d->fake3D & FAKE3D_FAKEMASK) return;
+	}
 
-		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
+	void SWRenderLine::MarkOpaquePassClip(int x1, int x2)
+	{
+		auto ceilingclip = Thread->OpaquePass->ceilingclip;
+		auto floorclip = Thread->OpaquePass->floorclip;
 
-		// draw the wall tiers
-		if (mMiddlePart.Texture)
-		{ // one sided line
-			if (mMiddlePart.Texture->UseType != FTexture::TEX_Null && viewactive)
-			{
-				FTexture *rw_pic = mMiddlePart.Texture;
-				xscale = rw_pic->Scale.X * mMiddlePart.TextureScaleU;
-				yscale = rw_pic->Scale.Y * mMiddlePart.TextureScaleV;
-				if (xscale != lwallscale)
-				{
-					walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-					lwallscale = xscale;
-				}
-				fixed_t offset;
-				if (mMiddlePart.Texture->bWorldPanning)
-				{
-					offset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
-				}
-				else
-				{
-					offset = mMiddlePart.TextureOffsetU;
-				}
-				if (xscale < 0)
-				{
-					offset = -offset;
-				}
-
-				RenderWallPart renderWallpart(Thread);
-				renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
-			}
+		if (mMiddlePart.Texture) // one sided line
+		{
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
 		}
@@ -1124,36 +1096,9 @@ namespace swrenderer
 		{ // two sided line
 			if (mTopPart.Texture != NULL && mTopPart.Texture->UseType != FTexture::TEX_Null)
 			{ // top wall
-				for (x = x1; x < x2; ++x)
+				for (int x = x1; x < x2; ++x)
 				{
 					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
-				}
-				if (viewactive)
-				{
-					FTexture *rw_pic = mTopPart.Texture;
-					xscale = rw_pic->Scale.X * mTopPart.TextureScaleU;
-					yscale = rw_pic->Scale.Y * mTopPart.TextureScaleV;
-					if (xscale != lwallscale)
-					{
-						walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-						lwallscale = xscale;
-					}
-					fixed_t offset;
-					if (mTopPart.Texture->bWorldPanning)
-					{
-						offset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
-					}
-					else
-					{
-						offset = mTopPart.TextureOffsetU;
-					}
-					if (xscale < 0)
-					{
-						offset = -offset;
-					}
-
-					RenderWallPart renderWallpart(Thread);
-					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1162,39 +1107,11 @@ namespace swrenderer
 				memcpy(ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 
-
 			if (mBottomPart.Texture != NULL && mBottomPart.Texture->UseType != FTexture::TEX_Null)
 			{ // bottom wall
-				for (x = x1; x < x2; ++x)
+				for (int x = x1; x < x2; ++x)
 				{
 					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
-				}
-				if (viewactive)
-				{
-					FTexture *rw_pic = mBottomPart.Texture;
-					xscale = rw_pic->Scale.X * mBottomPart.TextureScaleU;
-					yscale = rw_pic->Scale.Y * mBottomPart.TextureScaleV;
-					if (xscale != lwallscale)
-					{
-						walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-						lwallscale = xscale;
-					}
-					fixed_t offset;
-					if (mBottomPart.Texture->bWorldPanning)
-					{
-						offset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
-					}
-					else
-					{
-						offset = mBottomPart.TextureOffsetU;
-					}
-					if (xscale < 0)
-					{
-						offset = -offset;
-					}
-
-					RenderWallPart renderWallpart(Thread);
-					renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1203,6 +1120,140 @@ namespace swrenderer
 				memcpy(floorclip + x1, wallbottom.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 		}
+	}
+
+	void SWRenderLine::RenderTopTexture(int x1, int x2)
+	{
+		if (mMiddlePart.Texture) return;
+		if (!mTopPart.Texture || mTopPart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!viewactive) return;
+
+		FTexture *rw_pic = mTopPart.Texture;
+		double xscale = rw_pic->Scale.X * mTopPart.TextureScaleU;
+		double yscale = rw_pic->Scale.Y * mTopPart.TextureScaleV;
+		if (xscale != lwallscale)
+		{
+			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			lwallscale = xscale;
+		}
+		fixed_t offset;
+		if (mTopPart.Texture->bWorldPanning)
+		{
+			offset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
+		}
+		else
+		{
+			offset = mTopPart.TextureOffsetU;
+		}
+		if (xscale < 0)
+		{
+			offset = -offset;
+		}
+
+		WallDrawerArgs drawerargs;
+		drawerargs.SetStyle(false, false, OPAQUE);
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+		else if (cameraLight->FixedColormap() != nullptr)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
+
+		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+
+		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
+
+		RenderWallPart renderWallpart(Thread);
+		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+	}
+
+	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
+	{
+		if (!mMiddlePart.Texture || mMiddlePart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!viewactive) return;
+
+		FTexture *rw_pic = mMiddlePart.Texture;
+		double xscale = rw_pic->Scale.X * mMiddlePart.TextureScaleU;
+		double yscale = rw_pic->Scale.Y * mMiddlePart.TextureScaleV;
+		if (xscale != lwallscale)
+		{
+			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			lwallscale = xscale;
+		}
+		fixed_t offset;
+		if (mMiddlePart.Texture->bWorldPanning)
+		{
+			offset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
+		}
+		else
+		{
+			offset = mMiddlePart.TextureOffsetU;
+		}
+		if (xscale < 0)
+		{
+			offset = -offset;
+		}
+
+		WallDrawerArgs drawerargs;
+		drawerargs.SetStyle(false, false, OPAQUE);
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+		else if (cameraLight->FixedColormap() != nullptr)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
+
+		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+
+		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
+
+		RenderWallPart renderWallpart(Thread);
+		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+	}
+
+	void SWRenderLine::RenderBottomTexture(int x1, int x2)
+	{
+		if (mMiddlePart.Texture) return;
+		if (!mBottomPart.Texture || mBottomPart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!viewactive) return;
+
+		FTexture *rw_pic = mBottomPart.Texture;
+		double xscale = rw_pic->Scale.X * mBottomPart.TextureScaleU;
+		double yscale = rw_pic->Scale.Y * mBottomPart.TextureScaleV;
+		if (xscale != lwallscale)
+		{
+			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			lwallscale = xscale;
+		}
+		fixed_t offset;
+		if (mBottomPart.Texture->bWorldPanning)
+		{
+			offset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
+		}
+		else
+		{
+			offset = mBottomPart.TextureOffsetU;
+		}
+		if (xscale < 0)
+		{
+			offset = -offset;
+		}
+
+		WallDrawerArgs drawerargs;
+		drawerargs.SetStyle(false, false, OPAQUE);
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+		else if (cameraLight->FixedColormap() != nullptr)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
+
+		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+
+		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
+
+		RenderWallPart renderWallpart(Thread);
+		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, wallshade, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
 	}
 
 	////////////////////////////////////////////////////////////////////////////

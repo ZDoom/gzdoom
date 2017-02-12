@@ -51,10 +51,6 @@
 #include "i_music.h"
 #include "m_joy.h"
 
-#define NO_IMP
-#include "optionmenuitems.h"
-
-
 static TArray<IJoystickConfig *> Joysticks;
 IJoystickConfig *SELECTED_JOYSTICK;
 

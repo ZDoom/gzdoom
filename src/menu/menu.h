@@ -269,7 +269,7 @@ public:
 	virtual void Ticker ();
 	virtual void Drawer ();
 	virtual bool DimAllowed ();
-	virtual bool TranslateKeyboardEvents();
+	/*virtual */bool TranslateKeyboardEvents();
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);
 
@@ -277,7 +277,9 @@ public:
 	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
 	virtual void ReleaseFocus() {}
 
+	virtual DMenuItemBase *GetItem(FName name) { return nullptr; }
 
+	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	bool CallMouseEvent(int type, int x, int y);
 	void CallDrawer();
@@ -466,7 +468,7 @@ public:
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool Responder(event_t *ev);
-	bool TranslateKeyboardEvents();
+	//bool TranslateKeyboardEvents();
 	bool MouseEvent(int type, int x, int y);
 
 };

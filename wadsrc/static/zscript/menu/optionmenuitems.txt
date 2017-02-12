@@ -354,33 +354,29 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 //
 //=============================================================================
 
-/* This will have to wait.
-class DEnterKey : Menu
+class EnterKey : Menu
 {
-	DECLARE_CLASS(DEnterKey, Menu)
+	OptionMenuItemControlBase mOwner;
 
-	int *pKey;
-
-
-	DEnterKey(Menu *parent, int *keyptr)
-	: Menu(parent)
+	void Init(Menu parent, OptionMenuItemControlBase owner)
 	{
-		pKey = keyptr;
+		Super.Init(parent);
+		mOwner = owner;
 		SetMenuMessage(1);
-		menuactive = MENU_WaitKey;	// There should be a better way to disable GUI capture...
+		menuactive = Menu.WaitKey;	// There should be a better way to disable GUI capture...
 	}
 
-	bool TranslateKeyboardEvents()
+	override bool TranslateKeyboardEvents()
 	{
 		return false; 
 	}
 
-	void SetMenuMessage(int which)
+	private void SetMenuMessage(int which)
 	{
-		if (mParentMenu.IsKindOf(RUNTIME_CLASS(OptionMenu)))
+		let parent = OptionMenu(mParentMenu);
+		if (parent != null)
 		{
-			OptionMenu *m = barrier_cast<OptionMenu*>(mParentMenu);
-			MenuItemBase *it = m.GetItem(NAME_Controlmessage);
+			let it = parent.GetItem('Controlmessage');
 			if (it != null)
 			{
 				it.SetValue(0, which);
@@ -388,30 +384,26 @@ class DEnterKey : Menu
 		}
 	}
 
-	bool Responder(event_t *ev)
+	override bool Responder(InputEvent ev)
 	{
-		if (ev.type == EV_KeyDown)
+		// This checks raw keys, not GUI keys.
+		if (ev.type == InputEvent.KeyDown)
 		{
-			*pKey = ev.data1;
-			menuactive = MENU_On;
+			mOwner.SendKey(ev.data1);
+			menuactive = Menu.On;
 			SetMenuMessage(0);
 			Close();
-			mParentMenu.CallMenuEvent((ev.data1 == KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
+			mParentMenu.MenuEvent((ev.data1 == InputEvent.KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
 			return true;
 		}
 		return false;
 	}
 
-	void Drawer()
+	override void Drawer()
 	{
-		mParentMenu.CallDrawer();
+		mParentMenu.Drawer();
 	}
-};
-
-#ifndef NO_IMP
-IMPLEMENT_CLASS(DEnterKey, true, false)
-#endif
-*/
+}
 
 //=============================================================================
 //
@@ -475,13 +467,19 @@ class OptionMenuItemControlBase : OptionMenuItem
 		}
 		return false;
 	}
+	
+	void SendKey(int key)
+	{
+		mInput = key;
+	}
 
 	override bool Activate()
 	{
 		Menu.MenuSound("menu/choose");
 		mWaiting = true;
-		//Menu *input = new DEnterKey(Menu.CurrentMenu, &mInput);
-		//M_ActivateMenu(input);
+		let input = new("EnterKey");
+		input.Init(Menu.GetCurrentMenu(), self);
+		input.ActivateMenu();
 		return true;
 	}
 }

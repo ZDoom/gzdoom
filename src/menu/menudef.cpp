@@ -52,8 +52,6 @@
 #include "i_sound.h"
 #include "cmdlib.h"
 
-#include "optionmenuitems.h"
-
 
 
 void ClearSaveGames();

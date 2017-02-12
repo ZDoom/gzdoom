@@ -54,10 +54,6 @@
 #include "sbar.h"
 #include "hardware.h"
 
-#define NO_IMP
-#include "optionmenuitems.h"
-
-
 /*=======================================
  *
  * Video Modes Menu

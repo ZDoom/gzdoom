@@ -191,6 +191,26 @@ bool DMenu::Responder (event_t *ev)
 	return false; 
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, Responder)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_POINTER(ev, event_t);
+	ACTION_RETURN_BOOL(self->Responder(ev));
+}
+
+bool DMenu::CallResponder(event_t *ev)
+{
+	IFVIRTUAL(DMenu, Responder)
+	{
+		VMValue params[] = { (DObject*)this, ev};
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+	}
+	else return Responder(ev);
+}
+
 //=============================================================================
 //
 //
@@ -386,6 +406,20 @@ void DMenu::CallDrawer()
 	else Drawer();
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, Close)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Close();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, GetItem)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(self->GetItem(name));
+}
+
 
 
 bool DMenu::DimAllowed()
@@ -395,6 +429,14 @@ bool DMenu::DimAllowed()
 
 bool DMenu::TranslateKeyboardEvents()
 {
+	IFVIRTUAL(DMenu, TranslateKeyboardEvents)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
 	return true;
 }
 
@@ -442,6 +484,13 @@ void M_ActivateMenu(DMenu *menu)
 	if (DMenu::CurrentMenu != nullptr) DMenu::CurrentMenu->ReleaseCapture();
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	M_ActivateMenu(self);
+	return 0;
 }
 
 //=============================================================================
@@ -631,7 +680,7 @@ bool M_Responder (event_t *ev)
 				}
 
 				// pass everything else on to the current menu
-				return DMenu::CurrentMenu->Responder(ev);
+				return DMenu::CurrentMenu->CallResponder(ev);
 			}
 			else if (DMenu::CurrentMenu->TranslateKeyboardEvents())
 			{
@@ -652,7 +701,7 @@ bool M_Responder (event_t *ev)
 				default:
 					if (!keyup)
 					{
-						return DMenu::CurrentMenu->Responder(ev);
+						return DMenu::CurrentMenu->CallResponder(ev);
 					}
 					break;
 				}
@@ -739,7 +788,7 @@ bool M_Responder (event_t *ev)
 				return true;
 			}
 		}
-		return DMenu::CurrentMenu->Responder(ev) || !keyup;
+		return DMenu::CurrentMenu->CallResponder(ev) || !keyup;
 	}
 	else if (MenuEnabled)
 	{
@@ -1093,6 +1142,8 @@ CCMD(reset2saved)
 
 //native void OptionMenuDescriptor.CalcIndent();
 //native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
+
+DEFINE_FIELD(DMenu, mParentMenu)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

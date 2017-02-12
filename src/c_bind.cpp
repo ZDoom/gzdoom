@@ -282,6 +282,7 @@ void C_NameKeys (char *str, int first, int second)
 	int c = 0;
 
 	*str = 0;
+	if (second == first) second = 0;
 	if (first)
 	{
 		c++;
@@ -478,7 +479,7 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 	int k1, k2, c;
 	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
 	if (numret > 0) ret[0].SetInt(k1);
-	if (numret > 1) ret[1].SetInt(k1);
+	if (numret > 1) ret[1].SetInt(k2);
 	return MIN(numret, 2);
 }
 

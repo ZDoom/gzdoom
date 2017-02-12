@@ -48,9 +48,6 @@
 #include "d_event.h"
 #include "d_gui.h"
 
-#define NO_IMP
-#include "menu/optionmenuitems.h"
-
 class DColorPickerMenu : public DOptionMenu
 {
 	DECLARE_CLASS(DColorPickerMenu, DOptionMenu)

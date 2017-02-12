@@ -73,6 +73,21 @@ class Menu : Object native
 		MOUSE_Release
 	};
 
+	enum EMenuState
+	{
+		Off,			// Menu is closed
+		On,				// Menu is opened
+		WaitKey,		// Menu is opened and waiting for a key in the controls menu
+		OnNoPause,		// Menu is opened but does not pause the game
+	};
+
+	native Menu mParentMenu;
+
+	void Init(Menu parent)
+	{
+		mParentMenu = parent;
+	}
+	
 	native static int MenuTime();
 	native static void SetVideoMode();
 	native static Menu GetCurrentMenu();
@@ -80,13 +95,18 @@ class Menu : Object native
 	native static void SetMenu(Name mnu, int param = 0);
 	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
 	
+	virtual bool TranslateKeyboardEvents() { return true; }
 	virtual void SetFocus(MenuItemBase fc) {}
 	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
 	virtual void ReleaseFocus() {}
-	
+
+	native virtual bool Responder(InputEvent ev);
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
 	native virtual void Drawer();
+	native void Close();
+	native MenuItemBase GetItem(Name n);
+	native void ActivateMenu();
 	
 	static void MenuSound(Sound snd)
 	{

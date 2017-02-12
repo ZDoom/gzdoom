@@ -2830,3 +2830,10 @@ void FStartupScreen::NetMessage(char const *,...) {}
 void FStartupScreen::NetDone(void) {}
 bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
 
+DEFINE_FIELD_X(InputEvent, event_t, type)
+DEFINE_FIELD_X(InputEvent, event_t, subtype)
+DEFINE_FIELD_X(InputEvent, event_t, data1)
+DEFINE_FIELD_X(InputEvent, event_t, data2)
+DEFINE_FIELD_X(InputEvent, event_t, data3)
+DEFINE_FIELD_X(InputEvent, event_t, x)
+DEFINE_FIELD_X(InputEvent, event_t, y)

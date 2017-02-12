@@ -96,10 +96,12 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 //
 //=============================================================================
 
+/*
 bool DTextEnterMenu::TranslateKeyboardEvents()
 {
 	return mInputGridOkay; 
 }
+*/
 
 //=============================================================================
 //

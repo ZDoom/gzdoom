@@ -882,6 +882,9 @@ void InitThingdef()
 	fieldptr = new PField("CleanHeight_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanHeight_1);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
+	fieldptr = new PField("menuactive", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&menuactive);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
 	fieldptr = new PField("OptionMenuSettings", NewStruct("FOptionMenuSettings", nullptr), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&OptionSettings);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 

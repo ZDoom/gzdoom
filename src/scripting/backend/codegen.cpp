@@ -5069,7 +5069,6 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 
 ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == val->ValueType);
 	ExpEmit from = val->Emit(build);
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
@@ -10167,6 +10166,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				ScriptPosition.Message(MSG_OPTERROR,
 					"Unknown class name '%s' of type '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
+				delete this;
+				return nullptr;
 			}
 			else
 			{

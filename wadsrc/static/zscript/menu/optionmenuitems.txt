@@ -852,8 +852,12 @@ class OptionMenuItemColorPicker : OptionMenuItem
 		if (mCVar != null)
 		{
 			Menu.MenuSound("menu/choose");
-			let desc = MenuDescriptor.GetDescriptor('Colorpickermenu');
+			
+			// This code is a bit complicated because it should allow subclassing the
+			// colorpicker menu.
 			// New color pickers must inherit from the internal one to work here.
+			
+			let desc = MenuDescriptor.GetDescriptor('Colorpickermenu');
 			if (desc != NULL && (desc.mClass == null || desc.mClass is "ColorPickerMenu"))
 			{
 				let odesc = OptionMenuDescriptor(desc);

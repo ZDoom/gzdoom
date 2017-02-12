@@ -214,7 +214,7 @@ class OptionMenu : Menu native
 	//
 	//=============================================================================
 
-	void Init(Menu parent, OptionMenuDescriptor desc)
+	virtual void Init(Menu parent, OptionMenuDescriptor desc)
 	{
 		mParentMenu = parent;
 		mDesc = desc;

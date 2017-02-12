@@ -61,6 +61,8 @@ static const char InputGridChars[INPUTGRID_WIDTH * INPUTGRID_HEIGHT] =
 
 CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+DEFINE_FIELD(DTextEnterMenu, mInputGridOkay)
+
 //=============================================================================
 //
 //
@@ -68,15 +70,14 @@ CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //=============================================================================
 
 // [TP] Added allowcolors
-DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors)
+DTextEnterMenu::DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors)
 : DMenu(parent)
 {
 	mEnterString = textbuffer;
-	mEnterSize = maxlen;
-	mEnterPos = (unsigned)strlen(textbuffer);
+	mEnterSize = maxlen < 0 ? UINT_MAX : unsigned(maxlen);
 	mSizeMode = sizemode;
 	mInputGridOkay = showgrid || m_showinputgrid;
-	if (mEnterPos > 0)
+	if (mEnterString.IsNotEmpty())
 	{
 		InputGridX = INPUTGRID_WIDTH - 1;
 		InputGridY = INPUTGRID_HEIGHT - 1;
@@ -96,12 +97,17 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 //
 //=============================================================================
 
-/*
-bool DTextEnterMenu::TranslateKeyboardEvents()
+FString DTextEnterMenu::GetText()
 {
-	return mInputGridOkay; 
+	return mEnterString;
 }
-*/
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 
 //=============================================================================
 //
@@ -117,21 +123,19 @@ bool DTextEnterMenu::Responder(event_t *ev)
 		if (ev->subtype == EV_GUI_Char)
 		{
 			mInputGridOkay = false;
-			if (mEnterPos < mEnterSize &&
+			if (mEnterString.Len() < mEnterSize &&
 				(mSizeMode == 2/*entering player name*/ || (size_t)SmallFont->StringWidth(mEnterString) < (mEnterSize-1)*8))
 			{
-				mEnterString[mEnterPos] = (char)ev->data1;
-				mEnterString[++mEnterPos] = 0;
+				mEnterString.AppendFormat("%c", (char)ev->data1);
 			}
 			return true;
 		}
 		char ch = (char)ev->data1;
 		if ((ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat) && ch == '\b')
 		{
-			if (mEnterPos > 0)
+			if (mEnterString.IsNotEmpty())
 			{
-				mEnterPos--;
-				mEnterString[mEnterPos] = 0;
+				mEnterString.Truncate(mEnterString.Len() - 1);
 			}
 		}
 		else if (ev->subtype == EV_GUI_KeyDown)
@@ -145,15 +149,15 @@ bool DTextEnterMenu::Responder(event_t *ev)
 			}
 			else if (ch == '\r')
 			{
-				if (mEnterString[0])
+				if (mEnterString.IsNotEmpty())
 				{
 					// [TP] If we allow color codes, colorize the string now.
 					if (AllowColors)
-						strbin(mEnterString);
+						mEnterString = strbin1(mEnterString);
 
 					DMenu *parent = mParentMenu;
-					Close();
 					parent->CallMenuEvent(MKEY_Input, false);
+					Close();
 					return true;
 				}
 			}
@@ -247,9 +251,9 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 			return true;
 
 		case MKEY_Clear:
-			if (mEnterPos > 0)
+			if (mEnterString.IsNotEmpty())
 			{
-				mEnterString[--mEnterPos] = 0;
+				mEnterString.Truncate(mEnterString.Len() - 1);
 			}
 			return true;
 
@@ -260,7 +264,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 				ch = InputGridChars[InputGridX + InputGridY * INPUTGRID_WIDTH];
 				if (ch == 0)			// end
 				{
-					if (mEnterString[0] != '\0')
+					if (mEnterString.IsNotEmpty())
 					{
 						DMenu *parent = mParentMenu;
 						Close();
@@ -270,16 +274,15 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 				}
 				else if (ch == '\b')	// bs
 				{
-					if (mEnterPos > 0)
+					if (mEnterString.IsNotEmpty())
 					{
-						mEnterString[--mEnterPos] = 0;
+						mEnterString.Truncate(mEnterString.Len() - 1);
 					}
 				}
-				else if (mEnterPos < mEnterSize &&
+				else if (mEnterString.Len() < mEnterSize &&
 					(mSizeMode == 2/*entering player name*/ || (size_t)SmallFont->StringWidth(mEnterString) < (mEnterSize-1)*8))
 				{
-					mEnterString[mEnterPos] = ch;
-					mEnterString[++mEnterPos] = 0;
+					mEnterString += char(ch);
 				}
 			}
 			return true;
@@ -370,4 +373,24 @@ void DTextEnterMenu::Drawer ()
 		}
 	}
 	Super::Drawer();
+}
+
+
+DEFINE_ACTION_FUNCTION(DTextEnterMenu, Open)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(parent, DMenu);
+	PARAM_STRING(text);
+	PARAM_INT(maxlen);
+	PARAM_INT(sizemode);
+	PARAM_BOOL(fromcontroller);
+	auto m = new DTextEnterMenu(parent, text.GetChars(), maxlen, sizemode, fromcontroller, false);
+	M_ActivateMenu(m);
+	ACTION_RETURN_OBJECT(m);
+}
+
+DEFINE_ACTION_FUNCTION(DTextEnterMenu, GetText)
+{
+	PARAM_SELF_PROLOGUE(DTextEnterMenu);
+	ACTION_RETURN_STRING(self->GetText());
 }

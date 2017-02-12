@@ -2293,7 +2293,7 @@ static int PatchStrings (int dummy)
 			holdstring.StripRight();
 			if (holdstring.Len() > 0 && holdstring[holdstring.Len()-1] == '\\')
 			{
-				holdstring.Truncate((long)holdstring.Len()-1);
+				holdstring.Truncate(holdstring.Len()-1);
 				Line2 = igets ();
 			}
 			else

@@ -2598,7 +2598,7 @@ void ZCCCompiler::CompileStates()
 						statename << FName(part->Id) << '.';
 						part = static_cast<decltype(part)>(part->SiblingNext);
 					} while (part != sg->Label);
-					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
+					statename.Truncate(statename.Len() - 1);	// remove the last '.' in the label name
 					if (sg->Offset != nullptr)
 					{
 						int offset = IntConstFromNode(sg->Offset, c->Type());

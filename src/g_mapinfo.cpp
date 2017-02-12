@@ -589,7 +589,7 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 		}
 		while (sc.CheckString(","));
 		// strip off the last newline
-		dest.Truncate(long(dest.Len()-1));
+		dest.Truncate(dest.Len()-1);
 		return false;
 	}
 }

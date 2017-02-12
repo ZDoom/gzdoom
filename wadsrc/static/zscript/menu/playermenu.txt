@@ -46,8 +46,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	int mFontColor;
 	int mFrameSize;
 	String mPlayerName;
-	String mEditName;
-	bool mEntering;
+	TextEnterMenu mEnter;
 
 	//=============================================================================
 	//
@@ -63,7 +62,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		mFontColor = desc.mFontColor;
 		mFrameSize = frameofs;
 		mPlayerName = "";
-		mEntering = false;
+		mEnter = null;
 	}
 
 	//=============================================================================
@@ -80,7 +79,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		mFontColor = color;
 		mFrameSize = frameofs;
 		mPlayerName = "";
-		mEntering = false;
+		mEnter = null;
 	}
 
 	//=============================================================================
@@ -164,13 +163,13 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		// Draw player name box
 		int x = mXpos + mFont.StringWidth(text) + 16 + mFrameSize;
 		DrawBorder (x, mYpos - mFrameSize, MAXPLAYERNAME+1);
-		if (!mEntering)
+		if (!mEnter)
 		{
 			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, x + mFrameSize, mYpos, mPlayerName, DTA_Clean, true);
 		}
 		else
 		{
-			let printit = mEditName .. SmallFont.GetCursor();
+			let printit = mEnter.GetText() .. SmallFont.GetCursor();
 			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, x + mFrameSize, mYpos, printit, DTA_Clean, true);
 		}
 	}
@@ -186,21 +185,18 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound ("menu/choose");
-			mEditName = mPlayerName;
-			mEntering = true;
-			//DMenu *input = new DTextEnterMenu(Menu.CurrentMenu, mEditName, MAXPLAYERNAME, 2, fromcontroller);
-			//M_ActivateMenu(input);
+			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), mPlayerName, MAXPLAYERNAME, 2, fromcontroller);
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)
 		{
-			mPlayerName = mEditName;
-			mEntering = false;
+			mPlayerName = mEnter.GetText();
+			mEnter = null;
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Abort)
 		{
-			mEntering = false;
+			mEnter = null;
 			return true;
 		}
 		return false;

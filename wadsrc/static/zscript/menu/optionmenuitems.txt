@@ -1083,22 +1083,24 @@ class OptionMenuFieldBase : OptionMenuItem
 
 class OptionMenuItemTextField : OptionMenuFieldBase
 {
+	TextEnterMenu mEnter;
+	
 	OptionMenuItemTextField Init (String label, Name command, CVar graycheck = null)
 	{
 		Super.Init(label, command, graycheck);
-		mEntering = false;
+		mEnter = null;
 		return self;
 	}
 
 	override String Represent()
 	{
-		if (mEntering) return mEditName .. SmallFont.GetCursor();
+		if (mEnter) return mEnter.GetText() .. SmallFont.GetCursor();
 		else return GetCVarString();
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		if (mEntering)
+		if (mEnter)
 		{
 			// reposition the text so that the cursor is visible when in entering mode.
 			String text = Represent();
@@ -1114,30 +1116,23 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound("menu/choose");
-			mEditName = GetCVarString();
-			mEntering = true;
-			
-			//Menu* input = new DTextEnterMenu (Menu.CurrentMenu, mEditName, sizeof mEditName, 2, fromcontroller);
-			//M_ActivateMenu(input);
+			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), GetCVarString(), -1, 2, fromcontroller);
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)
 		{
-			if (mCVar) mCVar.SetString(mEditName);
-			mEntering = false;
+			if (mCVar) mCVar.SetString(mEnter.GetText());
+			mEnter = null;
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Abort)
 		{
-			mEntering = false;
+			mEnter = null;
 			return true;
 		}
 
 		return Super.MenuEvent(mkey, fromcontroller);
 	}
-
-	bool mEntering;
-	String mEditName;
 }
 
 

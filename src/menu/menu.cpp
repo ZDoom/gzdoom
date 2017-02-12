@@ -73,7 +73,7 @@ DMenu *DMenu::CurrentMenu;
 
 DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
 {
-	ACTION_RETURN_POINTER(DMenu::CurrentMenu);
+	ACTION_RETURN_OBJECT(DMenu::CurrentMenu);
 }
 
 int DMenu::MenuTime;
@@ -113,7 +113,7 @@ DEFINE_ACTION_FUNCTION(DMenuDescriptor, GetDescriptor)
 	PARAM_NAME(name);
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(name);
 	auto retn = desc ? *desc : nullptr;
-	ACTION_RETURN_POINTER(retn);
+	ACTION_RETURN_OBJECT(retn);
 }
 
 size_t DListMenuDescriptor::PropagateMark()
@@ -425,7 +425,7 @@ DEFINE_ACTION_FUNCTION(DMenu, GetItem)
 {
 	PARAM_SELF_PROLOGUE(DMenu);
 	PARAM_NAME(name);
-	ACTION_RETURN_POINTER(self->GetItem(name));
+	ACTION_RETURN_OBJECT(self->GetItem(name));
 }
 
 

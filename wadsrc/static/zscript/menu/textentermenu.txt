@@ -1,0 +1,15 @@
+
+// This is only the parts that are needed to make the menu fully work right now. More to come later.
+class TextEnterMenu : Menu native
+{
+	native bool mInputGridOkay;
+	
+	native static TextEnterMenu Open(Menu parent, String text, int maxlen, int sizemode, bool fromcontroller);
+	native String GetText();
+	
+	
+	override bool TranslateKeyboardEvents()
+	{
+		return mInputGridOkay; 
+	}
+}

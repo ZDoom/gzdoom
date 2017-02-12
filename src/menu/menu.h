@@ -269,7 +269,7 @@ public:
 	virtual void Ticker ();
 	virtual void Drawer ();
 	virtual bool DimAllowed ();
-	/*virtual */bool TranslateKeyboardEvents();
+	bool TranslateKeyboardEvents();
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);
 
@@ -448,7 +448,8 @@ class DTextEnterMenu : public DMenu
 {
 	DECLARE_ABSTRACT_CLASS(DTextEnterMenu, DMenu)
 
-	char *mEnterString;
+public:
+	FString mEnterString;
 	unsigned int mEnterSize;
 	unsigned int mEnterPos;
 	int mSizeMode; // 1: size is length in chars. 2: also check string width
@@ -460,17 +461,15 @@ class DTextEnterMenu : public DMenu
 	// [TP]
 	bool AllowColors;
 
-public:
 
 	// [TP] Added allowcolors
-	DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
+	DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
 
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool Responder(event_t *ev);
-	//bool TranslateKeyboardEvents();
 	bool MouseEvent(int type, int x, int y);
-
+	FString GetText();
 };
 
 

@@ -598,6 +598,7 @@ protected:
 	// this needs to be kept in memory so that the texture can access it when it needs to.
 	bool mEntering;
 	char savegamestring[SAVESTRINGSIZE];
+	DTextEnterMenu *mInput = nullptr;
 
 	DLoadSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
 	void OnDestroy() override;
@@ -760,15 +761,9 @@ void DLoadSaveMenu::Drawer ()
 			}
 			else
 			{
+				FString s = mInput->GetText() + SmallFont->GetCursor();
 				screen->DrawText (SmallFont, CR_WHITE,
-					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, savegamestring,
-					DTA_CleanNoMove, true, TAG_DONE);
-
-				char curs[2] = { SmallFont->GetCursor(), 0 };
-				screen->DrawText (SmallFont, CR_WHITE,
-					listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
-					listboxTop+rowHeight*i+CleanYfac, 
-					curs,
+					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, s,
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}
@@ -1055,18 +1050,20 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		{
 			savegamestring[0] = 0;
 		}
-		DMenu *input = new DTextEnterMenu(this, savegamestring, SAVESTRINGSIZE, 1, fromcontroller);
-		M_ActivateMenu(input);
+		mInput = new DTextEnterMenu(this, savegamestring, SAVESTRINGSIZE, 1, fromcontroller);
+		M_ActivateMenu(mInput);
 		mEntering = true;
 	}
 	else if (mkey == MKEY_Input)
 	{
 		mEntering = false;
-		manager->DoSave(Selected, savegamestring);
+		manager->DoSave(Selected, mInput->GetText());
+		mInput = nullptr;
 	}
 	else if (mkey == MKEY_Abort)
 	{
 		mEntering = false;
+		mInput = nullptr;
 	}
 	return false;
 }

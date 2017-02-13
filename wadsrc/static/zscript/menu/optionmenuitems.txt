@@ -138,7 +138,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 		// don't execute if this item cannot be found in the current menu.
 		if (m.GetItem(mAction) != self) return false;
 		Menu.MenuSound("menu/choose");
-		Console.DoCommand(mAction);
+		DoCommand(mAction);
 		return true;
 	}
 
@@ -166,7 +166,7 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 	{
 		if (mkey == Menu.MKEY_MBYes)
 		{
-			Super.Activate(mKey, fromController);
+			Super.Activate();
 			return true;
 		}
 		return Super.MenuEvent(mkey, fromcontroller);

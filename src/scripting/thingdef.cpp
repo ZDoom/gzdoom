@@ -434,8 +434,6 @@ void LoadActors()
 			// PASSMOBJ is irrelevant for normal missiles, but not for bouncers.
 			defaults->flags2 |= MF2_PASSMOBJ;
 		}
-
-
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{

@@ -198,6 +198,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	
 	viewport->RenderTarget = screen;
 
+	viewport->RenderTarget->Lock(true);
+
 	if (APART(parms.colorOverlay) != 0)
 	{
 		// The software renderer cannot invert the source without inverting the overlay
@@ -324,6 +326,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	{
 		NetUpdate();
 	}
+
+	viewport->RenderTarget->Unlock();
 #endif
 }
 

@@ -352,15 +352,18 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 
 float FTexCoordInfo::RowOffset(float rowoffset) const
 {
-	if (mTempScale.Y == 1.f)
+	float tscale = fabs(mTempScale.Y);
+	float scale = fabs(mScale.Y);
+
+	if (tscale == 1.f)
 	{
-		if (mScale.Y == 1.f || mWorldPanning) return rowoffset;
-		else return rowoffset / mScale.Y;
+		if (scale == 1.f || mWorldPanning) return rowoffset;
+		else return rowoffset / scale;
 	}
 	else
 	{
-		if (mWorldPanning) return rowoffset / mTempScale.Y;
-		else return rowoffset / mScale.Y;
+		if (mWorldPanning) return rowoffset / tscale;
+		else return rowoffset / scale;
 	}
 }
 
@@ -372,15 +375,17 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 
 float FTexCoordInfo::TextureOffset(float textureoffset) const
 {
-	if (mTempScale.X == 1.f)
+	float tscale = fabs(mTempScale.X);
+	float scale = fabs(mScale.X);
+	if (tscale == 1.f)
 	{
-		if (mScale.X == 1.f || mWorldPanning) return textureoffset;
-		else return textureoffset / mScale.X;
+		if (scale == 1.f || mWorldPanning) return textureoffset;
+		else return textureoffset / scale;
 	}
 	else
 	{
-		if (mWorldPanning) return textureoffset / mTempScale.X;
-		else return textureoffset / mScale.X;
+		if (mWorldPanning) return textureoffset / tscale;
+		else return textureoffset / scale;
 	}
 }
 
@@ -394,8 +399,9 @@ float FTexCoordInfo::TextureAdjustWidth() const
 {
 	if (mWorldPanning) 
 	{
-		if (mTempScale.X == 1.f) return mRenderWidth;
-		else return mWidth / mTempScale.X;
+		float tscale = fabs(mTempScale.X);
+		if (tscale == 1.f) return mRenderWidth;
+		else return mWidth / fabs(tscale);
 	}
 	else return mWidth;
 }

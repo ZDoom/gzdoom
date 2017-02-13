@@ -480,30 +480,12 @@ namespace swrenderer
 			SetLight(&identitycolormap, 0, 0);
 		}
 
-		if (!SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
-		{
-			return false;
-		}
-		return true;
+		return SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags);
 	}
 
 	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		return SetStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
-	}
-
-	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, float alpha, lighttable_t *translation, uint32_t color)
-	{
-		SetTranslationMap(translation);
-		SetLight(nullptr, 0.0f, 0);
-
-		FDynamicColormap *basecolormap = &identitycolormap;
-		if (!SetStyle(style, alpha, -1, color, basecolormap))
-			return false;
-
-		if (!Colormap())
-			SetTranslationMap(identitymap);
-		return true;
 	}
 
 	void SpriteDrawerArgs::FillColumn(RenderThread *thread)

@@ -192,13 +192,14 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
         using namespace swrenderer;
 
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
-	lighttable_t *translation = NULL;
 
 	auto viewport = RenderViewport::Instance();
-	
 	viewport->RenderTarget = screen;
-
 	viewport->RenderTarget->Lock(true);
+
+	lighttable_t *translation = nullptr;
+	FDynamicColormap *basecolormap = &identitycolormap;
+	int shade = 0;
 
 	if (APART(parms.colorOverlay) != 0)
 	{
@@ -216,10 +217,15 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
 		// Note that this overrides the translation in software, but not in hardware.
-		if (!viewport->RenderTarget->IsBgra())
+		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255, 255, 255), parms.colorOverlay & MAKEARGB(0, 255, 255, 255), 0);
+
+		if (viewport->RenderTarget->IsBgra())
 		{
-			FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255, 255, 255),
-				parms.colorOverlay & MAKEARGB(0, 255, 255, 255), 0);
+			basecolormap = colormap;
+			shade = (APART(parms.colorOverlay)*NUMCOLORMAPS / 255) << FRACBITS;
+		}
+		else
+		{
 			translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS / 255) * 256];
 		}
 	}
@@ -233,8 +239,10 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	SpriteDrawerArgs drawerargs;
 
-	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, translation, parms.fillcolor);
-	
+	drawerargs.SetTranslationMap(translation);
+	drawerargs.SetLight(basecolormap, 0.0f, shade);
+	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
 

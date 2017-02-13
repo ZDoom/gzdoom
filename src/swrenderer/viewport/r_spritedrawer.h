@@ -18,7 +18,6 @@ namespace swrenderer
 
 		bool SetStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		bool SetStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		bool SetStyle(FRenderStyle style, float alpha, lighttable_t *translation, uint32_t color);
 		void SetDest(int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetSolidColor(int color) { dc_color = color; }

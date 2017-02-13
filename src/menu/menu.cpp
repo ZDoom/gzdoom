@@ -1457,7 +1457,7 @@ bool DMenuItemBase::MouseEvent(int type, int x, int y)
 {
 	IFVIRTUAL(DMenuItemBase, MouseEvent)
 	{
-		VMValue params[] = { (DObject*)this, x, y };
+		VMValue params[] = { (DObject*)this, type, x, y };
 		int retval;
 		VMReturn ret(&retval);
 		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);

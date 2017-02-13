@@ -31,7 +31,7 @@ class Coin : Inventory
 		}
 		else
 		{
-			String msg = StringTable.Localize("TXT_XGOLD");
+			String msg = StringTable.Localize("$TXT_XGOLD");
 			msg.Replace("%d", "" .. Amount);
 			return msg;
 		}

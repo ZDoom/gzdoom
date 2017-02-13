@@ -785,8 +785,11 @@ begin:
 	OP(NEW_K):
 	OP(NEW):
 	{
-		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[C] : konsta[C].v);
-		reg.a[B] = cls->CreateNew();
+		b = B;
+		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
+		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		reg.a[a] = cls->CreateNew();
+		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	}
 

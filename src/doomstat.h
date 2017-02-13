@@ -101,7 +101,7 @@ EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 // Status flags for refresh.
 //
 
-enum EMenuState
+enum EMenuState : int
 {
 	MENU_Off,			// Menu is closed
 	MENU_On,			// Menu is opened

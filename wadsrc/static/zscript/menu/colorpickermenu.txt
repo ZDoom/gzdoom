@@ -32,18 +32,93 @@
 **
 */
 
-class ColorpickerMenu : Menu native
+
+//=============================================================================
+//
+// This is only used by the color picker
+//
+//=============================================================================
+
+class OptionMenuSliderVar : OptionMenuSliderBase
 {
-	native float mRed;
-	native float mGreen;
-	native float mBlue;
+	int mIndex;
 
-	native int mGridPosX;
-	native int mGridPosY;
+	OptionMenuSliderVar Init(String label, int index, double min, double max, double step, int showval)
+	{
+		Super.Init(label, min, max, step, showval);
+		mIndex = index;
+		return self;
+	}
 
-	native int mStartItem;
+	override double GetSliderValue()
+	{
+		return ColorpickerMenu(Menu.GetCurrentMenu()).GetColor(mIndex);
+	}
 
-	native CVar mCVar;
+	override void SetSliderValue(double val)
+	{
+		ColorpickerMenu(Menu.GetCurrentMenu()).setColor(mIndex, val);
+	}
+}
+
+class ColorpickerMenu : OptionMenu
+{
+	float mRed;
+	float mGreen;
+	float mBlue;
+
+	int mGridPosX;
+	int mGridPosY;
+
+	int mStartItem;
+
+	CVar mCVar;
+	
+	double GetColor(int index)
+	{
+		double v = index == 0? mRed : index == 1? mGreen : mBlue;
+		return v;
+	}
+	
+	void SetColor(int index, double val)
+	{
+		if (index == 0) mRed = val;
+		else if (index == 1) mGreen = val;
+		else mBlue = val;
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void Init(Menu parent, String name, OptionMenuDescriptor desc, CVar cv)
+	{
+		Super.Init(parent, desc);
+
+		mStartItem = mDesc.mItems.Size();
+		mCVar = cv;
+
+		ResetColor();
+		mGridPosX = 0;
+		mGridPosY = 0;
+
+		// This menu uses some features that are hard to implement in an external control lump
+		// so it creates its own list of menu items.
+		mDesc.mItems.Resize(mStartItem+8);
+		mDesc.mItems[mStartItem+0] = new ("OptionMenuItemStaticText").Init(name, false);
+		mDesc.mItems[mStartItem+1] = new ("OptionMenuItemStaticText").Init(" ", false);
+		mDesc.mItems[mStartItem+2] = new ("OptionMenuSliderVar").Init("Red", 0, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+3] = new ("OptionMenuSliderVar").Init("Green", 1, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+4] = new ("OptionMenuSliderVar").Init("Blue", 2, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+5] = new ("OptionMenuItemStaticText").Init(" ", false);
+		mDesc.mItems[mStartItem+6] = new ("OptionMenuItemCommand").Init("Undo changes", "undocolorpic");
+		mDesc.mItems[mStartItem+7] = new ("OptionMenuItemStaticText").Init(" ", false);
+		mDesc.mSelectedItem = mStartItem + 2;
+		mDesc.mIndent = 0;
+		mDesc.CalcIndent();
+	}
 	
 	//=============================================================================
 	//
@@ -256,5 +331,24 @@ class ColorpickerMenu : Menu native
 		screen.DrawText (SmallFont, Font.CR_WHITE, x+(48+24-SmallFont.StringWidth("New")/2)*CleanXfac_1, y, "New", DTA_CleanNoMove_1, true);
 	}
 	
-	
+	override void OnDestroy()
+	{
+		if (mStartItem >= 0)
+		{
+			mDesc.mItems.Resize(mStartItem);
+			if (mCVar != null) mCVar.SetInt(Color(int(mRed), int(mGreen), int(mBlue)));
+			mStartItem = -1;
+		}
+	}
+
+	override void ResetColor()
+	{
+		if (mCVar != null) 
+		{
+			Color clr = Color(mCVar.GetInt());
+			mRed = clr.r;
+			mGreen = clr.g;
+			mBlue = clr.b;
+		}
+	}
 }

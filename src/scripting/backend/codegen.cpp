@@ -154,6 +154,7 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 		{
 			if (ReturnProto->ReturnTypes[i] != proto->ReturnTypes[i])
 			{ // Incompatible
+				Printf("Return type %s mismatch with %s\n", ReturnProto->ReturnTypes[i]->DescriptiveName(), proto->ReturnTypes[i]->DescriptiveName());
 				fail = true;
 				break;
 			}
@@ -2455,7 +2456,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
 	static const BYTE loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
-	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
+	assert(Base->ValueType->GetRegType() == Right->ValueType->GetRegType());
 
 	ExpEmit pointer = Base->Emit(build);
 	Address = pointer;
@@ -2970,6 +2971,12 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 	RESOLVE(right, ctx);
 	if (!left || !right)
 	{
+		delete this;
+		return nullptr;
+	}
+	if (!left->ValueType || !right->ValueType)
+	{
+		ScriptPosition.Message(MSG_ERROR, "ValueType not set");
 		delete this;
 		return nullptr;
 	}
@@ -3550,6 +3557,16 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 			{
 				goto error;
 			}
+		}
+		else if (left->IsPointer() && static_cast<PPointer*>(left->ValueType)->PointedType == right->ValueType)
+		{
+			bool writable;
+			if (!right->RequestAddress(ctx, &writable)) goto error;
+		}
+		else if (right->IsPointer() && static_cast<PPointer*>(right->ValueType)->PointedType == left->ValueType)
+		{
+			bool writable;
+			if (!left->RequestAddress(ctx, &writable)) goto error;
 		}
 		else
 		{
@@ -5052,7 +5069,6 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 
 ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == val->ValueType);
 	ExpEmit from = val->Emit(build);
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
@@ -10150,6 +10166,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				ScriptPosition.Message(MSG_OPTERROR,
 					"Unknown class name '%s' of type '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
+				delete this;
+				return nullptr;
 			}
 			else
 			{

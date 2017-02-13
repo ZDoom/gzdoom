@@ -301,7 +301,7 @@ public:
 	bool IsEmpty() const { return Len() == 0; }
 	bool IsNotEmpty() const { return Len() != 0; }
 
-	void Truncate (long newlen);
+	void Truncate (size_t newlen);
 	void Remove(size_t index, size_t remlen);
 
 	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }

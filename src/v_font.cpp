@@ -2741,3 +2741,8 @@ void V_ClearFonts()
 	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = NULL;
 }
 
+DEFINE_ACTION_FUNCTION(FFont, GetCursor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_STRING(FString(self->GetCursor()));
+}

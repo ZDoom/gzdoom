@@ -1,3 +1,55 @@
+struct InputEvent native
+{
+	native uint8	type;
+	native uint8	subtype;
+	native int16	data1;		// keys / mouse/joystick buttons
+	native int16	data2;
+	native int16	data3;
+	native int 		x;			// mouse/joystick x move
+	native int 		y;			// mouse/joystick y move
+	
+	enum EGenericEvent
+	{
+		NoEvent,
+		KeyDown,		// data1: scan code, data2: Qwerty ASCII code
+		KeyUp,		// same
+		Mouse,		// x, y: mouse movement deltas
+		GUI_Event,	// subtype specifies actual event
+		DeviceChange,// a device has been connected or removed
+	}
+	
+	enum EGUIEvent
+	{
+		GUI_None,
+		GUI_KeyDown,			// data1: unshifted ASCII, data2: shifted ASCII, data3: modifiers
+		GUI_KeyRepeat,		// same
+		GUI_KeyUp,			// same
+		GUI_Char,			// data1: translated character (for user text input), data2: alt down?
+		GUI_FirstMouseEvent,
+			GUI_MouseMove,
+			GUI_LButtonDown,
+			GUI_LButtonUp,
+			GUI_LButtonDblClick,
+			GUI_MButtonDown,
+			GUI_MButtonUp,
+			GUI_MButtonDblClick,
+			GUI_RButtonDown,
+			GUI_RButtonUp,
+			GUI_RButtonDblClick,
+			GUI_WheelUp,			// data3: shift/ctrl/alt
+			GUI_WheelDown,		// "
+			GUI_WheelRight,		// "
+			GUI_WheelLeft,		// "
+			GUI_BackButtonDown,
+			GUI_BackButtonUp,
+			GUI_FwdButtonDown,
+			GUI_FwdButtonUp,
+		GUI_LastMouseEvent,
+	};
+	
+	const KEY_ESCAPE = 0x01;
+}
+
 struct TexMan
 {
 	enum EUseTypes
@@ -42,6 +94,8 @@ struct TexMan
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 	native static void ReplaceTextures(String from, String to, int flags);
+	native static int, int GetSize(TextureID tex);
+	native static Vector2 GetScaledSize(TextureID tex);
 }
 
 enum DrawTextureTags
@@ -118,7 +172,7 @@ struct Screen native
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-
+	native static void DrawFrame(int x, int y, int w, int h);
 }
 
 class BrokenLines : Object native
@@ -158,10 +212,42 @@ struct Font native
 		CR_CYAN,
 		NUM_TEXT_COLORS
 	};
+	
+	const TEXTCOLOR_BRICK			= "\034A";
+	const TEXTCOLOR_TAN				= "\034B";
+	const TEXTCOLOR_GRAY			= "\034C";
+	const TEXTCOLOR_GREY			= "\034C";
+	const TEXTCOLOR_GREEN			= "\034D";
+	const TEXTCOLOR_BROWN			= "\034E";
+	const TEXTCOLOR_GOLD			= "\034F";
+	const TEXTCOLOR_RED				= "\034G";
+	const TEXTCOLOR_BLUE			= "\034H";
+	const TEXTCOLOR_ORANGE			= "\034I";
+	const TEXTCOLOR_WHITE			= "\034J";
+	const TEXTCOLOR_YELLOW			= "\034K";
+	const TEXTCOLOR_UNTRANSLATED	= "\034L";
+	const TEXTCOLOR_BLACK			= "\034M";
+	const TEXTCOLOR_LIGHTBLUE		= "\034N";
+	const TEXTCOLOR_CREAM			= "\034O";
+	const TEXTCOLOR_OLIVE			= "\034P";
+	const TEXTCOLOR_DARKGREEN		= "\034Q";
+	const TEXTCOLOR_DARKRED			= "\034R";
+	const TEXTCOLOR_DARKBROWN		= "\034S";
+	const TEXTCOLOR_PURPLE			= "\034T";
+	const TEXTCOLOR_DARKGRAY		= "\034U";
+	const TEXTCOLOR_CYAN			= "\034V";
+
+	const TEXTCOLOR_NORMAL			= "\034-";
+	const TEXTCOLOR_BOLD			= "\034+";
+
+	const TEXTCOLOR_CHAT			= "\034*";
+	const TEXTCOLOR_TEAMCHAT		= "\034!";
+	
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
 	native int GetHeight();
+	native String GetCursor();
 
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
@@ -169,10 +255,24 @@ struct Font native
 	native static BrokenLines BreakLines(String text, int maxlen);
 }
 
+struct Translation
+{
+	Color colors[256];
+	
+	native int AddTranslation();
+	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
+	static int MakeID(int group, int num)
+	{
+		return (group << 16) + num;
+	}
+}
+
 struct Console native
 {
 	native static void HideConsole();
 	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
+	native static vararg void Printf(string fmt, ...);
+	native static void DoCommand(String cmd);
 }
 
 struct DamageTypeDefinition native
@@ -182,9 +282,24 @@ struct DamageTypeDefinition native
 
 struct CVar native
 {
+	enum ECVarType
+	{
+		CVAR_Bool,
+		CVAR_Int,
+		CVAR_Float,
+		CVAR_String,
+		CVAR_Color,
+	};
+
+	native static CVar FindCVar(Name name);
 	native int GetInt();
 	native double GetFloat();
 	native String GetString();
+	native void SetInt(int v);
+	native void SetFloat(double v);
+	native void SetString(String s);
+	native int GetRealType();
+	native int ResetToDefault();
 }
 
 struct GameInfoStruct native
@@ -347,7 +462,7 @@ struct LevelLocals native
 
 struct StringTable native
 {
-	native static String Localize(String val, bool prefixed = false);
+	native static String Localize(String val, bool prefixed = true);
 }
 
 // a few values of this need to be readable by the play code.
@@ -382,6 +497,7 @@ struct State native
 	
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();
+	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
 }
 
 struct F3DFloor native
@@ -476,7 +592,7 @@ class Floor : Thinker native
 		floorRaiseInstant,
 		floorMoveToValue,
 		floorRaiseToLowestCeiling,
-		floorRaiseByTexture,
+		floorRaiseuint8xture,
 
 		floorLowerAndChange,
 		floorRaiseAndChange,
@@ -484,7 +600,7 @@ class Floor : Thinker native
 		floorRaiseToLowest,
 		floorRaiseToCeiling,
 		floorLowerToLowestCeiling,
-		floorLowerByTexture,
+		floorLoweruint8xture,
 		floorLowerToCeiling,
 
 		donutRaise,
@@ -493,7 +609,7 @@ class Floor : Thinker native
 		waitStair,
 		resetStair,
 
-		// Not to be used as parameters to EV_DoFloor()
+		// Not to be used as parameters to DoFloor()
 		genFloorChg0,
 		genFloorChgT,
 		genFloorChg
@@ -527,8 +643,8 @@ class Ceiling : Thinker native
 		ceilLowerToNearest,
 		ceilRaiseToHighestFloor,
 		ceilRaiseToFloor,
-		ceilRaiseByTexture,
-		ceilLowerByTexture,
+		ceilRaiseuint8xture,
+		ceilLoweruint8xture,
 
 		genCeilingChg0,
 		genCeilingChgT,

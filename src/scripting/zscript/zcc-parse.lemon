@@ -12,6 +12,10 @@ static void SetNodeLine(ZCC_TreeNode *name, ZCCToken &tok)
 
 static void SetNodeLine(ZCC_TreeNode *name, ZCC_TreeNode *node)
 {
+	if (name == nullptr || node == nullptr)
+	{
+		I_Error("Fatal parse error");
+	}
 	name->SourceLoc = node->SourceLoc;
 }
 

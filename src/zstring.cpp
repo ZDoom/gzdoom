@@ -368,15 +368,15 @@ FString &FString::CopyCStrPart(const char *tail, size_t tailLen)
 	return *this;
 }
 
-void FString::Truncate(long newlen)
+void FString::Truncate(size_t newlen)
 {
-	if (newlen <= 0)
+	if (newlen == 0)
 	{
 		Data()->Release();
 		NullString.RefCount++;
 		Chars = &NullString.Nothing[0];
 	}
-	else if (newlen < (long)Len())
+	else if (newlen < Len())
 	{
 		ReallocBuffer (newlen);
 		Chars[newlen] = '\0';

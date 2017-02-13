@@ -2520,7 +2520,10 @@ void D_DoomMain (void)
 
 		// Create replacements for dehacked pickups
 		FinishDehPatch();
-		
+
+		if (!batchrun) Printf("M_Init: Init menus.\n");
+		M_Init();
+
 		// clean up the compiler symbols which are not needed any longer.
 		RemoveUnusedSymbols();
 
@@ -2537,9 +2540,6 @@ void D_DoomMain (void)
 		}
 		bglobal.spawn_tries = 0;
 		bglobal.wanted_botnum = bglobal.getspawned.Size();
-
-		if (!batchrun) Printf ("M_Init: Init menus.\n");
-		M_Init ();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);
@@ -2827,3 +2827,10 @@ void FStartupScreen::NetMessage(char const *,...) {}
 void FStartupScreen::NetDone(void) {}
 bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
 
+DEFINE_FIELD_X(InputEvent, event_t, type)
+DEFINE_FIELD_X(InputEvent, event_t, subtype)
+DEFINE_FIELD_X(InputEvent, event_t, data1)
+DEFINE_FIELD_X(InputEvent, event_t, data2)
+DEFINE_FIELD_X(InputEvent, event_t, data3)
+DEFINE_FIELD_X(InputEvent, event_t, x)
+DEFINE_FIELD_X(InputEvent, event_t, y)

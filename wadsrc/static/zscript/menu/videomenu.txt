@@ -1,8 +1,9 @@
 /*
-** optionmenu.cpp
-** Handler class for the option menus and associated items
+** videomenu.txt
+** The video modes menu
 **
 **---------------------------------------------------------------------------
+** Copyright 2001-2010 Randy Heit
 ** Copyright 2010-2017 Christoph Oelckers
 ** All rights reserved.
 **
@@ -32,62 +33,41 @@
 **
 */
 
-#include "v_video.h"
-#include "v_font.h"
-#include "cmdlib.h"
-#include "gstrings.h"
-#include "g_level.h"
-#include "gi.h"
-#include "v_palette.h"
-#include "d_gui.h"
-#include "d_event.h"
-#include "c_dispatch.h"
-#include "c_console.h"
-#include "c_cvars.h"
-#include "c_bind.h"
-#include "gameconfigfile.h"
-#include "menu/menu.h"
-
-
 //=============================================================================
 //
 //
 //
 //=============================================================================
 
-void DOptionMenuDescriptor::CalcIndent()
+class VideoModeMenu : OptionMenu
 {
-	// calculate the menu indent
-	int widest = 0, thiswidth;
-
-	for (unsigned i = 0; i < mItems.Size(); i++)
+	native static bool SetSelectedSize();
+	
+	override bool MenuEvent(int mkey, bool fromcontroller)
 	{
-		thiswidth = mItems[i]->GetIndent();
-		if (thiswidth > widest) widest = thiswidth;
+		if ((mkey == MKEY_Up || mkey == MKEY_Down) && mDesc.mSelectedItem >= 0 && mDesc.mSelectedItem < mDesc.mItems.Size())
+		{
+			int sel;
+			bool selected;
+			[selected, sel] = mDesc.mItems[mDesc.mSelectedItem].GetValue(OptionMenuItemScreenResolution.SRL_SELECTION);
+			bool res = Super.MenuEvent(mkey, fromcontroller);
+			if (selected) mDesc.mItems[mDesc.mSelectedItem].SetValue(OptionMenuItemScreenResolution.SRL_SELECTION, sel);
+			return res;
+		}
+		return Super.MenuEvent(mkey, fromcontroller);
 	}
-	mIndent =  widest + 4;
-}
 
-DEFINE_ACTION_FUNCTION(DOptionMenuDescriptor, CalcIndent)
-{
-	PARAM_SELF_PROLOGUE(DOptionMenuDescriptor);
-	self->CalcIndent();
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DMenuItemBase *DOptionMenuDescriptor::GetItem(FName name)
-{
-	for(unsigned i=0;i<mItems.Size(); i++)
+	override bool Responder(InputEvent ev)
 	{
-		FName nm = mItems[i]->GetAction(NULL);
-		if (nm == name) return mItems[i];
+		if (ev.type == InputEvent.GUI_Event && ev.subtype == InputEvent.GUI_KeyDown && (ev.data1 == 0x54 || ev.data1 == 0x74))
+		{
+			if (SetSelectedSize())
+			{
+				MenuSound ("menu/choose");
+				return true;
+			}
+		}
+		return Super.Responder(ev);
 	}
-	return NULL;
 }
 

@@ -55,6 +55,7 @@
 #include "r_sky.h"
 #include "v_font.h"
 #include "v_video.h"
+#include "c_bind.h"
 #include "menu/menu.h"
 
 static TArray<FPropertyInfo*> properties;
@@ -754,6 +755,10 @@ void InitThingdef()
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
+	auto playerclassstruct = NewNativeStruct("PlayerClass", nullptr);
+	playerclassstruct->Size = sizeof(FPlayerClass);
+	playerclassstruct->Align = alignof(FPlayerClass);
+
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
 	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
@@ -788,6 +793,16 @@ void InitThingdef()
 	auto aact = NewPointer(NewResizableArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
 	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(aacf);
+
+	auto plrcls = NewPointer(NewResizableArray(playerclassstruct), false);
+	PField *plrclsf = new PField("PlayerClasses", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PlayerClasses);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
+
+	auto bindcls = NewNativeStruct("KeyBindings", nullptr);
+	PField *binding = new PField("Bindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&Bindings);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
+	binding = new PField("AutomapBindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&AutomapBindings);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
@@ -865,6 +880,9 @@ void InitThingdef()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
 	fieldptr = new PField("CleanHeight_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanHeight_1);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+	fieldptr = new PField("menuactive", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&menuactive);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
 	fieldptr = new PField("OptionMenuSettings", NewStruct("FOptionMenuSettings", nullptr), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&OptionSettings);
@@ -994,7 +1012,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Replace)
 	return 0;
 }
 
-static FString FStringFormat(VM_ARGS)
+FString FStringFormat(VM_ARGS)
 {
 	assert(param[0].Type == REGT_STRING);
 	FString fmtstring = param[0].s().GetChars();

@@ -589,6 +589,7 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
 						}
+						else DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->Type()->ParentClass->TypeName.GetChars());
 					}
 					catch (CRecoverableError &err)
 					{
@@ -596,6 +597,10 @@ void ZCCCompiler::CreateClassTypes()
 						// create a placeholder so that the compiler can continue looking for errors.
 						c->cls->Type = nullptr;
 					}
+				}
+				if (c->cls->Flags & ZCC_Abstract)
+				{
+					c->Type()->ObjectFlags |= OF_Abstract;
 				}
 				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
@@ -2593,7 +2598,7 @@ void ZCCCompiler::CompileStates()
 						statename << FName(part->Id) << '.';
 						part = static_cast<decltype(part)>(part->SiblingNext);
 					} while (part != sg->Label);
-					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
+					statename.Truncate(statename.Len() - 1);	// remove the last '.' in the label name
 					if (sg->Offset != nullptr)
 					{
 						int offset = IntConstFromNode(sg->Offset, c->Type());

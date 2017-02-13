@@ -51,6 +51,40 @@ FStateLabelStorage StateLabels;
 // actor. States are archived by recording the actor they belong
 // to and the index into that actor's list of states.
 
+
+//==========================================================================
+//
+// This wraps everything needed to get a current sprite from a state into
+// one single script function.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FState);
+	PARAM_INT(rotation);
+	PARAM_INT_DEF(skin);
+	PARAM_FLOAT_DEF(scalex);
+	PARAM_FLOAT_DEF(scaley);
+
+	spriteframe_t *sprframe;
+	if (skin == 0)
+	{
+		sprframe = &SpriteFrames[sprites[self->sprite].spriteframes + self->GetFrame()];
+	}
+	else
+	{
+		sprframe = &SpriteFrames[sprites[skins[skin].sprite].spriteframes + self->GetFrame()];
+		scalex = skins[skin].Scale.X;
+		scaley = skins[skin].Scale.Y;
+	}
+	if (numret > 0) ret[0].SetInt(sprframe->Texture[rotation].GetIndex());
+	if (numret > 1) ret[1].SetInt(!!(sprframe->Flip & (1 << rotation)));
+	if (numret > 2) ret[2].SetVector2(DVector2(scalex, scaley));
+	return MIN(3, numret);
+}
+
+
 //==========================================================================
 //
 // Find the actor that a state belongs to.

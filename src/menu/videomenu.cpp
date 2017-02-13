@@ -54,10 +54,6 @@
 #include "sbar.h"
 #include "hardware.h"
 
-#define NO_IMP
-#include "optionmenuitems.h"
-
-
 /*=======================================
  *
  * Video Modes Menu
@@ -101,19 +97,21 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 
 CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
+	const int OptionMenuItemOptionBase_OP_VALUES = 0x11001;
+
 	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
 	{
-		DOptionMenuItem *it = opt->GetItem("menu_screenratios");
+		DMenuItemBase *it = opt->GetItem("menu_screenratios");
 		if (it != NULL)
 		{
 			if (self)
 			{
-				it->SetString(DOptionMenuItemOptionBase::OP_VALUES, "RatiosTFT");
+				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "RatiosTFT");
 			}
 			else
 			{
-				it->SetString(DOptionMenuItemOptionBase::OP_VALUES, "Ratios");
+				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "Ratios");
 			}
 		}
 	}
@@ -131,60 +129,15 @@ CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //=============================================================================
 
-class DVideoModeMenu : public DOptionMenu
+struct OptionMenuItemScreenResolution	// temporary workaround
 {
-	DECLARE_CLASS(DVideoModeMenu, DOptionMenu)
-
-public:
-
-	DVideoModeMenu()
+	enum EValues
 	{
-		SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
-	}
-
-	bool MenuEvent(int mkey, bool fromcontroller)
-	{
-		if ((mkey == MKEY_Up || mkey == MKEY_Down) && mDesc->mSelectedItem >= 0 && 
-			mDesc->mSelectedItem < (int)mDesc->mItems.Size())
-		{
-			int sel;
-			bool selected = mDesc->mItems[mDesc->mSelectedItem]->GetValue(DOptionMenuScreenResolutionLine::SRL_SELECTION, &sel);
-			bool res = Super::MenuEvent(mkey, fromcontroller);
-			if (selected) mDesc->mItems[mDesc->mSelectedItem]->SetValue(DOptionMenuScreenResolutionLine::SRL_SELECTION, sel);
-			return res;
-		}
-		return Super::MenuEvent(mkey, fromcontroller);
-	}
-
-	bool Responder(event_t *ev)
-	{
-		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown &&
-			(ev->data1 == 't' || ev->data1 == 'T'))
-		{
-			if (!GetSelectedSize (&NewWidth, &NewHeight))
-			{
-				NewWidth = screen->VideoWidth;
-				NewHeight = screen->VideoHeight;
-			}
-			else
-			{
-				OldWidth = screen->VideoWidth;
-				OldHeight = screen->VideoHeight;
-				OldBits = DisplayBits;
-				NewBits = BitTranslate[DummyDepthCvar];
-				setmodeneeded = true;
-				testingmode = I_GetTime(false) + 5 * TICRATE;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-				SetModesMenu (NewWidth, NewHeight, NewBits);
-				return true;
-			}
-		}
-		return Super::Responder(ev);
-	}
+		SRL_INDEX = 0x30000,
+		SRL_SELECTION = 0x30003,
+		SRL_HIGHLIGHT = 0x30004,
+	};
 };
-
-IMPLEMENT_CLASS(DVideoModeMenu, false, false)
-
 
 //=============================================================================
 //
@@ -236,10 +189,10 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	{
 		for (i = NAME_res_0; i<= NAME_res_9; i++)
 		{
-			DOptionMenuItem *it = opt->GetItem((ENamedName)i);
+			DMenuItemBase *it = opt->GetItem((ENamedName)i);
 			if (it != NULL)
 			{
-				it->SetValue(DOptionMenuScreenResolutionLine::SRL_HIGHLIGHT, -1);
+				it->SetValue(OptionMenuItemScreenResolution::SRL_HIGHLIGHT, -1);
 				for (c = 0; c < 3; c++)
 				{
 					bool haveMode = false;
@@ -260,16 +213,16 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 					{
 						if (width == hiwidth && height == hiheight)
 						{
-							it->SetValue(DOptionMenuScreenResolutionLine::SRL_SELECTION, c);
-							it->SetValue(DOptionMenuScreenResolutionLine::SRL_HIGHLIGHT, c);
+							it->SetValue(OptionMenuItemScreenResolution::SRL_SELECTION, c);
+							it->SetValue(OptionMenuItemScreenResolution::SRL_HIGHLIGHT, c);
 						}
 						
 						mysnprintf (strtemp, countof(strtemp), "%dx%d%s", width, height, letterbox?TEXTCOLOR_BROWN" LB":"");
-						it->SetString(DOptionMenuScreenResolutionLine::SRL_INDEX+c, strtemp);
+						it->SetString(OptionMenuItemScreenResolution::SRL_INDEX+c, strtemp);
 					}
 					else
 					{
-						it->SetString(DOptionMenuScreenResolutionLine::SRL_INDEX+c, "");
+						it->SetString(OptionMenuItemScreenResolution::SRL_INDEX+c, "");
 					}
 				}
 			}
@@ -359,12 +312,12 @@ static bool GetSelectedSize (int *width, int *height)
 	{
 		int line = opt->mSelectedItem;
 		int hsel;
-		DOptionMenuItem *it = opt->mItems[line];
-		if (it->GetValue(DOptionMenuScreenResolutionLine::SRL_SELECTION, &hsel))
+		DMenuItemBase *it = opt->mItems[line];
+		if (it->GetValue(OptionMenuItemScreenResolution::SRL_SELECTION, &hsel))
 		{
 			char buffer[32];
 			char *breakpt;
-			if (it->GetString(DOptionMenuScreenResolutionLine::SRL_INDEX+hsel, buffer, sizeof(buffer)))
+			if (it->GetString(OptionMenuItemScreenResolution::SRL_INDEX+hsel, buffer, sizeof(buffer)))
 			{
 				*width = (int)strtoll (buffer, &breakpt, 10);
 				*height = (int)strtoll (breakpt+1, NULL, 10);
@@ -374,6 +327,27 @@ static bool GetSelectedSize (int *width, int *height)
 	}
 	return false;
 }
+
+DEFINE_ACTION_FUNCTION(DVideoModeMenu, SetSelectedSize)
+{
+	if (!GetSelectedSize (&NewWidth, &NewHeight))
+	{
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
+		ACTION_RETURN_BOOL(false);
+	}
+	else
+	{
+		OldWidth = screen->VideoWidth;
+		OldHeight = screen->VideoHeight;
+		OldBits = DisplayBits;
+		NewBits = BitTranslate[DummyDepthCvar];
+		setmodeneeded = true;
+		testingmode = I_GetTime(false) + 5 * TICRATE;
+		SetModesMenu (NewWidth, NewHeight, NewBits);
+		ACTION_RETURN_BOOL(true);
+	}
+}	
 
 //=============================================================================
 //
@@ -397,6 +371,11 @@ void M_SetVideoMode()
 	SetModesMenu (NewWidth, NewHeight, NewBits);
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, SetVideoMode)
+{
+	M_SetVideoMode();
+	return 0;
+}
 //=============================================================================
 //
 //
@@ -423,7 +402,7 @@ static void SetModesMenu (int w, int h, int bits)
 	DOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
 	{
-		DOptionMenuItem *it;
+		DMenuItemBase *it;
 		if (testingmode <= 1)
 		{
 			it = opt->GetItem(NAME_VMEnterText);
@@ -447,4 +426,9 @@ static void SetModesMenu (int w, int h, int bits)
 		}
 	}
 	BuildModesList (w, h, bits);
+}
+
+void M_InitVideoModes()
+{
+	SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 }

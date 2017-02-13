@@ -57,428 +57,6 @@ EXTERN_CVAR (Bool, cl_run)
 
 //=============================================================================
 //
-// Player's name
-//
-//=============================================================================
-IMPLEMENT_CLASS(DPlayerNameBox, false, false)
-
-DPlayerNameBox::DPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
-: DListMenuItemSelectable(x, y, height, action)
-{
-	mText = text;
-	mFont = font;
-	mFontColor = color;
-	mFrameSize = frameofs;
-	mPlayerName[0] = 0;
-	mEntering = false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DPlayerNameBox::SetString(int i, const char *s)
-{
-	if (i == 0)
-	{
-		strncpy(mPlayerName, s, MAXPLAYERNAME);
-		mPlayerName[MAXPLAYERNAME] = 0;
-		return true;
-	}
-	return false;
-}
-
-bool DPlayerNameBox::GetString(int i, char *s, int len)
-{
-	if (i == 0)
-	{
-		strncpy(s, mPlayerName, len);
-		s[len] = 0;
-		return true;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-// [RH] Width of the border is variable
-//
-//=============================================================================
-
-void DPlayerNameBox::DrawBorder (int x, int y, int len)
-{
-	FTexture *left = TexMan[TexMan.CheckForTexture("M_LSLEFT", FTexture::TEX_MiscPatch)];
-	FTexture *mid = TexMan[TexMan.CheckForTexture("M_LSCNTR", FTexture::TEX_MiscPatch)];
-	FTexture *right = TexMan[TexMan.CheckForTexture("M_LSRGHT", FTexture::TEX_MiscPatch)];
-	if (left != NULL && right != NULL && mid != NULL)
-	{
-		int i;
-
-		screen->DrawTexture (left, x-8, y+7, DTA_Clean, true, TAG_DONE);
-
-		for (i = 0; i < len; i++)
-		{
-			screen->DrawTexture (mid, x, y+7, DTA_Clean, true, TAG_DONE);
-			x += 8;
-		}
-
-		screen->DrawTexture (right, x, y+7, DTA_Clean, true, TAG_DONE);
-	}
-	else
-	{
-		FTexture *slot = TexMan[TexMan.CheckForTexture("M_FSLOT", FTexture::TEX_MiscPatch)];
-		if (slot != NULL)
-		{
-			screen->DrawTexture (slot, x, y+1, DTA_Clean, true, TAG_DONE);
-		}
-		else
-		{
-			screen->Clear(x, y, x + len, y + SmallFont->GetHeight() * 3/2, -1, 0);
-		}
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DPlayerNameBox::Drawer(bool selected)
-{
-	const char *text = mText;
-	if (text != NULL)
-	{
-		if (*text == '$') text = GStrings(text+1);
-		screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
-	}
-
-	// Draw player name box
-	int x = mXpos + mFont->StringWidth(text) + 16 + mFrameSize;
-	DrawBorder (x, mYpos - mFrameSize, MAXPLAYERNAME+1);
-	if (!mEntering)
-	{
-		screen->DrawText (SmallFont, CR_UNTRANSLATED, x + mFrameSize, mYpos, mPlayerName,
-			DTA_Clean, true, TAG_DONE);
-	}
-	else
-	{
-		size_t l = strlen(mEditName);
-		mEditName[l] = SmallFont->GetCursor();
-		mEditName[l+1] = 0;
-
-		screen->DrawText (SmallFont, CR_UNTRANSLATED, x + mFrameSize, mYpos, mEditName,
-			DTA_Clean, true, TAG_DONE);
-		
-		mEditName[l] = 0;
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
-{
-	if (mkey == MKEY_Enter)
-	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-		strcpy(mEditName, mPlayerName);
-		mEntering = true;
-		DMenu *input = new DTextEnterMenu(DMenu::CurrentMenu, mEditName, MAXPLAYERNAME, 2, fromcontroller);
-		M_ActivateMenu(input);
-		return true;
-	}
-	else if (mkey == MKEY_Input)
-	{
-		strcpy(mPlayerName, mEditName);
-		mEntering = false;
-		return true;
-	}
-	else if (mkey == MKEY_Abort)
-	{
-		mEntering = false;
-		return true;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-// items for the player menu
-//
-//=============================================================================
-IMPLEMENT_CLASS(DValueTextItem, false, false)
-
-DValueTextItem::DValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values)
-: DListMenuItemSelectable(x, y, height, action)
-{
-	mText = text;
-	mFont = font;
-	mFontColor = color;
-	mFontColor2 = valuecolor;
-	mSelection = 0;
-	if (values != NAME_None)
-	{
-		FOptionValues **opt = OptionValues.CheckKey(values);
-		if (opt != NULL) 
-		{
-			for(unsigned i=0;i<(*opt)->mValues.Size(); i++)
-			{
-				SetString(i, (*opt)->mValues[i].Text);
-			}
-		}
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DValueTextItem::SetString(int i, const char *s)
-{
-	// should actually use the index...
-	FString str = s;
-	if (i==0) mSelections.Clear();
-	mSelections.Push(str);
-	return true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DValueTextItem::SetValue(int i, int value)
-{
-	if (i == 0)
-	{
-		mSelection = value;
-		return true;
-	}
-	return false;
-}
-
-bool DValueTextItem::GetValue(int i, int *pvalue)
-{
-	if (i == 0)
-	{
-		*pvalue = mSelection;
-		return true;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DValueTextItem::MenuEvent (int mkey, bool fromcontroller)
-{
-	if (mSelections.Size() > 1)
-	{
-		if (mkey == MKEY_Left)
-		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-			if (--mSelection < 0) mSelection = mSelections.Size() - 1;
-			return true;
-		}
-		else if (mkey == MKEY_Right || mkey == MKEY_Enter)
-		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-			if (++mSelection >= (int)mSelections.Size()) mSelection = 0;
-			return true;
-		}
-	}
-	return (mkey == MKEY_Enter);	// needs to eat enter keys so that Activate won't get called
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DValueTextItem::Drawer(bool selected)
-{
-	const char *text = mText;
-
-	if (*text == '$') text = GStrings(text+1);
-	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
-
-	int x = mXpos + mFont->StringWidth(text) + 8;
-	if (mSelections.Size() > 0)
-	{
-		const char *mOptValue = mSelections[mSelection];
-		if (*mOptValue == '$') mOptValue = GStrings(mOptValue + 1);
-		screen->DrawText(mFont, mFontColor2, x, mYpos, mOptValue, DTA_Clean, true, TAG_DONE);
-	}
-}
-
-//=============================================================================
-//
-// items for the player menu
-//
-//=============================================================================
-IMPLEMENT_CLASS(DSliderItem, false, false)
-
-DSliderItem::DSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
-: DListMenuItemSelectable(x, y, height, action)
-{
-	mText = text;
-	mFont = font;
-	mFontColor = color;
-	mSelection = 0;
-	mMinrange = min;
-	mMaxrange = max;
-	mStep = step;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DSliderItem::SetValue(int i, int value)
-{
-	if (i == 0)
-	{
-		mSelection = value;
-		return true;
-	}
-	return false;
-}
-
-bool DSliderItem::GetValue(int i, int *pvalue)
-{
-	if (i == 0)
-	{
-		*pvalue = mSelection;
-		return true;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DSliderItem::MenuEvent (int mkey, bool fromcontroller)
-{
-	if (mkey == MKEY_Left)
-	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-		if ((mSelection -= mStep) < mMinrange) mSelection = mMinrange;
-		return true;
-	}
-	else if (mkey == MKEY_Right || mkey == MKEY_Enter)
-	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-		if ((mSelection += mStep) > mMaxrange) mSelection = mMaxrange;
-		return true;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DSliderItem::MouseEvent(int type, int x, int y)
-{
-	DListMenu *lm = static_cast<DListMenu*>(DMenu::CurrentMenu);
-	if (type != DMenu::MOUSE_Click)
-	{
-		if (!lm->CheckFocus(this)) return false;
-	}
-	if (type == DMenu::MOUSE_Release)
-	{
-		lm->ReleaseFocus();
-	}
-
-	int slide_left = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	int slide_right = slide_left + 12*8;	// 12 char cells with 8 pixels each.
-
-	if (type == DMenu::MOUSE_Click)
-	{
-		if (x < slide_left || x >= slide_right) return true;
-	}
-
-	x = clamp(x, slide_left, slide_right);
-	int v = mMinrange + Scale(x - slide_left, mMaxrange - mMinrange, slide_right - slide_left);
-	if (v != mSelection)
-	{
-		mSelection = v;
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-	}
-	if (type == DMenu::MOUSE_Click)
-	{
-		lm->SetFocus(this);
-	}
-	return true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DSliderItem::DrawSlider (int x, int y)
-{
-	int range = mMaxrange - mMinrange;
-	int cur = mSelection - mMinrange;
-
-	x = (x - 160) * CleanXfac + screen->GetWidth() / 2;
-	y = (y - 100) * CleanYfac + screen->GetHeight() / 2;
-
-	screen->DrawText (ConFont, CR_WHITE, x, y,
-		"\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12",
-		DTA_CellX, 8 * CleanXfac,
-		DTA_CellY, 8 * CleanYfac,
-		TAG_DONE);
-	screen->DrawText (ConFont, CR_ORANGE, x + (5 + (int)((cur * 78) / range)) * CleanXfac, y,
-		"\x13",
-		DTA_CellX, 8 * CleanXfac,
-		DTA_CellY, 8 * CleanYfac,
-		TAG_DONE);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DSliderItem::Drawer(bool selected)
-{
-	const char *text = mText;
-
-	if (*text == '$') text = GStrings(text+1);
-	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
-
-	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	int x2 = SmallFont->StringWidth (text) + 8 + mXpos;
-	DrawSlider (MAX(x2, x), mYpos);
-}
-
-
-//=============================================================================
-//
 //
 //
 //=============================================================================
@@ -524,6 +102,14 @@ IMPLEMENT_CLASS(DPlayerMenu, false, false)
 //
 //
 //=============================================================================
+enum EPDFlags
+{
+	ListMenuItemPlayerDisplay_PDF_ROTATION = 0x10001,
+	ListMenuItemPlayerDisplay_PDF_SKIN = 0x10002,
+	ListMenuItemPlayerDisplay_PDF_CLASS = 0x10003,
+	ListMenuItemPlayerDisplay_PDF_MODE = 0x10004,
+	ListMenuItemPlayerDisplay_PDF_TRANSLATE = 0x10005,
+};
 
 void DPlayerMenu::Init(DMenu *parent, DListMenuDescriptor *desc)
 {
@@ -536,14 +122,14 @@ void DPlayerMenu::Init(DMenu *parent, DListMenuDescriptor *desc)
 	li = GetItem(NAME_Playerdisplay);
 	if (li != NULL)
 	{
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_ROTATION, 0);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_MODE, 1);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
-		li->SetValue(DListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
+		li->SetValue(ListMenuItemPlayerDisplay_PDF_ROTATION, 0);
+		li->SetValue(ListMenuItemPlayerDisplay_PDF_MODE, 1);
+		li->SetValue(ListMenuItemPlayerDisplay_PDF_TRANSLATE, 1);
+		li->SetValue(ListMenuItemPlayerDisplay_PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		if (PlayerClass != NULL && !(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
 			players[consoleplayer].userinfo.GetPlayerClassNum() != -1)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.GetSkin());
+			li->SetValue(ListMenuItemPlayerDisplay_PDF_SKIN, players[consoleplayer].userinfo.GetSkin());
 		}
 	}
 
@@ -658,7 +244,7 @@ bool DPlayerMenu::Responder (event_t *ev)
 		DMenuItemBase *li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_ROTATION, mRotation);
+			li->SetValue(ListMenuItemPlayerDisplay_PDF_ROTATION, mRotation);
 		}
 		return true;
 	}
@@ -812,7 +398,7 @@ void DPlayerMenu::UpdateSkins()
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, skin);
+			li->SetValue(ListMenuItemPlayerDisplay_PDF_SKIN, skin);
 		}
 	}
 	UpdateTranslation();
@@ -908,7 +494,7 @@ void DPlayerMenu::ClassChanged (DMenuItemBase *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
+			li->SetValue(ListMenuItemPlayerDisplay_PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		}
 	}
 }
@@ -939,7 +525,7 @@ void DPlayerMenu::SkinChanged (DMenuItemBase *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(DListMenuItemPlayerDisplay::PDF_SKIN, sel);
+			li->SetValue(ListMenuItemPlayerDisplay_PDF_SKIN, sel);
 		}
 	}
 }

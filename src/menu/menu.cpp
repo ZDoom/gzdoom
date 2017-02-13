@@ -70,7 +70,18 @@ CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 DMenu *DMenu::CurrentMenu;
+
+DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
+{
+	ACTION_RETURN_OBJECT(DMenu::CurrentMenu);
+}
+
 int DMenu::MenuTime;
+
+DEFINE_ACTION_FUNCTION(DMenu, MenuTime)
+{
+	ACTION_RETURN_INT(DMenu::MenuTime);
+}
 
 FGameStartup GameStartupInfo;
 EMenuState		menuactive;
@@ -81,6 +92,8 @@ bool			MenuButtonOrigin[NUM_MKEYS];
 int				BackbuttonTime;
 float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
+
+void M_InitVideoModes();
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -96,6 +109,14 @@ IMPLEMENT_CLASS(DMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DListMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DOptionMenuDescriptor, false, false)
 
+DEFINE_ACTION_FUNCTION(DMenuDescriptor, GetDescriptor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey(name);
+	auto retn = desc ? *desc : nullptr;
+	ACTION_RETURN_OBJECT(retn);
+}
 
 size_t DListMenuDescriptor::PropagateMark()
 {
@@ -178,6 +199,26 @@ bool DMenu::Responder (event_t *ev)
 		}
 	}
 	return false; 
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, Responder)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_POINTER(ev, event_t);
+	ACTION_RETURN_BOOL(self->Responder(ev));
+}
+
+bool DMenu::CallResponder(event_t *ev)
+{
+	IFVIRTUAL(DMenu, Responder)
+	{
+		VMValue params[] = { (DObject*)this, ev};
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+	}
+	else return Responder(ev);
 }
 
 //=============================================================================
@@ -337,6 +378,24 @@ void DMenu::Ticker ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, Ticker)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Drawer();
+	return 0;
+}
+
+void DMenu::CallTicker()
+{
+	IFVIRTUAL(DMenu, Ticker)
+	{
+		VMValue params[] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else Drawer();
+}
+
+
 void DMenu::Drawer () 
 {
 	if (this == DMenu::CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
@@ -375,6 +434,20 @@ void DMenu::CallDrawer()
 	else Drawer();
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, Close)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	self->Close();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, GetItem)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_NAME(name);
+	ACTION_RETURN_OBJECT(self->GetItem(name));
+}
+
 
 
 bool DMenu::DimAllowed()
@@ -384,6 +457,14 @@ bool DMenu::DimAllowed()
 
 bool DMenu::TranslateKeyboardEvents()
 {
+	IFVIRTUAL(DMenu, TranslateKeyboardEvents)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
 	return true;
 }
 
@@ -431,6 +512,13 @@ void M_ActivateMenu(DMenu *menu)
 	if (DMenu::CurrentMenu != nullptr) DMenu::CurrentMenu->ReleaseCapture();
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
+{
+	PARAM_SELF_PROLOGUE(DMenu);
+	M_ActivateMenu(self);
+	return 0;
 }
 
 //=============================================================================
@@ -500,6 +588,11 @@ void M_SetMenu(FName menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return;
 		}
+
+	case NAME_VideoModeMenu:
+		M_InitVideoModes();
+		break;
+
 	}
 
 	// End of special checks
@@ -533,10 +626,14 @@ void M_SetMenu(FName menu, int param)
 		else if ((*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 		{
 			DOptionMenuDescriptor *ld = static_cast<DOptionMenuDescriptor*>(*desc);
-			const PClass *cls = ld->mClass == nullptr? RUNTIME_CLASS(DOptionMenu) : ld->mClass;
+			const PClass *cls = ld->mClass == nullptr? PClass::FindClass("OptionMenu") : ld->mClass;
 
-			DOptionMenu *newmenu = (DOptionMenu *)cls->CreateNew();
-			newmenu->Init(DMenu::CurrentMenu, ld);
+			DMenu *newmenu = (DMenu*)cls->CreateNew();
+			IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)
+			{
+				VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
+				GlobalVMStack.Call(func, params, 3, nullptr, 0);
+			}
 			M_ActivateMenu(newmenu);
 		}
 		return;
@@ -559,6 +656,14 @@ void M_SetMenu(FName menu, int param)
 	M_ClearMenus();
 }
 
+DEFINE_ACTION_FUNCTION(DMenu, SetMenu)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(menu);
+	PARAM_INT(mparam);
+	M_SetMenu(menu, mparam);
+	return 0;
+}
 //=============================================================================
 //
 //
@@ -612,7 +717,7 @@ bool M_Responder (event_t *ev)
 				}
 
 				// pass everything else on to the current menu
-				return DMenu::CurrentMenu->Responder(ev);
+				return DMenu::CurrentMenu->CallResponder(ev);
 			}
 			else if (DMenu::CurrentMenu->TranslateKeyboardEvents())
 			{
@@ -633,7 +738,7 @@ bool M_Responder (event_t *ev)
 				default:
 					if (!keyup)
 					{
-						return DMenu::CurrentMenu->Responder(ev);
+						return DMenu::CurrentMenu->CallResponder(ev);
 					}
 					break;
 				}
@@ -720,7 +825,7 @@ bool M_Responder (event_t *ev)
 				return true;
 			}
 		}
-		return DMenu::CurrentMenu->Responder(ev) || !keyup;
+		return DMenu::CurrentMenu->CallResponder(ev) || !keyup;
 	}
 	else if (MenuEnabled)
 	{
@@ -764,7 +869,7 @@ void M_Ticker (void)
 	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		DMenu::CurrentMenu->Ticker();
+		DMenu::CurrentMenu->CallTicker();
 
 		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
@@ -773,7 +878,7 @@ void M_Ticker (void)
 				if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
 				{
 					MenuButtonTickers[i] = KEY_REPEAT_RATE;
-					DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+					DMenu::CurrentMenu->CallMenuEvent(i, MenuButtonOrigin[i]);
 				}
 			}
 		}
@@ -1071,10 +1176,23 @@ CCMD(reset2saved)
 }
 
 
+// This really should be in the script but we can't do scripted CCMDs yet.
+CCMD(undocolorpic)
+{
+	if (DMenu::CurrentMenu != NULL)
+	{
+		IFVIRTUALPTR(DMenu::CurrentMenu, DMenu, ResetColor)
+		{
+			VMValue params[] = { (DObject*)DMenu::CurrentMenu };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
+		}
+	}
+}
 
-//native void OptionMenuDescriptor.CalcIndent();
-//native OptionMenuItem OptionMenuDescriptor.GetItem(Name iname);
-//native void OptionMenuItem.drawLabel(int indent, int y, EColorRange color, bool grayed = false);
+
+
+
+DEFINE_FIELD(DMenu, mParentMenu)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -1084,6 +1202,23 @@ DEFINE_FIELD(DMenuItemBase, mXpos)
 DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
+
+DEFINE_FIELD(DListMenuDescriptor, mItems)
+DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)
+DEFINE_FIELD(DListMenuDescriptor, mSelectOfsX)
+DEFINE_FIELD(DListMenuDescriptor, mSelectOfsY)
+DEFINE_FIELD(DListMenuDescriptor, mSelector)
+DEFINE_FIELD(DListMenuDescriptor, mDisplayTop)
+DEFINE_FIELD(DListMenuDescriptor, mXpos)
+DEFINE_FIELD(DListMenuDescriptor, mYpos)
+DEFINE_FIELD(DListMenuDescriptor, mWLeft)
+DEFINE_FIELD(DListMenuDescriptor, mWRight)
+DEFINE_FIELD(DListMenuDescriptor, mLinespacing)
+DEFINE_FIELD(DListMenuDescriptor, mAutoselect)
+DEFINE_FIELD(DListMenuDescriptor, mFont)
+DEFINE_FIELD(DListMenuDescriptor, mFontColor)
+DEFINE_FIELD(DListMenuDescriptor, mFontColor2)
+DEFINE_FIELD(DListMenuDescriptor, mCenter)
 
 DEFINE_FIELD(DOptionMenuDescriptor, mItems)
 DEFINE_FIELD(DOptionMenuDescriptor, mTitle)
@@ -1095,15 +1230,6 @@ DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
 
-DEFINE_FIELD(DOptionMenuItem, mLabel)
-DEFINE_FIELD(DOptionMenuItem, mCentered)
-
-DEFINE_FIELD(DOptionMenu, CanScrollUp)
-DEFINE_FIELD(DOptionMenu, CanScrollDown)
-DEFINE_FIELD(DOptionMenu, VisBottom)
-DEFINE_FIELD(DOptionMenu, mFocusControl)
-DEFINE_FIELD(DOptionMenu, mDesc)
-
 DEFINE_FIELD(FOptionMenuSettings, mTitleColor)
 DEFINE_FIELD(FOptionMenuSettings, mFontColor)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorValue)
@@ -1112,3 +1238,380 @@ DEFINE_FIELD(FOptionMenuSettings, mFontColorHeader)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorHighlight)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorSelection)
 DEFINE_FIELD(FOptionMenuSettings, mLinespacing)
+
+
+struct IJoystickConfig;
+DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
+{
+	auto c = PClass::FindClass("OptionMenuItemStaticText");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(name), v };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuSliderVar(const char *name, int index, double min, double max, double step, int showval)
+{
+	auto c = PClass::FindClass("OptionMenuItemSliderVar");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(name), index, min, max, step, showval };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemCommand(const char * label, FName cmd)
+{
+	auto c = PClass::FindClass("OptionMenuItemCommand");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), cmd.GetIndex() };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemOption(const char * label, FName cmd, FName values, FBaseCVar *graycheck, bool center)
+{
+	auto c = PClass::FindClass("OptionMenuItemOption");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), cmd.GetIndex(), values.GetIndex(), graycheck, center };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy)
+{
+	auto c = PClass::FindClass("OptionMenuItemJoyConfigMenu");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), joy };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemJoyMap(const char *label, int axis, FName values, bool center)
+{
+	auto c = PClass::FindClass("OptionMenuItemJoyMap");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), axis, values.GetIndex(), center };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double min, double max, double step, int showval)
+{
+	auto c = PClass::FindClass("OptionMenuSliderJoySensitivity");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), min, max, step, showval };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval)
+{
+	auto c = PClass::FindClass("OptionMenuSliderJoyScale");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), min, max, step, showval };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center)
+{
+	auto c = PClass::FindClass("OptionMenuItemInverter");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), axis, center };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval)
+{
+	auto c = PClass::FindClass("OptionMenuSliderJoyDeadZone");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), min, max, step, showval };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center)
+{
+	auto c = PClass::FindClass("OptionMenuItemSubmenu");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), cmd.GetIndex(), center };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings)
+{
+	auto c = PClass::FindClass("OptionMenuItemControl");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, FString(label), cmd.GetIndex(), bindings };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param)
+{
+	auto c = PClass::FindClass("ListMenuItemPatchItem");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, x, y, height, tex.GetIndex(), FString(char(hotkey)), command.GetIndex(), param };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param)
+{
+	auto c = PClass::FindClass("ListMenuItemTextItem");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, x, y, height, FString(char(hotkey)), text, font, int(color1.d), int(color2.d), command.GetIndex(), param };
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+bool DMenuItemBase::CheckCoordinate(int x, int y)
+{
+	IFVIRTUAL(DMenuItemBase, CheckCoordinate)
+	{
+		VMValue params[] = { (DObject*)this, x, y };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+void DMenuItemBase::Ticker()
+{
+	IFVIRTUAL(DMenuItemBase, Ticker)
+	{
+		VMValue params[] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
+	}
+}
+
+void DMenuItemBase::Drawer(bool selected)
+{
+	IFVIRTUAL(DMenuItemBase, Drawer)
+	{
+		VMValue params[] = { (DObject*)this, selected };
+		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
+	}
+}
+
+bool DMenuItemBase::Selectable()
+{
+	IFVIRTUAL(DMenuItemBase, Selectable)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+bool DMenuItemBase::Activate()
+{
+	IFVIRTUAL(DMenuItemBase, Activate)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+FName DMenuItemBase::GetAction(int *pparam)
+{
+	IFVIRTUAL(DMenuItemBase, GetAction)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval[2];
+		VMReturn ret[2]; ret[0].IntAt(&retval[0]); ret[1].IntAt(&retval[1]);
+		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);
+		return ENamedName(retval[0]);
+	}
+	return NAME_None;
+}
+
+bool DMenuItemBase::SetString(int i, const char *s)
+{
+	IFVIRTUAL(DMenuItemBase, SetString)
+	{
+		VMValue params[] = { (DObject*)this, i, FString(s) };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+bool DMenuItemBase::GetString(int i, char *s, int len)
+{
+	IFVIRTUAL(DMenuItemBase, GetString)
+	{
+		VMValue params[] = { (DObject*)this, i };
+		int retval;
+		FString retstr;
+		VMReturn ret[2]; ret[0].IntAt(&retval); ret[1].StringAt(&retstr);
+		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);
+		strncpy(s, retstr, len);
+		return !!retval;
+	}
+	return false;
+}
+
+
+bool DMenuItemBase::SetValue(int i, int value)
+{
+	IFVIRTUAL(DMenuItemBase, SetValue)
+	{
+		VMValue params[] = { (DObject*)this, i, value };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+bool DMenuItemBase::GetValue(int i, int *pvalue)
+{
+	IFVIRTUAL(DMenuItemBase, GetValue)
+	{
+		VMValue params[] = { (DObject*)this, i };
+		int retval[2];
+		VMReturn ret[2]; ret[0].IntAt(&retval[0]); ret[1].IntAt(&retval[1]);
+		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);
+		*pvalue = retval[1];
+		return !!retval[0];
+	}
+	return false;
+}
+
+
+void DMenuItemBase::Enable(bool on)
+{
+	IFVIRTUAL(DMenuItemBase, Enable)
+	{
+		VMValue params[] = { (DObject*)this, on };
+		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
+	}
+}
+
+bool DMenuItemBase::MenuEvent(int mkey, bool fromcontroller)
+{
+	IFVIRTUAL(DMenuItemBase, MenuEvent)
+	{
+		VMValue params[] = { (DObject*)this, mkey, fromcontroller };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+bool DMenuItemBase::MouseEvent(int type, int x, int y)
+{
+	IFVIRTUAL(DMenuItemBase, MouseEvent)
+	{
+		VMValue params[] = { (DObject*)this, x, y };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+bool DMenuItemBase::CheckHotkey(int c)
+{
+	IFVIRTUAL(DMenuItemBase, CheckHotkey)
+	{
+		VMValue params[] = { (DObject*)this, c };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return !!retval;
+	}
+	return false;
+}
+
+int DMenuItemBase::GetWidth()
+{
+	IFVIRTUAL(DMenuItemBase, GetWidth)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return retval;
+	}
+	return false;
+}
+
+int DMenuItemBase::GetIndent()
+{
+	IFVIRTUAL(DMenuItemBase, GetIndent)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return retval;
+	}
+	return false;
+}
+
+int DMenuItemBase::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
+{
+	IFVIRTUAL(DMenuItemBase, Draw)
+	{
+		VMValue params[] = { (DObject*)this, desc, y, indent, selected };
+		int retval;
+		VMReturn ret(&retval);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		return retval;
+	}
+	return false;
+}
+
+void DMenuItemBase::DrawSelector(int xofs, int yofs, FTextureID tex)
+{
+	if (tex.isNull())
+	{
+		if ((DMenu::MenuTime % 8) < 6)
+		{
+			screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
+				(mXpos + xofs - 160) * CleanXfac + screen->GetWidth() / 2,
+				(mYpos + yofs - 100) * CleanYfac + screen->GetHeight() / 2,
+				"\xd",
+				DTA_CellX, 8 * CleanXfac,
+				DTA_CellY, 8 * CleanYfac,
+				TAG_DONE);
+		}
+	}
+	else
+	{
+		screen->DrawTexture(TexMan(tex), mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
+	}
+}
+

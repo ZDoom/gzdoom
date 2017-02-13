@@ -1,4 +1,48 @@
 
+struct KeyBindings native
+{
+	native static String NameKeys(int k1, int k2);
+
+	native int, int GetKeysForCommand(String cmd);
+	native void SetBind(int key, String cmd);
+	native void UnbindACommand (String str);
+}
+
+struct OptionValues native
+{
+	native static int GetCount(Name group);
+	native static String GetText(Name group, int index);
+	native static double GetValue(Name group, int index);
+	native static String GetTextValue(Name group, int index);
+}
+
+struct JoystickConfig native
+{
+	enum EJoyAxis
+	{
+		JOYAXIS_None = -1,
+		JOYAXIS_Yaw,
+		JOYAXIS_Pitch,
+		JOYAXIS_Forward,
+		JOYAXIS_Side,
+		JOYAXIS_Up,
+	//	JOYAXIS_Roll,		// Ha ha. No roll for you.
+		NUM_JOYAXIS,
+	};
+
+	native float GetSensitivity();
+	native void SetSensitivity(float scale);
+
+	native float GetAxisScale(int axis);
+	native void SetAxisScale(int axis, float scale);
+
+	native float GetAxisDeadZone(int axis);
+	native void SetAxisDeadZone(int axis, float zone);
+	
+	native int GetAxisMap(int axis);
+	native void SetAxisMap(int axis, int gameaxis);
+}
+
 class Menu : Object native
 {
 	enum EMenuKey
@@ -29,17 +73,53 @@ class Menu : Object native
 		MOUSE_Release
 	};
 
-	//native static int MenuTime();
+	enum EMenuState
+	{
+		Off,			// Menu is closed
+		On,				// Menu is opened
+		WaitKey,		// Menu is opened and waiting for a key in the controls menu
+		OnNoPause,		// Menu is opened but does not pause the game
+	};
+
+	native Menu mParentMenu;
+
+	void Init(Menu parent)
+	{
+		mParentMenu = parent;
+	}
 	
+	native static int MenuTime();
+	native static void SetVideoMode();
+	native static Menu GetCurrentMenu();
+	native static JoystickConfig GetCurrentJoystickConfig();
+	native static void SetMenu(Name mnu, int param = 0);
+	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
+	
+	virtual bool TranslateKeyboardEvents() { return true; }
+	virtual void SetFocus(MenuItemBase fc) {}
+	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
+	virtual void ReleaseFocus() {}
+	virtual void ResetColor() {}
+
+	native virtual bool Responder(InputEvent ev);
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
+	native virtual void Ticker();
 	native virtual void Drawer();
+	native void Close();
+	native MenuItemBase GetItem(Name n);
+	native void ActivateMenu();
 	
-	void MenuSound(Sound snd)
+	static void MenuSound(Sound snd)
 	{
 		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
 	}
 	
+	static void DrawConText (int color, int x, int y, String str)
+	{
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac_1, DTA_CellY, 8 * CleanYfac_1);
+	}
+
 }
 
 class MenuDescriptor : Object native
@@ -47,17 +127,42 @@ class MenuDescriptor : Object native
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
+
+	native static MenuDescriptor GetDescriptor(Name n);
 }
 
-class MenuItemBase : object native
+class ListMenuDescriptor : MenuDescriptor native
 {
+	native Array<ListMenuItem> mItems;
+	native int mSelectedItem;
+	native int mSelectOfsX;
+	native int mSelectOfsY;
+	native TextureID mSelector;
+	native int mDisplayTop;
 	native int mXpos, mYpos;
-	native Name mAction;
-	native bool mEnabled;
-	
-	// making this virtual now would require exporting all classes at once.
-	native /*virtual*/ bool MenuEvent (int mkey, bool fromcontroller);
-	
+	native int mWLeft, mWRight;
+	native int mLinespacing;	// needs to be stored for dynamically created menus
+	native int mAutoselect;	// this can only be set by internal menu creation functions
+	native Font mFont;
+	native int mFontColor;
+	native int mFontColor2;
+	native bool mCenter;
+
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mSelectOfsX = 0;
+		mSelectOfsY = 0;
+		mSelector.SetInvalid();
+		mDisplayTop = 0;
+		mXpos = 0;
+		mYpos = 0;
+		mLinespacing = 0;
+		mNetgameMessage = "";
+		mFont = NULL;
+		mFontColor = Font.CR_UNTRANSLATED;
+		mFontColor2 = Font.CR_UNTRANSLATED;
+	}
 }
 
 struct FOptionMenuSettings
@@ -84,7 +189,7 @@ class OptionMenuDescriptor : MenuDescriptor native
 	native int mPosition;
 	native bool mDontDim;
 
-	//native void CalcIndent();
+	native void CalcIndent();
 	//native OptionMenuItem GetItem(Name iname);
 	void Reset()
 	{
@@ -94,22 +199,5 @@ class OptionMenuDescriptor : MenuDescriptor native
 		mIndent = 0;
 		mDontDim = 0;
 	}
-}
-
-class OptionMenuItem : MenuItemBase native
-{
-	native String mLabel;
-	native bool mCentered;
-	
-	//native void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
-}
-
-class OptionMenu : Menu native
-{
-	native bool CanScrollUp;
-	native bool CanScrollDown;
-	native int VisBottom;
-	native OptionMenuItem mFocusControl;
-	native OptionMenuDescriptor mDesc;
 }
 

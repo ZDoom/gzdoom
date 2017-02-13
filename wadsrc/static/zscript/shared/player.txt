@@ -315,3 +315,12 @@ userinfo_t	userinfo;
 	native void BringUpWeapon();
 
 }
+
+struct PlayerClass native
+{
+	native class<Actor> Type;
+	native uint Flags;
+	native Array<int> Skins;
+	
+	native bool CheckSkin(int skin);
+}

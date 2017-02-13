@@ -27,7 +27,7 @@ extend class Actor
 			}
 		}
 
-		String msgid = "TXT_QUEST_" .. questitem;
+		String msgid = "$TXT_QUEST_" .. questitem;
 		String msg = StringTable.Localize(msgid);
 
 		if (msg != msgid)	// if both are identical there was no message of this name in the stringtable.

@@ -740,8 +740,6 @@ void R_InitTranslationTables ()
 	}
 	// The menu player also gets a separate translation table
 	PushIdentityTable(TRANSLATION_Players);
-	// This one is for the backdrop in the menu
-	PushIdentityTable(TRANSLATION_Players);
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
@@ -1200,6 +1198,33 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL, NULL);
 }
 
+
+DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(tgroup);
+	PARAM_UINT(tnum);
+	PARAM_UINT(pnum);
+	PARAM_POINTER(cls, FPlayerClass);
+
+	if (pnum >= MAXPLAYERS || tgroup >= NUM_TRANSLATION_TABLES || tnum >= translationtables[tgroup].Size())
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	auto self = &players[pnum];
+	int PlayerColor = self->userinfo.GetColor();
+	int	PlayerSkin = self->userinfo.GetSkin();
+	int PlayerColorset = self->userinfo.GetColorSet();
+
+	if (cls != nullptr)
+	{
+		PlayerSkin = R_FindSkin(skins[PlayerSkin].name, int(cls - &PlayerClasses[0]));
+		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
+			&skins[PlayerSkin], translationtables[tgroup][tnum]);
+	}
+	ACTION_RETURN_BOOL(true);
+}
+
 //----------------------------------------------------------------------------
 //
 //
@@ -1307,3 +1332,29 @@ void R_ParseTrnslate()
 		}
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+struct FTranslation
+{
+	PalEntry colors[256];
+};
+
+DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslation);
+
+	FRemapTable NewTranslation;
+	memcpy(&NewTranslation.Palette[0], self->colors, 256 * sizeof(PalEntry));
+	for (int i = 0; i < 256; i++)
+	{
+		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
+	}
+	int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
+	ACTION_RETURN_INT(trans);
+}
+

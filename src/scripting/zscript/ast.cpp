@@ -112,7 +112,7 @@ public:
 			}
 			else
 			{ // Move hanging ( characters to the new line
-				Str.Truncate(long(Str.Len() - ConsecOpens));
+				Str.Truncate(Str.Len() - ConsecOpens);
 				NestDepth -= ConsecOpens;
 			}
 			Str << '\n';

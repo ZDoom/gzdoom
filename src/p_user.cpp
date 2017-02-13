@@ -60,6 +60,7 @@
 #include "p_spec.h"
 #include "virtual.h"
 #include "g_levellocals.h"
+#include "r_data/r_translate.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -140,6 +141,13 @@ bool FPlayerClass::CheckSkin (int skin)
 	}
 
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(FPlayerClass, CheckSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_INT(skin);
+	ACTION_RETURN_BOOL(self->CheckSkin(skin));
 }
 
 //===========================================================================
@@ -3342,3 +3350,7 @@ DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
 DEFINE_FIELD_X(PlayerInfo, player_t, weapons)
+
+DEFINE_FIELD(FPlayerClass, Type)
+DEFINE_FIELD(FPlayerClass, Flags)
+DEFINE_FIELD(FPlayerClass, Skins)

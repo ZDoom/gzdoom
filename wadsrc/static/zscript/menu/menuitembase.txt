@@ -6,12 +6,11 @@
 
 class MenuItemBase : Object native
 {
-	protected int mXpos, mYpos;
-	protected Name mAction;
+	protected native int mXpos, mYpos;
+	protected native Name mAction;
+	native bool mEnabled;
 
-	bool mEnabled;
-
-	protected void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
+	void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
 	{
 		mXpos = xpos;
 		mYpos = ypos;
@@ -34,33 +33,17 @@ class MenuItemBase : Object native
 	virtual bool MouseEvent(int type, int x, int y) { return false; }
 	virtual bool CheckHotkey(int c) { return false; }
 	virtual int GetWidth() { return 0; }
-	virtual void OffsetPositionY(int ydelta) { mYpos += ydelta; }
-	virtual int GetY() { return mYpos; }
-	virtual int GetX() { return mXpos; }
-	virtual void SetX(int x) { mXpos = x; }
-	
-	/*
-	virtual void DrawSelector(int xofs, int yofs, TextureID tex)
-	{
-		if (tex.isNull())
-		{
-			if ((Menu.MenuTime() % 8) < 6)
-			{
-				screen.DrawText(ConFont, OptionSettings.mFontColorSelection,
-					(mXpos + xofs - 160) * CleanXfac + screen.GetWidth() / 2,
-					(mYpos + yofs - 100) * CleanYfac + screen.GetHeight() / 2,
-					"\xd",
-					DTA_CellX, 8 * CleanXfac,
-					DTA_CellY, 8 * CleanYfac,
-					TAG_DONE);
-			}
-		}
-		else
-		{
-			screen.DrawTexture (tex, mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
-		}
-	}
-	*/
-	
+	virtual int GetIndent() { return 0; }
+	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
+
+	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
+	int GetY() { return mYpos; }
+	int GetX() { return mXpos; }
+	void SetX(int x) { mXpos = x; }
 }
 
+// this is only used to parse font color ranges in MENUDEF
+enum MenudefColorRange
+{
+	NO_COLOR = -1
+}

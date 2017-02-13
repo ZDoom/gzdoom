@@ -336,7 +336,10 @@ class ColorpickerMenu : OptionMenu
 		if (mStartItem >= 0)
 		{
 			mDesc.mItems.Resize(mStartItem);
-			if (mCVar != null) mCVar.SetInt(Color(int(mRed), int(mGreen), int(mBlue)));
+			if (mCVar != null) 
+			{
+				mCVar.SetInt(Color(int(mRed), int(mGreen), int(mBlue)));
+			}
 			mStartItem = -1;
 		}
 	}

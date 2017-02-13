@@ -127,8 +127,16 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 		return self;
 	}
 
+	private native static void DoCommand(String cmd);	// This is very intentionally limited to this menu item to prevent abuse.
+
 	override bool Activate()
 	{
+		// This needs to perform a few checks to prevent abuse  by malicious modders.
+		let m = Menu.GetCurrentMenu();
+		// don't execute if no menu is active
+		if (m == null) return false;	
+		// don't execute if this item cannot be found in the current menu.
+		if (m.GetItem(mAction) != self) return false;
 		Menu.MenuSound("menu/choose");
 		Console.DoCommand(mAction);
 		return true;
@@ -158,7 +166,7 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 	{
 		if (mkey == Menu.MKEY_MBYes)
 		{
-			Console.DoCommand(mAction);
+			Super.Activate(mKey, fromController);
 			return true;
 		}
 		return Super.MenuEvent(mkey, fromcontroller);

@@ -3513,7 +3513,7 @@ const PClass *PClass::NativeClass() const
 
 VMFunction *PClass::FindFunction(FName clsname, FName funcname)
 {
-	auto cls = PClass::FindActor(clsname);
+	auto cls = PClass::FindClass(clsname);
 	if (!cls) return nullptr;
 	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
 	if (!func) return nullptr;
@@ -3522,7 +3522,7 @@ VMFunction *PClass::FindFunction(FName clsname, FName funcname)
 
 void PClass::FindFunction(VMFunction **pptr, FName clsname, FName funcname)
 {
-	auto cls = PClass::FindActor(clsname);
+	auto cls = PClass::FindClass(clsname);
 	if (!cls) return;
 	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
 	if (!func) return;

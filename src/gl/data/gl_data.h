@@ -10,6 +10,7 @@ struct GLRenderSettings
 
 	SBYTE lightmode;
 	bool nocoloredspritelighting;
+	bool nolightfade;
 	bool notexturefill;
 	bool brightfog;
 	bool lightadditivesurfaces;

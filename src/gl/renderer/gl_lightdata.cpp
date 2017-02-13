@@ -312,7 +312,7 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if (glset.lightmode != 8)
+		if (glset.lightmode != 8 && !glset.nolightfade)
 		{
 			density = distfogtable[glset.lightmode != 0][gl_ClampLight(lightlevel)];
 		}

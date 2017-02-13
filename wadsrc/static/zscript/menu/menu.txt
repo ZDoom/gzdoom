@@ -41,6 +41,11 @@ struct JoystickConfig native
 	
 	native int GetAxisMap(int axis);
 	native void SetAxisMap(int axis, int gameaxis);
+	
+	native String GetName();
+	native int GetNumAxes();
+	native String GetAxisName(int axis);
+	
 }
 
 class Menu : Object native
@@ -91,7 +96,6 @@ class Menu : Object native
 	native static int MenuTime();
 	native static void SetVideoMode();
 	native static Menu GetCurrentMenu();
-	native static JoystickConfig GetCurrentJoystickConfig();
 	native static void SetMenu(Name mnu, int param = 0);
 	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
 	
@@ -129,75 +133,5 @@ class MenuDescriptor : Object native
 	native Class<Menu> mClass;
 
 	native static MenuDescriptor GetDescriptor(Name n);
-}
-
-class ListMenuDescriptor : MenuDescriptor native
-{
-	native Array<ListMenuItem> mItems;
-	native int mSelectedItem;
-	native int mSelectOfsX;
-	native int mSelectOfsY;
-	native TextureID mSelector;
-	native int mDisplayTop;
-	native int mXpos, mYpos;
-	native int mWLeft, mWRight;
-	native int mLinespacing;	// needs to be stored for dynamically created menus
-	native int mAutoselect;	// this can only be set by internal menu creation functions
-	native Font mFont;
-	native int mFontColor;
-	native int mFontColor2;
-	native bool mCenter;
-
-	void Reset()
-	{
-		// Reset the default settings (ignore all other values in the struct)
-		mSelectOfsX = 0;
-		mSelectOfsY = 0;
-		mSelector.SetInvalid();
-		mDisplayTop = 0;
-		mXpos = 0;
-		mYpos = 0;
-		mLinespacing = 0;
-		mNetgameMessage = "";
-		mFont = NULL;
-		mFontColor = Font.CR_UNTRANSLATED;
-		mFontColor2 = Font.CR_UNTRANSLATED;
-	}
-}
-
-struct FOptionMenuSettings
-{
-	int mTitleColor;
-	int mFontColor;
-	int mFontColorValue;
-	int mFontColorMore;
-	int mFontColorHeader;
-	int mFontColorHighlight;
-	int mFontColorSelection;
-	int mLinespacing;
-}
-
-class OptionMenuDescriptor : MenuDescriptor native
-{
-	native Array<OptionMenuItem> mItems;
-	native String mTitle;
-	native int mSelectedItem;
-	native int mDrawTop;
-	native int mScrollTop;
-	native int mScrollPos;
-	native int mIndent;
-	native int mPosition;
-	native bool mDontDim;
-
-	native void CalcIndent();
-	//native OptionMenuItem GetItem(Name iname);
-	void Reset()
-	{
-		// Reset the default settings (ignore all other values in the struct)
-		mPosition = 0;
-		mScrollTop = 0;
-		mIndent = 0;
-		mDontDim = 0;
-	}
 }
 

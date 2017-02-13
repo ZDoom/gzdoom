@@ -52,12 +52,6 @@
 #include "m_joy.h"
 
 static TArray<IJoystickConfig *> Joysticks;
-IJoystickConfig *SELECTED_JOYSTICK;
-
-DEFINE_ACTION_FUNCTION(DMenu, GetCurrentJoystickConfig)
-{
-	ACTION_RETURN_POINTER(SELECTED_JOYSTICK);
-}
 
 DEFINE_ACTION_FUNCTION(IJoystickConfig, GetSensitivity)
 {
@@ -121,80 +115,24 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisMap)
 	return 0;
 }
 
-
-DOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy);
-
-/*=======================================
- *
- * Joystick Menu
- *
- *=======================================*/
-
-DOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetName)
 {
-	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickConfigMenu);
-	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
-	{
-		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
-		DMenuItemBase *it;
-		opt->mItems.Clear();
-		if (joy == NULL)
-		{
-			opt->mTitle = "Configure Controller";
-			it = CreateOptionMenuItemStaticText("Invalid controller specified for menu", false);
-			opt->mItems.Push(it);
-		}
-		else
-		{
-			opt->mTitle.Format("Configure %s", joy->GetName().GetChars());
-
-			SELECTED_JOYSTICK = joy;
-
-			it = CreateOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 3);
-			opt->mItems.Push(it);
-			it = CreateOptionMenuItemStaticText(" ", false);
-			opt->mItems.Push(it);
-
-			if (joy->GetNumAxes() > 0)
-			{
-				it = CreateOptionMenuItemStaticText("Axis Configuration", true);
-				opt->mItems.Push(it);
-
-				for (int i = 0; i < joy->GetNumAxes(); ++i)
-				{
-					it = CreateOptionMenuItemStaticText(" ", false);
-					opt->mItems.Push(it);
-
-					it = CreateOptionMenuItemJoyMap(joy->GetAxisName(i), i, "JoyAxisMapNames", false);
-					opt->mItems.Push(it);
-					it = CreateOptionMenuSliderJoyScale("Overall sensitivity", i, 0, 4, 0.1, 3);
-					opt->mItems.Push(it);
-					it = CreateOptionMenuItemInverter("Invert", i, false);
-					opt->mItems.Push(it);
-					it = CreateOptionMenuSliderJoyDeadZone("Dead Zone", i, 0, 0.9, 0.05, 3);
-					opt->mItems.Push(it);
-				}
-			}
-			else
-			{
-				it = CreateOptionMenuItemStaticText("No configurable axes", false);
-				opt->mItems.Push(it);
-			}
-		}
-		for (auto &p : opt->mItems)
-		{
-			GC::WriteBarrier(p);
-		}
-		opt->mScrollPos = 0;
-		opt->mSelectedItem = -1;
-		opt->mIndent = 0;
-		opt->mPosition = -25;
-		opt->CalcIndent();
-		return opt;
-	}
-	return NULL;
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_STRING(self->GetName());
 }
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	ACTION_RETURN_STRING(self->GetAxisName(axis));
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetNumAxes)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_INT(self->GetNumAxes());
+}
 
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
@@ -204,7 +142,6 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 	{
 		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
 		DMenuItemBase *it;
-		opt->mItems.Clear();
 
 		int i;
 		int itemnum = -1;
@@ -225,72 +162,50 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				}
 			}
 		}
+#ifdef _WIN32
+		opt->mItems.Resize(8);
+#else
+		opt->mItems.Resize(5);
+#endif
 
-		// Todo: Block joystick for changing this one.
-		it = CreateOptionMenuItemOption("Enable controller support", "use_joystick", "YesNo", NULL, false);
-		opt->mItems.Push(it);
-		#ifdef _WIN32
-			it = CreateOptionMenuItemOption("Enable DirectInput controllers", "joy_dinput", "YesNo", NULL, false);
-			opt->mItems.Push(it);
-			it = CreateOptionMenuItemOption("Enable XInput controllers", "joy_xinput", "YesNo", NULL, false);
-			opt->mItems.Push(it);
-			it = CreateOptionMenuItemOption("Enable raw PlayStation 2 adapters", "joy_ps2raw", "YesNo", NULL, false);
-			opt->mItems.Push(it);
-		#endif
+		it = opt->GetItem("ConfigureMessage");
+		if (it != nullptr) it->SetValue(0, !!Joysticks.Size());
+		it = opt->GetItem("ConnectMessage1");
+		if (it != nullptr) it->SetValue(0, !use_joystick);
+		it = opt->GetItem("ConnectMessage2");
+		if (it != nullptr) it->SetValue(0, !use_joystick);
 
-		it = CreateOptionMenuItemStaticText(" ", false);
-		opt->mItems.Push(it);
-
-		if (Joysticks.Size() == 0)
+		for (int i = 0; i < (int)Joysticks.Size(); ++i)
 		{
-			it = CreateOptionMenuItemStaticText("No controllers detected", false);
+			it = CreateOptionMenuItemJoyConfigMenu(Joysticks[i]->GetName(), Joysticks[i]);
+			GC::WriteBarrier(opt, it);
 			opt->mItems.Push(it);
-			if (!use_joystick)
-			{
-				it = CreateOptionMenuItemStaticText("Controller support must be", false);
-				opt->mItems.Push(it);
-				it = CreateOptionMenuItemStaticText("enabled to detect any", false);
-				opt->mItems.Push(it);
-			}
-		}
-		else
-		{
-			it = CreateOptionMenuItemStaticText("Configure controllers:", false);
-			opt->mItems.Push(it);
-
-			for (int i = 0; i < (int)Joysticks.Size(); ++i)
-			{
-				it = CreateOptionMenuItemJoyConfigMenu(Joysticks[i]->GetName(), Joysticks[i]);
-				opt->mItems.Push(it);
-				if (i == itemnum) opt->mSelectedItem = opt->mItems.Size();
-			}
-		}
-		for (auto &p : opt->mItems)
-		{
-			GC::WriteBarrier(p);
+			if (i == itemnum) opt->mSelectedItem = opt->mItems.Size();
 		}
 		if (opt->mSelectedItem >= (int)opt->mItems.Size())
 		{
 			opt->mSelectedItem = opt->mItems.Size() - 1;
 		}
-
 		opt->CalcIndent();
 
-		// If the joystick config menu is open, close it if the device it's
-		// open for is gone.
-		for (i = 0; (unsigned)i < Joysticks.Size(); ++i)
+		// If the joystick config menu is open, close it if the device it's open for is gone.
+		if (DMenu::CurrentMenu != nullptr && (DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu")))
 		{
-			if (Joysticks[i] == SELECTED_JOYSTICK)
+			auto p = DMenu::CurrentMenu->PointerVar<IJoystickConfig>("mJoy");
+			if (p != nullptr)
 			{
-				break;
-			}
-		}
-		if (i == (int)Joysticks.Size())
-		{
-			SELECTED_JOYSTICK = NULL;
-			if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu"))
-			{
-				DMenu::CurrentMenu->Close();
+				unsigned i;
+				for (i = 0; i < Joysticks.Size(); ++i)
+				{
+					if (Joysticks[i] == p)
+					{
+						break;
+					}
+				}
+				if (i == Joysticks.Size())
+				{
+					DMenu::CurrentMenu->Close();
+				}
 			}
 		}
 	}

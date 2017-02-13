@@ -51,6 +51,7 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "colormatcher.h"
+#include "menu/menu.h"
 
 struct FLatchedValue
 {
@@ -204,7 +205,9 @@ DEFINE_ACTION_FUNCTION(_CVar, GetString)
 
 DEFINE_ACTION_FUNCTION(_CVar, SetInt)
 {
+	// Only menus are allowed to change CVARs.
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD) && DMenu::CurrentMenu == nullptr) return 0;
 	PARAM_INT(val);
 	UCVarValue v;
 	v.Int = val;
@@ -214,17 +217,21 @@ DEFINE_ACTION_FUNCTION(_CVar, SetInt)
 
 DEFINE_ACTION_FUNCTION(_CVar, SetFloat)
 {
+	// Only menus are allowed to change CVARs.
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD) && DMenu::CurrentMenu == nullptr) return 0;
 	PARAM_FLOAT(val);
 	UCVarValue v;
-	v.Float = val;
+	v.Float = (float)val;
 	self->SetGenericRep(v, CVAR_Float);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_CVar, SetString)
 {
+	// Only menus are allowed to change CVARs.
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD) && DMenu::CurrentMenu == nullptr) return 0;
 	PARAM_STRING(val);
 	UCVarValue v;
 	v.String = val.GetChars();

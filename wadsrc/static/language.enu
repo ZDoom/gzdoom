@@ -2182,6 +2182,23 @@ NETMNU_HOSTOPTIONS				= "Host options";
 NETMNU_EXTRATICS				= "Extra Tics";
 NETMNU_TICBALANCE				= "Latency balancing";
 
+// Joystick menu
+
+JOYMNU_ENABLE = "Enable controller support";
+JOYMNU_DINPUT = "Enable DirectInput controllers";
+JOYMNU_XINPUT = "Enable XInput controllers";
+JOYMNU_PS2 = "Enable raw PlayStation 2 adapters";
+JOYMNU_NOCON = "No controllers detected";
+JOYMNU_CONFIG = "Configure controllers:";
+JOYMNU_DISABLED1 = "Controller support must be";
+JOYMNU_DISABLED2 = "enabled to detect any";
+JOYMNU_INVALID = "Invalid controller specified for menu";
+JOYMNU_OVRSENS = "Overall sensitivity";
+JOYMNU_AXIS = "Axis Configuration";
+JOYMNU_INVERT = "Invert";
+JOYMNU_DEADZONE = "Dead zone";
+JOYMNU_NOAXES = "No configurable axes";
+
 // Option Values
 OPTVAL_OFF					= "Off";
 OPTVAL_ON					= "On";

@@ -427,6 +427,7 @@ enum ActorRenderFlag
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
+	RF_INVERTMASK		= 0x40000000,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

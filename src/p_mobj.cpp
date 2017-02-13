@@ -1486,7 +1486,7 @@ bool AActor::IsInsideVisibleAngles() const
 		anglestart = angleend;
 		angleend = temp;
 	}
-
+	
 	if (pitchstart > pitchend)
 	{
 		DAngle temp = pitchstart;
@@ -1503,8 +1503,13 @@ bool AActor::IsInsideVisibleAngles() const
 		DVector3 diffang = ViewPos - Pos();
 		DAngle to = diffang.Angle();
 
-		if (!(renderflags & RF_ABSMASKANGLE)) 
-			to = deltaangle(Angles.Yaw, to);
+		if (!(renderflags & RF_ABSMASKANGLE))
+		{
+			if (renderflags & RF_INVERTMASK)
+				to = (Angles.Yaw - to).Normalized360();
+			else
+				to = deltaangle(Angles.Yaw, to);
+		}
 
 		if ((to >= anglestart && to <= angleend))
 		{

@@ -844,6 +844,7 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 set( FASTMATH_PCH_SOURCES
+	swrenderer/r_swcanvas.cpp
 	swrenderer/r_swrenderer.cpp
 	swrenderer/r_memory.cpp
 	swrenderer/r_renderthread.cpp

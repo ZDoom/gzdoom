@@ -300,8 +300,6 @@ private:
 	// Keep track of canvases, for automatic destruction at exit
 	DCanvas *Next;
 	static DCanvas *CanvasChain;
-
-	void PUTTRANSDOT (int xx, int yy, int basecolor, int level);
 };
 
 // A canvas in system memory.

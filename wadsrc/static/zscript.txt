@@ -8,6 +8,7 @@
 
 #include "zscript/menu/menuitembase.txt"
 #include "zscript/menu/menu.txt"
+#include "zscript/menu/listmenu.txt"
 #include "zscript/menu/listmenuitems.txt"
 #include "zscript/menu/optionmenu.txt"
 #include "zscript/menu/optionmenuitems.txt"

@@ -561,7 +561,19 @@ OptionMenu "MouseOptions"
 OptionMenu "JoystickOptions"
 {
 	Title "$JOYMNU_OPTIONS"
-	// Will be filled in by joystick code.
+	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
+	IfOption(Windows)
+	{
+		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"
+		Option "$JOYMNU_XINPUT", "joy_xinput", "YesNo"
+		Option "$JOYMNU_PS2", "joy_ps2raw", "YesNo"
+	}
+	StaticText ""
+	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"
+	StaticTextSwitchable " ", "$JOYMNU_DISABLED1", "ConnectMessage1"
+	StaticTextSwitchable " ", "$JOYMNU_DISABLED2", "ConnectMessage2"
+	
+	// The rest will be filled in by joystick code if devices get connected or disconnected
 }
 
 OptionValue "JoyAxisMapNames"

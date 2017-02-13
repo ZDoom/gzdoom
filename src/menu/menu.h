@@ -344,12 +344,11 @@ class DListMenu : public DMenu
 {
 	DECLARE_CLASS(DListMenu, DMenu)
 	HAS_OBJECT_POINTERS;
+public:
 
-protected:
 	DListMenuDescriptor *mDesc;
 	DMenuItemBase *mFocusControl;
 
-public:
 	DListMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	DMenuItemBase *GetItem(FName name);
@@ -455,17 +454,9 @@ void M_MarkMenus();
 
 struct IJoystickConfig;
 DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
-DMenuItemBase * CreateOptionMenuSliderVar(const char *name, int index, double min, double max, double step, int showval);
-DMenuItemBase * CreateOptionMenuItemCommand(const char * label, FName cmd);
-DMenuItemBase * CreateOptionMenuItemOption(const char * label, FName cmd, FName values, FBaseCVar *graycheck, bool center);
 DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
 DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
-DMenuItemBase * CreateOptionMenuItemJoyMap(const char *label, int axis, FName values, bool center);
-DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double min, double max, double step, int showval);
-DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval);
-DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center);
-DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval);
 DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param);
 DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 

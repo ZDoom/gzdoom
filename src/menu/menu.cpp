@@ -1203,6 +1203,9 @@ DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
 
+DEFINE_FIELD(DListMenu, mDesc)
+DEFINE_FIELD(DListMenu, mFocusControl)
+
 DEFINE_FIELD(DListMenuDescriptor, mItems)
 DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)
 DEFINE_FIELD(DListMenuDescriptor, mSelectOfsX)
@@ -1241,6 +1244,7 @@ DEFINE_FIELD(FOptionMenuSettings, mLinespacing)
 
 
 struct IJoystickConfig;
+// These functions are used by dynamic menu creation.
 DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
 {
 	auto c = PClass::FindClass("OptionMenuItemStaticText");
@@ -1251,91 +1255,11 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateOptionMenuSliderVar(const char *name, int index, double min, double max, double step, int showval)
-{
-	auto c = PClass::FindClass("OptionMenuItemSliderVar");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(name), index, min, max, step, showval };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuItemCommand(const char * label, FName cmd)
-{
-	auto c = PClass::FindClass("OptionMenuItemCommand");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), cmd.GetIndex() };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuItemOption(const char * label, FName cmd, FName values, FBaseCVar *graycheck, bool center)
-{
-	auto c = PClass::FindClass("OptionMenuItemOption");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), cmd.GetIndex(), values.GetIndex(), graycheck, center };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy)
 {
 	auto c = PClass::FindClass("OptionMenuItemJoyConfigMenu");
 	auto p = c->CreateNew();
 	VMValue params[] = { p, FString(label), joy };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuItemJoyMap(const char *label, int axis, FName values, bool center)
-{
-	auto c = PClass::FindClass("OptionMenuItemJoyMap");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), axis, values.GetIndex(), center };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuSliderJoySensitivity(const char * label, double min, double max, double step, int showval)
-{
-	auto c = PClass::FindClass("OptionMenuSliderJoySensitivity");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), min, max, step, showval };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuSliderJoyScale(const char *label, int axis, double min, double max, double step, int showval)
-{
-	auto c = PClass::FindClass("OptionMenuSliderJoyScale");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), min, max, step, showval };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuItemInverter(const char *label, int axis, int center)
-{
-	auto c = PClass::FindClass("OptionMenuItemInverter");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), axis, center };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenuItemBase*)p;
-}
-
-DMenuItemBase * CreateOptionMenuSliderJoyDeadZone(const char *label, int axis, double min, double max, double step, int showval)
-{
-	auto c = PClass::FindClass("OptionMenuSliderJoyDeadZone");
-	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), min, max, step, showval };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;

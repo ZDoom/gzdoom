@@ -32,6 +32,43 @@
 **
 */
 
+struct FOptionMenuSettings
+{
+	int mTitleColor;
+	int mFontColor;
+	int mFontColorValue;
+	int mFontColorMore;
+	int mFontColorHeader;
+	int mFontColorHighlight;
+	int mFontColorSelection;
+	int mLinespacing;
+}
+
+class OptionMenuDescriptor : MenuDescriptor native
+{
+	native Array<OptionMenuItem> mItems;
+	native String mTitle;
+	native int mSelectedItem;
+	native int mDrawTop;
+	native int mScrollTop;
+	native int mScrollPos;
+	native int mIndent;
+	native int mPosition;
+	native bool mDontDim;
+
+	native void CalcIndent();
+	//native OptionMenuItem GetItem(Name iname);
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mPosition = 0;
+		mScrollTop = 0;
+		mIndent = 0;
+		mDontDim = 0;
+	}
+}
+
+
 class OptionMenu : Menu
 {
 	OptionMenuDescriptor mDesc;
@@ -461,9 +498,3 @@ class CompatibilityMenu : OptionMenu
 			DTA_CleanNoMove_1, true);
 	}
 }
-
-class JoystickConfigMenu : OptionMenu
-{
-	// This is not really needed anymore but needs to be kept for old MENUDEFs that keep the entry
-}
-

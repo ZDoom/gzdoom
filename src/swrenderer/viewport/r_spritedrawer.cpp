@@ -492,6 +492,20 @@ namespace swrenderer
 		return SetStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
 
+	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, float alpha, lighttable_t *translation, uint32_t color)
+	{
+		SetTranslationMap(translation);
+		SetLight(nullptr, 0.0f, 0);
+
+		FDynamicColormap *basecolormap = &identitycolormap;
+		if (!SetStyle(style, alpha, -1, color, basecolormap))
+			return false;
+
+		if (!Colormap())
+			SetTranslationMap(identitymap);
+		return true;
+	}
+
 	void SpriteDrawerArgs::FillColumn(RenderThread *thread)
 	{
 		thread->Drawers()->FillColumn(*this);

@@ -192,7 +192,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
         using namespace swrenderer;
 
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
-	const BYTE *translation = NULL;
+	lighttable_t *translation = NULL;
 
 	auto viewport = RenderViewport::Instance();
 	
@@ -224,27 +224,14 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	else if (parms.remap != NULL)
 	{
 		if (viewport->RenderTarget->IsBgra())
-			translation = (const BYTE*)parms.remap->Palette;
+			translation = (lighttable_t *)parms.remap->Palette;
 		else
 			translation = parms.remap->Remap;
 	}
 
 	SpriteDrawerArgs drawerargs;
 
-	if (translation != NULL)
-	{
-		drawerargs.SetTranslationMap((lighttable_t *)translation);
-	}
-	else
-	{
-		if (viewport->RenderTarget->IsBgra())
-			drawerargs.SetTranslationMap(nullptr);
-		else
-			drawerargs.SetTranslationMap(identitymap);
-	}
-
-	FDynamicColormap *basecolormap = nullptr;
-	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, translation, parms.fillcolor);
 	
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;

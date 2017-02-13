@@ -212,6 +212,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		lightmode = -1;
 		attenuate = -1;
 		nocoloredspritelighting = -1;
+		nolightfade = false;
 		notexturefill = -1;
 		skyrotatevector = FVector3(0,0,1);
 		skyrotatevector2 = FVector3(0,0,1);
@@ -228,6 +229,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->lightmode = lightmode;
 		newopt->attenuate = attenuate;
 		newopt->nocoloredspritelighting = nocoloredspritelighting;
+		newopt->nolightfade = nolightfade;
 		newopt->notexturefill = notexturefill;
 		newopt->skyrotatevector = skyrotatevector;
 		newopt->skyrotatevector2 = skyrotatevector2;
@@ -244,6 +246,7 @@ struct FGLROptions : public FOptionalMapinfoData
 	int8_t		lightadditivesurfaces;
 	int8_t		nocoloredspritelighting;
 	int8_t		notexturefill;
+	bool		nolightfade;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
 	float		pixelstretch;
@@ -300,6 +303,20 @@ DEFINE_MAP_OPTION(nocoloredspritelighting, false)
 	else
 	{
 		opt->nocoloredspritelighting = true;
+	}
+}
+
+DEFINE_MAP_OPTION(nolightfade, false)
+{
+	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		opt->nolightfade = !!parse.sc.Number;
+	}
+	else
+	{
+		opt->nolightfade = true;
 	}
 }
 
@@ -423,6 +440,7 @@ void InitGLRMapinfoData()
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
 		glset.pixelstretch = opt->pixelstretch;
+		glset.nolightfade = opt->nolightfade;
 	}
 	else
 	{
@@ -436,6 +454,7 @@ void InitGLRMapinfoData()
 		glset.skyrotatevector = FVector3(0, 0, 1);
 		glset.skyrotatevector2 = FVector3(0, 0, 1);
 		glset.pixelstretch = 1.2f;
+		glset.nolightfade = false;
 	}
 	ResetOpts();
 }

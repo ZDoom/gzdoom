@@ -1197,6 +1197,7 @@ class OptionMenuItemNumberField : OptionMenuFieldBase
 			mCVar.SetFloat(value);
 			Menu.MenuSound("menu/change");
 		}
+		else return Super.MenuEvent(mkey, fromcontroller);
 
 		return true;
 	}

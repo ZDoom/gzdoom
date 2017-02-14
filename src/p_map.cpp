@@ -5287,6 +5287,14 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 				if (P_ActivateThingSpecial(in->d.thing, usething))
 					return true;
 			}
+			IFVIRTUALPTR(usething, AActor, Used)
+			{
+				VMValue params[] = { usething, in->d.thing };
+				int ret;
+				VMReturn vret(&ret);
+				GlobalVMStack.Call(func, params, 2, &vret, 1);
+				if (ret) return true;
+			}
 			continue;
 		}
 

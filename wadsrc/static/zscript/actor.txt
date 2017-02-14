@@ -329,7 +329,12 @@ class Actor : Thinker native
 	{
 		return -1;
 	}
-	
+
+	// Called when the player presses 'use' and an actor is found
+	virtual bool Used(Actor user)
+	{
+		return false;
+	}
 
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);

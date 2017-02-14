@@ -381,7 +381,7 @@ void DMenu::Ticker ()
 DEFINE_ACTION_FUNCTION(DMenu, Ticker)
 {
 	PARAM_SELF_PROLOGUE(DMenu);
-	self->Drawer();
+	self->Ticker();
 	return 0;
 }
 
@@ -392,7 +392,7 @@ void DMenu::CallTicker()
 		VMValue params[] = { (DObject*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
-	else Drawer();
+	else Ticker();
 }
 
 

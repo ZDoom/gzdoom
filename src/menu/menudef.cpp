@@ -796,7 +796,10 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 							auto cv = FindCVar(sc.String, nullptr);
 							if (cv == nullptr && *sc.String)
 							{
-								sc.ScriptError("Unknown CVar %s", sc.String);
+									if (func->Variants[0].ArgFlags[i] & VARF_Optional)
+										sc.ScriptMessage("Unknown CVar %s", sc.String);
+									else
+										sc.ScriptError("Unknown CVar %s", sc.String);
 							}
 							params.Push(cv);
 						}

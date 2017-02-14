@@ -21,6 +21,7 @@ namespace swrenderer
 		void SetDest(int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetSolidColor(int color) { dc_color = color; }
+		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 
 		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
 		void FillColumn(RenderThread *thread);
@@ -50,6 +51,8 @@ namespace swrenderer
 		uint32_t *DestBlend() const { return dc_destblend; }
 		fixed_t SrcAlpha() const { return dc_srcalpha; }
 		fixed_t DestAlpha() const { return dc_destalpha; }
+		
+		uint32_t DynamicLight() const { return dynlightcolor; }
 
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
@@ -81,6 +84,8 @@ namespace swrenderer
 		int dc_color = 0;
 		uint32_t dc_srccolor = 0;
 		uint32_t dc_srccolor_bgra = 0;
+		
+		uint32_t dynlightcolor = 0;
 
 		typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
 		SpriteDrawerFunc colfunc;

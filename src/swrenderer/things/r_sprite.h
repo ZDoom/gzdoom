@@ -32,5 +32,7 @@ namespace swrenderer
 
 		uint32_t Translation = 0;
 		uint32_t FillColor = 0;
+		
+		uint32_t dynlightcolor = 0;
 	};
 }

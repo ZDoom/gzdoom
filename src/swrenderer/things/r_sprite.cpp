@@ -56,6 +56,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
+#include "gl/dynlights/gl_dynlight.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
@@ -225,6 +226,54 @@ namespace swrenderer
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
+		
+		if (r_dynlights)
+		{
+			float lit_red = 0;
+			float lit_green = 0;
+			float lit_blue = 0;
+			auto node = vis->sector->lighthead;
+			while (node != nullptr)
+			{
+				ADynamicLight *light = node->lightsource;
+				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->flags4&MF4_DONTLIGHTSELF) || light->target != thing))
+				{
+					double lightX = light->X() - ViewPos.X;
+					double lightY = light->Y() - ViewPos.Y;
+					double lightZ = light->Z() - ViewPos.Z;
+
+					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - pos.X;
+					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - pos.Y;
+					float lz = (float)lightZ - pos.Z;
+					
+					bool is_point_light = (node->lightsource->flags4 & MF4_ATTENUATE) != 0;
+					float LdotL = lx * lx + ly * ly + lz * lz;
+					float NdotL = is_point_light ? -ly : 0.0f;
+					
+					float radius = node->lightsource->GetRadius();
+					if (radius * radius >= LdotL && NdotL > 0.0f)
+					{
+						uint32_t red = light->GetRed();
+						uint32_t green = light->GetGreen();
+						uint32_t blue = light->GetBlue();
+						float distance = sqrt(LdotL);
+						float attenuation = distance / radius * NdotL;
+						lit_red += red * attenuation;
+						lit_red += green * attenuation;
+						lit_red += blue * attenuation;
+					}
+				}
+				node = node->nextLight;
+			}
+			lit_red = MIN(lit_red, 255.0f);
+			lit_green = MIN(lit_green, 255.0f);
+			lit_blue = MIN(lit_blue, 255.0f);
+			vis->dynlightcolor = (((uint32_t)lit_red) << 16) | (((uint32_t)lit_green) << 8) | ((uint32_t)lit_blue);
+		}
+		else
+		{
+			vis->dynlightcolor = 0;
+		}
 
 		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis() / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
@@ -250,6 +299,7 @@ namespace swrenderer
 
 		SpriteDrawerArgs drawerargs;
 		drawerargs.SetLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
+		drawerargs.SetDynamicLight(dynlightcolor);
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
 

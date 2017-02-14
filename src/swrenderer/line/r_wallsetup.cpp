@@ -163,31 +163,15 @@ namespace swrenderer
 		float depthScale = (float)(WallT.InvZstep * viewport->WallTMapScale2);
 		float depthOrg = (float)(-WallT.UoverZstep * viewport->WallTMapScale2);
 
-		if (xrepeat < 0.0f)
+		for (int x = x1; x < x2; x++)
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ;
+			float u = uOverZ / invZ;
 
-				UPos[x] = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
-				VStep[x] = depthOrg + u * depthScale;
+			UPos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
+			VStep[x] = depthOrg + u * depthScale;
 
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
-		}
-		else
-		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ;
-
-				UPos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
-				VStep[x] = depthOrg + u * depthScale;
-
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
 	}
 
@@ -201,29 +185,14 @@ namespace swrenderer
 		float zGradient = WallT.InvZstep;
 		float xrepeat = (float)walxrepeat;
 
-		if (xrepeat < 0.0f)
+		for (int x = x1; x < x2; x++)
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ * xrepeat - xrepeat;
+			float u = uOverZ / invZ * xrepeat;
 
-				UPos[x] = (fixed_t)(u * FRACUNIT);
+			UPos[x] = (fixed_t)(u * FRACUNIT);
 
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
-		}
-		else
-		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ * xrepeat;
-
-				UPos[x] = (fixed_t)(u * FRACUNIT);
-
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
 	}
 }

@@ -2046,11 +2046,11 @@ void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2)
 	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
 	float uGradient = WallT.UoverZstep;
 	float zGradient = WallT.InvZstep;
-	float xrepeat = (float)walxrepeat;
+    float xrepeat = (float)fabs(walxrepeat);
 	float depthScale = (float)(WallT.InvZstep * WallTMapScale2);
 	float depthOrg = (float)(-WallT.UoverZstep * WallTMapScale2);
 
-	if (xrepeat < 0.0f)
+    if (walxrepeat < 0.0)
 	{
 		for (int x = x1; x < x2; x++)
 		{
@@ -2084,9 +2084,9 @@ void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2)
 	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
 	float uGradient = WallT.UoverZstep;
 	float zGradient = WallT.InvZstep;
-	float xrepeat = (float)walxrepeat;
+	float xrepeat = (float)fabs(walxrepeat);
 
-	if (xrepeat < 0.0f)
+	if (walxrepeat < 0.0f)
 	{
 		for (int x = x1; x < x2; x++)
 		{

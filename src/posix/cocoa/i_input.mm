@@ -91,13 +91,15 @@ size_t s_skipMouseMoves;
 
 void CheckGUICapture()
 {
-	const bool wantCapture = (MENU_Off == menuactive)
+	bool wantCapture = (MENU_Off == menuactive)
 		? (c_down == ConsoleState || c_falling == ConsoleState || chatmodeon)
 		: (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 
 	// [ZZ] check active event handlers that want the UI processing
 	if (!wantCapture && E_CheckUiProcessors())
+	{
 		wantCapture = true;
+	}
 
 	if (wantCapture != GUICapture)
 	{

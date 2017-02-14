@@ -59,6 +59,7 @@
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
 #include "r_thread.h"
+#include "events.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)

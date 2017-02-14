@@ -47,6 +47,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "v_video.h"
+#include "events.h"
 
 #undef Class
 
@@ -93,6 +94,10 @@ void CheckGUICapture()
 	const bool wantCapture = (MENU_Off == menuactive)
 		? (c_down == ConsoleState || c_falling == ConsoleState || chatmodeon)
 		: (MENU_On == menuactive || MENU_OnNoPause == menuactive);
+
+	// [ZZ] check active event handlers that want the UI processing
+	if (!wantCapture && E_CheckUiProcessors())
+		wantCapture = true;
 
 	if (wantCapture != GUICapture)
 	{
@@ -180,6 +185,9 @@ void CheckNativeMouse()
 		wantNative = m_use_mouse
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
+
+	if (!wantNative && E_CheckRequireMouse())
+		wantNative = true;
 
 	I_SetNativeMouse(wantNative);
 }

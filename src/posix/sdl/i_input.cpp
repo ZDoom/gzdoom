@@ -17,6 +17,7 @@
 #include "dikeys.h"
 #include "templates.h"
 #include "s_sound.h"
+#include "events.h"
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -153,6 +154,10 @@ static void I_CheckGUICapture ()
 	{
 		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
+
+	// [ZZ] check active event handlers that want the UI processing
+	if (!wantCapt && E_CheckUiProcessors())
+		wantCapt = true;
 
 	if (wantCapt != GUICapture)
 	{
@@ -331,6 +336,12 @@ void MessagePump (const SDL_Event &sev)
 				event.subtype = sev.type == SDL_MOUSEBUTTONDOWN ? EV_GUI_LButtonDown : EV_GUI_LButtonUp;
 				event.subtype += (sev.button.button - 1) * 3;
 			}
+
+			SDL_Keymod kmod = SDL_GetModState();
+			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+				((kmod & KMOD_ALT) ? GKM_ALT : 0);
+
 			D_PostEvent(&event);
 		}
 		break;
@@ -340,6 +351,10 @@ void MessagePump (const SDL_Event &sev)
 		{
 			event.type = EV_GUI_Event;
 			event.subtype = sev.wheel.y > 0 ? EV_GUI_WheelUp : EV_GUI_WheelDown;
+			SDL_Keymod kmod = SDL_GetModState();
+			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+				((kmod & KMOD_ALT) ? GKM_ALT : 0);
 			D_PostEvent (&event);
 		}
 		else

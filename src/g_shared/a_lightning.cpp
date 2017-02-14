@@ -11,6 +11,7 @@
 #include "r_state.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 static FRandom pr_lightning ("Lightning");
 
@@ -129,6 +130,9 @@ void DLightningThinker::LightningFlash ()
 
 	level.flags |= LEVEL_SWAPSKIES;	// set alternate sky
 	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
+	// [ZZ] just in case
+	E_WorldLightning();
+	// start LIGHTNING scripts
 	FBehavior::StaticStartTypedScripts (SCRIPT_Lightning, NULL, false);	// [RH] Run lightning scripts
 
 	// Calculate the next lighting flash

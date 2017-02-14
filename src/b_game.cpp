@@ -61,6 +61,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_netinf.h"
 #include "d_player.h"
 #include "doomerrors.h"
+#include "events.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -418,6 +419,9 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 					}
 				}
 			}
+			// [ZZ] run event hook
+			E_PlayerDisconnected(i);
+			//
 			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
 			ClearPlayer (i, !fromlist);
 		}

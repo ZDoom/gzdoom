@@ -66,6 +66,7 @@
 #include "p_maputl.h"
 #include "g_levellocals.h"
 #include "r_thread.h"
+#include "events.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)

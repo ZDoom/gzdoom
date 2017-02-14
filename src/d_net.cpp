@@ -64,6 +64,7 @@
 #include "a_keys.h"
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2676,6 +2677,17 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_FINISHGAME:
 		// Simulate an end-of-game action
 		G_ChangeLevel(NULL, 0, 0);
+		break;
+
+	case DEM_NETEVENT:
+		{
+			FString ename = ReadString(stream);
+			int argn = ReadByte(stream);
+			int arg[3] = { 0, 0, 0 };
+			for (int i = 0; i < argn; i++)
+				arg[i] = ReadLong(stream);
+			E_Console(player, ename, arg[0], arg[1], arg[2]);
+		}
 		break;
 
 	default:

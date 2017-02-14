@@ -36,6 +36,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 extern gamestate_t wipegamestate;
 
@@ -125,6 +126,8 @@ void P_Ticker (void)
 			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
 			P_PlayerThink (&players[i]);
 
+	// [ZZ] call the WorldTick hook
+	E_WorldTick();
 	StatusBar->Tick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();

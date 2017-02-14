@@ -448,6 +448,12 @@ DEFINE_ACTION_FUNCTION(DMenu, GetItem)
 	ACTION_RETURN_OBJECT(self->GetItem(name));
 }
 
+DEFINE_ACTION_FUNCTION(DOptionMenuDescriptor, GetItem)
+{
+	PARAM_SELF_PROLOGUE(DOptionMenuDescriptor);
+	PARAM_NAME(name);
+	ACTION_RETURN_OBJECT(self->GetItem(name));
+}
 
 
 bool DMenu::DimAllowed()

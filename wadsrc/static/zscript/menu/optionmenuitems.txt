@@ -396,16 +396,16 @@ class EnterKey : Menu
 		}
 	}
 
-	override bool Responder(InputEvent ev)
+	override bool Responder(InputEventData ev)
 	{
 		// This checks raw keys, not GUI keys.
-		if (ev.type == InputEvent.KeyDown)
+		if (ev.type == InputEventData.KeyDown)
 		{
 			mOwner.SendKey(ev.data1);
 			menuactive = Menu.On;
 			SetMenuMessage(0);
 			Close();
-			mParentMenu.MenuEvent((ev.data1 == InputEvent.KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
+			mParentMenu.MenuEvent((ev.data1 == InputEventData.KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
 			return true;
 		}
 		return false;

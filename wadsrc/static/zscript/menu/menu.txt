@@ -105,7 +105,7 @@ class Menu : Object native
 	virtual void ReleaseFocus() {}
 	virtual void ResetColor() {}
 
-	native virtual bool Responder(InputEvent ev);
+	native virtual bool Responder(InputEventData ev);
 	native virtual bool MenuEvent (int mkey, bool fromcontroller);
 	native virtual bool MouseEvent(int type, int mx, int my);
 	native virtual void Ticker();

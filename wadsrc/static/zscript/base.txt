@@ -1,4 +1,4 @@
-struct InputEvent native
+struct InputEventData native
 {
 	native uint8	type;
 	native uint8	subtype;

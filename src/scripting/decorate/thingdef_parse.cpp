@@ -840,6 +840,21 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			bool val = sc.CheckNumber() ? !!sc.Number : true;
 			static_cast<PBool*>(f->Type)->SetValue(addr, !!val);
 		}
+		else if (f->Type == TypeName)
+		{
+			sc.MustGetString();
+			*(FName*)addr = sc.String;
+		}
+		else if (f->Type == TypeSound)
+		{
+			sc.MustGetString();
+			*(FSoundID*)addr = sc.String;
+		}
+		else if (f->Type == TypeColor)
+		{
+			if (sc.CheckNumber()) *(int*)addr = sc.Number;
+			else *(PalEntry*)addr = V_GetColor(nullptr, sc);
+		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
 			sc.MustGetNumber();

@@ -1720,7 +1720,19 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		{
 			static_cast<PBool*>(f->Type)->SetValue(addr, !!GetIntConst(ex, ctx));
 		}
-		if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		else if (f->Type == TypeName)
+		{
+			*(FName*)addr = GetStringConst(ex, ctx);
+		}
+		else if (f->Type == TypeSound)
+		{
+			*(FSoundID*)addr = GetStringConst(ex, ctx);
+		}
+		else if (f->Type == TypeColor && ex->ValueType == TypeString)	// colors can also be specified as ints.
+		{
+			*(PalEntry*)addr = V_GetColor(nullptr, GetStringConst(ex, ctx).GetChars(), &ex->ScriptPosition);
+		}
+		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
 			static_cast<PInt*>(f->Type)->SetValue(addr, GetIntConst(ex, ctx));
 		}

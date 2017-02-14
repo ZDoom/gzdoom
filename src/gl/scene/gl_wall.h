@@ -192,7 +192,7 @@ private:
 	bool PutWallCompat(int passflag);
 	void PutWall(bool translucent);
 	void PutPortal(int ptype);
-	void CheckTexturePosition();
+	void CheckTexturePosition(FTexCoordInfo *tci);
 
 	void RenderFogBoundaryCompat();
 	void RenderLightsCompat(int pass);

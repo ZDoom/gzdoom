@@ -626,7 +626,7 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 //
 //==========================================================================
 
-void GLWall::CheckTexturePosition()
+void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 {
 	float sub;
 
@@ -634,23 +634,47 @@ void GLWall::CheckTexturePosition()
 
 	// clamp texture coordinates to a reasonable range.
 	// Extremely large values can cause visual problems
-	if (tcs[UPLFT].v < tcs[UPRGT].v)
+	if (tci->mScale.Y > 0)
 	{
-		sub = float(xs_FloorToInt(tcs[UPLFT].v));
+		if (tcs[UPLFT].v < tcs[UPRGT].v)
+		{
+			sub = float(xs_FloorToInt(tcs[UPLFT].v));
+		}
+		else
+		{
+			sub = float(xs_FloorToInt(tcs[UPRGT].v));
+		}
+		tcs[UPLFT].v -= sub;
+		tcs[UPRGT].v -= sub;
+		tcs[LOLFT].v -= sub;
+		tcs[LORGT].v -= sub;
+
+		if ((tcs[UPLFT].v == 0.f && tcs[UPRGT].v == 0.f && tcs[LOLFT].v <= 1.f && tcs[LORGT].v <= 1.f) ||
+			(tcs[UPLFT].v >= 0.f && tcs[UPRGT].v >= 0.f && tcs[LOLFT].v == 1.f && tcs[LORGT].v == 1.f))
+		{
+			flags |= GLT_CLAMPY;
+		}
 	}
 	else
 	{
-		sub = float(xs_FloorToInt(tcs[UPRGT].v));
-	}
-	tcs[UPLFT].v -= sub;
-	tcs[UPRGT].v -= sub;
-	tcs[LOLFT].v -= sub;
-	tcs[LORGT].v -= sub;
+		if (tcs[LOLFT].v < tcs[LORGT].v)
+		{
+			sub = float(xs_FloorToInt(tcs[LOLFT].v));
+		}
+		else
+		{
+			sub = float(xs_FloorToInt(tcs[LORGT].v));
+		}
+		tcs[UPLFT].v -= sub;
+		tcs[UPRGT].v -= sub;
+		tcs[LOLFT].v -= sub;
+		tcs[LORGT].v -= sub;
 
-	if ((tcs[UPLFT].v == 0.f && tcs[UPRGT].v == 0.f && tcs[LOLFT].v <= 1.f && tcs[LORGT].v <= 1.f) ||
-		(tcs[UPLFT].v >= 0.f && tcs[UPRGT].v >= 0.f && tcs[LOLFT].v == 1.f && tcs[LORGT].v == 1.f))
-	{
-		flags |= GLT_CLAMPY;
+		if ((tcs[LOLFT].v == 0.f && tcs[LORGT].v == 0.f && tcs[UPLFT].v <= 1.f && tcs[UPRGT].v <= 1.f) ||
+			(tcs[LOLFT].v >= 0.f && tcs[LORGT].v >= 0.f && tcs[UPLFT].v == 1.f && tcs[UPRGT].v == 1.f))
+		{
+			flags |= GLT_CLAMPY;
+		}
 	}
 
 	// Check if this is marked as a skybox and if so, do the same for x.
@@ -721,7 +745,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	else
 	{
 
-		CheckTexturePosition();
+		CheckTexturePosition(&tci);
 
 		// Add this wall to the render list
 		sector_t * sec = sub ? sub->sector : seg->frontsector;
@@ -1139,7 +1163,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		tcs[LOLFT].v = tci.FloatToTexV(to - ff_bottomleft);
 		tcs[LORGT].v = tci.FloatToTexV(to - ff_bottomright);
 		type = RENDERWALL_FFBLOCK;
-		CheckTexturePosition();
+		CheckTexturePosition(&tci);
 	}
 
 	ztop[0] = ff_topleft;

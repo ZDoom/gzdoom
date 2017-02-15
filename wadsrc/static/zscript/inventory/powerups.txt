@@ -1767,7 +1767,7 @@ class PowerProtection : Powerup
 	{
 		if (passive && damage > 0)
 		{
-			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
 			if (Owner != null && newdamage < damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 		}
 	}

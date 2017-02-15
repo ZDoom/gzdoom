@@ -270,6 +270,7 @@ bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 
 void DMenu::Close ()
 {
+	if (DMenu::CurrentMenu == nullptr) return;	// double closing can happen in the save menu.
 	assert(DMenu::CurrentMenu == this);
 	DMenu::CurrentMenu = mParentMenu;
 	Destroy();

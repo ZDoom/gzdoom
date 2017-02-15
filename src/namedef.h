@@ -203,6 +203,8 @@ xx(CallTryPickup)
 xx(QuestItem25)
 xx(QuestItem28)
 xx(QuestItem29)
+xx(PowerDoubleFiringSpeed)
+xx(PowerInfiniteAmmo)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

@@ -40,7 +40,7 @@
 class FLispString;
 extern void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *);
 
-static const char *BuiltInTypeNames[] =
+const char *BuiltInTypeNames[] =
 {
 	"sint8", "uint8",
 	"sint16", "uint16",

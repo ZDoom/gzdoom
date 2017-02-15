@@ -528,6 +528,7 @@ struct ZCC_FlagStmt : ZCC_Statement
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root);
+FString ZCC_PrintRefDocs(ZCC_TreeNode *root);
 
 
 struct ZCC_AST

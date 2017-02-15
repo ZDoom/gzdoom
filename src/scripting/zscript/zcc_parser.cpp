@@ -398,6 +398,20 @@ static void DoParse(int lumpnum)
 		}
 	}
 
+	if (Args->CheckParm("-refdocs"))
+	{
+		FString docs = ZCC_PrintRefDocs(state.TopNode);
+		FString filename = Wads.GetLumpFullPath(lumpnum);
+		filename.ReplaceChars(":\\/?|", '.');
+		filename << ".reference.html";
+		FILE *ff = fopen(filename, "w");
+		if (ff != NULL)
+		{
+			fputs(docs.GetChars(), ff);
+			fclose(ff);
+		}
+	}
+
 	PSymbolTable symtable;
 	auto newns = Wads.GetLumpFile(lumpnum) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(lumpnum));
 	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum);

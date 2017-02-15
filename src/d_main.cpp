@@ -777,7 +777,7 @@ void D_Display ()
 				viewwindowx + viewwidth, viewwindowy + viewheight);
 
 			// [ZZ] execute event hook that we just started the frame
-			E_RenderFrame();
+			//E_RenderFrame();
 			//
 			Renderer->RenderView(&players[consoleplayer]);
 
@@ -898,7 +898,7 @@ void D_Display ()
 		NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff
-		E_RenderOverlay();
+		//E_RenderOverlay();
 		C_DrawConsole (hw2d);	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();

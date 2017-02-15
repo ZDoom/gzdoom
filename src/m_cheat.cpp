@@ -350,7 +350,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 				// player is now alive.
 				// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-				E_PlayerRespawned(player - players);
+				E_PlayerRespawned(int(player - players));
 				//
 				FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, player->mo, true);
 

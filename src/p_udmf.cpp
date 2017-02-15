@@ -1854,7 +1854,7 @@ public:
 			intptr_t v1i = intptr_t(ParsedLines[i].v1);
 			intptr_t v2i = intptr_t(ParsedLines[i].v2);
 
-			if (v1i >= level.vertexes.Size() || v2i >= level.vertexes.Size() || v1i < 0 || v2i < 0)
+			if ((unsigned)v1i >= level.vertexes.Size() || (unsigned)v2i >= level.vertexes.Size())
 			{
 				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %u vertices.", i+skipped, v1i, v2i, level.vertexes.Size());
 			}

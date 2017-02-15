@@ -155,12 +155,12 @@ public:
 	double		ViewBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
-	FName SoundClass;		// Sound class
-	FName Face;			// Doom status bar face (when used)
-	FName Portrait;
-	FName Slot[10];
-	FName InvulMode;
-	FName HealingRadiusType;
+	FNameNoInit SoundClass;		// Sound class
+	FNameNoInit Face;			// Doom status bar face (when used)
+	FNameNoInit Portrait;
+	FNameNoInit Slot[10];
+	FNameNoInit InvulMode;
+	FNameNoInit HealingRadiusType;
 	double HexenArmor[5];
 	BYTE ColorRangeStart;	// Skin color range
 	BYTE ColorRangeEnd;

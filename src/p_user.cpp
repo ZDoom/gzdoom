@@ -1232,8 +1232,6 @@ const char *APlayerPawn::GetSoundClass() const
 		return skins[player->userinfo.GetSkin()].name;
 	}
 
-	// [GRB]
-	auto pclass = GetClass();
 	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
 }
 

@@ -57,7 +57,7 @@ class OptionMenuDescriptor : MenuDescriptor native
 	native bool mDontDim;
 
 	native void CalcIndent();
-	//native OptionMenuItem GetItem(Name iname);
+	native OptionMenuItem GetItem(Name iname);
 	void Reset()
 	{
 		// Reset the default settings (ignore all other values in the struct)

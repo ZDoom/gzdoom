@@ -2889,7 +2889,7 @@ namespace swrenderer
 	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
 	{
 		_colormap = args.Colormap();
-		_dest = RenderViewport::Instance()->GetDest(x1, y);
+		_dest = RenderViewport::Instance()->GetDest(0, y);
 	}
 
 	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)

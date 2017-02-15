@@ -130,7 +130,7 @@ class PlayerPawn : Actor native
 				return powerup.EffectTics, maxtics;
 			}
 		}
-		return 0, 0;
+		return -1, -1;
 	}
 
 	native int GetMaxHealth();

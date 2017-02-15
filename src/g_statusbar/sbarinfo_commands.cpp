@@ -1442,7 +1442,7 @@ class CommandDrawNumber : public CommandDrawString
 					int retv;
 					VMReturn ret(&retv);
 					GlobalVMStack.Call(func, params, 2, &ret, 1);
-					num = retv / TICRATE + 1;
+					num = retv < 0? 0 :  retv / TICRATE + 1;
 					break;
 				}
 				case INVENTORY:

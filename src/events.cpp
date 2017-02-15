@@ -164,7 +164,7 @@ static void E_InitStaticHandler(PClass* type, FString typestring, bool map)
 {
 	if (type == nullptr)
 	{
-		I_Error("Fatal: unknown event handler class %s in MAPINFO!\n", TEXTCOLOR_ESCAPE, typestring.GetChars());
+		I_Error("Fatal: unknown event handler class %s in MAPINFO!\n", typestring.GetChars());
 		return;
 
 	}
@@ -1033,7 +1033,7 @@ static DConsoleEvent* E_SetupConsoleEvent()
 	if (!e) e = (DConsoleEvent*)RUNTIME_CLASS(DConsoleEvent)->CreateNew();
 	e->Player = -1;
 	e->Name = "";
-	for (int i = 0; i < countof(e->Args); i++)
+	for (size_t i = 0; i < countof(e->Args); i++)
 		e->Args[i] = 0;
 	return e;
 }

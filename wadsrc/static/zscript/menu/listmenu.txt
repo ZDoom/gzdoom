@@ -86,7 +86,7 @@ class ListMenu : Menu native
 		return NULL;
 	}
 	
-	//bool Responder (InputEvent ev);
+	//bool Responder (InputEventData ev);
 	//bool MenuEvent (int mkey, bool fromcontroller);
 	//bool MouseEvent(int type, int x, int y);
 	//void Ticker ();

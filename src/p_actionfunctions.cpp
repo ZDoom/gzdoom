@@ -1021,7 +1021,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlaySound)
 
 	if (!looping)
 	{
-		S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
+		if (!(channel & CHAN_NOSTOP) || !S_IsActorPlayingSomething(self, channel & 7, soundid))
+		{
+			S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
+		}
 	}
 	else
 	{

@@ -97,6 +97,28 @@ void gl_CreateSections();
 void AdjustSpriteOffsets()
 {
 	int lump, lastlump = 0;
+	int sprid;
+	TMap<int, bool> donotprocess;
+
+	int numtex = Wads.GetNumLumps();
+
+	for (int i = 0; i < numtex; i++)
+	{
+		if (Wads.GetLumpFile(i) > 1) break; // we are past the IWAD
+		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == FWadCollection::IWAD_FILENUM)
+		{
+			char str[9];
+			Wads.GetLumpName(str, i);
+			FTextureID texid = TexMan.CheckForTexture(str, FTexture::TEX_Sprite, 0);
+			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > FWadCollection::IWAD_FILENUM)
+			{
+				// This texture has been replaced by some PWAD.
+				memcpy(&sprid, str, 4);
+				donotprocess[sprid] = true;
+			}
+		}
+	}
+
 	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
 	{
 		FScanner sc;
@@ -108,6 +130,7 @@ void AdjustSpriteOffsets()
 		{
 			int x,y;
 			bool iwadonly = false;
+			bool forced = false;
 			FTextureID texno = TexMan.CheckForTexture(sc.String, FTexture::TEX_Sprite);
 			sc.MustGetStringName(",");
 			sc.MustGetNumber();
@@ -119,6 +142,7 @@ void AdjustSpriteOffsets()
 			{
 				sc.MustGetString();
 				if (sc.Compare("iwad")) iwadonly = true;
+				if (sc.Compare("iwadforced")) forced = iwadonly = true;
 			}
 			if (texno.isValid())
 			{
@@ -131,6 +155,11 @@ void AdjustSpriteOffsets()
 					int wadno = Wads.GetLumpFile(lumpnum);
 					if ((iwadonly && wadno==FWadCollection::IWAD_FILENUM) || (!iwadonly && wadno == ofslumpno))
 					{
+						if (wadno == FWadCollection::IWAD_FILENUM && !forced && iwadonly)
+						{
+							memcpy(&sprid, &tex->Name[0], 4);
+							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
+						}
 						tex->LeftOffset=x;
 						tex->TopOffset=y;
 						tex->KillNative();

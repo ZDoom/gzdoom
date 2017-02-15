@@ -120,17 +120,17 @@ class OptionMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEvent ev)
+	override bool Responder (InputEventData ev)
 	{
-		if (ev.type == InputEvent.GUI_Event)
+		if (ev.type == InputEventData.GUI_Event)
 		{
-			if (ev.subtype == InputEvent.GUI_WheelUp)
+			if (ev.subtype == InputEventData.GUI_WheelUp)
 			{
 				int scrollamt = MIN(2, mDesc.mScrollPos);
 				mDesc.mScrollPos -= scrollamt;
 				return true;
 			}
-			else if (ev.subtype == InputEvent.GUI_WheelDown)
+			else if (ev.subtype == InputEventData.GUI_WheelDown)
 			{
 				if (CanScrollDown)
 				{

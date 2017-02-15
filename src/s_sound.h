@@ -284,6 +284,7 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 #define CHAN_JUSTSTARTED		512	// internal: Sound has not been updated yet.
 #define CHAN_ABSTIME			1024// internal: Start time is absolute and does not depend on current time.
 #define CHAN_VIRTUAL			2048// internal: Channel is currently virtual
+#define CHAN_NOSTOP				4096// only for A_PlaySound. Does not start if channel is playing something.
 
 // sound attenuation values
 #define ATTN_NONE				0.f	// full volume the entire level

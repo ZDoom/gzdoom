@@ -84,6 +84,20 @@ struct Side native
 	native Vertex V2();
 
 	native int Index();
+	
+	int GetUDMFInt(Name nm)
+	{
+		return Level.GetUDMFInt(LevelLocals.UDMF_Side, Index(), nm);
+	}
+	double GetUDMFFloat(Name nm)
+	{
+		return Level.GetUDMFFloat(LevelLocals.UDMF_Side, Index(), nm);
+	}
+	String GetUDMFString(Name nm)
+	{
+		return Level.GetUDMFString(LevelLocals.UDMF_Side, Index(), nm);
+	}
+	
 };
 
 struct Line native
@@ -142,6 +156,19 @@ struct Line native
 	native Line getPortalDestination();
 	native int getPortalAlignment();
 	native int Index();
+	
+	int GetUDMFInt(Name nm)
+	{
+		return Level.GetUDMFInt(LevelLocals.UDMF_Line, Index(), nm);
+	}
+	double GetUDMFFloat(Name nm)
+	{
+		return Level.GetUDMFFloat(LevelLocals.UDMF_Line, Index(), nm);
+	}
+	String GetUDMFString(Name nm)
+	{
+		return Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
+	}
 }
 
 struct SecPlane native
@@ -398,4 +425,18 @@ struct Sector native
 	 {
 		 Flags &= ~SECF_SECRET;
 	 }
+	 
+	int GetUDMFInt(Name nm)
+	{
+		return Level.GetUDMFInt(LevelLocals.UDMF_Sector, Index(), nm);
+	}
+	double GetUDMFFloat(Name nm)
+	{
+		return Level.GetUDMFFloat(LevelLocals.UDMF_Sector, Index(), nm);
+	}
+	String GetUDMFString(Name nm)
+	{
+		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
+	}
+	 
 }

@@ -387,6 +387,7 @@ enum ActorFlag7
 	MF7_SPRITEANGLE		= 0x02000000,	// [MC] Utilize the SpriteAngle property and lock the rotation to the degrees specified.
 	MF7_SMASHABLE		= 0x04000000,	// dies if hitting the floor.
 	MF7_NOSHIELDREFLECT = 0x08000000,	// will not be reflected by shields.
+	MF7_PUFFHITANGLE	= 0x10000000,	// Puff will face the same angle as whatever it hit (eg wall angle), instead of facing its Target
 };
 
 // --- mobj.renderflags ---

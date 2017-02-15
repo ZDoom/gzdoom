@@ -230,7 +230,7 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int am
 	int enough, enoughmask;
 	int lAmmoUse1;
 
-	if ((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO))
+	if ((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr))
 	{
 		return true;
 	}
@@ -311,7 +311,7 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 
 bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 {
-	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO)))
+	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr)))
 	{
 		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
 		{

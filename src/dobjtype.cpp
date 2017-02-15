@@ -1531,6 +1531,17 @@ bool PClassPointer::isCompatible(PType *type)
 
 //==========================================================================
 //
+// PClassPointer :: SetPointer
+//
+//==========================================================================
+
+void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	// Class pointers do not get added to FlatPointers because they are released from the GC.
+}
+
+//==========================================================================
+//
 // PClassPointer :: IsMatch
 //
 //==========================================================================

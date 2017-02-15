@@ -401,6 +401,7 @@ public:
 
 	bool isCompatible(PType *type);
 
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 };

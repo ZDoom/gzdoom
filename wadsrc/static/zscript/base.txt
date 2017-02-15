@@ -418,6 +418,14 @@ class SpotState : Object native
 
 struct LevelLocals native
 {
+	enum EUDMF
+	{
+		UDMF_Line,
+		UDMF_Side,
+		UDMF_Sector,
+		//UDMF_Thing // not implemented
+	};
+
 	native readonly int time;
 	native readonly int maptime;
 	native readonly int totaltime;
@@ -457,6 +465,11 @@ struct LevelLocals native
 	native bool frozen;
 	native bool infinite_flight;
 // level_info_t *info cannot be done yet.
+
+	native String GetUDMFString(int type, int index, Name key);
+	native int GetUDMFInt(int type, int index, Name key);
+	native double GetUDMFFloat(int type, int index, Name key);
+
 }
 
 struct StringTable native

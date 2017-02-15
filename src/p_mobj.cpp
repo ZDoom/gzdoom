@@ -143,7 +143,6 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(LastHeard)
 	IMPLEMENT_POINTER(master)
 	IMPLEMENT_POINTER(Poisoner)
-	IMPLEMENT_POINTER(DamageFunc)
 	IMPLEMENT_POINTER(alternative)
 IMPLEMENT_POINTERS_END
 
@@ -5513,7 +5512,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		{
 			// [ZZ] fire non-hub ENTER event
 			//      level.time is a hack to make sure that we don't call it on dummy player initialization during hub return.
-			if (!level.time) E_PlayerEntered(p - players, false);
+			if (!level.time) E_PlayerEntered(int(p - players), false);
 			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)

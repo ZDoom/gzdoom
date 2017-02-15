@@ -1365,7 +1365,7 @@ void G_FinishTravel ()
 		for (int i = 0; i < pawnsnum; i++)
 		{
 			// [ZZ] fire the enter hook.
-			E_PlayerEntered(pawns[i]->player - players, true);
+			E_PlayerEntered(int(pawns[i]->player - players), true);
 			//
 			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
 		}

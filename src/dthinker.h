@@ -71,7 +71,7 @@ public:
 	virtual void Tick ();
 	void CallTick();
 	virtual void PostBeginPlay ();	// Called just before the first tick
-	void CallPostBeginPlay();
+	virtual void CallPostBeginPlay(); // different in actor.
 	virtual void PostSerialize();
 	size_t PropagateMark();
 	

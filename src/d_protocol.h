@@ -159,6 +159,7 @@ enum EDemoCommand
 	DEM_SETSLOTPNUM,	// 67 Byte: player number, the rest is the same as DEM_SETSLOT
 	DEM_REMOVE,			// 68
 	DEM_FINISHGAME,		// 69
+	DEM_NETEVENT		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

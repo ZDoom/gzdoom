@@ -91,6 +91,7 @@
 
 #include "g_hub.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -1791,6 +1792,8 @@ void G_DoPlayerPop(int playernum)
 
 	// [RH] Make the player disappear
 	FBehavior::StaticStopMyScripts(players[playernum].mo);
+	// [ZZ] fire player disconnect hook
+	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
 	FBehavior::StaticStartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
 	if (players[playernum].mo != NULL)

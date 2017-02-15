@@ -63,6 +63,7 @@
 #include "r_renderer.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 static TStaticArray<sector_t>	loadsectors;
 static TStaticArray<line_t>		loadlines;
@@ -968,6 +969,8 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
 
+	// [ZZ] serialize events
+	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, !hubload);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
 	arc("subsectors", subsectors);

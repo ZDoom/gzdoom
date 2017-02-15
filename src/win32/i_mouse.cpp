@@ -18,6 +18,7 @@
 #include "win32iface.h"
 #include "rawinput.h"
 #include "menu/menu.h"
+#include "events.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -281,6 +282,9 @@ void I_CheckNativeMouse(bool preferNative)
 				(!CaptureMode_InGame() || GUICapture ||	paused || demoplayback));
 		}
 	}
+
+	if (!want_native && E_CheckRequireMouse())
+		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
 

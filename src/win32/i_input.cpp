@@ -101,6 +101,7 @@
 #include "d_event.h"
 #include "v_text.h"
 #include "version.h"
+#include "events.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"
@@ -186,6 +187,10 @@ static void I_CheckGUICapture ()
 	{
 		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
+
+	// [ZZ] check active event handlers that want the UI processing
+	if (!wantCapt && E_CheckUiProcessors())
+		wantCapt = true;
 
 	if (wantCapt != GUICapture)
 	{

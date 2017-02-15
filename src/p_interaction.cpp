@@ -60,6 +60,7 @@
 #include "a_morph.h"
 #include "virtual.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -384,6 +385,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		target = source;
 	}
 
+	// [ZZ] Fire WorldThingDied script hook.
+	E_WorldThingDied(this, inflictor);
+
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
 	{
@@ -605,6 +609,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		// [RH] Death messages
 		ClientObituary (this, inflictor, source, dmgflags);
+
+		// [ZZ] fire player death hook
+		E_PlayerDied(player - players);
 
 		// Death script execution, care of Skull Tag
 		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
@@ -1593,7 +1600,12 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_NAME(mod);
 	PARAM_INT_DEF(flags);
 	PARAM_FLOAT_DEF(angle);
-	ACTION_RETURN_INT(DamageMobj(self, inflictor, source, damage, mod, flags, angle));
+
+	// [ZZ] event handlers need the result.
+	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle);
+	if (!realdamage) ACTION_RETURN_INT(0);
+	E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	ACTION_RETURN_INT(realdamage);
 }
 
 int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
@@ -1607,7 +1619,14 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 		GlobalVMStack.Call(func, params, 7, &ret, 1, nullptr);
 		return retval;
 	}
-	else return DamageMobj(target, inflictor, source, damage, mod, flags, angle);
+	else
+	{
+		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle);
+		if (!realdamage) return 0;
+		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
+		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		return realdamage;
+	}
 }
 
 

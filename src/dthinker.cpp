@@ -309,6 +309,7 @@ DEFINE_ACTION_FUNCTION(DThinker, PostBeginPlay)
 
 void DThinker::CallPostBeginPlay()
 {
+	ObjectFlags |= OF_Spawned;
 	IFVIRTUAL(DThinker, PostBeginPlay)
 	{
 		// Without the type cast this picks the 'void *' assignment...

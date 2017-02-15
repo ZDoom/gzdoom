@@ -85,6 +85,7 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "virtual.h"
+#include "events.h"
 
 #include "gi.h"
 
@@ -406,6 +407,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	// did we have any level before?
+	if (level.info != nullptr)
+		E_WorldUnloadedUnsafe();
+
 	if (!savegamerestore)
 	{
 		G_ClearHubInfo();
@@ -655,6 +660,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	// [RH] Give scripts a chance to do something
 	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	// [ZZ] safe world unload
+	E_WorldUnloaded();
+	// [ZZ] unsafe world unload (changemap != map)
+	E_WorldUnloadedUnsafe();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel);
@@ -1012,6 +1021,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.maptime = 0;
+
 	P_SetupLevel (level.MapName, position);
 
 	AM_LevelInit();
@@ -1053,6 +1063,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.starttime = gametic;
+
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
 	// For each player, if they are viewing through a player, make sure it is themselves.
@@ -1064,6 +1075,10 @@ void G_DoLoadLevel (int position, bool autosave)
 		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
+	//      unsafe world load
+	E_WorldLoadedUnsafe();
+	//      regular world load (savegames are handled internally)
+	E_WorldLoaded();
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
@@ -1241,6 +1256,10 @@ void G_FinishTravel ()
 	FPlayerStart *start;
 	int pnum;
 
+	// 
+	APlayerPawn* pawns[MAXPLAYERS];
+	int pawnsnum = 0;
+
 	next = it.Next ();
 	while ( (pawn = next) != NULL)
 	{
@@ -1332,12 +1351,23 @@ void G_FinishTravel ()
 		{
 			pawn->Speed = pawn->GetDefault()->Speed;
 		}
-		if (level.FromSnapshot)
-		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);
+		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
+		pawns[pawnsnum++] = pawn;
+	}
 
-			// [Nash] run REOPEN scripts upon map re-entry
-			FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+	// [ZZ] fire the reopen hook.
+	//      if level is loaded from snapshot, and we don't have savegamerestore, this means we returned from a hub.
+	if (level.FromSnapshot)
+	{
+		// [Nash] run REOPEN scripts upon map re-entry
+		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+
+		for (int i = 0; i < pawnsnum; i++)
+		{
+			// [ZZ] fire the enter hook.
+			E_PlayerEntered(pawns[i]->player - players, true);
+			//
+			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
 		}
 	}
 

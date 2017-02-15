@@ -71,6 +71,7 @@
 #include "virtual.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
+#include "events.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -4973,6 +4974,12 @@ void AActor::PostBeginPlay ()
 	flags7 |= MF7_HANDLENODELAY;
 }
 
+void AActor::CallPostBeginPlay()
+{
+	Super::CallPostBeginPlay();
+	E_WorldThingSpawned(this);
+}
+
 void AActor::MarkPrecacheSounds() const
 {
 	SeeSound.MarkUsed();
@@ -5104,6 +5111,12 @@ void AActor::CallDeactivate(AActor *activator)
 
 void AActor::OnDestroy ()
 {
+	// [ZZ] call destroy event hook.
+	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
+	//      but you can't really do that without utterly breaking the game, so it's ok.
+	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
+	E_WorldThingDestroyed(this);
+
 	ClearRenderSectorList();
 	ClearRenderLineList();
 
@@ -5416,6 +5429,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
+			// [ZZ] fire non-hub ENTER event
+			//      level.time is a hack to make sure that we don't call it on dummy player initialization during hub return.
+			if (!level.time) E_PlayerEntered(p - players, false);
 			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)
@@ -7462,6 +7478,9 @@ void AActor::Revive()
 	{
 		level.total_monsters++;
 	}
+
+	// [ZZ] resurrect hook
+	E_WorldThingRevived(this);
 }
 
 int AActor::GetGibHealth() const

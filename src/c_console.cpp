@@ -69,6 +69,8 @@
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 
+FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
+
 #include "gi.h"
 
 #define LEFTMARGIN 8

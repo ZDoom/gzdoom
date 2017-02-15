@@ -39,6 +39,7 @@
 #include "d_event.h"
 #include "g_level.h"
 #include "gstrings.h"
+#include "events.h"
 
 #include "i_system.h"
 #include "m_argv.h"

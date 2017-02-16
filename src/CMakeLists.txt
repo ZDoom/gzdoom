@@ -103,8 +103,6 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for Randy.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
 		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )

@@ -476,7 +476,7 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
 	PARAM_STRING(cmd);
-	int k1, k2, c;
+	int k1, k2;
 	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
 	if (numret > 0) ret[0].SetInt(k1);
 	if (numret > 1) ret[1].SetInt(k2);

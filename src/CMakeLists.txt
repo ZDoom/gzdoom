@@ -107,55 +107,62 @@ if( WIN32 )
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	
-	find_path( D3D_INCLUDE_DIR d3d9.h
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Include )
-	if( NOT D3D_INCLUDE_DIR )
-		# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
-		# CMake cannot find this file via find_path, so we check for it using
-		# CHECK_INCLUDE_FILE.
-		CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
-		if ( NOT D3D9_H_FOUND )
-			message( SEND_ERROR "Could not find DirectX 9 header files" )
-		endif()
-	else()
-		include_directories( ${D3D_INCLUDE_DIR} )
-	endif()
-	
-	find_path( XINPUT_INCLUDE_DIR xinput.h
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Include )
-	if( NOT XINPUT_INCLUDE_DIR )
-		# Modern versions of the Windows SDK include xinput.h. Unfortunately,
-		# CMake cannot find this file via find_path, so we check for it using
-		# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
-		CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
-		if( NOT XINPUT_H_FOUND )
-			message( WARNING "Could not find xinput.h. XInput will be disabled." )
-			add_definitions( -DNO_XINPUT )
-		endif()
-	else()
-		include_directories( ${XINPUT_INCLUDE_DIR} )
-	endif()
-
-	find_library( DX_dinput8_LIBRARY dinput8
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
-	find_library( DX_dxguid_LIBRARY dxguid
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
-
-	# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
-	# CMake cannot find these libraries via find_library.
-	if( NOT DX_dinput8_LIBRARY )
-		# If we got this far, assume dinput8.lib is in the system library path.
+	if( ( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" ) OR	# For VS 2015.
+		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v150_xp" ) )		# For VS 2017.
+		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
-	endif()
+	else()
+		
+		find_path( D3D_INCLUDE_DIR d3d9.h
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Include )
+		if( NOT D3D_INCLUDE_DIR )
+			# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
+			# CMake cannot find this file via find_path, so we check for it using
+			# CHECK_INCLUDE_FILE.
+			CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
+			if ( NOT D3D9_H_FOUND )
+				message( SEND_ERROR "Could not find DirectX 9 header files" )
+			endif()
+		else()
+			include_directories( ${D3D_INCLUDE_DIR} )
+		endif()
+		
+		find_path( XINPUT_INCLUDE_DIR xinput.h
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Include )
+		if( NOT XINPUT_INCLUDE_DIR )
+			# Modern versions of the Windows SDK include xinput.h. Unfortunately,
+			# CMake cannot find this file via find_path, so we check for it using
+			# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
+			CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
+			if( NOT XINPUT_H_FOUND )
+				message( WARNING "Could not find xinput.h. XInput will be disabled." )
+				add_definitions( -DNO_XINPUT )
+			endif()
+		else()
+			include_directories( ${XINPUT_INCLUDE_DIR} )
+		endif()
 
-	# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-	# were moved to dinput8.lib.
-	if( NOT DX_dxguid_LIBRARY )
-		message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+		find_library( DX_dinput8_LIBRARY dinput8
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
+		find_library( DX_dxguid_LIBRARY dxguid
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
+
+		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
+		# CMake cannot find these libraries via find_library.
+		if( NOT DX_dinput8_LIBRARY )
+			# If we got this far, assume dinput8.lib is in the system library path.
+			set( DX_dinput8_LIBRARY dinput8 )
+		endif()
+
+		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+		# were moved to dinput8.lib.
+		if( NOT DX_dxguid_LIBRARY )
+			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+		endif()
 	endif()
 
 	set( ZDOOM_LIBS

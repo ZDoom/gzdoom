@@ -297,7 +297,13 @@ FUNC(LS_Door_Animated)
 	if (arg3 != 0 && !P_CheckKeys (it, arg3, arg0 != 0))
 		return false;
 
-	return EV_SlidingDoor (ln, it, arg0, arg1, arg2);
+	return EV_SlidingDoor (ln, it, arg0, arg1, arg2, DAnimatedDoor::adOpenClose);
+}
+
+FUNC(LS_Door_AnimatedClose)
+// Door_AnimatedClose (tag, speed)
+{
+	return EV_SlidingDoor(ln, it, arg0, arg1, -1, DAnimatedDoor::adClose);
 }
 
 FUNC(LS_Generic_Door)
@@ -3594,6 +3600,7 @@ static lnSpecFunc LineSpecials[] =
 	/* 271 */ LS_Stairs_BuildUpDoomSync,
 	/* 272 */ LS_Stairs_BuildDownDoomSync,
 	/* 273 */ LS_Stairs_BuildUpDoomCrush,
+	/* 274 */ LS_Door_AnimatedClose,
 
 };
 

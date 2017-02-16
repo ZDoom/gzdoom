@@ -539,7 +539,7 @@ void DAnimatedDoor::Serialize(FSerializer &arc)
 		("dooranim", m_DoorAnim)
 		("setblock1", m_SetBlocking1)
 		("setblock2", m_SetBlocking2)
-		("tyoe", m_Type);
+		("type", m_Type);
 }
 
 //============================================================================

@@ -950,9 +950,9 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
-	DefaultListMenuClass = DefaultListMenuSettings->GetClass();
+	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
-	DefaultOptionMenuClass = DefaultOptionMenuSettings->GetClass();
+	DefaultOptionMenuClass = DefaultOptionMenuSettings->mClass;
 	DefaultOptionMenuSettings = nullptr;
 }
 

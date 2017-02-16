@@ -599,10 +599,9 @@ void ZCCCompiler::CreateClassTypes()
 					}
 				}
 				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
-				if (c->cls->Flags & ZCC_Abstract)
-				{
+				// [ZZ] if parent class is abstract, this one should be abstract as well - otherwise we can subclass Actor and be able to new() our subclass
+				if ((c->cls->Flags & ZCC_Abstract) || (parent && parent->ObjectFlags & OF_Abstract))
 					c->Type()->ObjectFlags |= OF_Abstract;
-				}
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);

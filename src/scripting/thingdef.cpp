@@ -194,7 +194,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
 		}
-		else if (funcsym->Variants[0].Flags & VARF_Private && symtable != &funccls->Symbols)
+		else if ((funcsym->Variants[0].Flags & VARF_Private) && symtable != &funccls->Symbols)
 		{
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());

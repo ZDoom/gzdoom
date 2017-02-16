@@ -36,7 +36,8 @@ enum
 	ZCC_Virtual			= 1 << 13,
 	ZCC_Override		= 1 << 14,
 	ZCC_Transient		= 1 << 15,
-	ZCC_VarArg			= 1 << 16
+	ZCC_VarArg			= 1 << 16,
+	ZCC_NoNew			= 1 << 17,
 };
 
 // Function parameter modifiers

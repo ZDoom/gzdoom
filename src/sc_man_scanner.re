@@ -170,6 +170,7 @@ std2:
 		'virtual'					{ RET(TK_Virtual); }
 		'override'					{ RET(TK_Override); }
 		'vararg'					{ RET(TK_VarArg); }
+		'nonew'						{ RET(TK_NoNew); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

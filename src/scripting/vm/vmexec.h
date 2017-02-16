@@ -788,7 +788,19 @@ begin:
 		b = B;
 		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
 		PFunction *callingfunc = (PFunction*)konsta[C].o; // [ZZ] due to how this is set, it's always const
-		if ((cls->ObjectFlags & OF_Abstract) && (!callingfunc || callingfunc->OwningClass != cls)) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s outside of that class", cls->TypeName.GetChars());
+		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		if (cls->ObjectFlags & OF_NoNew)
+		{
+			// trace to the first nonew class in the hierarchy.
+			// compare that class to the context class.
+			// if not matching, disallow creation.
+			// this ensures that only the root class can have a static factory method that can also create instances of subclasses via new().
+			PClass* pcls = cls;
+			while (pcls && pcls->ParentClass && (pcls->ParentClass->ObjectFlags & OF_NoNew))
+				pcls = pcls->ParentClass;
+			if (!callingfunc || pcls != callingfunc->OwningClass)
+				ThrowAbortException(X_OTHER, "Cannot instantiate class %s directly", cls->TypeName.GetChars());
+		}
 		reg.a[a] = cls->CreateNew();
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;

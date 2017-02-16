@@ -5058,11 +5058,24 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 	if (val->isConstant())
 	{
 		auto cls = static_cast<PClass *>(static_cast<FxConstant*>(val)->GetValue().GetPointer());
-		if ((cls->ObjectFlags & OF_Abstract) && cls != ctx.Class)
+		if (cls->ObjectFlags & OF_Abstract)
 		{
-			ScriptPosition.Message(MSG_ERROR, "Cannot instantiate abstract class %s outside of that class", cls->TypeName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 			delete this;
 			return nullptr;
+		}
+
+		if (cls->ObjectFlags & OF_NoNew)
+		{
+			PClass* pcls = cls;
+			while (pcls && pcls->ParentClass && (pcls->ParentClass->ObjectFlags & OF_NoNew))
+				pcls = pcls->ParentClass;
+			if (pcls != ctx.Class)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Cannot instantiate class %s directly", cls->TypeName.GetChars());
+				delete this;
+				return nullptr;
+			}
 		}
 
 		ValueType = NewPointer(cls);

@@ -3717,3 +3717,27 @@ int P_ExecuteSpecial(int			num,
 	}
 	return 0;
 }
+
+//==========================================================================
+//
+// Execute a line special / script
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION(FLevelLocals, ExecuteSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(special);
+	PARAM_OBJECT(activator, AActor);
+	PARAM_POINTER(linedef, line_t);
+	PARAM_BOOL(lineside);
+	PARAM_INT_DEF(arg1);
+	PARAM_INT_DEF(arg2);
+	PARAM_INT_DEF(arg3);
+	PARAM_INT_DEF(arg4);
+	PARAM_INT_DEF(arg5);
+
+	bool res = !!P_ExecuteSpecial(special, linedef, activator, lineside, arg1, arg2, arg3, arg4, arg5);
+
+	ACTION_RETURN_BOOL(res);
+}
+

@@ -787,7 +787,8 @@ begin:
 	{
 		b = B;
 		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
-		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		PClass *callingcls = (PClass*)konsta[C].o; // [ZZ] due to how this is set, it's always const
+		if ((cls->ObjectFlags & OF_Abstract) && callingcls != cls) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s outside of that class", cls->TypeName.GetChars());
 		reg.a[a] = cls->CreateNew();
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;

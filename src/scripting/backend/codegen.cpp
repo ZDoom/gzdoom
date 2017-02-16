@@ -5023,6 +5023,7 @@ FxNew::FxNew(FxExpression *v)
 {
 	val = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), v, false);
 	ValueType = NewPointer(RUNTIME_CLASS(DObject));
+	CallingClass = nullptr;
 }
 
 //==========================================================================
@@ -5047,6 +5048,7 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(val, ctx);
 
+	CallingClass = (PClass*)ctx.Class;
 	if (!val->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Class type expected");
@@ -5058,6 +5060,7 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 		auto cls = static_cast<PClass *>(static_cast<FxConstant*>(val)->GetValue().GetPointer());
 		ValueType = NewPointer(cls);
 	}
+
 	return this;
 }
 
@@ -5072,7 +5075,7 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	ExpEmit from = val->Emit(build);
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum);
+	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum, build->GetConstantAddress(CallingClass, ATAG_OBJECT));
 	return to;
 }
 
@@ -7527,8 +7530,18 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		break;
 
 	case NAME_New:
-		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
+		if (CheckArgSize(MethodName, ArgList, 0, 1, ScriptPosition))
 		{
+			// [ZZ] allow implicit new() call to mean "create current class instance"
+			if (!ArgList.Size() && !ctx.Class->IsKindOf(RUNTIME_CLASS(PClass)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Cannot use implicit new() in a struct");
+				delete this;
+				return nullptr;
+			}
+			else if (!ArgList.Size())
+				ArgList.Push(new FxConstant((PClass*)ctx.Class, NewClassPointer((PClass*)ctx.Class), ScriptPosition));
+
 			func = new FxNew(ArgList[0]);
 			ArgList[0] = nullptr;
 		}

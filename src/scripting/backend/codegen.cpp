@@ -5023,7 +5023,7 @@ FxNew::FxNew(FxExpression *v)
 {
 	val = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), v, false);
 	ValueType = NewPointer(RUNTIME_CLASS(DObject));
-	CallingClass = nullptr;
+	CallingFunction = nullptr;
 }
 
 //==========================================================================
@@ -5048,7 +5048,7 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(val, ctx);
 
-	CallingClass = (PClass*)ctx.Class;
+	CallingFunction = ctx.Function;
 	if (!val->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Class type expected");
@@ -5075,7 +5075,7 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	ExpEmit from = val->Emit(build);
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum, build->GetConstantAddress(CallingClass, ATAG_OBJECT));
+	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum, build->GetConstantAddress(CallingFunction, ATAG_OBJECT));
 	return to;
 }
 

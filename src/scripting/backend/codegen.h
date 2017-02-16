@@ -1208,7 +1208,7 @@ private:
 class FxNew : public FxExpression
 {
 	FxExpression *val;
-	PClass *CallingClass;
+	PFunction *CallingFunction;
 
 public:
 

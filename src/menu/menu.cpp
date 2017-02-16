@@ -94,6 +94,8 @@ float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
 
 void M_InitVideoModes();
+extern PClass *DefaultListMenuClass;
+extern PClass *DefaultOptionMenuClass;
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -623,7 +625,9 @@ void M_SetMenu(FName menu, int param)
 			}
 			else
 			{
-				const PClass *cls = ld->mClass == nullptr? RUNTIME_CLASS(DListMenu) : ld->mClass;
+				PClass *cls = ld->mClass;
+				if (cls == nullptr) cls = DefaultListMenuClass;
+				if (cls == nullptr) cls = PClass::FindClass("ListMenu");
 
 				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
 				newmenu->Init(DMenu::CurrentMenu, ld);
@@ -633,7 +637,9 @@ void M_SetMenu(FName menu, int param)
 		else if ((*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 		{
 			DOptionMenuDescriptor *ld = static_cast<DOptionMenuDescriptor*>(*desc);
-			const PClass *cls = ld->mClass == nullptr? PClass::FindClass("OptionMenu") : ld->mClass;
+			PClass *cls = ld->mClass;
+			if (cls == nullptr) cls = DefaultOptionMenuClass;
+			if (cls == nullptr) cls = PClass::FindClass("OptionMenu");
 
 			DMenu *newmenu = (DMenu*)cls->CreateNew();
 			IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)

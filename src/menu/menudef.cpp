@@ -62,6 +62,8 @@ static DOptionMenuDescriptor *DefaultOptionMenuSettings;	// contains common sett
 FOptionMenuSettings OptionSettings;
 FOptionMap OptionValues;
 bool mustPrintErrors;
+PClass *DefaultListMenuClass;
+PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
 
@@ -948,7 +950,9 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
+	DefaultListMenuClass = DefaultListMenuSettings->GetClass();
 	DefaultListMenuSettings = nullptr;
+	DefaultOptionMenuClass = DefaultOptionMenuSettings->GetClass();
 	DefaultOptionMenuSettings = nullptr;
 }
 

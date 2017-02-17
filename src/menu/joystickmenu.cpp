@@ -138,9 +138,13 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, GetNumAxes)
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickOptions);
+	DMenuDescriptor **ddesc = MenuDescriptors.CheckKey("JoystickOptionsDefaults");
+	if (ddesc == nullptr) return;	// without any data the menu cannot be set up and must remain empty.
 	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
 		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
+		DOptionMenuDescriptor *dopt = (DOptionMenuDescriptor *)*ddesc;
+		if (dopt == nullptr) return;
 		DMenuItemBase *it;
 
 		int i;
@@ -162,11 +166,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				}
 			}
 		}
-#ifdef _WIN32
-		opt->mItems.Resize(8);
-#else
-		opt->mItems.Resize(5);
-#endif
+		opt->mItems = dopt->mItems;
 
 		it = opt->GetItem("ConfigureMessage");
 		if (it != nullptr) it->SetValue(0, !!Joysticks.Size());

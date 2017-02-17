@@ -1942,13 +1942,13 @@ static int PatchMisc (int dummy)
 	if (armor!=NULL)
 	{
 		armor->IntVar(NAME_SaveAmount) = 100 * deh.GreenAC;
-		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 0.33335 : 0.5;
+		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 33.335 : 50;
 	}
 	armor = GetDefaultByName ("BlueArmor");
 	if (armor!=NULL)
 	{
 		armor->IntVar(NAME_SaveAmount) = 100 * deh.BlueAC;
-		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 0.33335 : 0.5;
+		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 33.335 : 50;
 	}
 
 	auto barmor = GetDefaultByName ("ArmorBonus");

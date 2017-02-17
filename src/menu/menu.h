@@ -112,7 +112,7 @@ class DMenuDescriptor : public DObject
 public:
 	FName mMenuName;
 	FString mNetgameMessage;
-	const PClass *mClass;
+	PClass *mClass = nullptr;
 
 	virtual size_t PropagateMark() { return 0;  }
 };

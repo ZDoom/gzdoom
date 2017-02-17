@@ -62,6 +62,8 @@ static DOptionMenuDescriptor *DefaultOptionMenuSettings;	// contains common sett
 FOptionMenuSettings OptionSettings;
 FOptionMap OptionValues;
 bool mustPrintErrors;
+PClass *DefaultListMenuClass;
+PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
 
@@ -291,7 +293,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		else if (sc.Compare("Class"))
 		{
 			sc.MustGetString();
-			const PClass *cls = PClass::FindClass(sc.String);
+			PClass *cls = PClass::FindClass(sc.String);
 			if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(DListMenu)))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
@@ -699,7 +701,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 		else if (sc.Compare("Class"))
 		{
 			sc.MustGetString();
-			const PClass *cls = PClass::FindClass(sc.String);
+			PClass *cls = PClass::FindClass(sc.String);
 			if (cls == nullptr || !cls->IsDescendantOf("OptionMenu"))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
@@ -948,7 +950,9 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
+	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
+	DefaultOptionMenuClass = DefaultOptionMenuSettings->mClass;
 	DefaultOptionMenuSettings = nullptr;
 }
 

@@ -7662,7 +7662,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (ctx.Class == nullptr)
 	{
 		// There's no way that a member function call can resolve to a constant so abort right away.
-		ScriptPosition.Message(MSG_ERROR, "Expression is not constant.");
+		ScriptPosition.Message(MSG_ERROR, "Expression is not constant");
 		delete this;
 		return nullptr;
 	}
@@ -7671,7 +7671,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		if (a == nullptr)
 		{
-			ScriptPosition.Message(MSG_ERROR, "Empty function argument.");
+			ScriptPosition.Message(MSG_ERROR, "Empty function argument");
 			delete this;
 			return nullptr;
 		}
@@ -7762,7 +7762,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		{
 			if (ArgList.Size() > 0)
 			{
-				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
 				delete this;
 				return nullptr;
 			}
@@ -7806,7 +7806,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		{
 			if (ArgList.Size() > 0)
 			{
-				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
 				delete this;
 				return nullptr;
 			}
@@ -7900,7 +7900,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		{
 			if (ArgList.Size() > 0)
 			{
-				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
 				delete this;
 				return nullptr;
 			}
@@ -7960,7 +7960,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				if (ArgList.Size() > 0)
 				{
-					ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+					ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
 					delete this;
 					return nullptr;
 				}
@@ -7973,7 +7973,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			ScriptPosition.Message(MSG_ERROR, "Left hand side of %s must point to a class object\n", MethodName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "Left hand side of %s must point to a class object", MethodName.GetChars());
 			delete this;
 			return nullptr;
 		}
@@ -7989,7 +7989,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s\n", MethodName.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s", MethodName.GetChars());
 		delete this;
 		return nullptr;
 	}
@@ -8007,7 +8007,7 @@ isresolved:
 
 	if (afd == nullptr)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Unknown function %s\n", MethodName.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "Unknown function %s", MethodName.GetChars());
 		delete this;
 		return nullptr;
 	}
@@ -8016,9 +8016,29 @@ isresolved:
 	{
 		// Cannot be made writable so we cannot use its methods.
 		// [ZZ] Why this esoteric message?
-		ScriptPosition.Message(MSG_ERROR, "Readonly struct on left hand side of %s not allowed\n", MethodName.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "Readonly struct on left hand side of %s not allowed", MethodName.GetChars());
 		delete this;
 		return nullptr;
+	}
+
+	// [ZZ] if self is a struct or a class member, check if it's valid to call this function at all.
+	//		implement more magic
+	if (Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StructMember)
+	{
+		FxStructMember* pmember = (FxStructMember*)Self;
+		int outerflags = 0;
+		if (ctx.Function)
+			outerflags = ctx.Function->Variants[0].Flags;
+		int innerflags = afd->Variants[0].Flags;
+		if (FScopeBarrier::SideFromFlags(innerflags) == FScopeBarrier::Side_PlainData)
+			innerflags = FScopeBarrier::ChangeSideInFlags(innerflags, pmember->BarrierSide);
+		FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
+		if (!scopeBarrier.callable)
+		{
+			ScriptPosition.Message(MSG_ERROR, "%s", scopeBarrier.callerror.GetChars());
+			delete this;
+			return nullptr;
+		}
 	}
 
 	if (staticonly && (afd->Variants[0].Flags & VARF_Method))
@@ -8029,14 +8049,14 @@ isresolved:
 			auto ccls = dyn_cast<PClass>(cls);
 			if (clstype == nullptr || ccls == nullptr || !clstype->IsDescendantOf(ccls))
 			{
-				ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here\n", cls->TypeName.GetChars(), MethodName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here", cls->TypeName.GetChars(), MethodName.GetChars());
 				delete this;
 				return nullptr;
 			}
 			else
 			{
 				// Todo: If this is a qualified call to a parent class function, let it through (but this needs to disable virtual calls later.)
-				ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class %s::%s is not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class %s::%s is not yet implemented", cls->TypeName.GetChars(), MethodName.GetChars());
 				delete this;
 				return nullptr;
 			}
@@ -8064,7 +8084,7 @@ isresolved:
 			// Functions with no Actor usage may not be called through a pointer because they will lose their context.
 			if (!(afd->Variants[0].UseFlags & SUF_ACTOR))
 			{
-				ScriptPosition.Message(MSG_ERROR, "Function %s cannot be used with a non-self object\n", afd->SymbolName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Function %s cannot be used with a non-self object", afd->SymbolName.GetChars());
 				delete this;
 				return nullptr;
 			}

@@ -132,6 +132,14 @@ struct FScopeBarrier
 		}
 	}
 
+	// this modifies VARF_ flags and sets the side properly.
+	static int ChangeSideInFlags(int flags, int side)
+	{
+		flags &= ~(VARF_UI | VARF_Play);
+		flags |= FlagsFromSide(side);
+		return flags;
+	}
+
 	FScopeBarrier()
 	{
 		sidefrom = -1;
@@ -203,7 +211,7 @@ struct FScopeBarrier
 		if (callable && (sidefrom != sideto) && !(flags2 & VARF_ReadOnly)) // readonly on methods is used for plain data stuff that can be called from ui/play context.
 		{
 			callable = false;
-			callerror.Format("Can't call %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			callerror.Format("Can't call %s function %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
 		}
 	}
 };

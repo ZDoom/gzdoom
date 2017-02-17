@@ -2128,6 +2128,13 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_ClearScope)
 			varflags = (varflags&~(VARF_Play | VARF_UI));
 
+		// [ZZ] supporting const self for actors is quite a cumbersome task because there's no concept of a const pointer (?)
+		//      either way, it doesn't make sense, because you can call any method on a readonly class instance.
+		if ((f->Flags & ZCC_FuncConst) && !(c->Type()->IsKindOf(RUNTIME_CLASS(PStruct))))
+		{
+			Error(f, "'Const' on a method can only be used in structs");
+		}
+
 		if ((f->Flags & ZCC_VarArg) && !(f->Flags & ZCC_Native))
 		{
 			Error(f, "'VarArg' can only be used with native methods");
@@ -2172,6 +2179,12 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			varflags |= VARF_Method;
 		}
 		if (varflags & VARF_Override) varflags |= VARF_Virtual;	// Now that the flags are checked, make all override functions virtual as well.
+
+		// [ZZ] this doesn't make sense either.
+		if ((varflags&(VARF_ReadOnly | VARF_Method)) == VARF_ReadOnly) // non-method const function
+		{
+			Error(f, "'Const' on a static method is not supported");
+		}
 
 		// you can't have a const function belonging to either ui or play.
 		// const is intended for plain data to signify that you can call a method on readonly variable.

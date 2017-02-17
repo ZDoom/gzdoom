@@ -625,10 +625,18 @@ void ZCCCompiler::CreateClassTypes()
 					Error(c->cls, "Class %s has incompatible flags", c->NodeName().GetChars());
 				}
 				
-				if (c->cls->Flags & ZCC_UIFlag || ((parent->ObjectFlags & OF_UI) && !(c->cls->Flags & ZCC_ClearScope)))
+				if (c->cls->Flags & ZCC_UIFlag)
 					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_Play) | OF_UI;
-				if (c->cls->Flags & ZCC_Play || ((parent->ObjectFlags & OF_Play) && !(c->cls->Flags & ZCC_ClearScope)))
+				if (c->cls->Flags & ZCC_Play)
 					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
+				if (parent->ObjectFlags & (OF_UI | OF_Play)) // parent is either ui or play
+				{
+					if (c->cls->Flags & (ZCC_UIFlag | ZCC_Play))
+					{
+						Error(c->cls, "Can't change class scope in class %s", c->NodeName().GetChars());
+					}
+					c->Type()->ObjectFlags = (c->Type()->ObjectFlags & ~(OF_UI | OF_Play)) | (parent->ObjectFlags & (OF_UI | OF_Play));
+				}
 
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());

@@ -6709,8 +6709,14 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		return false;
 	}
 	AddressRequested = true;
-	if (writable != nullptr) *writable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
-											(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
+	if (writable != nullptr)
+	{
+		*writable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
+			(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
+		// [ZZ] self in a const function is not writable.
+		if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
+			*writable = false;
+	}
 	return true;
 }
 

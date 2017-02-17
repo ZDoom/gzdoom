@@ -2415,7 +2415,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
 						}
 						// you can't change const qualifier for a virtual method
-						if (oldfunc->FuncConst != (varflags & VARF_ReadOnly))
+						if (oldfunc->FuncConst != sym->Variants[0].Implementation->FuncConst)
 						{
 							Error(f, "Attempt to change const qualifier for virtual function %s", FName(f->Name).GetChars());
 						}

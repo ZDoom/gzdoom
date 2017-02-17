@@ -91,7 +91,6 @@ public:
 	void Init(DMenu *parent, DListMenuDescriptor *desc);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
 };
 
 IMPLEMENT_CLASS(DPlayerMenu, false, false)
@@ -278,30 +277,18 @@ void DPlayerMenu::UpdateTranslation()
 
 void DPlayerMenu::PickPlayerClass()
 {
+	int pclass = 0;
+	// [GRB] Pick a class from player class list
+	if (PlayerClasses.Size () > 1)
+	{
+		pclass = players[consoleplayer].userinfo.GetPlayerClassNum();
 
-	/*
-	// What's the point of this? Aren't we supposed to edit the
-	// userinfo?
-	if (players[consoleplayer].mo != NULL)
-	{
-		PlayerClassIndex = players[consoleplayer].CurrentPlayerClass;
-	}
-	else
-	*/
-	{
-		int pclass = 0;
-		// [GRB] Pick a class from player class list
-		if (PlayerClasses.Size () > 1)
+		if (pclass < 0)
 		{
-			pclass = players[consoleplayer].userinfo.GetPlayerClassNum();
-
-			if (pclass < 0)
-			{
-				pclass = (MenuTime>>7) % PlayerClasses.Size ();
-			}
+			pclass = (MenuTime>>7) % PlayerClasses.Size ();
 		}
-		PlayerClassIndex = pclass;
 	}
+	PlayerClassIndex = pclass;
 	PlayerClass = &PlayerClasses[PlayerClassIndex];
 	UpdateTranslation();
 }
@@ -314,13 +301,24 @@ void DPlayerMenu::PickPlayerClass()
 
 void DPlayerMenu::SendNewColor (int red, int green, int blue)
 {
-	char command[24];
-
 	players[consoleplayer].userinfo.ColorChanged(MAKERGB(red,green,blue));
-	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
-	C_DoCommand (command);
 	UpdateTranslation();
 }
+
+DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(r);
+	PARAM_INT(g);
+	PARAM_INT(b);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
+	{
+		players[consoleplayer].userinfo.ColorChanged(MAKERGB(r, g, b));
+	}
+	return 0;
+}
+
 
 //=============================================================================
 //
@@ -456,10 +454,7 @@ void DPlayerMenu::ColorSetChanged (DMenuItemBase *li)
 		if (green != NULL) green->Enable(mycolorset == -1);
 		if (blue != NULL) blue->Enable(mycolorset == -1);
 
-		char command[24];
 		players[consoleplayer].userinfo.ColorSetChanged(mycolorset);
-		mysnprintf(command, countof(command), "colorset %d", mycolorset);
-		C_DoCommand(command);
 		UpdateTranslation();
 	}
 }
@@ -545,6 +540,17 @@ void DPlayerMenu::AutoaimChanged (DMenuItemBase *li)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DPlayerMenu, AutoaimChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_FLOAT(val);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
+	{
+		autoaim = float(val);
+	}
+	return 0;
+}
 //=============================================================================
 //
 //
@@ -648,49 +654,5 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 	return Super::MenuEvent(mkey, fromcontroller);
 }
 
-
-bool DPlayerMenu::MouseEvent(int type, int x, int y)
-{
-	int v;
-	DMenuItemBase *li = mFocusControl;
-	bool res = Super::MouseEvent(type, x, y);
-	if (li == NULL) li = mFocusControl;
-	if (li != NULL)
-	{
-		// Check if the colors have changed
-		FName current = li->GetAction(NULL);
-		switch(current)
-		{
-		case NAME_Red:
-			if (li->GetValue(0, &v))
-			{
-				uint32 color = players[consoleplayer].userinfo.GetColor();
-				SendNewColor (v, GPART(color), BPART(color));
-			}
-			break;
-
-		case NAME_Green:
-			if (li->GetValue(0, &v))
-			{
-				uint32 color = players[consoleplayer].userinfo.GetColor();
-				SendNewColor (RPART(color), v, BPART(color));
-			}
-			break;
-
-		case NAME_Blue:
-			if (li->GetValue(0, &v))
-			{
-				uint32 color = players[consoleplayer].userinfo.GetColor();
-				SendNewColor (RPART(color), GPART(color), v);
-			}
-			break;
-		case NAME_Autoaim:
-			AutoaimChanged(li);
-			break;
-		}
-	}
-	return res;
-}
-
-
 DEFINE_FIELD(DPlayerMenu, mRotation)
+DEFINE_FIELD_NAMED(DPlayerMenu, PlayerClass, mPlayerClass)

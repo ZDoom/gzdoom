@@ -136,6 +136,8 @@ class PlayerPawn : Actor native
 	native int GetMaxHealth();
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
+	native static String GetPrintableDisplayName(Class<Actor> cls);
+
 }
 
 class PlayerChunk : PlayerPawn
@@ -308,6 +310,7 @@ userinfo_t	userinfo;
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
 	native String GetUserName();
+	native Color GetColor();
 	native bool GetNeverSwitch();
 	native void DropWeapon();
 	native void BringUpWeapon();

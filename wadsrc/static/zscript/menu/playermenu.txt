@@ -1,8 +1,74 @@
 
-
 class PlayerMenu : ListMenu native
 {
 	native int mRotation;
+	native PlayerClass mPlayerClass;
+	
+	protected native void AutoaimChanged(float val);
+	protected native void ColorChanged(int red, int green, int blue);
+	
+	protected void UpdateTranslation()
+	{
+		Translation.SetPlayerTranslation(TRANSLATION_Players, MAXPLAYERS, consoleplayer, mPlayerClass);
+	}
+	
+	protected void SendNewColor (int red, int green, int blue)
+	{
+		ColorChanged(red, green, blue);
+		UpdateTranslation();
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MouseEvent(int type, int x, int y)
+	{
+		let li = mFocusControl;
+		bool res = Super.MouseEvent(type, x, y);
+		if (li == NULL) li = mFocusControl;
+		if (li != NULL)
+		{
+			// Check if the colors have changed
+			Name ctrl = li.GetAction();
+			bool resv;
+			int v;
+			[resv, v]= li.GetValue(0);
+			switch(ctrl)
+			{
+			case 'Red':
+				if (resv)
+				{
+					Color colr = players[consoleplayer].GetColor();
+					SendNewColor (v, colr.g, colr.b);
+				}
+				break;
+
+			case 'Green':
+				if (resv)
+				{
+					Color colr = players[consoleplayer].GetColor();
+					SendNewColor (colr.r, v, colr.b);
+				}
+				break;
+
+			case 'Blue':
+				if (resv)
+				{
+					Color colr = players[consoleplayer].GetColor();
+					SendNewColor (colr.r, colr.g, v);
+				}
+				break;
+			case 'Autoaim':
+				AutoaimChanged(v);
+				break;
+			}
+		}
+		return res;
+	}
+
 	
 	//=============================================================================
 	//
@@ -12,9 +78,7 @@ class PlayerMenu : ListMenu native
 
 	override void Drawer ()
 	{
-
 		Super.Drawer();
-
 		String str = "PRESS " .. TEXTCOLOR_WHITE .. "SPACE";
 		screen.DrawText (SmallFont, Font.CR_GOLD, 320 - 32 - 32 - SmallFont.StringWidth (str)/2, 50 + 48 + 70, str, DTA_Clean, true);
 		str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";

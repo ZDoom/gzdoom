@@ -163,6 +163,13 @@ FString GetPrintableDisplayName(PClassActor *cls)
 	return cls->DisplayName;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, GetPrintableDisplayName)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->DisplayName);
+}
+
 bool ValidatePlayerClass(PClassActor *ti, const char *name)
 {
 	if (ti == NULL)
@@ -653,6 +660,13 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_BOOL(self->userinfo.GetNeverSwitch());
 }
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColor());
+}
+
 
 //===========================================================================
 //

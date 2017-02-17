@@ -2130,7 +2130,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 		// [ZZ] supporting const self for actors is quite a cumbersome task because there's no concept of a const pointer (?)
 		//      either way, it doesn't make sense, because you can call any method on a readonly class instance.
-		if ((f->Flags & ZCC_FuncConst) && !(c->Type()->IsKindOf(RUNTIME_CLASS(PStruct))))
+		if ((f->Flags & ZCC_FuncConst) && (c->Type()->IsKindOf(RUNTIME_CLASS(PClass))))
 		{
 			Error(f, "'Const' on a method can only be used in structs");
 		}

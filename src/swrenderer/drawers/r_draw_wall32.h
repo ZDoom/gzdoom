@@ -89,7 +89,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 outcolor = fgcolor;
+						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						dest[offset] = _mm_cvtsi128_si32(outcolor);
@@ -157,7 +157,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 outcolor = fgcolor;
+						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						dest[offset] = _mm_cvtsi128_si32(outcolor);
@@ -225,7 +225,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 outcolor = fgcolor;
+						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						dest[offset] = _mm_cvtsi128_si32(outcolor);
@@ -306,7 +306,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 outcolor = fgcolor;
+						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						dest[offset] = _mm_cvtsi128_si32(outcolor);
@@ -377,10 +377,10 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -452,10 +452,10 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -527,10 +527,10 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -615,10 +615,10 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -693,15 +693,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -783,15 +783,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -873,15 +873,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -976,15 +976,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1069,15 +1069,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1159,15 +1159,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1249,15 +1249,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1352,15 +1352,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1445,15 +1445,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1535,15 +1535,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1625,15 +1625,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
@@ -1728,15 +1728,15 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128 alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
+						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128 inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
-						__m128 bgalpha = _mm_mullo_epi16(destalpha, alpha);
+						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
 						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
 						
-						__m128 fgalpha = _mm_mullo_epi16(srcalpha, alpha);
+						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
 						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);

@@ -93,7 +93,7 @@ struct FScopeBarrier
 	int sidelast;
 
 	// Note: the same object can't be both UI and Play. This is checked explicitly in the field construction and will cause esoteric errors here if found.
-	int SideFromFlags(int flags)
+	static int SideFromFlags(int flags)
 	{
 		if (flags & VARF_UI)
 			return Side_UI;
@@ -102,8 +102,22 @@ struct FScopeBarrier
 		return Side_PlainData;
 	}
 
+	//
+	static int FlagsFromSide(int side)
+	{
+		switch (side)
+		{
+		case Side_Play:
+			return VARF_Play;
+		case Side_UI:
+			return VARF_UI;
+		default:
+			return 0;
+		}
+	}
+
 	// used for errors
-	const char* StringFromSide(int side)
+	static const char* StringFromSide(int side)
 	{
 		switch (side)
 		{
@@ -1451,6 +1465,7 @@ public:
 	PField *membervar;
 	bool AddressRequested = false;
 	bool AddressWritable = true;
+	int BarrierSide = -1; // [ZZ] some magic
 	FxMemberBase(EFxType type, PField *f, const FScriptPosition &p);
 };
 

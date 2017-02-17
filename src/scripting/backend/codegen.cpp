@@ -6706,11 +6706,28 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 	AddressRequested = true;
 	if (writable != nullptr)
 	{
-		*writable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
+		// [ZZ] original check.
+		bool bWritable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
 			(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
 		// [ZZ] self in a const function is not writable.
-		if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
-			*writable = false;
+		if (bWritable) // don't do complex checks on early fail
+		{
+			if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
+				bWritable = false;
+		}
+		// [ZZ] plain data "inherits" scope of whatever it was defined in.
+		if (bWritable) // don't do complex checks on early fail
+		{
+			if (ctx.Function && FString(ctx.Function->SymbolName) == FString("DrawPowerup"))
+				Printf("field type = %d\n", BarrierSide);
+			int outerflags = 0;
+			if (ctx.Function)
+				outerflags = ctx.Function->Variants[0].Flags;
+			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), membervar->SymbolName.GetChars());
+			if (!scopeBarrier.writable)
+				bWritable = false;
+		}
+		*writable = bWritable;
 	}
 	return true;
 }
@@ -6739,6 +6756,15 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		classx = nullptr;
 		delete this;
 		return x->Resolve(ctx);
+	}
+
+	// [ZZ] support magic
+	BarrierSide = FScopeBarrier::SideFromFlags(membervar->Flags);
+	if (classx->ExprType == EFX_StructMember || classx->ExprType == EFX_ClassMember)
+	{
+		FxStructMember* pmember = (FxStructMember*)classx;
+		if (BarrierSide == FScopeBarrier::Side_PlainData && pmember)
+			BarrierSide = pmember->BarrierSide;
 	}
 
 	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))

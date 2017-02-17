@@ -313,10 +313,10 @@ usercmd_t	original_cmd;
 
 	native String GetUserName();
 	native Color GetColor();
+	native int GetColorSet();
 	native int GetPlayerClassNum();
 	native int GetSkin();
 	native bool GetNeverSwitch();
-	
 }
 
 struct PlayerClass native
@@ -326,6 +326,8 @@ struct PlayerClass native
 	native Array<int> Skins;
 	
 	native bool CheckSkin(int skin);
+	native void EnumColorsets(out Array<int> data);
+	native Name GetColorsetName(int setnum);
 }
 
 struct PlayerSkin native

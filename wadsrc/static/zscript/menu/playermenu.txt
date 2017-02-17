@@ -61,6 +61,40 @@ class PlayerMenu : ListMenu native
 	//
 	//=============================================================================
 
+	protected void UpdateColorsets()
+	{
+		let li = GetItem('Color');
+		if (li != NULL)
+		{
+			int sel = 0;
+			mPlayerClass.EnumColorSets(PlayerColorSets);
+			li.SetString(0, "Custom");
+			for(int i = 0; i < PlayerColorSets.Size(); i++)
+			{
+				let cname = mPlayerClass.GetColorSetName(PlayerColorSets[i]);
+				li.SetString(i+1, cname);
+			}
+			int mycolorset = players[consoleplayer].GetColorSet();
+			if (mycolorset != -1)
+			{
+				for(int i = 0; i < PlayerColorSets.Size(); i++)
+				{
+					if (PlayerColorSets[i] == mycolorset)
+					{
+						sel = i + 1;
+					}
+				}
+			}
+			li.SetValue(0, sel);
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	protected void UpdateSkins()
 	{
 		int sel = 0;
@@ -101,7 +135,7 @@ class PlayerMenu : ListMenu native
 		UpdateTranslation();
 	}
 
-//=============================================================================
+	//=============================================================================
 	//
 	//
 	//

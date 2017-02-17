@@ -584,6 +584,14 @@ void EnumColorSets(PClassActor *cls, TArray<int> *out)
 	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
 }
 
+DEFINE_ACTION_FUNCTION(FPlayerClass, EnumColorSets)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_POINTER(out, TArray<int>);
+	EnumColorSets(self->Type, out);
+	return 0;
+}
+
 //==========================================================================
 //
 //
@@ -601,6 +609,14 @@ FPlayerColorSet *GetColorSet(PClassActor *cls, int setnum)
 		}
 	}
 	return nullptr;
+}
+
+DEFINE_ACTION_FUNCTION(FPlayerClass, GetColorSetName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_INT(setnum);
+	auto p = GetColorSet(self->Type, setnum);
+	ACTION_RETURN_INT(p ? p->Name.GetIndex() : 0);
 }
 
 //==========================================================================
@@ -665,6 +681,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_INT(self->userinfo.GetColor());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColorSet)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColorSet());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPlayerClassNum)

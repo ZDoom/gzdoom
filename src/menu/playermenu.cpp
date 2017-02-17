@@ -77,12 +77,6 @@ public:
 	void UpdateSkins();
 	void UpdateTranslation();
 
-	void PlayerNameChanged(DMenuItemBase *li);
-	void ColorSetChanged (DMenuItemBase *li);
-	void ClassChanged (DMenuItemBase *li);
-	void SkinChanged (DMenuItemBase *li);
-
-
 public:
 
 	DPlayerMenu() {}
@@ -248,7 +242,7 @@ bool DPlayerMenu::Responder (event_t *ev)
 
 //=============================================================================
 //
-//
+// done
 //
 //=============================================================================
 
@@ -268,7 +262,7 @@ void DPlayerMenu::UpdateTranslation()
 
 //=============================================================================
 //
-//
+// done
 //
 //=============================================================================
 
@@ -305,7 +299,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
 	// only allow if the menu is active to prevent abuse.
 	if (self == DMenu::CurrentMenu)
 	{
+		char command[24];
 		players[consoleplayer].userinfo.ColorChanged(MAKERGB(r, g, b));
+		mysnprintf(command, countof(command), "color \"%02x %02x %02x\"", r, g, b);
+		C_DoCommand(command);
 	}
 	return 0;
 }
@@ -313,7 +310,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
 
 //=============================================================================
 //
-//
+// done
 //
 //=============================================================================
 
@@ -347,7 +344,7 @@ void DPlayerMenu::UpdateColorsets()
 
 //=============================================================================
 //
-//
+// done
 //
 //=============================================================================
 
@@ -436,6 +433,9 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorSetChanged)
 	if (self == DMenu::CurrentMenu)
 	{
 		players[consoleplayer].userinfo.ColorSetChanged(sel);
+		char command[24];
+		mysnprintf(command, countof(command), "colorset %d", sel);
+		C_DoCommand(command);
 	}
 	return 0;
 }
@@ -446,41 +446,15 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorSetChanged)
 //
 //=============================================================================
 
-void DPlayerMenu::ClassChanged (DMenuItemBase *li)
-{
-	if (PlayerClasses.Size () == 1)
-	{
-		return;
-	}
-
-	int	sel;
-
-	if (li->GetValue(0, &sel))
-	{
-		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
-		PickPlayerClass();
-
-		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : GetPrintableDisplayName(PlayerClass->Type).GetChars());
-
-		UpdateSkins();
-		UpdateColorsets();
-		UpdateTranslation();
-
-		li = GetItem(NAME_Playerdisplay);
-		if (li != NULL)
-		{
-			li->SetValue(ListMenuItemPlayerDisplay_PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
-		}
-	}
-}
-
 DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
 {
 	PARAM_SELF_PROLOGUE(DPlayerMenu);
-	PARAM_OBJECT(sel, DMenuItemBase);
+	PARAM_INT(sel);
+	PARAM_POINTER(cls, FPlayerClass);
 	if (self == DMenu::CurrentMenu)
 	{
-		self->ClassChanged(sel);
+		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel - 1);
+		cvar_set("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : GetPrintableDisplayName(cls->Type).GetChars());
 	}
 	return 0;
 }
@@ -499,6 +473,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 	if (self == DMenu::CurrentMenu)
 	{
 		players[consoleplayer].userinfo.SkinNumChanged(sel);
+		cvar_set("skin", Skins[sel].Name);
 	}
 	return 0;
 }

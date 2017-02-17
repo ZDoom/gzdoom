@@ -50,6 +50,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, Armor2Percent)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon1)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
 
 
 const char *GameNames[17] =

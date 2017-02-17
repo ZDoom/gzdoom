@@ -17,8 +17,7 @@ class PlayerMenu : ListMenu native
 	protected native void ColorSetChanged(int red);
 	protected native void PlayerNameChanged(String name);
 	protected native void SkinChanged (int val);
-
-	protected native void ClassChanged(ListMenuItem it);
+	protected native void ClassChanged(int sel, PlayerClass cls);
 	
 	protected void UpdateTranslation()
 	{
@@ -37,13 +36,13 @@ class PlayerMenu : ListMenu native
 	//
 	//=============================================================================
 
-	protected void PickPlayerClass()
+	protected void PickPlayerClass(int pick = -100)
 	{
 		int pclass = 0;
 		// [GRB] Pick a class from player class list
 		if (PlayerClasses.Size () > 1)
 		{
-			pclass = players[consoleplayer].GetPlayerClassNum();
+			pclass = pick == -100? players[consoleplayer].GetPlayerClassNum() : pick;
 
 			if (pclass < 0)
 			{
@@ -133,6 +132,39 @@ class PlayerMenu : ListMenu native
 			}
 		}
 		UpdateTranslation();
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void ChangeClass (MenuItemBase li)
+	{
+		if (PlayerClasses.Size () == 1)
+		{
+			return;
+		}
+
+		bool res;
+		int	sel;
+
+		[res, sel] = li.GetValue(0);
+		if (res)
+		{
+			PickPlayerClass(gameinfo.norandomplayerclass ? sel : sel-1);
+			ClassChanged(sel, mPlayerClass);
+			UpdateSkins();
+			UpdateColorsets();
+			UpdateTranslation();
+
+			li = GetItem('Playerdisplay');
+			if (li != NULL)
+			{
+				li.SetValue(ListMenuItemPlayerDisplay.PDF_CLASS, players[consoleplayer].GetPlayerClassNum());
+			}
+		}
 	}
 
 	//=============================================================================
@@ -254,7 +286,7 @@ class PlayerMenu : ListMenu native
 					[res, v] = li.GetValue(0);
 					if (res) 
 					{
-						ClassChanged(li);
+						ChangeClass(li);
 					}
 					break;
 

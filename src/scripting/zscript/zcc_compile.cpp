@@ -2397,9 +2397,9 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			if (varflags & VARF_Final)
 				sym->Variants[0].Implementation->Final = true;
 			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
-			if (f->Flags & ZCC_UIFlag) // only direct specification here (varflags can also have owning class scope applied, we don't want that)
+			if (varflags & VARF_UI)
 				sym->Variants[0].Implementation->ScopeUI = true;
-			if (f->Flags & ZCC_Play) // only direct specification here
+			if (varflags & VARF_Play)
 				sym->Variants[0].Implementation->ScopePlay = true;
 			if (varflags & VARF_ReadOnly)
 				sym->Variants[0].Implementation->FuncConst = true;
@@ -2422,8 +2422,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
 						// you can't change ui/play/clearscope for a virtual method.
-						if ((oldfunc->ScopePlay != sym->Variants[0].Implementation->ScopePlay) ||
-							(oldfunc->ScopeUI != sym->Variants[0].Implementation->ScopeUI))
+						if (f->Flags & (ZCC_UIFlag|ZCC_Play|ZCC_ClearScope))
 						{
 							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
 						}
@@ -2432,7 +2431,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						{
 							Error(f, "Attempt to change const qualifier for virtual function %s", FName(f->Name).GetChars());
 						}
-						// inherit scope of original function
+						// inherit scope of original function if override not specified
 						if (sym->Variants[0].Implementation->ScopeUI = oldfunc->ScopeUI)
 							sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_Play)) | VARF_UI;
 						else if (sym->Variants[0].Implementation->ScopePlay = oldfunc->ScopePlay)

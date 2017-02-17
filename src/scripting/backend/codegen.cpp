@@ -6715,16 +6715,17 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 			if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
 				bWritable = false;
 		}
-		// [ZZ] plain data "inherits" scope of whatever it was defined in.
-		if (bWritable) // don't do complex checks on early fail
+		// [ZZ] implement write barrier between different scopes
+		if (bWritable)
 		{
 			int outerflags = 0;
 			if (ctx.Function)
 				outerflags = ctx.Function->Variants[0].Flags;
-			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), membervar->SymbolName.GetChars());
+			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), "<unknown>");
 			if (!scopeBarrier.writable)
 				bWritable = false;
 		}
+
 		*writable = bWritable;
 	}
 	return true;
@@ -6769,7 +6770,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	}
 
 	BarrierSide = scopeBarrier.sidelast;
-	if (classx->ExprType == EFX_StructMember || classx->ExprType == EFX_ClassMember)
+	if (classx->ExprType == EFX_StructMember) // note: only do this for structs now
 	{
 		FxStructMember* pmember = (FxStructMember*)classx;
 		if (BarrierSide == FScopeBarrier::Side_PlainData && pmember)
@@ -6793,7 +6794,8 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			auto parentfield = static_cast<FxMemberBase *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
-			auto newfield = new PField(NAME_None, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			// [ZZ] call ChangeSideInFlags to ensure that we don't get ui+play
+			auto newfield = new PField(NAME_None, membervar->Type, FScopeBarrier::ChangeSideInFlags(membervar->Flags | parentfield->Flags, BarrierSide), membervar->Offset + parentfield->Offset);
 			newfield->BitValue = membervar->BitValue;
 			static_cast<FxMemberBase *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
@@ -8023,22 +8025,22 @@ isresolved:
 
 	// [ZZ] if self is a struct or a class member, check if it's valid to call this function at all.
 	//		implement more magic
-	if (Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StructMember)
+	int outerflags = 0;
+	if (ctx.Function)
+		outerflags = ctx.Function->Variants[0].Flags;
+	int innerflags = afd->Variants[0].Flags;
+	if (Self->ExprType == EFX_StructMember)
 	{
 		FxStructMember* pmember = (FxStructMember*)Self;
-		int outerflags = 0;
-		if (ctx.Function)
-			outerflags = ctx.Function->Variants[0].Flags;
-		int innerflags = afd->Variants[0].Flags;
 		if (FScopeBarrier::SideFromFlags(innerflags) == FScopeBarrier::Side_PlainData)
 			innerflags = FScopeBarrier::ChangeSideInFlags(innerflags, pmember->BarrierSide);
-		FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
-		if (!scopeBarrier.callable)
-		{
-			ScriptPosition.Message(MSG_ERROR, "%s", scopeBarrier.callerror.GetChars());
-			delete this;
-			return nullptr;
-		}
+	}
+	FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
+	if (!scopeBarrier.callable)
+	{
+		ScriptPosition.Message(MSG_ERROR, "%s", scopeBarrier.callerror.GetChars());
+		delete this;
+		return nullptr;
 	}
 
 	if (staticonly && (afd->Variants[0].Flags & VARF_Method))

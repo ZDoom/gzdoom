@@ -187,7 +187,7 @@ struct FScopeBarrier
 			sidelast = sideto;
 		else sideto = sidelast;
 
-		if ((sideto == Side_UI) != (sidefrom == Side_UI)) // only ui -> ui is readable
+		if ((sideto == Side_UI) && (sidefrom != Side_UI)) // only ui -> ui is readable
 		{
 			readable = false;
 			readerror.Format("Can't read %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));

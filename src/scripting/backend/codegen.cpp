@@ -6718,8 +6718,6 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		// [ZZ] plain data "inherits" scope of whatever it was defined in.
 		if (bWritable) // don't do complex checks on early fail
 		{
-			if (ctx.Function && FString(ctx.Function->SymbolName) == FString("DrawPowerup"))
-				Printf("field type = %d\n", BarrierSide);
 			int outerflags = 0;
 			if (ctx.Function)
 				outerflags = ctx.Function->Variants[0].Flags;
@@ -6748,7 +6746,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		if (!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))
 			|| !static_cast<PPointer *>(classx->ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(AActor)))
 		{
-			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
+			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type");
 			delete this;
 			return nullptr;
 		}
@@ -6759,7 +6757,18 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	}
 
 	// [ZZ] support magic
-	BarrierSide = FScopeBarrier::SideFromFlags(membervar->Flags);
+	int outerflags = 0;
+	if (ctx.Function)
+		outerflags = ctx.Function->Variants[0].Flags;
+	FScopeBarrier scopeBarrier(outerflags, membervar->Flags, membervar->SymbolName.GetChars());
+	if (!scopeBarrier.readable)
+	{
+		ScriptPosition.Message(MSG_ERROR, "%s", scopeBarrier.readerror.GetChars());
+		delete this;
+		return nullptr;
+	}
+
+	BarrierSide = scopeBarrier.sidelast;
 	if (classx->ExprType == EFX_StructMember || classx->ExprType == EFX_ClassMember)
 	{
 		FxStructMember* pmember = (FxStructMember*)classx;
@@ -6772,7 +6781,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
 		if (ptrtype == nullptr || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
-			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct or class object.");
+			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct or class object");
 			delete this;
 			return nullptr;
 		}
@@ -6826,7 +6835,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			if (!(classx->RequestAddress(ctx, &AddressWritable)))
 			{
-				ScriptPosition.Message(MSG_ERROR, "unable to dereference left side of %s", membervar->SymbolName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Unable to dereference left side of %s", membervar->SymbolName.GetChars());
 				delete this;
 				return nullptr;
 			}

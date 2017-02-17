@@ -499,41 +499,16 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
 //
 //=============================================================================
 
-void DPlayerMenu::SkinChanged (DMenuItemBase *li)
-{
-	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-		players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
-	{
-		return;
-	}
-
-	int	sel;
-
-	if (li->GetValue(0, &sel))
-	{
-		sel = PlayerSkins[sel];
-		players[consoleplayer].userinfo.SkinNumChanged(sel);
-		UpdateTranslation();
-
-		li = GetItem(NAME_Playerdisplay);
-		if (li != NULL)
-		{
-			li->SetValue(ListMenuItemPlayerDisplay_PDF_SKIN, sel);
-		}
-	}
-}
-
 DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 {
 	PARAM_SELF_PROLOGUE(DPlayerMenu);
-	PARAM_OBJECT(sel, DMenuItemBase);
+	PARAM_INT(sel);
 	if (self == DMenu::CurrentMenu)
 	{
-		self->SkinChanged(sel);
+		players[consoleplayer].userinfo.SkinNumChanged(sel);
 	}
 	return 0;
 }
-
 
 //=============================================================================
 //
@@ -629,3 +604,4 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, AlwaysRunChanged)
 DEFINE_FIELD(DPlayerMenu, mRotation)
 DEFINE_FIELD_NAMED(DPlayerMenu, PlayerClass, mPlayerClass)
 DEFINE_FIELD(DPlayerMenu, PlayerColorSets)
+DEFINE_FIELD(DPlayerMenu, PlayerSkins)

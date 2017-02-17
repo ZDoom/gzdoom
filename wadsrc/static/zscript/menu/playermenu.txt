@@ -4,6 +4,7 @@ class PlayerMenu : ListMenu native
 	native int mRotation;
 	native PlayerClass mPlayerClass;
 	native Array<int> PlayerColorSets;
+	native Array<int> PlayerSkins;
 	
 	// All write function for the player config are native to prevent abuse.
 	protected native void AutoaimChanged(float val);
@@ -14,9 +15,9 @@ class PlayerMenu : ListMenu native
 	protected native void ColorChanged(int red, int green, int blue);
 	protected native void ColorSetChanged(int red);
 	protected native void PlayerNameChanged(String name);
+	protected native void SkinChanged (int val);
 
 	protected native void ClassChanged(ListMenuItem it);
-	protected native void SkinChanged (ListMenuItem li);
 	
 	protected void UpdateTranslation()
 	{
@@ -28,6 +29,39 @@ class PlayerMenu : ListMenu native
 		ColorChanged(red, green, blue);
 		UpdateTranslation();
 	}
+	
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	protected void ChangeSkin (MenuItemBase li)
+	{
+		if (GetDefaultByType (mPlayerClass.Type).bNoSkin || players[consoleplayer].GetPlayerClassNum() == -1)
+		{
+			return;
+		}
+
+		bool res;
+		int	sel;
+
+		[res, sel] = li.GetValue(0);
+		if (res)
+		{
+			sel = PlayerSkins[sel];
+			SkinChanged(sel);
+			UpdateTranslation();
+
+			li = GetItem('Playerdisplay');
+			if (li != NULL)
+			{
+				li.SetValue(ListMenuItemPlayerDisplay.PDF_SKIN, sel);
+			}
+		}
+	}
+
 	
 	//=============================================================================
 	//
@@ -121,7 +155,7 @@ class PlayerMenu : ListMenu native
 					break;
 
 				case 'Skin':
-					SkinChanged(li);
+					ChangeSkin(li);
 					break;
 
 				case 'Gender':

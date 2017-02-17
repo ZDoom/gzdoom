@@ -311,6 +311,7 @@ userinfo_t	userinfo;
 	native void SetLogText (String text);
 	native String GetUserName();
 	native Color GetColor();
+	native int GetPlayerClassNum();
 	native bool GetNeverSwitch();
 	native void DropWeapon();
 	native void BringUpWeapon();

@@ -37,6 +37,8 @@ enum
 	VARF_Transient		= (1<<17),  // don't auto serialize field.
 	VARF_Meta			= (1<<18),	// static class data (by necessity read only.)
 	VARF_VarArg			= (1<<19),  // [ZZ] vararg: don't typecheck values after ... in function signature
+	VARF_UI				= (1<<20),  // [ZZ] ui: object is ui-scope only (can't modify playsim)
+	VARF_Play			= (1<<21),  // [ZZ] play: object is playsim-scope only (can't access ui)
 };
 
 // An action function -------------------------------------------------------

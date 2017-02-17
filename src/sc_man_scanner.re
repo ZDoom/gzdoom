@@ -171,6 +171,9 @@ std2:
 		'override'					{ RET(TK_Override); }
 		'vararg'					{ RET(TK_VarArg); }
 		'nonew'						{ RET(TK_NoNew); }
+		'ui'						{ RET(TK_UI); }
+		'play'						{ RET(TK_Play); }
+		'allowui'					{ RET(TK_AllowUI); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

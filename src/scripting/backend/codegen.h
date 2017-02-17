@@ -70,6 +70,130 @@ class FxCompoundStatement;
 class FxLocalVariableDeclaration;
 typedef TDeletingArray<FxExpression*> FArgumentList;
 
+// [ZZ] this is kind of related to compile context as well
+struct FPlayUIBarrier
+{
+	bool callable;
+	bool readable;
+	bool writable;
+
+	// this is the error message
+	FString callerror;
+	FString readerror;
+	FString writeerror;
+
+	// this is used to make the error message.
+	enum Side
+	{
+		Side_PlainData = 0,
+		Side_UI,
+		Side_Play
+	};
+	int sidefrom;
+	int sidelast;
+
+	// Note: the same object can't be both UI and Play. This is checked explicitly in the field construction and will cause esoteric errors here if found.
+	int SideFromFlags(int flags)
+	{
+		if (flags & VARF_UI)
+			return Side_UI;
+		if (flags & VARF_Play)
+			return Side_Play;
+		return Side_PlainData;
+	}
+
+	// used for errors
+	const char* StringFromSide(int side)
+	{
+		switch (side)
+		{
+		case Side_PlainData:
+			return "data";
+		case Side_UI:
+			return "ui";
+		case Side_Play:
+			return "play";
+		default:
+			return "unknown";
+		}
+	}
+
+	FPlayUIBarrier()
+	{
+		sidefrom = -1;
+		sidelast = -1;
+		callable = true;
+		readable = true;
+		writable = true;
+	}
+
+	FPlayUIBarrier(int flags1, int flags2, const char* name)
+	{
+		sidefrom = -1;
+		sidelast = -1;
+		callable = true;
+		readable = true;
+		writable = true;
+
+		AddFlags(flags1, flags2, name);
+	}
+
+	// AddFlags modifies ALLOWED actions by flags1->flags2.
+	// This is used for comparing a.b.c.d access - if non-allowed field is seen anywhere in the chain, anything after it is non-allowed.
+	// This struct is used so that the logic is in a single place.
+	void AddFlags(int flags1, int flags2, const char* name)
+	{
+		// note: if it's already non-readable, don't even try advancing
+		if (!readable)
+			return;
+
+		// we aren't interested in any other flags
+		flags1 &= VARF_UI | VARF_Play;
+		flags2 &= VARF_UI | VARF_Play | VARF_ReadOnly;
+
+		if (sidefrom < 0) sidefrom = SideFromFlags(flags1);
+		if (sidelast < 0) sidelast = sidefrom;
+
+		// flags1 = what's trying to access
+		// flags2 = what's being accessed
+
+		int sideto = SideFromFlags(flags2);
+
+		// plain data inherits whatever scope modifiers that context or field container has.
+		// i.e. play String bla; is play, and all non-specified methods/fields inside it are play as well.
+		if (sideto != Side_PlainData)
+			sidelast = sideto;
+		else sideto = sidelast;
+
+		if ((sideto == Side_UI) != (sidefrom == Side_UI)) // only ui -> ui is readable
+		{
+			readable = false;
+			readerror.Format("Can't read %s field %s from %s context", StringFromSide(sideto), StringFromSide(sidefrom));
+		}
+
+		if (!readable)
+		{
+			writable = false;
+			callable = false;
+			writeerror.Format("Can't write %s field %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			callerror.Format("Can't call %s function %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			return;
+		}
+
+		if (writable && (sidefrom != sideto)) // only matching types are writable (plain data implicitly takes context type by default, unless overridden)
+		{
+			writable = false;
+			writeerror.Format("Can't write %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+		}
+
+		if (callable && (sidefrom != sideto) && !(flags2 & VARF_ReadOnly)) // readonly on methods is used for plain data stuff that can be called from ui/play context.
+		{
+			callable = false;
+			callerror.Format("Can't call %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+		}
+	}
+};
+
 struct FCompileContext
 {
 	FxExpression *ControlStmt = nullptr;

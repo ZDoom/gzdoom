@@ -207,6 +207,8 @@ enum EObjectFlags
 	OF_Released			= 1 << 13,		// Object was released from the GC system and should not be processed by GC function
 	OF_Abstract			= 1 << 14,		// Marks a class that cannot be created with new() function at all
 	OF_NoNew			= 1 << 15,		// Marks a class that can only be created with new() in the exact class that has this keyword
+	OF_UI				= 1 << 16,		// Marks a class that defaults to VARF_UI for it's fields/methods
+	OF_Play				= 1 << 17,		// Marks a class that defaults to VARF_Play for it's fields/methods
 };
 
 template<class T> class TObjPtr;

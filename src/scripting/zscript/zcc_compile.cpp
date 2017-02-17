@@ -496,6 +496,16 @@ void ZCCCompiler::CreateStructTypes()
 		{
 			s->strct->Type = NewStruct(s->NodeName(), outer);
 		}
+
+		if ((s->strct->Flags & (ZCC_UIFlag | ZCC_Play)) == (ZCC_UIFlag | ZCC_Play))
+		{
+			Error(s->strct, "Struct %s has incompatible flags", s->NodeName().GetChars());
+		}
+
+		if (s->strct->Flags & ZCC_UIFlag)
+			s->Type()->ObjectFlags |= OF_UI;
+		if (s->strct->Flags & ZCC_Play)
+			s->Type()->ObjectFlags |= OF_Play;
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
 		syms->AddSymbol(s->strct->Symbol);
 
@@ -602,8 +612,24 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->cls->Flags & ZCC_Abstract)
 					c->Type()->ObjectFlags |= OF_Abstract;
 				// [ZZ] inherit nonew keyword
-				if (c->cls->Flags & ZCC_NoNew || (parent && parent->ObjectFlags & OF_NoNew))
+				if (c->cls->Flags & ZCC_NoNew || (parent->ObjectFlags & OF_NoNew))
 					c->Type()->ObjectFlags |= OF_NoNew;
+				// 
+				static int incompatible[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+				int incompatiblecnt = 0;
+				for (int k = 0; k < countof(incompatible); k++)
+					if (incompatible[k] & c->cls->Flags) incompatiblecnt++;
+				
+				if (incompatiblecnt > 1)
+				{
+					Error(c->cls, "Class %s has incompatible flags", c->NodeName().GetChars());
+				}
+				
+				if (c->cls->Flags & ZCC_UIFlag || ((parent->ObjectFlags & OF_UI) && !(c->cls->Flags & ZCC_AllowUI)))
+					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_Play) | OF_UI;
+				if (c->cls->Flags & ZCC_Play || ((parent->ObjectFlags & OF_Play) && !(c->cls->Flags & ZCC_AllowUI)))
+					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
+
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
@@ -1063,10 +1089,37 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		if (field->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
 		if (field->Flags & ZCC_ReadOnly) varflags |= VARF_ReadOnly;
 		if (field->Flags & ZCC_Transient) varflags |= VARF_Transient;
+		if (type->ObjectFlags & OF_UI)
+			varflags |= VARF_UI;
+		if (type->ObjectFlags & OF_Play)
+			varflags |= VARF_Play;
+		if (field->Flags & ZCC_UIFlag)
+			varflags = (varflags&~VARF_Play) | VARF_UI;
+		if (field->Flags & ZCC_Play)
+			varflags = (varflags&~VARF_UI) | VARF_Play;
+		if (field->Flags & ZCC_AllowUI)
+			varflags = (varflags&~(VARF_UI | VARF_Play));
 
 		if (field->Flags & ZCC_Native)
 		{
 			varflags |= VARF_Native | VARF_Transient;
+		}
+
+		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+		int excludeflags = 0;
+		int fc = 0;
+		for (int i = 0; i < countof(excludescope); i++)
+		{
+			if (field->Flags & excludescope[i])
+			{
+				fc++;
+				excludeflags |= excludescope[i];
+			}
+		}
+		if (fc > 1)
+		{
+			Error(field, "Invalid combination of scope qualifiers %s on field %s", FlagsToString(excludeflags).GetChars(), FName(field->Names->Name).GetChars());
+			varflags &= ~(VARF_UI | VARF_Play); // make plain data
 		}
 
 		if (field->Flags & ZCC_Meta)
@@ -1101,11 +1154,11 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 					fd = FindField(querytype, FName(name->Name).GetChars());
 					if (fd == nullptr)
 					{
-						Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
+						Error(field, "The member variable '%s.%s' has not been exported from the executable", type->TypeName.GetChars(), FName(name->Name).GetChars());
 					}
 					else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
 					{
-						Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
+						Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
 					}
 					// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
 					else
@@ -1117,7 +1170,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				}
 				else if (hasnativechildren)
 				{
-					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change.", FName(name->Name).GetChars(), type->TypeName.GetChars(), type->TypeName.GetChars());
+					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change", FName(name->Name).GetChars(), type->TypeName.GetChars(), type->TypeName.GetChars());
 				}
 				else
 				{
@@ -1212,7 +1265,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 FString ZCCCompiler::FlagsToString(uint32_t flags)
 {
 
-	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "funcconst", "abstract", "extension", "virtual", "override", "transient", "vararg" };
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "allowui" };
 	FString build;
 
 	for (size_t i = 0; i < countof(flagnames); i++)
@@ -2014,7 +2067,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			} while (t != f->Type);
 		}
 
-		int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_FuncConst | ZCC_Abstract;
+		int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_Abstract;
 
 		if (f->Flags & notallowed)
 		{
@@ -2061,6 +2114,20 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
 		if (f->Flags & ZCC_Override) varflags |= VARF_Override;
 		if (f->Flags & ZCC_VarArg) varflags |= VARF_VarArg;
+		if (f->Flags & ZCC_FuncConst) varflags |= VARF_ReadOnly; // FuncConst method is internally marked as VARF_ReadOnly
+		if (c->Type()->ObjectFlags & OF_UI)
+			varflags |= VARF_UI;
+		if (c->Type()->ObjectFlags & OF_Play)
+			varflags |= VARF_Play;
+		if (f->Flags & ZCC_FuncConst)
+			varflags = (varflags&~(VARF_Play | VARF_UI)); // const implies allowui. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
+		if (f->Flags & ZCC_UIFlag)
+			varflags = (varflags&~VARF_Play) | VARF_UI;
+		if (f->Flags & ZCC_Play)
+			varflags = (varflags&~VARF_UI) | VARF_Play;
+		if (f->Flags & ZCC_AllowUI)
+			varflags = (varflags&~(VARF_Play | VARF_UI));
+
 		if ((f->Flags & ZCC_VarArg) && !(f->Flags & ZCC_Native))
 		{
 			Error(f, "'VarArg' can only be used with native methods");
@@ -2086,28 +2153,49 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		}
 		if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
 
-
 		if (varflags & VARF_Override) varflags &= ~VARF_Virtual;	// allow 'virtual override'.
 																	// Only one of these flags may be used.
 		static int exclude[] = { ZCC_Virtual, ZCC_Override, ZCC_Action, ZCC_Static };
-		static const char * print[] = { "virtual", "override", "action", "static" };
+		int excludeflags = 0;
 		int fc = 0;
-		FString build;
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < countof(exclude); i++)
 		{
 			if (f->Flags & exclude[i])
 			{
 				fc++;
-				if (build.Len() > 0) build += ", ";
-				build += print[i];
+				excludeflags |= exclude[i];
 			}
 		}
 		if (fc > 1)
 		{
-			Error(f, "Invalid combination of qualifiers %s on function %s.", FName(f->Name).GetChars(), build.GetChars());
+			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(excludeflags).GetChars(), FName(f->Name).GetChars());
 			varflags |= VARF_Method;
 		}
 		if (varflags & VARF_Override) varflags |= VARF_Virtual;	// Now that the flags are checked, make all override functions virtual as well.
+
+		// you can't have a const function belonging to either ui or play.
+		// const is intended for plain data to signify that you can call a method on readonly variable.
+		if ((f->Flags & ZCC_FuncConst) && (f->Flags & (ZCC_UIFlag | ZCC_Play)))
+		{
+			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(f->Flags&(ZCC_FuncConst | ZCC_UIFlag | ZCC_Play)).GetChars(), FName(f->Name).GetChars());
+		}
+
+		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+		excludeflags = 0;
+		fc = 0;
+		for (int i = 0; i < countof(excludescope); i++)
+		{
+			if (f->Flags & excludescope[i])
+			{
+				fc++;
+				excludeflags |= excludescope[i];
+			}
+		}
+		if (fc > 1)
+		{
+			Error(f, "Invalid combination of scope qualifiers %s on function %s", FlagsToString(excludeflags).GetChars(), FName(f->Name).GetChars());
+			varflags &= ~(VARF_UI | VARF_Play); // make plain data
+		}
 
 		if (f->Flags & ZCC_Native)
 		{
@@ -2115,7 +2203,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			afd = FindFunction(c->Type(), FName(f->Name).GetChars());
 			if (afd == nullptr)
 			{
-				Error(f, "The function '%s.%s' has not been exported from the executable.", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
+				Error(f, "The function '%s.%s' has not been exported from the executable", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
 			}
 			else
 			{
@@ -2229,7 +2317,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					}
 					else if (hasoptionals)
 					{
-						Error(p, "All arguments after the first optional one need also be optional.");
+						Error(p, "All arguments after the first optional one need also be optional");
 					}
 					// TBD: disallow certain types? For now, let everything pass that isn't an array.
 					args.Push(type);
@@ -2289,13 +2377,20 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		{
 			if (sym->Variants[0].Implementation == nullptr)
 			{
-				Error(f, "Virtual function %s.%s not present.", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
+				Error(f, "Virtual function %s.%s not present", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
 				return;
 			}
+			
 			if (varflags & VARF_Final)
-			{
 				sym->Variants[0].Implementation->Final = true;
-			}
+			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
+			if (f->Flags & ZCC_UIFlag) // only direct specification here (varflags can also have owning class scope applied, we don't want that)
+				sym->Variants[0].Implementation->ScopeUI = true;
+			if (f->Flags & ZCC_Play) // only direct specification here
+				sym->Variants[0].Implementation->ScopePlay = true;
+			if (varflags & VARF_ReadOnly)
+				sym->Variants[0].Implementation->FuncConst = true;
+
 			if (forclass)
 			{
 				int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
@@ -2313,6 +2408,27 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						{
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
+						// you can't change ui/play/allowui for a virtual method.
+						if ((oldfunc->ScopePlay != sym->Variants[0].Implementation->ScopePlay) ||
+							(oldfunc->ScopeUI != sym->Variants[0].Implementation->ScopeUI))
+						{
+							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
+						}
+						// you can't change const qualifier for a virtual method
+						if (oldfunc->FuncConst != (varflags & VARF_ReadOnly))
+						{
+							Error(f, "Attempt to change const qualifier for virtual function %s", FName(f->Name).GetChars());
+						}
+						// inherit scope of original function
+						if (sym->Variants[0].Implementation->ScopeUI = oldfunc->ScopeUI)
+							sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_Play)) | VARF_UI;
+						else if (sym->Variants[0].Implementation->ScopePlay = oldfunc->ScopePlay)
+							sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_UI)) | VARF_Play;
+						else sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_UI | VARF_Play));
+						// inherit const from original function
+						if (sym->Variants[0].Implementation->FuncConst = oldfunc->FuncConst)
+							sym->Variants[0].Flags |= VARF_ReadOnly;
+													
 						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
 						sym->Variants[0].Implementation->VirtualIndex = vindex;
 					}

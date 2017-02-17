@@ -359,7 +359,7 @@ namespace swrenderer
 	public:
 		using SWPixelFormatDrawers::SWPixelFormatDrawers;
 		
-		void DrawWallColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWall1LLVMCommand>(args); }
+		void DrawWallColumn(const WallDrawerArgs &args) override;
 		void DrawWallMaskedColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallMasked1LLVMCommand>(args); }
 		void DrawWallAddColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallAdd1LLVMCommand>(args); }
 		void DrawWallAddClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallAddClamp1LLVMCommand>(args); }

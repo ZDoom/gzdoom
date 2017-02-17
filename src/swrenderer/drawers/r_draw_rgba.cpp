@@ -40,6 +40,7 @@
 #include "gl/data/gl_matrix.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
+#include "r_draw_wall32.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -58,8 +59,18 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
 
+CVAR(Bool, r_phpdrawers, false, 0);
+
 namespace swrenderer
 {
+	void SWTruecolorDrawers::DrawWallColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWall32Command>(args);
+		else
+			Queue->Push<DrawWall1LLVMCommand>(args);
+	}
+	
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
 	{
 		auto shade_constants = drawerargs.ColormapConstants();

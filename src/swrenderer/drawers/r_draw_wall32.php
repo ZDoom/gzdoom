@@ -46,7 +46,6 @@ namespace swrenderer
 	{
 	protected:
 		WallDrawerArgs args;
-		bool is_nearest_filter = false;
 
 	public:
 		<?=$className?>(const WallDrawerArgs &drawerargs) : args(drawerargs) { }
@@ -63,6 +62,8 @@ namespace swrenderer
 <?				LoopShade($blendVariant, false);?>
 			}
 		}
+		
+		FString DebugInfo() override { return "<?=$className?>"; }
 	};
 	
 <?
@@ -70,6 +71,9 @@ namespace swrenderer
 
 	function LoopShade($blendVariant, $isSimpleShade)
 	{ ?>
+				const uint32_t *source = (const uint32_t*)args.TexturePixels();
+				const uint32_t *source2 = (const uint32_t*)args.TexturePixels2();
+				bool is_nearest_filter = (source2 == nullptr);
 				if (is_nearest_filter)
 				{
 <?					Loop($blendVariant, $isSimpleShade, true);?>
@@ -83,23 +87,42 @@ namespace swrenderer
 	function Loop($blendVariant, $isSimpleShade, $isNearestFilter)
 	{ ?>
 					int textureheight = args.TextureHeight();
+					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = args.Light();
-					__m128i mlight = _mm_set_epi16(light, light, light, 256, light, light, light, 256);
-					__m128i inv_light = _mm_set1_epi16(256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light, 0);
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 <?					if ($isSimpleShade == false)
 					{ ?>
-					__m128i inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 0, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 0);
-					__m128i shade_fade = _mm_set_epi16(shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, shade_constants.fade_alpha);
-					__m128i shade_light = _mm_set_epi16(shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha);
+					__m128i inv_desaturate = _mm_setr_epi16(0, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 0, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate);
+					__m128i shade_fade = _mm_set_epi16(shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue);
+					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
+					int desaturate = shade_constants.desaturate;
 <?					} ?>
 					
 					int count = args.Count();
+					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+					uint32_t fracstep = args.TextureVStep();
+					uint32_t frac = args.TextureVPos();
+					uint32_t texturefracx = args.TextureUPos();
+					uint32_t *dest = (uint32_t*)args.Dest();
+					int dest_y = args.DestY();
+
+					count = thread->count_for_thread(dest_y, count);
+					if (count <= 0) return;
+					frac += thread->skipped_by_thread(dest_y) * fracstep;
+					dest = thread->dest_for_thread(dest_y, pitch, dest);
+					fracstep *= thread->num_cores;
+					pitch *= thread->num_cores;
+					
+					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
+					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					
 					for (int index = 0; index < count; index++)
 					{
-						int offset = index * pitch * 4;
-						__m128i bgcolor = _mm_unpacklo_epi8(_mm_cvtsi32(dest[offset]), _mm_setzero_si128());
+						int offset = index * pitch;
+						__m128i bgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(dest[offset]), _mm_setzero_si128());
 						
 						// Sample
 <?						Sample($isNearestFilter);?>
@@ -110,7 +133,7 @@ namespace swrenderer
 						// Blend
 <?						Blend($blendVariant);?>
 
-						dest[offset] = _mm_cvtsi32(outcolor);
+						dest[offset] = _mm_cvtsi128_si32(outcolor);
 						frac += fracstep;
 					}
 <?	}
@@ -120,20 +143,20 @@ namespace swrenderer
 		if ($isNearestFilter == true)
 		{ ?>
 						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
-						unsigned int ifgcolor = source[sample_index * 4];
-						__m128i fgcolor = _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_cvtsi32(ifgcolor), _mm_setzero_si128()), _mm_setzero_si128());
+						unsigned int ifgcolor = source[sample_index];
+						__m128i fgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ifgcolor), _mm_setzero_si128());
 <?		}
 		else
 		{ ?>
-						unsigned int frac_y0 = (texturefracy >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((texturefracy + one) >> FRACBITS) * textureheight;
+						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
+						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
-						unsigned int p00 = source[y0 * 4];
-						unsigned int p01 = source[y1 * 4];
-						unsigned int p10 = source2[y0 * 4];
-						unsigned int p11 = source2[y1 * 4];
+						unsigned int p00 = source[y0];
+						unsigned int p01 = source[y1];
+						unsigned int p10 = source2[y0];
+						unsigned int p11 = source2[y1];
 
 						unsigned int inv_b = texturefracx;
 						unsigned int a = (frac_y1 >> (FRACBITS - 4)) & 15;
@@ -146,7 +169,7 @@ namespace swrenderer
 						unsigned int salpha = (APART(p00) * (a * b) + APART(p01) * (inv_a * b) + APART(p10) * (a * inv_b) + APART(p11) * (inv_a * inv_b) + 127) >> 8;
 
 						unsigned int ifgcolor = (salpha << 24) | (sred << 16) | (sgreen << 8) | sblue;
-						__m128i fgcolor = _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_cvtsi32(ifgcolor), _mm_setzero_si128()), _mm_setzero_si128());
+						__m128i fgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ifgcolor), _mm_setzero_si128());
 <?		}
 	}
 		
@@ -176,7 +199,7 @@ namespace swrenderer
 		if ($blendVariant == "opaque")
 		{ ?>
 						__m128 outcolor = fgcolor;
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero128());
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 <?		}
 		else if ($blendVariant == "masked")
 		{
@@ -184,8 +207,8 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero128());
-						outcolor = _mm_or_si128(outcolor, _mm_set_epi32(0xff000000));
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
 		else if ($blendVariant == "add" || $blendVariant == "addclamp")
 		{
@@ -194,8 +217,8 @@ namespace swrenderer
 						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
 						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
 						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero128());
-						outcolor = _mm_or_si128(outcolor, _mm_set_epi32(0xff000000));
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
 		else if ($blendVariant == "subclamp")
 		{
@@ -204,8 +227,8 @@ namespace swrenderer
 						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
 						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
 						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero128());
-						outcolor = _mm_or_si128(outcolor, _mm_set_epi32(0xff000000));
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
 		else if ($blendVariant == "revsubclamp")
 		{
@@ -214,8 +237,8 @@ namespace swrenderer
 						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
 						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
 						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero128());
-						outcolor = _mm_or_si128(outcolor, _mm_set_epi32(0xff000000));
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
 	}
 	

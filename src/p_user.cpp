@@ -1247,9 +1247,9 @@ const char *APlayerPawn::GetSoundClass() const
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
-		(size_t)player->userinfo.GetSkin() < numskins)
+		(unsigned)player->userinfo.GetSkin() < Skins.Size())
 	{
-		return skins[player->userinfo.GetSkin()].name;
+		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
 
 	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
@@ -1801,8 +1801,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
 	}
 
 	// Set the crouch sprite?
@@ -1813,10 +1813,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 			crouchspriteno = player->mo->crouchsprite;
 		}
 		else if (!(actor->flags4 & MF4_NOSKIN) &&
-				(spritenum == skins[player->userinfo.GetSkin()].sprite ||
-				 spritenum == skins[player->userinfo.GetSkin()].crouchsprite))
+				(spritenum == Skins[player->userinfo.GetSkin()].sprite ||
+				 spritenum == Skins[player->userinfo.GetSkin()].crouchsprite))
 		{
-			crouchspriteno = skins[player->userinfo.GetSkin()].crouchsprite;
+			crouchspriteno = Skins[player->userinfo.GetSkin()].crouchsprite;
 		}
 		else
 		{ // no sprite -> squash the existing one

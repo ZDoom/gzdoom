@@ -260,9 +260,9 @@ void DPlayerMenu::UpdateTranslation()
 
 	if (PlayerClass != NULL)
 	{
-		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
+		PlayerSkin = R_FindSkin (Skins[PlayerSkin].Name, int(PlayerClass - &PlayerClasses[0]));
 		R_GetPlayerTranslation(PlayerColor, GetColorSet(PlayerClass->Type, PlayerColorset),
-			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+			&Skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }
 
@@ -368,12 +368,12 @@ void DPlayerMenu::UpdateSkins()
 		else
 		{
 			PlayerSkins.Clear();
-			for(int i=0;i<(int)numskins; i++)
+			for (unsigned i = 0; i < Skins.Size(); i++)
 			{
 				if (PlayerClass->CheckSkin(i))
 				{
 					int j = PlayerSkins.Push(i);
-					li->SetString(j, skins[i].name);
+					li->SetString(j, Skins[i].Name);
 					if (players[consoleplayer].userinfo.GetSkin() == i)
 					{
 						sel = j;

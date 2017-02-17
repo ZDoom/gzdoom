@@ -326,3 +326,17 @@ struct PlayerClass native
 	
 	native bool CheckSkin(int skin);
 }
+
+struct PlayerSkin native
+{
+	native readonly String		Name;
+	native readonly String		Face;
+	native readonly uint8		gender;
+	native readonly uint8		range0start;
+	native readonly uint8		range0end;
+	native readonly bool		othergame;
+	native readonly Vector2		Scale;
+	native readonly int			sprite;
+	native readonly int			crouchsprite;
+	native readonly int			namespc;
+};

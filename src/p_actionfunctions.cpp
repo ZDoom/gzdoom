@@ -3919,7 +3919,7 @@ DEFINE_ACTION_FUNCTION(AActor, PlayerSkinCheck)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	ACTION_RETURN_BOOL(self->player != NULL &&
-		skins[self->player->userinfo.GetSkin()].othergame);
+		Skins[self->player->userinfo.GetSkin()].othergame);
 }
 
 // [KS] *** Start of my modifications ***

@@ -81,7 +81,6 @@ public:
 	void PlayerNameChanged(DMenuItemBase *li);
 	void ColorSetChanged (DMenuItemBase *li);
 	void ClassChanged (DMenuItemBase *li);
-	void AutoaimChanged (DMenuItemBase *li);
 	void SkinChanged (DMenuItemBase *li);
 
 
@@ -90,7 +89,6 @@ public:
 	DPlayerMenu() {}
 	void Init(DMenu *parent, DListMenuDescriptor *desc);
 	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey, bool fromcontroller);
 };
 
 IMPLEMENT_CLASS(DPlayerMenu, false, false)
@@ -403,20 +401,22 @@ void DPlayerMenu::UpdateSkins()
 
 //=============================================================================
 //
-//
+// access to the player config is done natively, so that broader access
+// functions do not need to be exported.
 //
 //=============================================================================
 
-void DPlayerMenu::PlayerNameChanged(DMenuItemBase *li)
+DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 {
-	char pp[MAXPLAYERNAME+1];
-	const char *p;
-	if (li->GetString(0, pp, MAXPLAYERNAME))
-	{
-		FString command("name \"");
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_STRING(s);
+	const char *pp = s;
+	FString command("name \"");
 
+	if (self == DMenu::CurrentMenu)
+	{
 		// Escape any backslashes or quotation marks before sending the name to the console.
-		for (p = pp; *p != '\0'; ++p)
+		for (auto p = pp; *p != '\0'; ++p)
 		{
 			if (*p == '"' || *p == '\\')
 			{
@@ -425,8 +425,9 @@ void DPlayerMenu::PlayerNameChanged(DMenuItemBase *li)
 			command << *p;
 		}
 		command << '"';
-		C_DoCommand (command);
+		C_DoCommand(command);
 	}
+	return 0;
 }
 
 //=============================================================================
@@ -435,28 +436,15 @@ void DPlayerMenu::PlayerNameChanged(DMenuItemBase *li)
 //
 //=============================================================================
 
-void DPlayerMenu::ColorSetChanged (DMenuItemBase *li)
+DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorSetChanged)
 {
-	int	sel;
-
-	if (li->GetValue(0, &sel))
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(sel);
+	if (self == DMenu::CurrentMenu)
 	{
-		int mycolorset = -1;
-
-		if (sel > 0) mycolorset = PlayerColorSets[sel-1];
-
-		DMenuItemBase *red   = GetItem(NAME_Red);
-		DMenuItemBase *green = GetItem(NAME_Green);
-		DMenuItemBase *blue  = GetItem(NAME_Blue);
-
-		// disable the sliders if a valid colorset is selected
-		if (red != NULL) red->Enable(mycolorset == -1);
-		if (green != NULL) green->Enable(mycolorset == -1);
-		if (blue != NULL) blue->Enable(mycolorset == -1);
-
-		players[consoleplayer].userinfo.ColorSetChanged(mycolorset);
-		UpdateTranslation();
+		players[consoleplayer].userinfo.ColorSetChanged(sel);
 	}
+	return 0;
 }
 
 //=============================================================================
@@ -493,6 +481,18 @@ void DPlayerMenu::ClassChanged (DMenuItemBase *li)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_OBJECT(sel, DMenuItemBase);
+	if (self == DMenu::CurrentMenu)
+	{
+		self->ClassChanged(sel);
+	}
+	return 0;
+}
+
+
 //=============================================================================
 //
 //
@@ -514,7 +514,6 @@ void DPlayerMenu::SkinChanged (DMenuItemBase *li)
 		sel = PlayerSkins[sel];
 		players[consoleplayer].userinfo.SkinNumChanged(sel);
 		UpdateTranslation();
-		cvar_set ("skin", skins[sel].name);
 
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
@@ -524,21 +523,23 @@ void DPlayerMenu::SkinChanged (DMenuItemBase *li)
 	}
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DPlayerMenu::AutoaimChanged (DMenuItemBase *li)
+DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 {
-	int	sel;
-
-	if (li->GetValue(0, &sel))
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_OBJECT(sel, DMenuItemBase);
+	if (self == DMenu::CurrentMenu)
 	{
-		autoaim = (float)sel;
+		self->SkinChanged(sel);
 	}
+	return 0;
 }
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, AutoaimChanged)
 {
@@ -551,108 +552,80 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, AutoaimChanged)
 	}
 	return 0;
 }
+
 //=============================================================================
 //
 //
 //
 //=============================================================================
 
-bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
+DEFINE_ACTION_FUNCTION(DPlayerMenu, TeamChanged)
 {
-	int v;
-	if (mDesc->mSelectedItem >= 0)
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(val);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
 	{
-		DMenuItemBase *li = mDesc->mItems[mDesc->mSelectedItem];
-		if (li->MenuEvent(mkey, fromcontroller))
-		{
-			FName current = li->GetAction(NULL);
-			switch(current)
-			{
-				// item specific handling comes here
-
-			case NAME_Playerbox:
-				if (mkey == MKEY_Input)
-				{
-					PlayerNameChanged(li);
-				}
-				break;
-
-			case NAME_Team:
-				if (li->GetValue(0, &v))
-				{
-					team = v==0? TEAM_NONE : v-1;
-				}
-				break;
-
-			case NAME_Color:
-					ColorSetChanged(li);
-					break;
-
-			case NAME_Red:
-				if (li->GetValue(0, &v))
-				{
-					uint32 color = players[consoleplayer].userinfo.GetColor();
-					SendNewColor (v, GPART(color), BPART(color));
-				}
-				break;
-
-			case NAME_Green:
-				if (li->GetValue(0, &v))
-				{
-					uint32 color = players[consoleplayer].userinfo.GetColor();
-					SendNewColor (RPART(color), v, BPART(color));
-				}
-				break;
-
-			case NAME_Blue:
-				if (li->GetValue(0, &v))
-				{
-					uint32 color = players[consoleplayer].userinfo.GetColor();
-					SendNewColor (RPART(color), GPART(color), v);
-				}
-				break;
-
-			case NAME_Class:
-				ClassChanged(li);
-				break;
-
-			case NAME_Skin:
-				SkinChanged(li);
-				break;
-
-			case NAME_Gender:
-				if (li->GetValue(0, &v))
-				{
-					cvar_set ("gender", v==0? "male" : v==1? "female" : "other");
-				}
-				break;
-
-			case NAME_Autoaim:
-				AutoaimChanged(li);
-				break;
-
-			case NAME_Switch:
-				if (li->GetValue(0, &v))
-				{
-					neverswitchonpickup = !!v;
-				}
-				break;
-
-			case NAME_AlwaysRun:
-				if (li->GetValue(0, &v))
-				{
-					cl_run = !!v;
-				}
-				break;
-
-			default:
-				break;
-			}
-			return true;
-		}
+		team = val == 0 ? TEAM_NONE : val - 1;
 	}
-	return Super::MenuEvent(mkey, fromcontroller);
+	return 0;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(DPlayerMenu, GenderChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(v);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
+	{
+		cvar_set("gender", v == 0 ? "male" : v == 1 ? "female" : "other");
+	}
+	return 0;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(DPlayerMenu, SwitchOnPickupChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(v);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
+	{
+		neverswitchonpickup = !!v;
+	}
+	return 0;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(DPlayerMenu, AlwaysRunChanged)
+{
+	PARAM_SELF_PROLOGUE(DPlayerMenu);
+	PARAM_INT(v);
+	// only allow if the menu is active to prevent abuse.
+	if (self == DMenu::CurrentMenu)
+	{
+		cl_run = !!v;
+	}
+	return 0;
+}
+
 
 DEFINE_FIELD(DPlayerMenu, mRotation)
 DEFINE_FIELD_NAMED(DPlayerMenu, PlayerClass, mPlayerClass)
+DEFINE_FIELD(DPlayerMenu, PlayerColorSets)

@@ -3,9 +3,20 @@ class PlayerMenu : ListMenu native
 {
 	native int mRotation;
 	native PlayerClass mPlayerClass;
+	native Array<int> PlayerColorSets;
 	
+	// All write function for the player config are native to prevent abuse.
 	protected native void AutoaimChanged(float val);
+	protected native void TeamChanged(int val);
+	protected native void AlwaysRunChanged(int val);
+	protected native void GenderChanged(int val);
+	protected native void SwitchOnPickupChanged(int val);
 	protected native void ColorChanged(int red, int green, int blue);
+	protected native void ColorSetChanged(int red);
+	protected native void PlayerNameChanged(String name);
+
+	protected native void ClassChanged(ListMenuItem it);
+	protected native void SkinChanged (ListMenuItem li);
 	
 	protected void UpdateTranslation()
 	{
@@ -16,6 +27,142 @@ class PlayerMenu : ListMenu native
 	{
 		ColorChanged(red, green, blue);
 		UpdateTranslation();
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		int v;
+		bool res;
+		String s;
+		if (mDesc.mSelectedItem >= 0)
+		{
+			let li = mDesc.mItems[mDesc.mSelectedItem];
+			if (li.MenuEvent(mkey, fromcontroller))
+			{
+				Name ctrl = li.GetAction();
+				switch(ctrl)
+				{
+					// item specific handling comes here
+
+				case 'Playerbox':
+					if (mkey == MKEY_Input)
+					{
+						[res, s] = li.GetString(0);
+						if (res) PlayerNameChanged(s);
+					}
+					break;
+
+				case 'Team':
+					[res, v] = li.GetValue(0);
+					if (res) TeamChanged(v);
+					break;
+
+				case 'Color':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						int mycolorset = -1;
+
+						if (v > 0) mycolorset = PlayerColorSets[v - 1];
+
+						let red   = GetItem('Red');
+						let green = GetItem('Green');
+						let blue  = GetItem('Blue');
+
+						// disable the sliders if a valid colorset is selected
+						if (red != NULL) red.Enable(mycolorset == -1);
+						if (green != NULL) green.Enable(mycolorset == -1);
+						if (blue != NULL) blue.Enable(mycolorset == -1);
+						
+						ColorSetChanged(v - 1);
+						UpdateTranslation();
+					}
+					break;
+
+				case 'Red':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						Color colr = players[consoleplayer].GetColor();
+						SendNewColor (v, colr.g, colr.b);
+					}
+					break;
+
+				case 'Green':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						Color colr = players[consoleplayer].GetColor();
+						SendNewColor (colr.r, v, colr.b);
+					}
+					break;
+
+				case 'Blue':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						Color colr = players[consoleplayer].GetColor();
+						SendNewColor (colr.r, colr.g, v);
+					}
+					break;
+					
+				case 'Class':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						ClassChanged(li);
+					}
+					break;
+
+				case 'Skin':
+					SkinChanged(li);
+					break;
+
+				case 'Gender':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						GenderChanged(v);
+					}
+					break;
+
+				case 'Autoaim':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						AutoaimChanged(v);
+					}
+					break;
+
+				case 'Switch':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						SwitchOnPickupChanged(v);
+					}
+					break;
+
+				case 'AlwaysRun':
+					[res, v] = li.GetValue(0);
+					if (res) 
+					{
+						AlwaysRunChanged(v);
+					}
+					break;
+
+				default:
+					break;
+				}
+				return true;
+			}
+		}
+		return Super.MenuEvent(mkey, fromcontroller);
 	}
 	
 	//=============================================================================

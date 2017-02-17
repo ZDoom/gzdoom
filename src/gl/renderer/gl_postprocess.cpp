@@ -166,6 +166,7 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
+	BlurScene();
 }
 
 //-----------------------------------------------------------------------------
@@ -462,6 +463,76 @@ void FGLRenderer::BloomScene(int fixedcm)
 	mBloomCombineShader->Bind();
 	mBloomCombineShader->BloomTexture.Set(0);
 	RenderScreenQuad();
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
+// Blur the scene
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::BlurScene()
+{
+	FGLDebug::PushGroup("BlurScene");
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
+
+	const float blurAmount = 5.0f;
+	int sampleCount = 9;
+	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
+	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
+
+	const auto &viewport = mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
+
+	const auto &level0 = mBuffers->BloomLevels[0];
+
+	// Grab the area we want to bloom:
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mBuffers->GetCurrentFB());
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, level0.VFramebuffer);
+	glBlitFramebuffer(viewport.left, viewport.top, viewport.width, viewport.height, 0, 0, level0.Width, level0.Height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	// Blur and downscale:
+	for (int i = 0; i < numLevels - 1; i++)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i + 1];
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+	}
+
+	// Blur and upscale:
+	for (int i = numLevels - 1; i > 0; i--)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i - 1];
+
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+
+		// Linear upscale:
+		glBindFramebuffer(GL_FRAMEBUFFER, next.VFramebuffer);
+		glViewport(0, 0, next.Width, next.Height);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, level.VTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		mBloomCombineShader->Bind();
+		mBloomCombineShader->BloomTexture.Set(0);
+		RenderScreenQuad();
+	}
+
+	mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurVertical(this, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+
+	// Copy blur back to scene texture:
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, level0.VFramebuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mBuffers->GetCurrentFB());
+	glBlitFramebuffer(0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	FGLDebug::PopGroup();

@@ -219,7 +219,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
-	bool CheckReadOnly(int flags);
+	bool CheckWritable(int flags);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 

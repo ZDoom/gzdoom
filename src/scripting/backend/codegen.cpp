@@ -167,7 +167,8 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	}
 }
 
-bool FCompileContext::CheckReadOnly(int flags)
+// [ZZ] I find it really dumb that something called CheckReadOnly returns false for readonly. renamed.
+bool FCompileContext::CheckWritable(int flags)
 {
 	if (!(flags & VARF_ReadOnly)) return false;
 	if (!(flags & VARF_InternalAccess)) return true;
@@ -6202,7 +6203,7 @@ FxExpression *FxLocalVariable::Resolve(FCompileContext &ctx)
 bool FxLocalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = !ctx.CheckReadOnly(Variable->VarFlags);
+	if (writable != nullptr) *writable = !ctx.CheckWritable(Variable->VarFlags);
 	return true;
 }
 	
@@ -6420,7 +6421,7 @@ FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
 bool FxGlobalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && !ctx.CheckReadOnly(membervar->Flags);
+	if (writable != nullptr) *writable = AddressWritable && !ctx.CheckWritable(membervar->Flags);
 	return true;
 }
 
@@ -6610,7 +6611,7 @@ FxStackVariable::~FxStackVariable()
 bool FxStackVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && !ctx.CheckReadOnly(membervar->Flags);
+	if (writable != nullptr) *writable = AddressWritable && !ctx.CheckWritable(membervar->Flags);
 	return true;
 }
 
@@ -6708,7 +6709,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		return false;
 	}
 	AddressRequested = true;
-	if (writable != nullptr) *writable = (AddressWritable && !ctx.CheckReadOnly(membervar->Flags) &&
+	if (writable != nullptr) *writable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
 											(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
 	return true;
 }
@@ -7618,6 +7619,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	PStruct *cls;
 	bool staticonly = false;
 	bool novirtual = false;
+	bool isreadonly = false;
 
 	PStruct *ccls = nullptr;
 
@@ -7912,7 +7914,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		auto x = new FxGetParentClass(Self);
 		return x->Resolve(ctx);
 	}
-	
+
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
@@ -7943,18 +7945,11 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	else if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 	{
 		bool writable;
-		if (Self->RequestAddress(ctx, &writable) && writable)
-		{
-			cls = static_cast<PStruct*>(Self->ValueType);
-			Self->ValueType = NewPointer(Self->ValueType);
-		}
-		else
-		{
-			// Cannot be made writable so we cannot use its methods.
-			ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s\n", MethodName.GetChars());
-			delete this;
-			return nullptr;
-		}
+
+		// [ZZ] allow const method to be called on a readonly struct
+		isreadonly = !(Self->RequestAddress(ctx, &writable) && writable);
+		cls = static_cast<PStruct*>(Self->ValueType);
+		Self->ValueType = NewPointer(Self->ValueType);
 	}
 	else
 	{
@@ -7977,6 +7972,15 @@ isresolved:
 	if (afd == nullptr)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Unknown function %s\n", MethodName.GetChars());
+		delete this;
+		return nullptr;
+	}
+
+	if (isreadonly && !(afd->Variants[0].Flags & VARF_ReadOnly))
+	{
+		// Cannot be made writable so we cannot use its methods.
+		// [ZZ] Why this esoteric message?
+		ScriptPosition.Message(MSG_ERROR, "Readonly struct on left hand side of %s not allowed\n", MethodName.GetChars());
 		delete this;
 		return nullptr;
 	}

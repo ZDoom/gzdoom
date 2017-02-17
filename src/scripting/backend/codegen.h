@@ -71,7 +71,7 @@ class FxLocalVariableDeclaration;
 typedef TDeletingArray<FxExpression*> FArgumentList;
 
 // [ZZ] this is kind of related to compile context as well
-struct FPlayUIBarrier
+struct FScopeBarrier
 {
 	bool callable;
 	bool readable;
@@ -118,7 +118,7 @@ struct FPlayUIBarrier
 		}
 	}
 
-	FPlayUIBarrier()
+	FScopeBarrier()
 	{
 		sidefrom = -1;
 		sidelast = -1;
@@ -127,7 +127,7 @@ struct FPlayUIBarrier
 		writable = true;
 	}
 
-	FPlayUIBarrier(int flags1, int flags2, const char* name)
+	FScopeBarrier(int flags1, int flags2, const char* name)
 	{
 		sidefrom = -1;
 		sidelast = -1;

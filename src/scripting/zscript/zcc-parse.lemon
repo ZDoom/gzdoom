@@ -216,7 +216,7 @@ class_flags(X) ::= class_flags(A) NONEW.					{ X.Flags = A.Flags | ZCC_NoNew; X.
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) ALLOWUI.					{ X.Flags = A.Flags | ZCC_AllowUI; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
 
 /*----- Dottable Identifier -----*/
@@ -332,7 +332,7 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body
 struct_flags(X) ::= .										{ X.Flags = 0; }
 struct_flags(X) ::= struct_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; }
 struct_flags(X) ::= struct_flags(A) PLAY.					{ X.Flags = A.Flags | ZCC_Play; }
-struct_flags(X) ::= struct_flags(A) ALLOWUI.				{ X.Flags = A.Flags | ZCC_AllowUI; }
+struct_flags(X) ::= struct_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; }
 struct_flags(X) ::= struct_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
@@ -1008,7 +1008,7 @@ decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= UI(T).			{ X.Int = ZCC_UIFlag; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= PLAY(T).		{ X.Int = ZCC_Play; X.SourceLoc = T.SourceLoc; }
-decl_flag(X) ::= ALLOWUI(T).	{ X.Int = ZCC_AllowUI; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= CLEARSCOPE(T). { X.Int = ZCC_ClearScope; X.SourceLoc = T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }

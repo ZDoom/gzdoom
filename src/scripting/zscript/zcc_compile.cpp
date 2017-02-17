@@ -615,7 +615,7 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->cls->Flags & ZCC_NoNew || (parent->ObjectFlags & OF_NoNew))
 					c->Type()->ObjectFlags |= OF_NoNew;
 				// 
-				static int incompatible[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+				static int incompatible[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 				int incompatiblecnt = 0;
 				for (int k = 0; k < countof(incompatible); k++)
 					if (incompatible[k] & c->cls->Flags) incompatiblecnt++;
@@ -625,9 +625,9 @@ void ZCCCompiler::CreateClassTypes()
 					Error(c->cls, "Class %s has incompatible flags", c->NodeName().GetChars());
 				}
 				
-				if (c->cls->Flags & ZCC_UIFlag || ((parent->ObjectFlags & OF_UI) && !(c->cls->Flags & ZCC_AllowUI)))
+				if (c->cls->Flags & ZCC_UIFlag || ((parent->ObjectFlags & OF_UI) && !(c->cls->Flags & ZCC_ClearScope)))
 					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_Play) | OF_UI;
-				if (c->cls->Flags & ZCC_Play || ((parent->ObjectFlags & OF_Play) && !(c->cls->Flags & ZCC_AllowUI)))
+				if (c->cls->Flags & ZCC_Play || ((parent->ObjectFlags & OF_Play) && !(c->cls->Flags & ZCC_ClearScope)))
 					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
 
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
@@ -1097,7 +1097,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 			varflags = (varflags&~VARF_Play) | VARF_UI;
 		if (field->Flags & ZCC_Play)
 			varflags = (varflags&~VARF_UI) | VARF_Play;
-		if (field->Flags & ZCC_AllowUI)
+		if (field->Flags & ZCC_ClearScope)
 			varflags = (varflags&~(VARF_UI | VARF_Play));
 
 		if (field->Flags & ZCC_Native)
@@ -1105,7 +1105,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 			varflags |= VARF_Native | VARF_Transient;
 		}
 
-		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 		int excludeflags = 0;
 		int fc = 0;
 		for (int i = 0; i < countof(excludescope); i++)
@@ -1265,7 +1265,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 FString ZCCCompiler::FlagsToString(uint32_t flags)
 {
 
-	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "allowui" };
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "clearscope" };
 	FString build;
 
 	for (size_t i = 0; i < countof(flagnames); i++)
@@ -2120,12 +2120,12 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (c->Type()->ObjectFlags & OF_Play)
 			varflags |= VARF_Play;
 		if (f->Flags & ZCC_FuncConst)
-			varflags = (varflags&~(VARF_Play | VARF_UI)); // const implies allowui. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
+			varflags = (varflags&~(VARF_Play | VARF_UI)); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
 		if (f->Flags & ZCC_UIFlag)
 			varflags = (varflags&~VARF_Play) | VARF_UI;
 		if (f->Flags & ZCC_Play)
 			varflags = (varflags&~VARF_UI) | VARF_Play;
-		if (f->Flags & ZCC_AllowUI)
+		if (f->Flags & ZCC_ClearScope)
 			varflags = (varflags&~(VARF_Play | VARF_UI));
 
 		if ((f->Flags & ZCC_VarArg) && !(f->Flags & ZCC_Native))
@@ -2180,7 +2180,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(f->Flags&(ZCC_FuncConst | ZCC_UIFlag | ZCC_Play)).GetChars(), FName(f->Name).GetChars());
 		}
 
-		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_AllowUI };
+		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 		excludeflags = 0;
 		fc = 0;
 		for (int i = 0; i < countof(excludescope); i++)
@@ -2408,7 +2408,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						{
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
-						// you can't change ui/play/allowui for a virtual method.
+						// you can't change ui/play/clearscope for a virtual method.
 						if ((oldfunc->ScopePlay != sym->Variants[0].Implementation->ScopePlay) ||
 							(oldfunc->ScopeUI != sym->Variants[0].Implementation->ScopeUI))
 						{

@@ -40,7 +40,7 @@ enum
 	ZCC_NoNew			= 1 << 17,
 	ZCC_UIFlag			= 1 << 18, // there's also token called ZCC_UI
 	ZCC_Play			= 1 << 19,
-	ZCC_AllowUI			= 1 << 20,
+	ZCC_ClearScope		= 1 << 20,
 };
 
 // Function parameter modifiers

@@ -173,7 +173,7 @@ std2:
 		'nonew'						{ RET(TK_NoNew); }
 		'ui'						{ RET(TK_UI); }
 		'play'						{ RET(TK_Play); }
-		'allowui'					{ RET(TK_AllowUI); }
+		'clearscope'				{ RET(TK_ClearScope); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

@@ -76,7 +76,6 @@ public:
 	void UpdateColorsets();
 	void UpdateSkins();
 	void UpdateTranslation();
-	void SendNewColor (int red, int green, int blue);
 
 	void PlayerNameChanged(DMenuItemBase *li);
 	void ColorSetChanged (DMenuItemBase *li);
@@ -296,12 +295,6 @@ void DPlayerMenu::PickPlayerClass()
 //
 //
 //=============================================================================
-
-void DPlayerMenu::SendNewColor (int red, int green, int blue)
-{
-	players[consoleplayer].userinfo.ColorChanged(MAKERGB(red,green,blue));
-	UpdateTranslation();
-}
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
 {
@@ -605,3 +598,4 @@ DEFINE_FIELD(DPlayerMenu, mRotation)
 DEFINE_FIELD_NAMED(DPlayerMenu, PlayerClass, mPlayerClass)
 DEFINE_FIELD(DPlayerMenu, PlayerColorSets)
 DEFINE_FIELD(DPlayerMenu, PlayerSkins)
+DEFINE_FIELD(DPlayerMenu, PlayerClassIndex)

@@ -2,6 +2,7 @@
 class PlayerMenu : ListMenu native
 {
 	native int mRotation;
+	native int PlayerClassIndex;
 	native PlayerClass mPlayerClass;
 	native Array<int> PlayerColorSets;
 	native Array<int> PlayerSkins;
@@ -30,7 +31,30 @@ class PlayerMenu : ListMenu native
 		UpdateTranslation();
 	}
 	
-	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	protected void PickPlayerClass()
+	{
+		int pclass = 0;
+		// [GRB] Pick a class from player class list
+		if (PlayerClasses.Size () > 1)
+		{
+			pclass = players[consoleplayer].GetPlayerClassNum();
+
+			if (pclass < 0)
+			{
+				pclass = (MenuTime() >> 7) % PlayerClasses.Size ();
+			}
+		}
+		PlayerClassIndex = pclass;
+		mPlayerClass = PlayerClasses[PlayerClassIndex];
+		UpdateTranslation();
+	}
+
 	//=============================================================================
 	//
 	//

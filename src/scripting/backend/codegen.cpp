@@ -6120,11 +6120,6 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	SAFE_RESOLVE(Object, ctx);
 
-	if (Identifier == FName("allmap"))
-	{
-		int a = 2;
-	}
-
 	// check for class or struct constants if the left side is a type name.
 	if (Object->ValueType == TypeError)
 	{

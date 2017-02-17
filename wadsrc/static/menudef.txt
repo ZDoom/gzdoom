@@ -559,7 +559,7 @@ OptionMenu "MouseOptions"
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu "JoystickOptions"
+OptionMenu "JoystickOptionsDefaults"
 {
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
@@ -575,6 +575,11 @@ OptionMenu "JoystickOptions"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED2", "ConnectMessage2"
 	
 	// The rest will be filled in by joystick code if devices get connected or disconnected
+}
+
+OptionMenu "JoystickOptions"
+{
+	Title "$JOYMNU_OPTIONS"
 }
 
 OptionValue "JoyAxisMapNames"

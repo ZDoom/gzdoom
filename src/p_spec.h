@@ -322,8 +322,15 @@ class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
 public:
+
+	enum EADType
+	{
+		adOpenClose,
+		adClose
+	};
+
 	DAnimatedDoor (sector_t *sector);
-	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim);
+	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, EADType type);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -336,6 +343,7 @@ protected:
 	int m_Timer;
 	double m_BotDist;
 	int m_Status;
+	int m_Type;
 	enum
 	{
 		Opening,
@@ -347,12 +355,12 @@ protected:
 	int m_Delay;
 	bool m_SetBlocking1, m_SetBlocking2;
 
-	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
+	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, EADType type);
 private:
 	DAnimatedDoor ();
 };
 
-bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
+bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
 
 //
 // P_CEILNG

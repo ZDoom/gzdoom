@@ -538,7 +538,8 @@ void DAnimatedDoor::Serialize(FSerializer &arc)
 		("delay", m_Delay)
 		("dooranim", m_DoorAnim)
 		("setblock1", m_SetBlocking1)
-		("setblock2", m_SetBlocking2);
+		("setblock2", m_SetBlocking2)
+		("type", m_Type);
 }
 
 //============================================================================
@@ -614,7 +615,6 @@ void DAnimatedDoor::Tick ()
 				}
 
 				m_Timer = m_Delay;
-				m_Status = Waiting;
 			}
 			else
 			{
@@ -631,7 +631,7 @@ void DAnimatedDoor::Tick ()
 
 	case Waiting:
 		// IF DOOR IS DONE WAITING...
-		if (!m_Timer--)
+		if (m_Type == adClose || !m_Timer--)
 		{
 			if (!StartClosing())
 			{
@@ -683,7 +683,7 @@ void DAnimatedDoor::Tick ()
 //
 //============================================================================
 
-DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
+DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, DAnimatedDoor::EADType type)
 	: DMovingCeiling (sec, false)
 {
 	double topdist;
@@ -717,7 +717,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 
 	topdist = m_Sector->ceilingplane.fD() - topdist * m_Sector->ceilingplane.fC();
 
-	m_Status = Opening;
+	m_Type = type;
+	m_Status = type == adClose? Waiting : Opening;
 	m_Speed = speed;
 	m_Delay = delay;
 	m_Timer = m_Speed;
@@ -728,9 +729,12 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	m_Line2->flags |= ML_BLOCKING;
 	m_BotDist = m_Sector->ceilingplane.fD();
 	m_Sector->MoveCeiling (2048., topdist, 1);
-	if (m_DoorAnim->OpenSound != NAME_None)
+	if (type == adOpenClose)
 	{
-		SN_StartSequence (m_Sector, CHAN_INTERIOR, m_DoorAnim->OpenSound, 1);
+		if (m_DoorAnim->OpenSound != NAME_None)
+		{
+			SN_StartSequence(m_Sector, CHAN_INTERIOR, m_DoorAnim->OpenSound, 1);
+		}
 	}
 }
 
@@ -741,7 +745,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 //
 //============================================================================
 
-bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
+bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
 {
 	sector_t *sec;
 	int secnum;
@@ -756,7 +760,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 		sec = line->backsector;
 
 		// Make sure door isn't already being animated
-		if (sec->ceilingdata != NULL)
+		if (sec->ceilingdata != NULL )
 		{
 			if (actor->player == NULL)
 				return false;
@@ -774,7 +778,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
-			new DAnimatedDoor (sec, line, speed, delay, anim);
+			new DAnimatedDoor (sec, line, speed, delay, anim, type);
 			return true;
 		}
 		return false;
@@ -799,7 +803,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			if (anim != NULL)
 			{
 				rtn = true;
-				new DAnimatedDoor (sec, line, speed, delay, anim);
+				new DAnimatedDoor (sec, line, speed, delay, anim, type);
 				break;
 			}
 		}

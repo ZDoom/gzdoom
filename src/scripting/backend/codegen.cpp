@@ -1530,7 +1530,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(basex, ctx);
 
 	// first deal with the simple types
-	if (ValueType == TypeError || basex->ValueType == TypeError)
+	if (ValueType == TypeError || basex->ValueType == TypeError || basex->ValueType == nullptr)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Trying to cast to invalid type.");
 		delete this;

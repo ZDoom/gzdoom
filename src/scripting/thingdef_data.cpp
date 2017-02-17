@@ -804,7 +804,7 @@ void InitThingdef()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
 
 	auto plrskn = NewPointer(NewResizableArray(playerskinstruct), false);
-	PField *plrsknf = new PField("PlayerSkins", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Skins);
+	PField *plrsknf = new PField("PlayerSkins", plrskn, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Skins);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrsknf);
 
 	auto bindcls = NewNativeStruct("KeyBindings", nullptr);

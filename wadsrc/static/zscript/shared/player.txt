@@ -295,7 +295,6 @@ struct PlayerInfo native	// this is what internally is known as player_t
 /* these are not doable yet
 ticcmd_t	cmd;
 usercmd_t	original_cmd;
-userinfo_t	userinfo;
 */
 	
 
@@ -309,13 +308,15 @@ userinfo_t	userinfo;
 	native PSprite FindPSprite(int id);
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
-	native String GetUserName();
-	native Color GetColor();
-	native int GetPlayerClassNum();
-	native bool GetNeverSwitch();
 	native void DropWeapon();
 	native void BringUpWeapon();
 
+	native String GetUserName();
+	native Color GetColor();
+	native int GetPlayerClassNum();
+	native int GetSkin();
+	native bool GetNeverSwitch();
+	
 }
 
 struct PlayerClass native
@@ -329,7 +330,7 @@ struct PlayerClass native
 
 struct PlayerSkin native
 {
-	native readonly String		Name;
+	native readonly String		SkinName;
 	native readonly String		Face;
 	native readonly uint8		gender;
 	native readonly uint8		range0start;

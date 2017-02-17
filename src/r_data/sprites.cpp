@@ -992,7 +992,7 @@ void R_InitSprites ()
 }
 
 
-DEFINE_FIELD(FPlayerSkin, Name);
+DEFINE_FIELD_NAMED(FPlayerSkin, Name, SkinName);
 DEFINE_FIELD(FPlayerSkin, Face);
 DEFINE_FIELD(FPlayerSkin, gender);
 DEFINE_FIELD(FPlayerSkin, range0start);

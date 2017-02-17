@@ -673,6 +673,11 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPlayerClassNum)
 	ACTION_RETURN_INT(self->userinfo.GetPlayerClassNum());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetSkin());
+}
 
 //===========================================================================
 //

@@ -5,7 +5,7 @@ class PlayerMenu : ListMenu native
 	native int PlayerClassIndex;
 	native PlayerClass mPlayerClass;
 	native Array<int> PlayerColorSets;
-	native Array<int> PlayerSkins;
+	native Array<int> mPlayerSkins;
 	
 	// All write function for the player config are native to prevent abuse.
 	protected native void AutoaimChanged(float val);
@@ -61,6 +61,52 @@ class PlayerMenu : ListMenu native
 	//
 	//=============================================================================
 
+	protected void UpdateSkins()
+	{
+		int sel = 0;
+		int skin;
+		let li = GetItem('Skin');
+		if (li != NULL)
+		{
+			if (GetDefaultByType (mPlayerClass.Type).bNoSkin ||	players[consoleplayer].GetPlayerClassNum() == -1)
+			{
+				li.SetString(0, "Base");
+				li.SetValue(0, 0);
+				skin = 0;
+			}
+			else
+			{
+				mPlayerSkins.Clear();
+				for (int i = 0; i < PlayerSkins.Size(); i++)
+				{
+					if (mPlayerClass.CheckSkin(i))
+					{
+						int j = mPlayerSkins.Push(i);
+						li.SetString(j, PlayerSkins[i].SkinName);
+						if (players[consoleplayer].GetSkin() == i)
+						{
+							sel = j;
+						}
+					}
+				}
+				li.SetValue(0, sel);
+				skin = mPlayerSkins[sel];
+			}
+			li = GetItem('Playerdisplay');
+			if (li != NULL)
+			{
+				li.SetValue(ListMenuItemPlayerDisplay.PDF_SKIN, skin);
+			}
+		}
+		UpdateTranslation();
+	}
+
+//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	protected void ChangeSkin (MenuItemBase li)
 	{
 		if (GetDefaultByType (mPlayerClass.Type).bNoSkin || players[consoleplayer].GetPlayerClassNum() == -1)
@@ -74,7 +120,7 @@ class PlayerMenu : ListMenu native
 		[res, sel] = li.GetValue(0);
 		if (res)
 		{
-			sel = PlayerSkins[sel];
+			sel = mPlayerSkins[sel];
 			SkinChanged(sel);
 			UpdateTranslation();
 

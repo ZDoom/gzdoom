@@ -1,0 +1,25 @@
+
+
+class PlayerMenu : ListMenu native
+{
+	native int mRotation;
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer ()
+	{
+
+		Super.Drawer();
+
+		String str = "PRESS " .. TEXTCOLOR_WHITE .. "SPACE";
+		screen.DrawText (SmallFont, Font.CR_GOLD, 320 - 32 - 32 - SmallFont.StringWidth (str)/2, 50 + 48 + 70, str, DTA_Clean, true);
+		str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";
+		screen.DrawText (SmallFont, Font.CR_GOLD, 320 - 32 - 32 - SmallFont.StringWidth (str)/2, 50 + 48 + 70 + SmallFont.GetHeight (), str, DTA_Clean, true);
+
+	}
+	
+}

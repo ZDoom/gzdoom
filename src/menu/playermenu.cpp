@@ -65,6 +65,7 @@ class DPlayerMenu : public DListMenu
 {
 	DECLARE_CLASS(DPlayerMenu, DListMenu)
 
+public:
 	int PlayerClassIndex;
 	FPlayerClass *PlayerClass;
 	TArray<int> PlayerColorSets;
@@ -91,8 +92,6 @@ public:
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
-	void Ticker ();
-	void Drawer ();
 };
 
 IMPLEMENT_CLASS(DPlayerMenu, false, false)
@@ -693,38 +692,5 @@ bool DPlayerMenu::MouseEvent(int type, int x, int y)
 	return res;
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
 
-void DPlayerMenu::Ticker ()
-{
-
-	Super::Ticker();
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DPlayerMenu::Drawer ()
-{
-
-	Super::Drawer();
-
-	const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
-	screen->DrawText (SmallFont, CR_GOLD, 320 - 32 - 32 -
-		SmallFont->StringWidth (str)/2,
-		50 + 48 + 70, str,
-		DTA_Clean, true, TAG_DONE);
-	str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";
-	screen->DrawText (SmallFont, CR_GOLD, 320 - 32 - 32 -
-		SmallFont->StringWidth (str)/2,
-		50 + 48 + 70 + SmallFont->GetHeight (), str,
-		DTA_Clean, true, TAG_DONE);
-
-}
+DEFINE_FIELD(DPlayerMenu, mRotation)

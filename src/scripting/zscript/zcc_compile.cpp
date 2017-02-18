@@ -1081,8 +1081,8 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
 		int notallowed = forstruct? 
-			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Meta | ZCC_Extension | ZCC_VirtualScope :
-			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Extension | ZCC_VirtualScope;
+			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Meta | ZCC_Extension | ZCC_VirtualScope | ZCC_ClearScope :
+			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Extension | ZCC_VirtualScope | ZCC_ClearScope;
 
 		if (field->Flags & notallowed)
 		{

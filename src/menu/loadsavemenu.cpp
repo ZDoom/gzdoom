@@ -66,6 +66,10 @@ void FSavegameManager::ClearSaveGames()
 	SaveGames.Clear();
 }
 
+FSavegameManager::~FSavegameManager()
+{
+	ClearSaveGames();
+}
 //=============================================================================
 //
 // Save data maintenance 

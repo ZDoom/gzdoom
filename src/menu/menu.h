@@ -80,7 +80,7 @@ private:
 public:
 	int WindowSize = 0;
 	FSaveGameNode *quickSaveSlot = nullptr;
-
+	~FSavegameManager();
 
 private:
 	int InsertSaveNode(FSaveGameNode *node);

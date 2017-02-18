@@ -58,12 +58,13 @@ class DMessageBoxMenu : public DMenu
 	int messageSelection;
 	int mMouseLeft, mMouseRight, mMouseY;
 	FName mAction;
+	void (*Handler)();
 
 public:
 
-	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None);
+	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None, void (*hnd)() = nullptr);
 	void OnDestroy() override;
-	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false);
+	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false, void(*hnd)() = nullptr);
 	void Drawer();
 	bool Responder(event_t *ev);
 	bool MenuEvent(int mkey, bool fromcontroller);
@@ -80,7 +81,7 @@ IMPLEMENT_CLASS(DMessageBoxMenu, false, false)
 //
 //=============================================================================
 
-DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int messagemode, bool playsound, FName action)
+DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int messagemode, bool playsound, FName action, void (*hnd)())
 : DMenu(parent)
 {
 	mAction = action;
@@ -91,7 +92,7 @@ DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int message
 	int mr2 = 170 + SmallFont->StringWidth(GStrings["TXT_NO"]);
 	mMouseRight = MAX(mr1, mr2);
 
-	Init(parent, message, messagemode, playsound);
+	Init(parent, message, messagemode, playsound, hnd);
 }
 
 //=============================================================================
@@ -100,7 +101,7 @@ DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int message
 //
 //=============================================================================
 
-void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, bool playsound)
+void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, bool playsound, void (*hnd)())
 {
 	mParentMenu = parent;
 	if (message != NULL) 
@@ -115,6 +116,7 @@ void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, 
 		S_StopSound (CHAN_VOICE);
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", snd_menuvolume, ATTN_NONE);
 	}
+	Handler = hnd;
 }
 
 //=============================================================================
@@ -150,7 +152,16 @@ void DMessageBoxMenu::CloseSound()
 
 void DMessageBoxMenu::HandleResult(bool res)
 {
-	if (mParentMenu != NULL)
+	if (Handler != nullptr)
+	{
+		if (res) Handler();
+		else
+		{
+			Close();
+			CloseSound();
+		}
+	}
+	else if (mParentMenu != NULL)
 	{
 		if (mMessageMode == 0)
 		{
@@ -349,150 +360,45 @@ bool DMessageBoxMenu::MouseEvent(int type, int x, int y)
 //
 //
 //=============================================================================
-//=============================================================================
-//
-//
-//
-//=============================================================================
 
-class DQuitMenu : public DMessageBoxMenu
-{
-	DECLARE_CLASS(DQuitMenu, DMessageBoxMenu)
+CCMD (menu_quit)
+{	// F10
+	M_StartControlPanel (true);
 
-public:
-
-	DQuitMenu(bool playsound = false);
-	virtual void HandleResult(bool res);
-};
-
-IMPLEMENT_CLASS(DQuitMenu, false, false)
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DQuitMenu::DQuitMenu(bool playsound)
-{
 	int messageindex = gametic % gameinfo.quitmessages.Size();
 	FString EndString;
 	const char *msg = gameinfo.quitmessages[messageindex];
-	if (msg[0] == '$') 
+	if (msg[0] == '$')
 	{
 		if (msg[1] == '*')
 		{
-			EndString = GStrings(msg+2);
+			EndString = GStrings(msg + 2);
 		}
 		else
 		{
-			EndString.Format("%s\n\n%s", GStrings(msg+1), GStrings("DOSY"));
+			EndString.Format("%s\n\n%s", GStrings(msg + 1), GStrings("DOSY"));
 		}
 	}
 	else EndString = gameinfo.quitmessages[messageindex];
 
-	Init(NULL, EndString, 0, playsound);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DQuitMenu::HandleResult(bool res)
-{
-	if (res)
+	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, EndString, 0, false, NAME_None, []()
 	{
 		if (!netgame)
 		{
 			if (gameinfo.quitSound.IsNotEmpty())
 			{
-				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
-				I_WaitVBL (105);
+				S_Sound(CHAN_VOICE | CHAN_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
+				I_WaitVBL(105);
 			}
 		}
 		ST_Endoom();
-	}
-	else
-	{
-		Close();
-		CloseSound();
-	}
-}
+	});
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
 
-CCMD (menu_quit)
-{	// F10
-	M_StartControlPanel (true);
-	DMenu *newmenu = new DQuitMenu(false);
-	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 
 
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class DEndGameMenu : public DMessageBoxMenu
-{
-	DECLARE_CLASS(DEndGameMenu, DMessageBoxMenu)
-
-public:
-
-	DEndGameMenu(bool playsound = false);
-	virtual void HandleResult(bool res);
-};
-
-IMPLEMENT_CLASS(DEndGameMenu, false, false)
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DEndGameMenu::DEndGameMenu(bool playsound)
-{
-	Init(NULL, GStrings(netgame ? "NETEND" : "ENDGAME"), 0, playsound);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DEndGameMenu::HandleResult(bool res)
-{
-	if (res)
-	{
-		M_ClearMenus ();
-		if (!netgame)
-		{
-			D_StartTitle ();
-		}
-	}
-	else
-	{
-		Close();
-		CloseSound();
-	}
-}
 
 //=============================================================================
 //
@@ -510,67 +416,18 @@ CCMD (menu_endgame)
 		
 	//M_StartControlPanel (true);
 	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
-	DMenu *newmenu = new DEndGameMenu(false);
-	newmenu->mParentMenu = CurrentMenu;
-	M_ActivateMenu(newmenu);
-}
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class DQuickSaveMenu : public DMessageBoxMenu
-{
-	DECLARE_CLASS(DQuickSaveMenu, DMessageBoxMenu)
-
-public:
-
-	DQuickSaveMenu(bool playsound = false);
-	virtual void HandleResult(bool res);
-};
-
-IMPLEMENT_CLASS(DQuickSaveMenu, false, false)
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DQuickSaveMenu::DQuickSaveMenu(bool playsound)
-{
-	FString tempstring;
-
-	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
-	Init(NULL, tempstring, 0, playsound);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DQuickSaveMenu::HandleResult(bool res)
-{
-	if (res)
+	FString tempstring = GStrings(netgame ? "NETEND" : "ENDGAME");
+	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
-		G_SaveGame (savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
-	}
-	else
-	{
-		Close();
-		CloseSound();
-	}
+		if (!netgame)
+		{
+			D_StartTitle();
+		}
+	});
+
+	M_ActivateMenu(newmenu);
 }
 
 //=============================================================================
@@ -606,67 +463,18 @@ CCMD (quicksave)
 	}
 
 	S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
-	DMenu *newmenu = new DQuickSaveMenu(false);
-	newmenu->mParentMenu = CurrentMenu;
-	M_ActivateMenu(newmenu);
-}
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class DQuickLoadMenu : public DMessageBoxMenu
-{
-	DECLARE_CLASS(DQuickLoadMenu, DMessageBoxMenu)
-
-public:
-
-	DQuickLoadMenu(bool playsound = false);
-	virtual void HandleResult(bool res);
-};
-
-IMPLEMENT_CLASS(DQuickLoadMenu, false, false)
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DQuickLoadMenu::DQuickLoadMenu(bool playsound)
-{
 	FString tempstring;
+	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
-	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
-	Init(NULL, tempstring, 0, playsound);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DQuickLoadMenu::HandleResult(bool res)
-{
-	if (res)
+	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
-		G_LoadGame (savegameManager.quickSaveSlot->Filename.GetChars());
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
+		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
-	}
-	else
-	{
-		Close();
-		CloseSound();
-	}
+	});
+
+	M_ActivateMenu(newmenu);
 }
 
 //=============================================================================
@@ -699,10 +507,17 @@ CCMD (quickload)
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
 		return;
 	}
+	FString tempstring;
+	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
 	M_StartControlPanel(true);
-	DMenu *newmenu = new DQuickLoadMenu(false);
-	newmenu->mParentMenu = CurrentMenu;
+
+	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
+	{
+		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
+		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		M_ClearMenus();
+	});
 	M_ActivateMenu(newmenu);
 }
 

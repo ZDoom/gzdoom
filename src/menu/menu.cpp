@@ -588,6 +588,11 @@ void M_SetMenu(FName menu, int param)
 		M_InitVideoModes();
 		break;
 
+	case NAME_Quitmenu:
+		// The separate menu class no longer exists but the name still needs support for existing mods.
+		C_DoCommand("menu_quit");
+		return;
+
 	}
 
 	// End of special checks

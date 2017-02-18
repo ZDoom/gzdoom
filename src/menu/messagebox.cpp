@@ -47,13 +47,34 @@
 #include "g_game.h"
 
 
+class DBrokenLines : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DBrokenLines, DObject)
+
+public:
+	FBrokenLines *mBroken;
+	unsigned int mCount;
+
+	DBrokenLines(FBrokenLines *broken, unsigned int count)
+	{
+		mBroken = broken;
+		mCount = count;
+	}
+
+	void OnDestroy() override
+	{
+		V_FreeBrokenLines(mBroken);
+	}
+};
+
+
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 
 class DMessageBoxMenu : public DMenu
 {
 	DECLARE_CLASS(DMessageBoxMenu, DMenu)
 public:
-	FBrokenLines *mMessage;
+	DBrokenLines *mMessage;
 	int mMessageMode;
 	int messageSelection;
 	int mMouseLeft, mMouseRight, mMouseY;
@@ -63,9 +84,7 @@ public:
 public:
 
 	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None, void (*hnd)() = nullptr);
-	void OnDestroy() override;
 	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false, void(*hnd)() = nullptr);
-	void Drawer();
 };
 
 IMPLEMENT_CLASS(DMessageBoxMenu, false, false)
@@ -102,7 +121,11 @@ void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, 
 	if (message != NULL) 
 	{
 		if (*message == '$') message = GStrings(message+1);
-		mMessage = V_BreakLines(SmallFont, 300, message);
+		unsigned count;
+		auto Message = V_BreakLines(SmallFont, 300, message, true, &count);
+		mMessage = new DBrokenLines(Message, count);
+		GC::WriteBarrier(mMessage);
+		mMessage->ObjectFlags |= OF_Fixed;
 	}
 	else mMessage = NULL;
 	mMessageMode = messagemode;
@@ -112,76 +135,6 @@ void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, 
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", snd_menuvolume, ATTN_NONE);
 	}
 	Handler = hnd;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMessageBoxMenu::OnDestroy()
-{
-	if (mMessage != NULL) V_FreeBrokenLines(mMessage);
-	mMessage = NULL;
-	Super::OnDestroy();
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMessageBoxMenu::Drawer ()
-{
-	int i, y;
-	PalEntry fade = 0;
-
-	int fontheight = SmallFont->GetHeight();
-	//V_SetBorderNeedRefresh();
-	//ST_SetNeedRefresh();
-
-	y = 100;
-
-	if (mMessage != NULL)
-	{
-		for (i = 0; mMessage[i].Width >= 0; i++)
-			y -= SmallFont->GetHeight () / 2;
-
-		for (i = 0; mMessage[i].Width >= 0; i++)
-		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, 160 - mMessage[i].Width/2, y, mMessage[i].Text,
-				DTA_Clean, true, TAG_DONE);
-			y += fontheight;
-		}
-	}
-
-	if (mMessageMode == 0)
-	{
-		y += fontheight;
-		mMouseY = y;
-		screen->DrawText(SmallFont, 
-			messageSelection == 0? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, 
-			160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
-		screen->DrawText(SmallFont, 
-			messageSelection == 1? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, 
-			160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
-
-		if (messageSelection >= 0)
-		{
-			if ((MenuTime%8) < 6)
-			{
-				screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
-					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-					(y + (fontheight + 1) * messageSelection - 100 + fontheight/2 - 5) * CleanYfac + screen->GetHeight() / 2,
-					"\xd",
-					DTA_CellX, 8 * CleanXfac,
-					DTA_CellY, 8 * CleanYfac,
-					TAG_DONE);
-			}
-		}
-	}
 }
 
 typedef void(*hfunc)();
@@ -395,3 +348,4 @@ DEFINE_FIELD(DMessageBoxMenu, mMouseRight);
 DEFINE_FIELD(DMessageBoxMenu, mMouseY);
 DEFINE_FIELD(DMessageBoxMenu, mAction);
 DEFINE_FIELD(DMessageBoxMenu, Handler);
+DEFINE_FIELD(DMessageBoxMenu, mMessage);

@@ -34,6 +34,7 @@
 
 class MessageBoxMenu : Menu native
 {
+	native BrokenLines mMessage;
 	native voidptr Handler;
 	native int mMessageMode;
 	native int messageSelection;
@@ -43,6 +44,66 @@ class MessageBoxMenu : Menu native
 	native static void CallHandler(voidptr hnd);
 
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void OnDestroy()
+	{
+		mMessage.Destroy();	// explicitly free the strings now.
+		Super.OnDestroy();
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer ()
+	{
+		int i, y;
+
+		int fontheight = SmallFont.GetHeight();
+
+		y = 100;
+
+		if (mMessage != NULL)
+		{
+			int c = mMessage.Count();
+			for (i = 0; i < c; i++)
+				y -= SmallFont.GetHeight () / 2;
+
+			for (i = 0; i < c; i++)
+			{
+				screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, 160 - mMessage.StringWidth(i)/2, y, mMessage.StringAt(i), DTA_Clean, true);
+				y += fontheight;
+			}
+		}
+
+		if (mMessageMode == 0)
+		{
+			y += fontheight;
+			mMouseY = y;
+			screen.DrawText(SmallFont, messageSelection == 0? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, 160, y, Stringtable.Localize("$TXT_YES"), DTA_Clean, true);
+			screen.DrawText(SmallFont, messageSelection == 1? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, 160, y + fontheight + 1, Stringtable.Localize("$TXT_NO"), DTA_Clean, true);
+
+			if (messageSelection >= 0)
+			{
+				if ((MenuTime() % 8) < 6)
+				{
+					screen.DrawText(ConFont, OptionMenuSettings.mFontColorSelection,
+						(150 - 160) * CleanXfac + screen.GetWidth() / 2,
+						(y + (fontheight + 1) * messageSelection - 100 + fontheight/2 - 5) * CleanYfac + screen.GetHeight() / 2,
+						"\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+				}
+			}
+		}
+	}
+
+	
 	//=============================================================================
 	//
 	//

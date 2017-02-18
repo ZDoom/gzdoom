@@ -107,7 +107,8 @@ void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc)
 // this can be imported in vmexec.h
 void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype)
 {
-	int outerside = FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags);
+	// [ZZ] anonymous blocks have 0 variants, so give them Side_Virtual.
+	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
 	if (outerside == FScopeBarrier::Side_Virtual)
 		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
 	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);

@@ -253,9 +253,7 @@ class DMenu : public DObject
 	DECLARE_CLASS (DMenu, DObject)
 	HAS_OBJECT_POINTERS
 
-protected:
-	bool mMouseCapture;
-	bool mBackbuttonSelected;
+
 
 public:
 	enum
@@ -271,6 +269,8 @@ public:
 	};
 
 	TObjPtr<DMenu> mParentMenu;
+	bool mMouseCapture;
+	bool mBackbuttonSelected;
 
 	DMenu(DMenu *parent = NULL);
 	virtual bool Responder (event_t *ev);
@@ -354,7 +354,7 @@ extern FOptionMap OptionValues;
 
 class DTextEnterMenu : public DMenu
 {
-	DECLARE_ABSTRACT_CLASS(DTextEnterMenu, DMenu)
+	DECLARE_CLASS(DTextEnterMenu, DMenu)
 
 public:
 	FString mEnterString;
@@ -370,12 +370,7 @@ public:
 	bool AllowColors;
 
 
-	// [TP] Added allowcolors
-	DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
-
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool Responder(event_t *ev);
-	bool MouseEvent(int type, int x, int y);
+	DTextEnterMenu() {}
 };
 
 

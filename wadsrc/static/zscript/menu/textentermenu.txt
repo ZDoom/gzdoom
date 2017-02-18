@@ -16,9 +16,47 @@ class TextEnterMenu : Menu native
 	native int InputGridY;
 	native bool AllowColors;
 	
-	native static TextEnterMenu Open(Menu parent, String text, int maxlen, int sizemode, bool fromcontroller);
-	
-	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	// [TP] Added allowcolors
+	private void Init(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors)
+	{
+		Super.init(parent);
+		mEnterString = textbuffer;
+		mEnterSize = maxlen < 0 ? 0x7fffffff : maxlen;
+		mSizeMode = sizemode;
+		mInputGridOkay = showgrid || m_showinputgrid;
+		if (mEnterString.Length() > 0)
+		{
+			InputGridX = INPUTGRID_WIDTH - 1;
+			InputGridY = INPUTGRID_HEIGHT - 1;
+		}
+		else
+		{
+			// If we are naming a new save, don't start the cursor on "end".
+			InputGridX = 0;
+			InputGridY = 0;
+		}
+		AllowColors = allowcolors; // [TP]
+	}
+
+	static TextEnterMenu Open(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid = false, bool allowcolors = false)
+	{
+		let me = new("TextEnterMenu");
+		me.Init(parent, textbuffer, maxlen, sizemode, showgrid, allowcolors);
+		return me;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	String GetText()
 	{
 		return mEnterString;
@@ -28,6 +66,195 @@ class TextEnterMenu : Menu native
 	{
 		return mInputGridOkay; 
 	}
+	
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool Responder(InputEventData ev)
+	{
+		if (ev.type == InputEventData.GUI_Event)
+		{
+			// Save game and player name string input
+			if (ev.subtype == InputEventData.GUI_Char)
+			{
+				mInputGridOkay = false;
+				if (mEnterString.Length() < mEnterSize &&
+					(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
+				{
+					mEnterString.AppendFormat("%c", ev.data1);
+				}
+				return true;
+			}
+			int ch = ev.data1;
+			if ((ev.subtype == InputEventData.GUI_KeyDown || ev.subtype == InputEventData.GUI_KeyRepeat) && ch == 8)
+			{
+				if (mEnterString.Length() > 0)
+				{
+					mEnterString.Truncate(mEnterString.Length() - 1);
+				}
+			}
+			else if (ev.subtype == InputEventData.GUI_KeyDown)
+			{
+				if (ch == UIEvent.Key_ESCAPE)
+				{
+					Menu parent = mParentMenu;
+					Close();
+					parent.MenuEvent(MKEY_Abort, false);
+					return true;
+				}
+				else if (ch == 13)
+				{
+					if (mEnterString.Length() > 0)
+					{
+						// [TP] If we allow color codes, colorize the string now.
+						if (AllowColors)
+							mEnterString = mEnterString.Filter();
+
+						Menu parent = mParentMenu;
+						parent.MenuEvent(MKEY_Input, false);
+						Close();
+						return true;
+					}
+				}
+			}
+			if (ev.subtype == InputEventData.GUI_KeyDown || ev.subtype == InputEventData.GUI_KeyRepeat)
+			{
+				return true;
+			}
+		}
+		return Super.Responder(ev);
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MouseEvent(int type, int x, int y)
+	{
+		if (mMouseCapture || m_use_mouse == 1)
+		{
+			int cell_width = 18 * CleanXfac;
+			int cell_height = 12 * CleanYfac;
+			int screen_y = screen.GetHeight() - INPUTGRID_HEIGHT * cell_height;
+			int screen_x = (screen.GetWidth() - INPUTGRID_WIDTH * cell_width) / 2;
+
+			if (x >= screen_x && x < screen_x + INPUTGRID_WIDTH * cell_width && y >= screen_y)
+			{
+				InputGridX = (x - screen_x) / cell_width;
+				InputGridY = (y - screen_y) / cell_height;
+				if (type == MOUSE_Release)
+				{
+					if (MenuEvent(MKEY_Enter, true))
+					{
+						MenuSound("menu/choose");
+						if (m_use_mouse == 2) InputGridX = InputGridY = -1;
+						return true;
+					}
+				}
+			}
+			else
+			{
+				InputGridX = InputGridY = -1;
+			}
+		}
+		return Super.MouseEvent(type, x, y);
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int key, bool fromcontroller)
+	{
+		String InputGridChars = Chars;
+		if (key == MKEY_Back)
+		{
+			mParentMenu.MenuEvent(MKEY_Abort, false);
+			return Super.MenuEvent(key, fromcontroller);
+		}
+		if (fromcontroller)
+		{
+			mInputGridOkay = true;
+		}
+
+		if (mInputGridOkay)
+		{
+			int ch;
+
+			if (InputGridX == -1 || InputGridY == -1)
+			{
+				InputGridX = InputGridY = 0;
+			}
+			switch (key)
+			{
+			case MKEY_Down:
+				InputGridY = (InputGridY + 1) % INPUTGRID_HEIGHT;
+				return true;
+
+			case MKEY_Up:
+				InputGridY = (InputGridY + INPUTGRID_HEIGHT - 1) % INPUTGRID_HEIGHT;
+				return true;
+
+			case MKEY_Right:
+				InputGridX = (InputGridX + 1) % INPUTGRID_WIDTH;
+				return true;
+
+			case MKEY_Left:
+				InputGridX = (InputGridX + INPUTGRID_WIDTH - 1) % INPUTGRID_WIDTH;
+				return true;
+
+			case MKEY_Clear:
+				if (mEnterString.Length() > 0)
+				{
+					mEnterString.Truncate(mEnterString.Length() - 1);
+				}
+				return true;
+
+			case MKEY_Enter:
+				if (mInputGridOkay)
+				{
+					String c = InputGridChars.CharAt(InputGridX + InputGridY * INPUTGRID_WIDTH);
+					int ch = c.CharCodeAt(0);
+					if (ch == 0)			// end
+					{
+						if (mEnterString.Length() > 0)
+						{
+							Menu parent = mParentMenu;
+							Close();
+							parent.MenuEvent(MKEY_Input, false);
+							return true;
+						}
+					}
+					else if (ch == 8)	// bs
+					{
+						if (mEnterString.Length() > 0)
+						{
+							mEnterString.Truncate(mEnterString.Length() - 1);
+						}
+					}
+					else if (mEnterString.Length() < mEnterSize &&
+						(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
+					{
+						mEnterString = mEnterString .. c;
+					}
+				}
+				return true;
+
+			default:
+				break;	// Keep GCC quiet
+			}
+		}
+		return false;
+	}
+
 	
 	//=============================================================================
 	//

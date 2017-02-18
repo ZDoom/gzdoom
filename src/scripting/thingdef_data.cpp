@@ -1213,10 +1213,12 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 	ACTION_RETURN_STRING(s);
 }
 
-DEFINE_ACTION_FUNCTION(FStringStruct, Len)
+DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_INT((int)self->Len());
+	PARAM_UINT(len);
+	self->Truncate(len);
+	return 0;
 }
 
 // CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
@@ -1239,3 +1241,10 @@ DEFINE_ACTION_FUNCTION(FStringStruct, CharCodeAt)
 		ACTION_RETURN_INT(0);
 	ACTION_RETURN_INT((*self)[pos]);
 }
+
+DEFINE_ACTION_FUNCTION(FStringStruct, Filter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(strbin1(*self));
+}
+

@@ -8,6 +8,8 @@
 #include "doomerrors.h"
 #include "memarena.h"
 
+class DObject;
+
 extern FMemArena ClassDataAllocator;
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return

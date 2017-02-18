@@ -578,9 +578,10 @@ struct StringStruct native
 
 	native void Replace(String pattern, String replacement);
 	native String Mid(int pos = 0, int len = 2147483647);
-	native int Len();
+	native void Truncate(int newlen);
 	native String CharAt(int pos);
 	native int CharCodeAt(int pos);
+	native String Filter();
 }
 
 class Floor : Thinker native

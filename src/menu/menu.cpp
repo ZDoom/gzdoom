@@ -1195,6 +1195,8 @@ CCMD(undocolorpic)
 
 
 DEFINE_FIELD(DMenu, mParentMenu)
+DEFINE_FIELD(DMenu, mMouseCapture);
+DEFINE_FIELD(DMenu, mBackbuttonSelected);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

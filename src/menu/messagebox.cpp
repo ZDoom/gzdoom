@@ -52,7 +52,7 @@ EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 class DMessageBoxMenu : public DMenu
 {
 	DECLARE_CLASS(DMessageBoxMenu, DMenu)
-
+public:
 	FBrokenLines *mMessage;
 	int mMessageMode;
 	int messageSelection;
@@ -66,11 +66,6 @@ public:
 	void OnDestroy() override;
 	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false, void(*hnd)() = nullptr);
 	void Drawer();
-	bool Responder(event_t *ev);
-	bool MenuEvent(int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	void CloseSound();
-	virtual void HandleResult(bool res);
 };
 
 IMPLEMENT_CLASS(DMessageBoxMenu, false, false)
@@ -138,54 +133,6 @@ void DMessageBoxMenu::OnDestroy()
 //
 //=============================================================================
 
-void DMessageBoxMenu::CloseSound()
-{
-	S_Sound (CHAN_VOICE | CHAN_UI, 
-		CurrentMenu != NULL? "menu/backup" : "menu/dismiss", snd_menuvolume, ATTN_NONE);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMessageBoxMenu::HandleResult(bool res)
-{
-	if (Handler != nullptr)
-	{
-		if (res) Handler();
-		else
-		{
-			Close();
-			CloseSound();
-		}
-	}
-	else if (mParentMenu != NULL)
-	{
-		if (mMessageMode == 0)
-		{
-			if (mAction == NAME_None) 
-			{
-				mParentMenu->CallMenuEvent(res? MKEY_MBYes : MKEY_MBNo, false);
-				Close();
-			}
-			else 
-			{
-				Close();
-				if (res) M_SetMenu(mAction, -1);
-			}
-			CloseSound();
-		}
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 void DMessageBoxMenu::Drawer ()
 {
 	int i, y;
@@ -237,122 +184,13 @@ void DMessageBoxMenu::Drawer ()
 	}
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DMessageBoxMenu::Responder(event_t *ev)
+typedef void(*hfunc)();
+DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)
 {
-	if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown)
-	{
-		if (mMessageMode == 0)
-		{
-			int ch = tolower(ev->data1);
-			if (ch == 'n' || ch == ' ') 
-			{
-				HandleResult(false);		
-				return true;
-			}
-			else if (ch == 'y') 
-			{
-				HandleResult(true);
-				return true;
-			}
-		}
-		else
-		{
-			Close();
-			return true;
-		}
-		return false;
-	}
-	else if (ev->type == EV_KeyDown)
-	{
-		Close();
-		return true;
-	}
-	return Super::Responder(ev);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DMessageBoxMenu::MenuEvent(int mkey, bool fromcontroller)
-{
-	if (mMessageMode == 0)
-	{
-		if (mkey == MKEY_Up || mkey == MKEY_Down)
-		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-			messageSelection = !messageSelection;
-			return true;
-		}
-		else if (mkey == MKEY_Enter)
-		{
-			// 0 is yes, 1 is no
-			HandleResult(!messageSelection);
-			return true;
-		}
-		else if (mkey == MKEY_Back)
-		{
-			HandleResult(false);
-			return true;
-		}
-		return false;
-	}
-	else
-	{
-		Close();
-		CloseSound();
-		return true;
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DMessageBoxMenu::MouseEvent(int type, int x, int y)
-{
-	if (mMessageMode == 1)
-	{
-		if (type == MOUSE_Click)
-		{
-			return MenuEvent(MKEY_Enter, true);
-		}
-		return false;
-	}
-	else
-	{
-		int sel = -1;
-		int fh = SmallFont->GetHeight() + 1;
-
-		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
-		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
-		y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
-
-		if (x >= mMouseLeft && x <= mMouseRight && y >= mMouseY && y < mMouseY + 2 * fh)
-		{
-			sel = y >= mMouseY + fh;
-		}
-		if (sel != -1 && sel != messageSelection)
-		{
-			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-		}
-		messageSelection = sel;
-		if (type == MOUSE_Release)
-		{
-			return MenuEvent(MKEY_Enter, true);
-		}
-		return true;
-	}
+	PARAM_PROLOGUE;
+	PARAM_POINTERTYPE(Handler, hfunc);
+	Handler();
+	return 0;
 }
 
 //=============================================================================
@@ -548,3 +386,12 @@ DEFINE_ACTION_FUNCTION(DMenu, StartMessage)
 	M_StartMessage(msg, mode, action);
 	return 0;
 }
+
+
+DEFINE_FIELD(DMessageBoxMenu, mMessageMode);
+DEFINE_FIELD(DMessageBoxMenu, messageSelection);
+DEFINE_FIELD(DMessageBoxMenu, mMouseLeft);
+DEFINE_FIELD(DMessageBoxMenu, mMouseRight); 
+DEFINE_FIELD(DMessageBoxMenu, mMouseY);
+DEFINE_FIELD(DMessageBoxMenu, mAction);
+DEFINE_FIELD(DMessageBoxMenu, Handler);

@@ -72,6 +72,7 @@ FSavegameManager::~FSavegameManager()
 {
 	ClearSaveGames();
 }
+
 //=============================================================================
 //
 // Save data maintenance 
@@ -312,6 +313,14 @@ void FSavegameManager::ReadSaveStrings()
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(FSavegameManager, ReadSaveStrings)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	self->ReadSaveStrings();
+	return 0;
+}
+
 
 //=============================================================================
 //
@@ -579,6 +588,12 @@ void FSavegameManager::ClearSaveStuff()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, ClearSaveStuff)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	self->ClearSaveStuff();
+	return 0;
+}
 
 //=============================================================================
 //
@@ -751,94 +766,12 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveNewSaveNode)
 
 FSavegameManager savegameManager;
 
-
-
-
-class DLoadSaveMenu : public DListMenu
+DEFINE_ACTION_FUNCTION(FSavegameManager, GetManager)
 {
-	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
-
-public:
-
-	FSavegameManager *manager;
-
-	int Selected;
-	int TopItem;
-
-
-	int savepicLeft;
-	int savepicTop;
-	int savepicWidth;
-	int savepicHeight;
-	int rowHeight;
-	int listboxLeft;
-	int listboxTop;
-	int listboxWidth;
-	
-	int listboxRows;
-	int listboxHeight;
-	int listboxRight;
-	int listboxBottom;
-
-	int commentLeft;
-	int commentTop;
-	int commentWidth;
-	int commentHeight;
-	int commentRight;
-	int commentBottom;
-
-	bool mEntering;
-	DTextEnterMenu *mInput = nullptr;
-
-	DLoadSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
-	void OnDestroy() override;
-};
-
-IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
-
-
-
-//=============================================================================
-//
-// End of static savegame maintenance code
-//
-//=============================================================================
-
-DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
-: DListMenu(parent, desc)
-{
-	manager = &savegameManager;
-	manager->ReadSaveStrings();
-
-	savepicLeft = 10;
-	savepicTop = 54*CleanYfac;
-	savepicWidth = 216*screen->GetWidth()/640;
-	savepicHeight = 135*screen->GetHeight()/400;
-	manager->WindowSize = savepicWidth / CleanXfac;
-
-	rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
-	listboxLeft = savepicLeft + savepicWidth + 14;
-	listboxTop = savepicTop;
-	listboxWidth = screen->GetWidth() - listboxLeft - 10;
-	int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
-	listboxRows = (listboxHeight1 - 1) / rowHeight;
-	listboxHeight = listboxRows * rowHeight + 1;
-	listboxRight = listboxLeft + listboxWidth;
-	listboxBottom = listboxTop + listboxHeight;
-
-	commentLeft = savepicLeft;
-	commentTop = savepicTop + savepicHeight + 16;
-	commentWidth = savepicWidth;
-	commentHeight = (51+(screen->GetHeight()>200?10:0))*CleanYfac;
-	commentRight = commentLeft + commentWidth;
-	commentBottom = commentTop + commentHeight;
+	PARAM_PROLOGUE;
+	ACTION_RETURN_POINTER(&savegameManager);
 }
 
-void DLoadSaveMenu::OnDestroy()
-{
-	manager->ClearSaveStuff ();
-	Super::OnDestroy();
-}
 
 
 DEFINE_FIELD(FSaveGameNode, SaveTitle);
@@ -850,26 +783,3 @@ DEFINE_FIELD(FSaveGameNode, bNoDelete);
 DEFINE_FIELD(FSavegameManager, WindowSize);
 DEFINE_FIELD(FSavegameManager, quickSaveSlot);
 
-DEFINE_FIELD(DLoadSaveMenu, manager);
-DEFINE_FIELD(DLoadSaveMenu, Selected);
-DEFINE_FIELD(DLoadSaveMenu, TopItem);
-DEFINE_FIELD(DLoadSaveMenu, savepicLeft);
-DEFINE_FIELD(DLoadSaveMenu, savepicTop);
-DEFINE_FIELD(DLoadSaveMenu, savepicWidth);
-DEFINE_FIELD(DLoadSaveMenu, savepicHeight);
-DEFINE_FIELD(DLoadSaveMenu, rowHeight);
-DEFINE_FIELD(DLoadSaveMenu, listboxLeft);
-DEFINE_FIELD(DLoadSaveMenu, listboxTop);
-DEFINE_FIELD(DLoadSaveMenu, listboxWidth);
-DEFINE_FIELD(DLoadSaveMenu, listboxRows);
-DEFINE_FIELD(DLoadSaveMenu, listboxHeight);
-DEFINE_FIELD(DLoadSaveMenu, listboxRight);
-DEFINE_FIELD(DLoadSaveMenu, listboxBottom);
-DEFINE_FIELD(DLoadSaveMenu, commentLeft);
-DEFINE_FIELD(DLoadSaveMenu, commentTop);
-DEFINE_FIELD(DLoadSaveMenu, commentWidth);
-DEFINE_FIELD(DLoadSaveMenu, commentHeight);
-DEFINE_FIELD(DLoadSaveMenu, commentRight);
-DEFINE_FIELD(DLoadSaveMenu, commentBottom);
-DEFINE_FIELD(DLoadSaveMenu, mEntering);
-DEFINE_FIELD(DLoadSaveMenu, mInput);

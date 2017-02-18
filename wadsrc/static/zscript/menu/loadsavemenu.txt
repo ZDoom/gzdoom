@@ -48,14 +48,15 @@ struct SavegameManager native
 	native int WindowSize;
 	native SaveGameNode quickSaveSlot;
 
-	//void ReadSaveStrings();
+	native static SavegameManager GetManager();
+	native void ReadSaveStrings();
 	native void UnloadSaveData();
 
 	native int RemoveSaveSlot(int index);
 	native void LoadSavegame(int Selected);
 	native void DoSave(int Selected, String savegamestring);
 	native int ExtractSaveData(int index);
-	//void ClearSaveStuff();
+	native void ClearSaveStuff();
 	native bool DrawSavePic(int x, int y, int w, int h);
 	native void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
 	native void SetFileInfo(int Selected);
@@ -68,37 +69,86 @@ struct SavegameManager native
 
 
 
-class LoadSaveMenu : ListMenu native
+class LoadSaveMenu : ListMenu
 {
-	native SavegameManager manager;
-	native int TopItem;
-	native int Selected;
+	SavegameManager manager;
+	int TopItem;
+	int Selected;
 
-	native int savepicLeft;
-	native int savepicTop;
-	native int savepicWidth;
-	native int savepicHeight;
-	native int rowHeight;
-	native int listboxLeft;
-	native int listboxTop;
-	native int listboxWidth;
+	int savepicLeft;
+	int savepicTop;
+	int savepicWidth;
+	int savepicHeight;
+	int rowHeight;
+	int listboxLeft;
+	int listboxTop;
+	int listboxWidth;
 	
-	native int listboxRows;
-	native int listboxHeight;
-	native int listboxRight;
-	native int listboxBottom;
+	int listboxRows;
+	int listboxHeight;
+	int listboxRight;
+	int listboxBottom;
 
-	native int commentLeft;
-	native int commentTop;
-	native int commentWidth;
-	native int commentHeight;
-	native int commentRight;
-	native int commentBottom;
+	int commentLeft;
+	int commentTop;
+	int commentWidth;
+	int commentHeight;
+	int commentRight;
+	int commentBottom;
 
-	native bool mEntering;
-	native TextEnterMenu mInput;
+	bool mEntering;
+	TextEnterMenu mInput;
 
 	
+
+	//=============================================================================
+	//
+	// 
+	//
+	//=============================================================================
+
+	override void Init(Menu parent, ListMenuDescriptor desc)
+	{
+		Super.Init(parent, desc);
+		manager = SavegameManager.GetManager();
+		manager.ReadSaveStrings();
+
+		savepicLeft = 10;
+		savepicTop = 54*CleanYfac;
+		savepicWidth = 216*screen.GetWidth()/640;
+		savepicHeight = 135*screen.GetHeight()/400;
+		manager.WindowSize = savepicWidth / CleanXfac;
+
+		rowHeight = (SmallFont.GetHeight() + 1) * CleanYfac;
+		listboxLeft = savepicLeft + savepicWidth + 14;
+		listboxTop = savepicTop;
+		listboxWidth = screen.GetWidth() - listboxLeft - 10;
+		int listboxHeight1 = screen.GetHeight() - listboxTop - 10;
+		listboxRows = (listboxHeight1 - 1) / rowHeight;
+		listboxHeight = listboxRows * rowHeight + 1;
+		listboxRight = listboxLeft + listboxWidth;
+		listboxBottom = listboxTop + listboxHeight;
+
+		commentLeft = savepicLeft;
+		commentTop = savepicTop + savepicHeight + 16;
+		commentWidth = savepicWidth;
+		commentHeight = (51+(screen.GetHeight()>200?10:0))*CleanYfac;
+		commentRight = commentLeft + commentWidth;
+		commentBottom = commentTop + commentHeight;
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void OnDestroy()
+	{
+		manager.ClearSaveStuff ();
+		Super.OnDestroy();
+	}
+
 	//=============================================================================
 	//
 	//

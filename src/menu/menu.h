@@ -69,7 +69,10 @@ struct FSaveGameNode
 
 struct SavegameManager
 {
+private:
 	TArray<FSaveGameNode*> SaveGames;
+	FSaveGameNode NewSaveNode;
+public:
 	int LastSaved = -1;
 	int LastAccessed = -1;
 	int WindowSize = 0;
@@ -81,11 +84,13 @@ struct SavegameManager
 	FTexture *SavePic = nullptr;
 	FBrokenLines *SaveComment = nullptr;
 
-	void ClearSaveGames();
+private:
 	int InsertSaveNode(FSaveGameNode *node);
+public:
+	void ClearSaveGames();
 	int RemoveSaveSlot(int index);
 	void ReadSaveStrings();
-	void NotifyNewSave(const char *file, const char *title, bool okForQuicksave);
+	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave);
 	void LoadSavegame(int Selected);
 	void DoSave(int Selected, const char *savegamestring);
 	void DeleteEntry(int Selected);
@@ -94,6 +99,10 @@ struct SavegameManager
 	void ClearSaveStuff();
 	bool DrawSavePic(int x, int y, int w, int h);
 	void SetFileInfo(int Selected);
+	unsigned SavegameCount();
+	FSaveGameNode *GetSavegame(unsigned i);
+	void InsertNewSaveNode();
+	bool RemoveNewSaveNode();
 
 };
 

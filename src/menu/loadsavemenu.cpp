@@ -304,11 +304,11 @@ void SavegameManager::ReadSaveStrings()
 //
 //=============================================================================
 
-void SavegameManager::NotifyNewSave(const char *file, const char *title, bool okForQuicksave)
+void SavegameManager::NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave)
 {
 	FSaveGameNode *node;
 
-	if (file == nullptr)
+	if (file.IsEmpty())
 		return;
 
 	ReadSaveStrings();
@@ -555,6 +555,60 @@ void SavegameManager::SetFileInfo(int Selected)
 	}
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+unsigned SavegameManager::SavegameCount()
+{
+	return SaveGames.Size();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+FSaveGameNode *SavegameManager::GetSavegame(unsigned i)
+{
+	return SaveGames[i];
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void SavegameManager::InsertNewSaveNode()
+{
+	NewSaveNode.SaveTitle = GStrings["NEWSAVE"];
+	NewSaveNode.bNoDelete = true;
+	SaveGames.Insert(0, &NewSaveNode);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool SavegameManager::RemoveNewSaveNode()
+{
+	if (SaveGames[0] == &NewSaveNode)
+	{
+		SaveGames.Delete(0);
+		return true;
+	}
+	return false;
+}
+
+
+
+
 SavegameManager savegameManager;
 
 
@@ -576,7 +630,6 @@ protected:
 	int savepicTop;
 	int savepicWidth;
 	int savepicHeight;
-
 	int rowHeight;
 	int listboxLeft;
 	int listboxTop;
@@ -680,10 +733,10 @@ void DLoadSaveMenu::Drawer ()
 		screen->Clear (savepicLeft, savepicTop,
 			savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
 
-		if (manager->SaveGames.Size() > 0)
+		if (manager->SavegameCount() > 0)
 		{
 			const char *text =
-				(Selected == -1 || !manager->SaveGames[Selected]->bOldVersion)
+				(Selected == -1 || !manager->GetSavegame(Selected)->bOldVersion)
 				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
@@ -713,7 +766,7 @@ void DLoadSaveMenu::Drawer ()
 	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
 	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
 
-	if (manager->SaveGames.Size() == 0)
+	if (manager->SavegameCount() == 0)
 	{
 		const char * text = GStrings("MNU_NOFILES");
 		const int textlen = SmallFont->StringWidth (text)*CleanXfac;
@@ -724,10 +777,10 @@ void DLoadSaveMenu::Drawer ()
 		return;
 	}
 
-	for (i = 0, j = TopItem; i < listboxRows && j < manager->SaveGames.Size(); i++,j++)
+	for (i = 0, j = TopItem; i < listboxRows && j < manager->SavegameCount(); i++,j++)
 	{
 		int color;
-		node = manager->SaveGames[j];
+		node = manager->GetSavegame(j);
 		if (node->bOldVersion)
 		{
 			color = CR_BLUE;
@@ -785,12 +838,12 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
-		if (manager->SaveGames.Size() > 1)
+		if (manager->SavegameCount() > 1)
 		{
 			if (Selected == -1) Selected = TopItem;
 			else
 			{
-				if (--Selected < 0) Selected = manager->SaveGames.Size()-1;
+				if (--Selected < 0) Selected = manager->SavegameCount()-1;
 				if (Selected < TopItem) TopItem = Selected;
 				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			}
@@ -800,12 +853,12 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_Down:
-		if (manager->SaveGames.Size() > 1)
+		if (manager->SavegameCount() > 1)
 		{
 			if (Selected == -1) Selected = TopItem;
 			else
 			{
-				if (unsigned(++Selected) >= manager->SaveGames.Size()) Selected = 0;
+				if (unsigned(++Selected) >= manager->SavegameCount()) Selected = 0;
 				if (Selected < TopItem) TopItem = Selected;
 				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			}
@@ -815,16 +868,16 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_PageDown:
-		if (manager->SaveGames.Size() > 1)
+		if (manager->SavegameCount() > 1)
 		{
-			if (TopItem >= (int)manager->SaveGames.Size() - listboxRows)
+			if (TopItem >= (int)manager->SavegameCount() - listboxRows)
 			{
 				TopItem = 0;
 				if (Selected != -1) Selected = 0;
 			}
 			else
 			{
-				TopItem = MIN<int>(TopItem + listboxRows, manager->SaveGames.Size() - listboxRows);
+				TopItem = MIN<int>(TopItem + listboxRows, manager->SavegameCount() - listboxRows);
 				if (TopItem > Selected && Selected != -1) Selected = TopItem;
 			}
 			manager->UnloadSaveData ();
@@ -833,11 +886,11 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_PageUp:
-		if (manager->SaveGames.Size() > 1)
+		if (manager->SavegameCount() > 1)
 		{
 			if (TopItem == 0)
 			{
-				TopItem = manager->SaveGames.Size() - listboxRows;
+				TopItem = manager->SavegameCount() - listboxRows;
 				if (Selected != -1) Selected = TopItem;
 			}
 			else
@@ -855,9 +908,9 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	case MKEY_MBYes:
 	{
-		if ((unsigned)Selected < manager->SaveGames.Size())
+		if ((unsigned)Selected < manager->SavegameCount())
 		{
-			int listindex = manager->SaveGames[0]->bNoDelete? Selected-1 : Selected;
+			int listindex = manager->GetSavegame(0)->bNoDelete? Selected-1 : Selected;
 			manager->DeleteEntry(Selected);
 			manager->UnloadSaveData ();
 			Selected = manager->RemoveSaveSlot (Selected);
@@ -889,7 +942,7 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 	{
 		int lineno = (y - listboxTop) / rowHeight;
 
-		if (TopItem + lineno < (int)manager->SaveGames.Size())
+		if (TopItem + lineno < (int)manager->SavegameCount())
 		{
 			Selected = TopItem + lineno;
 			manager->UnloadSaveData ();
@@ -921,7 +974,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_KeyDown)
 		{
-			if ((unsigned)Selected < manager->SaveGames.Size())
+			if ((unsigned)Selected < manager->SavegameCount())
 			{
 				switch (ev->data1)
 				{
@@ -934,7 +987,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 					{
 						FString EndString;
 						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-							GStrings("MNU_DELETESG"), manager->SaveGames[Selected]->SaveTitle.GetChars(), GStrings("PRESSYN"));
+							GStrings("MNU_DELETESG"), manager->GetSavegame(Selected)->SaveTitle.GetChars(), GStrings("PRESSYN"));
 						M_StartMessage (EndString, 0);
 					}
 					return true;
@@ -948,7 +1001,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 		}
 		else if (ev->subtype == EV_GUI_WheelDown)
 		{
-			if (TopItem < (int)manager->SaveGames.Size() - listboxRows) TopItem++;
+			if (TopItem < (int)manager->SavegameCount() - listboxRows) TopItem++;
 			return true;
 		}
 	}
@@ -965,8 +1018,6 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 class DSaveMenu : public DLoadSaveMenu
 {
 	DECLARE_CLASS(DSaveMenu, DLoadSaveMenu)
-
-	FSaveGameNode NewSaveNode;
 
 public:
 
@@ -989,18 +1040,9 @@ IMPLEMENT_CLASS(DSaveMenu, false, false)
 DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
-	NewSaveNode.SaveTitle =  GStrings["NEWSAVE"];
-	NewSaveNode.bNoDelete = true;
-	manager->SaveGames.Insert(0, &NewSaveNode);
+	manager->InsertNewSaveNode();
 	TopItem = 0;
-	if (manager->LastSaved == -1)
-	{
-		Selected = 0;
-	}
-	else
-	{
-		Selected = manager->LastSaved + 1;
-	}
+	Selected = manager->LastSaved + 1;
 	manager->ExtractSaveData (Selected);
 }
 
@@ -1012,11 +1054,9 @@ DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 
 void DSaveMenu::OnDestroy()
 {
-	if (manager->SaveGames[0] == &NewSaveNode)
+	if (manager->RemoveNewSaveNode())
 	{
-		manager->SaveGames.Delete(0);
-		if (Selected == 0) Selected = -1;
-		else Selected--;
+		Selected--;
 	}
 	Super::OnDestroy();
 }
@@ -1040,7 +1080,7 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	if (mkey == MKEY_Enter)
 	{
-		const char *SavegameString = (Selected != 0)? manager->SaveGames[Selected]->SaveTitle.GetChars() : "";
+		const char *SavegameString = (Selected != 0)? manager->GetSavegame(Selected)->SaveTitle.GetChars() : "";
 		mInput = new DTextEnterMenu(this, SavegameString, SAVESTRINGSIZE, 1, fromcontroller);
 		M_ActivateMenu(mInput);
 		mEntering = true;
@@ -1139,7 +1179,7 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		return true;
 	}
-	if (Selected == -1 || manager->SaveGames.Size() == 0)
+	if (Selected == -1 || manager->SavegameCount() == 0)
 	{
 		return false;
 	}

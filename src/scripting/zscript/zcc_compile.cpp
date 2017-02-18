@@ -2401,6 +2401,17 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
 		}
 
+		if (sym->Variants[0].Implementation != nullptr)
+		{
+			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
+			if (varflags & VARF_UI)
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_UI;
+			if (varflags & VARF_Play)
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Play;
+			if (varflags & VARF_VirtualScope)
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Virtual;
+		}
+
 		PClass *clstype = static_cast<PClass *>(c->Type());
 		if (varflags & VARF_Virtual)
 		{
@@ -2412,13 +2423,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			
 			if (varflags & VARF_Final)
 				sym->Variants[0].Implementation->Final = true;
-			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
-			if (varflags & VARF_UI)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_UI;
-			if (varflags & VARF_Play)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Play;
-			if (varflags & VARF_VirtualScope)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Virtual;
 			if (varflags & VARF_ReadOnly)
 				sym->Variants[0].Implementation->FuncConst = true;
 

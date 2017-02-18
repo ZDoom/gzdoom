@@ -89,6 +89,34 @@ static const FLOP FxFlops[] =
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
+
+//==========================================================================
+//
+// [ZZ] Magic methods to be used in vmexec.h for runtime checking of scope
+//
+//==========================================================================
+
+// this can be imported in vmexec.h
+void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc)
+{
+	int outerside = FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
+		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
+}
+// this can be imported in vmexec.h
+void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype)
+{
+	int outerside = FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags);
+	if (outerside == FScopeBarrier::Side_Virtual)
+		outerside = FScopeBarrier::Side_PlainData;
+	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);
+	if (innerside == FScopeBarrier::Side_Virtual)
+		innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
+	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
+		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->SymbolName.GetChars(), FScopeBarrier::StringFromSide(outerside));
+}
+
 //==========================================================================
 //
 // FCompileContext
@@ -8300,6 +8328,7 @@ FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumen
 	ArgList = std::move(args);
 	EmitTail = false;
 	NoVirtual = novirtual;
+	CallingFunction = nullptr;
 }
 
 //==========================================================================
@@ -8373,6 +8402,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
+	CallingFunction = ctx.Function;
 	if (ArgList.Size() > 0)
 	{
 		bool foundvarargs = false;
@@ -8580,6 +8610,15 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	ExpEmit selfemit;
 	if (Function->Variants[0].Flags & VARF_Method)
 	{
+		// [ZZ]
+		if (Function->Variants[0].Implementation && Function->Variants[0].Implementation->BarrierSide == FScopeBarrier::Side_Virtual)
+		{
+			// pass this even before Self, because otherwise we can't silently advance the arguments.
+			// this is not even implicit arguments.
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(Function, ATAG_OBJECT));
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(CallingFunction, ATAG_OBJECT));
+			count += 2;
+		}
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
 		assert((selfemit.RegType == REGT_POINTER) || (selfemit.Fixed && selfemit.Target));

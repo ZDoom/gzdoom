@@ -8,6 +8,11 @@
 #include "doomerrors.h"
 #include "memarena.h"
 
+// [ZZ] there are serious circular references between this and the rest of ZScript code, so it needs to be done like this
+//		these are used in vmexec.h
+void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc);
+void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
+
 extern FMemArena ClassDataAllocator;
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
@@ -712,7 +717,7 @@ public:
 
 	class PPrototype *Proto;
 
-	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) 
+	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL)
 	{
 		AllFunctions.Push(this);
 	}

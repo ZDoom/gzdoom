@@ -70,7 +70,8 @@ class FxCompoundStatement;
 class FxLocalVariableDeclaration;
 typedef TDeletingArray<FxExpression*> FArgumentList;
 
-// [ZZ] this is kind of related to compile context as well
+//
+// [ZZ] this really should be in codegen.h, but vmexec needs to access it
 struct FScopeBarrier
 {
 	bool callable;
@@ -86,9 +87,9 @@ struct FScopeBarrier
 	enum Side
 	{
 		Side_PlainData = 0,
-		Side_UI,
-		Side_Play,
-		Side_Virtual
+		Side_UI = 1,
+		Side_Play = 2,
+		Side_Virtual = 3 // do NOT change the value
 	};
 	int sidefrom;
 	int sidelast;
@@ -152,7 +153,7 @@ struct FScopeBarrier
 	// this modifies VARF_ flags and sets the side properly.
 	static int ChangeSideInFlags(int flags, int side)
 	{
-		flags &= ~(VARF_UI | VARF_Play);
+		flags &= ~(VARF_UI | VARF_Play | VARF_VirtualScope);
 		flags |= FlagsFromSide(side);
 		return flags;
 	}
@@ -208,28 +209,31 @@ struct FScopeBarrier
 		if ((sideto == Side_UI) && (sidefrom != Side_UI)) // only ui -> ui is readable
 		{
 			readable = false;
-			readerror.Format("Can't read %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			if (name) readerror.Format("Can't read %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
 		}
 
 		if (!readable)
 		{
 			writable = false;
 			callable = false;
-			writeerror.Format("Can't write %s field %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
-			callerror.Format("Can't call %s function %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			if (name)
+			{
+				writeerror.Format("Can't write %s field %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
+				callerror.Format("Can't call %s function %s from %s context (not readable)", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			}
 			return;
 		}
 
 		if (writable && (sidefrom != sideto)) // only matching types are writable (plain data implicitly takes context type by default, unless overridden)
 		{
 			writable = false;
-			writeerror.Format("Can't write %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			if (name) writeerror.Format("Can't write %s field %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
 		}
 
 		if (callable && (sidefrom != sideto) && !(flags2 & VARF_ReadOnly)) // readonly on methods is used for plain data stuff that can be called from ui/play context.
 		{
 			callable = false;
-			callerror.Format("Can't call %s function %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
+			if (name) callerror.Format("Can't call %s function %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
 		}
 	}
 };
@@ -1873,6 +1877,7 @@ class FxVMFunctionCall : public FxExpression
 	// for multi assignment
 	int AssignCount = 0;
 	TArray<ExpEmit> ReturnRegs;
+	PFunction *CallingFunction;
 
 public:
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);

@@ -163,6 +163,10 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 	// Functions that only get flagged for actors do not need the additional two context parameters.
 	int fflags = (flags& (SUF_OVERLAY | SUF_WEAPON | SUF_ITEM)) ? VARF_Action | VARF_Method : VARF_Method;
 
+	// [ZZ] give anonymous functions the scope of their class 
+	//      (just give them VARF_Play, whatever)
+	fflags |= VARF_Play;
+
 	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 

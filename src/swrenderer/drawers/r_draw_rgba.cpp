@@ -59,7 +59,7 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
 
-CVAR(Bool, r_phpdrawers, false, 0);
+CVAR(Bool, r_phpdrawers, true, 0);
 
 namespace swrenderer
 {
@@ -69,6 +69,46 @@ namespace swrenderer
 			Queue->Push<DrawWall32Command>(args);
 		else
 			Queue->Push<DrawWall1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawWallMaskedColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWallMasked32Command>(args);
+		else
+			Queue->Push<DrawWallMasked1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawWallAddColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWallAddClamp32Command>(args);
+		else
+			Queue->Push<DrawWallAdd1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawWallAddClampColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWallAddClamp32Command>(args);
+		else
+			Queue->Push<DrawWallAddClamp1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawWallSubClampColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWallSubClamp32Command>(args);
+		else
+			Queue->Push<DrawWallSubClamp1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawWallRevSubClampColumn(const WallDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawWallRevSubClamp32Command>(args);
+		else
+			Queue->Push<DrawWallRevSubClamp1LLVMCommand>(args);
 	}
 	
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)

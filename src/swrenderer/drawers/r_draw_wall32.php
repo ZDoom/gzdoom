@@ -95,8 +95,9 @@ namespace swrenderer
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 <?					if ($isSimpleShade == false)
 					{ ?>
-					__m128i inv_desaturate = _mm_setr_epi16(0, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 0, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate);
+					__m128i inv_desaturate = _mm_setr_epi16(256, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate, 256 - shade_constants.desaturate);
 					__m128i shade_fade = _mm_set_epi16(shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue);
+					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 <?					} ?>
@@ -115,7 +116,10 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					
+<?					if ($isNearestFilter == false)
+					{ ?>
+					frac -= one / 2;
+<?					} ?>
 					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
 					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
 					
@@ -159,8 +163,8 @@ namespace swrenderer
 						unsigned int p11 = source2[y1];
 
 						unsigned int inv_b = texturefracx;
-						unsigned int a = (frac_y1 >> (FRACBITS - 4)) & 15;
-						unsigned int inv_a = 16 - a;
+						unsigned int inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
+						unsigned int a = 16 - inv_a;
 						unsigned int b = 16 - inv_b;
 						
 						unsigned int sred = (RPART(p00) * (a * b) + RPART(p01) * (inv_a * b) + RPART(p10) * (a * inv_b) + RPART(p11) * (inv_a * inv_b) + 127) >> 8;
@@ -181,15 +185,16 @@ namespace swrenderer
 <?		}
 		else
 		{ ?>
-						int blue = BPART(ifgcolor);
-						int green = GPART(ifgcolor);
-						int red = RPART(ifgcolor);
+						int blue0 = BPART(ifgcolor);
+						int green0 = GPART(ifgcolor);
+						int red0 = RPART(ifgcolor);
 
-						__m128i intensity = _mm_set1_epi16(((red * 77 + green * 143 + blue * 37) >> 8) * desaturate);
+						int intensity0 = ((red0 * 77 + green0 * 143 + blue0 * 37) >> 8) * desaturate;
+						__m128i intensity = _mm_set_epi16(0, intensity0, intensity0, intensity0, 0, intensity0, intensity0, intensity0);
 
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(fgcolor, inv_desaturate), intensity), 8);
-						fgcolor = _mm_mullo_epi16(fgcolor, _mm_set1_epi16(light));
-						fgcolor = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(shade_fade, inv_light), fgcolor), 8);
+						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
+						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 <?		}
 	}

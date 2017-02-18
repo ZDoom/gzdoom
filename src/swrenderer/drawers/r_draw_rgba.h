@@ -360,11 +360,11 @@ namespace swrenderer
 		using SWPixelFormatDrawers::SWPixelFormatDrawers;
 		
 		void DrawWallColumn(const WallDrawerArgs &args) override;
-		void DrawWallMaskedColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallMasked1LLVMCommand>(args); }
-		void DrawWallAddColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallAdd1LLVMCommand>(args); }
-		void DrawWallAddClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallAddClamp1LLVMCommand>(args); }
-		void DrawWallSubClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallSubClamp1LLVMCommand>(args); }
-		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override { Queue->Push<DrawWallRevSubClamp1LLVMCommand>(args); }
+		void DrawWallMaskedColumn(const WallDrawerArgs &args) override;
+		void DrawWallAddColumn(const WallDrawerArgs &args) override;
+		void DrawWallAddClampColumn(const WallDrawerArgs &args) override;
+		void DrawWallSubClampColumn(const WallDrawerArgs &args) override;
+		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override;
 		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawSingleSky1LLVMCommand>(args); }
 		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawDoubleSky1LLVMCommand>(args); }
 		void DrawColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnLLVMCommand>(args); }

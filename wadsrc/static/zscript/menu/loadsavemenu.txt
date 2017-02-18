@@ -1,5 +1,5 @@
 /*
-** loadsavemenu.cpp
+** loacpp
 ** The load game and save game menus
 **
 **---------------------------------------------------------------------------
@@ -49,20 +49,20 @@ struct SavegameManager native
 	native SaveGameNode quickSaveSlot;
 
 	//void ReadSaveStrings();
-	//void UnloadSaveData();
+	native void UnloadSaveData();
 
 	//int RemoveSaveSlot(int index);
 	native void LoadSavegame(int Selected);
-	//void DoSave(int Selected, String savegamestring);
+	native void DoSave(int Selected, String savegamestring);
 	native int ExtractSaveData(int index);
 	//void ClearSaveStuff();
 	//bool DrawSavePic(int x, int y, int w, int h);
 	//void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
-	//void SetFileInfo(int Selected);
+	native void SetFileInfo(int Selected);
 	native int SavegameCount();
-	//SaveGameNode GetSavegame(int i);
-	//void InsertNewSaveNode();
-	//bool RemoveNewSaveNode();
+	native SaveGameNode GetSavegame(int i);
+	native void InsertNewSaveNode();
+	native bool RemoveNewSaveNode();
 
 }
 
@@ -99,10 +99,156 @@ class LoadSaveMenu : ListMenu native
 	native TextEnterMenu mInput;
 
 	
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool Responder (InputEventData ev)
+	{
+		if (ev.type == InputEventData.GUI_Event)
+		{
+			if (ev.subtype == InputEventData.GUI_KeyDown)
+			{
+				if (Selected < manager.SavegameCount())
+				{
+					switch (ev.data1)
+					{
+					case UIEvent.Key_F1:
+						manager.SetFileInfo(Selected);
+						return true;
+
+					case UIEvent.Key_DEL:
+						{
+							String EndString;
+							EndString = String.Format("%s%s%s%s?\n\n%s", Stringtable.Localize("$MNU_DELETESG"), TEXTCOLOR_WHITE, manager.GetSavegame(Selected).SaveTitle, TEXTCOLOR_NORMAL, Stringtable.Localize("$PRESSYN"));
+							StartMessage (EndString, 0);
+						}
+						return true;
+					}
+				}
+			}
+			else if (ev.subtype == InputEventData.GUI_WheelUp)
+			{
+				if (TopItem > 0) TopItem--;
+				return true;
+			}
+			else if (ev.subtype == InputEventData.GUI_WheelDown)
+			{
+				if (TopItem < manager.SavegameCount() - listboxRows) TopItem++;
+				return true;
+			}
+		}
+		return Super.Responder(ev);
+	}
+
+	
 }
 
-class SaveMenu : LoadSaveMenu native
+class SaveMenu : LoadSaveMenu
 {
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Init(Menu parent, ListMenuDescriptor desc)
+	{
+		Super.Init(parent, desc);
+		manager.InsertNewSaveNode();
+		TopItem = 0;
+		Selected = manager.ExtractSaveData (-1);
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void OnDestroy()
+	{
+		if (manager.RemoveNewSaveNode())
+		{
+			Selected--;
+		}
+		Super.OnDestroy();
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+	const SAVESTRINGSIZE = 32;
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		
+		if (Super.MenuEvent(mkey, fromcontroller)) 
+		{
+			return true;
+		}
+		if (Selected == -1)
+		{
+			return false;
+		}
+
+		if (mkey == MKEY_Enter)
+		{
+			String SavegameString = (Selected != 0)? manager.GetSavegame(Selected).SaveTitle : "";
+			mInput = TextEnterMenu.Open(self, SavegameString, SAVESTRINGSIZE, 1, fromcontroller);
+			mInput.ActivateMenu();
+			mEntering = true;
+		}
+		else if (mkey == MKEY_Input)
+		{
+			mEntering = false;
+			manager.DoSave(Selected, mInput.GetText());
+			mInput = null;
+		}
+		else if (mkey == MKEY_Abort)
+		{
+			mEntering = false;
+			mInput = null;
+		}
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool Responder (InputEventData ev)
+	{
+		if (ev.subtype == InputEventData.GUI_KeyDown)
+		{
+			if (Selected != -1)
+			{
+				switch (ev.data1)
+				{
+				case UIEvent.Key_DEL:
+					// cannot delete 'new save game' item
+					if (Selected == 0) return true;
+					break;
+
+				case 78://'N':
+					Selected = TopItem = 0;
+					manager.UnloadSaveData ();
+					return true;
+				}
+			}
+		}
+		return Super.Responder(ev);
+	}
+
+
+	
 }
 
 //=============================================================================
@@ -111,7 +257,7 @@ class SaveMenu : LoadSaveMenu native
 //
 //=============================================================================
 
-class LoadMenu : LoadSaveMenu native
+class LoadMenu : LoadSaveMenu
 {
 	//=============================================================================
 	//

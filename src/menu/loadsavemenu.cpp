@@ -49,6 +49,8 @@
 #include "serializer.h"
 #include "resourcefiles/resourcefile.h"
 
+// Save name length limit for old binary formats.
+#define OLDSAVESTRINGSIZE		24
 
 //=============================================================================
 //
@@ -229,7 +231,7 @@ void FSavegameManager::ReadSaveStrings()
 					{
 						PNGHandle *png;
 						char sig[16];
-						char title[SAVESTRINGSIZE + 1];
+						char title[OLDSAVESTRINGSIZE + 1];
 						bool oldVer = true;
 						bool addIt = false;
 						bool missing = false;
@@ -241,7 +243,7 @@ void FSavegameManager::ReadSaveStrings()
 						// Old savegame versions are always added to the menu so
 						// the user can easily delete them if desired.
 
-						title[SAVESTRINGSIZE] = 0;
+						title[OLDSAVESTRINGSIZE] = 0;
 
 
 						if (nullptr != (png = M_VerifyPNG(file)))
@@ -250,9 +252,9 @@ void FSavegameManager::ReadSaveStrings()
 							if (ver != nullptr)
 							{
 								// An old version
-								if (!M_GetPNGText(png, "Title", title, SAVESTRINGSIZE))
+								if (!M_GetPNGText(png, "Title", title, OLDSAVESTRINGSIZE))
 								{
-									strncpy(title, I_FindName(&c_file), SAVESTRINGSIZE);
+									strncpy(title, I_FindName(&c_file), OLDSAVESTRINGSIZE);
 								}
 								addIt = true;
 								delete[] ver;
@@ -267,7 +269,7 @@ void FSavegameManager::ReadSaveStrings()
 
 								if (strncmp(sig, "ZDOOMSAVE", 9) == 0)
 								{
-									if (fread(title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
+									if (fread(title, 1, OLDSAVESTRINGSIZE, file) == OLDSAVESTRINGSIZE)
 									{
 										addIt = true;
 									}
@@ -275,7 +277,7 @@ void FSavegameManager::ReadSaveStrings()
 								else
 								{
 									memcpy(title, sig, 16);
-									if (fread(title + 16, 1, SAVESTRINGSIZE - 16, file) == SAVESTRINGSIZE - 16 &&
+									if (fread(title + 16, 1, OLDSAVESTRINGSIZE - 16, file) == OLDSAVESTRINGSIZE - 16 &&
 										fread(sig, 1, 16, file) == 16 &&
 										strncmp(sig, "ZDOOMSAVE", 9) == 0)
 									{
@@ -416,6 +418,15 @@ void FSavegameManager::DoSave(int Selected, const char *savegamestring)
 	V_SetBorderNeedRefresh();
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_INT(sel);
+	PARAM_STRING(name);
+	self->DoSave(sel, name);
+	return 0;
+}
+
 //=============================================================================
 //
 //
@@ -435,7 +446,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 		}
 		else
 		{
-			index = LastAccessed + 1;
+			index = LastAccessed < 0? 0 : LastAccessed;
 		}
 	}
 
@@ -538,6 +549,13 @@ void FSavegameManager::UnloadSaveData()
 	SavePicData.Clear();
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, UnloadSaveData)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	self->UnloadSaveData();
+	return 0;
+}
+
 //=============================================================================
 //
 //
@@ -614,6 +632,15 @@ void FSavegameManager::SetFileInfo(int Selected)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, SetFileInfo)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_INT(i);
+	self->SetFileInfo(i);
+	return 0;
+}
+
+
 //=============================================================================
 //
 //
@@ -642,6 +669,13 @@ FSaveGameNode *FSavegameManager::GetSavegame(unsigned i)
 	return SaveGames[i];
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, GetSavegame)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_INT(i);
+	ACTION_RETURN_POINTER(self->GetSavegame(i));
+}
+
 //=============================================================================
 //
 //
@@ -653,6 +687,13 @@ void FSavegameManager::InsertNewSaveNode()
 	NewSaveNode.SaveTitle = GStrings["NEWSAVE"];
 	NewSaveNode.bNoDelete = true;
 	SaveGames.Insert(0, &NewSaveNode);
+}
+
+DEFINE_ACTION_FUNCTION(FSavegameManager, InsertNewSaveNode)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	self->InsertNewSaveNode();
+	return 0;
 }
 
 //=============================================================================
@@ -671,7 +712,11 @@ bool FSavegameManager::RemoveNewSaveNode()
 	return false;
 }
 
-
+DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveNewSaveNode)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	ACTION_RETURN_INT(self->RemoveNewSaveNode());
+}
 
 
 FSavegameManager savegameManager;
@@ -712,7 +757,6 @@ public:
 	int commentRight;
 	int commentBottom;
 
-	// this needs to be kept in memory so that the texture can access it when it needs to.
 	bool mEntering;
 	DTextEnterMenu *mInput = nullptr;
 
@@ -722,7 +766,6 @@ public:
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
-	bool Responder(event_t *ev);
 };
 
 IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
@@ -745,7 +788,7 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 	savepicTop = 54*CleanYfac;
 	savepicWidth = 216*screen->GetWidth()/640;
 	savepicHeight = 135*screen->GetHeight()/400;
-	manager->WindowSize = savepicWidth;
+	manager->WindowSize = savepicWidth / CleanXfac;
 
 	rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
 	listboxLeft = savepicLeft + savepicWidth + 14;
@@ -815,7 +858,7 @@ void DLoadSaveMenu::Drawer ()
 	V_DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
 	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
 
-	// manager->DrawSaveComment(SmallFont, CR_GOLD, commentLeft, commentTop, CleanYfac);
+	manager->DrawSaveComment(SmallFont, CR_GOLD, commentLeft, commentTop, CleanYfac);
 
 	// Draw file area
 	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
@@ -1007,232 +1050,6 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 
 	return Super::MouseEvent(type, x, y);
 }
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DLoadSaveMenu::Responder (event_t *ev)
-{
-	if (ev->type == EV_GUI_Event)
-	{
-		if (ev->subtype == EV_GUI_KeyDown)
-		{
-			if ((unsigned)Selected < manager->SavegameCount())
-			{
-				switch (ev->data1)
-				{
-				case GK_F1:
-					manager->SetFileInfo(Selected);
-					return true;
-
-				case GK_DEL:
-				case '\b':
-					{
-						FString EndString;
-						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-							GStrings("MNU_DELETESG"), manager->GetSavegame(Selected)->SaveTitle.GetChars(), GStrings("PRESSYN"));
-						M_StartMessage (EndString, 0);
-					}
-					return true;
-				}
-			}
-		}
-		else if (ev->subtype == EV_GUI_WheelUp)
-		{
-			if (TopItem > 0) TopItem--;
-			return true;
-		}
-		else if (ev->subtype == EV_GUI_WheelDown)
-		{
-			if (TopItem < (int)manager->SavegameCount() - listboxRows) TopItem++;
-			return true;
-		}
-	}
-	return Super::Responder(ev);
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class DSaveMenu : public DLoadSaveMenu
-{
-	DECLARE_CLASS(DSaveMenu, DLoadSaveMenu)
-
-public:
-
-	DSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
-	void OnDestroy() override;
-	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey, bool fromcontroller);
-
-};
-
-IMPLEMENT_CLASS(DSaveMenu, false, false)
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
-: DLoadSaveMenu(parent, desc)
-{
-	manager->InsertNewSaveNode();
-	TopItem = 0;
-	Selected = manager->ExtractSaveData (-1);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DSaveMenu::OnDestroy()
-{
-	if (manager->RemoveNewSaveNode())
-	{
-		Selected--;
-	}
-	Super::OnDestroy();
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
-{
-	if (Super::MenuEvent(mkey, fromcontroller)) 
-	{
-		return true;
-	}
-	if (Selected == -1)
-	{
-		return false;
-	}
-
-	if (mkey == MKEY_Enter)
-	{
-		const char *SavegameString = (Selected != 0)? manager->GetSavegame(Selected)->SaveTitle.GetChars() : "";
-		mInput = new DTextEnterMenu(this, SavegameString, SAVESTRINGSIZE, 1, fromcontroller);
-		M_ActivateMenu(mInput);
-		mEntering = true;
-	}
-	else if (mkey == MKEY_Input)
-	{
-		mEntering = false;
-		manager->DoSave(Selected, mInput->GetText());
-		mInput = nullptr;
-	}
-	else if (mkey == MKEY_Abort)
-	{
-		mEntering = false;
-		mInput = nullptr;
-	}
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DSaveMenu::Responder (event_t *ev)
-{
-	if (ev->subtype == EV_GUI_KeyDown)
-	{
-		if (Selected != -1)
-		{
-			switch (ev->data1)
-			{
-			case GK_DEL:
-			case '\b':
-				// cannot delete 'new save game' item
-				if (Selected == 0) return true;
-				break;
-
-			case 'N':
-				Selected = TopItem = 0;
-				manager->UnloadSaveData ();
-				return true;
-			}
-		}
-	}
-	return Super::Responder(ev);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class DLoadMenu : public DLoadSaveMenu
-{
-	DECLARE_CLASS(DLoadMenu, DLoadSaveMenu)
-
-public:
-
-	DLoadMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
-
-	bool MenuEvent (int mkey, bool fromcontroller);
-};
-
-IMPLEMENT_CLASS(DLoadMenu, false, false)
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DLoadMenu::DLoadMenu(DMenu *parent, DListMenuDescriptor *desc)
-: DLoadSaveMenu(parent, desc)
-{
-	TopItem = 0;
-	Selected = manager->ExtractSaveData (-1);
-
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
-{
-	if (Super::MenuEvent(mkey, fromcontroller)) 
-	{
-		return true;
-	}
-	if (Selected == -1 || manager->SavegameCount() == 0)
-	{
-		return false;
-	}
-
-	if (mkey == MKEY_Enter)
-	{
-		manager->LoadSavegame(Selected);
-		return true;
-	}
-	return false;
-}
-
 
 DEFINE_FIELD(FSaveGameNode, SaveTitle);
 DEFINE_FIELD(FSaveGameNode, Filename);

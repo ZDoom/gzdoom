@@ -100,7 +100,4 @@ const char *GetVersionString();
 #endif
 
 
-// The maximum length of one save game description for the menus.
-#define SAVESTRINGSIZE		24
-
 #endif //__VERSION_H__

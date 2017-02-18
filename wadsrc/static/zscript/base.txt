@@ -332,10 +332,10 @@ class Object native
 	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
-	virtual void OnDestroy() {}
+	virtual virtualscope void OnDestroy() {}
 }
 
-class Thinker : Object native
+class Thinker : Object play native
 {
 	enum EStatnums
 	{

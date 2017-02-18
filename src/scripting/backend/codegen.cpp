@@ -109,7 +109,7 @@ void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, P
 {
 	int outerside = FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags);
 	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::Side_PlainData;
+		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
 	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);
 	if (innerside == FScopeBarrier::Side_Virtual)
 		innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
@@ -6748,7 +6748,11 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		{
 			int outerflags = 0;
 			if (ctx.Function)
+			{
 				outerflags = ctx.Function->Variants[0].Flags;
+				if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+			}
 			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), "<unknown>");
 			if (!scopeBarrier.writable)
 				bWritable = false;
@@ -6788,7 +6792,11 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	// [ZZ] support magic
 	int outerflags = 0;
 	if (ctx.Function)
+	{
 		outerflags = ctx.Function->Variants[0].Flags;
+		if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+	}
 	FScopeBarrier scopeBarrier(outerflags, membervar->Flags, membervar->SymbolName.GetChars());
 	if (!scopeBarrier.readable)
 	{
@@ -8055,7 +8063,11 @@ isresolved:
 	//		implement more magic
 	int outerflags = 0;
 	if (ctx.Function)
+	{
 		outerflags = ctx.Function->Variants[0].Flags;
+		if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+	}
 	int innerflags = afd->Variants[0].Flags;
 	int innerside = FScopeBarrier::SideFromFlags(innerflags);
 	// [ZZ] check this at compile time. this would work for most legit cases.

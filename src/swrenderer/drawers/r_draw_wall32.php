@@ -123,13 +123,56 @@ namespace swrenderer
 					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
 					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
 					
-					for (int index = 0; index < count; index++)
+					int ssecount = count / 2;
+					for (int index = 0; index < ssecount; index++)
 					{
-						int offset = index * pitch;
-						__m128i bgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(dest[offset]), _mm_setzero_si128());
+						int offset = index * pitch * 2;
+						uint32_t desttmp[2];
+						desttmp[0] = dest[offset];
+						desttmp[1] = dest[offset + pitch];
+<?						if ($blendVariant != "opaque") { ?>
+						__m128i bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)desttmp), _mm_setzero_si128());
+<?						} ?>
 						
 						// Sample
+						unsigned int ifgcolor[2];
+						{
 <?						Sample($isNearestFilter);?>
+						ifgcolor[0] = sampleout;
+						frac += fracstep;
+						}
+						{
+<?						Sample($isNearestFilter);?>
+						ifgcolor[1] = sampleout;
+						frac += fracstep;
+						}
+						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
+
+						// Shade
+<?						Shade($isSimpleShade);?>
+
+						// Blend
+<?						Blend($blendVariant);?>
+
+						_mm_storel_epi64((__m128i*)desttmp, outcolor);
+						dest[offset] = desttmp[0];
+						dest[offset + pitch] = desttmp[1];
+					}
+					
+					if (ssecount * 2 != count)
+					{
+						int index = ssecount * 2;
+						int offset = index * pitch;
+<?						if ($blendVariant != "opaque") { ?>
+						__m128i bgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(dest[offset]), _mm_setzero_si128());
+<?						} ?>
+						
+						// Sample
+						unsigned int ifgcolor[2];
+<?						Sample($isNearestFilter);?>
+						ifgcolor[0] = sampleout;
+						ifgcolor[1] = 0;
+						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
 <?						Shade($isSimpleShade);?>
@@ -138,7 +181,6 @@ namespace swrenderer
 <?						Blend($blendVariant);?>
 
 						dest[offset] = _mm_cvtsi128_si32(outcolor);
-						frac += fracstep;
 					}
 <?	}
 
@@ -147,8 +189,7 @@ namespace swrenderer
 		if ($isNearestFilter == true)
 		{ ?>
 						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
-						unsigned int ifgcolor = source[sample_index];
-						__m128i fgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ifgcolor), _mm_setzero_si128());
+						unsigned int sampleout = source[sample_index];
 <?		}
 		else
 		{ ?>
@@ -172,8 +213,7 @@ namespace swrenderer
 						unsigned int sblue = (BPART(p00) * (a * b) + BPART(p01) * (inv_a * b) + BPART(p10) * (a * inv_b) + BPART(p11) * (inv_a * inv_b) + 127) >> 8;
 						unsigned int salpha = (APART(p00) * (a * b) + APART(p01) * (inv_a * b) + APART(p10) * (a * inv_b) + APART(p11) * (inv_a * inv_b) + 127) >> 8;
 
-						unsigned int ifgcolor = (salpha << 24) | (sred << 16) | (sgreen << 8) | sblue;
-						__m128i fgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ifgcolor), _mm_setzero_si128());
+						unsigned int sampleout = (salpha << 24) | (sred << 16) | (sgreen << 8) | sblue;
 <?		}
 	}
 		
@@ -185,12 +225,17 @@ namespace swrenderer
 <?		}
 		else
 		{ ?>
-						int blue0 = BPART(ifgcolor);
-						int green0 = GPART(ifgcolor);
-						int red0 = RPART(ifgcolor);
-
+						int blue0 = BPART(ifgcolor[0]);
+						int green0 = GPART(ifgcolor[0]);
+						int red0 = RPART(ifgcolor[0]);
 						int intensity0 = ((red0 * 77 + green0 * 143 + blue0 * 37) >> 8) * desaturate;
-						__m128i intensity = _mm_set_epi16(0, intensity0, intensity0, intensity0, 0, intensity0, intensity0, intensity0);
+
+						int blue1 = BPART(ifgcolor[1]);
+						int green1 = GPART(ifgcolor[1]);
+						int red1 = RPART(ifgcolor[1]);
+						int intensity1 = ((red1 * 77 + green1 * 143 + blue1 * 37) >> 8) * desaturate;
+
+						__m128i intensity = _mm_set_epi16(0, intensity1, intensity1, intensity1, 0, intensity0, intensity0, intensity0);
 
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(fgcolor, inv_desaturate), intensity), 8);
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);

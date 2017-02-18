@@ -348,33 +348,9 @@ extern FOptionMap OptionValues;
 
 //=============================================================================
 //
-// Input some text
+//
 //
 //=============================================================================
-
-class DTextEnterMenu : public DMenu
-{
-	DECLARE_CLASS(DTextEnterMenu, DMenu)
-
-public:
-	FString mEnterString;
-	unsigned int mEnterSize;
-	unsigned int mEnterPos;
-	int mSizeMode; // 1: size is length in chars. 2: also check string width
-	bool mInputGridOkay;
-
-	int InputGridX;
-	int InputGridY;
-
-	// [TP]
-	bool AllowColors;
-
-
-	DTextEnterMenu() {}
-};
-
-
-
 
 struct event_t;
 void M_EnableMenu (bool on) ;

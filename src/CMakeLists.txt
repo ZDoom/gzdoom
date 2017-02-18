@@ -848,7 +848,6 @@ set( FASTMATH_PCH_SOURCES
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
 	menu/menudef.cpp
-	menu/menuinput.cpp
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp

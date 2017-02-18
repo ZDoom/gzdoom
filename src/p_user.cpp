@@ -163,6 +163,13 @@ FString GetPrintableDisplayName(PClassActor *cls)
 	return cls->DisplayName;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, GetPrintableDisplayName)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->DisplayName);
+}
+
 bool ValidatePlayerClass(PClassActor *ti, const char *name)
 {
 	if (ti == NULL)
@@ -577,6 +584,14 @@ void EnumColorSets(PClassActor *cls, TArray<int> *out)
 	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
 }
 
+DEFINE_ACTION_FUNCTION(FPlayerClass, EnumColorSets)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_POINTER(out, TArray<int>);
+	EnumColorSets(self->Type, out);
+	return 0;
+}
+
 //==========================================================================
 //
 //
@@ -594,6 +609,14 @@ FPlayerColorSet *GetColorSet(PClassActor *cls, int setnum)
 		}
 	}
 	return nullptr;
+}
+
+DEFINE_ACTION_FUNCTION(FPlayerClass, GetColorSetName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_INT(setnum);
+	auto p = GetColorSet(self->Type, setnum);
+	ACTION_RETURN_INT(p ? p->Name.GetIndex() : 0);
 }
 
 //==========================================================================
@@ -653,6 +676,49 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_BOOL(self->userinfo.GetNeverSwitch());
 }
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColor());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColorSet)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColorSet());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPlayerClassNum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetPlayerClassNum());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetSkin());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetGender());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetAutoaim)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetAutoaim());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetTeam)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetTeam());
+}
+
 
 //===========================================================================
 //
@@ -1227,9 +1293,9 @@ const char *APlayerPawn::GetSoundClass() const
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
-		(size_t)player->userinfo.GetSkin() < numskins)
+		(unsigned)player->userinfo.GetSkin() < Skins.Size())
 	{
-		return skins[player->userinfo.GetSkin()].name;
+		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
 
 	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
@@ -1781,8 +1847,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
 	}
 
 	// Set the crouch sprite?
@@ -1793,10 +1859,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 			crouchspriteno = player->mo->crouchsprite;
 		}
 		else if (!(actor->flags4 & MF4_NOSKIN) &&
-				(spritenum == skins[player->userinfo.GetSkin()].sprite ||
-				 spritenum == skins[player->userinfo.GetSkin()].crouchsprite))
+				(spritenum == Skins[player->userinfo.GetSkin()].sprite ||
+				 spritenum == Skins[player->userinfo.GetSkin()].crouchsprite))
 		{
-			crouchspriteno = skins[player->userinfo.GetSkin()].crouchsprite;
+			crouchspriteno = Skins[player->userinfo.GetSkin()].crouchsprite;
 		}
 		else
 		{ // no sprite -> squash the existing one

@@ -388,7 +388,7 @@ class EnterKey : Menu
 		let parent = OptionMenu(mParentMenu);
 		if (parent != null)
 		{
-			let it = parent.GetItem('Controlmessage');
+			let it = parent.mDesc.GetItem('Controlmessage');
 			if (it != null)
 			{
 				it.SetValue(0, which);

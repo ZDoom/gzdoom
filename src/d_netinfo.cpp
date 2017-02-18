@@ -729,7 +729,7 @@ void D_WriteUserInfoStrings (int pnum, BYTE **stream, bool compact)
 			break;
 
 		case NAME_Skin:
-			*stream += sprintf(*((char **)stream), "\\%s", D_EscapeUserInfo(skins[info->GetSkin()].name).GetChars());
+			*stream += sprintf(*((char **)stream), "\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name).GetChars());
 			break;
 
 		default:
@@ -828,7 +828,7 @@ void D_ReadUserInfoStrings (int pnum, BYTE **stream, bool update)
 						players[pnum].mo->state->sprite ==
 						GetDefaultByType (players[pnum].cls)->SpawnState->sprite)
 					{ // Only change the sprite if the player is using a standard one
-						players[pnum].mo->sprite = skins[info->GetSkin()].sprite;
+						players[pnum].mo->sprite = Skins[info->GetSkin()].sprite;
 					}
 				}
 				// Rebuild translation in case the new skin uses a different range
@@ -898,7 +898,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 			switch (pair->Key.GetIndex())
 			{
 			case NAME_Skin:
-				string = skins[info.GetSkin()].name;
+				string = Skins[info.GetSkin()].Name;
 				break;
 
 			case NAME_PlayerClass:
@@ -986,7 +986,7 @@ CCMD (playerinfo)
 		// Print special info
 		Printf("%20s: %s\n",      "Name", ui->GetName());
 		Printf("%20s: %s (%d)\n", "Team", ui->GetTeam() == TEAM_NONE ? "None" : Teams[ui->GetTeam()].GetName(), ui->GetTeam());
-		Printf("%20s: %s (%d)\n", "Skin", skins[ui->GetSkin()].name, ui->GetSkin());
+		Printf("%20s: %s (%d)\n", "Skin", Skins[ui->GetSkin()].Name.GetChars(), ui->GetSkin());
 		Printf("%20s: %s (%d)\n", "Gender", GenderNames[ui->GetGender()], ui->GetGender());
 		Printf("%20s: %s (%d)\n", "PlayerClass",
 			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->DisplayName.GetChars(),

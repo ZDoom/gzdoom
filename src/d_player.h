@@ -297,6 +297,11 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 			return aim;
 		}
 	}
+	// Same but unfiltered.
+	double GetAutoaim() const
+	{
+		return *static_cast<FFloatCVar *>(*CheckKey(NAME_Autoaim));
+	}
 	const char *GetName() const
 	{
 		return *static_cast<FStringCVar *>(*CheckKey(NAME_Name));

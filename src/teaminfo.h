@@ -63,7 +63,9 @@ private:
 	void ParseTeamDefinition (FScanner &Scan);
 	void ClearTeams ();
 
+public:	// needed for script access.
 	FString		m_Name;
+private:
 	int			m_iPlayerColor;
 	FString		m_TextColor;
 	FString		m_Logo;

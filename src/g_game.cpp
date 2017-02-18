@@ -1695,7 +1695,7 @@ static void G_QueueBody (AActor *body)
 	{
 		// Apply skin's scale to actor's scale, it will be lost otherwise
 		const AActor *const defaultActor = body->GetDefault();
-		const FPlayerSkin &skin = skins[skinidx];
+		const FPlayerSkin &skin = Skins[skinidx];
 
 		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
 		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;

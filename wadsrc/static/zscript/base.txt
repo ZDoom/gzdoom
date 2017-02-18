@@ -309,6 +309,7 @@ struct GameInfoStruct native
 	native String ArmorIcon1;
 	native String ArmorIcon2;
 	native int gametype;
+	native bool norandomplayerclass;
 }
 
 class Object native

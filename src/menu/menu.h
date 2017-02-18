@@ -286,8 +286,6 @@ public:
 	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
 	virtual void ReleaseFocus() {}
 
-	virtual DMenuItemBase *GetItem(FName name) { return nullptr; }
-
 	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	bool CallMouseEvent(int type, int x, int y);
@@ -317,60 +315,14 @@ public:
 	FNameNoInit mAction;
 	bool mEnabled;
 
-	bool CheckCoordinate(int x, int y);
-	void Ticker();
-	bool Selectable();
 	bool Activate();
-	FName GetAction(int *pparam);
 	bool SetString(int i, const char *s);
 	bool GetString(int i, char *s, int len);
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
-	void Enable(bool on);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	bool CheckHotkey(int c);
-	int GetWidth();
-	int GetIndent();
-	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
 	int GetY() { return mYpos; }
-	int GetX() { return mXpos; }
-	void SetX(int x) { mXpos = x; }
 };	
-
-//=============================================================================
-//
-// list menu class runs a menu described by a DListMenuDescriptor
-//
-//=============================================================================
-
-class DListMenu : public DMenu
-{
-	DECLARE_CLASS(DListMenu, DMenu)
-	HAS_OBJECT_POINTERS;
-public:
-
-	DListMenuDescriptor *mDesc;
-	DMenuItemBase *mFocusControl;
-
-	DListMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
-	virtual void Init(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
-	DMenuItemBase *GetItem(FName name);
-	void SetFocus(DMenuItemBase *fc)
-	{
-		mFocusControl = fc;
-	}
-	bool CheckFocus(DMenuItemBase *fc)
-	{
-		return mFocusControl == fc;
-	}
-	void ReleaseFocus()
-	{
-		mFocusControl = NULL;
-	}
-};
-
 
 //=============================================================================
 //

@@ -868,7 +868,6 @@ static void ParseOptionMenu(FScanner &sc)
 
 	ParseOptionMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);
-	if (desc->mIndent == 0) desc->CalcIndent();
 }
 
 
@@ -1340,7 +1339,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
 			{
-				FName n = ld->mItems[i]->GetAction(nullptr);
+				FName n = ld->mItems[i]->mAction;
 				if (n == NAME_Startgame || n == NAME_StartgameConfirm) 
 				{
 					ld->mItems.Resize(i);

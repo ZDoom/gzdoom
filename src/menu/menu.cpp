@@ -444,21 +444,6 @@ DEFINE_ACTION_FUNCTION(DMenu, Close)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DMenu, GetItem)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	PARAM_NAME(name);
-	ACTION_RETURN_OBJECT(self->GetItem(name));
-}
-
-DEFINE_ACTION_FUNCTION(DOptionMenuDescriptor, GetItem)
-{
-	PARAM_SELF_PROLOGUE(DOptionMenuDescriptor);
-	PARAM_NAME(name);
-	ACTION_RETURN_OBJECT(self->GetItem(name));
-}
-
-
 bool DMenu::DimAllowed()
 {
 	return true;
@@ -1319,41 +1304,6 @@ DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, con
 	return (DMenuItemBase*)p;
 }
 
-bool DMenuItemBase::CheckCoordinate(int x, int y)
-{
-	IFVIRTUAL(DMenuItemBase, CheckCoordinate)
-	{
-		VMValue params[] = { (DObject*)this, x, y };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
-void DMenuItemBase::Ticker()
-{
-	IFVIRTUAL(DMenuItemBase, Ticker)
-	{
-		VMValue params[] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
-	}
-}
-
-bool DMenuItemBase::Selectable()
-{
-	IFVIRTUAL(DMenuItemBase, Selectable)
-	{
-		VMValue params[] = { (DObject*)this };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
 bool DMenuItemBase::Activate()
 {
 	IFVIRTUAL(DMenuItemBase, Activate)
@@ -1365,18 +1315,6 @@ bool DMenuItemBase::Activate()
 		return !!retval;
 	}
 	return false;
-}
-FName DMenuItemBase::GetAction(int *pparam)
-{
-	IFVIRTUAL(DMenuItemBase, GetAction)
-	{
-		VMValue params[] = { (DObject*)this };
-		int retval[2];
-		VMReturn ret[2]; ret[0].IntAt(&retval[0]); ret[1].IntAt(&retval[1]);
-		GlobalVMStack.Call(func, params, countof(params), ret, 2, nullptr);
-		return ENamedName(retval[0]);
-	}
-	return NAME_None;
 }
 
 bool DMenuItemBase::SetString(int i, const char *s)
@@ -1435,90 +1373,4 @@ bool DMenuItemBase::GetValue(int i, int *pvalue)
 	return false;
 }
 
-
-void DMenuItemBase::Enable(bool on)
-{
-	IFVIRTUAL(DMenuItemBase, Enable)
-	{
-		VMValue params[] = { (DObject*)this, on };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
-	}
-}
-
-bool DMenuItemBase::MenuEvent(int mkey, bool fromcontroller)
-{
-	IFVIRTUAL(DMenuItemBase, MenuEvent)
-	{
-		VMValue params[] = { (DObject*)this, mkey, fromcontroller };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
-bool DMenuItemBase::MouseEvent(int type, int x, int y)
-{
-	IFVIRTUAL(DMenuItemBase, MouseEvent)
-	{
-		VMValue params[] = { (DObject*)this, type, x, y };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
-bool DMenuItemBase::CheckHotkey(int c)
-{
-	IFVIRTUAL(DMenuItemBase, CheckHotkey)
-	{
-		VMValue params[] = { (DObject*)this, c };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return !!retval;
-	}
-	return false;
-}
-
-int DMenuItemBase::GetWidth()
-{
-	IFVIRTUAL(DMenuItemBase, GetWidth)
-	{
-		VMValue params[] = { (DObject*)this };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return retval;
-	}
-	return false;
-}
-
-int DMenuItemBase::GetIndent()
-{
-	IFVIRTUAL(DMenuItemBase, GetIndent)
-	{
-		VMValue params[] = { (DObject*)this };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return retval;
-	}
-	return false;
-}
-
-int DMenuItemBase::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected)
-{
-	IFVIRTUAL(DMenuItemBase, Draw)
-	{
-		VMValue params[] = { (DObject*)this, desc, y, indent, selected };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
-		return retval;
-	}
-	return false;
-}
+IMPLEMENT_CLASS(DMenuItemBase, false, false)

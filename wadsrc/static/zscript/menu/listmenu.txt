@@ -40,10 +40,10 @@ class ListMenuDescriptor : MenuDescriptor native
 //
 //=============================================================================
 
-class ListMenu : Menu native 
+class ListMenu : Menu
 {
-	native ListMenuDescriptor mDesc;
-	native MenuItemBase mFocusControl;
+	ListMenuDescriptor mDesc;
+	MenuItemBase mFocusControl;
 
 	virtual void Init(Menu parent = NULL, ListMenuDescriptor desc = NULL)
 	{
@@ -82,7 +82,7 @@ class ListMenu : Menu native
 	//
 	//=============================================================================
 
-	MenuItemBase GetItem(Name name)
+	ListMenuItem GetItem(Name name)
 	{
 		for(int i = 0; i < mDesc.mItems.Size(); i++)
 		{

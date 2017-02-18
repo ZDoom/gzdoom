@@ -186,7 +186,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		{
 			opt->mSelectedItem = opt->mItems.Size() - 1;
 		}
-		opt->CalcIndent();
+		//opt->CalcIndent();
 
 		// If the joystick config menu is open, close it if the device it's open for is gone.
 		if (DMenu::CurrentMenu != nullptr && (DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu")))

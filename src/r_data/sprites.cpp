@@ -802,7 +802,7 @@ void R_InitSkins (void)
 
 				if (spr == 0 && maxframe <= 0)
 				{
-					Printf (PRINT_BOLD, "Skin %s (#%u) has no frames. Removing.\n", Skins[i].Name, i);
+					Printf (PRINT_BOLD, "Skin %s (#%u) has no frames. Removing.\n", Skins[i].Name.GetChars(), i);
 					remove = true;
 					break;
 				}

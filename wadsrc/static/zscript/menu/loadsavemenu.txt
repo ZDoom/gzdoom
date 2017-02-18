@@ -56,8 +56,8 @@ struct SavegameManager native
 	native void DoSave(int Selected, String savegamestring);
 	native int ExtractSaveData(int index);
 	//void ClearSaveStuff();
-	//bool DrawSavePic(int x, int y, int w, int h);
-	//void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
+	native bool DrawSavePic(int x, int y, int w, int h);
+	native void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
 	native void SetFileInfo(int Selected);
 	native int SavegameCount();
 	native SaveGameNode GetSavegame(int i);
@@ -97,6 +97,106 @@ class LoadSaveMenu : ListMenu native
 
 	native bool mEntering;
 	native TextEnterMenu mInput;
+
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Drawer ()
+	{
+		Super.Drawer();
+
+		SaveGameNode node;
+		int i;
+		int j;
+		bool didSeeSelected = false;
+
+		// Draw picture area
+		if (gameaction == ga_loadgame || gameaction == ga_loadgamehidecon || gameaction == ga_savegame)
+		{
+			return;
+		}
+
+		Screen.DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
+		if (!manager.DrawSavePic(savepicLeft, savepicTop, savepicWidth, savepicHeight))
+		{
+			screen.Clear (savepicLeft, savepicTop, savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
+
+			if (manager.SavegameCount() > 0)
+			{
+				String text = (Selected == -1 || !manager.GetSavegame(Selected).bOldVersion)? Stringtable.Localize("$MNU_NOPICTURE") : Stringtable.Localize("$MNU_DIFFVERSION");
+				int textlen = SmallFont.StringWidth(text) * CleanXfac;
+
+				screen.DrawText (SmallFont, Font.CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
+					savepicTop+(savepicHeight-rowHeight)/2, text, DTA_CleanNoMove, true);
+			}
+		}
+
+		// Draw comment area
+		Screen.DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
+		screen.Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
+
+		manager.DrawSaveComment(SmallFont, Font.CR_GOLD, commentLeft, commentTop, CleanYfac);
+
+		// Draw file area
+		Screen.DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
+		screen.Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
+
+		if (manager.SavegameCount() == 0)
+		{
+			String text = Stringtable.Localize("$MNU_NOFILES");
+			int textlen = SmallFont.StringWidth(text) * CleanXfac;
+
+			screen.DrawText (SmallFont, Font.CR_GOLD, listboxLeft+(listboxWidth-textlen)/2, listboxTop+(listboxHeight-rowHeight)/2, text, DTA_CleanNoMove, true);
+			return;
+		}
+
+		j = TopItem;
+		for (i = 0; i < listboxRows && j < manager.SavegameCount(); i++)
+		{
+			int colr;
+			node = manager.GetSavegame(j);
+			if (node.bOldVersion)
+			{
+				colr = Font.CR_BLUE;
+			}
+			else if (node.bMissingWads)
+			{
+				colr = Font.CR_ORANGE;
+			}
+			else if (j == Selected)
+			{
+				colr = Font.CR_WHITE;
+			}
+			else
+			{
+				colr = Font.CR_TAN;
+			}
+
+			if (j == Selected)
+			{
+				screen.Clear (listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1), mEntering ? Color(255,255,0,0) : Color(255,0,0,255));
+				didSeeSelected = true;
+				if (!mEntering)
+				{
+					screen.DrawText (SmallFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+				}
+				else
+				{
+					String s = mInput.GetText() .. SmallFont.GetCursor();
+					screen.DrawText (SmallFont, Font.CR_WHITE, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, s, DTA_CleanNoMove, true);
+				}
+			}
+			else
+			{
+				screen.DrawText (SmallFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+			}
+			j++;
+		}
+	} 
 
 	
 

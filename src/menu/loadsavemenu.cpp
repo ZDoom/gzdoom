@@ -593,6 +593,16 @@ bool FSavegameManager::DrawSavePic(int x, int y, int w, int h)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, DrawSavePic)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	ACTION_RETURN_BOOL(self->DrawSavePic(x, y, w, h));
+}
+
 //=============================================================================
 //
 //
@@ -616,6 +626,18 @@ void FSavegameManager::DrawSaveComment(FFont *font, int cr, int x, int y, int sc
 
 	CleanXfac = sx;
 	CleanYfac = sy;
+}
+
+DEFINE_ACTION_FUNCTION(FSavegameManager, DrawSaveComment)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_POINTER(fnt, FFont);
+	PARAM_INT(cr);
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(fac);
+	self->DrawSaveComment(fnt, cr, x, y, fac);
+	return 0;
 }
 
 
@@ -770,8 +792,6 @@ public:
 
 	DLoadSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
 	void OnDestroy() override;
-
-	void Drawer ();
 };
 
 IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
@@ -819,117 +839,6 @@ void DLoadSaveMenu::OnDestroy()
 	manager->ClearSaveStuff ();
 	Super::OnDestroy();
 }
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DLoadSaveMenu::Drawer ()
-{
-	Super::Drawer();
-
-	FSaveGameNode *node;
-	int i;
-	unsigned j;
-	bool didSeeSelected = false;
-
-	// Draw picture area
-	if (gameaction == ga_loadgame || gameaction == ga_loadgamehidecon || gameaction == ga_savegame)
-	{
-		return;
-	}
-
-	V_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
-	if (!manager->DrawSavePic(savepicLeft, savepicTop, savepicWidth, savepicHeight))
-	{
-		screen->Clear (savepicLeft, savepicTop,
-			savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
-
-		if (manager->SavegameCount() > 0)
-		{
-			const char *text =
-				(Selected == -1 || !manager->GetSavegame(Selected)->bOldVersion)
-				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
-			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
-
-			screen->DrawText (SmallFont, CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
-				savepicTop+(savepicHeight-rowHeight)/2, text,
-				DTA_CleanNoMove, true, TAG_DONE);
-		}
-	}
-
-	// Draw comment area
-	V_DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
-	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
-
-	manager->DrawSaveComment(SmallFont, CR_GOLD, commentLeft, commentTop, CleanYfac);
-
-	// Draw file area
-	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
-	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
-
-	if (manager->SavegameCount() == 0)
-	{
-		const char * text = GStrings("MNU_NOFILES");
-		const int textlen = SmallFont->StringWidth (text)*CleanXfac;
-
-		screen->DrawText (SmallFont, CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
-			listboxTop+(listboxHeight-rowHeight)/2, text,
-			DTA_CleanNoMove, true, TAG_DONE);
-		return;
-	}
-
-	for (i = 0, j = TopItem; i < listboxRows && j < manager->SavegameCount(); i++,j++)
-	{
-		int color;
-		node = manager->GetSavegame(j);
-		if (node->bOldVersion)
-		{
-			color = CR_BLUE;
-		}
-		else if (node->bMissingWads)
-		{
-			color = CR_ORANGE;
-		}
-		else if ((int)j == Selected)
-		{
-			color = CR_WHITE;
-		}
-		else
-		{
-			color = CR_TAN;
-		}
-
-		if ((int)j == Selected)
-		{
-			screen->Clear (listboxLeft, listboxTop+rowHeight*i,
-				listboxRight, listboxTop+rowHeight*(i+1), -1,
-				mEntering ? MAKEARGB(255,255,0,0) : MAKEARGB(255,0,0,255));
-			didSeeSelected = true;
-			if (!mEntering)
-			{
-				screen->DrawText (SmallFont, color,
-					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->SaveTitle.GetChars(),
-					DTA_CleanNoMove, true, TAG_DONE);
-			}
-			else
-			{
-				FString s = mInput->GetText() + SmallFont->GetCursor();
-				screen->DrawText (SmallFont, CR_WHITE,
-					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, s,
-					DTA_CleanNoMove, true, TAG_DONE);
-			}
-		}
-		else
-		{
-			screen->DrawText (SmallFont, color,
-				listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->SaveTitle.GetChars(),
-				DTA_CleanNoMove, true, TAG_DONE);
-		}
-	}
-} 
 
 
 DEFINE_FIELD(FSaveGameNode, SaveTitle);

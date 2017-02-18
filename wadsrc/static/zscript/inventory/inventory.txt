@@ -813,7 +813,7 @@ class Inventory : Actor native
 	//
 	//===========================================================================
 
-	virtual bool DrawPowerup(int x, int y) { return false; }
+	virtual ui bool DrawPowerup(int x, int y) { return false; }
 
 	//===========================================================================
 	//

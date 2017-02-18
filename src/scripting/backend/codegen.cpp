@@ -6750,7 +6750,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 			if (ctx.Function)
 			{
 				outerflags = ctx.Function->Variants[0].Flags;
-				if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+				if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
 					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
 			}
 			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), "<unknown>");
@@ -6794,7 +6794,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	if (ctx.Function)
 	{
 		outerflags = ctx.Function->Variants[0].Flags;
-		if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+		if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
 			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
 	}
 	FScopeBarrier scopeBarrier(outerflags, membervar->Flags, membervar->SymbolName.GetChars());
@@ -8065,7 +8065,7 @@ isresolved:
 	if (ctx.Function)
 	{
 		outerflags = ctx.Function->Variants[0].Flags;
-		if ((outerflags & (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+		if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
 			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
 	}
 	int innerflags = afd->Variants[0].Flags;

@@ -1081,8 +1081,8 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
 		int notallowed = forstruct? 
-			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Meta | ZCC_Extension :
-			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Extension;
+			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Meta | ZCC_Extension | ZCC_VirtualScope :
+			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Extension | ZCC_VirtualScope;
 
 		if (field->Flags & notallowed)
 		{
@@ -1102,11 +1102,11 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		if (type->ObjectFlags & OF_Play)
 			varflags |= VARF_Play;
 		if (field->Flags & ZCC_UIFlag)
-			varflags = (varflags&~VARF_Play) | VARF_UI;
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 		if (field->Flags & ZCC_Play)
-			varflags = (varflags&~VARF_UI) | VARF_Play;
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Play);
 		if (field->Flags & ZCC_ClearScope)
-			varflags = (varflags&~(VARF_UI | VARF_Play));
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData);
 
 		if (field->Flags & ZCC_Native)
 		{
@@ -2128,7 +2128,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (c->Type()->ObjectFlags & OF_Play)
 			varflags |= VARF_Play;
 		if (f->Flags & ZCC_FuncConst)
-			varflags = (varflags&~(VARF_Play | VARF_UI)); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
 		if (f->Flags & ZCC_UIFlag)
 			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 		if (f->Flags & ZCC_Play)

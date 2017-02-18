@@ -934,7 +934,7 @@ class PowerFlight : Powerup
 		+INVENTORY.HUBPOWER
 	}
 
-	bool HitCenterFrame;
+	ui bool HitCenterFrame;
 
 	//===========================================================================
 	//

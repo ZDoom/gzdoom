@@ -7403,6 +7403,32 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				return nullptr;
 			}
 
+			// [ZZ] validate call
+			PClass* cls = (PClass*)ctx.Class;
+			int outerflags = 0;
+			if (ctx.Function)
+			{
+				outerflags = ctx.Function->Variants[0].Flags;
+				if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
+					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+			}
+			int innerflags = afd->Variants[0].Flags;
+			int innerside = FScopeBarrier::SideFromFlags(innerflags);
+			// [ZZ] check this at compile time. this would work for most legit cases.
+			if (innerside == FScopeBarrier::Side_Virtual)
+			{
+				innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+				innerflags = FScopeBarrier::FlagsFromSide(innerside);
+			}
+			FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
+			if (!scopeBarrier.callable)
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s", scopeBarrier.callerror.GetChars());
+				delete this;
+				return nullptr;
+			}
+
+			// [ZZ] this is only checked for VARF_Methods in the other place. bug?
 			if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))
 			{
 				delete this;

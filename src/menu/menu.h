@@ -373,11 +373,9 @@ public:
 	// [TP] Added allowcolors
 	DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
 
-	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool Responder(event_t *ev);
 	bool MouseEvent(int type, int x, int y);
-	FString GetText();
 };
 
 

@@ -61,8 +61,6 @@ static const char InputGridChars[INPUTGRID_WIDTH * INPUTGRID_HEIGHT] =
 
 CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-DEFINE_FIELD(DTextEnterMenu, mInputGridOkay)
-
 //=============================================================================
 //
 //
@@ -90,24 +88,6 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen
 	}
 	AllowColors = allowcolors; // [TP]
 }
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FString DTextEnterMenu::GetText()
-{
-	return mEnterString;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 
 //=============================================================================
 //
@@ -294,88 +274,6 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 	return false;
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DTextEnterMenu::Drawer ()
-{
-	mParentMenu->CallDrawer();
-	if (mInputGridOkay)
-	{
-		const int cell_width = 18 * CleanXfac;
-		const int cell_height = 12 * CleanYfac;
-		const int top_padding = cell_height / 2 - SmallFont->GetHeight() * CleanYfac / 2;
-
-		// Darken the background behind the character grid.
-		// Unless we frame it with a border, I think it looks better to extend the
-		// background across the full width of the screen.
-		screen->Dim(0, 0.8f,
-			0 /*screen->GetWidth()/2 - 13 * cell_width / 2*/,
-			screen->GetHeight() - INPUTGRID_HEIGHT * cell_height,
-			screen->GetWidth() /*13 * cell_width*/,
-			INPUTGRID_HEIGHT * cell_height);
-
-		if (InputGridX >= 0 && InputGridY >= 0)
-		{
-			// Highlight the background behind the selected character.
-			screen->Dim(MAKERGB(255,248,220), 0.6f,
-				InputGridX * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2,
-				InputGridY * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight(),
-				cell_width, cell_height);
-		}
-
-		for (int y = 0; y < INPUTGRID_HEIGHT; ++y)
-		{
-			const int yy = y * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight();
-			for (int x = 0; x < INPUTGRID_WIDTH; ++x)
-			{
-				int width;
-				const int xx = x * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2;
-				const int ch = InputGridChars[y * INPUTGRID_WIDTH + x];
-				FTexture *pic = SmallFont->GetChar(ch, &width);
-				EColorRange color;
-
-				// The highlighted character is yellow; the rest are dark gray.
-				color = (x == InputGridX && y == InputGridY) ? CR_YELLOW : CR_DARKGRAY;
-
-				if (pic != NULL)
-				{
-					// Draw a normal character.
-					screen->DrawChar(SmallFont, color, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding, ch, DTA_CleanNoMove, true, TAG_DONE);
-				}
-				else if (ch == ' ')
-				{
-					FRemapTable *remap = SmallFont->GetColorTranslation(color);
-					// Draw the space as a box outline. We also draw it 50% wider than it really is.
-					const int x1 = xx + cell_width/2 - width * CleanXfac * 3 / 4;
-					const int x2 = x1 + width * 3 * CleanXfac / 2;
-					const int y1 = yy + top_padding;
-					const int y2 = y1 + SmallFont->GetHeight() * CleanYfac;
-					const int palentry = remap->Remap[remap->NumEntries * 2 / 3];
-					const uint32 palcolor = remap->Palette[remap->NumEntries * 2 / 3];
-					screen->Clear(x1, y1, x2, y1+CleanYfac, palentry, palcolor);	// top
-					screen->Clear(x1, y2, x2, y2+CleanYfac, palentry, palcolor);	// bottom
-					screen->Clear(x1, y1+CleanYfac, x1+CleanXfac, y2, palentry, palcolor);	// left
-					screen->Clear(x2-CleanXfac, y1+CleanYfac, x2, y2, palentry, palcolor);	// right
-				}
-				else if (ch == '\b' || ch == 0)
-				{
-					// Draw the backspace and end "characters".
-					const char *const str = ch == '\b' ? "BS" : "ED";
-					screen->DrawText(SmallFont, color,
-						xx + cell_width/2 - SmallFont->StringWidth(str)*CleanXfac/2,
-						yy + top_padding, str, DTA_CleanNoMove, true, TAG_DONE);
-				}
-			}
-		}
-	}
-	Super::Drawer();
-}
-
-
 DEFINE_ACTION_FUNCTION(DTextEnterMenu, Open)
 {
 	PARAM_PROLOGUE;
@@ -389,8 +287,11 @@ DEFINE_ACTION_FUNCTION(DTextEnterMenu, Open)
 	ACTION_RETURN_OBJECT(m);
 }
 
-DEFINE_ACTION_FUNCTION(DTextEnterMenu, GetText)
-{
-	PARAM_SELF_PROLOGUE(DTextEnterMenu);
-	ACTION_RETURN_STRING(self->GetText());
-}
+DEFINE_FIELD(DTextEnterMenu, mEnterString);
+DEFINE_FIELD(DTextEnterMenu, mEnterSize);
+DEFINE_FIELD(DTextEnterMenu, mEnterPos);
+DEFINE_FIELD(DTextEnterMenu, mSizeMode); // 1: size is length in chars. 2: also check string width
+DEFINE_FIELD(DTextEnterMenu, mInputGridOkay);
+DEFINE_FIELD(DTextEnterMenu, InputGridX);
+DEFINE_FIELD(DTextEnterMenu, InputGridY);
+DEFINE_FIELD(DTextEnterMenu, AllowColors);

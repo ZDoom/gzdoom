@@ -398,6 +398,20 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, Dim)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(color);
+	PARAM_FLOAT(amount);
+	PARAM_INT(x1);
+	PARAM_INT(y1);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	screen->Dim(color, float(amount), x1, y1, w, h);
+	return 0;
+}
+
+
 //==========================================================================
 //
 // DCanvas :: GetScreenshotBuffer

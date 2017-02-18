@@ -630,7 +630,7 @@ void M_SetMenu(FName menu, int param)
 				if (cls == nullptr) cls = PClass::FindClass("ListMenu");
 
 				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
-				IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)
+				IFVIRTUALPTRNAME(newmenu, "ListMenu", Init)
 				{
 					VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
 					GlobalVMStack.Call(func, params, 3, nullptr, 0);

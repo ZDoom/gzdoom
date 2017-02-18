@@ -33,38 +33,72 @@
 **
 */
 
-/*
+
+struct SaveGameNode native
+{
+	native String SaveTitle;
+	native String Filename;
+	native bool bOldVersion;
+	native bool bMissingWads;
+	native bool bNoDelete;
+}
+
 struct SavegameManager native 
 {
-	native int LastSaved;
-	native int LastAccessed;
 	native int WindowSize;
-	//SaveGameNode quickSaveSlot = nullptr;
-	//FBrokenLines *SaveComment = nullptr;
+	native SaveGameNode quickSaveSlot;
 
-	void ClearSaveGames();
-	int InsertSaveNode(FSaveGameNode *node);
-	int RemoveSaveSlot(int index);
-	void ReadSaveStrings();
-	void NotifyNewSave(const char *file, const char *title, bool okForQuicksave);
-	void LoadSavegame(int Selected);
-	void DoSave(int Selected, const char *savegamestring);
-	void DeleteEntry(int Selected);
-	void ExtractSaveData(int index);
-	void UnloadSaveData();
-	void ClearSaveStuff();
-	bool DrawSavePic(int x, int y, int w, int h);
-	void SetFileInfo(int Selected);
+	//void ReadSaveStrings();
+	//void UnloadSaveData();
+
+	//int RemoveSaveSlot(int index);
+	native void LoadSavegame(int Selected);
+	//void DoSave(int Selected, String savegamestring);
+	native int ExtractSaveData(int index);
+	//void ClearSaveStuff();
+	//bool DrawSavePic(int x, int y, int w, int h);
+	//void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
+	//void SetFileInfo(int Selected);
+	native int SavegameCount();
+	//SaveGameNode GetSavegame(int i);
+	//void InsertNewSaveNode();
+	//bool RemoveNewSaveNode();
 
 }
-*/
+
 
 
 class LoadSaveMenu : ListMenu native
 {
-	//native SavegameManager manager;
-	//native int TopItem;
-	//native int Selected;
+	native SavegameManager manager;
+	native int TopItem;
+	native int Selected;
+
+	native int savepicLeft;
+	native int savepicTop;
+	native int savepicWidth;
+	native int savepicHeight;
+	native int rowHeight;
+	native int listboxLeft;
+	native int listboxTop;
+	native int listboxWidth;
+	
+	native int listboxRows;
+	native int listboxHeight;
+	native int listboxRight;
+	native int listboxBottom;
+
+	native int commentLeft;
+	native int commentTop;
+	native int commentWidth;
+	native int commentHeight;
+	native int commentRight;
+	native int commentBottom;
+
+	native bool mEntering;
+	native TextEnterMenu mInput;
+
+	
 }
 
 class SaveMenu : LoadSaveMenu native
@@ -85,19 +119,13 @@ class LoadMenu : LoadSaveMenu native
 	//
 	//=============================================================================
 
-	/*
 	override void Init(Menu parent, ListMenuDescriptor desc)
 	{
 		Super.Init(parent, desc);
 		TopItem = 0;
-		if (manager.LastAccessed != -1)
-		{
-			Selected = manager.LastAccessed;
-		}
-		manager.ExtractSaveData (Selected);
+		Selected = manager.ExtractSaveData (-1);
 
 	}
-	*/
 
 	//=============================================================================
 	//
@@ -105,14 +133,13 @@ class LoadMenu : LoadSaveMenu native
 	//
 	//=============================================================================
 
-	/*
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (Super.MenuEvent(mkey, fromcontroller)) 
 		{
 			return true;
 		}
-		if (Selected == -1 || manager.SaveGames.Size() == 0)
+		if (Selected == -1 || manager.SavegameCount() == 0)
 		{
 			return false;
 		}
@@ -124,5 +151,4 @@ class LoadMenu : LoadSaveMenu native
 		}
 		return false;
 	}
-	*/
 }

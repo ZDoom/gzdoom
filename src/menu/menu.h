@@ -60,44 +60,44 @@ struct FSaveGameNode
 {
 	FString SaveTitle;
 	FString Filename;
-	bool bOldVersion;
-	bool bMissingWads;
-	bool bNoDelete;
-
-	FSaveGameNode() { bNoDelete = false; }
+	bool bOldVersion = false;
+	bool bMissingWads = false;
+	bool bNoDelete = false;
 };
 
-struct SavegameManager
+struct FSavegameManager
 {
 private:
 	TArray<FSaveGameNode*> SaveGames;
 	FSaveGameNode NewSaveNode;
-public:
 	int LastSaved = -1;
 	int LastAccessed = -1;
+	FileReader *currentSavePic = nullptr;
+	TArray<char> SavePicData;
+	FTexture *SavePic = nullptr;
+	FBrokenLines *SaveComment = nullptr;
+
+public:
 	int WindowSize = 0;
 	FSaveGameNode *quickSaveSlot = nullptr;
 
-	FileReader *currentSavePic = nullptr;
-	TArray<char> SavePicData;
-
-	FTexture *SavePic = nullptr;
-	FBrokenLines *SaveComment = nullptr;
 
 private:
 	int InsertSaveNode(FSaveGameNode *node);
 public:
-	void ClearSaveGames();
-	int RemoveSaveSlot(int index);
-	void ReadSaveStrings();
 	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave);
+	void ClearSaveGames();
+
+	void ReadSaveStrings();
+	void UnloadSaveData();
+
+	int RemoveSaveSlot(int index);
 	void LoadSavegame(int Selected);
 	void DoSave(int Selected, const char *savegamestring);
-	void DeleteEntry(int Selected);
-	void ExtractSaveData(int index);
-	void UnloadSaveData();
+	unsigned ExtractSaveData(int index);
 	void ClearSaveStuff();
 	bool DrawSavePic(int x, int y, int w, int h);
+	void DrawSaveComment(FFont *font, int cr, int x, int y, int scalefactor);
 	void SetFileInfo(int Selected);
 	unsigned SavegameCount();
 	FSaveGameNode *GetSavegame(unsigned i);
@@ -106,7 +106,7 @@ public:
 
 };
 
-extern SavegameManager savegameManager;
+extern FSavegameManager savegameManager;
 
 //=============================================================================
 //

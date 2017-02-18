@@ -158,11 +158,6 @@ enum DrawTextureTags
 
 struct Screen native
 {
-	int CleanWidth, CleanHeight;
-	int CleanXFac, CleanYFac;
-	int CleanWidth_1, CleanHeight_1;
-	int CleanXFac_1, CleanYFac_1;
-	
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();

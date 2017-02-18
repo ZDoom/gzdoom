@@ -15,6 +15,7 @@
 #include "zscript/menu/optionmenuitems.txt"
 #include "zscript/menu/colorpickermenu.txt"
 #include "zscript/menu/joystickmenu.txt"
+#include "zscript/menu/loadsavemenu.txt"
 #include "zscript/menu/playermenu.txt"
 #include "zscript/menu/playerdisplay.txt"
 #include "zscript/menu/playercontrols.txt"

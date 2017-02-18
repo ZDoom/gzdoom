@@ -548,7 +548,7 @@ DQuickSaveMenu::DQuickSaveMenu(bool playsound)
 {
 	FString tempstring;
 
-	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->Title);
+	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 	Init(NULL, tempstring, 0, playsound);
 }
 
@@ -562,7 +562,7 @@ void DQuickSaveMenu::HandleResult(bool res)
 {
 	if (res)
 	{
-		G_SaveGame (savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->Title);
+		G_SaveGame (savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	}
@@ -601,7 +601,7 @@ CCMD (quicksave)
 	// [mxd]. Just save the game, no questions asked.
 	if (!saveloadconfirmation)
 	{
-		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->Title);
+		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 		return;
 	}
 
@@ -644,7 +644,7 @@ DQuickLoadMenu::DQuickLoadMenu(bool playsound)
 {
 	FString tempstring;
 
-	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->Title);
+	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 	Init(NULL, tempstring, 0, playsound);
 }
 

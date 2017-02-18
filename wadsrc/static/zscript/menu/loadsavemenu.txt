@@ -1,0 +1,128 @@
+/*
+** loadsavemenu.cpp
+** The load game and save game menus
+**
+**---------------------------------------------------------------------------
+** Copyright 2001-2010 Randy Heit
+** Copyright 2010-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+/*
+struct SavegameManager native 
+{
+	native int LastSaved;
+	native int LastAccessed;
+	native int WindowSize;
+	//SaveGameNode quickSaveSlot = nullptr;
+	//FBrokenLines *SaveComment = nullptr;
+
+	void ClearSaveGames();
+	int InsertSaveNode(FSaveGameNode *node);
+	int RemoveSaveSlot(int index);
+	void ReadSaveStrings();
+	void NotifyNewSave(const char *file, const char *title, bool okForQuicksave);
+	void LoadSavegame(int Selected);
+	void DoSave(int Selected, const char *savegamestring);
+	void DeleteEntry(int Selected);
+	void ExtractSaveData(int index);
+	void UnloadSaveData();
+	void ClearSaveStuff();
+	bool DrawSavePic(int x, int y, int w, int h);
+	void SetFileInfo(int Selected);
+
+}
+*/
+
+
+class LoadSaveMenu : ListMenu native
+{
+	//native SavegameManager manager;
+	//native int TopItem;
+	//native int Selected;
+}
+
+class SaveMenu : LoadSaveMenu native
+{
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class LoadMenu : LoadSaveMenu native
+{
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	/*
+	override void Init(Menu parent, ListMenuDescriptor desc)
+	{
+		Super.Init(parent, desc);
+		TopItem = 0;
+		if (manager.LastAccessed != -1)
+		{
+			Selected = manager.LastAccessed;
+		}
+		manager.ExtractSaveData (Selected);
+
+	}
+	*/
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	/*
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		if (Super.MenuEvent(mkey, fromcontroller)) 
+		{
+			return true;
+		}
+		if (Selected == -1 || manager.SaveGames.Size() == 0)
+		{
+			return false;
+		}
+
+		if (mkey == MKEY_Enter)
+		{
+			manager.LoadSavegame(Selected);
+			return true;
+		}
+		return false;
+	}
+	*/
+}

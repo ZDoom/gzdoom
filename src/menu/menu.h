@@ -58,7 +58,7 @@ extern FGameStartup GameStartupInfo;
 
 struct FSaveGameNode
 {
-	char Title[SAVESTRINGSIZE];
+	FString SaveTitle;
 	FString Filename;
 	bool bOldVersion;
 	bool bMissingWads;

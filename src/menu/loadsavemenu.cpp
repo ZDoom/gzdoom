@@ -120,8 +120,7 @@ int SavegameManager::InsertSaveNode(FSaveGameNode *node)
 		unsigned int i;
 		for (i = 0; i < SaveGames.Size(); i++)
 		{
-			if (SaveGames[i]->bOldVersion ||
-				stricmp(node->Title, SaveGames[i]->Title) <= 0)
+			if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
 			{
 				break;
 			}
@@ -212,7 +211,7 @@ void SavegameManager::ReadSaveStrings()
 						node->Filename = filepath;
 						node->bOldVersion = oldVer;
 						node->bMissingWads = missing;
-						strncpy(node->Title, title.GetChars(), SAVESTRINGSIZE);
+						node->SaveTitle = title;
 						InsertSaveNode(node);
 						delete savegame;
 					}
@@ -287,7 +286,7 @@ void SavegameManager::ReadSaveStrings()
 							node->Filename = filepath;
 							node->bOldVersion = true;
 							node->bMissingWads = false;
-							memcpy(node->Title, title, SAVESTRINGSIZE);
+							node->SaveTitle = title;
 							InsertSaveNode(node);
 						}
 						fclose(file);
@@ -324,7 +323,7 @@ void SavegameManager::NotifyNewSave(const char *file, const char *title, bool ok
 		if (node->Filename.CompareNoCase(file) == 0)
 #endif
 		{
-			strcpy(node->Title, title);
+			node->SaveTitle = title;
 			node->bOldVersion = false;
 			node->bMissingWads = false;
 			if (okForQuicksave)
@@ -337,7 +336,7 @@ void SavegameManager::NotifyNewSave(const char *file, const char *title, bool ok
 	}
 
 	node = new FSaveGameNode;
-	strcpy(node->Title, title);
+	node->SaveTitle = title;
 	node->Filename = file;
 	node->bOldVersion = false;
 	node->bMissingWads = false;
@@ -597,7 +596,6 @@ protected:
 
 	// this needs to be kept in memory so that the texture can access it when it needs to.
 	bool mEntering;
-	char savegamestring[SAVESTRINGSIZE];
 	DTextEnterMenu *mInput = nullptr;
 
 	DLoadSaveMenu(DMenu *parent = nullptr, DListMenuDescriptor *desc = nullptr);
@@ -756,7 +754,7 @@ void DLoadSaveMenu::Drawer ()
 			if (!mEntering)
 			{
 				screen->DrawText (SmallFont, color,
-					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
+					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->SaveTitle.GetChars(),
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
 			else
@@ -770,7 +768,7 @@ void DLoadSaveMenu::Drawer ()
 		else
 		{
 			screen->DrawText (SmallFont, color,
-				listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
+				listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->SaveTitle.GetChars(),
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
@@ -936,7 +934,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 					{
 						FString EndString;
 						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-							GStrings("MNU_DELETESG"), manager->SaveGames[Selected]->Title, GStrings("PRESSYN"));
+							GStrings("MNU_DELETESG"), manager->SaveGames[Selected]->SaveTitle.GetChars(), GStrings("PRESSYN"));
 						M_StartMessage (EndString, 0);
 					}
 					return true;
@@ -991,7 +989,7 @@ IMPLEMENT_CLASS(DSaveMenu, false, false)
 DSaveMenu::DSaveMenu(DMenu *parent, DListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
-	strcpy (NewSaveNode.Title, GStrings["NEWSAVE"]);
+	NewSaveNode.SaveTitle =  GStrings["NEWSAVE"];
 	NewSaveNode.bNoDelete = true;
 	manager->SaveGames.Insert(0, &NewSaveNode);
 	TopItem = 0;
@@ -1042,15 +1040,8 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	if (mkey == MKEY_Enter)
 	{
-		if (Selected != 0)
-		{
-			strcpy (savegamestring, manager->SaveGames[Selected]->Title);
-		}
-		else
-		{
-			savegamestring[0] = 0;
-		}
-		mInput = new DTextEnterMenu(this, savegamestring, SAVESTRINGSIZE, 1, fromcontroller);
+		const char *SavegameString = (Selected != 0)? manager->SaveGames[Selected]->SaveTitle.GetChars() : "";
+		mInput = new DTextEnterMenu(this, SavegameString, SAVESTRINGSIZE, 1, fromcontroller);
 		M_ActivateMenu(mInput);
 		mEntering = true;
 	}

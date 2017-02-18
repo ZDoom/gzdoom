@@ -329,7 +329,7 @@ class Object native
 	native static uint MSTime();
 
 	native Name GetClassName();
-	native void Destroy();
+	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual void OnDestroy() {}

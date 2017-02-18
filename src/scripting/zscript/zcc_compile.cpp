@@ -1273,7 +1273,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 FString ZCCCompiler::FlagsToString(uint32_t flags)
 {
 
-	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "clearscope" };
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "clearscope", "virtualscope" };
 	FString build;
 
 	for (size_t i = 0; i < countof(flagnames); i++)
@@ -2130,11 +2130,13 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_FuncConst)
 			varflags = (varflags&~(VARF_Play | VARF_UI)); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
 		if (f->Flags & ZCC_UIFlag)
-			varflags = (varflags&~VARF_Play) | VARF_UI;
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 		if (f->Flags & ZCC_Play)
-			varflags = (varflags&~VARF_UI) | VARF_Play;
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Play);
 		if (f->Flags & ZCC_ClearScope)
-			varflags = (varflags&~(VARF_Play | VARF_UI));
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData);
+		if (f->Flags & ZCC_VirtualScope)
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Virtual);
 
 		// [ZZ] supporting const self for actors is quite a cumbersome task because there's no concept of a const pointer (?)
 		//      either way, it doesn't make sense, because you can call any method on a readonly class instance.
@@ -2194,14 +2196,20 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			Error(f, "'Const' on a static method is not supported");
 		}
 
-		// you can't have a const function belonging to either ui or play.
-		// const is intended for plain data to signify that you can call a method on readonly variable.
-		if ((f->Flags & ZCC_FuncConst) && (f->Flags & (ZCC_UIFlag | ZCC_Play)))
+		// [ZZ] neither this
+		if ((varflags&(VARF_VirtualScope | VARF_Method)) == VARF_VirtualScope) // non-method virtualscope function
 		{
-			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(f->Flags&(ZCC_FuncConst | ZCC_UIFlag | ZCC_Play)).GetChars(), FName(f->Name).GetChars());
+			Error(f, "'VirtualScope' on a static method is not supported");
 		}
 
-		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
+		// you can't have a const function belonging to either ui or play.
+		// const is intended for plain data to signify that you can call a method on readonly variable.
+		if ((f->Flags & ZCC_FuncConst) && (f->Flags & (ZCC_UIFlag | ZCC_Play | ZCC_VirtualScope)))
+		{
+			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(f->Flags&(ZCC_FuncConst | ZCC_UIFlag | ZCC_Play | ZCC_VirtualScope)).GetChars(), FName(f->Name).GetChars());
+		}
+
+		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope, ZCC_VirtualScope };
 		excludeflags = 0;
 		fc = 0;
 		for (int i = 0; i < countof(excludescope); i++)
@@ -2406,9 +2414,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				sym->Variants[0].Implementation->Final = true;
 			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
 			if (varflags & VARF_UI)
-				sym->Variants[0].Implementation->ScopeUI = true;
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_UI;
 			if (varflags & VARF_Play)
-				sym->Variants[0].Implementation->ScopePlay = true;
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Play;
+			if (varflags & VARF_VirtualScope)
+				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Virtual;
 			if (varflags & VARF_ReadOnly)
 				sym->Variants[0].Implementation->FuncConst = true;
 
@@ -2430,7 +2440,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
 						// you can't change ui/play/clearscope for a virtual method.
-						if (f->Flags & (ZCC_UIFlag|ZCC_Play|ZCC_ClearScope))
+						if (f->Flags & (ZCC_UIFlag|ZCC_Play|ZCC_ClearScope|ZCC_VirtualScope))
 						{
 							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
 						}
@@ -2440,11 +2450,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to change const qualifier for virtual function %s", FName(f->Name).GetChars());
 						}
 						// inherit scope of original function if override not specified
-						if (sym->Variants[0].Implementation->ScopeUI = oldfunc->ScopeUI)
-							sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_Play)) | VARF_UI;
-						else if (sym->Variants[0].Implementation->ScopePlay = oldfunc->ScopePlay)
-							sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_UI)) | VARF_Play;
-						else sym->Variants[0].Flags = (sym->Variants[0].Flags&~(VARF_UI | VARF_Play));
+						sym->Variants[0].Implementation->BarrierSide = oldfunc->BarrierSide;
+						sym->Variants[0].Flags = FScopeBarrier::ChangeSideInFlags(sym->Variants[0].Flags, oldfunc->BarrierSide);
 						// inherit const from original function
 						if (sym->Variants[0].Implementation->FuncConst = oldfunc->FuncConst)
 							sym->Variants[0].Flags |= VARF_ReadOnly;

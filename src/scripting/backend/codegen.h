@@ -87,7 +87,8 @@ struct FScopeBarrier
 	{
 		Side_PlainData = 0,
 		Side_UI,
-		Side_Play
+		Side_Play,
+		Side_Virtual
 	};
 	int sidefrom;
 	int sidelast;
@@ -98,6 +99,18 @@ struct FScopeBarrier
 		if (flags & VARF_UI)
 			return Side_UI;
 		if (flags & VARF_Play)
+			return Side_Play;
+		if (flags & VARF_VirtualScope)
+			return Side_Virtual;
+		return Side_PlainData;
+	}
+
+	// same as above, but from object flags
+	static int SideFromObjectFlags(int flags)
+	{
+		if (flags & OF_UI)
+			return Side_UI;
+		if (flags & OF_Play)
 			return Side_Play;
 		return Side_PlainData;
 	}
@@ -111,6 +124,8 @@ struct FScopeBarrier
 			return VARF_Play;
 		case Side_UI:
 			return VARF_UI;
+		case Side_Virtual:
+			return VARF_VirtualScope;
 		default:
 			return 0;
 		}
@@ -127,6 +142,8 @@ struct FScopeBarrier
 			return "ui";
 		case Side_Play:
 			return "play";
+		case Side_Virtual:
+			return "virtual"; // should not happen!
 		default:
 			return "unknown";
 		}
@@ -170,6 +187,7 @@ struct FScopeBarrier
 			return;
 
 		// we aren't interested in any other flags
+		//  - update: including VARF_VirtualScope. inside the function itself, we treat it as if it's PlainData.
 		flags1 &= VARF_UI | VARF_Play;
 		flags2 &= VARF_UI | VARF_Play | VARF_ReadOnly;
 

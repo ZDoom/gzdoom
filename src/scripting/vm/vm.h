@@ -702,9 +702,8 @@ public:
 	bool Native;
 	bool Final = false;				// cannot be overridden
 	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
-	bool ScopeUI = false;			// [ZZ] 'ui' method
-	bool ScopePlay = false;			// [ZZ] 'play' method
-	bool FuncConst = false;			// [ZZ] const qualifier for methods - these can be called on readonly
+	bool FuncConst = false;			// [ZZ] readonly function
+	int BarrierSide = -1;			// [ZZ] FScopeBarrier::Side
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	unsigned VirtualIndex = ~0u;
 	FName Name;

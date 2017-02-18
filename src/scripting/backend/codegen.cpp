@@ -7684,6 +7684,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		auto id = static_cast<FxIdentifier *>(Self)->Identifier;
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
+		// [ZZ] substitute ccls for String internal type.
 		if (id == NAME_String) ccls = TypeStringStruct;
 		else ccls = FindStructType(id, ctx);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Self)->noglobal = true;
@@ -7695,7 +7696,6 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		if (ccls != nullptr)
 		{
-			// [ZZ] substitute ccls for String internal type.
 			if (!ccls->IsKindOf(RUNTIME_CLASS(PClass)) || static_cast<PClass *>(ccls)->bExported)
 			{
 				cls = ccls;
@@ -8029,10 +8029,17 @@ isresolved:
 	if (ctx.Function)
 		outerflags = ctx.Function->Variants[0].Flags;
 	int innerflags = afd->Variants[0].Flags;
+	int innerside = FScopeBarrier::SideFromFlags(innerflags);
+	// [ZZ] check this at compile time. this would work for most legit cases.
+	if (innerside == FScopeBarrier::Side_Virtual)
+	{
+		innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+		innerflags = FScopeBarrier::FlagsFromSide(innerside);
+	}
 	if (Self->ExprType == EFX_StructMember)
 	{
 		FxStructMember* pmember = (FxStructMember*)Self;
-		if (FScopeBarrier::SideFromFlags(innerflags) == FScopeBarrier::Side_PlainData)
+		if (innerside == FScopeBarrier::Side_PlainData)
 			innerflags = FScopeBarrier::ChangeSideInFlags(innerflags, pmember->BarrierSide);
 	}
 	FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());

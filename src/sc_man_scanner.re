@@ -174,6 +174,7 @@ std2:
 		'ui'						{ RET(TK_UI); }
 		'play'						{ RET(TK_Play); }
 		'clearscope'				{ RET(TK_ClearScope); }
+		'virtualscope'				{ RET(TK_VirtualScope); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

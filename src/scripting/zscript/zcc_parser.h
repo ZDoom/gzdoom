@@ -41,6 +41,7 @@ enum
 	ZCC_UIFlag			= 1 << 18, // there's also token called ZCC_UI
 	ZCC_Play			= 1 << 19,
 	ZCC_ClearScope		= 1 << 20,
+	ZCC_VirtualScope	= 1 << 21,
 };
 
 // Function parameter modifiers

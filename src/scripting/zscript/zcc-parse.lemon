@@ -1007,6 +1007,7 @@ decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc;
 decl_flag(X) ::= UI(T).			{ X.Int = ZCC_UIFlag; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= PLAY(T).		{ X.Int = ZCC_Play; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= CLEARSCOPE(T). { X.Int = ZCC_ClearScope; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= VIRTUALSCOPE(T). { X.Int = ZCC_VirtualScope; X.SourceLoc = T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }

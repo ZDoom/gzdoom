@@ -39,6 +39,7 @@ enum
 	VARF_VarArg			= (1<<19),  // [ZZ] vararg: don't typecheck values after ... in function signature
 	VARF_UI				= (1<<20),  // [ZZ] ui: object is ui-scope only (can't modify playsim)
 	VARF_Play			= (1<<21),  // [ZZ] play: object is playsim-scope only (can't access ui)
+	VARF_VirtualScope	= (1<<22),  // [ZZ] virtualscope: object should use the scope of the particular class it's being used with (methods only)
 };
 
 // An action function -------------------------------------------------------

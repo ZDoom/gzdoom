@@ -105,6 +105,14 @@ int FSavegameManager::RemoveSaveSlot(int index)
 	return index;
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveSaveSlot)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
+	PARAM_INT(sel);
+	ACTION_RETURN_INT(self->RemoveSaveSlot(sel));
+}
+
+
 //=============================================================================
 //
 //
@@ -664,7 +672,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, SavegameCount)
 //
 //=============================================================================
 
-FSaveGameNode *FSavegameManager::GetSavegame(unsigned i)
+FSaveGameNode *FSavegameManager::GetSavegame(int i)
 {
 	return SaveGames[i];
 }
@@ -764,8 +772,6 @@ public:
 	void OnDestroy() override;
 
 	void Drawer ();
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
 };
 
 IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
@@ -925,131 +931,6 @@ void DLoadSaveMenu::Drawer ()
 	}
 } 
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
-{
-	switch (mkey)
-	{
-	case MKEY_Up:
-		if (manager->SavegameCount() > 1)
-		{
-			if (Selected == -1) Selected = TopItem;
-			else
-			{
-				if (--Selected < 0) Selected = manager->SavegameCount()-1;
-				if (Selected < TopItem) TopItem = Selected;
-				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
-			}
-			manager->UnloadSaveData ();
-			manager->ExtractSaveData (Selected);
-		}
-		return true;
-
-	case MKEY_Down:
-		if (manager->SavegameCount() > 1)
-		{
-			if (Selected == -1) Selected = TopItem;
-			else
-			{
-				if (unsigned(++Selected) >= manager->SavegameCount()) Selected = 0;
-				if (Selected < TopItem) TopItem = Selected;
-				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
-			}
-			manager->UnloadSaveData ();
-			manager->ExtractSaveData (Selected);
-		}
-		return true;
-
-	case MKEY_PageDown:
-		if (manager->SavegameCount() > 1)
-		{
-			if (TopItem >= (int)manager->SavegameCount() - listboxRows)
-			{
-				TopItem = 0;
-				if (Selected != -1) Selected = 0;
-			}
-			else
-			{
-				TopItem = MIN<int>(TopItem + listboxRows, manager->SavegameCount() - listboxRows);
-				if (TopItem > Selected && Selected != -1) Selected = TopItem;
-			}
-			manager->UnloadSaveData ();
-			manager->ExtractSaveData (Selected);
-		}
-		return true;
-
-	case MKEY_PageUp:
-		if (manager->SavegameCount() > 1)
-		{
-			if (TopItem == 0)
-			{
-				TopItem = manager->SavegameCount() - listboxRows;
-				if (Selected != -1) Selected = TopItem;
-			}
-			else
-			{
-				TopItem = MAX(TopItem - listboxRows, 0);
-				if (Selected >= TopItem + listboxRows) Selected = TopItem;
-			}
-			manager->UnloadSaveData ();
-			manager->ExtractSaveData (Selected);
-		}
-		return true;
-
-	case MKEY_Enter:
-		return false;	// This event will be handled by the subclasses
-
-	case MKEY_MBYes:
-	{
-		if ((unsigned)Selected < manager->SavegameCount())
-		{
-			Selected = manager->RemoveSaveSlot (Selected);
-		}
-		return true;
-	}
-
-	default:
-		return Super::MenuEvent(mkey, fromcontroller);
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
-{
-	if (x >= listboxLeft && x < listboxLeft + listboxWidth && 
-		y >= listboxTop && y < listboxTop + listboxHeight)
-	{
-		int lineno = (y - listboxTop) / rowHeight;
-
-		if (TopItem + lineno < (int)manager->SavegameCount())
-		{
-			Selected = TopItem + lineno;
-			manager->UnloadSaveData ();
-			manager->ExtractSaveData (Selected);
-			if (type == MOUSE_Release)
-			{
-				if (MenuEvent(MKEY_Enter, true))
-				{
-					return true;
-				}
-			}
-		}
-		else Selected = -1;
-	}
-	else Selected = -1;
-
-	return Super::MouseEvent(type, x, y);
-}
 
 DEFINE_FIELD(FSaveGameNode, SaveTitle);
 DEFINE_FIELD(FSaveGameNode, Filename);

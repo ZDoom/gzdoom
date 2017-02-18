@@ -100,7 +100,7 @@ public:
 	void DrawSaveComment(FFont *font, int cr, int x, int y, int scalefactor);
 	void SetFileInfo(int Selected);
 	unsigned SavegameCount();
-	FSaveGameNode *GetSavegame(unsigned i);
+	FSaveGameNode *GetSavegame(int i);
 	void InsertNewSaveNode();
 	bool RemoveNewSaveNode();
 

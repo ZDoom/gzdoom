@@ -51,7 +51,7 @@ struct SavegameManager native
 	//void ReadSaveStrings();
 	native void UnloadSaveData();
 
-	//int RemoveSaveSlot(int index);
+	native int RemoveSaveSlot(int index);
 	native void LoadSavegame(int Selected);
 	native void DoSave(int Selected, String savegamestring);
 	native int ExtractSaveData(int index);
@@ -98,6 +98,133 @@ class LoadSaveMenu : ListMenu native
 	native bool mEntering;
 	native TextEnterMenu mInput;
 
+	
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		switch (mkey)
+		{
+		case MKEY_Up:
+			if (manager.SavegameCount() > 1)
+			{
+				if (Selected == -1) Selected = TopItem;
+				else
+				{
+					if (--Selected < 0) Selected = manager.SavegameCount()-1;
+					if (Selected < TopItem) TopItem = Selected;
+					else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+				}
+				manager.UnloadSaveData ();
+				manager.ExtractSaveData (Selected);
+			}
+			return true;
+
+		case MKEY_Down:
+			if (manager.SavegameCount() > 1)
+			{
+				if (Selected == -1) Selected = TopItem;
+				else
+				{
+					if (++Selected >= manager.SavegameCount()) Selected = 0;
+					if (Selected < TopItem) TopItem = Selected;
+					else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+				}
+				manager.UnloadSaveData ();
+				manager.ExtractSaveData (Selected);
+			}
+			return true;
+
+		case MKEY_PageDown:
+			if (manager.SavegameCount() > 1)
+			{
+				if (TopItem >= manager.SavegameCount() - listboxRows)
+				{
+					TopItem = 0;
+					if (Selected != -1) Selected = 0;
+				}
+				else
+				{
+					TopItem = MIN(TopItem + listboxRows, manager.SavegameCount() - listboxRows);
+					if (TopItem > Selected && Selected != -1) Selected = TopItem;
+				}
+				manager.UnloadSaveData ();
+				manager.ExtractSaveData (Selected);
+			}
+			return true;
+
+		case MKEY_PageUp:
+			if (manager.SavegameCount() > 1)
+			{
+				if (TopItem == 0)
+				{
+					TopItem = MAX(0, manager.SavegameCount() - listboxRows);
+					if (Selected != -1) Selected = TopItem;
+				}
+				else
+				{
+					TopItem = MAX(TopItem - listboxRows, 0);
+					if (Selected >= TopItem + listboxRows) Selected = TopItem;
+				}
+				manager.UnloadSaveData ();
+				manager.ExtractSaveData (Selected);
+			}
+			return true;
+
+		case MKEY_Enter:
+			return false;	// This event will be handled by the subclasses
+
+		case MKEY_MBYes:
+		{
+			if (Selected < manager.SavegameCount())
+			{
+				Selected = manager.RemoveSaveSlot (Selected);
+			}
+			return true;
+		}
+
+		default:
+			return Super.MenuEvent(mkey, fromcontroller);
+		}
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MouseEvent(int type, int x, int y)
+	{
+		if (x >= listboxLeft && x < listboxLeft + listboxWidth && 
+			y >= listboxTop && y < listboxTop + listboxHeight)
+		{
+			int lineno = (y - listboxTop) / rowHeight;
+
+			if (TopItem + lineno < manager.SavegameCount())
+			{
+				Selected = TopItem + lineno;
+				manager.UnloadSaveData ();
+				manager.ExtractSaveData (Selected);
+				if (type == MOUSE_Release)
+				{
+					if (MenuEvent(MKEY_Enter, true))
+					{
+						return true;
+					}
+				}
+			}
+			else Selected = -1;
+		}
+		else Selected = -1;
+
+		return Super.MouseEvent(type, x, y);
+	}
 	
 	
 	//=============================================================================

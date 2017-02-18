@@ -171,13 +171,6 @@ struct Screen native
 	native static void DrawFrame(int x, int y, int w, int h);
 }
 
-class BrokenLines : Object native
-{
-	native int Count();
-	native int StringWidth(int line);
-	native String StringAt(int line);
-}
-
 struct Font native
 {
 	enum EColorRange
@@ -248,7 +241,7 @@ struct Font native
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
-	native static BrokenLines BreakLines(String text, int maxlen);
+	native BrokenLines BreakLines(String text, int maxlen);
 }
 
 struct Translation
@@ -330,6 +323,13 @@ class Object native
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual void OnDestroy() {}
+}
+
+class BrokenLines : Object native
+{
+	native int Count();
+	native int StringWidth(int line);
+	native String StringAt(int line);
 }
 
 class Thinker : Object native

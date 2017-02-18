@@ -32,14 +32,14 @@
 **
 */
 
-class MessageBoxMenu : Menu native
+class MessageBoxMenu : Menu
 {
-	native BrokenLines mMessage;
-	native voidptr Handler;
-	native int mMessageMode;
-	native int messageSelection;
-	native int mMouseLeft, mMouseRight, mMouseY;
-	native Name mAction;
+	BrokenLines mMessage;
+	voidptr Handler;
+	int mMessageMode;
+	int messageSelection;
+	int mMouseLeft, mMouseRight, mMouseY;
+	Name mAction;
 
 	native static void CallHandler(voidptr hnd);
 
@@ -50,12 +50,26 @@ class MessageBoxMenu : Menu native
 	//
 	//=============================================================================
 
-	override void OnDestroy()
+	void Init(Menu parent, String message, int messagemode, bool playsound = false, Name cmd = 'None', voidptr native_handler = null)
 	{
-		mMessage.Destroy();	// explicitly free the strings now.
-		Super.OnDestroy();
+		Super.Init(parent);
+		mAction = cmd;
+		messageSelection = 0;
+		mMouseLeft = 140;
+		mMouseY = 0x80000000;
+		int mr1 = 170 + SmallFont.StringWidth(Stringtable.Localize("$TXT_YES"));
+		int mr2 = 170 + SmallFont.StringWidth(Stringtable.Localize("TXT_NO"));
+		mMouseRight = MAX(mr1, mr2);
+		mParentMenu = parent;
+		mMessage = SmallFont.BreakLines(message, 300);
+		mMessageMode = messagemode;
+		if (playsound)
+		{
+			MenuSound ("menu/prompt");
+		}
+		Handler = native_handler;
 	}
-
+	
 	//=============================================================================
 	//
 	//
@@ -70,17 +84,14 @@ class MessageBoxMenu : Menu native
 
 		y = 100;
 
-		if (mMessage != NULL)
-		{
-			int c = mMessage.Count();
-			for (i = 0; i < c; i++)
-				y -= SmallFont.GetHeight () / 2;
+		int c = mMessage.Count();
+		for (i = 0; i < c; i++)
+			y -= SmallFont.GetHeight () / 2;
 
-			for (i = 0; i < c; i++)
-			{
-				screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, 160 - mMessage.StringWidth(i)/2, y, mMessage.StringAt(i), DTA_Clean, true);
-				y += fontheight;
-			}
+		for (i = 0; i < c; i++)
+		{
+			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, 160 - mMessage.StringWidth(i)/2, y, mMessage.StringAt(i), DTA_Clean, true);
+			y += fontheight;
 		}
 
 		if (mMessageMode == 0)

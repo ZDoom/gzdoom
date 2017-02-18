@@ -46,96 +46,7 @@
 #include "c_dispatch.h"
 #include "g_game.h"
 
-
-class DBrokenLines : public DObject
-{
-	DECLARE_ABSTRACT_CLASS(DBrokenLines, DObject)
-
-public:
-	FBrokenLines *mBroken;
-	unsigned int mCount;
-
-	DBrokenLines(FBrokenLines *broken, unsigned int count)
-	{
-		mBroken = broken;
-		mCount = count;
-	}
-
-	void OnDestroy() override
-	{
-		V_FreeBrokenLines(mBroken);
-	}
-};
-
-
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
-
-class DMessageBoxMenu : public DMenu
-{
-	DECLARE_CLASS(DMessageBoxMenu, DMenu)
-public:
-	DBrokenLines *mMessage;
-	int mMessageMode;
-	int messageSelection;
-	int mMouseLeft, mMouseRight, mMouseY;
-	FName mAction;
-	void (*Handler)();
-
-public:
-
-	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None, void (*hnd)() = nullptr);
-	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false, void(*hnd)() = nullptr);
-};
-
-IMPLEMENT_CLASS(DMessageBoxMenu, false, false)
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int messagemode, bool playsound, FName action, void (*hnd)())
-: DMenu(parent)
-{
-	mAction = action;
-	messageSelection = 0;
-	mMouseLeft = 140;
-	mMouseY = INT_MIN;
-	int mr1 = 170 + SmallFont->StringWidth(GStrings["TXT_YES"]);
-	int mr2 = 170 + SmallFont->StringWidth(GStrings["TXT_NO"]);
-	mMouseRight = MAX(mr1, mr2);
-
-	Init(parent, message, messagemode, playsound, hnd);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMessageBoxMenu::Init(DMenu *parent, const char *message, int messagemode, bool playsound, void (*hnd)())
-{
-	mParentMenu = parent;
-	if (message != NULL) 
-	{
-		if (*message == '$') message = GStrings(message+1);
-		unsigned count;
-		auto Message = V_BreakLines(SmallFont, 300, message, true, &count);
-		mMessage = new DBrokenLines(Message, count);
-		GC::WriteBarrier(mMessage);
-		mMessage->ObjectFlags |= OF_Fixed;
-	}
-	else mMessage = NULL;
-	mMessageMode = messagemode;
-	if (playsound)
-	{
-		S_StopSound (CHAN_VOICE);
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", snd_menuvolume, ATTN_NONE);
-	}
-	Handler = hnd;
-}
 
 typedef void(*hfunc)();
 DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)
@@ -144,6 +55,23 @@ DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)
 	PARAM_POINTERTYPE(Handler, hfunc);
 	Handler();
 	return 0;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr)
+{
+	auto c = PClass::FindClass("MessageBoxMenu");
+	auto p = c->CreateNew();
+	VMValue params[] = { p, parent, FString(message), messagemode, playsound, action.GetIndex(), handler };
+
+	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenu*)p;
 }
 
 //=============================================================================
@@ -172,7 +100,7 @@ CCMD (menu_quit)
 	}
 	else EndString = gameinfo.quitmessages[messageindex];
 
-	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, EndString, 0, false, NAME_None, []()
+	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, EndString, 0, false, NAME_None, []()
 	{
 		if (!netgame)
 		{
@@ -209,7 +137,7 @@ CCMD (menu_endgame)
 	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	FString tempstring = GStrings(netgame ? "NETEND" : "ENDGAME");
-	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
+	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
 		M_ClearMenus();
 		if (!netgame)
@@ -258,7 +186,7 @@ CCMD (quicksave)
 	FString tempstring;
 	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
-	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
+	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
 		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
@@ -303,7 +231,7 @@ CCMD (quickload)
 
 	M_StartControlPanel(true);
 
-	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
+	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
 		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
@@ -325,7 +253,7 @@ void M_StartMessage(const char *message, int messagemode, FName action)
 		// only play a sound if no menu was active before
 		M_StartControlPanel(menuactive == MENU_Off);
 	}
-	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, message, messagemode, false, action);
+	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, message, messagemode, false, action);
 	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
@@ -339,13 +267,3 @@ DEFINE_ACTION_FUNCTION(DMenu, StartMessage)
 	M_StartMessage(msg, mode, action);
 	return 0;
 }
-
-
-DEFINE_FIELD(DMessageBoxMenu, mMessageMode);
-DEFINE_FIELD(DMessageBoxMenu, messageSelection);
-DEFINE_FIELD(DMessageBoxMenu, mMouseLeft);
-DEFINE_FIELD(DMessageBoxMenu, mMouseRight); 
-DEFINE_FIELD(DMessageBoxMenu, mMouseY);
-DEFINE_FIELD(DMessageBoxMenu, mAction);
-DEFINE_FIELD(DMessageBoxMenu, Handler);
-DEFINE_FIELD(DMessageBoxMenu, mMessage);

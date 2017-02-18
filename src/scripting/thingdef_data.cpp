@@ -906,7 +906,10 @@ void InitThingdef()
 	fieldptr = new PField("OptionMenuSettings", NewStruct("FOptionMenuSettings", nullptr), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&OptionSettings);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
-	
+	fieldptr = new PField("gametic", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gametic);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
 	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
 	// is to create a static variable from it and reference that in the script. Yuck!!!

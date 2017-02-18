@@ -851,7 +851,6 @@ set( FASTMATH_PCH_SOURCES
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/readthis.cpp
 	menu/videomenu.cpp
 	oplsynth/fmopl.cpp
 	oplsynth/mlopl.cpp

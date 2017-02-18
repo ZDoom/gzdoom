@@ -1970,6 +1970,7 @@ static void ClearMapinfo()
 	DefaultSkill = -1;
 	DeinitIntermissions();
 	level.info = NULL;
+	level.F1Pic = "";
 }
 
 //==========================================================================

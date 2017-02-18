@@ -299,6 +299,7 @@ struct GameInfoStruct native
 	native String ArmorIcon2;
 	native int gametype;
 	native bool norandomplayerclass;
+	native Array<Name> infoPages;
 }
 
 class Object native
@@ -436,6 +437,7 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
+	native String F1Pic;
 	native readonly int maptype;
 	native readonly String Music;
 	native readonly int musicorder;

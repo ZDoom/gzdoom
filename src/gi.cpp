@@ -51,6 +51,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon1)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
 
 
 const char *GameNames[17] =

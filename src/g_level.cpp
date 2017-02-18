@@ -1461,6 +1461,7 @@ void G_InitLevelLocals ()
 	level.LevelName = level.info->LookupLevelName();
 	level.NextMap = info->NextMap;
 	level.NextSecretMap = info->NextSecretMap;
+	level.F1Pic = info->F1Pic;
 
 	compatflags.Callback();
 	compatflags2.Callback();
@@ -1909,6 +1910,7 @@ DEFINE_FIELD(FLevelLocals, LevelName)
 DEFINE_FIELD(FLevelLocals, MapName)
 DEFINE_FIELD(FLevelLocals, NextMap)
 DEFINE_FIELD(FLevelLocals, NextSecretMap)
+DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)

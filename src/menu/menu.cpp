@@ -69,18 +69,16 @@ CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-DMenu *DMenu::CurrentMenu;
 
 DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
 {
-	ACTION_RETURN_OBJECT(DMenu::CurrentMenu);
+	ACTION_RETURN_OBJECT(CurrentMenu);
 }
 
-int DMenu::MenuTime;
 
 DEFINE_ACTION_FUNCTION(DMenu, MenuTime)
 {
-	ACTION_RETURN_INT(DMenu::MenuTime);
+	ACTION_RETURN_INT(MenuTime);
 }
 
 FGameStartup GameStartupInfo;
@@ -92,6 +90,8 @@ bool			MenuButtonOrigin[NUM_MKEYS];
 int				BackbuttonTime;
 float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
+DMenu			*CurrentMenu;
+int				MenuTime;
 
 void M_InitVideoModes();
 extern PClass *DefaultListMenuClass;
@@ -140,7 +140,7 @@ void M_MarkMenus()
 	{
 		GC::Mark(pair->Value);
 	}
-	GC::Mark(DMenu::CurrentMenu);
+	GC::Mark(CurrentMenu);
 }
 //============================================================================
 //
@@ -237,7 +237,7 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		Close();
 		S_Sound (CHAN_VOICE | CHAN_UI, 
-			DMenu::CurrentMenu != nullptr? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
+			CurrentMenu != nullptr? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
 		return true;
 	}
 	}
@@ -272,13 +272,13 @@ bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 
 void DMenu::Close ()
 {
-	if (DMenu::CurrentMenu == nullptr) return;	// double closing can happen in the save menu.
-	assert(DMenu::CurrentMenu == this);
-	DMenu::CurrentMenu = mParentMenu;
+	if (CurrentMenu == nullptr) return;	// double closing can happen in the save menu.
+	assert(CurrentMenu == this);
+	CurrentMenu = mParentMenu;
 	Destroy();
-	if (DMenu::CurrentMenu != nullptr)
+	if (CurrentMenu != nullptr)
 	{
-		GC::WriteBarrier(DMenu::CurrentMenu);
+		GC::WriteBarrier(CurrentMenu);
 	}
 	else
 	{
@@ -401,7 +401,7 @@ void DMenu::CallTicker()
 
 void DMenu::Drawer () 
 {
-	if (this == DMenu::CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
+	if (this == CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 	{
 		FTexture *tex = TexMan(gameinfo.mBackButton);
 		int w = tex->GetScaledWidth() * CleanXfac;
@@ -471,7 +471,7 @@ bool DMenu::TranslateKeyboardEvents()
 void M_StartControlPanel (bool makeSound)
 {
 	// intro might call this repeatedly
-	if (DMenu::CurrentMenu != nullptr)
+	if (CurrentMenu != nullptr)
 		return;
 
 	ResetButtonStates ();
@@ -503,9 +503,9 @@ void M_StartControlPanel (bool makeSound)
 void M_ActivateMenu(DMenu *menu)
 {
 	if (menuactive == MENU_Off) menuactive = MENU_On;
-	if (DMenu::CurrentMenu != nullptr) DMenu::CurrentMenu->ReleaseCapture();
-	DMenu::CurrentMenu = menu;
-	GC::WriteBarrier(DMenu::CurrentMenu);
+	if (CurrentMenu != nullptr) CurrentMenu->ReleaseCapture();
+	CurrentMenu = menu;
+	GC::WriteBarrier(CurrentMenu);
 }
 
 DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
@@ -617,7 +617,7 @@ void M_SetMenu(FName menu, int param)
 				DMenu *newmenu = (DMenu *)cls->CreateNew();
 				IFVIRTUALPTRNAME(newmenu, "ListMenu", Init)
 				{
-					VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
+					VMValue params[3] = { newmenu, CurrentMenu, ld };
 					GlobalVMStack.Call(func, params, 3, nullptr, 0);
 				}
 				M_ActivateMenu(newmenu);
@@ -633,7 +633,7 @@ void M_SetMenu(FName menu, int param)
 			DMenu *newmenu = (DMenu*)cls->CreateNew();
 			IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)
 			{
-				VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
+				VMValue params[3] = { newmenu, CurrentMenu, ld };
 				GlobalVMStack.Call(func, params, 3, nullptr, 0);
 			}
 			M_ActivateMenu(newmenu);
@@ -648,7 +648,7 @@ void M_SetMenu(FName menu, int param)
 			if (menuclass->IsDescendantOf(RUNTIME_CLASS(DMenu)))
 			{
 				DMenu *newmenu = (DMenu*)menuclass->CreateNew();
-				newmenu->mParentMenu = DMenu::CurrentMenu;
+				newmenu->mParentMenu = CurrentMenu;
 				M_ActivateMenu(newmenu);
 				return;
 			}
@@ -684,7 +684,7 @@ bool M_Responder (event_t *ev)
 		return false;
 	}
 
-	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
+	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		// There are a few input sources we are interested in:
 		//
@@ -719,9 +719,9 @@ bool M_Responder (event_t *ev)
 				}
 
 				// pass everything else on to the current menu
-				return DMenu::CurrentMenu->CallResponder(ev);
+				return CurrentMenu->CallResponder(ev);
 			}
-			else if (DMenu::CurrentMenu->TranslateKeyboardEvents())
+			else if (CurrentMenu->TranslateKeyboardEvents())
 			{
 				ch = ev->data1;
 				keyup = ev->subtype == EV_GUI_KeyUp;
@@ -740,7 +740,7 @@ bool M_Responder (event_t *ev)
 				default:
 					if (!keyup)
 					{
-						return DMenu::CurrentMenu->CallResponder(ev);
+						return CurrentMenu->CallResponder(ev);
 					}
 					break;
 				}
@@ -823,11 +823,11 @@ bool M_Responder (event_t *ev)
 				{
 					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
 				}
-				DMenu::CurrentMenu->CallMenuEvent(mkey, fromcontroller);
+				CurrentMenu->CallMenuEvent(mkey, fromcontroller);
 				return true;
 			}
 		}
-		return DMenu::CurrentMenu->CallResponder(ev) || !keyup;
+		return CurrentMenu->CallResponder(ev) || !keyup;
 	}
 	else if (MenuEnabled)
 	{
@@ -868,10 +868,10 @@ bool M_Responder (event_t *ev)
 
 void M_Ticker (void) 
 {
-	DMenu::MenuTime++;
-	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
+	MenuTime++;
+	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		DMenu::CurrentMenu->CallTicker();
+		CurrentMenu->CallTicker();
 
 		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
@@ -880,7 +880,7 @@ void M_Ticker (void)
 				if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
 				{
 					MenuButtonTickers[i] = KEY_REPEAT_RATE;
-					DMenu::CurrentMenu->CallMenuEvent(i, MenuButtonOrigin[i]);
+					CurrentMenu->CallMenuEvent(i, MenuButtonOrigin[i]);
 				}
 			}
 		}
@@ -920,14 +920,14 @@ void M_Drawer (void)
 	}
 
 
-	if (DMenu::CurrentMenu != nullptr && menuactive != MENU_Off) 
+	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (DMenu::CurrentMenu->DimAllowed())
+		if (CurrentMenu->DimAllowed())
 		{
 			screen->Dim(fade);
 			V_SetBorderNeedRefresh();
 		}
-		DMenu::CurrentMenu->CallDrawer();
+		CurrentMenu->CallDrawer();
 	}
 }
 
@@ -940,10 +940,10 @@ void M_Drawer (void)
 void M_ClearMenus ()
 {
 	M_DemoNoPlay = false;
-	if (DMenu::CurrentMenu != nullptr)
+	if (CurrentMenu != nullptr)
 	{
-		DMenu::CurrentMenu->Destroy();
-		DMenu::CurrentMenu = nullptr;
+		CurrentMenu->Destroy();
+		CurrentMenu = nullptr;
 	}
 	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;
@@ -1181,11 +1181,11 @@ CCMD(reset2saved)
 // This really should be in the script but we can't do scripted CCMDs yet.
 CCMD(undocolorpic)
 {
-	if (DMenu::CurrentMenu != NULL)
+	if (CurrentMenu != NULL)
 	{
-		IFVIRTUALPTR(DMenu::CurrentMenu, DMenu, ResetColor)
+		IFVIRTUALPTR(CurrentMenu, DMenu, ResetColor)
 		{
-			VMValue params[] = { (DObject*)DMenu::CurrentMenu };
+			VMValue params[] = { (DObject*)CurrentMenu };
 			GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
 		}
 	}

@@ -139,7 +139,7 @@ void DMessageBoxMenu::OnDestroy()
 void DMessageBoxMenu::CloseSound()
 {
 	S_Sound (CHAN_VOICE | CHAN_UI, 
-		DMenu::CurrentMenu != NULL? "menu/backup" : "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		CurrentMenu != NULL? "menu/backup" : "menu/dismiss", snd_menuvolume, ATTN_NONE);
 }
 
 //=============================================================================
@@ -212,7 +212,7 @@ void DMessageBoxMenu::Drawer ()
 
 		if (messageSelection >= 0)
 		{
-			if ((DMenu::MenuTime%8) < 6)
+			if ((MenuTime%8) < 6)
 			{
 				screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
 					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
@@ -431,7 +431,7 @@ CCMD (menu_quit)
 {	// F10
 	M_StartControlPanel (true);
 	DMenu *newmenu = new DQuitMenu(false);
-	newmenu->mParentMenu = DMenu::CurrentMenu;
+	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 
@@ -511,7 +511,7 @@ CCMD (menu_endgame)
 	//M_StartControlPanel (true);
 	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	DMenu *newmenu = new DEndGameMenu(false);
-	newmenu->mParentMenu = DMenu::CurrentMenu;
+	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 
@@ -607,7 +607,7 @@ CCMD (quicksave)
 
 	S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	DMenu *newmenu = new DQuickSaveMenu(false);
-	newmenu->mParentMenu = DMenu::CurrentMenu;
+	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 
@@ -702,7 +702,7 @@ CCMD (quickload)
 
 	M_StartControlPanel(true);
 	DMenu *newmenu = new DQuickLoadMenu(false);
-	newmenu->mParentMenu = DMenu::CurrentMenu;
+	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 
@@ -714,13 +714,13 @@ CCMD (quickload)
 
 void M_StartMessage(const char *message, int messagemode, FName action)
 {
-	if (DMenu::CurrentMenu == NULL) 
+	if (CurrentMenu == NULL) 
 	{
 		// only play a sound if no menu was active before
 		M_StartControlPanel(menuactive == MENU_Off);
 	}
-	DMenu *newmenu = new DMessageBoxMenu(DMenu::CurrentMenu, message, messagemode, false, action);
-	newmenu->mParentMenu = DMenu::CurrentMenu;
+	DMenu *newmenu = new DMessageBoxMenu(CurrentMenu, message, messagemode, false, action);
+	newmenu->mParentMenu = CurrentMenu;
 	M_ActivateMenu(newmenu);
 }
 

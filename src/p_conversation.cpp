@@ -1097,7 +1097,7 @@ public:
 
 				if (response == mSelection+1)
 				{
-					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
+					int color = ((MenuTime%8) < 4) || CurrentMenu != this ? CR_RED:CR_GREY;
 
 					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
 					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
@@ -1135,9 +1135,9 @@ void P_FreeStrifeConversations ()
 	ClassRoots.Clear();
 
 	PrevNode = NULL;
-	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (CurrentMenu != NULL && CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
 	{
-		DMenu::CurrentMenu->Close();
+		CurrentMenu->Close();
 	}
 }
 
@@ -1482,10 +1482,10 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 
 	// The conversation menus are normally closed by the menu code, but that
 	// doesn't happen during demo playback, so we need to do it here.
-	if (demoplayback && DMenu::CurrentMenu != NULL &&
-		DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (demoplayback && CurrentMenu != NULL &&
+		CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
 	{
-		DMenu::CurrentMenu->Close();
+		CurrentMenu->Close();
 	}
 	if (netcode == DEM_CONVREPLY)
 	{

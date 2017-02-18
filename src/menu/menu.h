@@ -107,6 +107,9 @@ public:
 };
 
 extern FSavegameManager savegameManager;
+class DMenu;
+extern DMenu *CurrentMenu;
+extern int MenuTime;
 
 //=============================================================================
 //
@@ -266,9 +269,6 @@ public:
 	{
 		BACKBUTTON_TIME = 4*TICRATE
 	};
-
-	static DMenu *CurrentMenu;
-	static int MenuTime;
 
 	TObjPtr<DMenu> mParentMenu;
 

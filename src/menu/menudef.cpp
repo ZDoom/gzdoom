@@ -147,7 +147,7 @@ static void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	DMenu::CurrentMenu = nullptr;
+	CurrentMenu = nullptr;
 	savegameManager.ClearSaveGames();
 }
 

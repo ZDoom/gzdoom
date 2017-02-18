@@ -629,7 +629,7 @@ void M_SetMenu(FName menu, int param)
 				if (cls == nullptr) cls = DefaultListMenuClass;
 				if (cls == nullptr) cls = PClass::FindClass("ListMenu");
 
-				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
+				DMenu *newmenu = (DMenu *)cls->CreateNew();
 				IFVIRTUALPTRNAME(newmenu, "ListMenu", Init)
 				{
 					VMValue params[3] = { newmenu, DMenu::CurrentMenu, ld };
@@ -1220,9 +1220,6 @@ DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
 
-DEFINE_FIELD(DListMenu, mDesc)
-DEFINE_FIELD(DListMenu, mFocusControl)
-
 DEFINE_FIELD(DListMenuDescriptor, mItems)
 DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)
 DEFINE_FIELD(DListMenuDescriptor, mSelectOfsX)
@@ -1340,15 +1337,6 @@ void DMenuItemBase::Ticker()
 	IFVIRTUAL(DMenuItemBase, Ticker)
 	{
 		VMValue params[] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
-	}
-}
-
-void DMenuItemBase::Drawer(bool selected)
-{
-	IFVIRTUAL(DMenuItemBase, Drawer)
-	{
-		VMValue params[] = { (DObject*)this, selected };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0, nullptr);
 	}
 }
@@ -1534,25 +1522,3 @@ int DMenuItemBase::Draw(DOptionMenuDescriptor *desc, int y, int indent, bool sel
 	}
 	return false;
 }
-
-void DMenuItemBase::DrawSelector(int xofs, int yofs, FTextureID tex)
-{
-	if (tex.isNull())
-	{
-		if ((DMenu::MenuTime % 8) < 6)
-		{
-			screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
-				(mXpos + xofs - 160) * CleanXfac + screen->GetWidth() / 2,
-				(mYpos + yofs - 100) * CleanYfac + screen->GetHeight() / 2,
-				"\xd",
-				DTA_CellX, 8 * CleanXfac,
-				DTA_CellY, 8 * CleanYfac,
-				TAG_DONE);
-		}
-	}
-	else
-	{
-		screen->DrawTexture(TexMan(tex), mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
-	}
-}
-

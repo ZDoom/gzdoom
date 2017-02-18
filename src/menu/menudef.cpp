@@ -294,7 +294,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		{
 			sc.MustGetString();
 			PClass *cls = PClass::FindClass(sc.String);
-			if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(DListMenu)))
+			if (cls == nullptr || !cls->IsDescendantOf("ListMenu"))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
 			}

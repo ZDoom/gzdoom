@@ -319,7 +319,6 @@ public:
 
 	bool CheckCoordinate(int x, int y);
 	void Ticker();
-	void Drawer(bool selected);
 	bool Selectable();
 	bool Activate();
 	FName GetAction(int *pparam);
@@ -338,9 +337,6 @@ public:
 	int GetY() { return mYpos; }
 	int GetX() { return mXpos; }
 	void SetX(int x) { mXpos = x; }
-
-	void DrawSelector(int xofs, int yofs, FTextureID tex);
-
 };	
 
 //=============================================================================
@@ -361,11 +357,6 @@ public:
 	DListMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
 	DMenuItemBase *GetItem(FName name);
-	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	void Ticker ();
-	void Drawer ();
 	void SetFocus(DMenuItemBase *fc)
 	{
 		mFocusControl = fc;

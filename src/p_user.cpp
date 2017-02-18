@@ -701,6 +701,25 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
 	ACTION_RETURN_INT(self->userinfo.GetSkin());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetGender());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetAutoaim)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetAutoaim());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetTeam)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetTeam());
+}
+
+
 //===========================================================================
 //
 // APlayerPawn

@@ -317,6 +317,9 @@ usercmd_t	original_cmd;
 	native int GetPlayerClassNum();
 	native int GetSkin();
 	native bool GetNeverSwitch();
+	native int GetGender();
+	native int GetTeam();
+	native float GetAutoaim();
 }
 
 struct PlayerClass native
@@ -343,3 +346,10 @@ struct PlayerSkin native
 	native readonly int			crouchsprite;
 	native readonly int			namespc;
 };
+
+struct Team native
+{
+	const NoTeam = 255;
+	const Max = 16;
+	native String mName;
+}

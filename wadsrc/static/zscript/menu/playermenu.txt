@@ -1,11 +1,45 @@
+/*
+** playermenu.cpp
+** The player setup menu
+**
+**---------------------------------------------------------------------------
+** Copyright 2001-2010 Randy Heit
+** Copyright 2010-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
-class PlayerMenu : ListMenu native
+class PlayerMenu : ListMenu
 {
-	native int mRotation;
-	native int PlayerClassIndex;
-	native PlayerClass mPlayerClass;
-	native Array<int> PlayerColorSets;
-	native Array<int> mPlayerSkins;
+	int mRotation;
+	int PlayerClassIndex;
+	PlayerClass mPlayerClass;
+	Array<int> PlayerColorSets;
+	Array<int> mPlayerSkins;
 	
 	// All write function for the player config are native to prevent abuse.
 	protected native void AutoaimChanged(float val);
@@ -19,6 +53,12 @@ class PlayerMenu : ListMenu native
 	protected native void SkinChanged (int val);
 	protected native void ClassChanged(int sel, PlayerClass cls);
 	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	protected void UpdateTranslation()
 	{
 		Translation.SetPlayerTranslation(TRANSLATION_Players, MAXPLAYERS, consoleplayer, mPlayerClass);
@@ -29,6 +69,133 @@ class PlayerMenu : ListMenu native
 		ColorChanged(red, green, blue);
 		UpdateTranslation();
 	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void Init(Menu parent, ListMenuDescriptor desc)
+	{
+		MenuItemBase li;
+		PlayerInfo p = players[consoleplayer];
+
+		Super.Init(parent, desc);
+		PickPlayerClass();
+		mRotation = 0;
+
+		li = GetItem('Playerdisplay');
+		if (li != NULL)
+		{
+			li.SetValue(ListMenuItemPlayerDisplay.PDF_ROTATION, 0);
+			li.SetValue(ListMenuItemPlayerDisplay.PDF_MODE, 1);
+			li.SetValue(ListMenuItemPlayerDisplay.PDF_TRANSLATE, 1);
+			li.SetValue(ListMenuItemPlayerDisplay.PDF_CLASS, p.GetPlayerClassNum());
+			if (mPlayerClass != NULL && !(GetDefaultByType (mPlayerClass.Type).bNoSkin) &&
+				p.GetPlayerClassNum() != -1)
+			{
+				li.SetValue(ListMenuItemPlayerDisplay.PDF_SKIN, p.GetSkin());
+			}
+		}
+
+		li = GetItem('Playerbox');
+		if (li != NULL)
+		{
+			li.SetString(0, p.GetUserName());
+		}
+
+		li = GetItem('Team');
+		if (li != NULL)
+		{
+			li.SetString(0, "None");
+			for(int i=0;i<Teams.Size(); i++)
+			{
+				li.SetString(i+1, Teams[i].mName);
+			}
+			int myteam = players[consoleplayer].GetTeam();
+			li.SetValue(0, myteam ==  Team.NoTeam? 0 : myteam + 1);
+		}
+
+		int mycolorset = p.GetColorSet();
+		Color colr = p.GetColor();
+
+		UpdateColorsets();
+
+		li = GetItem('Red');
+		if (li != NULL)
+		{
+			li.Enable(mycolorset == -1);
+			li.SetValue(0, colr.r);
+		}
+
+		li = GetItem('Green');
+		if (li != NULL)
+		{
+			li.Enable(mycolorset == -1);
+			li.SetValue(0, colr.g);
+		}
+
+		li = GetItem('Blue');
+		if (li != NULL)
+		{
+			li.Enable(mycolorset == -1);
+			li.SetValue(0, colr.b);
+		}
+
+		li = GetItem('Class');
+		if (li != NULL)
+		{
+			if (PlayerClasses.Size() == 1)
+			{
+				li.SetString(0, PlayerPawn.GetPrintableDisplayName(PlayerClasses[0].Type));
+				li.SetValue(0, 0);
+			}
+			else
+			{
+				// [XA] Remove the "Random" option if the relevant gameinfo flag is set.
+				if(!gameinfo.norandomplayerclass)
+					li.SetString(0, "Random");
+				for(int i=0; i< PlayerClasses.Size(); i++)
+				{
+					let cls = PlayerPawn.GetPrintableDisplayName(PlayerClasses[i].Type);
+					li.SetString(gameinfo.norandomplayerclass ? i : i+1, cls);
+				}
+				int pclass = p.GetPlayerClassNum();
+				li.SetValue(0, gameinfo.norandomplayerclass && pclass >= 0 ? pclass : pclass + 1);
+			}
+		}
+
+		UpdateSkins();
+
+		li = GetItem('Gender');
+		if (li != NULL)
+		{
+			li.SetValue(0, p.GetGender());
+		}
+
+		li = GetItem('Autoaim');
+		if (li != NULL)
+		{
+			li.SetValue(0, int(p.GetAutoaim()));
+		}
+
+		li = GetItem('Switch');
+		if (li != NULL)
+		{
+			li.SetValue(0, p.GetNeverSwitch());
+		}
+
+		li = GetItem('AlwaysRun');
+		if (li != NULL)
+		{
+			li.SetValue(0, cl_run);
+		}
+
+		if (mDesc.mSelectedItem < 0) mDesc.mSelectedItem = 1;
+
+	}
+
 	
 	//=============================================================================
 	//
@@ -199,6 +366,28 @@ class PlayerMenu : ListMenu native
 	}
 
 	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool Responder (InputEventData ev)
+	{
+		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_Char && ev.data1 == 32)
+		{
+			// turn the player sprite around
+			mRotation = 8 - mRotation;
+			MenuItemBase li = GetItem('Playerdisplay');
+			if (li != NULL)
+			{
+				li.SetValue(ListMenuItemPlayerDisplay.PDF_ROTATION, mRotation);
+			}
+			return true;
+		}
+		return Super.Responder(ev);
+	}
+
 	//=============================================================================
 	//
 	//

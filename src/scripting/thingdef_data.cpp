@@ -57,6 +57,7 @@
 #include "v_video.h"
 #include "c_bind.h"
 #include "menu/menu.h"
+#include "teaminfo.h"
 #include "r_data/sprites.h"
 
 static TArray<FPropertyInfo*> properties;
@@ -764,6 +765,10 @@ void InitThingdef()
 	playerskinstruct->Size = sizeof(FPlayerSkin);
 	playerskinstruct->Align = alignof(FPlayerSkin);
 
+	auto teamstruct = NewNativeStruct("Team", nullptr);
+	teamstruct->Size = sizeof(FTeam);
+	teamstruct->Align = alignof(FTeam);
+
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
 	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
@@ -806,6 +811,10 @@ void InitThingdef()
 	auto plrskn = NewPointer(NewResizableArray(playerskinstruct), false);
 	PField *plrsknf = new PField("PlayerSkins", plrskn, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Skins);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrsknf);
+
+	auto teamst = NewPointer(NewResizableArray(teamstruct), false);
+	PField *teamf = new PField("Teams", teamst, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Teams);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(teamf);
 
 	auto bindcls = NewNativeStruct("KeyBindings", nullptr);
 	PField *binding = new PField("Bindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&Bindings);

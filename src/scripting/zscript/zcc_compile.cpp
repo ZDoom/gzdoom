@@ -1361,22 +1361,19 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		break;
 
 	case AST_DynArrayType:
-		if (allowarraytypes)
+	{
+		auto atype = static_cast<ZCC_DynArrayType *>(ztype);
+		auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
+		if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
 		{
-			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
-			auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
-			if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
-			{
-				Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
-			}
-			else
-			{
-				retval = NewDynArray(ftype);
-			}
-			break;
+			Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+		}
+		else
+		{
+			retval = NewDynArray(ftype);
 		}
 		break;
-
+	}
 	case AST_ClassType:
 	{
 		auto ctype = static_cast<ZCC_ClassType *>(ztype);
@@ -2135,7 +2132,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if (type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
+					if ((type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3) || type->IsA(RUNTIME_CLASS(PDynArray)))
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);

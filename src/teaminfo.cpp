@@ -333,3 +333,6 @@ CCMD (teamlist)
 
 	Printf ("End of team list.\n");
 }
+
+
+DEFINE_FIELD_NAMED(FTeam, m_Name, mName)

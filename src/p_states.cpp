@@ -74,9 +74,9 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 	}
 	else
 	{
-		sprframe = &SpriteFrames[sprites[skins[skin].sprite].spriteframes + self->GetFrame()];
-		scalex = skins[skin].Scale.X;
-		scaley = skins[skin].Scale.Y;
+		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + self->GetFrame()];
+		scalex = Skins[skin].Scale.X;
+		scaley = Skins[skin].Scale.Y;
 	}
 	if (numret > 0) ret[0].SetInt(sprframe->Texture[rotation].GetIndex());
 	if (numret > 1) ret[1].SetInt(!!(sprframe->Flip & (1 << rotation)));

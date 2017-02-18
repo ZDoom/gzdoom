@@ -1171,7 +1171,7 @@ void R_BuildPlayerTranslation (int player)
 	D_GetPlayerColor (player, &h, &s, &v, &colorset);
 
 	R_CreatePlayerTranslation (h, s, v, colorset,
-		&skins[players[player].userinfo.GetSkin()],
+		&Skins[players[player].userinfo.GetSkin()],
 		translationtables[TRANSLATION_Players][player],
 		translationtables[TRANSLATION_PlayersExtra][player],
 		translationtables[TRANSLATION_RainPillar][player]
@@ -1218,9 +1218,9 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 
 	if (cls != nullptr)
 	{
-		PlayerSkin = R_FindSkin(skins[PlayerSkin].name, int(cls - &PlayerClasses[0]));
+		PlayerSkin = R_FindSkin(Skins[PlayerSkin].Name, int(cls - &PlayerClasses[0]));
 		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
-			&skins[PlayerSkin], translationtables[tgroup][tnum]);
+			&Skins[PlayerSkin], translationtables[tgroup][tnum]);
 	}
 	ACTION_RETURN_BOOL(true);
 }

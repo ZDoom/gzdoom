@@ -47,25 +47,23 @@ extern TArray<spriteframe_t> SpriteFrames;
 class FPlayerSkin
 {
 public:
-	char		name[17];	// 16 chars + NULL
-	char		face[4];	// 3 chars ([MH] + NULL so can use as a C string)
-	BYTE		gender;		// This skin's gender (not really used)
-	BYTE		range0start;
-	BYTE		range0end;
-	bool		othergame;	// [GRB]
-	DVector2	Scale;
-	int			sprite;
-	int			crouchsprite;
-	int			namespc;	// namespace for this skin
+	FString		Name;
+	FString		Face;
+	BYTE		gender = 0;		// This skin's gender (not really used)
+	BYTE		range0start = 0;
+	BYTE		range0end = 0;
+	bool		othergame = 0;	// [GRB]
+	DVector2	Scale = { 1, 1 };
+	int			sprite = 0;
+	int			crouchsprite = 0;
+	int			namespc = 0;	// namespace for this skin
 };
 
-extern size_t			numskins;	// [RH]
-extern FPlayerSkin	*	skins;		// [RH]
+extern TArray<FPlayerSkin> Skins;
 
 extern BYTE				OtherGameSkinRemap[256];
 extern PalEntry			OtherGameSkinPalette[256];
 
 void R_InitSprites ();
-void R_DeinitSpriteData ();
 
 #endif

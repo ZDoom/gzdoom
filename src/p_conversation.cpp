@@ -113,6 +113,7 @@ static int ConversationMenuY;
 
 static int ConversationPauseTic;
 static bool ShowGold;
+static int StaticLastReply;
 
 static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
 static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
@@ -689,6 +690,49 @@ static bool ShouldSkipReply(FStrifeDialogueReply *reply, player_t *player)
 	return false;
 }
 
+static void SendConversationReply(int node, int reply)
+{
+	switch (node)
+	{
+	case -1:
+		Net_WriteByte(DEM_CONVNULL);
+		break;
+
+	case -2:
+		Net_WriteByte(DEM_CONVCLOSE);
+		break;
+
+	default:
+		Net_WriteByte(DEM_CONVREPLY);
+		Net_WriteWord(node);
+		Net_WriteByte(reply);
+		break;
+	}
+	StaticLastReply = reply;
+}
+
+
+// Needed for the conversion process.
+class DBrokenLines : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DBrokenLines, DObject)
+
+public:
+	FBrokenLines *mBroken;
+	unsigned int mCount;
+
+	DBrokenLines(FBrokenLines *broken, unsigned int count)
+	{
+		mBroken = broken;
+		mCount = count;
+	}
+
+	void OnDestroy() override
+	{
+		V_FreeBrokenLines(mBroken);
+	}
+};
+
 //============================================================================
 //
 // The conversation menu
@@ -699,17 +743,16 @@ class DConversationMenu : public DMenu
 {
 	DECLARE_CLASS(DConversationMenu, DMenu)
 
+public:
 	FString mSpeaker;
-	FBrokenLines *mDialogueLines;
+	DBrokenLines *mDialogueLines;
 	TArray<FString> mResponseLines;
 	TArray<unsigned int> mResponses;
 	bool mShowGold;
 	FStrifeDialogueNode *mCurNode;
 	int mYpos;
 	player_t *mPlayer;
-
-public:
-	static int mSelection;
+	int mSelection;
 
 	//=============================================================================
 	//
@@ -717,7 +760,7 @@ public:
 	//
 	//=============================================================================
 
-	DConversationMenu(FStrifeDialogueNode *CurNode, player_t *player)
+	DConversationMenu(FStrifeDialogueNode *CurNode, player_t *player, int activereply)
 	{
 		mCurNode = CurNode;
 		mPlayer = player;
@@ -749,16 +792,24 @@ public:
 		{
 			toSay = ".";
 		}
-		mDialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay);
+		unsigned int count;
+		auto bl = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay, true, &count);
+		mDialogueLines = new DBrokenLines(bl, count);
+
+		mSelection = -1;
 
 		FStrifeDialogueReply *reply;
+		int r = -1;
 		int i,j;
 		for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
 		{
+			r++;
 			if (ShouldSkipReply(reply, mPlayer))
 			{
 				continue;
 			}
+			if (activereply == r) mSelection = i - 1;
+
 			mShowGold |= reply->NeedsGold;
 
 			const char *ReplyText = reply->Reply;
@@ -776,8 +827,13 @@ public:
 			{
 				mResponseLines.Push(ReplyLines[j].Text);
 			}
+			
 			++i;
 			V_FreeBrokenLines (ReplyLines);
+		}
+		if (mSelection == -1)
+		{
+			mSelection = r < activereply ? r + 1 : 0;
 		}
 		const char *goodbyestr = CurNode->Goodbye;
 		if (*goodbyestr == 0)
@@ -802,11 +858,8 @@ public:
 		mResponseLines.Push(FString(goodbyestr));
 
 		// Determine where the top of the reply list should be positioned.
-		i = OptionSettings.mLinespacing;
-		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * i);
-		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
-		{ }
-		i = 44 + i * 10;
+		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * OptionSettings.mLinespacing);
+		i = 44 + count * (OptionSettings.mLinespacing + 2);
 		if (mYpos - 100 < i - screen->GetHeight() / CleanYfac / 2)
 		{
 			mYpos = i - screen->GetHeight() / CleanYfac / 2 + 100;
@@ -830,7 +883,7 @@ public:
 
 	void OnDestroy() override
 	{
-		V_FreeBrokenLines(mDialogueLines);
+		mDialogueLines->Destroy();
 		mDialogueLines = NULL;
 		I_SetMusicVolume (1.f);
 		Super::OnDestroy();
@@ -839,6 +892,25 @@ public:
 	bool DimAllowed()
 	{
 		return false;
+	}
+
+	int GetReplyNum()
+	{
+		assert((unsigned)mCurNode->ThisNodeNum < StrifeDialogues.Size());
+		assert(StrifeDialogues[mCurNode->ThisNodeNum] == mCurNode);
+
+		// This is needed because mSelection represents the replies currently being displayed which will
+		// not match up with what's supposed to be selected if there are any hidden/skipped replies. [FishyClockwork]
+		FStrifeDialogueReply *reply = mCurNode->Children;
+		int replynum = mSelection;
+		for (int i = 0; i <= mSelection && reply != nullptr; reply = reply->Next)
+		{
+			if (ShouldSkipReply(reply, mPlayer))
+				replynum++;
+			else
+				i++;
+		}
+		return replynum;
 	}
 
 	//=============================================================================
@@ -870,36 +942,21 @@ public:
 		}
 		else if (mkey == MKEY_Back)
 		{
-			Net_WriteByte (DEM_CONVNULL);
+			SendConversationReply(-1, GetReplyNum());
 			Close();
 			return true;
 		}
 		else if (mkey == MKEY_Enter)
 		{
+			int replynum = GetReplyNum();
 			if ((unsigned)mSelection >= mResponses.Size())
 			{
-				Net_WriteByte(DEM_CONVCLOSE);
+				SendConversationReply(-1, replynum);
 			}
 			else
 			{
-				assert((unsigned)mCurNode->ThisNodeNum < StrifeDialogues.Size());
-				assert(StrifeDialogues[mCurNode->ThisNodeNum] == mCurNode);
-
-				// This is needed because mSelection represents the replies currently being displayed which will
-				// not match up with what's supposed to be selected if there are any hidden/skipped replies. [FishyClockwork]
-				FStrifeDialogueReply *reply = mCurNode->Children;
-				int replynum = mSelection;
-				for (int i = 0; i <= mSelection && reply != nullptr; reply = reply->Next)
-				{
-					if (ShouldSkipReply(reply, mPlayer))
-						replynum++;
-					else
-						i++;
-				}
 				// Send dialogue and reply numbers across the wire.
-				Net_WriteByte(DEM_CONVREPLY);
-				Net_WriteWord(mCurNode->ThisNodeNum);
-				Net_WriteByte(replynum);
+				SendConversationReply(mCurNode->ThisNodeNum, replynum);
 			}
 			Close();
 			return true;
@@ -1020,9 +1077,7 @@ public:
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
 		if (!CurNode->Backdrop.isValid())
 		{
-			int i;
-			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
-			{ }
+			int i = mDialogueLines->mCount;
 			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
 				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
 				speakerName == NULL ? linesize * i + 6 * CleanYfac
@@ -1043,9 +1098,9 @@ public:
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen->GetWidth() / 320;
-		for (int i = 0; mDialogueLines[i].Width >= 0; ++i)
+		for (int i = 0; i < mDialogueLines->mCount; ++i)
 		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines->mBroken[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 			y += linesize;
 		}
@@ -1108,7 +1163,6 @@ public:
 };
 
 IMPLEMENT_CLASS(DConversationMenu, true, false)
-int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
 
 //============================================================================
@@ -1228,12 +1282,12 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 		}
 
-		DConversationMenu *cmenu = new DConversationMenu(CurNode, pc->player);
+		DConversationMenu *cmenu = new DConversationMenu(CurNode, pc->player, StaticLastReply);
 
 
 		if (CurNode != PrevNode)
 		{ // Only reset the selection if showing a different menu.
-			DConversationMenu::mSelection = 0;
+			StaticLastReply = 0;
 			PrevNode = CurNode;
 		}
 

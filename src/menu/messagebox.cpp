@@ -67,7 +67,7 @@ DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode,
 {
 	auto c = PClass::FindClass("MessageBoxMenu");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, parent, FString(message), messagemode, playsound, action.GetIndex(), handler };
+	VMValue params[] = { p, parent, FString(message), messagemode, playsound, action.GetIndex(), reinterpret_cast<void*>(handler) };
 
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);

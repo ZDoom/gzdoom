@@ -711,6 +711,28 @@ static void SendConversationReply(int node, int reply)
 	StaticLastReply = reply;
 }
 
+
+// Needed for the conversion process.
+class DBrokenLines : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DBrokenLines, DObject)
+
+public:
+	FBrokenLines *mBroken;
+	unsigned int mCount;
+
+	DBrokenLines(FBrokenLines *broken, unsigned int count)
+	{
+		mBroken = broken;
+		mCount = count;
+	}
+
+	void OnDestroy() override
+	{
+		V_FreeBrokenLines(mBroken);
+	}
+};
+
 //============================================================================
 //
 // The conversation menu
@@ -723,7 +745,7 @@ class DConversationMenu : public DMenu
 
 public:
 	FString mSpeaker;
-	FBrokenLines *mDialogueLines;
+	DBrokenLines *mDialogueLines;
 	TArray<FString> mResponseLines;
 	TArray<unsigned int> mResponses;
 	bool mShowGold;
@@ -770,7 +792,10 @@ public:
 		{
 			toSay = ".";
 		}
-		mDialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay);
+		unsigned int count;
+		auto bl = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay, true, &count);
+		mDialogueLines = new DBrokenLines(bl, count);
+
 		mSelection = -1;
 
 		FStrifeDialogueReply *reply;
@@ -833,11 +858,8 @@ public:
 		mResponseLines.Push(FString(goodbyestr));
 
 		// Determine where the top of the reply list should be positioned.
-		i = OptionSettings.mLinespacing;
-		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * i);
-		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
-		{ }
-		i = 44 + i * 10;
+		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * OptionSettings.mLinespacing);
+		i = 44 + count * (OptionSettings.mLinespacing + 2);
 		if (mYpos - 100 < i - screen->GetHeight() / CleanYfac / 2)
 		{
 			mYpos = i - screen->GetHeight() / CleanYfac / 2 + 100;
@@ -861,7 +883,7 @@ public:
 
 	void OnDestroy() override
 	{
-		V_FreeBrokenLines(mDialogueLines);
+		mDialogueLines->Destroy();
 		mDialogueLines = NULL;
 		I_SetMusicVolume (1.f);
 		Super::OnDestroy();
@@ -1055,9 +1077,7 @@ public:
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
 		if (!CurNode->Backdrop.isValid())
 		{
-			int i;
-			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
-			{ }
+			int i = mDialogueLines->mCount;
 			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
 				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
 				speakerName == NULL ? linesize * i + 6 * CleanYfac
@@ -1078,9 +1098,9 @@ public:
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen->GetWidth() / 320;
-		for (int i = 0; mDialogueLines[i].Width >= 0; ++i)
+		for (int i = 0; i < mDialogueLines->mCount; ++i)
 		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines->mBroken[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 			y += linesize;
 		}

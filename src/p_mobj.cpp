@@ -3848,7 +3848,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			DVector3 oldpos = Pos();
 			if (islinked && !moved) UnlinkFromWorld(&ctx);
 			SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::ceiling)));
-			Prev = Pos() - oldpos;
+			Prev += Pos() - oldpos;
 			Sector = P_PointInSector(Pos());
 			PrevPortalGroup = Sector->PortalGroup;
 			moved = true;
@@ -3865,7 +3865,7 @@ void AActor::CheckPortalTransition(bool islinked)
 				DVector3 oldpos = Pos();
 				if (islinked && !moved) UnlinkFromWorld(&ctx);
 				SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::floor)));
-				Prev = Pos() - oldpos;
+				Prev += Pos() - oldpos;
 				Sector = P_PointInSector(Pos());
 				PrevPortalGroup = Sector->PortalGroup;
 				moved = true;

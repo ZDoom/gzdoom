@@ -186,12 +186,12 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		{
 			opt->mSelectedItem = opt->mItems.Size() - 1;
 		}
-		opt->CalcIndent();
+		//opt->CalcIndent();
 
 		// If the joystick config menu is open, close it if the device it's open for is gone.
-		if (DMenu::CurrentMenu != nullptr && (DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu")))
+		if (CurrentMenu != nullptr && (CurrentMenu->IsKindOf("JoystickConfigMenu")))
 		{
-			auto p = DMenu::CurrentMenu->PointerVar<IJoystickConfig>("mJoy");
+			auto p = CurrentMenu->PointerVar<IJoystickConfig>("mJoy");
 			if (p != nullptr)
 			{
 				unsigned i;
@@ -204,7 +204,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				}
 				if (i == Joysticks.Size())
 				{
-					DMenu::CurrentMenu->Close();
+					CurrentMenu->Close();
 				}
 			}
 		}

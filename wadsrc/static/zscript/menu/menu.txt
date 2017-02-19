@@ -87,6 +87,8 @@ class Menu : Object native
 	};
 
 	native Menu mParentMenu;
+	native bool mMouseCapture;
+	native bool mBackbuttonSelected;
 
 	void Init(Menu parent)
 	{
@@ -111,7 +113,6 @@ class Menu : Object native
 	native virtual void Ticker();
 	native virtual void Drawer();
 	native void Close();
-	native MenuItemBase GetItem(Name n);
 	native void ActivateMenu();
 	
 	static void MenuSound(Sound snd)

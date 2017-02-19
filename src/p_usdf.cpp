@@ -232,20 +232,21 @@ class USDFParser : public UDMFParserBase
 		// Todo: Finalize
 		if (reply->ItemCheck.Size() > 0)
 		{
-			if (reply->ItemCheck[0].Amount <= 0) reply->NeedsGold = false;
+			reply->PrintAmount = reply->ItemCheck[0].Amount;
+			if (reply->PrintAmount <= 0) reply->NeedsGold = false;
 		}
 
-		reply->Reply = ncopystring(ReplyString);
-		reply->QuickYes = ncopystring(QuickYes);
+		reply->Reply = ReplyString;
+		reply->QuickYes = QuickYes;
 		if (reply->ItemCheck.Size() > 0 && reply->ItemCheck[0].Item != NULL)
 		{
-			reply->QuickNo = ncopystring(QuickNo);
+			reply->QuickNo = QuickNo;
 		}
 		else
 		{
-			reply->QuickNo = NULL;
+			reply->QuickNo = "";
 		}
-		reply->LogString = ncopystring(LogString);
+		reply->LogString = LogString;
 		if(!closeDialog) reply->NextNode *= -1;
 		return true;
 	}
@@ -373,9 +374,9 @@ class USDFParser : public UDMFParserBase
 				}
 			}
 		}
-		node->SpeakerName = ncopystring(SpeakerName);
-		node->Dialogue = ncopystring(Dialogue);
-		node->Goodbye = ncopystring(Goodbye);
+		node->SpeakerName = SpeakerName;
+		node->Dialogue = Dialogue;
+		node->Goodbye = Goodbye;
 		return true;
 	}
 

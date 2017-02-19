@@ -158,28 +158,17 @@ enum DrawTextureTags
 
 struct Screen native
 {
-	int CleanWidth, CleanHeight;
-	int CleanXFac, CleanYFac;
-	int CleanWidth_1, CleanHeight_1;
-	int CleanXFac_1, CleanYFac_1;
-	
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
 	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native static void Dim(Color col, double amount, int x, int y, int w, int h);
 
 	native static void DrawHUDTexture(TextureID tex, double x, double y);
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawFrame(int x, int y, int w, int h);
-}
-
-class BrokenLines : Object native
-{
-	native int Count();
-	native int StringWidth(int line);
-	native String StringAt(int line);
 }
 
 struct Font native
@@ -252,7 +241,7 @@ struct Font native
 	native static int FindFontColor(Name color);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
-	native static BrokenLines BreakLines(String text, int maxlen);
+	native BrokenLines BreakLines(String text, int maxlen);
 }
 
 struct Translation
@@ -310,6 +299,7 @@ struct GameInfoStruct native
 	native String ArmorIcon2;
 	native int gametype;
 	native bool norandomplayerclass;
+	native Array<Name> infoPages;
 }
 
 class Object native
@@ -334,6 +324,13 @@ class Object native
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual void OnDestroy() {}
+}
+
+class BrokenLines : Object native
+{
+	native int Count();
+	native int StringWidth(int line);
+	native String StringAt(int line);
 }
 
 class Thinker : Object native
@@ -440,6 +437,7 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
+	native String F1Pic;
 	native readonly int maptype;
 	native readonly String Music;
 	native readonly int musicorder;
@@ -582,9 +580,10 @@ struct StringStruct native
 
 	native void Replace(String pattern, String replacement);
 	native String Mid(int pos = 0, int len = 2147483647);
-	native int Len();
+	native void Truncate(int newlen);
 	native String CharAt(int pos);
 	native int CharCodeAt(int pos);
+	native String Filter();
 }
 
 class Floor : Thinker native

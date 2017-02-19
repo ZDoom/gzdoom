@@ -73,7 +73,7 @@ EXTERN_CVAR (Int, autosavecount)
 #define SIMULATEERRORS			0
 
 extern BYTE		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
-extern char		savedescription[SAVESTRINGSIZE];
+extern FString	savedescription;
 extern FString	savegamefile;
 
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
@@ -2418,8 +2418,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			savegamefile = s;
 			delete[] s;
 			s = ReadString (stream);
-			memset (savedescription, 0, sizeof(savedescription));
-			strncpy (savedescription, s, sizeof(savedescription));
+			savedescription = s;
 			if (player != consoleplayer)
 			{
 				// Paths sent over the network will be valid for the system that sent

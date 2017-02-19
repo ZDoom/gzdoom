@@ -52,7 +52,7 @@ class ListMenuItem : MenuItemBase
 		}
 		else
 		{
-			screen.DrawTexture (tex, mXpos + xofs, mYpos + yofs, DTA_Clean, true);
+			screen.DrawTexture (tex, true, mXpos + xofs, mYpos + yofs, DTA_Clean, true);
 		}
 	}
 }

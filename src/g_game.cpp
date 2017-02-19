@@ -226,7 +226,7 @@ int 			mousex;
 int 			mousey; 		
 
 FString			savegamefile;
-char			savedescription[SAVESTRINGSIZE];
+FString			savedescription;
 
 // [RH] Name of screenshot file to generate (usually NULL)
 FString			shotfile;
@@ -1081,7 +1081,7 @@ void G_Ticker ()
 			G_DoSaveGame (true, savegamefile, savedescription);
 			gameaction = ga_nothing;
 			savegamefile = "";
-			savedescription[0] = '\0';
+			savedescription = "";
 			break;
 		case ga_autosave:
 			G_DoAutoSave ();
@@ -2068,8 +2068,7 @@ void G_SaveGame (const char *filename, const char *description)
 	else
 	{
 		savegamefile = filename;
-		strncpy (savedescription, description, sizeof(savedescription)-1);
-		savedescription[sizeof(savedescription)-1] = '\0';
+		savedescription = description;
 		sendsave = true;
 	}
 }
@@ -2119,7 +2118,7 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
-	char description[SAVESTRINGSIZE];
+	FString description;
 	FString file;
 	// Keep up to four autosaves at a time
 	UCVarValue num;
@@ -2147,10 +2146,7 @@ void G_DoAutoSave ()
 	}
 
 	readableTime = myasctime ();
-	strcpy (description, "Autosave ");
-	strncpy (description+9, readableTime+4, 12);
-	description[9+12] = 0;
-
+	description.Format("Autosave %.12s", readableTime + 4);
 	G_DoSaveGame (false, file, description);
 }
 
@@ -2310,7 +2306,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	WriteZip(filename, savegame_filenames, savegame_content);
 
-	savegameManager.NotifyNewSave (filename.GetChars(), description, okForQuicksave);
+	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.

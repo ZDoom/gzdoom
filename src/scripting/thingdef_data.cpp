@@ -906,7 +906,10 @@ void InitThingdef()
 	fieldptr = new PField("OptionMenuSettings", NewStruct("FOptionMenuSettings", nullptr), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&OptionSettings);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
-	
+	fieldptr = new PField("gametic", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gametic);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
 	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
 	// is to create a static variable from it and reference that in the script. Yuck!!!
@@ -1213,10 +1216,12 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 	ACTION_RETURN_STRING(s);
 }
 
-DEFINE_ACTION_FUNCTION(FStringStruct, Len)
+DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_INT((int)self->Len());
+	PARAM_UINT(len);
+	self->Truncate(len);
+	return 0;
 }
 
 // CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
@@ -1239,3 +1244,10 @@ DEFINE_ACTION_FUNCTION(FStringStruct, CharCodeAt)
 		ACTION_RETURN_INT(0);
 	ACTION_RETURN_INT((*self)[pos]);
 }
+
+DEFINE_ACTION_FUNCTION(FStringStruct, Filter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(strbin1(*self));
+}
+

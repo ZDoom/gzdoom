@@ -347,7 +347,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	}
 
 	// Convert the rest of the data to our own internal format.
-	node->Dialogue = ncopystring (speech.Dialogue);
+	node->Dialogue = speech.Dialogue;
 
 	// The speaker's portrait, if any.
 	speech.Dialogue[0] = 0; 	//speech.Backdrop[8] = 0;
@@ -360,7 +360,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 
 	// The speaker's name, if any.
 	speech.Sound[0] = 0; 		//speech.Name[16] = 0;
-	node->SpeakerName = ncopystring(speech.Name);
+	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
 	node->DropType = dyn_cast<PClassActor>(GetStrifeType(speech.DropType));
@@ -422,7 +422,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	}
 
 	// Convert the rest of the data to our own internal format.
-	node->Dialogue = ncopystring (speech.Dialogue);
+	node->Dialogue = speech.Dialogue;
 
 	// The Teaser version doesn't have portraits.
 	node->Backdrop.SetInvalid();
@@ -440,7 +440,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 
 	// The speaker's name, if any.
 	speech.Dialogue[0] = 0; 	//speech.Name[16] = 0;
-	node->SpeakerName = ncopystring (speech.Name);
+	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
 	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
@@ -505,7 +505,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 		// The message to record in the log for this reply.
 		reply->LogNumber = rsp->Log;
-		reply->LogString = NULL;
+		reply->LogString = "";
 
 		// The item to receive when this reply is used.
 		reply->GiveType = dyn_cast<PClassActor>(GetStrifeType (rsp->GiveType));
@@ -520,31 +520,32 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 			reply->ItemCheck[k].Item = inv;
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
+		reply->PrintAmount = reply->ItemCheck[0].Amount;
 		reply->ItemCheckRequire.Clear();
 		reply->ItemCheckExclude.Clear();
 
 		// If the first item check has a positive amount required, then
 		// add that to the reply string. Otherwise, use the reply as-is.
-		reply->Reply = copystring (rsp->Reply);
+		reply->Reply = rsp->Reply;
 		reply->NeedsGold = (rsp->Count[0] > 0);
 
 		// QuickYes messages are shown when you meet the item checks.
 		// QuickNo messages are shown when you don't.
 		if (rsp->Yes[0] == '_' && rsp->Yes[1] == 0)
 		{
-			reply->QuickYes = NULL;
+			reply->QuickYes = "";
 		}
 		else
 		{
-			reply->QuickYes = ncopystring (rsp->Yes);
+			reply->QuickYes = rsp->Yes;
 		}
 		if (reply->ItemCheck[0].Item != 0)
 		{
-			reply->QuickNo = ncopystring (rsp->No);
+			reply->QuickNo = rsp->No;
 		}
 		else
 		{
-			reply->QuickNo = NULL;
+			reply->QuickNo = "";
 		}
 		reply->Next = *replyptr;
 		*replyptr = reply;
@@ -560,9 +561,6 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 FStrifeDialogueNode::~FStrifeDialogueNode ()
 {
-	if (SpeakerName != NULL) delete[] SpeakerName;
-	if (Dialogue != NULL) delete[] Dialogue;
-	if (Goodbye != nullptr) delete[] Goodbye;
 	FStrifeDialogueReply *tokill = Children;
 	while (tokill != NULL)
 	{
@@ -580,9 +578,6 @@ FStrifeDialogueNode::~FStrifeDialogueNode ()
 
 FStrifeDialogueReply::~FStrifeDialogueReply ()
 {
-	if (Reply != NULL) delete[] Reply;
-	if (QuickYes != NULL) delete[] QuickYes;
-	if (QuickNo != NULL) delete[] QuickNo;
 }
 
 //============================================================================
@@ -672,7 +667,7 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 
 static bool ShouldSkipReply(FStrifeDialogueReply *reply, player_t *player)
 {
-	if (reply->Reply == nullptr)
+	if (reply->Reply.IsEmpty())
 		return true;
 
 	int i;
@@ -772,7 +767,7 @@ public:
 				ReplyText = GStrings(ReplyText + 1);
 			}
 			FString ReplyString = ReplyText;
-			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
+			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->PrintAmount);
 
 			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyString);
 
@@ -785,7 +780,7 @@ public:
 			V_FreeBrokenLines (ReplyLines);
 		}
 		const char *goodbyestr = CurNode->Goodbye;
-		if (goodbyestr == nullptr)
+		if (*goodbyestr == 0)
 		{
 			char goodbye[25];
 			mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1 + (pr_randomspeech() % NUM_RANDOM_GOODBYES));
@@ -1012,7 +1007,7 @@ public:
 		linesize = 10 * CleanYfac;
 
 		// Who is talking to you?
-		if (CurNode->SpeakerName != NULL)
+		if (CurNode->SpeakerName.IsNotEmpty())
 		{
 			speakerName = CurNode->SpeakerName;
 			if (speakerName[0] == '$') speakerName = GStrings(speakerName+1);
@@ -1097,7 +1092,7 @@ public:
 
 				if (response == mSelection+1)
 				{
-					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
+					int color = ((MenuTime%8) < 4) || CurrentMenu != this ? CR_RED:CR_GREY;
 
 					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
 					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
@@ -1135,9 +1130,9 @@ void P_FreeStrifeConversations ()
 	ClassRoots.Clear();
 
 	PrevNode = NULL;
-	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (CurrentMenu != NULL && CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
 	{
-		DMenu::CurrentMenu->Close();
+		CurrentMenu->Close();
 	}
 }
 
@@ -1315,7 +1310,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		if (!CheckStrifeItem(player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount))
 		{
 			// No, you don't. Say so and let the NPC animate negatively.
-			if (reply->QuickNo && isconsole)
+			if (reply->QuickNo.IsNotEmpty() && isconsole)
 			{
 				TerminalResponse(reply->QuickNo);
 			}
@@ -1396,7 +1391,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	}
 
 	// Update the quest log, if needed.
-	if (reply->LogString != NULL)
+	if (reply->LogString.IsNotEmpty())
 	{
 		const char *log = reply->LogString;
 		if (log[0] == '$')
@@ -1482,10 +1477,10 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 
 	// The conversation menus are normally closed by the menu code, but that
 	// doesn't happen during demo playback, so we need to do it here.
-	if (demoplayback && DMenu::CurrentMenu != NULL &&
-		DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (demoplayback && CurrentMenu != NULL &&
+		CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
 	{
-		DMenu::CurrentMenu->Close();
+		CurrentMenu->Close();
 	}
 	if (netcode == DEM_CONVREPLY)
 	{

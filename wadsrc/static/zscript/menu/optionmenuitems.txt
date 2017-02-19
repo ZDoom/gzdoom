@@ -136,7 +136,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 		// don't execute if no menu is active
 		if (m == null) return false;	
 		// don't execute if this item cannot be found in the current menu.
-		if (m.mDesc.GetItem(mAction) != self) return false;
+		if (m.GetItem(mAction) != self) return false;
 		Menu.MenuSound("menu/choose");
 		DoCommand(mAction);
 		return true;
@@ -388,7 +388,7 @@ class EnterKey : Menu
 		let parent = OptionMenu(mParentMenu);
 		if (parent != null)
 		{
-			let it = parent.mDesc.GetItem('Controlmessage');
+			let it = parent.GetItem('Controlmessage');
 			if (it != null)
 			{
 				it.SetValue(0, which);

@@ -922,15 +922,12 @@ set( FASTMATH_PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	menu/joystickmenu.cpp
-	menu/listmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
 	menu/menudef.cpp
-	menu/menuinput.cpp
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/readthis.cpp
 	menu/videomenu.cpp
 	oplsynth/fmopl.cpp
 	oplsynth/mlopl.cpp

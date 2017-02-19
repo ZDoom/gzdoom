@@ -580,6 +580,7 @@ struct StringStruct native
 	native vararg void AppendFormat(String fmt, ...);
 
 	native void Replace(String pattern, String replacement);
+	native String Left(int len);
 	native String Mid(int pos = 0, int len = 2147483647);
 	native void Truncate(int newlen);
 	native String CharAt(int pos);

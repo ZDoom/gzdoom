@@ -172,6 +172,7 @@ struct gameinfo_t
 	double gibfactor;
 	int TextScreenX;
 	int TextScreenY;
+	FName DefaultConversationMenuClass;
 	FName DefaultEndSequence;
 	FString mMapArrow, mCheatMapArrow;
 	FString mEasyKey, mCheatKey;

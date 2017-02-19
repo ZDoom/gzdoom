@@ -61,6 +61,7 @@
 #include "p_local.h"
 #include "menu/menu.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -123,9 +124,6 @@ static void PickConversationReply (int replyindex);
 static void TerminalResponse (const char *str);
 
 static FStrifeDialogueNode *PrevNode;
-
-#define NUM_RANDOM_LINES 10
-#define NUM_RANDOM_GOODBYES 3
 
 //============================================================================
 //
@@ -351,7 +349,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 
 	// The speaker's portrait, if any.
 	speech.Dialogue[0] = 0; 	//speech.Backdrop[8] = 0;
-	node->Backdrop = TexMan.CheckForTexture (speech.Backdrop, FTexture::TEX_MiscPatch);
+	node->Backdrop = speech.Backdrop;
 
 	// The speaker's voice for this node, if any.
 	speech.Backdrop[0] = 0; 	//speech.Sound[8] = 0;
@@ -425,7 +423,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->Dialogue = speech.Dialogue;
 
 	// The Teaser version doesn't have portraits.
-	node->Backdrop.SetInvalid();
+	node->Backdrop = "";
 
 	// The speaker's voice for this node, if any.
 	if (speech.VoiceNumber != 0)
@@ -745,153 +743,6 @@ public:
 
 //============================================================================
 //
-// The conversation menu
-//
-//============================================================================
-
-class DConversationMenu : public DMenu
-{
-	DECLARE_CLASS(DConversationMenu, DMenu)
-
-public:
-	FString mSpeaker;
-	DBrokenLines *mDialogueLines;
-	TArray<FString> mResponseLines;
-	TArray<unsigned int> mResponses;
-	bool mShowGold;
-	FStrifeDialogueNode *mCurNode;
-	int mYpos;
-	player_t *mPlayer;
-	int mSelection;
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	DConversationMenu(FStrifeDialogueNode *CurNode, player_t *player, int activereply)
-	{
-		mCurNode = CurNode;
-		mPlayer = player;
-		mDialogueLines = NULL;
-		mShowGold = false;
-
-		// Format the speaker's message.
-		const char * toSay = CurNode->Dialogue;
-		if (strncmp (toSay, "RANDOM_", 7) == 0)
-		{
-			FString dlgtext;
-
-			dlgtext.Format("TXT_%s_%02d", toSay, 1+(pr_randomspeech() % NUM_RANDOM_LINES));
-			toSay = GStrings[dlgtext];
-			if (toSay == NULL)
-			{
-				toSay = GStrings["TXT_GOAWAY"];	// Ok, it's lame - but it doesn't look like an error to the player. ;)
-			}
-		}
-		else
-		{
-			// handle string table replacement
-			if (toSay[0] == '$')
-			{
-				toSay = GStrings(toSay + 1);
-			}
-		}
-		if (toSay == NULL)
-		{
-			toSay = ".";
-		}
-		unsigned int count;
-		auto bl = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay, true, &count);
-		mDialogueLines = new DBrokenLines(bl, count);
-
-		mSelection = -1;
-
-		FStrifeDialogueReply *reply;
-		int r = -1;
-		int i,j;
-		for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
-		{
-			r++;
-			if (ShouldSkipReply(reply, mPlayer))
-			{
-				continue;
-			}
-			if (activereply == r) mSelection = i - 1;
-
-			mShowGold |= reply->NeedsGold;
-
-			const char *ReplyText = reply->Reply;
-			if (ReplyText[0] == '$')
-			{
-				ReplyText = GStrings(ReplyText + 1);
-			}
-			FString ReplyString = ReplyText;
-			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->PrintAmount);
-
-			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyString);
-
-			mResponses.Push(mResponseLines.Size());
-			for (j = 0; ReplyLines[j].Width >= 0; ++j)
-			{
-				mResponseLines.Push(ReplyLines[j].Text);
-			}
-			
-			++i;
-			V_FreeBrokenLines (ReplyLines);
-		}
-		if (mSelection == -1)
-		{
-			mSelection = r < activereply ? r + 1 : 0;
-		}
-		const char *goodbyestr = CurNode->Goodbye;
-		if (*goodbyestr == 0)
-		{
-			char goodbye[25];
-			mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1 + (pr_randomspeech() % NUM_RANDOM_GOODBYES));
-			goodbyestr = GStrings[goodbye];
-		}
-		else if (strncmp(goodbyestr, "RANDOM_", 7) == 0)
-		{
-			FString byetext;
-
-			byetext.Format("TXT_%s_%02d", goodbyestr, 1 + (pr_randomspeech() % NUM_RANDOM_LINES));
-			goodbyestr = GStrings[byetext];
-		}
-		else if (goodbyestr[0] == '$')
-		{
-			goodbyestr = GStrings(goodbyestr + 1);
-		}
-		if (goodbyestr == nullptr) goodbyestr = "Bye.";
-		mResponses.Push(mResponseLines.Size());
-		mResponseLines.Push(FString(goodbyestr));
-
-		// Determine where the top of the reply list should be positioned.
-		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * OptionSettings.mLinespacing);
-		i = 44 + count * (OptionSettings.mLinespacing + 2);
-		if (mYpos - 100 < i - screen->GetHeight() / CleanYfac / 2)
-		{
-			mYpos = i - screen->GetHeight() / CleanYfac / 2 + 100;
-		}
-		ConversationMenuY = mYpos;
-		//ConversationMenu.indent = 50;
-
-		// Because replies can be selectively hidden mResponses.Size() won't be consistent.
-		// So make sure mSelection doesn't exceed mResponses.Size(). [FishyClockwork]
-		if (mSelection >= (int)mResponses.Size())
-		{
-			mSelection = mResponses.Size() - 1;
-		}
-	}
-
-};
-
-IMPLEMENT_CLASS(DConversationMenu, true, false)
-
-
-//============================================================================
-//
 // P_FreeStrifeConversations
 //
 //============================================================================
@@ -909,7 +760,7 @@ void P_FreeStrifeConversations ()
 	ClassRoots.Clear();
 
 	PrevNode = NULL;
-	if (CurrentMenu != NULL && CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (CurrentMenu != NULL && CurrentMenu->IsKindOf("ConversationMenu"))
 	{
 		CurrentMenu->Close();
 	}
@@ -1007,8 +858,21 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 		}
 
-		DConversationMenu *cmenu = new DConversationMenu(CurNode, pc->player, StaticLastReply);
+		// Create the menu. This may be a user-defined class so check if it is good to use.
+		FName cls = CurNode->MenuClassName;
+		if (cls == NAME_None) cls = gameinfo.DefaultConversationMenuClass;
+		if (cls == NAME_None) cls = "ConversationMenu";
+		auto mcls = PClass::FindClass(cls);
+		if (mcls == nullptr || !mcls->IsDescendantOf("ConversationMenu")) mcls = PClass::FindClass("ConversationMenu");
+		assert(mcls);
 
+		auto cmenu = mcls->CreateNew();
+		IFVIRTUALPTRNAME(cmenu, "ConversationMenu", Init)
+		{
+			VMValue params[] = { cmenu, CurNode, pc->player, StaticLastReply };
+			VMReturn ret(&ConversationMenuY);
+			GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+		}
 
 		if (CurNode != PrevNode)
 		{ // Only reset the selection if showing a different menu.
@@ -1018,7 +882,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 		// And open the menu
 		M_StartControlPanel (false);
-		M_ActivateMenu(cmenu);
+		M_ActivateMenu((DMenu*)cmenu);
 		menuactive = MENU_OnNoPause;
 	}
 }
@@ -1255,8 +1119,7 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 
 	// The conversation menus are normally closed by the menu code, but that
 	// doesn't happen during demo playback, so we need to do it here.
-	if (demoplayback && CurrentMenu != NULL &&
-		CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	if (demoplayback && CurrentMenu != NULL && CurrentMenu->IsKindOf("ConversationMenu"))
 	{
 		CurrentMenu->Close();
 	}
@@ -1332,6 +1195,8 @@ DEFINE_FIELD(FStrifeDialogueNode, Backdrop);
 DEFINE_FIELD(FStrifeDialogueNode, Dialogue);
 DEFINE_FIELD(FStrifeDialogueNode, Goodbye);
 DEFINE_FIELD(FStrifeDialogueNode, Children);
+DEFINE_FIELD(FStrifeDialogueNode, MenuClassName);
+DEFINE_FIELD(FStrifeDialogueNode, UserData);
 
 DEFINE_FIELD(FStrifeDialogueReply, Next);
 DEFINE_FIELD(FStrifeDialogueReply, GiveType);
@@ -1345,14 +1210,3 @@ DEFINE_FIELD(FStrifeDialogueReply, LogString);
 DEFINE_FIELD(FStrifeDialogueReply, NextNode);
 DEFINE_FIELD(FStrifeDialogueReply, LogNumber);
 DEFINE_FIELD(FStrifeDialogueReply, NeedsGold);
-
-
-DEFINE_FIELD(DConversationMenu, mSpeaker);
-DEFINE_FIELD(DConversationMenu, mDialogueLines);
-DEFINE_FIELD(DConversationMenu, mResponseLines);
-DEFINE_FIELD(DConversationMenu, mResponses);
-DEFINE_FIELD(DConversationMenu, mShowGold);
-DEFINE_FIELD(DConversationMenu, mCurNode);
-DEFINE_FIELD(DConversationMenu, mYpos);
-DEFINE_FIELD(DConversationMenu, mPlayer);
-DEFINE_FIELD(DConversationMenu, mSelection);

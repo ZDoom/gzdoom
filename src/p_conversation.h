@@ -28,11 +28,13 @@ struct FStrifeDialogueNode
 	PClassActor *SpeakerType;
 	FString SpeakerName;
 	FSoundID SpeakerVoice;
-	FTextureID Backdrop;
+	FString Backdrop;
 	FString Dialogue;
 	FString Goodbye; // must init to null for binary scripts to work as intended
 
 	FStrifeDialogueReply *Children;
+	FName MenuClassName;
+	FString UserData;
 };
 
 // FStrifeDialogueReply holds responses the player can give to the NPC

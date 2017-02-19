@@ -316,7 +316,14 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Panel:
-					node->Backdrop = TexMan.CheckForTexture (CheckString(key), FTexture::TEX_MiscPatch);
+					node->Backdrop = CheckString(key);
+					break;
+
+				case NAME_Userstring:
+					if (namespace_bits == Zd)
+					{
+						node->UserData = CheckString(key);
+					}
 					break;
 
 				case NAME_Voice:
@@ -391,6 +398,7 @@ class USDFParser : public UDMFParserBase
 	{
 		PClassActor *type = NULL;
 		int dlgid = -1;
+		FName clsid;
 		unsigned int startpos = StrifeDialogues.Size();
 
 		while (!sc.CheckToken('}'))
@@ -413,6 +421,13 @@ class USDFParser : public UDMFParserBase
 					if (namespace_bits == Zd)
 					{
 						dlgid = CheckInt(key);
+					}
+					break;
+
+				case NAME_Class:
+					if (namespace_bits == Zd)
+					{
+						clsid = CheckString(key);
 					}
 					break;
 				}
@@ -440,6 +455,7 @@ class USDFParser : public UDMFParserBase
 		for(;startpos < StrifeDialogues.Size(); startpos++)
 		{
 			StrifeDialogues[startpos]->SpeakerType = type;
+			StrifeDialogues[startpos]->MenuClassName = clsid;
 		}
 		return true;
 	}

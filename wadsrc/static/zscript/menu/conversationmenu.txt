@@ -63,6 +63,8 @@ struct StrifeDialogueReply native
 	native int NextNode;	// index into StrifeDialogues
 	native int LogNumber;
 	native bool NeedsGold;
+	
+	native bool ShouldSkipReply(PlayerInfo player);
 }
 
 
@@ -78,8 +80,151 @@ class ConversationMenu : Menu native
 	native PlayerInfo mPlayer;
 	native int mSelection;
 	
+	native static void SendConversationReply(int node, int reply);
+	
 	//ConversationPauseTic = gametic + 20;
+	// DontDim = true;
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void OnDestroy()
+	{
+		mDialogueLines.Destroy();
+		SetMusicVolume (1);
+		Super.OnDestroy();
+	}
+
+	protected int GetReplyNum()
+	{
+		// This is needed because mSelection represents the replies currently being displayed which will
+		// not match up with what's supposed to be selected if there are any hidden/skipped replies. [FishyClockwork]
+		let reply = mCurNode.Children;
+		int replynum = mSelection;
+		for (int i = 0; i <= mSelection && reply != null; reply = reply.Next)
+		{
+			if (reply.ShouldSkipReply(mPlayer))
+				replynum++;
+			else
+				i++;
+		}
+		return replynum;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (demoplayback)
+		{ // During demo playback, don't let the user do anything besides close this menu.
+			if (mkey == MKEY_Back)
+			{
+				Close();
+				return true;
+			}
+			return false;
+		}
+		if (mkey == MKEY_Up)
+		{
+			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
+			return true;
+		}
+		else if (mkey == MKEY_Down)
+		{
+			if (++mSelection >= mResponses.Size()) mSelection = 0;
+			return true;
+		}
+		else if (mkey == MKEY_Back)
+		{
+			SendConversationReply(-1, GetReplyNum());
+			Close();
+			return true;
+		}
+		else if (mkey == MKEY_Enter)
+		{
+			int replynum = GetReplyNum();
+			if (mSelection >= mResponses.Size())
+			{
+				SendConversationReply(-2, replynum);
+			}
+			else
+			{
+				// Send dialogue and reply numbers across the wire.
+				SendConversationReply(mCurNode.ThisNodeNum, replynum);
+			}
+			Close();
+			return true;
+		}
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MouseEvent(int type, int x, int y)
+	{
+		int sel = -1;
+		int fh = OptionMenuSettings.mLinespacing;
+
+		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+		x = ((x - (screen.GetWidth() / 2)) / CleanXfac) + 160;
+		y = ((y - (screen.GetHeight() / 2)) / CleanYfac) + 100;
+
+		if (x >= 24 && x <= 320-24 && y >= mYpos && y < mYpos + fh * mResponseLines.Size())
+		{
+			sel = (y - mYpos) / fh;
+			for(int i = 0; i < mResponses.Size(); i++)
+			{
+				if (mResponses[i] > sel)
+				{
+					sel = i-1;
+					break;
+				}
+			}
+		}
+		if (sel != -1 && sel != mSelection)
+		{
+			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+		}
+		mSelection = sel;
+		if (type == MOUSE_Release)
+		{
+			return MenuEvent(MKEY_Enter, true);
+		}
+		return true;
+	}
+
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool Responder(InputEventData ev)
+	{
+		if (demoplayback)
+		{ // No interaction during demo playback
+			return false;
+		}
+		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_Char && ev.data1 >= 48 && ev.data1 <= 57)
+		{ // Activate an item of type numberedmore (dialogue only)
+			mSelection = ev.data1 == 48 ? 9 : ev.data1 - 49;
+			return MenuEvent(MKEY_Enter, false);
+		}
+		return Super.Responder(ev);
+	}
+	
 	//============================================================================
 	//
 	// Draw the backdrop, returns true if the text background should be dimmed

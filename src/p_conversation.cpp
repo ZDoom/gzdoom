@@ -689,8 +689,18 @@ static bool ShouldSkipReply(FStrifeDialogueReply *reply, player_t *player)
 	return false;
 }
 
-static void SendConversationReply(int node, int reply)
+DEFINE_ACTION_FUNCTION(FStrifeDialogueReply, ShouldSkipReply)
 {
+	PARAM_SELF_STRUCT_PROLOGUE(FStrifeDialogueReply);
+	PARAM_POINTER(player, player_t);
+	ACTION_RETURN_BOOL(ShouldSkipReply(self, player));
+}
+
+DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(node);
+	PARAM_INT(reply);
 	switch (node)
 	{
 	case -1:
@@ -708,6 +718,7 @@ static void SendConversationReply(int node, int reply)
 		break;
 	}
 	StaticLastReply = reply;
+	return 0;
 }
 
 
@@ -874,154 +885,6 @@ public:
 		}
 	}
 
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	void OnDestroy() override
-	{
-		mDialogueLines->Destroy();
-		mDialogueLines = NULL;
-		I_SetMusicVolume (1.f);
-		Super::OnDestroy();
-	}
-
-	bool DimAllowed()
-	{
-		return false;
-	}
-
-	int GetReplyNum()
-	{
-		assert((unsigned)mCurNode->ThisNodeNum < StrifeDialogues.Size());
-		assert(StrifeDialogues[mCurNode->ThisNodeNum] == mCurNode);
-
-		// This is needed because mSelection represents the replies currently being displayed which will
-		// not match up with what's supposed to be selected if there are any hidden/skipped replies. [FishyClockwork]
-		FStrifeDialogueReply *reply = mCurNode->Children;
-		int replynum = mSelection;
-		for (int i = 0; i <= mSelection && reply != nullptr; reply = reply->Next)
-		{
-			if (ShouldSkipReply(reply, mPlayer))
-				replynum++;
-			else
-				i++;
-		}
-		return replynum;
-	}
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	bool MenuEvent(int mkey, bool fromcontroller)
-	{
-		if (demoplayback)
-		{ // During demo playback, don't let the user do anything besides close this menu.
-			if (mkey == MKEY_Back)
-			{
-				Close();
-				return true;
-			}
-			return false;
-		}
-		if (mkey == MKEY_Up)
-		{
-			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
-			return true;
-		}
-		else if (mkey == MKEY_Down)
-		{
-			if (++mSelection >= (int)mResponses.Size()) mSelection = 0;
-			return true;
-		}
-		else if (mkey == MKEY_Back)
-		{
-			SendConversationReply(-1, GetReplyNum());
-			Close();
-			return true;
-		}
-		else if (mkey == MKEY_Enter)
-		{
-			int replynum = GetReplyNum();
-			if ((unsigned)mSelection >= mResponses.Size())
-			{
-				SendConversationReply(-1, replynum);
-			}
-			else
-			{
-				// Send dialogue and reply numbers across the wire.
-				SendConversationReply(mCurNode->ThisNodeNum, replynum);
-			}
-			Close();
-			return true;
-		}
-		return false;
-	}
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	bool MouseEvent(int type, int x, int y)
-	{
-		int sel = -1;
-		int fh = OptionSettings.mLinespacing;
-
-		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
-		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
-		y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
-
-		if (x >= 24 && x <= 320-24 && y >= mYpos && y < mYpos + fh * (int)mResponseLines.Size())
-		{
-			sel = (y - mYpos) / fh;
-			for(unsigned i=0;i<mResponses.Size(); i++)
-			{
-				if ((int)mResponses[i] > sel)
-				{
-					sel = i-1;
-					break;
-				}
-			}
-		}
-		if (sel != -1 && sel != mSelection)
-		{
-			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-		}
-		mSelection = sel;
-		if (type == MOUSE_Release)
-		{
-			return MenuEvent(MKEY_Enter, true);
-		}
-		return true;
-	}
-
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	bool Responder(event_t *ev)
-	{
-		if (demoplayback)
-		{ // No interaction during demo playback
-			return false;
-		}
-		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 >= '0' && ev->data1 <= '9')
-		{ // Activate an item of type numberedmore (dialogue only)
-			mSelection = ev->data1 == '0' ? 9 : ev->data1 - '1';
-			return MenuEvent(MKEY_Enter, false);
-		}
-		return Super::Responder(ev);
-	}
 };
 
 IMPLEMENT_CLASS(DConversationMenu, true, false)

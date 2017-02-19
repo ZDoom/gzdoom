@@ -47,7 +47,7 @@ class ListMenu : Menu
 
 	virtual void Init(Menu parent = NULL, ListMenuDescriptor desc = NULL)
 	{
-		mParentMenu = parent;
+		Super.Init(parent);
 		mDesc = desc;
 		if (desc.mCenter)
 		{

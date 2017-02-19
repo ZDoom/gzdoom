@@ -160,6 +160,7 @@ DMenu::DMenu(DMenu *parent)
 	mParentMenu = parent;
 	mMouseCapture = false;
 	mBackbuttonSelected = false;
+	DontDim = false;
 	GC::WriteBarrier(this, parent);
 }
 	
@@ -443,11 +444,6 @@ DEFINE_ACTION_FUNCTION(DMenu, Close)
 	PARAM_SELF_PROLOGUE(DMenu);
 	self->Close();
 	return 0;
-}
-
-bool DMenu::DimAllowed()
-{
-	return true;
 }
 
 bool DMenu::TranslateKeyboardEvents()
@@ -928,7 +924,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (CurrentMenu->DimAllowed())
+		if (!CurrentMenu->DontDim)
 		{
 			screen->Dim(fade);
 			V_SetBorderNeedRefresh();
@@ -1203,6 +1199,7 @@ CCMD(undocolorpic)
 DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);
 DEFINE_FIELD(DMenu, mBackbuttonSelected);
+DEFINE_FIELD(DMenu, DontDim);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

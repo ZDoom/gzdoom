@@ -89,6 +89,7 @@ class Menu : Object native
 	native Menu mParentMenu;
 	native bool mMouseCapture;
 	native bool mBackbuttonSelected;
+	native bool DontDim;
 
 	void Init(Menu parent)
 	{

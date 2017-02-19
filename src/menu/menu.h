@@ -271,13 +271,13 @@ public:
 	TObjPtr<DMenu> mParentMenu;
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
+	bool DontDim;
 
 	DMenu(DMenu *parent = NULL);
 	virtual bool Responder (event_t *ev);
 	virtual bool MenuEvent (int mkey, bool fromcontroller);
 	virtual void Ticker ();
 	virtual void Drawer ();
-	virtual bool DimAllowed ();
 	bool TranslateKeyboardEvents();
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);

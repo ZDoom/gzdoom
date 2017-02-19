@@ -26,11 +26,11 @@ struct FStrifeDialogueNode
 	int ItemCheckNode;	// index into StrifeDialogues
 
 	PClassActor *SpeakerType;
-	char *SpeakerName;
+	FString SpeakerName;
 	FSoundID SpeakerVoice;
 	FTextureID Backdrop;
-	char *Dialogue;
-	char *Goodbye = nullptr; // must init to null for binary scripts to work as intended
+	FString Dialogue;
+	FString Goodbye; // must init to null for binary scripts to work as intended
 
 	FStrifeDialogueReply *Children;
 };
@@ -44,15 +44,16 @@ struct FStrifeDialogueReply
 	PClassActor *GiveType;
 	int ActionSpecial;
 	int Args[5];
+	int PrintAmount;
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	TArray<FStrifeDialogueItemCheck> ItemCheckRequire;
 	TArray<FStrifeDialogueItemCheck> ItemCheckExclude;
-	char *Reply;
-	char *QuickYes;
+	FString Reply;
+	FString QuickYes;
+	FString QuickNo;
+	FString LogString;
 	int NextNode;	// index into StrifeDialogues
 	int LogNumber;
-	char *LogString;
-	char *QuickNo;
 	bool NeedsGold;
 };
 

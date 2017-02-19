@@ -1,0 +1,247 @@
+/*
+** conversationmenu.txt
+** The Strife dialogue display
+**
+**---------------------------------------------------------------------------
+** Copyright 2010-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+struct StrifeDialogueNode native 
+{
+	native Class<Actor> DropType;
+	native int ThisNodeNum;
+	native int ItemCheckNode;
+
+	native Class<Actor> SpeakerType;
+	native String SpeakerName;
+	native Sound SpeakerVoice;
+	native TextureID Backdrop;
+	native String Dialogue;
+	native String Goodbye;
+
+	native StrifeDialogueReply Children;
+}
+
+// FStrifeDialogueReply holds responses the player can give to the NPC
+struct StrifeDialogueReply native
+{
+	native StrifeDialogueReply Next;
+	native Class<Actor> GiveType;
+	native int ActionSpecial;
+	native int Args[5];
+	native int PrintAmount;
+	native String Reply;
+	native String QuickYes;
+	native String QuickNo;
+	native String LogString;
+	native int NextNode;	// index into StrifeDialogues
+	native int LogNumber;
+	native bool NeedsGold;
+}
+
+
+class ConversationMenu : Menu native
+{
+	native String mSpeaker;
+	native BrokenLines mDialogueLines;
+	native Array<String> mResponseLines;
+	native Array<uint> mResponses;
+	native bool mShowGold;
+	native StrifeDialogueNode mCurNode;
+	native int mYpos;
+	native PlayerInfo mPlayer;
+	native int mSelection;
+	
+	//ConversationPauseTic = gametic + 20;
+
+	//============================================================================
+	//
+	// Draw the backdrop, returns true if the text background should be dimmed
+	//
+	//============================================================================
+
+	virtual bool DrawBackdrop()
+	{
+		if (mCurNode.Backdrop.isValid())
+		{
+			screen.DrawTexture(mCurNode.Backdrop, false, 0, 0, DTA_320x200, true);
+			return false;
+		}
+		return true;
+	}
+
+	//============================================================================
+	//
+	// Draw the speaker text
+	//
+	//============================================================================
+
+	virtual void DrawSpeakerText(bool dimbg)
+	{
+		String speakerName;
+		int linesize = OptionMenuSettings.mLinespacing * CleanYfac;
+		int cnt = mDialogueLines.Count();
+
+		// Who is talking to you?
+		if (mCurNode.SpeakerName.Length() > 0)
+		{
+			speakerName = Stringtable.Localize(mCurNode.SpeakerName);
+		}
+		else
+		{
+			speakerName = players[consoleplayer].ConversationNPC.GetTag("Person");
+		}
+
+		
+		// Dim the screen behind the dialogue (but only if there is no backdrop).
+		if (dimbg)
+		{
+			int x = 14 * screen.GetWidth() / 320;
+			int y = 13 * screen.GetHeight() / 200;
+			int w = 294 * screen.GetWidth() / 320;
+			int h = linesize * cnt + 6 * CleanYfac;
+			if (speakerName.Length() > 0) h += linesize * 3 / 2;
+			screen.Dim(0, 0.45f, x, y, w, h);
+		}
+
+		int x = 16 * screen.GetWidth() / 320;
+		int y = 16 * screen.GetHeight() / 200;
+
+		if (speakerName.Length() > 0)
+		{
+			screen.DrawText(SmallFont, Font.CR_WHITE, x, y, speakerName, DTA_CleanNoMove, true);
+			y += linesize * 3 / 2;
+		}
+		x = 24 * screen.GetWidth() / 320;
+		for (int i = 0; i < cnt; ++i)
+		{
+			screen.DrawText(SmallFont, Font.CR_UNTRANSLATED, x, y, mDialogueLines.StringAt(i), DTA_CleanNoMove, true);
+			y += linesize;
+		}
+	}
+
+
+	//============================================================================
+	//
+	// Draw the replies
+	//
+	//============================================================================
+
+	virtual void DrawReplies()
+	{
+		// Dim the screen behind the PC's choices.
+		screen.Dim(0, 0.45, (24 - 160) * CleanXfac + screen.GetWidth() / 2, (mYpos - 2 - 100) * CleanYfac + screen.GetHeight() / 2,
+			272 * CleanXfac, MIN(mResponseLines.Size() * OptionMenuSettings.mLinespacing + 4, 200 - mYpos) * CleanYfac);
+
+		int y = mYpos;
+		int fontheight = OptionMenuSettings.mLinespacing;
+
+		int response = 0;
+		for (int i = 0; i < mResponseLines.Size(); i++)
+		{
+			int width = SmallFont.StringWidth(mResponseLines[i]);
+			int x = 64;
+
+			screen.DrawText(SmallFont, Font.CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true);
+
+			if (i == mResponses[response])
+			{
+				String tbuf;
+
+				response++;
+				tbuf = String.Format("%d.", response);
+				x = 50 - SmallFont.StringWidth(tbuf);
+				screen.DrawText(SmallFont, Font.CR_GREY, x, y, tbuf, DTA_Clean, true);
+
+				if (response == mSelection + 1)
+				{
+					int colr = ((MenuTime() % 8) < 4) || GetCurrentMenu() != self ? Font.CR_RED : Font.CR_GREY;
+
+					x = (50 + 3 - 160) * CleanXfac + screen.GetWidth() / 2;
+					int yy = (y + fontheight / 2 - 5 - 100) * CleanYfac + screen.GetHeight() / 2;
+					screen.DrawText(ConFont, colr, x, yy, "\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+				}
+			}
+			y += fontheight;
+		}
+	}
+
+	virtual void DrawGold()
+	{
+		if (mShowGold)
+		{
+			let coin = players[consoleplayer].ConversationPC.FindInventory("Coin");
+			let icon = GetDefaultByType("Coin").Icon;
+			let goldstr = String.Format("%d", coin != NULL ? coin.Amount : 0);
+			screen.DrawText(SmallFont, Font.CR_GRAY, 21, 191, goldstr, DTA_320x200, true, DTA_FillColor, 0, DTA_Alpha, HR_SHADOW);
+			screen.DrawTexture(icon, false, 3, 190, DTA_320x200, true, DTA_FillColor, 0, DTA_Alpha, HR_SHADOW);
+			screen.DrawText(SmallFont, Font.CR_GRAY, 20, 190, goldstr, DTA_320x200, true);
+			screen.DrawTexture(icon, false, 2, 189, DTA_320x200, true);
+		}
+
+	}
+
+	//============================================================================
+	//
+	// DrawConversationMenu
+	//
+	//============================================================================
+
+	override void Drawer()
+	{
+		if (mCurNode == NULL)
+		{
+			Close ();
+			return;
+		}
+
+		bool dimbg = DrawBackdrop();
+		DrawSpeakerText(dimbg);
+		DrawReplies();
+		DrawGold();
+	}
+	
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	override void Ticker()
+	{
+		// will be reactivated later.
+		// [CW] Freeze the game depending on MAPINFO options.
+		//if (ConversationPauseTic < gametic && !multiplayer && !level.no_dlg_freeze)
+		{
+			menuactive = Menu.On;
+		}
+	}
+	
+}

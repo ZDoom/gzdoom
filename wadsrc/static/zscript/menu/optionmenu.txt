@@ -104,6 +104,7 @@ class OptionMenu : Menu
 	{
 		mParentMenu = parent;
 		mDesc = desc;
+		DontDim = desc.mDontDim;
 		if (mDesc != NULL && mDesc.mSelectedItem == -1) mDesc.mSelectedItem = FirstSelectable();
 		mDesc.CalcIndent();
 	}

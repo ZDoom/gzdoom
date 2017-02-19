@@ -52,6 +52,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mBackButton)
 
 
 const char *GameNames[17] =
@@ -362,6 +363,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
 		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
 		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
+		GAMEINFOKEY_STRING(DefaultConversationMenuClass, "defaultconversationmenuclass")
 		GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
 		GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
 		GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")

@@ -138,11 +138,11 @@ class DListMenuDescriptor : public DMenuDescriptor
 public:
 	TArray<DMenuItemBase *> mItems;
 	int mSelectedItem;
-	int mSelectOfsX;
-	int mSelectOfsY;
+	double mSelectOfsX;
+	double mSelectOfsY;
 	FTextureID mSelector;
 	int mDisplayTop;
-	int mXpos, mYpos;
+	double mXpos, mYpos;
 	int mWLeft, mWRight;
 	int mLinespacing;	// needs to be stored for dynamically created menus
 	int mAutoselect;	// this can only be set by internal menu creation functions
@@ -263,42 +263,19 @@ public:
 		MOUSE_Release
 	};
 
-	enum
-	{
-		BACKBUTTON_TIME = 4*TICRATE
-	};
-
 	TObjPtr<DMenu> mParentMenu;
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
+	bool DontDim;
 
 	DMenu(DMenu *parent = NULL);
-	virtual bool Responder (event_t *ev);
-	virtual bool MenuEvent (int mkey, bool fromcontroller);
-	virtual void Ticker ();
-	virtual void Drawer ();
-	virtual bool DimAllowed ();
 	bool TranslateKeyboardEvents();
 	virtual void Close();
-	virtual bool MouseEvent(int type, int x, int y);
-
-	virtual void SetFocus(DMenuItemBase *fc) {}
-	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
-	virtual void ReleaseFocus() {}
 
 	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
-	bool CallMouseEvent(int type, int x, int y);
 	void CallTicker();
 	void CallDrawer();
-
-	bool MouseEventBack(int type, int x, int y);
-	void SetCapture();
-	void ReleaseCapture();
-	bool HasCapture()
-	{
-		return mMouseCapture;
-	}
 };
 
 //=============================================================================
@@ -311,7 +288,7 @@ class DMenuItemBase : public DObject
 {
 	DECLARE_CLASS(DMenuItemBase, DObject)
 public:
-	int mXpos, mYpos;
+	double mXpos, mYpos;
 	FNameNoInit mAction;
 	bool mEnabled;
 
@@ -321,7 +298,7 @@ public:
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
-	int GetY() { return mYpos; }
+	double GetY() { return mYpos; }
 };	
 
 //=============================================================================
@@ -378,7 +355,7 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
 DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
 DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
-DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param);
-DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
+DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
+DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 
 #endif

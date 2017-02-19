@@ -89,32 +89,192 @@ class Menu : Object native
 	native Menu mParentMenu;
 	native bool mMouseCapture;
 	native bool mBackbuttonSelected;
+	native bool DontDim;
 
-	void Init(Menu parent)
-	{
-		mParentMenu = parent;
-	}
-	
 	native static int MenuTime();
 	native static void SetVideoMode();
 	native static Menu GetCurrentMenu();
 	native static void SetMenu(Name mnu, int param = 0);
 	native static void StartMessage(String msg, int mode = 0, Name command = 'none');
+	native static void SetMouseCapture(bool on);
+	native void Close();
+	native void ActivateMenu();
 	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void Init(Menu parent)
+	{
+		mParentMenu = parent;
+		mMouseCapture = false;
+		mBackbuttonSelected = false;
+		DontDim = false;
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	virtual bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		switch (mkey)
+		{
+		case MKEY_Back:
+			Close();
+			MenuSound (GetCurrentMenu() != null? "menu/backup" : "menu/clear");
+			return true;
+		}
+		return false;
+	}
+
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	protected bool MouseEventBack(int type, int x, int y)
+	{
+		if (m_show_backbutton >= 0)
+		{
+			let tex = TexMan.CheckForTexture(gameinfo.mBackButton, TexMan.Type_MiscPatch);
+			if (tex.IsValid())
+			{
+				Vector2 v = TexMan.GetScaledSize(tex);
+				int w = int(v.X + 0.5) * CleanXfac;
+				int h = int(v.Y + 0.5) * CleanYfac;
+				if (m_show_backbutton&1) x -= screen.GetWidth() - w;
+				if (m_show_backbutton&2) y -= screen.GetHeight() - h;
+				mBackbuttonSelected = ( x >= 0 && x < w && y >= 0 && y < h);
+				if (mBackbuttonSelected && type == MOUSE_Release)
+				{
+					if (m_use_mouse == 2) mBackbuttonSelected = false;
+					MenuEvent(MKEY_Back, true);
+				}
+				return mBackbuttonSelected;
+			}
+		}
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	virtual bool Responder(InputEventData ev)
+	{ 
+		bool res = false;
+		if (ev.type == InputEventData.GUI_Event)
+		{
+			if (ev.subtype == InputEventData.GUI_LButtonDown)
+			{
+				res = MouseEventBack(MOUSE_Click, ev.data1, ev.data2);
+				// make the menu's mouse handler believe that the current coordinate is outside the valid range
+				if (res) ev.data2 = -1;	
+				res |= MouseEvent(MOUSE_Click, ev.data1, ev.data2);
+				if (res)
+				{
+					SetCapture(true);
+				}
+				
+			}
+			else if (ev.subtype == InputEventData.GUI_MouseMove)
+			{
+				BackbuttonTime = 4*Thinker.TICRATE;
+				if (mMouseCapture || m_use_mouse == 1)
+				{
+					res = MouseEventBack(MOUSE_Move, ev.data1, ev.data2);
+					if (res) ev.data2 = -1;	
+					res |= MouseEvent(MOUSE_Move, ev.data1, ev.data2);
+				}
+			}
+			else if (ev.subtype == InputEventData.GUI_LButtonUp)
+			{
+				if (mMouseCapture)
+				{
+					SetCapture(false);
+					res = MouseEventBack(MOUSE_Release, ev.data1, ev.data2);
+					if (res) ev.data2 = -1;	
+					res |= MouseEvent(MOUSE_Release, ev.data1, ev.data2);
+				}
+			}
+		}
+		return false; 
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	virtual void Drawer () 
+	{
+		if (self == GetCurrentMenu() && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
+		{
+			let tex = TexMan.CheckForTexture(gameinfo.mBackButton, TexMan.Type_MiscPatch);
+			if (tex.IsValid())
+			{
+				Vector2 v = TexMan.GetScaledSize(tex);
+				int w = int(v.X + 0.5) * CleanXfac;
+				int h = int(v.Y + 0.5) * CleanYfac;
+				int x = (!(m_show_backbutton&1))? 0:screen.GetWidth() - w;
+				int y = (!(m_show_backbutton&2))? 0:screen.GetHeight() - h;
+				if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
+				{
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255));
+				}
+				else
+				{
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha);
+				}
+			}
+		}
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void SetCapture(bool on)
+	{
+		if (mMouseCapture != on)
+		{
+			mMouseCapture = on;
+			SetMouseCapture(on);
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	virtual bool TranslateKeyboardEvents() { return true; }
 	virtual void SetFocus(MenuItemBase fc) {}
 	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
 	virtual void ReleaseFocus() {}
 	virtual void ResetColor() {}
+	virtual bool MouseEvent(int type, int mx, int my) { return false; }
+	virtual void Ticker() {}
 
-	native virtual bool Responder(InputEventData ev);
-	native virtual bool MenuEvent (int mkey, bool fromcontroller);
-	native virtual bool MouseEvent(int type, int mx, int my);
-	native virtual void Ticker();
-	native virtual void Drawer();
-	native void Close();
-	native void ActivateMenu();
-	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	static void MenuSound(Sound snd)
 	{
 		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
@@ -136,3 +296,11 @@ class MenuDescriptor : Object native
 	native static MenuDescriptor GetDescriptor(Name n);
 }
 
+// This class is only needed to give it a virtual Init method that doesn't belong to Menu itself
+class GenericMenu : Menu
+{
+	virtual void Init(Menu parent)
+	{
+		Super.Init(parent);
+	}
+}

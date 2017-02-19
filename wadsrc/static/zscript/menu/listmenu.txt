@@ -4,11 +4,11 @@ class ListMenuDescriptor : MenuDescriptor native
 {
 	native Array<ListMenuItem> mItems;
 	native int mSelectedItem;
-	native int mSelectOfsX;
-	native int mSelectOfsY;
+	native double mSelectOfsX;
+	native double mSelectOfsY;
 	native TextureID mSelector;
 	native int mDisplayTop;
-	native int mXpos, mYpos;
+	native double mXpos, mYpos;
 	native int mWLeft, mWRight;
 	native int mLinespacing;	// needs to be stored for dynamically created menus
 	native int mAutoselect;	// this can only be set by internal menu creation functions
@@ -47,20 +47,20 @@ class ListMenu : Menu
 
 	virtual void Init(Menu parent = NULL, ListMenuDescriptor desc = NULL)
 	{
-		mParentMenu = parent;
+		Super.Init(parent);
 		mDesc = desc;
 		if (desc.mCenter)
 		{
-			int center = 160;
+			double center = 160;
 			for(int i=0; i < mDesc.mItems.Size(); i++)
 			{
-				int xpos = mDesc.mItems[i].GetX();
+				double xpos = mDesc.mItems[i].GetX();
 				int width = mDesc.mItems[i].GetWidth();
-				int curx = mDesc.mSelectOfsX;
+				double curx = mDesc.mSelectOfsX;
 
 				if (width > 0 && mDesc.mItems[i].Selectable())
 				{
-					int left = 160 - (width - curx) / 2 - curx;
+					double left = 160 - (width - curx) / 2 - curx;
 					if (left < center) center = left;
 				}
 			}

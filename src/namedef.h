@@ -653,6 +653,7 @@ xx(Link)
 xx(Goodbye)
 xx(Require)
 xx(Exclude)
+xx(Userstring)
 
 // Special menus
 xx(Mainmenu)

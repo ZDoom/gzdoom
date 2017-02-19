@@ -300,6 +300,7 @@ struct GameInfoStruct native
 	native int gametype;
 	native bool norandomplayerclass;
 	native Array<Name> infoPages;
+	native String mBackButton;
 }
 
 class Object native
@@ -463,6 +464,7 @@ struct LevelLocals native
 	native bool nomonsters;
 	native bool frozen;
 	native bool infinite_flight;
+	native bool no_dlg_freeze;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -579,6 +581,7 @@ struct StringStruct native
 	native vararg void AppendFormat(String fmt, ...);
 
 	native void Replace(String pattern, String replacement);
+	native String Left(int len);
 	native String Mid(int pos = 0, int len = 2147483647);
 	native void Truncate(int newlen);
 	native String CharAt(int pos);

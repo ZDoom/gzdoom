@@ -71,7 +71,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void InitDirect(int x, int y, int height, int frameofs, String text, Font font, int color, Name command)
+	void InitDirect(double x, double y, int height, int frameofs, String text, Font font, int color, Name command)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;
@@ -113,7 +113,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	protected void DrawBorder (int x, int y, int len)
+	protected void DrawBorder (double x, double y, int len)
 	{
 		let left = TexMan.CheckForTexture("M_LSLEFT", TexMan.Type_MiscPatch);
 		let mid = TexMan.CheckForTexture("M_LSCNTR", TexMan.Type_MiscPatch);
@@ -141,7 +141,9 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 			}
 			else
 			{
-				screen.Clear(x, y, x + len, y + SmallFont.GetHeight() * 3/2, 0);
+				int xx = int(x - 160) * CleanXfac + screen.GetWidth()/2;
+				int yy = int(y - 100) * CleanXfac + screen.GetHeight()/2;
+				screen.Clear(xx, yy, xx + len*CleanXfac, yy + SmallFont.GetHeight() * CleanYfac * 3/2, 0);
 			}
 		}
 	}
@@ -161,7 +163,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		}
 
 		// Draw player name box
-		int x = mXpos + mFont.StringWidth(text) + 16 + mFrameSize;
+		double x = mXpos + mFont.StringWidth(text) + 16 + mFrameSize;
 		DrawBorder (x, mYpos - mFrameSize, MAXPLAYERNAME+1);
 		if (!mEnter)
 		{
@@ -186,6 +188,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		{
 			Menu.MenuSound ("menu/choose");
 			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), mPlayerName, MAXPLAYERNAME, 2, fromcontroller);
+			mEnter.ActivateMenu();
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)
@@ -246,7 +249,7 @@ class ListMenuItemValueText : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void InitDirect(int x, int y, int height, String text, Font font, int color, int valuecolor, Name command, Name values)
+	void InitDirect(double x, double y, int height, String text, Font font, int color, int valuecolor, Name command, Name values)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;
@@ -337,7 +340,7 @@ class ListMenuItemValueText : ListMenuItemSelectable
 		String text = Stringtable.Localize(mText);
 		screen.DrawText(mFont, selected? OptionMenuSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true);
 
-		int x = mXpos + mFont.StringWidth(text) + 8;
+		double x = mXpos + mFont.StringWidth(text) + 8;
 		if (mSelections.Size() > 0)
 		{
 			screen.DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true);
@@ -385,7 +388,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	void InitDirect(int x, int y, int height, String text, Font font, int color, Name command, int min, int max, int step)
+	void InitDirect(double x, double y, int height, String text, Font font, int color, Name command, int min, int max, int step)
 	{
 		Super.Init(x, y, height, command);
 		mText = text;
@@ -463,7 +466,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 			lm.ReleaseFocus();
 		}
 
-		int slide_left = SmallFont.StringWidth ("Green") + 8 + mXpos;
+		int slide_left = SmallFont.StringWidth ("Green") + 8 + int(mXpos);
 		int slide_right = slide_left + 12*8;	// 12 char cells with 8 pixels each.
 
 		if (type == Menu.MOUSE_Click)
@@ -491,7 +494,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 	//
 	//=============================================================================
 
-	protected void DrawSlider (int x, int y)
+	protected void DrawSlider (double x, double y)
 	{
 		int range = mMaxrange - mMinrange;
 		int cur = mSelection - mMinrange;
@@ -515,8 +518,8 @@ class ListMenuItemSlider : ListMenuItemSelectable
 
 		screen.DrawText(mFont, selected? OptionMenuSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true);
 
-		int x = SmallFont.StringWidth ("Green") + 8 + mXpos;
-		int x2 = SmallFont.StringWidth (text) + 8 + mXpos;
+		double x = SmallFont.StringWidth ("Green") + 8 + mXpos;
+		double x2 = SmallFont.StringWidth (text) + 8 + mXpos;
 		DrawSlider (MAX(x2, x), mYpos);
 	}
 }

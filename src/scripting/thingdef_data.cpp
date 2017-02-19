@@ -63,6 +63,9 @@
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
 static TArray<FieldDesc> FieldTable;
+extern int				BackbuttonTime;
+extern float			BackbuttonAlpha;
+static AWeapon *wpnochg;
 
 //==========================================================================
 //
@@ -909,11 +912,20 @@ void InitThingdef()
 	fieldptr = new PField("gametic", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gametic);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
+	fieldptr = new PField("demoplayback", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&demoplayback);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+	fieldptr = new PField("BackbuttonTime", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&BackbuttonTime);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+	fieldptr = new PField("BackbuttonAlpha", TypeFloat32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&BackbuttonAlpha);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
 
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
 	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
 	// is to create a static variable from it and reference that in the script. Yuck!!!
-	static AWeapon *wpnochg = WP_NOCHANGE;
+	wpnochg = WP_NOCHANGE;
 	fieldptr = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
@@ -1213,6 +1225,14 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 	PARAM_UINT(pos);
 	PARAM_UINT(len);
 	FString s = self->Mid(pos, len);
+	ACTION_RETURN_STRING(s);
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, Left)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	FString s = self->Left(len);
 	ACTION_RETURN_STRING(s);
 }
 

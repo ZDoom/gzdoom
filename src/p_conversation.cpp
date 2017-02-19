@@ -112,7 +112,6 @@ static FDialogueMap ClassRoots;
 static int ConversationMenuY;
 
 static int ConversationPauseTic;
-static bool ShowGold;
 static int StaticLastReply;
 
 static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
@@ -1026,91 +1025,121 @@ public:
 
 	//============================================================================
 	//
-	// DrawConversationMenu
+	// Draw the backdrop, returns true if the text background should be dimmed
 	//
 	//============================================================================
 
-	void Drawer()
+	virtual bool DrawBackdrop()
 	{
-		const char *speakerName;
-		int x, y, linesize;
-		int width, fontheight;
-
-		player_t *cp = &players[consoleplayer];
-
-		assert (mDialogueLines != NULL);
-		assert (mCurNode != NULL);
-
-		FStrifeDialogueNode *CurNode = mCurNode;
-
-		if (CurNode == NULL)
+		if (mCurNode->Backdrop.isValid())
 		{
-			Close ();
-			return;
+			screen->DrawTexture(TexMan(mCurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
+			return false;
 		}
+		return true;
+	}
 
-		// [CW] Freeze the game depending on MAPINFO options.
-		if (ConversationPauseTic < gametic && !multiplayer && !(level.flags2 & LEVEL2_CONV_SINGLE_UNFREEZE))
-		{
-			menuactive = MENU_On;
-		}
+	//============================================================================
+	//
+	// Draw the speaker text
+	//
+	//============================================================================
 
-		if (CurNode->Backdrop.isValid())
-		{
-			screen->DrawTexture (TexMan(CurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
-		}
-		x = 16 * screen->GetWidth() / 320;
-		y = 16 * screen->GetHeight() / 200;
-		linesize = 10 * CleanYfac;
+	virtual void DrawSpeakerText(bool dimbg)
+	{
+		FString speakerName;
+		int x = 16 * screen->GetWidth() / 320;
+		int y = 16 * screen->GetHeight() / 200;
+		int linesize = (OptionSettings.mLinespacing+2) * CleanYfac;
 
 		// Who is talking to you?
-		if (CurNode->SpeakerName.IsNotEmpty())
+		if (mCurNode->SpeakerName.IsNotEmpty())
 		{
-			speakerName = CurNode->SpeakerName;
-			if (speakerName[0] == '$') speakerName = GStrings(speakerName+1);
+			speakerName = mCurNode->SpeakerName;
+			if (speakerName[0] == '$') speakerName = GStrings(speakerName + 1);
 		}
 		else
 		{
-			speakerName = cp->ConversationNPC->GetTag("Person");
+			speakerName = players[consoleplayer].ConversationNPC->GetTag("Person");
 		}
 
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
-		if (!CurNode->Backdrop.isValid())
+		if (dimbg)
 		{
 			int i = mDialogueLines->mCount;
-			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
-				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
-				speakerName == NULL ? linesize * i + 6 * CleanYfac
-				: linesize * i + 6 * CleanYfac + linesize * 3/2);
+			screen->Dim(0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
+				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth() / 320,
+				speakerName.IsEmpty() ? linesize * i + 6 * CleanYfac
+				: linesize * i + 6 * CleanYfac + linesize * 3 / 2);
 		}
 
-		// Dim the screen behind the PC's choices.
-
-		screen->Dim (0, 0.45f, (24-160) * CleanXfac + screen->GetWidth()/2,
-			(mYpos - 2 - 100) * CleanYfac + screen->GetHeight()/2,
-			272 * CleanXfac,
-			MIN<int>(mResponseLines.Size() * OptionSettings.mLinespacing + 4, 200 - mYpos) * CleanYfac);
-
-		if (speakerName != NULL)
+		if (speakerName.IsNotEmpty())
 		{
-			screen->DrawText (SmallFont, CR_WHITE, x, y, speakerName,
+			screen->DrawText(SmallFont, CR_WHITE, x, y, speakerName,
 				DTA_CleanNoMove, true, TAG_DONE);
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen->GetWidth() / 320;
 		for (int i = 0; i < mDialogueLines->mCount; ++i)
 		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines->mBroken[i].Text,
+			screen->DrawText(SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines->mBroken[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 			y += linesize;
 		}
+	}
 
-		if (ShowGold)
+
+	virtual void DrawReplies()
+	{
+		// Dim the screen behind the PC's choices.
+		screen->Dim(0, 0.45f, (24 - 160) * CleanXfac + screen->GetWidth() / 2,
+			(mYpos - 2 - 100) * CleanYfac + screen->GetHeight() / 2,
+			272 * CleanXfac,
+			MIN<int>(mResponseLines.Size() * OptionSettings.mLinespacing + 4, 200 - mYpos) * CleanYfac);
+
+		int y = mYpos;
+		int fontheight = OptionSettings.mLinespacing;
+
+		int response = 0;
+		for (unsigned i = 0; i < mResponseLines.Size(); i++, y += fontheight)
+		{
+			int width = SmallFont->StringWidth(mResponseLines[i]);
+			int x = 64;
+
+			screen->DrawText(SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
+
+			if (i == mResponses[response])
+			{
+				char tbuf[16];
+
+				response++;
+				mysnprintf(tbuf, countof(tbuf), "%d.", response);
+				x = 50 - SmallFont->StringWidth(tbuf);
+				screen->DrawText(SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+
+				if (response == mSelection + 1)
+				{
+					int color = ((MenuTime % 8) < 4) || CurrentMenu != this ? CR_RED : CR_GREY;
+
+					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
+					int yy = (y + fontheight / 2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
+					screen->DrawText(ConFont, color, x, yy, "\xd",
+						DTA_CellX, 8 * CleanXfac,
+						DTA_CellY, 8 * CleanYfac,
+						TAG_DONE);
+				}
+			}
+		}
+	}
+
+	virtual void DrawGold()
+	{
+		if (mShowGold)
 		{
 			auto cointype = PClass::FindActor("Coin");
 			if (cointype)
 			{
-				AInventory *coin = cp->ConversationPC->FindInventory(cointype);
+				AInventory *coin = players[consoleplayer].ConversationPC->FindInventory(cointype);
 				char goldstr[32];
 
 				mysnprintf(goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
@@ -1125,39 +1154,32 @@ public:
 			}
 		}
 
-		y = mYpos;
-		fontheight = OptionSettings.mLinespacing;
+	}
 
-		int response = 0;
-		for (unsigned i = 0; i < mResponseLines.Size(); i++, y += fontheight)
+	//============================================================================
+	//
+	// DrawConversationMenu
+	//
+	//============================================================================
+
+	void Drawer()
+	{
+		if (mCurNode == NULL)
 		{
-			width = SmallFont->StringWidth(mResponseLines[i]);
-			x = 64;
-
-			screen->DrawText (SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
-
-			if (i == mResponses[response])
-			{
-				char tbuf[16];
-
-				response++;
-				mysnprintf (tbuf, countof(tbuf), "%d.", response);
-				x = 50 - SmallFont->StringWidth (tbuf);
-				screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
-
-				if (response == mSelection+1)
-				{
-					int color = ((MenuTime%8) < 4) || CurrentMenu != this ? CR_RED:CR_GREY;
-
-					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
-					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
-					screen->DrawText (ConFont, color, x, yy, "\xd",
-						DTA_CellX, 8 * CleanXfac,
-						DTA_CellY, 8 * CleanYfac,
-						TAG_DONE);
-				}
-			}
+			Close ();
+			return;
 		}
+
+		// [CW] Freeze the game depending on MAPINFO options.
+		if (ConversationPauseTic < gametic && !multiplayer && !(level.flags2 & LEVEL2_CONV_SINGLE_UNFREEZE))
+		{
+			menuactive = MENU_On;
+		}
+
+		bool dimbg = DrawBackdrop();
+		DrawSpeakerText(dimbg);
+		DrawReplies();
+		DrawGold();
 	}
 
 };
@@ -1598,3 +1620,37 @@ static void TerminalResponse (const char *str)
 	}
 }
 
+DEFINE_FIELD(FStrifeDialogueNode, DropType);
+DEFINE_FIELD(FStrifeDialogueNode, ThisNodeNum);
+DEFINE_FIELD(FStrifeDialogueNode, ItemCheckNode);
+DEFINE_FIELD(FStrifeDialogueNode, SpeakerType);
+DEFINE_FIELD(FStrifeDialogueNode, SpeakerName);
+DEFINE_FIELD(FStrifeDialogueNode, SpeakerVoice);
+DEFINE_FIELD(FStrifeDialogueNode, Backdrop);
+DEFINE_FIELD(FStrifeDialogueNode, Dialogue);
+DEFINE_FIELD(FStrifeDialogueNode, Goodbye);
+DEFINE_FIELD(FStrifeDialogueNode, Children);
+
+DEFINE_FIELD(FStrifeDialogueReply, Next);
+DEFINE_FIELD(FStrifeDialogueReply, GiveType);
+DEFINE_FIELD(FStrifeDialogueReply, ActionSpecial);
+DEFINE_FIELD(FStrifeDialogueReply, Args);
+DEFINE_FIELD(FStrifeDialogueReply, PrintAmount);
+DEFINE_FIELD(FStrifeDialogueReply, Reply);
+DEFINE_FIELD(FStrifeDialogueReply, QuickYes);
+DEFINE_FIELD(FStrifeDialogueReply, QuickNo);
+DEFINE_FIELD(FStrifeDialogueReply, LogString);
+DEFINE_FIELD(FStrifeDialogueReply, NextNode);
+DEFINE_FIELD(FStrifeDialogueReply, LogNumber);
+DEFINE_FIELD(FStrifeDialogueReply, NeedsGold);
+
+
+DEFINE_FIELD(DConversationMenu, mSpeaker);
+DEFINE_FIELD(DConversationMenu, mDialogueLines);
+DEFINE_FIELD(DConversationMenu, mResponseLines);
+DEFINE_FIELD(DConversationMenu, mResponses);
+DEFINE_FIELD(DConversationMenu, mShowGold);
+DEFINE_FIELD(DConversationMenu, mCurNode);
+DEFINE_FIELD(DConversationMenu, mYpos);
+DEFINE_FIELD(DConversationMenu, mPlayer);
+DEFINE_FIELD(DConversationMenu, mSelection);

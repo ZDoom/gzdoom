@@ -33,7 +33,7 @@
 **
 */
 
-class ReadThisMenu : Menu
+class ReadThisMenu : GenericMenu
 {
 	int mScreen;
 	int mInfoTic;
@@ -43,18 +43,19 @@ class ReadThisMenu : Menu
 	//
 	//
 	//=============================================================================
+	
+	override void Init(Menu parent)
+	{
+		Super.Init(parent);
+		mScreen = 1;
+		mInfoTic = gametic;
+	}
 
 	override void Drawer()
 	{
 		double alpha;
 		TextureID tex, prevpic;
 		
-		if (mScreen == 0)
-		{
-			mScreen = 1;
-			mInfoTic = gametic;
-		}
-
 		// Did the mapper choose a custom help page via MAPINFO?
 		if (level.F1Pic.Length() != 0)
 		{

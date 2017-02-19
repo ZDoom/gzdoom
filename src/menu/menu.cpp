@@ -469,10 +469,15 @@ void M_SetMenu(FName menu, int param)
 		const PClass *menuclass = PClass::FindClass(menu);
 		if (menuclass != nullptr)
 		{
-			if (menuclass->IsDescendantOf(RUNTIME_CLASS(DMenu)))
+			if (menuclass->IsDescendantOf("GenericMenu"))
 			{
 				DMenu *newmenu = (DMenu*)menuclass->CreateNew();
-				newmenu->mParentMenu = CurrentMenu;
+
+				IFVIRTUALPTRNAME(newmenu, "GenericMenu", Init)
+				{
+					VMValue params[3] = { newmenu, CurrentMenu };
+					GlobalVMStack.Call(func, params, 2, nullptr, 0);
+				}
 				M_ActivateMenu(newmenu);
 				return;
 			}

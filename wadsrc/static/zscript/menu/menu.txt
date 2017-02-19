@@ -296,3 +296,11 @@ class MenuDescriptor : Object native
 	native static MenuDescriptor GetDescriptor(Name n);
 }
 
+// This class is only needed to give it a virtual Init method that doesn't belong to Menu itself
+class GenericMenu : Menu
+{
+	virtual void Init(Menu parent)
+	{
+		Super.Init(parent);
+	}
+}

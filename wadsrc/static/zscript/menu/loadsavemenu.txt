@@ -426,6 +426,8 @@ class LoadSaveMenu : ListMenu
 
 class SaveMenu : LoadSaveMenu
 {
+	String mSaveName;
+	
 	//=============================================================================
 	//
 	//
@@ -464,7 +466,6 @@ class SaveMenu : LoadSaveMenu
 
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
-		
 		if (Super.MenuEvent(mkey, fromcontroller)) 
 		{
 			return true;
@@ -483,8 +484,9 @@ class SaveMenu : LoadSaveMenu
 		}
 		else if (mkey == MKEY_Input)
 		{
+			// Do not start the save here, it would cause some serious execution ordering problems.
 			mEntering = false;
-			manager.DoSave(Selected, mInput.GetText());
+			mSaveName = mInput.GetText();
 			mInput = null;
 		}
 		else if (mkey == MKEY_Abort)
@@ -525,6 +527,14 @@ class SaveMenu : LoadSaveMenu
 	}
 
 
+	override void Ticker()
+	{
+		if (mSaveName.Length() > 0)
+		{
+			manager.DoSave(Selected, mSaveName);
+			mSaveName = "";
+		}
+	}
 	
 }
 

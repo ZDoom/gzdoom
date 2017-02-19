@@ -266,7 +266,7 @@ class Menu : Object native
 	virtual bool CheckFocus(MenuItemBase fc) { return false;  }
 	virtual void ReleaseFocus() {}
 	virtual void ResetColor() {}
-	virtual bool MouseEvent(int type, int mx, int my) { return false; }
+	virtual bool MouseEvent(int type, int mx, int my) { return true; }
 	virtual void Ticker() {}
 
 	//=============================================================================

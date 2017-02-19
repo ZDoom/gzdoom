@@ -1117,7 +1117,7 @@ DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBi
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param)
+DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param)
 {
 	auto c = PClass::FindClass("ListMenuItemPatchItem");
 	auto p = c->CreateNew();
@@ -1127,7 +1127,7 @@ DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FT
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param)
+DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param)
 {
 	auto c = PClass::FindClass("ListMenuItemTextItem");
 	auto p = c->CreateNew();

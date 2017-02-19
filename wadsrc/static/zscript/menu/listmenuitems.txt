@@ -35,7 +35,7 @@
 
 class ListMenuItem : MenuItemBase
 {
-	void DrawSelector(int xofs, int yofs, TextureID tex)
+	void DrawSelector(double xofs, double yofs, TextureID tex)
 	{
 		if (tex.isNull())
 		{
@@ -68,7 +68,7 @@ class ListMenuItemStaticPatch : ListMenuItem
 	TextureID mTexture;
 	bool mCentered;
 
-	void Init(int x, int y, TextureID patch, bool centered = false)
+	void Init(double x, double y, TextureID patch, bool centered = false)
 	{
 		Super.Init(x, y);
 		mTexture = patch;
@@ -82,17 +82,17 @@ class ListMenuItemStaticPatch : ListMenuItem
 			return;
 		}
 
-		int x = mXpos;
+		double x = mXpos;
 		Vector2 vec = TexMan.GetScaledSize(mTexture);
 		if (mYpos >= 0)
 		{
-			if (mCentered) x -= int(vec.X) / 2;
+			if (mCentered) x -= vec.X / 2;
 			screen.DrawTexture (mTexture, true, x, mYpos, DTA_Clean, true);
 		}
 		else
 		{
-			int x = (mXpos - 160) * CleanXfac + (Screen.GetWidth()>>1);
-			if (mCentered) x -= (int(vec.X) * CleanXfac)/2;
+			x = (mXpos - 160) * CleanXfac + (Screen.GetWidth()>>1);
+			if (mCentered) x -= (vec.X * CleanXfac)/2;
 			screen.DrawTexture (mTexture, true, x, -mYpos*CleanYfac, DTA_CleanNoMove, true);
 		}
 	}
@@ -100,7 +100,7 @@ class ListMenuItemStaticPatch : ListMenuItem
 
 class ListMenuItemStaticPatchCentered : ListMenuItemStaticPatch
 {
-	void Init(int x, int y, TextureID patch)
+	void Init(double x, double y, TextureID patch)
 	{
 		Super.Init(x, y, patch, true);
 	}
@@ -119,7 +119,7 @@ class ListMenuItemStaticText : ListMenuItem
 	int mColor;
 	bool mCentered;
 
-	void Init(ListMenuDescriptor desc, int x, int y, String text, int color = Font.CR_UNTRANSLATED)
+	void Init(ListMenuDescriptor desc, double x, double y, String text, int color = Font.CR_UNTRANSLATED)
 	{
 		Super.Init(x, y);
 		mText = text;
@@ -128,7 +128,7 @@ class ListMenuItemStaticText : ListMenuItem
 		mCentered = false;
 	}
 	
-	void InitDirect(int x, int y, String text, Font font, int color = Font.CR_UNTRANSLATED, bool centered = false)
+	void InitDirect(double x, double y, String text, Font font, int color = Font.CR_UNTRANSLATED, bool centered = false)
 	{
 		Super.Init(x, y);
 		mText = text;
@@ -144,13 +144,13 @@ class ListMenuItemStaticText : ListMenuItem
 			String text = Stringtable.Localize(mText);
 			if (mYpos >= 0)
 			{
-				int x = mXpos;
+				double x = mXpos;
 				if (mCentered) x -= mFont.StringWidth(text)/2;
 				screen.DrawText(mFont, mColor, x, mYpos, text, DTA_Clean, true);
 			}
 			else
 			{
-				int x = (mXpos - 160) * CleanXfac + (Screen.GetWidth() >> 1);
+				double x = (mXpos - 160) * CleanXfac + (Screen.GetWidth() >> 1);
 				if (mCentered) x -= (mFont.StringWidth(text) * CleanXfac)/2;
 				screen.DrawText (mFont, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true);
 			}
@@ -160,7 +160,7 @@ class ListMenuItemStaticText : ListMenuItem
 
 class ListMenuItemStaticTextCentered : ListMenuItemStaticText
 {
-	void Init(ListMenuDescriptor desc, int x, int y, String text, int color = -1)
+	void Init(ListMenuDescriptor desc, double x, double y, String text, int color = -1)
 	{
 		Super.Init(desc, x, y, text, color);
 		mCentered = true;
@@ -179,7 +179,7 @@ class ListMenuItemSelectable : ListMenuItem
 	int mHeight;
 	int mParam;
 
-	protected void Init(int x, int y, int height, Name childmenu, int param = -1)
+	protected void Init(double x, double y, int height, Name childmenu, int param = -1)
 	{
 		Super.Init(x, y, childmenu);
 		mHeight = height;
@@ -250,7 +250,7 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 		mHotkey = hotkey.CharCodeAt(0);
 	}
 	
-	void InitDirect(int x, int y, int height, String hotkey, String text, Font font, int color, int color2, Name child, int param = 0)
+	void InitDirect(double x, double y, int height, String hotkey, String text, Font font, int color, int color2, Name child, int param = 0)
 	{
 		Super.Init(x, y, height, child, param);
 		mText = text;
@@ -288,7 +288,7 @@ class ListMenuItemPatchItem : ListMenuItemSelectable
 		mTexture = patch;
 	}
 	
-	void InitDirect(int x, int y, int height, TextureID patch, String hotkey, Name child, int param = 0)
+	void InitDirect(double x, double y, int height, TextureID patch, String hotkey, Name child, int param = 0)
 	{
 		Super.Init(x, y, height, child, param);
 		mHotkey = hotkey.CharCodeAt(0);

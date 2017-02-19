@@ -4359,6 +4359,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	bool spawnSky = false;
 	if (flags & LAF_NORANDOMPUFFZ)
 		puffFlags |= PF_NORANDOMZ;
+	DAngle ang, pang;
 
 	if (victim != NULL)
 	{
@@ -4471,9 +4472,20 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
+				// if the puff hits the wall with +PUFFHITANGLE, set the puff's angle to the wall's angle
+				if (trace.HitType == TRACE_HitWall && (puffDefaults && puffDefaults->flags7 & MF7_PUFFHITANGLE))
+				{
+					ang = trace.Line->Delta().Angle() + 90;
+					pang = ang;
+				}
+				else
+				{
+					ang = trace.SrcAngleFromTarget;
+					pang = trace.SrcAngleFromTarget - 90;
+				}
 				DVector2 pos = P_GetOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
-				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
-					trace.SrcAngleFromTarget - 90, 0, puffFlags);
+				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), ang,
+					pang, 0, puffFlags);
 				puff->radius = 1/65536.;
 
 				if (nointeract)
@@ -4536,8 +4548,19 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				if (!(trace.Actor->flags & MF_NOBLOOD))
 					puffFlags |= PF_HITTHINGBLEED;
 
-				// We must pass the unreplaced puff type here 
-				puff = P_SpawnPuff(t1, pufftype, bleedpos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 2, puffFlags | PF_HITTHING, trace.Actor);
+				// We must pass the unreplaced puff type here
+				// (also check for +PUFFHITANGLE)
+				if ((puffDefaults && puffDefaults->flags7 & MF7_PUFFHITANGLE))
+				{
+					ang = trace.Actor->Angles.Yaw + 180.;
+					pang = ang;
+				}
+				else
+				{
+					ang = trace.SrcAngleFromTarget;
+					pang = trace.SrcAngleFromTarget - 90;
+				}
+				puff = P_SpawnPuff(t1, pufftype, bleedpos, ang, pang, 2, puffFlags | PF_HITTHING, trace.Actor);
 
 				if (nointeract)
 				{

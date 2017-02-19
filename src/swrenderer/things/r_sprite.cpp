@@ -242,9 +242,9 @@ namespace swrenderer
 					double lightY = light->Y() - ViewPos.Y;
 					double lightZ = light->Z() - ViewPos.Z;
 
-					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - pos.X;
-					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - pos.Y;
-					float lz = (float)lightZ - pos.Z;
+					float lx = (float)(lightX * ViewSin - lightY * ViewCos - pos.X);
+					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin - pos.Y);
+					float lz = (float)(lightZ - pos.Z);
 					
 					bool is_point_light = (node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 					float LdotL = lx * lx + ly * ly + lz * lz;

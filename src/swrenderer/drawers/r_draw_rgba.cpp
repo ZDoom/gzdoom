@@ -60,7 +60,7 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
 
-CVAR(Bool, r_phpdrawers, true, 0);
+CVAR(Bool, r_phpdrawers, false, 0);
 
 namespace swrenderer
 {
@@ -112,6 +112,140 @@ namespace swrenderer
 			Queue->Push<DrawWallRevSubClamp1LLVMCommand>(args);
 	}
 	
+	void SWTruecolorDrawers::DrawColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSprite32Command>(args);
+		else
+			Queue->Push<DrawColumnLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::FillColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<FillSprite32Command>(args);
+		else
+			Queue->Push<FillColumnLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::FillAddColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<FillSpriteAddClamp32Command>(args);
+		else
+			Queue->Push<FillColumnAddLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::FillAddClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<FillSpriteAddClamp32Command>(args);
+		else
+			Queue->Push<FillColumnAddClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::FillSubClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<FillSpriteSubClamp32Command>(args);
+		else
+			Queue->Push<FillColumnSubClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::FillRevSubClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<FillSpriteRevSubClamp32Command>(args);
+		else
+			Queue->Push<FillColumnRevSubClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawFuzzColumn(const SpriteDrawerArgs &args)
+	{
+		Queue->Push<DrawFuzzColumnRGBACommand>(args);
+		R_UpdateFuzzPos(args);
+	}
+
+	void SWTruecolorDrawers::DrawAddColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteAddClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnAddLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawTranslatedColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteTranslated32Command>(args);
+		else
+			Queue->Push<DrawColumnTranslatedLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawTranslatedAddColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnTlatedAddLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawShadedColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteShaded32Command>(args);
+		else
+			Queue->Push<DrawColumnShadedLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawAddClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteAddClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnAddClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnAddClampTranslatedLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawSubClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteSubClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnSubClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteTranslatedSubClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnSubClampTranslatedLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawRevSubClampColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteRevSubClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnRevSubClampLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
+		else
+			Queue->Push<DrawColumnRevSubClampTranslatedLLVMCommand>(args);
+	}
+
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
 	{
 		auto shade_constants = drawerargs.ColormapConstants();

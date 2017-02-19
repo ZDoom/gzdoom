@@ -5674,8 +5674,9 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			}
 			points *= thing->GetClass()->RDFactor;
 
+			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
-			if ((((double)int(points) * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			if ((check > 0 || (check == 0 && bombspot->flags7 & MF7_FORCEZERORADIUSDMG)) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
 				double vz;
 				double thrust;
@@ -5752,7 +5753,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 
 				double factor = splashfactor * thing->GetClass()->RDFactor;
 				damage = int(damage * factor);
-				if (damage > 0)
+				if (damage > 0 || (bombspot->flags7 & MF7_FORCEZERORADIUSDMG))
 				{
 					//[MC] Don't count actors saved by buddha if already at 1 health.
 					int prehealth = thing->health;

@@ -404,16 +404,6 @@ public:
 	double CrosshairSize;
 	double Displacement;
 
-	enum
-	{
-		imgLAME = 0,
-		imgNEGATIVE = 1,
-		imgINumbers = 2,
-		imgBNEGATIVE = 12,
-		imgBNumbers = 13,
-		imgSmNumbers = 23,
-		NUM_BASESB_IMAGES = 33
-	};
 	FImageCollection Images;
 
 	player_t *CPlayer;

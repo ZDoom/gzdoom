@@ -181,12 +181,12 @@ class MessageBoxMenu : Menu
 				int ch = ev.data1;
 				ch = ch >= 65 && ch <91? ch + 32 : ch;
 
-				if (ch == 78 /*'n'*/ || ch == 32) 
+				if (ch == 110 /*'n'*/ || ch == 32) 
 				{
 					HandleResult(false);		
 					return true;
 				}
-				else if (ch == 89 /*'y'*/) 
+				else if (ch == 121 /*'y'*/) 
 				{
 					HandleResult(true);
 					return true;

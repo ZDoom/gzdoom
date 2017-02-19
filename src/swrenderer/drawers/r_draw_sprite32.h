@@ -89,13 +89,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -120,7 +120,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -176,8 +176,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -201,8 +202,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -245,8 +247,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -332,13 +335,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -363,7 +366,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -424,8 +427,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -449,8 +453,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -493,8 +498,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -591,13 +597,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -623,7 +629,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -680,8 +686,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -705,8 +712,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -750,8 +758,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -838,13 +847,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -870,7 +879,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -932,8 +941,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -957,8 +967,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1002,8 +1013,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1102,13 +1114,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -1157,7 +1169,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -1237,8 +1249,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1262,8 +1275,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1330,8 +1344,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1441,13 +1456,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -1496,7 +1511,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -1581,8 +1596,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1606,8 +1622,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1674,8 +1691,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1796,13 +1814,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -1851,7 +1869,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -1931,8 +1949,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -1956,8 +1975,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2024,8 +2044,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2135,13 +2156,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -2190,7 +2211,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -2275,8 +2296,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2300,8 +2322,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2368,8 +2391,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2490,13 +2514,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -2545,7 +2569,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -2625,8 +2649,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2650,8 +2675,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2718,8 +2744,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2829,13 +2856,13 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						frac += fracstep;
 						}
 						{
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[1] = sampleout;
 						frac += fracstep;
@@ -2884,7 +2911,7 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
@@ -2969,8 +2996,9 @@ namespace swrenderer
 						// Sample
 						unsigned int ifgcolor[2];
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -2994,8 +3022,9 @@ namespace swrenderer
 						frac += fracstep;
 						}
 						{
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 
@@ -3062,8 +3091,9 @@ namespace swrenderer
 						
 						// Sample
 						unsigned int ifgcolor[2];
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 

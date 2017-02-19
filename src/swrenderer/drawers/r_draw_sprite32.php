@@ -225,13 +225,14 @@ namespace swrenderer
 <?		}
 		else if ($isNearestFilter == true)
 		{ ?>
-						int sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
 <?		}
 		else
 		{ ?>
-						unsigned int frac_y0 = (frac >> FRACBITS) * textureheight;
-						unsigned int frac_y1 = ((frac + one) >> FRACBITS) * textureheight;
+						// Clamp to edge
+						unsigned int frac_y0 = (clamp<unsigned int>(frac, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
+						unsigned int frac_y1 = (clamp<unsigned int>(frac + one, 0, 1 << 30) >> (FRACBITS - 2)) * textureheight;
 						unsigned int y0 = frac_y0 >> FRACBITS;
 						unsigned int y1 = frac_y1 >> FRACBITS;
 

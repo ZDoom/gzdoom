@@ -766,13 +766,14 @@ void M_Drawer (void)
 //
 //=============================================================================
 
-void M_ClearMenus ()
+void M_ClearMenus()
 {
 	M_DemoNoPlay = false;
-	if (CurrentMenu != nullptr)
+	while (CurrentMenu != nullptr)
 	{
+		DMenu* parent = CurrentMenu->mParentMenu;
 		CurrentMenu->Destroy();
-		CurrentMenu = nullptr;
+		CurrentMenu = parent;
 	}
 	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;

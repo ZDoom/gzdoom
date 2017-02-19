@@ -52,6 +52,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mBackButton)
 
 
 const char *GameNames[17] =

@@ -164,53 +164,11 @@ DMenu::DMenu(DMenu *parent)
 	GC::WriteBarrier(this, parent);
 }
 	
-bool DMenu::Responder (event_t *ev) 
-{ 
-	bool res = false;
-	if (ev->type == EV_GUI_Event)
-	{
-		if (ev->subtype == EV_GUI_LButtonDown)
-		{
-			res = MouseEventBack(MOUSE_Click, ev->data1, ev->data2);
-			// make the menu's mouse handler believe that the current coordinate is outside the valid range
-			if (res) ev->data2 = -1;	
-			res |= CallMouseEvent(MOUSE_Click, ev->data1, ev->data2);
-			if (res)
-			{
-				SetCapture();
-			}
-			
-		}
-		else if (ev->subtype == EV_GUI_MouseMove)
-		{
-			BackbuttonTime = BACKBUTTON_TIME;
-			if (mMouseCapture || m_use_mouse == 1)
-			{
-				res = MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
-				if (res) ev->data2 = -1;	
-				res |= CallMouseEvent(MOUSE_Move, ev->data1, ev->data2);
-			}
-		}
-		else if (ev->subtype == EV_GUI_LButtonUp)
-		{
-			if (mMouseCapture)
-			{
-				ReleaseCapture();
-				res = MouseEventBack(MOUSE_Release, ev->data1, ev->data2);
-				if (res) ev->data2 = -1;	
-				res |= CallMouseEvent(MOUSE_Release, ev->data1, ev->data2);
-			}
-		}
-	}
-	return false; 
-}
-
-DEFINE_ACTION_FUNCTION(DMenu, Responder)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	PARAM_POINTER(ev, event_t);
-	ACTION_RETURN_BOOL(self->Responder(ev));
-}
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 bool DMenu::CallResponder(event_t *ev)
 {
@@ -222,7 +180,7 @@ bool DMenu::CallResponder(event_t *ev)
 		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 	}
-	else return Responder(ev);
+	else return false;
 }
 
 //=============================================================================
@@ -230,29 +188,6 @@ bool DMenu::CallResponder(event_t *ev)
 //
 //
 //=============================================================================
-
-bool DMenu::MenuEvent (int mkey, bool fromcontroller)
-{
-	switch (mkey)
-	{
-	case MKEY_Back:
-	{
-		Close();
-		S_Sound (CHAN_VOICE | CHAN_UI, 
-			CurrentMenu != nullptr? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
-		return true;
-	}
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(DMenu, MenuEvent)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	PARAM_INT(key);
-	PARAM_BOOL(fromcontroller);
-	ACTION_RETURN_BOOL(self->MenuEvent(key, fromcontroller));
-}
 
 bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 {
@@ -264,13 +199,22 @@ bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
 		return !!retval;
 	}
-	else return MenuEvent(mkey, fromcontroller);
+	else return false;
 }
 //=============================================================================
 //
 //
 //
 //=============================================================================
+
+DEFINE_ACTION_FUNCTION(DMenu, SetMouseCapture)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(on);
+	if (on) I_SetMouseCapture();
+	else I_ReleaseMouseCapture();
+	return 0;
+}
 
 void DMenu::Close ()
 {
@@ -288,107 +232,18 @@ void DMenu::Close ()
 	}
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DMenu::MouseEvent(int type, int x, int y)
-{
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(DMenu, MouseEvent)
+DEFINE_ACTION_FUNCTION(DMenu, Close)
 {
 	PARAM_SELF_PROLOGUE(DMenu);
-	PARAM_INT(type);
-	PARAM_INT(x);
-	PARAM_INT(y);
-	ACTION_RETURN_BOOL(self->MouseEvent(type, x, y));
-}
-
-bool DMenu::CallMouseEvent(int type, int x, int y)
-{
-	IFVIRTUAL(DMenu, MouseEvent)
-	{
-		VMValue params[] = { (DObject*)this, type, x, y };
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
-		return !!retval;
-	}
-	else return MouseEvent (type, x, y);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool DMenu::MouseEventBack(int type, int x, int y)
-{
-	if (m_show_backbutton >= 0)
-	{
-		FTexture *tex = TexMan(gameinfo.mBackButton);
-		if (tex != nullptr)
-		{
-			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
-			if (m_show_backbutton&2) y -= screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
-			mBackbuttonSelected = ( x >= 0 && x < tex->GetScaledWidth() * CleanXfac && 
-									y >= 0 && y < tex->GetScaledHeight() * CleanYfac);
-			if (mBackbuttonSelected && type == MOUSE_Release)
-			{
-				if (m_use_mouse == 2) mBackbuttonSelected = false;
-				CallMenuEvent(MKEY_Back, true);
-			}
-			return mBackbuttonSelected;
-		}
-	}
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMenu::SetCapture()
-{
-	if (!mMouseCapture)
-	{
-		mMouseCapture = true;
-		I_SetMouseCapture();
-	}
-}
-
-void DMenu::ReleaseCapture()
-{
-	if (mMouseCapture)
-	{
-		mMouseCapture = false;
-		I_ReleaseMouseCapture();
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DMenu::Ticker () 
-{
-}
-
-DEFINE_ACTION_FUNCTION(DMenu, Ticker)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	self->Ticker();
+	self->Close();
 	return 0;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void DMenu::CallTicker()
 {
@@ -397,37 +252,8 @@ void DMenu::CallTicker()
 		VMValue params[] = { (DObject*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
-	else Ticker();
 }
 
-
-void DMenu::Drawer () 
-{
-	if (this == CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
-	{
-		FTexture *tex = TexMan(gameinfo.mBackButton);
-		int w = tex->GetScaledWidth() * CleanXfac;
-		int h = tex->GetScaledHeight() * CleanYfac;
-		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - w;
-		int y = (!(m_show_backbutton&2))? 0:screen->GetHeight() - h;
-		if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
-		{
-			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, MAKEARGB(40, 255,255,255), TAG_DONE);
-		}
-		else
-		{
-			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, TAG_DONE);
-		}
-	}
-}
-
-
-DEFINE_ACTION_FUNCTION(DMenu, Drawer)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	self->Drawer();
-	return 0;
-}
 
 void DMenu::CallDrawer()
 {
@@ -436,14 +262,6 @@ void DMenu::CallDrawer()
 		VMValue params[] = { (DObject*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
-	else Drawer();
-}
-
-DEFINE_ACTION_FUNCTION(DMenu, Close)
-{
-	PARAM_SELF_PROLOGUE(DMenu);
-	self->Close();
-	return 0;
 }
 
 bool DMenu::TranslateKeyboardEvents()
@@ -500,7 +318,11 @@ void M_StartControlPanel (bool makeSound)
 void M_ActivateMenu(DMenu *menu)
 {
 	if (menuactive == MENU_Off) menuactive = MENU_On;
-	if (CurrentMenu != nullptr) CurrentMenu->ReleaseCapture();
+	if (CurrentMenu != nullptr && CurrentMenu->mMouseCapture)
+	{
+		CurrentMenu->mMouseCapture = false;
+		I_ReleaseMouseCapture();
+	}
 	CurrentMenu = menu;
 	GC::WriteBarrier(CurrentMenu);
 }

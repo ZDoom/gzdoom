@@ -300,6 +300,7 @@ struct GameInfoStruct native
 	native int gametype;
 	native bool norandomplayerclass;
 	native Array<Name> infoPages;
+	native String mBackButton;
 }
 
 class Object native

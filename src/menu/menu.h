@@ -263,42 +263,19 @@ public:
 		MOUSE_Release
 	};
 
-	enum
-	{
-		BACKBUTTON_TIME = 4*TICRATE
-	};
-
 	TObjPtr<DMenu> mParentMenu;
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
 	bool DontDim;
 
 	DMenu(DMenu *parent = NULL);
-	virtual bool Responder (event_t *ev);
-	virtual bool MenuEvent (int mkey, bool fromcontroller);
-	virtual void Ticker ();
-	virtual void Drawer ();
 	bool TranslateKeyboardEvents();
 	virtual void Close();
-	virtual bool MouseEvent(int type, int x, int y);
-
-	virtual void SetFocus(DMenuItemBase *fc) {}
-	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
-	virtual void ReleaseFocus() {}
 
 	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
-	bool CallMouseEvent(int type, int x, int y);
 	void CallTicker();
 	void CallDrawer();
-
-	bool MouseEventBack(int type, int x, int y);
-	void SetCapture();
-	void ReleaseCapture();
-	bool HasCapture()
-	{
-		return mMouseCapture;
-	}
 };
 
 //=============================================================================

@@ -54,7 +54,6 @@
 #include "i_system.h"
 #include "colormatcher.h"
 #include "backend/codegen.h"
-#include "version.h"
 #include "templates.h"
 #include "backend/vmbuilder.h"
 

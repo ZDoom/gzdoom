@@ -52,7 +52,6 @@
 #include "backend/codegen.h"
 #include "w_wad.h"
 #include "v_video.h"
-#include "version.h"
 #include "v_text.h"
 #include "m_argv.h"
 

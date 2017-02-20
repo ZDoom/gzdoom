@@ -181,18 +181,6 @@ class DStrifeStatusBar : public DBaseStatusBar
 public:
 	DStrifeStatusBar () : DBaseStatusBar (32)
 	{
-		static const char *sharedLumpNames[] =
-		{
-			NULL,		NULL,		"INVFONY0",	"INVFONY1",	"INVFONY2",
-			"INVFONY3",	"INVFONY4",	"INVFONY5",	"INVFONY6",	"INVFONY7",
-			"INVFONY8",	"INVFONY9",	NULL,		NULL,		NULL,
-			NULL,		NULL,		NULL,		NULL,		NULL,
-			NULL,		NULL,		NULL,		"INVFONG0",	"INVFONG1",
-			"INVFONG2",	"INVFONG3",	"INVFONG4",	"INVFONG5",	"INVFONG6",
-			"INVFONG7",	"INVFONG8",	"INVFONG9"
-		};
-
-		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
 		DoCommonInit ();
 	}
 
@@ -296,10 +284,11 @@ private:
 			"INVFONY0", "INVFONY1", "INVFONY2", "INVFONY3", "INVFONY4",
 			"INVFONY5", "INVFONY6", "INVFONY7", "INVFONY8", "INVFONY9",
 			"INVFONY%",
-			"I_COMM", "I_MDKT", "I_ARM1", "I_ARM2"
+			"I_COMM", "I_MDKT", "I_ARM1", "I_ARM2", nullptr
+
 		};
 
-		Images.Init (strifeLumpNames, NUM_STRIFESB_IMAGES);
+		Images.Init (strifeLumpNames, countof(strifeLumpNames));
 
 		CursorImage = Images[imgINVCURS] != NULL ? imgINVCURS : imgCURSOR01;
 
@@ -829,8 +818,8 @@ private:
 		imgMEDI,
 		imgARM1,
 		imgARM2,
-
-		NUM_STRIFESB_IMAGES
+		imgNEGATIVE,
+		imgINumbers = imgFONG0,
 	};
 
 	FImageCollection Images;

@@ -49,7 +49,6 @@
 #include "i_system.h"
 #include "gdtoa.h"
 #include "backend/vmbuilder.h"
-#include "version.h"
 
 static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
 {

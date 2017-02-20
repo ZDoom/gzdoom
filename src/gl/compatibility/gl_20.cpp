@@ -34,7 +34,6 @@
 #include "doomtype.h"
 #include "m_argv.h"
 #include "zstring.h"
-#include "version.h"
 #include "i_system.h"
 #include "v_text.h"
 #include "r_utility.h"

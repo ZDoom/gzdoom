@@ -9,7 +9,6 @@
 #include "r_data/r_translate.h"
 #include "c_cvars.h"
 #include "v_font.h"
-#include "version.h"
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)

@@ -71,8 +71,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -158,8 +158,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -312,8 +312,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -434,8 +434,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -629,8 +629,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -665,6 +665,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -698,6 +699,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -732,8 +734,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -806,6 +808,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -858,6 +861,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -902,8 +906,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -953,6 +957,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -1001,6 +1006,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -1040,8 +1046,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -1129,6 +1135,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -1196,6 +1203,7 @@ namespace swrenderer
 						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
 						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 						__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
@@ -1251,8 +1259,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -1283,16 +1291,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1301,10 +1313,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1331,16 +1346,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1349,10 +1368,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1384,8 +1406,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -1454,16 +1476,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1472,10 +1498,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1521,16 +1550,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1539,10 +1572,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1584,8 +1620,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -1631,16 +1667,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1649,10 +1689,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1694,16 +1737,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1712,10 +1759,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1752,8 +1802,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -1837,16 +1887,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1855,10 +1909,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1919,16 +1976,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -1937,10 +1998,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -1993,8 +2057,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2025,16 +2089,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2043,10 +2111,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2073,16 +2144,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2091,10 +2166,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2126,8 +2204,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2196,16 +2274,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2214,10 +2296,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2263,16 +2348,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2281,10 +2370,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2326,8 +2418,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2373,16 +2465,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2391,10 +2487,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2436,16 +2535,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2454,10 +2557,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2494,8 +2600,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2579,16 +2685,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2597,10 +2707,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2661,16 +2774,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2679,10 +2796,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2735,8 +2855,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2767,16 +2887,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2785,10 +2909,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2815,16 +2942,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2833,10 +2964,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -2868,8 +3002,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -2938,16 +3072,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -2956,10 +3094,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -3005,16 +3146,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -3023,10 +3168,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -3068,8 +3216,8 @@ namespace swrenderer
 					dest = thread->dest_for_thread(dest_y, pitch, dest);
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -3115,16 +3263,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -3133,10 +3285,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -3178,16 +3333,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -3196,10 +3355,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -3236,8 +3398,8 @@ namespace swrenderer
 					fracstep *= thread->num_cores;
 					pitch *= thread->num_cores;
 					frac -= one / 2;
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -3321,16 +3483,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -3339,10 +3505,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
@@ -3403,16 +3572,20 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 
 						// Blend
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -3421,10 +3594,13 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
+						
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
 
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 

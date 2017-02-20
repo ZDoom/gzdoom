@@ -82,12 +82,20 @@ namespace swrenderer
 	}
 
 	function LoopShade($blendVariant, $sampleVariant, $isSimpleShade)
-	{ ?>
-				const uint32_t *source = (const uint32_t*)args.TexturePixels();
-				const uint32_t *source2 = (const uint32_t*)args.TexturePixels2();
+	{
+		if ($sampleVariant == "shaded" || $sampleVariant == "translated")
+		{ ?>
+				const uint8_t *source = args.TexturePixels();
 				const uint8_t *colormap = args.Colormap();
 				const uint32_t *translation = (const uint32_t*)args.TranslationMap();
-<?		if ($sampleVariant == "texture")
+<?		}
+		else
+		{ ?>
+				const uint32_t *source = (const uint32_t*)args.TexturePixels();
+				const uint32_t *source2 = (const uint32_t*)args.TexturePixels2();
+<?		}
+
+		if ($sampleVariant == "texture")
 		{ ?>
 				bool is_nearest_filter = (source2 == nullptr);
 				if (is_nearest_filter)
@@ -141,10 +149,10 @@ namespace swrenderer
 					{ ?>
 					frac -= one / 2;
 <?					} ?>
-					__m128i srcalpha = _mm_set1_epi16(args.SrcAlpha());
-					__m128i destalpha = _mm_set1_epi16(args.DestAlpha());
+					uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
+					uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 					uint32_t srccolor = args.SrcColorBgra();
-					uint32_t color = args.SolidColor();
+					uint32_t color = LightBgra::shade_pal_index_simple(args.SolidColor(), light);
 					
 					int ssecount = count / 2;
 					for (int index = 0; index < ssecount; index++)
@@ -158,21 +166,23 @@ namespace swrenderer
 <?						} ?>
 						
 						// Sample
-						unsigned int ifgcolor[2];
+						unsigned int ifgcolor[2], ifgshade[2];
 						{
 <?						Sample($sampleVariant, $isNearestFilter);?>
 						ifgcolor[0] = sampleout;
+						ifgshade[0] = sampleshadeout;
 						frac += fracstep;
 						}
 						{
 <?						Sample($sampleVariant, $isNearestFilter);?>
 						ifgcolor[1] = sampleout;
+						ifgshade[1] = sampleshadeout;
 						frac += fracstep;
 						}
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-<?						if ($blendVariant != "copy") Shade($blendVariant, $isSimpleShade);?>
+<?						Shade($blendVariant, $isSimpleShade);?>
 
 						// Blend
 <?						Blend($blendVariant);?>
@@ -191,14 +201,16 @@ namespace swrenderer
 <?						} ?>
 						
 						// Sample
-						unsigned int ifgcolor[2];
+						unsigned int ifgcolor[2], ifgshade[2];
 <?						Sample($sampleVariant, $isNearestFilter);?>
 						ifgcolor[0] = sampleout;
 						ifgcolor[1] = 0;
+						ifgshade[0] = sampleshadeout;
+						ifgshade[1] = 0;
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-<?						if ($blendVariant != "copy") Shade($blendVariant, $isSimpleShade);?>
+<?						Shade($blendVariant, $isSimpleShade);?>
 
 						// Blend
 <?						Blend($blendVariant);?>
@@ -212,21 +224,24 @@ namespace swrenderer
 		if ($sampleVariant == "shaded")
 		{ ?>
 						unsigned int sampleout = color;
-						unsigned int samplealphaout = colormap[source[frac >> FRACBITS]];
-						samplealphaout = clamp<unsigned int>(samplealphaout, 0, 64) * 4;
+						unsigned int sampleshadeout = colormap[source[frac >> FRACBITS]];
+						sampleshadeout = clamp<unsigned int>(sampleshadeout, 0, 64) * 4;
 <?		}
 		else if ($sampleVariant == "translated")
 		{ ?>
 						unsigned int sampleout = translation[source[frac >> FRACBITS]];
+						unsigned int sampleshadeout = 0;
 <?		}
 		else if ($sampleVariant == "fill")
 		{ ?>
 						unsigned int sampleout = srccolor;
+						unsigned int sampleshadeout = 0;
 <?		}
 		else if ($isNearestFilter == true)
 		{ ?>
 						int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
 						unsigned int sampleout = source[sample_index];
+						unsigned int sampleshadeout = 0;
 <?		}
 		else
 		{ ?>
@@ -252,11 +267,14 @@ namespace swrenderer
 						unsigned int salpha = (APART(p00) * (a * b) + APART(p01) * (inv_a * b) + APART(p10) * (a * inv_b) + APART(p11) * (inv_a * inv_b) + 127) >> 8;
 
 						unsigned int sampleout = (salpha << 24) | (sred << 16) | (sgreen << 8) | sblue;
+						unsigned int sampleshadeout = 0;
 <?		}
 	}
 		
-	function Shade($isSimpleShade)
+	function Shade($blendVariant, $isSimpleShade)
 	{
+		if ($blendVariant == "copy" || $blendVariant == "shaded") return;
+		
 		if ($isSimpleShade == true)
 		{ ?>
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
@@ -291,9 +309,8 @@ namespace swrenderer
 <?		}
 		else if ($blendVariant == "shaded")
 		{ ?>
-						int shadealpha = 256; // To do: this comes from a sampled source (samplealphaout)
-						__m128i alpha = _mm_set1_epi16(shadealpha);
-						__m128i inv_alpha = _mm_set1_epi16(256 - shadealpha);
+						__m128i alpha = _mm_set_epi16(ifgshade[1], ifgshade[1], ifgshade[1], ifgshade[1], ifgshade[0], ifgshade[0], ifgshade[0], ifgshade[0]);
+						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
@@ -301,55 +318,22 @@ namespace swrenderer
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
-		else if ($blendVariant == "add" || $blendVariant == "addclamp")
-		{
-						CalcBlendColor(); ?>
-
-						__m128i out_lo = _mm_srai_epi16(_mm_add_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_add_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
-<?		}
-		else if ($blendVariant == "subclamp")
-		{
-						CalcBlendColor(); ?>
-
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(fg_lo, bg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(fg_hi, bg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
-<?		}
-		else if ($blendVariant == "revsubclamp")
-		{
-						CalcBlendColor(); ?>
-
-						__m128i out_lo = _mm_srai_epi16(_mm_sub_epi32(bg_lo, fg_lo), 8);
-						__m128i out_hi = _mm_srai_epi16(_mm_sub_epi32(bg_hi, fg_hi), 8);
-						__m128i outcolor = _mm_packs_epi32(fg_lo, fg_hi);
-						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
-<?		}
-	}
-	
-	function CalcAlpha()
-	{ ?>
-						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
-						alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
-						__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
-<?	}
-	
-	function CalcBlendColor()
-	{
-						CalcAlpha();?>
-
-						__m128i bgalpha = _mm_mullo_epi16(destalpha, alpha);
-						bgalpha = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(bgalpha, _mm_slli_epi16(inv_alpha, 8)), _mm_set1_epi16(128)), 8);
+		else
+		{ ?>
+						uint32_t alpha0 = APART(ifgcolor[0]);
+						uint32_t alpha1 = APART(ifgcolor[1]);
+						alpha0 += alpha0 >> 7; // 255->256
+						alpha1 += alpha1 >> 7; // 255->256
+						uint32_t inv_alpha0 = 256 - alpha0;
+						uint32_t inv_alpha1 = 256 - alpha1;
 						
-						__m128i fgalpha = _mm_mullo_epi16(srcalpha, alpha);
-						fgalpha = _mm_srli_epi16(_mm_add_epi16(fgalpha, _mm_set1_epi16(128)), 8);
+						uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
+						uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
+						uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
+						uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+						
+						__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
+						__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
 						
 						fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
 						bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
@@ -358,7 +342,29 @@ namespace swrenderer
 						__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
 						__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
 						__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
-<?	}
-	
+						
+<?			if ($blendVariant == "add" || $blendVariant == "addclamp")
+			{ ?>
+						__m128i out_lo = _mm_add_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_add_epi32(fg_hi, bg_hi);
+<?			}
+			else if ($blendVariant == "subclamp")
+			{ ?>
+						__m128i out_lo = _mm_sub_epi32(fg_lo, bg_lo);
+						__m128i out_hi = _mm_sub_epi32(fg_hi, bg_hi);
+<?			}
+			else if ($blendVariant == "revsubclamp")
+			{ ?>
+						__m128i out_lo = _mm_sub_epi32(bg_lo, fg_lo);
+						__m128i out_hi = _mm_sub_epi32(bg_hi, fg_hi);
+<?			} ?>
+
+						out_lo = _mm_srai_epi32(out_lo, 8);
+						out_hi = _mm_srai_epi32(out_hi, 8);
+						__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
+						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+<?		}
+	}
 ?>
 }

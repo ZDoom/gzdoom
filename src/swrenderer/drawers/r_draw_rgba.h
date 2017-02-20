@@ -384,12 +384,12 @@ namespace swrenderer
 		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override;
 		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override;
 		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override;
-		void DrawSpan(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanLLVMCommand>(args); }
-		void DrawSpanMasked(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedLLVMCommand>(args); }
-		void DrawSpanTranslucent(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanTranslucentLLVMCommand>(args); }
-		void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedTranslucentLLVMCommand>(args); }
-		void DrawSpanAddClamp(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanAddClampLLVMCommand>(args); }
-		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedAddClampLLVMCommand>(args); }
+		void DrawSpan(const SpanDrawerArgs &args) override;
+		void DrawSpanMasked(const SpanDrawerArgs &args) override;
+		void DrawSpanTranslucent(const SpanDrawerArgs &args) override;
+		void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) override;
+		void DrawSpanAddClamp(const SpanDrawerArgs &args) override;
+		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override;
 		void FillSpan(const SpanDrawerArgs &args) override { Queue->Push<FillSpanRGBACommand>(args); }
 
 		void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override

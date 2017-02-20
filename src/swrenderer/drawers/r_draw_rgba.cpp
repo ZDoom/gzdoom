@@ -42,6 +42,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "r_draw_wall32.h"
 #include "r_draw_sprite32.h"
+#include "r_draw_span32.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -244,6 +245,54 @@ namespace swrenderer
 			Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
 		else
 			Queue->Push<DrawColumnRevSubClampTranslatedLLVMCommand>(args);
+	}
+
+	void SWTruecolorDrawers::DrawSpan(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpan32Command>(args);
+		else
+			Queue->Push<DrawSpanLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSpanMasked(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpanMasked32Command>(args);
+		else
+			Queue->Push<DrawSpanMaskedLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSpanTranslucent(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpanTranslucent32Command>(args);
+		else
+			Queue->Push<DrawSpanTranslucentLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSpanMaskedTranslucent(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpanAddClamp32Command>(args);
+		else
+			Queue->Push<DrawSpanMaskedTranslucentLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSpanAddClamp(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpanTranslucent32Command>(args);
+		else
+			Queue->Push<DrawSpanAddClampLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSpanMaskedAddClamp(const SpanDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSpanAddClamp32Command>(args);
+		else
+			Queue->Push<DrawSpanMaskedAddClampLLVMCommand>(args);
 	}
 
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)

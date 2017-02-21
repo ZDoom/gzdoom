@@ -43,6 +43,7 @@
 #include "r_draw_wall32.h"
 #include "r_draw_sprite32.h"
 #include "r_draw_span32.h"
+#include "r_draw_sky32.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -293,6 +294,22 @@ namespace swrenderer
 			Queue->Push<DrawSpanAddClamp32Command>(args);
 		else
 			Queue->Push<DrawSpanMaskedAddClampLLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawSingleSkyColumn(const SkyDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSkySingle32Command>(args);
+		else
+			Queue->Push<DrawSingleSky1LLVMCommand>(args);
+	}
+	
+	void SWTruecolorDrawers::DrawDoubleSkyColumn(const SkyDrawerArgs &args)
+	{
+		if (r_phpdrawers)
+			Queue->Push<DrawSkyDouble32Command>(args);
+		else
+			Queue->Push<DrawDoubleSky1LLVMCommand>(args);
 	}
 
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)

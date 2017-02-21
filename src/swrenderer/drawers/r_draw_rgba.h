@@ -365,8 +365,8 @@ namespace swrenderer
 		void DrawWallAddClampColumn(const WallDrawerArgs &args) override;
 		void DrawWallSubClampColumn(const WallDrawerArgs &args) override;
 		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override;
-		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawSingleSky1LLVMCommand>(args); }
-		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override { Queue->Push<DrawDoubleSky1LLVMCommand>(args); }
+		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override;
+		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override;
 		void DrawColumn(const SpriteDrawerArgs &args) override;
 		void FillColumn(const SpriteDrawerArgs &args) override;
 		void FillAddColumn(const SpriteDrawerArgs &args) override;

@@ -31,6 +31,11 @@ public:
 	static void SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+
+	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw8;
+	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw32;
+	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill8;
+	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill32;
 };
 
 struct ScreenTriangleStepVariables

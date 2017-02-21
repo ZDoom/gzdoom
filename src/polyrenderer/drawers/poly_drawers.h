@@ -57,6 +57,8 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -133,6 +135,7 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -140,9 +143,8 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -202,6 +204,7 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -209,9 +212,8 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -258,6 +260,7 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -265,9 +268,8 @@ static void TriFill32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -300,6 +302,8 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -376,6 +380,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -383,11 +388,10 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -395,7 +399,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -455,6 +459,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -462,11 +467,10 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -474,7 +478,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -521,6 +525,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -528,11 +533,10 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -540,7 +544,7 @@ static void TriFill32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -573,6 +577,8 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -649,6 +655,7 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -656,19 +663,9 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -728,6 +725,7 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -735,19 +733,9 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -794,6 +782,7 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -801,19 +790,9 @@ static void TriFill32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -846,6 +825,8 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -922,6 +903,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -929,11 +911,10 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -941,7 +922,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -1001,6 +982,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1008,11 +990,10 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1020,7 +1001,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -1067,6 +1048,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1074,11 +1056,10 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1086,7 +1067,7 @@ static void TriFill32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -1119,6 +1100,8 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -1195,6 +1178,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1202,11 +1186,10 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1214,7 +1197,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -1274,6 +1257,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1281,11 +1265,10 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1293,7 +1276,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -1340,6 +1323,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1347,11 +1331,10 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1359,7 +1342,7 @@ static void TriFill32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -1392,6 +1375,8 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -1468,6 +1453,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1475,11 +1461,10 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1487,7 +1472,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -1547,6 +1532,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1554,11 +1540,10 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1566,7 +1551,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -1613,6 +1598,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1620,11 +1606,10 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1632,7 +1617,7 @@ static void TriFill32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -1665,6 +1650,8 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -1741,6 +1728,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1748,11 +1736,12 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1760,7 +1749,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -1820,6 +1809,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1827,11 +1817,12 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1839,7 +1830,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -1886,6 +1877,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -1893,11 +1885,12 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -1905,7 +1898,7 @@ static void TriFill32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -1938,6 +1931,8 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -1956,7 +1951,8 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -2014,6 +2010,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -2021,11 +2018,16 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2033,7 +2035,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -2093,6 +2095,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -2100,11 +2103,16 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2112,7 +2120,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -2159,6 +2167,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -2166,11 +2175,16 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2178,7 +2192,7 @@ static void TriFill32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -2211,6 +2225,8 @@ static void TriFill32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -2229,7 +2245,8 @@ static void TriFill32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -2287,26 +2304,17 @@ static void TriFill32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -2366,26 +2374,17 @@ static void TriFill32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -2432,26 +2431,17 @@ static void TriFill32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -2484,6 +2474,8 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -2502,7 +2494,8 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -2560,18 +2553,19 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2579,7 +2573,7 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -2639,18 +2633,19 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2658,7 +2653,7 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -2705,18 +2700,19 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2724,7 +2720,7 @@ static void TriFill32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -2757,6 +2753,8 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -2775,7 +2773,8 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -2833,18 +2832,19 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2852,7 +2852,7 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -2912,18 +2912,19 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2931,7 +2932,7 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -2978,18 +2979,19 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -2997,7 +2999,7 @@ static void TriFill32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -3030,6 +3032,8 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -3048,7 +3052,8 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -3106,18 +3111,19 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3125,7 +3131,7 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -3185,18 +3191,19 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3204,7 +3211,7 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -3251,18 +3258,19 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3270,7 +3278,7 @@ static void TriFill32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -3303,6 +3311,8 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -3321,7 +3331,8 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -3379,18 +3390,19 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3398,7 +3410,7 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -3458,18 +3470,19 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3477,7 +3490,7 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -3524,18 +3537,19 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -3543,7 +3557,7 @@ static void TriFill32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -3576,6 +3590,8 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -3652,6 +3668,7 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -3659,19 +3676,18 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -3731,6 +3747,7 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -3738,19 +3755,18 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -3797,6 +3813,7 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -3804,19 +3821,18 @@ static void TriFill32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -3849,6 +3865,8 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -3925,6 +3943,7 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -3932,19 +3951,21 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -4004,6 +4025,7 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -4011,19 +4033,21 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -4070,6 +4094,7 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
@@ -4077,19 +4102,21 @@ static void TriFill32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -4122,6 +4149,8 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -4198,6 +4227,7 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4207,9 +4237,8 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -4269,6 +4298,7 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4278,9 +4308,8 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -4327,6 +4356,7 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4336,9 +4366,8 @@ static void TriDraw32Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -4371,6 +4400,8 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -4447,6 +4478,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4456,11 +4488,10 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -4468,7 +4499,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -4528,6 +4559,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4537,11 +4569,10 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -4549,7 +4580,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -4596,6 +4627,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4605,11 +4637,10 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -4617,7 +4648,7 @@ static void TriDraw32AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadDat
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -4650,6 +4681,8 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -4726,6 +4759,7 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4735,19 +4769,9 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -4807,6 +4831,7 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4816,19 +4841,9 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -4875,6 +4890,7 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -4884,19 +4900,9 @@ static void TriDraw32AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData 
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -4929,6 +4935,8 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -5005,6 +5013,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5014,11 +5023,10 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5026,7 +5034,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -5086,6 +5094,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5095,11 +5104,10 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5107,7 +5115,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -5154,6 +5162,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5163,11 +5172,10 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5175,7 +5183,7 @@ static void TriDraw32Add(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -5208,6 +5216,8 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -5284,6 +5294,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5293,11 +5304,10 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5305,7 +5315,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -5365,6 +5375,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5374,11 +5385,10 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5386,7 +5396,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -5433,6 +5443,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5442,11 +5453,10 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5454,7 +5464,7 @@ static void TriDraw32Sub(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -5487,6 +5497,8 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -5563,6 +5575,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5572,11 +5585,10 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5584,7 +5596,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -5644,6 +5656,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5653,11 +5666,10 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5665,7 +5677,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -5712,6 +5724,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5721,11 +5734,10 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5733,7 +5745,7 @@ static void TriDraw32RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -5766,6 +5778,8 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -5842,6 +5856,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5851,11 +5866,12 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5863,7 +5879,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -5923,6 +5939,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -5932,11 +5949,12 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -5944,7 +5962,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -5991,6 +6009,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -6000,11 +6019,12 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6012,7 +6032,7 @@ static void TriDraw32Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -6045,6 +6065,8 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -6063,7 +6085,8 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -6121,20 +6144,24 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					uint32_t *destptr = dest + x * 8 + ix;
+					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6142,7 +6169,7 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -6202,20 +6229,24 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					uint32_t *destptr = dest + x;
+					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6223,7 +6254,7 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -6270,20 +6301,24 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					uint32_t *destptr = dest + x;
+					uint32_t fg = color;
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6291,7 +6326,7 @@ static void TriDraw32Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -6324,6 +6359,8 @@ static void TriDraw32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -6342,7 +6379,8 @@ static void TriDraw32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -6400,28 +6438,19 @@ static void TriDraw32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -6481,28 +6510,19 @@ static void TriDraw32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -6549,28 +6569,19 @@ static void TriDraw32TranslateCopy(const TriDrawTriangleArgs *args, WorkerThread
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -6603,6 +6614,8 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -6621,7 +6634,8 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -6679,20 +6693,21 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6700,7 +6715,7 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -6760,20 +6775,21 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6781,7 +6797,7 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -6828,20 +6844,21 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6849,7 +6866,7 @@ static void TriDraw32TranslateAlphaBlend(const TriDrawTriangleArgs *args, Worker
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -6882,6 +6899,8 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -6900,7 +6919,8 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -6958,20 +6978,21 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -6979,7 +7000,7 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -7039,20 +7060,21 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7060,7 +7082,7 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -7107,20 +7129,21 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7128,7 +7151,7 @@ static void TriDraw32TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -7161,6 +7184,8 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -7179,7 +7204,8 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -7237,20 +7263,21 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7258,7 +7285,7 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -7318,20 +7345,21 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7339,7 +7367,7 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -7386,20 +7414,21 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7407,7 +7436,7 @@ static void TriDraw32TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadD
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -7440,6 +7469,8 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -7458,7 +7489,8 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -7516,20 +7548,21 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7537,7 +7570,7 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -7597,20 +7630,21 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7618,7 +7652,7 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -7665,20 +7699,21 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					uint32_t r = RPART(fg);
 					uint32_t g = GPART(fg);
 					uint32_t b = BPART(fg);
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
 					uint32_t a = APART(fg);
 					a += a >> 7;
 					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
@@ -7686,7 +7721,7 @@ static void TriDraw32TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThre
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -7719,6 +7754,8 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -7795,6 +7832,7 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -7804,19 +7842,18 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -7876,6 +7913,7 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -7885,19 +7923,18 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -7944,6 +7981,7 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -7953,19 +7991,18 @@ static void TriDraw32AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
-					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
 					uint32_t bg_red = RPART(bg);
 					uint32_t bg_green = GPART(bg);
 					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -7998,6 +8035,8 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -8074,6 +8113,7 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint32_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -8083,19 +8123,21 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -8155,6 +8197,7 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -8164,19 +8207,21 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -8223,6 +8268,7 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint32_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
@@ -8232,19 +8278,21 @@ static void TriDraw32Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *t
 					r = (r * lightpos) >> 16;
 					g = (g * lightpos) >> 16;
 					b = (b * lightpos) >> 16;
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
 					
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
 					r = (r * a + bg_red * inv_a + 127) >> 8;
 					g = (g * a + bg_green * inv_a + 127) >> 8;
 					b = (b * a + bg_blue * inv_a + 127) >> 8;
 					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -8277,6 +8325,8 @@ static void TriFill8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -8353,10 +8403,11 @@ static void TriFill8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -8416,10 +8467,11 @@ static void TriFill8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -8466,10 +8518,11 @@ static void TriFill8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -8502,6 +8555,8 @@ static void TriFill8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -8578,10 +8633,11 @@ static void TriFill8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -8641,10 +8697,11 @@ static void TriFill8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -8691,10 +8748,11 @@ static void TriFill8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -8727,6 +8785,8 @@ static void TriFill8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -8803,10 +8863,11 @@ static void TriFill8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -8866,10 +8927,11 @@ static void TriFill8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -8916,10 +8978,11 @@ static void TriFill8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -8952,6 +9015,8 @@ static void TriFill8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -9028,10 +9093,11 @@ static void TriFill8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -9091,10 +9157,11 @@ static void TriFill8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -9141,10 +9208,11 @@ static void TriFill8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -9177,6 +9245,8 @@ static void TriFill8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -9253,10 +9323,11 @@ static void TriFill8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -9316,10 +9387,11 @@ static void TriFill8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -9366,10 +9438,11 @@ static void TriFill8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -9402,6 +9475,8 @@ static void TriFill8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -9478,10 +9553,11 @@ static void TriFill8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -9541,10 +9617,11 @@ static void TriFill8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -9591,10 +9668,11 @@ static void TriFill8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -9627,6 +9705,8 @@ static void TriFill8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -9703,10 +9783,11 @@ static void TriFill8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -9766,10 +9847,11 @@ static void TriFill8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -9816,10 +9898,11 @@ static void TriFill8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -9852,6 +9935,8 @@ static void TriFill8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -9870,7 +9955,8 @@ static void TriFill8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -9928,10 +10014,11 @@ static void TriFill8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -9991,10 +10078,11 @@ static void TriFill8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -10041,10 +10129,11 @@ static void TriFill8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -10077,6 +10166,8 @@ static void TriFill8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -10095,7 +10186,8 @@ static void TriFill8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -10153,10 +10245,12 @@ static void TriFill8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -10216,10 +10310,12 @@ static void TriFill8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -10266,10 +10362,12 @@ static void TriFill8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -10302,6 +10400,8 @@ static void TriFill8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -10320,7 +10420,8 @@ static void TriFill8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -10378,10 +10479,12 @@ static void TriFill8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -10441,10 +10544,12 @@ static void TriFill8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -10491,10 +10596,12 @@ static void TriFill8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -10527,6 +10634,8 @@ static void TriFill8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -10545,7 +10654,8 @@ static void TriFill8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -10603,10 +10713,12 @@ static void TriFill8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -10666,10 +10778,12 @@ static void TriFill8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -10716,10 +10830,12 @@ static void TriFill8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -10752,6 +10868,8 @@ static void TriFill8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -10770,7 +10888,8 @@ static void TriFill8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -10828,10 +10947,12 @@ static void TriFill8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -10891,10 +11012,12 @@ static void TriFill8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -10941,10 +11064,12 @@ static void TriFill8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -10977,6 +11102,8 @@ static void TriFill8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -10995,7 +11122,8 @@ static void TriFill8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -11053,10 +11181,12 @@ static void TriFill8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -11116,10 +11246,12 @@ static void TriFill8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -11166,10 +11298,12 @@ static void TriFill8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -11202,6 +11336,8 @@ static void TriFill8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -11278,10 +11414,11 @@ static void TriFill8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -11341,10 +11478,11 @@ static void TriFill8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -11391,10 +11529,11 @@ static void TriFill8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -11427,6 +11566,8 @@ static void TriFill8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -11503,10 +11644,11 @@ static void TriFill8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -11566,10 +11708,11 @@ static void TriFill8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -11616,10 +11759,11 @@ static void TriFill8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -11652,6 +11796,8 @@ static void TriDraw8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -11728,12 +11874,13 @@ static void TriDraw8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -11793,12 +11940,13 @@ static void TriDraw8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -11845,12 +11993,13 @@ static void TriDraw8Copy(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -11883,6 +12032,8 @@ static void TriDraw8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -11959,12 +12110,13 @@ static void TriDraw8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -12024,12 +12176,13 @@ static void TriDraw8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -12076,12 +12229,13 @@ static void TriDraw8AlphaBlend(const TriDrawTriangleArgs *args, WorkerThreadData
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -12114,6 +12268,8 @@ static void TriDraw8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -12190,12 +12346,13 @@ static void TriDraw8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -12255,12 +12412,13 @@ static void TriDraw8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -12307,12 +12465,13 @@ static void TriDraw8AddSolid(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -12345,6 +12504,8 @@ static void TriDraw8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -12421,12 +12582,13 @@ static void TriDraw8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -12486,12 +12648,13 @@ static void TriDraw8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -12538,12 +12701,13 @@ static void TriDraw8Add(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -12576,6 +12740,8 @@ static void TriDraw8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -12652,12 +12818,13 @@ static void TriDraw8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -12717,12 +12884,13 @@ static void TriDraw8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -12769,12 +12937,13 @@ static void TriDraw8Sub(const TriDrawTriangleArgs *args, WorkerThreadData *threa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -12807,6 +12976,8 @@ static void TriDraw8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -12883,12 +13054,13 @@ static void TriDraw8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -12948,12 +13120,13 @@ static void TriDraw8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -13000,12 +13173,13 @@ static void TriDraw8RevSub(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -13038,6 +13212,8 @@ static void TriDraw8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -13114,12 +13290,13 @@ static void TriDraw8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -13179,12 +13356,13 @@ static void TriDraw8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -13231,12 +13409,13 @@ static void TriDraw8Stencil(const TriDrawTriangleArgs *args, WorkerThreadData *t
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -13269,6 +13448,8 @@ static void TriDraw8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -13287,7 +13468,8 @@ static void TriDraw8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -13345,12 +13527,11 @@ static void TriDraw8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					uint8_t *destptr = dest + x * 8 + ix;
+					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -13410,12 +13591,11 @@ static void TriDraw8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					uint8_t *destptr = dest + x;
+					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -13462,12 +13642,11 @@ static void TriDraw8Shaded(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					uint8_t *destptr = dest + x;
+					uint8_t fg = color;
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -13500,6 +13679,8 @@ static void TriDraw8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -13518,7 +13699,8 @@ static void TriDraw8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -13576,12 +13758,14 @@ static void TriDraw8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -13641,12 +13825,14 @@ static void TriDraw8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -13693,12 +13879,14 @@ static void TriDraw8TranslateCopy(const TriDrawTriangleArgs *args, WorkerThreadD
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -13731,6 +13919,8 @@ static void TriDraw8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -13749,7 +13939,8 @@ static void TriDraw8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -13807,12 +13998,14 @@ static void TriDraw8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -13872,12 +14065,14 @@ static void TriDraw8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -13924,12 +14119,14 @@ static void TriDraw8TranslateAlphaBlend(const TriDrawTriangleArgs *args, WorkerT
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -13962,6 +14159,8 @@ static void TriDraw8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -13980,7 +14179,8 @@ static void TriDraw8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -14038,12 +14238,14 @@ static void TriDraw8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -14103,12 +14305,14 @@ static void TriDraw8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -14155,12 +14359,14 @@ static void TriDraw8TranslateAdd(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -14193,6 +14399,8 @@ static void TriDraw8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -14211,7 +14419,8 @@ static void TriDraw8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -14269,12 +14478,14 @@ static void TriDraw8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -14334,12 +14545,14 @@ static void TriDraw8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -14386,12 +14599,14 @@ static void TriDraw8TranslateSub(const TriDrawTriangleArgs *args, WorkerThreadDa
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -14424,6 +14639,8 @@ static void TriDraw8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -14442,7 +14659,8 @@ static void TriDraw8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint8_t * RESTRICT texPixels = (const uint8_t *)args->texturePixels;
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const uint8_t * RESTRICT translation = (const uint8_t *)args->translation;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -14500,12 +14718,14 @@ static void TriDraw8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -14565,12 +14785,14 @@ static void TriDraw8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -14617,12 +14839,14 @@ static void TriDraw8TranslateRevSub(const TriDrawTriangleArgs *args, WorkerThrea
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
+					fg = translation[fg];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -14655,6 +14879,8 @@ static void TriDraw8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -14731,12 +14957,13 @@ static void TriDraw8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -14796,12 +15023,13 @@ static void TriDraw8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -14848,12 +15076,13 @@ static void TriDraw8AddSrcColorOneMinusSrcColor(const TriDrawTriangleArgs *args,
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 
@@ -14886,6 +15115,8 @@ static void TriDraw8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -14962,12 +15193,13 @@ static void TriDraw8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 
 				for (int ix = 0; ix < 8; ix++)
 				{
+					uint8_t *destptr = dest + x * 8 + ix;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x * 8 + ix] = fg;
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -15027,12 +15259,13 @@ static void TriDraw8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask0 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask0 <<= 1;
 
@@ -15079,12 +15312,13 @@ static void TriDraw8Skycap(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			{
 				if (mask1 & (1 << 31))
 				{
+					uint8_t *destptr = dest + x;
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint8_t fg = texPixels[texelX * texHeight + texelY];
 					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
 					fg = colormaps[colormapindex + fg];
-					dest[x] = fg;
+					*destptr = fg;
 				}
 				mask1 <<= 1;
 

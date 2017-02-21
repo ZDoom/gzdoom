@@ -78,21 +78,21 @@ std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTria
 {
 <?	}
 	
-	OutputDrawer($namePrefix."Copy", "opaque", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."AlphaBlend", "masked", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."AddSolid", "translucent", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."Add", "add", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."Sub", "sub", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."RevSub", "revsub", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."Stencil", "stencil", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."Shaded", "shaded", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."TranslateCopy", "translate", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."TranslateAlphaBlend", "translatemasked", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."TranslateAdd", "translateadd", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."TranslateSub", "translatesub", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."TranslateRevSub", "translaterevsub", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."AddSrcColorOneMinusSrcColor", "addsrccolor", $isTruecolor, $isColorFill, $isListEntry);
-	OutputDrawer($namePrefix."Skycap", "skycap", $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Copy", "opaque", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."AlphaBlend", "masked", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."AddSolid", "translucent", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Add", "add", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Sub", "sub", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."RevSub", "revsub", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Stencil", "stencil", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Shaded", "shaded", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."TranslateCopy", "opaque", true, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."TranslateAlphaBlend", "masked", true, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."TranslateAdd", "add", true, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."TranslateSub", "sub", true, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."TranslateRevSub", "revsub", true, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."AddSrcColorOneMinusSrcColor", "addsrccolor", false, $isTruecolor, $isColorFill, $isListEntry);
+	OutputDrawer($namePrefix."Skycap", "skycap", false, $isTruecolor, $isColorFill, $isListEntry);
 	
 	if ($isListEntry)
 	{ ?>
@@ -101,7 +101,7 @@ std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTria
 <?	}
 }
 
-function OutputDrawer($drawerName, $blendmode, $isTruecolor, $isColorFill, $isListEntry)
+function OutputDrawer($drawerName, $blendmode, $isTranslated, $isTruecolor, $isColorFill, $isListEntry)
 {
 	if ($isListEntry)
 	{ ?>
@@ -109,11 +109,11 @@ function OutputDrawer($drawerName, $blendmode, $isTruecolor, $isColorFill, $isLi
 <?	}
 	else
 	{
-		GenerateDrawer($drawerName, $blendmode, $isTruecolor, $isColorFill);
+		GenerateDrawer($drawerName, $blendmode, $isTranslated, $isTruecolor, $isColorFill);
 	}
 }
 
-function GenerateDrawer($drawerName, $blendmode, $isTruecolor, $isColorFill)
+function GenerateDrawer($drawerName, $blendmode, $isTranslated, $isTruecolor, $isColorFill)
 {
 	$pixeltype = $isTruecolor ? "uint32_t" : "uint8_t";
 ?>
@@ -132,6 +132,8 @@ static void <?=$drawerName?>(const TriDrawTriangleArgs *args, WorkerThreadData *
 	bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 	auto colormaps = args->colormaps;
+	uint32_t srcalpha = args->uniforms->srcalpha;
+	uint32_t destalpha = args->uniforms->destalpha;
 
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
@@ -150,7 +152,15 @@ static void <?=$drawerName?>(const TriDrawTriangleArgs *args, WorkerThreadData *
 		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
+<?	if ($isTranslated || $blendmode == "shaded")
+	{ ?>
+	const uint8_t * RESTRICT texPixels = args->texturePixels;
+	const <?=$pixeltype?> * RESTRICT translation = (const <?=$pixeltype?> *)args->translation;
+<?	}
+	else
+	{ ?>
 	const <?=$pixeltype?> * RESTRICT texPixels = (const <?=$pixeltype?> *)args->texturePixels;
+<?	}?>
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
 
@@ -208,51 +218,9 @@ static void <?=$drawerName?>(const TriDrawTriangleArgs *args, WorkerThreadData *
 
 				for (int ix = 0; ix < 8; ix++)
 				{
-<?	if ($isColorFill)
-	{ ?>
-					<?=$pixeltype?> fg = color;
-<?	}
-	else
-	{ ?>
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					<?=$pixeltype?> fg = texPixels[texelX * texHeight + texelY];
-<?	}
-
-	if ($isTruecolor)
-	{ ?>
-					uint32_t r = RPART(fg);
-					uint32_t g = GPART(fg);
-					uint32_t b = BPART(fg);
-					r = (r * lightpos) >> 16;
-					g = (g * lightpos) >> 16;
-					b = (b * lightpos) >> 16;
-					
-<?		if ($blendmode != "opaque")
-		{ ?>
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x * 8 + ix];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-<?		}
-		else
-		{ ?>
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-<?		}
-	}
-	else
-	{ ?>
-					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
-					fg = colormaps[colormapindex + fg];
-<?	} ?>
-					dest[x * 8 + ix] = fg;
+					<?=$pixeltype?> *destptr = dest + x * 8 + ix;
+<?					ProcessPixel($blendmode, $isTranslated, $isTruecolor, $isColorFill, $pixeltype); ?>
+					*destptr = fg;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
@@ -317,51 +285,9 @@ static void <?=$drawerName?>(const TriDrawTriangleArgs *args, WorkerThreadData *
 			{
 				if (<?=$coveragemask?> & (1 << 31))
 				{
-<?	if ($isColorFill)
-	{ ?>
-					<?=$pixeltype?> fg = color;
-<?	}
-	else
-	{ ?>
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					<?=$pixeltype?> fg = texPixels[texelX * texHeight + texelY];
-<?	}
-
-	if ($isTruecolor)
-	{ ?>
-					uint32_t r = RPART(fg);
-					uint32_t g = GPART(fg);
-					uint32_t b = BPART(fg);
-					r = (r * lightpos) >> 16;
-					g = (g * lightpos) >> 16;
-					b = (b * lightpos) >> 16;
-					
-<?		if ($blendmode != "opaque")
-		{ ?>
-					uint32_t a = APART(fg);
-					a += a >> 7;
-					uint32_t inv_a = 256 - a;
-					uint32_t bg = dest[x];
-					uint32_t bg_red = RPART(bg);
-					uint32_t bg_green = GPART(bg);
-					uint32_t bg_blue = BPART(bg);
-					r = (r * a + bg_red * inv_a + 127) >> 8;
-					g = (g * a + bg_green * inv_a + 127) >> 8;
-					b = (b * a + bg_blue * inv_a + 127) >> 8;
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-<?		}
-		else
-		{ ?>
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-<?		}
-	}
-	else
-	{ ?>
-					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
-					fg = colormaps[colormapindex + fg];
-<?	} ?>
-					dest[x] = fg;
+					<?=$pixeltype?> *destptr = dest + x;
+<?					ProcessPixel($blendmode, $isTranslated, $isTruecolor, $isColorFill, $pixeltype); ?>
+					*destptr = fg;
 				}
 				<?=$coveragemask?> <<= 1;
 
@@ -381,6 +307,143 @@ static void <?=$drawerName?>(const TriDrawTriangleArgs *args, WorkerThreadData *
 }
 	
 <?
+}
+
+function ProcessPixel($blendmode, $isTranslated, $isTruecolor, $isColorFill, $pixeltype)
+{
+	if ($isColorFill || $blendmode == "shaded")
+	{ ?>
+					<?=$pixeltype?> fg = color;
+<?	}
+	else
+	{ ?>
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					<?=$pixeltype?> fg = texPixels[texelX * texHeight + texelY];
+<?	}
+
+	if ($isTranslated)
+	{ ?>
+					fg = translation[fg];
+<?	}
+
+	if ($isTruecolor)
+	{ ?>
+					uint32_t r = RPART(fg);
+					uint32_t g = GPART(fg);
+					uint32_t b = BPART(fg);
+					r = (r * lightpos) >> 16;
+					g = (g * lightpos) >> 16;
+					b = (b * lightpos) >> 16;
+<?					TruecolorBlend($blendmode); ?>
+					fg = 0xff000000 | (r << 16) | (g << 8) | b;
+<?
+	}
+	else
+	{ ?>
+					int colormapindex = MIN(((256 - (lightpos >> 8)) * 32) >> 8, 31) << 8;
+					fg = colormaps[colormapindex + fg];
+<?	}
+}
+
+function TruecolorBlend($blendmode)
+{
+		if ($blendmode == "opaque")
+		{
+		}
+		else if ($blendmode == "masked")
+		{ ?>
+					uint32_t a = APART(fg);
+					a += a >> 7;
+					uint32_t inv_a = 256 - a;
+					uint32_t bg = *destptr;
+					uint32_t bg_red = RPART(bg);
+					uint32_t bg_green = GPART(bg);
+					uint32_t bg_blue = BPART(bg);
+					r = (r * a + bg_red * inv_a + 127) >> 8;
+					g = (g * a + bg_green * inv_a + 127) >> 8;
+					b = (b * a + bg_blue * inv_a + 127) >> 8;
+<?		}
+		else if ($blendmode == "translucent")
+		{ ?>
+
+<?		}
+		else if ($blendmode == "shaded")
+		{ ?>
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					int sample = texPixels[texelX * texHeight + texelY];
+					
+					uint32_t fgalpha = sample;//clamp(sample, 0, 64) * 4;
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
+					uint32_t bg_red = RPART(bg);
+					uint32_t bg_green = GPART(bg);
+					uint32_t bg_blue = BPART(bg);
+					r = (r * a + bg_red * inv_a + 127) >> 8;
+					g = (g * a + bg_green * inv_a + 127) >> 8;
+					b = (b * a + bg_blue * inv_a + 127) >> 8;
+<?		}
+		else if ($blendmode == "stencil")
+		{ ?>
+					uint32_t fgalpha = APART(fg);
+					uint32_t inv_fgalpha = 256 - fgalpha;
+					int a = (fgalpha * srcalpha + 128) >> 8;
+					int inv_a = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+					
+					uint32_t bg = *destptr;
+					uint32_t bg_red = RPART(bg);
+					uint32_t bg_green = GPART(bg);
+					uint32_t bg_blue = BPART(bg);
+					r = (r * a + bg_red * inv_a + 127) >> 8;
+					g = (g * a + bg_green * inv_a + 127) >> 8;
+					b = (b * a + bg_blue * inv_a + 127) >> 8;
+<?		}
+		else if ($blendmode == "addsrccolor")
+		{ ?>
+					uint32_t inv_r = 256 - (r + (r >> 7));
+					uint32_t inv_g = 256 - (g + (r >> 7));
+					uint32_t inv_b = 256 - (b + (r >> 7));
+					uint32_t bg = *destptr;
+					uint32_t bg_red = RPART(bg);
+					uint32_t bg_green = GPART(bg);
+					uint32_t bg_blue = BPART(bg);
+					r = r + ((bg_red * inv_r + 127) >> 8);
+					g = g + ((bg_green * inv_g + 127) >> 8);
+					b = b + ((bg_blue * inv_b + 127) >> 8);
+<?		}
+		else if ($blendmode == "skycap")
+		{ ?>
+					int start_fade = 2; // How fast it should fade out
+
+					int alpha_top = clamp(varyingPos[1] >> (16 - start_fade), 0, 256);
+					int alpha_bottom = clamp(((2 << 24) - varyingPos[1]) >> (16 - start_fade), 0, 256);
+					int a = MIN(alpha_top, alpha_bottom);
+					int inv_a = 256 - a;
+					
+					uint32_t bg_red = RPART(color);
+					uint32_t bg_green = GPART(color);
+					uint32_t bg_blue = BPART(color);
+					r = (r * a + bg_red * inv_a + 127) >> 8;
+					g = (g * a + bg_green * inv_a + 127) >> 8;
+					b = (b * a + bg_blue * inv_a + 127) >> 8;
+<?		}
+		else
+		{ ?>
+					uint32_t a = APART(fg);
+					a += a >> 7;
+					uint32_t inv_a = 256 - a;
+					uint32_t bg = *destptr;
+					uint32_t bg_red = RPART(bg);
+					uint32_t bg_green = GPART(bg);
+					uint32_t bg_blue = BPART(bg);
+					r = (r * a + bg_red * inv_a + 127) >> 8;
+					g = (g * a + bg_green * inv_a + 127) >> 8;
+					b = (b * a + bg_blue * inv_a + 127) >> 8;
+<?		}
 }
 
 ?>

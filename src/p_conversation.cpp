@@ -570,16 +570,6 @@ FStrifeDialogueNode::~FStrifeDialogueNode ()
 
 //============================================================================
 //
-// FStrifeDialogueReply :: ~FStrifeDialogueReply
-//
-//============================================================================
-
-FStrifeDialogueReply::~FStrifeDialogueReply ()
-{
-}
-
-//============================================================================
-//
 // FindNode
 //
 // Returns the index that matches the given conversation node.

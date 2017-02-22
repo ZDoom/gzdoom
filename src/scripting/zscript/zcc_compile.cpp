@@ -2562,7 +2562,7 @@ void ZCCCompiler::CompileStates()
 						state.Misc1 = IntConstFromNode(sl->Offset, c->Type());
 						state.Misc2 = IntConstFromNode(static_cast<ZCC_Expression *>(sl->Offset->SiblingNext), c->Type());
 					}
-#ifdef DYNLIGHT
+
 					if (sl->Lights != nullptr)
 					{
 						auto l = sl->Lights;
@@ -2572,7 +2572,6 @@ void ZCCCompiler::CompileStates()
 							l = static_cast<decltype(l)>(l->SiblingNext);
 						} while (l != sl->Lights);
 					}
-#endif
 
 					if (sl->Action != nullptr)
 					{

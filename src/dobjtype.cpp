@@ -501,7 +501,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	MemberOnly = (size < 4);
 	if (!unsign)
 	{
-		int maxval = (1 << ((8 * size) - 1)) - 1;
+		int maxval = (1u << ((8 * size) - 1)) - 1; // compute as unsigned to prevent overflow before -1
 		int minval = -maxval - 1;
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, minval));
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, maxval));
@@ -509,7 +509,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	else
 	{
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << (8 * size)) - 1));
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << ((8 * size) - 1))));
 	}
 	SetOps();
 }

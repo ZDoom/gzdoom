@@ -411,7 +411,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						else if (args[i] == TypeTextureID)
 						{
 							auto f = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
-							if (!f.isValid())
+							if (!f.Exists())
 							{
 								sc.ScriptError("Unknown texture %s", sc.String);
 							}

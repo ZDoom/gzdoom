@@ -544,7 +544,6 @@ void FullGC()
 
 void Barrier(DObject *pointing, DObject *pointed)
 {
-	assert(pointed->GetClass() != nullptr);
 	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
 	assert(State != GCS_Finalize && State != GCS_Pause);

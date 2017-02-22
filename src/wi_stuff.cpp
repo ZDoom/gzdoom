@@ -198,23 +198,29 @@ public:
 	// (which is why I have renamed this one!)
 	//
 
-	static const int MAX_ANIMATION_FRAMES = 20;
 	struct in_anim_t
 	{
 		int			type;	// Made an int so I can use '|'
 		int 		period;	// period in tics between animations
-		int 		nanims;	// number of animation frames
 		yahpt_t 	loc;	// location of animation
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-		FTexture *	p[MAX_ANIMATION_FRAMES];	// actual graphics for frames of animations
+		TArray<FTexture*>	frames;	// actual graphics for frames of animations
 
 		// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
 		int 		ctr;		// next frame number to animate
 		int 		state;		// used by RANDOM and LEVEL when animating
 
-		char		levelname[9];
-		char		levelname2[9];
+		FString		LevelName;
+		FString		LevelName2;
+
+		void Reset()
+		{
+			type = period = loc.x = loc.y = data = nexttic = ctr = state = 0;
+			LevelName = "";
+			LevelName2 = "";
+			frames.Clear();
+		}
 	};
 
 	TArray<lnode_t> lnodes;
@@ -414,7 +420,7 @@ public:
 				FScanner sc(lumpnum);
 				while (sc.GetString())
 				{
-					memset(&an,0,sizeof(an));
+					an.Reset();
 					int caseval = sc.MustMatchString(WI_Cmd);
 					switch(caseval)
 					{
@@ -479,15 +485,13 @@ public:
 					case 10:	// IfTravelling
 						an.type = ANIM_IFTRAVELLING;
 						sc.MustGetString();
-						strncpy(an.levelname2, sc.String, 8);
-						an.levelname2[8] = 0;
+						an.LevelName2 = sc.String;
 						goto readanimation;
 
 					case 11:	// IfNotTravelling
 						an.type = ANIM_IFTRAVELLING;
 						sc.MustGetString();
-						strncpy(an.levelname2, sc.String, 8);
-						an.levelname2[8] = 0;
+						an.LevelName2 = sc.String;
 						goto readanimation;
 
 					case 14:	// NoAutostartMap
@@ -496,8 +500,7 @@ public:
 
 					readanimation:
 						sc.MustGetString();
-						strncpy(an.levelname, sc.String, 8);
-						an.levelname[8] = 0;
+						an.LevelName = sc.String;
 						sc.MustGetString();
 						caseval=sc.MustMatchString(WI_Cmd);
 
@@ -527,15 +530,14 @@ public:
 							if (!sc.CheckString("{"))
 							{
 								sc.MustGetString();
-								an.p[an.nanims++] = TexMan[sc.String];
+								an.frames.Push(TexMan[sc.String]);
 							}
 							else
 							{
 								while (!sc.CheckString("}"))
 								{
 									sc.MustGetString();
-									if (an.nanims<MAX_ANIMATION_FRAMES)
-										an.p[an.nanims++] = TexMan[sc.String];
+									an.frames.Push(TexMan[sc.String]);
 								}
 							}
 							an.ctr = -1;
@@ -549,7 +551,8 @@ public:
 							sc.MustGetNumber();
 							an.loc.y = sc.Number;
 							sc.MustGetString();
-							an.p[0] = TexMan[sc.String];
+							an.frames.Reserve(1);	// allocate exactly one element
+							an.frames[0] = TexMan[sc.String];
 							anims.Push(an);
 							break;
 
@@ -587,7 +590,7 @@ public:
 			case ANIM_ALWAYS:
 				if (bcnt >= a->nexttic)
 				{
-					if (++a->ctr >= a->nanims) 
+					if (++a->ctr >= (int)a->frames.Size()) 
 					{
 						if (a->data==0) a->ctr = 0;
 						else a->ctr--;
@@ -647,42 +650,42 @@ public:
 			switch (a->type & ANIM_CONDITION)
 			{
 			case ANIM_IFVISITED:
-				li = FindLevelInfo(a->levelname);
+				li = FindLevelInfo(a->LevelName);
 				if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
 				break;
 
 			case ANIM_IFNOTVISITED:
-				li = FindLevelInfo(a->levelname);
+				li = FindLevelInfo(a->LevelName);
 				if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
 				break;
 
 				// StatCount means 'leaving' - everything else means 'entering'!
 			case ANIM_IFENTERING:
-				if (state == StatCount || strnicmp(a->levelname, wbs->next, 8)) continue;
+				if (state == StatCount || strnicmp(a->LevelName, wbs->next, 8)) continue;
 				break;
 
 			case ANIM_IFNOTENTERING:
-				if (state != StatCount && !strnicmp(a->levelname, wbs->next, 8)) continue;
+				if (state != StatCount && !strnicmp(a->LevelName, wbs->next, 8)) continue;
 				break;
 
 			case ANIM_IFLEAVING:
-				if (state != StatCount || strnicmp(a->levelname, wbs->current, 8)) continue;
+				if (state != StatCount || strnicmp(a->LevelName, wbs->current, 8)) continue;
 				break;
 
 			case ANIM_IFNOTLEAVING:
-				if (state == StatCount && !strnicmp(a->levelname, wbs->current, 8)) continue;
+				if (state == StatCount && !strnicmp(a->LevelName, wbs->current, 8)) continue;
 				break;
 
 			case ANIM_IFTRAVELLING:
-				if (strnicmp(a->levelname2, wbs->current, 8) || strnicmp(a->levelname, wbs->next, 8)) continue;
+				if (strnicmp(a->LevelName2, wbs->current, 8) || strnicmp(a->LevelName, wbs->next, 8)) continue;
 				break;
 
 			case ANIM_IFNOTTRAVELLING:
-				if (!strnicmp(a->levelname2, wbs->current, 8) && !strnicmp(a->levelname, wbs->next, 8)) continue;
+				if (!strnicmp(a->LevelName2, wbs->current, 8) && !strnicmp(a->LevelName, wbs->next, 8)) continue;
 				break;
 			}
 			if (a->ctr >= 0)
-				screen->DrawTexture(a->p[a->ctr], a->loc.x, a->loc.y, 
+				screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y, 
 									DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
 		}
 	}

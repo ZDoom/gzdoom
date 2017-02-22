@@ -101,7 +101,7 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 <?					} ?>
-					
+
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t fracstep = args.TextureVStep();
@@ -109,6 +109,15 @@ namespace swrenderer
 					uint32_t texturefracx = args.TextureUPos();
 					uint32_t *dest = (uint32_t*)args.Dest();
 					int dest_y = args.DestY();
+					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpz = args.dc_viewpos.Z;
+					float stepvpz = args.dc_viewpos_step.Z;
+					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
+					stepvpz *= thread->num_cores; 
+					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
 					if (count <= 0) return;
@@ -157,6 +166,7 @@ namespace swrenderer
 						_mm_storel_epi64((__m128i*)desttmp, outcolor);
 						dest[offset] = desttmp[0];
 						dest[offset + pitch] = desttmp[1];
+						viewpos_z = _mm_add_ps(viewpos_z, step_viewpos_z);
 					}
 					
 					if (ssecount * 2 != count)
@@ -218,8 +228,9 @@ namespace swrenderer
 	}
 		
 	function Shade($isSimpleShade)
-	{
-		if ($isSimpleShade == true)
+	{ ?>
+						__m128i material = fgcolor;
+<?		if ($isSimpleShade == true)
 		{ ?>
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 <?		}
@@ -242,6 +253,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 <?		}
+						AddLights();
 	}
 		
 	function Blend($blendVariant)
@@ -312,5 +324,49 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 <?		}
 	}
+	
+	function AddLights()
+	{ ?>
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lxy2 = light_x; // L.x*L.x + L.y*L.y
+							__m128 Lz = _mm_sub_ps(light_z, viewpos_z);
+							__m128 dist2 = _mm_add_ps(Lxy2, _mm_mul_ps(Lz, Lz));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_y, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_y, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
+<?	}
 ?>
 }

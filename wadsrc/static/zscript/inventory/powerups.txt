@@ -174,7 +174,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
 		return NULL;
 	}

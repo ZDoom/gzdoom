@@ -94,6 +94,7 @@ extern AActor *bodyque[BODYQUESIZE];
 extern int bodyqueslot; 
 class AInventory;
 extern const AInventory *SendItemUse, *SendItemDrop;
+extern int SendItemDropAmount;
 
 
 #endif

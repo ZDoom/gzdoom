@@ -2271,6 +2271,9 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_INVDROP:
 		{
 			DWORD which = ReadLong (stream);
+			int amt = -1;
+
+			if (type == DEM_INVDROP) amt = ReadLong(stream);
 
 			if (gamestate == GS_LEVEL && !paused
 				&& players[player].playerstate != PST_DEAD)
@@ -2288,7 +2291,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 					}
 					else
 					{
-						players[player].mo->DropInventory (item);
+						players[player].mo->DropInventory (item, amt);
 					}
 				}
 			}
@@ -2764,8 +2767,11 @@ void Net_SkipCommand (int type, BYTE **stream)
 			break;
 
 		case DEM_INVUSE:
-		case DEM_INVDROP:
 			skip = 4;
+			break;
+
+		case DEM_INVDROP:
+			skip = 8;
 			break;
 
 		case DEM_GENERICCHEAT:

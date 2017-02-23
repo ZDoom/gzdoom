@@ -1035,14 +1035,14 @@ DEFINE_ACTION_FUNCTION(AActor, UseInventory)
 //
 //===========================================================================
 
-AInventory *AActor::DropInventory (AInventory *item)
+AInventory *AActor::DropInventory (AInventory *item, int amt)
 {
 	AInventory *drop = nullptr;
 	IFVIRTUALPTR(item, AInventory, CreateTossable)
 	{
-		VMValue params[1] = { (DObject*)item };
+		VMValue params[] = { (DObject*)item, amt };
 		VMReturn ret((void**)&drop);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
 	}
 	if (drop == nullptr) return NULL;
 	drop->SetOrigin(PosPlusZ(10.), false);
@@ -1059,7 +1059,8 @@ DEFINE_ACTION_FUNCTION(AActor, DropInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	ACTION_RETURN_OBJECT(self->DropInventory(item));
+	PARAM_INT(amt);
+	ACTION_RETURN_OBJECT(self->DropInventory(item, amt));
 }
 
 //============================================================================

@@ -53,6 +53,9 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mBackButton)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenMapNameFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenEnteringFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenFinishedFont)
 
 
 const char *GameNames[17] =

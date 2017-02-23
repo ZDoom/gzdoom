@@ -121,7 +121,6 @@ class USDFParser : public UDMFParserBase
 	bool ParseChoice(FStrifeDialogueReply **&replyptr)
 	{
 		FStrifeDialogueReply *reply = new FStrifeDialogueReply;
-		memset(reply, 0, sizeof(*reply));
 
 		reply->Next = *replyptr;
 		*replyptr = reply;
@@ -293,8 +292,6 @@ class USDFParser : public UDMFParserBase
 	{
 		FStrifeDialogueNode *node = new FStrifeDialogueNode;
 		FStrifeDialogueReply **replyptr = &node->Children;
-		memset(node, 0, sizeof(*node));
-		//node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
 
 		node->ThisNodeNum = StrifeDialogues.Push(node);
 		node->ItemCheckNode = -1;

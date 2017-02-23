@@ -279,7 +279,7 @@ namespace swrenderer
 	{
 		if ($blendVariant == "copy" || $blendVariant == "shaded") return;
 ?>
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 <?		
 		if ($isSimpleShade == true)
 		{ ?>
@@ -303,11 +303,8 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-<?		} ?>
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
-<?	}
+<?		}
+	}
 		
 	function Blend($blendVariant)
 	{

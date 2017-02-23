@@ -657,11 +657,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -689,11 +686,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -805,11 +799,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -857,11 +848,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -943,7 +931,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -960,9 +948,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -990,7 +975,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1007,9 +992,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -1126,7 +1108,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1143,9 +1125,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -1193,7 +1172,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1210,9 +1189,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -1306,11 +1282,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1368,11 +1341,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1514,11 +1484,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1596,11 +1563,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1712,7 +1676,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1729,9 +1693,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1789,7 +1750,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1806,9 +1767,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -1955,7 +1913,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1972,9 +1930,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2052,7 +2007,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2069,9 +2024,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2194,11 +2146,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2256,11 +2205,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2402,11 +2348,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2484,11 +2427,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2600,7 +2540,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2617,9 +2557,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2677,7 +2614,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2694,9 +2631,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2843,7 +2777,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2860,9 +2794,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -2940,7 +2871,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2957,9 +2888,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3082,11 +3010,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3144,11 +3069,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3290,11 +3212,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3372,11 +3291,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3488,7 +3404,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3505,9 +3421,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3565,7 +3478,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3582,9 +3495,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3731,7 +3641,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3748,9 +3658,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3828,7 +3735,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3845,9 +3752,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3964,11 +3868,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -3995,11 +3896,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -4075,7 +3973,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4092,9 +3990,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -4121,7 +4016,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4138,9 +4033,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -4228,11 +4120,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4289,11 +4178,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4399,7 +4285,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4416,9 +4302,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4475,7 +4358,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4492,9 +4375,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4611,11 +4491,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4672,11 +4549,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4782,7 +4656,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4799,9 +4673,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4858,7 +4729,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4875,9 +4746,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4994,11 +4862,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5055,11 +4920,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5165,7 +5027,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5182,9 +5044,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5241,7 +5100,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5258,9 +5117,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5626,11 +5482,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -5657,11 +5510,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -5738,7 +5588,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5755,9 +5605,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -5784,7 +5631,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5801,9 +5648,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -5892,11 +5736,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5953,11 +5794,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6064,7 +5902,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6081,9 +5919,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6140,7 +5975,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6157,9 +5992,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6277,11 +6109,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6338,11 +6167,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6449,7 +6275,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6466,9 +6292,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6525,7 +6348,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6542,9 +6365,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6662,11 +6482,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6723,11 +6540,8 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6834,7 +6648,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6851,9 +6665,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -6910,7 +6721,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-   						__m128i material = fgcolor;
+						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -6927,9 +6738,6 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-
-						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
-						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);

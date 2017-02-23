@@ -79,19 +79,19 @@ CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 bool IsOpenALPresent()
 {
 #ifdef NO_OPENAL
-	return false;
+    return false;
 #elif !defined DYN_OPENAL
-	return true;
+    return true;
 #else
-	static bool cached_result = false;
-	static bool done = false;
+    static bool cached_result = false;
+    static bool done = false;
 
-	if (!done)
-	{
-		done = true;
-		cached_result = OpenALModule.Load({NicePath("$PROGDIR/" OPENALLIB), OPENALLIB});
-	}
-	return cached_result;
+    if (!done)
+    {
+        done = true;
+        cached_result = OpenALModule.Load({NicePath("$PROGDIR/" OPENALLIB), OPENALLIB});
+    }
+    return cached_result;
 #endif
 }
 
@@ -104,22 +104,22 @@ void I_BuildALDeviceList(FOptionValues *opt)
     opt->mValues[0].Text = "Default";
 
 #ifndef NO_OPENAL
-	if (IsOpenALPresent())
-	{
-		const ALCchar *names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
-			alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
-			alcGetString(NULL, ALC_DEVICE_SPECIFIER));
-		if (!names)
-			Printf("Failed to get device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
-		else while (*names)
-		{
-			unsigned int i = opt->mValues.Reserve(1);
-			opt->mValues[i].TextValue = names;
-			opt->mValues[i].Text = names;
+    if (IsOpenALPresent())
+    {
+        const ALCchar *names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
+            alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
+            alcGetString(NULL, ALC_DEVICE_SPECIFIER));
+        if (!names)
+            Printf("Failed to get device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
+        else while (*names)
+        {
+            unsigned int i = opt->mValues.Reserve(1);
+            opt->mValues[i].TextValue = names;
+            opt->mValues[i].Text = names;
 
-			names += strlen(names) + 1;
-		}
-	}
+            names += strlen(names) + 1;
+        }
+    }
 #endif
 }
 
@@ -429,34 +429,34 @@ public:
             return stats;
         }
 
-		if (Decoder != nullptr)
-		{
-			pos = Decoder->getSampleOffset();
-			len = Decoder->getSampleLength();
-		}
+        if (Decoder != nullptr)
+        {
+            pos = Decoder->getSampleOffset();
+            len = Decoder->getSampleLength();
+        }
         lock.unlock();
 
         stats = (state == AL_INITIAL) ? "Buffering" : (state == AL_STOPPED) ? "Underrun" :
                 (state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
 
-		if (Decoder != nullptr)
-		{
-			if (state == AL_STOPPED)
-				offset = BufferCount * (Data.Size() / FrameSize);
-			else
-			{
-				size_t rem = queued*(Data.Size() / FrameSize) - offset;
-				if (pos > rem) pos -= rem;
-				else if (len > 0) pos += len - rem;
-				else pos = 0;
-			}
-			pos = (size_t)(pos * 1000.0 / SampleRate);
-			len = (size_t)(len * 1000.0 / SampleRate);
-			stats.AppendFormat(",%3u%% buffered", 100 - 100 * offset / (BufferCount*(Data.Size() / FrameSize)));
-			stats.AppendFormat(", %zu.%03zu", pos / 1000, pos % 1000);
-			if (len > 0)
-				stats.AppendFormat(" / %zu.%03zu", len / 1000, len % 1000);
-		}
+        if (Decoder != nullptr)
+        {
+            if (state == AL_STOPPED)
+                offset = BufferCount * (Data.Size() / FrameSize);
+            else
+            {
+                size_t rem = queued*(Data.Size() / FrameSize) - offset;
+                if (pos > rem) pos -= rem;
+                else if (len > 0) pos += len - rem;
+                else pos = 0;
+            }
+            pos = (size_t)(pos * 1000.0 / SampleRate);
+            len = (size_t)(len * 1000.0 / SampleRate);
+            stats.AppendFormat(",%3u%% buffered", 100 - 100 * offset / (BufferCount*(Data.Size() / FrameSize)));
+            stats.AppendFormat(", %zu.%03zu", pos / 1000, pos % 1000);
+            if (len > 0)
+                stats.AppendFormat(" / %zu.%03zu", len / 1000, len % 1000);
+        }
         if(state == AL_PAUSED)
             stats += ", paused";
         if(state == AL_PLAYING)
@@ -671,30 +671,30 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 
 ALCdevice *OpenALSoundRenderer::InitDevice()
 {
-	ALCdevice *device = NULL;
-	if (IsOpenALPresent())
-	{
-		if(strcmp(snd_aldevice, "Default") != 0)
-		{
-			device = alcOpenDevice(*snd_aldevice);
-			if(!device)
-				Printf(TEXTCOLOR_BLUE" Failed to open device " TEXTCOLOR_BOLD"%s" TEXTCOLOR_BLUE". Trying default.\n", *snd_aldevice);
-		}
+    ALCdevice *device = NULL;
+    if (IsOpenALPresent())
+    {
+        if(strcmp(snd_aldevice, "Default") != 0)
+        {
+            device = alcOpenDevice(*snd_aldevice);
+            if(!device)
+                Printf(TEXTCOLOR_BLUE" Failed to open device " TEXTCOLOR_BOLD"%s" TEXTCOLOR_BLUE". Trying default.\n", *snd_aldevice);
+        }
 
-		if(!device)
-		{
-			device = alcOpenDevice(NULL);
-			if(!device)
-			{
-				Printf(TEXTCOLOR_RED" Could not open audio device\n");
-			}
-		}
-	}
-	else
-	{
-		Printf(TEXTCOLOR_ORANGE"Failed to load openal32.dll\n");
-	}
-	return device;
+        if(!device)
+        {
+            device = alcOpenDevice(NULL);
+            if(!device)
+            {
+                Printf(TEXTCOLOR_RED" Could not open audio device\n");
+            }
+        }
+    }
+    else
+    {
+        Printf(TEXTCOLOR_ORANGE"Failed to load openal32.dll\n");
+    }
+    return device;
 }
 
 
@@ -715,8 +715,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
     Printf("I_InitSound: Initializing OpenAL\n");
 
-	Device = InitDevice();
-	if (Device == NULL) return;
+    Device = InitDevice();
+    if (Device == NULL) return;
 
     const ALCchar *current = NULL;
     if(alcIsExtensionPresent(Device, "ALC_ENUMERATE_ALL_EXT"))
@@ -1302,26 +1302,26 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 {
     if(StreamThread.get_id() == std::thread::id())
         StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
-	OpenALSoundStream *stream = new OpenALSoundStream(this);
-	if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
-	{
-		delete stream;
-		return NULL;
-	}
-	return stream;
+    OpenALSoundStream *stream = new OpenALSoundStream(this);
+    if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
+    {
+        delete stream;
+        return NULL;
+    }
+    return stream;
 }
 
 SoundStream *OpenALSoundRenderer::OpenStream(FileReader *reader, int flags)
 {
     if(StreamThread.get_id() == std::thread::id())
         StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
-	OpenALSoundStream *stream = new OpenALSoundStream(this);
-	if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
-	{
-		delete stream;
-		return NULL;
-	}
-	return stream;
+    OpenALSoundStream *stream = new OpenALSoundStream(this);
+    if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
+    {
+        delete stream;
+        return NULL;
+    }
+    return stream;
 }
 
 FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)

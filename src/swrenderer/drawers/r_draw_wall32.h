@@ -67,11 +67,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -245,11 +243,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -492,11 +488,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -705,11 +699,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -993,11 +985,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -1189,11 +1179,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -1454,11 +1442,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -1685,11 +1671,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -1991,11 +1975,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -2229,11 +2211,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -2536,11 +2516,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -2809,11 +2787,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -3157,11 +3133,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -3395,11 +3369,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -3702,11 +3674,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -3975,11 +3945,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -4323,11 +4291,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -4561,11 +4527,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -4868,11 +4832,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);
@@ -5141,11 +5103,9 @@ namespace swrenderer
 					
 					auto lights = args.dc_lights;
 					auto num_lights = args.dc_num_lights;
-					float vpz = args.dc_viewpos.Z;
-					float stepvpz = args.dc_viewpos_step.Z;
-					vpz += thread->skipped_by_thread(dest_y) * stepvpz;
-					stepvpz *= thread->num_cores; 
-					__m128 viewpos_z = _mm_set_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
+					float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
+					float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+					__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 					__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
 
 					count = thread->count_for_thread(dest_y, count);

@@ -2818,99 +2818,29 @@ namespace swrenderer
 
 	// Calculates the lighting for one row of a tilted plane. If the definition
 	// of GETPALOOKUP changes, this needs to change, too.
-	void DrawTiltedSpanPalCommand::CalcTiltedLighting(double lval, double lend, int width, DrawerThread *thread)
+	void DrawTiltedSpanPalCommand::CalcTiltedLighting(double lstart, double lend, int width, DrawerThread *thread)
 	{
 		const uint8_t **tiltlighting = thread->tiltlighting;
 
-		double lstep;
-		uint8_t *lightfiller = nullptr;
-		int i = 0;
+		uint8_t *lightstart = basecolormapdata + (GETPALOOKUP(lstart, planeshade) << COLORMAPSHIFT);
+		uint8_t *lightend = basecolormapdata + (GETPALOOKUP(lend, planeshade) << COLORMAPSHIFT);
 
-		if (width == 0 || lval == lend)
-		{ // Constant lighting
-			lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
+		if (width == 0 || lightstart == lightend)
+		{
+			for (int i = 0; i <= width; i++)
+			{
+				tiltlighting[i] = lightstart;
+			}
 		}
 		else
 		{
-			lstep = (lend - lval) / width;
-			if (lval >= MAXLIGHTVIS)
-			{ // lval starts "too bright".
-				lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
-				for (; i <= width && lval >= MAXLIGHTVIS; ++i)
-				{
-					tiltlighting[i] = lightfiller;
-					lval += lstep;
-				}
-			}
-			if (lend >= MAXLIGHTVIS)
-			{ // lend ends "too bright".
-				lightfiller = basecolormapdata + (GETPALOOKUP(lend, planeshade) << COLORMAPSHIFT);
-				for (; width > i && lend >= MAXLIGHTVIS; --width)
-				{
-					tiltlighting[width] = lightfiller;
-					lend -= lstep;
-				}
-			}
-			if (width > 0)
+			double lstep = (lend - lstart) / width;
+			double lval = lstart;
+			for (int i = 0; i <= width; i++)
 			{
-				lval = FIXED2DBL(planeshade) - lval;
-				lend = FIXED2DBL(planeshade) - lend;
-				lstep = (lend - lval) / width;
-				if (lstep < 0)
-				{ // Going from dark to light
-					if (lval < 1.)
-					{ // All bright
-						lightfiller = basecolormapdata;
-					}
-					else
-					{
-						if (lval >= NUMCOLORMAPS)
-						{ // Starts beyond the dark end
-							uint8_t *clight = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
-							while (lval >= NUMCOLORMAPS && i <= width)
-							{
-								tiltlighting[i++] = clight;
-								lval += lstep;
-							}
-							if (i > width)
-								return;
-						}
-						while (i <= width && lval >= 0)
-						{
-							tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
-							lval += lstep;
-						}
-						lightfiller = basecolormapdata;
-					}
-				}
-				else
-				{ // Going from light to dark
-					if (lval >= (NUMCOLORMAPS - 1))
-					{ // All dark
-						lightfiller = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
-					}
-					else
-					{
-						while (lval < 0 && i <= width)
-						{
-							tiltlighting[i++] = basecolormapdata;
-							lval += lstep;
-						}
-						if (i > width)
-							return;
-						while (i <= width && lval < (NUMCOLORMAPS - 1))
-						{
-							tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
-							lval += lstep;
-						}
-						lightfiller = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
-					}
-				}
+				tiltlighting[i] = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
+				lval += lstep;
 			}
-		}
-		for (; i <= width; i++)
-		{
-			tiltlighting[i] = lightfiller;
 		}
 	}
 

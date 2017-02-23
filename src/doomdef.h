@@ -344,7 +344,6 @@ enum : unsigned int
 	COMPATF2_MULTIEXIT		= 1 << 4,	// Level exit can be triggered multiple times (required by Daedalus's travel tubes, thanks to a faulty script)
 	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
-	COMPATF2_CLIPMIDTEX		= 1 << 7,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -360,6 +359,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
+	BCOMPATF_CLIPMIDTEX		= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
 };
 
 // phares 3/20/98:

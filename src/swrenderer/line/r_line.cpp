@@ -607,7 +607,7 @@ namespace swrenderer
 			if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return true;
 			if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return true;
 
-			if (sidedef->GetTexture(side_t::mid).isValid() && ((linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) || sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX))) return true;
+			if (sidedef->GetTexture(side_t::mid).isValid() && ((ib_compatflags & BCOMPATF_CLIPMIDTEX) || (linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) || sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX))) return true;
 
 			return false;
 		}
@@ -669,6 +669,7 @@ namespace swrenderer
 
 				if (sidedef->GetTexture(side_t::mid).isValid())
 				{
+					if (ib_compatflags & BCOMPATF_CLIPMIDTEX) return true;
 					if (linedef->flags & (ML_CLIP_MIDTEX | ML_WRAP_MIDTEX)) return true;
 					if (sidedef->Flags & (WALLF_CLIP_MIDTEX | WALLF_WRAP_MIDTEX)) return true;
 				}

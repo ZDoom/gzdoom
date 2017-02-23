@@ -277,7 +277,8 @@ namespace swrenderer
 			  // or above the ceiling, so the appropriate end won't be clipped automatically when adding
 			  // this drawseg.
 				if ((curline->linedef->flags & ML_CLIP_MIDTEX) ||
-					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX))
+					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX) ||
+					(ib_compatflags & BCOMPATF_CLIPMIDTEX))
 				{
 					ClipMidtex(x1, x2);
 				}
@@ -335,7 +336,8 @@ namespace swrenderer
 			  // or above the ceiling, so the appropriate end won't be clipped automatically when adding
 			  // this drawseg.
 				if ((curline->linedef->flags & ML_CLIP_MIDTEX) ||
-					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX))
+					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX) ||
+					(ib_compatflags & BCOMPATF_CLIPMIDTEX))
 				{
 					ClipMidtex(x1, x2);
 				}

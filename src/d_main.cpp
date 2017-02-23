@@ -641,7 +641,6 @@ CVAR (Flag, compat_pointonline,			compatflags2, COMPATF2_POINTONLINE);
 CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
-CVAR (Flag, compat_clipmidtex,			compatflags2, COMPATF2_CLIPMIDTEX);
 
 //==========================================================================
 //

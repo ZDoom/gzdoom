@@ -246,28 +246,41 @@ namespace swrenderer
 					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin - pos.Y);
 					float lz = (float)(lightZ - pos.Z);
 					
-					bool is_point_light = (node->lightsource->flags4 & MF4_ATTENUATE) != 0;
+					// Attenuated lights disabled for sprites for now to keep consistency with the GL renderer
+					//bool is_point_light = (node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 					float LdotL = lx * lx + ly * ly + lz * lz;
-					float NdotL = is_point_light ? -ly : 0.0f;
+					float NdotL = 1.0f;//is_point_light ? -ly : 1.0f;
 					
 					float radius = node->lightsource->GetRadius();
 					if (radius * radius >= LdotL && NdotL > 0.0f)
 					{
-						uint32_t red = light->GetRed();
-						uint32_t green = light->GetGreen();
-						uint32_t blue = light->GetBlue();
 						float distance = sqrt(LdotL);
-						float attenuation = distance / radius * NdotL;
-						lit_red += red * attenuation;
-						lit_red += green * attenuation;
-						lit_red += blue * attenuation;
+						float attenuation = (1.0f - distance / radius) * NdotL;
+						if (attenuation > 0.0f)
+						{						
+							float red = light->GetRed() * (1.0f / 255.0f);
+							float green = light->GetGreen() * (1.0f / 255.0f);
+							float blue = light->GetBlue() * (1.0f / 255.0f);
+							/*if (light->IsSubtractive())
+							{
+								float bright = FVector3(lr, lg, lb).Length();
+								FVector3 lightColor(lr, lg, lb);
+								red = (bright - lr) * -1;
+								green = (bright - lg) * -1;
+								blue = (bright - lb) * -1;
+							}*/
+						
+							lit_red += red * attenuation;
+							lit_green += green * attenuation;
+							lit_blue += blue * attenuation;
+						}
 					}
 				}
 				node = node->nextLight;
 			}
-			lit_red = MIN(lit_red, 255.0f);
-			lit_green = MIN(lit_green, 255.0f);
-			lit_blue = MIN(lit_blue, 255.0f);
+			lit_red = clamp(lit_red * 255.0f, 0.0f, 255.0f);
+			lit_green = clamp(lit_green * 255.0f, 0.0f, 255.0f);
+			lit_blue = clamp(lit_blue * 255.0f, 0.0f, 255.0f);
 			vis->dynlightcolor = (((uint32_t)lit_red) << 16) | (((uint32_t)lit_green) << 8) | ((uint32_t)lit_blue);
 		}
 		else

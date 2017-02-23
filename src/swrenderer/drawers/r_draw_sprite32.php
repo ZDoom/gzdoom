@@ -130,6 +130,10 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 <?					} ?>
+
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -274,7 +278,9 @@ namespace swrenderer
 	function Shade($blendVariant, $isSimpleShade)
 	{
 		if ($blendVariant == "copy" || $blendVariant == "shaded") return;
-		
+?>
+   						__m128i material = fgcolor;
+<?		
 		if ($isSimpleShade == true)
 		{ ?>
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
@@ -297,8 +303,11 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
-<?		}
-	}
+<?		} ?>
+
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, dynlight), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
+<?	}
 		
 	function Blend($blendVariant)
 	{

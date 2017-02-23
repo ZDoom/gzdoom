@@ -52,6 +52,8 @@ xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT),	// load vector2
 xx(LV2_R,	lv2,	RVRPRI,		NOP,	0, 0),
 xx(LV3,		lv3,	RVRPKI,		LV3_R,	4, REGT_INT),	// load vector3
 xx(LV3_R,	lv3,	RVRPRI,		NOP,	0, 0),
+xx(LCS,		lcs,	RSRPKI,		LCS_R,	4, REGT_INT),	// load string from char ptr.
+xx(LCS_R,	lcs,	RSRPRI,		NOP,	0, 0),
 
 xx(LBIT,	lbit,	RIRPI8,		NOP,	0, 0),	// rA = !!(*rB & C)  -- *rB is a byte
 

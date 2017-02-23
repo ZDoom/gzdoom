@@ -501,7 +501,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	MemberOnly = (size < 4);
 	if (!unsign)
 	{
-		int maxval = (1 << ((8 * size) - 1)) - 1;
+		int maxval = (1u << ((8 * size) - 1)) - 1; // compute as unsigned to prevent overflow before -1
 		int minval = -maxval - 1;
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, minval));
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, maxval));
@@ -509,7 +509,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	else
 	{
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << (8 * size)) - 1));
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << ((8 * size) - 1))));
 	}
 	SetOps();
 }
@@ -3219,16 +3219,24 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 	const PClass *existclass = FindClass(name);
 
-	// This is a placeholder so fill it in
-	if (existclass != NULL && existclass->Size == (unsigned)-1)
+	if (existclass != nullptr)
 	{
-		type = const_cast<PClass*>(existclass);
-		if (!IsDescendantOf(type->ParentClass))
+		// This is a placeholder so fill it in
+		if (existclass->Size == TentativeClass)
 		{
-			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			type = const_cast<PClass*>(existclass);
+			if (!IsDescendantOf(type->ParentClass))
+			{
+				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			}
+			DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
+			notnew = true;
 		}
-		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
-		notnew = true;
+		else
+		{
+			// a different class with the same name already exists. Let the calling code deal with this.
+			return nullptr;
+		}
 	}
 	else
 	{

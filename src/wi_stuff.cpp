@@ -836,7 +836,7 @@ public:
 	{
 		int y = WI_TITLEY * CleanYfac;
 
-		y = WI_DrawName(y, wbs->LName0, lnametexts[0]);
+		y = WI_DrawName(y, TexMan(wbs->LName0), lnametexts[0]);
 	
 		// Adjustment for different font sizes for map name and 'finished'.
 		y -= ((mapname.mFont->GetHeight() - finished.mFont->GetHeight()) * CleanYfac) / 4;
@@ -866,7 +866,7 @@ public:
 
 		y = WI_DrawPatchText(y, &entering, "WI_ENTERING");
 		y += entering.mFont->GetHeight() * CleanYfac / 4;
-		WI_DrawName(y, wbs->LName1, lnametexts[1]);
+		WI_DrawName(y, TexMan(wbs->LName1), lnametexts[1]);
 	}
 
 

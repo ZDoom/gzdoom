@@ -125,17 +125,8 @@ CCMD (menu_quit)
 //
 //=============================================================================
 
-CCMD (menu_endgame)
-{	// F7
-	if (!usergame)
-	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
-		return;
-	}
-		
-	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
-
+void ActivateEndGameMenu()
+{
 	FString tempstring = GStrings(netgame ? "NETEND" : "ENDGAME");
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
@@ -147,6 +138,20 @@ CCMD (menu_endgame)
 	});
 
 	M_ActivateMenu(newmenu);
+}
+
+CCMD (menu_endgame)
+{	// F7
+	if (!usergame)
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
+		return;
+	}
+		
+	//M_StartControlPanel (true);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+
+	ActivateEndGameMenu();
 }
 
 //=============================================================================

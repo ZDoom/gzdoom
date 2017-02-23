@@ -713,7 +713,7 @@ public:
 	virtual bool UseInventory (AInventory *item);
 
 	// Tosses an item out of the inventory.
-	AInventory *DropInventory (AInventory *item);
+	AInventory *DropInventory (AInventory *item, int amt = -1);
 
 	// Removes all items from the inventory.
 	void ClearInventory();

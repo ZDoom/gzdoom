@@ -489,7 +489,7 @@ class HexenArmor : Armor
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
 		return NULL;
 	}

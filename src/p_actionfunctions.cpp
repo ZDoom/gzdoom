@@ -3663,13 +3663,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(drop, AInventory);
+	PARAM_INT_DEF(amount);
 
 	if (drop)
 	{
 		AInventory *inv = self->FindInventory(drop);
 		if (inv)
 		{
-			self->DropInventory(inv);
+			self->DropInventory(inv, amount);
 		}
 	}
 	return 0;

@@ -120,9 +120,9 @@ class HealthPickup : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
-		Inventory copy = Super.CreateTossable ();
+		Inventory copy = Super.CreateTossable (-1);
 		if (copy != NULL)
 		{
 			copy.health = health;

@@ -671,6 +671,7 @@ xx(Optionsmenu)
 xx(Quitmenu)
 xx(Savemenu)
 xx(Playermenu)
+xx(EndGameMenu)
 
 xx(Playerbox)
 xx(Team)

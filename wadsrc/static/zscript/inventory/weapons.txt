@@ -435,7 +435,7 @@ class Weapon : StateProvider native
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amt)
 	{
 		// Only drop the weapon that is meant to be placed in a level. That is,
 		// only drop the weapon that normally gives you ammo.
@@ -443,9 +443,9 @@ class Weapon : StateProvider native
 			Default.AmmoGive1 == 0 && Default.AmmoGive2 == 0 &&
 			(SisterWeapon.Default.AmmoGive1 > 0 || SisterWeapon.Default.AmmoGive2 > 0))
 		{
-			return SisterWeapon.CreateTossable ();
+			return SisterWeapon.CreateTossable (amt);
 		}
-		let copy = Weapon(Super.CreateTossable ());
+		let copy = Weapon(Super.CreateTossable (-1));
 
 		if (copy != NULL)
 		{

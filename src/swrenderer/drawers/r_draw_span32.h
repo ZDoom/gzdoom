@@ -89,6 +89,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -120,13 +127,55 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -143,7 +192,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -159,6 +249,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -190,13 +287,55 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -213,7 +352,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -233,6 +413,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -312,13 +499,55 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -358,7 +587,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -374,6 +644,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -453,13 +730,55 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -499,7 +818,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -527,6 +887,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -558,6 +925,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -574,12 +942,53 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -596,6 +1005,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -612,6 +1022,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -632,6 +1082,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -663,6 +1120,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -679,12 +1137,53 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -701,6 +1200,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -717,6 +1217,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -741,6 +1281,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -820,6 +1367,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -836,12 +1384,53 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -881,6 +1470,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -897,6 +1487,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -917,6 +1547,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -996,6 +1633,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1012,12 +1650,53 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
 						outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1057,6 +1736,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1073,6 +1753,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i outcolor = fgcolor;
@@ -1146,6 +1866,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1178,7 +1905,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1193,6 +1961,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1210,7 +1979,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1234,6 +2044,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1266,7 +2083,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1281,6 +2139,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1298,7 +2157,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1326,6 +2226,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1406,7 +2313,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1421,6 +2369,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1461,7 +2410,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1485,6 +2475,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1565,7 +2562,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1580,6 +2618,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1620,7 +2659,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1656,6 +2736,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1688,6 +2775,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1704,6 +2792,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1718,6 +2846,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1735,6 +2864,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1751,6 +2881,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1779,6 +2949,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1811,6 +2988,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1827,6 +3005,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1841,6 +3059,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -1858,6 +3077,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -1874,6 +3094,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -1906,6 +3166,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -1986,6 +3253,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2002,6 +3270,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -2016,6 +3324,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2056,6 +3365,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2072,6 +3382,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -2100,6 +3450,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2180,6 +3537,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2196,6 +3554,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -2210,6 +3608,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2250,6 +3649,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2266,6 +3666,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3,3,3,3));
@@ -2347,6 +3787,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2379,7 +3826,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2403,6 +3891,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2420,7 +3909,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2453,6 +3983,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2485,7 +4022,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2509,6 +4087,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2526,7 +4105,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2563,6 +4183,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2643,7 +4270,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2667,6 +4335,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2707,7 +4376,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2740,6 +4450,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2820,7 +4537,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2844,6 +4602,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -2884,7 +4643,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -2929,6 +4729,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -2961,6 +4768,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -2977,6 +4785,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3000,6 +4848,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3017,6 +4866,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3033,6 +4883,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3070,6 +4960,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -3102,6 +4999,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3118,6 +5016,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3141,6 +5079,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3158,6 +5097,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3174,6 +5114,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3215,6 +5195,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -3295,6 +5282,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3311,6 +5299,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3334,6 +5362,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3374,6 +5403,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3390,6 +5420,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3427,6 +5497,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -3507,6 +5584,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3523,6 +5601,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3546,6 +5664,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3586,6 +5705,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -3602,6 +5722,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						__m128i fgalpha = _mm_set1_epi16(srcalpha);
@@ -3692,6 +5852,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -3724,7 +5891,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3760,6 +5968,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3777,7 +5986,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3822,6 +6072,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -3854,7 +6111,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3890,6 +6188,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -3907,7 +6206,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -3956,6 +6296,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -4036,7 +6383,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4072,6 +6460,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -4112,7 +6501,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4157,6 +6587,13 @@ namespace swrenderer
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -4237,7 +6674,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4273,6 +6751,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -4313,7 +6792,48 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4370,6 +6890,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -4402,6 +6929,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4418,6 +6946,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4453,6 +7021,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -4470,6 +7039,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4486,6 +7056,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4535,6 +7145,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -4567,6 +7184,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4583,6 +7201,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4618,6 +7276,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -4635,6 +7294,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4651,6 +7311,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4704,6 +7404,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -4784,6 +7491,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4800,6 +7508,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4835,6 +7583,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -4875,6 +7624,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -4891,6 +7641,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -4940,6 +7730,13 @@ namespace swrenderer
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
 					
+					auto lights = args.dc_lights;
+					auto num_lights = args.dc_num_lights;
+					float vpx = args.dc_viewpos.X;
+					float stepvpx = args.dc_viewpos_step.X;
+					__m128 viewpos_x = _mm_setr_ps(vpx, vpx + stepvpx, 0.0f, 0.0f);
+					__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
+					
 					int count = args.DestX2() - args.DestX1() + 1;
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 					uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
@@ -5020,6 +7817,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5036,6 +7834,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);
@@ -5071,6 +7909,7 @@ namespace swrenderer
 						outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 
 						_mm_storel_epi64((__m128i*)(dest + offset), outcolor);
+						viewpos_x = _mm_add_ps(viewpos_x, step_viewpos_x);
 					}
 					
 					if (ssecount * 2 != count)
@@ -5111,6 +7950,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
+						__m128i material = fgcolor;
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
 						int red0 = RPART(ifgcolor[0]);
@@ -5127,6 +7967,46 @@ namespace swrenderer
 						fgcolor = _mm_mullo_epi16(fgcolor, mlight);
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+						__m128i lit = _mm_setzero_si128();
+						
+						for (int i = 0; i != num_lights; i++)
+						{
+							__m128 light_x = _mm_set1_ps(lights[i].x);
+							__m128 light_y = _mm_set1_ps(lights[i].y);
+							__m128 light_z = _mm_set1_ps(lights[i].z);
+							__m128 light_radius = _mm_set1_ps(lights[i].radius);
+							__m128 m256 = _mm_set1_ps(256.0f);
+							
+							// L = light-pos
+							// dist = sqrt(dot(L, L))
+							// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+							__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
+							__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
+							__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));
+							__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+							__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+							__m128 distance_attenuation = _mm_sub_ps(m256, _mm_min_ps(_mm_mul_ps(dist, light_radius), m256));
+
+							// The simple light type
+							__m128 simple_attenuation = distance_attenuation;
+
+							// The point light type
+							// diffuse = dot(N,L) * attenuation
+							__m128 point_attenuation = _mm_mul_ps(_mm_mul_ps(light_z, rcp_dist), distance_attenuation);
+							
+							__m128 is_attenuated = _mm_cmpeq_ps(light_z, _mm_setzero_ps());
+							__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, simple_attenuation), _mm_andnot_ps(is_attenuated, point_attenuation)));
+							attenuation = _mm_packs_epi32(_mm_shuffle_epi32(attenuation, _MM_SHUFFLE(0,0,0,0)), _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1,1,1,1)));
+
+							__m128i light_color = _mm_cvtsi32_si128(lights[i].color);
+							light_color = _mm_unpacklo_epi8(light_color, _mm_setzero_si128());
+							light_color = _mm_shuffle_epi32(light_color, _MM_SHUFFLE(1,0,1,0));
+
+							lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
+						}
+						
+						fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
+						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 
 						// Blend
 						uint32_t alpha0 = APART(ifgcolor[0]);

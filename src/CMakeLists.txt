@@ -801,6 +801,7 @@ file( GLOB HEADER_FILES
 	polyrenderer/*.h
 	polyrenderer/math/*.h
 	polyrenderer/drawers/*.h
+	polyrenderer/drawers/*.php
 	polyrenderer/scene/*.h
 	gl/*.h
 	gl/api/*.h

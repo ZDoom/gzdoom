@@ -115,7 +115,7 @@ namespace swrenderer
 		_step_viewpos_z = args.dc_viewpos_step.Z;
 	}
 
-	uint8_t PalWall1Command::AddLights(const TriLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
+	uint8_t PalWall1Command::AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
 	{
 		uint32_t lit_r = 0;
 		uint32_t lit_g = 0;
@@ -175,7 +175,7 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
+		DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_z = _viewpos_z;
 		float step_viewpos_z = _step_viewpos_z;
@@ -226,7 +226,7 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
+		DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_z = _viewpos_z;
 		float step_viewpos_z = _step_viewpos_z;
@@ -347,7 +347,7 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
+		DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_z = _viewpos_z;
 		float step_viewpos_z = _step_viewpos_z;
@@ -421,7 +421,7 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
+		DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_z = _viewpos_z;
 		float step_viewpos_z = _step_viewpos_z;
@@ -494,7 +494,7 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
+		DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_z = _viewpos_z;
 		float step_viewpos_z = _step_viewpos_z;
@@ -1874,7 +1874,7 @@ namespace swrenderer
 		_step_viewpos_x = args.dc_viewpos_step.X;
 	}
 
-	uint8_t PalSpanCommand::AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
+	uint8_t PalSpanCommand::AddLights(const DrawerLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
 	{
 		uint32_t lit_r = 0;
 		uint32_t lit_g = 0;
@@ -1949,7 +1949,7 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
@@ -2037,7 +2037,7 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
@@ -2113,7 +2113,7 @@ namespace swrenderer
 
 		const PalEntry *palette = GPalette.BaseColors;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
@@ -2219,7 +2219,7 @@ namespace swrenderer
 
 		const PalEntry *palette = GPalette.BaseColors;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
@@ -2360,7 +2360,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		const PalEntry *palette = GPalette.BaseColors;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
@@ -2483,7 +2483,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		const PalEntry *palette = GPalette.BaseColors;
 
-		const TriLight *dynlights = _dynlights;
+		const DrawerLight *dynlights = _dynlights;
 		int num_dynlights = _num_dynlights;
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;

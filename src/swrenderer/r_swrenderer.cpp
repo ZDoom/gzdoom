@@ -47,7 +47,6 @@
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 #include "drawers/r_draw_rgba.h"
-#include "drawers/r_drawers.h"
 #include "polyrenderer/poly_renderer.h"
 #include "p_setup.h"
 

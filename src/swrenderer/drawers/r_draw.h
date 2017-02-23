@@ -6,7 +6,6 @@
 
 struct FSWColormap;
 struct FLightNode;
-struct TriLight;
 
 EXTERN_CVAR(Bool, r_multithreaded);
 EXTERN_CVAR(Bool, r_magfilter);

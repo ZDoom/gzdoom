@@ -24,7 +24,7 @@
 
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "swrenderer/drawers/r_drawers.h"
+#include "screen_triangle.h"
 
 class FTexture;
 

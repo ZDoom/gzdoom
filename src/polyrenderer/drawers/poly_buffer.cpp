@@ -34,7 +34,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_buffer.h"
-#include "swrenderer/drawers/r_drawers.h"
+#include "screen_triangle.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

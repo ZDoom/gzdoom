@@ -43,7 +43,6 @@
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 #include "drawers/r_draw_rgba.h"
-#include "drawers/r_drawers.h"
 
 EXTERN_CVAR(Bool, r_blendmethod)
 

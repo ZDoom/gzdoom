@@ -5,7 +5,6 @@
 
 struct FSWColormap;
 struct FLightNode;
-struct TriLight;
 
 namespace swrenderer
 {
@@ -54,7 +53,7 @@ namespace swrenderer
 		FVector3 dc_normal;
 		FVector3 dc_viewpos;
 		FVector3 dc_viewpos_step;
-		TriLight *dc_lights = nullptr;
+		DrawerLight *dc_lights = nullptr;
 		int dc_num_lights = 0;
 
 	private:

@@ -18,7 +18,7 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalWallCommand"; }
 
 	protected:
-		inline static uint8_t AddLights(const TriLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
+		inline static uint8_t AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
 
 		uint32_t _iscale;
 		uint32_t _texturefrac;
@@ -31,7 +31,7 @@ namespace swrenderer
 		int _pitch;
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
-		TriLight *_dynlights;
+		DrawerLight *_dynlights;
 		int _num_dynlights;
 		float _viewpos_z;
 		float _step_viewpos_z;
@@ -134,7 +134,7 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalSpanCommand"; }
 
 	protected:
-		inline static uint8_t AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material);
+		inline static uint8_t AddLights(const DrawerLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material);
 
 		const uint8_t *_source;
 		const uint8_t *_colormap;
@@ -153,7 +153,7 @@ namespace swrenderer
 		int _color;
 		fixed_t _srcalpha;
 		fixed_t _destalpha;
-		TriLight *_dynlights;
+		DrawerLight *_dynlights;
 		int _num_dynlights;
 		float _viewpos_x;
 		float _step_viewpos_x;

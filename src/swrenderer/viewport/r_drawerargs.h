@@ -13,13 +13,19 @@
 
 struct FSWColormap;
 struct FLightNode;
-struct TriLight;
 
 namespace swrenderer
 {
 	class SWPixelFormatDrawers;
 	class DrawerArgs;
 	struct ShadeConstants;
+
+	struct DrawerLight
+	{
+		uint32_t color;
+		float x, y, z;
+		float radius;
+	};
 
 	class DrawerArgs
 	{

@@ -25,7 +25,6 @@
 #include "r_draw.h"
 #include "v_palette.h"
 #include "r_thread.h"
-#include "r_drawers.h"
 #include "swrenderer/viewport/r_skydrawer.h"
 #include "swrenderer/viewport/r_spandrawer.h"
 #include "swrenderer/viewport/r_walldrawer.h"

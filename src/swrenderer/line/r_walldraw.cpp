@@ -29,7 +29,6 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "swrenderer/drawers/r_drawers.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_opaque_pass.h"
@@ -200,7 +199,7 @@ namespace swrenderer
 			}
 
 			drawerargs.dc_num_lights = 0;
-			drawerargs.dc_lights = Thread->FrameMemory->AllocMemory<TriLight>(max_lights);
+			drawerargs.dc_lights = Thread->FrameMemory->AllocMemory<DrawerLight>(max_lights);
 
 			// Setup lights for column
 			cur_node = light_list;

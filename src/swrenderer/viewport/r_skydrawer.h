@@ -5,7 +5,6 @@
 
 struct FSWColormap;
 struct FLightNode;
-struct TriLight;
 
 namespace swrenderer
 {

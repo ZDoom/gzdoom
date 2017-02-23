@@ -204,7 +204,7 @@ namespace swrenderer
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y - 0.5) / viewport->InvZtoScale * zspan);
 			drawerargs.dc_viewpos_step.X = (float)(zspan / viewport->CenterX);
 
-			static TriLight lightbuffer[64 * 1024];
+			static DrawerLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
 			
 			// Plane normal

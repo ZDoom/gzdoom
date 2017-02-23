@@ -231,7 +231,7 @@ public:
 	int				me;					// wbs->pnum
 	EState			state;				// specifies current state
 	wbstartstruct_t *wbs;				// contains information passed into intermission
-	wbplayerstruct_t*plrs;				// wbs->plyr[]
+	wbplayerstruct_t* Plrs[MAXPLAYERS];				// wbs->plyr[]
 	int				cnt;				// used for general timing
 	int				bcnt;				// used for timing of background animation
 	int				cnt_kills[MAXPLAYERS];
@@ -1192,12 +1192,12 @@ public:
 			if (playeringame[i]
 				&& i!=playernum)
 			{
-				frags += plrs[playernum].frags[i];
+				frags += Plrs[playernum]->frags[i];
 			}
 		}
 		
 		// JDC hack - negative frags.
-		frags -= plrs[playernum].frags[playernum];
+		frags -= Plrs[playernum]->frags[playernum];
 
 		return frags;
 	}
@@ -1225,9 +1225,9 @@ public:
 			{
 				for (j = 0; j < MAXPLAYERS; j++)
 					if (playeringame[j])
-						player_deaths[i] += plrs[j].frags[i];
+						player_deaths[i] += Plrs[j]->frags[i];
 				total_deaths += player_deaths[i];
-				total_frags += plrs[i].fragcount;
+				total_frags += Plrs[i]->fragcount;
 			}
 		}
 	}
@@ -1250,7 +1250,7 @@ public:
 				if (!playeringame[i])
 					continue;
 
-				cnt_frags[i] = plrs[i].fragcount;
+				cnt_frags[i] = Plrs[i]->fragcount;
 				cnt_deaths[i] = player_deaths[i];
 			}
 			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
@@ -1271,8 +1271,8 @@ public:
 
 				cnt_frags[i] += 2;
 
-				if (cnt_frags[i] > plrs[i].fragcount)
-					cnt_frags[i] = plrs[i].fragcount;
+				if (cnt_frags[i] > Plrs[i]->fragcount)
+					cnt_frags[i] = Plrs[i]->fragcount;
 				else
 					stillticking = true;
 			}
@@ -1443,7 +1443,7 @@ public:
 		// Draw game time
 		y += height + CleanYfac;
 
-		int seconds = Tics2Seconds(plrs[me].stime);
+		int seconds = Tics2Seconds(Plrs[me]->stime);
 		int hours = seconds / 3600;
 		int minutes = (seconds % 3600) / 60;
 		seconds = seconds % 60;
@@ -1502,9 +1502,9 @@ public:
 				if (!playeringame[i])
 					continue;
 
-				cnt_kills[i] = plrs[i].skills;
-				cnt_items[i] = plrs[i].sitems;
-				cnt_secret[i] = plrs[i].ssecret;
+				cnt_kills[i] = Plrs[i]->skills;
+				cnt_items[i] = Plrs[i]->sitems;
+				cnt_secret[i] = Plrs[i]->ssecret;
 
 				if (dofrags)
 					cnt_frags[i] = WI_fragSum (i);
@@ -1527,8 +1527,8 @@ public:
 
 				cnt_kills[i] += 2;
 
-				if (cnt_kills[i] > plrs[i].skills)
-					cnt_kills[i] = plrs[i].skills;
+				if (cnt_kills[i] > Plrs[i]->skills)
+					cnt_kills[i] = Plrs[i]->skills;
 				else
 					stillticking = true;
 			}
@@ -1552,8 +1552,8 @@ public:
 					continue;
 
 				cnt_items[i] += 2;
-				if (cnt_items[i] > plrs[i].sitems)
-					cnt_items[i] = plrs[i].sitems;
+				if (cnt_items[i] > Plrs[i]->sitems)
+					cnt_items[i] = Plrs[i]->sitems;
 				else
 					stillticking = true;
 			}
@@ -1577,8 +1577,8 @@ public:
 
 				cnt_secret[i] += 2;
 
-				if (cnt_secret[i] > plrs[i].ssecret)
-					cnt_secret[i] = plrs[i].ssecret;
+				if (cnt_secret[i] > Plrs[i]->ssecret)
+					cnt_secret[i] = Plrs[i]->ssecret;
 				else
 					stillticking = true;
 			}
@@ -1794,10 +1794,10 @@ public:
 			sp_state = 10;
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 
-			cnt_kills[0] = plrs[me].skills;
-			cnt_items[0] = plrs[me].sitems;
-			cnt_secret[0] = plrs[me].ssecret;
-			cnt_time = Tics2Seconds(plrs[me].stime);
+			cnt_kills[0] = Plrs[me]->skills;
+			cnt_items[0] = Plrs[me]->sitems;
+			cnt_secret[0] = Plrs[me]->ssecret;
+			cnt_time = Tics2Seconds(Plrs[me]->stime);
 			cnt_par = wbs->partime / TICRATE;
 			cnt_total_time = Tics2Seconds(wbs->totaltime);
 		}
@@ -1811,9 +1811,9 @@ public:
 				if (!(bcnt&3))
 					S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 			}
-			if (!gameinfo.intermissioncounter || cnt_kills[0] >= plrs[me].skills)
+			if (!gameinfo.intermissioncounter || cnt_kills[0] >= Plrs[me]->skills)
 			{
-				cnt_kills[0] = plrs[me].skills;
+				cnt_kills[0] = Plrs[me]->skills;
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 				sp_state++;
 			}
@@ -1827,9 +1827,9 @@ public:
 				if (!(bcnt&3))
 					S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 			}
-			if (!gameinfo.intermissioncounter || cnt_items[0] >= plrs[me].sitems)
+			if (!gameinfo.intermissioncounter || cnt_items[0] >= Plrs[me]->sitems)
 			{
-				cnt_items[0] = plrs[me].sitems;
+				cnt_items[0] = Plrs[me]->sitems;
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 				sp_state++;
 			}
@@ -1843,9 +1843,9 @@ public:
 				if (!(bcnt&3))
 					S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 			}
-			if (!gameinfo.intermissioncounter || cnt_secret[0] >= plrs[me].ssecret)
+			if (!gameinfo.intermissioncounter || cnt_secret[0] >= Plrs[me]->ssecret)
 			{
-				cnt_secret[0] = plrs[me].ssecret;
+				cnt_secret[0] = Plrs[me]->ssecret;
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 				sp_state++;
 			}
@@ -1862,7 +1862,7 @@ public:
 				cnt_total_time += 3;
 			}
 
-			int sec = Tics2Seconds(plrs[me].stime);
+			int sec = Tics2Seconds(Plrs[me]->stime);
 			if (!gameinfo.intermissioncounter || cnt_time >= sec)
 				cnt_time = sec;
 
@@ -2141,7 +2141,7 @@ public:
 		acceleratestage = 0;
 		cnt = bcnt = 0;
 		me = wbs->pnum;
-		plrs = wbs->plyr;
+		for (int i = 0; i < 8; i++) Plrs[i] = &wbs->plyr[i];
 	}
 
 	void WI_Start (wbstartstruct_t *wbstartstruct)
@@ -2180,3 +2180,27 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 {
 	WI_Screen.WI_Start(wbstartstruct);
 }
+
+
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, skills);
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, sitems);
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, ssecret);
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, stime);
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, frags);
+DEFINE_FIELD_X(WBPlayerStruct, wbplayerstruct_t, fragcount);
+
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, finished_ep);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next_ep);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxitems);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxsecret);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxfrags);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, partime);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, sucktime);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, totaltime);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, pnum);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, plyr);

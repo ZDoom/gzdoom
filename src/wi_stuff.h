@@ -32,8 +32,6 @@ class FTexture;
 //
 struct wbplayerstruct_t
 {
-	bool		in;			// whether the player is in game
-
 	// Player stats, kills, collected items etc.
 	int			skills;
 	int			sitems;

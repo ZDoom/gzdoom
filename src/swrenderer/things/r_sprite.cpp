@@ -59,6 +59,7 @@
 #include "gl/dynlights/gl_dynlight.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+EXTERN_CVAR(Bool, gl_light_sprites)
 
 namespace swrenderer
 {
@@ -227,7 +228,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 		
-		if (r_dynlights)
+		if (r_dynlights && gl_light_sprites)
 		{
 			float lit_red = 0;
 			float lit_green = 0;
@@ -238,9 +239,9 @@ namespace swrenderer
 				ADynamicLight *light = node->lightsource;
 				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->flags4&MF4_DONTLIGHTSELF) || light->target != thing))
 				{
-					float lx = (float)(light->X() - pos.X);
-					float ly = (float)(light->Y() - pos.Y);
-					float lz = (float)(light->Z() - pos.Z);
+					float lx = (float)(light->X() - thing->X());
+					float ly = (float)(light->Y() - thing->Y());
+					float lz = (float)(light->Z() - thing->Center());
 					float LdotL = lx * lx + ly * ly + lz * lz;
 					float radius = node->lightsource->GetRadius();
 					if (radius * radius >= LdotL)

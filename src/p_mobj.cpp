@@ -1059,7 +1059,7 @@ DEFINE_ACTION_FUNCTION(AActor, DropInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	PARAM_INT(amt);
+	PARAM_INT_DEF(amt);
 	ACTION_RETURN_OBJECT(self->DropInventory(item, amt));
 }
 

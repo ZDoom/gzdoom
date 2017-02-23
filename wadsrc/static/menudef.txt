@@ -1409,7 +1409,6 @@ OptionMenu "CompatibilityOptions"
 	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
 	Option "$CMPTMNU_TELEPORT",						"compat_teleport", "YesNo"
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
-	Option "$CMPTMNU_CLIPMIDTEX",					"compat_clipmidtex", "YesNo"
 	
 	StaticText " "
 	StaticText "$CMPTMNU_PHYSICSBEHAVIOR",1

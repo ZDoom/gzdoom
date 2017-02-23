@@ -53,13 +53,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -150,13 +149,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -314,6 +312,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -322,10 +323,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -416,6 +416,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -424,10 +427,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -601,13 +603,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -657,7 +658,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -686,7 +686,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -702,13 +701,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -799,7 +797,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -848,7 +845,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -870,6 +866,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -878,10 +877,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -931,9 +929,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -952,7 +948,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -981,9 +977,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1002,7 +996,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -1018,6 +1012,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -1026,10 +1023,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -1120,9 +1116,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1141,7 +1135,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -1190,9 +1184,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1211,7 +1203,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -1249,13 +1241,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -1306,7 +1297,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -1365,7 +1355,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -1410,13 +1399,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -1508,7 +1496,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -1587,7 +1574,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -1638,6 +1624,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -1646,10 +1635,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -1700,9 +1688,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1721,7 +1707,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -1780,9 +1766,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1801,7 +1785,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -1846,6 +1830,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -1854,10 +1841,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -1949,9 +1935,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -1970,7 +1954,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -2049,9 +2033,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -2070,7 +2052,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -2137,13 +2119,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -2194,7 +2175,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -2253,7 +2233,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -2298,13 +2277,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -2396,7 +2374,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -2475,7 +2452,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -2526,6 +2502,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -2534,10 +2513,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -2588,9 +2566,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -2609,7 +2585,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -2668,9 +2644,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -2689,7 +2663,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -2734,6 +2708,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -2742,10 +2719,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -2837,9 +2813,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -2858,7 +2832,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -2937,9 +2911,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -2958,7 +2930,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -3025,13 +2997,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -3082,7 +3053,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -3141,7 +3111,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -3186,13 +3155,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -3284,7 +3252,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -3363,7 +3330,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -3414,6 +3380,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -3422,10 +3391,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -3476,9 +3444,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -3497,7 +3463,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -3556,9 +3522,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -3577,7 +3541,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -3622,6 +3586,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -3630,10 +3597,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -3725,9 +3691,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -3746,7 +3710,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -3825,9 +3789,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -3846,7 +3808,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -3910,13 +3872,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -3964,7 +3925,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -3992,7 +3952,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -4010,6 +3969,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -4018,10 +3980,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4069,9 +4030,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4090,7 +4049,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4118,9 +4077,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4139,7 +4096,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4173,13 +4130,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4228,7 +4184,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -4286,7 +4241,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -4333,6 +4287,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -4341,10 +4298,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4393,9 +4349,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4414,7 +4368,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4472,9 +4426,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4493,7 +4445,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4556,13 +4508,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4611,7 +4562,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -4669,7 +4619,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -4716,6 +4665,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -4724,10 +4676,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4776,9 +4727,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4797,7 +4746,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4855,9 +4804,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -4876,7 +4823,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -4939,13 +4886,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -4994,7 +4940,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5052,7 +4997,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5099,6 +5043,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -5107,10 +5054,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5159,9 +5105,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -5180,7 +5124,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -5238,9 +5182,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -5259,7 +5201,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -5323,13 +5265,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5437,6 +5378,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -5445,10 +5389,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5572,13 +5515,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5626,7 +5568,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5654,7 +5595,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5673,6 +5613,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -5681,10 +5624,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5732,9 +5674,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -5753,7 +5693,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -5781,9 +5721,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -5802,7 +5740,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -5837,13 +5775,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -5892,7 +5829,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5950,7 +5886,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -5998,6 +5933,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -6006,10 +5944,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -6058,9 +5995,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6079,7 +6014,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -6137,9 +6072,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6158,7 +6091,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -6222,13 +6155,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -6277,7 +6209,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -6335,7 +6266,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -6383,6 +6313,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -6391,10 +6324,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -6443,9 +6375,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6464,7 +6394,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -6522,9 +6452,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6543,7 +6471,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -6607,13 +6535,12 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
-					int light = 256 - (args.Light() >> (FRACBITS - 8));
-					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
-
 					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
 					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
 					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					int light = 256 - (args.Light() >> (FRACBITS - 8));
+					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+					mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -6662,7 +6589,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -6720,7 +6646,6 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						mlight = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 
 						// Blend
@@ -6768,6 +6693,9 @@ namespace swrenderer
 					uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 					
 					// Shade constants
+					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
+					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
+					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
 					int light = 256 - (args.Light() >> (FRACBITS - 8));
 					__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 					__m128i inv_light = _mm_set_epi16(0, 256 - light, 256 - light, 256 - light, 0, 256 - light, 256 - light, 256 - light);
@@ -6776,10 +6704,9 @@ namespace swrenderer
 					shade_fade = _mm_mullo_epi16(shade_fade, inv_light);
 					__m128i shade_light = _mm_set_epi16(shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue);
 					int desaturate = shade_constants.desaturate;
-
-					__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());
-					dynlight = _mm_unpacklo_epi8(dynlight, _mm_setzero_si128());
-					dynlight = _mm_shuffle_epi32(dynlight, _MM_SHUFFLE(1,0,1,0));
+					
+					__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
+					lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
 					
 					int count = args.Count();
 					int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
@@ -6828,9 +6755,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6849,7 +6774,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend
@@ -6907,9 +6832,7 @@ namespace swrenderer
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 
 						// Shade
-						__m128i lightcontrib = _mm_min_epi16(_mm_add_epi16(mlight, dynlight), _mm_set1_epi16(256));
-						lightcontrib = _mm_sub_epi16(lightcontrib, mlight);
-						lightcontrib = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
+						__m128i lit_dynlight = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, lightcontrib), 8);
 
 						int blue0 = BPART(ifgcolor[0]);
 						int green0 = GPART(ifgcolor[0]);
@@ -6928,7 +6851,7 @@ namespace swrenderer
 						fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
 						fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
 						
-						fgcolor = _mm_add_epi16(fgcolor, lightcontrib);
+						fgcolor = _mm_add_epi16(fgcolor, lit_dynlight);
 						fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(256));
 
 						// Blend

@@ -290,6 +290,12 @@ struct CVar native
 	native int ResetToDefault();
 }
 
+struct GIFont
+{
+	Name fontname;
+	Name color;
+};
+
 struct GameInfoStruct native
 {
 	// will be extended as needed.
@@ -301,6 +307,9 @@ struct GameInfoStruct native
 	native bool norandomplayerclass;
 	native Array<Name> infoPages;
 	native String mBackButton;
+	native GIFont mStatscreenMapNameFont;
+	native GIFont mStatscreenEnteringFont;
+	native GIFont mStatscreenFinishedFont;
 }
 
 class Object native

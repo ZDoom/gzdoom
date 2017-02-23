@@ -87,8 +87,6 @@ const char *GetVersionString();
 // SVN revision ever got.
 #define SAVEVER 4550
 
-#define DYNLIGHT
-
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "QZDOOM"
 #define BASEWAD "qzdoom.pk3"

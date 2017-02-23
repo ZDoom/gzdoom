@@ -2821,6 +2821,8 @@ void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool alwa
 		"Unloading",
 		"Disconnect",
 		"Return",
+		"Event",
+		"Kill",
 		"Reopen"
 	};
 	DPrintf(DMSG_NOTIFY, "Starting all scripts of type %d (%s)\n", type,

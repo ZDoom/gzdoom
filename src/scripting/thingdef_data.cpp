@@ -851,7 +851,10 @@ void InitThingdef()
 	fieldptr = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
-	fieldptr = new PField("gameaction", TypeUInt8, VARF_Native | VARF_Static, (intptr_t)&gameaction);
+	fieldptr = new PField("gameaction", TypeUInt32, VARF_Native | VARF_Static, (intptr_t)&gameaction);
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
+
+	fieldptr = new PField("gamestate", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gamestate);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
 	fieldptr = new PField("skyflatnum", TypeTextureID, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&skyflatnum);

@@ -1029,6 +1029,18 @@ enum PaletteFlashFlags
 	PF_HAZARD			= 8,
 };
 
+enum EGameState
+{
+	GS_LEVEL,
+	GS_INTERMISSION,
+	GS_FINALE,
+	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,
+	GS_HIDECONSOLE,
+	GS_STARTUP,
+	GS_TITLELEVEL,
+}
+
 enum EGameAction
 {
 	ga_nothing,

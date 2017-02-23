@@ -588,20 +588,6 @@ add_custom_target( revision_check ALL
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
-# Run drawer codegen tool
-
-if ( WIN32 )
-	add_custom_target( drawergen_target ALL
-		COMMAND drawergen src/r_drawersasm.obj
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		DEPENDS drawergen )
-else()
-	add_custom_target( drawergen_target ALL
-		COMMAND drawergen src/r_drawersasm.o
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		DEPENDS drawergen )
-endif()
-
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
@@ -857,7 +843,6 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/drawers/r_draw.cpp
 	swrenderer/drawers/r_draw_pal.cpp
 	swrenderer/drawers/r_draw_rgba.cpp
-	swrenderer/drawers/r_drawers.cpp
 	swrenderer/drawers/r_thread.cpp
 	swrenderer/scene/r_3dfloors.cpp
 	swrenderer/scene/r_light.cpp
@@ -1296,16 +1281,6 @@ set (PCH_SOURCES
 )
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
-if ( WIN32 )
-	set (CODEGENOBJ_SOURCES
-		r_drawersasm.obj
-	)
-else()
-	set (CODEGENOBJ_SOURCES
-		r_drawersasm.o
-	)
-endif()
-
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
@@ -1336,10 +1311,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tanh.c
 	math/fastsin.cpp
 	zzautozend.cpp
-	${CMAKE_BINARY_DIR}/src/${CODEGENOBJ_SOURCES}
 )
-
-set_source_files_properties( ${CODEGENOBJ_SOURCES} PROPERTIES EXTERNAL_OBJECT true GENERATED true)
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
@@ -1378,7 +1350,7 @@ include_directories( .
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
-add_dependencies( zdoom revision_check drawergen_target )
+add_dependencies( zdoom revision_check )
 
 # Due to some quirks, we need to do this in this order
 if( NOT ZDOOM_OUTPUT_OLDSTYLE )

@@ -85,8 +85,6 @@ void PolyTriangleDrawer::draw(const PolyDrawArgs &args)
 	PolyRenderer::Instance()->Thread.DrawQueue->Push<DrawPolyTrianglesCommand>(args, mirror);
 }
 
-EXTERN_CVAR(Bool, r_phpdrawers);
-
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadData *thread)
 {
 	if (drawargs.vcount < 3)
@@ -100,21 +98,11 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	if (!r_debug_trisetup) // For profiling how much time is spent in setup vs drawal
 	{
 		int bmode = (int)drawargs.blendmode;
-		if (r_phpdrawers)
-		{
-			if (drawargs.writeColor && drawargs.texturePixels)
-				drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDraw32[bmode] : ScreenTriangle::TriDraw8[bmode];
-			else if (drawargs.writeColor)
-				drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriFill32[bmode] : ScreenTriangle::TriFill8[bmode];
-		}
-		else
-		{
-			auto llvm = Drawers::Instance();
-			if (drawargs.writeColor && drawargs.texturePixels)
-				drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
-			else if (drawargs.writeColor)
-				drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
-		}
+
+		if (drawargs.writeColor && drawargs.texturePixels)
+			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDraw32[bmode] : ScreenTriangle::TriDraw8[bmode];
+		else if (drawargs.writeColor)
+			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriFill32[bmode] : ScreenTriangle::TriFill8[bmode];
 	}
 
 	if (drawargs.writeStencil)

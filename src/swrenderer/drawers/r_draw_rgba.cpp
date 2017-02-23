@@ -62,104 +62,66 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
 
-CVAR(Bool, r_phpdrawers, false, 0);
-
 namespace swrenderer
 {
 	void SWTruecolorDrawers::DrawWallColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWall32Command>(args);
-		else
-			Queue->Push<DrawWall1LLVMCommand>(args);
+		Queue->Push<DrawWall32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallMaskedColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWallMasked32Command>(args);
-		else
-			Queue->Push<DrawWallMasked1LLVMCommand>(args);
+		Queue->Push<DrawWallMasked32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallAddColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWallAddClamp32Command>(args);
-		else
-			Queue->Push<DrawWallAdd1LLVMCommand>(args);
+		Queue->Push<DrawWallAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallAddClampColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWallAddClamp32Command>(args);
-		else
-			Queue->Push<DrawWallAddClamp1LLVMCommand>(args);
+		Queue->Push<DrawWallAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallSubClampColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWallSubClamp32Command>(args);
-		else
-			Queue->Push<DrawWallSubClamp1LLVMCommand>(args);
+		Queue->Push<DrawWallSubClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallRevSubClampColumn(const WallDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawWallRevSubClamp32Command>(args);
-		else
-			Queue->Push<DrawWallRevSubClamp1LLVMCommand>(args);
+		Queue->Push<DrawWallRevSubClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSprite32Command>(args);
-		else
-			Queue->Push<DrawColumnLLVMCommand>(args);
+		Queue->Push<DrawSprite32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<FillSprite32Command>(args);
-		else
-			Queue->Push<FillColumnLLVMCommand>(args);
+		Queue->Push<FillSprite32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillAddColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<FillSpriteAddClamp32Command>(args);
-		else
-			Queue->Push<FillColumnAddLLVMCommand>(args);
+		Queue->Push<FillSpriteAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillAddClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<FillSpriteAddClamp32Command>(args);
-		else
-			Queue->Push<FillColumnAddClampLLVMCommand>(args);
+		Queue->Push<FillSpriteAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<FillSpriteSubClamp32Command>(args);
-		else
-			Queue->Push<FillColumnSubClampLLVMCommand>(args);
+		Queue->Push<FillSpriteSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillRevSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<FillSpriteRevSubClamp32Command>(args);
-		else
-			Queue->Push<FillColumnRevSubClampLLVMCommand>(args);
+		Queue->Push<FillSpriteRevSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawFuzzColumn(const SpriteDrawerArgs &args)
@@ -170,410 +132,92 @@ namespace swrenderer
 
 	void SWTruecolorDrawers::DrawAddColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteAddClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnAddLLVMCommand>(args);
+		Queue->Push<DrawSpriteAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteTranslated32Command>(args);
-		else
-			Queue->Push<DrawColumnTranslatedLLVMCommand>(args);
+		Queue->Push<DrawSpriteTranslated32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawTranslatedAddColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnTlatedAddLLVMCommand>(args);
+		Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawShadedColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteShaded32Command>(args);
-		else
-			Queue->Push<DrawColumnShadedLLVMCommand>(args);
+		Queue->Push<DrawSpriteShaded32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteAddClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnAddClampLLVMCommand>(args);
+		Queue->Push<DrawSpriteAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnAddClampTranslatedLLVMCommand>(args);
+		Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteSubClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnSubClampLLVMCommand>(args);
+		Queue->Push<DrawSpriteSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteTranslatedSubClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnSubClampTranslatedLLVMCommand>(args);
+		Queue->Push<DrawSpriteTranslatedSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawRevSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteRevSubClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnRevSubClampLLVMCommand>(args);
+		Queue->Push<DrawSpriteRevSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
-		else
-			Queue->Push<DrawColumnRevSubClampTranslatedLLVMCommand>(args);
+		Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawSpan(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpan32Command>(args);
-		else
-			Queue->Push<DrawSpanLLVMCommand>(args);
+		Queue->Push<DrawSpan32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMasked(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpanMasked32Command>(args);
-		else
-			Queue->Push<DrawSpanMaskedLLVMCommand>(args);
+		Queue->Push<DrawSpanMasked32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanTranslucent(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpanTranslucent32Command>(args);
-		else
-			Queue->Push<DrawSpanTranslucentLLVMCommand>(args);
+		Queue->Push<DrawSpanTranslucent32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMaskedTranslucent(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpanAddClamp32Command>(args);
-		else
-			Queue->Push<DrawSpanMaskedTranslucentLLVMCommand>(args);
+		Queue->Push<DrawSpanAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanAddClamp(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpanTranslucent32Command>(args);
-		else
-			Queue->Push<DrawSpanAddClampLLVMCommand>(args);
+		Queue->Push<DrawSpanTranslucent32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMaskedAddClamp(const SpanDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSpanAddClamp32Command>(args);
-		else
-			Queue->Push<DrawSpanMaskedAddClampLLVMCommand>(args);
+		Queue->Push<DrawSpanAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSingleSkyColumn(const SkyDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSkySingle32Command>(args);
-		else
-			Queue->Push<DrawSingleSky1LLVMCommand>(args);
+		Queue->Push<DrawSkySingle32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawDoubleSkyColumn(const SkyDrawerArgs &args)
 	{
-		if (r_phpdrawers)
-			Queue->Push<DrawSkyDouble32Command>(args);
-		else
-			Queue->Push<DrawDoubleSky1LLVMCommand>(args);
-	}
-
-	DrawSpanLLVMCommand::DrawSpanLLVMCommand(const SpanDrawerArgs &drawerargs)
-	{
-		auto shade_constants = drawerargs.ColormapConstants();
-		args.xfrac = drawerargs.TextureUPos();
-		args.yfrac = drawerargs.TextureVPos();
-		args.xstep = drawerargs.TextureUStep();
-		args.ystep = drawerargs.TextureVStep();
-		args.x1 = drawerargs.DestX1();
-		args.x2 = drawerargs.DestX2();
-		args.y = drawerargs.DestY();
-		args.xbits = drawerargs.TextureWidthBits();
-		args.ybits = drawerargs.TextureHeightBits();
-		args.destorg = (uint32_t*)RenderViewport::Instance()->GetDest(0, 0);
-		args.destpitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.source = (const uint32_t*)drawerargs.TexturePixels();
-		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
-		args.light_red = shade_constants.light_red;
-		args.light_green = shade_constants.light_green;
-		args.light_blue = shade_constants.light_blue;
-		args.light_alpha = shade_constants.light_alpha;
-		args.fade_red = shade_constants.fade_red;
-		args.fade_green = shade_constants.fade_green;
-		args.fade_blue = shade_constants.fade_blue;
-		args.fade_alpha = shade_constants.fade_alpha;
-		args.desaturate = shade_constants.desaturate;
-		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
-		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
-		args.flags = 0;
-		if (shade_constants.simple_shade)
-			args.flags |= DrawSpanArgs::simple_shade;
-		if (!sampler_setup(drawerargs.TextureLOD(), args.source, args.xbits, args.ybits, drawerargs.MipmappedTexture()))
-			args.flags |= DrawSpanArgs::nearest_filter;
-
-		args.viewpos_x = drawerargs.dc_viewpos.X;
-		args.step_viewpos_x = drawerargs.dc_viewpos_step.X;
-		args.dynlights = drawerargs.dc_lights;
-		args.num_dynlights = drawerargs.dc_num_lights;
-	}
-
-	void DrawSpanLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpan(&args);
-	}
-
-	FString DrawSpanLLVMCommand::DebugInfo()
-	{
-		return "DrawSpan\n" + args.ToString();
-	}
-
-	bool DrawSpanLLVMCommand::sampler_setup(double lod, const uint32_t * &source, int &xbits, int &ybits, bool mipmapped)
-	{
-		bool magnifying = lod < 0.0;
-		if (r_mipmap && mipmapped)
-		{
-			int level = (int)lod;
-			while (level > 0)
-			{
-				if (xbits <= 2 || ybits <= 2)
-					break;
-
-				source += (1 << (xbits)) * (1 << (ybits));
-				xbits -= 1;
-				ybits -= 1;
-				level--;
-			}
-		}
-
-		return (magnifying && r_magfilter) || (!magnifying && r_minfilter);
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	void DrawSpanMaskedLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpanMasked(&args);
-	}
-
-	void DrawSpanTranslucentLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpanTranslucent(&args);
-	}
-
-	void DrawSpanMaskedTranslucentLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpanMaskedTranslucent(&args);
-	}
-
-	void DrawSpanAddClampLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpanAddClamp(&args);
-	}
-
-	void DrawSpanMaskedAddClampLLVMCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->skipped_by_thread(args.y))
-			return;
-		Drawers::Instance()->DrawSpanMaskedAddClamp(&args);
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	WorkerThreadData DrawWall1LLVMCommand::ThreadData(DrawerThread *thread)
-	{
-		WorkerThreadData d;
-		d.core = thread->core;
-		d.num_cores = thread->num_cores;
-		d.pass_start_y = thread->pass_start_y;
-		d.pass_end_y = thread->pass_end_y;
-		return d;
-	}
-
-	DrawWall1LLVMCommand::DrawWall1LLVMCommand(const WallDrawerArgs &drawerargs)
-	{
-		auto shade_constants = drawerargs.ColormapConstants();
-		args.dest = (uint32_t*)drawerargs.Dest();
-		args.dest_y = drawerargs.DestY();
-		args.pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.count = drawerargs.Count();
-		args.texturefrac[0] = drawerargs.TextureVPos();
-		args.texturefracx[0] = drawerargs.TextureUPos();
-		args.iscale[0] = drawerargs.TextureVStep();
-		args.textureheight[0] = drawerargs.TextureHeight();
-		args.source[0] = (const uint32 *)drawerargs.TexturePixels();
-		args.source2[0] = (const uint32 *)drawerargs.TexturePixels2();
-		args.light[0] = LightBgra::calc_light_multiplier(drawerargs.Light());
-		args.light_red = shade_constants.light_red;
-		args.light_green = shade_constants.light_green;
-		args.light_blue = shade_constants.light_blue;
-		args.light_alpha = shade_constants.light_alpha;
-		args.fade_red = shade_constants.fade_red;
-		args.fade_green = shade_constants.fade_green;
-		args.fade_blue = shade_constants.fade_blue;
-		args.fade_alpha = shade_constants.fade_alpha;
-		args.desaturate = shade_constants.desaturate;
-		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
-		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
-		args.flags = 0;
-		if (shade_constants.simple_shade)
-			args.flags |= DrawWallArgs::simple_shade;
-		if (args.source2[0] == nullptr)
-			args.flags |= DrawWallArgs::nearest_filter;
-
-		args.z = drawerargs.dc_viewpos.Z;
-		args.step_z = drawerargs.dc_viewpos_step.Z;
-		args.dynlights = drawerargs.dc_lights;
-		args.num_dynlights = drawerargs.dc_num_lights;
-	}
-
-	void DrawWall1LLVMCommand::Execute(DrawerThread *thread)
-	{
-		WorkerThreadData d = ThreadData(thread);
-		Drawers::Instance()->vlinec1(&args, &d);
-	}
-
-	FString DrawWall1LLVMCommand::DebugInfo()
-	{
-		return "DrawWall1\n" + args.ToString();
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	WorkerThreadData DrawColumnLLVMCommand::ThreadData(DrawerThread *thread)
-	{
-		WorkerThreadData d;
-		d.core = thread->core;
-		d.num_cores = thread->num_cores;
-		d.pass_start_y = thread->pass_start_y;
-		d.pass_end_y = thread->pass_end_y;
-		return d;
-	}
-
-	FString DrawColumnLLVMCommand::DebugInfo()
-	{
-		return "DrawColumn\n" + args.ToString();
-	}
-
-	DrawColumnLLVMCommand::DrawColumnLLVMCommand(const SpriteDrawerArgs &drawerargs)
-	{
-		auto shade_constants = drawerargs.ColormapConstants();
-
-		args.dest = (uint32_t*)drawerargs.Dest();
-		args.source = drawerargs.TexturePixels();
-		args.source2 = drawerargs.TexturePixels2();
-		args.colormap = drawerargs.Colormap();
-		args.translation = drawerargs.TranslationMap();
-		args.basecolors = (const uint32_t *)GPalette.BaseColors;
-		args.pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.count = drawerargs.Count();
-		args.dest_y = drawerargs.DestY();
-		args.iscale = drawerargs.TextureVStep();
-		args.texturefracx = drawerargs.TextureUPos();
-		args.textureheight = drawerargs.TextureHeight();
-		args.texturefrac = drawerargs.TextureVPos();
-		args.light = LightBgra::calc_light_multiplier(drawerargs.Light());
-		args.color = LightBgra::shade_pal_index_simple(drawerargs.SolidColor(), args.light);
-		args.srccolor = drawerargs.SrcColorBgra();
-		args.srcalpha = drawerargs.SrcAlpha() >> (FRACBITS - 8);
-		args.destalpha = drawerargs.DestAlpha() >> (FRACBITS - 8);
-		args.light_red = shade_constants.light_red;
-		args.light_green = shade_constants.light_green;
-		args.light_blue = shade_constants.light_blue;
-		args.light_alpha = shade_constants.light_alpha;
-		args.fade_red = shade_constants.fade_red;
-		args.fade_green = shade_constants.fade_green;
-		args.fade_blue = shade_constants.fade_blue;
-		args.fade_alpha = shade_constants.fade_alpha;
-		args.desaturate = shade_constants.desaturate;
-		args.flags = 0;
-		if (shade_constants.simple_shade)
-			args.flags |= DrawColumnArgs::simple_shade;
-		if (args.source2 == nullptr)
-			args.flags |= DrawColumnArgs::nearest_filter;
-	}
-
-	void DrawColumnLLVMCommand::Execute(DrawerThread *thread)
-	{
-		WorkerThreadData d = ThreadData(thread);
-		Drawers::Instance()->DrawColumn(&args, &d);
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	WorkerThreadData DrawSkyLLVMCommand::ThreadData(DrawerThread *thread)
-	{
-		WorkerThreadData d;
-		d.core = thread->core;
-		d.num_cores = thread->num_cores;
-		d.pass_start_y = thread->pass_start_y;
-		d.pass_end_y = thread->pass_end_y;
-		return d;
-	}
-
-	DrawSkyLLVMCommand::DrawSkyLLVMCommand(const SkyDrawerArgs &drawerargs)
-	{
-		args.dest = (uint32_t*)drawerargs.Dest();
-		args.dest_y = drawerargs.DestY();
-		args.count = drawerargs.Count();
-		args.pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		args.texturefrac[0] = drawerargs.TextureVPos();
-		args.iscale[0] = drawerargs.TextureVStep();
-		args.source0[0] = (const uint32_t *)drawerargs.FrontTexturePixels();
-		args.source1[0] = (const uint32_t *)drawerargs.BackTexturePixels();
-		args.textureheight0 = drawerargs.FrontTextureHeight();
-		args.textureheight1 = drawerargs.BackTextureHeight();
-		args.top_color = drawerargs.SolidTopColor();
-		args.bottom_color = drawerargs.SolidBottomColor();
-		args.flags = drawerargs.FadeSky() ? DrawSkyArgs::fade_sky : 0;
-	}
-
-	FString DrawSkyLLVMCommand::DebugInfo()
-	{
-		return "DrawSky\n" + args.ToString();
+		Queue->Push<DrawSkyDouble32Command>(args);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////

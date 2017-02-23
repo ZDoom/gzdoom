@@ -7,6 +7,5 @@ if( WIN32 AND NOT CMAKE_SIZEOF_VOID_P MATCHES "8" )
 endif()
 add_subdirectory( updaterevision )
 add_subdirectory( zipdir )
-add_subdirectory( drawergen )
 
 set( CROSS_EXPORTS ${CROSS_EXPORTS} PARENT_SCOPE )

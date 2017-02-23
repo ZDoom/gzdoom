@@ -76,6 +76,8 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalColumnCommand"; }
 
 	protected:
+		uint8_t AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b);
+		
 		int _count;
 		uint8_t *_dest;
 		int _dest_y;
@@ -91,6 +93,8 @@ namespace swrenderer
 		uint32_t _srccolor;
 		fixed_t _srcalpha;
 		fixed_t _destalpha;
+		uint32_t _dynlight;
+		fixed_t _light;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };

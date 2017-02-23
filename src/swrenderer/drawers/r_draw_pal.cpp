@@ -882,6 +882,24 @@ namespace swrenderer
 		_srccolor = args.SrcColorIndex();
 		_srcalpha = args.SrcAlpha();
 		_destalpha = args.DestAlpha();
+		_dynlight = args.DynamicLight();
+		_light = args.Light();
+	}
+
+	uint8_t PalColumnCommand::AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b)
+	{
+		if (lit_r == 0 && lit_g == 0 && lit_b == 0)
+			return fg;
+
+		uint32_t material_r = GPalette.BaseColors[material].r;
+		uint32_t material_g = GPalette.BaseColors[material].g;
+		uint32_t material_b = GPalette.BaseColors[material].b;
+
+		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
+
+		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
@@ -915,20 +933,42 @@ namespace swrenderer
 		//		has a better chance of optimizing this well.
 		const uint8_t *colormap = _colormap;
 		const uint8_t *source = _source;
-
-		// Inner loop that does the actual texture mapping,
-		//	e.g. a DDA-lile scaling.
-		// This is as fast as it gets.
-		do
+		
+		if (_dynlight == 0)
 		{
-			// Re-map color indices from wall texture column
-			//	using a lighting/special effects LUT.
-			*dest = colormap[source[frac >> FRACBITS]];
+			do
+			{
+				*dest = colormap[source[frac >> FRACBITS]];
 
-			dest += pitch;
-			frac += fracstep;
+				dest += pitch;
+				frac += fracstep;
 
-		} while (--count);
+			} while (--count);
+		}
+		else
+		{
+			uint32_t lit_r = RPART(_dynlight);
+			uint32_t lit_g = GPART(_dynlight);
+			uint32_t lit_b = BPART(_dynlight);
+			uint32_t light = 256 - (_light >> (FRACBITS - 8));
+			lit_r = MIN<uint32_t>(light + lit_r, 256);
+			lit_g = MIN<uint32_t>(light + lit_g, 256);
+			lit_b = MIN<uint32_t>(light + lit_b, 256);
+			lit_r = lit_r - light;
+			lit_g = lit_g - light;
+			lit_b = lit_b - light;
+			
+			do
+			{
+				auto material = source[frac >> FRACBITS];
+				auto fg = colormap[material];
+				*dest = AddLights(fg, material, lit_r, lit_g, lit_b);
+
+				dest += pitch;
+				frac += fracstep;
+
+			} while (--count);
+		}
 	}
 
 	void FillColumnPalCommand::Execute(DrawerThread *thread)

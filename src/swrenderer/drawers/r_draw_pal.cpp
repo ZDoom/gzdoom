@@ -121,10 +121,6 @@ namespace swrenderer
 		uint32_t lit_g = 0;
 		uint32_t lit_b = 0;
 
-		uint32_t material_r = GPalette.BaseColors[material].r;
-		uint32_t material_g = GPalette.BaseColors[material].g;
-		uint32_t material_b = GPalette.BaseColors[material].b;
-
 		for (int i = 0; i < num_lights; i++)
 		{
 			uint32_t light_color_r = RPART(lights[i].color);
@@ -157,6 +153,13 @@ namespace swrenderer
 			lit_g += (light_color_g * attenuation) >> 8;
 			lit_b += (light_color_b * attenuation) >> 8;
 		}
+
+		if (lit_r == 0 && lit_g == 0 && lit_b == 0)
+			return fg;
+
+		uint32_t material_r = GPalette.BaseColors[material].r;
+		uint32_t material_g = GPalette.BaseColors[material].g;
+		uint32_t material_b = GPalette.BaseColors[material].b;
 
 		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
 		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
@@ -1920,10 +1923,6 @@ namespace swrenderer
 		uint32_t lit_g = 0;
 		uint32_t lit_b = 0;
 
-		uint32_t material_r = GPalette.BaseColors[material].r;
-		uint32_t material_g = GPalette.BaseColors[material].g;
-		uint32_t material_b = GPalette.BaseColors[material].b;
-
 		for (int i = 0; i < num_lights; i++)
 		{
 			uint32_t light_color_r = RPART(lights[i].color);
@@ -1956,6 +1955,13 @@ namespace swrenderer
 			lit_g += (light_color_g * attenuation) >> 8;
 			lit_b += (light_color_b * attenuation) >> 8;
 		}
+
+		if (lit_r == 0 && lit_g == 0 && lit_b == 0)
+			return fg;
+
+		uint32_t material_r = GPalette.BaseColors[material].r;
+		uint32_t material_g = GPalette.BaseColors[material].g;
+		uint32_t material_b = GPalette.BaseColors[material].b;
 
 		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
 		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);

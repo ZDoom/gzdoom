@@ -2176,7 +2176,8 @@ void P_LoadLineDefs (MapData * map)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if ((level.flags2 & LEVEL2_CLIPMIDTEX) || (ii_compatflags2 & COMPATF2_CLIPMIDTEX))
+			ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
@@ -2262,7 +2263,8 @@ void P_LoadLineDefs2 (MapData * map)
 		P_AdjustLine (ld);
 		P_SetLineID(i, ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if ((level.flags2 & LEVEL2_CLIPMIDTEX) || (ii_compatflags2 & COMPATF2_CLIPMIDTEX))
+			ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 

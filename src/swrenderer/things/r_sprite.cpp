@@ -238,24 +238,15 @@ namespace swrenderer
 				ADynamicLight *light = node->lightsource;
 				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->flags4&MF4_DONTLIGHTSELF) || light->target != thing))
 				{
-					double lightX = light->X() - ViewPos.X;
-					double lightY = light->Y() - ViewPos.Y;
-					double lightZ = light->Z() - ViewPos.Z;
-
-					float lx = (float)(lightX * ViewSin - lightY * ViewCos - pos.X);
-					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin - pos.Y);
-					float lz = (float)(lightZ - pos.Z);
-					
-					// Attenuated lights disabled for sprites for now to keep consistency with the GL renderer
-					//bool is_point_light = (node->lightsource->flags4 & MF4_ATTENUATE) != 0;
+					float lx = (float)(light->X() - pos.X);
+					float ly = (float)(light->Y() - pos.Y);
+					float lz = (float)(light->Z() - pos.Z);
 					float LdotL = lx * lx + ly * ly + lz * lz;
-					float NdotL = 1.0f;//is_point_light ? -ly : 1.0f;
-					
 					float radius = node->lightsource->GetRadius();
-					if (radius * radius >= LdotL && NdotL > 0.0f)
+					if (radius * radius >= LdotL)
 					{
 						float distance = sqrt(LdotL);
-						float attenuation = (1.0f - distance / radius) * NdotL;
+						float attenuation = 1.0f - distance / radius;
 						if (attenuation > 0.0f)
 						{						
 							float red = light->GetRed() * (1.0f / 255.0f);

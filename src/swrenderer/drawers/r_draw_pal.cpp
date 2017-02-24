@@ -846,24 +846,8 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalColumnCommand::PalColumnCommand(const SpriteDrawerArgs &args)
+	PalColumnCommand::PalColumnCommand(const SpriteDrawerArgs &args) : args(args)
 	{
-		_count = args.Count();
-		_dest = args.Dest();
-		_dest_y = args.DestY();
-		_iscale = args.TextureVStep();
-		_texturefrac = args.TextureVPos();
-		_colormap = args.Colormap();
-		_source = args.TexturePixels();
-		_translation = args.TranslationMap();
-		_color = args.SolidColor();
-		_srcblend = args.SrcBlend();
-		_destblend = args.DestBlend();
-		_srccolor = args.SrcColorIndex();
-		_srcalpha = args.SrcAlpha();
-		_destalpha = args.DestAlpha();
-		_dynlight = args.DynamicLight();
-		_light = args.Light();
 	}
 
 	uint8_t PalColumnCommand::AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b)
@@ -889,32 +873,33 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
+		count = args.Count();
 
 		// Framebuffer destination address.
-		dest = _dest;
+		dest = args.Dest();
 
 		// Determine scaling,
 		//	which is the only mapping to be done.
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
 		
-		if (_dynlight == 0)
+		uint32_t dynlight = args.DynamicLight();
+		if (dynlight == 0)
 		{
 			do
 			{
@@ -927,10 +912,10 @@ namespace swrenderer
 		}
 		else
 		{
-			uint32_t lit_r = RPART(_dynlight);
-			uint32_t lit_g = GPART(_dynlight);
-			uint32_t lit_b = BPART(_dynlight);
-			uint32_t light = 256 - (_light >> (FRACBITS - 8));
+			uint32_t lit_r = RPART(dynlight);
+			uint32_t lit_g = GPART(dynlight);
+			uint32_t lit_b = BPART(dynlight);
+			uint32_t light = 256 - (args.Light() >> (FRACBITS - 8));
 			lit_r = MIN<uint32_t>(light + lit_r, 256);
 			lit_g = MIN<uint32_t>(light + lit_g, 256);
 			lit_b = MIN<uint32_t>(light + lit_b, 256);
@@ -956,18 +941,18 @@ namespace swrenderer
 		int count;
 		uint8_t *dest;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
-		uint8_t color = _color;
+		uint8_t color = args.SolidColor();
 		do
 		{
 			*dest = color;
@@ -980,20 +965,20 @@ namespace swrenderer
 		int count;
 		uint8_t *dest;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 		uint32_t *bg2rgb;
 		uint32_t fg;
 
-		bg2rgb = _destblend;
-		fg = _srccolor;
+		bg2rgb = args.DestBlend();
+		fg = args.SrcColorIndex();
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
 		const PalEntry* pal = GPalette.BaseColors;
@@ -1010,14 +995,17 @@ namespace swrenderer
 		}
 		else
 		{
-			int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
-			int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
-			int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+			uint32_t srccolor = args.SrcColorIndex();
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
+			int src_r = ((srccolor >> 16) & 0xff) * srcalpha;
+			int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
+			int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 			do
 			{
-				int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
-				int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
-				int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
+				int r = clamp((src_r + pal[*dest].r * destalpha)>>18, 0, 255);
+				int g = clamp((src_g + pal[*dest].g * destalpha)>>18, 0, 255);
+				int b = clamp((src_b + pal[*dest].b * destalpha)>>18, 0, 255);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 			} while (--count);
@@ -1029,21 +1017,21 @@ namespace swrenderer
 		int count;
 		uint8_t *dest;
 
-		count = _count;
+		count = args.Count();
 
-		dest = _dest;
+		dest = args.Dest();
 		uint32_t *bg2rgb;
 		uint32_t fg;
 
-		bg2rgb = _destblend;
-		fg = _srccolor;
+		bg2rgb = args.DestBlend();
+		fg = args.SrcColorIndex();
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
 		const PalEntry* pal = GPalette.BaseColors;
@@ -1066,14 +1054,17 @@ namespace swrenderer
 		}
 		else
 		{
-			int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
-			int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
-			int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+			uint32_t srccolor = args.SrcColorIndex();
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
+			int src_r = ((srccolor >> 16) & 0xff) * srcalpha;
+			int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
+			int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 			do
 			{
-				int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
-				int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
-				int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
+				int r = clamp((src_r + pal[*dest].r * destalpha)>>18, 0, 255);
+				int g = clamp((src_g + pal[*dest].g * destalpha)>>18, 0, 255);
+				int b = clamp((src_b + pal[*dest].b * destalpha)>>18, 0, 255);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 			} while (--count);
@@ -1085,19 +1076,19 @@ namespace swrenderer
 		int count;
 		uint8_t *dest;
 
-		count = _count;
+		count = args.Count();
 
-		dest = _dest;
-		uint32_t *bg2rgb = _destblend;
-		uint32_t fg = _srccolor;
+		dest = args.Dest();
+		uint32_t *bg2rgb = args.DestBlend();
+		uint32_t fg = args.SrcColorIndex();
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
 		const PalEntry* palette = GPalette.BaseColors;
@@ -1119,15 +1110,18 @@ namespace swrenderer
 		}
 		else
 		{
+			uint32_t srccolor = args.SrcColorIndex();
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
-				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
-				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
-				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int src_r = ((srccolor >> 16) & 0xff) * srcalpha;
+				int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
+				int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 				int bg = *dest;
-				int r = MAX((-src_r + palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((-src_g + palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((-src_b + palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((-src_r + palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((-src_g + palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((-src_b + palette[bg].b * destalpha)>>18, 0);
 
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
@@ -1140,21 +1134,21 @@ namespace swrenderer
 		int count;
 		uint8_t *dest;
 
-		count = _count;
+		count = args.Count();
 		if (count <= 0)
 			return;
 
-		dest = _dest;
-		uint32_t *bg2rgb = _destblend;
-		uint32_t fg = _srccolor;
+		dest = args.Dest();
+		uint32_t *bg2rgb = args.DestBlend();
+		uint32_t fg = args.SrcColorIndex();
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
 		const PalEntry *palette = GPalette.BaseColors;
@@ -1176,15 +1170,18 @@ namespace swrenderer
 		}
 		else
 		{
+			uint32_t srccolor = args.SrcColorIndex();
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
-				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
-				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
-				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int src_r = ((srccolor >> 16) & 0xff) * srcalpha;
+				int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
+				int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 				int bg = *dest;
-				int r = MAX((src_r - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((src_g - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((src_b - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((src_r - palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((src_g - palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((src_b - palette[bg].b * destalpha)>>18, 0);
 
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
@@ -1199,26 +1196,26 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1238,13 +1235,16 @@ namespace swrenderer
 		}
 		else
 		{
+			uint32_t srccolor = args.SrcColorIndex();
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				uint32_t fg = colormap[source[frac >> FRACBITS]];
 				uint32_t bg = *dest;
-				uint32_t r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
-				uint32_t g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
-				uint32_t b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				uint32_t r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				uint32_t g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				uint32_t b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1259,27 +1259,27 @@ namespace swrenderer
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
-		count = _count;
+		count = args.Count();
 
-		dest = _dest;
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		// [RH] Local copies of global vars to improve compiler optimizations
-		const uint8_t *colormap = _colormap;
-		const uint8_t *translation = _translation;
-		const uint8_t *source = _source;
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *translation = args.TranslationMap();
+		const uint8_t *source = args.TexturePixels();
 
 		do
 		{
@@ -1297,27 +1297,27 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
-		const uint8_t *translation = _translation;
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
+		const uint8_t *translation = args.TranslationMap();
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
 
 		const PalEntry *palette = GPalette.BaseColors;
 
@@ -1338,13 +1338,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
 				uint32_t bg = *dest;
-				uint32_t r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
-				uint32_t g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
-				uint32_t b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				uint32_t r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				uint32_t g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				uint32_t b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1358,25 +1360,25 @@ namespace swrenderer
 		uint8_t *dest;
 		fixed_t frac, fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *source = _source;
-		const uint8_t *colormap = _colormap;
-		uint32_t *fgstart = &Col2RGB8[0][_color];
+		const uint8_t *source = args.TexturePixels();
+		const uint8_t *colormap = args.Colormap();
+		uint32_t *fgstart = &Col2RGB8[0][args.SolidColor()];
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1394,13 +1396,14 @@ namespace swrenderer
 		}
 		else
 		{
+			int color = args.SolidColor();
 			do
 			{
 				uint32_t val = source[frac >> FRACBITS];
 
-				int r = (palette[*dest].r * (255-val) + palette[_color].r * val) >> 10;
-				int g = (palette[*dest].g * (255-val) + palette[_color].g * val) >> 10;
-				int b = (palette[*dest].b * (255-val) + palette[_color].b * val) >> 10;
+				int r = (palette[*dest].r * (255-val) + palette[color].r * val) >> 10;
+				int g = (palette[*dest].g * (255-val) + palette[color].g * val) >> 10;
+				int b = (palette[*dest].b * (255-val) + palette[color].b * val) >> 10;
 				*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 
 				dest += pitch;
@@ -1416,26 +1419,26 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1457,13 +1460,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
-				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
-				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				int r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1478,27 +1483,27 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *translation = _translation;
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *translation = args.TranslationMap();
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1520,13 +1525,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
-				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
-				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				int r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1541,26 +1548,26 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1581,13 +1588,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1602,27 +1611,27 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *translation = _translation;
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *translation = args.TranslationMap();
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1643,13 +1652,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1664,26 +1675,26 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1704,13 +1715,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1725,27 +1738,27 @@ namespace swrenderer
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = _count;
-		dest = _dest;
+		count = args.Count();
+		dest = args.Dest();
 
-		fracstep = _iscale;
-		frac = _texturefrac;
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *translation = _translation;
-		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _source;
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		const uint8_t *translation = args.TranslationMap();
+		const uint8_t *colormap = args.Colormap();
+		const uint8_t *source = args.TexturePixels();
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 		const PalEntry *palette = GPalette.BaseColors;
 
 		if (!r_blendmethod)
@@ -1766,13 +1779,15 @@ namespace swrenderer
 		}
 		else
 		{
+			fixed_t srcalpha = args.SrcAlpha();
+			fixed_t destalpha = args.DestAlpha();
 			do
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
+				int g = MAX((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
+				int b = MAX((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;

@@ -52,22 +52,7 @@ namespace swrenderer
 	protected:
 		uint8_t AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b);
 		
-		int _count;
-		uint8_t *_dest;
-		int _dest_y;
-		fixed_t _iscale;
-		fixed_t _texturefrac;
-		const uint8_t *_colormap;
-		const uint8_t *_source;
-		const uint8_t *_translation;
-		int _color;
-		uint32_t *_srcblend;
-		uint32_t *_destblend;
-		uint32_t _srccolor;
-		fixed_t _srcalpha;
-		fixed_t _destalpha;
-		uint32_t _dynlight;
-		fixed_t _light;
+		SpriteDrawerArgs args;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };

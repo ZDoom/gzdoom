@@ -496,7 +496,7 @@ DEFINE_ACTION_FUNCTION(DMenu, SetMenu)
 {
 	PARAM_PROLOGUE;
 	PARAM_NAME(menu);
-	PARAM_INT(mparam);
+	PARAM_INT_DEF(mparam);
 	M_SetMenu(menu, mparam);
 	return 0;
 }

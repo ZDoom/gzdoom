@@ -78,6 +78,7 @@
 #include "menu/menu.h"
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -331,6 +332,8 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
+	Mark(E_FirstEventHandler);
+	Mark(E_LastEventHandler);
 	for (auto &s : level.sectorPortals)
 	{
 		Mark(s.mSkybox);

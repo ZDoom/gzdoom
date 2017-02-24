@@ -158,6 +158,7 @@ public:
 	bool IsStatic() override { return false; }
 };
 extern DStaticEventHandler* E_FirstEventHandler;
+extern DStaticEventHandler* E_LastEventHandler;
 
 // we cannot call this DEvent because in ZScript, 'event' is a keyword
 class DBaseEvent : public DObject

@@ -6522,7 +6522,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 
 	case CVAR_String:
 		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FStringCVar *>(CVar)->Value, ATAG_GENERIC));
-		build->Emit(OP_LS, dest.RegNum, addr.RegNum, nul);
+		build->Emit(OP_LCS, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_DummyBool:

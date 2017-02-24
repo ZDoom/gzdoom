@@ -111,8 +111,6 @@ SPIDR0, 110, 111, iwad
 SPIDS0, 98, 35, iwad
 SPOSH0, 14, 60, iwad
 SPOSL0, 24, 15, iwad
-SSWVG0, 17, 55, iwad
-SSWVH0, 17, 52, iwad
 SSWVI0, 18, 54, iwad
 SSWVJ0, 15, 44, iwad
 SSWVK0, 15, 40, iwad

@@ -42,7 +42,7 @@
 #include "r_draw_wall32_sse2.h"
 #include "r_draw_sprite32_sse2.h"
 #include "r_draw_span32_sse2.h"
-#include "r_draw_sky32.h"
+#include "r_draw_sky32_sse2.h"
 
 #include "gi.h"
 #include "stats.h"

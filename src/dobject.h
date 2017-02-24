@@ -165,10 +165,11 @@ protected: \
 	_X_CONSTRUCTOR_##isabstract(cls) \
 	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls))
 
-// Taking the address of a field in an object at address 1 instead of
+// Taking the address of a field in an object at address > 0 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
+// Using 8 to avoid unaligned pointer use.
 #define IMPLEMENT_POINTERS_START(cls)	const size_t cls::PointerOffsets[] = {
-#define IMPLEMENT_POINTER(field)		(size_t)&((ThisClass*)1)->field - 1,
+#define IMPLEMENT_POINTER(field)		((size_t)&((ThisClass*)8)->field) - 8,
 #define IMPLEMENT_POINTERS_END			~(size_t)0 };
 
 // Possible arguments for the IMPLEMENT_CLASS macro

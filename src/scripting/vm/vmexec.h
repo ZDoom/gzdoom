@@ -197,6 +197,16 @@ begin:
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.s[a] = *(FString *)ptr;
 		NEXTOP;
+	OP(LCS):
+		ASSERTS(a); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB,KC,X_READ_NIL);
+		reg.s[a] = *(const char **)ptr;
+		NEXTOP;
+	OP(LCS_R):
+		ASSERTS(a); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB,RC,X_READ_NIL);
+		reg.s[a] = *(const char **)ptr;
+		NEXTOP;
 	OP(LO):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);

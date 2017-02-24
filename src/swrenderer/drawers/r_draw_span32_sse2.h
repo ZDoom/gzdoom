@@ -215,7 +215,6 @@ namespace swrenderer
 					bgcolor = _mm_setzero_si128();
 				}
 						
-				// Sample
 				unsigned int ifgcolor[2];
 				ifgcolor[0] = Sample<FilterModeT, TextureSizeT>(texdata.xbits, texdata.ybits, texdata.xstep, texdata.ystep, texdata.xfrac, texdata.yfrac, texdata.yshift, texdata.xshift, texdata.xmask, texdata.source);
 				texdata.xfrac += texdata.xstep;

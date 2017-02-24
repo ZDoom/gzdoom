@@ -37,18 +37,7 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalSkyCommand"; }
 
 	protected:
-		uint32_t solid_top;
-		uint32_t solid_bottom;
-		bool fadeSky;
-
-		uint8_t *_dest;
-		int _dest_y;
-		int _count;
-		const uint8_t *_source;
-		const uint8_t *_source2;
-		int _sourceheight[2];
-		uint32_t _iscale;
-		uint32_t _texturefrac;
+		SkyDrawerArgs args;
 	};
 
 	class DrawSingleSky1PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };

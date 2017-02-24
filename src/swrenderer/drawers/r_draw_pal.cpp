@@ -547,32 +547,20 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args)
+	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args) : args(args)
 	{
-		_dest = args.Dest();
-		_dest_y = args.DestY();
-		_count = args.Count();
-		_source = args.FrontTexturePixels();
-		_source2 = args.BackTexturePixels();
-		_sourceheight[0] = args.FrontTextureHeight();
-		_sourceheight[1] = args.BackTextureHeight();
-		_iscale = args.TextureVStep();
-		_texturefrac = args.TextureVPos();
-		solid_top = args.SolidTopColor();
-		solid_bottom = args.SolidBottomColor();
-		fadeSky = args.FadeSky();
 	}
 
 	void DrawSingleSky1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint8_t *dest = _dest;
-		int count = _count;
+		uint8_t *dest = args.Dest();
+		int count = args.Count();
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		const uint8_t *source0 = _source;
-		int textureheight0 = _sourceheight[0];
+		const uint8_t *source0 = args.FrontTexturePixels();
+		int textureheight0 = args.FrontTextureHeight();
 
-		int32_t frac = _texturefrac;
-		int32_t fracstep = _iscale;
+		int32_t frac = args.TextureVPos();
+		int32_t fracstep = args.TextureVStep();
 
 		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
@@ -587,15 +575,15 @@ namespace swrenderer
 		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
 		int num_cores = thread->num_cores;
-		int skipped = thread->skipped_by_thread(_dest_y);
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		int skipped = thread->skipped_by_thread(args.DestY());
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * skipped;
 		fracstep *= num_cores;
 		pitch *= num_cores;
 
-		if (!fadeSky)
+		if (!args.FadeSky())
 		{
-			count = thread->count_for_thread(_dest_y, count);
+			count = thread->count_for_thread(args.DestY(), count);
 
 			for (int index = 0; index < count; index++)
 			{
@@ -607,6 +595,9 @@ namespace swrenderer
 
 			return;
 		}
+
+		uint32_t solid_top = args.SolidTopColor();
+		uint32_t solid_bottom = args.SolidBottomColor();
 
 		int solid_top_r = RPART(solid_top);
 		int solid_top_g = GPART(solid_top);
@@ -696,16 +687,16 @@ namespace swrenderer
 
 	void DrawDoubleSky1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint8_t *dest = _dest;
-		int count = _count;
+		uint8_t *dest = args.Dest();
+		int count = args.Count();
 		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		const uint8_t *source0 = _source;
-		const uint8_t *source1 = _source2;
-		int textureheight0 = _sourceheight[0];
-		uint32_t maxtextureheight1 = _sourceheight[1] - 1;
+		const uint8_t *source0 = args.FrontTexturePixels();
+		const uint8_t *source1 = args.BackTexturePixels();
+		int textureheight0 = args.FrontTextureHeight();
+		uint32_t maxtextureheight1 = args.BackTextureHeight() - 1;
 
-		int32_t frac = _texturefrac;
-		int32_t fracstep = _iscale;
+		int32_t frac = args.TextureVPos();
+		int32_t fracstep = args.TextureVStep();
 
 		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
@@ -720,15 +711,15 @@ namespace swrenderer
 		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
 		int num_cores = thread->num_cores;
-		int skipped = thread->skipped_by_thread(_dest_y);
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		int skipped = thread->skipped_by_thread(args.DestY());
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * skipped;
 		fracstep *= num_cores;
 		pitch *= num_cores;
 
-		if (!fadeSky)
+		if (!args.FadeSky())
 		{
-			count = thread->count_for_thread(_dest_y, count);
+			count = thread->count_for_thread(args.DestY(), count);
 
 			for (int index = 0; index < count; index++)
 			{
@@ -747,6 +738,9 @@ namespace swrenderer
 
 			return;
 		}
+
+		uint32_t solid_top = args.SolidTopColor();
+		uint32_t solid_bottom = args.SolidBottomColor();
 
 		int solid_top_r = RPART(solid_top);
 		int solid_top_g = GPART(solid_top);

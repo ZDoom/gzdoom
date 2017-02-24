@@ -20,21 +20,7 @@ namespace swrenderer
 	protected:
 		inline static uint8_t AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
 
-		uint32_t _iscale;
-		uint32_t _texturefrac;
-		uint8_t *_colormap;
-		int _count;
-		const uint8_t *_source;
-		uint8_t *_dest;
-		int _dest_y;
-		int _fracbits;
-		int _pitch;
-		uint32_t *_srcblend;
-		uint32_t *_destblend;
-		DrawerLight *_dynlights;
-		int _num_dynlights;
-		float _viewpos_z;
-		float _step_viewpos_z;
+		WallDrawerArgs args;
 	};
 
 	class DrawWall1PalCommand : public PalWall1Command { public: using PalWall1Command::PalWall1Command; void Execute(DrawerThread *thread) override; };
@@ -58,7 +44,6 @@ namespace swrenderer
 		uint8_t *_dest;
 		int _dest_y;
 		int _count;
-		int _pitch;
 		const uint8_t *_source;
 		const uint8_t *_source2;
 		int _sourceheight[2];
@@ -81,7 +66,6 @@ namespace swrenderer
 		int _count;
 		uint8_t *_dest;
 		int _dest_y;
-		int _pitch;
 		fixed_t _iscale;
 		fixed_t _texturefrac;
 		const uint8_t *_colormap;
@@ -126,7 +110,6 @@ namespace swrenderer
 		int _yh;
 		int _x;
 		uint8_t *_destorg;
-		int _pitch;
 		int _fuzzpos;
 		int _fuzzviewheight;
 	};

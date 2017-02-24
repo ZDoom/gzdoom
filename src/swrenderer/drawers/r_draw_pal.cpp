@@ -96,23 +96,8 @@ CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 namespace swrenderer
 {
-	PalWall1Command::PalWall1Command(const WallDrawerArgs &args)
+	PalWall1Command::PalWall1Command(const WallDrawerArgs &args) : args(args)
 	{
-		_iscale = args.TextureVStep();
-		_texturefrac = args.TextureVPos();
-		_colormap = args.Colormap();
-		_count = args.Count();
-		_source = args.TexturePixels();
-		_dest = args.Dest();
-		_dest_y = args.DestY();
-		_fracbits = args.TextureFracBits();
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-		_srcblend = args.SrcBlend();
-		_destblend = args.DestBlend();
-		_dynlights = args.dc_lights;
-		_num_dynlights = args.dc_num_lights;
-		_viewpos_z = args.dc_viewpos.Z;
-		_step_viewpos_z = args.dc_viewpos_step.Z;
 	}
 
 	uint8_t PalWall1Command::AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
@@ -170,25 +155,25 @@ namespace swrenderer
 
 	void DrawWall1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
-		DrawerLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		DrawerLight *dynlights = args.dc_lights;
+		int num_dynlights = args.dc_num_lights;
+		float viewpos_z = args.dc_viewpos.Z;
+		float step_viewpos_z = args.dc_viewpos_step.Z;
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
@@ -203,10 +188,10 @@ namespace swrenderer
 		}
 		else
 		{
-			float viewpos_z = _viewpos_z;
-			float step_viewpos_z = _step_viewpos_z;
+			float viewpos_z = args.dc_viewpos.Z;
+			float step_viewpos_z = args.dc_viewpos_step.Z;
 
-			viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
+			viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
 			step_viewpos_z *= thread->num_cores;
 
 			do
@@ -221,25 +206,25 @@ namespace swrenderer
 
 	void DrawWallMasked1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
-		DrawerLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		DrawerLight *dynlights = args.dc_lights;
+		int num_dynlights = args.dc_num_lights;
+		float viewpos_z = args.dc_viewpos.Z;
+		float step_viewpos_z = args.dc_viewpos_step.Z;
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
@@ -258,10 +243,10 @@ namespace swrenderer
 		}
 		else
 		{
-			float viewpos_z = _viewpos_z;
-			float step_viewpos_z = _step_viewpos_z;
+			float viewpos_z = args.dc_viewpos.Z;
+			float step_viewpos_z = args.dc_viewpos_step.Z;
 
-			viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
+			viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
 			step_viewpos_z *= thread->num_cores;
 
 			do
@@ -280,24 +265,24 @@ namespace swrenderer
 
 	void DrawWallAdd1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
@@ -342,31 +327,31 @@ namespace swrenderer
 
 	void DrawWallAddClamp1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
-		DrawerLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		DrawerLight *dynlights = args.dc_lights;
+		int num_dynlights = args.dc_num_lights;
+		float viewpos_z = args.dc_viewpos.Z;
+		float step_viewpos_z = args.dc_viewpos_step.Z;
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
+		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
 		step_viewpos_z *= thread->num_cores;
 
 		if (!r_blendmethod)
@@ -416,31 +401,31 @@ namespace swrenderer
 
 	void DrawWallSubClamp1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
-		DrawerLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		DrawerLight *dynlights = args.dc_lights;
+		int num_dynlights = args.dc_num_lights;
+		float viewpos_z = args.dc_viewpos.Z;
+		float step_viewpos_z = args.dc_viewpos_step.Z;
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
+		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
 		step_viewpos_z *= thread->num_cores;
 
 		if (!r_blendmethod)
@@ -489,31 +474,31 @@ namespace swrenderer
 
 	void DrawWallRevSubClamp1PalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t fracstep = _iscale;
-		uint32_t frac = _texturefrac;
-		uint8_t *colormap = _colormap;
-		int count = _count;
-		const uint8_t *source = _source;
-		uint8_t *dest = _dest;
-		int bits = _fracbits;
-		int pitch = _pitch;
-		DrawerLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
+		uint32_t fracstep = args.TextureVStep();
+		uint32_t frac = args.TextureVPos();
+		uint8_t *colormap = args.Colormap();
+		int count = args.Count();
+		const uint8_t *source = args.TexturePixels();
+		uint8_t *dest = args.Dest();
+		int bits = args.TextureFracBits();
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		DrawerLight *dynlights = args.dc_lights;
+		int num_dynlights = args.dc_num_lights;
+		float viewpos_z = args.dc_viewpos.Z;
+		float step_viewpos_z = args.dc_viewpos_step.Z;
 
-		uint32_t *fg2rgb = _srcblend;
-		uint32_t *bg2rgb = _destblend;
+		uint32_t *fg2rgb = args.SrcBlend();
+		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(_dest_y, count);
+		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
+		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
 		step_viewpos_z *= thread->num_cores;
 
 		if (!r_blendmethod)
@@ -567,7 +552,6 @@ namespace swrenderer
 		_dest = args.Dest();
 		_dest_y = args.DestY();
 		_count = args.Count();
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_source = args.FrontTexturePixels();
 		_source2 = args.BackTexturePixels();
 		_sourceheight[0] = args.FrontTextureHeight();
@@ -583,7 +567,7 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		const uint8_t *source0 = _source;
 		int textureheight0 = _sourceheight[0];
 
@@ -714,7 +698,7 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		const uint8_t *source0 = _source;
 		const uint8_t *source1 = _source2;
 		int textureheight0 = _sourceheight[0];
@@ -873,7 +857,6 @@ namespace swrenderer
 		_count = args.Count();
 		_dest = args.Dest();
 		_dest_y = args.DestY();
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_iscale = args.TextureVStep();
 		_texturefrac = args.TextureVPos();
 		_colormap = args.Colormap();
@@ -926,7 +909,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -986,7 +969,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
@@ -1010,7 +993,7 @@ namespace swrenderer
 
 		bg2rgb = _destblend;
 		fg = _srccolor;
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -1060,7 +1043,7 @@ namespace swrenderer
 
 		bg2rgb = _destblend;
 		fg = _srccolor;
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -1114,7 +1097,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		uint32_t fg = _srccolor;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -1171,7 +1154,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		uint32_t fg = _srccolor;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -1232,7 +1215,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1293,7 +1276,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1330,7 +1313,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1391,7 +1374,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1449,7 +1432,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1511,7 +1494,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1574,7 +1557,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1635,7 +1618,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1697,7 +1680,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1758,7 +1741,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = _pitch;
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
@@ -1811,7 +1794,6 @@ namespace swrenderer
 		_yh = args.FuzzY2();
 		_x = args.FuzzX();
 		_destorg = RenderViewport::Instance()->GetDest(0, 0);
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}
@@ -1829,9 +1811,10 @@ namespace swrenderer
 
 		uint8_t *map = &NormalLight.Maps[6 * 256];
 
-		uint8_t *dest = thread->dest_for_thread(yl, _pitch, yl * _pitch + _x + _destorg);
+		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		uint8_t *dest = thread->dest_for_thread(yl, pitch, yl * pitch + _x + _destorg);
 
-		int pitch = _pitch * thread->num_cores;
+		pitch = pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
 		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
 
@@ -1841,7 +1824,7 @@ namespace swrenderer
 		if (yl < fuzzstep)
 		{
 			uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep + pitch;
-			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
+			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (pitch)) < viewheight);
 
 			*dest = map[*srcdest];
 			dest += pitch;
@@ -1870,7 +1853,7 @@ namespace swrenderer
 			do
 			{
 				uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep;
-				//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
+				//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (pitch)) < viewheight);
 
 				*dest = map[*srcdest];
 				dest += pitch;
@@ -1884,7 +1867,7 @@ namespace swrenderer
 		if (lowerbounds)
 		{
 			uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep - pitch;
-			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
+			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (pitch)) < viewheight);
 
 			*dest = map[*srcdest];
 		}
@@ -2901,8 +2884,9 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		uint8_t *dest = thread->dest_for_thread(_dest_y, _pitch, _dest);
-		int pitch = _pitch * thread->num_cores;
+		int pitch = _pitch;
+		uint8_t *dest = thread->dest_for_thread(_dest_y, pitch, _dest);
+		pitch = pitch * thread->num_cores;
 
 		const uint32_t *source = &particle_texture[(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;

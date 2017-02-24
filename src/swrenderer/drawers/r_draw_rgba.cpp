@@ -40,7 +40,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 #include "r_draw_wall32_sse2.h"
-#include "r_draw_sprite32.h"
+#include "r_draw_sprite32_sse2.h"
 #include "r_draw_span32_sse2.h"
 #include "r_draw_sky32.h"
 

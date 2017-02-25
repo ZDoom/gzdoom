@@ -880,7 +880,7 @@ CCMD(linetarget)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, false);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, argv.argc() > 1 && atoi(argv[1]) != 0);
 	else
 		Printf("No target found\n");
 }
@@ -893,7 +893,7 @@ CCMD(info)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, true);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, !(argv.argc() > 1 && atoi(argv[1]) == 0));
 	else
 		Printf("No target found. Info cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
@@ -902,7 +902,7 @@ CCMD(info)
 CCMD(myinfo)
 {
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	C_PrintInfo(players[consoleplayer].mo);
+	C_PrintInfo(players[consoleplayer].mo, true);
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);

@@ -34,6 +34,6 @@
 
 void C_PrintInv(AActor *target);
 void C_AimLine(FTranslatedLineTarget *t, bool nonshootable);
-void C_PrintInfo(AActor *target);
+void C_PrintInfo(AActor *target, bool verbose);
 
 struct FTranslatedLineTarget;

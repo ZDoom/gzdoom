@@ -125,6 +125,7 @@ int starttime;
 extern FString BackupSaveName;
 
 bool savegamerestore;
+int finishstate;
 
 extern int mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
@@ -160,6 +161,7 @@ void G_DeferedInitNew (FGameStartup *gs)
 	d_skill = gs->Skill;
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
+	finishstate = FINISH_NoHub;
 }
 
 //==========================================================================
@@ -897,6 +899,7 @@ void G_DoCompleted (void)
 	}
 
 	gamestate = GS_INTERMISSION;
+	finishstate = mode;
 	viewactive = false;
 	automapactive = false;
 
@@ -1068,11 +1071,24 @@ void G_DoLoadLevel (int position, bool autosave)
 	// For each player, if they are viewing through a player, make sure it is themselves.
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
-		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
+		if (playeringame[ii])
 		{
-			players[ii].camera = players[ii].mo;
+			if (players[ii].camera == NULL || players[ii].camera->player != NULL)
+			{
+				players[ii].camera = players[ii].mo;
+			}
+			E_PlayerEntered(ii, finishstate == FINISH_SameHub);
+			// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
+			if (level.FromSnapshot) FBehavior::StaticStartTypedScripts(SCRIPT_Return, players[ii].mo, true);
 		}
 	}
+
+	if (level.FromSnapshot)
+	{
+		// [Nash] run REOPEN scripts upon map re-entry
+		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+	}
+
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
@@ -1352,22 +1368,6 @@ void G_FinishTravel ()
 		}
 		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
 		pawns[pawnsnum++] = pawn;
-	}
-
-	// [ZZ] fire the reopen hook.
-	//      if level is loaded from snapshot, and we don't have savegamerestore, this means we returned from a hub.
-	if (level.FromSnapshot)
-	{
-		// [Nash] run REOPEN scripts upon map re-entry
-		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
-
-		for (int i = 0; i < pawnsnum; i++)
-		{
-			// [ZZ] fire the enter hook.
-			E_PlayerEntered(int(pawns[i]->player - players), true);
-			//
-			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
-		}
 	}
 
 	bglobal.FinishTravel ();

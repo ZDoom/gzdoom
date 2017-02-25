@@ -1090,8 +1090,6 @@ public:
 
 	void WI_updateNoState ()
 	{
-		WI_updateAnimatedBack();
-
 		if (acceleratestage)
 		{
 			cnt = 0;
@@ -1140,8 +1138,6 @@ public:
 
 	void WI_updateShowNextLoc ()
 	{
-		WI_updateAnimatedBack();
-
 		if (!--cnt || acceleratestage)
 			WI_initNoState();
 		else
@@ -1238,8 +1234,6 @@ public:
 		int i;
 		bool stillticking;
 		bool autoskip = WI_autoSkip();
-
-		WI_updateAnimatedBack();
 
 		if ((acceleratestage || autoskip) && ng_state != 6)
 		{
@@ -1490,8 +1484,6 @@ public:
 		int fsum;
 		bool stillticking;
 		bool autoskip = WI_autoSkip();
-
-		WI_updateAnimatedBack ();
 
 		if ((acceleratestage || autoskip) && ng_state != 10)
 		{
@@ -1786,8 +1778,6 @@ public:
 
 	void WI_updateStats ()
 	{
-		WI_updateAnimatedBack ();
-
 		if (acceleratestage && sp_state != 10)
 		{
 			acceleratestage = 0;
@@ -2165,6 +2155,7 @@ static FIntermissionScreen WI_Screen;
 
 void WI_Ticker()
 {
+	WI_Screen.WI_updateAnimatedBack();
 	WI_Screen.WI_Ticker();
 }
 

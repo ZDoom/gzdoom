@@ -76,6 +76,7 @@ const double CARRYFACTOR = 3 / 32.;
 #define DAMAGE_NONPLAYERS			2
 #define DAMAGE_IN_AIR				4
 #define DAMAGE_SUBCLASSES_PROTECT	8
+#define DAMAGE_NO_ARMOR				16
 
 
 // [RH] If a deathmatch game, checks to see if noexit is enabled.

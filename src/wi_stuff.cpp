@@ -738,6 +738,7 @@ public:
 	bool			noautostartmap;
 	int				dofrags;
 	int				ng_state;
+	float			shadowalpha;
 
 	//
 	//		GRAPHICS
@@ -779,23 +780,6 @@ public:
 
 	//====================================================================
 	//
-	// Draws a single character with a shadow
-	//
-	//====================================================================
-
-	int WI_DrawCharPatch (FFont *font, int charcode, int x, int y, EColorRange translation=CR_UNTRANSLATED, bool nomove=false)
-	{
-		int width;
-		font->GetChar(charcode, &width);
-		screen->DrawChar(font, translation, x, y, charcode,
-			nomove ? DTA_CleanNoMove : DTA_Clean, true,
-			DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : 0.5,
-			TAG_DONE);
-		return x - width;
-	}
-
-	//====================================================================
-	//
 	// CheckRealHeight
 	//
 	// Checks the posts in a texture and returns the lowest row (plus one)
@@ -828,6 +812,20 @@ public:
 		maxy = int((maxy *2) / tex->Scale.Y);
 		maxy = (maxy >> 1) + (maxy & 1);
 		return maxy;
+	}
+
+	//====================================================================
+	//
+	// Draws a single character with a shadow
+	//
+	//====================================================================
+
+	int WI_DrawCharPatch(FFont *font, int charcode, int x, int y, EColorRange translation = CR_UNTRANSLATED, bool nomove = false)
+	{
+		int width;
+		font->GetChar(charcode, &width);
+		screen->DrawChar(font, translation, x, y, charcode, nomove ? DTA_CleanNoMove : DTA_Clean, true, TAG_DONE);
+		return x - width;
 	}
 
 	//====================================================================

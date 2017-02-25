@@ -572,7 +572,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
-	parms->shadowAlpha = 0;
+	//parms->shadowAlpha = 0;
 	parms->shadowColor = 0;
 	parms->virtWidth = this->GetWidth();
 	parms->virtHeight = this->GetHeight();
@@ -845,7 +845,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 			break;
 
 		case DTA_ShadowAlpha:
-			parms->shadowAlpha = (float)MIN(1., ListGetDouble(tags));
+			//parms->shadowAlpha = (float)MIN(1., ListGetDouble(tags));
 			break;
 
 		case DTA_ShadowColor:
@@ -856,12 +856,12 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 			boolval = ListGetInt(tags);
 			if (boolval)
 			{
-				parms->shadowAlpha = 0.5;
+				//parms->shadowAlpha = 0.5;
 				parms->shadowColor = 0;
 			}
 			else
 			{
-				parms->shadowAlpha = 0;
+				//parms->shadowAlpha = 0;
 			}
 			break;
 

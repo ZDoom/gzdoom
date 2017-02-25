@@ -162,7 +162,7 @@ struct DrawParms
 	uint32 colorOverlay;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
-	float shadowAlpha;
+	//float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
 	INTBOOL masked;

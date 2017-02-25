@@ -59,6 +59,14 @@ CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
 
+// States for the intermission
+enum EState
+{
+	NoState = -1,
+	StatCount,
+	ShowNextLoc,
+	LeavingIntermission
+};
 
 static const char *WI_Cmd[] = {
 	"Background",
@@ -83,67 +91,8 @@ static const char *WI_Cmd[] = {
 	NULL
 };
 
-
-struct FPatchInfo
+struct FInterBackground
 {
-	FFont *mFont;
-	FTexture *mPatch;
-	EColorRange mColor;
-
-	void Init(FGIFont &gifont)
-	{
-		if (gifont.color == NAME_Null)
-		{
-			mPatch = TexMan[gifont.fontname];	// "entering"
-			mColor = mPatch == NULL ? CR_UNTRANSLATED : CR_UNDEFINED;
-			mFont = NULL;
-		}
-		else
-		{
-			mFont = V_GetFont(gifont.fontname);
-			mColor = V_FindFontColor(gifont.color);
-			mPatch = NULL;
-		}
-		if (mFont == NULL)
-		{
-			mFont = BigFont;
-		}
-	}
-};
-
-
-
-class FIntermissionScreen
-{
-public:
-	// States for the intermission
-	enum EState
-	{
-		NoState = -1,
-		StatCount,
-		ShowNextLoc,
-		LeavingIntermission
-	};
-
-
-	enum EValues
-	{
-		// GLOBAL LOCATIONS
-		WI_TITLEY = 2,
-
-		// SINGPLE-PLAYER STUFF
-		SP_STATSX = 50,
-		SP_STATSY = 50,
-
-		SP_TIMEX = 8,
-		SP_TIMEY = (200 - 32),
-
-		// NET GAME STUFF
-		NG_STATSY = 50,
-	};
-
-
-
 	// These animation variables, structures, etc. are used for the
 	// DOOM/Ultimate DOOM intermission screen animations.  This is
 	// totally different from any sprite or texture/flat animations
@@ -167,18 +116,6 @@ public:
 
 	};
 
-	// States for single-player
-	enum ESPState
-	{
-		SP_KILLS = 0,
-		SP_ITEMS = 2,
-		SP_SECRET = 4,
-		SP_FRAGS = 6,
-		SP_TIME = 8,
-	};
-
-	static const int SHOWNEXTLOCDELAY = 4;			// in seconds
-
 	struct yahpt_t
 	{
 		int x, y;
@@ -188,15 +125,8 @@ public:
 	{
 		int   x;       // x/y coordinate pair structure
 		int   y;
-		char level[9];
+		FString Level;
 	};
-
-
-	//
-	// Animation.
-	// There is another anim_t used in p_spec.
-	// (which is why I have renamed this one!)
-	//
 
 	struct in_anim_t
 	{
@@ -206,7 +136,7 @@ public:
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
 		TArray<FTexture*>	frames;	// actual graphics for frames of animations
 
-		// following must be initialized to zero before use!
+									// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
 		int 		ctr;		// next frame number to animate
 		int 		state;		// used by RANDOM and LEVEL when animating
@@ -223,71 +153,21 @@ public:
 		}
 	};
 
+private:
 	TArray<lnode_t> lnodes;
 	TArray<in_anim_t> anims;
-
-	int				acceleratestage;	// used to accelerate or skip a stage
-	bool			playerready[MAXPLAYERS];
-	int				me;					// wbs->pnum
-	EState			state;				// specifies current state
-	wbstartstruct_t *wbs;				// contains information passed into intermission
-	wbplayerstruct_t* Plrs[MAXPLAYERS];				// wbs->plyr[]
-	int				cnt;				// used for general timing
-	int				bcnt;				// used for timing of background animation
-	int				cnt_kills[MAXPLAYERS];
-	int				cnt_items[MAXPLAYERS];
-	int				cnt_secret[MAXPLAYERS];
-	int				cnt_frags[MAXPLAYERS];
-	int				cnt_deaths[MAXPLAYERS];
-	int				cnt_time;
-	int				cnt_total_time;
-	int				cnt_par;
-	int				cnt_pause;
-	int				total_frags;
-	int				total_deaths;
-	bool			noautostartmap;
-	int				dofrags;
-	int				ng_state;
-
-	//
-	//		GRAPHICS
-	//
-
-	FPatchInfo mapname;
-	FPatchInfo finished;
-	FPatchInfo entering;
-
+	int				bcnt = 0;				// used for timing of background animation
 	TArray<FTexture *> yah; 		// You Are Here graphic
-	FTexture* 		splat;		// splat
-	FTexture* 		sp_secret;	// "secret"
-	FTexture* 		kills;		// "Kills", "Scrt", "Items", "Frags"
-	FTexture* 		secret;
-	FTexture* 		items;
-	FTexture* 		frags;
-	FTexture* 		timepic;	// Time sucks.
-	FTexture* 		par;
-	FTexture* 		sucks;
-	FTexture* 		killers;	// "killers", "victims"
-	FTexture* 		victims;
-	FTexture* 		total;		// "Total", your face, your dead face
-	FTexture* 		p;			// Player graphic
-	FTexture*		lnames[2];	// Name graphics of each level (centered)
+	FTexture* 		splat = nullptr;		// splat
+	FTexture		*background = nullptr;
+	wbstartstruct_t *wbs;
+public:
 
-	// [RH] Info to dynamically generate the level name graphics
-	FString			lnametexts[2];
+	FInterBackground(wbstartstruct_t *wbst)
+	{
+		wbs = wbst;
 
-	FTexture		*background;
-
-	bool snl_pointeron = false;
-
-	int player_deaths[MAXPLAYERS];
-	int  sp_state;
-
-	//
-	// CODE
-	//
-
-
+	};
 	//====================================================================
 	// 
 	//	Loads the background - either from a single texture
@@ -297,22 +177,23 @@ public:
 	//  MAPINFO.
 	//
 	//====================================================================
-	static bool IsExMy(const char * name)
+	bool IsExMy(const char * name)
 	{
 		// Only check for the first 3 episodes. They are the only ones with default intermission scripts.
 		// Level names can be upper- and lower case so use tolower to check!
-		return (tolower(name[0])=='e' && name[1]>='1' && name[1]<='3' && tolower(name[2])=='m');
+		return (tolower(name[0]) == 'e' && name[1] >= '1' && name[1] <= '3' && tolower(name[2]) == 'm');
 	}
 
-	void WI_LoadBackground(bool isenterpic)
+	bool LoadBackground(bool isenterpic)
 	{
 		const char *lumpname = NULL;
 		char buffer[10];
 		in_anim_t an;
 		lnode_t pt;
 		FTextureID texture;
+		bool noautostartmap = false;
 
-		bcnt=0;
+		bcnt = 0;
 
 		texture.SetInvalid();
 		if (isenterpic)
@@ -326,10 +207,10 @@ public:
 		}
 
 		// Try to get a default if nothing specified
-		if (lumpname == NULL || lumpname[0]==0) 
+		if (lumpname == NULL || lumpname[0] == 0)
 		{
 			lumpname = NULL;
-			switch(gameinfo.gametype)
+			switch (gameinfo.gametype)
 			{
 			case GAME_Chex:
 			case GAME_Doom:
@@ -342,24 +223,24 @@ public:
 						lumpname = buffer;
 					}
 				}
-				if (!lumpname) 
+				if (!lumpname)
 				{
-					if (isenterpic) 
+					if (isenterpic)
 					{
 						// One special case needs to be handled here!
 						// If going from E1-E3 to E4 the default should be used, not the exit pic.
 
 						// Not if the exit pic is user defined!
-						if (level.info->ExitPic.IsNotEmpty()) return;
+						if (level.info->ExitPic.IsNotEmpty()) return false;
 
 						// E1-E3 need special treatment when playing Doom 1.
 						if (!(gameinfo.flags & GI_MAPxx))
 						{
 							// not if the last level is not from the first 3 episodes
-							if (!IsExMy(wbs->current)) return;
+							if (!IsExMy(wbs->current)) return false;
 
 							// not if the next level is one of the first 3 episodes
-							if (IsExMy(wbs->next)) return;
+							if (IsExMy(wbs->next)) return false;
 						}
 					}
 					lumpname = "INTERPIC";
@@ -375,22 +256,22 @@ public:
 						lumpname = buffer;
 					}
 				}
-				if (!lumpname) 
+				if (!lumpname)
 				{
-					if (isenterpic) return;
+					if (isenterpic) return false;
 					lumpname = "FLOOR16";
 				}
 				break;
 
 			case GAME_Hexen:
-				if (isenterpic) return;
+				if (isenterpic) return false;
 				lumpname = "INTERPIC";
 				break;
 
 			case GAME_Strife:
 			default:
 				// Strife doesn't have an intermission pic so choose something neutral.
-				if (isenterpic) return;
+				if (isenterpic) return false;
 				lumpname = gameinfo.BorderFlat;
 				break;
 			}
@@ -399,7 +280,7 @@ public:
 		{
 			// shouldn't happen!
 			background = NULL;
-			return;
+			return false;
 		}
 
 		lnodes.Clear();
@@ -408,21 +289,21 @@ public:
 		splat = NULL;
 
 		// a name with a starting '$' indicates an intermission script
-		if (*lumpname!='$')
+		if (*lumpname != '$')
 		{
 			texture = TexMan.CheckForTexture(lumpname, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
 		}
 		else
 		{
-			int lumpnum=Wads.CheckNumForFullName(lumpname+1, true);
-			if (lumpnum>=0)
+			int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
+			if (lumpnum >= 0)
 			{
 				FScanner sc(lumpnum);
 				while (sc.GetString())
 				{
 					an.Reset();
 					int caseval = sc.MustMatchString(WI_Cmd);
-					switch(caseval)
+					switch (caseval)
 					{
 					case 0:		// Background
 						sc.MustGetString();
@@ -448,8 +329,7 @@ public:
 						while (!sc.CheckString("}"))
 						{
 							sc.MustGetString();
-							strncpy(pt.level, sc.String,8);
-							pt.level[8] = 0;
+							pt.Level = sc.String;
 							sc.MustGetNumber();
 							pt.x = sc.Number;
 							sc.MustGetNumber();
@@ -477,7 +357,7 @@ public:
 					case 8:		// IfLeaving
 						an.type = ANIM_IFLEAVING;
 						goto readanimation;
-				
+
 					case 9:		// IfNotLeaving
 						an.type = ANIM_IFNOTLEAVING;
 						goto readanimation;
@@ -502,7 +382,7 @@ public:
 						sc.MustGetString();
 						an.LevelName = sc.String;
 						sc.MustGetString();
-						caseval=sc.MustMatchString(WI_Cmd);
+						caseval = sc.MustMatchString(WI_Cmd);
 
 					default:
 						switch (caseval)
@@ -562,13 +442,14 @@ public:
 					}
 				}
 			}
-			else 
+			else
 			{
-				Printf("Intermission script %s not found!\n", lumpname+1);
+				Printf("Intermission script %s not found!\n", lumpname + 1);
 				texture = TexMan.GetTexture("INTERPIC", FTexture::TEX_MiscPatch);
 			}
 		}
-		background=TexMan[texture];
+		background = TexMan[texture];
+		return noautostartmap;
 	}
 
 	//====================================================================
@@ -578,11 +459,12 @@ public:
 	//
 	//====================================================================
 
-	void WI_updateAnimatedBack()
+	void updateAnimatedBack()
 	{
 		unsigned int i;
 
-		for(i=0;i<anims.Size();i++)
+		bcnt++;
+		for (i = 0; i<anims.Size(); i++)
 		{
 			in_anim_t * a = &anims[i];
 			switch (a->type & ANIM_TYPE)
@@ -590,19 +472,19 @@ public:
 			case ANIM_ALWAYS:
 				if (bcnt >= a->nexttic)
 				{
-					if (++a->ctr >= (int)a->frames.Size()) 
+					if (++a->ctr >= (int)a->frames.Size())
 					{
-						if (a->data==0) a->ctr = 0;
+						if (a->data == 0) a->ctr = 0;
 						else a->ctr--;
 					}
 					a->nexttic = bcnt + a->period;
 				}
 				break;
-			
+
 			case ANIM_PIC:
 				a->ctr = 0;
 				break;
-			
+
 			}
 		}
 	}
@@ -613,11 +495,11 @@ public:
 	//
 	//====================================================================
 
-	void WI_drawBackground()
+	void drawBackground(int state, bool drawsplat, bool snl_pointeron)
 	{
 		unsigned int i;
-		double animwidth=320;		// For a flat fill or clear background scale animations to 320x200
-		double animheight=200;
+		double animwidth = 320;		// For a flat fill or clear background scale animations to 320x200
+		double animheight = 200;
 
 		if (background)
 		{
@@ -629,20 +511,20 @@ public:
 				// placing the animations precisely where they belong on the base pic
 				animwidth = background->GetScaledWidthDouble();
 				animheight = background->GetScaledHeightDouble();
-				screen->FillBorder (NULL);
+				screen->FillBorder(NULL);
 				screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 			}
-			else 
+			else
 			{
 				screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
 			}
 		}
-		else 
+		else
 		{
-			screen->Clear(0,0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+			screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 		}
 
-		for(i=0;i<anims.Size();i++)
+		for (i = 0; i<anims.Size(); i++)
 		{
 			in_anim_t * a = &anims[i];
 			level_info_t * li;
@@ -685,10 +567,214 @@ public:
 				break;
 			}
 			if (a->ctr >= 0)
-				screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y, 
-									DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
+				screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y,
+					DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
+		}
+
+		if (drawsplat)
+		{
+			for (i = 0; i<lnodes.Size(); i++)
+			{
+				level_info_t * li = FindLevelInfo(lnodes[i].Level);
+				if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
+			}
+		}
+
+		// draw flashing ptr
+		if (snl_pointeron && yah.Size())
+		{
+			unsigned int v = MapToIndex(wbs->next);
+			// Draw only if it points to a valid level on the current screen!
+			if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size());
+		}
+
+	}
+
+private:
+	//====================================================================
+	//
+	// Draws the splats and the 'You are here' arrows
+	//
+	//====================================================================
+
+	int MapToIndex(const char *map)
+	{
+		unsigned int i;
+
+		for (i = 0; i < lnodes.Size(); i++)
+		{
+			if (!lnodes[i].Level.CompareNoCase(map))
+				break;
+		}
+		return i;
+	}
+
+
+	//====================================================================
+	//
+	// Draws the splats and the 'You are here' arrows
+	//
+	//====================================================================
+
+	void drawOnLnode(int   n, FTexture * c[], int numc)
+	{
+		int   i;
+		for (i = 0; i<numc; i++)
+		{
+			int            left;
+			int            top;
+			int            right;
+			int            bottom;
+
+
+			right = c[i]->GetScaledWidth();
+			bottom = c[i]->GetScaledHeight();
+			left = lnodes[n].x - c[i]->GetScaledLeftOffset();
+			top = lnodes[n].y - c[i]->GetScaledTopOffset();
+			right += left;
+			bottom += top;
+
+			if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
+			{
+				screen->DrawTexture(c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
+				break;
+			}
 		}
 	}
+
+
+};
+
+struct FPatchInfo
+{
+	FFont *mFont;
+	FTexture *mPatch;
+	EColorRange mColor;
+
+	void Init(FGIFont &gifont)
+	{
+		if (gifont.color == NAME_Null)
+		{
+			mPatch = TexMan[gifont.fontname];	// "entering"
+			mColor = mPatch == NULL ? CR_UNTRANSLATED : CR_UNDEFINED;
+			mFont = NULL;
+		}
+		else
+		{
+			mFont = V_GetFont(gifont.fontname);
+			mColor = V_FindFontColor(gifont.color);
+			mPatch = NULL;
+		}
+		if (mFont == NULL)
+		{
+			mFont = BigFont;
+		}
+	}
+};
+
+
+
+class FIntermissionScreen
+{
+public:
+
+	enum EValues
+	{
+		// GLOBAL LOCATIONS
+		WI_TITLEY = 2,
+
+		// SINGPLE-PLAYER STUFF
+		SP_STATSX = 50,
+		SP_STATSY = 50,
+
+		SP_TIMEX = 8,
+		SP_TIMEY = (200 - 32),
+
+		// NET GAME STUFF
+		NG_STATSY = 50,
+	};
+
+
+
+	// States for single-player
+	enum ESPState
+	{
+		SP_KILLS = 0,
+		SP_ITEMS = 2,
+		SP_SECRET = 4,
+		SP_FRAGS = 6,
+		SP_TIME = 8,
+	};
+
+	static const int SHOWNEXTLOCDELAY = 4;			// in seconds
+
+	//
+	// Animation.
+	// There is another anim_t used in p_spec.
+	// (which is why I have renamed this one!)
+	//
+
+
+	FInterBackground *bg;
+	int				acceleratestage;	// used to accelerate or skip a stage
+	bool			playerready[MAXPLAYERS];
+	int				me;					// wbs->pnum
+	int				bcnt;
+	EState			state;				// specifies current state
+	wbstartstruct_t *wbs;				// contains information passed into intermission
+	wbplayerstruct_t* Plrs[MAXPLAYERS];				// wbs->plyr[]
+	int				cnt;				// used for general timing
+	int				cnt_kills[MAXPLAYERS];
+	int				cnt_items[MAXPLAYERS];
+	int				cnt_secret[MAXPLAYERS];
+	int				cnt_frags[MAXPLAYERS];
+	int				cnt_deaths[MAXPLAYERS];
+	int				cnt_time;
+	int				cnt_total_time;
+	int				cnt_par;
+	int				cnt_pause;
+	int				total_frags;
+	int				total_deaths;
+	bool			noautostartmap;
+	int				dofrags;
+	int				ng_state;
+
+	//
+	//		GRAPHICS
+	//
+
+	FPatchInfo mapname;
+	FPatchInfo finished;
+	FPatchInfo entering;
+
+	FTexture* 		sp_secret;	// "secret"
+	FTexture* 		kills;		// "Kills", "Scrt", "Items", "Frags"
+	FTexture* 		secret;
+	FTexture* 		items;
+	FTexture* 		frags;
+	FTexture* 		timepic;	// Time sucks.
+	FTexture* 		par;
+	FTexture* 		sucks;
+	FTexture* 		killers;	// "killers", "victims"
+	FTexture* 		victims;
+	FTexture* 		total;		// "Total", your face, your dead face
+	FTexture* 		p;			// Player graphic
+	FTexture*		lnames[2];	// Name graphics of each level (centered)
+
+	// [RH] Info to dynamically generate the level name graphics
+	FString			lnametexts[2];
+
+
+	bool snl_pointeron = false;
+
+	int player_deaths[MAXPLAYERS];
+	int  sp_state;
+
+	//
+	// CODE
+	//
+
+
 
 
 	//====================================================================
@@ -869,57 +955,6 @@ public:
 		WI_DrawName(y, TexMan(wbs->LName1), lnametexts[1]);
 	}
 
-
-	//====================================================================
-	//
-	// Draws the splats and the 'You are here' arrows
-	//
-	//====================================================================
-
-	int WI_MapToIndex (const char *map)
-	{
-		unsigned int i;
-
-		for (i = 0; i < lnodes.Size(); i++)
-		{
-			if (!strnicmp (lnodes[i].level, map, 8))
-				break;
-		}
-		return i;
-	}
-
-
-	//====================================================================
-	//
-	// Draws the splats and the 'You are here' arrows
-	//
-	//====================================================================
-
-	void WI_drawOnLnode( int   n, FTexture * c[] ,int numc)
-	{
-		int   i;
-		for(i=0;i<numc;i++)
-		{
-			int            left;
-			int            top;
-			int            right;
-			int            bottom;
-
-
-			right = c[i]->GetScaledWidth();
-			bottom = c[i]->GetScaledHeight();
-			left = lnodes[n].x - c[i]->GetScaledLeftOffset();
-			top = lnodes[n].y - c[i]->GetScaledTopOffset();
-			right += left;
-			bottom += top;
-		
-			if (left >= 0 && right < 320 && top >= 0 && bottom < 200) 
-			{
-				screen->DrawTexture (c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
-				break;
-			}
-		} 
-	}
 
 	//====================================================================
 	//
@@ -1133,7 +1168,7 @@ public:
 		state = ShowNextLoc;
 		acceleratestage = 0;
 		cnt = SHOWNEXTLOCDELAY * TICRATE;
-		WI_LoadBackground(true);
+		bg->LoadBackground(true);
 	}
 
 	void WI_updateShowNextLoc ()
@@ -1146,26 +1181,7 @@ public:
 
 	void WI_drawShowNextLoc(void)
 	{
-		unsigned int i;
-	
-		WI_drawBackground();
-
-		if (splat)
-		{
-			for (i=0 ; i<lnodes.Size() ; i++) 
-			{
-				level_info_t * li = FindLevelInfo (lnodes[i].level);
-				if (li && li->flags & LEVEL_VISITED) WI_drawOnLnode(i, &splat,1);  // draw a splat on taken cities.
-			}
-		}
-		
-		// draw flashing ptr
-		if (snl_pointeron && yah.Size())
-		{
-			unsigned int v = WI_MapToIndex (wbs->next);
-			// Draw only if it points to a valid level on the current screen!
-			if (v<lnodes.Size()) WI_drawOnLnode (v, &yah[0], yah.Size()); 
-		}
+		bg->drawBackground(state, true, snl_pointeron);
 
 		// draws which level you are entering..
 		WI_drawEL ();  
@@ -1344,7 +1360,7 @@ public:
 		player_t *sortedplayers[MAXPLAYERS];
 
 		// draw animated background
-		WI_drawBackground();
+		bg->drawBackground(state, false, false);
 
 		y = WI_drawLF();
 
@@ -1648,7 +1664,7 @@ public:
 		FTexture *readyico = TexMan.FindTexture("READYICO");
 
 		// draw animated background
-		WI_drawBackground(); 
+		bg->drawBackground(state, false, false); 
 
 		y = WI_drawLF();
 
@@ -1898,8 +1914,8 @@ public:
 		lh = IntermissionFont->GetHeight() * 3 / 2;
 
 		// draw animated background
-		WI_drawBackground(); 
-	
+		bg->drawBackground(state, false, false);
+
 		WI_drawLF();
 	
 		if (gameinfo.gametype & GAME_DoomChex)
@@ -2089,12 +2105,15 @@ public:
 		if (li) lnametexts[1] = li->LookupLevelName();
 		else lnametexts[1] = "";
 
-		WI_LoadBackground(false);
+		bg = new FInterBackground(wbs);
+		noautostartmap = bg->LoadBackground(false);
 	}
 
 	void WI_unloadData ()
 	{
 		// [RH] The texture data gets unloaded at pre-map time, so there's nothing to do here
+		if (bg != nullptr) delete bg;
+		bg = nullptr;
 		return;
 	}
 
@@ -2155,7 +2174,7 @@ static FIntermissionScreen WI_Screen;
 
 void WI_Ticker()
 {
-	WI_Screen.WI_updateAnimatedBack();
+	WI_Screen.bg->updateAnimatedBack();
 	WI_Screen.WI_Ticker();
 }
 

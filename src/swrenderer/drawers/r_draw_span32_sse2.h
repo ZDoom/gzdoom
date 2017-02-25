@@ -410,14 +410,23 @@ namespace swrenderer
 			}
 			else if (BlendT::Mode == (int)SpanBlendModes::Masked)
 			{
+#if 0 // leaving this in for alpha texture support (todo: fix in texture manager later?)
 				__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3, 3, 3, 3));
 				alpha = _mm_shufflehi_epi16(alpha, _MM_SHUFFLE(3, 3, 3, 3));
 				alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
+
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 
 				fgcolor = _mm_mullo_epi16(fgcolor, alpha);
 				bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
 				__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
+				outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+				outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+				return outcolor;
+#endif
+				__m128i mask = _mm_cmpeq_epi32(_mm_packus_epi16(fgcolor, _mm_setzero_si128()), _mm_setzero_si128());
+				mask = _mm_unpacklo_epi8(mask, _mm_setzero_si128());
+				__m128i outcolor = _mm_or_si128(_mm_and_si128(mask, bgcolor), _mm_andnot_si128(mask, fgcolor));
 				outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 				outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 				return outcolor;

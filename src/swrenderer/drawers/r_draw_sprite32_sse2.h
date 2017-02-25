@@ -100,7 +100,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		void Loop(DrawerThread *thread, ShadeConstants shade_constants)
+		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, ShadeConstants shade_constants)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -254,7 +254,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		unsigned int Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
+		FORCEINLINE unsigned int VECTORCALL Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -303,7 +303,7 @@ namespace swrenderer
 			}
 		}
 
-		unsigned int SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
+		FORCEINLINE unsigned int VECTORCALL SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -320,7 +320,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		__m128i Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, __m128i lightcontrib)
+		FORCEINLINE __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, __m128i lightcontrib)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -359,7 +359,7 @@ namespace swrenderer
 			}
 		}
 
-		__m128i Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawSprite32TModes;
 

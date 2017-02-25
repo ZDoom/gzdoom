@@ -78,7 +78,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		void Loop(DrawerThread *thread, ShadeConstants shade_constants)
+		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, ShadeConstants shade_constants)
 		{
 			using namespace DrawWall32TModes;
 
@@ -205,7 +205,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		unsigned int Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
+		FORCEINLINE unsigned int VECTORCALL Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
 		{
 			using namespace DrawWall32TModes;
 
@@ -241,7 +241,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		__m128i Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
+		FORCEINLINE __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -273,7 +273,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_z);
 		}
 
-		__m128i AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
+		FORCEINLINE __m128i VECTORCALL AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -320,7 +320,7 @@ namespace swrenderer
 			return fgcolor;
 		}
 
-		__m128i Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawWall32TModes;
 

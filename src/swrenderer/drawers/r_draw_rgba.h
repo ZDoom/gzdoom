@@ -67,6 +67,13 @@ namespace swrenderer
 	#endif
 	#endif
 
+	// Force the compiler to use a calling convention that works for vector types
+	#if defined(_MSC_VER)
+	#define VECTORCALL __vectorcall
+	#else
+	#define VECTORCALL
+	#endif
+
 	class DrawFuzzColumnRGBACommand : public DrawerCommand
 	{
 		int _x;

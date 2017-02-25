@@ -791,7 +791,6 @@ file( GLOB HEADER_FILES
 	xlat/*.h
 	swrenderer/*.h
 	swrenderer/drawers/*.h
-	swrenderer/drawers/*.php
 	swrenderer/scene/*.h
 	swrenderer/segments/*.h
 	swrenderer/line/*.h

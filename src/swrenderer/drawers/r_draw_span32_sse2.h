@@ -152,7 +152,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT, typename FilterModeT, typename TextureSizeT>
-		void Loop(DrawerThread *thread, TextureData texdata, ShadeConstants shade_constants)
+		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, TextureData texdata, ShadeConstants shade_constants)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -264,7 +264,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT, typename TextureSizeT>
-		unsigned int Sample(uint32_t xbits, uint32_t ybits, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, uint32_t yshift, uint32_t xshift, uint32_t xmask, const uint32_t *source)
+		FORCEINLINE unsigned int VECTORCALL Sample(uint32_t xbits, uint32_t ybits, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, uint32_t yshift, uint32_t xshift, uint32_t xmask, const uint32_t *source)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -319,7 +319,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		__m128i Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_x)
+		FORCEINLINE __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -351,7 +351,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_x);
 		}
 
-		__m128i AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_x)
+		FORCEINLINE __m128i VECTORCALL AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -398,7 +398,7 @@ namespace swrenderer
 			return fgcolor;
 		}
 
-		__m128i Blend(__m128i fgcolor, __m128i bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor0, unsigned int ifgcolor1)
+		FORCEINLINE __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor0, unsigned int ifgcolor1)
 		{
 			using namespace DrawSpan32TModes;
 

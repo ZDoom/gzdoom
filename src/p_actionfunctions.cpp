@@ -1124,7 +1124,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	PARAM_INT_DEF(chance);
 	PARAM_INT_DEF(distance);
 
-	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
+	if ((flags & SMF_LOOK) && (self->tracer == nullptr) && (pr_seekermissile()<chance))
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}

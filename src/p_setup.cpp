@@ -4202,6 +4202,7 @@ void P_Init ()
 static void P_Shutdown ()
 {
 	// [ZZ] delete global event handlers
+	DThinker::DestroyThinkersInList(STAT_STATIC);
 	E_Shutdown(false);
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();

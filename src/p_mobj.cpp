@@ -1804,7 +1804,7 @@ bool AActor::Massacre ()
 //
 //----------------------------------------------------------------------------
 
-void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
+void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 {
 	if (mo->flags3 & MF3_EXPLOCOUNT)
 	{
@@ -1832,11 +1832,15 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death);
 	
-	if (line != NULL && line->special == Line_Horizon && !(mo->flags3 & MF3_SKYEXPLODE))
+	if (onsky || (line != NULL && line->special == Line_Horizon))
 	{
-		// [RH] Don't explode missiles on horizon lines.
-		mo->Destroy ();
-		return;
+		if (!(mo->flags3 & MF3_SKYEXPLODE))
+		{
+			// [RH] Don't explode missiles on horizon lines.
+			mo->Destroy();
+			return;
+		}
+		nextstate = mo->FindState(NAME_Death, NAME_Sky);
 	}
 
 	if (line != NULL && cl_missiledecals)
@@ -2557,26 +2561,32 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 				}
 explode:
 				// explode a missile
-				if (!(mo->flags3 & MF3_SKYEXPLODE))
-				{
+				bool onsky = false;
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
 					{
-						// Hack to prevent missiles exploding against the sky.
-						// Does not handle sky floors.
-						mo->Destroy ();
-						return Oldfloorz;
+						if (!(mo->flags3 & MF3_SKYEXPLODE))
+						{
+							// Hack to prevent missiles exploding against the sky.
+							// Does not handle sky floors.
+							mo->Destroy();
+							return Oldfloorz;
+						}
+						else onsky = true;
 					}
 					// [RH] Don't explode on horizon lines.
 					if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
 					{
-						mo->Destroy ();
-						return Oldfloorz;
+						if (!(mo->flags3 & MF3_SKYEXPLODE))
+						{
+							mo->Destroy();
+							return Oldfloorz;
+						}
+						else onsky = true;
 					}
-				}
-				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj);
+				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
 			}
 			else
@@ -2955,15 +2965,20 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 				}
 				else
 				{
-					if (mo->floorpic == skyflatnum && !(mo->flags3 & MF3_SKYEXPLODE))
+					bool onsky = false;
+					if (mo->floorpic == skyflatnum)
 					{
-						// [RH] Just remove the missile without exploding it
-						//		if this is a sky floor.
-						mo->Destroy ();
-						return;
+						if (!(mo->flags3 & MF3_SKYEXPLODE))
+						{
+							// [RH] Just remove the missile without exploding it
+							//		if this is a sky floor.
+							mo->Destroy();
+							return;
+						}
+						else onsky = true;
 					}
 					P_HitFloor (mo);
-					P_ExplodeMissile (mo, NULL, NULL);
+					P_ExplodeMissile (mo, NULL, NULL, onsky);
 					return;
 				}
 			}
@@ -3056,12 +3071,17 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 				{
 					return;
 				}
-				if (mo->ceilingpic == skyflatnum &&  !(mo->flags3 & MF3_SKYEXPLODE))
+				bool onsky = false;
+				if (mo->ceilingpic == skyflatnum)
 				{
-					mo->Destroy ();
-					return;
+					if (!(mo->flags3 & MF3_SKYEXPLODE))
+					{
+						mo->Destroy();
+						return;
+					}
+					else onsky = true;
 				}
-				P_ExplodeMissile (mo, NULL, NULL);
+				P_ExplodeMissile (mo, NULL, NULL, onsky);
 				return;
 			}
 		}

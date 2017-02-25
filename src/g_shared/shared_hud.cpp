@@ -1136,10 +1136,6 @@ void DrawHUD()
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, i);
 		DrawInventory(CPlayer, 144, hudheight-28);
-		if (CPlayer->camera && CPlayer->camera->player)
-		{
-			StatusBar->DrawCrosshair();
-		}
 		if (idmypos) DrawCoordinates(CPlayer);
 
 		DrawTime();

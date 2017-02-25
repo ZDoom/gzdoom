@@ -654,6 +654,7 @@ xx(Goodbye)
 xx(Require)
 xx(Exclude)
 xx(Userstring)
+xx(Sky)
 
 // Special menus
 xx(Mainmenu)

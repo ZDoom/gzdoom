@@ -1714,6 +1714,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 		}
 	}
 
+	if ((flags7 & MF7_NOINFIGHTSPECIES) && GetSpecies() == target->GetSpecies())
+		return false;		// Don't fight own species.
+
 	if ((other->flags3 & MF3_NOTARGET) &&
 		(other->tid != TIDtoHate || TIDtoHate == 0) &&
 		!IsHostile (other))

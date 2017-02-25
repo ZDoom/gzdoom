@@ -427,6 +427,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
+	DThinker::DestroyThinkersInList(STAT_STATIC);
 
 	if (paused)
 	{

@@ -808,6 +808,10 @@ void D_Display ()
 			{
 				StatusBar->DrawBottomStuff (HUD_AltHud);
 				if (DrawFSHUD || automapactive) DrawHUD();
+				if (players[consoleplayer].camera && players[consoleplayer].camera->player)
+				{
+					StatusBar->DrawCrosshair();
+				}
 				StatusBar->Draw (HUD_AltHud);
 				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
@@ -2705,6 +2709,7 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
+		DThinker::DestroyThinkersInList(STAT_STATIC);
 		P_FreeLevelData();
 		P_FreeExtraLevelData();
 

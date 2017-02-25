@@ -11,6 +11,7 @@ Class GoldWandAmmo : Ammo
 		Ammo.BackpackAmount 10;
 		Ammo.BackpackMaxAmount 200;
 		Inventory.Icon "INAMGLD";
+		Tag "$AMMO_GOLDWAND";
 	}
 	States
 	{
@@ -48,6 +49,7 @@ Class CrossbowAmmo : Ammo
 		Ammo.BackpackAmount 5;
 		Ammo.BackpackMaxAmount 100;
 		Inventory.Icon "INAMBOW";
+		Tag "$AMMO_CROSSBOW";
 	}
 	States
 	{
@@ -85,6 +87,7 @@ Class MaceAmmo : Ammo
 		Ammo.BackpackAmount 20;
 		Ammo.BackpackMaxAmount 300;
 		Inventory.Icon "INAMLOB";
+		Tag "$AMMO_MACE";
 	}
 	States
 	{
@@ -123,6 +126,7 @@ Class BlasterAmmo : Ammo
 		Ammo.BackpackAmount 10;
 		Ammo.BackpackMaxAmount 400;
 		Inventory.Icon "INAMBST";
+		Tag "$AMMO_BLASTER";
 	}
 	States
 	{
@@ -161,6 +165,7 @@ Class SkullRodAmmo : Ammo
 		Ammo.BackpackAmount 20;
 		Ammo.BackpackMaxAmount 400;
 		Inventory.Icon "INAMRAM";
+		Tag "$AMMO_SKULLROD";
 	}
 	States
 	{
@@ -199,6 +204,7 @@ Class PhoenixRodAmmo : Ammo
 		Ammo.BackpackAmount 1;
 		Ammo.BackpackMaxAmount 40;
 		Inventory.Icon "INAMPNX";
+		Tag "$AMMO_PHOENIXROD";
 	}
 	States
 	{

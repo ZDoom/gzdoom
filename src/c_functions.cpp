@@ -39,7 +39,7 @@
 
 #include "c_functions.h"
 
-void C_PrintInfo(AActor *target)
+void C_PrintInfo(AActor *target, bool verbose)
 {
 	if (target->player)
 		Printf("Player=%s, ", target->player->userinfo.GetName());
@@ -47,7 +47,7 @@ void C_PrintInfo(AActor *target)
 		target->GetClass()->TypeName.GetChars(),
 		target->health,
 		target->SpawnHealth());
-	PrintMiscActorInfo(target);
+	if (verbose) PrintMiscActorInfo(target);
 }
 
 void C_AimLine(FTranslatedLineTarget *t, bool nonshootable)

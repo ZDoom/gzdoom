@@ -422,7 +422,7 @@ void DThinker::DestroyAllThinkers ()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		if (i != STAT_TRAVELLING)
+		if (i != STAT_TRAVELLING && i != STAT_STATIC)
 		{
 			DestroyThinkersInList (Thinkers[i]);
 			DestroyThinkersInList (FreshThinkers[i]);

@@ -333,7 +333,7 @@ namespace swrenderer
 			else if (BlendT::Mode == (int)WallBlendModes::Masked)
 			{
 				__m128i alpha = _mm_shufflelo_epi16(fgcolor, _MM_SHUFFLE(3, 3, 3, 3));
-				alpha = _mm_shufflehi_epi16(fgcolor, _MM_SHUFFLE(3, 3, 3, 3));
+				alpha = _mm_shufflehi_epi16(alpha, _MM_SHUFFLE(3, 3, 3, 3));
 				alpha = _mm_add_epi16(alpha, _mm_srli_epi16(alpha, 7)); // 255 -> 256
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 

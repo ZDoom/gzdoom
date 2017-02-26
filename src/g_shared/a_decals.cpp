@@ -751,14 +751,23 @@ IMPLEMENT_CLASS(ADecal, false, false)
 
 void ADecal::BeginPlay ()
 {
-	const FDecalTemplate *tpl;
+	const FDecalTemplate *tpl = nullptr;
 
 	Super::BeginPlay ();
 
-	int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+	if (args[0] < 0)
+	{
+		FName name = ENamedName(-args[0]);
+		tpl = DecalLibrary.GetDecalByName(name.GetChars());
+	}
+	else
+	{
+		int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+		tpl = DecalLibrary.GetDecalByNum(decalid);
+	}
 
 	// If no decal is specified, don't try to create one.
-	if (decalid != 0 && (tpl = DecalLibrary.GetDecalByNum (decalid)) != 0)
+	if (tpl != nullptr)
 	{
 		if (!tpl->PicNum.Exists())
 		{

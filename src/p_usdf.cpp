@@ -196,6 +196,11 @@ class USDFParser : public UDMFParserBase
 						reply->ActionSpecial = 0;
 					break;
 
+				case NAME_SpecialName:
+					if (namespace_bits == Zd)
+						reply->ActionSpecial = P_FindLineSpecial(CheckString(key));
+					break;
+
 				case NAME_Arg0:
 				case NAME_Arg1:
 				case NAME_Arg2:

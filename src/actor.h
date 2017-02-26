@@ -430,6 +430,7 @@ enum ActorRenderFlag
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
+	RF_DONTINTERPOLATE	= 0x04000000,	// no render interpolation ever!
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -1321,7 +1322,8 @@ public:
 	}
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{
-		return Prev + (ticFrac * (Pos() - Prev));
+		if (renderflags & RF_DONTINTERPOLATE) return Pos();
+		else return Prev + (ticFrac * (Pos() - Prev));
 	}
 	DRotator InterpolatedAngles(double ticFrac) const
 	{

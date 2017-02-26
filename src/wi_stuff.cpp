@@ -1155,7 +1155,8 @@ public:
 
 	void WI_initShowNextLoc ()
 	{
-		if (wbs->next_ep == -1) 
+		auto info = FindLevelInfo(wbs->next, false);
+		if (info == nullptr) 
 		{
 			// Last map in episode - there is no next location!
 			WI_End();

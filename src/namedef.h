@@ -773,6 +773,7 @@ xx(BuiltinGetDefault)
 xx(BuiltinClassCast)
 xx(BuiltinFormat)
 xx(Damage)
+xx(Noattack)
 
 // basic type names
 xx(Default)

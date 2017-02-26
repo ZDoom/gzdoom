@@ -197,6 +197,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       desaturation = <float>;         // Color desaturation factor. 0 = none, 1 = full, default = 0.
       silent = <bool>;                // Actors in this sector make no sound,
       nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
+	  noattack = <bool>;              // Blocks monster attacks in this sector.
       dropactors = <bool>;            // Actors drop with instantly moving floors (*)
       norespawn = <bool>;             // Players can not respawn in this sector
       soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a

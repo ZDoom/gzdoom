@@ -60,6 +60,7 @@ void FMapInfoParser::ParseSkill ()
 	bool thisisdefault = false;
 	bool acsreturnisset = false;
 
+	skill.NoMenu = false;
 	skill.AmmoFactor = 1.;
 	skill.DoubleAmmoFactor = 2.;
 	skill.DropAmmoFactor = -1.;
@@ -148,6 +149,10 @@ void FMapInfoParser::ParseSkill ()
 		else if (sc.Compare("autousehealth"))
 		{
 			skill.AutoUseHealth = true;
+		}
+		else if (sc.Compare("nomenu"))
+		{
+			skill.NoMenu = true;
 		}
 		else if (sc.Compare("respawntime"))
 		{
@@ -508,6 +513,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 {
 	Name = other.Name;
 	AmmoFactor = other.AmmoFactor;
+	NoMenu = other.NoMenu;
 	DoubleAmmoFactor = other.DoubleAmmoFactor;
 	DropAmmoFactor = other.DropAmmoFactor;
 	DamageFactor = other.DamageFactor;

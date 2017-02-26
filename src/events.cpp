@@ -449,7 +449,13 @@ DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 
 // declarations
-IMPLEMENT_CLASS(DStaticEventHandler, false, false);
+IMPLEMENT_CLASS(DStaticEventHandler, false, true);
+
+IMPLEMENT_POINTERS_START(DStaticEventHandler)
+IMPLEMENT_POINTER(next)
+IMPLEMENT_POINTER(prev)
+IMPLEMENT_POINTERS_END
+
 IMPLEMENT_CLASS(DEventHandler, false, false);
 IMPLEMENT_CLASS(DBaseEvent, false, false)
 IMPLEMENT_CLASS(DRenderEvent, false, false)

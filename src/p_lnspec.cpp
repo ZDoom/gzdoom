@@ -3177,7 +3177,7 @@ FUNC(LS_ClearForceField)
 }
 
 FUNC(LS_GlassBreak)
-// GlassBreak (bNoJunk)
+// GlassBreak (bNoJunk, junkID)
 {
 	bool switched;
 	bool quest1, quest2;
@@ -3197,7 +3197,6 @@ FUNC(LS_GlassBreak)
 	{
 		if (!arg0)
 		{ // Break some glass
-			AActor *glass;
 
 			DVector2 linemid((ln->v1->fX() + ln->v2->fX()) / 2, (ln->v1->fY() + ln->v2->fY()) / 2);
 
@@ -3209,18 +3208,32 @@ FUNC(LS_GlassBreak)
 			y += (ln->frontsector->centerspot.y - y) / 5;
 			*/
 
+			auto type = SpawnableThings.CheckKey(arg1);
 			for (int i = 0; i < 7; ++i)
 			{
-				glass = Spawn("GlassJunk", DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
-
-				glass->AddZ(24.);
-				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
-
-				glass->Angles.Yaw = pr_glass() * (360 / 256.);
-				glass->VelFromAngle(pr_glass() & 3);
-				glass->Vel.Z = (pr_glass() & 7);
-				// [RH] Let the shards stick around longer than they did in Strife.
-				glass->tics += pr_glass();
+				AActor *glass = nullptr;
+				if (arg1 > 0)
+				{
+					if (type != nullptr)
+					{
+						glass = Spawn(*type, DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
+						glass->AddZ(24.);
+					}
+				}
+				else
+				{
+					glass = Spawn("GlassJunk", DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
+					glass->AddZ(24.);
+					glass->SetState(glass->SpawnState + (pr_glass() % glass->health));
+				}
+				if (glass != nullptr)
+				{
+					glass->Angles.Yaw = pr_glass() * (360 / 256.);
+					glass->VelFromAngle(pr_glass() & 3);
+					glass->Vel.Z = (pr_glass() & 7);
+					// [RH] Let the shards stick around longer than they did in Strife.
+					glass->tics += pr_glass();
+				}
 			}
 		}
 		if (quest1 || quest2)

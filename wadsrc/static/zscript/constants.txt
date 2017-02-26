@@ -996,6 +996,12 @@ enum EFindFloorCeiling
 	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
 };
 
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+}
+
 enum ETeleport
 {
 	TELF_DESTFOG			= 1,

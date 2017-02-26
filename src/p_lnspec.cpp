@@ -1737,14 +1737,14 @@ FUNC(LS_Thing_SpawnFacing)
 }
 
 FUNC(LS_Thing_Raise)
-// Thing_Raise(tid)
+// Thing_Raise(tid, nocheck)
 {
 	AActor * target;
 	bool ok = false;
 
 	if (arg0==0)
 	{
-		ok = P_Thing_Raise (it,NULL);
+		ok = P_Thing_Raise (it,NULL, arg1);
 	}
 	else
 	{
@@ -1752,7 +1752,7 @@ FUNC(LS_Thing_Raise)
 
 		while ( (target = iterator.Next ()) )
 		{
-			ok |= P_Thing_Raise(target,NULL);
+			ok |= P_Thing_Raise(target,NULL, arg1);
 		}
 	}
 	return ok;

@@ -790,9 +790,9 @@ class Actor : Thinker native
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0);
 	deprecated native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
-	native void A_RaiseMaster(bool copy = 0);
-	native void A_RaiseChildren(bool copy = 0);
-	native void A_RaiseSiblings(bool copy = 0);
+	native void A_RaiseMaster(int flags = 0);
+	native void A_RaiseChildren(int flags = 0);
+	native void A_RaiseSiblings(int flags = 0);
 	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
 	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);

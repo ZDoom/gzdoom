@@ -4602,6 +4602,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 	return 0;
 }
 
+
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+};
+
 //===========================================================================
 //
 // A_RaiseMaster
@@ -4610,11 +4617,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	if (self->master != NULL)
 	{
-		P_Thing_Raise(self->master, copy ? self : NULL);
+		P_Thing_Raise(self->master, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 	}
 	return 0;
 }
@@ -4627,16 +4635,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	while ((mo = it.Next()) != NULL)
 	{
 		if (mo->master == self)
 		{
-			P_Thing_Raise(mo, copy ? self : NULL);
+			P_Thing_Raise(mo, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 		}
 	}
 	return 0;
@@ -4650,18 +4659,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	if (self->master != NULL)
 	{
 		while ((mo = it.Next()) != NULL)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				P_Thing_Raise(mo, copy ? self : NULL);
+				P_Thing_Raise(mo, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 			}
 		}
 	}

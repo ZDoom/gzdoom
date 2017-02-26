@@ -61,7 +61,7 @@ class MessageBoxMenu : Menu
 		int mr2 = 170 + SmallFont.StringWidth(Stringtable.Localize("$TXT_NO"));
 		mMouseRight = MAX(mr1, mr2);
 		mParentMenu = parent;
-		mMessage = SmallFont.BreakLines(message, 300);
+		mMessage = SmallFont.BreakLines(Stringtable.Localize(message), 300);
 		mMessageMode = messagemode;
 		if (playsound)
 		{

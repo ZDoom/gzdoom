@@ -84,6 +84,7 @@ public:
 	virtual void FluidSettingNum(const char *setting, double value);		// "
 	virtual void FluidSettingStr(const char *setting, const char *value);	// "
 	virtual void WildMidiSetOption(int opt, int set);
+	virtual void GMEDepthChanged(float val);
 
 	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
 

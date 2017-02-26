@@ -43,6 +43,7 @@
 #include <gme/gme.h>
 #include "v_text.h"
 #include "files.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -67,6 +68,7 @@ protected:
 	bool StartTrack(int track, bool getcritsec=true);
 	bool GetTrackInfo();
 	int CalcSongLength();
+	void GMEDepthChanged(float val);
 
 	static bool Read(SoundStream *stream, void *buff, int len, void *userdata);
 };
@@ -83,6 +85,12 @@ protected:
 
 // Currently not used.
 CVAR (Float, spc_amp, 1.875f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr)
+		currSong->GMEDepthChanged(self);
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -146,6 +154,7 @@ MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
         reader.Seek(fpos, SEEK_SET);
 		return NULL;
 	}
+	gme_set_stereo_depth(emu, clamp(*gme_stereodepth, 0.f, 1.f));
 	return new GMESong(emu, sample_rate);
 }
 
@@ -186,6 +195,19 @@ GMESong::~GMESong()
 	{
 		gme_delete(Emu);
 	}
+}
+
+
+//==========================================================================
+//
+// GMESong :: GMEDepthChanged
+//
+//==========================================================================
+
+void GMESong::GMEDepthChanged(float val)
+{
+	if (Emu != nullptr)
+		gme_set_stereo_depth(Emu, clamp(val, 0.f, 1.f));
 }
 
 

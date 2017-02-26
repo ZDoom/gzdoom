@@ -1772,7 +1772,8 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	}
 	
 	int infight;
-	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
+	if (flags7 & MF7_FORCEINFIGHTING) infight = 1;
+	else if (flags5 & MF5_NOINFIGHTING) infight = -1;
 	else infight = G_SkillProperty(SKILLP_Infight);
 
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))

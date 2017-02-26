@@ -1177,6 +1177,7 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 	if (!victim->player && !shooter->player)
 	{
 		int infight = G_SkillProperty(SKILLP_Infight);
+		if (infight < 0 && (victim->flags7 & MF7_FORCEINFIGHTING)) infight = 0;	// This must override the 'no infight' setting to take effect.
 
 		if (infight < 0)
 		{

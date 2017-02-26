@@ -205,6 +205,11 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 		{
 			if (!LoadScriptFile (scriptname_b, false, 1))
 			{
+				if (gameinfo.Dialogue.IsNotEmpty())
+				{
+					if (LoadScriptFile(gameinfo.Dialogue, false, 0)) return;
+				}
+
 				LoadScriptFile ("SCRIPT00", false, 1);
 			}
 		}

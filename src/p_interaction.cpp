@@ -216,15 +216,20 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		}
 	}
 
-	switch (mod)
+	FString obit = DamageTypeDefinition::GetObituary(mod);
+	if (obit.IsNotEmpty()) messagename = obit;
+	else
 	{
-	case NAME_Suicide:		messagename = "OB_SUICIDE";		break;
-	case NAME_Falling:		messagename = "OB_FALLING";		break;
-	case NAME_Crush:		messagename = "OB_CRUSH";		break;
-	case NAME_Exit:			messagename = "OB_EXIT";		break;
-	case NAME_Drowning:		messagename = "OB_WATER";		break;
-	case NAME_Slime:		messagename = "OB_SLIME";		break;
-	case NAME_Fire:			if (attacker == NULL) messagename = "OB_LAVA";		break;
+		switch (mod)
+		{
+		case NAME_Suicide:		messagename = "OB_SUICIDE";		break;
+		case NAME_Falling:		messagename = "OB_FALLING";		break;
+		case NAME_Crush:		messagename = "OB_CRUSH";		break;
+		case NAME_Exit:			messagename = "OB_EXIT";		break;
+		case NAME_Drowning:		messagename = "OB_WATER";		break;
+		case NAME_Slime:		messagename = "OB_SLIME";		break;
+		case NAME_Fire:			if (attacker == NULL) messagename = "OB_LAVA";		break;
+		}
 	}
 
 	// Check for being killed by a voodoo doll.

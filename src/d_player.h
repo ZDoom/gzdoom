@@ -209,13 +209,7 @@ typedef enum
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
-	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
-	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
-	CF_REFLECTION		= 1 << 19,
-	CF_PROSPERITY		= 1 << 20,
-	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
-	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
 	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
 	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die

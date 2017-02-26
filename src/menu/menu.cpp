@@ -64,6 +64,7 @@ CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
@@ -582,6 +583,9 @@ bool M_Responder (event_t *ev)
 		}
 		else if (menuactive != MENU_WaitKey && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 		{
+			// eat blocked controller events without dispatching them.
+			if (ev->data1 >= KEY_FIRSTJOYBUTTON && m_blockcontrollers) return true;
+
 			keyup = ev->type == EV_KeyUp;
 
 			ch = ev->data1;

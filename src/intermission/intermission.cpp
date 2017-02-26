@@ -68,6 +68,7 @@ IMPLEMENT_POINTERS_END
 
 extern int		NoWipe;
 
+CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //==========================================================================
 //
 //
@@ -647,7 +648,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 int DIntermissionScreenScroller::Responder (event_t *ev)
 {
 	int res = Super::Responder(ev);
-	if (res == -1)
+	if (res == -1 && !nointerscrollabort)
 	{
 		mBackground = mSecondPic;
 		mTicker = mScrollDelay + mScrollTime;

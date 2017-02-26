@@ -53,22 +53,6 @@ struct FSimpleVert
 	fixed_t x, y;
 };
 
-extern "C"
-{
-	int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#ifndef DISABLE_SSE
-	int ClassifyLineSSE1 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-	int ClassifyLineSSE2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#ifdef BACKPATCH
-#ifdef __GNUC__
-	int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]) __attribute__((noinline));
-#else
-	int __declspec(noinline) ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#endif
-#endif
-#endif
-}
-
 class FNodeBuilder
 {
 	struct FPrivSeg
@@ -282,7 +266,7 @@ private:
 	//  1 = seg is in back
 	// -1 = seg cuts the node
 
-	inline int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
+	int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
@@ -340,29 +324,4 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 		}
 	}
 	return s_num > 0.0 ? -1 : 1;
-}
-
-inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2])
-{
-#ifdef DISABLE_SSE
-	return ClassifyLine2 (node, v1, v2, sidev);
-#else
-#if defined(__SSE2__) || defined(_M_X64)
-	// If compiling with SSE2 support everywhere, just use the SSE2 version.
-	return ClassifyLineSSE2 (node, v1, v2, sidev);
-#elif defined(_MSC_VER) && _MSC_VER < 1300
-	// VC 6 does not support SSE optimizations.
-	return ClassifyLine2 (node, v1, v2, sidev);
-#else
-	// Select the routine based on our flag.
-#ifdef BACKPATCH
-	return ClassifyLineBackpatch (node, v1, v2, sidev);
-#else
-	if (CPU.bSSE2)
-		return ClassifyLineSSE2 (node, v1, v2, sidev);
-	else
-		return ClassifyLine2 (node, v1, v2, sidev);
-#endif
-#endif
-#endif
 }

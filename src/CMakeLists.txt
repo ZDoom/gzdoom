@@ -397,22 +397,6 @@ if (NOT ZDOOM_USE_SSE2)
 	endif()
 endif()
 
-if( SSE_MATTERS )
-	if( WIN32 )
-		set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-	else()
-		CHECK_FUNCTION_EXISTS(mprotect HAVE_MPROTECT)
-		if( HAVE_MPROTECT )
-			set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-		else()
-			set( BACKPATCH 0 )
-		endif()
-	endif()
-	set( SSE 1 CACHE BOOL "Build SSE and SSE2 versions of key code." )
-else()
-	set( BACKPATCH 0 )
-endif()
-
 if( X64 )
 	set( HAVE_MMX 1 )
 else( X64 )
@@ -577,10 +561,6 @@ endif()
 
 # Flags
 
-if( BACKPATCH )
-	add_definitions( -DBACKPATCH )
-endif()
-
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
@@ -725,18 +705,6 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-
-if( SSE_MATTERS )
-	if( SSE )
-		set( X86_SOURCES nodebuild_classify_sse2.cpp )
-		set_source_files_properties( nodebuild_classify_sse2.cpp PROPERTIES COMPILE_FLAGS "${SSE2_ENABLE}" )
-	else()
-		add_definitions( -DDISABLE_SSE )
-	endif()
-else()
-	add_definitions( -DDISABLE_SSE )
-	set( X86_SOURCES )
-endif()
 
 if( SNDFILE_FOUND )
     add_definitions( -DHAVE_SNDFILE )

@@ -511,6 +511,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	DoubleAmmoFactor = other.DoubleAmmoFactor;
 	DropAmmoFactor = other.DropAmmoFactor;
 	DamageFactor = other.DamageFactor;
+	KickbackFactor = other.KickbackFactor;
 	FastMonsters = other.FastMonsters;
 	SlowMonsters = other.SlowMonsters;
 	DisableCheats = other.DisableCheats;

@@ -1162,6 +1162,28 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		// any negative value means that something in the above chain has cancelled out all damage and all damage effects, including pain.
 		return 0;
 	}
+
+
+	AInventory *reflect;
+	//[RC] Backported from the Zandronum source.. Mostly.
+	if( target->player  &&
+		damage > 0 &&
+		source &&
+		(reflect = target->FindInventory(NAME_PowerReflection)) &&
+		mod != NAME_Reflection)
+	{
+		if ( target != source )
+		{
+			// use the reflect item's damage factors to get the final value here.
+			int reflectdamage = reflect->ApplyDamageFactor(mod, damage);
+			P_DamageMobj(source, nullptr, target, reflectdamage, NAME_Reflection );
+
+			// Reset means of death flag.
+			MeansOfDeath = mod;
+		}
+	}
+
+
 	// Push the target unless the source's weapon's kickback is 0.
 	// (i.e. Gauntlets/Chainsaw)
 	if (!plrDontThrust && inflictor && inflictor != target	// [RH] Not if hurting own self

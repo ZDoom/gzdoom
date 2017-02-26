@@ -5276,20 +5276,22 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 		// [RH] Check for things to talk with or use a puzzle item on
 		if (!in->isaline)
 		{
-			if (usething == in->d.thing)
+			AActor * const mobj = in->d.thing;
+
+			if (mobj == usething)
 				continue;
 			// Check thing
 
 			// Check for puzzle item use or USESPECIAL flag
 			// Extended to use the same activationtype mechanism as BUMPSPECIAL does
-			if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == UsePuzzleItem)
+			if (mobj->flags5 & MF5_USESPECIAL || mobj->special == UsePuzzleItem)
 			{
-				if (P_ActivateThingSpecial(in->d.thing, usething))
+				if (P_ActivateThingSpecial(mobj, usething))
 					return true;
 			}
-			IFVIRTUALPTR(usething, AActor, Used)
+			IFVIRTUALPTR(mobj, AActor, Used)
 			{
-				VMValue params[] = { usething, in->d.thing };
+				VMValue params[] = { mobj, usething };
 				int ret;
 				VMReturn vret(&ret);
 				GlobalVMStack.Call(func, params, 2, &vret, 1);

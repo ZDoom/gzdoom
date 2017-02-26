@@ -80,6 +80,7 @@
 #include "math/cmath.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
+#include "sbar.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -6938,5 +6939,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
 	SprayDecal(self, name);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(name);
+	if (self->CheckLocalView(consoleplayer))
+		StatusBar->SetMugShotState(name);
 	return 0;
 }

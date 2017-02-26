@@ -66,6 +66,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.DamageFactor = 1.;
 	skill.ArmorFactor = 1.;
 	skill.HealthFactor = 1.;
+	skill.KickbackFactor = 1.;
 	skill.FastMonsters = false;
 	skill.SlowMonsters = false;
 	skill.DisableCheats = false;
@@ -117,6 +118,12 @@ void FMapInfoParser::ParseSkill ()
 			ParseAssign();
 			sc.MustGetFloat ();
 			skill.DamageFactor = sc.Float;
+		}
+		else if (sc.Compare("kickbackfactor"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.KickbackFactor = sc.Float;
 		}
 		else if (sc.Compare ("fastmonsters"))
 		{
@@ -436,6 +443,9 @@ double G_SkillProperty(EFSkillProperty prop)
 		case SKILLP_FriendlyHealth:
 			return AllSkills[gameskill].FriendlyHealth;
 
+		case SKILLP_KickbackFactor:
+			return AllSkills[gameskill].KickbackFactor;
+
 		}
 	}
 	return 0;
@@ -501,6 +511,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	DoubleAmmoFactor = other.DoubleAmmoFactor;
 	DropAmmoFactor = other.DropAmmoFactor;
 	DamageFactor = other.DamageFactor;
+	KickbackFactor = other.KickbackFactor;
 	FastMonsters = other.FastMonsters;
 	SlowMonsters = other.SlowMonsters;
 	DisableCheats = other.DisableCheats;

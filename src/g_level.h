@@ -497,6 +497,7 @@ enum EFSkillProperty	// floating point properties
 	SKILLP_Aggressiveness,
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
+	SKILLP_KickbackFactor,
 };
 
 int G_SkillProperty(ESkillProperty prop);
@@ -514,6 +515,7 @@ struct FSkillInfo
 	double DamageFactor;
 	double ArmorFactor;
 	double HealthFactor;
+	double KickbackFactor;
 
 	bool FastMonsters;
 	bool SlowMonsters;

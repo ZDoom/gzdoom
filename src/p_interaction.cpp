@@ -1212,6 +1212,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		else
 			kickback = source->player->ReadyWeapon->Kickback;
 
+		kickback = int(kickback * G_SkillProperty(SKILLP_KickbackFactor));
 		if (kickback)
 		{
 			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;

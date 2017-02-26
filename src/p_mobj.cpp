@@ -4437,7 +4437,8 @@ void AActor::Tick ()
 				return; 		// freed itself
 		}
 	}
-	else
+
+	if (tics == -1 || state->GetCanRaise())
 	{
 		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
 		// check for nightmare respawn

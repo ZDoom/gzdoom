@@ -1950,7 +1950,8 @@ class PowerReflection : Powerup
 {
 	Default
 	{
-		Powerup.Duration -30;
+		Powerup.Duration -60;
+		DamageFactor 0.5;
 	}
 }
 

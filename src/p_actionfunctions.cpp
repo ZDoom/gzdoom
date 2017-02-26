@@ -6932,3 +6932,11 @@ DEFINE_ACTION_FUNCTION(AActor, SetCamera)
 	}
 	return 0;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(name);
+	SprayDecal(self, name);
+	return 0;
+}

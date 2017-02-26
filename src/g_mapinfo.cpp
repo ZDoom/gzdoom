@@ -915,6 +915,18 @@ DEFINE_MAP_OPTION(intermusic, true)
 	parse.ParseMusic(info->InterMusic, info->intermusicorder);
 }
 
+DEFINE_MAP_OPTION(mapintermusic, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FString mapname = parse.sc.String;
+	FString music;
+	int order;
+	parse.ParseComma();
+	parse.ParseMusic(music, order);
+	info->MapInterMusic[FName(mapname)] = std::make_pair(music, order);
+}
+
 DEFINE_MAP_OPTION(fadetable, true)
 {
 	parse.ParseAssign();

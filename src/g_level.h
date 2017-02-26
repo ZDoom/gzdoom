@@ -324,6 +324,7 @@ struct level_info_t
 	FString		ExitPic;
 	FString 	InterMusic;
 	int			intermusicorder;
+	TMap <FName, std::pair<FString, int> > MapInterMusic;
 
 	FString		SoundInfo;
 	FString		SndSeq;

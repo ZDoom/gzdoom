@@ -2020,7 +2020,10 @@ public:
 		if (bcnt == 1)
 		{
 			// intermission music - use the defaults if none specified
-			if (level.info->InterMusic.IsNotEmpty()) 
+			auto mus = level.info->MapInterMusic.CheckKey(wbs->next);
+			if (mus != nullptr)
+				S_ChangeMusic(mus->first, mus->second);
+			else if (level.info->InterMusic.IsNotEmpty()) 
 				S_ChangeMusic(level.info->InterMusic, level.info->intermusicorder);
 			else
 				S_ChangeMusic (gameinfo.intermissionMusic.GetChars(), gameinfo.intermissionOrder); 

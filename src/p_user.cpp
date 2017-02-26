@@ -2690,9 +2690,19 @@ void P_PlayerThink (player_t *player)
 			else if (level.IsJumpingAllowed() && player->onground && player->jumpTics == 0)
 			{
 				double jumpvelz = player->mo->JumpZ * 35 / TICRATE;
+				double jumpfac = 0;
 
 				// [BC] If the player has the high jump power, double his jump velocity.
-				if ( player->cheats & CF_HIGHJUMP )	jumpvelz *= 2;
+				// (actually, pick the best factors from all active items.)
+				for (auto p = player->mo->Inventory; p != nullptr; p = p->Inventory)
+				{
+					if (p->IsKindOf(NAME_PowerHighJump))
+					{
+						double f = p->FloatVar(NAME_Strength);
+						if (f > jumpfac) jumpfac = f;
+					}
+				}
+				if (jumpfac > 0) jumpvelz *= jumpfac;
 
 				player->mo->Vel.Z += jumpvelz;
 				player->mo->flags2 &= ~MF2_ONMOBJ;

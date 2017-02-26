@@ -92,6 +92,8 @@ conversation // Starts a dialog.
 
         choice
         {
+			specialname = <string>; // Allows specifying a special by name.
+			
             // The amount of an item needed for this option to become available.
             // You can have as many as needed. All require blocks must be satisfied
             // to show this option.

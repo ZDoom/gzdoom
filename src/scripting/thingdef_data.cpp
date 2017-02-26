@@ -318,6 +318,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, NOSHIELDREFLECT, AActor, flags7),
 	DEFINE_FLAG(MF7, FORCEZERORADIUSDMG, AActor, flags7),
 	DEFINE_FLAG(MF7, NOINFIGHTSPECIES, AActor, flags7),
+	DEFINE_FLAG(MF7, FORCEINFIGHTING, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -917,7 +918,7 @@ void InitThingdef()
 	fieldptr = new PField("gametic", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gametic);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
-	fieldptr = new PField("demoplayback", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&demoplayback);
+	fieldptr = new PField("demoplayback", TypeBool, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&demoplayback);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
 	fieldptr = new PField("BackbuttonTime", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&BackbuttonTime);

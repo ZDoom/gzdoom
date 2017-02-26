@@ -279,6 +279,10 @@ void MusInfo::TimidityVolumeChanged()
 {
 }
 
+void MusInfo::GMEDepthChanged(float val)
+{
+}
+
 void MusInfo::FluidSettingInt(const char *, int)
 {
 }

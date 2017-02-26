@@ -76,7 +76,7 @@ void E_SerializeEvents(FSerializer& arc);
 
 class DStaticEventHandler : public DObject // make it a part of normal GC process
 {
-	DECLARE_CLASS(DStaticEventHandler, DObject)
+	DECLARE_CLASS(DStaticEventHandler, DObject);
 	HAS_OBJECT_POINTERS
 public:
 	DStaticEventHandler()

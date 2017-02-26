@@ -223,6 +223,7 @@ enum ELevelFlags : unsigned int
 	
 	// More flags!
 	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
+	LEVEL3_RESETINVENTORY		= 0x00000002,	// kills all INVBAR items on map change.
 };
 
 
@@ -324,6 +325,7 @@ struct level_info_t
 	FString		ExitPic;
 	FString 	InterMusic;
 	int			intermusicorder;
+	TMap <FName, std::pair<FString, int> > MapInterMusic;
 
 	FString		SoundInfo;
 	FString		SndSeq;

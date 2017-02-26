@@ -1393,7 +1393,7 @@ public:
 				if (isTranslated) sec->special = P_TranslateSectorSpecial(sec->special);
 				else if (namespc == NAME_Hexen)
 				{
-					if (sec->special < 0 || sec->special > 255 || !HexenSectorSpecialOk[sec->special])
+					if (sec->special < 0 || sec->special > 140 || !HexenSectorSpecialOk[sec->special])
 						sec->special = 0;	// NULL all unknown specials
 				}
 				continue;

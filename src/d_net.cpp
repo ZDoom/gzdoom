@@ -2376,25 +2376,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		break;
 
 	case DEM_SPRAY:
-		{
-			FTraceResults trace;
-
-			DAngle ang = players[player].mo->Angles.Yaw;
-			DAngle pitch = players[player].mo->Angles.Pitch;
-			double c = pitch.Cos();
-			DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
-
-			s = ReadString (stream);
-
-			if (Trace (players[player].mo->PosPlusZ(players[player].mo->Height/2), players[player].mo->Sector, 
-				vec, 172., 0, ML_BLOCKEVERYTHING, players[player].mo, trace, TRACE_NoSky))
-			{
-				if (trace.HitType == TRACE_HitWall)
-				{
-					DImpactDecal::StaticCreate (s, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
-				}
-			}
-		}
+		s = ReadString(stream);
+		SprayDecal(players[player].mo, s);
 		break;
 
 	case DEM_PAUSE:

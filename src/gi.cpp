@@ -374,6 +374,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_PATCH(mStatscreenEnteringFont, "statscreen_enteringpatch")
 		GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 		GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
+		GAMEINFOKEY_STRING(Dialogue, "dialogue")
 
 		else
 		{

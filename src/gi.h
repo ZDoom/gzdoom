@@ -176,6 +176,7 @@ struct gameinfo_t
 	FName DefaultEndSequence;
 	FString mMapArrow, mCheatMapArrow;
 	FString mEasyKey, mCheatKey;
+	FString Dialogue;
 	FGIFont mStatscreenMapNameFont;
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;

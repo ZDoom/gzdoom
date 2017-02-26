@@ -1343,12 +1343,24 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
 	{ // Reduce all owned (visible) inventory to defined maximum interhub amount
+		TArray<AInventory*> todelete;
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
 			// If the player is carrying more samples of an item than allowed, reduce amount accordingly
 			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
 			{
 				item->Amount = item->InterHubAmount;
+				if ((level.flags3 & LEVEL3_RESETINVENTORY) && !(item->ItemFlags & IF_UNDROPPABLE))
+				{
+					todelete.Push(item);
+				}
+			}
+		}
+		for (auto it : todelete)
+		{
+			if (!(it->ObjectFlags & OF_EuthanizeMe))
+			{
+				it->DepleteOrDestroy();
 			}
 		}
 	}

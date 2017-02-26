@@ -75,7 +75,7 @@ extern int NumTextColors;
 class FFont
 {
 public:
-	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1);
+	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int *const width) const;
@@ -100,6 +100,7 @@ public:
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }
 	void SetCursor(char c) { Cursor = c; }
+	bool NoTranslate() const { return noTranslate; }
 
 protected:
 	FFont (int lump);
@@ -116,6 +117,7 @@ protected:
 	int FontHeight;
 	int GlobalKerning;
 	char Cursor;
+	bool noTranslate;
 	struct CharData
 	{
 		FTexture *Pic;

@@ -791,9 +791,9 @@ class Actor : Thinker native
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0);
 	deprecated native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
-	native void A_RaiseMaster(bool copy = 0);
-	native void A_RaiseChildren(bool copy = 0);
-	native void A_RaiseSiblings(bool copy = 0);
+	native void A_RaiseMaster(int flags = 0);
+	native void A_RaiseChildren(int flags = 0);
+	native void A_RaiseSiblings(int flags = 0);
 	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
 	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
@@ -869,6 +869,8 @@ class Actor : Thinker native
 	native bool A_SetVisibleRotation(double anglestart = 0, double angleend = 0, double pitchstart = 0, double pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetTranslation(name transname);
 	native bool A_SetSize(double newradius, double newheight = -1, bool testpos = false);
+	native void A_SprayDecal(String name);
+	native void A_SetMugshotState(String name);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

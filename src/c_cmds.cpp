@@ -937,14 +937,20 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	AActor *mo;
 	const PClass *FilterClass = NULL;
 	int counter = 0;
+	int tid = 0;
 
 	if (FilterName != NULL)
 	{
 		FilterClass = PClass::FindActor(FilterName);
 		if (FilterClass == NULL)
 		{
-			Printf("%s is not an actor class.\n", FilterName);
-			return;
+			char *endp;
+			tid = (int)strtol(FilterName, &endp, 10);
+			if (*endp != 0)
+			{
+				Printf("%s is not an actor class.\n", FilterName);
+				return;
+			}
 		}
 	}
 	TThinkerIterator<AActor> it;
@@ -953,10 +959,13 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			counter++;
-			if (!countOnly)
-				Printf ("%s at (%f,%f,%f)\n",
-					mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+			if (tid == 0 || tid == mo->tid)
+			{
+				counter++;
+				if (!countOnly)
+					Printf("%s at (%f,%f,%f)\n",
+						mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+			}
 		}
 	}
 	Printf("%i match(s) found.\n", counter);

@@ -704,6 +704,24 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
+void SprayDecal(AActor *shooter, const char *name)
+{
+	FTraceResults trace;
+
+	DAngle ang = shooter->Angles.Yaw;
+	DAngle pitch = shooter->Angles.Pitch;
+	double c = pitch.Cos();
+	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+
+	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, 172., 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
+	{
+		if (trace.HitType == TRACE_HitWall)
+		{
+			DImpactDecal::StaticCreate(name, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
+		}
+	}
+}
+
 DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent)
 {
 	if (tpl == NULL || (tpl = tpl->GetDecal()) == NULL)
@@ -751,14 +769,23 @@ IMPLEMENT_CLASS(ADecal, false, false)
 
 void ADecal::BeginPlay ()
 {
-	const FDecalTemplate *tpl;
+	const FDecalTemplate *tpl = nullptr;
 
 	Super::BeginPlay ();
 
-	int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+	if (args[0] < 0)
+	{
+		FName name = ENamedName(-args[0]);
+		tpl = DecalLibrary.GetDecalByName(name.GetChars());
+	}
+	else
+	{
+		int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+		tpl = DecalLibrary.GetDecalByNum(decalid);
+	}
 
 	// If no decal is specified, don't try to create one.
-	if (decalid != 0 && (tpl = DecalLibrary.GetDecalByNum (decalid)) != 0)
+	if (tpl != nullptr)
 	{
 		if (!tpl->PicNum.Exists())
 		{

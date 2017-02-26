@@ -1162,6 +1162,38 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		// any negative value means that something in the above chain has cancelled out all damage and all damage effects, including pain.
 		return 0;
 	}
+
+
+	//[RC] Backported from the Zandronum source.. Mostly.
+	if( target->player  &&
+		damage > 0 &&
+		source &&
+		mod != NAME_Reflection &&
+		target != source)
+
+	{
+		int reflectdamage = 0;
+		for (auto p = target->player->mo->Inventory; p != nullptr; p = p->Inventory)
+		{
+			// This picks the reflection item with the maximum efficiency for the given damage type.
+			if (p->IsKindOf(NAME_PowerReflection))
+			{
+				int mydamage = p->ApplyDamageFactor(mod, damage);
+				if (mydamage > reflectdamage) reflectdamage = mydamage;
+			}
+		}
+
+		if (reflectdamage > 0)
+		{
+			// use the reflect item's damage factors to get the final value here.
+			P_DamageMobj(source, nullptr, target, reflectdamage, NAME_Reflection );
+
+			// Reset means of death flag.
+			MeansOfDeath = mod;
+		}
+	}
+
+
 	// Push the target unless the source's weapon's kickback is 0.
 	// (i.e. Gauntlets/Chainsaw)
 	if (!plrDontThrust && inflictor && inflictor != target	// [RH] Not if hurting own self
@@ -1417,13 +1449,24 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 
 	// If the damaging player has the power of drain, give the player 50% of the damage
 	// done in health.
-	if ( source && source->player && source->player->cheats & CF_DRAIN && !(target->flags5 & MF5_DONTDRAIN))
+	if ( source && source->player && !(target->flags5 & MF5_DONTDRAIN))
 	{
 		if (!target->player || target->player != source->player)
 		{
-			if ( P_GiveBody( source, damage / 2 ))
+			double draindamage = 0;
+			for (auto p = source->player->mo->Inventory; p != nullptr; p = p->Inventory)
 			{
-				S_Sound( source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM );
+				// This picks the item with the maximum efficiency.
+				if (p->IsKindOf(NAME_PowerDrain))
+				{
+					double mydamage = p->FloatVar(NAME_Strength);
+					if (mydamage > draindamage) draindamage = mydamage;
+				}
+			}
+
+			if ( P_GiveBody( source, int(draindamage * damage)))
+			{
+				S_Sound(source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM );
 			}
 		}
 	}
@@ -1729,7 +1772,8 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	}
 	
 	int infight;
-	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
+	if (flags7 & MF7_FORCEINFIGHTING) infight = 1;
+	else if (flags5 & MF5_NOINFIGHTING) infight = -1;
 	else infight = G_SkillProperty(SKILLP_Infight);
 
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))

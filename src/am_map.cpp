@@ -90,7 +90,7 @@ CVAR (Bool,  am_customcolors,		true,		CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Int,	 am_drawmapback,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
+CVAR (Int,   am_showtriggerlines,	0,			CVAR_ARCHIVE);
 CVAR (Int,   am_showthingsprites,		0,		CVAR_ARCHIVE);
 
 //=============================================================================
@@ -2281,58 +2281,47 @@ bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *s
 	return (line.backsector && AM_checkSectorActions(line.backsector, function, specialptr, argsptr, false));
 }
 
-bool AM_isTeleportSpecial (int special, int *)
-{
-	return (special == Teleport ||
-		special == Teleport_NoFog ||
-		special == Teleport_ZombieChanger ||
-		special == Teleport_Line);
-}
-
 bool AM_isTeleportBoundary (line_t &line)
 {
-	return AM_checkSpecialBoundary(line, &AM_isTeleportSpecial);
-}
-
-bool AM_isExitSpecial (int special, int *)
-{
-	return (special == Teleport_NewMap ||
-		 special == Teleport_EndGame ||
-		 special == Exit_Normal ||
-		 special == Exit_Secret);
+	return AM_checkSpecialBoundary(line, [](int special, int *)
+	{
+		return (special == Teleport ||
+			special == Teleport_NoFog ||
+			special == Teleport_ZombieChanger ||
+			special == Teleport_Line);
+	});
 }
 
 bool AM_isExitBoundary (line_t& line)
 {
-	return AM_checkSpecialBoundary(line, &AM_isExitSpecial);
-}
-
-bool AM_isTriggerSpecial (int special, int *)
-{
-	FLineSpecial *spec = P_GetLineSpecialInfo(special);
-	return spec != NULL
-		&& spec->max_args >= 0
-		&& special != Door_Open
-		&& special != Door_Close
-		&& special != Door_CloseWaitOpen
-		&& special != Door_Raise
-		&& special != Door_Animated
-		&& special != Generic_Door;
+	return AM_checkSpecialBoundary(line, [](int special, int *)
+	{
+		return (special == Teleport_NewMap ||
+			special == Teleport_EndGame ||
+			special == Exit_Normal ||
+			special == Exit_Secret);
+	});
 }
 
 bool AM_isTriggerBoundary (line_t &line)
 {
-	return AM_checkSpecialBoundary(line, &AM_isTriggerSpecial);
-}
-
-bool AM_isLockSpecial (int special, int* args)
-{
-	return special == Door_LockedRaise
-		 || special == ACS_LockedExecute
-		 || special == ACS_LockedExecuteDoor
-		 || (special == Door_Animated && args[3] != 0)
-		 || (special == Generic_Door && args[4] != 0)
-		 || (special == FS_Execute && args[2] != 0);
+	return am_showtriggerlines == 1? AM_checkSpecialBoundary(line, [](int special, int *)
+	{
+		FLineSpecial *spec = P_GetLineSpecialInfo(special);
+		return spec != NULL
+			&& spec->max_args >= 0
+			&& special != Door_Open
+			&& special != Door_Close
+			&& special != Door_CloseWaitOpen
+			&& special != Door_Raise
+			&& special != Door_Animated
+			&& special != Generic_Door;
+	}) : AM_checkSpecialBoundary(line, [](int special, int *)
+	{
+		FLineSpecial *spec = P_GetLineSpecialInfo(special);
+		return spec != NULL
+			&& spec->max_args >= 0;
+	});
 }
 
 bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
@@ -2351,7 +2340,15 @@ bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
 
 	int special;
 	int *args;
-	bool result = AM_checkSpecialBoundary(line, &AM_isLockSpecial, &special, &args);
+	bool result = AM_checkSpecialBoundary(line, [](int special, int* args)
+	{
+		return special == Door_LockedRaise
+			|| special == ACS_LockedExecute
+			|| special == ACS_LockedExecuteDoor
+			|| (special == Door_Animated && args[3] != 0)
+			|| (special == Generic_Door && args[4] != 0)
+			|| (special == FS_Execute && args[2] != 0);
+	}, &special, &args);
 
 	if (result)
 	{

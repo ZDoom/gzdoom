@@ -1035,6 +1035,13 @@ OptionValue MapBackTypes
 	2, "$OPTVAL_MAPDEFINEDCOLORSONLY"
 }
 
+OptionValue MapTriggers
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_NO_DOORS"
+	2, "$OPTVAL_ON"
+}
+
 OptionMenu AutomapOptions
 {
 	Title "$AUTOMAPMNU_TITLE"
@@ -1058,7 +1065,7 @@ OptionMenu AutomapOptions
 	Option "$AUTOMAPMNU_SHOWMAPLABEL",			"am_showmaplabel", "MaplabelTypes"
 	Option "$AUTOMAPMNU_DRAWMAPBACK",			"am_drawmapback", "MapBackTypes"
 	Option "$AUTOMAPMNU_SHOWKEYS",				"am_showkeys", "OnOff"
-	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "OnOff"
+	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "MapTriggers"
 	Option "$AUTOMAPMNU_SHOWTHINGSPRITES",		"am_showthingsprites", "STSTypes"
 }
 

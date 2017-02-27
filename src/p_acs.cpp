@@ -4367,6 +4367,7 @@ enum EACSFunctions
 	ACSF_SetTranslation,
 	ACSF_GetActorFloorTexture,
 	ACSF_GetActorFloorTerrain,
+	ACSF_StrArg,
 
 
 	// OpenGL stuff
@@ -6087,7 +6088,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			break;
 		}
 
-
+		case ACSF_StrArg:
+			return -FName(FBehavior::StaticLookupString(args[0]));
 
 		default:
 			break;

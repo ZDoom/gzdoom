@@ -1624,6 +1624,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 				}
 			}
 		}
+		arc.Close();
 	}
 	// No reason to keep the snapshot around once the level's been entered.
 	level.info->Snapshot.Clean();

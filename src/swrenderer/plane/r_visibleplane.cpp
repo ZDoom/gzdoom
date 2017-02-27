@@ -61,6 +61,10 @@ namespace swrenderer
 		if (!r_dynlights)
 			return;
 
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0)
+			return; // [SP] no dynlights if invul or lightamp
+
 		while (node)
 		{
 			if (!(node->lightsource->flags2&MF2_DORMANT))

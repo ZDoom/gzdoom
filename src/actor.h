@@ -430,6 +430,7 @@ enum ActorRenderFlag
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
+	RF_DONTINTERPOLATE	= 0x04000000,	// no render interpolation ever!
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -467,6 +468,7 @@ enum ActorBounceFlag
 	BOUNCE_MBF = 1<<12,			// This in itself is not a valid mode, but replaces MBF's MF_BOUNCE flag.
 	BOUNCE_AutoOffFloorOnly = 1<<13,		// like BOUNCE_AutoOff, but only on floors
 	BOUNCE_UseBounceState = 1<<14,	// Use Bounce[.*] states
+	BOUNCE_NotOnShootables = 1<<15,	// do not bounce off shootable actors if we are a projectile. Explode instead.
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
@@ -1321,7 +1323,8 @@ public:
 	}
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{
-		return Prev + (ticFrac * (Pos() - Prev));
+		if (renderflags & RF_DONTINTERPOLATE) return Pos();
+		else return Prev + (ticFrac * (Pos() - Prev));
 	}
 	DRotator InterpolatedAngles(double ticFrac) const
 	{

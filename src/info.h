@@ -214,6 +214,7 @@ struct DamageTypeDefinition
 public:
 	DamageTypeDefinition() { Clear(); }
 
+	FString Obituary;
 	double DefaultFactor;
 	bool ReplaceFactor;
 	bool NoArmor;
@@ -221,6 +222,7 @@ public:
 	void Apply(FName type);
 	void Clear()
 	{
+		Obituary = "";
 		DefaultFactor = 1.;
 		ReplaceFactor = false;
 		NoArmor = false;
@@ -228,6 +230,7 @@ public:
 
 	static bool IgnoreArmor(FName type);
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
+	static FString GetObituary(FName type);
 
 private:
 	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);

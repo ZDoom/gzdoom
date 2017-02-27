@@ -2666,12 +2666,13 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_NETEVENT:
 		{
-			FString ename = ReadString(stream);
+			const char *ename = ReadString(stream);
 			int argn = ReadByte(stream);
 			int arg[3] = { 0, 0, 0 };
-			for (int i = 0; i < argn; i++)
+			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
 			E_Console(player, ename, arg[0], arg[1], arg[2]);
+			delete[] ename;
 		}
 		break;
 
@@ -2719,6 +2720,10 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
 			skip = strlen ((char *)(*stream)) + 5;
+			break;
+
+		case DEM_NETEVENT:
+			skip = strlen((char *)(*stream)) + 13;
 			break;
 
 		case DEM_SUMMON2:

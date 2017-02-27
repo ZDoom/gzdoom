@@ -339,6 +339,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, XFLIP, AActor, renderflags),
 	DEFINE_FLAG(RF, YFLIP, AActor, renderflags),
 	DEFINE_FLAG(RF, INTERPOLATEANGLES, AActor, renderflags),
+	DEFINE_FLAG(RF, DONTINTERPOLATE, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -355,6 +356,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_MBF, MBFBOUNCER, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
+	DEFINE_FLAG2(BOUNCE_NotOnShootables, DONTBOUNCEONSHOOTABLES, AActor, BounceFlags),
 };
 
 // These won't be accessible through bitfield variables

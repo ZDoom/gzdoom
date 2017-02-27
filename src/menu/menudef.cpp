@@ -1327,6 +1327,43 @@ void M_StartupSkillMenu(FGameStartup *gs)
 {
 	static int done = -1;
 	bool success = false;
+	TArray<FSkillInfo*> MenuSkills;
+	TArray<int> SkillIndices;
+	if (MenuSkills.Size() == 0)
+	{
+		for (unsigned ind = 0; ind < AllSkills.Size(); ind++)
+		{
+			if (!AllSkills[ind].NoMenu)
+			{
+				MenuSkills.Push(&AllSkills[ind]);
+				SkillIndices.Push(ind);
+			}
+		}
+	}
+	if (MenuSkills.Size() == 0) I_Error("No valid skills for menu found. At least one must be defined.");
+
+	int defskill = DefaultSkill;
+	if ((unsigned int)defskill >= MenuSkills.Size())
+	{
+		defskill = SkillIndices[(MenuSkills.Size() - 1) / 2];
+	}
+	if (AllSkills[defskill].NoMenu)
+	{
+		for (defskill = 0; defskill < (int)AllSkills.Size(); defskill++)
+		{
+			if (!AllSkills[defskill].NoMenu) break;
+		}
+	}
+	int defindex = 0;
+	for (unsigned i = 0; i < MenuSkills.Size(); i++)
+	{
+		if (MenuSkills[i] == &AllSkills[defskill])
+		{
+			defindex = i;
+			break;
+		}
+	}
+
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
 	if (desc != nullptr)
 	{
@@ -1350,12 +1387,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			if (done != restart)
 			{
 				done = restart;
-				int defskill = DefaultSkill;
-				if ((unsigned int)defskill >= AllSkills.Size())
-				{
-					defskill = (AllSkills.Size() - 1) / 2;
-				}
-				ld->mSelectedItem = ld->mItems.Size() + defskill;
+				ld->mSelectedItem = ld->mItems.Size() + defindex;
 
 				int posy = y;
 				int topy = posy;
@@ -1368,9 +1400,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 
 				// center the menu on the screen if the top space is larger than the bottom space
-				int totalheight = posy + AllSkills.Size() * ld->mLinespacing - topy;
+				int totalheight = posy + MenuSkills.Size() * ld->mLinespacing - topy;
 
-				if (totalheight < 190 || AllSkills.Size() == 1)
+				if (totalheight < 190 || MenuSkills.Size() == 1)
 				{
 					int newtop = (200 - totalheight + topy) / 2;
 					int topdelta = newtop - topy;
@@ -1393,9 +1425,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			}
 
 			unsigned firstitem = ld->mItems.Size();
-			for(unsigned int i = 0; i < AllSkills.Size(); i++)
+			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 			{
-				FSkillInfo &skill = AllSkills[i];
+				FSkillInfo &skill = *MenuSkills[i];
 				DMenuItemBase *li;
 				// Using a different name for skills that must be confirmed makes handling this easier.
 				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
@@ -1409,22 +1441,22 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, i);
+					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				else
 				{
 					EColorRange color = (EColorRange)skill.GetTextColor();
 					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
 					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
-									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, i);
+									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);
 				GC::WriteBarrier(*desc, li);
 				y += ld->mLinespacing;
 			}
-			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
+			if (AllEpisodes[gs->Episode].mNoSkill || MenuSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + M_GetDefaultSkill();
+				ld->mAutoselect = firstitem + defindex;
 			}
 			else
 			{
@@ -1443,7 +1475,7 @@ fail:
 		MenuDescriptors[NAME_Skillmenu] = od;
 		od->mMenuName = NAME_Skillmenu;
 		od->mTitle = "$MNU_CHOOSESKILL";
-		od->mSelectedItem = 0;
+		od->mSelectedItem = defindex;
 		od->mScrollPos = 0;
 		od->mClass = nullptr;
 		od->mPosition = -15;
@@ -1457,9 +1489,9 @@ fail:
 		od = static_cast<DOptionMenuDescriptor*>(*desc);
 		od->mItems.Clear();
 	}
-	for(unsigned int i = 0; i < AllSkills.Size(); i++)
+	for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 	{
-		FSkillInfo &skill = AllSkills[i];
+		FSkillInfo &skill = *MenuSkills[i];
 		DMenuItemBase *li;
 		// Using a different name for skills that must be confirmed makes handling this easier.
 		const char *action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
@@ -1470,29 +1502,13 @@ fail:
 		{
 			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 		}
-		li = CreateOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
+		li = CreateOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, SkillIndices[i]);
 		od->mItems.Push(li);
 		GC::WriteBarrier(od, li);
 		if (!done)
 		{
 			done = true;
-			od->mSelectedItem = M_GetDefaultSkill();
+			od->mSelectedItem = defindex;
 		}
 	}
-}
-
-//=============================================================================
-//
-// Returns the default skill level.
-//
-//=============================================================================
-
-int M_GetDefaultSkill()
-{
-	int defskill = DefaultSkill;
-	if ((unsigned int)defskill >= AllSkills.Size())
-	{
-		defskill = (AllSkills.Size() - 1) / 2;
-	}
-	return defskill;
 }

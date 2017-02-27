@@ -524,6 +524,7 @@ struct FSkillInfo
 
 	bool EasyBossBrain;
 	bool EasyKey;
+	bool NoMenu;
 	int RespawnCounter;
 	int RespawnLimit;
 	double Aggressiveness;

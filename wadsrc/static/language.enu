@@ -1777,6 +1777,7 @@ MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
 
 JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
 JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
+JOYMNU_NOMENU				= "Block controller input in menu";
 
 // Player Setup Menu
 MNU_PLAYERSETUP		= "PLAYER SETUP";
@@ -1900,7 +1901,7 @@ MISCMNU_DEHLOAD					= "Load *.deh/*.bex lumps";
 MISCMNU_CACHENODES				= "Cache nodes";
 MISCMNU_CACHETIME				= "Time threshold for node caching";
 MISCMNU_CLEARNODECACHE			= "Clear node cache";
-
+MISCMNU_INTERSCROLL				= "Allow skipping of intermission scrollers";
 // Automap Options
 AUTOMAPMNU_TITLE				= "AUTOMAP OPTIONS";
 AUTOMAPMNU_COLORSET				= "Map color set";

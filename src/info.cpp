@@ -767,6 +767,13 @@ DEFINE_ACTION_FUNCTION(_DamageTypeDefinition, IgnoreArmor)
 	ACTION_RETURN_BOOL(DamageTypeDefinition::IgnoreArmor(type));
 }
 
+FString DamageTypeDefinition::GetObituary(FName type)
+{
+	DamageTypeDefinition *dtd = Get(type);
+	if (dtd) return dtd->Obituary;
+	return "";
+}
+
 
 //==========================================================================
 //
@@ -858,6 +865,12 @@ void FMapInfoParser::ParseDamageDefinition()
 			sc.MustGetFloat();
 			dtd.DefaultFactor = sc.Float;
 			if (dtd.DefaultFactor == 0) dtd.ReplaceFactor = true;
+		}
+		if (sc.Compare("OBITUARY"))
+		{
+			sc.MustGetStringName("=");
+			sc.MustGetString();
+			dtd.Obituary = sc.String;
 		}
 		else if (sc.Compare("REPLACEFACTOR"))
 		{

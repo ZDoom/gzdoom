@@ -3537,6 +3537,11 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE)
 			return true;
 
+		if (BlockingMobj->flags & MF_SHOOTABLE && mo->BounceFlags & BOUNCE_NotOnShootables)
+		{
+			mo->bouncecount = 1;	// let it explode now.
+		}
+
 		if (mo->bouncecount>0 && --mo->bouncecount == 0)
 		{
 			if (mo->flags & MF_MISSILE)

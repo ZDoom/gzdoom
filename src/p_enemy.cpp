@@ -349,7 +349,7 @@ bool AActor::CheckMeleeRange ()
 
 	double dist;
 		
-	if (!pl)
+	if (!pl || (Sector->Flags & SECF_NOATTACK))
 		return false;
 				
 	dist = Distance2D (pl);
@@ -398,7 +398,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	double dist;
 
 
-	if (!actor->target)
+	if (!actor->target || (actor->Sector->Flags & SECF_NOATTACK))
 	{
 		return false;
 	}
@@ -445,6 +445,8 @@ bool P_CheckMissileRange (AActor *actor)
 {
 	double dist;
 		
+	if ((actor->Sector->Flags & SECF_NOATTACK)) return false;
+
 	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
 		

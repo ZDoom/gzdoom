@@ -701,3 +701,30 @@ void AMorphedMonster::Tick ()
 		Super::Tick ();
 	}
 }
+
+
+DEFINE_ACTION_FUNCTION(AActor, A_Morph)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT_DEF(duration);
+	PARAM_INT_DEF(flags);
+	PARAM_CLASS_DEF(enter_flash, AActor);
+	PARAM_CLASS_DEF(exit_flash, AActor);
+	bool res = false;
+	if (self->player)
+	{
+		if (type->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+		{
+			res = P_MorphPlayer(self->player, self->player, type, duration, flags, enter_flash, exit_flash);
+		}
+	}
+	else
+	{
+		if (type->IsKindOf(RUNTIME_CLASS(AMorphedMonster)))
+		{
+			res = P_MorphMonster(self, type, duration, flags, enter_flash, exit_flash);
+		}
+	}
+	ACTION_RETURN_BOOL(res);
+}

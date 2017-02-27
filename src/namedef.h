@@ -46,6 +46,7 @@ xx(Shadow)
 xx(Subtract)
 xx(Subtractive)
 xx(FillColor)
+xx(HealthFactor)
 
 // Healingradius types
 xx(Mana)
@@ -773,6 +774,7 @@ xx(BuiltinGetDefault)
 xx(BuiltinClassCast)
 xx(BuiltinFormat)
 xx(Damage)
+xx(Noattack)
 
 // basic type names
 xx(Default)

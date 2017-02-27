@@ -329,11 +329,13 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 		FSectorTagIterator itr(tag);
 		while ((sec = itr.Next()) >= 0)
 		{
-			// Don't attach to self!
-			if (control != &level.sectors[sec])
+			// Don't attach to self (but allow attaching to this sector's oposite plane.
+			if (control == &level.sectors[sec])
 			{
-				AddSingleSector(scrollplane, &level.sectors[sec], movetype);
+				if (ceiling == sector_t::floor && movetype & LINK_FLOOR) continue;
+				if (ceiling == sector_t::ceiling && movetype & LINK_CEILING) continue;
 			}
+			AddSingleSector(scrollplane, &level.sectors[sec], movetype);
 		}
 	}
 	else

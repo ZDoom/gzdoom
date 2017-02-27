@@ -2281,7 +2281,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			}
 #endif
 		}
-		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
+		if (!(thing->flags & MF_TELEPORT) && (!(thing->flags3 & MF3_FLOORHUGGER) || thing->flags5 & MF5_NODROPOFF))
 		{
 			if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > thing->Z())
 			{ // [RH] Don't let normal missiles climb steps
@@ -2772,7 +2772,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 			if (thing->Top() > tm.ceilingz)
 				return false;
 		}
-		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
+		if (!(thing->flags & MF_TELEPORT) && (!(thing->flags3 & MF3_FLOORHUGGER) || thing->flags5 & MF5_NODROPOFF))
 		{
 			if (tm.floorz - newz > thing->MaxStepHeight)
 			{ // too big a step up

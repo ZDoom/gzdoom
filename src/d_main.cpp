@@ -2689,6 +2689,7 @@ void D_DoomMain (void)
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			M_InitVideoModesMenu();
+			Renderer->RemapVoxels();
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}

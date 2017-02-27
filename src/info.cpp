@@ -868,7 +868,7 @@ void FMapInfoParser::ParseDamageDefinition()
 			dtd.DefaultFactor = sc.Float;
 			if (dtd.DefaultFactor == 0) dtd.ReplaceFactor = true;
 		}
-		if (sc.Compare("OBITUARY"))
+		else if (sc.Compare("OBITUARY"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();

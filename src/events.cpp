@@ -1139,7 +1139,7 @@ CCMD(netevent)
 		Net_WriteByte(DEM_NETEVENT);
 		Net_WriteString(argv[1]);
 		Net_WriteByte(argn);
-		for (int i = 0; i < argn; i++)
+		for (int i = 0; i < 3; i++)
 			Net_WriteLong(arg[i]);
 	}
 }

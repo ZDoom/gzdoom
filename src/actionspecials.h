@@ -260,5 +260,7 @@ DEFINE_SPECIAL(Stairs_BuildUpDoomSync, 271, 4, 4, 4)
 DEFINE_SPECIAL(Stairs_BuildDownDoomSync, 272, 4, 4, 4)
 DEFINE_SPECIAL(Stairs_BuildUpDoomCrush, 273, 5, 5, 5)
 DEFINE_SPECIAL(Door_AnimatedClose, 274, 4, 4, 4)
+DEFINE_SPECIAL(Floor_Stop, 275, 1, 1, 1)
+DEFINE_SPECIAL(Ceiling_Stop, 276, 1, 1, 1)
 
 #undef DEFINE_SPECIAL

@@ -561,6 +561,21 @@ bool EV_FloorCrushStop (int tag)
 	return true;
 }
 
+// same as above but stops any floor mover that was active on the given sector.
+bool EV_StopFloor(int tag)
+{
+	FSectorTagIterator it(tag);
+	while (int sec = it.Next())
+	{
+		if (level.sectors[sec].floordata)
+		{
+			SN_StopSequence(&level.sectors[sec], CHAN_FLOOR);
+			level.sectors[sec].floordata->Destroy();
+			level.sectors[sec].floordata = nullptr;
+		}
+	}
+	return true;
+}
 //==========================================================================
 //
 // BUILD A STAIRCASE!

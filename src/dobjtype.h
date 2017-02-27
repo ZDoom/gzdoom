@@ -557,12 +557,13 @@ enum
 class PClass : public PNativeStruct
 {
 	DECLARE_CLASS(PClass, PNativeStruct);
-protected:
 	// We unravel _WITH_META here just as we did for PType.
-	TArray<FTypeAndOffset> SpecialInits;
+protected:
+	TArray<FTypeAndOffset> MetaInits;
 	void Derive(PClass *newclass, FName name);
-	void InitializeSpecials(void *addr, void *defaults) const;
+	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
+	PField *AddMetaField(FName name, PType *type, DWORD flags);
 public:
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
@@ -577,11 +578,14 @@ public:
 	static void StaticBootstrap();
 
 	// Per-class information -------------------------------------
+	TArray<FTypeAndOffset> SpecialInits;
 	PClass				*ParentClass;	// the class this class derives from
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
 	BYTE				*Defaults;
+	BYTE				*Meta;			// Per-class static script data
+	unsigned			 MetaSize;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
 	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
@@ -593,13 +597,13 @@ public:
 	PClass();
 	~PClass();
 	void InsertIntoHash();
-	DObject *CreateNew() const;
+	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
 	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();
-	void DestroySpecials(void *addr) const;
+	void DestroySpecials(void *addr);
 	const PClass *NativeClass() const;
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.

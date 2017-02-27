@@ -827,7 +827,14 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		if (i > 0) sc.MustGetStringName(",");
 		if (f->Flags & VARF_Meta)
 		{
-			addr = ((char*)bag.Info) + f->Offset;
+			if (f->Flags & VARF_Native)
+			{
+				addr = ((char*)bag.Info) + f->Offset;
+			}
+			else
+			{
+				addr = ((char*)bag.Info->Meta) + f->Offset;
+			}
 		}
 		else
 		{

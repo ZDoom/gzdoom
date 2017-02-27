@@ -2910,6 +2910,11 @@ PClass::~PClass()
 		M_Free(Defaults);
 		Defaults = nullptr;
 	}
+	if (Meta != nullptr)
+	{
+		M_Free(Meta);
+		Meta = nullptr;
+	}
 }
 
 //==========================================================================
@@ -3047,7 +3052,7 @@ PClass *PClass::FindClass (FName zaname)
 //
 //==========================================================================
 
-DObject *PClass::CreateNew() const
+DObject *PClass::CreateNew()
 {
 	BYTE *mem = (BYTE *)M_Malloc (Size);
 	assert (mem != nullptr);
@@ -3064,7 +3069,7 @@ DObject *PClass::CreateNew() const
 	}
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
-	InitializeSpecials(mem, Defaults);
+	InitializeSpecials(mem, Defaults, &PClass::SpecialInits);
 	return (DObject *)mem;
 }
 
@@ -3076,7 +3081,7 @@ DObject *PClass::CreateNew() const
 //
 //==========================================================================
 
-void PClass::InitializeSpecials(void *addr, void *defaults) const
+void PClass::InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits)
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle initialization natively.
@@ -3085,8 +3090,8 @@ void PClass::InitializeSpecials(void *addr, void *defaults) const
 		return;
 	}
 	assert(ParentClass != nullptr);
-	ParentClass->InitializeSpecials(addr, defaults);
-	for (auto tao : SpecialInits)
+	ParentClass->InitializeSpecials(addr, defaults, Inits);
+	for (auto tao : (this->*Inits))
 	{
 		tao.first->InitializeValue((char*)addr + tao.second, defaults == nullptr? nullptr : ((char*)defaults) + tao.second);
 	}
@@ -3101,7 +3106,7 @@ void PClass::InitializeSpecials(void *addr, void *defaults) const
 //
 //==========================================================================
 
-void PClass::DestroySpecials(void *addr) const
+void PClass::DestroySpecials(void *addr)
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle deinitialization natively.
@@ -3160,7 +3165,6 @@ void PClass::InitializeDefaults()
 		optr->ObjNext = nullptr;
 		optr->SetClass(this);
 
-
 		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
 		if (ParentClass->Defaults != nullptr)
 		{
@@ -3174,18 +3178,30 @@ void PClass::InitializeDefaults()
 		{
 			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
 		}
+
+		if (MetaSize != 0)
+		{
+			Meta = (BYTE*)M_Malloc(MetaSize);
+			memset(Meta, 0, MetaSize);
+			if (ParentClass->MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+		}
 	}
 
 	if (bRuntimeClass)
 	{
 		// Copy parent values from the parent defaults.
 		assert(ParentClass != nullptr);
-		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
+		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
+		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
 		for (const PField *field : Fields)
 		{
-			if (!(field->Flags & VARF_Native))
+			if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+			}
+			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
+			{
+				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
 			}
 		}
 	}
@@ -3266,24 +3282,75 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 //==========================================================================
 //
+// PStruct :: AddField
+//
+// Appends a new metadata field to the end of a struct. Returns either the new field
+// or nullptr if a symbol by that name already exists.
+//
+//==========================================================================
+
+PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
+{
+	PField *field = new PField(name, type, flags);
+
+	// The new field is added to the end of this struct, alignment permitting.
+	field->Offset = (MetaSize + (type->Align - 1)) & ~(type->Align - 1);
+
+	// Enlarge this struct to enclose the new field.
+	MetaSize = unsigned(field->Offset + type->Size);
+
+	// This struct's alignment is the same as the largest alignment of any of
+	// its fields.
+	Align = MAX(Align, type->Align);
+
+	if (Symbols.AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	Fields.Push(field);
+
+	return field;
+}
+
+//==========================================================================
+//
 // PClass :: AddField
 //
 //==========================================================================
 
 PField *PClass::AddField(FName name, PType *type, DWORD flags)
 {
-	unsigned oldsize = Size;
-	PField *field = Super::AddField(name, type, flags);
-
-	// Only initialize the defaults if they have already been created.
-	// For ZScript this is not the case, it will first define all fields before
-	// setting up any defaults for any class.
-	if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
+	if (!(flags & VARF_Meta))
 	{
-		Defaults = (BYTE *)M_Realloc(Defaults, Size);
-		memset(Defaults + oldsize, 0, Size - oldsize);
+		unsigned oldsize = Size;
+		PField *field = Super::AddField(name, type, flags);
+
+		// Only initialize the defaults if they have already been created.
+		// For ZScript this is not the case, it will first define all fields before
+		// setting up any defaults for any class.
+		if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
+		{
+			Defaults = (BYTE *)M_Realloc(Defaults, Size);
+			memset(Defaults + oldsize, 0, Size - oldsize);
+		}
+		return field;
 	}
-	return field;
+	else
+	{
+		unsigned oldsize = MetaSize;
+		PField *field = AddMetaField(name, type, flags);
+
+		// Only initialize the defaults if they have already been created.
+		// For ZScript this is not the case, it will first define all fields before
+		// setting up any defaults for any class.
+		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
+		{
+			Meta = (BYTE *)M_Realloc(Meta, MetaSize);
+			memset(Meta + oldsize, 0, MetaSize - oldsize);
+		}
+		return field;
+	}
 }
 
 //==========================================================================

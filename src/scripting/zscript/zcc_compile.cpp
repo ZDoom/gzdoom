@@ -1070,11 +1070,6 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		if (field->Flags & ZCC_Meta)
 		{
 			varflags |= VARF_Meta | VARF_Static | VARF_ReadOnly;	// metadata implies readonly
-			if (!(field->Flags & ZCC_Native))
-			{
-				// Non-native meta data is not implemented yet and requires some groundwork in the class copy code.
-				Error(field, "Metadata member %s must be native", FName(field->Names->Name).GetChars());
-			}
 		}
 
 		if (field->Type->ArraySize != nullptr)
@@ -1692,7 +1687,14 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 
 		if (f->Flags & VARF_Meta)
 		{
-			addr = ((char*)bag.Info) + f->Offset;
+			if (f->Flags & VARF_Native)
+			{
+				addr = ((char*)bag.Info) + f->Offset;
+			}
+			else
+			{
+				addr = ((char*)bag.Info->Meta) + f->Offset;
+			}
 		}
 		else
 		{

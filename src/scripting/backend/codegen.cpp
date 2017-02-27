@@ -6371,7 +6371,7 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 	ExpEmit ob = obj->Emit(build);
 	ob.Free(build);
 	ExpEmit meta(build, REGT_POINTER);
-	build->Emit(OP_META, meta.RegNum, ob.RegNum);
+	build->Emit(OP_CLSS, meta.RegNum, ob.RegNum);
 	build->Emit(OP_LOS, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return meta;
 
@@ -6805,7 +6805,7 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 	{
 		obj.Free(build);
 		ExpEmit meta(build, REGT_POINTER);
-		build->Emit(OP_META, meta.RegNum, obj.RegNum);
+		build->Emit(membervar->Flags & VARF_Native?  OP_CLSS : OP_META, meta.RegNum, obj.RegNum);
 		obj = meta;
 	}
 
@@ -8832,7 +8832,7 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 	ExpEmit op = Self->Emit(build);
 	op.Free(build);
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(OP_META, to.RegNum, op.RegNum);
+	build->Emit(OP_CLSS, to.RegNum, op.RegNum);
 	return to;
 }
 
@@ -8873,7 +8873,7 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 	if (Self->IsObject())
 	{
 		ExpEmit to(build, REGT_POINTER);
-		build->Emit(OP_META, to.RegNum, op.RegNum);
+		build->Emit(OP_CLSS, to.RegNum, op.RegNum);
 		op = to;
 		op.Free(build);
 	}

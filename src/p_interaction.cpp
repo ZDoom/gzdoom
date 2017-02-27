@@ -1020,6 +1020,11 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		}
 		return 0;
 	}
+	if (target == source && damage < TELEFRAG_DAMAGE)
+	{
+		damage = int(damage * target->GetClass()->SelfDamageFactor);
+	}
+
 	// [MC] Changed it to check rawdamage here for consistency, even though that doesn't actually do anything
 	// different here. At any rate, invulnerable is being checked before type factoring, which is then being 
 	// checked by player cheats/invul/buddha followed by monster buddha. This is inconsistent. Don't let the 

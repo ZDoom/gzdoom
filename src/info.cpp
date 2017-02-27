@@ -258,6 +258,7 @@ PClassActor::PClassActor()
 	FastSpeed = -1.;
 	RDFactor = 1.;
 	SelfDamageFactor = 1.;
+	StealthAlpha = 0.;
 	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
@@ -319,6 +320,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->FastSpeed = FastSpeed;
 	newa->RDFactor = RDFactor;
 	newa->SelfDamageFactor = SelfDamageFactor;
+	newa->StealthAlpha = StealthAlpha;
 	newa->CameraHeight = CameraHeight;
 	newa->HowlSound = HowlSound;
 	newa->BloodType = BloodType;

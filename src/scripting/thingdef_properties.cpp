@@ -1443,6 +1443,16 @@ DEFINE_PROPERTY(selfdamagefactor, F, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(stealthalpha, F, Actor)
+{
+	PROP_DOUBLE_PARM(i, 0);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->StealthAlpha = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);

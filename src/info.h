@@ -301,6 +301,7 @@ public:
 	double RDFactor;		// Radius damage factor
 	double SelfDamageFactor;
 	double CameraHeight;	// Height of camera when used as such
+	double StealthAlpha;	// Minmum alpha for MF_STEALTH.
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 	FName BloodType;		// Blood replacement type
 	FName BloodType2;		// Bloopsplatter replacement type

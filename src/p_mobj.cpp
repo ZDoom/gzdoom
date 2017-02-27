@@ -322,6 +322,7 @@ DEFINE_FIELD(PClassActor, WoundHealth)
 DEFINE_FIELD(PClassActor, FastSpeed)
 DEFINE_FIELD(PClassActor, RDFactor)
 DEFINE_FIELD(PClassActor, SelfDamageFactor)
+DEFINE_FIELD(PClassActor, StealthAlpha)
 DEFINE_FIELD(PClassActor, CameraHeight)
 DEFINE_FIELD(PClassActor, HowlSound)
 DEFINE_FIELD(PClassActor, BloodType)
@@ -4100,9 +4101,9 @@ void AActor::Tick ()
 			else if (visdir < 0)
 			{
 				Alpha -= 1.5/TICRATE;
-				if (Alpha < 0)
+				if (Alpha < GetClass()->StealthAlpha)
 				{
-					Alpha = 0;
+					Alpha = GetClass()->StealthAlpha;
 					visdir = 0;
 				}
 			}

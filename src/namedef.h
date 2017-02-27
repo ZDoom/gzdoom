@@ -398,6 +398,8 @@ xx(VisibleStartPitch)
 xx(VisibleEndAngle)
 xx(VisibleEndPitch)
 xx(Format)
+xx(PickupMsg)
+xx(Respawnable)
 
 // Various actor names which are used internally
 xx(MapSpot)

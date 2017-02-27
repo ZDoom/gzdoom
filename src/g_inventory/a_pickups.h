@@ -87,7 +87,6 @@ public:
 	FTextureID Icon;			// Icon to show on status bar or HUD
 	int DropTime;				// Countdown after dropping
 	PClassActor *SpawnPointClass;	// For respawning like Heretic's mace
-	int GiveQuest;				// Optionally give one of the quest items.
 	FTextureID AltHUDIcon;
 
 	DWORD ItemFlags;

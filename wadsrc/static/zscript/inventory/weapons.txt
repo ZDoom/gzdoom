@@ -33,7 +33,7 @@ class Weapon : StateProvider native
 	native float FOVScale;
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
-	native bool bAltFire;							// Set when self weapon's alternate fire is used.
+	native bool bAltFire;							// Set when this weapon's alternate fire is used.
 	native readonly bool bDehAmmo;
 
 	Default

@@ -603,6 +603,7 @@ public:
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();
+	void InitMeta(); 
 	void DestroySpecials(void *addr);
 	const PClass *NativeClass() const;
 
@@ -740,6 +741,11 @@ inline FName &DObject::NameVar(FName field)
 inline double &DObject::FloatVar(FName field)
 {
 	return *(double*)ScriptVar(field, TypeFloat64);
+}
+
+inline FString &DObject::StringVar(FName field)
+{
+	return *(FString*)ScriptVar(field, TypeString);
 }
 
 template<class T>

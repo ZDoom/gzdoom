@@ -1834,16 +1834,6 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->PickupMsg = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1873,15 +1863,6 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UseSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->GiveQuest = i;
 }
 
 //==========================================================================

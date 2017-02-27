@@ -354,7 +354,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	}
 
 	// Inventory stuff
-	newa->PickupMsg = PickupMsg;
 	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
 	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
 

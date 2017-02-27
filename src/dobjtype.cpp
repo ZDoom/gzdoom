@@ -2892,6 +2892,7 @@ PClass::PClass()
 	bExported = false;
 	bDecorateClass = false;
 	ConstructNative = nullptr;
+	Meta = nullptr;
 	mDescriptiveName = "Class";
 
 	PClass::AllClasses.Push(this);
@@ -3085,11 +3086,10 @@ void PClass::InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffse
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle initialization natively.
-	if (!bRuntimeClass)
+	if ((!bRuntimeClass && Inits == &PClass::SpecialInits) || ParentClass == nullptr)
 	{
 		return;
 	}
-	assert(ParentClass != nullptr);
 	ParentClass->InitializeSpecials(addr, defaults, Inits);
 	for (auto tao : (this->*Inits))
 	{
@@ -3179,11 +3179,27 @@ void PClass::InitializeDefaults()
 			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
 		}
 
+		assert(MetaSize >= ParentClass->MetaSize);
 		if (MetaSize != 0)
 		{
 			Meta = (BYTE*)M_Malloc(MetaSize);
-			memset(Meta, 0, MetaSize);
-			if (ParentClass->MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+
+			// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
+			if (ParentClass->Meta != nullptr)
+			{
+				memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+				if (MetaSize > ParentClass->MetaSize)
+				{
+					memset(Meta + ParentClass->MetaSize, 0, MetaSize - ParentClass->MetaSize);
+				}
+			}
+			else
+			{
+				memset(Meta, 0, MetaSize);
+			}
+
+			if (MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+			else memset(Meta, 0, MetaSize);
 		}
 	}
 
@@ -3199,10 +3215,14 @@ void PClass::InitializeDefaults()
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 			}
-			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
-			{
-				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
-			}
+		}
+	}
+	if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
+	for (const PField *field : Fields)
+	{
+		if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
+		{
+			field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
 		}
 	}
 }
@@ -3264,6 +3284,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->bRuntimeClass = true;
 	Derive(type, name);
 	type->Size = size;
+	type->MetaSize = MetaSize;
 	if (size != TentativeClass)
 	{
 		type->InitializeDefaults();
@@ -3344,7 +3365,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
 		// setting up any defaults for any class.
-		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
+		if (field != nullptr && !(flags & VARF_Native))
 		{
 			Meta = (BYTE *)M_Realloc(Meta, MetaSize);
 			memset(Meta + oldsize, 0, MetaSize - oldsize);
@@ -3380,6 +3401,7 @@ PClass *PClass::FindClassTentative(FName name)
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
 	DPrintf(DMSG_SPAMMY, "Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
+	assert(MetaSize == 0);
 	Derive(type, name);
 	type->Size = TentativeClass;
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), 0, name, bucket);

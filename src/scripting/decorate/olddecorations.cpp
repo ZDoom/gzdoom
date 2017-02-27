@@ -541,11 +541,11 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			bag.Info->PickupMsg = sc.String;
+			inv->StringVar(NAME_PickupMsg) = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
-			inv->BoolVar("Respawnable") = true;
+			inv->BoolVar(NAME_Respawnable) = true;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnDeath"))
 		{

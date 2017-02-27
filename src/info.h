@@ -321,7 +321,6 @@ public:
 	double MissileHeight;
 
 	// These are only valid for inventory items.
-	FString PickupMsg;
 	TArray<PClassActor *> RestrictedToPlayerClass;
 	TArray<PClassActor *> ForbiddenToPlayerClass;
 

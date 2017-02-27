@@ -1007,6 +1007,11 @@ void ZCCCompiler::CompileAllFields()
 					type->Size = Classes[i]->Type()->ParentClass->Size;
 				}
 			}
+			if (Classes[i]->Type()->ParentClass)
+				type->MetaSize = Classes[i]->Type()->ParentClass->MetaSize;
+			else
+				type->MetaSize = 0;
+
 			if (CompileFields(type, Classes[i]->Fields, nullptr, &Classes[i]->TreeNodes, false, !!HasNativeChildren.CheckKey(type)))
 			{
 				// Remove from the list if all fields got compiled.

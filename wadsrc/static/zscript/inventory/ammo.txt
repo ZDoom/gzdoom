@@ -37,7 +37,7 @@ class Ammo : Inventory
 {
 	int BackpackAmount;
 	int BackpackMaxAmount;
-	/*meta*/ int DropAmount;
+	meta int DropAmount;
 	
 	property BackpackAmount: BackpackAmount;
 	property BackpackMaxAmount: BackpackMaxAmount;

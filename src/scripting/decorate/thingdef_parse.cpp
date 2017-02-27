@@ -874,7 +874,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
 		{
 			sc.MustGetString();
-			*(FString*)addr = sc.String;
+			*(FString*)addr = strbin1(sc.String);
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{

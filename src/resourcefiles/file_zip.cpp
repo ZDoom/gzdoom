@@ -220,7 +220,7 @@ bool FZipFile::Open(bool quiet)
 
 	// Check if all files have the same prefix so that this can be stripped out.
 	FString name0;
-	for (DWORD i = 0; i < NumLumps; i++)
+	if (NumLumps > 1) for (DWORD i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
@@ -244,6 +244,7 @@ bool FZipFile::Open(bool quiet)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.
 			bool isspecial = !name.Compare("flats/") ||
+				name.IndexOf("/") < 0 ||
 				!name.Compare("textures/") ||
 				!name.Compare("hires/") ||
 				!name.Compare("sprites/") ||

@@ -6009,7 +6009,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 		{
 			P_DrawSplash2 (32, pos, particledir, updown, 1);
-			puff->renderflags |= RF_INVISIBLE;
+			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
 		if ((flags & PF_HITTHING) && puff->SeeSound)

@@ -560,8 +560,9 @@ class PClass : public PNativeStruct
 protected:
 	// We unravel _WITH_META here just as we did for PType.
 	TArray<FTypeAndOffset> SpecialInits;
+	TArray<FTypeAndOffset> MetaInits;
 	void Derive(PClass *newclass, FName name);
-	void InitializeSpecials(void *addr, void *defaults) const;
+	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset>* PClass::*Inits);
 	void SetSuper();
 public:
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
@@ -582,6 +583,8 @@ public:
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
 	BYTE				*Defaults;
+	BYTE				*Meta;			// Per-class static script data
+	unsigned			 MetaSize;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
 	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility

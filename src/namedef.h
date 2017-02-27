@@ -46,7 +46,6 @@ xx(Shadow)
 xx(Subtract)
 xx(Subtractive)
 xx(FillColor)
-xx(HealthFactor)
 
 // Healingradius types
 xx(Mana)

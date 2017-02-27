@@ -3160,6 +3160,7 @@ void PClass::InitializeDefaults()
 		optr->ObjNext = nullptr;
 		optr->SetClass(this);
 
+
 		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
 		if (ParentClass->Defaults != nullptr)
 		{
@@ -3173,13 +3174,6 @@ void PClass::InitializeDefaults()
 		{
 			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
 		}
-
-		if (MetaSize != 0)
-		{
-			Meta = (BYTE*)ClassDataAllocator.Alloc(MetaSize);
-			memset(Meta, 0, MetaSize);
-			if (ParentClass->MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
-		}
 	}
 
 	if (bRuntimeClass)
@@ -3189,13 +3183,9 @@ void PClass::InitializeDefaults()
 		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
 		for (const PField *field : Fields)
 		{
-			if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
+			if (!(field->Flags & VARF_Native))
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
-			}
-			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
-			{
-				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
 			}
 		}
 	}

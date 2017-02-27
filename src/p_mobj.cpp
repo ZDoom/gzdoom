@@ -5930,13 +5930,13 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->LevelSpawned ();
 	}
 
-	if (mthing->health > 0)
-		mobj->health *= mthing->health;
+	if (mthing->Health > 0)
+		mobj->health = int(mobj->health * mthing->Health);
 	else
-		mobj->health = -mthing->health;
-	if (mthing->health == 0)
+		mobj->health = -int(mthing->Health);
+	if (mthing->Health == 0)
 		mobj->CallDie(NULL, NULL);
-	else if (mthing->health != 1)
+	else if (mthing->Health != 1)
 		mobj->StartHealth = mobj->health;
 
 	return mobj;

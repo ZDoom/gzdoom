@@ -263,7 +263,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  gravity = <float>;		// Set per-actor gravity. Positive values are multiplied with the class's property, 
 	                            // negative values are used as their absolute. Default = 1.0.
 								
-	  health = <int>;			// Set per-actor health. Positive values are multiplied with the class's property,
+	  health = <float>;			// Set per-actor health. Positive values are multiplied with the class's property,
 								// negative values are used as their absolute. Default = 1.
 								
 	  renderstyle = <string>;	// Set per-actor render style, overriding the class default. Possible values can be "normal",

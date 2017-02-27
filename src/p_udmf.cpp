@@ -518,7 +518,7 @@ public:
 		th->Gravity = 1;
 		th->RenderStyle = STYLE_Count;
 		th->Alpha = -1;
-		th->health = 1;
+		th->Health = 1;
 		th->FloatbobPhase = -1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -746,7 +746,7 @@ public:
 				break;
 
 			case NAME_Health:
-				th->health = CheckInt(key);
+				th->Health = CheckFloat(key);
 				break;
 
 			case NAME_Score:

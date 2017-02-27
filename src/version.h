@@ -57,7 +57,7 @@ const char *GetVersionString();
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 232
+#define NETGAMEVERSION 233
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to

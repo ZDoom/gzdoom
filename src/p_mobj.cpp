@@ -321,6 +321,7 @@ DEFINE_FIELD(PClassActor, GibHealth)
 DEFINE_FIELD(PClassActor, WoundHealth)
 DEFINE_FIELD(PClassActor, FastSpeed)
 DEFINE_FIELD(PClassActor, RDFactor)
+DEFINE_FIELD(PClassActor, SelfDamageFactor)
 DEFINE_FIELD(PClassActor, CameraHeight)
 DEFINE_FIELD(PClassActor, HowlSound)
 DEFINE_FIELD(PClassActor, BloodType)
@@ -2958,7 +2959,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					mo->Vel.Z = 0;
 					return;
 				}
-				else if (mo->flags3 & MF3_FLOORHUGGER)
+				else if ((mo->flags3 & MF3_FLOORHUGGER) && !(mo->flags5 & MF5_NODROPOFF))
 				{ // Floor huggers can go up steps
 					return;
 				}

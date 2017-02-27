@@ -1433,6 +1433,16 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(selfdamagefactor, F, Actor)
+{
+	PROP_DOUBLE_PARM(i, 0);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->SelfDamageFactor = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);

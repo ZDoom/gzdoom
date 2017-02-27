@@ -257,6 +257,7 @@ PClassActor::PClassActor()
 	WoundHealth = 6;
 	FastSpeed = -1.;
 	RDFactor = 1.;
+	SelfDamageFactor = 1.;
 	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
@@ -317,6 +318,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->WoundHealth = WoundHealth;
 	newa->FastSpeed = FastSpeed;
 	newa->RDFactor = RDFactor;
+	newa->SelfDamageFactor = SelfDamageFactor;
 	newa->CameraHeight = CameraHeight;
 	newa->HowlSound = HowlSound;
 	newa->BloodType = BloodType;

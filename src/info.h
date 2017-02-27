@@ -299,6 +299,7 @@ public:
 	int WoundHealth;		// Health needed to enter wound state
 	double FastSpeed;		// speed in fast mode
 	double RDFactor;		// Radius damage factor
+	double SelfDamageFactor;
 	double CameraHeight;	// Height of camera when used as such
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 	FName BloodType;		// Blood replacement type

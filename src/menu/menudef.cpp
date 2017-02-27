@@ -877,6 +877,25 @@ static void ParseOptionMenu(FScanner &sc)
 //
 //=============================================================================
 
+static void ParseAddOptionMenu(FScanner &sc)
+{
+	sc.MustGetString();
+
+	DMenuDescriptor **pOld = MenuDescriptors.CheckKey(sc.String);
+	if (pOld == nullptr || *pOld == nullptr || !(*pOld)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
+	{
+		sc.ScriptError("%s is not an option menu that can be extended", sc.String);
+	}
+	ParseOptionMenuBody(sc, (DOptionMenuDescriptor*)(*pOld));
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
@@ -934,6 +953,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("OPTIONMENU"))
 			{
 				ParseOptionMenu(sc);
+			}
+			else if (sc.Compare("ADDOPTIONMENU"))
+			{
+				ParseAddOptionMenu(sc);
 			}
 			else if (sc.Compare("DEFAULTOPTIONMENU"))
 			{

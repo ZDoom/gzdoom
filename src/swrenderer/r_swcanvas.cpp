@@ -645,9 +645,9 @@ void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int l
 	{
 		BYTE *spot = canvas->GetBuffer() + oldyyshifted + xx;
 
-		uint32_t r = (GPalette.BaseColors[*spot].r * (64 - level) + GPalette.BaseColors[basecolor].r * level) / 64;
-		uint32_t g = (GPalette.BaseColors[*spot].g * (64 - level) + GPalette.BaseColors[basecolor].g * level) / 64;
-		uint32_t b = (GPalette.BaseColors[*spot].b * (64 - level) + GPalette.BaseColors[basecolor].b * level) / 64;
+		uint32_t r = (GPalette.BaseColors[*spot].r * (64 - level) + GPalette.BaseColors[basecolor].r * level) / 256;
+		uint32_t g = (GPalette.BaseColors[*spot].g * (64 - level) + GPalette.BaseColors[basecolor].g * level) / 256;
+		uint32_t b = (GPalette.BaseColors[*spot].b * (64 - level) + GPalette.BaseColors[basecolor].b * level) / 256;
 
 		*spot = (BYTE)RGB256k.RGB[r][g][b];
 	}

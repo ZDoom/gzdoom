@@ -1022,7 +1022,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	}
 	if (target == source && damage < TELEFRAG_DAMAGE)
 	{
-		damage = int(damage * target->GetClass()->SelfDamageFactor);
+		damage = int(damage * target->SelfDamageFactor);
 	}
 
 	// [MC] Changed it to check rawdamage here for consistency, even though that doesn't actually do anything

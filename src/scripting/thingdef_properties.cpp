@@ -1313,21 +1313,10 @@ DEFINE_PROPERTY(poisondamagetype, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(fastspeed, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->FastSpeed = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->RDFactor = i;
+	defaults->RadiusDamageFactor = i;
 }
 
 //==========================================================================
@@ -1336,8 +1325,7 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 DEFINE_PROPERTY(selfdamagefactor, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->SelfDamageFactor = i;
+	defaults->SelfDamageFactor = i;
 }
 
 //==========================================================================
@@ -1346,8 +1334,7 @@ DEFINE_PROPERTY(selfdamagefactor, F, Actor)
 DEFINE_PROPERTY(stealthalpha, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->StealthAlpha = i;
+	defaults->StealthAlpha = i;
 }
 
 //==========================================================================

@@ -312,6 +312,9 @@ DEFINE_FIELD(AActor, Conversation)
 DEFINE_FIELD(AActor, DecalGenerator)
 DEFINE_FIELD(AActor, fountaincolor)
 DEFINE_FIELD(AActor, CameraHeight)
+DEFINE_FIELD(AActor, RadiusDamageFactor)
+DEFINE_FIELD(AActor, SelfDamageFactor)
+DEFINE_FIELD(AActor, StealthAlpha)
 
 DEFINE_FIELD(PClassActor, Obituary)
 DEFINE_FIELD(PClassActor, HitObituary)
@@ -320,10 +323,6 @@ DEFINE_FIELD(PClassActor, BurnHeight)
 DEFINE_FIELD(PClassActor, BloodColor)
 DEFINE_FIELD(PClassActor, GibHealth)
 DEFINE_FIELD(PClassActor, WoundHealth)
-DEFINE_FIELD(PClassActor, FastSpeed)
-DEFINE_FIELD(PClassActor, RDFactor)
-DEFINE_FIELD(PClassActor, SelfDamageFactor)
-DEFINE_FIELD(PClassActor, StealthAlpha)
 DEFINE_FIELD(PClassActor, HowlSound)
 
 //==========================================================================
@@ -490,7 +489,11 @@ void AActor::Serialize(FSerializer &arc)
 		A("visiblestartangle",VisibleStartAngle)
 		A("visibleendangle",VisibleEndAngle)
 		A("visiblestartpitch",VisibleStartPitch)
-		A("visibleendpitch",VisibleEndPitch);
+		A("visibleendpitch",VisibleEndPitch)
+		A("rdfactor", RadiusDamageFactor)
+		A("selfdamagefactor", SelfDamageFactor)
+		A("stealthalpha", StealthAlpha);
+
 }
 
 #undef A
@@ -4105,9 +4108,9 @@ void AActor::Tick ()
 			else if (visdir < 0)
 			{
 				Alpha -= 1.5/TICRATE;
-				if (Alpha < GetClass()->StealthAlpha)
+				if (Alpha < StealthAlpha)
 				{
-					Alpha = GetClass()->StealthAlpha;
+					Alpha = StealthAlpha;
 					visdir = 0;
 				}
 			}
@@ -4828,8 +4831,11 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = nullptr;	// NULL head of sector list // phares 3/13/98
 	actor->touching_rendersectors = nullptr;
-	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
-	actor->Speed = actor->GetClass()->FastSpeed;
+	if (G_SkillProperty(SKILLP_FastMonsters))
+	{
+		double f = actor->FloatVar(NAME_FastSpeed);
+		if (f >= 0) actor->Speed = f;
+	}
 
 	// set subsector and/or block links
 	actor->LinkToWorld (nullptr, SpawningMapThing);
@@ -6701,10 +6707,14 @@ static double GetDefaultSpeed(PClassActor *type)
 {
 	if (type == NULL)
 		return 0;
-	else if (G_SkillProperty(SKILLP_FastMonsters) && type->FastSpeed >= 0)
-		return type->FastSpeed;
-	else
-		return GetDefaultByType(type)->Speed;
+
+	auto def = GetDefaultByType(type);
+	if (G_SkillProperty(SKILLP_FastMonsters))
+	{
+		double f = def->FloatVar(NAME_FastSpeed);
+		if (f >= 0) return f;
+	}
+	return def->Speed;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, GetDefaultSpeed)

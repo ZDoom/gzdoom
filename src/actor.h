@@ -1025,6 +1025,10 @@ public:
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
 	double			CameraHeight;	// Height of camera when used as such
 
+	double			RadiusDamageFactor;		// Radius damage factor
+	double			SelfDamageFactor;
+	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
+
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun

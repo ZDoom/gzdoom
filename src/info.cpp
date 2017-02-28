@@ -255,10 +255,6 @@ PClassActor::PClassActor()
 	BurnHeight = -1;
 	GibHealth = INT_MIN;
 	WoundHealth = 6;
-	FastSpeed = -1.;
-	RDFactor = 1.;
-	SelfDamageFactor = 1.;
-	StealthAlpha = 0.;
 
 	DropItems = NULL;
 	// Record this in the master list.
@@ -311,10 +307,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->BloodColor = BloodColor;
 	newa->GibHealth = GibHealth;
 	newa->WoundHealth = WoundHealth;
-	newa->FastSpeed = FastSpeed;
-	newa->RDFactor = RDFactor;
-	newa->SelfDamageFactor = SelfDamageFactor;
-	newa->StealthAlpha = StealthAlpha;
 	newa->HowlSound = HowlSound;
 	newa->distancecheck = distancecheck;
 

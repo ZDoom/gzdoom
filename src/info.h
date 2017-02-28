@@ -297,10 +297,6 @@ public:
 	PalEntry BloodColor;	// Colorized blood
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
-	double FastSpeed;		// speed in fast mode
-	double RDFactor;		// Radius damage factor
-	double SelfDamageFactor;
-	double StealthAlpha;	// Minmum alpha for MF_STEALTH.
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 
 	FDropItem *DropItems;

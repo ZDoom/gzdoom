@@ -320,6 +320,7 @@ usercmd_t	original_cmd;
 	native int GetGender();
 	native int GetTeam();
 	native float GetAutoaim();
+	native void SetFOV(float fov);
 }
 
 struct PlayerClass native

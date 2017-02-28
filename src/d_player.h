@@ -529,6 +529,9 @@ public:
 	DPSprite *GetPSprite(PSPLayers layer);
 
 	bool GetPainFlash(FName type, PalEntry *color) const;
+
+	// [Nash] set player FOV
+	void SetFOV(float fov);
 };
 
 // Bookkeeping on players - state.

@@ -262,11 +262,6 @@ PClassActor::PClassActor()
 	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
-
-	DontHurtShooter = false;
-	ExplosionRadius = -1;
-	MeleeDamage = 0;
-
 	// Record this in the master list.
 	AllActorClasses.Push(this);
 }
@@ -329,14 +324,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;
-
-	newa->DontHurtShooter = DontHurtShooter;
-	newa->ExplosionRadius = ExplosionRadius;
-	newa->ExplosionDamage = ExplosionDamage;
-	newa->MeleeDamage = MeleeDamage;
-	newa->MeleeSound = MeleeSound;
-	newa->MissileName = MissileName;
-	newa->MissileHeight = MissileHeight;
 
 	newa->VisibleToPlayerClass = VisibleToPlayerClass;
 

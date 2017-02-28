@@ -189,7 +189,7 @@ class Actor : Thinker native
 	native State MissileState;
 	native voidptr /*DecalBase*/ DecalGenerator;
 	native uint8 fountaincolor;
-	
+
 	native meta String Obituary;		// Player was killed by this actor
 	native meta String HitObituary;		// Player was killed by this actor in melee
 	native meta double DeathHeight;		// Height on normal death
@@ -204,15 +204,24 @@ class Actor : Thinker native
 	native meta Name BloodType;			// Blood replacement type
 	native meta Name BloodType2;		// Bloopsplatter replacement type
 	native meta Name BloodType3;		// AxeBlood replacement type
-	native meta bool DontHurtShooter;
-	native meta int ExplosionRadius;
-	native meta int ExplosionDamage;
-	native meta int MeleeDamage;
-	native meta Sound MeleeSound;
-	native meta Name MissileName;
-	native meta double MissileHeight;
 	
+	meta bool DontHurtShooter;
+	meta int ExplosionRadius;
+	meta int ExplosionDamage;
+	meta int MeleeDamage;
+	meta Sound MeleeSound;
+	meta double MissileHeight;
+	meta Name MissileName;
 
+	Property prefix: none;
+	Property MeleeDamage: MeleeDamage;
+	Property MeleeSound: MeleeSound;
+	Property MissileHeight: MissileHeight;
+	Property MissileType: MissileName;
+	Property DontHurtShooter: DontHurtShooter;
+	Property ExplosionRadius: ExplosionRadius;
+	Property ExplosionDamage: ExplosionDamage;
+	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
 	//int ConversationRoot; // THe root of the current dialogue
@@ -271,6 +280,7 @@ class Actor : Thinker native
 		DefThreshold 100;
 		BloodType "Blood", "BloodSplatter", "AxeBlood";
 		ExplosionDamage 128;
+		ExplosionRadius -1;	// i.e. use ExplosionDamage value
 		MissileHeight 32;
 		SpriteAngle 0;
 		SpriteRotation 0;
@@ -724,6 +734,68 @@ class Actor : Thinker native
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
 	// End of MBF redundant functions.
+	
+
+	//==========================================================================
+	//
+	// old customizable attack functions which use actor parameters.
+	//
+	//==========================================================================
+	
+	private void DoAttack (bool domelee, bool domissile, int MeleeDamage, Sound MeleeSound, Class<Actor> MissileType,double MissileHeight)
+	{
+		if (target == NULL) return;
+
+		A_FaceTarget ();
+		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
+		{
+			int damage = random[CustomMelee](1, 8) * MeleeDamage;
+			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+		}
+		else if (domissile && MissileType != NULL)
+		{
+			// This seemingly senseless code is needed for proper aiming.
+			double add = MissileHeight + GetBobOffset() - 32;
+			AddZ(add);
+			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), target, MissileType, false);
+			AddZ(-add);
+
+			if (missile)
+			{
+				// automatic handling of seeker missiles
+				if (missile.bSeekerMissile)
+				{
+					missile.tracer = target;
+				}
+				missile.CheckMissileSpawn(radius);
+			}
+		}
+	}
+
+	deprecated void A_MeleeAttack()
+	{
+		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
+	}
+
+	deprecated void A_MissileAttack()
+	{
+		Class<Actor> MissileType = MissileName;
+		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
+	}
+
+	deprecated void A_ComboAttack()
+	{
+		Class<Actor> MissileType = MissileName;
+		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
+	}
+
+	void A_BasicAttack(int melee_damage, sound melee_sound, class<actor> missile_type, double missile_height)
+	{
+		DoAttack(true, true, melee_damage, melee_sound, missile_type, missile_height);
+	}
+
 
 	native void A_MonsterRail();
 	native void A_Pain();
@@ -753,9 +825,6 @@ class Actor : Thinker native
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
 
-	deprecated native void A_MissileAttack();
-	deprecated native void A_MeleeAttack();
-	deprecated native void A_ComboAttack();
 	deprecated native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
 	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
@@ -793,7 +862,6 @@ class Actor : Thinker native
 	native void A_RaiseMaster(int flags = 0);
 	native void A_RaiseChildren(int flags = 0);
 	native void A_RaiseSiblings(int flags = 0);
-	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
 	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 	native bool A_Morph(class<Actor> type, int duration = 0, int flags = 0, class<Actor> enter_flash = null, class<Actor> exit_flash = null);

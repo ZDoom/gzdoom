@@ -311,15 +311,6 @@ public:
 	FString SourceLumpName;
 	FIntCVar *distancecheck;
 
-	// Old Decorate compatibility stuff
-	bool DontHurtShooter;
-	int ExplosionRadius;
-	int ExplosionDamage;
-	int MeleeDamage;
-	FSoundID MeleeSound;
-	FName MissileName;
-	double MissileHeight;
-
 	// These are only valid for inventory items.
 	TArray<PClassActor *> RestrictedToPlayerClass;
 	TArray<PClassActor *> ForbiddenToPlayerClass;

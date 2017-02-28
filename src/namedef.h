@@ -400,6 +400,9 @@ xx(VisibleEndPitch)
 xx(Format)
 xx(PickupMsg)
 xx(Respawnable)
+xx(ExplosionDamage)
+xx(ExplosionRadius)
+xx(DontHurtShooter)
 
 // Various actor names which are used internally
 xx(MapSpot)

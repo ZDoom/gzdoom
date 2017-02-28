@@ -445,18 +445,18 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionRadius"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->ExplosionRadius = sc.Number;
+			defaults->IntVar(NAME_ExplosionRadius) = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionDamage"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->ExplosionDamage = sc.Number;
+			defaults->IntVar(NAME_ExplosionDamage) = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoNotHurtShooter"))
 		{
-			bag.Info->DontHurtShooter = true;
+			defaults->BoolVar(NAME_DontHurtShooter) = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{

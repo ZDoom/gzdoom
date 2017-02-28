@@ -328,13 +328,6 @@ DEFINE_FIELD(PClassActor, HowlSound)
 DEFINE_FIELD(PClassActor, BloodType)
 DEFINE_FIELD(PClassActor, BloodType2)
 DEFINE_FIELD(PClassActor, BloodType3)
-DEFINE_FIELD(PClassActor, DontHurtShooter)
-DEFINE_FIELD(PClassActor, ExplosionRadius)
-DEFINE_FIELD(PClassActor, ExplosionDamage)
-DEFINE_FIELD(PClassActor, MeleeDamage)
-DEFINE_FIELD(PClassActor, MeleeSound)
-DEFINE_FIELD(PClassActor, MissileName)
-DEFINE_FIELD(PClassActor, MissileHeight)
 
 //==========================================================================
 //

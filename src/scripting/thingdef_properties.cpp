@@ -1004,35 +1004,6 @@ DEFINE_PROPERTY(hitobituary, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(donthurtshooter, 0, Actor)
-{
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->DontHurtShooter = true;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(explosionradius, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->ExplosionRadius = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(explosiondamage, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->ExplosionDamage = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(deathheight, F, Actor)
 {
 	PROP_DOUBLE_PARM(h, 0);
@@ -1071,50 +1042,10 @@ DEFINE_PROPERTY(meleethreshold, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(meleedamage, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MeleeDamage = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(meleerange, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleerange = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(meleesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MeleeSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(missiletype, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MissileName = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(missileheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MissileHeight = id;
 }
 
 //==========================================================================

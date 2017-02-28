@@ -651,6 +651,7 @@ OptionValue PuffTypes
 {
 	0.0, "$OPTVAL_SPRITES"
 	1.0, "$OPTVAL_PARTICLES"
+	2.0, "$OPTVAL_SPRITESPARTICLES"
 }
 
 OptionValue Wipes

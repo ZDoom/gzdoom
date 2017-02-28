@@ -1741,7 +1741,7 @@ void P_LoadThings (MapData * map)
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].Alpha = -1;
-		mti[i].health = 1;
+		mti[i].Health = 1;
 		mti[i].FloatbobPhase = -1;
 
 		mti[i].pos.X = LittleShort(mt->x);
@@ -1837,7 +1837,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].Gravity = 1;
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].Alpha = -1;
-		mti[i].health = 1;
+		mti[i].Health = 1;
 		mti[i].FloatbobPhase = -1;
 	}
 	delete[] mtp;

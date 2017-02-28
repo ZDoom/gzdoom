@@ -451,6 +451,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
 
 bool EV_CeilingCrushStop (int tag, bool remove);
+bool EV_StopCeiling(int tag);
 void P_ActivateInStasisCeiling (int tag);
 
 
@@ -564,6 +565,7 @@ bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
 	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower = false);
 
 bool EV_FloorCrushStop (int tag);
+bool EV_StopFloor(int tag);
 bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed);
 
 class DElevator : public DMover

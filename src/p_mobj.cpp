@@ -322,6 +322,7 @@ DEFINE_FIELD(PClassActor, WoundHealth)
 DEFINE_FIELD(PClassActor, FastSpeed)
 DEFINE_FIELD(PClassActor, RDFactor)
 DEFINE_FIELD(PClassActor, SelfDamageFactor)
+DEFINE_FIELD(PClassActor, StealthAlpha)
 DEFINE_FIELD(PClassActor, CameraHeight)
 DEFINE_FIELD(PClassActor, HowlSound)
 DEFINE_FIELD(PClassActor, BloodType)
@@ -4100,9 +4101,9 @@ void AActor::Tick ()
 			else if (visdir < 0)
 			{
 				Alpha -= 1.5/TICRATE;
-				if (Alpha < 0)
+				if (Alpha < GetClass()->StealthAlpha)
 				{
-					Alpha = 0;
+					Alpha = GetClass()->StealthAlpha;
 					visdir = 0;
 				}
 			}
@@ -5929,13 +5930,13 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->LevelSpawned ();
 	}
 
-	if (mthing->health > 0)
-		mobj->health *= mthing->health;
+	if (mthing->Health > 0)
+		mobj->health = int(mobj->health * mthing->Health);
 	else
-		mobj->health = -mthing->health;
-	if (mthing->health == 0)
+		mobj->health = -int(mthing->Health);
+	if (mthing->Health == 0)
 		mobj->CallDie(NULL, NULL);
-	else if (mthing->health != 1)
+	else if (mthing->Health != 1)
 		mobj->StartHealth = mobj->health;
 
 	return mobj;
@@ -6008,7 +6009,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 		{
 			P_DrawSplash2 (32, pos, particledir, updown, 1);
-			puff->renderflags |= RF_INVISIBLE;
+			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
 		if ((flags & PF_HITTHING) && puff->SeeSound)

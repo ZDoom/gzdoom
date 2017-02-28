@@ -563,6 +563,13 @@ FUNC(LS_Generic_Floor)
 					   
 }
 
+FUNC(LS_Floor_Stop)
+// Floor_Stop (tag)
+{
+	return EV_StopFloor(arg0);
+}
+
+
 FUNC(LS_Stairs_BuildDown)
 // Stair_BuildDown (tag, speed, height, delay, reset)
 {
@@ -859,6 +866,13 @@ FUNC(LS_Ceiling_LowerByTexture)
 {
 	return EV_DoCeiling (DCeiling::ceilLowerByTexture, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4));
 }
+
+FUNC(LS_Ceiling_Stop)
+// Ceiling_Stop (tag)
+{
+	return EV_StopCeiling(arg0);
+}
+
 
 FUNC(LS_Generic_Ceiling)
 // Generic_Ceiling (tag, speed, height, target, change/model/direct/crush)
@@ -3614,6 +3628,8 @@ static lnSpecFunc LineSpecials[] =
 	/* 272 */ LS_Stairs_BuildDownDoomSync,
 	/* 273 */ LS_Stairs_BuildUpDoomCrush,
 	/* 274 */ LS_Door_AnimatedClose,
+	/* 275 */ LS_Floor_Stop,
+	/* 276 */ LS_Ceiling_Stop,
 
 };
 

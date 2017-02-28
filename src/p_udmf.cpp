@@ -515,11 +515,10 @@ public:
 		FString arg0str, arg1str;
 
 		memset(th, 0, sizeof(*th));
-		double healthfactor = 1;
 		th->Gravity = 1;
 		th->RenderStyle = STYLE_Count;
 		th->Alpha = -1;
-		th->health = 1;
+		th->Health = 1;
 		th->FloatbobPhase = -1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -739,52 +738,38 @@ public:
 				break;
 
 			case NAME_Alpha:
-				CHECK_N(Zd | Zdt)
 				th->Alpha = CheckFloat(key);
 				break;
 
 			case NAME_FillColor:
-				CHECK_N(Zd | Zdt)
 				th->fillcolor = CheckInt(key);
 				break;
 
 			case NAME_Health:
-				CHECK_N(Zd | Zdt)
-				th->health = CheckInt(key);
-				break;
-
-			case NAME_HealthFactor:
-				CHECK_N(Zd | Zdt)
-				healthfactor = CheckFloat(key);
+				th->Health = CheckFloat(key);
 				break;
 
 			case NAME_Score:
-				CHECK_N(Zd | Zdt)
 				th->score = CheckInt(key);
 				break;
 
 			case NAME_Pitch:
-				CHECK_N(Zd | Zdt)
 				th->pitch = (short)CheckInt(key);
 				break;
 
 			case NAME_Roll:
-				CHECK_N(Zd | Zdt)
 				th->roll = (short)CheckInt(key);
 				break;
 
 			case NAME_ScaleX:
-				CHECK_N(Zd | Zdt)
 				th->Scale.X = CheckFloat(key);
 				break;
 
 			case NAME_ScaleY:
-				CHECK_N(Zd | Zdt)
 				th->Scale.Y = CheckFloat(key);
 				break;
 
 			case NAME_Scale:
-				CHECK_N(Zd | Zdt)
 				th->Scale.X = th->Scale.Y = CheckFloat(key);
 				break;
 
@@ -808,7 +793,6 @@ public:
 		{
 			th->args[1] = -FName(arg1str);
 		}
-		th->health = int(th->health * healthfactor);
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
 		if (namespc == NAME_ZDoomTranslated)

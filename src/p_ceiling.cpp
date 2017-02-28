@@ -582,3 +582,18 @@ bool EV_CeilingCrushStop (int tag, bool remove)
 
 	return rtn;
 }
+
+bool EV_StopCeiling(int tag)
+{
+	FSectorTagIterator it(tag);
+	while (int sec = it.Next())
+	{
+		if (level.sectors[sec].ceilingdata)
+		{
+			SN_StopSequence(&level.sectors[sec], CHAN_CEILING);
+			level.sectors[sec].ceilingdata->Destroy();
+			level.sectors[sec].ceilingdata = nullptr;
+		}
+	}
+	return true;
+}

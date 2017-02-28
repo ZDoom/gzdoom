@@ -540,6 +540,7 @@ void P_FireWeapon (player_t *player, FState *state)
 		return;
 	}
 
+	player->WeaponState &= ~WF_WEAPONBOBBING;
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = false;
 	if (state == nullptr)
@@ -576,6 +577,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 		return;
 	}
 
+	player->WeaponState &= ~WF_WEAPONBOBBING;
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = true;
 

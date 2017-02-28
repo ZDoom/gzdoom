@@ -38,6 +38,7 @@ class Armor : Inventory
 	Default
 	{
 		Inventory.PickupSound "misc/armor_pkup";
+		+INVENTORY.ISARMOR
 	}
 }
 

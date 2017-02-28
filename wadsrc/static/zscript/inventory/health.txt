@@ -43,6 +43,7 @@ class Health : Inventory
 	
 	Default
 	{
+		+INVENTORY.ISHEALTH
 		Inventory.Amount 1;
 		Inventory.MaxAmount 0;
 		Inventory.PickupSound "misc/health_pkup";
@@ -99,6 +100,7 @@ class HealthPickup : Inventory
 	{
 		Inventory.DefMaxAmount;
 		+INVENTORY.INVBAR
+		+INVENTORY.ISHEALTH
 	}
 	
 	//===========================================================================

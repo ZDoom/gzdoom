@@ -5821,27 +5821,23 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// [RH] Other things that shouldn't be spawned depending on dmflags
 	if (deathmatch || alwaysapplydmflags)
 	{
-		// Fixme: This needs to be done differently, it's quite broken.
-		if (dmflags & DF_NO_HEALTH)
+		if (i->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
-			if (i->IsDescendantOf (PClass::FindActor(NAME_Health)))
-				return NULL;
-			if (i->TypeName == NAME_Berserk)
-				return NULL;
-			if (i->TypeName == NAME_Megasphere)
-				return NULL;
-		}
-		if (dmflags & DF_NO_ITEMS)
-		{
-//			if (i->IsDescendantOf (RUNTIME_CLASS(AArtifact)))
-//				return;
-		}
-		if (dmflags & DF_NO_ARMOR)
-		{
-			if (i->IsDescendantOf (PClass::FindActor(NAME_Armor)))
-				return NULL;
-			if (i->TypeName == NAME_Megasphere)
-				return NULL;
+			auto it = static_cast<AInventory*>(GetDefaultByType(i));
+
+			if (dmflags & DF_NO_HEALTH)
+			{
+				if (it->ItemFlags & IF_ISHEALTH) return nullptr;
+			}
+			if (dmflags & DF_NO_ITEMS)
+			{
+				//			if (i->IsDescendantOf (RUNTIME_CLASS(AArtifact)))
+				//				return;
+			}
+			if (dmflags & DF_NO_ARMOR)
+			{
+				if (it->ItemFlags & IF_ISARMOR) return nullptr;
+			}
 		}
 	}
 

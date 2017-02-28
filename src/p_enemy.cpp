@@ -3217,13 +3217,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 //---------------------------------------------------------------------------
 void ModifyDropAmount(AInventory *inv, int dropamount)
 {
-	int flagmask = IF_IGNORESKILL;
+	auto flagmask = IF_IGNORESKILL;
 	double dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
 	// Default drop amount is half of regular amount * regular ammo multiplication
 	if (dropammofactor == -1) 
 	{
 		dropammofactor = 0.5;
-		flagmask = 0;
+		flagmask = ItemFlag(0);
 	}
 
 	if (dropamount > 0)

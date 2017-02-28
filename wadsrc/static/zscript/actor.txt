@@ -196,9 +196,8 @@ class Actor : Thinker native
 	native int WoundHealth;		// Health needed to enter wound state
 	//native color BloodColor;		// won't be accessible for now because it needs refactoring to remove the 255-translations limit.
 
-	native meta String Obituary;		// Player was killed by this actor
-	native meta String HitObituary;		// Player was killed by this actor in melee
-
+	meta String Obituary;		// Player was killed by this actor
+	meta String HitObituary;		// Player was killed by this actor in melee
 	meta double DeathHeight;	// Height on normal death
 	meta double BurnHeight;		// Height on burning death
 	meta int GibHealth;			// Negative health below which this monster dies an extreme death
@@ -216,6 +215,8 @@ class Actor : Thinker native
 	meta double FastSpeed;		// speed in fast mode
 
 	Property prefix: none;
+	Property Obituary: Obituary;
+	Property HitObituary: HitObituary;
 	Property MeleeDamage: MeleeDamage;
 	Property MeleeSound: MeleeSound;
 	Property MissileHeight: MissileHeight;
@@ -421,6 +422,19 @@ class Actor : Thinker native
 		{
 			return MAX(metaheight, 0);
 		}
+	}
+	
+	virtual String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		if (mod == 'Telefrag')
+		{
+			return "$OB_MONTELEFRAG";
+		}
+		else if (mod == 'Melee' && HitObituary.Length() > 0)
+		{
+			return HitObituary;
+		}
+		return Obituary;
 	}
 	
 

@@ -290,8 +290,6 @@ public:
 
 	TArray<PClassActor *> VisibleToPlayerClass;
 
-	FString Obituary;		// Player was killed by this actor
-	FString HitObituary;	// Player was killed by this actor in melee
 	PalEntry BloodColor;	// Colorized blood
 
 	FDropItem *DropItems;

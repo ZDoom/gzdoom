@@ -295,8 +295,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
 	newa->DefaultStateUsage = DefaultStateUsage;
-	newa->Obituary = Obituary;
-	newa->HitObituary = HitObituary;
 	newa->BloodColor = BloodColor;
 	newa->distancecheck = distancecheck;
 

@@ -963,26 +963,6 @@ DEFINE_PROPERTY(alpha, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(obituary, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->Obituary = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(hitobituary, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->HitObituary = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(maxtargetrange, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);

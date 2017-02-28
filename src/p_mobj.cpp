@@ -317,8 +317,6 @@ DEFINE_FIELD(AActor, SelfDamageFactor)
 DEFINE_FIELD(AActor, StealthAlpha)
 DEFINE_FIELD(AActor, WoundHealth)
 
-DEFINE_FIELD(PClassActor, Obituary)
-DEFINE_FIELD(PClassActor, HitObituary)
 //DEFINE_FIELD(PClassActor, BloodColor)
 
 //==========================================================================

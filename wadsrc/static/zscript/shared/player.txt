@@ -119,6 +119,36 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		if (victim.player != player && victim.IsTeammate(self))
+		{
+			victim = self;
+			return String.Format("$OB_FRIENDLY%c", random[Obituary](49, 53));
+		}
+		else
+		{
+			if (mod == 'Telefrag') return "$OB_MPTELEFRAG";
+
+			String message;
+			if (inflictor != NULL)
+			{
+				message = inflictor.GetObituary(victim, inflictor, mod, playerattack);
+			}
+			if (message.Length() == 0 && playerattack && player.ReadyWeapon != NULL)
+			{
+				message = player.ReadyWeapon.GetObituary(victim, inflictor, mod, playerattack);
+			}
+			if (message.Length() == 0)
+			{
+				if (mod == 'BFGSplash') return "$OB_MPBFG_SPLASH";
+				if (mod == 'Railgun') return "$OB_RAILGUN";
+				message = Obituary;
+			}
+			return message;
+		}
+	}
+	
 	// This is for SBARINFO.
 	int, int GetEffectTicsForItem(class<Inventory> item)
 	{

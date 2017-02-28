@@ -62,7 +62,6 @@
 #include "g_levellocals.h"
 #include "events.h"
 
-static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
 static FRandom pr_killmobj ("ActorDie");
 FRandom pr_damagemobj ("ActorTakeDamage");
@@ -186,13 +185,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
 	if (self->player == NULL || self->player->mo != self || !show_obituaries)
 		return;
-
-	gender = self->player->userinfo.GetGender();
 
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
@@ -217,93 +213,47 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	}
 
 	FString obit = DamageTypeDefinition::GetObituary(mod);
-	if (obit.IsNotEmpty()) messagename = obit;
+	if (attacker == nullptr) messagename = obit;
 	else
 	{
 		switch (mod)
 		{
-		case NAME_Suicide:		messagename = "OB_SUICIDE";		break;
-		case NAME_Falling:		messagename = "OB_FALLING";		break;
-		case NAME_Crush:		messagename = "OB_CRUSH";		break;
-		case NAME_Exit:			messagename = "OB_EXIT";		break;
-		case NAME_Drowning:		messagename = "OB_WATER";		break;
-		case NAME_Slime:		messagename = "OB_SLIME";		break;
-		case NAME_Fire:			if (attacker == NULL) messagename = "OB_LAVA";		break;
+		case NAME_Suicide:		message = "$OB_SUICIDE";	break;
+		case NAME_Falling:		message = "$OB_FALLING";	break;
+		case NAME_Crush:		message = "$OB_CRUSH";		break;
+		case NAME_Exit:			message = "$OB_EXIT";		break;
+		case NAME_Drowning:		message = "$OB_WATER";		break;
+		case NAME_Slime:		message = "$OB_SLIME";		break;
+		case NAME_Fire:			messagename = "$OB_LAVA";		break;
 		}
 	}
 
 	// Check for being killed by a voodoo doll.
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
 	{
-		messagename = "OB_VOODOO";
+		messagename = "$OB_VOODOO";
 	}
-
-	if (messagename != NULL)
-		message = GStrings(messagename);
 
 	if (attacker != NULL && message == NULL)
 	{
 		if (attacker == self)
 		{
-			message = GStrings("OB_KILLEDSELF");
+			message = "$OB_KILLEDSELF";
 		}
-		else if (attacker->player == NULL)
+		else 
 		{
-			if (mod == NAME_Telefrag)
+			IFVIRTUALPTR(attacker, AActor, GetObituary)
 			{
-				message = GStrings("OB_MONTELEFRAG");
-			}
-			else if (mod == NAME_Melee && attacker->GetClass()->HitObituary.IsNotEmpty())
-			{
-				message = attacker->GetClass()->HitObituary;
-			}
-			else if (attacker->GetClass()->Obituary.IsNotEmpty())
-			{
-				message = attacker->GetClass()->Obituary;
+				VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
+				FString ret;
+				VMReturn rett(&ret);
+				GlobalVMStack.Call(func, params, countof(params), &rett, 1);
+				if (ret.IsNotEmpty()) message = ret;
 			}
 		}
 	}
-
-	if (message == NULL && attacker != NULL && attacker->player != NULL)
-	{
-		if (self->player != attacker->player && self->IsTeammate(attacker))
-		{
-			self = attacker;
-			gender = self->player->userinfo.GetGender();
-			mysnprintf (gendermessage, countof(gendermessage), "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
-			message = GStrings(gendermessage);
-		}
-		else
-		{
-			if (mod == NAME_Telefrag) message = GStrings("OB_MPTELEFRAG");
-			if (message == NULL)
-			{
-				if (inflictor != NULL && inflictor->GetClass()->Obituary.IsNotEmpty())
-				{
-					message = inflictor->GetClass()->Obituary;
-				}
-				if (message == NULL && (dmgflags & DMG_PLAYERATTACK) && attacker->player->ReadyWeapon != NULL)
-				{
-					message = attacker->player->ReadyWeapon->GetClass()->Obituary;
-				}
-				if (message == NULL)
-				{
-					switch (mod)
-					{
-					case NAME_BFGSplash:	messagename = "OB_MPBFG_SPLASH";	break;
-					case NAME_Railgun:		messagename = "OB_RAILGUN";			break;
-					}
-					if (messagename != NULL)
-						message = GStrings(messagename);
-				}
-				if (message == NULL)
-				{
-					message = attacker->GetClass()->Obituary;
-				}
-			}
-		}
-	}
-	else attacker = self;	// for the message creation
+	if (message == nullptr) message = messagename;	// fallback to defaults if possible.
+	if (attacker->player == nullptr) attacker = self;	// for the message creation
 
 	if (message != NULL && message[0] == '$') 
 	{
@@ -319,7 +269,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (message == NULL || strlen(message) <= 0)
 		return;
 		
-	SexMessage (message, gendermessage, gender,
+	SexMessage (message, gendermessage, self->player->userinfo.GetGender(),
 		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }

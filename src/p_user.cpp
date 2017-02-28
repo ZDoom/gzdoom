@@ -3333,8 +3333,6 @@ DEFINE_FIELD(APlayerPawn, HexenArmor)
 DEFINE_FIELD(APlayerPawn, ColorRangeStart)
 DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
 
-DEFINE_FIELD(PClassActor, DisplayName)
-
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_oldbuttons)

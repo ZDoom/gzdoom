@@ -34,7 +34,6 @@ class PlayerPawn : Actor native
 	native double		ViewBob;				// [SP] ViewBob Multiplier
 	native double		FullHeight;
 
-	native meta String 	DisplayName;	// Display name (used in menus, etc.)
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
 	

@@ -472,7 +472,7 @@ void M_SetMenu(FName menu, int param)
 	}
 	else
 	{
-		const PClass *menuclass = PClass::FindClass(menu);
+		PClass *menuclass = PClass::FindClass(menu);
 		if (menuclass != nullptr)
 		{
 			if (menuclass->IsDescendantOf("GenericMenu"))

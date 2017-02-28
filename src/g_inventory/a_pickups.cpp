@@ -50,8 +50,6 @@ DEFINE_FIELD(AInventory, DropTime)
 DEFINE_FIELD(AInventory, SpawnPointClass)
 DEFINE_FIELD(AInventory, PickupFlash)
 DEFINE_FIELD(AInventory, PickupSound)
-DEFINE_FIELD(AInventory, GiveQuest)
-DEFINE_FIELD(PClassActor, PickupMsg)
 
 //===========================================================================
 //
@@ -115,8 +113,7 @@ void AInventory::Serialize(FSerializer &arc)
 		("icon", Icon, def->Icon)
 		("pickupsound", PickupSound, def->PickupSound)
 		("spawnpointclass", SpawnPointClass, def->SpawnPointClass)
-		("droptime", DropTime, def->DropTime)
-		("givequest", GiveQuest, def->GiveQuest);
+		("droptime", DropTime, def->DropTime);
 }
 
 //===========================================================================

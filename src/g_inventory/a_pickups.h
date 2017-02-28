@@ -17,7 +17,7 @@ struct visstyle_t;
 
 // A pickup is anything the player can pickup (i.e. weapons, ammo, powerups, etc)
 
-enum
+enum ItemFlag
 {
 	IF_ACTIVATABLE		= 1<<0,		// can be activated
 	IF_ACTIVATED		= 1<<1,		// is currently activated
@@ -46,8 +46,14 @@ enum
 	IF_TRANSFER			= 1<<24,	// All inventory items that the inventory item contains is also transfered to the pickuper
 	IF_NOTELEPORTFREEZE	= 1<<25,	// does not 'freeze' the player right after teleporting.
 	IF_NOSCREENBLINK	= 1<<26,	// Does not blink the screen overlay when expiring.
+	IF_ISHEALTH			= 1<<27,	// for the DM flag so that it can recognize items that are not obviously health givers.
+	IF_ISARMOR			= 1<<28,	// for the DM flag so that it can recognize items that are not obviously armor givers.
 };
 
+typedef TFlags<ItemFlag> InvFlags;
+//typedef TFlags<ItemFlag2> ItemFlags2;
+DEFINE_TFLAGS_OPERATORS(InvFlags)
+//DEFINE_TFLAGS_OPERATORS(ItemFlags2)
 
 class AInventory : public AActor
 {
@@ -87,10 +93,9 @@ public:
 	FTextureID Icon;			// Icon to show on status bar or HUD
 	int DropTime;				// Countdown after dropping
 	PClassActor *SpawnPointClass;	// For respawning like Heretic's mace
-	int GiveQuest;				// Optionally give one of the quest items.
 	FTextureID AltHUDIcon;
 
-	DWORD ItemFlags;
+	InvFlags ItemFlags;
 	PClassActor *PickupFlash;	// actor to spawn as pickup flash
 
 	FSoundIDNoInit PickupSound;

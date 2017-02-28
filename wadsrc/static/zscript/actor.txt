@@ -189,30 +189,48 @@ class Actor : Thinker native
 	native State MissileState;
 	native voidptr /*DecalBase*/ DecalGenerator;
 	native uint8 fountaincolor;
-	
-	native meta String Obituary;		// Player was killed by this actor
-	native meta String HitObituary;		// Player was killed by this actor in melee
-	native meta double DeathHeight;		// Height on normal death
-	native meta double BurnHeight;		// Height on burning death
-	native meta color BloodColor;		// Colorized blood
-	native meta int GibHealth;			// Negative health below which this monster dies an extreme death
-	native meta int WoundHealth;		// Health needed to enter wound state
-	native meta double FastSpeed;		// speed in fast mode
-	native meta double RDFactor;		// Radius damage factor
-	native meta double CameraHeight;	// Height of camera when used as such
-	native meta Sound HowlSound;		// Sound being played when electrocuted or poisoned
-	native meta Name BloodType;			// Blood replacement type
-	native meta Name BloodType2;		// Bloopsplatter replacement type
-	native meta Name BloodType3;		// AxeBlood replacement type
-	native meta bool DontHurtShooter;
-	native meta int ExplosionRadius;
-	native meta int ExplosionDamage;
-	native meta int MeleeDamage;
-	native meta Sound MeleeSound;
-	native meta Name MissileName;
-	native meta double MissileHeight;
-	
+	native double CameraHeight;	// Height of camera when used as such
+	native double RadiusDamageFactor;		// Radius damage factor
+	native double SelfDamageFactor;
+	native double StealthAlpha;
+	native int WoundHealth;		// Health needed to enter wound state
+	//native color BloodColor;		// won't be accessible for now because it needs refactoring to remove the 255-translations limit.
 
+	meta String Obituary;		// Player was killed by this actor
+	meta String HitObituary;		// Player was killed by this actor in melee
+	meta double DeathHeight;	// Height on normal death
+	meta double BurnHeight;		// Height on burning death
+	meta int GibHealth;			// Negative health below which this monster dies an extreme death
+	meta Sound HowlSound;		// Sound being played when electrocuted or poisoned
+	meta Name BloodType;		// Blood replacement type
+	meta Name BloodType2;		// Bloopsplatter replacement type
+	meta Name BloodType3;		// AxeBlood replacement type
+	meta bool DontHurtShooter;
+	meta int ExplosionRadius;
+	meta int ExplosionDamage;
+	meta int MeleeDamage;
+	meta Sound MeleeSound;
+	meta double MissileHeight;
+	meta Name MissileName;
+	meta double FastSpeed;		// speed in fast mode
+
+	Property prefix: none;
+	Property Obituary: Obituary;
+	Property HitObituary: HitObituary;
+	Property MeleeDamage: MeleeDamage;
+	Property MeleeSound: MeleeSound;
+	Property MissileHeight: MissileHeight;
+	Property MissileType: MissileName;
+	Property DontHurtShooter: DontHurtShooter;
+	Property ExplosionRadius: ExplosionRadius;
+	Property ExplosionDamage: ExplosionDamage;
+	Property BloodType: BloodType, BloodType2, BloodType3;
+	Property FastSpeed: FastSpeed;
+	Property HowlSound: HowlSound;
+	Property GibHealth: GibHealth;
+	Property DeathHeight: DeathHeight;
+	Property BurnHeight: BurnHeight;
+	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
 	//int ConversationRoot; // THe root of the current dialogue
@@ -239,7 +257,7 @@ class Actor : Thinker native
 		Health DEFAULT_HEALTH;
 		Reactiontime 8;
 		Radius 20;
-                RenderRadius 0;
+		RenderRadius 0;
 		Height 16;
 		Mass 100;
 		RenderStyle 'Normal';
@@ -271,6 +289,7 @@ class Actor : Thinker native
 		DefThreshold 100;
 		BloodType "Blood", "BloodSplatter", "AxeBlood";
 		ExplosionDamage 128;
+		ExplosionRadius -1;	// i.e. use ExplosionDamage value
 		MissileHeight 32;
 		SpriteAngle 0;
 		SpriteRotation 0;
@@ -278,6 +297,15 @@ class Actor : Thinker native
 		VisibleAngles 0, 0;
 		VisiblePitch 0, 0;
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY;
+		CameraHeight int.min;
+		FastSpeed -1;
+		RadiusDamageFactor 1;
+		SelfDamageFactor 1;
+		StealthAlpha 0;
+		WoundHealth 6;
+		GibHealth int.min;
+		DeathHeight -1;
+		BurnHeight -1;
 	}
 	
 	// Functions
@@ -310,7 +338,7 @@ class Actor : Thinker native
 	virtual native void Touch(Actor toucher);
 	virtual native void MarkPrecacheSounds();
 
-	// Called by PIT_CheckThing to check if two actos actually can collide.
+	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
 	{
 		return true;
@@ -334,6 +362,81 @@ class Actor : Thinker native
 	{
 		return false;
 	}
+	
+	virtual class<Actor> GetBloodType(int type)
+	{
+		Class<Actor> bloodcls;
+		if (type == 0)
+		{
+			bloodcls = BloodType;
+		}
+		else if (type == 1)
+		{
+			bloodcls = BloodType2;
+		}
+		else if (type == 2)
+		{
+			bloodcls = BloodType3;
+		}
+		else
+		{
+			return NULL;
+		}
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = GetReplacement(bloodcls);
+		}
+		return bloodcls;
+	}
+	
+	virtual int GetGibHealth()
+	{
+		if (GibHealth != int.min)
+		{
+			return -abs(GibHealth);
+		}
+		else
+		{
+			return -int(GetSpawnHealth() * gameinfo.gibfactor);
+		}
+	}
+	
+	virtual double GetDeathHeight()
+	{
+		// [RH] Allow the death height to be overridden using metadata.
+		double metaheight = -1;
+		if (DamageType == 'Fire')
+		{
+			metaheight = BurnHeight;
+		}
+		if (metaheight < 0)
+		{
+			metaheight = DeathHeight;
+		}
+		if (metaheight < 0)
+		{
+			return Height * 0.25;
+		}
+		else
+		{
+			return MAX(metaheight, 0);
+		}
+	}
+	
+	virtual String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		if (mod == 'Telefrag')
+		{
+			return "$OB_MONTELEFRAG";
+		}
+		else if (mod == 'Melee' && HitObituary.Length() > 0)
+		{
+			return HitObituary;
+		}
+		return Obituary;
+	}
+	
 
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);
@@ -510,7 +613,6 @@ class Actor : Thinker native
 	native double GetAngle(int flags, int ptr = AAPTR_TARGET);
 	native double GetZAt(double px = 0, double py = 0, double angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
 	native int GetSpawnHealth();
-	native int GetGibHealth();
 	native double GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native double GetCVar(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
@@ -725,6 +827,68 @@ class Actor : Thinker native
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
 	// End of MBF redundant functions.
+	
+
+	//==========================================================================
+	//
+	// old customizable attack functions which use actor parameters.
+	//
+	//==========================================================================
+	
+	private void DoAttack (bool domelee, bool domissile, int MeleeDamage, Sound MeleeSound, Class<Actor> MissileType,double MissileHeight)
+	{
+		if (target == NULL) return;
+
+		A_FaceTarget ();
+		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
+		{
+			int damage = random[CustomMelee](1, 8) * MeleeDamage;
+			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+		}
+		else if (domissile && MissileType != NULL)
+		{
+			// This seemingly senseless code is needed for proper aiming.
+			double add = MissileHeight + GetBobOffset() - 32;
+			AddZ(add);
+			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), target, MissileType, false);
+			AddZ(-add);
+
+			if (missile)
+			{
+				// automatic handling of seeker missiles
+				if (missile.bSeekerMissile)
+				{
+					missile.tracer = target;
+				}
+				missile.CheckMissileSpawn(radius);
+			}
+		}
+	}
+
+	deprecated void A_MeleeAttack()
+	{
+		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
+	}
+
+	deprecated void A_MissileAttack()
+	{
+		Class<Actor> MissileType = MissileName;
+		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
+	}
+
+	deprecated void A_ComboAttack()
+	{
+		Class<Actor> MissileType = MissileName;
+		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
+	}
+
+	void A_BasicAttack(int melee_damage, sound melee_sound, class<actor> missile_type, double missile_height)
+	{
+		DoAttack(true, true, melee_damage, melee_sound, missile_type, missile_height);
+	}
+
 
 	native void A_MonsterRail();
 	native void A_Pain();
@@ -754,9 +918,6 @@ class Actor : Thinker native
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
 
-	deprecated native void A_MissileAttack();
-	deprecated native void A_MeleeAttack();
-	deprecated native void A_ComboAttack();
 	deprecated native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
 	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
@@ -794,7 +955,6 @@ class Actor : Thinker native
 	native void A_RaiseMaster(int flags = 0);
 	native void A_RaiseChildren(int flags = 0);
 	native void A_RaiseSiblings(int flags = 0);
-	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
 	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 	native bool A_Morph(class<Actor> type, int duration = 0, int flags = 0, class<Actor> enter_flash = null, class<Actor> exit_flash = null);

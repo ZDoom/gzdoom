@@ -41,6 +41,7 @@
 class PClass;
 class PType;
 class FSerializer;
+class FSoundID;
 
 class   DObject;
 /*
@@ -483,9 +484,11 @@ public:
 	// Add other types as needed.
 	bool &BoolVar(FName field);
 	int &IntVar(FName field);
+	FSoundID &SoundVar(FName field);
 	PalEntry &ColorVar(FName field);
 	FName &NameVar(FName field);
 	double &FloatVar(FName field);
+	FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
 
 	// If you need to replace one object with another and want to

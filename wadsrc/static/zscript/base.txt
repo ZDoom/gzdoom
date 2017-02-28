@@ -310,6 +310,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenMapNameFont;
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
+	native double gibfactor;
 }
 
 class Object native

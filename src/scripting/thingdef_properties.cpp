@@ -595,21 +595,10 @@ DEFINE_PROPERTY(health, I, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(gibhealth, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->GibHealth = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(woundhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->WoundHealth = id;
+	defaults->WoundHealth = id;
 }
 
 //==========================================================================
@@ -891,16 +880,6 @@ DEFINE_PROPERTY(activesound, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(howlsound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->HowlSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(crushpainsound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -984,75 +963,6 @@ DEFINE_PROPERTY(alpha, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(obituary, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->Obituary = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(hitobituary, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->HitObituary = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(donthurtshooter, 0, Actor)
-{
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->DontHurtShooter = true;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(explosionradius, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->ExplosionRadius = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(explosiondamage, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->ExplosionDamage = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(deathheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(h, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->DeathHeight = MAX(0., h);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(burnheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(h, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->BurnHeight = MAX(0., h);
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(maxtargetrange, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
@@ -1071,50 +981,10 @@ DEFINE_PROPERTY(meleethreshold, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(meleedamage, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MeleeDamage = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(meleerange, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleerange = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(meleesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MeleeSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(missiletype, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MissileName = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(missileheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->MissileHeight = id;
 }
 
 //==========================================================================
@@ -1189,37 +1059,6 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 	static_cast<PClassActor *>(info)->BloodColor = pe;
 }
 
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(bloodtype, Sss, Actor)
-{
-	PROP_STRING_PARM(str, 0)
-	PROP_STRING_PARM(str1, 1)
-	PROP_STRING_PARM(str2, 2)
-
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	PClassActor *ainfo = static_cast<PClassActor *>(info);
-
-	FName blood = str;
-	// normal blood
-	ainfo->BloodType = blood;
-
-	if (PROP_PARM_COUNT > 1)
-	{
-		blood = str1;
-	}
-	// blood splatter
-	ainfo->BloodType2 = blood;
-
-	if (PROP_PARM_COUNT > 2)
-	{
-		blood = str2;
-	}
-	// axe blood
-	ainfo->BloodType3 = blood;
-}
 
 //==========================================================================
 //
@@ -1413,21 +1252,10 @@ DEFINE_PROPERTY(poisondamagetype, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(fastspeed, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->FastSpeed = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->RDFactor = i;
+	defaults->RadiusDamageFactor = i;
 }
 
 //==========================================================================
@@ -1436,8 +1264,7 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 DEFINE_PROPERTY(selfdamagefactor, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->SelfDamageFactor = i;
+	defaults->SelfDamageFactor = i;
 }
 
 //==========================================================================
@@ -1446,8 +1273,7 @@ DEFINE_PROPERTY(selfdamagefactor, F, Actor)
 DEFINE_PROPERTY(stealthalpha, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->StealthAlpha = i;
+	defaults->StealthAlpha = i;
 }
 
 //==========================================================================
@@ -1456,8 +1282,7 @@ DEFINE_PROPERTY(stealthalpha, F, Actor)
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->CameraHeight = i;
+	defaults->CameraHeight = i;
 }
 
 //==========================================================================
@@ -1834,16 +1659,6 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->PickupMsg = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1873,15 +1688,6 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UseSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->GiveQuest = i;
 }
 
 //==========================================================================
@@ -2716,24 +2522,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->InvulMode = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->HealingRadiusType = str;
 }
 
 //==========================================================================

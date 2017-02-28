@@ -88,6 +88,13 @@ CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCO
 ColorSetList ColorSets;
 PainFlashList PainFlashes;
 
+// [Nash] FOV cvar setting
+CUSTOM_CVAR(Float, fov, 90.f, CVAR_ARCHIVE | CVAR_USERINFO | CVAR_NOINITCALL)
+{
+	player_t *p = &players[consoleplayer];
+	p->SetFOV(fov);
+}
+
 struct PredictPos
 {
 	int gametic;
@@ -548,6 +555,40 @@ int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+}
+
+// [Nash] Set FOV
+void player_t::SetFOV(float fov)
+{
+	player_t *p = &players[consoleplayer];
+	if (p != nullptr && p->mo != nullptr)
+	{
+		if (dmflags & DF_NO_FOV)
+		{
+			if (consoleplayer == Net_Arbitrator)
+			{
+				Net_WriteByte(DEM_MYFOV);
+			}
+			else
+			{
+				Printf("A setting controller has disabled FOV changes.\n");
+				return;
+			}
+		}
+		else
+		{
+			Net_WriteByte(DEM_MYFOV);
+		}
+		Net_WriteByte((BYTE)clamp<float>(fov, 5.f, 179.f));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetFOV)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_FLOAT(fov);
+	self->SetFOV((float)fov);
+	return 0;
 }
 
 //===========================================================================
@@ -1309,15 +1350,18 @@ const char *APlayerPawn::GetSoundClass() const
 //
 //===========================================================================
 
-int APlayerPawn::GetMaxHealth() const 
+int APlayerPawn::GetMaxHealth(bool withupgrades) const 
 { 
-	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	int ret = MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	if (withupgrades) ret += stamina;
+	return ret;
 }
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	ACTION_RETURN_INT(self->GetMaxHealth());
+	PARAM_BOOL_DEF(withupgrades);
+	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
 }
 
 //===========================================================================
@@ -2829,7 +2873,7 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			int maxhealth = player->mo->GetMaxHealth() + player->mo->stamina;
+			int maxhealth = player->mo->GetMaxHealth(true);
 			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
 			{
 				if (player->health - 5 < maxhealth)
@@ -3326,18 +3370,13 @@ DEFINE_FIELD(APlayerPawn, FlechetteType)
 DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
-
-DEFINE_FIELD(APlayerPawn, HealingRadiusType)
 DEFINE_FIELD(APlayerPawn, SoundClass)
 DEFINE_FIELD(APlayerPawn, Face)
 DEFINE_FIELD(APlayerPawn, Portrait)
 DEFINE_FIELD(APlayerPawn, Slot)
-DEFINE_FIELD(APlayerPawn, InvulMode)
 DEFINE_FIELD(APlayerPawn, HexenArmor)
 DEFINE_FIELD(APlayerPawn, ColorRangeStart)
 DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
-
-DEFINE_FIELD(PClassActor, DisplayName)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

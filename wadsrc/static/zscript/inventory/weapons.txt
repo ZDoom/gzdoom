@@ -33,7 +33,7 @@ class Weapon : StateProvider native
 	native float FOVScale;
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
-	native bool bAltFire;							// Set when self weapon's alternate fire is used.
+	native bool bAltFire;							// Set when this weapon's alternate fire is used.
 	native readonly bool bDehAmmo;
 
 	Default
@@ -87,6 +87,12 @@ class Weapon : StateProvider native
 		if (hold) s = FindState('AltHold');
 		if (s == null) s = FindState('AltFire');
 		return s;
+	}
+	
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		// Weapons may never return HitObituary by default. Override this if it is needed.
+		return Obituary;
 	}
 	
 	action void A_GunFlash(statelabel flashlabel = null, int flags = 0)

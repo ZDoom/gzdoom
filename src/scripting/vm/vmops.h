@@ -23,7 +23,8 @@ xx(LKF_R,	lk,		RFRII8,		NOP,	0, 0),		// load float constant indexed
 xx(LKS_R,	lk,		RSRII8,		NOP,	0, 0),		// load string constant indexed
 xx(LKP_R,	lk,		RPRII8,		NOP,	0, 0),		// load pointer constant indexed
 xx(LFP,		lf,		LFP,		NOP,	0, 0),		// load frame pointer
-xx(META,	meta,	RPRP,		NOP,	0, 0),		// load a class's meta class address
+xx(META,	meta,	RPRP,		NOP,	0, 0),		// load a class's meta data address
+xx(CLSS,	clss,	RPRP,		NOP,	0, 0),		// load a class's descriptor address
 
 // Load from memory. rA = *(rB + rkC)
 xx(LB,		lb,		RIRPKI,		LB_R,	4, REGT_INT),	// load byte

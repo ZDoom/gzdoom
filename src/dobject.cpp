@@ -623,12 +623,20 @@ DEFINE_ACTION_FUNCTION(DObject, MSTime)
 
 void *DObject::ScriptVar(FName field, PType *type)
 {
-	auto sym = dyn_cast<PField>(GetClass()->Symbols.FindSymbol(field, true));
+	auto cls = GetClass();
+	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
 	if (sym && (sym->Type == type || type == nullptr))
 	{
-		return (((char*)this) + sym->Offset);
+		if (!(sym->Flags & VARF_Meta))
+		{
+			return (((char*)this) + sym->Offset);
+		}
+		else
+		{
+			return (cls->Meta + sym->Offset);
+		}
 	}
 	// This is only for internal use so I_Error is fine.
-	I_Error("Variable %s not found in %s\n", field.GetChars(), GetClass()->TypeName.GetChars());
+	I_Error("Variable %s not found in %s\n", field.GetChars(), cls->TypeName.GetChars());
 	return nullptr;
 }

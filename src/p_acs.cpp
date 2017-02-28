@@ -4232,7 +4232,7 @@ enum
 	SOUND_Howl,
 };
 
-static FSoundID GetActorSound(const AActor *actor, int soundtype)
+static FSoundID GetActorSound(AActor *actor, int soundtype)
 {
 	switch (soundtype)
 	{
@@ -4245,7 +4245,7 @@ static FSoundID GetActorSound(const AActor *actor, int soundtype)
 	case SOUND_Bounce:		return actor->BounceSound;
 	case SOUND_WallBounce:	return actor->WallBounceSound;
 	case SOUND_CrushPain:	return actor->CrushPainSound;
-	case SOUND_Howl:		return actor->GetClass()->HowlSound;
+	case SOUND_Howl:		return actor->SoundVar(NAME_HowlSound);
 	default:				return 0;
 	}
 }
@@ -4369,8 +4369,8 @@ enum EACSFunctions
 	ACSF_GetActorFloorTerrain,
 	ACSF_StrArg,
 	ACSF_Floor,
-	ACSF_Ceil,
 	ACSF_Round,
+	ACSF_Ceil,
 
 
 	// OpenGL stuff

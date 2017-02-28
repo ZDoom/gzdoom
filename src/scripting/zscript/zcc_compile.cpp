@@ -1095,22 +1095,28 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				
 				if (varflags & VARF_Native)
 				{
-					auto querytype = (varflags & VARF_Meta) ? type->GetClass() : type;
-					fd = FindField(querytype, FName(name->Name).GetChars());
-					if (fd == nullptr)
+					if (varflags & VARF_Meta)
 					{
-						Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
+						Error(field, "Native meta variable %s not allowed", FName(name->Name).GetChars());
 					}
-					else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
-					{
-						Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
-					}
-					// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
 					else
 					{
-						// for bit fields the type must point to the source variable.
-						if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
-						type->AddNativeField(name->Name, thisfieldtype, fd->FieldOffset, varflags, fd->BitValue);
+						fd = FindField(type, FName(name->Name).GetChars());
+						if (fd == nullptr)
+						{
+							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
+						}
+						else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
+						{
+							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
+						}
+						// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
+						else
+						{
+							// for bit fields the type must point to the source variable.
+							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
+							type->AddNativeField(name->Name, thisfieldtype, fd->FieldOffset, varflags, fd->BitValue);
+						}
 					}
 				}
 				else if (hasnativechildren)
@@ -1694,14 +1700,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 
 		if (f->Flags & VARF_Meta)
 		{
-			if (f->Flags & VARF_Native)
-			{
-				addr = ((char*)bag.Info) + f->Offset;
-			}
-			else
-			{
-				addr = ((char*)bag.Info->Meta) + f->Offset;
-			}
+			addr = ((char*)bag.Info->Meta) + f->Offset;
 		}
 		else
 		{

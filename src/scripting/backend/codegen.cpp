@@ -6871,7 +6871,7 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 	{
 		obj.Free(build);
 		ExpEmit meta(build, REGT_POINTER);
-		build->Emit(membervar->Flags & VARF_Native?  OP_CLSS : OP_META, meta.RegNum, obj.RegNum);
+		build->Emit(OP_META, meta.RegNum, obj.RegNum);
 		obj = meta;
 	}
 

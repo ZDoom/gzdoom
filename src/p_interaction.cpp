@@ -1536,7 +1536,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	woundstate = target->FindState(NAME_Wound, mod);
 	if (woundstate != NULL)
 	{
-		int woundhealth = target->GetClass()->WoundHealth;
+		int woundhealth = target->WoundHealth;
 
 		if (target->health <= woundhealth)
 		{

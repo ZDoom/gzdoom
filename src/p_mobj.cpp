@@ -315,6 +315,7 @@ DEFINE_FIELD(AActor, CameraHeight)
 DEFINE_FIELD(AActor, RadiusDamageFactor)
 DEFINE_FIELD(AActor, SelfDamageFactor)
 DEFINE_FIELD(AActor, StealthAlpha)
+DEFINE_FIELD(AActor, WoundHealth)
 
 DEFINE_FIELD(PClassActor, Obituary)
 DEFINE_FIELD(PClassActor, HitObituary)
@@ -322,7 +323,6 @@ DEFINE_FIELD(PClassActor, DeathHeight)
 DEFINE_FIELD(PClassActor, BurnHeight)
 DEFINE_FIELD(PClassActor, BloodColor)
 DEFINE_FIELD(PClassActor, GibHealth)
-DEFINE_FIELD(PClassActor, WoundHealth)
 DEFINE_FIELD(PClassActor, HowlSound)
 
 //==========================================================================
@@ -490,6 +490,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("visibleendangle",VisibleEndAngle)
 		A("visiblestartpitch",VisibleStartPitch)
 		A("visibleendpitch",VisibleEndPitch)
+		A("woundhealth", WoundHealth)
 		A("rdfactor", RadiusDamageFactor)
 		A("selfdamagefactor", SelfDamageFactor)
 		A("stealthalpha", StealthAlpha);

@@ -254,7 +254,6 @@ PClassActor::PClassActor()
 	DeathHeight = -1;
 	BurnHeight = -1;
 	GibHealth = INT_MIN;
-	WoundHealth = 6;
 
 	DropItems = NULL;
 	// Record this in the master list.
@@ -306,7 +305,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->BurnHeight = BurnHeight;
 	newa->BloodColor = BloodColor;
 	newa->GibHealth = GibHealth;
-	newa->WoundHealth = WoundHealth;
 	newa->HowlSound = HowlSound;
 	newa->distancecheck = distancecheck;
 

@@ -1028,6 +1028,7 @@ public:
 	double			RadiusDamageFactor;		// Radius damage factor
 	double			SelfDamageFactor;
 	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
+	int				WoundHealth;		// Health needed to enter wound state
 
 	SDWORD			tics;				// state tic counter
 	FState			*state;

@@ -608,8 +608,7 @@ DEFINE_PROPERTY(gibhealth, I, Actor)
 DEFINE_PROPERTY(woundhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->WoundHealth = id;
+	defaults->WoundHealth = id;
 }
 
 //==========================================================================

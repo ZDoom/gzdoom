@@ -297,6 +297,8 @@ class Actor : Thinker native
 		RadiusDamageFactor 1;
 		SelfDamageFactor 1;
 		StealthAlpha 0;
+		WoundHealth 6;
+
 		
 	}
 	

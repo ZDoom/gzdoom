@@ -5680,7 +5680,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			{
 				points = points * splashfactor;
 			}
-			points *= thing->GetClass()->RDFactor;
+			points *= thing->RadiusDamageFactor;
 
 			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
@@ -5759,7 +5759,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 				dist = clamp<double>(dist - fulldamagedistance, 0, dist);
 				int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
 
-				double factor = splashfactor * thing->GetClass()->RDFactor;
+				double factor = splashfactor * thing->RadiusDamageFactor;
 				damage = int(damage * factor);
 				if (damage > 0 || (bombspot->flags7 & MF7_FORCEZERORADIUSDMG))
 				{

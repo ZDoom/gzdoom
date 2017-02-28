@@ -36,8 +36,8 @@
 class Health : Inventory
 {
 	transient int PrevHealth;
-	/*meta*/ int LowHealth;
-	/*meta*/ String LowHealthMessage;
+	meta int LowHealth;
+	meta String LowHealthMessage;
 	
 	property LowMessage: LowHealth, LowHealthMessage;
 	

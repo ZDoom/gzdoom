@@ -109,9 +109,15 @@ begin:
 		reg.atag[a] = ATAG_GENERIC;	// using ATAG_FRAMEPOINTER will cause endless asserts.
 		NEXTOP;
 
-	OP(META):
+	OP(CLSS):
 		ASSERTA(a); ASSERTO(B);
 		reg.a[a] = ((DObject*)reg.a[B])->GetClass();	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+
+	OP(META):
+		ASSERTA(a); ASSERTO(B);
+		reg.a[a] = ((DObject*)reg.a[B])->GetClass()->Meta;	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 

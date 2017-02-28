@@ -722,10 +722,6 @@ PBool::PBool()
 {
 	mDescriptiveName = "Bool";
 	MemberOnly = false;
-	// Override the default max set by PInt's constructor
-	PSymbolConstNumeric *maxsym = static_cast<PSymbolConstNumeric *>(Symbols.FindSymbol(NAME_Max, false));
-	assert(maxsym != nullptr && maxsym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
-	maxsym->Value = 1;
 }
 
 /* PFloat *****************************************************************/

@@ -6088,18 +6088,84 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	if (Object->ExprType == EFX_Identifier)
 	{
+		auto id = static_cast<FxIdentifier *>(Object)->Identifier;
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier, ctx);
-		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
+		ccls = FindStructType(id, ctx);
+		if (ccls != nullptr)
+		{
+			static_cast<FxIdentifier *>(Object)->noglobal = true;
+		}
+		else
+		{
+			PType *type;
+			// Another special case to deal with here is constants assigned to non-struct types. The code below cannot deal with them so it needs to be done here explicitly.
+			// Thanks to the messed up search logic of the type system, which doesn't allow any search by type name for the basic types at all,
+			// we have to do this manually, though and check for all types that may have values attached explicitly. 
+			// (What's the point of attached fields to types if you cannot even search for the types...???)
+			switch (id)
+			{
+			default:
+				type = nullptr;
+				break;
+
+			case NAME_Byte:
+			case NAME_uint8:
+				type = TypeUInt8;
+				break;
+
+			case NAME_sByte:
+			case NAME_int8:
+				type = TypeSInt8;
+				break;
+
+			case NAME_uShort:
+			case NAME_uint16:
+				type = TypeUInt16;
+				break;
+
+			case NAME_Short:
+			case NAME_int16:
+				type = TypeSInt16;
+				break;
+
+			case NAME_Int:
+				type = TypeSInt32;
+				break;
+
+			case NAME_uInt:
+				type = TypeUInt32;
+				break;
+
+			case NAME_Float:
+				type = TypeFloat32;
+				break;
+
+			case NAME_Double:
+				type = TypeFloat64;
+				break;
+			}
+			if (type != nullptr)
+			{
+				auto sym = type->Symbols.FindSymbol(Identifier, true);
+				if (sym != nullptr)
+				{
+					// non-struct symbols must be constant numbers and can only be defined internally.
+					assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
+					auto sn = static_cast<PSymbolConstNumeric*>(sym);
+
+					VMValue vmv;
+					if (sn->ValueType->IsKindOf(RUNTIME_CLASS(PInt))) vmv = sn->Value;
+					else vmv = sn->Float;
+					auto x = new FxConstant(sn->ValueType, vmv, ScriptPosition);
+					delete this;
+					return x->Resolve(ctx);
+				}
+			}
+		}
 	}
 
 	SAFE_RESOLVE(Object, ctx);
-
-	if (Identifier == FName("allmap"))
-	{
-		int a = 2;
-	}
 
 	// check for class or struct constants if the left side is a type name.
 	if (Object->ValueType == TypeError)

@@ -817,32 +817,7 @@ public:
 	void SetAngle(DAngle ang, bool interpolate);
 	void SetRoll(DAngle roll, bool interpolate);
 
-	PClassActor *GetBloodType(int type = 0) const
-	{
-		PClassActor *bloodcls;
-		if (type == 0)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType);
-		}
-		else if (type == 1)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType2);
-		}
-		else if (type == 2)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType3);
-		}
-		else
-		{
-			return NULL;
-		}
-
-		if (bloodcls != NULL)
-		{
-			bloodcls = bloodcls->GetReplacement();
-		}
-		return bloodcls;
-	}
+	PClassActor *GetBloodType(int type = 0) const;
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
 	{
@@ -1048,7 +1023,8 @@ public:
 	double			renderradius;
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
-	
+	double			CameraHeight;	// Height of camera when used as such
+
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun

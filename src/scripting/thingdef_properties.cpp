@@ -1124,37 +1124,6 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(bloodtype, Sss, Actor)
-{
-	PROP_STRING_PARM(str, 0)
-	PROP_STRING_PARM(str1, 1)
-	PROP_STRING_PARM(str2, 2)
-
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	PClassActor *ainfo = static_cast<PClassActor *>(info);
-
-	FName blood = str;
-	// normal blood
-	ainfo->BloodType = blood;
-
-	if (PROP_PARM_COUNT > 1)
-	{
-		blood = str1;
-	}
-	// blood splatter
-	ainfo->BloodType2 = blood;
-
-	if (PROP_PARM_COUNT > 2)
-	{
-		blood = str2;
-	}
-	// axe blood
-	ainfo->BloodType3 = blood;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(bouncetype, S, Actor)
 {
 	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", "Grenade", "Classic", NULL };
@@ -1387,8 +1356,7 @@ DEFINE_PROPERTY(stealthalpha, F, Actor)
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->CameraHeight = i;
+	defaults->CameraHeight = i;
 }
 
 //==========================================================================

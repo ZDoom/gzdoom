@@ -311,6 +311,7 @@ DEFINE_FIELD(AActor, ConversationRoot)
 DEFINE_FIELD(AActor, Conversation)
 DEFINE_FIELD(AActor, DecalGenerator)
 DEFINE_FIELD(AActor, fountaincolor)
+DEFINE_FIELD(AActor, CameraHeight)
 
 DEFINE_FIELD(PClassActor, Obituary)
 DEFINE_FIELD(PClassActor, HitObituary)
@@ -323,11 +324,7 @@ DEFINE_FIELD(PClassActor, FastSpeed)
 DEFINE_FIELD(PClassActor, RDFactor)
 DEFINE_FIELD(PClassActor, SelfDamageFactor)
 DEFINE_FIELD(PClassActor, StealthAlpha)
-DEFINE_FIELD(PClassActor, CameraHeight)
 DEFINE_FIELD(PClassActor, HowlSound)
-DEFINE_FIELD(PClassActor, BloodType)
-DEFINE_FIELD(PClassActor, BloodType2)
-DEFINE_FIELD(PClassActor, BloodType3)
 
 //==========================================================================
 //
@@ -488,6 +485,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("spriteangle", SpriteAngle)
 		A("spriterotation", SpriteRotation)
 		("alternative", alternative)
+		A("cameraheight", CameraHeight)
 		A("tag", Tag)
 		A("visiblestartangle",VisibleStartAngle)
 		A("visibleendangle",VisibleEndAngle)
@@ -3814,6 +3812,19 @@ void AActor::SetRoll(DAngle r, bool interpolate)
 			player->cheats |= CF_INTERPVIEW;
 		}
 	}
+}
+
+PClassActor *AActor::GetBloodType(int type) const
+{
+	IFVIRTUAL(AActor, GetBloodType)
+	{
+		VMValue params[] = { (DObject*)this, type };
+		PClassActor *res;
+		VMReturn ret((void**)&res);
+		GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+		return res;
+	}
+	return nullptr;
 }
 
 
@@ -7593,7 +7604,7 @@ int AActor::GetGibHealth() const
 
 double AActor::GetCameraHeight() const
 {
-	return GetClass()->CameraHeight == INT_MIN ? Height / 2 : GetClass()->CameraHeight;
+	return CameraHeight == INT_MIN ? Height / 2 : CameraHeight;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)

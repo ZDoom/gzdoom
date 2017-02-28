@@ -189,6 +189,7 @@ class Actor : Thinker native
 	native State MissileState;
 	native voidptr /*DecalBase*/ DecalGenerator;
 	native uint8 fountaincolor;
+	native double CameraHeight;	// Height of camera when used as such
 
 	native meta String Obituary;		// Player was killed by this actor
 	native meta String HitObituary;		// Player was killed by this actor in melee
@@ -199,12 +200,11 @@ class Actor : Thinker native
 	native meta int WoundHealth;		// Health needed to enter wound state
 	native meta double FastSpeed;		// speed in fast mode
 	native meta double RDFactor;		// Radius damage factor
-	native meta double CameraHeight;	// Height of camera when used as such
 	native meta Sound HowlSound;		// Sound being played when electrocuted or poisoned
-	native meta Name BloodType;			// Blood replacement type
-	native meta Name BloodType2;		// Bloopsplatter replacement type
-	native meta Name BloodType3;		// AxeBlood replacement type
-	
+
+	meta Name BloodType;		// Blood replacement type
+	meta Name BloodType2;		// Bloopsplatter replacement type
+	meta Name BloodType3;		// AxeBlood replacement type
 	meta bool DontHurtShooter;
 	meta int ExplosionRadius;
 	meta int ExplosionDamage;
@@ -221,6 +221,7 @@ class Actor : Thinker native
 	Property DontHurtShooter: DontHurtShooter;
 	Property ExplosionRadius: ExplosionRadius;
 	Property ExplosionDamage: ExplosionDamage;
+	Property BloodType: BloodType, BloodType2, BloodType3;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -248,7 +249,7 @@ class Actor : Thinker native
 		Health DEFAULT_HEALTH;
 		Reactiontime 8;
 		Radius 20;
-                RenderRadius 0;
+		RenderRadius 0;
 		Height 16;
 		Mass 100;
 		RenderStyle 'Normal';
@@ -288,6 +289,7 @@ class Actor : Thinker native
 		VisibleAngles 0, 0;
 		VisiblePitch 0, 0;
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY;
+		CameraHeight int.min;
 	}
 	
 	// Functions
@@ -320,7 +322,7 @@ class Actor : Thinker native
 	virtual native void Touch(Actor toucher);
 	virtual native void MarkPrecacheSounds();
 
-	// Called by PIT_CheckThing to check if two actos actually can collide.
+	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
 	{
 		return true;
@@ -343,6 +345,33 @@ class Actor : Thinker native
 	virtual bool Used(Actor user)
 	{
 		return false;
+	}
+	
+	virtual class<Actor> GetBloodType(int type)
+	{
+		Class<Actor> bloodcls;
+		if (type == 0)
+		{
+			bloodcls = BloodType;
+		}
+		else if (type == 1)
+		{
+			bloodcls = BloodType2;
+		}
+		else if (type == 2)
+		{
+			bloodcls = BloodType3;
+		}
+		else
+		{
+			return NULL;
+		}
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = GetReplacement(bloodcls);
+		}
+		return bloodcls;
 	}
 
 	native static class<Actor> GetReplacement(class<Actor> cls);

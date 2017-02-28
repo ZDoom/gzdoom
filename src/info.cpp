@@ -259,7 +259,6 @@ PClassActor::PClassActor()
 	RDFactor = 1.;
 	SelfDamageFactor = 1.;
 	StealthAlpha = 0.;
-	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
 	// Record this in the master list.
@@ -316,11 +315,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->RDFactor = RDFactor;
 	newa->SelfDamageFactor = SelfDamageFactor;
 	newa->StealthAlpha = StealthAlpha;
-	newa->CameraHeight = CameraHeight;
 	newa->HowlSound = HowlSound;
-	newa->BloodType = BloodType;
-	newa->BloodType2 = BloodType2;
-	newa->BloodType3 = BloodType3;
 	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;

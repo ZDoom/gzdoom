@@ -251,10 +251,6 @@ PClassActor::PClassActor()
 	DamageFactors = NULL;
 	PainChances = NULL;
 
-	DeathHeight = -1;
-	BurnHeight = -1;
-	GibHealth = INT_MIN;
-
 	DropItems = NULL;
 	// Record this in the master list.
 	AllActorClasses.Push(this);
@@ -301,11 +297,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->DefaultStateUsage = DefaultStateUsage;
 	newa->Obituary = Obituary;
 	newa->HitObituary = HitObituary;
-	newa->DeathHeight = DeathHeight;
-	newa->BurnHeight = BurnHeight;
 	newa->BloodColor = BloodColor;
-	newa->GibHealth = GibHealth;
-	newa->HowlSound = HowlSound;
 	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;

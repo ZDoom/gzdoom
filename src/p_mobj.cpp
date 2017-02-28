@@ -319,11 +319,7 @@ DEFINE_FIELD(AActor, WoundHealth)
 
 DEFINE_FIELD(PClassActor, Obituary)
 DEFINE_FIELD(PClassActor, HitObituary)
-DEFINE_FIELD(PClassActor, DeathHeight)
-DEFINE_FIELD(PClassActor, BurnHeight)
-DEFINE_FIELD(PClassActor, BloodColor)
-DEFINE_FIELD(PClassActor, GibHealth)
-DEFINE_FIELD(PClassActor, HowlSound)
+//DEFINE_FIELD(PClassActor, BloodColor)
 
 //==========================================================================
 //
@@ -3516,7 +3512,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 void AActor::Howl ()
 {
-	FSoundID howl = GetClass()->HowlSound;
+	FSoundID howl = IntVar(NAME_HowlSound);
 	if (!S_IsActorPlayingSomething(this, CHAN_BODY, howl))
 	{
 		S_Sound (this, CHAN_BODY, howl, 1, ATTN_NORM);
@@ -7481,9 +7477,10 @@ void AActor::Crash()
 	{
 		FState *crashstate = NULL;
 		
+		int gibh = GetGibHealth();
 		if (DamageType != NAME_None)
 		{
-			if (health < GetGibHealth())
+			if (health < gibh)
 			{ // Extreme death
 				FName labels[] = { NAME_Crash, NAME_Extreme, DamageType };
 				crashstate = FindState (3, labels, true);
@@ -7495,7 +7492,7 @@ void AActor::Crash()
 		}
 		if (crashstate == NULL)
 		{
-			if (health < GetGibHealth())
+			if (health < gibh)
 			{ // Extreme death
 				crashstate = FindState(NAME_Crash, NAME_Extreme);
 			}
@@ -7601,16 +7598,15 @@ void AActor::Revive()
 
 int AActor::GetGibHealth() const
 {
-	int gibhealth = GetClass()->GibHealth;
-
-	if (gibhealth != INT_MIN)
+	IFVIRTUAL(AActor, GetGibHealth)
 	{
-		return -abs(gibhealth);
+		VMValue params[] = { (DObject*)this };
+		int h;
+		VMReturn ret(&h);
+		GlobalVMStack.Call(func, params, 1, &ret, 1);
+		return h;
 	}
-	else
-	{
-		return -int(SpawnHealth() * gameinfo.gibfactor);
-	}
+	return -SpawnHealth();
 }
 
 double AActor::GetCameraHeight() const
@@ -8294,9 +8290,9 @@ void PrintMiscActorInfo(AActor *query)
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
 		Printf("\nTID: %d", query->tid);
-		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
+		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f, height= %f",
 			query->X(), query->Y(), query->Z(),
-			query->floorz, query->ceilingz);
+			query->floorz, query->ceilingz, query->Height);
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
 		Printf("Scale: x:%f, y:%f\n", query->Scale.X, query->Scale.Y);

@@ -193,16 +193,16 @@ class Actor : Thinker native
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;
+	native int WoundHealth;		// Health needed to enter wound state
+	//native color BloodColor;		// won't be accessible for now because it needs refactoring to remove the 255-translations limit.
 
 	native meta String Obituary;		// Player was killed by this actor
 	native meta String HitObituary;		// Player was killed by this actor in melee
-	native meta double DeathHeight;		// Height on normal death
-	native meta double BurnHeight;		// Height on burning death
-	native meta color BloodColor;		// Colorized blood
-	native meta int GibHealth;			// Negative health below which this monster dies an extreme death
-	native meta int WoundHealth;		// Health needed to enter wound state
-	native meta Sound HowlSound;		// Sound being played when electrocuted or poisoned
 
+	meta double DeathHeight;	// Height on normal death
+	meta double BurnHeight;		// Height on burning death
+	meta int GibHealth;			// Negative health below which this monster dies an extreme death
+	meta Sound HowlSound;		// Sound being played when electrocuted or poisoned
 	meta Name BloodType;		// Blood replacement type
 	meta Name BloodType2;		// Bloopsplatter replacement type
 	meta Name BloodType3;		// AxeBlood replacement type
@@ -225,6 +225,10 @@ class Actor : Thinker native
 	Property ExplosionDamage: ExplosionDamage;
 	Property BloodType: BloodType, BloodType2, BloodType3;
 	Property FastSpeed: FastSpeed;
+	Property HowlSound: HowlSound;
+	Property GibHealth: GibHealth;
+	Property DeathHeight: DeathHeight;
+	Property BurnHeight: BurnHeight;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -298,8 +302,9 @@ class Actor : Thinker native
 		SelfDamageFactor 1;
 		StealthAlpha 0;
 		WoundHealth 6;
-
-		
+		GibHealth int.min;
+		DeathHeight -1;
+		BurnHeight -1;
 	}
 	
 	// Functions
@@ -383,6 +388,41 @@ class Actor : Thinker native
 		}
 		return bloodcls;
 	}
+	
+	virtual int GetGibHealth()
+	{
+		if (GibHealth != int.min)
+		{
+			return -abs(GibHealth);
+		}
+		else
+		{
+			return -int(GetSpawnHealth() * gameinfo.gibfactor);
+		}
+	}
+	
+	virtual double GetDeathHeight()
+	{
+		// [RH] Allow the death height to be overridden using metadata.
+		double metaheight = -1;
+		if (DamageType == 'Fire')
+		{
+			metaheight = BurnHeight;
+		}
+		if (metaheight < 0)
+		{
+			metaheight = DeathHeight;
+		}
+		if (metaheight < 0)
+		{
+			return Height * 0.25;
+		}
+		else
+		{
+			return MAX(metaheight, 0);
+		}
+	}
+	
 
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);
@@ -559,7 +599,6 @@ class Actor : Thinker native
 	native double GetAngle(int flags, int ptr = AAPTR_TARGET);
 	native double GetZAt(double px = 0, double py = 0, double angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
 	native int GetSpawnHealth();
-	native int GetGibHealth();
 	native double GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native double GetCVar(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);

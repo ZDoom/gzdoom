@@ -440,22 +440,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpawnHealth)
 
 //==========================================================================
 //
-// GetGibHealth
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, GetGibHealth)
-{
-	if (numret > 0)
-	{
-		PARAM_SELF_PROLOGUE(AActor);
-		ret->SetInt(self->GetGibHealth());
-		return 1;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
 // GetSpriteAngle
 //
 // NON-ACTION function returns the sprite angle of a pointer.

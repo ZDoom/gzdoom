@@ -223,7 +223,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 				{
 					extra.DeathHeight = ((AActor*)(type->Defaults))->Height;
 				}
-				type->DeathHeight = extra.DeathHeight;
+				((AActor*)(type->Defaults))->FloatVar("DeathHeight") = extra.DeathHeight;
 			}
 			bag.statedef.SetStateLabel("Death", &type->OwnedStates[extra.DeathStart]);
 		}
@@ -262,7 +262,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->Height;
-			type->BurnHeight = extra.BurnHeight;
+			((AActor*)(type->Defaults))->FloatVar("BurnHeight") = extra.BurnHeight;
 
 			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
 		}

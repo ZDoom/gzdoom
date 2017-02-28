@@ -292,11 +292,7 @@ public:
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
-	double DeathHeight;	// Height on normal death
-	double BurnHeight;		// Height on burning death
 	PalEntry BloodColor;	// Colorized blood
-	int GibHealth;			// Negative health below which this monster dies an extreme death
-	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 
 	FDropItem *DropItems;
 	FString SourceLumpName;

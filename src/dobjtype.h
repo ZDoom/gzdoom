@@ -728,6 +728,11 @@ inline int &DObject::IntVar(FName field)
 	return *(int*)ScriptVar(field, TypeSInt32);
 }
 
+inline FSoundID &DObject::SoundVar(FName field)
+{
+	return *(FSoundID*)ScriptVar(field, TypeSound);
+}
+
 inline PalEntry &DObject::ColorVar(FName field)
 {
 	return *(PalEntry*)ScriptVar(field, TypeColor);

@@ -595,16 +595,6 @@ DEFINE_PROPERTY(health, I, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(gibhealth, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->GibHealth = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(woundhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
@@ -890,16 +880,6 @@ DEFINE_PROPERTY(activesound, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(howlsound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->HowlSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(crushpainsound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -998,26 +978,6 @@ DEFINE_PROPERTY(hitobituary, S, Actor)
 	PROP_STRING_PARM(str, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->HitObituary = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(deathheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(h, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->DeathHeight = MAX(0., h);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(burnheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(h, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->BurnHeight = MAX(0., h);
 }
 
 //==========================================================================

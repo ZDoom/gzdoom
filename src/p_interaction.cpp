@@ -411,23 +411,11 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 	flags6 |= MF6_KILLED;
 
-	// [RH] Allow the death height to be overridden using metadata.
-	double metaheight = -1;
-	if (DamageType == NAME_Fire)
+	IFVIRTUAL(AActor, GetDeathHeight)
 	{
-		metaheight = GetClass()->BurnHeight;
-	}
-	if (metaheight < 0)
-	{
-		metaheight = GetClass()->DeathHeight;
-	}
-	if (metaheight < 0)
-	{
-		Height *= 0.25;
-	}
-	else
-	{
-		Height = MAX<double> (metaheight, 0);
+		VMValue params[] = { (DObject*)this };
+		VMReturn ret(&Height);
+		GlobalVMStack.Call(func, params, 1, &ret, 1);
 	}
 
 	// [RH] If the thing has a special, execute and remove it

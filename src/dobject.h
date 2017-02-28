@@ -41,6 +41,7 @@
 class PClass;
 class PType;
 class FSerializer;
+class FSoundID;
 
 class   DObject;
 /*
@@ -483,6 +484,7 @@ public:
 	// Add other types as needed.
 	bool &BoolVar(FName field);
 	int &IntVar(FName field);
+	FSoundID &SoundVar(FName field);
 	PalEntry &ColorVar(FName field);
 	FName &NameVar(FName field);
 	double &FloatVar(FName field);

@@ -3361,7 +3361,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
 		// setting up any defaults for any class.
-		if (field != nullptr && !(flags & VARF_Native))
+		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
 			Meta = (BYTE *)M_Realloc(Meta, MetaSize);
 			memset(Meta + oldsize, 0, MetaSize - oldsize);

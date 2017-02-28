@@ -159,8 +159,6 @@ public:
 	FNameNoInit Face;			// Doom status bar face (when used)
 	FNameNoInit Portrait;
 	FNameNoInit Slot[10];
-	FNameNoInit InvulMode;
-	FNameNoInit HealingRadiusType;
 	double HexenArmor[5];
 	BYTE ColorRangeStart;	// Skin color range
 	BYTE ColorRangeEnd;

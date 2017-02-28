@@ -1188,8 +1188,10 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		FString qualifiedname;
 		// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
 		// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
-		if (prefix == NAME_None) qualifiedname.Format("@property@%s", FName(p->NodeName).GetChars());
-		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), FName(p->NodeName).GetChars());
+		FName name = FName(p->NodeName);
+		if (prefix == NAME_None) qualifiedname.Format("@property@%s", name.GetChars());
+		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
+
 		fields.ShrinkToFit();
 		if (!type->Symbols.AddSymbol(new PProperty(qualifiedname, fields)))
 		{

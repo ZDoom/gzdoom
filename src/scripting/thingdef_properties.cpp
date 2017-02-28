@@ -2702,24 +2702,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->InvulMode = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->HealingRadiusType = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 {
 	for (int i = 0; i < 5; i++)

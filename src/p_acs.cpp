@@ -4369,8 +4369,8 @@ enum EACSFunctions
 	ACSF_GetActorFloorTerrain,
 	ACSF_StrArg,
 	ACSF_Floor,
-	ACSF_Ceil,
 	ACSF_Round,
+	ACSF_Ceil,
 
 
 	// OpenGL stuff

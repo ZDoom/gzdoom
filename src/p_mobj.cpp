@@ -1330,7 +1330,7 @@ bool P_GiveBody(AActor *actor, int num, int max)
 		// calls while supporting health pickups.
 		if (max <= 0)
 		{
-			max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->mo->stamina;
+			max = static_cast<APlayerPawn*>(actor)->GetMaxHealth(true);
 			// [MH] First step in predictable generic morph effects
 			if (player->morphTics)
 			{

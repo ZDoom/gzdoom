@@ -1350,15 +1350,18 @@ const char *APlayerPawn::GetSoundClass() const
 //
 //===========================================================================
 
-int APlayerPawn::GetMaxHealth() const 
+int APlayerPawn::GetMaxHealth(bool withupgrades) const 
 { 
-	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	int ret = MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	if (withupgrades) ret += stamina;
+	return ret;
 }
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	ACTION_RETURN_INT(self->GetMaxHealth());
+	PARAM_BOOL_DEF(withupgrades);
+	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
 }
 
 //===========================================================================
@@ -2869,7 +2872,7 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			int maxhealth = player->mo->GetMaxHealth() + player->mo->stamina;
+			int maxhealth = player->mo->GetMaxHealth(true);
 			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
 			{
 				if (player->health - 5 < maxhealth)

@@ -166,7 +166,7 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 
-	native int GetMaxHealth();
+	native int GetMaxHealth(bool withupgrades = false);
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
 	native static String GetPrintableDisplayName(Class<Actor> cls);

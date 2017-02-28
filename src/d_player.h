@@ -93,7 +93,7 @@ public:
 	virtual bool UpdateWaterLevel (bool splash) override;
 
 	bool ResetAirSupply (bool playgasp = true);
-	int GetMaxHealth() const;
+	int GetMaxHealth(bool withupgrades = false) const;
 	void TweakSpeeds (double &forwardmove, double &sidemove);
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();

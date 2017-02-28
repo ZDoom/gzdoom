@@ -88,6 +88,13 @@ CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCO
 ColorSetList ColorSets;
 PainFlashList PainFlashes;
 
+// [Nash] FOV cvar setting
+CUSTOM_CVAR(Float, fov, 90.f, CVAR_ARCHIVE | CVAR_USERINFO | CVAR_NOINITCALL)
+{
+	player_t *p = &players[consoleplayer];
+	p->SetFOV(fov);
+}
+
 struct PredictPos
 {
 	int gametic;
@@ -548,6 +555,40 @@ int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+}
+
+// [Nash] Set FOV
+void player_t::SetFOV(float fov)
+{
+	player_t *p = &players[consoleplayer];
+	if (p != nullptr && p->mo != nullptr)
+	{
+		if (dmflags & DF_NO_FOV)
+		{
+			if (consoleplayer == Net_Arbitrator)
+			{
+				Net_WriteByte(DEM_MYFOV);
+			}
+			else
+			{
+				Printf("A setting controller has disabled FOV changes.\n");
+				return;
+			}
+		}
+		else
+		{
+			Net_WriteByte(DEM_MYFOV);
+		}
+		Net_WriteByte((BYTE)clamp<float>(fov, 5.f, 179.f));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetFOV)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_FLOAT(fov);
+	self->SetFOV((float)fov);
+	return 0;
 }
 
 //===========================================================================

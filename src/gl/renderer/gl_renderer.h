@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "gl/data/gl_matrix.h"
+#include "gl/dynlights/gl_lightbsp.h"
 
 struct particle_t;
 class FCanvasTexture;
@@ -122,6 +123,8 @@ public:
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
+
+	FLightBSP mLightBSP;
 
 	FTexture *gllight;
 	FTexture *glpart2;

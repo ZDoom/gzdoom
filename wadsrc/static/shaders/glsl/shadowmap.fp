@@ -112,5 +112,5 @@ float rayTest(vec2 from, vec2 to)
 
 void main()
 {
-	FragColor = vec4(rayTest(vec2(0.0, 0.0), vec2(1.0, 1.0));
+	FragColor = vec4(rayTest(vec2(0.0, 0.0), vec2(1.0, 1.0)));
 }

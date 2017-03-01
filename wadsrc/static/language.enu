@@ -1827,6 +1827,7 @@ DSPLYMNU_DIMCOLOR				= "Dim color";
 DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
 DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 DSPLYMNU_BOBSPEED				= "Weapon bob speed";
+DSPLYMNU_GPUSWITCH				= "Notebook Switchable GPU";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";
@@ -2345,6 +2346,9 @@ OPTVAL_WARNINGS				= "Warnings";
 OPTVAL_NOTIFICATIONS		= "Notifications";
 OPTVAL_EVERYTHING			= "Everything";
 OPTVAL_FULLSCREENONLY		= "Fullscreen only";
+OPTVAL_DEDICATED			= "High-Performance";
+OPTVAL_INTEGRATED			= "Power-Saving";
+
 // Colors
 C_BRICK					= "\cabrick";
 C_TAN					= "\cbtan";

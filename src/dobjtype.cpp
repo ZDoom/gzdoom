@@ -2307,7 +2307,7 @@ void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField
 	{
 		const PField *field = fields[i];
 		// Skip fields without or with native serialization
-		if (!(field->Flags & VARF_Transient))
+		if (!(field->Flags & (VARF_Transient|VARF_Meta)))
 		{
 			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
 		}
@@ -2338,6 +2338,11 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
+				label, TypeName.GetChars());
+		}
+		else if ((static_cast<const PField *>(sym)->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a serializable field\n",
 				label, TypeName.GetChars());
 		}
 		else
@@ -2638,7 +2643,7 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 		// Don't write this part if it has no non-transient variables
 		for (unsigned i = 0; i < type->Fields.Size(); ++i)
 		{
-			if (!(type->Fields[i]->Flags & VARF_Transient))
+			if (!(type->Fields[i]->Flags & (VARF_Transient|VARF_Meta)))
 			{
 				// Tag this section with the class it came from in case
 				// a more-derived class has variables that shadow a less-

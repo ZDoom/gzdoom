@@ -13,6 +13,7 @@
 #include "c_console.h"
 
 #include "sdlglvideo.h"
+#include "sdlvideo.h"
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
 #include "gl/gl_functions.h"
@@ -29,6 +30,7 @@
 
 // TYPES -------------------------------------------------------------------
 
+IMPLEMENT_CLASS(SDLBaseFB, true, false)
 IMPLEMENT_CLASS(SDLGLFB, true, false)
 
 struct MiniModeInfo
@@ -52,12 +54,30 @@ EXTERN_CVAR (Int, vid_renderer)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 
+DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
+CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
+#ifdef __arm__
+CUSTOM_CVAR(Bool, gl_es, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+#else
+CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -159,7 +179,7 @@ bool SDLGLVideo::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -169,15 +189,15 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		SDLGLFB *fb = static_cast<SDLGLFB *> (old);
+		SDLBaseFB *fb = static_cast<SDLBaseFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height)
 		{
-			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+			bool fsnow = (SDL_GetWindowFlags (fb->GetSDLWindow()) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
 			if (fsnow != fullscreen)
 			{
-				SDL_SetWindowFullscreen (fb->Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+				SDL_SetWindowFullscreen (fb->GetSDLWindow(), fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 			}
 			return old;
 		}
@@ -190,7 +210,22 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool fullscr
 //		flashAmount = 0;
 	}
 	
-	SDLGLFB *fb = new OpenGLFrameBuffer (0, width, height, 32, 60, fullscreen);
+	SDLBaseFB *fb;
+	if (vid_renderer == 1)
+	{
+		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
+	}
+	else if (vid_glswfb == 0)
+	{
+		fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
+	}
+	else
+	{
+		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+		if (!fb->IsValid())
+			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
+	}
+
 	retry = 0;
 	
 	// If we could not create the framebuffer, try again with slightly
@@ -233,7 +268,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool fullscr
 		}
 
 		++retry;
-		fb = static_cast<SDLGLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<SDLBaseFB *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
 	}
 
 //	fb->SetFlash (flashColor, flashAmount);
@@ -288,6 +323,14 @@ bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 	}
 	if (gl_debug)
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+		
+	if (gl_es)
+	{
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	}
+	
 	return true;
 }
 
@@ -310,8 +353,8 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 
 // FrameBuffer implementation -----------------------------------------------
 
-SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
-	: DFrameBuffer (width, height)
+SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool bgra)
+	: SDLBaseFB (width, height, bgra)
 {
 	int i;
 	

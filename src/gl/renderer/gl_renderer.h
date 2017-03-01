@@ -189,9 +189,9 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
-	void UpdateCameraExposure();
 	void PostProcessScene();
 	void AmbientOccludeScene();
+	void UpdateCameraExposure();
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();

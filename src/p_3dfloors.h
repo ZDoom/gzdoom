@@ -95,11 +95,6 @@ struct F3DFloor
 	int					lastlight;
 	int					alpha;
 
-	// kg3D - for software
-	short	*floorclip;
-	short	*ceilingclip;
-	int	validcount;
-
 	FDynamicColormap *GetColormap();
 	void UpdateColormap(FDynamicColormap *&map);
 	PalEntry GetBlend();

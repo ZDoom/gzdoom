@@ -21,7 +21,7 @@ class SDLGLVideo : public IVideo
 	EDisplayType GetDisplayType () { return DISPLAY_Both; }
 	void SetWindowedScale (float scale);
 
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
+	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
 
 	void StartModeIterator (int bits, bool fs);
 	bool NextMode (int *width, int *height, bool *letterbox);
@@ -34,12 +34,23 @@ private:
 	int IteratorMode;
 	int IteratorBits;
 };
-class SDLGLFB : public DFrameBuffer
+
+class SDLBaseFB : public DFrameBuffer
 {
-	DECLARE_CLASS(SDLGLFB, DFrameBuffer)
+	DECLARE_CLASS(SDLBaseFB, DFrameBuffer)
+public:
+	using DFrameBuffer::DFrameBuffer;
+	virtual SDL_Window *GetSDLWindow() = 0;
+	
+	friend class SDLGLVideo;
+};
+
+class SDLGLFB : public SDLBaseFB
+{
+	DECLARE_CLASS(SDLGLFB, SDLBaseFB)
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SDLGLFB (void *hMonitor, int width, int height, int, int, bool fullscreen); 
+	SDLGLFB (void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra); 
 	~SDLGLFB ();
 
 	void ForceBuffering (bool force);
@@ -60,6 +71,8 @@ public:
 
 	int GetClientWidth();
 	int GetClientHeight();
+
+	SDL_Window *GetSDLWindow() override { return Screen; }
 
 protected:
 	bool CanUpdate();

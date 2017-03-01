@@ -692,6 +692,7 @@ if( HAVE_MMX )
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
+
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
@@ -756,6 +757,19 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	xlat/*.h
+	swrenderer/*.h
+	swrenderer/drawers/*.h
+	swrenderer/scene/*.h
+	swrenderer/segments/*.h
+	swrenderer/line/*.h
+	swrenderer/plane/*.h
+	swrenderer/things/*.h
+	swrenderer/viewport/*.h
+	polyrenderer/*.h
+	polyrenderer/math/*.h
+	polyrenderer/drawers/*.h
+	polyrenderer/drawers/*.php
+	polyrenderer/scene/*.h
 	gl/*.h
 	gl/api/*.h
 	gl/data/*.h
@@ -790,19 +804,67 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 set( FASTMATH_PCH_SOURCES
-	r_swrenderer.cpp
-	r_3dfloors.cpp
-	r_bsp.cpp
-	r_draw.cpp
-	r_draw_pal.cpp
-	r_drawt_pal.cpp
-	r_thread.cpp
-	r_main.cpp
-	r_plane.cpp
-	r_segs.cpp
+	swrenderer/r_swcanvas.cpp
+	swrenderer/r_swrenderer.cpp
+	swrenderer/r_memory.cpp
+	swrenderer/r_renderthread.cpp
+	swrenderer/drawers/r_draw.cpp
+	swrenderer/drawers/r_draw_pal.cpp
+	swrenderer/drawers/r_draw_rgba.cpp
+	swrenderer/drawers/r_thread.cpp
+	swrenderer/scene/r_3dfloors.cpp
+	swrenderer/scene/r_light.cpp
+	swrenderer/scene/r_opaque_pass.cpp
+	swrenderer/scene/r_portal.cpp
+	swrenderer/scene/r_scene.cpp
+	swrenderer/scene/r_translucent_pass.cpp
+	swrenderer/viewport/r_drawerargs.cpp
+	swrenderer/viewport/r_skydrawer.cpp
+	swrenderer/viewport/r_spandrawer.cpp
+	swrenderer/viewport/r_spritedrawer.cpp
+	swrenderer/viewport/r_viewport.cpp
+	swrenderer/viewport/r_walldrawer.cpp
+	swrenderer/line/r_line.cpp
+	swrenderer/line/r_walldraw.cpp
+	swrenderer/line/r_wallsetup.cpp
+	swrenderer/line/r_fogboundary.cpp
+	swrenderer/line/r_renderdrawsegment.cpp
+	swrenderer/segments/r_clipsegment.cpp
+	swrenderer/segments/r_drawsegment.cpp
+	swrenderer/segments/r_portalsegment.cpp
+	swrenderer/things/r_visiblesprite.cpp
+	swrenderer/things/r_visiblespritelist.cpp
+	swrenderer/things/r_voxel.cpp
+	swrenderer/things/r_particle.cpp
+	swrenderer/things/r_playersprite.cpp
+	swrenderer/things/r_sprite.cpp
+	swrenderer/things/r_wallsprite.cpp
+	swrenderer/things/r_decal.cpp
+	swrenderer/plane/r_visibleplane.cpp
+	swrenderer/plane/r_visibleplanelist.cpp
+	swrenderer/plane/r_skyplane.cpp
+	swrenderer/plane/r_planerenderer.cpp
+	swrenderer/plane/r_flatplane.cpp
+	swrenderer/plane/r_slopeplane.cpp
+	polyrenderer/poly_renderer.cpp
+	polyrenderer/scene/poly_scene.cpp
+	polyrenderer/scene/poly_portal.cpp
+	polyrenderer/scene/poly_cull.cpp
+	polyrenderer/scene/poly_decal.cpp
+	polyrenderer/scene/poly_particle.cpp
+	polyrenderer/scene/poly_plane.cpp
+	polyrenderer/scene/poly_playersprite.cpp
+	polyrenderer/scene/poly_wall.cpp
+	polyrenderer/scene/poly_wallsprite.cpp
+	polyrenderer/scene/poly_sprite.cpp
+	polyrenderer/scene/poly_sky.cpp
+	polyrenderer/drawers/poly_triangle.cpp
+	polyrenderer/drawers/poly_buffer.cpp
+	polyrenderer/drawers/poly_draw_args.cpp
+	polyrenderer/drawers/screen_triangle.cpp
+	polyrenderer/math/tri_matrix.cpp
+	polyrenderer/math/poly_intersection.cpp
 	r_sky.cpp
-	r_things.cpp
-	r_walldraw.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp
@@ -953,6 +1015,8 @@ set( FASTMATH_SOURCES
 	gl/shaders/gl_fxaashader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
+	gl/system/gl_swframebuffer.cpp
+	gl/system/gl_swwipe.cpp
 	gl/system/gl_debug.cpp
 	gl/system/gl_menu.cpp
 	gl/system/gl_wipe.cpp
@@ -1223,6 +1287,10 @@ set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRE
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 if ( WIN32 )
 	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
+
+	# Supress C4244: 'initializing': conversion from '__int64' to 'unsigned int', possible loss of data
+	# For some reason using #pragma warning(disable: 4244) is not working..
+	set_source_files_properties( ${PCH_SOURCES} PROPERTIES COMPILE_FLAGS /wd4244 )
 endif()
 
 
@@ -1232,6 +1300,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+
 include_directories( .
 	g_statusbar
 	g_shared
@@ -1379,8 +1448,18 @@ source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOU
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
 source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
-source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
-source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
+source_group("Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/.+")
+source_group("Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/drawers/.+")
+source_group("Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/scene/.+")
+source_group("Software Renderer\\Segments" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/segments/.+")
+source_group("Software Renderer\\Line" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/line/.+")
+source_group("Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/plane/.+")
+source_group("Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/things/.+")
+source_group("Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/viewport/.+")
+source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")
+source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/math/.+")
+source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")
+source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")
 source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")

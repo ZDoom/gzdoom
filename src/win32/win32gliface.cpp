@@ -25,6 +25,7 @@
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_swframebuffer.h"
 
 extern "C" {
     _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -348,7 +349,8 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 //
 //==========================================================================
 
-DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer *old)
+
+DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
 {
 	Win32GLFrameBuffer *fb;
 
@@ -384,14 +386,18 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 			fb->m_Height == m_DisplayHeight &&
 			fb->m_Bits == m_DisplayBits &&
 			fb->m_RefreshHz == m_DisplayHz &&
-			fb->m_Fullscreen == fs)
+			fb->m_Fullscreen == fs &&
+			fb->m_Bgra == bgra)
 		{
 			return old;
 		}
 		//old->GetFlash(flashColor, flashAmount);
 		delete old;
 	}
-	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	if (vid_renderer == 1)
+		fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	else
+		fb = new OpenGLSWFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs, bgra);
 	return fb;
 }
 
@@ -867,13 +873,14 @@ IMPLEMENT_CLASS(Win32GLFrameBuffer, true, false)
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height) 
+Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : BaseWinFB(width, height, bgra) 
 {
 	m_Width = width;
 	m_Height = height;
 	m_Bits = bits;
 	m_RefreshHz = refreshHz;
 	m_Fullscreen = fullscreen;
+	m_Bgra = bgra;
 	m_Lock=0;
 
 	RECT r;

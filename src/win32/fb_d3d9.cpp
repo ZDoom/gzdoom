@@ -63,7 +63,6 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "sbar.h"
@@ -73,6 +72,7 @@
 #include "w_wad.h"
 #include "r_data/colormaps.h"
 #include "SkylineBinPack.h"
+#include "swrenderer/scene/r_light.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -242,8 +242,8 @@ CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
-	: BaseWinFB (width, height)
+D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
+	: BaseWinFB (width, height, bgra)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
@@ -765,14 +765,16 @@ void D3DFB::KillNativeTexs()
 
 bool D3DFB::CreateFBTexture ()
 {
-	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+	FBFormat = IsBgra() ? D3DFMT_A8R8G8B8 : D3DFMT_L8;
+
+	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 	{
 		int pow2width, pow2height, i;
 
 		for (i = 1; i < Width; i <<= 1) {} pow2width = i;
 		for (i = 1; i < Height; i <<= 1) {} pow2height = i;
 
-		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 		{
 			return false;
 		}
@@ -1323,20 +1325,45 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
-			if (lockrect.Pitch == Pitch && Pitch == Width)
+			if (IsBgra() && FBFormat == D3DFMT_A8R8G8B8)
 			{
-				memcpy (lockrect.pBits, MemBuffer, Width * Height);
+				if (lockrect.Pitch == Pitch * sizeof(uint32_t) && Pitch == Width)
+				{
+					memcpy(lockrect.pBits, MemBuffer, Width * Height * sizeof(uint32_t));
+				}
+				else
+				{
+					uint32_t *dest = (uint32_t *)lockrect.pBits;
+					uint32_t *src = (uint32_t*)MemBuffer;
+					for (int y = 0; y < Height; y++)
+					{
+						memcpy(dest, src, Width * sizeof(uint32_t));
+						dest = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
+						src += Pitch;
+					}
+				}
+			}
+			else if (!IsBgra() && FBFormat == D3DFMT_L8)
+			{
+				if (lockrect.Pitch == Pitch && Pitch == Width)
+				{
+					memcpy(lockrect.pBits, MemBuffer, Width * Height);
+				}
+				else
+				{
+					BYTE *dest = (BYTE *)lockrect.pBits;
+					BYTE *src = (BYTE *)MemBuffer;
+					for (int y = 0; y < Height; y++)
+					{
+						memcpy(dest, src, Width);
+						dest = reinterpret_cast<BYTE*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
+						src += Pitch;
+					}
+				}
 			}
 			else
 			{
-				BYTE *dest = (BYTE *)lockrect.pBits;
-				BYTE *src = MemBuffer;
-				for (int y = 0; y < Height; y++)
-				{
-					memcpy (dest, src, Width);
-					dest += lockrect.Pitch;
-					src += Pitch;
-				}
+				memset(lockrect.pBits, 0, lockrect.Pitch * Height);
 			}
 			FBTexture->UnlockRect (0);
 		}
@@ -1368,14 +1395,17 @@ void D3DFB::Draw3DPart(bool copy3d)
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			auto &map = swrenderer::realfixedcolormap;
+			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 			if (map == NULL)
 			{
 				color0 = 0;
@@ -1383,9 +1413,12 @@ void D3DFB::Draw3DPart(bool copy3d)
 			}
 			else
 			{
-				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
-				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
-				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0]/2, map->ColorizeStart[1]/2, map->ColorizeStart[2]/2, 0);
+				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0]/2, map->ColorizeEnd[1]/2, map->ColorizeEnd[2]/2, 1);
+				if (IsBgra())
+					SetPixelShader(Shaders[SHADER_SpecialColormap]);
+				else
+					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}
 		else
@@ -1396,7 +1429,10 @@ void D3DFB::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 }
 
 //==========================================================================

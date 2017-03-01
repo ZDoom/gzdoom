@@ -3402,7 +3402,6 @@ PClass *PClass::FindClassTentative(FName name)
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
 	DPrintf(DMSG_SPAMMY, "Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
-	assert(MetaSize == 0);
 	Derive(type, name);
 	type->Size = TentativeClass;
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), 0, name, bucket);

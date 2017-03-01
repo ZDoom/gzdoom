@@ -204,7 +204,8 @@ void ADynamicLight::Activate(AActor *activator)
 		float pulseTime = specialf1 / TICRATE;
 		
 		m_lastUpdate = level.maptime;
-		m_cycler.SetParams(float(args[LIGHT_SECONDARY_INTENSITY]), float(args[LIGHT_INTENSITY]), pulseTime);
+		if (!swapped) m_cycler.SetParams(float(args[LIGHT_SECONDARY_INTENSITY]), float(args[LIGHT_INTENSITY]), pulseTime);
+		else m_cycler.SetParams(float(args[LIGHT_INTENSITY]), float(args[LIGHT_SECONDARY_INTENSITY]), pulseTime);
 		m_cycler.ShouldCycle(true);
 		m_cycler.SetCycleType(CYCLE_Sin);
 		m_currentRadius = m_cycler.GetVal();

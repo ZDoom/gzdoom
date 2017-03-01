@@ -141,6 +141,7 @@ public:
 	bool halo;
 	BYTE color2[3];
 	bool visibletoplayer;
+	bool swapped;
 	int bufferindex;
 
 

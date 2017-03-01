@@ -41,6 +41,7 @@ class FPresent3DColumnShader;
 class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
+class FShadowMapShader;
 
 inline float DEG2RAD(float deg)
 {
@@ -123,6 +124,7 @@ public:
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
+	FShadowMapShader *mShadowMapShader;
 
 	FLightBSP mLightBSP;
 

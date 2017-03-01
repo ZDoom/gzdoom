@@ -952,6 +952,7 @@ set( FASTMATH_SOURCES
 	gl/shaders/gl_tonemapshader.cpp
 	gl/shaders/gl_lensshader.cpp
 	gl/shaders/gl_fxaashader.cpp
+	gl/shaders/gl_shadowmapshader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp

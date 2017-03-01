@@ -28,27 +28,32 @@
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "r_state.h"
 
 void FShadowMap::Clear()
 {
+	if (mLightList != 0)
+	{
+		glDeleteBuffers(1, (GLuint*)&mLightList);
+		mLightList = 0;
+	}
+
 	mLightBSP.Clear();
 }
 
 void FShadowMap::Update()
 {
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	while (true)
-	{
-		ADynamicLight *light = it.Next();
-		if (!light) break;
-	}
+	UploadLights();
 
 	FGLDebug::PushGroup("ShadowMap");
 	FGLPostProcessState savedState;
 
+	GLRenderer->mBuffers->BindShadowMapFB();
+
 	GLRenderer->mShadowMapShader->Bind();
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mLightBSP.GetNodesBuffer());
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLightBSP.GetSegsBuffer());
 
@@ -58,8 +63,41 @@ void FShadowMap::Update()
 	const auto &viewport = GLRenderer->mScreenViewport;
 	glViewport(viewport.left, viewport.top, viewport.width, viewport.height);
 
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
 
 	FGLDebug::PopGroup();
+}
+
+void FShadowMap::UploadLights()
+{
+	lights.Clear();
+
+	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+	while (true)
+	{
+		ADynamicLight *light = it.Next();
+		if (!light) break;
+
+		lights.Push(light->X());
+		lights.Push(light->Y());
+		lights.Push(light->Z());
+		lights.Push(light->GetRadius());
+
+		if (lights.Size() == 1024) // Only 1024 lights for now
+			break;
+	}
+
+	while (lights.Size() < 1024 * 4)
+		lights.Push(0.0f);
+
+	if (mLightList == 0)
+		glGenBuffers(1, (GLuint*)&mLightList);
+
+	int oldBinding = 0;
+	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLightList);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * lights.Size(), &lights[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }

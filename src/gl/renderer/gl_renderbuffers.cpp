@@ -743,6 +743,44 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 
 //==========================================================================
 //
+// Shadow map texture and frame buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindShadowMapFB()
+{
+	CreateShadowMap();
+	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMapFB);
+}
+
+void FGLRenderBuffers::BindShadowMapTexture(int texunit)
+{
+	CreateShadowMap();
+	glActiveTexture(GL_TEXTURE0 + texunit);
+	glBindTexture(GL_TEXTURE_2D, mShadowMapTexture);
+}
+
+void FGLRenderBuffers::CreateShadowMap()
+{
+	if (mShadowMapTexture != 0)
+		return;
+
+	GLint activeTex, textureBinding, frameBufferBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
+
+	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, 1024, 1024);
+	mShadowMapFB = CreateFrameBuffer("ShadowMapFB", mShadowMapTexture);
+
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	glActiveTexture(activeTex);
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferBinding);
+}
+
+//==========================================================================
+//
 // Makes the scene frame buffer active (multisample, depth, stecil, etc.)
 //
 //==========================================================================

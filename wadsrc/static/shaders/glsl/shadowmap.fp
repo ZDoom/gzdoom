@@ -16,6 +16,11 @@ struct GPUSeg
 	vec4 bSolid;
 };
 
+layout(std430, binding = 1) buffer LightList
+{
+	vec4 lights[];
+};
+
 layout(std430, binding = 2) buffer LightNodes
 {
 	GPUNode bspNodes[];
@@ -112,5 +117,16 @@ float rayTest(vec2 from, vec2 to)
 
 void main()
 {
-	FragColor = vec4(rayTest(vec2(0.0, 0.0), vec2(1.0, 1.0)));
+	int lightIndex = int(gl_FragCoord.y);
+	int x = int(gl_FragCoord.x);
+
+	vec4 light = lights[lightIndex];
+	float radius = light.w;
+	vec2 lightpos = light.xy;
+	vec2 pixelpos = lightpos + vec2(10.0);
+
+	if (radius > 0.0)
+		FragColor = vec4(rayTest(lightpos, pixelpos), 0.0, 0.0, 1.0);
+	else
+		FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -71,7 +71,33 @@ FRenderer *gl_CreateInterface();
 void I_RestartRenderer();
 int currentrenderer = -1;
 int currentcanvas = -1;
+int currentgpuswitch = -1;
 bool changerenderer;
+
+// Optimus/Hybrid switcher
+CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self != currentgpuswitch)
+	{
+		switch (self)
+		{
+		case 0:
+			Printf("Selecting default GPU...\n");
+			break;
+		case 1:
+			Printf("Selecting high-performance dedicated GPU...\n");
+			break;
+		case 2:
+			Printf("Selecting power-saving integrated GPU...\n");
+			break;
+		default:
+			Printf("Unknown option (%d) - falling back to 'default'\n", *vid_gpuswitch);
+			self = 0;
+			break;
+		}
+		Printf("You must restart " GAMENAME " for this change to take effect.\n");
+	}
+}
 
 // Software OpenGL canvas
 CUSTOM_CVAR(Bool, vid_used3d, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -127,6 +153,13 @@ void I_ShutdownGraphics ()
 void I_InitGraphics ()
 {
 	UCVarValue val;
+
+	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
+	currentgpuswitch = vid_gpuswitch;
+	if (currentgpuswitch == 1)
+		putenv("SHIM_MCCOMPAT=0x800000001"); // discrete
+	else if (currentgpuswitch == 2)
+		putenv("SHIM_MCCOMPAT=0x800000000"); // integrated
 
 	// If the focus window is destroyed, it doesn't go back to the active window.
 	// (e.g. because the net pane was up, and a button on it had focus)

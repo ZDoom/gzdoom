@@ -683,6 +683,13 @@ OptionValue Fuzziness
 	2.0, "$OPTVAL_SHADOW"
 }
 
+OptionValue GPUSwitch
+{
+	0.0, "$OPTVAL_DEFAULT"
+	1.0, "$OPTVAL_DEDICATED"
+	2.0, "$OPTVAL_INTEGRATED"	
+}
+
 OptionMenu "OpenGLOptions"
 {
 	Title "$GLMNU_TITLE"
@@ -755,7 +762,11 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1
-
+	IfOption(Windows)
+	{
+		StaticText " "
+		Option "$DSPLYMNU_GPUSWITCH",			vid_gpuswitch, "GPUSwitch"
+	}
 }
 
 //-------------------------------------------------------------------------------------------

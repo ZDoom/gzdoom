@@ -86,6 +86,7 @@ enum
 	CP_SETTHINGZ,
 	CP_SETTAG,
 	CP_SETTHINGFLAGS,
+	CP_SETVERTEX,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -345,7 +346,19 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 			}
-			else 
+			else if (sc.Compare("setvertex"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETVERTEX);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetFloat();
+				CompatParams.Push(int(sc.Float * 256));	// do not use full fixed here so that it can eventually handle larger levels
+				sc.MustGetFloat();
+				CompatParams.Push(int(sc.Float * 256));	// do not use full fixed here so that it can eventually handle larger levels
+				flags.CompatFlags[SLOT_BCOMPAT] |= BCOMPATF_REBUILDNODES;
+			}
+			else
 			{
 				sc.UnGet();
 				break;
@@ -598,6 +611,16 @@ void SetCompatibilityParams()
 						MapThingsConverted[CompatParams[i + 1]].flags = CompatParams[i + 2];
 					}
 					i += 3;
+					break;
+				}
+				case CP_SETVERTEX:
+				{
+					if ((unsigned)CompatParams[i + 1] < level.vertexes.Size())
+					{
+						level.vertexes[CompatParams[i + 1]].p.X = CompatParams[i + 2] / 256.;
+						level.vertexes[CompatParams[i + 1]].p.Y = CompatParams[i + 3] / 256.;
+					}
+					i += 4;
 					break;
 				}
 			}

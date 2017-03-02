@@ -1052,7 +1052,7 @@ OptionValue MapBackTypes
 OptionValue MapTriggers
 {
 	0, "$OPTVAL_OFF"
-	1, "$OPTVAL_NO_DOORS"
+	1, "$OPTVAL_NODOORS"
 	2, "$OPTVAL_ON"
 }
 

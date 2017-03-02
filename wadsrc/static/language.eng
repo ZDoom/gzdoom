@@ -106,7 +106,6 @@ CMPTMNU_RENDERINGBEHAVIOR = "Rendering Behaviour";
 CMPTMNU_SOUNDBEHAVIOR = "Sound Behaviour";
 CMPTMNU_SECTORSOUNDS = "Sector sounds use centre as source";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colours only";
-OPTVAL_NODOORS = "All except doors";
 C_GRAY = "\ccgrey";
 C_DARKGRAY = "\cudark grey";
 

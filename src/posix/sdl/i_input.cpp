@@ -395,9 +395,10 @@ void MessagePump (const SDL_Event &sev)
 		{
 			event.type = EV_GUI_Event;
 			event.subtype = sev.type == SDL_KEYDOWN ? EV_GUI_KeyDown : EV_GUI_KeyUp;
-			event.data3 = ((sev.key.keysym.mod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-						  ((sev.key.keysym.mod & KMOD_CTRL) ? GKM_CTRL : 0) |
-						  ((sev.key.keysym.mod & KMOD_ALT) ? GKM_ALT : 0);
+			SDL_Keymod kmod = SDL_GetModState();
+			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+				((kmod & KMOD_ALT) ? GKM_ALT : 0);
 
 			if (event.subtype == EV_GUI_KeyDown)
 			{
@@ -458,6 +459,7 @@ void MessagePump (const SDL_Event &sev)
 			event.type = EV_GUI_Event;
 			event.subtype = EV_GUI_Char;
 			event.data1 = sev.text.text[0];
+			event.data2 = !!(SDL_GetModState() & KMOD_ALT);
 			D_PostEvent (&event);
 		}
 		break;

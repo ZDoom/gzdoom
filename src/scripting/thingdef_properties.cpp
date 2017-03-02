@@ -1059,6 +1059,33 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 	static_cast<PClassActor *>(info)->BloodColor = pe;
 }
 
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(bloodtype, Sss, Actor)
+{
+	PROP_STRING_PARM(str, 0)
+	PROP_STRING_PARM(str1, 1)
+	PROP_STRING_PARM(str2, 2)
+
+	FName blood = str;
+	// normal blood
+	defaults->NameVar("BloodType") = blood;
+
+	if (PROP_PARM_COUNT > 1)
+	{
+		blood = str1;
+	}
+	// blood splatter
+	defaults->NameVar("BloodType2") = blood;
+
+	if (PROP_PARM_COUNT > 2)
+	{
+		blood = str2;
+	}
+	// axe blood
+	defaults->NameVar("BloodType3") = blood;
+}
 
 //==========================================================================
 //

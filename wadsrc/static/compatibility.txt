@@ -497,6 +497,12 @@ ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
 	setsectorspecial 156 0
 }
 
+B68EB7CFB4CC481796E2919B9C16DFBD // Moc11.wad e1m6
+{
+	setvertex 1650 -3072 2671
+	setvertex 1642 -2944 2671
+}
+
 712BB4CFBD0753178CA0C6814BE4C288 // map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
 {
 	setsectortag 545 32000

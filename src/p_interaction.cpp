@@ -253,6 +253,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		}
 	}
 	if (message == nullptr) message = messagename;	// fallback to defaults if possible.
+	if (attacker == nullptr) attacker = self; // world
 	if (attacker->player == nullptr) attacker = self;	// for the message creation
 
 	if (message != NULL && message[0] == '$') 

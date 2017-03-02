@@ -3,6 +3,7 @@ class PlayerPawn : Actor native
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
+	native int			BonusHealth;
 	native int			MugShotMaxHealth;
 	native int			RunHealth;
 	native int			PlayerFlags;

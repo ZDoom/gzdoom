@@ -218,8 +218,11 @@ bool FZipFile::Open(bool quiet)
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
 
-	// Check if all files have the same prefix so that this can be stripped out.
 	FString name0;
+	bool foundspeciallump = false;
+
+	// Check if all files have the same prefix so that this can be stripped out.
+	// This will only be done if there is either a MAPINFO, ZMAPINFO or GAMEINFO lump in the subdirectory, denoting a ZDoom mod.
 	if (NumLumps > 1) for (DWORD i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
@@ -251,6 +254,7 @@ bool FZipFile::Open(bool quiet)
 				!name.Compare("voxels/") ||
 				!name.Compare("colormaps/") ||
 				!name.Compare("acs/") ||
+				!name.Compare("maps/") ||
 				!name.Compare("voices/") ||
 				!name.Compare("patches/") ||
 				!name.Compare("graphics/") ||
@@ -265,6 +269,23 @@ bool FZipFile::Open(bool quiet)
 			{
 				name0 = "";
 				break;
+			}
+			else if (!foundspeciallump)
+			{
+				// at least one of the more common definition lumps must be present.
+				if (name.IndexOf(name0 + "mapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zmapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gameinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sndinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sbarinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "menudef") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gldefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "animdefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "decorate.") == 0) foundspeciallump = true;	// DECORATE is a common subdirectory name, so the check needs to be a bit different.
+				else if (name.Compare(name0 + "decorate") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zscript.") == 0) foundspeciallump = true;	// same here.
+				else if (name.Compare(name0 + "zscript") == 0) foundspeciallump = true;
+				else if (name.Compare(name0 + "maps/") == 0) foundspeciallump = true;
 			}
 		}
 	}

@@ -1009,6 +1009,13 @@ enum ERaise
 	RF_NOCHECKPOSITION = 2
 }
 
+enum eFogParm
+{
+	FOGP_DENSITY = 0,
+	FOGP_OUTSIDEDENSITY = 1,
+	FOGP_SKYFOG = 2,
+}
+
 enum ETeleport
 {
 	TELF_DESTFOG			= 1,

@@ -807,11 +807,6 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
-	PalEntry GetBloodColor() const
-	{
-		return GetClass()->BloodColor;
-	}
-
 	// These also set CF_INTERPVIEW for players.
 	void SetPitch(DAngle p, bool interpolate, bool forceclamp = false);
 	void SetAngle(DAngle ang, bool interpolate);
@@ -983,29 +978,42 @@ public:
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	DVector3		__Pos;		// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
-	DVector3		OldRenderPos;
 
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
-	DAngle			VisibleStartAngle;
-	DAngle			VisibleStartPitch;
-	DAngle			VisibleEndAngle;
-	DAngle			VisibleEndPitch;
 	DRotator		Angles;
-	DVector3		Vel;
-	double			Speed;
-	double			FloatSpeed;
+	DVector2		Scale;				// Scaling values; 1 is normal size
+	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
 	int				sprite;				// used to find patch_t and flip value
 	uint8_t			frame;				// sprite frame to draw
 	uint8_t			effects;			// [RH] see p_effect.h
 	uint8_t			fountaincolor;		// Split out of 'effect' to have easier access.
-	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
-	ActorRenderFlags	renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
-	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
+	DWORD			Translation;
+
+	ActorRenderFlags	renderflags;		// Different rendering flags
+	ActorFlags		flags;
+	ActorFlags2		flags2;			// Heretic flags
+	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
+	ActorFlags4		flags4;			// [RH] Even more flags!
+	ActorFlags5		flags5;			// OMG! We need another one.
+	ActorFlags6		flags6;			// Shit! Where did all the flags go?
+	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
+	double			Floorclip;		// value to use for floor clipping
+	double			radius, Height;		// for movement checking
+
+	DAngle			VisibleStartAngle;
+	DAngle			VisibleStartPitch;
+	DAngle			VisibleEndAngle;
+	DAngle			VisibleEndPitch;
+
+	DVector3		OldRenderPos;
+	DVector3		Vel;
+	double			Speed;
+	double			FloatSpeed;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
@@ -1019,7 +1027,6 @@ public:
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
-	double			radius, Height;		// for movement checking
 	double			renderradius;
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
@@ -1036,13 +1043,6 @@ public:
 	int				DamageVal;
 	VMFunction		*DamageFunc;
 	int				projectileKickback;
-	ActorFlags		flags;
-	ActorFlags2		flags2;			// Heretic flags
-	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
-	ActorFlags4		flags4;			// [RH] Even more flags!
-	ActorFlags5		flags5;			// OMG! We need another one.
-	ActorFlags6		flags6;			// Shit! Where did all the flags go?
-	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
 	DWORD			VisibleToTeam;
@@ -1080,7 +1080,6 @@ public:
 	TObjPtr<AActor>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
-	double			Floorclip;		// value to use for floor clipping
 
 	int				tid;			// thing identifier
 	int				special;		// special
@@ -1143,7 +1142,8 @@ public:
 	BYTE smokecounter;
 	BYTE FloatBobPhase;
 	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
-	DWORD Translation;
+	PalEntry BloodColor;
+	DWORD BloodTranslation;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	FSoundIDNoInit SeeSound;

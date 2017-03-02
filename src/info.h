@@ -290,8 +290,6 @@ public:
 
 	TArray<PClassActor *> VisibleToPlayerClass;
 
-	PalEntry BloodColor;	// Colorized blood
-
 	FDropItem *DropItems;
 	FString SourceLumpName;
 	FIntCVar *distancecheck;

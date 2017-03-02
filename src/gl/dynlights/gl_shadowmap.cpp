@@ -53,7 +53,7 @@ void FShadowMap::Update()
 	GLRenderer->mBuffers->BindShadowMapFB();
 
 	GLRenderer->mShadowMapShader->Bind();
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mLightList);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mLightBSP.GetNodesBuffer());
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLightBSP.GetSegsBuffer());
 
@@ -63,7 +63,7 @@ void FShadowMap::Update()
 	const auto &viewport = GLRenderer->mScreenViewport;
 	glViewport(viewport.left, viewport.top, viewport.width, viewport.height);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
 
@@ -72,7 +72,8 @@ void FShadowMap::Update()
 
 void FShadowMap::UploadLights()
 {
-	lights.Clear();
+	mLights.Clear();
+	mLightToShadowmap.Clear(mLightToShadowmap.CountUsed() * 2); // To do: allow clearing a TMap while building up a reserve
 
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	while (true)
@@ -80,17 +81,19 @@ void FShadowMap::UploadLights()
 		ADynamicLight *light = it.Next();
 		if (!light) break;
 
-		lights.Push(light->X());
-		lights.Push(light->Y());
-		lights.Push(light->Z());
-		lights.Push(light->GetRadius());
+		mLightToShadowmap[light] = mLights.Size();
 
-		if (lights.Size() == 1024) // Only 1024 lights for now
+		mLights.Push(light->X());
+		mLights.Push(light->Y());
+		mLights.Push(light->Z());
+		mLights.Push(light->GetRadius());
+
+		if (mLights.Size() == 1024) // Only 1024 lights for now
 			break;
 	}
 
-	while (lights.Size() < 1024 * 4)
-		lights.Push(0.0f);
+	while (mLights.Size() < 1024 * 4)
+		mLights.Push(0.0f);
 
 	if (mLightList == 0)
 		glGenBuffers(1, (GLuint*)&mLightList);
@@ -98,6 +101,6 @@ void FShadowMap::UploadLights()
 	int oldBinding = 0;
 	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLightList);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * lights.Size(), &lights[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mLights.Size(), &mLights[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }

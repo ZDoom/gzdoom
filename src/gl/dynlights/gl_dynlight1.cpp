@@ -108,6 +108,10 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		i = 1;
 	}
 
+	float shadowIndex = (float)GLRenderer->mShadowMap.ShadowMapIndex(light);
+	if (!!(light->flags4 & MF4_ATTENUATE)) // Store attenuate flag in the sign bit of the float
+		shadowIndex = -shadowIndex;
+
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
@@ -116,7 +120,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[4] = r;
 	data[5] = g;
 	data[6] = b;
-	data[7] = !!(light->flags4 & MF4_ATTENUATE);
+	data[7] = shadowIndex;
 	return true;
 }
 

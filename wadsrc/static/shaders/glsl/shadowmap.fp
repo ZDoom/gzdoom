@@ -16,11 +16,6 @@ struct GPUSeg
 	vec4 bSolid;
 };
 
-layout(std430, binding = 1) buffer LightList
-{
-	vec4 lights[];
-};
-
 layout(std430, binding = 2) buffer LightNodes
 {
 	GPUNode bspNodes[];
@@ -29,6 +24,11 @@ layout(std430, binding = 2) buffer LightNodes
 layout(std430, binding = 3) buffer LightSegs
 {
 	GPUSeg bspSegs[];
+};
+
+layout(std430, binding = 4) buffer LightList
+{
+	vec4 lights[];
 };
 
 //===========================================================================

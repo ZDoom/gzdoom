@@ -154,7 +154,7 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 float pointLightAttenuation(vec4 lightpos, float attenuate)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuate == 0.0)
+	if (attenuate >= 0.0) // Sign bit is the attenuate flag
 	{
 		return attenuation;
 	}

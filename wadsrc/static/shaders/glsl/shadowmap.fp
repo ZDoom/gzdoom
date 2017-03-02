@@ -33,18 +33,17 @@ layout(std430, binding = 3) buffer LightSegs
 
 //===========================================================================
 //
-// Ray/BSP collision test. Returns 0 if the ray hit a line, 1 otherwise.
+// Ray/BSP collision test. Returns where the ray hit something.
 //
 //===========================================================================
 
-float rayTest(vec2 from, vec2 to)
+vec2 rayTest(vec2 from, vec2 to)
 {
 	const int max_iterations = 50;
 	const float epsilon = 0.0000001;
 
 	// Avoid wall acne by adding some margin
 	vec2 margin = normalize(to - from);
-	to -= margin;
 
 	vec2 raydelta = to - from;
 	float raydist2 = dot(raydelta, raydelta);
@@ -52,7 +51,7 @@ float rayTest(vec2 from, vec2 to)
 	float rayd = dot(raynormal, from);
 
 	if (raydist2 < 1.0 || bspNodes.length() == 0)
-		return 1.0;
+		return to;
 
 	int nodeIndex = bspNodes.length() - 1;
 
@@ -85,7 +84,7 @@ float rayTest(vec2 from, vec2 to)
 						if (dot(raydelta, seghitdelta) > 0.0 && dot(seghitdelta, seghitdelta) < raydist2) // We hit a line segment.
 						{
 							if (seg.bSolid.x > 0.0) // segment line is one-sided
-								return 0.0;
+								return from + seghitdelta;
 
 							// We hit a two-sided segment line. Move to the other side and continue ray tracing.
 							from = from + seghitdelta + margin;
@@ -96,7 +95,7 @@ float rayTest(vec2 from, vec2 to)
 							rayd = dot(raynormal, from);
 
 							if (raydist2 < 1.0 || bspNodes.length() == 0)
-								return 1.0;
+								return to;
 
 							nodeIndex = bspNodes.length() - 1;
 
@@ -108,25 +107,41 @@ float rayTest(vec2 from, vec2 to)
 			}
 
 			if (!hit_line)
-				return 1.0;
+				return to;
 		}
 	}
 
-	return 0.0;
+	return to;
 }
 
 void main()
 {
 	int lightIndex = int(gl_FragCoord.y);
-	int x = int(gl_FragCoord.x);
 
 	vec4 light = lights[lightIndex];
 	float radius = light.w;
 	vec2 lightpos = light.xy;
-	vec2 pixelpos = lightpos + vec2(10.0);
 
 	if (radius > 0.0)
-		FragColor = vec4(rayTest(lightpos, pixelpos), 0.0, 0.0, 1.0);
+	{
+		vec2 pixelpos;
+		switch (int(gl_FragCoord.x) / 256)
+		{
+		case 0: pixelpos = vec2((gl_FragCoord.x - 128.0) / 128.0, 1.0); break;
+		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - 384.0) / 128.0); break;
+		case 2: pixelpos = vec2((gl_FragCoord.x - 640.0) / 128.0, -1.0); break;
+		case 3: pixelpos = vec2(-1.0, (gl_FragCoord.x - 896.0) / 128.0); break;
+		}
+		pixelpos = lightpos + pixelpos * radius;
+
+		vec2 hitpos = rayTest(lightpos, pixelpos);
+		vec2 delta = hitpos - lightpos;
+		float dist2 = dot(delta, delta);
+
+		FragColor = vec4(dist2, 0.0, 0.0, 1.0);
+	}
 	else
+	{
 		FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+	}
 }

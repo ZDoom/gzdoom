@@ -26,6 +26,7 @@ out vec4 FragNormal;
 
 
 uniform sampler2D tex;
+uniform sampler2D ShadowMap;
 
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
@@ -134,6 +135,34 @@ float R_DoomLightingEquation(float light)
 
 //===========================================================================
 //
+// Check if light is in shadow according to its 1D shadow map
+//
+//===========================================================================
+
+float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
+{
+	float u;
+	float v = (abs(shadowIndex) + 0.5) / 1024.0;
+	vec2 dir = (pixelpos.xz - lightpos.xz);
+	if (abs(dir.x) > abs(dir.y))
+	{
+		if (dir.x >= 0.0)
+			u = dir.y / dir.x * 0.125 + (0.25 + 0.125);
+		else
+			u = dir.y / dir.x * 0.125 + (0.75 + 0.125);
+	}
+	else
+	{
+		if (dir.y >= 0.0)
+			u = dir.x / dir.y * 0.125 + 0.125;
+		else
+			u = dir.x / dir.y * 0.125 + (0.50 + 0.125);
+	}
+	return texture(ShadowMap, vec2(u, v)).x < dot(dir, dir) ? 1.0 : 0.0;
+}
+
+//===========================================================================
+//
 // Standard lambertian diffuse light calculation
 //
 //===========================================================================
@@ -151,10 +180,11 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 //
 //===========================================================================
 
-float pointLightAttenuation(vec4 lightpos, float attenuate)
+float pointLightAttenuation(vec4 lightpos, float shadowIndex)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuate >= 0.0) // Sign bit is the attenuate flag
+	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
+	if (shadowIndex >= 0.0) // Sign bit is the attenuated light flag
 	{
 		return attenuation;
 	}

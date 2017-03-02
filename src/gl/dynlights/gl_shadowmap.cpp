@@ -67,6 +67,8 @@ void FShadowMap::Update()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
 
+	GLRenderer->mBuffers->BindShadowMapTexture(16);
+
 	FGLDebug::PopGroup();
 }
 

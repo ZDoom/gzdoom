@@ -2286,6 +2286,7 @@ OPTVAL_FRONT				= "Front";
 OPTVAL_ANIMATED				= "Animated";
 OPTVAL_ROTATED				= "Rotated";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colors only";
+OPTVAL_NODOORS				= "All except doors";
 OPTVAL_DOUBLE				= "Double";
 OPTVAL_TRIPLE				= "Triple";
 OPTVAL_QUADRUPLE			= "Quadruple";

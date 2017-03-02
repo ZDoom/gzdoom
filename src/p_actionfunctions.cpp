@@ -2580,8 +2580,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		else if (flags & SIXF_USEBLOODCOLOR)
 		{
 			// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
-			PalEntry bloodcolor = self->GetBloodColor();
-			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			mo->Translation = self->BloodTranslation;
 		}
 	}
 	if (flags & SIXF_TRANSFERPOINTERS)

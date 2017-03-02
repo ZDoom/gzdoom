@@ -316,8 +316,8 @@ DEFINE_FIELD(AActor, RadiusDamageFactor)
 DEFINE_FIELD(AActor, SelfDamageFactor)
 DEFINE_FIELD(AActor, StealthAlpha)
 DEFINE_FIELD(AActor, WoundHealth)
-
-//DEFINE_FIELD(PClassActor, BloodColor)
+DEFINE_FIELD(AActor, BloodColor)
+DEFINE_FIELD(AActor, BloodTranslation)
 
 //==========================================================================
 //
@@ -409,6 +409,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("inventoryid", InventoryID)
 		A("floatbobphase", FloatBobPhase)
 		A("translation", Translation)
+		A("bloodcolor", BloodColor)
+		A("bloodtranslation", BloodTranslation)
 		A("seesound", SeeSound)
 		A("attacksound", AttackSound)
 		A("paimsound", PainSound)
@@ -1665,8 +1667,7 @@ bool AActor::Grind(bool items)
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
 			{
 				S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-				PalEntry bloodcolor = GetBloodColor();
-				if (bloodcolor!=0) Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+				Translation = BloodTranslation;
 			}
 			return false;
 		}
@@ -1707,10 +1708,7 @@ bool AActor::Grind(bool items)
 				gib->Alpha = Alpha;
 				gib->Height = 0;
 				gib->radius = 0;
-
-				PalEntry bloodcolor = GetBloodColor();
-				if (bloodcolor != 0)
-					gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+				gib->Translation = BloodTranslation;
 			}
 			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
 		}
@@ -6051,7 +6049,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPuff)
 void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *originator)
 {
 	AActor *th;
-	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType();
 	DVector3 pos = pos1;
 	pos.Z += pr_spawnblood.Random2() / 64.;
@@ -6076,9 +6073,9 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 				th->tics = 1;
 		}
 		// colorize the blood
-		if (bloodcolor != 0 && !(th->flags2 & MF2_DONTTRANSLATE))
+		if (!(th->flags2 & MF2_DONTTRANSLATE))
 		{
-			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			th->Translation = originator->BloodTranslation;
 		}
 		
 		// Moved out of the blood actor so that replacing blood is easier
@@ -6135,7 +6132,7 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 	}
 
 	if (bloodtype >= 1)
-		P_DrawSplash2 (40, pos, dir, 2, bloodcolor);
+		P_DrawSplash2 (40, pos, dir, 2, originator->BloodColor);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
@@ -6159,7 +6156,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
 
 void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 {
-	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(1); 
 
 	int bloodtype = cl_bloodtype;
@@ -6178,16 +6174,16 @@ void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 		mo->Vel.Z = 3;
 
 		// colorize the blood!
-		if (bloodcolor!=0 && !(mo->flags2 & MF2_DONTTRANSLATE)) 
+		if (!(mo->flags2 & MF2_DONTTRANSLATE)) 
 		{
-			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			mo->Translation = originator->BloodTranslation;
 		}
 
 		if (!(bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, pos, hitangle-180., 2, bloodcolor);
+		P_DrawSplash2 (40, pos, hitangle-180., 2, originator->BloodColor);
 	}
 }
 
@@ -6199,7 +6195,6 @@ void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 
 void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 {
-	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(2);
 
 	int bloodtype = cl_bloodtype;
@@ -6220,16 +6215,16 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 		mo->target = originator;
 
 		// colorize the blood!
-		if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+		if (!(mo->flags2 & MF2_DONTTRANSLATE))
 		{
-			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			mo->Translation = originator->BloodTranslation;
 		}
 
 		if (!(bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(40, pos + add, hitangle - 180., 2, bloodcolor);
+		P_DrawSplash2(40, pos + add, hitangle - 180., 2, originator->BloodColor);
 	}
 }
 
@@ -6255,7 +6250,6 @@ DEFINE_ACTION_FUNCTION(AActor, BloodSplatter)
 
 void P_RipperBlood (AActor *mo, AActor *bleeder)
 {
-	PalEntry bloodcolor = bleeder->GetBloodColor();
 	PClassActor *bloodcls = bleeder->GetBloodType();
 
 	double xo = pr_ripperblood.Random2() / 16.;
@@ -6281,16 +6275,16 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 		th->tics += pr_ripperblood () & 3;
 
 		// colorize the blood!
-		if (bloodcolor!=0 && !(th->flags2 & MF2_DONTTRANSLATE))
+		if (!(th->flags2 & MF2_DONTTRANSLATE))
 		{
-			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			th->Translation = bleeder->BloodTranslation;
 		}
 
 		if (!(bloodtype <= 1)) th->renderflags |= RF_INVISIBLE;
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(28, pos, bleeder->AngleTo(mo) + 180., 0, bloodcolor);
+		P_DrawSplash2(28, pos, bleeder->AngleTo(mo) + 180., 0, bleeder->BloodColor);
 	}
 }
 

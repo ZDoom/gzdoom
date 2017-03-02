@@ -4803,7 +4803,7 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
-				PalEntry bloodcolor = actor->GetBloodColor();
+				PalEntry bloodcolor = actor->BloodColor;
 				if (bloodcolor != 0)
 				{
 					bloodcolor.r >>= 1;	// the full color is too bright for blood decals
@@ -5994,7 +5994,6 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 		{
 			if (!(thing->flags&MF_NOBLOOD))
 			{
-				PalEntry bloodcolor = thing->GetBloodColor();
 				PClassActor *bloodcls = thing->GetBloodType();
 				
 				P_TraceBleed (newdam > 0 ? newdam : cpos->crushchange, thing);
@@ -6006,9 +6005,9 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;
-					if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+					if (thing->BloodTranslation != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
 					{
-						mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+						mo->Translation = thing->BloodTranslation;
 					}
 
 					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
@@ -6017,7 +6016,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				DAngle an = (M_Random() - 128) * (360./256);
 				if (cl_bloodtype >= 1)
 				{
-					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, bloodcolor);
+					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, thing->BloodColor);
 				}
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))

@@ -112,7 +112,7 @@ class MaxHealth : Health
 			MaxAmount += player.BonusHealth;
 		}
 		success |= Super.TryPickup(other);
-		MaxAmount = saved;
+		MaxAmount = savedAmount;
 		if (success) GoAwayAndDie();
 		return success;
 	}

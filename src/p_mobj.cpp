@@ -1340,7 +1340,7 @@ bool P_GiveBody(AActor *actor, int num, int max)
 				{
 					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
 					{
-						max -= player->mo->stamina;
+						max -= player->mo->stamina + player->mo->BonusHealth;
 					}
 				}
 				else // old health behaviour
@@ -1348,7 +1348,7 @@ bool P_GiveBody(AActor *actor, int num, int max)
 					max = MAXMORPHHEALTH;
 					if (player->MorphStyle & MORPH_ADDSTAMINA)
 					{
-						max += player->mo->stamina;
+						max += player->mo->stamina + player->mo->BonusHealth;
 					}
 				}
 			}

@@ -781,6 +781,7 @@ void APlayerPawn::Serialize(FSerializer &arc)
 
 	arc("jumpz", JumpZ, def->JumpZ)
 		("maxhealth", MaxHealth, def->MaxHealth)
+		("bonushealth", BonusHealth, def->BonusHealth)
 		("runhealth", RunHealth, def->RunHealth)
 		("spawnmask", SpawnMask, def->SpawnMask)
 		("forwardmove1", ForwardMove1, def->ForwardMove1)
@@ -1353,7 +1354,7 @@ const char *APlayerPawn::GetSoundClass() const
 int APlayerPawn::GetMaxHealth(bool withupgrades) const 
 { 
 	int ret = MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
-	if (withupgrades) ret += stamina;
+	if (withupgrades) ret += stamina + BonusHealth;
 	return ret;
 }
 
@@ -3345,6 +3346,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 
 DEFINE_FIELD(APlayerPawn, crouchsprite)
 DEFINE_FIELD(APlayerPawn, MaxHealth)
+DEFINE_FIELD(APlayerPawn, BonusHealth)
 DEFINE_FIELD(APlayerPawn, MugShotMaxHealth)
 DEFINE_FIELD(APlayerPawn, RunHealth)
 DEFINE_FIELD(APlayerPawn, PlayerFlags)

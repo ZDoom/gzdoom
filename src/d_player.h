@@ -125,6 +125,8 @@ public:
 
 	int			crouchsprite;
 	int			MaxHealth;
+	int			BonusHealth;
+
 	int			MugShotMaxHealth;
 	int			RunHealth;
 	int			PlayerFlags;

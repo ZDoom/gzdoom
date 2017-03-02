@@ -3508,7 +3508,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 void AActor::Howl ()
 {
-	FSoundID howl = IntVar(NAME_HowlSound);
+	FSoundID howl = SoundVar(NAME_HowlSound);
 	if (!S_IsActorPlayingSomething(this, CHAN_BODY, howl))
 	{
 		S_Sound (this, CHAN_BODY, howl, 1, ATTN_NORM);

@@ -1,5 +1,5 @@
 
-struct SectorPortal native
+struct SectorPortal native play
 {
 	enum EType
 	{
@@ -31,12 +31,12 @@ struct SectorPortal native
 };
 
 
-struct Vertex native
+struct Vertex native play
 {
 	native readonly Vector2 p;
 }
 
-struct Side native
+struct Side native play
 {
 	enum ETexpart
 	{
@@ -100,7 +100,7 @@ struct Side native
 	
 };
 
-struct Line native
+struct Line native play
 {
 	enum ELineFlags
 	{
@@ -171,7 +171,7 @@ struct Line native
 	}
 }
 
-struct SecPlane native
+struct SecPlane native play
 {
 	native Vector3 Normal;
 	native double D;
@@ -189,7 +189,7 @@ struct SecPlane native
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
-struct SecSpecial
+struct SecSpecial play
 {
 	Name damagetype;
 	int damageamount;
@@ -199,7 +199,7 @@ struct SecSpecial
 	int Flags;
 }
 
-struct Sector native
+struct Sector native play
 {
 	//secplane_t	floorplane, ceilingplane;	// defined internally
 	//FDynamicColormap *ColorMap;

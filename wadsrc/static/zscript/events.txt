@@ -1,6 +1,6 @@
 class BaseEvent native { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
 
-class RenderEvent : BaseEvent native
+class RenderEvent : BaseEvent native ui
 {
     native readonly Vector3 ViewPos;
     native readonly double ViewAngle;
@@ -10,7 +10,7 @@ class RenderEvent : BaseEvent native
     native readonly Actor Camera;
 }
 
-class WorldEvent : BaseEvent native
+class WorldEvent : BaseEvent native play
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
@@ -28,7 +28,7 @@ class WorldEvent : BaseEvent native
     native readonly double DamageAngle;
 }
 
-class PlayerEvent : BaseEvent native
+class PlayerEvent : BaseEvent native play
 {
     // this is the player number that caused the event.
     // note: you can get player struct from this by using players[e.PlayerNumber]
@@ -37,7 +37,7 @@ class PlayerEvent : BaseEvent native
     native readonly bool IsReturn;
 }
 
-class UiEvent : BaseEvent native
+class UiEvent : BaseEvent native ui
 {
     // d_gui.h
     enum EGUIEvent
@@ -121,7 +121,7 @@ class UiEvent : BaseEvent native
     native readonly bool IsAlt;
 }
 
-class InputEvent : BaseEvent native
+class InputEvent : BaseEvent native play
 {
     enum EGenericEvent
     {
@@ -321,7 +321,7 @@ class StaticEventHandler : Object native play
     virtual native bool InputProcess(InputEvent e);
     
     //
-    virtual native void ConsoleProcess(ConsoleEvent e);
+    virtual native clearscope void ConsoleProcess(ConsoleEvent e);
     
     // this value will be queried on Register() to decide the relative order of this handler to every other.
     // this is most useful in UI systems.

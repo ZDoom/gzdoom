@@ -1396,6 +1396,10 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 			ar(key, *(DObject **)addr);
 		}
 	}
+	else if (writer != nullptr)
+	{
+		writer(ar, key, addr);
+	}
 	else
 	{
 		I_Error("Attempt to save pointer to unhandled type %s", PointedType->DescriptiveName());
@@ -1424,6 +1428,10 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 			::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
 		}
 		return res;
+	}
+	else if (reader != nullptr)
+	{
+		return reader(ar, key, addr);
 	}
 	return false;
 }

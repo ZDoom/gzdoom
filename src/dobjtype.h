@@ -362,12 +362,25 @@ public:
 class PPointer : public PBasicType
 {
 	DECLARE_CLASS(PPointer, PBasicType);
+
 public:
+	typedef void(*WriteHandler)(FSerializer &ar, const char *key, const void *addr);
+	typedef bool(*ReadHandler)(FSerializer &ar, const char *key, void *addr);
+
 	PPointer();
 	PPointer(PType *pointsat, bool isconst = false);
 
 	PType *PointedType;
 	bool IsConst;
+
+	WriteHandler writer = nullptr;
+	ReadHandler reader = nullptr;
+
+	void InstallHandlers(WriteHandler w, ReadHandler r)
+	{
+		writer = w;
+		reader = r;
+	}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;

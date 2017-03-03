@@ -35,7 +35,7 @@ static FRandom pr_opl;
 typedef uintptr_t	Bitu;
 typedef intptr_t	Bits;
 typedef DWORD		Bit32u;
-typedef SDWORD		Bit32s;
+typedef int32_t		Bit32s;
 typedef WORD		Bit16u;
 typedef SWORD		Bit16s;
 typedef BYTE		Bit8u;

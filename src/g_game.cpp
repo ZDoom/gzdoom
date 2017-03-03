@@ -2270,7 +2270,29 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		I_FreezeTime(true);
 
 	insave = true;
-	G_SnapshotLevel ();
+	try
+	{
+		G_SnapshotLevel();
+	}
+	catch(CRecoverableError &err)
+	{
+		// delete the snapshot. Since the save failed it is broken.
+		insave = false;
+		level.info->Snapshot.Clean();
+		Printf(PRINT_HIGH, "Save failed\n");
+		Printf(PRINT_HIGH, "%s\n", err.GetMessage());
+		// The time freeze must be reset if the save fails.
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		return;
+	}
+	catch (...)
+	{
+		insave = false;
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		throw;
+	}
 
 	BufferWriter savepic;
 	FSerializer savegameinfo;		// this is for displayable info about the savegame

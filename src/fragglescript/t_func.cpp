@@ -479,7 +479,7 @@ DFsSection *FParser::looping_section()
 	int n;
 	
 	// check thru all the hashchains
-	SDWORD rover_index = Script->MakeIndex(Rover);
+	int32_t rover_index = Script->MakeIndex(Rover);
 	
 	for(n=0; n<SECTIONSLOTS; n++)
 	{

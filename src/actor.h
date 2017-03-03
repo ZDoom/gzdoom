@@ -1037,7 +1037,7 @@ public:
 	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
 	int				WoundHealth;		// Health needed to enter wound state
 
-	SDWORD			tics;				// state tic counter
+	int32_t			tics;				// state tic counter
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun
 	int				DamageVal;
@@ -1062,10 +1062,10 @@ public:
 									// also the originator for missiles
 	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killough 2/15/98
 	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
-	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
+	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
-	SDWORD			threshold;		// if > 0, the target will be chased
-	SDWORD			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
+	int32_t			threshold;		// if > 0, the target will be chased
+	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
@@ -1159,7 +1159,7 @@ public:
 	double MaxDropOffHeight;
 	double MaxStepHeight;
 
-	SDWORD Mass;
+	int32_t Mass;
 	SWORD PainChance;
 	int PainThreshold;
 	FNameNoInit DamageType;

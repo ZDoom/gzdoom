@@ -167,7 +167,7 @@ struct FBloodSFX
 	int		Pitch;		// pitch change
 	int		PitchRange;	// range of random pitch
 	DWORD	Format;		// format of audio 1=11025 5=22050
-	SDWORD	LoopStart;	// loop position (-1 means no looping)
+	int32_t	LoopStart;	// loop position (-1 means no looping)
 	char	RawName[9];	// name of RAW resource
 };
 

@@ -289,7 +289,7 @@ void FBackdropTexture::Render()
 
 
 	DWORD a1, a2, a3, a4;
-	SDWORD c1, c2, c3, c4;
+	int32_t c1, c2, c3, c4;
 	DWORD tx, ty, tc, ts;
 	DWORD ux, uy, uc, us;
 	DWORD ltx, lty, lux, luy;
@@ -302,10 +302,10 @@ void FBackdropTexture::Render()
 	double z1 = (cos(TORAD(z2ang)) / 4 + 0.5) * (0x8000000);
 	double z2 = (cos(TORAD(z1ang)) / 4 + 0.75) * (0x8000000);
 
-	tc = SDWORD(cos(TORAD(t1ang)) * z1);
-	ts = SDWORD(sin(TORAD(t1ang)) * z1);
-	uc = SDWORD(cos(TORAD(t2ang)) * z2);
-	us = SDWORD(sin(TORAD(t2ang)) * z2);
+	tc = int32_t(cos(TORAD(t1ang)) * z1);
+	ts = int32_t(sin(TORAD(t1ang)) * z1);
+	uc = int32_t(cos(TORAD(t2ang)) * z2);
+	us = int32_t(sin(TORAD(t2ang)) * z2);
 	
 	ltx = -width / 2 * tc;
 	lty = -width / 2 * ts;
@@ -316,8 +316,8 @@ void FBackdropTexture::Render()
 	{
 		a1 = time1;
 		a2 = time2;
-		c3 = SDWORD(cos(TORAD(a3)) * 65536.0);
-		c4 = SDWORD(cos(TORAD(a4)) * 65536.0);
+		c3 = int32_t(cos(TORAD(a3)) * 65536.0);
+		c4 = int32_t(cos(TORAD(a4)) * 65536.0);
 		tx = ltx - (y - height / 2)*ts;
 		ty = lty + (y - height / 2)*tc;
 		ux = lux - (y - height / 2)*us;

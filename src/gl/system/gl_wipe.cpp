@@ -49,14 +49,14 @@
 
 #ifndef _WIN32
 struct POINT {
-  SDWORD x; 
-  SDWORD y; 
+  int32_t x; 
+  int32_t y; 
 };
 struct RECT {
-  SDWORD left; 
-  SDWORD top; 
-  SDWORD right; 
-  SDWORD bottom; 
+  int32_t left; 
+  int32_t top; 
+  int32_t right; 
+  int32_t bottom; 
 }; 
 #endif
 

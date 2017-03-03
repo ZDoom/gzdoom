@@ -59,6 +59,7 @@
 #include "menu/menu.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
+#include "serializer.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -741,7 +742,7 @@ static int fieldcmp(const void * a, const void * b)
 void InitThingdef()
 {
 	// Create all global variables here because this cannot be done on the script side and really isn't worth adding support for.
-	// Also create all special fields here that cannot be declared by script syntax.
+	// Also create all special fields here that cannot be declared by script syntax plus the pointer serializers. Doing all these with class overrides would be a bit messy.
 
 	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
 	secplanestruct->Size = sizeof(secplane_t);
@@ -750,18 +751,62 @@ void InitThingdef()
 	auto sectorstruct = NewNativeStruct("Sector", nullptr);
 	sectorstruct->Size = sizeof(sector_t);
 	sectorstruct->Align = alignof(sector_t);
+	NewPointer(sectorstruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(sector_t **)addr);
+		},
+		[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<sector_t>(ar, key, *(sector_t **)addr, nullptr);
+			return true;
+		}
+	);
 
 	auto linestruct = NewNativeStruct("Line", nullptr);
 	linestruct->Size = sizeof(line_t);
 	linestruct->Align = alignof(line_t);
+	NewPointer(linestruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(line_t **)addr);
+		},
+		[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<line_t>(ar, key, *(line_t **)addr, nullptr);
+			return true;
+		}
+	);
 
 	auto sidestruct = NewNativeStruct("Side", nullptr);
 	sidestruct->Size = sizeof(side_t);
 	sidestruct->Align = alignof(side_t);
+	NewPointer(sidestruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(side_t **)addr);
+		},
+			[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<side_t>(ar, key, *(side_t **)addr, nullptr);
+			return true;
+		}
+	);
 
 	auto vertstruct = NewNativeStruct("Vertex", nullptr);
 	vertstruct->Size = sizeof(vertex_t);
 	vertstruct->Align = alignof(vertex_t);
+	NewPointer(vertstruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(vertex_t **)addr);
+		},
+		[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<vertex_t>(ar, key, *(vertex_t **)addr, nullptr);
+			return true;
+		}
+	);
 
 	auto sectorportalstruct = NewNativeStruct("SectorPortal", nullptr);
 	sectorportalstruct->Size = sizeof(FSectorPortal);
@@ -778,6 +823,36 @@ void InitThingdef()
 	auto teamstruct = NewNativeStruct("Team", nullptr);
 	teamstruct->Size = sizeof(FTeam);
 	teamstruct->Align = alignof(FTeam);
+
+	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
+	pstruct->Size = sizeof(player_t);
+	pstruct->Align = alignof(player_t);
+	NewPointer(pstruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(player_t **)addr);
+		},
+			[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<player_t>(ar, key, *(player_t **)addr, nullptr);
+			return true;
+		}
+	);
+
+	auto fontstruct = NewNativeStruct("FFont", nullptr);
+	fontstruct->Size = sizeof(FFont);
+	fontstruct->Align = alignof(FFont);
+	NewPointer(fontstruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(FFont **)addr);
+		},
+			[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<FFont>(ar, key, *(FFont **)addr, nullptr);
+			return true;
+		}
+	);
 
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
@@ -843,9 +918,6 @@ void InitThingdef()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(gi);
 
 	// set up a variable for the global players array.
-	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
-	pstruct->Size = sizeof(player_t);
-	pstruct->Align = alignof(player_t);
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *fieldptr = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);

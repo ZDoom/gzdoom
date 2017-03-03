@@ -60,14 +60,14 @@ struct InitIntToZero
 		v = 0;
 	}
 };
-typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
+typedef TMap<int32_t, int32_t, THashTraits<int32_t>, InitIntToZero> FWorldGlobalArray;
 
 // ACS variables with world scope
-extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
+extern int32_t ACS_WorldVars[NUM_WORLDVARS];
 extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
 
 // ACS variables with global scope
-extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
+extern int32_t ACS_GlobalVars[NUM_GLOBALVARS];
 extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 #define LIBRARYID_MASK			0xFFF00000
@@ -323,7 +323,7 @@ public:
 	ACSProfileInfo *GetFunctionProfileData(ScriptFunction *func) { return GetFunctionProfileData((int)(func - (ScriptFunction *)Functions)); }
 	const char *LookupString (DWORD index) const;
 
-	SDWORD *MapVars[NUM_MAPVARS];
+	int32_t *MapVars[NUM_MAPVARS];
 
 	static FBehavior *StaticLoadModule (int lumpnum, FileReader * fr=NULL, int len=0);
 	static void StaticLoadDefaultModules ();
@@ -359,7 +359,7 @@ private:
 	ArrayInfo **Arrays;
 	int NumTotalArrays;
 	DWORD StringTable;
-	SDWORD MapVarStore[NUM_MAPVARS];
+	int32_t MapVarStore[NUM_MAPVARS];
 	TArray<FBehavior *> Imports;
 	DWORD LibraryID;
 	char ModuleName[9];
@@ -375,7 +375,7 @@ private:
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;
 
 	void SerializeVars (FSerializer &arc);
-	void SerializeVarSet (FSerializer &arc, SDWORD *vars, int max);
+	void SerializeVarSet (FSerializer &arc, int32_t *vars, int max);
 
 	void MarkMapVarStrings() const;
 	void LockMapVarStrings() const;
@@ -919,7 +919,7 @@ protected:
 	int DoSpawnSpot (int type, int spot, int tid, int angle, bool forced);
 	int DoSpawnSpotFacing (int type, int spot, int tid, bool forced);
 	int DoClassifyActor (int tid);
-	int CallFunction(int argCount, int funcIndex, SDWORD *args);
+	int CallFunction(int argCount, int funcIndex, int32_t *args);
 
 	void DoFadeTo (int r, int g, int b, int a, int time);
 	void DoFadeRange (int r1, int g1, int b1, int a1,

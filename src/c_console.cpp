@@ -1267,7 +1267,7 @@ void C_DrawConsole (bool hw2d)
 						DTA_KeepRatio, true, TAG_DONE);
 
 				// Draw the marker
-				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
+				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (int32_t)(tickend - tickbegin)*8, TickerMax);
 				if (textScale == 1)
 					screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
 				else

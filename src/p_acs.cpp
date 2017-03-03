@@ -180,7 +180,7 @@ inline int PitchToACS(DAngle ang)
 
 struct CallReturn
 {
-	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, int32_t *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
 		: ReturnFunction(func),
 		  ReturnModule(module),
 		  ReturnLocals(locals),
@@ -192,7 +192,7 @@ struct CallReturn
 
 	ScriptFunction *ReturnFunction;
 	FBehavior *ReturnModule;
-	SDWORD *ReturnLocals;
+	int32_t *ReturnLocals;
 	ACSLocalArrays *ReturnArrays;
 	int ReturnAddress;
 	int bDiscardResult;
@@ -206,7 +206,7 @@ static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, cons
 struct FBehavior::ArrayInfo
 {
 	DWORD ArraySize;
-	SDWORD *Elements;
+	int32_t *Elements;
 };
 
 TArray<FBehavior *> FBehavior::StaticModules;
@@ -243,11 +243,11 @@ inline int uallong(const int &foo)
 //============================================================================
 
 // ACS variables with world scope
-SDWORD ACS_WorldVars[NUM_WORLDVARS];
+int32_t ACS_WorldVars[NUM_WORLDVARS];
 FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
 
 // ACS variables with global scope
-SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
+int32_t ACS_GlobalVars[NUM_GLOBALVARS];
 FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 //----------------------------------------------------------------------------
@@ -261,7 +261,7 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 struct FACSStack
 {
-	SDWORD buffer[STACK_SIZE];
+	int32_t buffer[STACK_SIZE];
 	int sp;
 	FACSStack *next;
 	FACSStack *prev;
@@ -979,7 +979,7 @@ void P_ClearACSVars(bool alsoglobal)
 //
 //============================================================================
 
-static void WriteVars (FSerializer &file, SDWORD *vars, size_t count, const char *key)
+static void WriteVars (FSerializer &file, int32_t *vars, size_t count, const char *key)
 {
 	size_t i, j;
 
@@ -1007,7 +1007,7 @@ static void WriteVars (FSerializer &file, SDWORD *vars, size_t count, const char
 //
 //============================================================================
 
-static void ReadVars (FSerializer &arc, SDWORD *vars, size_t count, const char *key)
+static void ReadVars (FSerializer &arc, int32_t *vars, size_t count, const char *key)
 {
 	memset(&vars[0], 0, count * 4);
 	arc.Array(key, vars, (int)count);
@@ -1684,10 +1684,10 @@ void FBehavior::SerializeVars (FSerializer &arc)
 	}
 }
 
-void FBehavior::SerializeVarSet (FSerializer &arc, SDWORD *vars, int max)
+void FBehavior::SerializeVarSet (FSerializer &arc, int32_t *vars, int max)
 {
-	SDWORD count;
-	SDWORD first, last;
+	int32_t count;
+	int32_t first, last;
 
 	if (arc.BeginObject(nullptr))
 	{
@@ -1997,7 +1997,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			{
 				MapVarStore[LittleLong(chunk[2+i*2])] = i;
 				ArrayStore[i].ArraySize = LittleLong(chunk[3+i*2]);
-				ArrayStore[i].Elements = new SDWORD[ArrayStore[i].ArraySize];
+				ArrayStore[i].Elements = new int32_t[ArrayStore[i].ArraySize];
 				memset(ArrayStore[i].Elements, 0, ArrayStore[i].ArraySize*sizeof(DWORD));
 			}
 		}
@@ -2013,7 +2013,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				// optimizer. Might be some undefined behavior in this code,
 				// but I don't know what it is.
 				unsigned int initsize = MIN<unsigned int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
-				SDWORD *elems = ArrayStore[arraynum].Elements;
+				int32_t *elems = ArrayStore[arraynum].Elements;
 				for (unsigned int j = 0; j < initsize; ++j)
 				{
 					elems[j] = LittleLong(chunk[3+j]);
@@ -2062,7 +2062,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					int arraynum = MapVarStore[LittleLong(chunk[i+2])];
 					if ((unsigned)arraynum < (unsigned)NumArrays)
 					{
-						SDWORD *elems = ArrayStore[arraynum].Elements;
+						int32_t *elems = ArrayStore[arraynum].Elements;
 						for (int j = ArrayStore[arraynum].ArraySize; j > 0; --j, ++elems)
 						{
 //							*elems |= LibraryID;
@@ -2088,7 +2088,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					chunkData += 4;
 					if ((unsigned)arraynum < (unsigned)NumArrays)
 					{
-						SDWORD *elems = ArrayStore[arraynum].Elements;
+						int32_t *elems = ArrayStore[arraynum].Elements;
 						// Ending zeros may be left out.
 						for (int j = MIN(LittleLong(chunk[1])-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
 						{
@@ -4371,6 +4371,7 @@ enum EACSFunctions
 	ACSF_Floor,
 	ACSF_Round,
 	ACSF_Ceil,
+	ACSF_ScriptCall,
 
 
 	// OpenGL stuff
@@ -4753,9 +4754,121 @@ static int SwapActorTeleFog(AActor *activator, int tid)
 	return count;
 }
 
+static int ScriptCall(unsigned argc, int32_t *args)
+{
+	int retval = 0;
+	if (argc >= 2)
+	{
+		auto clsname = FBehavior::StaticLookupString(args[0]);
+		auto funcname = FBehavior::StaticLookupString(args[1]);
 
+		auto cls = PClass::FindClass(clsname);
+		if (!cls)
+		{
+			I_Error("ACS call to unknown class in script function %s.%s", cls, funcname);
+		}
+		auto funcsym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+		if (funcsym == nullptr)
+		{
+			I_Error("ACS call to unknown script function %s.%s", cls, funcname);
+		}
+		auto func = funcsym->Variants[0].Implementation;
+		if (func->ImplicitArgs > 0)
+		{
+			I_Error("ACS call to non-static script function %s.%s", cls, funcname);
+		}
+		TArray<VMValue> params;
+		for (unsigned i = 2; i < argc; i++)
+		{
+			if (func->Proto->ArgumentTypes.Size() < i - 1)
+			{
+				I_Error("Too many parameters in call to %s.%s", cls, funcname);
+			}
+			auto argtype = func->Proto->ArgumentTypes[i - 2];
+			// The only types allowed are int, bool, double, Name, Sound, Color and String
+			if (argtype == TypeSInt32 || argtype == TypeColor)
+			{
+				params.Push(args[i]);
+			}
+			else if (argtype == TypeBool)
+			{
+				params.Push(!!args[i]);
+			}
+			else if (argtype == TypeFloat64)
+			{
+				params.Push(ACSToDouble(args[i]));
+			}
+			else if (argtype == TypeName)
+			{
+				params.Push(FName(FBehavior::StaticLookupString(args[i])).GetIndex());
+			}
+			else if (argtype == TypeString)
+			{
+				params.Push(FBehavior::StaticLookupString(args[i]));
+			}
+			else if (argtype == TypeSound)
+			{
+				params.Push(int(FSoundID(FBehavior::StaticLookupString(args[i]))));
+			}
+			else
+			{
+				I_Error("Invalid type %s in call to %s.%s", argtype->DescriptiveName(), cls, funcname);
+			}
+		}
+		if (func->Proto->ArgumentTypes.Size() > params.Size())
+		{
+			// Check if we got enough parameters. That means we either cover the full argument list of the function or the next argument is optional.
+			if (!(funcsym->Variants[0].ArgFlags[params.Size()] & VARF_Optional))
+			{
+				I_Error("Insufficient parameters in call to %s.%s", cls, funcname);
+			}
+		}
+		// The return value can be the same types as the parameter types, plus void
+		if (func->Proto->ReturnTypes.Size() == 0)
+		{
+			GlobalVMStack.Call(func, &params[0], params.Size(), nullptr, 0);
+		}
+		else
+		{
+			auto rettype = func->Proto->ReturnTypes[0];
+			if (rettype == TypeSInt32 || rettype == TypeBool || rettype == TypeColor || rettype == TypeName || rettype == TypeSound)
+			{
+				VMReturn ret(&retval);
+				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				if (rettype == TypeName)
+				{
+					retval = GlobalACSStrings.AddString(FName(ENamedName(retval)));
+				}
+				else if (rettype == TypeSound)
+				{
+					retval = GlobalACSStrings.AddString(FSoundID(retval));
+				}
+			}
+			else if (rettype == TypeFloat64)
+			{
+				double d;
+				VMReturn ret(&d);
+				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				retval = DoubleToACS(d);
+			}
+			else if (rettype == TypeString)
+			{
+				FString d;
+				VMReturn ret(&d);
+				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				retval = GlobalACSStrings.AddString(d);
+			}
+			else
+			{
+				// All other return values can not be handled so ignore them.
+				GlobalVMStack.Call(func, &params[0], params.Size(), nullptr, 0);
+			}
+		}
+	}
+	return retval;
+}
 
-int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
+int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 {
 	AActor *actor;
 	switch(funcIndex)
@@ -6103,6 +6216,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_Round:
 			return (args[0] + 32768) & ~0xffff;
 
+		case ACSF_ScriptCall:
+			return ScriptCall(argCount, args);
+
 		default:
 			break;
 	}
@@ -6192,7 +6308,7 @@ static void SetMarineSprite(AActor *marine, PClassActor *source)
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
-	SDWORD *locals = &Localvars[0];
+	int32_t *locals = &Localvars[0];
 	ACSLocalArrays noarrays;
 	ACSLocalArrays *localarrays = &noarrays;
 	ScriptFunction *activeFunction = NULL;
@@ -6266,7 +6382,7 @@ int DLevelScript::RunScript ()
 	}
 
 	FACSStack stackobj;
-	SDWORD *Stack = stackobj.buffer;
+	int32_t *Stack = stackobj.buffer;
 	int &sp = stackobj.sp;
 
 	int *pc = this->pc;
@@ -6560,7 +6676,7 @@ int DLevelScript::RunScript ()
 				int i;
 				ScriptFunction *func;
 				FBehavior *module;
-				SDWORD *mylocals;
+				int32_t *mylocals;
 
 				if(pcd == PCD_CALLSTACK)
 				{
@@ -6615,7 +6731,7 @@ int DLevelScript::RunScript ()
 				int value;
 				union
 				{
-					SDWORD *retsp;
+					int32_t *retsp;
 					CallReturn *ret;
 				};
 
@@ -7770,7 +7886,7 @@ scriptwait:
 				while (min <= max)
 				{
 					int mid = (min + max) / 2;
-					SDWORD caseval = LittleLong(pc[mid*2]);
+					int32_t caseval = LittleLong(pc[mid*2]);
 					if (caseval == STACK(1))
 					{
 						pc = activeBehavior->Ofs2PC (LittleLong(pc[mid*2+1]));
@@ -9185,7 +9301,7 @@ scriptwait:
 				const char *str = FBehavior::StaticLookupString(STACK(1));
 				if (str != NULL)
 				{
-					STACK(1) = SDWORD(strlen(str));
+					STACK(1) = int32_t(strlen(str));
 					break;
 				}
 
@@ -9355,7 +9471,7 @@ scriptwait:
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->GetTeam(); break;
-				case PLAYERINFO_AIMDIST:		STACK(2) = (SDWORD)(userinfo->GetAimDist() * (0x40000000/90.)); break;	// Yes, this has been returning a BAM since its creation.
+				case PLAYERINFO_AIMDIST:		STACK(2) = (int32_t)(userinfo->GetAimDist() * (0x40000000/90.)); break;	// Yes, this has been returning a BAM since its creation.
 				case PLAYERINFO_COLOR:			STACK(2) = userinfo->GetColor(); break;
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->GetGender(); break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->GetNeverSwitch(); break;
@@ -9762,7 +9878,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	script = num;
 	assert(code->VarCount >= code->ArgCount);
 	Localvars.Resize(code->VarCount);
-	memset(&Localvars[0], 0, code->VarCount * sizeof(SDWORD));
+	memset(&Localvars[0], 0, code->VarCount * sizeof(int32_t));
 	for (int i = 0; i < MIN<int>(argcount, code->ArgCount); ++i)
 	{
 		Localvars[i] = args[i];

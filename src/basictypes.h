@@ -7,7 +7,6 @@ typedef int8_t					SBYTE;
 typedef uint8_t					BYTE;
 typedef int16_t					SWORD;
 typedef uint16_t				WORD;
-typedef int32_t					SDWORD;
 typedef uint32_t				uint32;
 typedef int64_t					SQWORD;
 typedef uint64_t				QWORD;
@@ -63,7 +62,7 @@ union QWORD_UNION
 #define FRACBITS						16
 #define FRACUNIT						(1<<FRACBITS)
 
-typedef SDWORD							fixed_t;
+typedef int32_t							fixed_t;
 typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 
 #define FIXED_MAX						(signed)(0x7fffffff)

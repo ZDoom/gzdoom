@@ -262,8 +262,8 @@ struct mapseg_t
 
 struct mapseg4_t 
 {
-	SDWORD v1;
-	SDWORD v2;
+	int32_t v1;
+	int32_t v2;
 	SWORD angle;
 	WORD linedef;
 	SWORD side;

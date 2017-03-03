@@ -83,6 +83,8 @@ public:
 	bool Is8BitMode() { return false; }
 	bool IsHWGammaActive() const { return HWGammaActive; }
 
+	void SetVSync(bool vsync);
+
 private:
 	PalEntry Flash;
 

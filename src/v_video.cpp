@@ -75,6 +75,7 @@ FRenderer *Renderer;
 IMPLEMENT_CLASS(DCanvas, true, false)
 IMPLEMENT_CLASS(DFrameBuffer, true, false)
 EXTERN_CVAR (Bool, swtruecolor)
+EXTERN_CVAR (Bool, fullscreen)
 
 #if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
 #define DBGBREAK	{ __asm int 3 }
@@ -1492,6 +1493,9 @@ CCMD (vid_setmode)
 	{
 		goodmode = true;
 	}
+
+	if (!fullscreen)
+		goodmode = true;
 
 	if (goodmode)
 	{

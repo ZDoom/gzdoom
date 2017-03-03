@@ -151,7 +151,7 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 
 		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
 
-		if (fin->Read(buf, (SDWORD)uReadSize) != (SDWORD)uReadSize) break;
+		if (fin->Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
 
 		for (i = (int)uReadSize - 3; (i--) > 0;)
 		{

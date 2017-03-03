@@ -5563,6 +5563,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			for (int ii=0; ii < BODYQUESIZE; ++ii)
 				if (bodyque[ii] == p->mo)
 					bodyque[ii] = oldactor;
+			E_PlayerRespawned(int(p - players));
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}

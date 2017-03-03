@@ -99,7 +99,9 @@ static const FLOP FxFlops[] =
 // this can be imported in vmexec.h
 void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc)
 {
-	int outerside = FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags);
+	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
+	if (outerside == FScopeBarrier::Side_Virtual)
+		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
 	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
@@ -5091,6 +5093,18 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 		if (cls->ObjectFlags & OF_Abstract)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+			delete this;
+			return nullptr;
+		}
+
+		//
+		int outerside = ctx.Function && ctx.Function->Variants.Size() ? FScopeBarrier::SideFromFlags(ctx.Function->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
+		if (outerside == FScopeBarrier::Side_Virtual)
+			outerside = FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags);
+		int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+		if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 			delete this;
 			return nullptr;
 		}

@@ -6754,7 +6754,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 				if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
 					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
 			}
-			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), "<unknown>");
+			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), membervar->SymbolName.GetChars());
 			if (!scopeBarrier.writable)
 				bWritable = false;
 		}

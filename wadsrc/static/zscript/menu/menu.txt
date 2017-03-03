@@ -48,7 +48,7 @@ struct JoystickConfig native
 	
 }
 
-class Menu : Object native
+class Menu : Object native ui
 {
 	enum EMenuKey
 	{

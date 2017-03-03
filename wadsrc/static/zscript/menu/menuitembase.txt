@@ -4,7 +4,7 @@
 //
 //=============================================================================
 
-class MenuItemBase : Object native
+class MenuItemBase : Object native ui
 {
 	protected native int mXpos, mYpos;
 	protected native Name mAction;

@@ -279,7 +279,7 @@ class ConsoleEvent : BaseEvent native
     native readonly int Args[3];
 }
 
-class StaticEventHandler : Object native
+class StaticEventHandler : Object native play
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
@@ -307,8 +307,8 @@ class StaticEventHandler : Object native
     virtual native void WorldTick(WorldEvent e);
 
     //
-    virtual native void RenderFrame(RenderEvent e);
-    virtual native void RenderOverlay(RenderEvent e);
+    virtual native ui void RenderFrame(RenderEvent e);
+    virtual native ui void RenderOverlay(RenderEvent e);
     
     //
     virtual native void PlayerEntered(PlayerEvent e);
@@ -317,7 +317,7 @@ class StaticEventHandler : Object native
     virtual native void PlayerDisconnected(PlayerEvent e);
     
     //
-    virtual native bool UiProcess(UiEvent e);
+    virtual native ui bool UiProcess(UiEvent e);
     virtual native bool InputProcess(InputEvent e);
     
     //

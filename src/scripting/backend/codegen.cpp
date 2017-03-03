@@ -5095,19 +5095,6 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 
-		if (cls->ObjectFlags & OF_NoNew)
-		{
-			PClass* pcls = cls;
-			while (pcls && pcls->ParentClass && (pcls->ParentClass->ObjectFlags & OF_NoNew))
-				pcls = pcls->ParentClass;
-			if (pcls != ctx.Class)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Cannot instantiate class %s directly", cls->TypeName.GetChars());
-				delete this;
-				return nullptr;
-			}
-		}
-
 		ValueType = NewPointer(cls);
 	}
 

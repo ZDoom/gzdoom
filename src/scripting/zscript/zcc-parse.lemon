@@ -212,7 +212,6 @@ class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 %type class_flags{ClassFlagsBlock}
 class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) NONEW.					{ X.Flags = A.Flags | ZCC_NoNew; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }

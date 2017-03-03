@@ -801,18 +801,6 @@ begin:
 		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
 		PFunction *callingfunc = (PFunction*)konsta[C].o; // [ZZ] due to how this is set, it's always const
 		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-		if (cls->ObjectFlags & OF_NoNew)
-		{
-			// trace to the first nonew class in the hierarchy.
-			// compare that class to the context class.
-			// if not matching, disallow creation.
-			// this ensures that only the root class can have a static factory method that can also create instances of subclasses via new().
-			PClass* pcls = cls;
-			while (pcls && pcls->ParentClass && (pcls->ParentClass->ObjectFlags & OF_NoNew))
-				pcls = pcls->ParentClass;
-			if (!callingfunc || pcls != callingfunc->OwningClass)
-				ThrowAbortException(X_OTHER, "Cannot instantiate class %s directly", cls->TypeName.GetChars());
-		}
 		// [ZZ] validate readonly and between scope construction
 		if (callingfunc)
 			FScopeBarrier_ValidateNew(cls, callingfunc);

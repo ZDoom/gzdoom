@@ -611,9 +611,6 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
 				if (c->cls->Flags & ZCC_Abstract)
 					c->Type()->ObjectFlags |= OF_Abstract;
-				// [ZZ] inherit nonew keyword
-				if (c->cls->Flags & ZCC_NoNew || (parent->ObjectFlags & OF_NoNew))
-					c->Type()->ObjectFlags |= OF_NoNew;
 				// 
 				static int incompatible[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 				int incompatiblecnt = 0;
@@ -1273,7 +1270,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 FString ZCCCompiler::FlagsToString(uint32_t flags)
 {
 
-	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "nonew", "ui", "play", "clearscope", "virtualscope" };
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "const", "abstract", "extend", "virtual", "override", "transient", "vararg", "ui", "play", "clearscope", "virtualscope" };
 	FString build;
 
 	for (size_t i = 0; i < countof(flagnames); i++)

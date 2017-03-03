@@ -141,7 +141,6 @@ static void InitTokenMap()
 	TOKENDEF (TK_Play,			ZCC_PLAY);
 	TOKENDEF (TK_ClearScope,	ZCC_CLEARSCOPE);
 	TOKENDEF (TK_VirtualScope,  ZCC_VIRTUALSCOPE);
-	TOKENDEF (TK_NoNew, 		ZCC_NONEW);
 	TOKENDEF (TK_Override,		ZCC_OVERRIDE);
 	TOKENDEF (TK_Final,			ZCC_FINAL);
 	TOKENDEF (TK_Meta,			ZCC_META);

@@ -89,7 +89,8 @@ struct FScopeBarrier
 		Side_PlainData = 0,
 		Side_UI = 1,
 		Side_Play = 2,
-		Side_Virtual = 3 // do NOT change the value
+		Side_Virtual = 3, // do NOT change the value
+		Side_Clear = 4
 	};
 	int sidefrom;
 	int sidelast;
@@ -103,6 +104,8 @@ struct FScopeBarrier
 			return Side_Play;
 		if (flags & VARF_VirtualScope)
 			return Side_Virtual;
+		if (flags & VARF_ClearScope)
+			return Side_Clear;
 		return Side_PlainData;
 	}
 
@@ -127,6 +130,8 @@ struct FScopeBarrier
 			return VARF_UI;
 		case Side_Virtual:
 			return VARF_VirtualScope;
+		case Side_Clear:
+			return VARF_ClearScope;
 		default:
 			return 0;
 		}
@@ -144,7 +149,9 @@ struct FScopeBarrier
 		case Side_Play:
 			return "play";
 		case Side_Virtual:
-			return "virtual"; // should not happen!
+			return "virtualscope"; // should not happen!
+		case Side_Clear:
+			return "clearscope"; // should not happen!
 		default:
 			return "unknown";
 		}
@@ -153,7 +160,7 @@ struct FScopeBarrier
 	// this modifies VARF_ flags and sets the side properly.
 	static int ChangeSideInFlags(int flags, int side)
 	{
-		flags &= ~(VARF_UI | VARF_Play | VARF_VirtualScope);
+		flags &= ~(VARF_UI | VARF_Play | VARF_VirtualScope | VARF_ClearScope);
 		flags |= FlagsFromSide(side);
 		return flags;
 	}

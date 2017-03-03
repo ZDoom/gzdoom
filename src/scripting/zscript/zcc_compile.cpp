@@ -2135,7 +2135,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_Play)
 			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Play);
 		if (f->Flags & ZCC_ClearScope)
-			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData);
+			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Clear);
 		if (f->Flags & ZCC_VirtualScope)
 			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Virtual);
 
@@ -2405,12 +2405,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (sym->Variants[0].Implementation != nullptr)
 		{
 			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
-			if (varflags & VARF_UI)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_UI;
-			if (varflags & VARF_Play)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Play;
-			if (varflags & VARF_VirtualScope)
-				sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::Side_Virtual;
+			sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::SideFromFlags(varflags);
 		}
 
 		PClass *clstype = static_cast<PClass *>(c->Type());

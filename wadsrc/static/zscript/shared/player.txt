@@ -150,7 +150,7 @@ class PlayerPawn : Actor native
 	}
 	
 	// This is for SBARINFO.
-	int, int GetEffectTicsForItem(class<Inventory> item)
+	clearscope int, int GetEffectTicsForItem(class<Inventory> item)
 	{
 		let pg = (class<PowerupGiver>)(item);
 		if (pg != null)
@@ -167,10 +167,10 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 
-	native int GetMaxHealth(bool withupgrades = false);
+	clearscope native int GetMaxHealth(bool withupgrades = false);
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
-	native static String GetPrintableDisplayName(Class<Actor> cls);
+	clearscope native static String GetPrintableDisplayName(Class<Actor> cls);
 
 }
 
@@ -192,7 +192,7 @@ class PlayerChunk : PlayerPawn
 	}
 }
 
-class PSprite : Object native
+class PSprite : Object native play
 {
 	enum PSPLayers
 	{
@@ -237,7 +237,7 @@ enum EPlayerState
 	PST_GONE	// Player has left the game
 }
 
-struct PlayerInfo native	// this is what internally is known as player_t
+struct PlayerInfo native play	// this is what internally is known as player_t
 {
 	// technically engine constants but the only part of the playsim using them is the player.
 	const NOFIXEDCOLORMAP = -1;
@@ -338,22 +338,22 @@ usercmd_t	original_cmd;
 	native void PoisonDamage(Actor source, int damage, bool playPainSound);
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
-	native PSprite GetPSprite(int id);
-	native PSprite FindPSprite(int id);
+	native PSprite GetPSprite(int id) const;
+	native PSprite FindPSprite(int id) const;
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
 	native void DropWeapon();
 	native void BringUpWeapon();
 
-	native String GetUserName();
-	native Color GetColor();
-	native int GetColorSet();
-	native int GetPlayerClassNum();
-	native int GetSkin();
-	native bool GetNeverSwitch();
-	native int GetGender();
-	native int GetTeam();
-	native float GetAutoaim();
+	native String GetUserName() const;
+	native Color GetColor() const;
+	native int GetColorSet() const;
+	native int GetPlayerClassNum() const;
+	native int GetSkin() const;
+	native bool GetNeverSwitch() const;
+	native int GetGender() const;
+	native int GetTeam() const;
+	native float GetAutoaim() const;
 	native void SetFOV(float fov);
 }
 

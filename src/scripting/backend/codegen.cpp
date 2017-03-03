@@ -6879,7 +6879,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	}
 
 	BarrierSide = scopeBarrier.sidelast;
-	if (classx->ExprType == EFX_StructMember) // note: only do this for structs now
+	if (classx->ExprType == EFX_StructMember && ExprType == EFX_StructMember) // note: only do this for structs now
 	{
 		FxStructMember* pmember = (FxStructMember*)classx;
 		if (BarrierSide == FScopeBarrier::Side_PlainData && pmember)
@@ -8175,11 +8175,14 @@ isresolved:
 		innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
 		innerflags = FScopeBarrier::FlagsFromSide(innerside);
 	}
-	if (Self->ExprType == EFX_StructMember)
+	else if (innerside != FScopeBarrier::Side_Clear)
 	{
-		FxStructMember* pmember = (FxStructMember*)Self;
-		if (innerside == FScopeBarrier::Side_PlainData)
-			innerflags = FScopeBarrier::ChangeSideInFlags(innerflags, pmember->BarrierSide);
+		if (Self->ExprType == EFX_StructMember)
+		{
+			FxStructMember* pmember = (FxStructMember*)Self;
+			if (innerside == FScopeBarrier::Side_PlainData)
+				innerflags = FScopeBarrier::ChangeSideInFlags(innerflags, pmember->BarrierSide);
+		}
 	}
 	FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
 	if (!scopeBarrier.callable)

@@ -40,6 +40,7 @@ enum
 	VARF_UI				= (1<<20),  // [ZZ] ui: object is ui-scope only (can't modify playsim)
 	VARF_Play			= (1<<21),  // [ZZ] play: object is playsim-scope only (can't access ui)
 	VARF_VirtualScope	= (1<<22),  // [ZZ] virtualscope: object should use the scope of the particular class it's being used with (methods only)
+	VARF_ClearScope		= (1<<23),  // [ZZ] clearscope: this method ignores the member access chain that leads to it and is always plain data.
 };
 
 // An action function -------------------------------------------------------

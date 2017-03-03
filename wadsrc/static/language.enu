@@ -1566,6 +1566,23 @@ TXT_COMM0			= "Incoming Message";
 TXT_COMM1			= "Incoming Message from BlackBird";
 
 
+AMMO_CLIP			= "Bullets";
+AMMO_SHELLS			= "Shotgun Shells";
+AMMO_ROCKETS		= "Rockets";
+AMMO_CELLS			= "Energy Cells";
+AMMO_GOLDWAND		= "Wand Crystals";
+AMMO_CROSSBOW		= "Ethereal Arrows";
+AMMO_BLASTER		= "Claw Orbs";
+AMMO_MACE			= "Mace Spheres";
+AMMO_SKULLROD		= "Hellstaff Runes";
+AMMO_PHOENIXROD		= "Flame Orbs";
+AMMO_MANA1			= "Blue Mana";
+AMMO_MANA2			= "Green Mana";
+$ifgame(chex) AMMO_CLIP = "Mini Zorch Charge";
+$ifgame(chex) AMMO_SHELLS = "Large Zorcher Charge";
+$ifgame(chex) AMMO_ROCKETS = "Propulsor Charge";
+$ifgame(chex) AMMO_CELLS = "Phasing Zorcher Charge";
+
 // Menu Strings
 
 // Main Menu
@@ -1759,6 +1776,7 @@ MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
 
 JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
 JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
+JOYMNU_NOMENU				= "Block controller input in menu";
 
 // Player Setup Menu
 MNU_PLAYERSETUP		= "PLAYER SETUP";
@@ -1878,7 +1896,7 @@ MISCMNU_DEHLOAD					= "Load *.deh/*.bex lumps";
 MISCMNU_CACHENODES				= "Cache nodes";
 MISCMNU_CACHETIME				= "Time threshold for node caching";
 MISCMNU_CLEARNODECACHE			= "Clear node cache";
-
+MISCMNU_INTERSCROLL				= "Allow skipping of intermission scrollers";
 // Automap Options
 AUTOMAPMNU_TITLE				= "AUTOMAP OPTIONS";
 AUTOMAPMNU_COLORSET				= "Map color set";
@@ -2268,6 +2286,7 @@ OPTVAL_FRONT				= "Front";
 OPTVAL_ANIMATED				= "Animated";
 OPTVAL_ROTATED				= "Rotated";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colors only";
+OPTVAL_NODOORS				= "All except doors";
 OPTVAL_DOUBLE				= "Double";
 OPTVAL_TRIPLE				= "Triple";
 OPTVAL_QUADRUPLE			= "Quadruple";

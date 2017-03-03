@@ -54,7 +54,6 @@
 #include "i_system.h"
 #include "colormatcher.h"
 #include "backend/codegen.h"
-#include "version.h"
 #include "templates.h"
 #include "backend/vmbuilder.h"
 
@@ -316,9 +315,7 @@ do_stop:
 					do
 					{
 						sc.MustGetString();
-						#ifdef DYNLIGHT
-							AddStateLight(&state, sc.String);
-						#endif
+						AddStateLight(&state, sc.String);
 					}
 					while (sc.CheckString(","));
 					sc.MustGetStringName(")");

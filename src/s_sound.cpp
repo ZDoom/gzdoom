@@ -1256,7 +1256,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_INT(channel);
 	PARAM_FLOAT_DEF(volume);
 	PARAM_FLOAT_DEF(attn);
-	S_Sound(channel, id, volume, attn);
+	S_Sound(channel, id, static_cast<float>(volume), static_cast<float>(attn));
 	return 0;
 }
 
@@ -1400,7 +1400,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
 			BYTE *sfxdata = new BYTE[size];
 			wlump.Read(sfxdata, size);
-			SDWORD dmxlen = LittleLong(((SDWORD *)sfxdata)[1]);
+			int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
             std::pair<SoundHandle,bool> snd;
 
 			// If the sound is voc, use the custom loader.
@@ -1460,7 +1460,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx)
     FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
     BYTE *sfxdata = new BYTE[size];
     wlump.Read(sfxdata, size);
-    SDWORD dmxlen = LittleLong(((SDWORD *)sfxdata)[1]);
+    int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
     std::pair<SoundHandle,bool> snd;
 
     // If the sound is voc, use the custom loader.

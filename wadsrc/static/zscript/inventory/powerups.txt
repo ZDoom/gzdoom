@@ -174,7 +174,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
 		return NULL;
 	}
@@ -1767,7 +1767,7 @@ class PowerProtection : Powerup
 	{
 		if (passive && damage > 0)
 		{
-			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
 			if (Owner != null && newdamage < damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 		}
 	}
@@ -1783,32 +1783,9 @@ class PowerDrain : Powerup
 {
 	Default
 	{
+		Powerup.Strength 0.5;
 		Powerup.Duration -60;
 	}
-	
-	override void InitEffect()
-	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to drain life from opponents when he damages them.
-			Owner.player.cheats |= CF_DRAIN;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the drain power.
-			Owner.player.cheats &= ~CF_DRAIN;
-		}
-	}
-	
 }
 
 //===========================================================================
@@ -1846,27 +1823,9 @@ class PowerRegeneration : Powerup
 
 class PowerHighJump : Powerup
 {
-	override void InitEffect()
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to jump much higher.
-			Owner.player.cheats |= CF_HIGHJUMP;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the high jump power.
-			Owner.player.cheats &= ~CF_HIGHJUMP;
-		}
+		Powerup.Strength 2;
 	}
 }
 
@@ -1878,27 +1837,9 @@ class PowerHighJump : Powerup
 
 class PowerDoubleFiringSpeed : Powerup
 {
-	override void InitEffect()
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to shoot twice as fast.
-			Owner.player.cheats |= CF_DOUBLEFIRINGSPEED;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the shooting twice as fast power.
-			Owner.player.cheats &= ~CF_DOUBLEFIRINGSPEED;
-		}
+		Powerup.Duration -40;
 	}
 }
 
@@ -1914,28 +1855,21 @@ class PowerInfiniteAmmo : Powerup
 	{
 		Powerup.Duration -30;
 	}
-	
-	override void InitEffect()
+}
+
+
+//===========================================================================
+//
+// InfiniteAmmo
+//
+//===========================================================================
+
+class PowerReflection : Powerup
+{
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player infinite ammo
-			Owner.player.cheats |= CF_INFINITEAMMO;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the limitless ammo
-			Owner.player.cheats &= ~CF_INFINITEAMMO;
-		}
+		Powerup.Duration -60;
+		DamageFactor 0.5;
 	}
 }
 

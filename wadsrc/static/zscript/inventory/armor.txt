@@ -38,6 +38,7 @@ class Armor : Inventory
 	Default
 	{
 		Inventory.PickupSound "misc/armor_pkup";
+		+INVENTORY.ISARMOR
 	}
 }
 
@@ -489,7 +490,7 @@ class HexenArmor : Armor
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
 		return NULL;
 	}

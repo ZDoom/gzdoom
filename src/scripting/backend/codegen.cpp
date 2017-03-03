@@ -1562,7 +1562,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(basex, ctx);
 
 	// first deal with the simple types
-	if (ValueType == TypeError || basex->ValueType == TypeError)
+	if (ValueType == TypeError || basex->ValueType == TypeError || basex->ValueType == nullptr)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Trying to cast to invalid type.");
 		delete this;
@@ -6142,10 +6142,81 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	if (Object->ExprType == EFX_Identifier)
 	{
+		auto id = static_cast<FxIdentifier *>(Object)->Identifier;
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier, ctx);
-		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
+		ccls = FindStructType(id, ctx);
+		if (ccls != nullptr)
+		{
+			static_cast<FxIdentifier *>(Object)->noglobal = true;
+		}
+		else
+		{
+			PType *type;
+			// Another special case to deal with here is constants assigned to non-struct types. The code below cannot deal with them so it needs to be done here explicitly.
+			// Thanks to the messed up search logic of the type system, which doesn't allow any search by type name for the basic types at all,
+			// we have to do this manually, though and check for all types that may have values attached explicitly. 
+			// (What's the point of attached fields to types if you cannot even search for the types...???)
+			switch (id)
+			{
+			default:
+				type = nullptr;
+				break;
+
+			case NAME_Byte:
+			case NAME_uint8:
+				type = TypeUInt8;
+				break;
+
+			case NAME_sByte:
+			case NAME_int8:
+				type = TypeSInt8;
+				break;
+
+			case NAME_uShort:
+			case NAME_uint16:
+				type = TypeUInt16;
+				break;
+
+			case NAME_Short:
+			case NAME_int16:
+				type = TypeSInt16;
+				break;
+
+			case NAME_Int:
+				type = TypeSInt32;
+				break;
+
+			case NAME_uInt:
+				type = TypeUInt32;
+				break;
+
+			case NAME_Float:
+				type = TypeFloat32;
+				break;
+
+			case NAME_Double:
+				type = TypeFloat64;
+				break;
+			}
+			if (type != nullptr)
+			{
+				auto sym = type->Symbols.FindSymbol(Identifier, true);
+				if (sym != nullptr)
+				{
+					// non-struct symbols must be constant numbers and can only be defined internally.
+					assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
+					auto sn = static_cast<PSymbolConstNumeric*>(sym);
+
+					VMValue vmv;
+					if (sn->ValueType->IsKindOf(RUNTIME_CLASS(PInt))) vmv = sn->Value;
+					else vmv = sn->Float;
+					auto x = new FxConstant(sn->ValueType, vmv, ScriptPosition);
+					delete this;
+					return x->Resolve(ctx);
+				}
+			}
+		}
 	}
 
 	SAFE_RESOLVE(Object, ctx);
@@ -6420,7 +6491,7 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 	ExpEmit ob = obj->Emit(build);
 	ob.Free(build);
 	ExpEmit meta(build, REGT_POINTER);
-	build->Emit(OP_META, meta.RegNum, ob.RegNum);
+	build->Emit(OP_CLSS, meta.RegNum, ob.RegNum);
 	build->Emit(OP_LOS, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return meta;
 
@@ -6571,7 +6642,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 
 	case CVAR_String:
 		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FStringCVar *>(CVar)->Value, ATAG_GENERIC));
-		build->Emit(OP_LS, dest.RegNum, addr.RegNum, nul);
+		build->Emit(OP_LCS, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_DummyBool:
@@ -9013,7 +9084,7 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 	ExpEmit op = Self->Emit(build);
 	op.Free(build);
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(OP_META, to.RegNum, op.RegNum);
+	build->Emit(OP_CLSS, to.RegNum, op.RegNum);
 	return to;
 }
 
@@ -9054,7 +9125,7 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 	if (Self->IsObject())
 	{
 		ExpEmit to(build, REGT_POINTER);
-		build->Emit(OP_META, to.RegNum, op.RegNum);
+		build->Emit(OP_CLSS, to.RegNum, op.RegNum);
 		op = to;
 		op.Free(build);
 	}

@@ -561,6 +561,21 @@ bool EV_FloorCrushStop (int tag)
 	return true;
 }
 
+// same as above but stops any floor mover that was active on the given sector.
+bool EV_StopFloor(int tag)
+{
+	FSectorTagIterator it(tag);
+	while (int sec = it.Next())
+	{
+		if (level.sectors[sec].floordata)
+		{
+			SN_StopSequence(&level.sectors[sec], CHAN_FLOOR);
+			level.sectors[sec].floordata->Destroy();
+			level.sectors[sec].floordata = nullptr;
+		}
+	}
+	return true;
+}
 //==========================================================================
 //
 // BUILD A STAIRCASE!
@@ -625,6 +640,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		floor->m_Delay = delay;
 		floor->m_PauseTime = 0;
 		floor->m_StepTime = floor->m_PerStepTime = persteptime;
+		floor->m_Instant = false;
 
 		floor->m_Crush = (usespecials & DFloor::stairCrush) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 		floor->m_Hexencrush = false;
@@ -740,6 +756,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				//jff 2/27/98 fix uninitialized crush field
 				floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 				floor->m_Hexencrush = false;
+				floor->m_Instant = false;
 				floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
 				floor->m_OrgDist = sec->floorplane.fD();	// [RH] Height to reset to
 			}
@@ -802,6 +819,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Direction = 1;
 			floor->m_Sector = s2;
 			floor->m_Speed = slimespeed;
+			floor->m_Instant = false;
 			floor->m_Texture = s3->GetTexture(sector_t::floor);
 			floor->m_NewSpecial.Clear();
 			height = s3->FindHighestFloorPoint (&spot);
@@ -816,6 +834,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Direction = -1;
 			floor->m_Sector = s1;
 			floor->m_Speed = pillarspeed;
+			floor->m_Instant = false;
 			height = s3->FindHighestFloorPoint (&spot);
 			floor->m_FloorDestDist = s1->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();

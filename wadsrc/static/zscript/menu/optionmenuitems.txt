@@ -136,7 +136,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 		// don't execute if no menu is active
 		if (m == null) return false;	
 		// don't execute if this item cannot be found in the current menu.
-		if (m.mDesc.GetItem(mAction) != self) return false;
+		if (m.GetItem(mAction) != self) return false;
 		Menu.MenuSound("menu/choose");
 		DoCommand(mAction);
 		return true;
@@ -1129,6 +1129,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		{
 			Menu.MenuSound("menu/choose");
 			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), GetCVarString(), -1, 2, fromcontroller);
+			mEnter.ActivateMenu();
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)

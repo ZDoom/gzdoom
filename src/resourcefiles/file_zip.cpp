@@ -151,7 +151,7 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 
 		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
 
-		if (fin->Read(buf, (SDWORD)uReadSize) != (SDWORD)uReadSize) break;
+		if (fin->Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
 
 		for (i = (int)uReadSize - 3; (i--) > 0;)
 		{
@@ -217,12 +217,88 @@ bool FZipFile::Open(bool quiet)
 
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
+
+	FString name0;
+	bool foundspeciallump = false;
+
+	// Check if all files have the same prefix so that this can be stripped out.
+	// This will only be done if there is either a MAPINFO, ZMAPINFO or GAMEINFO lump in the subdirectory, denoting a ZDoom mod.
+	if (NumLumps > 1) for (DWORD i = 0; i < NumLumps; i++)
+	{
+		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
+
+		int len = LittleShort(zip_fh->NameLength);
+		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+
+		dirptr += sizeof(FZipCentralDirectoryInfo) +
+			LittleShort(zip_fh->NameLength) +
+			LittleShort(zip_fh->ExtraLength) +
+			LittleShort(zip_fh->CommentLength);
+
+		if (dirptr > ((char*)directory) + dirsize)	// This directory entry goes beyond the end of the file.
+		{
+			free(directory);
+			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Central directory corrupted.", Filename);
+			return false;
+		}
+
+		name.ToLower();
+		if (i == 0)
+		{
+			// check for special names, if one of these gets found this must be treated as a normal zip.
+			bool isspecial = !name.Compare("flats/") ||
+				name.IndexOf("/") < 0 ||
+				!name.Compare("textures/") ||
+				!name.Compare("hires/") ||
+				!name.Compare("sprites/") ||
+				!name.Compare("voxels/") ||
+				!name.Compare("colormaps/") ||
+				!name.Compare("acs/") ||
+				!name.Compare("maps/") ||
+				!name.Compare("voices/") ||
+				!name.Compare("patches/") ||
+				!name.Compare("graphics/") ||
+				!name.Compare("sounds/") ||
+				!name.Compare("music/");
+			if (isspecial) break;
+			name0 = name;
+		}
+		else
+		{
+			if (name.IndexOf(name0) != 0)
+			{
+				name0 = "";
+				break;
+			}
+			else if (!foundspeciallump)
+			{
+				// at least one of the more common definition lumps must be present.
+				if (name.IndexOf(name0 + "mapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zmapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gameinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sndinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sbarinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "menudef") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gldefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "animdefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "decorate.") == 0) foundspeciallump = true;	// DECORATE is a common subdirectory name, so the check needs to be a bit different.
+				else if (name.Compare(name0 + "decorate") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zscript.") == 0) foundspeciallump = true;	// same here.
+				else if (name.Compare(name0 + "zscript") == 0) foundspeciallump = true;
+				else if (name.Compare(name0 + "maps/") == 0) foundspeciallump = true;
+			}
+		}
+	}
+
+	dirptr = (char*)directory;
+	lump_p = Lumps;
 	for (DWORD i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
 		int len = LittleShort(zip_fh->NameLength);
 		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
 		dirptr += sizeof(FZipCentralDirectoryInfo) + 
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 

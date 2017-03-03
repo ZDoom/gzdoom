@@ -95,23 +95,6 @@ char *copystring (const char *s)
 	return b;
 }
 
-//============================================================================
-//
-// ncopystring
-//
-// If the string has no content, returns NULL. Otherwise, returns a copy.
-//
-//============================================================================
-
-char *ncopystring (const char *string)
-{
-	if (string == NULL || string[0] == 0)
-	{
-		return NULL;
-	}
-	return copystring (string);
-}
-
 //==========================================================================
 //
 // ReplaceString

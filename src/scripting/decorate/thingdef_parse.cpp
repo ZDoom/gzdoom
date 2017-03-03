@@ -52,7 +52,6 @@
 #include "backend/codegen.h"
 #include "w_wad.h"
 #include "v_video.h"
-#include "version.h"
 #include "v_text.h"
 #include "m_argv.h"
 
@@ -828,7 +827,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		if (i > 0) sc.MustGetStringName(",");
 		if (f->Flags & VARF_Meta)
 		{
-			addr = ((char*)bag.Info) + f->Offset;
+			addr = ((char*)bag.Info->Meta) + f->Offset;
 		}
 		else
 		{
@@ -868,7 +867,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
 		{
 			sc.MustGetString();
-			*(FString*)addr = sc.String;
+			*(FString*)addr = strbin1(sc.String);
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{

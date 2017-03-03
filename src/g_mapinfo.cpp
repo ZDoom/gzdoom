@@ -915,6 +915,18 @@ DEFINE_MAP_OPTION(intermusic, true)
 	parse.ParseMusic(info->InterMusic, info->intermusicorder);
 }
 
+DEFINE_MAP_OPTION(mapintermusic, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FString mapname = parse.sc.String;
+	FString music;
+	int order;
+	parse.ParseComma();
+	parse.ParseMusic(music, order);
+	info->MapInterMusic[FName(mapname)] = std::make_pair(music, order);
+}
+
 DEFINE_MAP_OPTION(fadetable, true)
 {
 	parse.ParseAssign();
@@ -1265,6 +1277,7 @@ MapFlagHandlers[] =
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
 	{ "keepfullinventory",				MITYPE_SETFLAG2,	LEVEL2_KEEPFULLINVENTORY, 0 },
+	{ "resetitems",						MITYPE_SETFLAG3,	LEVEL2_RESETINVENTORY, 0 },
 	{ "monsterfallingdamage",			MITYPE_SETFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "nomonsterfallingdamage",			MITYPE_CLRFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "clipmidtextures",				MITYPE_SETFLAG2,	LEVEL2_CLIPMIDTEX, 0 },
@@ -1970,6 +1983,7 @@ static void ClearMapinfo()
 	DefaultSkill = -1;
 	DeinitIntermissions();
 	level.info = NULL;
+	level.F1Pic = "";
 }
 
 //==========================================================================

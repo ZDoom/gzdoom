@@ -103,61 +103,66 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for Randy.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
 		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	
-	find_path( D3D_INCLUDE_DIR d3d9.h
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Include )
-	if( NOT D3D_INCLUDE_DIR )
-		# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
-		# CMake cannot find this file via find_path, so we check for it using
-		# CHECK_INCLUDE_FILE.
-		CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
-		if ( NOT D3D9_H_FOUND )
-			message( SEND_ERROR "Could not find DirectX 9 header files" )
-		endif()
-	else()
-		include_directories( ${D3D_INCLUDE_DIR} )
-	endif()
-	
-	find_path( XINPUT_INCLUDE_DIR xinput.h
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Include )
-	if( NOT XINPUT_INCLUDE_DIR )
-		# Modern versions of the Windows SDK include xinput.h. Unfortunately,
-		# CMake cannot find this file via find_path, so we check for it using
-		# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
-		CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
-		if( NOT XINPUT_H_FOUND )
-			message( WARNING "Could not find xinput.h. XInput will be disabled." )
-			add_definitions( -DNO_XINPUT )
-		endif()
-	else()
-		include_directories( ${XINPUT_INCLUDE_DIR} )
-	endif()
-
-	find_library( DX_dinput8_LIBRARY dinput8
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
-	find_library( DX_dxguid_LIBRARY dxguid
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
-
-	# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
-	# CMake cannot find these libraries via find_library.
-	if( NOT DX_dinput8_LIBRARY )
-		# If we got this far, assume dinput8.lib is in the system library path.
+	if( ( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" ) OR	# For VS 2015.
+		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v150_xp" ) )		# For VS 2017.
+		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
-	endif()
+	else()
+		
+		find_path( D3D_INCLUDE_DIR d3d9.h
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Include )
+		if( NOT D3D_INCLUDE_DIR )
+			# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
+			# CMake cannot find this file via find_path, so we check for it using
+			# CHECK_INCLUDE_FILE.
+			CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
+			if ( NOT D3D9_H_FOUND )
+				message( SEND_ERROR "Could not find DirectX 9 header files" )
+			endif()
+		else()
+			include_directories( ${D3D_INCLUDE_DIR} )
+		endif()
+		
+		find_path( XINPUT_INCLUDE_DIR xinput.h
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Include )
+		if( NOT XINPUT_INCLUDE_DIR )
+			# Modern versions of the Windows SDK include xinput.h. Unfortunately,
+			# CMake cannot find this file via find_path, so we check for it using
+			# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
+			CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
+			if( NOT XINPUT_H_FOUND )
+				message( WARNING "Could not find xinput.h. XInput will be disabled." )
+				add_definitions( -DNO_XINPUT )
+			endif()
+		else()
+			include_directories( ${XINPUT_INCLUDE_DIR} )
+		endif()
 
-	# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-	# were moved to dinput8.lib.
-	if( NOT DX_dxguid_LIBRARY )
-		message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+		find_library( DX_dinput8_LIBRARY dinput8
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
+		find_library( DX_dxguid_LIBRARY dxguid
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
+
+		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
+		# CMake cannot find these libraries via find_library.
+		if( NOT DX_dinput8_LIBRARY )
+			# If we got this far, assume dinput8.lib is in the system library path.
+			set( DX_dinput8_LIBRARY dinput8 )
+		endif()
+
+		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+		# were moved to dinput8.lib.
+		if( NOT DX_dxguid_LIBRARY )
+			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+		endif()
 	endif()
 
 	set( ZDOOM_LIBS
@@ -392,22 +397,6 @@ if (NOT ZDOOM_USE_SSE2)
 	endif()
 endif()
 
-if( SSE_MATTERS )
-	if( WIN32 )
-		set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-	else()
-		CHECK_FUNCTION_EXISTS(mprotect HAVE_MPROTECT)
-		if( HAVE_MPROTECT )
-			set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-		else()
-			set( BACKPATCH 0 )
-		endif()
-	endif()
-	set( SSE 1 CACHE BOOL "Build SSE and SSE2 versions of key code." )
-else()
-	set( BACKPATCH 0 )
-endif()
-
 if( X64 )
 	set( HAVE_MMX 1 )
 else( X64 )
@@ -572,10 +561,6 @@ endif()
 
 # Flags
 
-if( BACKPATCH )
-	add_definitions( -DBACKPATCH )
-endif()
-
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
@@ -721,18 +706,6 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-if( SSE_MATTERS )
-	if( SSE )
-		set( X86_SOURCES nodebuild_classify_sse2.cpp )
-		set_source_files_properties( nodebuild_classify_sse2.cpp PROPERTIES COMPILE_FLAGS "${SSE2_ENABLE}" )
-	else()
-		add_definitions( -DDISABLE_SSE )
-	endif()
-else()
-	add_definitions( -DDISABLE_SSE )
-	set( X86_SOURCES )
-endif()
-
 if( SNDFILE_FOUND )
     add_definitions( -DHAVE_SNDFILE )
 endif()
@@ -840,15 +813,12 @@ set( FASTMATH_PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	menu/joystickmenu.cpp
-	menu/listmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
 	menu/menudef.cpp
-	menu/menuinput.cpp
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/readthis.cpp
 	menu/videomenu.cpp
 	oplsynth/fmopl.cpp
 	oplsynth/mlopl.cpp

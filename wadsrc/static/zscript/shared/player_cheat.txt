@@ -76,7 +76,7 @@ extend class PlayerPawn
 			}
 			else
 			{
-				player.health = health = GetMaxHealth();
+				player.health = health = GetMaxHealth(true);
 			}
 		}
 

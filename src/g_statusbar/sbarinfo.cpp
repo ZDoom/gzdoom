@@ -54,7 +54,6 @@
 #include "v_palette.h"
 #include "p_acs.h"
 #include "gstrings.h"
-#include "version.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
 

@@ -163,7 +163,7 @@ protected:
 class FSpecialFont : public FFont
 {
 public:
-	FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump);
+	FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
 
 	void LoadTranslations();
 
@@ -357,7 +357,7 @@ DEFINE_ACTION_FUNCTION(FFont, GetFont)
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, int first, int count, int start, int fdlump, int spacewidth)
+FFont::FFont (const char *name, const char *nametemplate, int first, int count, int start, int fdlump, int spacewidth, bool notranslate)
 {
 	int i;
 	FTextureID lump;
@@ -367,6 +367,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	bool doomtemplate = gameinfo.gametype & GAME_DoomChex ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 	bool stcfn121 = false;
 
+	noTranslate = notranslate;
 	Lump = fdlump;
 	Chars = new CharData[count];
 	charlumps = new FTexture *[count];
@@ -430,7 +431,8 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charlumps[i] != NULL)
 		{
-			Chars[i].Pic = new FFontChar1 (charlumps[i]);
+			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charlumps[i]);
+			else Chars[i].Pic = charlumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
 		}
 		else
@@ -455,7 +457,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 	FixXMoves();
 
-	LoadTranslations();
+	if (!noTranslate) LoadTranslations();
 
 	delete[] charlumps;
 }
@@ -472,11 +474,15 @@ FFont::~FFont ()
 	{
 		int count = LastChar - FirstChar + 1;
 
-		for (int i = 0; i < count; ++i)
+		// A noTranslate font directly references the original textures.
+		if (!noTranslate)
 		{
-			if (Chars[i].Pic != NULL && Chars[i].Pic->Name[0] == 0)
+			for (int i = 0; i < count; ++i)
 			{
-				delete Chars[i].Pic;
+				if (Chars[i].Pic != NULL && Chars[i].Pic->Name[0] == 0)
+				{
+					delete Chars[i].Pic;
+				}
 			}
 		}
 		delete[] Chars;
@@ -752,7 +758,7 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity,
 
 FRemapTable *FFont::GetColorTranslation (EColorRange range) const
 {
-	if (ActiveColors == 0)
+	if (ActiveColors == 0 || noTranslate)
 		return NULL;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
@@ -1005,6 +1011,7 @@ FFont::FFont (int lump)
 	PatchRemap = NULL;
 	FontName = NAME_None;
 	Cursor = '_';
+	noTranslate = false;
 }
 
 //==========================================================================
@@ -1962,7 +1969,7 @@ void FFontChar2::MakeTexture ()
 //
 //==========================================================================
 
-FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump) : FFont(lump)
+FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) : FFont(lump)
 {
 	int i;
 	FTexture **charlumps;
@@ -1971,6 +1978,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 	memcpy(this->notranslate, notranslate, 256*sizeof(bool));
 
+	noTranslate = donttranslate;
 	FontName = name;
 	Chars = new CharData[count];
 	charlumps = new FTexture*[count];
@@ -2005,7 +2013,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != NULL)
 		{
-			Chars[i].Pic = new FFontChar1 (charlumps[i]);
+			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charlumps[i]);
+			else Chars[i].Pic = charlumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
 		}
 		else
@@ -2027,7 +2036,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 	FixXMoves();
 
-	LoadTranslations();
+	if (!noTranslate) LoadTranslations();
 
 	delete[] charlumps;
 }
@@ -2158,6 +2167,7 @@ void V_InitCustomFonts()
 	FScanner sc;
 	FTexture *lumplist[256];
 	bool notranslate[256];
+	bool donttranslate;
 	FString namebuffer, templatebuf;
 	int i;
 	int llump,lastlump=0;
@@ -2175,6 +2185,7 @@ void V_InitCustomFonts()
 		{
 			memset (lumplist, 0, sizeof(lumplist));
 			memset (notranslate, 0, sizeof(notranslate));
+			donttranslate = false;
 			namebuffer = sc.String;
 			format = 0;
 			start = 33;
@@ -2226,6 +2237,10 @@ void V_InitCustomFonts()
 					spacewidth = sc.Number;
 					format = 1;
 				}
+				else if (sc.Compare("DONTTRANSLATE"))
+				{
+					donttranslate = true;
+				}
 				else if (sc.Compare ("NOTRANSLATION"))
 				{
 					if (format == 1) goto wrong;
@@ -2256,7 +2271,7 @@ void V_InitCustomFonts()
 			}
 			if (format == 1)
 			{
-				FFont *fnt = new FFont (namebuffer, templatebuf, first, count, start, llump, spacewidth);
+				FFont *fnt = new FFont (namebuffer, templatebuf, first, count, start, llump, spacewidth, donttranslate);
 				fnt->SetCursor(cursor);
 			}
 			else if (format == 2)
@@ -2279,7 +2294,7 @@ void V_InitCustomFonts()
 				}
 				if (count > 0)
 				{
-					FFont *fnt = new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump);
+					FFont *fnt = new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 				}
 			}

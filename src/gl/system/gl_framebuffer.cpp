@@ -83,7 +83,7 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 {
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
-	SetVSync(vid_vsync);
+	Super::SetVSync(vid_vsync);
 
 	// Make sure all global variables tracking OpenGL context state are reset..
 	FHardwareTexture::InitGlobalState();
@@ -228,6 +228,27 @@ void OpenGLFrameBuffer::Swap()
 	camtexcount = 0;
 	FHardwareTexture::UnbindAll();
 	mDebug->Update();
+}
+
+//==========================================================================
+//
+// Enable/disable vertical sync
+//
+//==========================================================================
+
+void OpenGLFrameBuffer::SetVSync(bool vsync)
+{
+	// Switch to the default frame buffer because some drivers associate the vsync state with the bound FB object.
+	GLint oldDrawFramebufferBinding = 0, oldReadFramebufferBinding = 0;
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFramebufferBinding);
+	glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFramebufferBinding);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+	Super::SetVSync(vsync);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, oldDrawFramebufferBinding);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, oldReadFramebufferBinding);
 }
 
 //===========================================================================

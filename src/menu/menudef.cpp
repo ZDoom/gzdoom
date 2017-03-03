@@ -62,6 +62,8 @@ static DOptionMenuDescriptor *DefaultOptionMenuSettings;	// contains common sett
 FOptionMenuSettings OptionSettings;
 FOptionMap OptionValues;
 bool mustPrintErrors;
+PClass *DefaultListMenuClass;
+PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
 
@@ -145,7 +147,7 @@ static void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	DMenu::CurrentMenu = nullptr;
+	CurrentMenu = nullptr;
 	savegameManager.ClearSaveGames();
 }
 
@@ -291,8 +293,8 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		else if (sc.Compare("Class"))
 		{
 			sc.MustGetString();
-			const PClass *cls = PClass::FindClass(sc.String);
-			if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(DListMenu)))
+			PClass *cls = PClass::FindClass(sc.String);
+			if (cls == nullptr || !cls->IsDescendantOf("ListMenu"))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
 			}
@@ -303,11 +305,11 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			sc.MustGetString();
 			desc->mSelector = GetMenuTexture(sc.String);
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			desc->mSelectOfsX = sc.Number;
+			sc.MustGetFloat();
+			desc->mSelectOfsX = sc.Float;
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			desc->mSelectOfsY = sc.Number;
+			sc.MustGetFloat();
+			desc->mSelectOfsY = sc.Float;
 		}
 		else if (sc.Compare("Linespacing"))
 		{
@@ -316,11 +318,11 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		}
 		else if (sc.Compare("Position"))
 		{
-			sc.MustGetNumber();
-			desc->mXpos = sc.Number;
+			sc.MustGetFloat();
+			desc->mXpos = sc.Float;
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			desc->mYpos = sc.Number;
+			sc.MustGetFloat();
+			desc->mYpos = sc.Float;
 		}
 		else if (sc.Compare("Centermenu"))
 		{
@@ -367,7 +369,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", false));
+				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
@@ -409,7 +411,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						else if (args[i] == TypeTextureID)
 						{
 							auto f = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
-							if (!f.isValid())
+							if (!f.Exists())
 							{
 								sc.ScriptError("Unknown texture %s", sc.String);
 							}
@@ -699,7 +701,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 		else if (sc.Compare("Class"))
 		{
 			sc.MustGetString();
-			const PClass *cls = PClass::FindClass(sc.String);
+			PClass *cls = PClass::FindClass(sc.String);
 			if (cls == nullptr || !cls->IsDescendantOf("OptionMenu"))
 			{
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
@@ -739,7 +741,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", false));
+				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
@@ -866,7 +868,25 @@ static void ParseOptionMenu(FScanner &sc)
 
 	ParseOptionMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);
-	if (desc->mIndent == 0) desc->CalcIndent();
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseAddOptionMenu(FScanner &sc)
+{
+	sc.MustGetString();
+
+	DMenuDescriptor **pOld = MenuDescriptors.CheckKey(sc.String);
+	if (pOld == nullptr || *pOld == nullptr || !(*pOld)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
+	{
+		sc.ScriptError("%s is not an option menu that can be extended", sc.String);
+	}
+	ParseOptionMenuBody(sc, (DOptionMenuDescriptor*)(*pOld));
 }
 
 
@@ -934,6 +954,10 @@ void M_ParseMenuDefs()
 			{
 				ParseOptionMenu(sc);
 			}
+			else if (sc.Compare("ADDOPTIONMENU"))
+			{
+				ParseAddOptionMenu(sc);
+			}
 			else if (sc.Compare("DEFAULTOPTIONMENU"))
 			{
 				ParseOptionMenuBody(sc, DefaultOptionMenuSettings);
@@ -948,7 +972,9 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
+	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
+	DefaultOptionMenuClass = DefaultOptionMenuSettings->mClass;
 	DefaultOptionMenuSettings = nullptr;
 }
 
@@ -970,13 +996,13 @@ static void BuildEpisodeMenu()
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			int posy = ld->mYpos;
+			int posy = (int)ld->mYpos;
 			int topy = posy;
 
 			// Get lowest y coordinate of any static item in the menu
 			for(unsigned i = 0; i < ld->mItems.Size(); i++)
 			{
-				int y = ld->mItems[i]->GetY();
+				int y = (int)ld->mItems[i]->GetY();
 				if (y < topy) topy = y;
 			}
 
@@ -1070,13 +1096,13 @@ static void BuildPlayerclassMenu()
 			// add player display
 			ld->mSelectedItem = ld->mItems.Size();
 			
-			int posy = ld->mYpos;
+			int posy = (int)ld->mYpos;
 			int topy = posy;
 
 			// Get lowest y coordinate of any static item in the menu
 			for(unsigned i = 0; i < ld->mItems.Size(); i++)
 			{
-				int y = ld->mItems[i]->GetY();
+				int y = (int)ld->mItems[i]->GetY();
 				if (y < topy) topy = y;
 			}
 
@@ -1324,19 +1350,56 @@ void M_StartupSkillMenu(FGameStartup *gs)
 {
 	static int done = -1;
 	bool success = false;
+	TArray<FSkillInfo*> MenuSkills;
+	TArray<int> SkillIndices;
+	if (MenuSkills.Size() == 0)
+	{
+		for (unsigned ind = 0; ind < AllSkills.Size(); ind++)
+		{
+			if (!AllSkills[ind].NoMenu)
+			{
+				MenuSkills.Push(&AllSkills[ind]);
+				SkillIndices.Push(ind);
+			}
+		}
+	}
+	if (MenuSkills.Size() == 0) I_Error("No valid skills for menu found. At least one must be defined.");
+
+	int defskill = DefaultSkill;
+	if ((unsigned int)defskill >= MenuSkills.Size())
+	{
+		defskill = SkillIndices[(MenuSkills.Size() - 1) / 2];
+	}
+	if (AllSkills[defskill].NoMenu)
+	{
+		for (defskill = 0; defskill < (int)AllSkills.Size(); defskill++)
+		{
+			if (!AllSkills[defskill].NoMenu) break;
+		}
+	}
+	int defindex = 0;
+	for (unsigned i = 0; i < MenuSkills.Size(); i++)
+	{
+		if (MenuSkills[i] == &AllSkills[defskill])
+		{
+			defindex = i;
+			break;
+		}
+	}
+
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
 	if (desc != nullptr)
 	{
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			int x = ld->mXpos;
-			int y = ld->mYpos;
+			int x = (int)ld->mXpos;
+			int y = (int)ld->mYpos;
 
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
 			{
-				FName n = ld->mItems[i]->GetAction(nullptr);
+				FName n = ld->mItems[i]->mAction;
 				if (n == NAME_Startgame || n == NAME_StartgameConfirm) 
 				{
 					ld->mItems.Resize(i);
@@ -1347,12 +1410,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			if (done != restart)
 			{
 				done = restart;
-				int defskill = DefaultSkill;
-				if ((unsigned int)defskill >= AllSkills.Size())
-				{
-					defskill = (AllSkills.Size() - 1) / 2;
-				}
-				ld->mSelectedItem = ld->mItems.Size() + defskill;
+				ld->mSelectedItem = ld->mItems.Size() + defindex;
 
 				int posy = y;
 				int topy = posy;
@@ -1360,14 +1418,14 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				// Get lowest y coordinate of any static item in the menu
 				for(unsigned i = 0; i < ld->mItems.Size(); i++)
 				{
-					int y = ld->mItems[i]->GetY();
+					int y = (int)ld->mItems[i]->GetY();
 					if (y < topy) topy = y;
 				}
 
 				// center the menu on the screen if the top space is larger than the bottom space
-				int totalheight = posy + AllSkills.Size() * ld->mLinespacing - topy;
+				int totalheight = posy + MenuSkills.Size() * ld->mLinespacing - topy;
 
-				if (totalheight < 190 || AllSkills.Size() == 1)
+				if (totalheight < 190 || MenuSkills.Size() == 1)
 				{
 					int newtop = (200 - totalheight + topy) / 2;
 					int topdelta = newtop - topy;
@@ -1377,7 +1435,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 						{
 							ld->mItems[i]->OffsetPositionY(topdelta);
 						}
-						y = ld->mYpos = posy - topdelta;
+						ld->mYpos = y = posy - topdelta;
 					}
 				}
 				else
@@ -1390,9 +1448,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			}
 
 			unsigned firstitem = ld->mItems.Size();
-			for(unsigned int i = 0; i < AllSkills.Size(); i++)
+			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 			{
-				FSkillInfo &skill = AllSkills[i];
+				FSkillInfo &skill = *MenuSkills[i];
 				DMenuItemBase *li;
 				// Using a different name for skills that must be confirmed makes handling this easier.
 				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
@@ -1406,22 +1464,22 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, i);
+					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				else
 				{
 					EColorRange color = (EColorRange)skill.GetTextColor();
 					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
 					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
-									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, i);
+									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);
 				GC::WriteBarrier(*desc, li);
 				y += ld->mLinespacing;
 			}
-			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
+			if (AllEpisodes[gs->Episode].mNoSkill || MenuSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + M_GetDefaultSkill();
+				ld->mAutoselect = firstitem + defindex;
 			}
 			else
 			{
@@ -1440,7 +1498,7 @@ fail:
 		MenuDescriptors[NAME_Skillmenu] = od;
 		od->mMenuName = NAME_Skillmenu;
 		od->mTitle = "$MNU_CHOOSESKILL";
-		od->mSelectedItem = 0;
+		od->mSelectedItem = defindex;
 		od->mScrollPos = 0;
 		od->mClass = nullptr;
 		od->mPosition = -15;
@@ -1454,9 +1512,9 @@ fail:
 		od = static_cast<DOptionMenuDescriptor*>(*desc);
 		od->mItems.Clear();
 	}
-	for(unsigned int i = 0; i < AllSkills.Size(); i++)
+	for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 	{
-		FSkillInfo &skill = AllSkills[i];
+		FSkillInfo &skill = *MenuSkills[i];
 		DMenuItemBase *li;
 		// Using a different name for skills that must be confirmed makes handling this easier.
 		const char *action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
@@ -1467,29 +1525,13 @@ fail:
 		{
 			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 		}
-		li = CreateOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
+		li = CreateOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, SkillIndices[i]);
 		od->mItems.Push(li);
 		GC::WriteBarrier(od, li);
 		if (!done)
 		{
 			done = true;
-			od->mSelectedItem = M_GetDefaultSkill();
+			od->mSelectedItem = defindex;
 		}
 	}
-}
-
-//=============================================================================
-//
-// Returns the default skill level.
-//
-//=============================================================================
-
-int M_GetDefaultSkill()
-{
-	int defskill = DefaultSkill;
-	if ((unsigned int)defskill >= AllSkills.Size())
-	{
-		defskill = (AllSkills.Size() - 1) / 2;
-	}
-	return defskill;
 }

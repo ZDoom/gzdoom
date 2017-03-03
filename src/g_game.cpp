@@ -226,7 +226,7 @@ int 			mousex;
 int 			mousey; 		
 
 FString			savegamefile;
-char			savedescription[SAVESTRINGSIZE];
+FString			savedescription;
 
 // [RH] Name of screenshot file to generate (usually NULL)
 FString			shotfile;
@@ -241,6 +241,7 @@ FString BackupSaveName;
 
 bool SendLand;
 const AInventory *SendItemUse, *SendItemDrop;
+int SendItemDropAmount;
 
 EXTERN_CVAR (Int, team)
 
@@ -346,6 +347,10 @@ CCMD (weapnext)
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
+	if (SendItemUse != players[consoleplayer].ReadyWeapon)
+	{
+		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (weapprev)
@@ -357,6 +362,10 @@ CCMD (weapprev)
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
+	if (SendItemUse != players[consoleplayer].ReadyWeapon)
+	{
+		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (invnext)
@@ -366,6 +375,7 @@ CCMD (invnext)
 	if (who == NULL)
 		return;
 
+	auto old = who->InvSel;
 	if (who->InvSel != NULL)
 	{
 		if ((next = who->InvSel->NextInv()) != NULL)
@@ -389,6 +399,10 @@ CCMD (invnext)
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
+	if (old != who->InvSel)
+	{
+		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (invprev)
@@ -398,6 +412,7 @@ CCMD (invprev)
 	if (who == NULL)
 		return;
 
+	auto old = who->InvSel;
 	if (who->InvSel != NULL)
 	{
 		if ((item = who->InvSel->PrevInv()) != NULL)
@@ -419,6 +434,10 @@ CCMD (invprev)
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
+	if (old != who->InvSel)
+	{
+		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (invuseall)
@@ -457,12 +476,14 @@ CCMD (invdrop)
 	if (players[consoleplayer].mo)
 	{
 		SendItemDrop = players[consoleplayer].mo->InvSel;
+		SendItemDropAmount = -1;
 	}
 }
 
 CCMD (weapdrop)
 {
 	SendItemDrop = players[consoleplayer].ReadyWeapon;
+	SendItemDropAmount = -1;
 }
 
 CCMD (drop)
@@ -470,6 +491,7 @@ CCMD (drop)
 	if (argv.argc() > 1 && who != NULL)
 	{
 		SendItemDrop = who->FindInventory(argv[1]);
+		SendItemDropAmount = argv.argc() > 2 ? atoi(argv[2]) : -1;
 	}
 }
 
@@ -762,6 +784,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		Net_WriteByte (DEM_INVDROP);
 		Net_WriteLong (SendItemDrop->InventoryID);
+		Net_WriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
@@ -1081,7 +1104,7 @@ void G_Ticker ()
 			G_DoSaveGame (true, savegamefile, savedescription);
 			gameaction = ga_nothing;
 			savegamefile = "";
-			savedescription[0] = '\0';
+			savedescription = "";
 			break;
 		case ga_autosave:
 			G_DoAutoSave ();
@@ -1320,12 +1343,24 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
 	{ // Reduce all owned (visible) inventory to defined maximum interhub amount
+		TArray<AInventory*> todelete;
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
 			// If the player is carrying more samples of an item than allowed, reduce amount accordingly
 			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
 			{
 				item->Amount = item->InterHubAmount;
+				if ((level.flags3 & LEVEL3_RESETINVENTORY) && !(item->ItemFlags & IF_UNDROPPABLE))
+				{
+					todelete.Push(item);
+				}
+			}
+		}
+		for (auto it : todelete)
+		{
+			if (!(it->ObjectFlags & OF_EuthanizeMe))
+			{
+				it->DepleteOrDestroy();
 			}
 		}
 	}
@@ -1695,7 +1730,7 @@ static void G_QueueBody (AActor *body)
 	{
 		// Apply skin's scale to actor's scale, it will be lost otherwise
 		const AActor *const defaultActor = body->GetDefault();
-		const FPlayerSkin &skin = skins[skinidx];
+		const FPlayerSkin &skin = Skins[skinidx];
 
 		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
 		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
@@ -2068,8 +2103,7 @@ void G_SaveGame (const char *filename, const char *description)
 	else
 	{
 		savegamefile = filename;
-		strncpy (savedescription, description, sizeof(savedescription)-1);
-		savedescription[sizeof(savedescription)-1] = '\0';
+		savedescription = description;
 		sendsave = true;
 	}
 }
@@ -2119,7 +2153,7 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
-	char description[SAVESTRINGSIZE];
+	FString description;
 	FString file;
 	// Keep up to four autosaves at a time
 	UCVarValue num;
@@ -2147,10 +2181,7 @@ void G_DoAutoSave ()
 	}
 
 	readableTime = myasctime ();
-	strcpy (description, "Autosave ");
-	strncpy (description+9, readableTime+4, 12);
-	description[9+12] = 0;
-
+	description.Format("Autosave %.12s", readableTime + 4);
 	G_DoSaveGame (false, file, description);
 }
 
@@ -2239,7 +2270,29 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		I_FreezeTime(true);
 
 	insave = true;
-	G_SnapshotLevel ();
+	try
+	{
+		G_SnapshotLevel();
+	}
+	catch(CRecoverableError &err)
+	{
+		// delete the snapshot. Since the save failed it is broken.
+		insave = false;
+		level.info->Snapshot.Clean();
+		Printf(PRINT_HIGH, "Save failed\n");
+		Printf(PRINT_HIGH, "%s\n", err.GetMessage());
+		// The time freeze must be reset if the save fails.
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		return;
+	}
+	catch (...)
+	{
+		insave = false;
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		throw;
+	}
 
 	BufferWriter savepic;
 	FSerializer savegameinfo;		// this is for displayable info about the savegame
@@ -2310,7 +2363,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	WriteZip(filename, savegame_filenames, savegame_content);
 
-	savegameManager.NotifyNewSave (filename.GetChars(), description, okForQuicksave);
+	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.

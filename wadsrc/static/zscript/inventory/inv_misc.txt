@@ -87,8 +87,8 @@ class MapRevealer : Inventory
 
 class PuzzleItem : Inventory
 {
-	/*meta*/ int PuzzleItemNumber;
-	/*meta*/ String PuzzFailMessage;
+	meta int PuzzleItemNumber;
+	meta String PuzzFailMessage;
 	
 	property Number: PuzzleItemNumber;
 	property FailMessage: PuzzFailMessage;

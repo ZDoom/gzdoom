@@ -135,6 +135,16 @@ public:
    void SetDontLightSelf(bool add) { m_dontlightself = add; }
    void SetAttenuate(bool on) { m_attenuate = on; }
    void SetHalo(bool halo) { m_halo = halo; }
+
+   void OrderIntensities()
+   {
+	   if (m_Args[LIGHT_INTENSITY] > m_Args[LIGHT_SECONDARY_INTENSITY])
+	   {
+		   std::swap(m_Args[LIGHT_INTENSITY], m_Args[LIGHT_SECONDARY_INTENSITY]);
+		   m_swapped = true;
+	   }
+   }
+
 protected:
    FName m_Name;
    int m_Args[5];
@@ -143,6 +153,7 @@ protected:
    ELightType m_type;
    int8_t m_attenuate;
    bool m_subtractive, m_additive, m_halo, m_dontlightself;
+   bool m_swapped = false;
 };
 
 TArray<FLightDefaults *> LightDefaults;
@@ -178,8 +189,8 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	light->SetOffset(m_Pos);
 	light->halo = m_halo;
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
-	light->args[LIGHT_INTENSITY] = int(m_Args[LIGHT_INTENSITY]);
-	light->args[LIGHT_SECONDARY_INTENSITY] = int(m_Args[LIGHT_SECONDARY_INTENSITY]);
+	light->args[LIGHT_INTENSITY] = m_Args[LIGHT_INTENSITY];
+	light->args[LIGHT_SECONDARY_INTENSITY] = m_Args[LIGHT_SECONDARY_INTENSITY];
 	light->flags4 &= ~(MF4_ADDITIVE | MF4_SUBTRACTIVE | MF4_DONTLIGHTSELF);
 	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
@@ -190,11 +201,13 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		float pulseTime = float(m_Param / TICRATE);
 
 		light->m_lastUpdate = level.maptime;
-		light->m_cycler.SetParams(float(light->args[LIGHT_SECONDARY_INTENSITY]), float(light->args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
+		if (m_swapped) light->m_cycler.SetParams(float(light->args[LIGHT_SECONDARY_INTENSITY]), float(light->args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
+		else light->m_cycler.SetParams(float(light->args[LIGHT_INTENSITY]), float(light->args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = light->m_cycler.GetVal();
 		if (light->m_currentRadius <= 0) light->m_currentRadius = 1;
+		light->swapped = m_swapped;
 	}
 
 	switch (m_attenuate)
@@ -474,13 +487,7 @@ void gl_ParsePulseLight(FScanner &sc)
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
-		if (defaults->GetArg(LIGHT_INTENSITY) > defaults->GetArg(LIGHT_SECONDARY_INTENSITY))
-		{
-			auto i = defaults->GetArg(LIGHT_INTENSITY);
-			auto j = defaults->GetArg(LIGHT_SECONDARY_INTENSITY);
-			defaults->SetArg(LIGHT_INTENSITY, j);
-			defaults->SetArg(LIGHT_SECONDARY_INTENSITY, i);
-		}
+		defaults->OrderIntensities();
 
 		gl_AddLightDefaults(defaults);
 	}
@@ -564,6 +571,7 @@ void gl_ParseFlickerLight(FScanner &sc)
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
+		defaults->OrderIntensities();
 		gl_AddLightDefaults(defaults);
 	}
 	else

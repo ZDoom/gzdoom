@@ -55,37 +55,11 @@
 //
 //=============================================================================
 
-void DOptionMenuDescriptor::CalcIndent()
-{
-	// calculate the menu indent
-	int widest = 0, thiswidth;
-
-	for (unsigned i = 0; i < mItems.Size(); i++)
-	{
-		thiswidth = mItems[i]->GetIndent();
-		if (thiswidth > widest) widest = thiswidth;
-	}
-	mIndent =  widest + 4;
-}
-
-DEFINE_ACTION_FUNCTION(DOptionMenuDescriptor, CalcIndent)
-{
-	PARAM_SELF_PROLOGUE(DOptionMenuDescriptor);
-	self->CalcIndent();
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 DMenuItemBase *DOptionMenuDescriptor::GetItem(FName name)
 {
 	for(unsigned i=0;i<mItems.Size(); i++)
 	{
-		FName nm = mItems[i]->GetAction(NULL);
+		FName nm = mItems[i]->mAction;
 		if (nm == name) return mItems[i];
 	}
 	return NULL;

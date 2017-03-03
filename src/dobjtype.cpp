@@ -501,7 +501,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	MemberOnly = (size < 4);
 	if (!unsign)
 	{
-		int maxval = (1 << ((8 * size) - 1)) - 1;
+		int maxval = (1u << ((8 * size) - 1)) - 1; // compute as unsigned to prevent overflow before -1
 		int minval = -maxval - 1;
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, minval));
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, maxval));
@@ -509,7 +509,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	else
 	{
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << (8 * size)) - 1));
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << ((8 * size) - 1))));
 	}
 	SetOps();
 }
@@ -722,10 +722,6 @@ PBool::PBool()
 {
 	mDescriptiveName = "Bool";
 	MemberOnly = false;
-	// Override the default max set by PInt's constructor
-	PSymbolConstNumeric *maxsym = static_cast<PSymbolConstNumeric *>(Symbols.FindSymbol(NAME_Max, false));
-	assert(maxsym != nullptr && maxsym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
-	maxsym->Value = 1;
 }
 
 /* PFloat *****************************************************************/
@@ -1400,10 +1396,13 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 			ar(key, *(DObject **)addr);
 		}
 	}
+	else if (writer != nullptr)
+	{
+		writer(ar, key, addr);
+	}
 	else
 	{
-		assert(0 && "Pointer points to a type we don't handle");
-		I_Error("Attempt to save pointer to unhandled type");
+		I_Error("Attempt to save pointer to unhandled type %s", PointedType->DescriptiveName());
 	}
 }
 
@@ -1429,6 +1428,10 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 			::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
 		}
 		return res;
+	}
+	else if (reader != nullptr)
+	{
+		return reader(ar, key, addr);
 	}
 	return false;
 }
@@ -2311,7 +2314,7 @@ void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField
 	{
 		const PField *field = fields[i];
 		// Skip fields without or with native serialization
-		if (!(field->Flags & VARF_Transient))
+		if (!(field->Flags & (VARF_Transient|VARF_Meta)))
 		{
 			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
 		}
@@ -2342,6 +2345,11 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
+				label, TypeName.GetChars());
+		}
+		else if ((static_cast<const PField *>(sym)->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a serializable field\n",
 				label, TypeName.GetChars());
 		}
 		else
@@ -2642,7 +2650,7 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 		// Don't write this part if it has no non-transient variables
 		for (unsigned i = 0; i < type->Fields.Size(); ++i)
 		{
-			if (!(type->Fields[i]->Flags & VARF_Transient))
+			if (!(type->Fields[i]->Flags & (VARF_Transient|VARF_Meta)))
 			{
 				// Tag this section with the class it came from in case
 				// a more-derived class has variables that shadow a less-
@@ -2892,6 +2900,7 @@ PClass::PClass()
 	bExported = false;
 	bDecorateClass = false;
 	ConstructNative = nullptr;
+	Meta = nullptr;
 	mDescriptiveName = "Class";
 
 	PClass::AllClasses.Push(this);
@@ -2909,6 +2918,11 @@ PClass::~PClass()
 	{
 		M_Free(Defaults);
 		Defaults = nullptr;
+	}
+	if (Meta != nullptr)
+	{
+		M_Free(Meta);
+		Meta = nullptr;
 	}
 }
 
@@ -3047,7 +3061,7 @@ PClass *PClass::FindClass (FName zaname)
 //
 //==========================================================================
 
-DObject *PClass::CreateNew() const
+DObject *PClass::CreateNew()
 {
 	BYTE *mem = (BYTE *)M_Malloc (Size);
 	assert (mem != nullptr);
@@ -3064,7 +3078,7 @@ DObject *PClass::CreateNew() const
 	}
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
-	InitializeSpecials(mem, Defaults);
+	InitializeSpecials(mem, Defaults, &PClass::SpecialInits);
 	return (DObject *)mem;
 }
 
@@ -3076,17 +3090,16 @@ DObject *PClass::CreateNew() const
 //
 //==========================================================================
 
-void PClass::InitializeSpecials(void *addr, void *defaults) const
+void PClass::InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits)
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle initialization natively.
-	if (!bRuntimeClass)
+	if ((!bRuntimeClass && Inits == &PClass::SpecialInits) || ParentClass == nullptr)
 	{
 		return;
 	}
-	assert(ParentClass != nullptr);
-	ParentClass->InitializeSpecials(addr, defaults);
-	for (auto tao : SpecialInits)
+	ParentClass->InitializeSpecials(addr, defaults, Inits);
+	for (auto tao : (this->*Inits))
 	{
 		tao.first->InitializeValue((char*)addr + tao.second, defaults == nullptr? nullptr : ((char*)defaults) + tao.second);
 	}
@@ -3101,7 +3114,7 @@ void PClass::InitializeSpecials(void *addr, void *defaults) const
 //
 //==========================================================================
 
-void PClass::DestroySpecials(void *addr) const
+void PClass::DestroySpecials(void *addr)
 {
 	// Once we reach a native class, we can stop going up the family tree,
 	// since native classes handle deinitialization natively.
@@ -3160,7 +3173,6 @@ void PClass::InitializeDefaults()
 		optr->ObjNext = nullptr;
 		optr->SetClass(this);
 
-
 		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
 		if (ParentClass->Defaults != nullptr)
 		{
@@ -3174,19 +3186,51 @@ void PClass::InitializeDefaults()
 		{
 			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
 		}
+
+		assert(MetaSize >= ParentClass->MetaSize);
+		if (MetaSize != 0)
+		{
+			Meta = (BYTE*)M_Malloc(MetaSize);
+
+			// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
+			if (ParentClass->Meta != nullptr)
+			{
+				memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+				if (MetaSize > ParentClass->MetaSize)
+				{
+					memset(Meta + ParentClass->MetaSize, 0, MetaSize - ParentClass->MetaSize);
+				}
+			}
+			else
+			{
+				memset(Meta, 0, MetaSize);
+			}
+
+			if (MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+			else memset(Meta, 0, MetaSize);
+		}
 	}
 
 	if (bRuntimeClass)
 	{
 		// Copy parent values from the parent defaults.
 		assert(ParentClass != nullptr);
-		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults);
+		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
+		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
 		for (const PField *field : Fields)
 		{
-			if (!(field->Flags & VARF_Native))
+			if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 			}
+		}
+	}
+	if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
+	for (const PField *field : Fields)
+	{
+		if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
+		{
+			field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
 		}
 	}
 }
@@ -3219,16 +3263,24 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 	const PClass *existclass = FindClass(name);
 
-	// This is a placeholder so fill it in
-	if (existclass != NULL && existclass->Size == (unsigned)-1)
+	if (existclass != nullptr)
 	{
-		type = const_cast<PClass*>(existclass);
-		if (!IsDescendantOf(type->ParentClass))
+		// This is a placeholder so fill it in
+		if (existclass->Size == TentativeClass)
 		{
-			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			type = const_cast<PClass*>(existclass);
+			if (!IsDescendantOf(type->ParentClass))
+			{
+				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			}
+			DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
+			notnew = true;
 		}
-		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
-		notnew = true;
+		else
+		{
+			// a different class with the same name already exists. Let the calling code deal with this.
+			return nullptr;
+		}
 	}
 	else
 	{
@@ -3240,6 +3292,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->bRuntimeClass = true;
 	Derive(type, name);
 	type->Size = size;
+	type->MetaSize = MetaSize;
 	if (size != TentativeClass)
 	{
 		type->InitializeDefaults();
@@ -3258,24 +3311,75 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 //==========================================================================
 //
+// PStruct :: AddField
+//
+// Appends a new metadata field to the end of a struct. Returns either the new field
+// or nullptr if a symbol by that name already exists.
+//
+//==========================================================================
+
+PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
+{
+	PField *field = new PField(name, type, flags);
+
+	// The new field is added to the end of this struct, alignment permitting.
+	field->Offset = (MetaSize + (type->Align - 1)) & ~(type->Align - 1);
+
+	// Enlarge this struct to enclose the new field.
+	MetaSize = unsigned(field->Offset + type->Size);
+
+	// This struct's alignment is the same as the largest alignment of any of
+	// its fields.
+	Align = MAX(Align, type->Align);
+
+	if (Symbols.AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	Fields.Push(field);
+
+	return field;
+}
+
+//==========================================================================
+//
 // PClass :: AddField
 //
 //==========================================================================
 
 PField *PClass::AddField(FName name, PType *type, DWORD flags)
 {
-	unsigned oldsize = Size;
-	PField *field = Super::AddField(name, type, flags);
-
-	// Only initialize the defaults if they have already been created.
-	// For ZScript this is not the case, it will first define all fields before
-	// setting up any defaults for any class.
-	if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
+	if (!(flags & VARF_Meta))
 	{
-		Defaults = (BYTE *)M_Realloc(Defaults, Size);
-		memset(Defaults + oldsize, 0, Size - oldsize);
+		unsigned oldsize = Size;
+		PField *field = Super::AddField(name, type, flags);
+
+		// Only initialize the defaults if they have already been created.
+		// For ZScript this is not the case, it will first define all fields before
+		// setting up any defaults for any class.
+		if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
+		{
+			Defaults = (BYTE *)M_Realloc(Defaults, Size);
+			memset(Defaults + oldsize, 0, Size - oldsize);
+		}
+		return field;
 	}
-	return field;
+	else
+	{
+		unsigned oldsize = MetaSize;
+		PField *field = AddMetaField(name, type, flags);
+
+		// Only initialize the defaults if they have already been created.
+		// For ZScript this is not the case, it will first define all fields before
+		// setting up any defaults for any class.
+		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
+		{
+			Meta = (BYTE *)M_Realloc(Meta, MetaSize);
+			memset(Meta + oldsize, 0, MetaSize - oldsize);
+		}
+		return field;
+	}
 }
 
 //==========================================================================

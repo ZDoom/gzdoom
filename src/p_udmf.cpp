@@ -518,7 +518,7 @@ public:
 		th->Gravity = 1;
 		th->RenderStyle = STYLE_Count;
 		th->Alpha = -1;
-		th->health = 1;
+		th->Health = 1;
 		th->FloatbobPhase = -1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -746,7 +746,7 @@ public:
 				break;
 
 			case NAME_Health:
-				th->health = CheckInt(key);
+				th->Health = CheckFloat(key);
 				break;
 
 			case NAME_Score:
@@ -1393,7 +1393,7 @@ public:
 				if (isTranslated) sec->special = P_TranslateSectorSpecial(sec->special);
 				else if (namespc == NAME_Hexen)
 				{
-					if (sec->special < 0 || sec->special > 255 || !HexenSectorSpecialOk[sec->special])
+					if (sec->special < 0 || sec->special > 140 || !HexenSectorSpecialOk[sec->special])
 						sec->special = 0;	// NULL all unknown specials
 				}
 				continue;
@@ -1656,6 +1656,10 @@ public:
 
 				case NAME_ceilingglowheight:
 					sec->planes[sector_t::ceiling].GlowHeight = (float)CheckFloat(key);
+					break;
+
+				case NAME_Noattack:
+					Flag(sec->Flags, SECF_NOATTACK, key);
 					break;
 
 				case NAME_MoreIds:

@@ -214,6 +214,7 @@ struct DamageTypeDefinition
 public:
 	DamageTypeDefinition() { Clear(); }
 
+	FString Obituary;
 	double DefaultFactor;
 	bool ReplaceFactor;
 	bool NoArmor;
@@ -221,6 +222,7 @@ public:
 	void Apply(FName type);
 	void Clear()
 	{
+		Obituary = "";
 		DefaultFactor = 1.;
 		ReplaceFactor = false;
 		NoArmor = false;
@@ -228,6 +230,7 @@ public:
 
 	static bool IgnoreArmor(FName type);
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
+	static FString GetObituary(FName type);
 
 private:
 	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);
@@ -287,36 +290,11 @@ public:
 
 	TArray<PClassActor *> VisibleToPlayerClass;
 
-	FString Obituary;		// Player was killed by this actor
-	FString HitObituary;	// Player was killed by this actor in melee
-	double DeathHeight;	// Height on normal death
-	double BurnHeight;		// Height on burning death
-	PalEntry BloodColor;	// Colorized blood
-	int GibHealth;			// Negative health below which this monster dies an extreme death
-	int WoundHealth;		// Health needed to enter wound state
-	double FastSpeed;		// speed in fast mode
-	double RDFactor;		// Radius damage factor
-	double CameraHeight;	// Height of camera when used as such
-	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
-	FName BloodType;		// Blood replacement type
-	FName BloodType2;		// Bloopsplatter replacement type
-	FName BloodType3;		// AxeBlood replacement type
-
 	FDropItem *DropItems;
 	FString SourceLumpName;
 	FIntCVar *distancecheck;
 
-	// Old Decorate compatibility stuff
-	bool DontHurtShooter;
-	int ExplosionRadius;
-	int ExplosionDamage;
-	int MeleeDamage;
-	FSoundID MeleeSound;
-	FName MissileName;
-	double MissileHeight;
-
 	// These are only valid for inventory items.
-	FString PickupMsg;
 	TArray<PClassActor *> RestrictedToPlayerClass;
 	TArray<PClassActor *> ForbiddenToPlayerClass;
 

@@ -138,9 +138,13 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, GetNumAxes)
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickOptions);
+	DMenuDescriptor **ddesc = MenuDescriptors.CheckKey("JoystickOptionsDefaults");
+	if (ddesc == nullptr) return;	// without any data the menu cannot be set up and must remain empty.
 	if (desc != NULL && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
 		DOptionMenuDescriptor *opt = (DOptionMenuDescriptor *)*desc;
+		DOptionMenuDescriptor *dopt = (DOptionMenuDescriptor *)*ddesc;
+		if (dopt == nullptr) return;
 		DMenuItemBase *it;
 
 		int i;
@@ -162,11 +166,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				}
 			}
 		}
-#ifdef _WIN32
-		opt->mItems.Resize(8);
-#else
-		opt->mItems.Resize(5);
-#endif
+		opt->mItems = dopt->mItems;
 
 		it = opt->GetItem("ConfigureMessage");
 		if (it != nullptr) it->SetValue(0, !!Joysticks.Size());
@@ -186,12 +186,12 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		{
 			opt->mSelectedItem = opt->mItems.Size() - 1;
 		}
-		opt->CalcIndent();
+		//opt->CalcIndent();
 
 		// If the joystick config menu is open, close it if the device it's open for is gone.
-		if (DMenu::CurrentMenu != nullptr && (DMenu::CurrentMenu->IsKindOf("JoystickConfigMenu")))
+		if (CurrentMenu != nullptr && (CurrentMenu->IsKindOf("JoystickConfigMenu")))
 		{
-			auto p = DMenu::CurrentMenu->PointerVar<IJoystickConfig>("mJoy");
+			auto p = CurrentMenu->PointerVar<IJoystickConfig>("mJoy");
 			if (p != nullptr)
 			{
 				unsigned i;
@@ -204,7 +204,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 				}
 				if (i == Joysticks.Size())
 				{
-					DMenu::CurrentMenu->Close();
+					CurrentMenu->Close();
 				}
 			}
 		}

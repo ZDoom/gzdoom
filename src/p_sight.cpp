@@ -107,6 +107,7 @@ class SightCheck
 	bool P_SightCheckLine (line_t *ld);
 	int P_SightBlockLinesIterator (int x, int y);
 	bool P_SightTraverseIntercepts ();
+	bool LineBlocksSight(line_t *ld);
 
 public:
 	bool P_SightPathTraverse ();
@@ -211,7 +212,14 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 	double trX = Trace.x + Trace.dx * in->frac;
 	double trY = Trace.y + Trace.dy * in->frac;
-	P_SightOpening (open, li, trX, trY);
+
+	P_SightOpening(open, li, trX, trY);
+	if (LineBlocksSight(in->d.line))
+	{
+		// This may not skip P_SightOpening, but only reduce the open range to 0.
+		open.range = 0;
+		open.bottom = open.top;
+	}
 
 	FLinePortal *lport = li->getPortal();
 
@@ -362,6 +370,42 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 }
 
 
+// performs trivial visibility checks.
+bool SightCheck::LineBlocksSight(line_t *ld)
+{
+	// try to early out the check
+	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
+		return true;	// stop checking
+
+						// [RH] don't see past block everything lines
+	if (ld->flags & ML_BLOCKEVERYTHING)
+	{
+		if (!(Flags & SF_SEEPASTBLOCKEVERYTHING))
+		{
+			return true;
+		}
+		// Pretend the other side is invisible if this is not an impact line
+		// that runs a script on the current map. Used to prevent monsters
+		// from trying to attack through a block everything line unless
+		// there's a chance their attack will make it nonblocking.
+		if (!(Flags & SF_SEEPASTSHOOTABLELINES))
+		{
+			if (!(ld->activation & SPAC_Impact))
+			{
+				return true;
+			}
+			if (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)
+			{
+				return true;
+			}
+			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 /*
 ==================
@@ -392,36 +436,9 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 		return true;		// line isn't crossed
 	}
 
-	// try to early out the check
-	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
-		return false;	// stop checking
-
-	// [RH] don't see past block everything lines
-	if (ld->flags & ML_BLOCKEVERYTHING)
+	if (!portalfound)	// when portals come into play, the quick-outs here may not be performed
 	{
-		if (!(Flags & SF_SEEPASTBLOCKEVERYTHING))
-		{
-			return false;
-		}
-		// Pretend the other side is invisible if this is not an impact line
-		// that runs a script on the current map. Used to prevent monsters
-		// from trying to attack through a block everything line unless
-		// there's a chance their attack will make it nonblocking.
-		if (!(Flags & SF_SEEPASTSHOOTABLELINES))
-		{
-			if (!(ld->activation & SPAC_Impact))
-			{
-				return false;
-			}
-			if (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)
-			{
-				return false;
-			}
-			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
-			{
-				return false;
-			}
-		}
+		if (LineBlocksSight(ld)) return false;
 	}
 
 	sightcounts[3]++;

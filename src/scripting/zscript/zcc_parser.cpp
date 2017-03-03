@@ -285,6 +285,7 @@ static void ParseSingleFile(const char *filename, int lump, void *parser, ZCCPar
 			tokentype = ZCC_FLOATCONST;
 			break;
 
+		case TK_None:	// 'NONE' is a token for SBARINFO but not here.
 		case TK_Identifier:
 			value.Int = FName(sc.String);
 			tokentype = ZCC_IDENTIFIER;

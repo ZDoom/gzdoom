@@ -78,6 +78,7 @@
 #include "menu/menu.h"
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -331,6 +332,8 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
+	Mark(E_FirstEventHandler);
+	Mark(E_LastEventHandler);
 	for (auto &s : level.sectorPortals)
 	{
 		Mark(s.mSkybox);
@@ -544,7 +547,6 @@ void FullGC()
 
 void Barrier(DObject *pointing, DObject *pointed)
 {
-	assert(pointed->GetClass() < (void*)0x1000000000000000);
 	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
 	assert(State != GCS_Finalize && State != GCS_Pause);

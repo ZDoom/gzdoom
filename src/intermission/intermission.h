@@ -58,15 +58,15 @@ enum EScrollDir
 };
 
 // actions that don't create objects
-#define WIPER_ID ((const PClass*)intptr_t(-1))
-#define TITLE_ID ((const PClass*)intptr_t(-2))
+#define WIPER_ID ((PClass*)intptr_t(-1))
+#define TITLE_ID ((PClass*)intptr_t(-2))
 
 //==========================================================================
 
 struct FIntermissionAction
 {
 	int mSize;
-	const PClass *mClass;
+	PClass *mClass;
 	FString mMusic;
 	int mMusicOrder;
 	int mCdTrack;

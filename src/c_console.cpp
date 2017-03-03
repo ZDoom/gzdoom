@@ -206,6 +206,9 @@ struct FCommandBuffer
 	unsigned CursorPos;
 	unsigned StartPos;	// First character to display
 
+	FString YankBuffer;	// Deleted text buffer
+	bool AppendToYankBuffer;	// Append consecutive deletes to buffer
+
 	FCommandBuffer()
 	{
 		CursorPos = StartPos = 0;
@@ -278,6 +281,30 @@ struct FCommandBuffer
 		StartPos = MAX(0, n);
 	}
 
+	unsigned WordBoundaryRight()
+	{
+		unsigned index = CursorPos;
+		while (index < Text.Len() && Text[index] == ' ') {
+			index++;
+		}
+		while (index < Text.Len() && Text[index] != ' ') {
+			index++;
+		}
+		return index;
+	}
+
+	unsigned WordBoundaryLeft()
+	{
+		int index = CursorPos - 1;
+		while (index > -1 && Text[index] == ' ') {
+			index--;
+		}
+		while (index > -1 && Text[index] != ' ') {
+			index--;
+		}
+		return (unsigned)index + 1;
+	}
+
 	void CursorStart()
 	{
 		CursorPos = 0;
@@ -309,6 +336,18 @@ struct FCommandBuffer
 		}
 	}
 
+	void CursorWordLeft()
+	{
+		CursorPos = WordBoundaryLeft();
+		MakeStartPosGood();
+	}
+
+	void CursorWordRight()
+	{
+		CursorPos = WordBoundaryRight();
+		MakeStartPosGood();
+	}
+
 	void DeleteLeft()
 	{
 		if (CursorPos > 0)
@@ -325,6 +364,50 @@ struct FCommandBuffer
 		{
 			Text.Remove(CursorPos, 1);
 			MakeStartPosGood();
+		}
+	}
+
+	void DeleteWordLeft()
+	{
+		if (CursorPos > 0)
+		{
+			unsigned index = WordBoundaryLeft();
+			if (AppendToYankBuffer) {
+				YankBuffer = FString(&Text[index], CursorPos - index) + YankBuffer;
+			} else {
+				YankBuffer = FString(&Text[index], CursorPos - index);
+			}
+			Text.Remove(index, CursorPos - index);
+			CursorPos = index;
+			MakeStartPosGood();
+		}
+	}
+
+	void DeleteLineLeft()
+	{
+		if (CursorPos > 0)
+		{
+			if (AppendToYankBuffer) {
+				YankBuffer = FString(&Text[0], CursorPos) + YankBuffer;
+			} else {
+				YankBuffer = FString(&Text[0], CursorPos);
+			}
+			Text.Remove(0, CursorPos);
+			CursorStart();
+		}
+	}
+
+	void DeleteLineRight()
+	{
+		if (CursorPos < Text.Len())
+		{
+			if (AppendToYankBuffer) {
+				YankBuffer += FString(&Text[CursorPos], Text.Len() - CursorPos);
+			} else {
+				YankBuffer = FString(&Text[CursorPos], Text.Len() - CursorPos);
+			}
+			Text.Truncate(CursorPos);
+			CursorEnd();
 		}
 	}
 
@@ -1180,7 +1263,7 @@ void C_DrawConsole (bool hw2d)
 						DTA_KeepRatio, true, TAG_DONE);
 
 				// Draw the marker
-				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
+				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (int32_t)(tickend - tickbegin)*8, TickerMax);
 				if (textScale == 1)
 					screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
 				else
@@ -1345,6 +1428,7 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 {
 	int data1 = ev->data1;
+	bool keepappending = false;
 
 	switch (ev->subtype)
 	{
@@ -1352,8 +1436,22 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		return false;
 
 	case EV_GUI_Char:
+		if (ev->data2)
+		{
+			// Bash-style shortcuts
+			if (data1 == 'b')
+			{
+				buffer.CursorWordLeft();
+				break;
+			}
+			else if (data1 == 'f')
+			{
+				buffer.CursorWordRight();
+				break;
+			}
+		}
 		// Add keypress to command line
-		buffer.AddChar(ev->data1);
+		buffer.AddChar(data1);
 		HistPos = NULL;
 		TabbedLast = false;
 		TabbedList = false;
@@ -1654,6 +1752,56 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				break;
 			}
 			break;
+
+		// Bash-style shortcuts
+		case 'A':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.CursorStart();
+			}
+			break;
+		case 'E':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.CursorEnd();
+			}
+			break;
+		case 'W':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteWordLeft();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'U':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteLineLeft();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'K':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteLineRight();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'Y':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.AddString(buffer.YankBuffer);
+				TabbedLast = false;
+				TabbedList = false;
+				HistPos = NULL;
+			}
+			break;
 		}
 		break;
 
@@ -1664,6 +1812,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		break;
 #endif
 	}
+
+	buffer.AppendToYankBuffer = keepappending;
+
 	// Ensure that the cursor is always visible while typing
 	CursorTicker = C_BLINKRATE;
 	cursoron = 1;

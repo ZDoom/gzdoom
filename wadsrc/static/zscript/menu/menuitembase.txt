@@ -6,11 +6,11 @@
 
 class MenuItemBase : Object native ui
 {
-	protected native int mXpos, mYpos;
+	protected native double mXpos, mYpos;
 	protected native Name mAction;
 	native bool mEnabled;
 
-	void Init(int xpos = 0, int ypos = 0, Name actionname = 'None')
+	void Init(double xpos = 0, double ypos = 0, Name actionname = 'None')
 	{
 		mXpos = xpos;
 		mYpos = ypos;
@@ -36,10 +36,10 @@ class MenuItemBase : Object native ui
 	virtual int GetIndent() { return 0; }
 	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
 
-	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
-	int GetY() { return mYpos; }
-	int GetX() { return mXpos; }
-	void SetX(int x) { mXpos = x; }
+	void OffsetPositionY(double ydelta) { mYpos += ydelta; }
+	double GetY() { return mYpos; }
+	double GetX() { return mXpos; }
+	void SetX(double x) { mXpos = x; }
 }
 
 // this is only used to parse font color ranges in MENUDEF

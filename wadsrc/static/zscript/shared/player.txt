@@ -3,23 +3,20 @@ class PlayerPawn : Actor native
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
+	native int			BonusHealth;
 	native int			MugShotMaxHealth;
 	native int			RunHealth;
 	native int			PlayerFlags;
 	native Inventory	InvFirst;		// first inventory item displayed on inventory bar
 	native Inventory	InvSel;			// selected inventory item
-	native meta String 	DisplayName;	// Display name (used in menus, etc.)
+	native Name 		SoundClass;		// Sound class
+	native Name 		Face;			// Doom status bar face (when used)
+	native Name 		Portrait;
+	native Name 		Slot[10];
+	native double 		HexenArmor[5];
+	native uint8		ColorRangeStart;	// Skin color range
+	native uint8		ColorRangeEnd;
 
-	native /*meta*/ Name 	SoundClass;		// Sound class
-	native /*meta*/ Name 	Face;			// Doom status bar face (when used)
-	native /*meta*/ Name 	Portrait;
-	native /*meta*/ Name 	Slot[10];
-	native /*meta*/ Name	InvulMode;
-	native /*meta*/ Name	HealingRadiusType;
-	native /*meta*/ double 	HexenArmor[5];
-	native /*meta*/ uint8	ColorRangeStart;	// Skin color range
-	native /*meta*/ uint8	ColorRangeEnd;
-	
 	// [GRB] Player class properties
 	native double		JumpZ;
 	native double		GruntSpeed;
@@ -37,6 +34,13 @@ class PlayerPawn : Actor native
 	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	native double		ViewBob;				// [SP] ViewBob Multiplier
 	native double		FullHeight;
+
+	meta Name HealingRadiusType;
+	meta Name InvulMode;
+	
+	Property prefix: Player;
+	Property HealRadiusType: HealingradiusType;
+	Property InvulnerabilityMode: InvulMode;
 	
 	Default
 	{
@@ -115,6 +119,36 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		if (victim.player != player && victim.IsTeammate(self))
+		{
+			victim = self;
+			return String.Format("$OB_FRIENDLY%c", random[Obituary](49, 53));
+		}
+		else
+		{
+			if (mod == 'Telefrag') return "$OB_MPTELEFRAG";
+
+			String message;
+			if (inflictor != NULL)
+			{
+				message = inflictor.GetObituary(victim, inflictor, mod, playerattack);
+			}
+			if (message.Length() == 0 && playerattack && player.ReadyWeapon != NULL)
+			{
+				message = player.ReadyWeapon.GetObituary(victim, inflictor, mod, playerattack);
+			}
+			if (message.Length() == 0)
+			{
+				if (mod == 'BFGSplash') return "$OB_MPBFG_SPLASH";
+				if (mod == 'Railgun') return "$OB_RAILGUN";
+				message = Obituary;
+			}
+			return message;
+		}
+	}
+	
 	// This is for SBARINFO.
 	int, int GetEffectTicsForItem(class<Inventory> item)
 	{
@@ -133,9 +167,11 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 
-	native int GetMaxHealth();
+	native int GetMaxHealth(bool withupgrades = false);
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
+	native static String GetPrintableDisplayName(Class<Actor> cls);
+
 }
 
 class PlayerChunk : PlayerPawn
@@ -293,7 +329,6 @@ struct PlayerInfo native	// this is what internally is known as player_t
 /* these are not doable yet
 ticcmd_t	cmd;
 usercmd_t	original_cmd;
-userinfo_t	userinfo;
 */
 	
 
@@ -307,11 +342,19 @@ userinfo_t	userinfo;
 	native PSprite FindPSprite(int id);
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
-	native String GetUserName();
-	native bool GetNeverSwitch();
 	native void DropWeapon();
 	native void BringUpWeapon();
 
+	native String GetUserName();
+	native Color GetColor();
+	native int GetColorSet();
+	native int GetPlayerClassNum();
+	native int GetSkin();
+	native bool GetNeverSwitch();
+	native int GetGender();
+	native int GetTeam();
+	native float GetAutoaim();
+	native void SetFOV(float fov);
 }
 
 struct PlayerClass native
@@ -321,4 +364,27 @@ struct PlayerClass native
 	native Array<int> Skins;
 	
 	native bool CheckSkin(int skin);
+	native void EnumColorsets(out Array<int> data);
+	native Name GetColorsetName(int setnum);
+}
+
+struct PlayerSkin native
+{
+	native readonly String		SkinName;
+	native readonly String		Face;
+	native readonly uint8		gender;
+	native readonly uint8		range0start;
+	native readonly uint8		range0end;
+	native readonly bool		othergame;
+	native readonly Vector2		Scale;
+	native readonly int			sprite;
+	native readonly int			crouchsprite;
+	native readonly int			namespc;
+};
+
+struct Team native
+{
+	const NoTeam = 255;
+	const Max = 16;
+	native String mName;
 }

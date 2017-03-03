@@ -38,6 +38,7 @@ conversation
     page
     {
         drop   = <string>;
+		userstring = <string>;        New field which can be used to pass data to custom conversation menu classes.
         ifitem
         {
             item   = <string>;
@@ -63,10 +64,6 @@ either refuse loading dialogues with the 'ZDoom' namespace or if it does not
 outright abort on incompatible namespaces fail with a type mismatch error on
 one of the specified propeties.
 
-In addition ZDoom defines one new field in the top level of a conversation block:
-
-id = <integer>; 	Assigns a conversation ID for use in Thing_SetConversation or in UDMF's 'conversation' actor property.
-
 ZDoom-format dialogues need to start with the line:
 
 namespace = "ZDoom";
@@ -86,6 +83,7 @@ conversation // Starts a dialog.
 				// the standard conversation ID ('actor' property) is used instead
 				// for this purpose but since 'ZDoom' namespace requires the actor
 				// to be a class name it needs a separate field for this.
+    class = <string>;   //Override the default conversation menu class for this conversation.
 
     page
     {
@@ -94,6 +92,8 @@ conversation // Starts a dialog.
 
         choice
         {
+			specialname = <string>; // Allows specifying a special by name.
+			
             // The amount of an item needed for this option to become available.
             // You can have as many as needed. All require blocks must be satisfied
             // to show this option.

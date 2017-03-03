@@ -251,20 +251,7 @@ PClassActor::PClassActor()
 	DamageFactors = NULL;
 	PainChances = NULL;
 
-	DeathHeight = -1;
-	BurnHeight = -1;
-	GibHealth = INT_MIN;
-	WoundHealth = 6;
-	FastSpeed = -1.;
-	RDFactor = 1.;
-	CameraHeight = INT_MIN;
-
 	DropItems = NULL;
-
-	DontHurtShooter = false;
-	ExplosionRadius = -1;
-	MeleeDamage = 0;
-
 	// Record this in the master list.
 	AllActorClasses.Push(this);
 }
@@ -308,31 +295,9 @@ void PClassActor::DeriveData(PClass *newclass)
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
 	newa->DefaultStateUsage = DefaultStateUsage;
-	newa->Obituary = Obituary;
-	newa->HitObituary = HitObituary;
-	newa->DeathHeight = DeathHeight;
-	newa->BurnHeight = BurnHeight;
-	newa->BloodColor = BloodColor;
-	newa->GibHealth = GibHealth;
-	newa->WoundHealth = WoundHealth;
-	newa->FastSpeed = FastSpeed;
-	newa->RDFactor = RDFactor;
-	newa->CameraHeight = CameraHeight;
-	newa->HowlSound = HowlSound;
-	newa->BloodType = BloodType;
-	newa->BloodType2 = BloodType2;
-	newa->BloodType3 = BloodType3;
 	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;
-
-	newa->DontHurtShooter = DontHurtShooter;
-	newa->ExplosionRadius = ExplosionRadius;
-	newa->ExplosionDamage = ExplosionDamage;
-	newa->MeleeDamage = MeleeDamage;
-	newa->MeleeSound = MeleeSound;
-	newa->MissileName = MissileName;
-	newa->MissileHeight = MissileHeight;
 
 	newa->VisibleToPlayerClass = VisibleToPlayerClass;
 
@@ -350,7 +315,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	}
 
 	// Inventory stuff
-	newa->PickupMsg = PickupMsg;
 	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
 	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
 
@@ -767,6 +731,13 @@ DEFINE_ACTION_FUNCTION(_DamageTypeDefinition, IgnoreArmor)
 	ACTION_RETURN_BOOL(DamageTypeDefinition::IgnoreArmor(type));
 }
 
+FString DamageTypeDefinition::GetObituary(FName type)
+{
+	DamageTypeDefinition *dtd = Get(type);
+	if (dtd) return dtd->Obituary;
+	return "";
+}
+
 
 //==========================================================================
 //
@@ -858,6 +829,12 @@ void FMapInfoParser::ParseDamageDefinition()
 			sc.MustGetFloat();
 			dtd.DefaultFactor = sc.Float;
 			if (dtd.DefaultFactor == 0) dtd.ReplaceFactor = true;
+		}
+		else if (sc.Compare("OBITUARY"))
+		{
+			sc.MustGetStringName("=");
+			sc.MustGetString();
+			dtd.Obituary = sc.String;
 		}
 		else if (sc.Compare("REPLACEFACTOR"))
 		{

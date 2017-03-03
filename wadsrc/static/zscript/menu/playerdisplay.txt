@@ -252,8 +252,8 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 		}
 		else
 		{
-			int x = (mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
-			int y = (mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
+			int x = int(mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
+			int y = int(mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
 
 			screen.DrawTexture(mBackdrop, false, x, y - 1,
 				DTA_DestWidth, 72 * CleanXfac,

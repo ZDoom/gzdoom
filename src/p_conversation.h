@@ -20,40 +20,41 @@ struct FStrifeDialogueItemCheck
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
-	PClassActor *DropType;
+	PClassActor *DropType = nullptr;
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
-	int ThisNodeNum;	// location of this node in StrifeDialogues
-	int ItemCheckNode;	// index into StrifeDialogues
+	int ThisNodeNum = 0;	// location of this node in StrifeDialogues
+	int ItemCheckNode = 0;	// index into StrifeDialogues
 
-	PClassActor *SpeakerType;
-	char *SpeakerName;
+	PClassActor *SpeakerType = nullptr;
+	FString SpeakerName;
 	FSoundID SpeakerVoice;
-	FTextureID Backdrop;
-	char *Dialogue;
-	char *Goodbye = nullptr; // must init to null for binary scripts to work as intended
+	FString Backdrop;
+	FString Dialogue;
+	FString Goodbye; // must init to null for binary scripts to work as intended
 
-	FStrifeDialogueReply *Children;
+	FStrifeDialogueReply *Children = nullptr;
+	FName MenuClassName;
+	FString UserData;
 };
 
 // FStrifeDialogueReply holds responses the player can give to the NPC
 struct FStrifeDialogueReply
 {
-	~FStrifeDialogueReply ();
-
-	FStrifeDialogueReply *Next;
-	PClassActor *GiveType;
-	int ActionSpecial;
-	int Args[5];
+	FStrifeDialogueReply *Next = nullptr;
+	PClassActor *GiveType = nullptr;
+	int ActionSpecial = 0;
+	int Args[5] = {};
+	int PrintAmount = 0;
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	TArray<FStrifeDialogueItemCheck> ItemCheckRequire;
 	TArray<FStrifeDialogueItemCheck> ItemCheckExclude;
-	char *Reply;
-	char *QuickYes;
-	int NextNode;	// index into StrifeDialogues
-	int LogNumber;
-	char *LogString;
-	char *QuickNo;
-	bool NeedsGold;
+	FString Reply;
+	FString QuickYes;
+	FString QuickNo;
+	FString LogString;
+	int NextNode = 0;	// index into StrifeDialogues
+	int LogNumber = 0;
+	bool NeedsGold = false;
 };
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;

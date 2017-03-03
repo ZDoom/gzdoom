@@ -665,7 +665,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	bool isPicnumOverride = thing->picnum.isValid();
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || !thing->IsInsideVisibleAngles())
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() ||  ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
 	{
 		return;
 	}

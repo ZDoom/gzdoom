@@ -80,12 +80,12 @@
 #include "math/cmath.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
+#include "sbar.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
 
 static FRandom pr_camissile ("CustomActorfire");
-static FRandom pr_camelee ("CustomMelee");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cajump ("CustomJump");
 static FRandom pr_cwbullet ("CustomWpBullet");
@@ -433,22 +433,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpawnHealth)
 	{
 		PARAM_SELF_PROLOGUE(AActor);
 		ret->SetInt(self->SpawnHealth());
-		return 1;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
-// GetGibHealth
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, GetGibHealth)
-{
-	if (numret > 0)
-	{
-		PARAM_SELF_PROLOGUE(AActor);
-		ret->SetInt(self->GetGibHealth());
 		return 1;
 	}
 	return 0;
@@ -925,86 +909,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CopyFriendliness)
 
 //==========================================================================
 //
-// Customizable attack functions which use actor parameters.
-//
-//==========================================================================
-static void DoAttack (AActor *self, bool domelee, bool domissile,
-					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,double MissileHeight)
-{
-	if (self->target == NULL) return;
-
-	A_FaceTarget (self);
-	if (domelee && MeleeDamage>0 && self->CheckMeleeRange ())
-	{
-		int damage = pr_camelee.HitDice(MeleeDamage);
-		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
-	}
-	else if (domissile && MissileType != NULL)
-	{
-		// This seemingly senseless code is needed for proper aiming.
-		double add = MissileHeight + self->GetBobOffset() - 32;
-		self->AddZ(add);
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, MissileType, false);
-		self->AddZ(-add);
-
-		if (missile)
-		{
-			// automatic handling of seeker missiles
-			if (missile->flags2&MF2_SEEKERMISSILE)
-			{
-				missile->tracer=self->target;
-			}
-			P_CheckMissileSpawn(missile, self->radius);
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_MeleeAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	int MeleeDamage = self->GetClass()->MeleeDamage;
-	FSoundID MeleeSound = self->GetClass()->MeleeSound;
-	DoAttack(self, true, false, MeleeDamage, MeleeSound, NULL, 0);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	DoAttack(self, false, true, 0, 0, MissileType, self->GetClass()->MissileHeight);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	int MeleeDamage = self->GetClass()->MeleeDamage;
-	FSoundID MeleeSound = self->GetClass()->MeleeSound;
-	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, self->GetClass()->MissileHeight);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_BasicAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT	(melee_damage);
-	PARAM_SOUND	(melee_sound);
-	PARAM_CLASS	(missile_type, AActor);
-	PARAM_FLOAT	(missile_height);
-
-	if (missile_type != NULL)
-	{
-		DoAttack(self, true, true, melee_damage, melee_sound, missile_type, missile_height);
-	}
-	return 0;
-}
-
-//==========================================================================
-//
 // Custom sound functions. 
 //
 //==========================================================================
@@ -1124,7 +1028,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	PARAM_INT_DEF(chance);
 	PARAM_INT_DEF(distance);
 
-	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
+	if ((flags & SMF_LOOK) && (self->tracer == nullptr) && (pr_seekermissile()<chance))
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
@@ -1260,9 +1164,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode)
 
 	if (damage < 0)	// get parameters from metadata
 	{
-		damage = self->GetClass()->ExplosionDamage;
-		distance = self->GetClass()->ExplosionRadius;
-		flags = !self->GetClass()->DontHurtShooter;
+		damage = self->IntVar(NAME_ExplosionDamage);
+		distance = self->IntVar(NAME_ExplosionRadius);
+		flags = !self->BoolVar(NAME_DontHurtShooter);
 		alert = false;
 	}
 	if (distance <= 0) distance = damage;
@@ -1408,26 +1312,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusDamageSelf)
 	}
 
 	return 0;
-}
-
-//==========================================================================
-//
-// Execute a line special / script
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CallSpecial)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT		(special);
-	PARAM_INT_DEF	(arg1);
-	PARAM_INT_DEF	(arg2);
-	PARAM_INT_DEF	(arg3);
-	PARAM_INT_DEF	(arg4);
-	PARAM_INT_DEF	(arg5);
-
-	bool res = !!P_ExecuteSpecial(special, NULL, self, false, arg1, arg2, arg3, arg4, arg5);
-
-	ACTION_RETURN_BOOL(res);
 }
 
 //==========================================================================
@@ -2696,8 +2580,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		else if (flags & SIXF_USEBLOODCOLOR)
 		{
 			// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
-			PalEntry bloodcolor = self->GetBloodColor();
-			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			mo->Translation = self->BloodTranslation;
 		}
 	}
 	if (flags & SIXF_TRANSFERPOINTERS)
@@ -3683,13 +3566,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(drop, AInventory);
+	PARAM_INT_DEF(amount);
 
 	if (drop)
 	{
 		AInventory *inv = self->FindInventory(drop);
 		if (inv)
 		{
-			self->DropInventory(inv);
+			self->DropInventory(inv, amount);
 		}
 	}
 	return 0;
@@ -3939,7 +3823,7 @@ DEFINE_ACTION_FUNCTION(AActor, PlayerSkinCheck)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	ACTION_RETURN_BOOL(self->player != NULL &&
-		skins[self->player->userinfo.GetSkin()].othergame);
+		Skins[self->player->userinfo.GetSkin()].othergame);
 }
 
 // [KS] *** Start of my modifications ***
@@ -4621,6 +4505,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 	return 0;
 }
 
+
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+};
+
 //===========================================================================
 //
 // A_RaiseMaster
@@ -4629,11 +4520,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	if (self->master != NULL)
 	{
-		P_Thing_Raise(self->master, copy ? self : NULL);
+		P_Thing_Raise(self->master, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 	}
 	return 0;
 }
@@ -4646,16 +4538,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	while ((mo = it.Next()) != NULL)
 	{
 		if (mo->master == self)
 		{
-			P_Thing_Raise(mo, copy ? self : NULL);
+			P_Thing_Raise(mo, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 		}
 	}
 	return 0;
@@ -4669,18 +4562,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(copy);
+	PARAM_INT_DEF(flags);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
+	bool copy = !!(flags & RF_TRANSFERFRIENDLINESS);
 	if (self->master != NULL)
 	{
 		while ((mo = it.Next()) != NULL)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				P_Thing_Raise(mo, copy ? self : NULL);
+				P_Thing_Raise(mo, copy ? self : NULL, (flags & RF_NOCHECKPOSITION));
 			}
 		}
 	}
@@ -6939,5 +6833,22 @@ DEFINE_ACTION_FUNCTION(AActor, SetCamera)
 	{
 		R_ClearPastViewer(cam);
 	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(name);
+	SprayDecal(self, name);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(name);
+	if (self->CheckLocalView(consoleplayer))
+		StatusBar->SetMugShotState(name);
 	return 0;
 }

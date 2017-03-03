@@ -426,7 +426,7 @@ static int update_signal(Voice *v)
 	return 0;
 }
 
-static void mix_mystery_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_mystery_signal(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
 	final_volume_t 
 		left = v->left_mix, 
@@ -477,7 +477,7 @@ static void mix_mystery_signal(SDWORD control_ratio, const sample_t *sp, float *
 	}
 }
 
-static void mix_single_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, float *ampat, int count)
+static void mix_single_signal(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, float *ampat, int count)
 {
 	final_volume_t amp;
 	int cc;
@@ -518,17 +518,17 @@ static void mix_single_signal(SDWORD control_ratio, const sample_t *sp, float *l
 	}
 }
 
-static void mix_single_left_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_single_left_signal(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
 	mix_single_signal(control_ratio, sp, lp, v, &v->left_mix, count);
 }
 
-static void mix_single_right_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_single_right_signal(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
 	mix_single_signal(control_ratio, sp, lp + 1, v, &v->right_mix, count);
 }
 
-static void mix_mono_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_mono_signal(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
 	final_volume_t 
 		left = v->left_mix;
@@ -568,7 +568,7 @@ static void mix_mono_signal(SDWORD control_ratio, const sample_t *sp, float *lp,
 	}
 }
 
-static void mix_mystery(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_mystery(int32_t control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
 	final_volume_t 
 		left = v->left_mix, 

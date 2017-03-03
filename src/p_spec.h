@@ -76,6 +76,7 @@ const double CARRYFACTOR = 3 / 32.;
 #define DAMAGE_NONPLAYERS			2
 #define DAMAGE_IN_AIR				4
 #define DAMAGE_SUBCLASSES_PROTECT	8
+#define DAMAGE_NO_ARMOR				16
 
 
 // [RH] If a deathmatch game, checks to see if noexit is enabled.
@@ -322,8 +323,15 @@ class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
 public:
+
+	enum EADType
+	{
+		adOpenClose,
+		adClose
+	};
+
 	DAnimatedDoor (sector_t *sector);
-	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim);
+	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, EADType type);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -336,6 +344,7 @@ protected:
 	int m_Timer;
 	double m_BotDist;
 	int m_Status;
+	int m_Type;
 	enum
 	{
 		Opening,
@@ -347,12 +356,12 @@ protected:
 	int m_Delay;
 	bool m_SetBlocking1, m_SetBlocking2;
 
-	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
+	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, EADType type);
 private:
 	DAnimatedDoor ();
 };
 
-bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
+bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
 
 //
 // P_CEILNG
@@ -442,6 +451,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
 
 bool EV_CeilingCrushStop (int tag, bool remove);
+bool EV_StopCeiling(int tag);
 void P_ActivateInStasisCeiling (int tag);
 
 
@@ -555,6 +565,7 @@ bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
 	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower = false);
 
 bool EV_FloorCrushStop (int tag);
+bool EV_StopFloor(int tag);
 bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed);
 
 class DElevator : public DMover

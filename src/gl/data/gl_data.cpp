@@ -109,6 +109,7 @@ void AdjustSpriteOffsets()
 		{
 			char str[9];
 			Wads.GetLumpName(str, i);
+			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, FTexture::TEX_Sprite, 0);
 			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > FWadCollection::IWAD_FILENUM)
 			{

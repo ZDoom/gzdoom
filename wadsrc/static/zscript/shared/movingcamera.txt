@@ -311,7 +311,7 @@ class PathFollower : Actor
 
 		while ( (spec = InterpolationSpecial(iterator.Next ())) )
 		{
-			A_CallSpecial(spec.special, spec.args[0], spec.args[1], spec.args[2], spec.args[3], spec.args[4]);
+			Level.ExecuteSpecial(spec.special, null, null, false, spec.args[0], spec.args[1], spec.args[2], spec.args[3], spec.args[4]);
 		}
 	}
 

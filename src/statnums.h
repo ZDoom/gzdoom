@@ -45,6 +45,7 @@ enum
 	STAT_AUTODECAL,							// A decal that can be automatically deleted
 	STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
 	STAT_TRAVELLING,						// An actor temporarily travelling to a new map
+	STAT_STATIC,							// persistent across maps.
 
   // Thinkers that do think
 	STAT_FIRST_THINKING=32,

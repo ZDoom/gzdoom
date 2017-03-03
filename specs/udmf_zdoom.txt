@@ -197,6 +197,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       desaturation = <float>;         // Color desaturation factor. 0 = none, 1 = full, default = 0.
       silent = <bool>;                // Actors in this sector make no sound,
       nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
+	  noattack = <bool>;              // Blocks monster attacks in this sector.
       dropactors = <bool>;            // Actors drop with instantly moving floors (*)
       norespawn = <bool>;             // Players can not respawn in this sector
       soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a
@@ -262,7 +263,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  gravity = <float>;		// Set per-actor gravity. Positive values are multiplied with the class's property, 
 	                            // negative values are used as their absolute. Default = 1.0.
 								
-	  health = <int>;			// Set per-actor health. Positive values are multiplied with the class's property,
+	  health = <float>;			// Set per-actor health. Positive values are multiplied with the class's property,
 								// negative values are used as their absolute. Default = 1.
 								
 	  renderstyle = <string>;	// Set per-actor render style, overriding the class default. Possible values can be "normal",

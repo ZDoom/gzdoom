@@ -64,6 +64,7 @@ public:
 
 	~FSerializer()
 	{
+		mErrors = 0;	// The destructor may not throw an exception so silence the error checker.
 		Close();
 	}
 	bool OpenWriter(bool pretty = true);

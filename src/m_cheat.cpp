@@ -55,6 +55,22 @@
 // writes some bytes to the network data stream, and the network code
 // later calls us.
 
+void cht_DoMDK(player_t *player, const char *mod)
+{
+	if (player->mo == NULL)
+	{
+		Printf("What do you want to kill outside of a game?\n");
+	}
+	else if (!deathmatch)
+	{
+		// Don't allow this in deathmatch even with cheats enabled, because it's
+		// a very very cheap kill.
+		P_LineAttack(player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE,
+			P_AimLineAttack(player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
+			mod, NAME_BulletPuff);
+	}
+}
+
 void cht_DoCheat (player_t *player, int cheat)
 {
 	static const char * const BeholdPowers[9] =
@@ -671,6 +687,7 @@ CCMD (mdk)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_MDK);
+	const char *name = argv.argc() > 1 ? argv[1] : "";
+	Net_WriteByte (DEM_MDK);
+	Net_WriteString(name);
 }

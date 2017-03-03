@@ -125,6 +125,7 @@ int starttime;
 extern FString BackupSaveName;
 
 bool savegamerestore;
+int finishstate;
 
 extern int mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
@@ -160,6 +161,7 @@ void G_DeferedInitNew (FGameStartup *gs)
 	d_skill = gs->Skill;
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
+	finishstate = FINISH_NoHub;
 }
 
 //==========================================================================
@@ -425,6 +427,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
+	DThinker::DestroyThinkersInList(STAT_STATIC);
 
 	if (paused)
 	{
@@ -776,7 +779,7 @@ void G_DoCompleted (void)
 		AM_Stop ();
 
 	wminfo.finished_ep = level.cluster - 1;
-	wminfo.LName0 = TexMan[TexMan.CheckForTexture(level.info->PName, FTexture::TEX_MiscPatch)];
+	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, FTexture::TEX_MiscPatch);
 	wminfo.current = level.MapName;
 
 	if (deathmatch &&
@@ -792,12 +795,12 @@ void G_DoCompleted (void)
 		if (nextinfo == NULL || strncmp (nextlevel, "enDSeQ", 6) == 0)
 		{
 			wminfo.next = nextlevel;
-			wminfo.LName1 = NULL;
+			wminfo.LName1.SetInvalid();
 		}
 		else
 		{
 			wminfo.next = nextinfo->MapName;
-			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->PName, FTexture::TEX_MiscPatch)];
+			wminfo.LName1 = TexMan.CheckForTexture(nextinfo->PName, FTexture::TEX_MiscPatch);
 		}
 	}
 
@@ -816,7 +819,6 @@ void G_DoCompleted (void)
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
-		wminfo.plyr[i].in = playeringame[i];
 		wminfo.plyr[i].skills = players[i].killcount;
 		wminfo.plyr[i].sitems = players[i].itemcount;
 		wminfo.plyr[i].ssecret = players[i].secretcount;
@@ -898,6 +900,7 @@ void G_DoCompleted (void)
 	}
 
 	gamestate = GS_INTERMISSION;
+	finishstate = mode;
 	viewactive = false;
 	automapactive = false;
 
@@ -1069,11 +1072,24 @@ void G_DoLoadLevel (int position, bool autosave)
 	// For each player, if they are viewing through a player, make sure it is themselves.
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
-		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
+		if (playeringame[ii])
 		{
-			players[ii].camera = players[ii].mo;
+			if (players[ii].camera == NULL || players[ii].camera->player != NULL)
+			{
+				players[ii].camera = players[ii].mo;
+			}
+			E_PlayerEntered(ii, finishstate == FINISH_SameHub);
+			// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
+			if (level.FromSnapshot) FBehavior::StaticStartTypedScripts(SCRIPT_Return, players[ii].mo, true);
 		}
 	}
+
+	if (level.FromSnapshot)
+	{
+		// [Nash] run REOPEN scripts upon map re-entry
+		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+	}
+
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
@@ -1355,22 +1371,6 @@ void G_FinishTravel ()
 		pawns[pawnsnum++] = pawn;
 	}
 
-	// [ZZ] fire the reopen hook.
-	//      if level is loaded from snapshot, and we don't have savegamerestore, this means we returned from a hub.
-	if (level.FromSnapshot)
-	{
-		// [Nash] run REOPEN scripts upon map re-entry
-		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
-
-		for (int i = 0; i < pawnsnum; i++)
-		{
-			// [ZZ] fire the enter hook.
-			E_PlayerEntered(int(pawns[i]->player - players), true);
-			//
-			FBehavior::StaticStartTypedScripts(SCRIPT_Return, pawns[i], true);
-		}
-	}
-
 	bglobal.FinishTravel ();
 
 	// make sure that, after travelling has completed, no travelling thinkers are left.
@@ -1461,6 +1461,7 @@ void G_InitLevelLocals ()
 	level.LevelName = level.info->LookupLevelName();
 	level.NextMap = info->NextMap;
 	level.NextSecretMap = info->NextSecretMap;
+	level.F1Pic = info->F1Pic;
 
 	compatflags.Callback();
 	compatflags2.Callback();
@@ -1623,6 +1624,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 				}
 			}
 		}
+		arc.Close();
 	}
 	// No reason to keep the snapshot around once the level's been entered.
 	level.info->Snapshot.Clean();
@@ -1909,6 +1911,7 @@ DEFINE_FIELD(FLevelLocals, LevelName)
 DEFINE_FIELD(FLevelLocals, MapName)
 DEFINE_FIELD(FLevelLocals, NextMap)
 DEFINE_FIELD(FLevelLocals, NextSecretMap)
+DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)
@@ -1934,6 +1937,7 @@ DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
 
 //==========================================================================
 //

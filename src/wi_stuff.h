@@ -32,8 +32,6 @@ class FTexture;
 //
 struct wbplayerstruct_t
 {
-	bool		in;			// whether the player is in game
-
 	// Player stats, kills, collected items etc.
 	int			skills;
 	int			sitems;
@@ -51,8 +49,8 @@ struct wbstartstruct_t
 	FString		current;	// [RH] Name of map just finished
 	FString		next;		// next level, [RH] actual map name
 
-	FTexture	*LName0;
-	FTexture	*LName1;
+	FTextureID	LName0;
+	FTextureID	LName1;
 
 	int			maxkills;
 	int			maxitems;

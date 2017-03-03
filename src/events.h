@@ -76,7 +76,8 @@ void E_SerializeEvents(FSerializer& arc);
 
 class DStaticEventHandler : public DObject // make it a part of normal GC process
 {
-	DECLARE_CLASS(DStaticEventHandler, DObject)
+	DECLARE_CLASS(DStaticEventHandler, DObject);
+	HAS_OBJECT_POINTERS
 public:
 	DStaticEventHandler()
 	{
@@ -99,6 +100,7 @@ public:
 	void Serialize(FSerializer& arc) override
 	{
 		Super::Serialize(arc);
+		/*
 		if (arc.isReading())
 		{
 			Printf("DStaticEventHandler::Serialize: reading object %s\n", GetClass()->TypeName.GetChars());
@@ -107,6 +109,7 @@ public:
 		{
 			Printf("DStaticEventHandler::Serialize: store object %s\n", GetClass()->TypeName.GetChars());
 		}
+		*/
 
 		arc("Order", Order);
 		arc("IsUiProcessor", IsUiProcessor);
@@ -155,6 +158,7 @@ public:
 	bool IsStatic() override { return false; }
 };
 extern DStaticEventHandler* E_FirstEventHandler;
+extern DStaticEventHandler* E_LastEventHandler;
 
 // we cannot call this DEvent because in ZScript, 'event' is a keyword
 class DBaseEvent : public DObject

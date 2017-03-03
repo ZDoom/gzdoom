@@ -31,6 +31,8 @@
 **
 */
 
+#include "gitinfo.h"
+
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
@@ -41,17 +43,21 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
+#ifdef GIT_DESCRIPTION
+#define VERSIONSTR GIT_DESCRIPTION
+#else
 #define VERSIONSTR "2.3pre"
+#endif
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION 2,3,9999,0
 #define RC_PRODUCTVERSION 2,3,9999,0
-#define RC_PRODUCTVERSION2 "2.3pre"
+#define RC_PRODUCTVERSION2 VERSIONSTR
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 232
+#define NETGAMEVERSION 233
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -81,8 +87,6 @@ const char *GetVersionString();
 // SVN revision ever got.
 #define SAVEVER 4550
 
-#define DYNLIGHT
-
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "GZDOOM"
 #define BASEWAD "gzdoom.pk3"
@@ -99,8 +103,5 @@ const char *GetVersionString();
 #define GAME_DIR ".config/" GAMENAMELOWERCASE
 #endif
 
-
-// The maximum length of one save game description for the menus.
-#define SAVESTRINGSIZE		24
 
 #endif //__VERSION_H__

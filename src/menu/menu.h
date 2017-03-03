@@ -9,7 +9,6 @@
 #include "r_data/r_translate.h"
 #include "c_cvars.h"
 #include "v_font.h"
-#include "version.h"
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
@@ -58,46 +57,58 @@ extern FGameStartup GameStartupInfo;
 
 struct FSaveGameNode
 {
-	char Title[SAVESTRINGSIZE];
+	FString SaveTitle;
 	FString Filename;
-	bool bOldVersion;
-	bool bMissingWads;
-	bool bNoDelete;
-
-	FSaveGameNode() { bNoDelete = false; }
+	bool bOldVersion = false;
+	bool bMissingWads = false;
+	bool bNoDelete = false;
 };
 
-struct SavegameManager
+struct FSavegameManager
 {
+private:
 	TArray<FSaveGameNode*> SaveGames;
+	FSaveGameNode NewSaveNode;
 	int LastSaved = -1;
 	int LastAccessed = -1;
-	int WindowSize = 0;
-	FSaveGameNode *quickSaveSlot = nullptr;
-
 	FileReader *currentSavePic = nullptr;
 	TArray<char> SavePicData;
-
 	FTexture *SavePic = nullptr;
 	FBrokenLines *SaveComment = nullptr;
 
-	void ClearSaveGames();
+public:
+	int WindowSize = 0;
+	FSaveGameNode *quickSaveSlot = nullptr;
+	~FSavegameManager();
+
+private:
 	int InsertSaveNode(FSaveGameNode *node);
-	int RemoveSaveSlot(int index);
+public:
+	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave);
+	void ClearSaveGames();
+
 	void ReadSaveStrings();
-	void NotifyNewSave(const char *file, const char *title, bool okForQuicksave);
+	void UnloadSaveData();
+
+	int RemoveSaveSlot(int index);
 	void LoadSavegame(int Selected);
 	void DoSave(int Selected, const char *savegamestring);
-	void DeleteEntry(int Selected);
-	void ExtractSaveData(int index);
-	void UnloadSaveData();
+	unsigned ExtractSaveData(int index);
 	void ClearSaveStuff();
 	bool DrawSavePic(int x, int y, int w, int h);
+	void DrawSaveComment(FFont *font, int cr, int x, int y, int scalefactor);
 	void SetFileInfo(int Selected);
+	unsigned SavegameCount();
+	FSaveGameNode *GetSavegame(int i);
+	void InsertNewSaveNode();
+	bool RemoveNewSaveNode();
 
 };
 
-extern SavegameManager savegameManager;
+extern FSavegameManager savegameManager;
+class DMenu;
+extern DMenu *CurrentMenu;
+extern int MenuTime;
 
 //=============================================================================
 //
@@ -112,7 +123,7 @@ class DMenuDescriptor : public DObject
 public:
 	FName mMenuName;
 	FString mNetgameMessage;
-	const PClass *mClass;
+	PClass *mClass = nullptr;
 
 	virtual size_t PropagateMark() { return 0;  }
 };
@@ -126,11 +137,11 @@ class DListMenuDescriptor : public DMenuDescriptor
 public:
 	TArray<DMenuItemBase *> mItems;
 	int mSelectedItem;
-	int mSelectOfsX;
-	int mSelectOfsY;
+	double mSelectOfsX;
+	double mSelectOfsY;
 	FTextureID mSelector;
 	int mDisplayTop;
-	int mXpos, mYpos;
+	double mXpos, mYpos;
 	int mWLeft, mWRight;
 	int mLinespacing;	// needs to be stored for dynamically created menus
 	int mAutoselect;	// this can only be set by internal menu creation functions
@@ -241,9 +252,7 @@ class DMenu : public DObject
 	DECLARE_CLASS (DMenu, DObject)
 	HAS_OBJECT_POINTERS
 
-protected:
-	bool mMouseCapture;
-	bool mBackbuttonSelected;
+
 
 public:
 	enum
@@ -253,45 +262,19 @@ public:
 		MOUSE_Release
 	};
 
-	enum
-	{
-		BACKBUTTON_TIME = 4*TICRATE
-	};
-
-	static DMenu *CurrentMenu;
-	static int MenuTime;
-
 	TObjPtr<DMenu> mParentMenu;
+	bool mMouseCapture;
+	bool mBackbuttonSelected;
+	bool DontDim;
 
 	DMenu(DMenu *parent = NULL);
-	virtual bool Responder (event_t *ev);
-	virtual bool MenuEvent (int mkey, bool fromcontroller);
-	virtual void Ticker ();
-	virtual void Drawer ();
-	virtual bool DimAllowed ();
 	bool TranslateKeyboardEvents();
 	virtual void Close();
-	virtual bool MouseEvent(int type, int x, int y);
-
-	virtual void SetFocus(DMenuItemBase *fc) {}
-	virtual bool CheckFocus(DMenuItemBase *fc) { return false;  }
-	virtual void ReleaseFocus() {}
-
-	virtual DMenuItemBase *GetItem(FName name) { return nullptr; }
 
 	bool CallResponder(event_t *ev);
 	bool CallMenuEvent(int mkey, bool fromcontroller);
-	bool CallMouseEvent(int type, int x, int y);
 	void CallTicker();
 	void CallDrawer();
-
-	bool MouseEventBack(int type, int x, int y);
-	void SetCapture();
-	void ReleaseCapture();
-	bool HasCapture()
-	{
-		return mMouseCapture;
-	}
 };
 
 //=============================================================================
@@ -304,73 +287,18 @@ class DMenuItemBase : public DObject
 {
 	DECLARE_CLASS(DMenuItemBase, DObject)
 public:
-	int mXpos, mYpos;
+	double mXpos, mYpos;
 	FNameNoInit mAction;
 	bool mEnabled;
 
-	bool CheckCoordinate(int x, int y);
-	void Ticker();
-	void Drawer(bool selected);
-	bool Selectable();
 	bool Activate();
-	FName GetAction(int *pparam);
 	bool SetString(int i, const char *s);
 	bool GetString(int i, char *s, int len);
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
-	void Enable(bool on);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	bool CheckHotkey(int c);
-	int GetWidth();
-	int GetIndent();
-	int Draw(DOptionMenuDescriptor *desc, int y, int indent, bool selected);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
-	int GetY() { return mYpos; }
-	int GetX() { return mXpos; }
-	void SetX(int x) { mXpos = x; }
-
-	void DrawSelector(int xofs, int yofs, FTextureID tex);
-
+	double GetY() { return mYpos; }
 };	
-
-//=============================================================================
-//
-// list menu class runs a menu described by a DListMenuDescriptor
-//
-//=============================================================================
-
-class DListMenu : public DMenu
-{
-	DECLARE_CLASS(DListMenu, DMenu)
-	HAS_OBJECT_POINTERS;
-public:
-
-	DListMenuDescriptor *mDesc;
-	DMenuItemBase *mFocusControl;
-
-	DListMenu(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
-	virtual void Init(DMenu *parent = NULL, DListMenuDescriptor *desc = NULL);
-	DMenuItemBase *GetItem(FName name);
-	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool MouseEvent(int type, int x, int y);
-	void Ticker ();
-	void Drawer ();
-	void SetFocus(DMenuItemBase *fc)
-	{
-		mFocusControl = fc;
-	}
-	bool CheckFocus(DMenuItemBase *fc)
-	{
-		return mFocusControl == fc;
-	}
-	void ReleaseFocus()
-	{
-		mFocusControl = NULL;
-	}
-};
-
 
 //=============================================================================
 //
@@ -396,40 +324,9 @@ extern FOptionMap OptionValues;
 
 //=============================================================================
 //
-// Input some text
+//
 //
 //=============================================================================
-
-class DTextEnterMenu : public DMenu
-{
-	DECLARE_ABSTRACT_CLASS(DTextEnterMenu, DMenu)
-
-public:
-	FString mEnterString;
-	unsigned int mEnterSize;
-	unsigned int mEnterPos;
-	int mSizeMode; // 1: size is length in chars. 2: also check string width
-	bool mInputGridOkay;
-
-	int InputGridX;
-	int InputGridY;
-
-	// [TP]
-	bool AllowColors;
-
-
-	// [TP] Added allowcolors
-	DTextEnterMenu(DMenu *parent, const char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
-
-	void Drawer ();
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool Responder(event_t *ev);
-	bool MouseEvent(int type, int x, int y);
-	FString GetText();
-};
-
-
-
 
 struct event_t;
 void M_EnableMenu (bool on) ;
@@ -442,7 +339,6 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
-int M_GetDefaultSkill();
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
@@ -457,7 +353,7 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
 DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
 DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
-DMenuItemBase * CreateListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID tex, FName command, int param);
-DMenuItemBase * CreateListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
+DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
+DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 
 #endif

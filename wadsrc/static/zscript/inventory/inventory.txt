@@ -23,8 +23,11 @@ class Inventory : Actor native
 	native bool bPickupGood;
 	native bool bCreateCopyMoved;
 	native bool bInitEffectFailed;
-	native meta String PickupMsg;
-	native /*meta*/ int GiveQuest;
+	meta String PickupMsg;
+	meta int GiveQuest;
+	
+	Property PickupMessage: PickupMsg;
+	Property GiveQuest: GiveQuest;
 	
 	Default
 	{
@@ -440,7 +443,7 @@ class Inventory : Actor native
 	//
 	//===========================================================================
 
-	virtual Inventory CreateTossable ()
+	virtual Inventory CreateTossable (int amt = -1)
 	{
 		// If self actor lacks a SpawnState, don't drop it. (e.g. A base weapon
 		// like the fist can't be dropped because you'll never see it.)
@@ -448,7 +451,7 @@ class Inventory : Actor native
 		{
 			return NULL;
 		}
-		if (bUndroppable || bUntossable || Owner == NULL || Amount <= 0)
+		if (bUndroppable || bUntossable || Owner == NULL || Amount <= 0 || amt == 0)
 		{
 			return NULL;
 		}
@@ -462,11 +465,13 @@ class Inventory : Actor native
 		let copy = Inventory(Spawn (GetClass(), Owner.Pos, NO_REPLACE));
 		if (copy != NULL)
 		{
+			amt = clamp(amt, 1, Amount);
+			
 			copy.MaxAmount = MaxAmount;
-			copy.Amount = 1;
+			copy.Amount = amt;
 			copy.DropTime = 30;
 			copy.bSpecial = copy.bSolid = false;
-			Amount--;
+			Amount -= amt;
 		}
 		return copy;
 	}

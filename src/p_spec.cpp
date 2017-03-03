@@ -466,7 +466,8 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 			return;
 	}
 
-	P_DamageMobj (actor, NULL, NULL, amount, type);
+	int dflags = (flags & DAMAGE_NO_ARMOR) ? DMG_NO_ARMOR : 0;
+	P_DamageMobj (actor, NULL, NULL, amount, type, dflags);
 }
 
 void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags)

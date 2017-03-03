@@ -36,13 +36,14 @@
 class Health : Inventory
 {
 	transient int PrevHealth;
-	/*meta*/ int LowHealth;
-	/*meta*/ String LowHealthMessage;
+	meta int LowHealth;
+	meta String LowHealthMessage;
 	
 	property LowMessage: LowHealth, LowHealthMessage;
 	
 	Default
 	{
+		+INVENTORY.ISHEALTH
 		Inventory.Amount 1;
 		Inventory.MaxAmount 0;
 		Inventory.PickupSound "misc/health_pkup";
@@ -85,8 +86,36 @@ class Health : Inventory
 		}
 		return false;
 	}
+}
 
-	
+class MaxHealth : Health
+{
+	//===========================================================================
+	//
+	// TryPickup
+	//
+	//===========================================================================
+
+	override bool TryPickup (in out Actor other)
+	{
+		bool success = false;
+		int savedAmount = MaxAmount;
+		let player = PlayerPawn(other);
+		MaxAmount = Health;
+		if (player)
+		{
+			if (player.BonusHealth < savedAmount)
+			{
+				player.BonusHealth = min(player.BonusHealth + Amount, savedAmount);
+				success = true;
+			}
+			MaxAmount += player.BonusHealth;
+		}
+		success |= Super.TryPickup(other);
+		MaxAmount = savedAmount;
+		if (success) GoAwayAndDie();
+		return success;
+	}
 }
 
 class HealthPickup : Inventory
@@ -99,6 +128,7 @@ class HealthPickup : Inventory
 	{
 		Inventory.DefMaxAmount;
 		+INVENTORY.INVBAR
+		+INVENTORY.ISHEALTH
 	}
 	
 	//===========================================================================
@@ -120,9 +150,9 @@ class HealthPickup : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
-		Inventory copy = Super.CreateTossable ();
+		Inventory copy = Super.CreateTossable (-1);
 		if (copy != NULL)
 		{
 			copy.health = health;

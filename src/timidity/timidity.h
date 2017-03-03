@@ -211,7 +211,7 @@ enum
 
 struct Sample
 {
-	SDWORD
+	int32_t
 		loop_start, loop_end, data_length,
 		sample_rate;
 	float
@@ -233,7 +233,7 @@ struct Sample
 		} sf2;
 	} envelope;
 	sample_t *data;
-	SDWORD 
+	int32_t
 		tremolo_sweep_increment, tremolo_phase_increment,
 		vibrato_sweep_increment, vibrato_control_ratio;
 	BYTE

@@ -387,6 +387,9 @@ enum ActorFlag7
 	MF7_SPRITEANGLE		= 0x02000000,	// [MC] Utilize the SpriteAngle property and lock the rotation to the degrees specified.
 	MF7_SMASHABLE		= 0x04000000,	// dies if hitting the floor.
 	MF7_NOSHIELDREFLECT = 0x08000000,	// will not be reflected by shields.
+	MF7_FORCEZERORADIUSDMG = 0x10000000,	// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
+	MF7_NOINFIGHTSPECIES = 0x20000000,	// don't start infights with one's own species.
+	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
 };
 
 // --- mobj.renderflags ---
@@ -427,6 +430,7 @@ enum ActorRenderFlag
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
+	RF_DONTINTERPOLATE	= 0x04000000,	// no render interpolation ever!
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -464,6 +468,7 @@ enum ActorBounceFlag
 	BOUNCE_MBF = 1<<12,			// This in itself is not a valid mode, but replaces MBF's MF_BOUNCE flag.
 	BOUNCE_AutoOffFloorOnly = 1<<13,		// like BOUNCE_AutoOff, but only on floors
 	BOUNCE_UseBounceState = 1<<14,	// Use Bounce[.*] states
+	BOUNCE_NotOnShootables = 1<<15,	// do not bounce off shootable actors if we are a projectile. Explode instead.
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
@@ -712,7 +717,7 @@ public:
 	virtual bool UseInventory (AInventory *item);
 
 	// Tosses an item out of the inventory.
-	AInventory *DropInventory (AInventory *item);
+	AInventory *DropInventory (AInventory *item, int amt = -1);
 
 	// Removes all items from the inventory.
 	void ClearInventory();
@@ -802,42 +807,12 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
-	PalEntry GetBloodColor() const
-	{
-		return GetClass()->BloodColor;
-	}
-
 	// These also set CF_INTERPVIEW for players.
 	void SetPitch(DAngle p, bool interpolate, bool forceclamp = false);
 	void SetAngle(DAngle ang, bool interpolate);
 	void SetRoll(DAngle roll, bool interpolate);
 
-	PClassActor *GetBloodType(int type = 0) const
-	{
-		PClassActor *bloodcls;
-		if (type == 0)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType);
-		}
-		else if (type == 1)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType2);
-		}
-		else if (type == 2)
-		{
-			bloodcls = PClass::FindActor(GetClass()->BloodType3);
-		}
-		else
-		{
-			return NULL;
-		}
-
-		if (bloodcls != NULL)
-		{
-			bloodcls = bloodcls->GetReplacement();
-		}
-		return bloodcls;
-	}
+	PClassActor *GetBloodType(int type = 0) const;
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
 	{
@@ -1003,29 +978,42 @@ public:
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	DVector3		__Pos;		// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
-	DVector3		OldRenderPos;
 
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
-	DAngle			VisibleStartAngle;
-	DAngle			VisibleStartPitch;
-	DAngle			VisibleEndAngle;
-	DAngle			VisibleEndPitch;
 	DRotator		Angles;
-	DVector3		Vel;
-	double			Speed;
-	double			FloatSpeed;
+	DVector2		Scale;				// Scaling values; 1 is normal size
+	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
 	int				sprite;				// used to find patch_t and flip value
 	uint8_t			frame;				// sprite frame to draw
 	uint8_t			effects;			// [RH] see p_effect.h
 	uint8_t			fountaincolor;		// Split out of 'effect' to have easier access.
-	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
-	ActorRenderFlags	renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
-	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
+	DWORD			Translation;
+
+	ActorRenderFlags	renderflags;		// Different rendering flags
+	ActorFlags		flags;
+	ActorFlags2		flags2;			// Heretic flags
+	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
+	ActorFlags4		flags4;			// [RH] Even more flags!
+	ActorFlags5		flags5;			// OMG! We need another one.
+	ActorFlags6		flags6;			// Shit! Where did all the flags go?
+	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
+	double			Floorclip;		// value to use for floor clipping
+	double			radius, Height;		// for movement checking
+
+	DAngle			VisibleStartAngle;
+	DAngle			VisibleStartPitch;
+	DAngle			VisibleEndAngle;
+	DAngle			VisibleEndPitch;
+
+	DVector3		OldRenderPos;
+	DVector3		Vel;
+	double			Speed;
+	double			FloatSpeed;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
@@ -1039,24 +1027,22 @@ public:
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
-	double			radius, Height;		// for movement checking
 	double			renderradius;
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
-	
-	SDWORD			tics;				// state tic counter
+	double			CameraHeight;	// Height of camera when used as such
+
+	double			RadiusDamageFactor;		// Radius damage factor
+	double			SelfDamageFactor;
+	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
+	int				WoundHealth;		// Health needed to enter wound state
+
+	int32_t			tics;				// state tic counter
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun
 	int				DamageVal;
 	VMFunction		*DamageFunc;
 	int				projectileKickback;
-	ActorFlags		flags;
-	ActorFlags2		flags2;			// Heretic flags
-	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
-	ActorFlags4		flags4;			// [RH] Even more flags!
-	ActorFlags5		flags5;			// OMG! We need another one.
-	ActorFlags6		flags6;			// Shit! Where did all the flags go?
-	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
 	DWORD			VisibleToTeam;
@@ -1076,10 +1062,10 @@ public:
 									// also the originator for missiles
 	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killough 2/15/98
 	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
-	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
+	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
-	SDWORD			threshold;		// if > 0, the target will be chased
-	SDWORD			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
+	int32_t			threshold;		// if > 0, the target will be chased
+	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
@@ -1094,7 +1080,6 @@ public:
 	TObjPtr<AActor>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
-	double			Floorclip;		// value to use for floor clipping
 
 	int				tid;			// thing identifier
 	int				special;		// special
@@ -1157,7 +1142,8 @@ public:
 	BYTE smokecounter;
 	BYTE FloatBobPhase;
 	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
-	DWORD Translation;
+	PalEntry BloodColor;
+	DWORD BloodTranslation;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	FSoundIDNoInit SeeSound;
@@ -1173,7 +1159,7 @@ public:
 	double MaxDropOffHeight;
 	double MaxStepHeight;
 
-	SDWORD Mass;
+	int32_t Mass;
 	SWORD PainChance;
 	int PainThreshold;
 	FNameNoInit DamageType;
@@ -1318,7 +1304,8 @@ public:
 	}
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{
-		return Prev + (ticFrac * (Pos() - Prev));
+		if (renderflags & RF_DONTINTERPOLATE) return Pos();
+		else return Prev + (ticFrac * (Pos() - Prev));
 	}
 	DRotator InterpolatedAngles(double ticFrac) const
 	{

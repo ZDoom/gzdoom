@@ -2651,16 +2651,6 @@ flickerlight LGNTAIL
     chance 0.8
 }
 
-object StrifeZap1
-{
-    frame ZAP1A { light ARROWZAP1 }
-    frame ZAP1B { light ARROWZAP2 }
-    frame ZAP1C { light ARROWZAP3 }
-    frame ZAP1D { light ARROWZAP4 }
-    frame ZAP1E { light ARROWZAP5 }
-    frame ZAP1F { light ARROWZAP6 }
-}
-
 object SpectralLightningBase
 {
     frame ZAP1A { light ARROWZAP1 }

@@ -88,6 +88,13 @@ CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCO
 ColorSetList ColorSets;
 PainFlashList PainFlashes;
 
+// [Nash] FOV cvar setting
+CUSTOM_CVAR(Float, fov, 90.f, CVAR_ARCHIVE | CVAR_USERINFO | CVAR_NOINITCALL)
+{
+	player_t *p = &players[consoleplayer];
+	p->SetFOV(fov);
+}
+
 struct PredictPos
 {
 	int gametic;
@@ -161,6 +168,13 @@ FString GetPrintableDisplayName(PClassActor *cls)
 	// Fixme; This needs a decent way to access the string table without creating a mess.
 	// [RH] ????
 	return cls->DisplayName;
+}
+
+DEFINE_ACTION_FUNCTION(APlayerPawn, GetPrintableDisplayName)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->DisplayName);
 }
 
 bool ValidatePlayerClass(PClassActor *ti, const char *name)
@@ -543,6 +557,40 @@ int player_t::GetSpawnClass()
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
 }
 
+// [Nash] Set FOV
+void player_t::SetFOV(float fov)
+{
+	player_t *p = &players[consoleplayer];
+	if (p != nullptr && p->mo != nullptr)
+	{
+		if (dmflags & DF_NO_FOV)
+		{
+			if (consoleplayer == Net_Arbitrator)
+			{
+				Net_WriteByte(DEM_MYFOV);
+			}
+			else
+			{
+				Printf("A setting controller has disabled FOV changes.\n");
+				return;
+			}
+		}
+		else
+		{
+			Net_WriteByte(DEM_MYFOV);
+		}
+		Net_WriteByte((BYTE)clamp<float>(fov, 5.f, 179.f));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetFOV)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_FLOAT(fov);
+	self->SetFOV((float)fov);
+	return 0;
+}
+
 //===========================================================================
 //
 // EnumColorsets
@@ -577,6 +625,14 @@ void EnumColorSets(PClassActor *cls, TArray<int> *out)
 	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
 }
 
+DEFINE_ACTION_FUNCTION(FPlayerClass, EnumColorSets)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_POINTER(out, TArray<int>);
+	EnumColorSets(self->Type, out);
+	return 0;
+}
+
 //==========================================================================
 //
 //
@@ -594,6 +650,14 @@ FPlayerColorSet *GetColorSet(PClassActor *cls, int setnum)
 		}
 	}
 	return nullptr;
+}
+
+DEFINE_ACTION_FUNCTION(FPlayerClass, GetColorSetName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPlayerClass);
+	PARAM_INT(setnum);
+	auto p = GetColorSet(self->Type, setnum);
+	ACTION_RETURN_INT(p ? p->Name.GetIndex() : 0);
 }
 
 //==========================================================================
@@ -654,6 +718,49 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)
 	ACTION_RETURN_BOOL(self->userinfo.GetNeverSwitch());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColor());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColorSet)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetColorSet());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPlayerClassNum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetPlayerClassNum());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetSkin());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetGender());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetAutoaim)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetAutoaim());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetTeam)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetTeam());
+}
+
+
 //===========================================================================
 //
 // APlayerPawn
@@ -674,6 +781,7 @@ void APlayerPawn::Serialize(FSerializer &arc)
 
 	arc("jumpz", JumpZ, def->JumpZ)
 		("maxhealth", MaxHealth, def->MaxHealth)
+		("bonushealth", BonusHealth, def->BonusHealth)
 		("runhealth", RunHealth, def->RunHealth)
 		("spawnmask", SpawnMask, def->SpawnMask)
 		("forwardmove1", ForwardMove1, def->ForwardMove1)
@@ -1227,9 +1335,9 @@ const char *APlayerPawn::GetSoundClass() const
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
-		(size_t)player->userinfo.GetSkin() < numskins)
+		(unsigned)player->userinfo.GetSkin() < Skins.Size())
 	{
-		return skins[player->userinfo.GetSkin()].name;
+		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
 
 	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
@@ -1243,15 +1351,18 @@ const char *APlayerPawn::GetSoundClass() const
 //
 //===========================================================================
 
-int APlayerPawn::GetMaxHealth() const 
+int APlayerPawn::GetMaxHealth(bool withupgrades) const 
 { 
-	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	int ret = MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+	if (withupgrades) ret += stamina + BonusHealth;
+	return ret;
 }
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	ACTION_RETURN_INT(self->GetMaxHealth());
+	PARAM_BOOL_DEF(withupgrades);
+	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
 }
 
 //===========================================================================
@@ -1781,8 +1892,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
 	}
 
 	// Set the crouch sprite?
@@ -1793,10 +1904,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 			crouchspriteno = player->mo->crouchsprite;
 		}
 		else if (!(actor->flags4 & MF4_NOSKIN) &&
-				(spritenum == skins[player->userinfo.GetSkin()].sprite ||
-				 spritenum == skins[player->userinfo.GetSkin()].crouchsprite))
+				(spritenum == Skins[player->userinfo.GetSkin()].sprite ||
+				 spritenum == Skins[player->userinfo.GetSkin()].crouchsprite))
 		{
-			crouchspriteno = skins[player->userinfo.GetSkin()].crouchsprite;
+			crouchspriteno = Skins[player->userinfo.GetSkin()].crouchsprite;
 		}
 		else
 		{ // no sprite -> squash the existing one
@@ -2623,9 +2734,19 @@ void P_PlayerThink (player_t *player)
 			else if (level.IsJumpingAllowed() && player->onground && player->jumpTics == 0)
 			{
 				double jumpvelz = player->mo->JumpZ * 35 / TICRATE;
+				double jumpfac = 0;
 
 				// [BC] If the player has the high jump power, double his jump velocity.
-				if ( player->cheats & CF_HIGHJUMP )	jumpvelz *= 2;
+				// (actually, pick the best factors from all active items.)
+				for (auto p = player->mo->Inventory; p != nullptr; p = p->Inventory)
+				{
+					if (p->IsKindOf(NAME_PowerHighJump))
+					{
+						double f = p->FloatVar(NAME_Strength);
+						if (f > jumpfac) jumpfac = f;
+					}
+				}
+				if (jumpfac > 0) jumpvelz *= jumpfac;
 
 				player->mo->Vel.Z += jumpvelz;
 				player->mo->flags2 &= ~MF2_ONMOBJ;
@@ -2752,7 +2873,7 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			int maxhealth = player->mo->GetMaxHealth() + player->mo->stamina;
+			int maxhealth = player->mo->GetMaxHealth(true);
 			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
 			{
 				if (player->health - 5 < maxhealth)
@@ -3225,6 +3346,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 
 DEFINE_FIELD(APlayerPawn, crouchsprite)
 DEFINE_FIELD(APlayerPawn, MaxHealth)
+DEFINE_FIELD(APlayerPawn, BonusHealth)
 DEFINE_FIELD(APlayerPawn, MugShotMaxHealth)
 DEFINE_FIELD(APlayerPawn, RunHealth)
 DEFINE_FIELD(APlayerPawn, PlayerFlags)
@@ -3249,18 +3371,13 @@ DEFINE_FIELD(APlayerPawn, FlechetteType)
 DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
-
-DEFINE_FIELD(APlayerPawn, HealingRadiusType)
 DEFINE_FIELD(APlayerPawn, SoundClass)
 DEFINE_FIELD(APlayerPawn, Face)
 DEFINE_FIELD(APlayerPawn, Portrait)
 DEFINE_FIELD(APlayerPawn, Slot)
-DEFINE_FIELD(APlayerPawn, InvulMode)
 DEFINE_FIELD(APlayerPawn, HexenArmor)
 DEFINE_FIELD(APlayerPawn, ColorRangeStart)
 DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
-
-DEFINE_FIELD(PClassActor, DisplayName)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

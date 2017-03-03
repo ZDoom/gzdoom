@@ -37,32 +37,42 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	// 2. MyHandler3->2:
 	//    E_FirstEventHandler = MyHandler2, E_LastEventHandler = MyHandler3
 
+	// (Yes, all those write barriers here are really needed!)
 	if (before != nullptr)
 	{
 		// if before is not null, link it before the existing handler.
 		// note that before can be first handler, check for this.
 		handler->next = before;
+		GC::WriteBarrier(handler, before);
 		handler->prev = before->prev;
+		GC::WriteBarrier(handler, before->prev);
 		before->prev = handler;
+		GC::WriteBarrier(before, handler);
 		if (before == E_FirstEventHandler)
+		{
 			E_FirstEventHandler = handler;
+			GC::WriteBarrier(handler);
+		}
 	}
 	else
 	{
 		// so if before is null, it means add last.
 		// it can also mean that we have no handlers at all yet.
 		handler->prev = E_LastEventHandler;
+		GC::WriteBarrier(handler, E_LastEventHandler);
 		handler->next = nullptr;
-		if (E_FirstEventHandler == nullptr)
-			E_FirstEventHandler = handler;
+		if (E_FirstEventHandler == nullptr)	E_FirstEventHandler = handler;
 		E_LastEventHandler = handler;
+		GC::WriteBarrier(handler);
 		if (handler->prev != nullptr)
+		{
 			handler->prev->next = handler;
+			GC::WriteBarrier(handler->prev, handler);
+		}
 	}
 
 	if (handler->IsStatic())
 	{
-		handler->ObjectFlags |= OF_Fixed;
 		handler->ObjectFlags |= OF_Transient;
 	}
 
@@ -80,16 +90,28 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 
 	// link out of normal list
 	if (handler->prev)
+	{
 		handler->prev->next = handler->next;
+		GC::WriteBarrier(handler->prev, handler->next);
+	}
 	if (handler->next)
+	{
 		handler->next->prev = handler->prev;
+		GC::WriteBarrier(handler->next, handler->prev);
+	}
 	if (handler == E_FirstEventHandler)
+	{
 		E_FirstEventHandler = handler->next;
+		GC::WriteBarrier(handler->next);
+	}
 	if (handler == E_LastEventHandler)
+	{
 		E_LastEventHandler = handler->prev;
+		GC::WriteBarrier(handler->prev);
+	}
 	if (handler->IsStatic())
 	{
-		handler->ObjectFlags &= ~(OF_Fixed|OF_Transient);
+		handler->ObjectFlags &= ~OF_Transient;
 		handler->Destroy();
 	}
 	return true;
@@ -427,7 +449,13 @@ DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 
 // declarations
-IMPLEMENT_CLASS(DStaticEventHandler, false, false);
+IMPLEMENT_CLASS(DStaticEventHandler, false, true);
+
+IMPLEMENT_POINTERS_START(DStaticEventHandler)
+IMPLEMENT_POINTER(next)
+IMPLEMENT_POINTER(prev)
+IMPLEMENT_POINTERS_END
+
 IMPLEMENT_CLASS(DEventHandler, false, false);
 IMPLEMENT_CLASS(DBaseEvent, false, false)
 IMPLEMENT_CLASS(DRenderEvent, false, false)
@@ -1135,7 +1163,7 @@ CCMD(netevent)
 		Net_WriteByte(DEM_NETEVENT);
 		Net_WriteString(argv[1]);
 		Net_WriteByte(argn);
-		for (int i = 0; i < argn; i++)
+		for (int i = 0; i < 3; i++)
 			Net_WriteLong(arg[i]);
 	}
 }

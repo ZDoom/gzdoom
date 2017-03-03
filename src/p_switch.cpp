@@ -69,7 +69,7 @@ public:
 	bool			bFlippable;
 	bool			bReturning;
 	FSwitchDef		*m_SwitchDef;
-	SDWORD			m_Frame;
+	int32_t			m_Frame;
 	DWORD			m_Timer;
 	DVector2		m_Pos;
 

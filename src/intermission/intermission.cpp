@@ -68,6 +68,7 @@ IMPLEMENT_POINTERS_END
 
 extern int		NoWipe;
 
+CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //==========================================================================
 //
 //
@@ -593,7 +594,7 @@ void DIntermissionScreenCast::Drawer ()
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
 			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
-			skins != NULL)
+			Skins.Size() > 0)
 		{
 			// Only use the skin sprite if this class has not been removed from the
 			// PlayerClasses list.
@@ -601,7 +602,7 @@ void DIntermissionScreenCast::Drawer ()
 			{
 				if (PlayerClasses[i].Type == mClass)
 				{
-					FPlayerSkin *skin = &skins[players[consoleplayer].userinfo.GetSkin()];
+					FPlayerSkin *skin = &Skins[players[consoleplayer].userinfo.GetSkin()];
 					castsprite = skin->sprite;
 
 					if (!(mDefaults->flags4 & MF4_NOSKIN))
@@ -647,7 +648,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 int DIntermissionScreenScroller::Responder (event_t *ev)
 {
 	int res = Super::Responder(ev);
-	if (res == -1)
+	if (res == -1 && !nointerscrollabort)
 	{
 		mBackground = mSecondPic;
 		mTicker = mScrollDelay + mScrollTime;

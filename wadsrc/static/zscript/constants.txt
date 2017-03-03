@@ -214,20 +214,23 @@ enum ESelectWeaponFlags
 // Morph constants
 enum EMorphFlags
 {
-	MRF_ADDSTAMINA = 1,
-	MRF_FULLHEALTH = 2,
-	MRF_UNDOBYTOMEOFPOWER = 4,
-	MRF_UNDOBYCHAOSDEVICE = 8,
-	MRF_FAILNOTELEFRAG = 16,
-	MRF_FAILNOLAUGH = 32,
-	MRF_WHENINVULNERABLE = 64,
-	MRF_LOSEACTUALWEAPON = 128,
-	MRF_NEWTIDBEHAVIOUR = 256,
-	MRF_UNDOBYDEATH = 512,
-	MRF_UNDOBYDEATHFORCED = 1024,
-	MRF_UNDOBYDEATHSAVES = 2048,
-	MRF_UNDOALWAYS = 4096,
-	MRF_TRANSFERTRANSLATION = 8192,
+	MRF_OLDEFFECTS			= 0x00000000,
+	MRF_ADDSTAMINA			= 0x00000001,
+	MRF_FULLHEALTH			= 0x00000002,
+	MRF_UNDOBYTOMEOFPOWER	= 0x00000004,
+	MRF_UNDOBYCHAOSDEVICE	= 0x00000008,
+	MRF_FAILNOTELEFRAG		= 0x00000010,
+	MRF_FAILNOLAUGH			= 0x00000020,
+	MRF_WHENINVULNERABLE	= 0x00000040,
+	MRF_LOSEACTUALWEAPON	= 0x00000080,
+	MRF_NEWTIDBEHAVIOUR		= 0x00000100,
+	MRF_UNDOBYDEATH			= 0x00000200,
+	MRF_UNDOBYDEATHFORCED	= 0x00000400,
+	MRF_UNDOBYDEATHSAVES	= 0x00000800,
+	MRF_UNDOBYTIMEOUT		= 0x00001000,
+	MRF_UNDOALWAYS			= 0x00002000,
+	MRF_TRANSFERTRANSLATION = 0x00004000,
+	MRF_STANDARDUNDOING	= MRF_UNDOBYTOMEOFPOWER | MRF_UNDOBYCHAOSDEVICE | MRF_UNDOBYTIMEOUT,
 };
 
 // Flags for A_RailAttack and A_CustomRailgun
@@ -996,6 +999,19 @@ enum EFindFloorCeiling
 	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
 };
 
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+}
+
+enum eFogParm
+{
+	FOGP_DENSITY = 0,
+	FOGP_OUTSIDEDENSITY = 1,
+	FOGP_SKYFOG = 2,
+}
+
 enum ETeleport
 {
 	TELF_DESTFOG			= 1,
@@ -1028,6 +1044,18 @@ enum PaletteFlashFlags
 	PF_ICE				= 4,
 	PF_HAZARD			= 8,
 };
+
+enum EGameState
+{
+	GS_LEVEL,
+	GS_INTERMISSION,
+	GS_FINALE,
+	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,
+	GS_HIDECONSOLE,
+	GS_STARTUP,
+	GS_TITLELEVEL,
+}
 
 enum EGameAction
 {
@@ -1076,17 +1104,21 @@ enum EPlayerCheats
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
-	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
-	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
-	CF_REFLECTION		= 1 << 19,
-	CF_PROSPERITY		= 1 << 20,
-	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
+
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
-	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+
 	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
 	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
+
+	// These flags no longer exist, but keep the names for some stray mod that might have used them. 
+	CF_DRAIN			= 0,
+	CF_HIGHJUMP			= 0,
+	CF_REFLECTION		= 0,
+	CF_PROSPERITY		= 0,
+	CF_DOUBLEFIRINGSPEED= 0,
+	CF_INFINITEAMMO		= 0,
 };
 
 const TEXTCOLOR_BRICK			= "\034A";

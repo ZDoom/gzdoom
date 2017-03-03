@@ -732,34 +732,6 @@ CCMD (dir)
 	chdir (curdir);
 }
 
-CCMD (fov)
-{
-	player_t *player = who ? who->player : &players[consoleplayer];
-
-	if (argv.argc() != 2)
-	{
-		Printf ("fov is %g\n", player->DesiredFOV);
-		return;
-	}
-	else if (dmflags & DF_NO_FOV)
-	{
-		if (consoleplayer == Net_Arbitrator)
-		{
-			Net_WriteByte (DEM_FOV);
-		}
-		else
-		{
-			Printf ("A setting controller has disabled FOV changes.\n");
-			return;
-		}
-	}
-	else
-	{
-		Net_WriteByte (DEM_MYFOV);
-	}
-	Net_WriteByte (clamp (atoi (argv[1]), 5, 179));
-}
-
 //==========================================================================
 //
 // CCMD warp
@@ -880,7 +852,7 @@ CCMD(linetarget)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, false);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, argv.argc() > 1 && atoi(argv[1]) != 0);
 	else
 		Printf("No target found\n");
 }
@@ -893,7 +865,7 @@ CCMD(info)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, true);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, !(argv.argc() > 1 && atoi(argv[1]) == 0));
 	else
 		Printf("No target found. Info cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
@@ -902,7 +874,7 @@ CCMD(info)
 CCMD(myinfo)
 {
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	C_PrintInfo(players[consoleplayer].mo);
+	C_PrintInfo(players[consoleplayer].mo, true);
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);
@@ -937,14 +909,20 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	AActor *mo;
 	const PClass *FilterClass = NULL;
 	int counter = 0;
+	int tid = 0;
 
 	if (FilterName != NULL)
 	{
 		FilterClass = PClass::FindActor(FilterName);
 		if (FilterClass == NULL)
 		{
-			Printf("%s is not an actor class.\n", FilterName);
-			return;
+			char *endp;
+			tid = (int)strtol(FilterName, &endp, 10);
+			if (*endp != 0)
+			{
+				Printf("%s is not an actor class.\n", FilterName);
+				return;
+			}
 		}
 	}
 	TThinkerIterator<AActor> it;
@@ -953,10 +931,13 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			counter++;
-			if (!countOnly)
-				Printf ("%s at (%f,%f,%f)\n",
-					mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+			if (tid == 0 || tid == mo->tid)
+			{
+				counter++;
+				if (!countOnly)
+					Printf("%s at (%f,%f,%f)\n",
+						mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+			}
 		}
 	}
 	Printf("%i match(s) found.\n", counter);

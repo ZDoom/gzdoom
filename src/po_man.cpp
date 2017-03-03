@@ -147,7 +147,7 @@ polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for u
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static TArray<SDWORD> KnownPolySides;
+static TArray<int32_t> KnownPolySides;
 static FPolyNode *FreePolyNodes;
 
 // CODE --------------------------------------------------------------------

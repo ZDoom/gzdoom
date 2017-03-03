@@ -810,6 +810,10 @@ void D_Display ()
 			{
 				StatusBar->DrawBottomStuff (HUD_AltHud);
 				if (DrawFSHUD || automapactive) DrawHUD();
+				if (players[consoleplayer].camera && players[consoleplayer].camera->player)
+				{
+					StatusBar->DrawCrosshair();
+				}
 				StatusBar->Draw (HUD_AltHud);
 				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
@@ -2688,6 +2692,7 @@ void D_DoomMain (void)
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			M_InitVideoModesMenu();
+			Renderer->RemapVoxels();
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}
@@ -2708,6 +2713,7 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
+		DThinker::DestroyThinkersInList(STAT_STATIC);
 		P_FreeLevelData();
 		P_FreeExtraLevelData();
 

@@ -558,10 +558,11 @@ OptionMenu "MouseOptions"
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu "JoystickOptions"
+OptionMenu "JoystickOptionsDefaults"
 {
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
+	Option "$JOYMNU_NOMENU", "m_blockcontrollers", "YesNo"
 	IfOption(Windows)
 	{
 		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"
@@ -574,6 +575,11 @@ OptionMenu "JoystickOptions"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED2", "ConnectMessage2"
 	
 	// The rest will be filled in by joystick code if devices get connected or disconnected
+}
+
+OptionMenu "JoystickOptions"
+{
+	Title "$JOYMNU_OPTIONS"
 }
 
 OptionValue "JoyAxisMapNames"
@@ -632,6 +638,7 @@ OptionValue PuffTypes
 {
 	0.0, "$OPTVAL_SPRITES"
 	1.0, "$OPTVAL_PARTICLES"
+	2.0, "$OPTVAL_SPRITESPARTICLES"
 }
 
 OptionValue Wipes
@@ -940,6 +947,7 @@ OptionMenu "MiscOptions"
 	Option "$MISCMNU_SAVELOADCONFIRMATION",			"saveloadconfirmation", "OnOff"
 	Slider "$MISCMNU_AUTOSAVECOUNT",			"autosavecount", 1, 20, 1, 0
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
+	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
@@ -1003,6 +1011,13 @@ OptionValue MapBackTypes
 	2, "$OPTVAL_MAPDEFINEDCOLORSONLY"
 }
 
+OptionValue MapTriggers
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_NODOORS"
+	2, "$OPTVAL_ON"
+}
+
 OptionMenu AutomapOptions
 {
 	Title "$AUTOMAPMNU_TITLE"
@@ -1026,7 +1041,7 @@ OptionMenu AutomapOptions
 	Option "$AUTOMAPMNU_SHOWMAPLABEL",			"am_showmaplabel", "MaplabelTypes"
 	Option "$AUTOMAPMNU_DRAWMAPBACK",			"am_drawmapback", "MapBackTypes"
 	Option "$AUTOMAPMNU_SHOWKEYS",				"am_showkeys", "OnOff"
-	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "OnOff"
+	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "MapTriggers"
 	Option "$AUTOMAPMNU_SHOWTHINGSPRITES",		"am_showthingsprites", "STSTypes"
 }
 

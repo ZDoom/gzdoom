@@ -49,7 +49,6 @@
 #include "i_system.h"
 #include "gdtoa.h"
 #include "backend/vmbuilder.h"
-#include "version.h"
 
 static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
 {
@@ -1040,6 +1039,11 @@ void ZCCCompiler::CompileAllFields()
 					type->Size = Classes[i]->Type()->ParentClass->Size;
 				}
 			}
+			if (Classes[i]->Type()->ParentClass)
+				type->MetaSize = Classes[i]->Type()->ParentClass->MetaSize;
+			else
+				type->MetaSize = 0;
+
 			if (CompileFields(type, Classes[i]->Fields, nullptr, &Classes[i]->TreeNodes, false, !!HasNativeChildren.CheckKey(type)))
 			{
 				// Remove from the list if all fields got compiled.
@@ -1130,11 +1134,6 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		if (field->Flags & ZCC_Meta)
 		{
 			varflags |= VARF_Meta | VARF_Static | VARF_ReadOnly;	// metadata implies readonly
-			if (!(field->Flags & ZCC_Native))
-			{
-				// Non-native meta data is not implemented yet and requires some groundwork in the class copy code.
-				Error(field, "Metadata member %s must be native", FName(field->Names->Name).GetChars());
-			}
 		}
 
 		if (field->Type->ArraySize != nullptr)
@@ -1155,22 +1154,28 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				
 				if (varflags & VARF_Native)
 				{
-					auto querytype = (varflags & VARF_Meta) ? type->GetClass() : type;
-					fd = FindField(querytype, FName(name->Name).GetChars());
-					if (fd == nullptr)
+					if (varflags & VARF_Meta)
 					{
-						Error(field, "The member variable '%s.%s' has not been exported from the executable", type->TypeName.GetChars(), FName(name->Name).GetChars());
+						Error(field, "Native meta variable %s not allowed", FName(name->Name).GetChars());
 					}
-					else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
-					{
-						Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
-					}
-					// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
 					else
 					{
-						// for bit fields the type must point to the source variable.
-						if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
-						type->AddNativeField(name->Name, thisfieldtype, fd->FieldOffset, varflags, fd->BitValue);
+						fd = FindField(type, FName(name->Name).GetChars());
+						if (fd == nullptr)
+						{
+							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
+						}
+						else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
+						{
+							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
+						}
+						// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
+						else
+						{
+							// for bit fields the type must point to the source variable.
+							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
+							type->AddNativeField(name->Name, thisfieldtype, fd->FieldOffset, varflags, fd->BitValue);
+						}
 					}
 				}
 				else if (hasnativechildren)
@@ -1248,8 +1253,10 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		FString qualifiedname;
 		// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
 		// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
-		if (prefix == NAME_None) qualifiedname.Format("@property@%s", FName(p->NodeName).GetChars());
-		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), FName(p->NodeName).GetChars());
+		FName name = FName(p->NodeName);
+		if (prefix == NAME_None) qualifiedname.Format("@property@%s", name.GetChars());
+		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
+
 		fields.ShrinkToFit();
 		if (!type->Symbols.AddSymbol(new PProperty(qualifiedname, fields)))
 		{
@@ -1420,22 +1427,19 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		break;
 
 	case AST_DynArrayType:
-		if (allowarraytypes)
+	{
+		auto atype = static_cast<ZCC_DynArrayType *>(ztype);
+		auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
+		if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
 		{
-			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
-			auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
-			if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
-			{
-				Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
-			}
-			else
-			{
-				retval = NewDynArray(ftype);
-			}
-			break;
+			Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+		}
+		else
+		{
+			retval = NewDynArray(ftype);
 		}
 		break;
-
+	}
 	case AST_ClassType:
 	{
 		auto ctype = static_cast<ZCC_ClassType *>(ztype);
@@ -1755,7 +1759,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 
 		if (f->Flags & VARF_Meta)
 		{
-			addr = ((char*)bag.Info) + f->Offset;
+			addr = ((char*)bag.Info->Meta) + f->Offset;
 		}
 		else
 		{
@@ -2250,7 +2254,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if (type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
+					if ((type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3) || type->IsA(RUNTIME_CLASS(PDynArray)))
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);
@@ -2711,7 +2715,7 @@ void ZCCCompiler::CompileStates()
 						state.Misc1 = IntConstFromNode(sl->Offset, c->Type());
 						state.Misc2 = IntConstFromNode(static_cast<ZCC_Expression *>(sl->Offset->SiblingNext), c->Type());
 					}
-#ifdef DYNLIGHT
+
 					if (sl->Lights != nullptr)
 					{
 						auto l = sl->Lights;
@@ -2721,7 +2725,6 @@ void ZCCCompiler::CompileStates()
 							l = static_cast<decltype(l)>(l->SiblingNext);
 						} while (l != sl->Lights);
 					}
-#endif
 
 					if (sl->Action != nullptr)
 					{

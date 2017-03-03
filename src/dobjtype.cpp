@@ -1398,8 +1398,7 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 	}
 	else
 	{
-		assert(0 && "Pointer points to a type we don't handle");
-		I_Error("Attempt to save pointer to unhandled type");
+		I_Error("Attempt to save pointer to unhandled type %s", PointedType->DescriptiveName());
 	}
 }
 

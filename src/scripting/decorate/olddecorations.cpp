@@ -483,7 +483,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Mass"))
 		{
 			sc.MustGetFloat ();
-			defaults->Mass = SDWORD(sc.Float);
+			defaults->Mass = int32_t(sc.Float);
 		}
 		else if (sc.Compare ("Translation1"))
 		{

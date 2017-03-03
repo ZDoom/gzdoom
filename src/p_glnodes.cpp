@@ -82,13 +82,13 @@ static void CreateCachedNodes(MapData *map);
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {
-	SDWORD x,y;
+	int32_t x,y;
 };
 
 struct gl3_mapsubsector_t
 {
-	SDWORD numsegs;
-	SDWORD firstseg;    // Index of first one; segs are stored sequentially.
+	int32_t numsegs;
+	int32_t firstseg;    // Index of first one; segs are stored sequentially.
 };
 
 struct glseg_t
@@ -102,11 +102,11 @@ struct glseg_t
 
 struct glseg3_t
 {
-	SDWORD			v1;
-	SDWORD			v2;
+	int32_t			v1;
+	int32_t			v2;
 	WORD			linedef;
 	WORD			side;
-	SDWORD			partner;
+	int32_t			partner;
 };
 
 struct gl5_mapnode_t
@@ -621,7 +621,7 @@ static bool LoadNodes (FileReader * lump)
 			no->dy = LittleShort(mn->dy)<<FRACBITS;
 			for (j = 0; j < 2; j++)
 			{
-				SDWORD child = LittleLong(mn->children[j]);
+				int32_t child = LittleLong(mn->children[j]);
 				if (child & GL5_NF_SUBSECTOR)
 				{
 					child &= ~GL5_NF_SUBSECTOR;

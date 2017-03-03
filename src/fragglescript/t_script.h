@@ -182,7 +182,7 @@ public:
 
 	union value_t
 	{
-		SDWORD i;
+		int32_t i;
 		fsfix fixed;          // haleyjd: fixed-point
 		
 		// the following are only used in the global script so we don't need to bother with them

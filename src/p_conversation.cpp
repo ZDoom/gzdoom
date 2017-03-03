@@ -66,22 +66,22 @@
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
 {
-	SDWORD GiveType;
-	SDWORD Item[3];
-	SDWORD Count[3];
+	int32_t GiveType;
+	int32_t Item[3];
+	int32_t Count[3];
 	char Reply[32];
 	char Yes[80];
-	SDWORD Link;
-	DWORD Log;
+	int32_t Link;
+	uint32_t Log;
 	char No[80];
 };
 
 struct Speech
 {
-	DWORD SpeakerType;
-	SDWORD DropType;
-	SDWORD ItemCheck[3];
-	SDWORD Link;
+	uint32_t SpeakerType;
+	int32_t DropType;
+	int32_t ItemCheck[3];
+	int32_t Link;
 	char Name[16];
 	char Sound[8];
 	char Backdrop[8];
@@ -92,9 +92,9 @@ struct Speech
 // The Teaser version of the game uses an older version of the structure
 struct TeaserSpeech
 {
-	DWORD SpeakerType;
-	SDWORD DropType;
-	DWORD VoiceNumber;
+	uint32_t SpeakerType;
+	int32_t DropType;
+	uint32_t VoiceNumber;
 	char Name[16];
 	char Dialogue[320];
 	Response Responses[5];
@@ -116,8 +116,8 @@ static int ConversationPauseTic;
 static int StaticLastReply;
 
 static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
-static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
+static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
@@ -243,7 +243,7 @@ bool LoadScriptFile (const char *name, bool include, int type)
 static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type)
 {
 	int i;
-	DWORD prevSpeakerType;
+	uint32_t prevSpeakerType;
 	FStrifeDialogueNode *node;
 	char buffer[4];
 
@@ -317,7 +317,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType)
+static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -393,7 +393,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;

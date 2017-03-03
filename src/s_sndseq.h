@@ -44,7 +44,7 @@ protected:
 	DSeqNode ();
 	DSeqNode (int sequence, int modenum);
 
-	SDWORD *m_SequencePtr;
+	int32_t *m_SequencePtr;
 	int m_Sequence;
 
 	FSoundID m_CurrentSoundID;
@@ -74,7 +74,7 @@ struct FSoundSequence
 	FName	 SeqName;
 	FName	 Slot;
 	FSoundID StopSound;
-	SDWORD	 Script[1];	// + more until end of sequence script
+	int32_t	 Script[1];	// + more until end of sequence script
 };
 
 void S_ParseSndSeq (int levellump);
@@ -93,7 +93,7 @@ void SN_StopSequence (FPolyObj *poly);
 bool SN_AreModesSame(int sequence, seqtype_t type, int mode1, int mode2);
 bool SN_AreModesSame(FName name, int mode1, int mode2);
 void SN_UpdateActiveSequences (void);
-ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr);
+ptrdiff_t SN_GetSequenceOffset (int sequence, int32_t *sequencePtr);
 void SN_DoStop (void *);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);

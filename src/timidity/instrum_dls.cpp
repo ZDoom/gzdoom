@@ -253,7 +253,7 @@ http://www.midi.org/about-midi/dls/dlsspec.shtml
 #define FAR
 typedef SWORD	SHORT;
 typedef WORD	USHORT;
-typedef SDWORD	LONG;
+typedef int32_t	LONG;
 typedef DWORD	ULONG;
 #define mmioFOURCC	MAKE_ID
 #define DEFINE_GUID(A, B, C, E, F, G, H, I, J, K, L, M)
@@ -1075,15 +1075,15 @@ static double to_normalized_percent(int decipercent)
 }
 
 /* convert from 8bit value to fractional offset (15.15) */
-static SDWORD to_offset(int offset)
+static int32_t to_offset(int offset)
 {
-	return (SDWORD)offset << (7+15);
+	return (int32_t)offset << (7+15);
 }
 
 /* calculate ramp rate in fractional unit;
 * diff = 8bit, time = msec
 */
-static SDWORD calc_rate(Renderer *song, int diff, int sample_rate, double msec)
+static int32_t calc_rate(Renderer *song, int diff, int sample_rate, double msec)
 {
 	double rate;
 
@@ -1093,7 +1093,7 @@ static SDWORD calc_rate(Renderer *song, int diff, int sample_rate, double msec)
 		diff = 255;
 	diff <<= (7+15);
 	rate = ((double)diff / song->rate) * song->control_ratio * 1000.0 / msec;
-	return (SDWORD)rate;
+	return (int32_t)rate;
 }
 
 static int load_connection(ULONG cConnections, CONNECTION *artList, USHORT destination)

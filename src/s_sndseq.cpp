@@ -34,8 +34,8 @@
 // MACROS ------------------------------------------------------------------
 
 #define GetCommand(a)		((a) & 255)
-#define GetData(a)			(SDWORD(a) >> 8 )
-#define GetFloatData(a)		float((SDWORD(a) >> 8 )/65536.f)
+#define GetData(a)			(int32_t(a) >> 8 )
+#define GetFloatData(a)		float((int32_t(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
 #define HexenPlatSeq(a)		(a)
 #define HexenDoorSeq(a)		((a) | 0x40)
@@ -1390,7 +1390,7 @@ void SN_StopAllSequences (void)
 //
 //==========================================================================
 
-ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr)
+ptrdiff_t SN_GetSequenceOffset (int sequence, int32_t *sequencePtr)
 {
 	return sequencePtr - Sequences[sequence]->Script;
 }

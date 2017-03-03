@@ -46,7 +46,7 @@
 struct sectortype
 {
 	SWORD wallptr, wallnum;
-	SDWORD ceilingZ, floorZ;
+	int32_t ceilingZ, floorZ;
 	SWORD ceilingstat, floorstat;
 	SWORD ceilingpicnum, ceilingheinum;
 	SBYTE ceilingshade;
@@ -74,7 +74,7 @@ struct sectortype
 	//32 bytes
 struct walltype
 {
-	SDWORD x, y;
+	int32_t x, y;
 	SWORD point2, nextwall, nextsector, cstat;
 	SWORD picnum, overpicnum;
 	SBYTE shade;
@@ -100,7 +100,7 @@ struct walltype
 	//44 bytes
 struct spritetype
 {
-	SDWORD x, y, z;
+	int32_t x, y, z;
 	SWORD cstat, picnum;
 	SBYTE shade;
 	BYTE pal, clipdist, filler;
@@ -146,8 +146,8 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *nu
 static void LoadSectors (sectortype *bsectors, int count);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
 static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
-static vertex_t *FindVertex (SDWORD x, SDWORD y);
-static void CreateStartSpot (SDWORD *pos, FMapThing *start);
+static vertex_t *FindVertex (int32_t x, int32_t y);
+static void CreateStartSpot (int32_t *pos, FMapThing *start);
 static void CalcPlane (SlopeWork &slope, secplane_t &plane);
 static void Decrypt (void *to, const void *from, int len, int key);
 
@@ -232,7 +232,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 
 	numsprites = *(WORD *)(data + 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype));
 	*sprites = new FMapThing[numsprites + 1];
-	CreateStartSpot ((SDWORD *)(data + 4), *sprites);
+	CreateStartSpot ((int32_t *)(data + 4), *sprites);
 	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)),
 		NULL, numsprites, (sectortype *)(data + 22), *sprites + 1);
 
@@ -755,7 +755,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 //
 //==========================================================================
 
-vertex_t *FindVertex (SDWORD xx, SDWORD yy)
+vertex_t *FindVertex (int32_t xx, int32_t yy)
 {
 	int i;
 
@@ -780,7 +780,7 @@ vertex_t *FindVertex (SDWORD xx, SDWORD yy)
 //
 //==========================================================================
 
-static void CreateStartSpot (SDWORD *pos, FMapThing *start)
+static void CreateStartSpot (int32_t *pos, FMapThing *start)
 {
 	short angle = LittleShort(*(WORD *)(&pos[3]));
 	FMapThing mt = { 0, };

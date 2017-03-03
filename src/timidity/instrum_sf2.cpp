@@ -199,12 +199,12 @@ static double timecent_to_sec(SWORD timecent)
 	return pow(2.0, timecent / 1200.0);
 }
 
-static SDWORD to_offset(int offset)
+static int32_t to_offset(int offset)
 {
-	return (SDWORD)offset << (7+15);
+	return (int32_t)offset << (7+15);
 }
 
-static SDWORD calc_rate(Renderer *song, int diff, double sec)
+static int32_t calc_rate(Renderer *song, int diff, double sec)
 {
 	double rate;
 
@@ -214,7 +214,7 @@ static SDWORD calc_rate(Renderer *song, int diff, double sec)
 		diff = 255;
 	diff <<= (7+15);
 	rate = ((double)diff / song->rate) * song->control_ratio / sec;
-	return (SDWORD)rate;
+	return (int32_t)rate;
 }
 
 
@@ -1524,7 +1524,7 @@ void SFFile::LoadSample(SFSample *sample)
 		{
 			BYTE samp;
 			*fp >> samp;
-			sample->InMemoryData[i] = ((((SDWORD(sample->InMemoryData[i] * 32768) << 8) | samp) << 8) >> 8) / 8388608.f;
+			sample->InMemoryData[i] = ((((int32_t(sample->InMemoryData[i] * 32768) << 8) | samp) << 8) >> 8) / 8388608.f;
 		}
 	}
 	// Final 0 byte is for interpolation.

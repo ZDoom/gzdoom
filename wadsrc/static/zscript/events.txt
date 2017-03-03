@@ -343,4 +343,6 @@ class EventHandler : StaticEventHandler native
 
     static native bool Register(StaticEventHandler handler);
     static native bool Unregister(StaticEventHandler handler);
+    
+    clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

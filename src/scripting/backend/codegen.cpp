@@ -7859,6 +7859,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 								Self = new FxSelf(ScriptPosition);
 								Self->ValueType = NewPointer(cls);
 							}
+							else novirtual = false;
 						}
 					}
 				}

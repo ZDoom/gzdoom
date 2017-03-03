@@ -60,6 +60,9 @@ bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
 // this executes on console/net events.
 void E_Console(int player, FString name, int arg1, int arg2, int arg3);
 
+// send networked event. unified function.
+bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3);
+
 // check if there is anything that should receive GUI events
 bool E_CheckUiProcessors();
 // check if we need native mouse due to UiProcessors

@@ -630,6 +630,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
 
 // ===========================================
 //
@@ -1040,22 +1041,45 @@ static DConsoleEvent* E_SetupConsoleEvent()
 
 void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3)
 {
-	IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+	if (player < 0)
 	{
-		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
-			return;
-		DConsoleEvent* e = E_SetupConsoleEvent();
+		IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+		{
+			// don't create excessive DObjects if not going to be processed anyway
+			if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
+				return;
+			DConsoleEvent* e = E_SetupConsoleEvent();
 
-		//
-		e->Player = player;
-		e->Name = name;
-		e->Args[0] = arg1;
-		e->Args[1] = arg2;
-		e->Args[2] = arg3;
+			//
+			e->Player = player;
+			e->Name = name;
+			e->Args[0] = arg1;
+			e->Args[1] = arg2;
+			e->Args[2] = arg3;
 
-		VMValue params[2] = { (DStaticEventHandler*)this, e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+			VMValue params[2] = { (DStaticEventHandler*)this, e };
+			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		}
+	}
+	else
+	{
+		IFVIRTUAL(DStaticEventHandler, NetworkProcess)
+		{
+			// don't create excessive DObjects if not going to be processed anyway
+			if (func == DStaticEventHandler_NetworkProcess_VMPtr)
+				return;
+			DConsoleEvent* e = E_SetupConsoleEvent();
+
+			//
+			e->Player = player;
+			e->Name = name;
+			e->Args[0] = arg1;
+			e->Args[1] = arg2;
+			e->Args[2] = arg3;
+
+			VMValue params[2] = { (DStaticEventHandler*)this, e };
+			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		}
 	}
 }
 

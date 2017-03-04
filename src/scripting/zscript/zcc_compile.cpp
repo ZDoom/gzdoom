@@ -501,7 +501,8 @@ void ZCCCompiler::CreateStructTypes()
 			Error(s->strct, "Struct %s has incompatible flags", s->NodeName().GetChars());
 		}
 
-		if (outer) s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(outer->ObjectFlags));
+		if (outer != OutNamespace) s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(outer->ObjectFlags));
+		else if (s->strct->Flags & ZCC_ClearScope) Warn(s->strct, "Useless 'ClearScope' on struct %s not inside a class", s->NodeName().GetChars());
 		if (s->strct->Flags & ZCC_UIFlag)
 			s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_UI);
 		if (s->strct->Flags & ZCC_Play)

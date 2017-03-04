@@ -501,10 +501,13 @@ void ZCCCompiler::CreateStructTypes()
 			Error(s->strct, "Struct %s has incompatible flags", s->NodeName().GetChars());
 		}
 
+		if (outer) s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(outer->ObjectFlags));
 		if (s->strct->Flags & ZCC_UIFlag)
-			s->Type()->ObjectFlags |= OF_UI;
+			s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_UI);
 		if (s->strct->Flags & ZCC_Play)
-			s->Type()->ObjectFlags |= OF_Play;
+			s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_Play);
+		if (s->strct->Flags & ZCC_ClearScope)
+			s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_PlainData); // don't inherit the scope from the outer class
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
 		syms->AddSymbol(s->strct->Symbol);
 

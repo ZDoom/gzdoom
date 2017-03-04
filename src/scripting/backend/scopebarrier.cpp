@@ -44,6 +44,19 @@ int FScopeBarrier::FlagsFromSide(int side)
 	}
 }
 
+int FScopeBarrier::ObjectFlagsFromSide(int side)
+{
+	switch (side)
+	{
+	case Side_Play:
+		return OF_Play;
+	case Side_UI:
+		return OF_UI;
+	default:
+		return 0;
+	}
+}
+
 // used for errors
 const char* FScopeBarrier::StringFromSide(int side)
 {
@@ -69,6 +82,14 @@ int FScopeBarrier::ChangeSideInFlags(int flags, int side)
 {
 	flags &= ~(VARF_UI | VARF_Play | VARF_VirtualScope | VARF_ClearScope);
 	flags |= FlagsFromSide(side);
+	return flags;
+}
+
+// this modifies OF_ flags and sets the side properly.
+int FScopeBarrier::ChangeSideInObjectFlags(int flags, int side)
+{
+	flags &= ~(OF_UI | OF_Play);
+	flags |= ObjectFlagsFromSide(side);
 	return flags;
 }
 

@@ -6084,10 +6084,34 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 			}
 			PClass* cls_ctx = dyn_cast<PClass>(classctx);
 			PClass* cls_target = dyn_cast<PClass>(objtype);
-			if ((vsym->Flags & VARF_Protected) && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf(cls_target)))
+			// [ZZ] neither PSymbol, PField or PSymbolTable have the necessary information. so we need to do the more complex check here.
+			if (vsym->Flags & VARF_Protected)
 			{
-				ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
-				return nullptr;
+				// early break.
+				if (!cls_ctx || !cls_target)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					return nullptr;
+				}
+
+				// find the class that declared this field.
+				PClass* p = cls_target;
+				while (p)
+				{
+					if (&p->Symbols == symtbl)
+					{
+						cls_target = p;
+						break;
+					}
+
+					p = p->ParentClass;
+				}
+
+				if (!cls_ctx->IsDescendantOf(cls_target))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					return nullptr;
+				}
 			}
 
 			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);

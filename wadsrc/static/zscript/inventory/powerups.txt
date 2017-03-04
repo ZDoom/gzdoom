@@ -285,7 +285,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	virtual clearscope bool isBlinking()
+	virtual bool isBlinking() const
 	{
 		return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !bNoScreenBlink);
 	}

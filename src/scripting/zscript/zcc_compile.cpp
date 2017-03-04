@@ -2453,7 +2453,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						sym->Variants[0].Implementation->BarrierSide = oldfunc->BarrierSide;
 						sym->Variants[0].Flags = FScopeBarrier::ChangeSideInFlags(sym->Variants[0].Flags, oldfunc->BarrierSide);
 						// inherit const from original function
-						if (sym->Variants[0].Implementation->FuncConst = oldfunc->FuncConst)
+						if ((sym->Variants[0].Implementation->FuncConst = oldfunc->FuncConst))
 							sym->Variants[0].Flags |= VARF_ReadOnly;
 													
 						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;

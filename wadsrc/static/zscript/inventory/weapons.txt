@@ -89,7 +89,7 @@ class Weapon : StateProvider native
 		return s;
 	}
 	
-	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack) const
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		// Weapons may never return HitObituary by default. Override this if it is needed.
 		return Obituary;

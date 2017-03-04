@@ -425,7 +425,7 @@ class Actor : Thinker native
 		}
 	}
 	
-	virtual String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack) const
+	virtual String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		if (mod == 'Telefrag')
 		{

@@ -119,7 +119,7 @@ class PlayerPawn : Actor native
 		}
 	}
 	
-	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack) const
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		if (victim.player != player && victim.IsTeammate(self))
 		{

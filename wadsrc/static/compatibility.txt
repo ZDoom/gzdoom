@@ -541,3 +541,28 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	clipmidtex
 }
 
+261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
+{
+	clipmidtex
+}
+
+04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
+{
+	clipmidtex
+}
+
+9E54F70648A77BBD090FF78A3AA05367 // unloved2beta1.pk3:u2_new2maps2.wad map08
+{
+	clipmidtex
+}
+
+72E9E0F41F691B7F956E62F35B4A617F // unloved2beta1.pk3:u2_new2maps2.wad map09
+{
+	clipmidtex
+}
+
+3D3FE412E87AD8B2316DAEC9E25F2E5D // unloved2beta1.pk3:u2_new2maps2.wad map10
+{
+	clipmidtex
+}
+

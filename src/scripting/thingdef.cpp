@@ -110,12 +110,13 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 	if (funcflags & VARF_Method)
 	{
 		// implied self pointer
-		if (args != nullptr)		args->Push(NewPointer(cls)); 
+		if (args != nullptr)		args->Push(NewPointer(cls, !!(funcflags & VARF_ReadOnly))); 
 		if (argflags != nullptr)	argflags->Push(VARF_Implicit | VARF_ReadOnly);
 		if (argnames != nullptr)	argnames->Push(NAME_self);
 	}
 	if (funcflags & VARF_Action)
 	{
+		assert(!(funcflags & VARF_ReadOnly));
 		// implied caller and callingstate pointers
 		if (args != nullptr)
 		{

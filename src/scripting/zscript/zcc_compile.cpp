@@ -2156,6 +2156,15 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		}
 		if (f->Flags & ZCC_Action)
 		{
+			if (varflags & VARF_ReadOnly)
+			{
+				Error(f, "Action functions cannot be declared const");
+				varflags &= ~VARF_ReadOnly;
+			}
+			if (varflags & VARF_UI)
+			{
+				Error(f, "Action functions cannot be declared UI");
+			}
 			// Non-Actors cannot have action functions.
 			if (!c->Type()->IsKindOf(RUNTIME_CLASS(PClassActor)))
 			{

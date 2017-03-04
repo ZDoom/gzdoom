@@ -2057,6 +2057,8 @@ MIDIDevice* OpenALSoundRenderer::CreateMIDIDevice() const
 #ifdef _WIN32
 	extern UINT mididevice;
 	return new WinMIDIDevice(mididevice);
+#elif defined __APPLE__
+	return new AudioToolboxMIDIDevice;
 #else
 	return new OPLMIDIDevice(nullptr);
 #endif

@@ -664,9 +664,9 @@ begin:
 			VMReturn returns[MAX_RETURNS];
 			int numret;
 
+			b = B;
 #if 0
 			// [ZZ] hax!
-			b = B;
 			if (call->BarrierSide == 3) // :( - this is Side_Virtual. Side_Virtual should receive special arguments.
 			{
 				PFunction* calledfunc = (PFunction*)(reg.param + f->NumParam - b)[0].a;

@@ -2415,7 +2415,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (sym->Variants[0].Implementation != nullptr)
 		{
 			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
-			sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::SideFromFlags(varflags);
 			sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 		}
 
@@ -2461,8 +2460,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to change private/protected qualifiers for virtual function %s", FName(f->Name).GetChars());
 						}
 						// inherit scope of original function if override not specified
-						sym->Variants[0].Implementation->BarrierSide = oldfunc->BarrierSide;
-						sym->Variants[0].Flags = FScopeBarrier::ChangeSideInFlags(sym->Variants[0].Flags, oldfunc->BarrierSide);
+						sym->Variants[0].Flags = FScopeBarrier::ChangeSideInFlags(sym->Variants[0].Flags, FScopeBarrier::SideFromFlags(oldfunc->VarFlags));
 						// inherit const from original function
 						if (oldfunc->VarFlags & VARF_ReadOnly)
 							sym->Variants[0].Flags |= VARF_ReadOnly;

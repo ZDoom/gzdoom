@@ -707,7 +707,6 @@ class VMFunction
 public:
 	bool Unsafe = false;
 	int VarFlags = 0; // [ZZ] this replaces 5+ bool fields
-	int BarrierSide = 0;			// [ZZ] FScopeBarrier::Side
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	unsigned VirtualIndex = ~0u;
 	FName Name;
@@ -940,7 +939,7 @@ class VMNativeFunction : public VMFunction
 public:
 	typedef int (*NativeCallType)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
-	// 8 is VARF_Native.
+	// 8 is VARF_Native. I can't write VARF_Native because of circular references between this and dobject/dobjtype.
 	VMNativeFunction() : NativeCall(NULL) { VarFlags = 8; }
 	VMNativeFunction(NativeCallType call) : NativeCall(call) { VarFlags = 8; }
 	VMNativeFunction(NativeCallType call, FName name) : VMFunction(name), NativeCall(call) { VarFlags = 8; }

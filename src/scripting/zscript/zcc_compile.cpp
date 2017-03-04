@@ -2128,8 +2128,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			varflags |= VARF_UI;
 		if (c->Type()->ObjectFlags & OF_Play)
 			varflags |= VARF_Play;
-		if (f->Flags & ZCC_FuncConst)
-			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
+		//if (f->Flags & ZCC_FuncConst)
+		//	varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.
 		if (f->Flags & ZCC_UIFlag)
 			varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 		if (f->Flags & ZCC_Play)
@@ -2214,13 +2214,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if ((varflags&(VARF_VirtualScope | VARF_Method)) == VARF_VirtualScope) // non-method virtualscope function
 		{
 			Error(f, "'VirtualScope' on a static method is not supported");
-		}
-
-		// you can't have a const function belonging to either ui or play.
-		// const is intended for plain data to signify that you can call a method on readonly variable.
-		if ((f->Flags & ZCC_FuncConst) && (f->Flags & (ZCC_UIFlag | ZCC_Play | ZCC_VirtualScope)))
-		{
-			Error(f, "Invalid combination of qualifiers %s on function %s", FlagsToString(f->Flags&(ZCC_FuncConst | ZCC_UIFlag | ZCC_Play | ZCC_VirtualScope)).GetChars(), FName(f->Name).GetChars());
 		}
 
 		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope, ZCC_VirtualScope };
@@ -2458,9 +2451,9 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
 						}
 						// you can't change const qualifier for a virtual method
-						if (oldfunc->FuncConst != sym->Variants[0].Implementation->FuncConst)
+						if (sym->Variants[0].Implementation->FuncConst && !oldfunc->FuncConst)
 						{
-							Error(f, "Attempt to change const qualifier for virtual function %s", FName(f->Name).GetChars());
+							Error(f, "Attempt to add const qualifier to virtual function %s", FName(f->Name).GetChars());
 						}
 						// inherit scope of original function if override not specified
 						sym->Variants[0].Implementation->BarrierSide = oldfunc->BarrierSide;

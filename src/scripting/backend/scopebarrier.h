@@ -35,12 +35,15 @@ struct FScopeBarrier
 
 	//
 	static int FlagsFromSide(int side);
+	static int ObjectFlagsFromSide(int side);
 	
 	// used for errors
 	static const char* StringFromSide(int side);
 
 	// this modifies VARF_ flags and sets the side properly.
 	static int ChangeSideInFlags(int flags, int side);
+	// this modifies OF_ flags and sets the side properly.
+	static int ChangeSideInObjectFlags(int flags, int side);
 	FScopeBarrier();
 	FScopeBarrier(int flags1, int flags2, const char* name);
 

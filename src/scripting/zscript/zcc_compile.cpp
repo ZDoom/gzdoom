@@ -2416,6 +2416,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		{
 			// [ZZ] unspecified virtual function inherits old scope. virtual function scope can't be changed.
 			sym->Variants[0].Implementation->BarrierSide = FScopeBarrier::SideFromFlags(varflags);
+			sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 		}
 
 		PClass *clstype = static_cast<PClass *>(c->Type());
@@ -2426,11 +2427,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				Error(f, "Virtual function %s.%s not present", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
 				return;
 			}
-			
-			if (varflags & VARF_Final)
-				sym->Variants[0].Implementation->Final = true;
-			if (varflags & VARF_ReadOnly)
-				sym->Variants[0].Implementation->FuncConst = true;
 
 			if (forclass)
 			{
@@ -2445,7 +2441,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					else
 					{
 						auto oldfunc = clstype->Virtuals[vindex];
-						if (oldfunc->Final)
+						if (oldfunc->VarFlags & VARF_Final)
 						{
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
@@ -2455,19 +2451,27 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							Error(f, "Attempt to change scope for virtual function %s", FName(f->Name).GetChars());
 						}
 						// you can't change const qualifier for a virtual method
-						if (sym->Variants[0].Implementation->FuncConst && !oldfunc->FuncConst)
+						if ((sym->Variants[0].Implementation->VarFlags & VARF_ReadOnly) && !(oldfunc->VarFlags & VARF_ReadOnly))
 						{
 							Error(f, "Attempt to add const qualifier to virtual function %s", FName(f->Name).GetChars());
+						}
+						// you can't change protected qualifier for a virtual method (i.e. putting private), because this cannot be reliably checked without runtime stuff
+						if (f->Flags & (ZCC_Private | ZCC_Protected))
+						{
+							Error(f, "Attempt to change private/protected qualifiers for virtual function %s", FName(f->Name).GetChars());
 						}
 						// inherit scope of original function if override not specified
 						sym->Variants[0].Implementation->BarrierSide = oldfunc->BarrierSide;
 						sym->Variants[0].Flags = FScopeBarrier::ChangeSideInFlags(sym->Variants[0].Flags, oldfunc->BarrierSide);
 						// inherit const from original function
-						if ((sym->Variants[0].Implementation->FuncConst = oldfunc->FuncConst))
+						if (oldfunc->VarFlags & VARF_ReadOnly)
 							sym->Variants[0].Flags |= VARF_ReadOnly;
+						if (oldfunc->VarFlags & VARF_Protected)
+							sym->Variants[0].Flags |= VARF_Protected;
 													
 						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
 						sym->Variants[0].Implementation->VirtualIndex = vindex;
+						sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 					}
 				}
 				else

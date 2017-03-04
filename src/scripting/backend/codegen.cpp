@@ -8725,7 +8725,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 
 	VMFunction *vmfunc = Function->Variants[0].Implementation;
-	bool staticcall = (vmfunc->Final || vmfunc->VirtualIndex == ~0u || NoVirtual);
+	bool staticcall = ((vmfunc->VarFlags & VARF_Final) || vmfunc->VirtualIndex == ~0u || NoVirtual);
 
 	count = 0;
 	// Emit code to pass implied parameters

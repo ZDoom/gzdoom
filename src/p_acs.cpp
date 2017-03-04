@@ -4765,24 +4765,24 @@ static int ScriptCall(unsigned argc, int32_t *args)
 		auto cls = PClass::FindClass(clsname);
 		if (!cls)
 		{
-			I_Error("ACS call to unknown class in script function %s.%s", cls, funcname);
+			I_Error("ACS call to unknown class in script function %s.%s", clsname, funcname);
 		}
 		auto funcsym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
 		if (funcsym == nullptr)
 		{
-			I_Error("ACS call to unknown script function %s.%s", cls, funcname);
+			I_Error("ACS call to unknown script function %s.%s", clsname, funcname);
 		}
 		auto func = funcsym->Variants[0].Implementation;
 		if (func->ImplicitArgs > 0)
 		{
-			I_Error("ACS call to non-static script function %s.%s", cls, funcname);
+			I_Error("ACS call to non-static script function %s.%s", clsname, funcname);
 		}
 		TArray<VMValue> params;
 		for (unsigned i = 2; i < argc; i++)
 		{
 			if (func->Proto->ArgumentTypes.Size() < i - 1)
 			{
-				I_Error("Too many parameters in call to %s.%s", cls, funcname);
+				I_Error("Too many parameters in call to %s.%s", clsname, funcname);
 			}
 			auto argtype = func->Proto->ArgumentTypes[i - 2];
 			// The only types allowed are int, bool, double, Name, Sound, Color and String
@@ -4812,7 +4812,7 @@ static int ScriptCall(unsigned argc, int32_t *args)
 			}
 			else
 			{
-				I_Error("Invalid type %s in call to %s.%s", argtype->DescriptiveName(), cls, funcname);
+				I_Error("Invalid type %s in call to %s.%s", argtype->DescriptiveName(), clsname, funcname);
 			}
 		}
 		if (func->Proto->ArgumentTypes.Size() > params.Size())
@@ -4820,7 +4820,7 @@ static int ScriptCall(unsigned argc, int32_t *args)
 			// Check if we got enough parameters. That means we either cover the full argument list of the function or the next argument is optional.
 			if (!(funcsym->Variants[0].ArgFlags[params.Size()] & VARF_Optional))
 			{
-				I_Error("Insufficient parameters in call to %s.%s", cls, funcname);
+				I_Error("Insufficient parameters in call to %s.%s", clsname, funcname);
 			}
 		}
 		// The return value can be the same types as the parameter types, plus void

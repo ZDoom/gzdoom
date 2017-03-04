@@ -613,7 +613,7 @@ void ZCCCompiler::CreateClassTypes()
 				// 
 				static int incompatible[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 				int incompatiblecnt = 0;
-				for (int k = 0; k < countof(incompatible); k++)
+				for (size_t k = 0; k < countof(incompatible); k++)
 					if (incompatible[k] & c->cls->Flags) incompatiblecnt++;
 				
 				if (incompatiblecnt > 1)
@@ -1117,7 +1117,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
 		int excludeflags = 0;
 		int fc = 0;
-		for (int i = 0; i < countof(excludescope); i++)
+		for (size_t i = 0; i < countof(excludescope); i++)
 		{
 			if (field->Flags & excludescope[i])
 			{
@@ -2176,7 +2176,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		static int exclude[] = { ZCC_Virtual, ZCC_Override, ZCC_Action, ZCC_Static };
 		int excludeflags = 0;
 		int fc = 0;
-		for (int i = 0; i < countof(exclude); i++)
+		for (size_t i = 0; i < countof(exclude); i++)
 		{
 			if (f->Flags & exclude[i])
 			{
@@ -2213,7 +2213,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope, ZCC_VirtualScope };
 		excludeflags = 0;
 		fc = 0;
-		for (int i = 0; i < countof(excludescope); i++)
+		for (size_t i = 0; i < countof(excludescope); i++)
 		{
 			if (f->Flags & excludescope[i])
 			{

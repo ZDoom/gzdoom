@@ -195,8 +195,8 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 
 	if (symbol != nullptr)
 	{
-		PClass* cls_ctx = dyn_cast<PClass>(selfcls);
-		PClass* cls_target = dyn_cast<PClass>(funccls);
+		PClass* cls_ctx = dyn_cast<PClass>(funccls);
+		PClass* cls_target = funcsym?dyn_cast<PClass>(funcsym->OwningClass):nullptr;
 		if (funcsym == nullptr)
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
@@ -206,7 +206,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Protected) && (!cls_ctx || !cls_target || cls_ctx->IsDescendantOf((PClass*)cls_target)))
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
 			return nullptr;

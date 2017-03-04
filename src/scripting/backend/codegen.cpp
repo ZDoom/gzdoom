@@ -6084,7 +6084,7 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 			}
 			PClass* cls_ctx = dyn_cast<PClass>(classctx);
 			PClass* cls_target = dyn_cast<PClass>(objtype);
-			if ((vsym->Flags & VARF_Protected) && (!cls_ctx || !cls_target || cls_ctx->IsDescendantOf(cls_target)))
+			if ((vsym->Flags & VARF_Protected) && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf(cls_target)))
 			{
 				ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
 				return nullptr;

@@ -22,7 +22,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	const FVoidObj *konsta;
 	const VM_ATAG *konstatag;
 
-	if (f->Func != NULL && !f->Func->Native)
+	if (f->Func != NULL && !(f->Func->VarFlags & VARF_Native))
 	{
 		sfunc = static_cast<VMScriptFunction *>(f->Func);
 		konstd = sfunc->KonstD;
@@ -679,7 +679,7 @@ begin:
 #endif
 
 			FillReturns(reg, f, returns, pc+1, C);
-			if (call->Native)
+			if (call->VarFlags & VARF_Native)
 			{
 				try
 				{
@@ -736,7 +736,7 @@ begin:
 		{
 			VMFunction *call = (VMFunction *)ptr;
 
-			if (call->Native)
+			if (call->VarFlags & VARF_Native)
 			{
 				try
 				{
@@ -1966,7 +1966,7 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	const void *src;
 	VMScriptFunction *func = static_cast<VMScriptFunction *>(frame->Func);
 
-	assert(func != NULL && !func->Native);
+	assert(func != NULL && !(func->VarFlags & VARF_Native));
 	assert((regtype & ~REGT_KONST) == ret->RegType);
 
 	switch (regtype & REGT_TYPE)

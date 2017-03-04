@@ -48,7 +48,6 @@ TArray<VMFunction *> VMFunction::AllFunctions;
 
 VMScriptFunction::VMScriptFunction(FName name)
 {
-	Native = false;
 	Name = name;
 	LineInfo = nullptr;
 	Code = NULL;
@@ -438,7 +437,7 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 	bool allocated = false;
 	try
 	{	
-		if (func->Native)
+		if (func->VarFlags & VARF_Native)
 		{
 			return static_cast<VMNativeFunction *>(func)->NativeCall(params, func->DefaultArgs, numparams, results, numresults);
 		}

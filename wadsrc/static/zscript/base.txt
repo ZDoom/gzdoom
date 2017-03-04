@@ -386,7 +386,6 @@ class Thinker : Object native play
 
 class ThinkerIterator : Object native
 {
-
 	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
 	native Thinker Next(bool exact = false);
 	native void Reinit();

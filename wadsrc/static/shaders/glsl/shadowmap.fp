@@ -129,8 +129,8 @@ void main()
 		{
 		case 0: pixelpos = vec2((gl_FragCoord.x - 128.0) / 128.0, 1.0); break;
 		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - 384.0) / 128.0); break;
-		case 2: pixelpos = vec2((gl_FragCoord.x - 640.0) / 128.0, -1.0); break;
-		case 3: pixelpos = vec2(-1.0, (gl_FragCoord.x - 896.0) / 128.0); break;
+		case 2: pixelpos = vec2(-(gl_FragCoord.x - 640.0) / 128.0, -1.0); break;
+		case 3: pixelpos = vec2(-1.0, -(gl_FragCoord.x - 896.0) / 128.0); break;
 		}
 		pixelpos = lightpos + pixelpos * radius;
 

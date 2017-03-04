@@ -83,7 +83,7 @@ void FShadowMap::UploadLights()
 		ADynamicLight *light = it.Next();
 		if (!light) break;
 
-		mLightToShadowmap[light] = mLights.Size();
+		mLightToShadowmap[light] = mLights.Size() / 4;
 
 		mLights.Push(light->X());
 		mLights.Push(light->Y());

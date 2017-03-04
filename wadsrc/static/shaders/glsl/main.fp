@@ -158,7 +158,9 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 		else
 			u = dir.x / dir.y * 0.125 + (0.50 + 0.125);
 	}
-	return texture(ShadowMap, vec2(u, v)).x < dot(dir, dir) ? 1.0 : 0.0;
+	dir -= sign(dir); // margin, to remove wall acne
+	float dist2 = dot(dir, dir);
+	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
 }
 
 //===========================================================================

@@ -6082,6 +6082,13 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
 				return nullptr;
 			}
+			PClass* cls_ctx = dyn_cast<PClass>(classctx);
+			PClass* cls_target = dyn_cast<PClass>(objtype);
+			if ((vsym->Flags & VARF_Protected) && (!cls_ctx || !cls_target || cls_ctx->IsDescendantOf(cls_target)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+				return nullptr;
+			}
 
 			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);
 			object = nullptr;

@@ -664,6 +664,7 @@ begin:
 			VMReturn returns[MAX_RETURNS];
 			int numret;
 
+#if 0
 			// [ZZ] hax!
 			b = B;
 			if (call->BarrierSide == 3) // :( - this is Side_Virtual. Side_Virtual should receive special arguments.
@@ -675,6 +676,7 @@ begin:
 				FScopeBarrier_ValidateCall(calledfunc, callingfunc, selftype);
 				b -= 2;
 			}
+#endif
 
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)

@@ -8725,6 +8725,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	ExpEmit selfemit;
 	if (Function->Variants[0].Flags & VARF_Method)
 	{
+#if 0
 		// [ZZ]
 		if (Function->Variants[0].Implementation && Function->Variants[0].Implementation->BarrierSide == FScopeBarrier::Side_Virtual)
 		{
@@ -8734,6 +8735,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(CallingFunction, ATAG_OBJECT));
 			count += 2;
 		}
+#endif
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
 		assert((selfemit.RegType == REGT_POINTER) || (selfemit.Fixed && selfemit.Target));

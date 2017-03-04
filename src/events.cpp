@@ -117,6 +117,21 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 	return true;
 }
 
+bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3)
+{
+	if (gamestate != GS_LEVEL)
+		return false;
+
+	Net_WriteByte(DEM_NETEVENT);
+	Net_WriteString(name);
+	Net_WriteByte(3);
+	Net_WriteLong(arg1);
+	Net_WriteLong(arg2);
+	Net_WriteLong(arg3);
+
+	return true;
+}
+
 bool E_CheckHandler(DStaticEventHandler* handler)
 {
 	for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
@@ -521,6 +536,18 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(arg1);
+	PARAM_INT(arg2);
+	PARAM_INT(arg3);
+	//
+
+	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3));
+}
+
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
 {
 	PARAM_PROLOGUE;
@@ -658,6 +685,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
 
 // ===========================================
 //
@@ -1068,22 +1096,45 @@ static DConsoleEvent* E_SetupConsoleEvent()
 
 void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3)
 {
-	IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+	if (player < 0)
 	{
-		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
-			return;
-		DConsoleEvent* e = E_SetupConsoleEvent();
+		IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+		{
+			// don't create excessive DObjects if not going to be processed anyway
+			if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
+				return;
+			DConsoleEvent* e = E_SetupConsoleEvent();
 
-		//
-		e->Player = player;
-		e->Name = name;
-		e->Args[0] = arg1;
-		e->Args[1] = arg2;
-		e->Args[2] = arg3;
+			//
+			e->Player = player;
+			e->Name = name;
+			e->Args[0] = arg1;
+			e->Args[1] = arg2;
+			e->Args[2] = arg3;
 
-		VMValue params[2] = { (DStaticEventHandler*)this, e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+			VMValue params[2] = { (DStaticEventHandler*)this, e };
+			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		}
+	}
+	else
+	{
+		IFVIRTUAL(DStaticEventHandler, NetworkProcess)
+		{
+			// don't create excessive DObjects if not going to be processed anyway
+			if (func == DStaticEventHandler_NetworkProcess_VMPtr)
+				return;
+			DConsoleEvent* e = E_SetupConsoleEvent();
+
+			//
+			e->Player = player;
+			e->Name = name;
+			e->Args[0] = arg1;
+			e->Args[1] = arg2;
+			e->Args[2] = arg3;
+
+			VMValue params[2] = { (DStaticEventHandler*)this, e };
+			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		}
 	}
 }
 
@@ -1136,10 +1187,6 @@ CCMD(netevent)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call networked
-		Net_WriteByte(DEM_NETEVENT);
-		Net_WriteString(argv[1]);
-		Net_WriteByte(argn);
-		for (int i = 0; i < 3; i++)
-			Net_WriteLong(arg[i]);
+		E_SendNetworkEvent(argv[1], arg[0], arg[1], arg[2]);
 	}
 }

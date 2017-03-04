@@ -36,7 +36,11 @@ enum
 	ZCC_Virtual			= 1 << 13,
 	ZCC_Override		= 1 << 14,
 	ZCC_Transient		= 1 << 15,
-	ZCC_VarArg			= 1 << 16
+	ZCC_VarArg			= 1 << 16,
+	ZCC_UIFlag			= 1 << 17, // there's also token called ZCC_UI
+	ZCC_Play			= 1 << 18,
+	ZCC_ClearScope		= 1 << 19,
+	ZCC_VirtualScope	= 1 << 20,
 };
 
 // Function parameter modifiers

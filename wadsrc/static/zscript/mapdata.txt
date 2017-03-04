@@ -1,5 +1,5 @@
 
-struct SectorPortal native
+struct SectorPortal native play
 {
 	enum EType
 	{
@@ -31,12 +31,12 @@ struct SectorPortal native
 };
 
 
-struct Vertex native
+struct Vertex native play
 {
 	native readonly Vector2 p;
 }
 
-struct Side native
+struct Side native play
 {
 	enum ETexpart
 	{
@@ -100,7 +100,7 @@ struct Side native
 	
 };
 
-struct Line native
+struct Line native play
 {
 	enum ELineFlags
 	{
@@ -143,7 +143,7 @@ struct Line native
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	native double					alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
-	native Side						sidedef[2];
+	native readonly Side			sidedef[2];
 	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
 	native readonly Sector			frontsector, backsector;
 	native int 						validcount;	// if == validcount, already checked
@@ -171,25 +171,25 @@ struct Line native
 	}
 }
 
-struct SecPlane native
+struct SecPlane native play
 {
 	native Vector3 Normal;
 	native double D;
 	native double negiC;
 	
-	native bool isSlope();
-	native int PointOnSide(Vector3 pos);
-	native double ZatPoint (Vector2 v);
-	native double ZatPointDist(Vector2 v, double dist);
-	native bool isEqual(Secplane other);
+	native bool isSlope() const;
+	native int PointOnSide(Vector3 pos) const;
+	native double ZatPoint (Vector2 v) const;
+	native double ZatPointDist(Vector2 v, double dist) const;
+	native bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);
-	native double GetChangedHeight(double hdiff);
+	native double GetChangedHeight(double hdiff) const;
 	native double HeightDiff(double oldd, double newd = 0.0);
-	native double PointToDist(Vector2 xy, double z);
+	native double PointToDist(Vector2 xy, double z) const;
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
-struct SecSpecial
+struct SecSpecial play
 {
 	Name damagetype;
 	int damageamount;
@@ -199,7 +199,7 @@ struct SecSpecial
 	int Flags;
 }
 
-struct Sector native
+struct Sector native play
 {
 	//secplane_t	floorplane, ceilingplane;	// defined internally
 	//FDynamicColormap *ColorMap;

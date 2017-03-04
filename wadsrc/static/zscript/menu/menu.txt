@@ -48,7 +48,7 @@ struct JoystickConfig native
 	
 }
 
-class Menu : Object native
+class Menu : Object native ui
 {
 	enum EMenuKey
 	{
@@ -287,7 +287,7 @@ class Menu : Object native
 
 }
 
-class MenuDescriptor : Object native
+class MenuDescriptor : Object native ui
 {
 	native Name mMenuName;
 	native String mNetgameMessage;

@@ -331,10 +331,10 @@ class Object native
 	native static uint MSTime();
 
 	native Name GetClassName();
-	native void Destroy();
+	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
-	virtual void OnDestroy() {}
+	virtual virtualscope void OnDestroy() {}
 }
 
 class BrokenLines : Object native
@@ -344,7 +344,7 @@ class BrokenLines : Object native
 	native String StringAt(int line);
 }
 
-class Thinker : Object native
+class Thinker : Object native play
 {
 	enum EStatnums
 	{
@@ -386,7 +386,6 @@ class Thinker : Object native
 
 class ThinkerIterator : Object native
 {
-
 	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
 	native Thinker Next(bool exact = false);
 	native void Reinit();

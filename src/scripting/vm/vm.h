@@ -8,6 +8,10 @@
 #include "doomerrors.h"
 #include "memarena.h"
 
+// [ZZ] there are serious circular references between this and the rest of ZScript code, so it needs to be done like this
+//		these are used in vmexec.h
+void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc);
+void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
 class DObject;
 
 extern FMemArena ClassDataAllocator;
@@ -704,6 +708,8 @@ public:
 	bool Native;
 	bool Final = false;				// cannot be overridden
 	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
+	bool FuncConst = false;			// [ZZ] readonly function
+	int BarrierSide = 0;			// [ZZ] FScopeBarrier::Side
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	unsigned VirtualIndex = ~0u;
 	FName Name;
@@ -712,7 +718,7 @@ public:
 
 	class PPrototype *Proto;
 
-	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) 
+	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL)
 	{
 		AllFunctions.Push(this);
 	}

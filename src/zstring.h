@@ -450,13 +450,4 @@ template<> struct THashTraits<FString>
 	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
 };
 
-class FStringNoInit
-{
-	char mem[sizeof(FString)];
-	operator FString&() 
-	{
-		return *reinterpret_cast<FString*>(&mem);
-	}
-};
-
 #endif

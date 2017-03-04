@@ -796,7 +796,16 @@ void M_ClearMenus()
 
 void M_Init (void) 
 {
-	M_ParseMenuDefs();
+	try
+	{
+		M_ParseMenuDefs();
+	}
+	catch (CVMAbortException &err)
+	{
+		err.MaybePrintMessage();
+		Printf("%s", err.stacktrace.GetChars());
+		I_FatalError("Failed to initialize menus");
+	}
 	M_CreateMenus();
 }
 

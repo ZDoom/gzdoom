@@ -45,6 +45,7 @@
 #include "s_sound.h"
 #include "actor.h"
 #include "vmbuilder.h"
+#include "scopebarrier.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
@@ -95,7 +96,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
-	bool CheckReadOnly(int flags);
+	bool CheckWritable(int flags);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 
@@ -1208,6 +1209,7 @@ private:
 class FxNew : public FxExpression
 {
 	FxExpression *val;
+	PFunction *CallingFunction;
 
 public:
 
@@ -1326,6 +1328,7 @@ public:
 	PField *membervar;
 	bool AddressRequested = false;
 	bool AddressWritable = true;
+	int BarrierSide = -1; // [ZZ] some magic
 	FxMemberBase(EFxType type, PField *f, const FScriptPosition &p);
 };
 
@@ -1707,6 +1710,7 @@ class FxVMFunctionCall : public FxExpression
 	// for multi assignment
 	int AssignCount = 0;
 	TArray<ExpEmit> ReturnRegs;
+	PFunction *CallingFunction;
 
 public:
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);

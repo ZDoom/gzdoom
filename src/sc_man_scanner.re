@@ -170,6 +170,10 @@ std2:
 		'virtual'					{ RET(TK_Virtual); }
 		'override'					{ RET(TK_Override); }
 		'vararg'					{ RET(TK_VarArg); }
+		'ui'						{ RET(TK_UI); }
+		'play'						{ RET(TK_Play); }
+		'clearscope'				{ RET(TK_ClearScope); }
+		'virtualscope'				{ RET(TK_VirtualScope); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

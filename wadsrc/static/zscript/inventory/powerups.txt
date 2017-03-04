@@ -285,7 +285,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	virtual bool isBlinking()
+	virtual bool isBlinking() const
 	{
 		return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !bNoScreenBlink);
 	}
@@ -934,7 +934,7 @@ class PowerFlight : Powerup
 		+INVENTORY.HUBPOWER
 	}
 
-	bool HitCenterFrame;
+	ui bool HitCenterFrame;
 
 	//===========================================================================
 	//

@@ -255,6 +255,8 @@ std2:
 		"^"							{ RET('^'); }
 		"|"							{ RET('|'); }
 		"?"							{ RET('?'); }
+		"#"							{ RET('#'); }
+		"@"							{ RET('@'); }
 
 		[ \t\v\f\r]+				{ goto std1; }
 		"\n"						{ goto newline; }

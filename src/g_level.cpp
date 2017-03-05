@@ -1462,6 +1462,8 @@ void G_InitLevelLocals ()
 	level.NextMap = info->NextMap;
 	level.NextSecretMap = info->NextSecretMap;
 	level.F1Pic = info->F1Pic;
+	level.hazardcolor = info->hazardcolor;
+	level.hazardflash = info->hazardflash;
 
 	compatflags.Callback();
 	compatflags2.Callback();

@@ -273,6 +273,8 @@ void level_info_t::Reset()
 	SndSeq = "";
 	BorderTexture = "";
 	teamdamage = 0.f;
+	hazardcolor = 0xff004200;
+	hazardflash = 0xff00ff00;
 	specialactions.Clear();
 	DefaultEnvironment = 0;
 	PrecacheSounds.Clear();
@@ -1198,6 +1200,20 @@ DEFINE_MAP_OPTION(defaultenvironment, false)
 		}
 	}
 	info->DefaultEnvironment = id;
+}
+
+DEFINE_MAP_OPTION(hazardcolor, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->hazardcolor = V_GetColor(NULL, parse.sc);
+}
+
+DEFINE_MAP_OPTION(hazardflash, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->hazardflash = V_GetColor(NULL, parse.sc);
 }
 
 

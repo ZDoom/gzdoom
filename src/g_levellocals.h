@@ -43,6 +43,9 @@ struct FLevelLocals
 	DWORD		fadeto;					// The color the palette fades to (usually black)
 	DWORD		outsidefog;				// The fog for sectors with sky ceilings
 
+	DWORD		hazardcolor;			// what color strife hazard blends the screen color as
+	DWORD		hazardflash;			// what color strife hazard flashes the screen color as
+
 	FString		Music;
 	int			musicorder;
 	int			cdtrack;

@@ -1,6 +1,23 @@
 #ifndef __SC_MAN_H__
 #define __SC_MAN_H__
 
+struct VersionInfo
+{
+	uint16_t major;
+	uint16_t minor;
+	uint32_t revision;
+
+	bool Check(unsigned int major, unsigned int minor)
+	{
+		return major < this->major || (major == this->major && minor <= this->minor);
+	}
+	bool Check(unsigned int major, unsigned int minor, unsigned int revision)
+	{
+		return major < this->major || (major == this->major && minor < this->minor) || (major == this->major && minor == this->minor && revision <= this->revision);
+	}
+	void operator=(const char *string);
+};
+
 class FScanner
 {
 public:
@@ -24,6 +41,10 @@ public:
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);
 	void Close();
+	void SetParseVersion(VersionInfo ver)
+	{
+		ParseVersion = ver;
+	}
 
 	void SetCMode(bool cmode);
 	void SetEscape(bool esc);
@@ -102,6 +123,7 @@ protected:
 	BYTE StateMode;
 	bool StateOptions;
 	bool Escape;
+	VersionInfo ParseVersion = { 0, 0 };	// no ZScript extensions by default
 };
 
 enum

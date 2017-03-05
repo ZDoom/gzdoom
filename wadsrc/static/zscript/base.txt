@@ -1,4 +1,4 @@
-struct InputEventData native
+struct InputEventData native version("2.4")
 {
 	native uint8	type;
 	native uint8	subtype;
@@ -244,7 +244,7 @@ struct Font native
 	native BrokenLines BreakLines(String text, int maxlen);
 }
 
-struct Translation
+struct Translation version("2.4")
 {
 	Color colors[256];
 	
@@ -290,7 +290,7 @@ struct CVar native
 	native int ResetToDefault();
 }
 
-struct GIFont
+struct GIFont version("2.4")
 {
 	Name fontname;
 	Name color;
@@ -337,7 +337,7 @@ class Object native
 	virtual virtualscope void OnDestroy() {}
 }
 
-class BrokenLines : Object native
+class BrokenLines : Object native version("2.4")
 {
 	native int Count();
 	native int StringWidth(int line);
@@ -458,23 +458,23 @@ struct LevelLocals native
 	native int found_items;
 	native int total_monsters;
 	native int killed_monsters;
-	native double gravity;
-	native double aircontrol;
-	native double airfriction;
-	native int airsupply;
-	native double teamdamage;
-	native bool monsterstelefrag;
-	native bool actownspecial;
-	native bool sndseqtotalctrl;
+	native play double gravity;
+	native play double aircontrol;
+	native play double airfriction;
+	native play int airsupply;
+	native readonly double teamdamage;
+	native readonly bool monsterstelefrag;
+	native readonly bool actownspecial;
+	native readonly bool sndseqtotalctrl;
 	native bool allmap;
-	native bool missilesactivateimpact;
-	native bool monsterfallingdamage;
-	native bool checkswitchrange;
-	native bool polygrind;
-	native bool nomonsters;
+	native readonly bool missilesactivateimpact;
+	native readonly bool monsterfallingdamage;
+	native readonly bool checkswitchrange;
+	native readonly bool polygrind;
+	native readonly bool nomonsters;
 	native bool frozen;
-	native bool infinite_flight;
-	native bool no_dlg_freeze;
+	native readonly bool infinite_flight;
+	native readonly bool no_dlg_freeze;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -618,7 +618,7 @@ class Floor : Thinker native
 		floorRaiseInstant,
 		floorMoveToValue,
 		floorRaiseToLowestCeiling,
-		floorRaiseuint8xture,
+		floorRaiseByTexture,
 
 		floorLowerAndChange,
 		floorRaiseAndChange,
@@ -626,7 +626,7 @@ class Floor : Thinker native
 		floorRaiseToLowest,
 		floorRaiseToCeiling,
 		floorLowerToLowestCeiling,
-		floorLoweruint8xture,
+		floorLowerByTexture,
 		floorLowerToCeiling,
 
 		donutRaise,
@@ -669,8 +669,8 @@ class Ceiling : Thinker native
 		ceilLowerToNearest,
 		ceilRaiseToHighestFloor,
 		ceilRaiseToFloor,
-		ceilRaiseuint8xture,
-		ceilLoweruint8xture,
+		ceilRaiseByTexture,
+		ceilLowerByTexture,
 
 		genCeilingChg0,
 		genCeilingChgT,

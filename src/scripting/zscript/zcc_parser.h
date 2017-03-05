@@ -41,6 +41,7 @@ enum
 	ZCC_Play			= 1 << 18,
 	ZCC_ClearScope		= 1 << 19,
 	ZCC_VirtualScope	= 1 << 20,
+	ZCC_Version			= 1 << 21,
 };
 
 // Function parameter modifiers
@@ -194,6 +195,7 @@ struct ZCC_Struct : ZCC_NamedNode
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
 	PStruct *Type;
+	VersionInfo Version;
 };
 
 struct ZCC_Property : ZCC_NamedNode
@@ -483,6 +485,7 @@ struct ZCC_FuncParamDecl : ZCC_TreeNode
 struct ZCC_DeclFlags : ZCC_TreeNode
 {
 	ZCC_Identifier *Id;
+	VersionInfo Version;
 	int Flags;
 };
 
@@ -542,6 +545,7 @@ struct ZCC_AST
 	FSharedStringArena Strings;
 	FMemArena SyntaxArena;
 	struct ZCC_TreeNode *TopNode;
+	VersionInfo ParseVersion;
 };
 
 struct ZCCParseState : public ZCC_AST

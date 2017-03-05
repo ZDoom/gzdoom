@@ -32,7 +32,7 @@
 **
 */
 
-struct StrifeDialogueNode native 
+struct StrifeDialogueNode native version("2.4")
 {
 	native Class<Actor> DropType;
 	native int ThisNodeNum;
@@ -49,7 +49,7 @@ struct StrifeDialogueNode native
 }
 
 // FStrifeDialogueReply holds responses the player can give to the NPC
-struct StrifeDialogueReply native
+struct StrifeDialogueReply native version("2.4")
 {
 	native StrifeDialogueReply Next;
 	native Class<Actor> GiveType;

@@ -42,6 +42,31 @@
 
 // CODE --------------------------------------------------------------------
 
+void VersionInfo::operator=(const char *string)
+{
+	char *endp;
+	major = (int16_t)clamp<unsigned long long>(strtoull(string, &endp, 10), 0, USHRT_MAX);
+	if (*endp == '.')
+	{
+		minor = (int16_t)clamp<unsigned long long>(strtoull(endp + 1, &endp, 10), 0, USHRT_MAX);
+		if (*endp == '.')
+		{
+			revision = (int16_t)clamp<unsigned long long>(strtoull(endp + 1, &endp, 10), 0, USHRT_MAX);
+			if (*endp != 0) major = USHRT_MAX;
+		}
+		else if (*endp == 0)
+		{
+			revision = 0;
+		}
+		else major = USHRT_MAX;
+	}
+	else if (*endp == 0)
+	{
+		minor = revision = 0;
+	}
+	else major = USHRT_MAX;
+}
+
 //==========================================================================
 //
 // FScanner Constructor

@@ -40,6 +40,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	struct ClassFlagsBlock {
 		VM_UWORD Flags;
 		ZCC_Identifier *Replaces;
+		VersionInfo Version;
 	};
 
 	struct StateOpts {
@@ -188,6 +189,7 @@ class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
 	head->ParentName = nullptr;
 	head->Flags =  ZCC_Extension;
 	head->Replaces = nullptr;
+	head->Version = {0, 0};
 	head->Type = nullptr;
 	head->Symbol = nullptr;
 	X = head;
@@ -200,6 +202,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
+	head->Version = C.Version;
 	head->Type = nullptr;
 	head->Symbol = nullptr;
 	X = head;
@@ -210,12 +213,13 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
-class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
+class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); }
 
 /*----- Dottable Identifier -----*/
 // This can be either a single identifier or two identifiers connected by a .
@@ -322,16 +326,18 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body
 	def->Body = B;
 	def->Type = nullptr;
 	def->Symbol = nullptr;
+	def->Version = S.Version;
 	def->Flags = S.Flags;
 	X = def;
 }
 
 %type struct_flags{ClassFlagsBlock}
-struct_flags(X) ::= .										{ X.Flags = 0; }
+struct_flags(X) ::= .										{ X.Flags = 0; X.Version = {0, 0}; }
 struct_flags(X) ::= struct_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; }
 struct_flags(X) ::= struct_flags(A) PLAY.					{ X.Flags = A.Flags | ZCC_Play; }
 struct_flags(X) ::= struct_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; }
 struct_flags(X) ::= struct_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; }
+struct_flags(X) ::= struct_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Version = C.String->GetChars(); }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).
@@ -966,6 +972,7 @@ decl_flags(X) ::= decl_flags(F) decl_flag(A).
 		X = nil_f;
 		X->Id = nullptr;
 		X->Flags = A.Int;
+		X->Version = { 0, 0 };
 	}
 	else
 	{
@@ -982,6 +989,8 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
 		X = nil_f;
 		X->Flags = ZCC_Action;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
 	}
 	else
 	{
@@ -989,6 +998,42 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 		X->Flags |= ZCC_Action;
 	}
 	X->Id = A;
+}
+
+decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) RPAREN.	
+{ 
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Deprecated;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Deprecated;
+	}
+	X->Version = A.String->GetChars();
+}
+
+decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRINGCONST(A) RPAREN.	
+{ 
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Version;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Version;
+	}
+	X->Version = A.String->GetChars();
 }
 
 decl_flag(X) ::= NATIVE(T).		{ X.Int = ZCC_Native; X.SourceLoc =  T.SourceLoc; }
@@ -1000,7 +1045,6 @@ decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= TRANSIENT(T).	{ X.Int = ZCC_Transient; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
-decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }

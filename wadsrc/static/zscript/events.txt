@@ -1,6 +1,6 @@
-class BaseEvent native { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
+class BaseEvent native version("2.4") { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
 
-class RenderEvent : BaseEvent native ui
+class RenderEvent : BaseEvent native ui version("2.4")
 {
     native readonly Vector3 ViewPos;
     native readonly double ViewAngle;
@@ -10,7 +10,7 @@ class RenderEvent : BaseEvent native ui
     native readonly Actor Camera;
 }
 
-class WorldEvent : BaseEvent native play
+class WorldEvent : BaseEvent native play version("2.4")
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
@@ -28,7 +28,7 @@ class WorldEvent : BaseEvent native play
     native readonly double DamageAngle;
 }
 
-class PlayerEvent : BaseEvent native play
+class PlayerEvent : BaseEvent native play version("2.4")
 {
     // this is the player number that caused the event.
     // note: you can get player struct from this by using players[e.PlayerNumber]
@@ -37,7 +37,7 @@ class PlayerEvent : BaseEvent native play
     native readonly bool IsReturn;
 }
 
-class UiEvent : BaseEvent native ui
+class UiEvent : BaseEvent native ui version("2.4")
 {
     // d_gui.h
     enum EGUIEvent
@@ -121,7 +121,7 @@ class UiEvent : BaseEvent native ui
     native readonly bool IsAlt;
 }
 
-class InputEvent : BaseEvent native play
+class InputEvent : BaseEvent native play version("2.4")
 {
     enum EGenericEvent
     {
@@ -270,7 +270,7 @@ class InputEvent : BaseEvent native play
     native readonly int MouseY;
 }
 
-class ConsoleEvent : BaseEvent native
+class ConsoleEvent : BaseEvent native version("2.4")
 {
     // for net events, this will be the activator.
     // for UI events, this is always -1, and you need to check if level is loaded and use players[consoleplayer].
@@ -279,7 +279,7 @@ class ConsoleEvent : BaseEvent native
     native readonly int Args[3];
 }
 
-class StaticEventHandler : Object native play
+class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
@@ -335,7 +335,7 @@ class StaticEventHandler : Object native play
     native bool RequireMouse;
 }
 
-class EventHandler : StaticEventHandler native
+class EventHandler : StaticEventHandler native version("2.4")
 {
     clearscope static native StaticEventHandler Create(class<StaticEventHandler> type);
     clearscope static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);

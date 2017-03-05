@@ -611,7 +611,7 @@ void ZCCCompiler::CreateClassTypes()
 					{
 						if (parent->mVersion > mVersion)
 						{
-							Error(c->cls, "Parent class %s of %s not accessible to ZScript version %d.%d.%d", parent->GetClass()->TypeName.GetChars(), c->NodeName().GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
+							Error(c->cls, "Parent class %s of %s not accessible to ZScript version %d.%d.%d", parent->TypeName.GetChars(), c->NodeName().GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 						}
 						c->cls->Type = parent->CreateDerivedClass(c->NodeName(), TentativeClass);
 						if (c->Type() == nullptr)
@@ -2493,6 +2493,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					else
 					{
 						auto oldfunc = clstype->Virtuals[vindex];
+						auto parentfunc = dyn_cast<PFunction>(clstype->ParentClass->Symbols.FindSymbol(sym->SymbolName, true));
+						if (parentfunc && parentfunc->mVersion > mVersion)
+						{
+							Error(f, "Attempt to override function %s which is incompatible with version %d.%d.%d", FName(f->Name).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
+						}
 						if (oldfunc->VarFlags & VARF_Final)
 						{
 							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());

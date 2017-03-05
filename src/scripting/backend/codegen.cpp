@@ -388,7 +388,7 @@ bool FxExpression::isConstant() const
 //
 //==========================================================================
 
-VMFunction *FxExpression::GetDirectFunction()
+VMFunction *FxExpression::GetDirectFunction(const VersionInfo &ver)
 {
 	return nullptr;
 }
@@ -6065,6 +6065,7 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 			}
 			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion >= ctx.Version)
 			{
+				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
 				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
 			}
 
@@ -8495,19 +8496,44 @@ PPrototype *FxVMFunctionCall::ReturnProto()
 	return Function->Variants[0].Proto;
 }
 
+
+bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
+{
+	if (Function->mVersion > ver && !(Function->Variants[0].Flags & VARF_Deprecated))
+	{
+		FString VersionString;
+		if (ver >= MakeVersion(2, 3))
+		{
+			VersionString.Format("ZScript version %d.%d.%d", ver.major, ver.minor, ver.revision);
+		}
+		else
+		{
+			VersionString = "DECORATE";
+		}
+		ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", Function->SymbolName.GetChars(), VersionString.GetChars());
+		return false;
+	}
+	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion >= ver)
+	{
+		ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+		return false;
+	}
+	return true;
+}
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-VMFunction *FxVMFunctionCall::GetDirectFunction()
+VMFunction *FxVMFunctionCall::GetDirectFunction(const VersionInfo &ver)
 {
 	// If this return statement calls a non-virtual function with no arguments,
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
+
+	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && CheckAccessibility(ver))
 	{
 		unsigned imp = Function->GetImplicitArgs();
 		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
@@ -8536,6 +8562,11 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 	int implicit = Function->GetImplicitArgs();
 
+	if (!CheckAccessibility(ctx.Version))
+	{
+		delete this;
+		return false;
+	}
 	// This should never happen.
 	if (Self == nullptr && (Function->Variants[0].Flags & VARF_Method))
 	{
@@ -9372,11 +9403,11 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-VMFunction *FxSequence::GetDirectFunction()
+VMFunction *FxSequence::GetDirectFunction(const VersionInfo &ver)
 {
 	if (Expressions.Size() == 1)
 	{
-		return Expressions[0]->GetDirectFunction();
+		return Expressions[0]->GetDirectFunction(ver);
 	}
 	return nullptr;
 }
@@ -10358,11 +10389,11 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 	return out;
 }
 
-VMFunction *FxReturnStatement::GetDirectFunction()
+VMFunction *FxReturnStatement::GetDirectFunction(const VersionInfo &ver)
 {
 	if (Args.Size() == 1)
 	{
-		return Args[0]->GetDirectFunction();
+		return Args[0]->GetDirectFunction(ver);
 	}
 	return nullptr;
 }

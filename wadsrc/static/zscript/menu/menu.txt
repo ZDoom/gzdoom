@@ -1,5 +1,5 @@
 
-struct KeyBindings native
+struct KeyBindings native version("2.4")
 {
 	native static String NameKeys(int k1, int k2);
 
@@ -8,7 +8,7 @@ struct KeyBindings native
 	native void UnbindACommand (String str);
 }
 
-struct OptionValues native
+struct OptionValues native version("2.4")
 {
 	native static int GetCount(Name group);
 	native static String GetText(Name group, int index);
@@ -16,7 +16,7 @@ struct OptionValues native
 	native static String GetTextValue(Name group, int index);
 }
 
-struct JoystickConfig native
+struct JoystickConfig native version("2.4")
 {
 	enum EJoyAxis
 	{
@@ -48,7 +48,7 @@ struct JoystickConfig native
 	
 }
 
-class Menu : Object native ui
+class Menu : Object native ui version("2.4")
 {
 	enum EMenuKey
 	{
@@ -287,7 +287,7 @@ class Menu : Object native ui
 
 }
 
-class MenuDescriptor : Object native ui
+class MenuDescriptor : Object native ui version("2.4")
 {
 	native Name mMenuName;
 	native String mNetgameMessage;

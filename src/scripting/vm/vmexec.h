@@ -22,7 +22,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	const FVoidObj *konsta;
 	const VM_ATAG *konstatag;
 
-	if (f->Func != NULL && !f->Func->Native)
+	if (f->Func != NULL && !(f->Func->VarFlags & VARF_Native))
 	{
 		sfunc = static_cast<VMScriptFunction *>(f->Func);
 		konstd = sfunc->KonstD;
@@ -673,13 +673,13 @@ begin:
 				PFunction* callingfunc = (PFunction*)(reg.param + f->NumParam - b)[1].a;
 				DObject* dobj = (DObject*)(reg.param + f->NumParam - b)[2].a; // this is the self pointer. it should be in, since Side_Virtual functions are always non-static methods.
 				PClass* selftype = dobj->GetClass();
-				FScopeBarrier_ValidateCall(calledfunc, callingfunc, selftype);
+				FScopeBarrier::ValidateCall(calledfunc, callingfunc, selftype);
 				b -= 2;
 			}
 #endif
 
 			FillReturns(reg, f, returns, pc+1, C);
-			if (call->Native)
+			if (call->VarFlags & VARF_Native)
 			{
 				try
 				{
@@ -736,7 +736,7 @@ begin:
 		{
 			VMFunction *call = (VMFunction *)ptr;
 
-			if (call->Native)
+			if (call->VarFlags & VARF_Native)
 			{
 				try
 				{
@@ -821,7 +821,7 @@ begin:
 		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 		// [ZZ] validate readonly and between scope construction
 		if (callingfunc)
-			FScopeBarrier_ValidateNew(cls, callingfunc);
+			FScopeBarrier::ValidateNew(cls, callingfunc);
 		reg.a[a] = cls->CreateNew();
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
@@ -1966,7 +1966,7 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	const void *src;
 	VMScriptFunction *func = static_cast<VMScriptFunction *>(frame->Func);
 
-	assert(func != NULL && !func->Native);
+	assert(func != NULL && !(func->VarFlags & VARF_Native));
 	assert((regtype & ~REGT_KONST) == ret->RegType);
 
 	switch (regtype & REGT_TYPE)

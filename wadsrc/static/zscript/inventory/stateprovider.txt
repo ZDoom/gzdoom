@@ -31,10 +31,10 @@ class CustomInventory : StateProvider
 	//---------------------------------------------------------------------------
 
 	// This is only here, because these functions were originally exported on Inventory, despite only working for weapons, so this is here to satisfy some potential old mods having called it through CustomInventory.
-	deprecated action void A_GunFlash(statelabel flash = null, int flags = 0) {}
-	deprecated action void A_Lower() {}
-	deprecated action void A_Raise() {}
-	deprecated action void A_CheckReload() {}
+	deprecated("2.3") action void A_GunFlash(statelabel flash = null, int flags = 0) {}
+	deprecated("2.3") action void A_Lower() {}
+	deprecated("2.3") action void A_Raise() {}
+	deprecated("2.3") action void A_CheckReload() {}
 	native bool CallStateChain (Actor actor, State state);
 		
 	//===========================================================================

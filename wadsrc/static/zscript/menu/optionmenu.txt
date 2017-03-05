@@ -32,7 +32,7 @@
 **
 */
 
-struct FOptionMenuSettings
+struct FOptionMenuSettings version("2.4")
 {
 	int mTitleColor;
 	int mFontColor;

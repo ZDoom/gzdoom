@@ -24,6 +24,10 @@ public:
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);
 	void Close();
+	void SetParseVersion(VersionInfo ver)
+	{
+		ParseVersion = ver;
+	}
 
 	void SetCMode(bool cmode);
 	void SetEscape(bool esc);
@@ -102,6 +106,7 @@ protected:
 	BYTE StateMode;
 	bool StateOptions;
 	bool Escape;
+	VersionInfo ParseVersion = { 0, 0, 0 };	// no ZScript extensions by default
 };
 
 enum

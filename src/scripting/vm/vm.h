@@ -7,11 +7,8 @@
 #include "cmdlib.h"
 #include "doomerrors.h"
 #include "memarena.h"
+#include "scripting/backend/scopebarrier.h"
 
-// [ZZ] there are serious circular references between this and the rest of ZScript code, so it needs to be done like this
-//		these are used in vmexec.h
-void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc);
-void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
 class DObject;
 
 extern FMemArena ClassDataAllocator;
@@ -705,11 +702,8 @@ do_double:		if (inexact)
 class VMFunction
 {
 public:
-	bool Native;
-	bool Final = false;				// cannot be overridden
-	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
-	bool FuncConst = false;			// [ZZ] readonly function
-	int BarrierSide = 0;			// [ZZ] FScopeBarrier::Side
+	bool Unsafe = false;
+	int VarFlags = 0; // [ZZ] this replaces 5+ bool fields
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	unsigned VirtualIndex = ~0u;
 	FName Name;
@@ -718,7 +712,7 @@ public:
 
 	class PPrototype *Proto;
 
-	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL)
+	VMFunction(FName name = NAME_None) : ImplicitArgs(0), Name(name), Proto(NULL)
 	{
 		AllFunctions.Push(this);
 	}
@@ -942,9 +936,10 @@ class VMNativeFunction : public VMFunction
 public:
 	typedef int (*NativeCallType)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
-	VMNativeFunction() : NativeCall(NULL) { Native = true; }
-	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
-	VMNativeFunction(NativeCallType call, FName name) : VMFunction(name), NativeCall(call) { Native = true; }
+	// 8 is VARF_Native. I can't write VARF_Native because of circular references between this and dobject/dobjtype.
+	VMNativeFunction() : NativeCall(NULL) { VarFlags = 8; }
+	VMNativeFunction(NativeCallType call) : NativeCall(call) { VarFlags = 8; }
+	VMNativeFunction(NativeCallType call, FName name) : VMFunction(name), NativeCall(call) { VarFlags = 8; }
 
 	// Return value is the number of results.
 	NativeCallType NativeCall;

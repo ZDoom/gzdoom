@@ -487,6 +487,56 @@ void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 //
 //----------------------------------------------------------------------------
 
+void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
+{
+	for (int i = start; i < end; ++i)
+	{
+		float br = GPalette.BaseColors[i].r;
+		float bg = GPalette.BaseColors[i].g;
+		float bb = GPalette.BaseColors[i].b;
+		float grey = (br * 0.299 + bg * 0.587 + bb * 0.114) / 255.0f;
+		if (grey > 1.0) grey = 1.0;
+		br = r * grey;
+		bg = g * grey;
+		bb = b * grey;
+
+		int j = GPalette.Remap[i];
+		Palette[j] = PalEntry(j == 0 ? 0 : 255, int(br), int(bg), int(bb));
+		Remap[j] = ColorMatcher.Pick(Palette[j]);
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
+{
+	for (int i = start; i < end; ++i)
+	{
+		float br = GPalette.BaseColors[i].r;
+		float bg = GPalette.BaseColors[i].g;
+		float bb = GPalette.BaseColors[i].b;
+		float a = amount * 0.01f;
+		float ia = 1.0f - a;
+		br = br * ia + r * a;
+		bg = bg * ia + g * a;
+		bb = bb * ia + b * a;
+
+		int j = GPalette.Remap[i];
+		Palette[j] = PalEntry(j == 0 ? 0 : 255, int(br), int(bg), int(bb));
+		Remap[j] = ColorMatcher.Pick(Palette[j]);
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void FRemapTable::AddToTranslation(const char *range)
 {
 	int start,end;
@@ -511,19 +561,9 @@ void FRemapTable::AddToTranslation(const char *range)
 		}
 
 		sc.MustGetAnyToken();
+		Printf(0, "token type: %d", sc.TokenType);
 
-		if (sc.TokenType != '[' && sc.TokenType != '%')
-		{
-			int pal1,pal2;
-
-			sc.TokenMustBe(TK_IntConst);
-			pal1 = sc.Number;
-			sc.MustGetToken(':');
-			sc.MustGetToken(TK_IntConst);
-			pal2 = sc.Number;
-			AddIndexRange(start, end, pal1, pal2);
-		}
-		else if (sc.TokenType == '[')
+		if (sc.TokenType == '[')
 		{ 
 			// translation using RGB values
 			int r1,g1,b1,r2,g2,b2;
@@ -595,6 +635,54 @@ void FRemapTable::AddToTranslation(const char *range)
 			sc.MustGetToken(']');
 
 			AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
+		}
+		else if (sc.TokenType == '#')
+		{
+			// Colourise translation
+			int r, g, b;
+			sc.MustGetToken('[');
+			sc.MustGetToken(TK_IntConst);
+			r = sc.Number;
+			sc.MustGetToken(',');
+			sc.MustGetToken(TK_IntConst);
+			g = sc.Number;
+			sc.MustGetToken(',');
+			sc.MustGetToken(TK_IntConst);
+			b = sc.Number;
+			sc.MustGetToken(']');
+
+			AddColourisation(start, end, r, g, b);
+		}
+		else if (sc.TokenType == '@')
+		{
+			// Tint translation
+			int a, r, g, b;
+
+			sc.MustGetToken(TK_IntConst);
+			a = sc.Number;
+			sc.MustGetToken('[');
+			sc.MustGetToken(TK_IntConst);
+			r = sc.Number;
+			sc.MustGetToken(',');
+			sc.MustGetToken(TK_IntConst);
+			g = sc.Number;
+			sc.MustGetToken(',');
+			sc.MustGetToken(TK_IntConst);
+			b = sc.Number;
+			sc.MustGetToken(']');
+
+			AddTint(start, end, r, g, b, a);
+		}
+		else
+		{
+			int pal1, pal2;
+
+			sc.TokenMustBe(TK_IntConst);
+			pal1 = sc.Number;
+			sc.MustGetToken(':');
+			sc.MustGetToken(TK_IntConst);
+			pal2 = sc.Number;
+			AddIndexRange(start, end, pal1, pal2);
 		}
 	}
 	catch (CRecoverableError &err)

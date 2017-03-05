@@ -3,7 +3,7 @@
 // INTERMISSION
 // Structure passed e.g. to WI_Start(wb)
 //
-struct WBPlayerStruct native
+struct WBPlayerStruct native version("2.4")
 {
 	// Player stats, kills, collected items etc.
 	native int			skills;
@@ -14,7 +14,7 @@ struct WBPlayerStruct native
 	native int			fragcount;	// [RH] Cumulative frags for this player
 }
 
-struct WBStartStruct native 
+struct WBStartStruct native version("2.4")
 {
 	native int			finished_ep;
 	native int			next_ep;

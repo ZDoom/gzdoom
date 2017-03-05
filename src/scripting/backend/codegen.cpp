@@ -92,43 +92,22 @@ static const FLOP FxFlops[] =
 
 //==========================================================================
 //
-// [ZZ] Magic methods to be used in vmexec.h for runtime checking of scope
-//
-//==========================================================================
-
-// this can be imported in vmexec.h
-void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc)
-{
-	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
-	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
-	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
-	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
-		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
-}
-// this can be imported in vmexec.h
-void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype)
-{
-	// [ZZ] anonymous blocks have 0 variants, so give them Side_Virtual.
-	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
-	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
-	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);
-	if (innerside == FScopeBarrier::Side_Virtual)
-		innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
-	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
-		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->SymbolName.GetChars(), FScopeBarrier::StringFromSide(outerside));
-}
-
-//==========================================================================
-//
 // FCompileContext
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump) 
-	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump), CurGlobals(cg)
+FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver) 
+	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump), CurGlobals(cg), Version(ver)
 {
+	if (Version >= MakeVersion(2, 3))
+	{
+		VersionString.Format("ZScript version %d.%d.%d", Version.major, Version.minor, Version.revision);
+	}
+	else
+	{
+		VersionString =  "DECORATE";
+	}
+
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
@@ -409,7 +388,7 @@ bool FxExpression::isConstant() const
 //
 //==========================================================================
 
-VMFunction *FxExpression::GetDirectFunction()
+VMFunction *FxExpression::GetDirectFunction(const VersionInfo &ver)
 {
 	return nullptr;
 }
@@ -5986,6 +5965,15 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
+			PField *vsym = static_cast<PField*>(sym);
+
+			if (vsym->GetVersion() > ctx.Version)
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", sym->SymbolName.GetChars(), ctx.VersionString.GetChars());
+				delete this;
+				return nullptr;
+			}
+
 			// internally defined global variable
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable\n", Identifier.GetChars());
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
@@ -6045,7 +6033,8 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 		if (!objtype->IsKindOf(RUNTIME_CLASS(PClassActor)))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
-			delete this;
+			delete object;
+			object = nullptr;
 			return nullptr;
 		}
 
@@ -6067,20 +6056,65 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			PField *vsym = static_cast<PField*>(sym);
+			if (vsym->GetVersion() > ctx.Version)
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", sym->SymbolName.GetChars(), ctx.VersionString.GetChars());
+				delete object;
+				object = nullptr;
+				return nullptr;
+			}
+			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion >= ctx.Version)
+			{
+				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+			}
 
 			// We have 4 cases to consider here:
-			// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
+			// 1. The symbol is a static/meta member which is always accessible.
 			// 2. This is a static function 
 			// 3. This is an action function with a restricted self pointer
 			// 4. This is a normal member or unrestricted action function.
-			if (vsym->Flags & VARF_Deprecated && !ctx.FromDecorate)
-			{
-				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
-			}
 			if ((vsym->Flags & VARF_Private) && symtbl != &classctx->Symbols)
 			{
 				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+				delete object;
+				object = nullptr;
 				return nullptr;
+			}
+			PClass* cls_ctx = dyn_cast<PClass>(classctx);
+			PClass* cls_target = dyn_cast<PClass>(objtype);
+			// [ZZ] neither PSymbol, PField or PSymbolTable have the necessary information. so we need to do the more complex check here.
+			if (vsym->Flags & VARF_Protected)
+			{
+				// early break.
+				if (!cls_ctx || !cls_target)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					delete object;
+					object = nullptr;
+					return nullptr;
+				}
+
+				// find the class that declared this field.
+				PClass* p = cls_target;
+				while (p)
+				{
+					if (&p->Symbols == symtbl)
+					{
+						cls_target = p;
+						break;
+					}
+
+					p = p->ParentClass;
+				}
+
+				if (!cls_ctx->IsDescendantOf(cls_target))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					delete object;
+					object = nullptr;
+					return nullptr;
+				}
 			}
 
 			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);
@@ -6810,12 +6844,6 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		// [ZZ] original check.
 		bool bWritable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
 			(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
-		// [ZZ] self in a const function is not writable.
-		if (bWritable) // don't do complex checks on early fail
-		{
-			if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
-				bWritable = false;
-		}
 		// [ZZ] implement write barrier between different scopes
 		if (bWritable)
 		{
@@ -8468,19 +8496,44 @@ PPrototype *FxVMFunctionCall::ReturnProto()
 	return Function->Variants[0].Proto;
 }
 
+
+bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
+{
+	if (Function->mVersion > ver && !(Function->Variants[0].Flags & VARF_Deprecated))
+	{
+		FString VersionString;
+		if (ver >= MakeVersion(2, 3))
+		{
+			VersionString.Format("ZScript version %d.%d.%d", ver.major, ver.minor, ver.revision);
+		}
+		else
+		{
+			VersionString = "DECORATE";
+		}
+		ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", Function->SymbolName.GetChars(), VersionString.GetChars());
+		return false;
+	}
+	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion >= ver)
+	{
+		ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+		return false;
+	}
+	return true;
+}
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-VMFunction *FxVMFunctionCall::GetDirectFunction()
+VMFunction *FxVMFunctionCall::GetDirectFunction(const VersionInfo &ver)
 {
 	// If this return statement calls a non-virtual function with no arguments,
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
+
+	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && CheckAccessibility(ver))
 	{
 		unsigned imp = Function->GetImplicitArgs();
 		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
@@ -8509,6 +8562,11 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 	int implicit = Function->GetImplicitArgs();
 
+	if (!CheckAccessibility(ctx.Version))
+	{
+		delete this;
+		return false;
+	}
 	// This should never happen.
 	if (Self == nullptr && (Function->Variants[0].Flags & VARF_Method))
 	{
@@ -8718,7 +8776,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 
 	VMFunction *vmfunc = Function->Variants[0].Implementation;
-	bool staticcall = (vmfunc->Final || vmfunc->VirtualIndex == ~0u || NoVirtual);
+	bool staticcall = ((vmfunc->VarFlags & VARF_Final) || vmfunc->VirtualIndex == ~0u || NoVirtual);
 
 	count = 0;
 	// Emit code to pass implied parameters
@@ -9345,11 +9403,11 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-VMFunction *FxSequence::GetDirectFunction()
+VMFunction *FxSequence::GetDirectFunction(const VersionInfo &ver)
 {
 	if (Expressions.Size() == 1)
 	{
-		return Expressions[0]->GetDirectFunction();
+		return Expressions[0]->GetDirectFunction(ver);
 	}
 	return nullptr;
 }
@@ -10331,11 +10389,11 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 	return out;
 }
 
-VMFunction *FxReturnStatement::GetDirectFunction()
+VMFunction *FxReturnStatement::GetDirectFunction(const VersionInfo &ver)
 {
 	if (Args.Size() == 1)
 	{
-		return Args[0]->GetDirectFunction();
+		return Args[0]->GetDirectFunction(ver);
 	}
 	return nullptr;
 }

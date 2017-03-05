@@ -91,6 +91,7 @@ public:
 	PSymbolTable	Symbols;
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
+	VersionInfo		mVersion = { 0,0,0 };
 	BYTE loadOp, storeOp, moveOp, RegType, RegCount;
 
 	PType(unsigned int size = 1, unsigned int align = 1);

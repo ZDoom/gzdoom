@@ -1,5 +1,5 @@
-#include "scopebarrier.h"
 #include "dobject.h"
+#include "scopebarrier.h"
 
 
 // Note: the same object can't be both UI and Play. This is checked explicitly in the field construction and will cause esoteric errors here if found.
@@ -44,6 +44,19 @@ int FScopeBarrier::FlagsFromSide(int side)
 	}
 }
 
+int FScopeBarrier::ObjectFlagsFromSide(int side)
+{
+	switch (side)
+	{
+	case Side_Play:
+		return OF_Play;
+	case Side_UI:
+		return OF_UI;
+	default:
+		return 0;
+	}
+}
+
 // used for errors
 const char* FScopeBarrier::StringFromSide(int side)
 {
@@ -69,6 +82,14 @@ int FScopeBarrier::ChangeSideInFlags(int flags, int side)
 {
 	flags &= ~(VARF_UI | VARF_Play | VARF_VirtualScope | VARF_ClearScope);
 	flags |= FlagsFromSide(side);
+	return flags;
+}
+
+// this modifies OF_ flags and sets the side properly.
+int FScopeBarrier::ChangeSideInObjectFlags(int flags, int side)
+{
+	flags &= ~(OF_UI | OF_Play);
+	flags |= ObjectFlagsFromSide(side);
 	return flags;
 }
 
@@ -149,4 +170,28 @@ void FScopeBarrier::AddFlags(int flags1, int flags2, const char* name)
 		callable = false;
 		if (name) callerror.Format("Can't call %s function %s from %s context", StringFromSide(sideto), name, StringFromSide(sidefrom));
 	}
+}
+
+// these are for vmexec.h
+void FScopeBarrier::ValidateNew(PClass* cls, PFunction* callingfunc)
+{
+	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
+	if (outerside == FScopeBarrier::Side_Virtual)
+		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
+		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
+}
+// this can be imported in vmexec.h
+void FScopeBarrier::ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype)
+{
+	// [ZZ] anonymous blocks have 0 variants, so give them Side_Virtual.
+	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
+	if (outerside == FScopeBarrier::Side_Virtual)
+		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);
+	if (innerside == FScopeBarrier::Side_Virtual)
+		innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
+	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
+		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->SymbolName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 }

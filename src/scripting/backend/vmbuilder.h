@@ -146,13 +146,14 @@ class FFunctionBuildList
 		int StateIndex;
 		int StateCount;
 		int Lump;
+		VersionInfo Version;
 		bool FromDecorate;
 	};
 
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PNamespace *curglobals, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
+	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();
 };
 

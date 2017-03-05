@@ -195,6 +195,8 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 
 	if (symbol != nullptr)
 	{
+		PClass* cls_ctx = dyn_cast<PClass>(funccls);
+		PClass* cls_target = funcsym?dyn_cast<PClass>(funcsym->OwningClass):nullptr;
 		if (funcsym == nullptr)
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
@@ -203,6 +205,11 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 		{
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
+		}
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
+		{
+			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
+			return nullptr;
 		}
 		else if (funcsym->Variants[0].Flags & VARF_Deprecated)
 		{
@@ -221,7 +228,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 //
 //==========================================================================
 
-void CreateDamageFunction(PNamespace *OutNamespace, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum)
+void CreateDamageFunction(PNamespace *OutNamespace, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum)
 {
 	if (id == nullptr)
 	{
@@ -231,7 +238,7 @@ void CreateDamageFunction(PNamespace *OutNamespace, PClassActor *info, AActor *d
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
 		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, 0);
-		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, ver, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
 	}
 }
 

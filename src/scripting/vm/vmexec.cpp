@@ -201,7 +201,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	VMScriptFunction *calleefunc = static_cast<VMScriptFunction *>(callee->Func);
 	const VMRegisters calleereg(callee);
 
-	assert(calleefunc != NULL && !calleefunc->Native);
+	assert(calleefunc != NULL && !(calleefunc->VarFlags & VARF_Native));
 	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->DefaultArgs.Size() == calleefunc->NumArgs));
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 

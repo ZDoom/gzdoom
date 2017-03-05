@@ -26,6 +26,7 @@ class PSymbol : public DObject
 	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
 public:
 	FName SymbolName;
+	VersionInfo mVersion = { 0,0,0 };
 
 protected:
 	PSymbol(FName name) { SymbolName = name; }
@@ -76,6 +77,7 @@ class PField : public PSymbol
 	HAS_OBJECT_POINTERS
 public:
 	PField(FName name, PType *type, uint32_t flags = 0, size_t offset = 0, int bitvalue = 0);
+	VersionInfo GetVersion();
 
 	size_t Offset;
 	PType *Type;

@@ -143,50 +143,38 @@ std2:
 		'false'						{ RET(TK_False); }
 		'none'						{ RET(TK_None); }
 		'auto'						{ RET(TK_Auto); }
-		'exec'						{ RET(TK_Exec); }
 		'property'					{ RET(TK_Property); }
 		'native'					{ RET(TK_Native); }
 		'var'						{ RET(TK_Var); }
-		'out'						{ RET(TK_Out); }
-		'ref'						{ RET(TK_Ref); }
-		'event'						{ RET(TK_Event); }
+		'out'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Out : TK_Identifier); }
 		'static'					{ RET(TK_Static); }
-		'transient'					{ RET(TK_Transient); }
-		'final'						{ RET(TK_Final); }
-		'throws'					{ RET(TK_Throws); }
-		'extend'					{ RET(TK_Extend); }
-		'public'					{ RET(TK_Public); }
-		'protected'					{ RET(TK_Protected); }
-		'private'					{ RET(TK_Private); }
+		'transient'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Transient : TK_Identifier); }
+		'final'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Final : TK_Identifier); }
+		'extend'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Extend : TK_Identifier); }
+		'protected'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Protected : TK_Identifier); }
+		'private'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Private : TK_Identifier); }
 		'dot'						{ RET(TK_Dot); }
 		'cross'						{ RET(TK_Cross); }
-		'localized'					{ RET(TK_Localized); }
-		'latent'					{ RET(TK_Latent); }
-		'singular'					{ RET(TK_Singular); }
-		'config'					{ RET(TK_Config); }
-		'coerce'					{ RET(TK_Coerce); }
-		'optional'					{ RET(TK_Optional); }
-		'export'					{ RET(TK_Export); }
-		'virtual'					{ RET(TK_Virtual); }
-		'override'					{ RET(TK_Override); }
-		'vararg'					{ RET(TK_VarArg); }
-		'ui'						{ RET(TK_UI); }
-		'play'						{ RET(TK_Play); }
-		'clearscope'				{ RET(TK_ClearScope); }
-		'virtualscope'				{ RET(TK_VirtualScope); }
-		'super'						{ RET(TK_Super); }
-		'global'					{ RET(TK_Global); }
+		'virtual'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Virtual : TK_Identifier); }
+		'override'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Override : TK_Identifier); }
+		'vararg'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_VarArg : TK_Identifier); }
+		'ui'						{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_UI : TK_Identifier); }
+		'play'						{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_Play : TK_Identifier); }
+		'clearscope'				{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_ClearScope : TK_Identifier); }
+		'virtualscope'				{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_VirtualScope : TK_Identifier); }
+		'super'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Super : TK_Identifier); }
 		'stop'						{ RET(TK_Stop); }
 		'null'						{ RET(TK_Null); }
 
-		'is'						{ RET(TK_Is); }
-		'replaces'					{ RET(TK_Replaces); }
+		'is'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Is : TK_Identifier); }
+		'replaces'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Replaces : TK_Identifier); }
 		'states'					{ RET(TK_States); }
-		'meta'						{ RET(TK_Meta); }
-		'deprecated'				{ RET(TK_Deprecated); }
-		'action'					{ RET(TK_Action); }
-		'readonly'					{ RET(TK_ReadOnly); }
-		'let'						{ RET(TK_Let); }
+		'meta'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Meta : TK_Identifier); }
+		'deprecated'				{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Deprecated : TK_Identifier); }
+		'version'					{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_Version : TK_Identifier); }
+		'action'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Action : TK_Identifier); }
+		'readonly'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_ReadOnly : TK_Identifier); }
+		'let'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Let : TK_Identifier); }
 
 		/* Actor state options */
 		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }
@@ -267,6 +255,8 @@ std2:
 		"^"							{ RET('^'); }
 		"|"							{ RET('|'); }
 		"?"							{ RET('?'); }
+		"#"							{ RET('#'); }
+		"@"							{ RET('@'); }
 
 		[ \t\v\f\r]+				{ goto std1; }
 		"\n"						{ goto newline; }

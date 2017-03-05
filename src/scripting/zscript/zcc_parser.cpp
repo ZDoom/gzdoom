@@ -41,6 +41,7 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "v_text.h"
+#include "version.h"
 #include "zcc_parser.h"
 #include "zcc_compile.h"
 
@@ -145,6 +146,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Final,			ZCC_FINAL);
 	TOKENDEF (TK_Meta,			ZCC_META);
 	TOKENDEF (TK_Deprecated,	ZCC_DEPRECATED);
+	TOKENDEF (TK_Version,		ZCC_VERSION);
 	TOKENDEF (TK_ReadOnly,		ZCC_READONLY);
 	TOKENDEF ('{',				ZCC_LBRACE);
 	TOKENDEF ('}',				ZCC_RBRACE);
@@ -179,7 +181,6 @@ static void InitTokenMap()
 	TOKENDEF (']',				ZCC_RBRACKET);
 	TOKENDEF (TK_In,			ZCC_IN);
 	TOKENDEF (TK_Out,			ZCC_OUT);
-	TOKENDEF (TK_Optional,		ZCC_OPTIONAL);
 	TOKENDEF (TK_Super,			ZCC_SUPER);
 	TOKENDEF (TK_Null,			ZCC_NULLPTR);
 	TOKENDEF ('~',				ZCC_TILDE);
@@ -232,29 +233,36 @@ static void InitTokenMap()
 
 //**--------------------------------------------------------------------------
 
-static void ParseSingleFile(const char *filename, int lump, void *parser, ZCCParseState &state)
+static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void *parser, ZCCParseState &state)
 {
 	int tokentype;
 	//bool failed;
 	ZCCToken value;
-	FScanner sc;
+	FScanner lsc;
 
-	if (filename != nullptr)
+	if (pSC == nullptr)
 	{
-		lump = Wads.CheckNumForFullName(filename, true);
-		if (lump >= 0)
+		if (filename != nullptr)
 		{
-			sc.OpenLumpNum(lump);
+			lump = Wads.CheckNumForFullName(filename, true);
+			if (lump >= 0)
+			{
+				lsc.OpenLumpNum(lump);
+			}
+			else
+			{
+				Printf("Could not find script lump '%s'\n", filename);
+				return;
+			}
 		}
-		else
-		{
-			Printf("Could not find script lump '%s'\n", filename);
-			return;
-		}
-	}
-	else sc.OpenLumpNum(lump);
+		else lsc.OpenLumpNum(lump);
 
+		pSC = &lsc;
+	}
+	FScanner &sc = *pSC;
+	sc.SetParseVersion(state.ParseVersion);
 	state.sc = &sc;
+
 	while (sc.GetToken())
 	{
 		value.SourceLoc = sc.GetMessageLine();
@@ -343,9 +351,47 @@ static void DoParse(int lumpnum)
 #endif
 
 	sc.OpenLumpNum(lumpnum);
+	sc.SetParseVersion({ 2, 4 });	// To get 'version' we need parse version 2.4 for the initial test
 	auto saved = sc.SavePos();
 
-	ParseSingleFile(nullptr, lumpnum, parser, state);
+	if (sc.GetToken())
+	{
+		if (sc.TokenType == TK_Version)
+		{
+			char *endp;
+			sc.MustGetString();
+			state.ParseVersion.major = (int16_t)clamp<unsigned long long>(strtoull(sc.String, &endp, 10), 0, USHRT_MAX);
+			if (*endp != '.')
+			{
+				sc.ScriptError("Bad version directive");
+			}
+			state.ParseVersion.minor = (int16_t)clamp<unsigned long long>(strtoll(endp + 1, &endp, 10), 0, USHRT_MAX);
+			if (*endp == '.')
+			{
+				state.ParseVersion.revision = (int16_t)clamp<unsigned long long>(strtoll(endp + 1, &endp, 10), 0, USHRT_MAX);
+			}
+			else state.ParseVersion.revision = 0;
+			if (*endp != 0)
+			{
+				sc.ScriptError("Bad version directive");
+			}
+			if (state.ParseVersion.major == USHRT_MAX || state.ParseVersion.minor == USHRT_MAX || state.ParseVersion.revision == USHRT_MAX)
+			{
+				sc.ScriptError("Bad version directive");
+			}
+			if (state.ParseVersion > MakeVersion(VER_MAJOR, VER_MINOR, VER_REVISION))
+			{
+				sc.ScriptError("Version mismatch. %d.%d.%d expected but only %d.%d.%d supported", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
+			}
+		}
+		else
+		{
+			state.ParseVersion = MakeVersion(2, 3);	// 2.3 is the first version of ZScript.
+			sc.RestorePos(saved);
+		}
+	}
+
+	ParseSingleFile(&sc, nullptr, lumpnum, parser, state);
 	for (unsigned i = 0; i < Includes.Size(); i++)
 	{
 		lumpnum = Wads.CheckNumForFullName(Includes[i], true);
@@ -362,7 +408,7 @@ static void DoParse(int lumpnum)
 					Wads.GetWadFullName(Wads.GetLumpFile(baselump)), Includes[i].GetChars());
 			}
 
-			ParseSingleFile(nullptr, lumpnum, parser, state);
+			ParseSingleFile(nullptr, nullptr, lumpnum, parser, state);
 		}
 	}
 	Includes.Clear();
@@ -405,7 +451,7 @@ static void DoParse(int lumpnum)
 
 	PSymbolTable symtable;
 	auto newns = Wads.GetLumpFile(lumpnum) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(lumpnum));
-	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum);
+	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum, state.ParseVersion);
 	cc.Compile();
 
 	if (FScriptPosition::ErrorCounter > 0)
@@ -435,16 +481,6 @@ void ParseScripts()
 		DoParse(lump);
 	}
 }
-
-/*
-CCMD(parse)
-{
-	if (argv.argc() == 2)
-	{
-		DoParse(argv[1]);
-	}
-}
-*/
 
 static FString ZCCTokenName(int terminal)
 {

@@ -86,8 +86,10 @@ struct FCompileContext
 	bool Unsafe = false;
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 	PNamespace *CurGlobals;
+	VersionInfo Version;
+	FString VersionString;
 
-	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
+	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver);
 	FCompileContext(PNamespace *spc, PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
@@ -322,7 +324,7 @@ public:
 	virtual bool isConstant() const;
 	virtual bool RequestAddress(FCompileContext &ctx, bool *writable);
 	virtual PPrototype *ReturnProto();
-	virtual VMFunction *GetDirectFunction();
+	virtual VMFunction *GetDirectFunction(const VersionInfo &ver);
 	virtual bool CheckReturn() { return false; }
 	virtual int GetBitValue() { return -1; }
 	bool IsNumeric() const { return ValueType->isNumeric(); }
@@ -1712,12 +1714,14 @@ class FxVMFunctionCall : public FxExpression
 	TArray<ExpEmit> ReturnRegs;
 	PFunction *CallingFunction;
 
+	bool CheckAccessibility(const VersionInfo &ver);
+
 public:
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
-	VMFunction *GetDirectFunction();
+	VMFunction *GetDirectFunction(const VersionInfo &ver);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
 	TArray<PType*> &GetReturnTypes() const
@@ -1742,7 +1746,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); expr->NeedResult = false; }
-	VMFunction *GetDirectFunction();
+	VMFunction *GetDirectFunction(const VersionInfo &ver);
 	bool CheckReturn();
 };
 
@@ -1949,7 +1953,7 @@ public:
 	~FxReturnStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
-	VMFunction *GetDirectFunction();
+	VMFunction *GetDirectFunction(const VersionInfo &ver);
 	bool CheckReturn() { return true; }
 };
 

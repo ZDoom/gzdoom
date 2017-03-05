@@ -386,8 +386,7 @@ static void DoParse(int lumpnum)
 		}
 		else
 		{
-			state.ParseVersion.major = 2;	// 2.3 is the first version of ZScript.
-			state.ParseVersion.minor = 3;
+			state.ParseVersion = MakeVersion(2, 3);	// 2.3 is the first version of ZScript.
 			sc.RestorePos(saved);
 		}
 	}

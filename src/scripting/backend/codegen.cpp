@@ -89,15 +89,25 @@ static const FLOP FxFlops[] =
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
+
 //==========================================================================
 //
 // FCompileContext
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump) 
-	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump), CurGlobals(cg)
+FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver) 
+	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump), CurGlobals(cg), Version(ver)
 {
+	if (Version >= MakeVersion(2, 3))
+	{
+		VersionString.Format("ZScript version %d.%d.%d", Version.major, Version.minor, Version.revision);
+	}
+	else
+	{
+		VersionString =  "DECORATE";
+	}
+
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
@@ -5955,6 +5965,15 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
+			PField *vsym = static_cast<PField*>(sym);
+
+			if (vsym->GetVersion() > ctx.Version)
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", sym->SymbolName.GetChars(), ctx.VersionString.GetChars());
+				delete this;
+				return nullptr;
+			}
+
 			// internally defined global variable
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable\n", Identifier.GetChars());
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
@@ -6014,7 +6033,8 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 		if (!objtype->IsKindOf(RUNTIME_CLASS(PClassActor)))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
-			delete this;
+			delete object;
+			object = nullptr;
 			return nullptr;
 		}
 
@@ -6036,19 +6056,28 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			PField *vsym = static_cast<PField*>(sym);
-
-			// We have 4 cases to consider here:
-			// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
-			// 2. This is a static function 
-			// 3. This is an action function with a restricted self pointer
-			// 4. This is a normal member or unrestricted action function.
-			if (vsym->Flags & VARF_Deprecated && !ctx.FromDecorate)
+			if (vsym->GetVersion() > ctx.Version)
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", sym->SymbolName.GetChars(), ctx.VersionString.GetChars());
+				delete object;
+				object = nullptr;
+				return nullptr;
+			}
+			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion >= ctx.Version)
 			{
 				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
 			}
+
+			// We have 4 cases to consider here:
+			// 1. The symbol is a static/meta member which is always accessible.
+			// 2. This is a static function 
+			// 3. This is an action function with a restricted self pointer
+			// 4. This is a normal member or unrestricted action function.
 			if ((vsym->Flags & VARF_Private) && symtbl != &classctx->Symbols)
 			{
 				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+				delete object;
+				object = nullptr;
 				return nullptr;
 			}
 			PClass* cls_ctx = dyn_cast<PClass>(classctx);
@@ -6060,6 +6089,8 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 				if (!cls_ctx || !cls_target)
 				{
 					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					delete object;
+					object = nullptr;
 					return nullptr;
 				}
 
@@ -6079,6 +6110,8 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 				if (!cls_ctx->IsDescendantOf(cls_target))
 				{
 					ScriptPosition.Message(MSG_ERROR, "Protected member %s not accessible", vsym->SymbolName.GetChars());
+					delete object;
+					object = nullptr;
 					return nullptr;
 				}
 			}

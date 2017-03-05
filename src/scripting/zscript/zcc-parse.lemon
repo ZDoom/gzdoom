@@ -1030,7 +1030,7 @@ decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) RPAREN.
 	X->Version = A.String->GetChars();
 }
 
-decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRINGCONST(A) RPAREN.	
+decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRCONST(A) RPAREN.	
 { 
 	if (F == nullptr)
 	{

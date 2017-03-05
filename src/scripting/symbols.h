@@ -77,6 +77,7 @@ class PField : public PSymbol
 	HAS_OBJECT_POINTERS
 public:
 	PField(FName name, PType *type, uint32_t flags = 0, size_t offset = 0, int bitvalue = 0);
+	VersionInfo GetVersion();
 
 	size_t Offset;
 	PType *Type;

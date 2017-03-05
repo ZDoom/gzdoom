@@ -1316,6 +1316,7 @@ PPointer::PPointer(PType *pointsat, bool isconst)
 : PBasicType(sizeof(void *), alignof(void *)), PointedType(pointsat), IsConst(isconst)
 {
 	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
+	mVersion = pointsat->mVersion;
 	SetOps();
 }
 
@@ -1518,6 +1519,7 @@ PClassPointer::PClassPointer(PClass *restrict)
 	// This means we can use the cheapoer non-barriered opcodes here.
 	loadOp = OP_LOS;
 	storeOp = OP_SP;
+	mVersion = restrict->mVersion;
 }
 
 //==========================================================================
@@ -2520,6 +2522,14 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 		}
 	}
 	else BitValue = -1;
+}
+
+VersionInfo PField::GetVersion()
+{
+	VersionInfo Highest = { 0,0,0 };
+	if (!(Flags & VARF_Deprecated)) Highest = mVersion;
+	if (Type->mVersion > Highest) Highest = Type->mVersion;
+	return Highest;
 }
 
 /* PProperty *****************************************************************/

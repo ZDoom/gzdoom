@@ -857,7 +857,7 @@ void FFunctionBuildList::Build()
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.CurGlobals, item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump);
+		FCompileContext ctx(item.CurGlobals, item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump, item.Version);
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
 		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());

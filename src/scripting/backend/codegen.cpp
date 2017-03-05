@@ -6841,12 +6841,6 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 		// [ZZ] original check.
 		bool bWritable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
 			(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
-		// [ZZ] self in a const function is not writable.
-		if (bWritable) // don't do complex checks on early fail
-		{
-			if ((classx->ExprType == EFX_Self) && (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_ReadOnly)))
-				bWritable = false;
-		}
 		// [ZZ] implement write barrier between different scopes
 		if (bWritable)
 		{

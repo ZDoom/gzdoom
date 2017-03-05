@@ -9088,6 +9088,35 @@ scriptwait:
 			}
 			break;
 
+		case PCD_TRANSLATIONRANGE4:
+			{ // Colourise translation
+				int start = STACK(5);
+				int end = STACK(4);
+				int r = STACK(3);
+				int g = STACK(2);
+				int b = STACK(1);
+				sp -= 5;
+
+				if (translation != NULL)
+					translation->AddColourisation(start, end, r, g, b);
+			}
+			break;
+
+		case PCD_TRANSLATIONRANGE5:
+			{ // Tint translation
+				int start = STACK(6);
+				int end = STACK(5);
+				int a = STACK(4);
+				int r = STACK(3);
+				int g = STACK(2);
+				int b = STACK(1);
+				sp -= 6;
+
+				if (translation != NULL)
+					translation->AddTint(start, end, r, g, b, a);
+			}
+			break;
+
 		case PCD_ENDTRANSLATION:
 			if (translation != NULL)
 			{

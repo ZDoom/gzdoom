@@ -273,7 +273,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 #endif
 
 	case MDEV_SNDSYS:
-		return new SndSysMIDIDevice;
+		return GSnd->CreateMIDIDevice();
 
 	case MDEV_GUS:
 		return new TimidityMIDIDevice(Args);

@@ -64,6 +64,7 @@ extern HWND Window;
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "files.h"
+#include "i_musicinterns.h"
 
 #if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43400
 #error You are trying to compile with an unsupported version of FMOD.
@@ -3476,6 +3477,11 @@ FMOD_RESULT FMODSoundRenderer::SetSystemReverbProperties(const REVERB_PROPERTIES
 	return Sys->setReverbProperties(&fr);
 #endif
 #endif
+}
+
+MIDIDevice* FMODSoundRenderer::CreateMIDIDevice() const
+{
+	return new SndSysMIDIDevice;
 }
 
 #endif // NO_FMOD

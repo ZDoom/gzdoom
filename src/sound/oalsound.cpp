@@ -2052,6 +2052,16 @@ void OpenALSoundRenderer::PrintDriversList()
 	}
 }
 
+MIDIDevice* OpenALSoundRenderer::CreateMIDIDevice() const
+{
+#ifdef _WIN32
+	extern UINT mididevice;
+	return new WinMIDIDevice(mididevice);
+#else
+	return new OPLMIDIDevice(nullptr);
+#endif
+}
+
 void OpenALSoundRenderer::PurgeStoppedSources()
 {
 	// Release channels that are stopped

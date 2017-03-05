@@ -143,17 +143,26 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
 
+	const auto copyPixels = [&viewport]()
+	{
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+	};
+
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindCurrentFB();
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+		copyPixels();
+	}
+	else if (gl.legacyMode)
+	{
+		copyPixels();
 	}
 	else
 	{
 		GLint readbuffer = 0;
 		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
 		glReadBuffer(GL_FRONT);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+		copyPixels();
 		glReadBuffer(readbuffer);
 	}
 

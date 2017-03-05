@@ -644,8 +644,12 @@ bool FConfigFile::ReadConfig (void *file)
 			continue;
 		}
 		// Do not process tail of long line
-		const bool longline = 255 == strlen(readbuf) && '\n' != readbuf[254];
-		if (!longline)
+		const bool longline = (READBUFFERSIZE - 1) == strlen(readbuf) && '\n' != readbuf[READBUFFERSIZE - 2];
+		if (longline)
+		{
+			endpt = start + READBUFFERSIZE - 2;
+		}
+		else
 		{
 			// Remove white space at end of line
 			endpt = start + strlen (start) - 1;

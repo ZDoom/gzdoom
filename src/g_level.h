@@ -223,7 +223,7 @@ enum ELevelFlags : unsigned int
 	
 	// More flags!
 	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
-	LEVEL3_RESETINVENTORY		= 0x00000002,	// kills all INVBAR items on map change.
+	LEVEL3_REMOVEITEMS		= 0x00000002,	// kills all INVBAR items on map change.
 };
 
 

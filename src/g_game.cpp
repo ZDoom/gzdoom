@@ -1350,7 +1350,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
 			{
 				item->Amount = item->InterHubAmount;
-				if ((level.flags3 & LEVEL3_RESETINVENTORY) && !(item->ItemFlags & IF_UNDROPPABLE))
+				if ((level.flags3 & LEVEL3_REMOVEITEMS) && !(item->ItemFlags & IF_UNDROPPABLE))
 				{
 					todelete.Push(item);
 				}

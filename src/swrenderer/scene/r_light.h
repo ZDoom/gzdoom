@@ -32,7 +32,10 @@
 // Convert a light level into an unbounded colormap index (shade). Result is
 // fixed point. Why the +12? I wish I knew, but experimentation indicates it
 // is necessary in order to best reproduce Doom's original lighting.
-#define LIGHT2SHADE(l) ((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
+//#define LIGHT2SHADE(l) ((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
+
+// Disable diminishing light (To do: merge with LIGHT2SHADE and let a cvar control it, maybe by converting this to a function, like R_ActualExtraLight)
+#define LIGHT2SHADE(lightlev) ((MAX(255 - lightlev, 0) * NUMCOLORMAPS) << (FRACBITS - 8))
 
 // MAXLIGHTSCALE from original DOOM, divided by 2.
 #define MAXLIGHTVIS (24.0)

@@ -69,6 +69,10 @@ EXTERN_CVAR(Bool, strictdecorate);
 
 PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
 {
+	if (parent->mVersion > MakeVersion(2, 0))
+	{
+		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->GetClass()->TypeName.GetChars(), typeName.GetChars());
+	}
 	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
 	if (type == nullptr)
 	{
@@ -1125,6 +1129,7 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 	Baggage bag;
 
 	bag.Namespace = ns;
+	bag.Version = { 2, 0, 0 };	
 	bag.fromDecorate = true;
 	info = ParseActorHeader(sc, &bag);
 	sc.MustGetToken('{');

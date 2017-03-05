@@ -3146,6 +3146,9 @@ void PClass::Derive(PClass *newclass, FName name)
 	newclass->Symbols.SetParentTable(&this->Symbols);
 	newclass->TypeName = name;
 	newclass->mDescriptiveName.Format("Class<%s>", name.GetChars());
+	newclass->mVersion = mVersion;
+	newclass->MetaSize = MetaSize;
+
 }
 
 //==========================================================================
@@ -3292,7 +3295,6 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->bRuntimeClass = true;
 	Derive(type, name);
 	type->Size = size;
-	type->MetaSize = MetaSize;
 	if (size != TentativeClass)
 	{
 		type->InitializeDefaults();

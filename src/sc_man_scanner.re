@@ -146,35 +146,35 @@ std2:
 		'property'					{ RET(TK_Property); }
 		'native'					{ RET(TK_Native); }
 		'var'						{ RET(TK_Var); }
-		'out'						{ RET(ParseVersion.Check(1,0)? TK_Out : TK_Identifier); }
+		'out'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Out : TK_Identifier); }
 		'static'					{ RET(TK_Static); }
-		'transient'					{ RET(ParseVersion.Check(1,0)? TK_Transient : TK_Identifier); }
-		'final'						{ RET(ParseVersion.Check(1,0)? TK_Final : TK_Identifier); }
-		'extend'					{ RET(ParseVersion.Check(1,0)? TK_Extend : TK_Identifier); }
-		'protected'					{ RET(ParseVersion.Check(1,0)? TK_Protected : TK_Identifier); }
-		'private'					{ RET(ParseVersion.Check(1,0)? TK_Private : TK_Identifier); }
+		'transient'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Transient : TK_Identifier); }
+		'final'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Final : TK_Identifier); }
+		'extend'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Extend : TK_Identifier); }
+		'protected'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Protected : TK_Identifier); }
+		'private'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Private : TK_Identifier); }
 		'dot'						{ RET(TK_Dot); }
 		'cross'						{ RET(TK_Cross); }
-		'virtual'					{ RET(ParseVersion.Check(1,0)? TK_Virtual : TK_Identifier); }
-		'override'					{ RET(ParseVersion.Check(1,0)? TK_Override : TK_Identifier); }
-		'vararg'					{ RET(ParseVersion.Check(1,0)? TK_VarArg : TK_Identifier); }
-		'ui'						{ RET(ParseVersion.Check(2,4)? TK_UI : TK_Identifier); }
-		'play'						{ RET(ParseVersion.Check(2,4)? TK_Play : TK_Identifier); }
-		'clearscope'				{ RET(ParseVersion.Check(2,4)? TK_ClearScope : TK_Identifier); }
-		'virtualscope'				{ RET(ParseVersion.Check(2,4)? TK_VirtualScope : TK_Identifier); }
-		'super'						{ RET(ParseVersion.Check(1,0)? TK_Super : TK_Identifier); }
+		'virtual'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Virtual : TK_Identifier); }
+		'override'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Override : TK_Identifier); }
+		'vararg'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_VarArg : TK_Identifier); }
+		'ui'						{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_UI : TK_Identifier); }
+		'play'						{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_Play : TK_Identifier); }
+		'clearscope'				{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_ClearScope : TK_Identifier); }
+		'virtualscope'				{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_VirtualScope : TK_Identifier); }
+		'super'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Super : TK_Identifier); }
 		'stop'						{ RET(TK_Stop); }
 		'null'						{ RET(TK_Null); }
 
-		'is'						{ RET(ParseVersion.Check(1,0)? TK_Is : TK_Identifier); }
-		'replaces'					{ RET(ParseVersion.Check(1,0)? TK_Replaces : TK_Identifier); }
+		'is'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Is : TK_Identifier); }
+		'replaces'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Replaces : TK_Identifier); }
 		'states'					{ RET(TK_States); }
-		'meta'						{ RET(ParseVersion.Check(1,0)? TK_Meta : TK_Identifier); }
-		'deprecated'				{ RET(ParseVersion.Check(1,0)? TK_Deprecated : TK_Identifier); }
-		'version'					{ RET(ParseVersion.Check(2,4)? TK_Version : TK_Identifier); }
-		'action'					{ RET(ParseVersion.Check(1,0)? TK_Action : TK_Identifier); }
-		'readonly'					{ RET(ParseVersion.Check(1,0)? TK_ReadOnly : TK_Identifier); }
-		'let'						{ RET(ParseVersion.Check(1,0)? TK_Let : TK_Identifier); }
+		'meta'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Meta : TK_Identifier); }
+		'deprecated'				{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Deprecated : TK_Identifier); }
+		'version'					{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_Version : TK_Identifier); }
+		'action'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Action : TK_Identifier); }
+		'readonly'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_ReadOnly : TK_Identifier); }
+		'let'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Let : TK_Identifier); }
 
 		/* Actor state options */
 		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }

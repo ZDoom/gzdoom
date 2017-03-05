@@ -360,34 +360,34 @@ static void DoParse(int lumpnum)
 		{
 			char *endp;
 			sc.MustGetString();
-			state.ParseVersion.major = (int16_t)clamp<long long>(strtoll(sc.String, &endp, 10), -1, USHRT_MAX);
+			state.ParseVersion.major = (int16_t)clamp<unsigned long long>(strtoull(sc.String, &endp, 10), 0, USHRT_MAX);
 			if (*endp != '.')
 			{
 				sc.ScriptError("Bad version directive");
 			}
-			state.ParseVersion.minor = (int16_t)clamp<long long>(strtoll(endp + 1, &endp, 10), -1, USHRT_MAX);
+			state.ParseVersion.minor = (int16_t)clamp<unsigned long long>(strtoll(endp + 1, &endp, 10), 0, USHRT_MAX);
 			if (*endp == '.')
 			{
-				state.ParseVersion.revision = (int16_t)clamp<long long>(strtoll(endp + 1, &endp, 10), -1, USHRT_MAX);
+				state.ParseVersion.revision = (int16_t)clamp<unsigned long long>(strtoll(endp + 1, &endp, 10), 0, USHRT_MAX);
 			}
 			else state.ParseVersion.revision = 0;
 			if (*endp != 0)
 			{
 				sc.ScriptError("Bad version directive");
 			}
-			if (state.ParseVersion.major < 0 || state.ParseVersion.minor < 0 || state.ParseVersion.revision < 0)
+			if (state.ParseVersion.major == USHRT_MAX || state.ParseVersion.minor == USHRT_MAX || state.ParseVersion.revision == USHRT_MAX)
 			{
 				sc.ScriptError("Bad version directive");
 			}
-			if (!state.ParseVersion.Check(VER_MAJOR, VER_MINOR, VER_REVISION))
+			if (state.ParseVersion > MakeVersion(VER_MAJOR, VER_MINOR, VER_REVISION))
 			{
-				sc.ScriptError("Version mismatch. %d.%d expected but only %d.%d supported", state.ParseVersion.major, state.ParseVersion.minor, VER_MAJOR, VER_MINOR);
+				sc.ScriptError("Version mismatch. %d.%d.%d expected but only %d.%d.%d supported", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
 			}
 		}
 		else
 		{
-			state.ParseVersion.major = 1;	// 0 excludes all ZSCRIPT keywords from the parser.
-			state.ParseVersion.minor = 0;
+			state.ParseVersion.major = 2;	// 2.3 is the first version of ZScript.
+			state.ParseVersion.minor = 3;
 			sc.RestorePos(saved);
 		}
 	}
@@ -452,7 +452,7 @@ static void DoParse(int lumpnum)
 
 	PSymbolTable symtable;
 	auto newns = Wads.GetLumpFile(lumpnum) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(lumpnum));
-	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum);
+	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum, state.ParseVersion);
 	cc.Compile();
 
 	if (FScriptPosition::ErrorCounter > 0)

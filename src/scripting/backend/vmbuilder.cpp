@@ -802,7 +802,7 @@ void VMFunctionBuilder::BackpatchListToHere(TArray<size_t> &locs)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
+VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo &ver, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
 {
 	auto func = code->GetDirectFunction();
 	if (func != nullptr)
@@ -828,6 +828,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, PFunction *functy
 	it.StateIndex = stateindex;
 	it.StateCount = statecount;
 	it.Lump = lumpnum;
+	it.Version = ver;
 	assert(it.Func->Variants.Size() == 1);
 	it.Func->Variants[0].Implementation = it.Function;
 

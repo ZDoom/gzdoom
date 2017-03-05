@@ -26,6 +26,7 @@ class PSymbol : public DObject
 	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
 public:
 	FName SymbolName;
+	VersionInfo mVersion = { 0,0,0 };
 
 protected:
 	PSymbol(FName name) { SymbolName = name; }

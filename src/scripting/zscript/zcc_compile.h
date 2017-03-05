@@ -86,7 +86,7 @@ struct ZCC_ConstantWork
 class ZCCCompiler
 {
 public:
-	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PNamespace *outnamespace, int lumpnum);
+	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PNamespace *outnamespace, int lumpnum, const VersionInfo & ver);
 	~ZCCCompiler();
 	int Compile();
 
@@ -127,6 +127,7 @@ private:
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;
 	TArray<ZCC_PropertyWork *> Properties;
+	VersionInfo mVersion;
 
 	PSymbolTreeNode *AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents = false);
 

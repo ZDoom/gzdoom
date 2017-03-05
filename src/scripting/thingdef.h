@@ -124,6 +124,7 @@ struct Baggage
 	bool fromDecorate;
 	int CurrentState;
 	int Lumpnum;
+	VersionInfo Version;
 	FStateDefinitions statedef;
 
 	FDropItem *DropItemList;
@@ -161,7 +162,7 @@ FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
 PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
-void CreateDamageFunction(PNamespace *ns, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
+void CreateDamageFunction(PNamespace *ns, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
 
 //==========================================================================
 //

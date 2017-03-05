@@ -228,7 +228,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 //
 //==========================================================================
 
-void CreateDamageFunction(PNamespace *OutNamespace, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum)
+void CreateDamageFunction(PNamespace *OutNamespace, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum)
 {
 	if (id == nullptr)
 	{
@@ -238,7 +238,7 @@ void CreateDamageFunction(PNamespace *OutNamespace, PClassActor *info, AActor *d
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
 		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, 0);
-		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, ver, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
 	}
 }
 

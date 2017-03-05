@@ -500,6 +500,7 @@ struct ZCC_Declarator : ZCC_TreeNode
 {
 	ZCC_Type *Type;
 	int Flags;
+	VersionInfo Version;
 };
 
 // A variable in a class or struct.

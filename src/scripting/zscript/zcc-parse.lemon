@@ -873,6 +873,9 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		decl->Name = C.FuncName;
 		decl->UseFlags = A == nullptr? nullptr : A->Id;
 		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
+		if (A == nullptr) decl->Version = {0,0,0};
+		else decl->Version = A->Version;
+
 		decl->Body = C.FuncBody;
 		X = decl;
 	}
@@ -881,7 +884,16 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		NEW_AST_NODE(VarDeclarator, decl, A == nullptr? B->SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Names = C.VarNames;
-		decl->Flags = (A == nullptr? 0 : A->Flags);
+		if (A == nullptr)
+		{
+			decl->Flags = 0;
+			decl->Version = {0,0,0};
+		}
+		else
+		{
+			decl->Flags = A->Flags;
+			decl->Version = A->Version;
+		}
 		X = decl;
 	}
 	else

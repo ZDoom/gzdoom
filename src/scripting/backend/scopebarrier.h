@@ -51,5 +51,9 @@ struct FScopeBarrier
 	// This is used for comparing a.b.c.d access - if non-allowed field is seen anywhere in the chain, anything after it is non-allowed.
 	// This struct is used so that the logic is in a single place.
 	void AddFlags(int flags1, int flags2, const char* name);
+
+	// this is called from vmexec.h
+	static void ValidateNew(PClass* cls, PFunction* callingfunc);
+	static void ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
 };
 

@@ -7,11 +7,8 @@
 #include "cmdlib.h"
 #include "doomerrors.h"
 #include "memarena.h"
+#include "scripting/backend/scopebarrier.h"
 
-// [ZZ] there are serious circular references between this and the rest of ZScript code, so it needs to be done like this
-//		these are used in vmexec.h
-void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc);
-void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
 class DObject;
 
 extern FMemArena ClassDataAllocator;

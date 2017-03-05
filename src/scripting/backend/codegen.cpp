@@ -89,37 +89,6 @@ static const FLOP FxFlops[] =
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
-
-//==========================================================================
-//
-// [ZZ] Magic methods to be used in vmexec.h for runtime checking of scope
-//
-//==========================================================================
-
-// this can be imported in vmexec.h
-void FScopeBarrier_ValidateNew(PClass* cls, PFunction* callingfunc)
-{
-	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
-	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
-	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
-	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
-		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
-}
-// this can be imported in vmexec.h
-void FScopeBarrier_ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype)
-{
-	// [ZZ] anonymous blocks have 0 variants, so give them Side_Virtual.
-	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
-	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
-	int innerside = FScopeBarrier::SideFromFlags(calledfunc->Variants[0].Flags);
-	if (innerside == FScopeBarrier::Side_Virtual)
-		innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
-	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
-		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->SymbolName.GetChars(), FScopeBarrier::StringFromSide(outerside));
-}
-
 //==========================================================================
 //
 // FCompileContext

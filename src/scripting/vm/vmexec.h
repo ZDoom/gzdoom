@@ -673,7 +673,7 @@ begin:
 				PFunction* callingfunc = (PFunction*)(reg.param + f->NumParam - b)[1].a;
 				DObject* dobj = (DObject*)(reg.param + f->NumParam - b)[2].a; // this is the self pointer. it should be in, since Side_Virtual functions are always non-static methods.
 				PClass* selftype = dobj->GetClass();
-				FScopeBarrier_ValidateCall(calledfunc, callingfunc, selftype);
+				FScopeBarrier::ValidateCall(calledfunc, callingfunc, selftype);
 				b -= 2;
 			}
 #endif
@@ -821,7 +821,7 @@ begin:
 		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 		// [ZZ] validate readonly and between scope construction
 		if (callingfunc)
-			FScopeBarrier_ValidateNew(cls, callingfunc);
+			FScopeBarrier::ValidateNew(cls, callingfunc);
 		reg.a[a] = cls->CreateNew();
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;

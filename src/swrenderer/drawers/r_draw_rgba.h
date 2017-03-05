@@ -36,8 +36,6 @@
 
 #ifndef NO_SSE
 #include <immintrin.h>
-#else
-#include "ila/ila.h"
 #endif
 
 struct FSpecialColormap;

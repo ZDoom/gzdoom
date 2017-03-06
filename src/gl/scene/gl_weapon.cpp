@@ -90,7 +90,7 @@ void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float 
 	}
 	else
 	{
-		gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, &mirror);
+		lump = gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, &mirror);
 	}
 
 	if (!lump.isValid()) return;

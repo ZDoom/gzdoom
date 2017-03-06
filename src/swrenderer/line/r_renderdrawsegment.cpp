@@ -20,6 +20,7 @@
 #include "p_setup.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 #include "p_effect.h"
 #include "doomstat.h"
 #include "r_state.h"
@@ -125,7 +126,8 @@ namespace swrenderer
 				{
 					lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 					basecolormap = lit->extra_colormap;
-					wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy));
+					bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+					wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
 					break;
 				}
 			}
@@ -701,7 +703,8 @@ namespace swrenderer
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy));
+								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -714,7 +717,8 @@ namespace swrenderer
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy));
+								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -876,7 +880,8 @@ namespace swrenderer
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy));
+								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -889,7 +894,8 @@ namespace swrenderer
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy));
+								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}

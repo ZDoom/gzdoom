@@ -38,6 +38,7 @@ PolySkyDome::PolySkyDome()
 void PolySkyDome::Render(const TriMatrix &worldToClip)
 {
 	FTextureID sky1tex, sky2tex;
+	bool foggy = false;
 	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
 		sky1tex = sky2texture;
 	else
@@ -55,7 +56,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	int rc = mRows + 1;
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
+	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis(foggy);
 	args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;

@@ -2676,7 +2676,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			int arg[3] = { 0, 0, 0 };
 			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
-			bool manual = ReadByte(stream);
+			bool manual = !!ReadByte(stream);
 			E_Console(player, s, arg[0], arg[1], arg[2], manual);
 		}
 		break;

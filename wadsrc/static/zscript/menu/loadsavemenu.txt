@@ -383,42 +383,39 @@ class LoadSaveMenu : ListMenu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event)
+		if (ev.Type == UIEvent.Type_KeyDown)
 		{
-			if (ev.subtype == InputEventData.GUI_KeyDown)
+			if (Selected < manager.SavegameCount())
 			{
-				if (Selected < manager.SavegameCount())
+				switch (ev.KeyChar)
 				{
-					switch (ev.data1)
-					{
-					case UIEvent.Key_F1:
-						manager.SetFileInfo(Selected);
-						return true;
+				case UIEvent.Key_F1:
+					manager.SetFileInfo(Selected);
+					return true;
 
-					case UIEvent.Key_DEL:
-						{
-							String EndString;
-							EndString = String.Format("%s%s%s%s?\n\n%s", Stringtable.Localize("$MNU_DELETESG"), TEXTCOLOR_WHITE, manager.GetSavegame(Selected).SaveTitle, TEXTCOLOR_NORMAL, Stringtable.Localize("$PRESSYN"));
-							StartMessage (EndString, 0);
-						}
-						return true;
+				case UIEvent.Key_DEL:
+					{
+						String EndString;
+						EndString = String.Format("%s%s%s%s?\n\n%s", Stringtable.Localize("$MNU_DELETESG"), TEXTCOLOR_WHITE, manager.GetSavegame(Selected).SaveTitle, TEXTCOLOR_NORMAL, Stringtable.Localize("$PRESSYN"));
+						StartMessage (EndString, 0);
 					}
+					return true;
 				}
 			}
-			else if (ev.subtype == InputEventData.GUI_WheelUp)
-			{
-				if (TopItem > 0) TopItem--;
-				return true;
-			}
-			else if (ev.subtype == InputEventData.GUI_WheelDown)
-			{
-				if (TopItem < manager.SavegameCount() - listboxRows) TopItem++;
-				return true;
-			}
 		}
-		return Super.Responder(ev);
+		else if (ev.Type == UIEvent.Type_WheelUp)
+		{
+			if (TopItem > 0) TopItem--;
+			return true;
+		}
+		else if (ev.Type == UIEvent.Type_WheelDown)
+		{
+			if (TopItem < manager.SavegameCount() - listboxRows) TopItem++;
+			return true;
+		}
+		return Super.OnUIEvent(ev);
 	}
 
 	
@@ -503,13 +500,13 @@ class SaveMenu : LoadSaveMenu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.subtype == InputEventData.GUI_KeyDown)
+		if (ev.Type == UIEvent.Type_KeyDown)
 		{
 			if (Selected != -1)
 			{
-				switch (ev.data1)
+				switch (ev.KeyChar)
 				{
 				case UIEvent.Key_DEL:
 					// cannot delete 'new save game' item
@@ -523,9 +520,14 @@ class SaveMenu : LoadSaveMenu
 				}
 			}
 		}
-		return Super.Responder(ev);
+		return Super.OnUIEvent(ev);
 	}
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
 
 	override void Ticker()
 	{

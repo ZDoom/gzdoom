@@ -169,47 +169,50 @@ class Menu : Object native ui version("2.4")
 	//
 	//=============================================================================
 
-	virtual bool Responder(InputEventData ev)
+	virtual bool OnUIEvent(UIEvent ev)
 	{ 
 		bool res = false;
-		if (ev.type == InputEventData.GUI_Event)
+		int y = ev.MouseY;
+		if (ev.type == UIEvent.Type_LButtonDown)
 		{
-			if (ev.subtype == InputEventData.GUI_LButtonDown)
+			res = MouseEventBack(MOUSE_Click, ev.MouseX, y);
+			// make the menu's mouse handler believe that the current coordinate is outside the valid range
+			if (res) y = -1;	
+			res |= MouseEvent(MOUSE_Click, ev.MouseX, y);
+			if (res)
 			{
-				res = MouseEventBack(MOUSE_Click, ev.data1, ev.data2);
-				// make the menu's mouse handler believe that the current coordinate is outside the valid range
-				if (res) ev.data2 = -1;	
-				res |= MouseEvent(MOUSE_Click, ev.data1, ev.data2);
-				if (res)
-				{
-					SetCapture(true);
-				}
-				
+				SetCapture(true);
 			}
-			else if (ev.subtype == InputEventData.GUI_MouseMove)
+			
+		}
+		else if (ev.type == UIEvent.Type_MouseMove)
+		{
+			BackbuttonTime = 4*Thinker.TICRATE;
+			if (mMouseCapture || m_use_mouse == 1)
 			{
-				BackbuttonTime = 4*Thinker.TICRATE;
-				if (mMouseCapture || m_use_mouse == 1)
-				{
-					res = MouseEventBack(MOUSE_Move, ev.data1, ev.data2);
-					if (res) ev.data2 = -1;	
-					res |= MouseEvent(MOUSE_Move, ev.data1, ev.data2);
-				}
+				res = MouseEventBack(MOUSE_Move, ev.MouseX, y);
+				if (res) y = -1;	
+				res |= MouseEvent(MOUSE_Move, ev.MouseX, y);
 			}
-			else if (ev.subtype == InputEventData.GUI_LButtonUp)
+		}
+		else if (ev.type == UIEvent.Type_LButtonUp)
+		{
+			if (mMouseCapture)
 			{
-				if (mMouseCapture)
-				{
-					SetCapture(false);
-					res = MouseEventBack(MOUSE_Release, ev.data1, ev.data2);
-					if (res) ev.data2 = -1;	
-					res |= MouseEvent(MOUSE_Release, ev.data1, ev.data2);
-				}
+				SetCapture(false);
+				res = MouseEventBack(MOUSE_Release, ev.MouseX, y);
+				if (res) y = -1;	
+				res |= MouseEvent(MOUSE_Release, ev.MouseX, y);
 			}
 		}
 		return false; 
 	}
 
+	virtual bool OnInputEvent(InputEvent ev)
+	{ 
+		return false;
+	}
+	
 	//=============================================================================
 	//
 	//

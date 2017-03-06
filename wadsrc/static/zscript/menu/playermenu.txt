@@ -372,9 +372,9 @@ class PlayerMenu : ListMenu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_Char && ev.data1 == 32)
+		if (ev.Type == UIEvent.Type_Char && ev.KeyChar == 32)
 		{
 			// turn the player sprite around
 			mRotation = 8 - mRotation;
@@ -385,7 +385,7 @@ class PlayerMenu : ListMenu
 			}
 			return true;
 		}
-		return Super.Responder(ev);
+		return Super.OnUIEvent(ev);
 	}
 
 	//=============================================================================

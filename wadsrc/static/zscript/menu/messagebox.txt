@@ -171,14 +171,14 @@ class MessageBoxMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder(InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_KeyDown)
+		if (ev.type == UIEvent.Type_KeyDown)
 		{
 			if (mMessageMode == 0)
 			{
 				// tolower
-				int ch = ev.data1;
+				int ch = ev.KeyChar;
 				ch = ch >= 65 && ch <91? ch + 32 : ch;
 
 				if (ch == 110 /*'n'*/ || ch == 32) 
@@ -199,12 +199,17 @@ class MessageBoxMenu : Menu
 			}
 			return false;
 		}
-		else if (ev.type == InputEventData.KeyDown)
+		return Super.OnUIEvent(ev);
+	}
+	
+	override bool OnInputEvent(InputEvent ev)
+	{
+		if (ev.type == InputEvent.Type_KeyDown)
 		{
 			Close();
 			return true;
 		}
-		return Super.Responder(ev);
+		return Super.OnInputEvent(ev);
 	}
 
 	//=============================================================================

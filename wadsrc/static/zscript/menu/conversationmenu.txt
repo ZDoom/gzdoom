@@ -335,18 +335,18 @@ class ConversationMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder(InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
 		if (demoplayback)
 		{ // No interaction during demo playback
 			return false;
 		}
-		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_Char && ev.data1 >= 48 && ev.data1 <= 57)
+		if (ev.type == UIEvent.Type_Char && ev.KeyChar >= 48 && ev.KeyChar <= 57)
 		{ // Activate an item of type numberedmore (dialogue only)
-			mSelection = ev.data1 == 48 ? 9 : ev.data1 - 49;
+			mSelection = ev.KeyChar == 48 ? 9 : ev.KeyChar - 49;
 			return MenuEvent(MKEY_Enter, false);
 		}
-		return Super.Responder(ev);
+		return Super.OnUIEvent(ev);
 	}
 	
 	//============================================================================

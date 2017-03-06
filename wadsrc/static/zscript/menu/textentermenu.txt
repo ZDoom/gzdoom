@@ -108,59 +108,56 @@ class TextEnterMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder(InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event)
+		// Save game and player name string input
+		if (ev.Type == UIEvent.Type_Char)
 		{
-			// Save game and player name string input
-			if (ev.subtype == InputEventData.GUI_Char)
+			mInputGridOkay = false;
+			if (mEnterString.Length() < mEnterSize &&
+				(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
 			{
-				mInputGridOkay = false;
-				if (mEnterString.Length() < mEnterSize &&
-					(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
-				{
-					mEnterString.AppendFormat("%c", ev.data1);
-				}
+				mEnterString.AppendFormat("%c", ev.KeyChar);
+			}
+			return true;
+		}
+		int ch = ev.KeyChar;
+		if ((ev.Type == UIEvent.Type_KeyDown || ev.Type == UIEvent.Type_KeyRepeat) && ch == 8)
+		{
+			if (mEnterString.Length() > 0)
+			{
+				mEnterString.Truncate(mEnterString.Length() - 1);
+			}
+		}
+		else if (ev.Type == UIEvent.Type_KeyDown)
+		{
+			if (ch == UIEvent.Key_ESCAPE)
+			{
+				Menu parent = mParentMenu;
+				Close();
+				parent.MenuEvent(MKEY_Abort, false);
 				return true;
 			}
-			int ch = ev.data1;
-			if ((ev.subtype == InputEventData.GUI_KeyDown || ev.subtype == InputEventData.GUI_KeyRepeat) && ch == 8)
+			else if (ch == 13)
 			{
 				if (mEnterString.Length() > 0)
 				{
-					mEnterString.Truncate(mEnterString.Length() - 1);
-				}
-			}
-			else if (ev.subtype == InputEventData.GUI_KeyDown)
-			{
-				if (ch == UIEvent.Key_ESCAPE)
-				{
+					// [TP] If we allow color codes, colorize the string now.
+					if (AllowColors)
+						mEnterString = mEnterString.Filter();
+
 					Menu parent = mParentMenu;
+					parent.MenuEvent(MKEY_Input, false);
 					Close();
-					parent.MenuEvent(MKEY_Abort, false);
 					return true;
 				}
-				else if (ch == 13)
-				{
-					if (mEnterString.Length() > 0)
-					{
-						// [TP] If we allow color codes, colorize the string now.
-						if (AllowColors)
-							mEnterString = mEnterString.Filter();
-
-						Menu parent = mParentMenu;
-						parent.MenuEvent(MKEY_Input, false);
-						Close();
-						return true;
-					}
-				}
-			}
-			if (ev.subtype == InputEventData.GUI_KeyDown || ev.subtype == InputEventData.GUI_KeyRepeat)
-			{
-				return true;
 			}
 		}
-		return Super.Responder(ev);
+		if (ev.Type == UIEvent.Type_KeyDown || ev.Type == UIEvent.Type_KeyRepeat)
+		{
+			return true;
+		}
+		return Super.OnUIEvent(ev);
 	}
 
 	//=============================================================================

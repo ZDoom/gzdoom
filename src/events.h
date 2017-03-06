@@ -58,10 +58,10 @@ void E_PlayerDisconnected(int num);
 // this executes on events.
 bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
 // this executes on console/net events.
-void E_Console(int player, FString name, int arg1, int arg2, int arg3);
+void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 
 // send networked event. unified function.
-bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3);
+bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
 
 // check if there is anything that should receive GUI events
 bool E_CheckUiProcessors();
@@ -152,7 +152,7 @@ public:
 	bool UiProcess(event_t* ev);
 	
 	// 
-	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3);
+	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -300,10 +300,13 @@ public:
 	//
 	FString Name;
 	int Args[3];
+	//
+	bool IsManual;
 
 	DConsoleEvent()
 	{
 		Player = -1;
+		IsManual = false;
 	}
 };
 

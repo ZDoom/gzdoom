@@ -117,7 +117,7 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 	return true;
 }
 
-bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3)
+bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 {
 	if (gamestate != GS_LEVEL)
 		return false;
@@ -128,6 +128,7 @@ bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3)
 	Net_WriteLong(arg1);
 	Net_WriteLong(arg2);
 	Net_WriteLong(arg3);
+	Net_WriteByte(manual);
 
 	return true;
 }
@@ -433,10 +434,10 @@ bool E_Responder(event_t* ev)
 	return false;
 }
 
-void E_Console(int player, FString name, int arg1, int arg2, int arg3)
+void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->ConsoleProcess(player, name, arg1, arg2, arg3);
+		handler->ConsoleProcess(player, name, arg1, arg2, arg3, manual);
 }
 
 bool E_CheckUiProcessors()
@@ -523,6 +524,7 @@ DEFINE_FIELD_X(InputEvent, DInputEvent, MouseY);
 DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Player)
 DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Name)
 DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, Args)
+DEFINE_FIELD_X(ConsoleEvent, DConsoleEvent, IsManual)
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
@@ -545,7 +547,7 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 	PARAM_INT(arg3);
 	//
 
-	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3));
+	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3, false));
 }
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Create)
@@ -1091,10 +1093,11 @@ static DConsoleEvent* E_SetupConsoleEvent()
 	e->Name = "";
 	for (size_t i = 0; i < countof(e->Args); i++)
 		e->Args[i] = 0;
+	e->IsManual = false;
 	return e;
 }
 
-void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3)
+void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual)
 {
 	if (player < 0)
 	{
@@ -1111,6 +1114,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 			e->Args[0] = arg1;
 			e->Args[1] = arg2;
 			e->Args[2] = arg3;
+			e->IsManual = manual;
 
 			VMValue params[2] = { (DStaticEventHandler*)this, e };
 			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
@@ -1131,6 +1135,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 			e->Args[0] = arg1;
 			e->Args[1] = arg2;
 			e->Args[2] = arg3;
+			e->IsManual = manual;
 
 			VMValue params[2] = { (DStaticEventHandler*)this, e };
 			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
@@ -1162,7 +1167,7 @@ CCMD(event)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call locally
-		E_Console(-1, argv[1], arg[0], arg[1], arg[2]);
+		E_Console(-1, argv[1], arg[0], arg[1], arg[2], true);
 	}
 }
 
@@ -1187,6 +1192,6 @@ CCMD(netevent)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call networked
-		E_SendNetworkEvent(argv[1], arg[0], arg[1], arg[2]);
+		E_SendNetworkEvent(argv[1], arg[0], arg[1], arg[2], true);
 	}
 }

@@ -1,0 +1,73 @@
+language: c++
+dist: trusty
+sudo: required 
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode8.2
+      env:
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
+
+    - os: osx
+      osx_image: xcode8.2
+      env:
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 -DFORCE_INTERNAL_ZLIB=YES -DFORCE_INTERNAL_JPEG=YES -DFORCE_INTERNAL_BZIP2=YES -DFORCE_INTERNAL_GME=YES"
+
+    - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=5
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - kubuntu-backports
+          packages:
+            - g++-5
+            - libsdl2-dev
+            - libgme-dev
+            - libopenal-dev
+            - libmpg123-dev
+            - libsndfile-dev
+            - libfluidsynth-dev
+            - libgtk-3-dev
+
+    - os: linux
+      compiler: clang
+      env:
+        - CLANG_VERSION=3.9
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DDYN_OPENAL=NO -DDYN_FLUIDSYNTH=NO"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-3.9
+            - kubuntu-backports
+          packages:
+            - clang-3.9
+            - libstdc++-5-dev
+            - libsdl2-dev
+            - libgme-dev
+            - libopenal-dev
+            - libmpg123-dev
+            - libsndfile-dev
+            - libfluidsynth-dev
+            - libgtk-3-dev
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; brew install mpg123 libsndfile fluidsynth; fi
+  - if [ -n "$GCC_VERSION" ]; then export CC="gcc-${GCC_VERSION}" CXX="g++-${GCC_VERSION}"; fi
+  - if [ -n "$CLANG_VERSION" ]; then export CC="clang-${CLANG_VERSION}" CXX="clang++-${CLANG_VERSION}"; fi
+  - $CC --version
+  - $CXX --version
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ${CMAKE_OPTIONS} ..
+  - make -j2
+
+notifications:
+  email: false

@@ -1,0 +1,23 @@
+version: "{build}"
+
+os: Visual Studio 2015
+
+platform: 
+  - Win32
+  - x64
+
+configuration:
+  - Debug
+  - Release
+
+before_build:
+  - cmd: md build
+  - cmd: cd build
+  - cmd: if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
+  - cmd: if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
+  - cmd: cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
+
+build:
+  project: build\GZDoom.sln
+  parallel: true
+  verbosity: minimal

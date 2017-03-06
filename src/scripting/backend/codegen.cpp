@@ -8516,7 +8516,6 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion >= ver)
 	{
 		ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
-		return false;
 	}
 	return true;
 }
@@ -8565,7 +8564,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	if (!CheckAccessibility(ctx.Version))
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 	// This should never happen.
 	if (Self == nullptr && (Function->Variants[0].Flags & VARF_Method))

@@ -445,7 +445,7 @@ namespace swrenderer
 			if (cameraLight->FixedLightLevel() >= 0 && !cameraLight->FixedColormap())
 			{
 				fixed_t shade = shadedlightshade;
-				if (shade == 0) FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel());
+				if (shade == 0) shade = cameraLight->FixedLightLevelShade();
 				SetLight(basecolormap, 0, shade);
 			}
 			else

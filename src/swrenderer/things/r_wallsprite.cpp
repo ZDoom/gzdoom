@@ -182,14 +182,14 @@ namespace swrenderer
 
 		SpriteDrawerArgs drawerargs;
 
-		int shade = LIGHT2SHADE(spr->sector->lightlevel + R_ActualExtraLight(spr->foggy), spr->foggy);
+		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel + LightVisibility::ActualExtraLight(spr->foggy), spr->foggy);
 		double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight(usecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight(usecolormap, 0, cameraLight->FixedLightLevelShade());
 		else if (cameraLight->FixedColormap() != NULL)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))

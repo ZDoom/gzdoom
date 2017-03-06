@@ -127,7 +127,7 @@ namespace swrenderer
 					lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 					basecolormap = lit->extra_colormap;
 					bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-					wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
+					wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
 					break;
 				}
 			}
@@ -159,8 +159,8 @@ namespace swrenderer
 
 		if (cameraLight->FixedLightLevel() >= 0)
 		{
-			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
-			columndrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
+			columndrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
 		}
 		else if (cameraLight->FixedColormap() != nullptr)
 		{
@@ -468,7 +468,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
 		else if (cameraLight->FixedColormap() != nullptr)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
@@ -704,7 +704,7 @@ namespace swrenderer
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -718,7 +718,7 @@ namespace swrenderer
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -881,7 +881,7 @@ namespace swrenderer
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}
@@ -895,7 +895,7 @@ namespace swrenderer
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + R_ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
 								break;
 							}
 						}

@@ -125,7 +125,7 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
 		{
-			drawerargs.SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight(basecolormap, 0, cameraLight->FixedLightLevelShade());
 			plane_shade = false;
 		}
 		else if (cameraLight->FixedColormap())
@@ -136,7 +136,7 @@ namespace swrenderer
 		else
 		{
 			plane_shade = true;
-			planeshade = LIGHT2SHADE(pl->lightlevel, foggy);
+			planeshade = LightVisibility::LightLevelToShade(pl->lightlevel, foggy);
 		}
 
 		drawerargs.SetStyle(masked, additive, alpha);

@@ -166,7 +166,7 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
 		{
-			drawerargs.SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight(basecolormap, 0, cameraLight->FixedLightLevelShade());
 			plane_shade = false;
 		}
 		else if (cameraLight->FixedColormap())
@@ -178,7 +178,7 @@ namespace swrenderer
 		{
 			drawerargs.SetLight(basecolormap, 0, 0);
 			plane_shade = true;
-			planeshade = LIGHT2SHADE(pl->lightlevel, foggy);
+			planeshade = LightVisibility::LightLevelToShade(pl->lightlevel, foggy);
 		}
 
 		// Hack in support for 1 x Z and Z x 1 texture sizes

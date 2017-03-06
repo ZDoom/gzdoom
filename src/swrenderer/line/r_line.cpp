@@ -496,7 +496,7 @@ namespace swrenderer
 					}
 					else
 					{
-						draw_segment->shade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + R_ActualExtraLight(foggy), foggy);
+						draw_segment->shade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + LightVisibility::ActualExtraLight(foggy), foggy);
 					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
@@ -781,7 +781,7 @@ namespace swrenderer
 			CameraLight *cameraLight = CameraLight::Instance();
 			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
-				wallshade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + R_ActualExtraLight(foggy), foggy);
+				wallshade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + LightVisibility::ActualExtraLight(foggy), foggy);
 				double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
@@ -1156,7 +1156,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
 		else if (cameraLight->FixedColormap() != nullptr)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
@@ -1203,7 +1203,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
 		else if (cameraLight->FixedColormap() != nullptr)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 
@@ -1251,7 +1251,7 @@ namespace swrenderer
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(cameraLight->FixedLightLevel()));
+			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
 		else if (cameraLight->FixedColormap() != nullptr)
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 

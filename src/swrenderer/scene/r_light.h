@@ -29,19 +29,6 @@
 // The size of a single colormap, in bits
 #define COLORMAPSHIFT 8
 
-//   Convert a light level into an unbounded colormap index (shade). Result is
-//   fixed point. Why the +12? I wish I knew, but experimentation indicates it
-//   is necessary in order to best reproduce Doom's original lighting.
-//#define LIGHT2SHADE(l) ((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
-
-//   Disable diminishing light (To do: merge with LIGHT2SHADE and let a cvar control it, maybe by converting this to a function, like R_ActualExtraLight)
-//#define LIGHT2SHADE(lightlev) ((MAX(255 - lightlev, 0) * NUMCOLORMAPS) << (FRACBITS - 8))
-
-//   combined!
-//#define LIGHT2SHADE(l) ((glset.nolightfade)? \
-//	((MAX(255 - l, 0) * NUMCOLORMAPS) << (FRACBITS - 8)) : \
-//	((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128))))
-
 // MAXLIGHTSCALE from original DOOM, divided by 2.
 #define MAXLIGHTVIS (24.0)
 
@@ -55,15 +42,10 @@
 // Returns a value between 0 and 1 in fixed point
 #define LIGHTSCALE(vis,shade) FLOAT2FIXED(clamp((FIXED2DBL(shade) - (MIN(MAXLIGHTVIS,double(vis)))) / NUMCOLORMAPS, 0.0, (NUMCOLORMAPS-1)/(double)NUMCOLORMAPS))
 
-// Converts fixedlightlev into a shade value
-#define FIXEDLIGHT2SHADE(lightlev) (((lightlev) >> COLORMAPSHIFT) << FRACBITS)
-
 struct FSWColormap;
 
 namespace swrenderer
 {
-	fixed_t LIGHT2SHADE(int lightlevel, bool foggy);
-
 	class CameraLight
 	{
 	public:
@@ -72,6 +54,8 @@ namespace swrenderer
 		int FixedLightLevel() const { return fixedlightlev; }
 		FSWColormap *FixedColormap() const { return fixedcolormap; }
 		FSpecialColormap *ShaderColormap() const { return realfixedcolormap; }
+
+		fixed_t FixedLightLevelShade() const { return (FixedLightLevel() >> COLORMAPSHIFT) << FRACBITS; }
 
 		void SetCamera(AActor *actor);
 		void ClearShaderColormap() { realfixedcolormap = nullptr; }
@@ -102,6 +86,9 @@ namespace swrenderer
 		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
 		double FlatPlaneVis(int screenY, double planeZ, bool foggy) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
 
+		static fixed_t LightLevelToShade(int lightlevel, bool foggy);
+		static int ActualExtraLight(bool fog) { return fog ? 0 : extralight << 4; }
+
 	private:
 		double BaseVisibility = 0.0;
 		double WallVisibility = 0.0;
@@ -123,6 +110,4 @@ namespace swrenderer
 
 		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
 	};
-
-	inline int R_ActualExtraLight(bool fog) { return fog ? 0 : extralight << 4; }
 }

@@ -130,8 +130,8 @@ namespace swrenderer
 		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
 		// get light level
-		lightnum = ((floorlight + ceilinglight) >> 1) + R_ActualExtraLight(foggy);
-		int spriteshade = LIGHT2SHADE(lightnum, foggy) - 24 * FRACUNIT;
+		lightnum = ((floorlight + ceilinglight) >> 1) + LightVisibility::ActualExtraLight(foggy);
+		int spriteshade = LightVisibility::LightLevelToShade(lightnum, foggy) - 24 * FRACUNIT;
 
 		if (camera->player != NULL)
 		{

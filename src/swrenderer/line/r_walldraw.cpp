@@ -401,7 +401,7 @@ namespace swrenderer
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 			basecolormap = lit->extra_colormap;
-			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + R_ActualExtraLight(foggy), foggy);
+			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + LightVisibility::ActualExtraLight(foggy), foggy);
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);

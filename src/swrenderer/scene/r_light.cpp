@@ -39,13 +39,6 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	fixed_t LIGHT2SHADE(int l, bool foggy)
-	{
-		return (!foggy && (glset.nolightfade) ?
-			((MAX(255 - l, 0) * NUMCOLORMAPS) << (FRACBITS - 8)) :
-			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128))));
-	}
-
 	CameraLight *CameraLight::Instance()
 	{
 		static CameraLight instance;
@@ -155,11 +148,22 @@ namespace swrenderer
 		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
 
 		NoLightFade = glset.nolightfade;
+	}
 
-		// Disable diminishing light
-		//	WallVisibility = 0.0;
-		//	FloorVisibility = 0.0;
-		//	TiltVisibility = 0.0f;
+	fixed_t LightVisibility::LightLevelToShade(int lightlevel, bool foggy)
+	{
+		bool nolightfade = !foggy && (glset.nolightfade);
+		if (nolightfade)
+		{
+			return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);
+		}
+		else
+		{
+			// Convert a light level into an unbounded colormap index (shade). Result is
+			// fixed point. Why the +12? I wish I knew, but experimentation indicates it
+			// is necessary in order to best reproduce Doom's original lighting.
+			return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
+		}
 	}
 
 	// Controls how quickly light ramps across a 1/z range. Set this, and it

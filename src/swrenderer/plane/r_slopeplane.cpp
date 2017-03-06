@@ -26,6 +26,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "r_slopeplane.h"
 #include "swrenderer/scene/r_3dfloors.h"
@@ -152,12 +153,15 @@ namespace swrenderer
 			plane_sz[0] = -plane_sz[0];
 		}
 
-		planelightfloat = (LightVisibility::Instance()->SlopePlaneGlobVis() * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
+		// [RH] set foggy flag
+		basecolormap = colormap;
+		bool foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);;
+
+		planelightfloat = (LightVisibility::Instance()->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
 
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;
 
-		basecolormap = colormap;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
@@ -174,7 +178,7 @@ namespace swrenderer
 		{
 			drawerargs.SetLight(basecolormap, 0, 0);
 			plane_shade = true;
-			planeshade = LIGHT2SHADE(pl->lightlevel);
+			planeshade = LIGHT2SHADE(pl->lightlevel, foggy);
 		}
 
 		// Hack in support for 1 x Z and Z x 1 texture sizes

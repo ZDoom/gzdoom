@@ -228,6 +228,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 
 void RenderPolyScene::RenderPortals(int portalDepth)
 {
+	bool foggy = false;
 	if (portalDepth < r_portal_recursions)
 	{
 		for (auto &portal : SectorPortals)
@@ -241,7 +242,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
-		args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis();
+		args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis(foggy);
 		args.uniforms.color = 0;
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

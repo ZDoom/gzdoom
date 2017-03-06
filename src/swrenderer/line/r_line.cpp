@@ -496,7 +496,7 @@ namespace swrenderer
 					}
 					else
 					{
-						draw_segment->shade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + R_ActualExtraLight(foggy));
+						draw_segment->shade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + R_ActualExtraLight(foggy), foggy);
 					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
@@ -781,8 +781,8 @@ namespace swrenderer
 			CameraLight *cameraLight = CameraLight::Instance();
 			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
-				wallshade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + R_ActualExtraLight(foggy));
-				double GlobVis = LightVisibility::Instance()->WallGlobVis();
+				wallshade = LIGHT2SHADE(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + R_ActualExtraLight(foggy), foggy);
+				double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 			}

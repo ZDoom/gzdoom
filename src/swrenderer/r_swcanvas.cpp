@@ -198,7 +198,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 	FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 	// Use an equation similar to player sprites to determine shade
-	fixed_t shade = LIGHT2SHADE(lightlevel) - 12 * FRACUNIT;
+	fixed_t shade = LIGHT2SHADE(lightlevel, true) - 12 * FRACUNIT;
 	float topy, boty, leftx, rightx;
 	int toppt, botpt, pt1, pt2;
 	int i;

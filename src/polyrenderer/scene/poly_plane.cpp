@@ -99,6 +99,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
 
 	int lightlevel = 255;
+	bool foggy = false;
 	if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 	{
 		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
@@ -109,7 +110,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	UVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis() * 48.0f;
+	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis(foggy) * 48.0f;
 	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 		args.uniforms.light = 256;
@@ -155,6 +156,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 {
 	std::vector<PolyPortalSegment> portalSegments;
 	FSectorPortal *portal = nullptr;// sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
+	bool foggy = false;
 	PolyDrawSectorPortal *polyportal = nullptr;
 	if (portal && (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
 		portal = nullptr;
@@ -305,7 +307,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis() * 48.0f;
+	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->SlopePlaneGlobVis(foggy) * 48.0f;
 	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 		args.uniforms.light = 256;

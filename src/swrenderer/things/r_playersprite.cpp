@@ -131,7 +131,7 @@ namespace swrenderer
 
 		// get light level
 		lightnum = ((floorlight + ceilinglight) >> 1) + R_ActualExtraLight(foggy);
-		int spriteshade = LIGHT2SHADE(lightnum) - 24 * FRACUNIT;
+		int spriteshade = LIGHT2SHADE(lightnum, foggy) - 24 * FRACUNIT;
 
 		if (camera->player != NULL)
 		{

@@ -26,6 +26,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
+#include "g_levellocals.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "r_flatplane.h"
 #include "swrenderer/scene/r_3dfloors.h"
@@ -115,7 +116,11 @@ namespace swrenderer
 		planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
 		basecolormap = colormap;
-		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis() / planeheight;
+
+		// [RH] set foggy flag
+		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
+
+		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis(foggy) / planeheight;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
@@ -131,7 +136,7 @@ namespace swrenderer
 		else
 		{
 			plane_shade = true;
-			planeshade = LIGHT2SHADE(pl->lightlevel);
+			planeshade = LIGHT2SHADE(pl->lightlevel, foggy);
 		}
 
 		drawerargs.SetStyle(masked, additive, alpha);

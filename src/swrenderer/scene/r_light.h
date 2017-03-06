@@ -29,13 +29,18 @@
 // The size of a single colormap, in bits
 #define COLORMAPSHIFT 8
 
-// Convert a light level into an unbounded colormap index (shade). Result is
-// fixed point. Why the +12? I wish I knew, but experimentation indicates it
-// is necessary in order to best reproduce Doom's original lighting.
+//   Convert a light level into an unbounded colormap index (shade). Result is
+//   fixed point. Why the +12? I wish I knew, but experimentation indicates it
+//   is necessary in order to best reproduce Doom's original lighting.
 //#define LIGHT2SHADE(l) ((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
 
-// Disable diminishing light (To do: merge with LIGHT2SHADE and let a cvar control it, maybe by converting this to a function, like R_ActualExtraLight)
-#define LIGHT2SHADE(lightlev) ((MAX(255 - lightlev, 0) * NUMCOLORMAPS) << (FRACBITS - 8))
+//   Disable diminishing light (To do: merge with LIGHT2SHADE and let a cvar control it, maybe by converting this to a function, like R_ActualExtraLight)
+//#define LIGHT2SHADE(lightlev) ((MAX(255 - lightlev, 0) * NUMCOLORMAPS) << (FRACBITS - 8))
+
+//   combined!
+//#define LIGHT2SHADE(l) ((glset.nolightfade)? \
+//	((MAX(255 - l, 0) * NUMCOLORMAPS) << (FRACBITS - 8)) : \
+//	((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128))))
 
 // MAXLIGHTSCALE from original DOOM, divided by 2.
 #define MAXLIGHTVIS (24.0)
@@ -57,6 +62,8 @@ struct FSWColormap;
 
 namespace swrenderer
 {
+	fixed_t LIGHT2SHADE(int lightlevel, bool foggy);
+
 	class CameraLight
 	{
 	public:
@@ -83,23 +90,25 @@ namespace swrenderer
 		void SetVisibility(double visibility);
 		double GetVisibility() const { return CurrentVisibility; }
 
-		double WallGlobVis() const { return WallVisibility; }
-		double SpriteGlobVis() const { return WallVisibility; }
-		double ParticleGlobVis() const { return WallVisibility * 0.5; }
-		double FlatPlaneGlobVis() const { return FloorVisibility; }
-		double SlopePlaneGlobVis() const { return TiltVisibility; }
+		double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
+		double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
+		double ParticleGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : (WallVisibility * 0.5); }
+		double FlatPlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : FloorVisibility; }
+		double SlopePlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : TiltVisibility; }
 
 		// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros
-		double WallVis(double screenZ) const { return WallGlobVis() / screenZ; }
-		double SpriteVis(double screenZ) const { return SpriteGlobVis() / screenZ; }
-		double ParticleVis(double screenZ) const { return ParticleGlobVis() / screenZ; }
-		double FlatPlaneVis(int screenY, double planeZ) const { return FlatPlaneGlobVis() / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
+		double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
+		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / screenZ; }
+		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
+		double FlatPlaneVis(int screenY, double planeZ, bool foggy) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
 
 	private:
 		double BaseVisibility = 0.0;
 		double WallVisibility = 0.0;
 		double FloorVisibility = 0.0;
 		float TiltVisibility = 0.0f;
+
+		bool NoLightFade = false;
 
 		double CurrentVisibility = 8.f;
 		double MaxVisForWall = 0.0;

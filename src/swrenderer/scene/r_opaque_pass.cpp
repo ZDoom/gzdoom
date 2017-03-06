@@ -717,7 +717,7 @@ namespace swrenderer
 		// [RH] Add particles
 		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
 		{ // Only do it for the main BSP.
-			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + R_ActualExtraLight(foggy));
+			int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel) / 2 + R_ActualExtraLight(foggy), foggy);
 			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
 				RenderParticle::Project(Thread, Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
@@ -834,7 +834,7 @@ namespace swrenderer
 		//sec->validcount = validcount;
 		SeenSpriteSectors.insert(sec);
 
-		int spriteshade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
+		int spriteshade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy), foggy);
 
 		// Handle all things in sector.
 		for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
@@ -886,7 +886,7 @@ namespace swrenderer
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 					{
 						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-						thingShade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy));
+						thingShade = LIGHT2SHADE(lightlevel + R_ActualExtraLight(foggy), foggy);
 						thingColormap = thing->Sector->ColorMap;
 					}
 

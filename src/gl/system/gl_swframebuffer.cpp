@@ -2951,7 +2951,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 	// Use an equation similar to player sprites to determine shade
-	double fadelevel = clamp((LIGHT2SHADE(lightlevel) / 65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
+	double fadelevel = clamp((swrenderer::LIGHT2SHADE(lightlevel, true) / 65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
 
 	BufferedTris *quad;
 	FBVERTEX *verts;

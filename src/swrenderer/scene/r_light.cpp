@@ -32,12 +32,20 @@
 #include "d_player.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
+#include "gl/data/gl_data.h"
 
 CVAR(Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
+	fixed_t LIGHT2SHADE(int l, bool foggy)
+	{
+		return (!foggy && (glset.nolightfade) ?
+			((MAX(255 - l, 0) * NUMCOLORMAPS) << (FRACBITS - 8)) :
+			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128))));
+	}
+
 	CameraLight *CameraLight::Instance()
 	{
 		static CameraLight instance;
@@ -146,10 +154,12 @@ namespace swrenderer
 
 		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
 
-		// Disable diminishing light (To do: make a cvar control this)
-		WallVisibility = 0.0;
-		FloorVisibility = 0.0;
-		TiltVisibility = 0.0f;
+		NoLightFade = glset.nolightfade;
+
+		// Disable diminishing light
+		//	WallVisibility = 0.0;
+		//	FloorVisibility = 0.0;
+		//	TiltVisibility = 0.0f;
 	}
 
 	// Controls how quickly light ramps across a 1/z range. Set this, and it

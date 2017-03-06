@@ -275,8 +275,11 @@ class ConsoleEvent : BaseEvent native version("2.4")
     // for net events, this will be the activator.
     // for UI events, this is always -1, and you need to check if level is loaded and use players[consoleplayer].
     native readonly int Player;
+    // this is the name and args as specified in SendNetworkEvent or event/netevent CCMDs
     native readonly String Name;
     native readonly int Args[3];
+    // this will be true if the event is fired from the console by event/netevent CCMD
+    native readonly bool IsManual;
 }
 
 class StaticEventHandler : Object native play version("2.4")

@@ -154,8 +154,11 @@ void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float 
 		fV1 = tex->GetSpriteVT();
 		fU2 = tex->GetSpriteUR();
 		fV2 = tex->GetSpriteVB();
-		
 	}
+
+	// [ZZ] vertical mirroring of canvas texture. for reasons.
+	if (tex->tex->bHasCanvas)
+		std::swap(fV1, fV2);
 
 	if (tex->GetTransparent() || OverrideShader != -1)
 	{

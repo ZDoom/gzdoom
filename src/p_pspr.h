@@ -68,6 +68,7 @@ public:
 
 	int			GetID()		const { return ID; }
 	int			GetSprite()	const { return Sprite; }
+	FTextureID  GetPicNum() const { return PicNum; }
 	int			GetFrame()	const { return Frame; }
 	int			GetTics()   const {	return Tics; }
 	FState*		GetState()	const { return State; }
@@ -98,6 +99,7 @@ public:	// must be public to be able to generate the field export tables. Grrr..
 	int Frame;
 	int ID;
 	bool processPending; // true: waiting for periodic processing on this tick
+	FTextureID PicNum;
 
 	friend class player_t;
 	friend void CopyPlayer(player_t *dst, player_t *src, const char *name);

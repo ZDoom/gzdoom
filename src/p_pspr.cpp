@@ -111,6 +111,7 @@ DEFINE_FIELD(DPSprite, Caller)
 DEFINE_FIELD(DPSprite, Next)
 DEFINE_FIELD(DPSprite, Owner)
 DEFINE_FIELD(DPSprite, Sprite)
+DEFINE_FIELD(DPSprite, PicNum)
 DEFINE_FIELD(DPSprite, Frame)
 DEFINE_FIELD(DPSprite, ID)
 DEFINE_FIELD(DPSprite, processPending)
@@ -168,6 +169,8 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 
 	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
+
+	PicNum.SetInvalid();
 }
 
 //------------------------------------------------------------------------

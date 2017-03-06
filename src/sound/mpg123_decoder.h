@@ -6,7 +6,8 @@
 #ifdef HAVE_MPG123
 
 #ifdef _MSC_VER
-typedef int ssize_t;
+#include <stddef.h>
+typedef ptrdiff_t ssize_t;
 #endif
 #include "mpg123.h"
 

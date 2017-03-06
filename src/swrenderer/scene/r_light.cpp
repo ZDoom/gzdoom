@@ -145,6 +145,11 @@ namespace swrenderer
 		FloorVisibility = 160.0 * FloorVisibility / viewport->FocalLengthY;
 
 		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
+
+		// Disable diminishing light (To do: make a cvar control this)
+		WallVisibility = 0.0;
+		FloorVisibility = 0.0;
+		TiltVisibility = 0.0f;
 	}
 
 	// Controls how quickly light ramps across a 1/z range. Set this, and it

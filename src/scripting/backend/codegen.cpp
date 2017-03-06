@@ -6063,10 +6063,9 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 				object = nullptr;
 				return nullptr;
 			}
-			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion >= ctx.Version)
+			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion <= ctx.Version)
 			{
 				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
-				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
 			}
 
 			// We have 4 cases to consider here:
@@ -8513,7 +8512,7 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 		ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", Function->SymbolName.GetChars(), VersionString.GetChars());
 		return false;
 	}
-	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion >= ver)
+	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion <= ver)
 	{
 		ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
 	}

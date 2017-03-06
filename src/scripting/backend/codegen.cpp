@@ -8565,7 +8565,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	if (!CheckAccessibility(ctx.Version))
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 	// This should never happen.
 	if (Self == nullptr && (Function->Variants[0].Flags & VARF_Method))

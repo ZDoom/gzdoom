@@ -173,11 +173,8 @@ void FScopeBarrier::AddFlags(int flags1, int flags2, const char* name)
 }
 
 // these are for vmexec.h
-void FScopeBarrier::ValidateNew(PClass* cls, PFunction* callingfunc)
+void FScopeBarrier::ValidateNew(PClass* cls, int outerside)
 {
-	int outerside = callingfunc->Variants.Size() ? FScopeBarrier::SideFromFlags(callingfunc->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
-	if (outerside == FScopeBarrier::Side_Virtual)
-		outerside = FScopeBarrier::SideFromObjectFlags(callingfunc->OwningClass->ObjectFlags);
 	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));

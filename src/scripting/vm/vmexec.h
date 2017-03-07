@@ -817,11 +817,10 @@ begin:
 	{
 		b = B;
 		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
-		PFunction *callingfunc = (PFunction*)konsta[C].o; // [ZZ] due to how this is set, it's always const
 		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 		// [ZZ] validate readonly and between scope construction
-		if (callingfunc)
-			FScopeBarrier::ValidateNew(cls, callingfunc);
+		c = C;
+		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
 		reg.a[a] = cls->CreateNew();
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;

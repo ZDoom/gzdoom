@@ -5105,7 +5105,18 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	ExpEmit from = val->Emit(build);
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(from.Konst ? OP_NEW_K : OP_NEW, to.RegNum, from.RegNum, build->GetConstantAddress(CallingFunction, ATAG_OBJECT));
+
+	if (!from.Konst)
+	{
+		int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
+		if (outerside == FScopeBarrier::Side_Virtual)
+			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ObjectFlags);
+		build->Emit(OP_NEW, to.RegNum, from.RegNum, outerside+1);	// +1 to ensure it's not 0
+	}
+	else
+	{
+		build->Emit(OP_NEW_K, to.RegNum, from.RegNum);
+	}
 	return to;
 }
 

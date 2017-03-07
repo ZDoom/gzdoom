@@ -410,15 +410,21 @@ void E_PlayerDisconnected(int num)
 		handler->PlayerDisconnected(num);
 }
 
-bool E_Responder(event_t* ev)
+bool E_Responder(const event_t* ev)
 {
+	bool uiProcessorsFound = false;
+
 	if (ev->type == EV_GUI_Event)
 	{
 		// iterate handlers back to front by order, and give them this event.
 		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 		{
-			if (handler->IsUiProcessor && handler->UiProcess(ev))
-				return true; // event was processed
+			if (handler->IsUiProcessor)
+			{
+				uiProcessorsFound = true;
+				if (handler->UiProcess(ev))
+					return true; // event was processed
+			}
 		}
 	}
 	else
@@ -426,12 +432,14 @@ bool E_Responder(event_t* ev)
 		// not sure if we want to handle device changes, but whatevs.
 		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 		{
+			if (handler->IsUiProcessor)
+				uiProcessorsFound = true;
 			if (handler->InputProcess(ev))
 				return true; // event was processed
 		}
 	}
 
-	return false;
+	return (uiProcessorsFound && (ev->type == EV_Mouse)); // mouse events are eaten by the event system if there are any uiprocessors.
 }
 
 void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
@@ -939,7 +947,7 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 	}
 }
 
-FUiEvent::FUiEvent(event_t *ev)
+FUiEvent::FUiEvent(const event_t *ev)
 {
 	Type = (EGUIEvent)ev->subtype;
 	KeyChar = 0;
@@ -979,7 +987,7 @@ FUiEvent::FUiEvent(event_t *ev)
 	}
 }
 
-bool DStaticEventHandler::UiProcess(event_t* ev)
+bool DStaticEventHandler::UiProcess(const event_t* ev)
 {
 	IFVIRTUAL(DStaticEventHandler, UiProcess)
 	{
@@ -998,7 +1006,7 @@ bool DStaticEventHandler::UiProcess(event_t* ev)
 	return false;
 }
 
-FInputEvent::FInputEvent(event_t *ev)
+FInputEvent::FInputEvent(const event_t *ev)
 {
 	Type = (EGenericEvent)ev->type;
 	// we don't want the modders to remember what weird fields mean what for what events.
@@ -1025,7 +1033,7 @@ FInputEvent::FInputEvent(event_t *ev)
 	}
 }
 
-bool DStaticEventHandler::InputProcess(event_t* ev)
+bool DStaticEventHandler::InputProcess(const event_t* ev)
 {
 	IFVIRTUAL(DStaticEventHandler, InputProcess)
 	{

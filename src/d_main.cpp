@@ -288,7 +288,7 @@ void D_ProcessEvents (void)
 		if (M_Responder (ev))
 			continue;				// menu ate the event
 		// check events
-		if (E_Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
+		if (ev->type != EV_Mouse && E_Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 			continue;
 		G_Responder (ev);
 	}
@@ -310,7 +310,7 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev))
+	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{

@@ -155,35 +155,32 @@ class OptionMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event)
+		if (ev.type == UIEvent.Type_WheelUp)
 		{
-			if (ev.subtype == InputEventData.GUI_WheelUp)
-			{
-				int scrollamt = MIN(2, mDesc.mScrollPos);
-				mDesc.mScrollPos -= scrollamt;
-				return true;
-			}
-			else if (ev.subtype == InputEventData.GUI_WheelDown)
-			{
-				if (CanScrollDown)
-				{
-					if (VisBottom >= 0 && VisBottom < (mDesc.mItems.Size()-2))
-					{
-						mDesc.mScrollPos += 2;
-						VisBottom += 2;
-					}
-					else
-					{
-						mDesc.mScrollPos++;
-						VisBottom++;
-					}
-				}
-				return true;
-			}
+			int scrollamt = MIN(2, mDesc.mScrollPos);
+			mDesc.mScrollPos -= scrollamt;
+			return true;
 		}
-		return Super.Responder(ev);
+		else if (ev.type == UIEvent.Type_WheelDown)
+		{
+			if (CanScrollDown)
+			{
+				if (VisBottom >= 0 && VisBottom < (mDesc.mItems.Size()-2))
+				{
+					mDesc.mScrollPos += 2;
+					VisBottom += 2;
+				}
+				else
+				{
+					mDesc.mScrollPos++;
+					VisBottom++;
+				}
+			}
+			return true;
+		}
+		return Super.OnUIEvent(ev);
 	}
 
 	//=============================================================================

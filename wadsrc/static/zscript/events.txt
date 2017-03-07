@@ -1,6 +1,5 @@
-class BaseEvent native version("2.4") { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
 
-class RenderEvent : BaseEvent native ui version("2.4")
+struct RenderEvent native ui version("2.4")
 {
     native readonly Vector3 ViewPos;
     native readonly double ViewAngle;
@@ -10,7 +9,7 @@ class RenderEvent : BaseEvent native ui version("2.4")
     native readonly Actor Camera;
 }
 
-class WorldEvent : BaseEvent native play version("2.4")
+struct WorldEvent native play version("2.4")
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
@@ -28,7 +27,7 @@ class WorldEvent : BaseEvent native play version("2.4")
     native readonly double DamageAngle;
 }
 
-class PlayerEvent : BaseEvent native play version("2.4")
+struct PlayerEvent native play version("2.4")
 {
     // this is the player number that caused the event.
     // note: you can get player struct from this by using players[e.PlayerNumber]
@@ -37,7 +36,7 @@ class PlayerEvent : BaseEvent native play version("2.4")
     native readonly bool IsReturn;
 }
 
-class UiEvent : BaseEvent native ui version("2.4")
+struct UiEvent native ui version("2.4")
 {
     // d_gui.h
     enum EGUIEvent
@@ -121,7 +120,7 @@ class UiEvent : BaseEvent native ui version("2.4")
     native readonly bool IsAlt;
 }
 
-class InputEvent : BaseEvent native play version("2.4")
+struct InputEvent native play version("2.4")
 {
     enum EGenericEvent
     {
@@ -270,7 +269,7 @@ class InputEvent : BaseEvent native play version("2.4")
     native readonly int MouseY;
 }
 
-class ConsoleEvent : BaseEvent native version("2.4")
+struct ConsoleEvent native version("2.4")
 {
     // for net events, this will be the activator.
     // for UI events, this is always -1, and you need to check if level is loaded and use players[consoleplayer].

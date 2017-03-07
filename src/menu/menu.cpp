@@ -56,6 +56,7 @@
 #include "menu/menu.h"
 #include "textures/textures.h"
 #include "virtual.h"
+#include "events.h"
 
 //
 // Todo: Move these elsewhere
@@ -173,15 +174,31 @@ DMenu::DMenu(DMenu *parent)
 
 bool DMenu::CallResponder(event_t *ev)
 {
-	IFVIRTUAL(DMenu, Responder)
+	if (ev->type == EV_GUI_Event)
 	{
-		VMValue params[] = { (DObject*)this, ev};
-		int retval;
-		VMReturn ret(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-		return !!retval;
+		IFVIRTUAL(DMenu, OnUIEvent)
+		{
+			FUiEvent e = ev;
+			VMValue params[] = { (DObject*)this, &e };
+			int retval;
+			VMReturn ret(&retval);
+			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+			return !!retval;
+		}
 	}
-	else return false;
+	else
+	{
+		IFVIRTUAL(DMenu, OnInputEvent)
+		{
+			FInputEvent e = ev;
+			VMValue params[] = { (DObject*)this, &e };
+			int retval;
+			VMReturn ret(&retval);
+			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+			return !!retval;
+		}
+	}
+	return false;
 }
 
 //=============================================================================

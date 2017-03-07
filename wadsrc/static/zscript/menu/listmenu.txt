@@ -99,37 +99,34 @@ class ListMenu : Menu
 	//
 	//=============================================================================
 
-	override bool Responder (InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event)
+		if (ev.Type == UIEvent.Type_KeyDown)
 		{
-			if (ev.subtype == InputEventData.GUI_KeyDown)
-			{
-				// tolower
-				int ch = ev.data1;
-				ch = ch >= 65 && ch <91? ch + 32 : ch;
+			// tolower
+			int ch = ev.KeyChar;
+			ch = ch >= 65 && ch <91? ch + 32 : ch;
 
-				for(int i = mDesc.mSelectedItem + 1; i < mDesc.mItems.Size(); i++)
+			for(int i = mDesc.mSelectedItem + 1; i < mDesc.mItems.Size(); i++)
+			{
+				if (mDesc.mItems[i].CheckHotkey(ch))
 				{
-					if (mDesc.mItems[i].CheckHotkey(ch))
-					{
-						mDesc.mSelectedItem = i;
-						MenuSound("menu/cursor");
-						return true;
-					}
+					mDesc.mSelectedItem = i;
+					MenuSound("menu/cursor");
+					return true;
 				}
-				for(int i = 0; i < mDesc.mSelectedItem; i++)
+			}
+			for(int i = 0; i < mDesc.mSelectedItem; i++)
+			{
+				if (mDesc.mItems[i].CheckHotkey(ch))
 				{
-					if (mDesc.mItems[i].CheckHotkey(ch))
-					{
-						mDesc.mSelectedItem = i;
-						MenuSound("menu/cursor");
-						return true;
-					}
+					mDesc.mSelectedItem = i;
+					MenuSound("menu/cursor");
+					return true;
 				}
 			}
 		}
-		return Super.Responder(ev);
+		return Super.OnUIEvent(ev);
 	}
 
 	//=============================================================================

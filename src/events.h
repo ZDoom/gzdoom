@@ -56,7 +56,7 @@ void E_PlayerDied(int num);
 // this executes when a player leaves the game
 void E_PlayerDisconnected(int num);
 // this executes on events.
-bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
+bool E_Responder(const event_t* ev); // splits events into InputProcess and UiProcess
 // this executes on console/net events.
 void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 
@@ -148,8 +148,8 @@ public:
 	void PlayerDisconnected(int num);
 
 	// return true if handled.
-	bool InputProcess(event_t* ev);
-	bool UiProcess(event_t* ev);
+	bool InputProcess(const event_t* ev);
+	bool UiProcess(const event_t* ev);
 	
 	// 
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
@@ -215,7 +215,7 @@ struct FUiEvent
 	bool IsCtrl;
 	bool IsAlt;
 
-	FUiEvent(event_t *ev);
+	FUiEvent(const event_t *ev);
 };
 
 struct FInputEvent
@@ -230,7 +230,7 @@ struct FInputEvent
 	int MouseX;
 	int MouseY;
 
-	FInputEvent(event_t *ev);
+	FInputEvent(const event_t *ev);
 };
 
 struct FConsoleEvent 

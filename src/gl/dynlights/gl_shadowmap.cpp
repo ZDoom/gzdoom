@@ -55,7 +55,7 @@ void FShadowMap::Update()
 	GLRenderer->mShadowMapShader->Bind();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mLightBSP.GetNodesBuffer());
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLightBSP.GetSegsBuffer());
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLightBSP.GetLinesBuffer());
 
 	glViewport(0, 0, 1024, 1024);
 	GLRenderer->RenderScreenQuad();

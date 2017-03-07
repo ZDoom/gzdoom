@@ -4,26 +4,28 @@ out vec4 FragColor;
 
 struct GPUNode
 {
-	vec4 plane;
-	int children[2];
-	int linecount[2];
+	vec2 aabb_min;
+	vec2 aabb_max;
+	int left;
+	int right;
+	int line_index;
+	int padding;
 };
 
-struct GPUSeg
+struct GPULine
 {
 	vec2 pos;
 	vec2 delta;
-	vec4 bSolid;
 };
 
 layout(std430, binding = 2) buffer LightNodes
 {
-	GPUNode bspNodes[];
+	GPUNode nodes[];
 };
 
-layout(std430, binding = 3) buffer LightSegs
+layout(std430, binding = 3) buffer LightLines
 {
-	GPUSeg bspSegs[];
+	GPULine lines[];
 };
 
 layout(std430, binding = 4) buffer LightList
@@ -31,87 +33,100 @@ layout(std430, binding = 4) buffer LightList
 	vec4 lights[];
 };
 
-//===========================================================================
-//
-// Ray/BSP collision test. Returns where the ray hit something.
-//
-//===========================================================================
-
-vec2 rayTest(vec2 from, vec2 to)
+bool overlapRayAABB(vec2 ray_start2d, vec2 ray_end2d, vec2 aabb_min2d, vec2 aabb_max2d)
 {
-	const int max_iterations = 50;
+	// To do: simplify test to use a 2D test
+	vec3 ray_start = vec3(ray_start2d, 0.0);
+	vec3 ray_end = vec3(ray_end2d, 0.0);
+	vec3 aabb_min = vec3(aabb_min2d, -1.0);
+	vec3 aabb_max = vec3(aabb_max2d, 1.0);
+
+	vec3 c = (ray_start + ray_end) * 0.5f;
+	vec3 w = ray_end - c;
+	vec3 h = (aabb_max - aabb_min) * 0.5f; // aabb.extents();
+
+	c -= (aabb_max + aabb_min) * 0.5f; // aabb.center();
+
+	vec3 v = abs(w);
+
+	if (abs(c.x) > v.x + h.x || abs(c.y) > v.y + h.y || abs(c.z) > v.z + h.z)
+		return false; // disjoint;
+
+	if (abs(c.y * w.z - c.z * w.y) > h.y * v.z + h.z * v.y ||
+		abs(c.x * w.z - c.z * w.x) > h.x * v.z + h.z * v.x ||
+		abs(c.x * w.y - c.y * w.x) > h.x * v.y + h.y * v.x)
+		return false; // disjoint;
+
+	return true; // overlap;
+}
+
+float intersectRayLine(vec2 ray_start, vec2 ray_end, int line_index, vec2 raydelta, float rayd, float raydist2)
+{
 	const float epsilon = 0.0000001;
+	GPULine line = lines[line_index];
 
-	// Avoid wall acne by adding some margin
-	vec2 margin = normalize(to - from);
-
-	vec2 raydelta = to - from;
-	float raydist2 = dot(raydelta, raydelta);
 	vec2 raynormal = vec2(raydelta.y, -raydelta.x);
-	float rayd = dot(raynormal, from);
 
-	if (raydist2 < 1.0 || bspNodes.length() == 0)
-		return to;
-
-	int nodeIndex = bspNodes.length() - 1;
-
-	for (int iteration = 0; iteration < max_iterations; iteration++)
+	float den = dot(raynormal, line.delta);
+	if (abs(den) > epsilon)
 	{
-		GPUNode node = bspNodes[nodeIndex];
-		int side = (dot(node.plane, vec4(from, 0.0, 1.0)) > 0.0) ? 1 : 0;
-		int linecount = node.linecount[side];
-		if (linecount < 0)
+		float t_line = (rayd - dot(raynormal, line.pos)) / den;
+		if (t_line >= 0.0 && t_line <= 1.0)
 		{
-			nodeIndex = node.children[side];
-		}
-		else
-		{
-			int startLineIndex = node.children[side];
-
-			// Ray/line test each line segment.
-			bool hit_line = false;
-			for (int i = 0; i < linecount; i++)
-			{
-				GPUSeg seg = bspSegs[startLineIndex + i];
-
-				float den = dot(raynormal, seg.delta);
-				if (abs(den) > epsilon)
-				{
-					float t_seg = (rayd - dot(raynormal, seg.pos)) / den;
-					if (t_seg >= 0.0 && t_seg <= 1.0)
-					{
-						vec2 seghitdelta = seg.pos + seg.delta * t_seg - from;
-						if (dot(raydelta, seghitdelta) > 0.0 && dot(seghitdelta, seghitdelta) < raydist2) // We hit a line segment.
-						{
-							if (seg.bSolid.x > 0.0) // segment line is one-sided
-								return from + seghitdelta;
-
-							// We hit a two-sided segment line. Move to the other side and continue ray tracing.
-							from = from + seghitdelta + margin;
-
-							raydelta = to - from;
-							raydist2 = dot(raydelta, raydelta);
-							raynormal = vec2(raydelta.y, -raydelta.x);
-							rayd = dot(raynormal, from);
-
-							if (raydist2 < 1.0 || bspNodes.length() == 0)
-								return to;
-
-							nodeIndex = bspNodes.length() - 1;
-
-							hit_line = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if (!hit_line)
-				return to;
+			vec2 linehitdelta = line.pos + line.delta * t_line - ray_start;
+			float t = dot(raydelta, linehitdelta) / raydist2;
+			return t > 0.0 ? t : 1.0;
 		}
 	}
 
-	return to;
+	return 1.0;
+}
+
+bool isLeaf(int node_index)
+{
+	return nodes[node_index].line_index != -1;
+}
+
+float rayTest(vec2 ray_start, vec2 ray_end)
+{
+	vec2 raydelta = ray_end - ray_start;
+	float raydist2 = dot(raydelta, raydelta);
+	vec2 raynormal = vec2(raydelta.y, -raydelta.x);
+	float rayd = dot(raynormal, ray_start);
+	if (raydist2 < 1.0)
+		return 1.0;
+
+	float t = 1.0;
+
+	int stack[16];
+	int stack_pos = 1;
+	stack[0] = nodes.length() - 1;
+	while (stack_pos > 0)
+	{
+		int node_index = stack[stack_pos - 1];
+
+		if (!overlapRayAABB(ray_start, ray_end, nodes[node_index].aabb_min, nodes[node_index].aabb_max))
+		{
+			stack_pos--;
+		}
+		else if (isLeaf(node_index))
+		{
+			t = min(intersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), t);
+			stack_pos--;
+		}
+		else if (stack_pos == 16)
+		{
+			stack_pos--; // stack overflow
+		}
+		else
+		{
+			stack[stack_pos - 1] = nodes[node_index].left;
+			stack[stack_pos] = nodes[node_index].right;
+			stack_pos++;
+		}
+	}
+
+	return t;
 }
 
 void main()
@@ -134,8 +149,8 @@ void main()
 		}
 		pixelpos = lightpos + pixelpos * radius;
 
-		vec2 hitpos = rayTest(lightpos, pixelpos);
-		vec2 delta = hitpos - lightpos;
+		float t = rayTest(lightpos, pixelpos);
+		vec2 delta = (pixelpos - lightpos) * t;
 		float dist2 = dot(delta, delta);
 
 		FragColor = vec4(dist2, 0.0, 0.0, 1.0);

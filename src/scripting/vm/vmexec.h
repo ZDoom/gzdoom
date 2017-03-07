@@ -648,6 +648,13 @@ begin:
 			reg.a[a] = p->Virtuals[C];
 		}
 		NEXTOP;
+	OP(SCOPE) :
+		{
+			ASSERTA(a); ASSERTA(C);
+			FScopeBarrier::ValidateCall(((DObject*)a)->GetClass(), (VMFunction*)C, B);
+		}
+		NEXTOP;
+
 	OP(CALL_K):
 		ASSERTKA(a);
 		assert(konstatag[a] == ATAG_OBJECT);
@@ -665,19 +672,6 @@ begin:
 			int numret;
 
 			b = B;
-#if 0
-			// [ZZ] hax!
-			if (call->BarrierSide == 3) // :( - this is Side_Virtual. Side_Virtual should receive special arguments.
-			{
-				PFunction* calledfunc = (PFunction*)(reg.param + f->NumParam - b)[0].a;
-				PFunction* callingfunc = (PFunction*)(reg.param + f->NumParam - b)[1].a;
-				DObject* dobj = (DObject*)(reg.param + f->NumParam - b)[2].a; // this is the self pointer. it should be in, since Side_Virtual functions are always non-static methods.
-				PClass* selftype = dobj->GetClass();
-				FScopeBarrier::ValidateCall(calledfunc, callingfunc, selftype);
-				b -= 2;
-			}
-#endif
-
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->VarFlags & VARF_Native)
 			{

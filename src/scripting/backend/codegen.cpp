@@ -8792,20 +8792,27 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	ExpEmit selfemit;
 	if (Function->Variants[0].Flags & VARF_Method)
 	{
-#if 0
-		// [ZZ]
-		if (Function->Variants[0].Implementation && Function->Variants[0].Implementation->BarrierSide == FScopeBarrier::Side_Virtual)
-		{
-			// pass this even before Self, because otherwise we can't silently advance the arguments.
-			// this is not even implicit arguments.
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(Function, ATAG_OBJECT));
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(CallingFunction, ATAG_OBJECT));
-			count += 2;
-		}
-#endif
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
 		assert((selfemit.RegType == REGT_POINTER) || (selfemit.Fixed && selfemit.Target));
+
+		int innerside = FScopeBarrier::SideFromFlags(Function->Variants[0].Flags);
+
+		if (innerside == FScopeBarrier::Side_Virtual)
+		{
+			auto selfside = FScopeBarrier::SideFromObjectFlags(static_cast<PPointer*>(Self->ValueType)->PointedType->ObjectFlags);
+
+			int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
+			if (outerside == FScopeBarrier::Side_Virtual)
+				outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ObjectFlags);
+
+			if (selfside != outerside && (selfside == FScopeBarrier::Side_Play || selfside == FScopeBarrier::Side_UI))	// if the self pointer and the calling functions have the same scope the check here is not needed.
+			{
+				// Check the self object against the calling function's flags at run time
+				build->Emit(OP_SCOPE, selfemit.RegNum, outerside + 1, build->GetConstantAddress(vmfunc, ATAG_OBJECT));
+			}
+		}
+
 		if (selfemit.Fixed && selfemit.Target)
 		{
 			// Address of a local variable.
@@ -8870,6 +8877,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		selfemit.Free(build);
 		ExpEmit funcreg(build, REGT_POINTER);
+
 		build->Emit(OP_VTBL, funcreg.RegNum, selfemit.RegNum, vmfunc->VirtualIndex);
 		if (EmitTail)
 		{ // Tail call

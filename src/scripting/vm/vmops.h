@@ -106,6 +106,7 @@ xx(PARAMI,	parami,	I24,		NOP,	0, 0),		// push immediate, signed integer for func
 xx(CALL,	call,	RPI8I8,		NOP,	0, 0),	// Call function pkA with parameter count B and expected result count C
 xx(CALL_K,	call,	KPI8I8,		CALL,	1, REGT_POINTER),
 xx(VTBL,	vtbl,	RPRPI8,		NOP,	0, 0),	// dereferences a virtual method table.
+xx(SCOPE,	scope,	RPI8,		NOP,	0, 0),		// Scope check at runtime.
 xx(TAIL,	tail,	RPI8,		NOP,	0, 0),		// Call+Ret in a single instruction
 xx(TAIL_K,	tail,	KPI8,		TAIL,	1, REGT_POINTER),
 xx(RESULT,	result,	__BCP,		NOP,	0, 0),		// Result should go in register encoded in BC (in caller, after CALL)

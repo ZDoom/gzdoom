@@ -258,6 +258,33 @@ static int pagetic;
 //
 //==========================================================================
 
+// [ZZ] this handles the mouse changes in the playsim.
+//      I have no idea why it had to be done before events are dispatched... also no idea why is this not in G_Responder or something.
+static void D_ProcessMouseForPlaysim(event_t *ev)
+{
+	//if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_CheckUiProcessors())
+	if (ev->type == EV_Mouse && !paused) // [ZZ] the other checks are replaced with responders eating the event.
+	{
+		if (Button_Mlook.bDown || freelook)
+		{
+			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
+			if (invertmouse)
+				look = -look;
+			G_AddViewPitch(look);
+			events[eventhead].y = 0;
+		}
+		if (!Button_Strafe.bDown && !lookstrafe)
+		{
+			G_AddViewAngle(int(ev->x * m_yaw * mouse_sensitivity * 8.0));
+			events[eventhead].x = 0;
+		}
+		if ((events[eventhead].x | events[eventhead].y) == 0)
+		{
+			return;
+		}
+	}
+}
+
 void D_ProcessEvents (void)
 {
 	event_t *ev;
@@ -290,6 +317,8 @@ void D_ProcessEvents (void)
 		// check events
 		if (E_Responder(ev)) // [ZZ] ZScript ate the event
 			continue;
+		// before passing this further, do some magic
+		D_ProcessMouseForPlaysim(ev);
 		G_Responder (ev);
 	}
 }
@@ -310,26 +339,6 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_CheckUiProcessors())
-	{
-		if (Button_Mlook.bDown || freelook)
-		{
-			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
-			if (invertmouse)
-				look = -look;
-			G_AddViewPitch (look);
-			events[eventhead].y = 0;
-		}
-		if (!Button_Strafe.bDown && !lookstrafe)
-		{
-			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0));
-			events[eventhead].x = 0;
-		}
-		if ((events[eventhead].x | events[eventhead].y) == 0)
-		{
-			return;
-		}
-	}
 	eventhead = (eventhead+1)&(MAXEVENTS-1);
 }
 

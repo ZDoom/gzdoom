@@ -260,7 +260,7 @@ static int pagetic;
 
 // [ZZ] this handles the mouse changes in the playsim.
 //      I have no idea why it had to be done before events are dispatched... also no idea why is this not in G_Responder or something.
-static void D_ProcessMouseForPlaysim(event_t *ev)
+static bool D_ProcessMouseForPlaysim(event_t *ev)
 {
 	//if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_CheckUiProcessors())
 	if (ev->type == EV_Mouse && !paused) // [ZZ] the other checks are replaced with responders eating the event.
@@ -280,9 +280,11 @@ static void D_ProcessMouseForPlaysim(event_t *ev)
 		}
 		if ((events[eventhead].x | events[eventhead].y) == 0)
 		{
-			return;
+			return false;
 		}
 	}
+
+	return true;
 }
 
 void D_ProcessEvents (void)
@@ -318,8 +320,8 @@ void D_ProcessEvents (void)
 		if (E_Responder(ev)) // [ZZ] ZScript ate the event
 			continue;
 		// before passing this further, do some magic
-		D_ProcessMouseForPlaysim(ev);
-		G_Responder (ev);
+		if (D_ProcessMouseForPlaysim(ev))
+			G_Responder (ev);
 	}
 }
 

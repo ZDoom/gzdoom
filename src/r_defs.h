@@ -955,6 +955,11 @@ public:
 		return LowestFloorAt(a->Pos(), resultsec);
 	}
 
+	bool isClosed() const
+	{
+		return floorplane.Normal() == -ceilingplane.Normal() && floorplane.D == -ceilingplane.D;
+	}
+
 	double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 

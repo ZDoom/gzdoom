@@ -651,7 +651,7 @@ begin:
 	OP(SCOPE) :
 		{
 			ASSERTA(a); ASSERTA(C);
-			FScopeBarrier::ValidateCall(((DObject*)a)->GetClass(), (VMFunction*)C, B);
+			FScopeBarrier::ValidateCall(((DObject*)a)->GetClass(), (VMFunction*)C, B - 1);
 		}
 		NEXTOP;
 

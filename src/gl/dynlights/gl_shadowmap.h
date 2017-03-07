@@ -17,6 +17,8 @@ public:
 
 	int ShadowMapIndex(ADynamicLight *light) { return mLightToShadowmap[light]; }
 
+	bool ShadowTest(ADynamicLight *light, const DVector3 &pos);
+
 private:
 	void UploadLights();
 

@@ -106,3 +106,8 @@ void FShadowMap::UploadLights()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mLights.Size(), &mLights[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }
+
+bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
+{
+	return mLightBSP.ShadowTest(light->Pos(), pos);
+}

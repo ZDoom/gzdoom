@@ -80,24 +80,11 @@ void FLightBSP::UploadNodes()
 
 void FLightBSP::UploadSegs()
 {
-	TArray<GPULine> gpulines;
-	gpulines.Resize(level.lines.Size());
-	for (unsigned int i = 0; i < level.lines.Size(); i++)
-	{
-		const auto &line = level.lines[i];
-		auto &gpuseg = gpulines[i];
-
-		gpuseg.x = (float)line.v1->fX();
-		gpuseg.y = (float)line.v1->fY();
-		gpuseg.dx = (float)line.v2->fX() - gpuseg.x;
-		gpuseg.dy = (float)line.v2->fY() - gpuseg.y;
-	}
-
 #if 0
-	if (gpulines.Size() > 0)
+	if (Shape->lines.Size() > 0)
 	{
 		FILE *file = fopen("lines.txt", "wb");
-		fwrite(&gpulines[0], sizeof(GPULine) * gpulines.Size(), 1, file);
+		fwrite(&Shape->lines[0], sizeof(GPULine) * Shape->lines.Size(), 1, file);
 		fclose(file);
 	}
 #endif
@@ -107,7 +94,7 @@ void FLightBSP::UploadSegs()
 
 	glGenBuffers(1, (GLuint*)&LinesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, LinesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GPULine) * gpulines.Size(), &gpulines[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GPULine) * Shape->lines.Size(), &Shape->lines[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 
 	NumSegs = numsegs;
@@ -128,11 +115,16 @@ void FLightBSP::Clear()
 	Shape.reset();
 }
 
+bool FLightBSP::ShadowTest(const DVector3 &light, const DVector3 &pos)
+{
+	return Shape->RayTest(light, pos) >= 1.0f;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 Level2DShape::Level2DShape()
 {
-	TArray<int> lines;
+	TArray<int> line_elements;
 	TArray<FVector2> centroids;
 	for (unsigned int i = 0; i < level.lines.Size(); i++)
 	{
@@ -142,7 +134,7 @@ Level2DShape::Level2DShape()
 			continue;
 		}
 
-		lines.Push(i);
+		line_elements.Push(i);
 
 		FVector2 v1 = { (float)level.lines[i].v1->fX(), (float)level.lines[i].v1->fY() };
 		FVector2 v2 = { (float)level.lines[i].v2->fX(), (float)level.lines[i].v2->fY() };
@@ -150,12 +142,117 @@ Level2DShape::Level2DShape()
 	}
 
 	TArray<int> work_buffer;
-	work_buffer.Resize(lines.Size() * 2);
+	work_buffer.Resize(line_elements.Size() * 2);
+	root = Subdivide(&line_elements[0], (int)line_elements.Size(), &centroids[0], &work_buffer[0]);
 
-	root = subdivide(&lines[0], (int)lines.Size(), &centroids[0], &work_buffer[0]);
+	lines.Resize(level.lines.Size());
+	for (unsigned int i = 0; i < level.lines.Size(); i++)
+	{
+		const auto &line = level.lines[i];
+		auto &gpuseg = lines[i];
+
+		gpuseg.x = (float)line.v1->fX();
+		gpuseg.y = (float)line.v1->fY();
+		gpuseg.dx = (float)line.v2->fX() - gpuseg.x;
+		gpuseg.dy = (float)line.v2->fY() - gpuseg.y;
+	}
 }
 
-int Level2DShape::subdivide(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer)
+double Level2DShape::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
+{
+	DVector2 raydelta = ray_end - ray_start;
+	double raydist2 = raydelta | raydelta;
+	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
+	double rayd = raynormal | ray_start;
+	if (raydist2 < 1.0)
+		return 1.0f;
+
+	double t = 1.0;
+
+	int stack[16];
+	int stack_pos = 1;
+	stack[0] = nodes.Size() - 1;
+	while (stack_pos > 0)
+	{
+		int node_index = stack[stack_pos - 1];
+
+		if (!OverlapRayAABB(ray_start, ray_end, nodes[node_index]))
+		{
+			stack_pos--;
+		}
+		else if (nodes[node_index].line_index != -1) // isLeaf(node_index)
+		{
+			t = MIN(IntersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), t);
+			stack_pos--;
+		}
+		else if (stack_pos == 16)
+		{
+			stack_pos--; // stack overflow
+		}
+		else
+		{
+			stack[stack_pos - 1] = nodes[node_index].left;
+			stack[stack_pos] = nodes[node_index].right;
+			stack_pos++;
+		}
+	}
+
+	return t;
+}
+
+bool Level2DShape::OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const GPUNode &node)
+{
+	// To do: simplify test to use a 2D test
+	DVector3 ray_start = DVector3(ray_start2d, 0.0);
+	DVector3 ray_end = DVector3(ray_end2d, 0.0);
+	DVector3 aabb_min = DVector3(node.aabb_left, node.aabb_top, -1.0);
+	DVector3 aabb_max = DVector3(node.aabb_right, node.aabb_bottom, 1.0);
+
+	DVector3 c = (ray_start + ray_end) * 0.5f;
+	DVector3 w = ray_end - c;
+	DVector3 h = (aabb_max - aabb_min) * 0.5f; // aabb.extents();
+
+	c -= (aabb_max + aabb_min) * 0.5f; // aabb.center();
+
+	DVector3 v = DVector3(abs(w.X), abs(w.Y), abs(w.Z));
+
+	if (abs(c.X) > v.X + h.X || abs(c.Y) > v.Y + h.Y || abs(c.Z) > v.Z + h.Z)
+		return false; // disjoint;
+
+	if (abs(c.Y * w.Z - c.Z * w.Y) > h.Y * v.Z + h.Z * v.Y ||
+		abs(c.X * w.Z - c.Z * w.X) > h.X * v.Z + h.Z * v.X ||
+		abs(c.X * w.Y - c.Y * w.X) > h.X * v.Y + h.Y * v.X)
+		return false; // disjoint;
+
+	return true; // overlap;
+}
+
+double Level2DShape::IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2)
+{
+	const double epsilon = 0.0000001;
+	const GPULine &line = lines[line_index];
+
+	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
+
+	DVector2 line_pos(line.x, line.y);
+	DVector2 line_delta(line.dx, line.dy);
+
+	double den = raynormal | line_delta;
+	if (abs(den) > epsilon)
+	{
+		double t_line = (rayd - (raynormal | line_pos)) / den;
+		if (t_line >= 0.0 && t_line <= 1.0)
+		{
+			DVector2 linehitdelta = line_pos + line_delta * t_line - ray_start;
+			double t = (raydelta | linehitdelta) / raydist2;
+			return t > 0.0 ? t : 1.0;
+		}
+	}
+
+	return 1.0;
+}
+
+int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer)
 {
 	if (num_lines == 0)
 		return -1;
@@ -255,9 +352,9 @@ int Level2DShape::subdivide(int *lines, int num_lines, const FVector2 *centroids
 	int left_index = -1;
 	int right_index = -1;
 	if (left_count > 0)
-		left_index = subdivide(lines, left_count, centroids, work_buffer);
+		left_index = Subdivide(lines, left_count, centroids, work_buffer);
 	if (right_count > 0)
-		right_index = subdivide(lines + left_count, right_count, centroids, work_buffer);
+		right_index = Subdivide(lines + left_count, right_count, centroids, work_buffer);
 
 	nodes.Push(GPUNode(aabb_min, aabb_max, left_index, right_index));
 	return (int)nodes.Size() - 1;

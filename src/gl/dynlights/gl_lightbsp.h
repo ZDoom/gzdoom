@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "vectors.h"
 #include <memory>
 
 struct GPUNode
@@ -28,10 +29,16 @@ public:
 	Level2DShape();
 
 	TArray<GPUNode> nodes;
+	TArray<GPULine> lines;
 	int root;
 
+	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
+
 private:
-	int subdivide(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
+	bool OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const GPUNode &node);
+	double IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2);
+
+	int Subdivide(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
 };
 
 class FLightBSP
@@ -43,6 +50,8 @@ public:
 	int GetNodesBuffer();
 	int GetLinesBuffer();
 	void Clear();
+
+	bool ShadowTest(const DVector3 &light, const DVector3 &pos);
 
 private:
 	void UpdateBuffers();

@@ -83,7 +83,7 @@ struct FPolyObj
 	int			crush; 			// should the polyobj attempt to crush mobjs?
 	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
 	bool		bBlocked;
-	BYTE		bHasPortals;	// 1 for any portal, 2 for a linked portal (2 must block rotations.)
+	uint8_t		bHasPortals;	// 1 for any portal, 2 for a linked portal (2 must block rotations.)
 	int			seqType;
 	double		Size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	FPolyNode	*subsectorlinks;

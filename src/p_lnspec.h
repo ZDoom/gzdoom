@@ -47,9 +47,9 @@ struct FLineSpecial
 {
 	const char *name;
 	int number;
-	SBYTE min_args;
-	SBYTE max_args;
-	BYTE map_args;
+	int8_t min_args;
+	int8_t max_args;
+	uint8_t map_args;
 };
 
 
@@ -196,7 +196,7 @@ typedef int (*lnSpecFunc)(struct line_t	*line,
 						  int			arg4,
 						  int			arg5);
 
-extern BYTE NamedACSToNormalACS[7];
+extern uint8_t NamedACSToNormalACS[7];
 static inline bool P_IsACSSpecial(int specnum)
 {
 	return (specnum >= ACS_Execute && specnum <= ACS_LockedExecuteDoor) ||

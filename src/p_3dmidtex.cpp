@@ -122,11 +122,11 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
 
 	// Bit arrays that mark whether a line or sector is to be attached.
-	BYTE *found_lines = new BYTE[(level.lines.Size()+7)/8];
-	BYTE *found_sectors = new BYTE[(level.sectors.Size()+7)/8];
+	uint8_t *found_lines = new uint8_t[(level.lines.Size()+7)/8];
+	uint8_t *found_sectors = new uint8_t[(level.sectors.Size()+7)/8];
 
-	memset(found_lines, 0, sizeof (BYTE) * ((level.lines.Size()+7)/8));
-	memset(found_sectors, 0, sizeof (BYTE) * ((level.sectors.Size()+7)/8));
+	memset(found_lines, 0, sizeof (uint8_t) * ((level.lines.Size()+7)/8));
+	memset(found_sectors, 0, sizeof (uint8_t) * ((level.sectors.Size()+7)/8));
 
 	// mark all lines and sectors that are already attached to this one
 	// and clear the arrays. The old data will be re-added automatically

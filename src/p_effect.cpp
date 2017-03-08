@@ -66,11 +66,11 @@ FRandom pr_railtrail("RailTrail");
 #define FADEFROMTTL(a)	(1.f/(a))
 
 // [RH] particle globals
-WORD			NumParticles;
-WORD			ActiveParticles;
-WORD			InactiveParticles;
+uint16_t			NumParticles;
+uint16_t			ActiveParticles;
+uint16_t			InactiveParticles;
 particle_t		*Particles;
-TArray<WORD>	ParticlesInSubsec;
+TArray<uint16_t>	ParticlesInSubsec;
 
 static int grey1, grey2, grey3, grey4, red, green, blue, yellow, black,
 		   red1, green1, blue1, yellow1, purple, purple1, white,
@@ -79,7 +79,7 @@ static int grey1, grey2, grey3, grey4, red, green, blue, yellow, black,
 
 static const struct ColorList {
 	int *color;
-	BYTE r, g, b;
+	uint8_t r, g, b;
 } Colors[] = {
 	{&grey1,	85,  85,  85 },
 	{&grey2,	171, 171, 171},
@@ -118,7 +118,7 @@ inline particle_t *NewParticle (void)
 		result = Particles + InactiveParticles;
 		InactiveParticles = result->tnext;
 		result->tnext = ActiveParticles;
-		ActiveParticles = WORD(result - Particles);
+		ActiveParticles = uint16_t(result - Particles);
 	}
 	return result;
 }
@@ -159,7 +159,7 @@ void P_InitParticles ()
 		num = r_maxparticles;
 
 	// This should be good, but eh...
-	NumParticles = (WORD)clamp<int>(num, 100, 65535);
+	NumParticles = (uint16_t)clamp<int>(num, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];
@@ -205,7 +205,7 @@ void P_FindParticleSubsectors ()
 	{
 		return;
 	}
-	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
+	for (uint16_t i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
 		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);

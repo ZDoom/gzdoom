@@ -46,8 +46,8 @@ struct seg_t;
 #define MAXWIDTH 5760
 #define MAXHEIGHT 3600
 
-const WORD NO_INDEX = 0xffffu;
-const DWORD NO_SIDE = 0xffffffffu;
+const uint16_t NO_INDEX = 0xffffu;
+const uint32_t NO_SIDE = 0xffffffffu;
 
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
@@ -80,7 +80,7 @@ enum
 struct vertexdata_t
 {
 	double zCeiling, zFloor;
-	DWORD flags;
+	uint32_t flags;
 };
 
 #ifdef USE_FLOAT
@@ -1011,16 +1011,16 @@ public:
 
 	int prevsec;		// -1 or number of sector for previous step
 	int nextsec;		// -1 or number of next step sector
-	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
+	uint8_t 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
-	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
+	int8_t stairlock;	// -2 on first locked -1 after thinker done 0 normally
 
 	TStaticPointedArray<line_t *> Lines;
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector
 
-	DWORD bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
+	uint32_t bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
 										// [RH] these can also be blend values if
 										//		the alpha mask is non-zero
 
@@ -1036,9 +1036,9 @@ public:
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 
-	WORD ZoneNumber;	// [RH] Zone this sector belongs to
-	WORD MoreFlags;		// [RH] Internal sector flags
-	DWORD Flags;		// Sector flags
+	uint16_t ZoneNumber;	// [RH] Zone this sector belongs to
+	uint16_t MoreFlags;		// [RH] Internal sector flags
+	uint32_t Flags;		// Sector flags
 
 	// [RH] Action specials for sectors. Like Skull Tag, but more
 	// flexible in a Bloody way. SecActTarget forms a list of actors
@@ -1134,16 +1134,16 @@ struct side_t
 	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	part		textures[3];
 	line_t		*linedef;
-	//DWORD		linenum;
-	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops
-	WORD		TexelLength;
-	SWORD		Light;
-	BYTE		Flags;
+	//uint32_t		linenum;
+	uint32_t		LeftSide, RightSide;	// [RH] Group walls into loops
+	uint16_t		TexelLength;
+	int16_t		Light;
+	uint8_t		Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 
 	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
-	void SetLight(SWORD l)
+	void SetLight(int16_t l)
 	{
 		Light = l;
 	}
@@ -1413,7 +1413,7 @@ enum
 
 struct FPortalCoverage
 {
-	DWORD *		subsectors;
+	uint32_t *		subsectors;
 	int			sscount;
 };
 
@@ -1424,7 +1424,7 @@ struct subsector_t
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
 	sector_t	*render_sector;
-	DWORD		numlines;
+	uint32_t		numlines;
 	int			flags;
 
 	void BuildPolyBSP();
@@ -1482,7 +1482,7 @@ struct FMiniBSP
 // OTHER TYPES
 //
 
-typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
+typedef uint8_t lighttable_t;	// This could be wider for >8 bit display.
 
 // This encapsulates the fields of vissprite_t that can be altered by AlterWeaponSprite
 struct visstyle_t

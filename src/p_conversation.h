@@ -75,7 +75,7 @@ void P_FreeStrifeConversations ();
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);
 void P_ResumeConversation ();
 
-void P_ConversationCommand (int netcode, int player, BYTE **stream);
+void P_ConversationCommand (int netcode, int player, uint8_t **stream);
 
 class FileReader;
 bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen);

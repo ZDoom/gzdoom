@@ -74,7 +74,7 @@ void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TA
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-void P_LoadZNodes (FileReader &dalump, DWORD id);
+void P_LoadZNodes (FileReader &dalump, uint32_t id);
 static bool CheckCachedNodes(MapData *map);
 static void CreateCachedNodes(MapData *map);
 
@@ -93,29 +93,29 @@ struct gl3_mapsubsector_t
 
 struct glseg_t
 {
-	WORD	v1;		 // start vertex		(16 bit)
-	WORD	v2;		 // end vertex			(16 bit)
-	WORD	linedef; // linedef, or -1 for minisegs
-	WORD	side;	 // side on linedef: 0 for right, 1 for left
-	WORD	partner; // corresponding partner seg, or 0xffff on one-sided walls
+	uint16_t	v1;		 // start vertex		(16 bit)
+	uint16_t	v2;		 // end vertex			(16 bit)
+	uint16_t	linedef; // linedef, or -1 for minisegs
+	uint16_t	side;	 // side on linedef: 0 for right, 1 for left
+	uint16_t	partner; // corresponding partner seg, or 0xffff on one-sided walls
 };
 
 struct glseg3_t
 {
 	int32_t			v1;
 	int32_t			v2;
-	WORD			linedef;
-	WORD			side;
+	uint16_t			linedef;
+	uint16_t			side;
 	int32_t			partner;
 };
 
 struct gl5_mapnode_t
 {
-	SWORD 	x,y,dx,dy;	// partition line
-	SWORD 	bbox[2][4];	// bounding box for each child
+	int16_t 	x,y,dx,dy;	// partition line
+	int16_t 	bbox[2][4];	// bounding box for each child
 	// If NF_SUBSECTOR is or'ed in, it's a subsector,
 	// else it's a node of another subtree.
-	DWORD children[2];
+	uint32_t children[2];
 };
 
 
@@ -181,7 +181,7 @@ bool P_CheckForGLNodes()
 		}
 		else
 		{
-			for(DWORD j=0;j<sub->numlines;j++)
+			for(uint32_t j=0;j<sub->numlines;j++)
 			{
 				if (segs[j].linedef==NULL)	// miniseg
 				{
@@ -221,14 +221,14 @@ static bool format5;
 
 static bool LoadGLVertexes(FileReader * lump)
 {
-	BYTE *gldata;
+	uint8_t *gldata;
 	int                 i;
 
 	firstglvertex = level.vertexes.Size();
 	
 	int gllen=lump->GetLength();
 
-	gldata = new BYTE[gllen];
+	gldata = new uint8_t[gllen];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(gldata, gllen);
 
@@ -377,7 +377,7 @@ static bool LoadGLSegs(FileReader * lump)
 				segs[i].v1 = &level.vertexes[checkGLVertex3(LittleLong(ml->v1))];
 				segs[i].v2 = &level.vertexes[checkGLVertex3(LittleLong(ml->v2))];
 
-				const DWORD partner = LittleLong(ml->partner);
+				const uint32_t partner = LittleLong(ml->partner);
 				segs[i].PartnerSeg = DWORD_MAX == partner ? nullptr : &segs[partner];
 	
 				if(ml->linedef != 0xffff) // skip minisegs 
@@ -533,7 +533,7 @@ static bool LoadNodes (FileReader * lump)
 	int 		j;
 	int 		k;
 	node_t* 	no;
-	WORD*		used;
+	uint16_t*		used;
 
 	if (!format5)
 	{
@@ -548,8 +548,8 @@ static bool LoadNodes (FileReader * lump)
 		basemn = mn = new mapnode_t[numnodes];
 		lump->Read(mn, lump->GetLength());
 
-		used = (WORD *)alloca (sizeof(WORD)*numnodes);
-		memset (used, 0, sizeof(WORD)*numnodes);
+		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
+		memset (used, 0, sizeof(uint16_t)*numnodes);
 
 		no = nodes;
 
@@ -561,7 +561,7 @@ static bool LoadNodes (FileReader * lump)
 			no->dy = LittleShort(mn->dy)<<FRACBITS;
 			for (j = 0; j < 2; j++)
 			{
-				WORD child = LittleShort(mn->children[j]);
+				uint16_t child = LittleShort(mn->children[j]);
 				if (child & NF_SUBSECTOR)
 				{
 					child &= ~NF_SUBSECTOR;
@@ -570,7 +570,7 @@ static bool LoadNodes (FileReader * lump)
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (BYTE *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&subsectors[child] + 1;
 				}
 				else if (child >= numnodes)
 				{
@@ -608,8 +608,8 @@ static bool LoadNodes (FileReader * lump)
 		basemn = mn = new gl5_mapnode_t[numnodes];
 		lump->Read(mn, lump->GetLength());
 
-		used = (WORD *)alloca (sizeof(WORD)*numnodes);
-		memset (used, 0, sizeof(WORD)*numnodes);
+		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
+		memset (used, 0, sizeof(uint16_t)*numnodes);
 
 		no = nodes;
 
@@ -630,7 +630,7 @@ static bool LoadNodes (FileReader * lump)
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (BYTE *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&subsectors[child] + 1;
 				}
 				else if (child >= numnodes)
 				{
@@ -808,7 +808,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 	FString glheader;
 	bool mustcheck=false;
-	DWORD numentries = f->LumpCount();
+	uint32_t numentries = f->LumpCount();
 
 	glheader.Format("GL_%.8s", label);
 	if (glheader.Len()>8)
@@ -819,7 +819,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 	if (numentries > 4)
 	{
-		for(DWORD i=0;i<numentries-4;i++)
+		for(uint32_t i=0;i<numentries-4;i++)
 		{
 			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
 			{
@@ -1051,7 +1051,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 //
 //==========================================================================
 
-typedef TArray<BYTE> MemFile;
+typedef TArray<uint8_t> MemFile;
 
 
 static FString CreateCacheName(MapData *map, bool create)
@@ -1067,25 +1067,25 @@ static FString CreateCacheName(MapData *map, bool create)
 	return path;
 }
 
-static void WriteByte(MemFile &f, BYTE b)
+static void WriteByte(MemFile &f, uint8_t b)
 {
 	f.Push(b);
 }
 
-static void WriteWord(MemFile &f, WORD b)
+static void WriteWord(MemFile &f, uint16_t b)
 {
 	int v = f.Reserve(2);
-	f[v] = (BYTE)b;
-	f[v+1] = (BYTE)(b>>8);
+	f[v] = (uint8_t)b;
+	f[v+1] = (uint8_t)(b>>8);
 }
 
-static void WriteLong(MemFile &f, DWORD b)
+static void WriteLong(MemFile &f, uint32_t b)
 {
 	int v = f.Reserve(4);
-	f[v] = (BYTE)b;
-	f[v+1] = (BYTE)(b>>8);
-	f[v+2] = (BYTE)(b>>16);
-	f[v+3] = (BYTE)(b>>24);
+	f[v] = (uint8_t)b;
+	f[v+1] = (uint8_t)(b>>8);
+	f[v+2] = (uint8_t)(b>>16);
+	f[v+3] = (uint8_t)(b>>24);
 }
 
 static void CreateCachedNodes(MapData *map)
@@ -1110,10 +1110,10 @@ static void CreateCachedNodes(MapData *map)
 	for(int i=0;i<numsegs;i++)
 	{
 		WriteLong(ZNodes, segs[i].v1->Index());
-		WriteLong(ZNodes, segs[i].PartnerSeg == nullptr? 0xffffffffu : DWORD(segs[i].PartnerSeg - segs));
+		WriteLong(ZNodes, segs[i].PartnerSeg == nullptr? 0xffffffffu : uint32_t(segs[i].PartnerSeg - segs));
 		if (segs[i].linedef)
 		{
-			WriteLong(ZNodes, DWORD(segs[i].linedef->Index()));
+			WriteLong(ZNodes, uint32_t(segs[i].linedef->Index()));
 			WriteByte(ZNodes, segs[i].sidedef == segs[i].linedef->sidedef[0]? 0:1);
 		}
 		else
@@ -1140,21 +1140,21 @@ static void CreateCachedNodes(MapData *map)
 
 		for (int j = 0; j < 2; ++j)
 		{
-			DWORD child;
+			uint32_t child;
 			if ((size_t)nodes[i].children[j] & 1)
 			{
-				child = 0x80000000 | DWORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
+				child = 0x80000000 | uint32_t((subsector_t *)((uint8_t *)nodes[i].children[j] - 1) - subsectors);
 			}
 			else
 			{
-				child = DWORD((node_t *)nodes[i].children[j] - nodes);
+				child = uint32_t((node_t *)nodes[i].children[j] - nodes);
 			}
 			WriteLong(ZNodes, child);
 		}
 	}
 
 	uLongf outlen = ZNodes.Size();
-	BYTE *compressed;
+	uint8_t *compressed;
 	int offset = level.lines.Size() * 8 + 12 + 16;
 	int r;
 	do
@@ -1170,12 +1170,12 @@ static void CreateCachedNodes(MapData *map)
 	while (r == Z_BUF_ERROR);
 
 	memcpy(compressed, "CACH", 4);
-	DWORD len = LittleLong(level.lines.Size());
+	uint32_t len = LittleLong(level.lines.Size());
 	memcpy(compressed+4, &len, 4);
 	map->GetChecksum(compressed+8);
 	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1->Index())), LittleLong(DWORD(level.lines[i].v2->Index())) };
+		uint32_t ndx[2] = { LittleLong(uint32_t(level.lines[i].v1->Index())), LittleLong(uint32_t(level.lines[i].v2->Index())) };
 		memcpy(compressed + 8 + 16 + 8 * i, ndx, 8);
 	}
 	memcpy(compressed + offset - 4, "ZGL3", 4);
@@ -1204,10 +1204,10 @@ static void CreateCachedNodes(MapData *map)
 static bool CheckCachedNodes(MapData *map)
 {
 	char magic[4] = {0,0,0,0};
-	BYTE md5[16];
-	BYTE md5map[16];
-	DWORD numlin;
-	DWORD *verts = NULL;
+	uint8_t md5[16];
+	uint8_t md5map[16];
+	uint32_t numlin;
+	uint32_t *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
 	FILE *f = fopen(path, "rb");
@@ -1224,7 +1224,7 @@ static bool CheckCachedNodes(MapData *map)
 	map->GetChecksum(md5map);
 	if (memcmp(md5, md5map, 16)) goto errorout;
 
-	verts = new DWORD[numlin * 8];
+	verts = new uint32_t[numlin * 8];
 	if (fread(verts, 8, numlin, f) != numlin) goto errorout;
 
 	if (fread(magic, 1, 4, f) != 4) goto errorout;
@@ -1353,7 +1353,7 @@ subsector_t *P_PointInSubsector (double x, double y)
 	}
 	while (!((size_t)node & 1));
 		
-	return (subsector_t *)((BYTE *)node - 1);
+	return (subsector_t *)((uint8_t *)node - 1);
 }
 
 //==========================================================================
@@ -1406,7 +1406,7 @@ static bool PointOnLine (int x, int y, int x1, int y1, int dx, int dy)
 void P_SetRenderSector()
 {
 	int 				i;
-	DWORD 				j;
+	uint32_t 				j;
 	TArray<subsector_t *> undetermined;
 	subsector_t *		ss;
 

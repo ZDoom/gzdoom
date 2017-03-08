@@ -247,7 +247,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 						// The content list changed in r1783 of Vavoom to be unified
 						// among all its supported games, so it has now ten different
 						// values instead of just five.
-						static DWORD vavoomcolors[] = { VC_EMPTY,
+						static uint32_t vavoomcolors[] = { VC_EMPTY,
 							VC_WATER, VC_LAVA, VC_NUKAGE, VC_SLIME, VC_HELLSLIME,
 							VC_BLOOD, VC_SLUDGE, VC_HAZARD, VC_BOOMWATER };
 						flags |= FF_SWIMMABLE | FF_BOTHPLANES | FF_ALLSIDES | FF_FLOOD;

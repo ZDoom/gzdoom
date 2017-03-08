@@ -104,7 +104,7 @@ struct PredictPos
 static int PredictionLerptics;
 
 static player_t PredictionPlayerBackup;
-static BYTE PredictionActorBackup[sizeof(APlayerPawn)];
+static uint8_t PredictionActorBackup[sizeof(APlayerPawn)];
 static TArray<AActor *> PredictionSectorListBackup;
 
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
@@ -579,7 +579,7 @@ void player_t::SetFOV(float fov)
 		{
 			Net_WriteByte(DEM_MYFOV);
 		}
-		Net_WriteByte((BYTE)clamp<float>(fov, 5.f, 179.f));
+		Net_WriteByte((uint8_t)clamp<float>(fov, 5.f, 179.f));
 	}
 }
 
@@ -3048,7 +3048,7 @@ void P_PredictPlayer (player_t *player)
 	PredictionPlayerBackup = *player;
 
 	APlayerPawn *act = player->mo;
-	memcpy(PredictionActorBackup, &act->snext, sizeof(APlayerPawn) - ((BYTE *)&act->snext - (BYTE *)act));
+	memcpy(PredictionActorBackup, &act->snext, sizeof(APlayerPawn) - ((uint8_t *)&act->snext - (uint8_t *)act));
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
@@ -3174,7 +3174,7 @@ void P_UnPredictPlayer ()
 		act->touching_lineportallist = nullptr;
 
 		act->UnlinkFromWorld(&ctx);
-		memcpy(&act->snext, PredictionActorBackup, sizeof(APlayerPawn) - ((BYTE *)&act->snext - (BYTE *)act));
+		memcpy(&act->snext, PredictionActorBackup, sizeof(APlayerPawn) - ((uint8_t *)&act->snext - (uint8_t *)act));
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.

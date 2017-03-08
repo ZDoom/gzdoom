@@ -439,7 +439,7 @@ FStateDefine *FStateDefinitions::FindStateAddress(const char *name)
 //
 //==========================================================================
 
-void FStateDefinitions::SetStateLabel(const char *statename, FState *state, BYTE defflags)
+void FStateDefinitions::SetStateLabel(const char *statename, FState *state, uint8_t defflags)
 {
 	FStateDefine *std = FindStateAddress(statename);
 	std->State = state;

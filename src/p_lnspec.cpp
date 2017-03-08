@@ -73,7 +73,7 @@
     5 : Copy texture and type; trigger model.  ( = 2)
     6 : Copy texture and type; numeric model.  ( = 2+4)
 */
-static const BYTE ChangeMap[8] = { 0, 1, 5, 3, 7, 2, 6, 0 };
+static const uint8_t ChangeMap[8] = { 0, 1, 5, 3, 7, 2, 6, 0 };
 
 int LS_Sector_SetPlaneReflection(line_t *ln, AActor *it, bool backSide, int arg0, int arg1, int arg2, int arg3, int arg4);
 int LS_SetGlobalFogParameter(line_t *ln, AActor *it, bool backSide, int arg0, int arg1, int arg2, int arg3, int arg4);
@@ -106,7 +106,7 @@ static FRandom pr_glass ("GlassBreak");
 
 // There are aliases for the ACS specials that take names instead of numbers.
 // This table maps them onto the real number-based specials.
-BYTE NamedACSToNormalACS[7] =
+uint8_t NamedACSToNormalACS[7] =
 {
 	ACS_Execute,
 	ACS_Suspend,

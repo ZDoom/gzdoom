@@ -51,7 +51,7 @@ void FLightBSP::UpdateBuffers()
 void FLightBSP::GenerateBuffers()
 {
 	if (!Shape)
-		Shape.reset(new Level2DShape());
+		Shape.reset(new LevelAABBTree());
 	UploadNodes();
 	UploadSegs();
 }
@@ -62,7 +62,7 @@ void FLightBSP::UploadNodes()
 	if (Shape->nodes.Size() > 0)
 	{
 		FILE *file = fopen("nodes.txt", "wb");
-		fwrite(&Shape->nodes[0], sizeof(GPUNode) * Shape->nodes.Size(), 1, file);
+		fwrite(&Shape->nodes[0], sizeof(AABBTreeNode) * Shape->nodes.Size(), 1, file);
 		fclose(file);
 	}
 #endif
@@ -72,7 +72,7 @@ void FLightBSP::UploadNodes()
 
 	glGenBuffers(1, (GLuint*)&NodesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, NodesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GPUNode) * Shape->nodes.Size(), &Shape->nodes[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeNode) * Shape->nodes.Size(), &Shape->nodes[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 
 	NumNodes = numnodes;
@@ -84,7 +84,7 @@ void FLightBSP::UploadSegs()
 	if (Shape->lines.Size() > 0)
 	{
 		FILE *file = fopen("lines.txt", "wb");
-		fwrite(&Shape->lines[0], sizeof(GPULine) * Shape->lines.Size(), 1, file);
+		fwrite(&Shape->lines[0], sizeof(AABBTreeLine) * Shape->lines.Size(), 1, file);
 		fclose(file);
 	}
 #endif
@@ -94,7 +94,7 @@ void FLightBSP::UploadSegs()
 
 	glGenBuffers(1, (GLuint*)&LinesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, LinesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GPULine) * Shape->lines.Size(), &Shape->lines[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeLine) * Shape->lines.Size(), &Shape->lines[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 
 	NumSegs = numsegs;
@@ -122,44 +122,51 @@ bool FLightBSP::ShadowTest(const DVector3 &light, const DVector3 &pos)
 
 /////////////////////////////////////////////////////////////////////////////
 
-Level2DShape::Level2DShape()
+LevelAABBTree::LevelAABBTree()
 {
-	TArray<int> line_elements;
+	// Calculate the center of all lines
 	TArray<FVector2> centroids;
 	for (unsigned int i = 0; i < level.lines.Size(); i++)
 	{
-		if (level.lines[i].backsector)
-		{
-			centroids.Push(FVector2(0.0f, 0.0f));
-			continue;
-		}
-
-		line_elements.Push(i);
-
 		FVector2 v1 = { (float)level.lines[i].v1->fX(), (float)level.lines[i].v1->fY() };
 		FVector2 v2 = { (float)level.lines[i].v2->fX(), (float)level.lines[i].v2->fY() };
 		centroids.Push((v1 + v2) * 0.5f);
 	}
 
+	// Create a list of level lines we want to add:
+	TArray<int> line_elements;
+	for (unsigned int i = 0; i < level.lines.Size(); i++)
+	{
+		if (!level.lines[i].backsector)
+		{
+			line_elements.Push(i);
+		}
+	}
+
+	// GenerateTreeNode needs a buffer where it can store line indices temporarily when sorting lines into the left and right child AABB buckets
 	TArray<int> work_buffer;
 	work_buffer.Resize(line_elements.Size() * 2);
-	root = Subdivide(&line_elements[0], (int)line_elements.Size(), &centroids[0], &work_buffer[0]);
 
+	// Generate the AABB tree
+	GenerateTreeNode(&line_elements[0], (int)line_elements.Size(), &centroids[0], &work_buffer[0]);
+
+	// Add the lines referenced by the leaf nodes
 	lines.Resize(level.lines.Size());
 	for (unsigned int i = 0; i < level.lines.Size(); i++)
 	{
 		const auto &line = level.lines[i];
-		auto &gpuseg = lines[i];
+		auto &treeline = lines[i];
 
-		gpuseg.x = (float)line.v1->fX();
-		gpuseg.y = (float)line.v1->fY();
-		gpuseg.dx = (float)line.v2->fX() - gpuseg.x;
-		gpuseg.dy = (float)line.v2->fY() - gpuseg.y;
+		treeline.x = (float)line.v1->fX();
+		treeline.y = (float)line.v1->fY();
+		treeline.dx = (float)line.v2->fX() - treeline.x;
+		treeline.dy = (float)line.v2->fY() - treeline.y;
 	}
 }
 
-double Level2DShape::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
+double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
 {
+	// Precalculate some of the variables used by the ray/line intersection test
 	DVector2 raydelta = ray_end - ray_start;
 	double raydist2 = raydelta | raydelta;
 	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
@@ -167,46 +174,54 @@ double Level2DShape::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
 	if (raydist2 < 1.0)
 		return 1.0f;
 
-	double t = 1.0;
+	double hit_fraction = 1.0;
 
+	// Walk the tree nodes
 	int stack[16];
 	int stack_pos = 1;
-	stack[0] = nodes.Size() - 1;
+	stack[0] = nodes.Size() - 1; // root node is the last node in the list
 	while (stack_pos > 0)
 	{
 		int node_index = stack[stack_pos - 1];
 
 		if (!OverlapRayAABB(ray_start, ray_end, nodes[node_index]))
 		{
+			// If the ray doesn't overlap this node's AABB we're done for this subtree
 			stack_pos--;
 		}
 		else if (nodes[node_index].line_index != -1) // isLeaf(node_index)
 		{
-			t = MIN(IntersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), t);
+			// We reached a leaf node. Do a ray/line intersection test to see if we hit the line.
+			hit_fraction = MIN(IntersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), hit_fraction);
 			stack_pos--;
 		}
 		else if (stack_pos == 16)
 		{
-			stack_pos--; // stack overflow
+			stack_pos--; // stack overflow - tree is too deep!
 		}
 		else
 		{
-			stack[stack_pos - 1] = nodes[node_index].left;
-			stack[stack_pos] = nodes[node_index].right;
+			// The ray overlaps the node's AABB. Examine its child nodes.
+			stack[stack_pos - 1] = nodes[node_index].left_node;
+			stack[stack_pos] = nodes[node_index].right_node;
 			stack_pos++;
 		}
 	}
 
-	return t;
+	return hit_fraction;
 }
 
-bool Level2DShape::OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const GPUNode &node)
+bool LevelAABBTree::OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const AABBTreeNode &node)
 {
 	// To do: simplify test to use a 2D test
 	DVector3 ray_start = DVector3(ray_start2d, 0.0);
 	DVector3 ray_end = DVector3(ray_end2d, 0.0);
 	DVector3 aabb_min = DVector3(node.aabb_left, node.aabb_top, -1.0);
 	DVector3 aabb_max = DVector3(node.aabb_right, node.aabb_bottom, 1.0);
+
+	// Standard 3D ray/AABB overlapping test.
+	// The details for the math here can be found in Real-Time Rendering, 3rd Edition.
+	// We could use a 2D test here instead, which would probably simplify the math.
 
 	DVector3 c = (ray_start + ray_end) * 0.5f;
 	DVector3 w = ray_end - c;
@@ -227,10 +242,16 @@ bool Level2DShape::OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &r
 	return true; // overlap;
 }
 
-double Level2DShape::IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2)
+double LevelAABBTree::IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2)
 {
+	// Check if two line segments intersects (the ray and the line).
+	// The math below does this by first finding the fractional hit for an infinitely long ray line.
+	// If that hit is within the line segment (0 to 1 range) then it calculates the fractional hit for where the ray would hit.
+	//
+	// This algorithm is homemade - I would not be surprised if there's a much faster method out there.
+
 	const double epsilon = 0.0000001;
-	const GPULine &line = lines[line_index];
+	const AABBTreeLine &line = lines[line_index];
 
 	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
 
@@ -252,7 +273,7 @@ double Level2DShape::IntersectRayLine(const DVector2 &ray_start, const DVector2 
 	return 1.0;
 }
 
-int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer)
+int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer)
 {
 	if (num_lines == 0)
 		return -1;
@@ -285,7 +306,7 @@ int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids
 
 	if (num_lines == 1) // Leaf node
 	{
-		nodes.Push(GPUNode(aabb_min, aabb_max, lines[0]));
+		nodes.Push(AABBTreeNode(aabb_min, aabb_max, lines[0]));
 		return (int)nodes.Size() - 1;
 	}
 
@@ -295,21 +316,21 @@ int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids
 		aabb_max.X - aabb_min.X,
 		aabb_max.Y - aabb_min.Y
 	};
-
 	int axis_order[2] = { 0, 1 };
 	FVector2 axis_plane[2] = { FVector2(1.0f, 0.0f), FVector2(0.0f, 1.0f) };
 	std::sort(axis_order, axis_order + 2, [&](int a, int b) { return axis_lengths[a] > axis_lengths[b]; });
 
-	// Try split at longest axis, then if that fails the next longest, and then the remaining one
+	// Try sort at longest axis, then if that fails then the other one.
+	// We place the sorted lines into work_buffer and then move the result back to the lines list when done.
 	int left_count, right_count;
 	FVector2 axis;
 	for (int attempt = 0; attempt < 2; attempt++)
 	{
-		// Find the split plane for axis
+		// Find the sort plane for axis
 		FVector2 axis = axis_plane[axis_order[attempt]];
 		FVector3 plane(axis, -(median | axis));
 
-		// Split lines into two
+		// Sort lines into two based ib whether the line center is on the front or back side of a plane
 		left_count = 0;
 		right_count = 0;
 		for (int i = 0; i < num_lines; i++)
@@ -333,7 +354,7 @@ int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids
 			break;
 	}
 
-	// Check if something went wrong when splitting and do a random split instead
+	// Check if something went wrong when sorting and do a random sort instead
 	if (left_count == 0 || right_count == 0)
 	{
 		left_count = num_lines / 2;
@@ -352,10 +373,11 @@ int Level2DShape::Subdivide(int *lines, int num_lines, const FVector2 *centroids
 	int left_index = -1;
 	int right_index = -1;
 	if (left_count > 0)
-		left_index = Subdivide(lines, left_count, centroids, work_buffer);
+		left_index = GenerateTreeNode(lines, left_count, centroids, work_buffer);
 	if (right_count > 0)
-		right_index = Subdivide(lines + left_count, right_count, centroids, work_buffer);
+		right_index = GenerateTreeNode(lines + left_count, right_count, centroids, work_buffer);
 
-	nodes.Push(GPUNode(aabb_min, aabb_max, left_index, right_index));
+	// Store resulting node and return its index
+	nodes.Push(AABBTreeNode(aabb_min, aabb_max, left_index, right_index));
 	return (int)nodes.Size() - 1;
 }

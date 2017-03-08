@@ -19,8 +19,8 @@ struct FZipEndOfCentralDirectory
 struct FZipCentralDirectoryInfo
 {
 	uint32_t	Magic;
-	BYTE	VersionMadeBy[2];
-	BYTE	VersionToExtract[2];
+	uint8_t	VersionMadeBy[2];
+	uint8_t	VersionToExtract[2];
 	uint16_t	Flags;
 	uint16_t	Method;
 	uint16_t	ModTime;
@@ -42,7 +42,7 @@ struct FZipCentralDirectoryInfo
 struct FZipLocalFileHeader
 {
 	uint32_t	Magic;
-	BYTE	VersionToExtract[2];
+	uint8_t	VersionToExtract[2];
 	uint16_t	Flags;
 	uint16_t	Method;
 	uint16_t	ModTime;

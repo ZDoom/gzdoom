@@ -488,7 +488,7 @@ void FGameConfigFile::ReadNetVars ()
 
 // Read cvars from a cvar section of the ini. Flags are the flags to give
 // to newly-created cvars that were not already defined.
-void FGameConfigFile::ReadCVars (DWORD flags)
+void FGameConfigFile::ReadCVars (uint32_t flags)
 {
 	const char *key, *value;
 	FBaseCVar *cvar;

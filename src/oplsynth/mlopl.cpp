@@ -474,7 +474,7 @@ int musicBlock::OPLloadBank (FileReader &data)
 	for (int i = 0; i < 175; ++i)
 	{
 		Printf ("%3d.%-33s%3d %3d %3d %d\n", i,
-			(BYTE *)data+6308+i*32,
+			(uint8_t *)data+6308+i*32,
 			OPLinstruments[i].instr[0].basenote,
 			OPLinstruments[i].instr[1].basenote,
 			OPLinstruments[i].note,

@@ -200,7 +200,7 @@ void FScanner::Open (const char *name)
 
 void FScanner::OpenFile (const char *name)
 {
-	BYTE *filebuf;
+	uint8_t *filebuf;
 	int filesize;
 
 	Close ();

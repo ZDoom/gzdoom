@@ -489,7 +489,7 @@ static void ReadReverbDef (int lump)
 	char *name;
 	int id1, id2, i, j;
 	bool inited[NUM_REVERB_FIELDS];
-	BYTE bools[32];
+	uint8_t bools[32];
 
 	sc.OpenLumpNum(lump);
 	while (sc.GetString ())

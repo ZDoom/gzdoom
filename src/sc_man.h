@@ -103,7 +103,7 @@ protected:
 	const char *LastGotPtr;
 	int LastGotLine;
 	bool CMode;
-	BYTE StateMode;
+	uint8_t StateMode;
 	bool StateOptions;
 	bool Escape;
 	VersionInfo ParseVersion = { 0, 0, 0 };	// no ZScript extensions by default

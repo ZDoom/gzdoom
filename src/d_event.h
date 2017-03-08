@@ -45,8 +45,8 @@ enum EGenericEvent
 // Event structure.
 struct event_t
 {
-	BYTE		type;
-	BYTE		subtype;
+	uint8_t		type;
+	uint8_t		subtype;
 	SWORD 		data1;		// keys / mouse/joystick buttons
 	SWORD		data2;
 	SWORD		data3;

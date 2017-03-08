@@ -47,7 +47,7 @@ struct FRemapTable
 	void AddToTranslation(const char * range);
 	int StoreTranslation(int slot);
 
-	BYTE *Remap;				// For the software renderer
+	uint8_t *Remap;				// For the software renderer
 	PalEntry *Palette;			// The ideal palette this maps to
 	FNativePalette *Native;		// The Palette stored in a HW texture
 	int NumEntries;				// # of elements in this table (usually 256)
@@ -81,7 +81,7 @@ extern TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANS
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)
 #define TRANSLATIONTYPE_MASK (255<<TRANSLATION_SHIFT)
 
-inline DWORD TRANSLATION(BYTE a, DWORD b)
+inline DWORD TRANSLATION(uint8_t a, DWORD b)
 {
 	return (a<<TRANSLATION_SHIFT) | b;
 }
@@ -106,7 +106,7 @@ void R_DeinitTranslationTables();
 void R_BuildPlayerTranslation (int player);		// [RH] Actually create a player's translation table.
 void R_GetPlayerTranslation (int color, const struct FPlayerColorSet *colorset, class FPlayerSkin *skin, struct FRemapTable *table);
 
-extern const BYTE IcePalette[16][3];
+extern const uint8_t IcePalette[16][3];
 
 extern TArray<PalEntry> BloodTranslationColors;
 

@@ -38,7 +38,7 @@ typedef DWORD		Bit32u;
 typedef int32_t		Bit32s;
 typedef WORD		Bit16u;
 typedef SWORD		Bit16s;
-typedef BYTE		Bit8u;
+typedef uint8_t		Bit8u;
 typedef SBYTE		Bit8s;
 
 #define OPLTYPE_IS_OPL3

@@ -297,8 +297,8 @@ static int ListActionCommands (const char *pattern)
 #endif
 
 #if !defined (get16bits)
-#define get16bits(d) ((((DWORD)(((const BYTE *)(d))[1])) << 8)\
-                       +(DWORD)(((const BYTE *)(d))[0]) )
+#define get16bits(d) ((((DWORD)(((const uint8_t *)(d))[1])) << 8)\
+                       +(DWORD)(((const uint8_t *)(d))[0]) )
 #endif
 
 DWORD SuperFastHash (const char *data, size_t len)
@@ -352,8 +352,8 @@ DWORD SuperFastHash (const char *data, size_t len)
 /* A modified version to do a case-insensitive hash */
 
 #undef get16bits
-#define get16bits(d) ((((DWORD)tolower(((const BYTE *)(d))[1])) << 8)\
-                       +(DWORD)tolower(((const BYTE *)(d))[0]) )
+#define get16bits(d) ((((DWORD)tolower(((const uint8_t *)(d))[1])) << 8)\
+                       +(DWORD)tolower(((const uint8_t *)(d))[0]) )
 
 DWORD SuperFastHashI (const char *data, size_t len)
 {
@@ -467,7 +467,7 @@ bool FButtonStatus::PressKey (int keynum)
 		}
 		Keys[open] = keynum;
 	}
-	BYTE wasdown = bDown;
+	uint8_t wasdown = bDown;
 	bDown = bWentDown = true;
 	// Returns true if this key caused the button to go down.
 	return !wasdown;
@@ -476,7 +476,7 @@ bool FButtonStatus::PressKey (int keynum)
 bool FButtonStatus::ReleaseKey (int keynum)
 {
 	int i, numdown, match;
-	BYTE wasdown = bDown;
+	uint8_t wasdown = bDown;
 
 	keynum &= KEY_DBLCLICKED-1;
 

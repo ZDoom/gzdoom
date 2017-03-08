@@ -66,13 +66,13 @@
 
 struct IHDR
 {
-	DWORD		Width;
-	DWORD		Height;
-	BYTE		BitDepth;
-	BYTE		ColorType;
-	BYTE		Compression;
-	BYTE		Filter;
-	BYTE		Interlace;
+	uint32_t		Width;
+	uint32_t		Height;
+	uint8_t		BitDepth;
+	uint8_t		ColorType;
+	uint8_t		Compression;
+	uint8_t		Filter;
+	uint8_t		Interlace;
 };
 
 PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
@@ -99,11 +99,11 @@ PNGHandle::~PNGHandle ()
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static inline void MakeChunk (void *where, DWORD type, size_t len);
-static inline void StuffPalette (const PalEntry *from, BYTE *to);
-static bool WriteIDAT (FileWriter *file, const BYTE *data, int len);
-static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale);
+static inline void MakeChunk (void *where, uint32_t type, size_t len);
+static inline void StuffPalette (const PalEntry *from, uint8_t *to);
+static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len);
+static void UnfilterRow (int width, uint8_t *dest, uint8_t *stream, uint8_t *prev, int bpp);
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_t *rowin, uint8_t *rowout, bool grayscale);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -131,17 +131,17 @@ CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-bool M_CreatePNG (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
+bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				  ESSType color_type, int width, int height, int pitch)
 {
-	BYTE work[8 +				// signature
+	uint8_t work[8 +				// signature
 			  12+2*4+5 +		// IHDR
 			  12+4 +			// gAMA
 			  12+256*3];		// PLTE
-	DWORD *const sig = (DWORD *)&work[0];
+	uint32_t *const sig = (uint32_t *)&work[0];
 	IHDR *const ihdr = (IHDR *)&work[8 + 8];
-	DWORD *const gama = (DWORD *)((BYTE *)ihdr + 2*4+5 + 12);
-	BYTE *const plte = (BYTE *)gama + 4 + 12;
+	uint32_t *const gama = (uint32_t *)((uint8_t *)ihdr + 2*4+5 + 12);
+	uint8_t *const plte = (uint8_t *)gama + 4 + 12;
 	size_t work_len;
 
 	sig[0] = MAKE_ID(137,'P','N','G');
@@ -187,7 +187,7 @@ bool M_CreatePNG (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
 
 bool M_CreateDummyPNG (FileWriter *file)
 {
-	static const BYTE dummyPNG[] =
+	static const uint8_t dummyPNG[] =
 	{
 		137,'P','N','G',13,10,26,10,
 		0,0,0,13,'I','H','D','R',
@@ -209,7 +209,7 @@ bool M_CreateDummyPNG (FileWriter *file)
 
 bool M_FinishPNG (FileWriter *file)
 {
-	static const BYTE iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
+	static const uint8_t iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
 	return file->Write (iend, 12) == 12;
 }
 
@@ -221,15 +221,15 @@ bool M_FinishPNG (FileWriter *file)
 //
 //==========================================================================
 
-bool M_AppendPNGChunk (FileWriter *file, DWORD chunkID, const BYTE *chunkData, DWORD len)
+bool M_AppendPNGChunk (FileWriter *file, uint32_t chunkID, const uint8_t *chunkData, uint32_t len)
 {
-	DWORD head[2] = { BigLong((unsigned int)len), chunkID };
-	DWORD crc;
+	uint32_t head[2] = { BigLong((unsigned int)len), chunkID };
+	uint32_t crc;
 
 	if (file->Write (head, 8) == 8 &&
 		(len == 0 || file->Write (chunkData, len) == len))
 	{
-		crc = CalcCRC32 ((BYTE *)&head[1], 4);
+		crc = CalcCRC32 ((uint8_t *)&head[1], 4);
 		if (len != 0)
 		{
 			crc = AddCRC32 (crc, chunkData, len);
@@ -250,10 +250,10 @@ bool M_AppendPNGChunk (FileWriter *file, DWORD chunkID, const BYTE *chunkData, D
 
 bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 {
-	struct { DWORD len, id; char key[80]; } head;
+	struct { uint32_t len, id; char key[80]; } head;
 	int len = (int)strlen (text);
 	int keylen = MIN ((int)strlen (keyword), 79);
-	DWORD crc;
+	uint32_t crc;
 
 	head.len = BigLong(len + keylen + 1);
 	head.id = MAKE_ID('t','E','X','t');
@@ -264,10 +264,10 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 	if ((int)file->Write (&head, keylen + 9) == keylen + 9 &&
 		(int)file->Write (text, len) == len)
 	{
-		crc = CalcCRC32 ((BYTE *)&head+4, keylen + 5);
+		crc = CalcCRC32 ((uint8_t *)&head+4, keylen + 5);
 		if (len != 0)
 		{
-			crc = AddCRC32 (crc, (BYTE *)text, len);
+			crc = AddCRC32 (crc, (uint8_t *)text, len);
 		}
 		crc = BigLong((unsigned int)crc);
 		return file->Write (&crc, 4) == 4;
@@ -289,7 +289,7 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 //
 //==========================================================================
 
-unsigned int M_FindPNGChunk (PNGHandle *png, DWORD id)
+unsigned int M_FindPNGChunk (PNGHandle *png, uint32_t id)
 {
 	png->ChunkPt = 0;
 	return M_NextPNGChunk (png, id);
@@ -303,7 +303,7 @@ unsigned int M_FindPNGChunk (PNGHandle *png, DWORD id)
 //
 //==========================================================================
 
-unsigned int M_NextPNGChunk (PNGHandle *png, DWORD id)
+unsigned int M_NextPNGChunk (PNGHandle *png, uint32_t id)
 {
 	for ( ; png->ChunkPt < png->Chunks.Size(); ++png->ChunkPt)
 	{
@@ -378,7 +378,7 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 {
 	PNGHandle::Chunk chunk;
 	PNGHandle *png;
-	DWORD data[2];
+	uint32_t data[2];
 	bool sawIDAT = false;
 
 	if (filer->Read(&data, 8) != 8)
@@ -479,14 +479,14 @@ void M_FreePNG (PNGHandle *png)
 //
 //==========================================================================
 
-bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,
-				 BYTE bitdepth, BYTE colortype, BYTE interlace, unsigned int chunklen)
+bool M_ReadIDAT (FileReader *file, uint8_t *buffer, int width, int height, int pitch,
+				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int chunklen)
 {
 	// Uninterlaced images are treated as a conceptual eighth pass by these tables.
-	static const BYTE passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
-	static const BYTE passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
-	static const BYTE passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
-	static const BYTE passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
+	static const uint8_t passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
+	static const uint8_t passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
+	static const uint8_t passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
+	static const uint8_t passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
 
 	Byte *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
 	Byte chunkbuffer[4096];
@@ -597,8 +597,8 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 			}
 			else
 			{
-				const BYTE *in;
-				BYTE *out;
+				const uint8_t *in;
+				uint8_t *out;
 				int colstep, x;
 
 				// Store pixels into a temporary buffer
@@ -628,7 +628,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 				case 2:
 					for (x = passwidth; x > 0; --x)
 					{
-						*(WORD *)out = *(WORD *)in;
+						*(uint16_t *)out = *(uint16_t *)in;
 						out += colstep;
 						in += 2;
 					}
@@ -648,7 +648,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 				case 4:
 					for (x = passwidth; x > 0; --x)
 					{
-						*(DWORD *)out = *(DWORD *)in;
+						*(uint32_t *)out = *(uint32_t *)in;
 						out += colstep;
 						in += 4;
 					}
@@ -666,7 +666,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 
 		if (chunklen == 0 && !lastIDAT)
 		{
-			DWORD x[3];
+			uint32_t x[3];
 
 			if (file->Read (x, 12) != 12)
 			{
@@ -711,12 +711,12 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 //
 //==========================================================================
 
-static inline void MakeChunk (void *where, DWORD type, size_t len)
+static inline void MakeChunk (void *where, uint32_t type, size_t len)
 {
-	BYTE *const data = (BYTE *)where;
-	*(DWORD *)(data - 8) = BigLong ((unsigned int)len);
-	*(DWORD *)(data - 4) = type;
-	*(DWORD *)(data + len) = BigLong ((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
+	uint8_t *const data = (uint8_t *)where;
+	*(uint32_t *)(data - 8) = BigLong ((unsigned int)len);
+	*(uint32_t *)(data - 4) = type;
+	*(uint32_t *)(data + len) = BigLong ((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
 }
 
 //==========================================================================
@@ -727,7 +727,7 @@ static inline void MakeChunk (void *where, DWORD type, size_t len)
 //
 //==========================================================================
 
-static void StuffPalette (const PalEntry *from, BYTE *to)
+static void StuffPalette (const PalEntry *from, uint8_t *to)
 {
 	for (int i = 256; i > 0; --i)
 	{
@@ -746,9 +746,9 @@ static void StuffPalette (const PalEntry *from, BYTE *to)
 //
 //==========================================================================
 
-DWORD CalcSum(Byte *row, int len)
+uint32_t CalcSum(Byte *row, int len)
 {
-	DWORD sum = 0;
+	uint32_t sum = 0;
 
 	while (len-- != 0)
 	{
@@ -776,8 +776,8 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 	// As it turns out, it seems no filtering is the best for Doom screenshots,
 	// no matter what the heuristic might determine.
 	return 0;
-	DWORD sum;
-	DWORD bestsum;
+	uint32_t sum;
+	uint32_t bestsum;
 	int bestfilter;
 	int x;
 
@@ -904,7 +904,7 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 //
 //==========================================================================
 
-bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FileWriter *file)
+bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height, int pitch, FileWriter *file)
 {
 #if USE_FILTER_HEURISTIC
 	Byte prior[MAXWIDTH*3];
@@ -1044,13 +1044,13 @@ bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, i
 //
 //==========================================================================
 
-static bool WriteIDAT (FileWriter *file, const BYTE *data, int len)
+static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len)
 {
-	DWORD foo[2], crc;
+	uint32_t foo[2], crc;
 
 	foo[0] = BigLong (len);
 	foo[1] = MAKE_ID('I','D','A','T');
-	crc = CalcCRC32 ((BYTE *)&foo[1], 4);
+	crc = CalcCRC32 ((uint8_t *)&foo[1], 4);
 	crc = BigLong ((unsigned int)AddCRC32 (crc, data, len));
 
 	if (file->Write (foo, 8) != 8 ||
@@ -1072,7 +1072,7 @@ static bool WriteIDAT (FileWriter *file, const BYTE *data, int len)
 //
 //==========================================================================
 
-void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
+void UnfilterRow (int width, uint8_t *dest, uint8_t *row, uint8_t *prev, int bpp)
 {
 	int x;
 
@@ -1110,7 +1110,7 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 		while (--x);
 		for (x = width - bpp; x > 0; --x)
 		{
-			*dest = *row++ + (BYTE)((unsigned(*(dest - bpp)) + unsigned(*prev++)) >> 1);
+			*dest = *row++ + (uint8_t)((unsigned(*(dest - bpp)) + unsigned(*prev++)) >> 1);
 			dest++;
 		}
 		break;
@@ -1134,7 +1134,7 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 			pc = abs (pa + pb);
 			pa = abs (pa);
 			pb = abs (pb);
-			*dest = *row + (BYTE)((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c);
+			*dest = *row + (uint8_t)((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c);
 			dest++;
 			row++;
 			prev++;
@@ -1158,11 +1158,11 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 //
 //==========================================================================
 
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale)
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_t *rowin, uint8_t *rowout, bool grayscale)
 {
-	const BYTE *in;
-	BYTE *out;
-	BYTE pack;
+	const uint8_t *in;
+	uint8_t *out;
+	uint8_t pack;
 	int lastbyte;
 
 	assert(bitdepth == 1 || bitdepth == 2 || bitdepth == 4);
@@ -1256,7 +1256,7 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *
 		union
 		{
 			uint32 bits2l;
-			BYTE bits2[4];
+			uint8_t bits2[4];
 		};
 
 		out = rowout + width;

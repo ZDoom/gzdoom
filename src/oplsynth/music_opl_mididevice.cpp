@@ -252,7 +252,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 //
 //==========================================================================
 
-void OPLMIDIDevice::HandleLongEvent(const BYTE *data, int len)
+void OPLMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 }
 

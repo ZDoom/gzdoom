@@ -70,9 +70,9 @@ __forceinline int32_t DivScale6(int32_t a, int32_t b) { return (int32_t)(((int64
 __forceinline int32_t DivScale21(int32_t a, int32_t b) { return (int32_t)(((int64_t)a << 21) / b); } // only used by R_DrawVoxel
 __forceinline int32_t DivScale30(int32_t a, int32_t b) { return (int32_t)(((int64_t)a << 30) / b); } // only used once in the node builder
 
-__forceinline void fillshort(void *buff, unsigned int count, WORD clear)
+__forceinline void fillshort(void *buff, unsigned int count, uint16_t clear)
 {
-	SWORD *b2 = (SWORD *)buff;
+	int16_t *b2 = (int16_t *)buff;
 	for (unsigned int i = 0; i != count; ++i)
 	{
 		b2[i] = clear;

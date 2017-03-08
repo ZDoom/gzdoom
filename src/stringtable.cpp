@@ -54,7 +54,7 @@ struct FStringTable::StringEntry
 {
 	StringEntry *Next;
 	char *Name;
-	BYTE PassNum;
+	uint8_t PassNum;
 	char String[];
 };
 
@@ -138,13 +138,13 @@ void FStringTable::LoadStrings (bool enuOnly)
 	}
 }
 
-void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int passnum)
+void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, int passnum)
 {
 	static bool errordone = false;
-	const DWORD orMask = exactMatch ? 0 : MAKE_ID(0,0,0xff,0);
-	DWORD inCode = 0;
+	const uint32_t orMask = exactMatch ? 0 : MAKE_ID(0,0,0xff,0);
+	uint32_t inCode = 0;
 	StringEntry *entry, **pentry;
-	DWORD bucket;
+	uint32_t bucket;
 	int cmpval;
 	bool skip = true;
 
@@ -328,7 +328,7 @@ const char *FStringTable::operator[] (const char *name) const
 	{
 		return NULL;
 	}
-	DWORD bucket = MakeKey (name) & (HASH_SIZE - 1);
+	uint32_t bucket = MakeKey (name) & (HASH_SIZE - 1);
 	StringEntry *entry = Buckets[bucket];
 
 	while (entry != NULL)
@@ -359,7 +359,7 @@ const char *FStringTable::operator() (const char *name) const
 // pointer to it. Return NULL for entry1 if it wasn't found.
 void FStringTable::FindString (const char *name, StringEntry **&pentry1, StringEntry *&entry1)
 {
-	DWORD bucket = MakeKey (name) & (HASH_SIZE - 1);
+	uint32_t bucket = MakeKey (name) & (HASH_SIZE - 1);
 	StringEntry **pentry = &Buckets[bucket], *entry = *pentry;
 
 	while (entry != NULL)

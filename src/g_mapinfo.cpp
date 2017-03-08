@@ -965,14 +965,14 @@ DEFINE_MAP_OPTION(vertwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallVertLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallVertLight = (int8_t)clamp (parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(horizwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallHorizLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallHorizLight = (int8_t)clamp (parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(gravity, true)
@@ -1243,7 +1243,7 @@ struct MapInfoFlagHandler
 {
 	const char *name;
 	EMIType type;
-	DWORD data1, data2;
+	uint32_t data1, data2;
 }
 MapFlagHandlers[] =
 {

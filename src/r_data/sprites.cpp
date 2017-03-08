@@ -31,7 +31,7 @@ struct spriteframewithrotate : public spriteframe_t
 
 // [RH] skin globals
 TArray<FPlayerSkin> Skins;
-BYTE			OtherGameSkinRemap[256];
+uint8_t			OtherGameSkinRemap[256];
 PalEntry		OtherGameSkinPalette[256];
 
 
@@ -893,7 +893,7 @@ CCMD (skins)
 static void R_CreateSkinTranslation (const char *palname)
 {
 	FMemLump lump = Wads.ReadLump (palname);
-	const BYTE *otherPal = (BYTE *)lump.GetMem();
+	const uint8_t *otherPal = (uint8_t *)lump.GetMem();
  
 	for (int i = 0; i < 256; ++i)
 	{

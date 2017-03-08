@@ -319,7 +319,7 @@ DEFINE_MAP_OPTION(lightmode, false)
 	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	opt->lightmode = BYTE(parse.sc.Number);
+	opt->lightmode = uint8_t(parse.sc.Number);
 }
 
 DEFINE_MAP_OPTION(nocoloredspritelighting, false)

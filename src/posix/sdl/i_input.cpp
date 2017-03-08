@@ -110,9 +110,9 @@ static const SDL_Scancode DIKToKeyScan[256] =
 	SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN
 };
 
-static TMap<SDL_Keycode, BYTE> InitKeySymMap ()
+static TMap<SDL_Keycode, uint8_t> InitKeySymMap ()
 {
-	TMap<SDL_Keycode, BYTE> KeySymToDIK;
+	TMap<SDL_Keycode, uint8_t> KeySymToDIK;
 
 	for (int i = 0; i < 256; ++i)
 	{
@@ -127,11 +127,11 @@ static TMap<SDL_Keycode, BYTE> InitKeySymMap ()
 
 	return KeySymToDIK;
 }
-static const TMap<SDL_Keycode, BYTE> KeySymToDIK(InitKeySymMap());
+static const TMap<SDL_Keycode, uint8_t> KeySymToDIK(InitKeySymMap());
 
-static TMap<SDL_Scancode, BYTE> InitKeyScanMap ()
+static TMap<SDL_Scancode, uint8_t> InitKeyScanMap ()
 {
-	TMap<SDL_Scancode, BYTE> KeyScanToDIK;
+	TMap<SDL_Scancode, uint8_t> KeyScanToDIK;
 
 	for (int i = 0; i < 256; ++i)
 	{
@@ -140,7 +140,7 @@ static TMap<SDL_Scancode, BYTE> InitKeyScanMap ()
 
 	return KeyScanToDIK;
 }
-static const TMap<SDL_Scancode, BYTE> KeyScanToDIK(InitKeyScanMap());
+static const TMap<SDL_Scancode, uint8_t> KeyScanToDIK(InitKeyScanMap());
 
 static void I_CheckGUICapture ()
 {
@@ -377,9 +377,9 @@ void MessagePump (const SDL_Event &sev)
 			// If that fails, then we'll do a lookup against the scan code,
 			// which may not return the right key, but at least the key should
 			// work in the game.
-			if (const BYTE *dik = KeySymToDIK.CheckKey (sev.key.keysym.sym))
+			if (const uint8_t *dik = KeySymToDIK.CheckKey (sev.key.keysym.sym))
 				event.data1 = *dik;
-			else if (const BYTE *dik = KeyScanToDIK.CheckKey (sev.key.keysym.scancode))
+			else if (const uint8_t *dik = KeyScanToDIK.CheckKey (sev.key.keysym.scancode))
 				event.data1 = *dik;
 
 			if (event.data1)

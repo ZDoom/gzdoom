@@ -1054,7 +1054,7 @@ public:
 
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
-	BYTE			movedir;		// 0-7
+	uint8_t			movedir;		// 0-7
 	SBYTE			visdir;
 	SWORD			movecount;		// when 0, select a new dir
 	SWORD			strafecount;	// for MF3_AVOIDMELEE
@@ -1072,8 +1072,8 @@ public:
 	DVector3		SpawnPoint; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				StartHealth;
-	BYTE			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
-	BYTE			WeaveIndexZ;
+	uint8_t			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
+	uint8_t			WeaveIndexZ;
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
 	FNameNoInit		Species;		// For monster families
@@ -1090,8 +1090,8 @@ public:
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	TObjPtr<AActor*> goal;			// Monster's goal if not chasing anything
 	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
-	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
-	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
+	uint8_t			boomwaterlevel;	// splash information for non-swimmable water sectors
+	uint8_t			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	ActorBounceFlags	BounceFlags;	// which bouncing type?
 	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
@@ -1139,9 +1139,9 @@ public:
 	TObjPtr<AInventory*>	Inventory;		// [RH] This actor's inventory
 	DWORD			InventoryID;	// A unique ID to keep track of inventory items
 
-	BYTE smokecounter;
-	BYTE FloatBobPhase;
-	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
+	uint8_t smokecounter;
+	uint8_t FloatBobPhase;
+	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	PalEntry BloodColor;
 	DWORD BloodTranslation;
 

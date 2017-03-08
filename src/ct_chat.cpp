@@ -61,11 +61,11 @@ int chatmodeon;
 static void CT_ClearChatMessage ();
 static void CT_AddChar (char c);
 static void CT_BackSpace ();
-static void ShoveChatStr (const char *str, BYTE who);
+static void ShoveChatStr (const char *str, uint8_t who);
 static bool DoSubstitution (FString &out, const char *in);
 
 static int len;
-static BYTE ChatQueue[QUEUESIZE];
+static uint8_t ChatQueue[QUEUESIZE];
 
 CVAR (String, chatmacro1, "I'm ready to kick butt!", CVAR_ARCHIVE)
 CVAR (String, chatmacro2, "I'm OK.", CVAR_ARCHIVE)
@@ -353,7 +353,7 @@ static void CT_ClearChatMessage ()
 //
 //===========================================================================
 
-static void ShoveChatStr (const char *str, BYTE who)
+static void ShoveChatStr (const char *str, uint8_t who)
 {
 	// Don't send empty messages
 	if (str == NULL || str[0] == '\0')

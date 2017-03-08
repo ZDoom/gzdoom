@@ -69,7 +69,7 @@ private:
 
 	void FreeData ();
 	void FreeNonDehackedStrings ();
-	void LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int passnum);
+	void LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, int passnum);
 	static size_t ProcessEscapes (char *str);
 	void FindString (const char *stringName, StringEntry **&pentry, StringEntry *&entry);
 };

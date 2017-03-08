@@ -116,7 +116,7 @@ protected:
 	const PClass *m_ParentType;
 private:
 	DThinker *m_CurrThinker;
-	BYTE m_Stat;
+	uint8_t m_Stat;
 	bool m_SearchStats;
 	bool m_SearchingFresh;
 

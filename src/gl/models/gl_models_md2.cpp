@@ -331,7 +331,7 @@ void FDMDModel::BuildVertexBuffer()
 //
 //===========================================================================
 
-void FDMDModel::AddSkins(BYTE *hitlist)
+void FDMDModel::AddSkins(uint8_t *hitlist)
 {
 	for (int i = 0; i < info.numSkins; i++)
 	{

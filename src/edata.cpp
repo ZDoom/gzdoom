@@ -124,9 +124,9 @@ struct EDSector
 	int damageamount;
 	int damageinterval;
 	FNameNoInit damagetype;
-	BYTE leaky;
-	BYTE leakyadd;
-	BYTE leakyremove;
+	uint8_t leaky;
+	uint8_t leakyadd;
+	uint8_t leakyremove;
 	int floorterrain;
 	int ceilingterrain;
 
@@ -349,7 +349,7 @@ static void parseSector(FScanner &sc)
 		else if (sc.Compare("damageflags"))
 		{
 			DWORD *flagvar = NULL;
-			BYTE *leakvar = NULL;
+			uint8_t *leakvar = NULL;
 			if (sc.CheckString("."))
 			{
 				sc.MustGetString();
@@ -723,7 +723,7 @@ void ProcessEDSector(sector_t *sec, int recordnum)
 	if (esec->flagsSet) sec->Flags = (sec->Flags & ~flagmask);
 	sec->Flags = (sec->Flags | esec->flags | esec->flagsAdd) & ~esec->flagsRemove;
 
-	BYTE leak = 0;
+	uint8_t leak = 0;
 	if (esec->damageflagsSet) sec->Flags = (sec->Flags & ~SECF_DAMAGEFLAGS);
 	else leak = sec->leakydamage >= 256 ? 2 : sec->leakydamage >= 5 ? 1 : 0;
 	sec->Flags = (sec->Flags | esec->damageflags | esec->damageflagsAdd) & ~esec->damageflagsRemove;

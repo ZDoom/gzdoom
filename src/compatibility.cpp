@@ -637,7 +637,7 @@ void SetCompatibilityParams()
 CCMD (mapchecksum)
 {
 	MapData *map;
-	BYTE cksum[16];
+	uint8_t cksum[16];
 
 	if (argv.argc() < 2)
 	{

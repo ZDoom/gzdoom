@@ -13,7 +13,7 @@ public:
 	virtual ~FileReaderBase() {}
 	virtual long Read (void *buffer, long len) = 0;
 
-	FileReaderBase &operator>> (BYTE &v)
+	FileReaderBase &operator>> (uint8_t &v)
 	{
 		Read (&v, 1);
 		return *this;
@@ -79,7 +79,7 @@ public:
 	FILE *GetFile () const { return File; }
 	virtual const char *GetBuffer() const { return NULL; }
 
-	FileReader &operator>> (BYTE &v)
+	FileReader &operator>> (uint8_t &v)
 	{
 		Read (&v, 1);
 		return *this;
@@ -138,7 +138,7 @@ public:
 
 	virtual long Read (void *buffer, long len);
 
-	FileReaderZ &operator>> (BYTE &v)
+	FileReaderZ &operator>> (uint8_t &v)
 	{
 		Read (&v, 1);
 		return *this;
@@ -184,7 +184,7 @@ private:
 	FileReader &File;
 	bool SawEOF;
 	z_stream Stream;
-	BYTE InBuff[BUFF_SIZE];
+	uint8_t InBuff[BUFF_SIZE];
 
 	void FillBuffer ();
 
@@ -200,7 +200,7 @@ public:
 
 	long Read (void *buffer, long len);
 
-	FileReaderBZ2 &operator>> (BYTE &v)
+	FileReaderBZ2 &operator>> (uint8_t &v)
 	{
 		Read (&v, 1);
 		return *this;
@@ -246,7 +246,7 @@ private:
 	FileReader &File;
 	bool SawEOF;
 	bz_stream Stream;
-	BYTE InBuff[BUFF_SIZE];
+	uint8_t InBuff[BUFF_SIZE];
 
 	void FillBuffer ();
 
@@ -264,7 +264,7 @@ public:
 
 	long Read (void *buffer, long len);
 
-	FileReaderLZMA &operator>> (BYTE &v)
+	FileReaderLZMA &operator>> (uint8_t &v)
 	{
 		Read (&v, 1);
 		return *this;
@@ -313,7 +313,7 @@ private:
 	size_t Size;
 	size_t InPos, InSize;
 	size_t OutProcessed;
-	BYTE InBuff[BUFF_SIZE];
+	uint8_t InBuff[BUFF_SIZE];
 
 	void FillBuffer ();
 
@@ -347,12 +347,12 @@ public:
     virtual long Read (void *buffer, long len);
     virtual char *Gets(char *strbuf, int len);
     virtual const char *GetBuffer() const { return (char*)&buf[0]; }
-    TArray<BYTE> &GetArray() { return buf; }
+    TArray<uint8_t> &GetArray() { return buf; }
 
     void UpdateLength() { Length = buf.Size(); }
 
 protected:
-    TArray<BYTE> buf;
+    TArray<uint8_t> buf;
 };
 
 

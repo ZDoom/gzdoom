@@ -163,10 +163,10 @@ enum SICommands
 
 struct FBloodSFX
 {
-	DWORD	RelVol;		// volume, 0-255
+	uint32_t	RelVol;		// volume, 0-255
 	int		Pitch;		// pitch change
 	int		PitchRange;	// range of random pitch
-	DWORD	Format;		// format of audio 1=11025 5=22050
+	uint32_t	Format;		// format of audio 1=11025 5=22050
 	int32_t	LoopStart;	// loop position (-1 means no looping)
 	char	RawName[9];	// name of RAW resource
 };
@@ -270,7 +270,7 @@ static TArray<FPlayerSoundHashTable> PlayerSounds;
 static FString DefPlayerClassName;
 static int DefPlayerClass;
 
-static BYTE CurrentPitchMask;
+static uint8_t CurrentPitchMask;
 
 static FRandom pr_randsound ("RandSound");
 

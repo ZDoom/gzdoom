@@ -54,7 +54,7 @@
 FDecalLib DecalLibrary;
 
 static double ReadScale (FScanner &sc);
-static TArray<BYTE> DecalTranslations;
+static TArray<uint8_t> DecalTranslations;
 
 // A decal group holds multiple decals and returns one randomly
 // when GetDecal() is called.
@@ -1073,7 +1073,7 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 {
 	DWORD ri, gi, bi, rs, gs, bs;
 	PalEntry *first, *last;
-	BYTE *table;
+	uint8_t *table;
 	unsigned int i, tablei;
 
 	StartColor = start;

@@ -33,8 +33,8 @@ class FIWadManager;
 extern FGameConfigFile *GameConfig;
 
 bool M_WriteFile (char const *name, void *source, int length);
-int M_ReadFile (char const *name, BYTE **buffer);
-int M_ReadFileMalloc (char const *name, BYTE **buffer);
+int M_ReadFile (char const *name, uint8_t **buffer);
+int M_ReadFileMalloc (char const *name, uint8_t **buffer);
 void M_FindResponseFile (void);
 
 // [RH] M_ScreenShot now accepts a filename parameter.

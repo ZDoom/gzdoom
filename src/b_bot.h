@@ -91,7 +91,7 @@ public:
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);
-	void TryAddBot (BYTE **stream, int player);
+	void TryAddBot (uint8_t **stream, int player);
 	void RemoveAllBots (bool fromlist);
 	bool LoadBots ();
 	void ForgetBots ();
@@ -110,8 +110,8 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	BYTE freeze;			//Game in freeze mode.
-	BYTE changefreeze;	//Game wants to change freeze mode.
+	uint8_t freeze;			//Game in freeze mode.
+	uint8_t changefreeze;	//Game wants to change freeze mode.
 	int botnum;
 	botinfo_t *botinfo;
 	int spawn_tries;
@@ -124,7 +124,7 @@ public:
 
 private:
 	//(b_game.cpp)
-	bool DoAddBot (BYTE *info, botskill_t skill);
+	bool DoAddBot (uint8_t *info, botskill_t skill);
 
 protected:
 	bool	 ctf;

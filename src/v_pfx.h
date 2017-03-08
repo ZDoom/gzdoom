@@ -40,10 +40,10 @@
 
 union PfxUnion
 {
-	BYTE Pal8[256];
-	WORD Pal16[256];
-	DWORD Pal32[256];
-	BYTE Pal24[256][4];
+	uint8_t Pal8[256];
+	uint16_t Pal16[256];
+	uint32_t Pal32[256];
+	uint8_t Pal24[256][4];
 };
 
 struct PfxState
@@ -52,9 +52,9 @@ struct PfxState
 	{
 		struct
 		{
-			WORD Red;
-			WORD Green;
-			WORD Blue;
+			uint16_t Red;
+			uint16_t Green;
+			uint16_t Blue;
 		} Bits16;
 		struct
 		{
@@ -63,16 +63,16 @@ struct PfxState
 			uint32_t Blue;
 		} Bits32;
 	} Masks;
-	BYTE RedShift;
-	BYTE BlueShift;
-	BYTE GreenShift;
+	uint8_t RedShift;
+	uint8_t BlueShift;
+	uint8_t GreenShift;
 	BITFIELD RedLeft:1;
 	BITFIELD BlueLeft:1;
 	BITFIELD GreenLeft:1;
 
 	void SetFormat (int bits, uint32_t redMask, uint32_t greenMask, uint32_t blueMask);
 	void (*SetPalette) (const PalEntry *pal);
-	void (*Convert) (BYTE *src, int srcpitch,
+	void (*Convert) (uint8_t *src, int srcpitch,
 		void *dest, int destpitch, int destwidth, int destheight,
 		fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
 };

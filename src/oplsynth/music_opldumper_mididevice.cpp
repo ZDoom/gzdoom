@@ -71,7 +71,7 @@ protected:
 	double CurTime;
 	int CurIntTime;
 	int TickMul;
-	BYTE CurChip;
+	uint8_t CurChip;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -110,16 +110,16 @@ public:
 	virtual void WriteReg(int reg, int v)
 	{
 		assert(File != NULL);
-		BYTE chipnum = reg >> 8;
+		uint8_t chipnum = reg >> 8;
 		if (chipnum != CurChip)
 		{
-			BYTE switcher[2] = { (BYTE)(chipnum + 1), 2 };
+			uint8_t switcher[2] = { (uint8_t)(chipnum + 1), 2 };
 			fwrite(switcher, 1, 2, File);
 		}
 		reg &= 255;
 		if (reg != 0 && reg != 2 && (reg != 255 || v != 255))
 		{
-			BYTE cmd[2] = { BYTE(v), BYTE(reg) };
+			uint8_t cmd[2] = { uint8_t(v), uint8_t(reg) };
 			fwrite(cmd, 1, 2, File);
 		}
 	}
@@ -153,7 +153,7 @@ public:
 		}
 		else
 		{ // Change the clock rate in the middle of the song.
-			BYTE clock_change[4] = { 0, 2, BYTE(clock_word & 255), BYTE(clock_word >> 8) };
+			uint8_t clock_change[4] = { 0, 2, uint8_t(clock_word & 255), uint8_t(clock_word >> 8) };
 			fwrite(clock_change, 1, 4, File);
 		}
 	}
@@ -162,7 +162,7 @@ public:
 		if (ticks > 0)
 		{ // RDos raw has very precise delays but isn't very efficient at
 		  // storing long delays.
-			BYTE delay[2];
+			uint8_t delay[2];
 
 			ticks *= TickMul;
 			delay[1] = 0;
@@ -172,7 +172,7 @@ public:
 				delay[0] = 255;
 				fwrite(delay, 1, 2, File);
 			}
-			delay[0] = BYTE(ticks);
+			delay[0] = uint8_t(ticks);
 			fwrite(delay, 1, 2, File);
 		}
 	}
@@ -212,14 +212,14 @@ public:
 	virtual void WriteReg(int reg, int v)
 	{
 		assert(File != NULL);
-		BYTE chipnum = reg >> 8;
+		uint8_t chipnum = reg >> 8;
 		if (chipnum != CurChip)
 		{
 			CurChip = chipnum;
 			fputc(chipnum + 2, File);
 		}
 		reg &= 255;
-		BYTE cmd[3] = { 4, BYTE(reg), BYTE(v) };
+		uint8_t cmd[3] = { 4, uint8_t(reg), uint8_t(v) };
 		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
 	}
 	virtual void WriteDelay(int ticks)
@@ -233,20 +233,20 @@ public:
 			CurIntTime += delay;
 			while (delay > 65536)
 			{
-				BYTE cmd[3] = { 1, 255, 255 };
+				uint8_t cmd[3] = { 1, 255, 255 };
 				fwrite(cmd, 1, 2, File);
 				delay -= 65536;
 			}
 			delay--;
 			if (delay <= 255)
 			{
-				BYTE cmd[2] = { 0, BYTE(delay) };
+				uint8_t cmd[2] = { 0, uint8_t(delay) };
 				fwrite(cmd, 1, 2, File);
 			}
 			else
 			{
 				assert(delay <= 65535);
-				BYTE cmd[3] = { 1, BYTE(delay & 255), BYTE(delay >> 8) };
+				uint8_t cmd[3] = { 1, uint8_t(delay & 255), uint8_t(delay >> 8) };
 				fwrite(cmd, 1, 3, File);
 			}
 		}

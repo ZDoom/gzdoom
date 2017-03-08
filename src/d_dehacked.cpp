@@ -129,8 +129,8 @@ static TArray<PClassActor *> InfoNames;
 struct BitName
 {
 	char Name[20];
-	BYTE Bit;
-	BYTE WhichFlags;
+	uint8_t Bit;
+	uint8_t WhichFlags;
 };
 
 static TArray<BitName> BitNames;
@@ -139,7 +139,7 @@ static TArray<BitName> BitNames;
 struct StyleName
 {
 	char Name[20];
-	BYTE Num;
+	uint8_t Num;
 };
 
 static TArray<StyleName> StyleNames;
@@ -160,7 +160,7 @@ struct CodePointerAlias
 {
 	FName name;
 	char alias[20];
-	BYTE params;
+	uint8_t params;
 };
 static TArray<CodePointerAlias> MBFCodePointers;
 
@@ -391,7 +391,7 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 		keys++;
 
 	if (keys->name) {
-		*((int *)(((BYTE *)structure) + keys->offset)) = value;
+		*((int *)(((uint8_t *)structure) + keys->offset)) = value;
 		return false;
 	}
 
@@ -842,7 +842,7 @@ static int PatchThing (int thingy)
 
 	int result;
 	AActor *info;
-	BYTE dummy[sizeof(AActor)];
+	uint8_t dummy[sizeof(AActor)];
 	bool hadHeight = false;
 	bool hadTranslucency = false;
 	bool hadStyle = false;
@@ -1605,7 +1605,7 @@ static int PatchWeapon (int weapNum)
 {
 	int result;
 	PClassActor *type = NULL;
-	BYTE dummy[sizeof(AWeapon)];
+	uint8_t dummy[sizeof(AWeapon)];
 	AWeapon *info = (AWeapon *)&dummy;
 	bool patchedStates = false;
 	FStateDefinitions statedef;
@@ -1917,7 +1917,7 @@ static int PatchMisc (int dummy)
 					else if (a > 0)
 					{
 						GetDefaultByName (types[i])->ColorVar(NAME_BlendColor) = PalEntry(
-							BYTE(clamp(a,0.f,1.f)*255.f),
+							uint8_t(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
 							clamp(b,0,255));
@@ -2592,7 +2592,7 @@ static bool DoDehPatch()
 	return true;
 }
 
-static inline bool CompareLabel (const char *want, const BYTE *have)
+static inline bool CompareLabel (const char *want, const uint8_t *have)
 {
 	return *(DWORD *)want == *(DWORD *)have;
 }

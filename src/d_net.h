@@ -83,7 +83,7 @@ struct doomcom_t
 #endif
 
 // packet data to be sent
-	BYTE	data[MAX_MSGLEN];
+	uint8_t	data[MAX_MSGLEN];
 	
 };
 
@@ -94,11 +94,11 @@ public:
 	FDynamicBuffer ();
 	~FDynamicBuffer ();
 
-	void SetData (const BYTE *data, int len);
-	BYTE *GetData (int *len = NULL);
+	void SetData (const uint8_t *data, int len);
+	uint8_t *GetData (int *len = NULL);
 
 private:
-	BYTE *m_Data;
+	uint8_t *m_Data;
 	int m_Len, m_BufferLen;
 };
 
@@ -119,15 +119,15 @@ void Net_CheckLastReceived(int);
 
 // [RH] Functions for making and using special "ticcmds"
 void Net_NewMakeTic ();
-void Net_WriteByte (BYTE);
+void Net_WriteByte (uint8_t);
 void Net_WriteWord (short);
 void Net_WriteLong (int);
 void Net_WriteFloat (float);
 void Net_WriteString (const char *);
-void Net_WriteBytes (const BYTE *, int len);
+void Net_WriteBytes (const uint8_t *, int len);
 
-void Net_DoCommand (int type, BYTE **stream, int player);
-void Net_SkipCommand (int type, BYTE **stream);
+void Net_DoCommand (int type, uint8_t **stream, int player);
+void Net_SkipCommand (int type, uint8_t **stream);
 
 void Net_ClearBuffers ();
 

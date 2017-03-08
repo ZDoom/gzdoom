@@ -8,7 +8,7 @@ struct FLevelLocals
 	void Tick ();
 	void AddScroller (int secnum);
 
-	BYTE		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
+	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
 	int			maptime;		// time in the map
 	int			totaltime;		// time in the game
@@ -36,15 +36,15 @@ struct FLevelLocals
 	TArray<FSectorPortal> sectorPortals;
 
 
-	DWORD		flags;
-	DWORD		flags2;
-	DWORD		flags3;
+	uint32_t		flags;
+	uint32_t		flags2;
+	uint32_t		flags3;
 
-	DWORD		fadeto;					// The color the palette fades to (usually black)
-	DWORD		outsidefog;				// The fog for sectors with sky ceilings
+	uint32_t		fadeto;					// The color the palette fades to (usually black)
+	uint32_t		outsidefog;				// The fog for sectors with sky ceilings
 
-	DWORD		hazardcolor;			// what color strife hazard blends the screen color as
-	DWORD		hazardflash;			// what color strife hazard flashes the screen color as
+	uint32_t		hazardcolor;			// what color strife hazard blends the screen color as
+	uint32_t		hazardflash;			// what color strife hazard flashes the screen color as
 
 	FString		Music;
 	int			musicorder;
@@ -73,8 +73,8 @@ struct FLevelLocals
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
-	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
-	SBYTE		WallHorizLight;
+	int8_t		WallVertLight;			// Light diffs for vert/horiz walls
+	int8_t		WallHorizLight;
 
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 

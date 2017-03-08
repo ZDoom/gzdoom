@@ -195,8 +195,8 @@ void OPLio::OPLwriteFreq(uint32_t channel, uint32_t note, uint32_t pitch, uint32
 	}
 	int i = frequencies[j] | (octave << 10);
 
-	OPLwriteValue (0xA0, channel, (BYTE)i);
-	OPLwriteValue (0xB0, channel, (BYTE)(i>>8)|(keyon<<5));
+	OPLwriteValue (0xA0, channel, (uint8_t)i);
+	OPLwriteValue (0xB0, channel, (uint8_t)(i>>8)|(keyon<<5));
 }
 
 /*

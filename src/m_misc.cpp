@@ -114,11 +114,11 @@ bool M_WriteFile (char const *name, void *source, int length)
 //
 // M_ReadFile
 //
-int M_ReadFile (char const *name, BYTE **buffer)
+int M_ReadFile (char const *name, uint8_t **buffer)
 {
 	int handle, count, length;
 	struct stat fileinfo;
-	BYTE *buf;
+	uint8_t *buf;
 
 	handle = open (name, O_RDONLY | O_BINARY, 0666);
 	if (handle == -1)
@@ -127,7 +127,7 @@ int M_ReadFile (char const *name, BYTE **buffer)
 	if (stat (name,&fileinfo) == -1)
 		I_Error ("Couldn't read file %s", name);
 	length = fileinfo.st_size;
-	buf = new BYTE[length];
+	buf = new uint8_t[length];
 	count = read (handle, buf, length);
 	close (handle);
 
@@ -141,11 +141,11 @@ int M_ReadFile (char const *name, BYTE **buffer)
 //
 // M_ReadFile (same as above but use malloc instead of new to allocate the buffer.)
 //
-int M_ReadFileMalloc (char const *name, BYTE **buffer)
+int M_ReadFileMalloc (char const *name, uint8_t **buffer)
 {
 	int handle, count, length;
 	struct stat fileinfo;
-	BYTE *buf;
+	uint8_t *buf;
 
 	handle = open (name, O_RDONLY | O_BINARY, 0666);
 	if (handle == -1)
@@ -154,7 +154,7 @@ int M_ReadFileMalloc (char const *name, BYTE **buffer)
 	if (stat (name,&fileinfo) == -1)
 		I_Error ("Couldn't read file %s", name);
 	length = fileinfo.st_size;
-	buf = (BYTE*)M_Malloc(length);
+	buf = (uint8_t*)M_Malloc(length);
 	count = read (handle, buf, length);
 	close (handle);
 
@@ -459,15 +459,15 @@ inline void putc(unsigned char chr, FileWriter *file)
 //
 // WritePCXfile
 //
-void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
+void WritePCXfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
-	BYTE temprow[MAXWIDTH * 3];
-	const BYTE *data;
+	uint8_t temprow[MAXWIDTH * 3];
+	const uint8_t *data;
 	int x, y;
 	int runlen;
 	int bytes_per_row_minus_one;
-	BYTE color;
+	uint8_t color;
 	pcx_t pcx;
 
 	pcx.manufacturer = 10;				// PCX id
@@ -600,7 +600,7 @@ void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette
 //
 // WritePNGfile
 //
-void WritePNGfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
+void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
 	char software[100];
@@ -703,7 +703,7 @@ void M_ScreenShot (const char *filename)
 	}
 
 	// save the screenshot
-	const BYTE *buffer;
+	const uint8_t *buffer;
 	int pitch;
 	ESSType color_type;
 

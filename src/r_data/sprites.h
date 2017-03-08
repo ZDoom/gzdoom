@@ -34,7 +34,7 @@ struct spritedef_t
 		char name[5];
 		DWORD dwName;
 	};
-	BYTE numframes;
+	uint8_t numframes;
 	WORD spriteframes;
 };
 
@@ -49,9 +49,9 @@ class FPlayerSkin
 public:
 	FString		Name;
 	FString		Face;
-	BYTE		gender = 0;		// This skin's gender (not really used)
-	BYTE		range0start = 0;
-	BYTE		range0end = 0;
+	uint8_t		gender = 0;		// This skin's gender (not really used)
+	uint8_t		range0start = 0;
+	uint8_t		range0end = 0;
 	bool		othergame = 0;	// [GRB]
 	DVector2	Scale = { 1, 1 };
 	int			sprite = 0;
@@ -61,7 +61,7 @@ public:
 
 extern TArray<FPlayerSkin> Skins;
 
-extern BYTE				OtherGameSkinRemap[256];
+extern uint8_t				OtherGameSkinRemap[256];
 extern PalEntry			OtherGameSkinPalette[256];
 
 void R_InitSprites ();

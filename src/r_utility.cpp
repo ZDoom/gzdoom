@@ -132,7 +132,7 @@ double	 		ViewSin, ViewTanSin;
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
 double			r_TicFracF;			// same as floating point
-DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
+uint32_t			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
 bool			r_showviewer;
 
@@ -324,7 +324,7 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 	}
 	while (!((size_t)node & 1));
 		
-	return (subsector_t *)((BYTE *)node - 1);
+	return (subsector_t *)((uint8_t *)node - 1);
 }
 
 //==========================================================================

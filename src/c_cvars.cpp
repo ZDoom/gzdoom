@@ -481,9 +481,9 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 	return ret;
 }
 
-static BYTE HexToByte (const char *hex)
+static uint8_t HexToByte (const char *hex)
 {
-	BYTE v = 0;
+	uint8_t v = 0;
 	for (int i = 0; i < 2; ++i)
 	{
 		v <<= 4;
@@ -1370,7 +1370,7 @@ void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 	}
 }
 
-void C_WriteCVars (BYTE **demo_p, DWORD filter, bool compact)
+void C_WriteCVars (uint8_t **demo_p, DWORD filter, bool compact)
 {
 	FString dump = C_GetMassCVarString(filter, compact);
 	size_t dumplen = dump.Len() + 1;	// include terminating \0
@@ -1408,7 +1408,7 @@ FString C_GetMassCVarString (DWORD filter, bool compact)
 	return dump;
 }
 
-void C_ReadCVars (BYTE **demo_p)
+void C_ReadCVars (uint8_t **demo_p)
 {
 	char *ptr = *((char **)demo_p);
 	char *breakpt;

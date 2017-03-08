@@ -511,7 +511,7 @@ void SDLFB::Update ()
 		{
 			for (int y = 0; y < Height; ++y)
 			{
-				memcpy ((BYTE *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
+				memcpy ((uint8_t *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
 			}
 		}
 	}

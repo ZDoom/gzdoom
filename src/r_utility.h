@@ -39,7 +39,7 @@ extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard t
 extern float			WidescreenRatio;
 
 extern double			r_TicFracF;
-extern DWORD			r_FrameTime;
+extern uint32_t			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
 

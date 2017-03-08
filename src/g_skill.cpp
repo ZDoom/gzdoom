@@ -559,7 +559,7 @@ int FSkillInfo::GetTextColor() const
 	{
 		return CR_UNTRANSLATED;
 	}
-	const BYTE *cp = (const BYTE *)TextColor.GetChars();
+	const uint8_t *cp = (const uint8_t *)TextColor.GetChars();
 	int color = V_ParseFontColor(cp, 0, 0);
 	if (color == CR_UNDEFINED)
 	{

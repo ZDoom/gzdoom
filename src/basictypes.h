@@ -39,7 +39,7 @@ typedef struct _GUID
     DWORD	Data1;
     WORD	Data2;
     WORD	Data3;
-    BYTE	Data4[8];
+    uint8_t	Data4[8];
 } GUID;
 #endif
 

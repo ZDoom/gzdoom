@@ -92,7 +92,7 @@ public:
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
 	VersionInfo		mVersion = { 0,0,0 };
-	BYTE loadOp, storeOp, moveOp, RegType, RegCount;
+	uint8_t loadOp, storeOp, moveOp, RegType, RegCount;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
@@ -601,8 +601,8 @@ public:
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
-	BYTE				*Defaults;
-	BYTE				*Meta;			// Per-class static script data
+	uint8_t				*Defaults;
+	uint8_t				*Meta;			// Per-class static script data
 	unsigned			 MetaSize;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script

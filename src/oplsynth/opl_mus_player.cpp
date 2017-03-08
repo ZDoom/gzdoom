@@ -60,7 +60,7 @@ OPLmusicFile::OPLmusicFile (FileReader *reader)
 		return;
 	}
 
-	scoredata = new BYTE[ScoreLen];
+	scoredata = new uint8_t[ScoreLen];
 
     if (reader->Read(scoredata, ScoreLen) != ScoreLen)
     {
@@ -126,7 +126,7 @@ fail:	delete[] scoredata;
 		     scoredata[4] == 'B' && scoredata[5] == 1)
 	{
 		int songlen;
-		BYTE *max = scoredata + ScoreLen;
+		uint8_t *max = scoredata + ScoreLen;
 		RawPlayer = IMF;
 		SamplesPerTick = OPL_SAMPLE_RATE / IMF_RATE;
 
@@ -363,7 +363,7 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 
 int OPLmusicFile::PlayTick ()
 {
-	BYTE reg, data;
+	uint8_t reg, data;
 	WORD delay;
 
 	switch (RawPlayer)
@@ -453,14 +453,14 @@ int OPLmusicFile::PlayTick ()
 
 	case DosBox2:
 		{
-			BYTE *to_reg = scoredata + 0x1A;
-			BYTE to_reg_size = scoredata[0x19];
-			BYTE short_delay_code = scoredata[0x17];
-			BYTE long_delay_code = scoredata[0x18];
+			uint8_t *to_reg = scoredata + 0x1A;
+			uint8_t to_reg_size = scoredata[0x19];
+			uint8_t short_delay_code = scoredata[0x17];
+			uint8_t long_delay_code = scoredata[0x18];
 
 			while (score < scoredata + ScoreLen)
 			{
-				BYTE code = *score++;
+				uint8_t code = *score++;
 				data = *score++;
 
 				// Which OPL chip to write to is encoded in the high bit of the code value.
@@ -512,7 +512,7 @@ ADD_STAT (opl)
 OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
 {
 	ScoreLen = source->ScoreLen;
-	scoredata = new BYTE[ScoreLen];
+	scoredata = new uint8_t[ScoreLen];
 	memcpy(scoredata, source->scoredata, ScoreLen);
 	SamplesPerTick = source->SamplesPerTick;
 	RawPlayer = source->RawPlayer;

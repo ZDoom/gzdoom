@@ -64,7 +64,7 @@ FRenderStyle LegacyRenderStyles[STYLE_Count] =
 #else
 FRenderStyle LegacyRenderStyles[STYLE_Count];
 
-static const BYTE Styles[STYLE_Count * 4] =
+static const uint8_t Styles[STYLE_Count * 4] =
 {
 	STYLEOP_None, 		STYLEALPHA_Zero,	STYLEALPHA_Zero,	0,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_Alpha1,

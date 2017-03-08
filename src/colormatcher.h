@@ -42,8 +42,8 @@ public:
 	FColorMatcher (const FColorMatcher &other);
 
 	void SetPalette (const DWORD *palette);
-	BYTE Pick (int r, int g, int b);
-	BYTE Pick (PalEntry pe)
+	uint8_t Pick (int r, int g, int b);
+	uint8_t Pick (PalEntry pe)
 	{
 		return Pick(pe.r, pe.g, pe.b);
 	}

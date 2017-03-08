@@ -25,17 +25,17 @@ struct MD5Context
 	MD5Context() { Init(); }
 
 	void Init();
-	void Update(const BYTE *buf, unsigned len);
+	void Update(const uint8_t *buf, unsigned len);
 	void Update(FileReader *file, unsigned len);
-	void Final(BYTE digest[16]);
+	void Final(uint8_t digest[16]);
 
 private:
-	DWORD buf[4];
-	DWORD bytes[2];
-	DWORD in[16];
+	uint32_t buf[4];
+	uint32_t bytes[2];
+	uint32_t in[16];
 
 };
 
-void MD5Transform(DWORD buf[4], DWORD const in[16]);
+void MD5Transform(uint32_t buf[4], uint32_t const in[16]);
 
 #endif /* !MD5_H */

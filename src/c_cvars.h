@@ -160,7 +160,7 @@ private:
 	static bool m_DoNoSet;
 
 	friend FString C_GetMassCVarString (uint32 filter, bool compact);
-	friend void C_ReadCVars (BYTE **demo_p);
+	friend void C_ReadCVars (uint8_t **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
@@ -178,10 +178,10 @@ FString C_GetMassCVarString (uint32 filter, bool compact=false);
 
 // Writes all cvars that could effect demo sync to *demo_p. These are
 // cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
-void C_WriteCVars (BYTE **demo_p, uint32 filter, bool compact=false);
+void C_WriteCVars (uint8_t **demo_p, uint32 filter, bool compact=false);
 
 // Read all cvars from *demo_p and set them appropriately.
-void C_ReadCVars (BYTE **demo_p);
+void C_ReadCVars (uint8_t **demo_p);
 
 // Backup demo cvars. Called before a demo starts playing to save all
 // cvars the demo might change.
@@ -431,8 +431,8 @@ extern int cvar_defflags;
 FBaseCVar *cvar_set (const char *var_name, const char *value);
 FBaseCVar *cvar_forceset (const char *var_name, const char *value);
 
-inline FBaseCVar *cvar_set (const char *var_name, const BYTE *value) { return cvar_set (var_name, (const char *)value); }
-inline FBaseCVar *cvar_forceset (const char *var_name, const BYTE *value) { return cvar_forceset (var_name, (const char *)value); }
+inline FBaseCVar *cvar_set (const char *var_name, const uint8_t *value) { return cvar_set (var_name, (const char *)value); }
+inline FBaseCVar *cvar_forceset (const char *var_name, const uint8_t *value) { return cvar_forceset (var_name, (const char *)value); }
 
 
 

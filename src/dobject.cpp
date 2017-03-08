@@ -404,7 +404,7 @@ size_t DObject::PropagateMark()
 		}
 		while (*offsets != ~(size_t)0)
 		{
-			GC::Mark((DObject **)((BYTE *)this + *offsets));
+			GC::Mark((DObject **)((uint8_t *)this + *offsets));
 			offsets++;
 		}
 
@@ -416,7 +416,7 @@ size_t DObject::PropagateMark()
 		}
 		while (*offsets != ~(size_t)0)
 		{
-			auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+			auto aray = (TArray<DObject*>*)((uint8_t *)this + *offsets);
 			for (auto &p : *aray)
 			{
 				GC::Mark(&p);
@@ -447,9 +447,9 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	}
 	while (*offsets != ~(size_t)0)
 	{
-		if (*(DObject **)((BYTE *)this + *offsets) == old)
+		if (*(DObject **)((uint8_t *)this + *offsets) == old)
 		{
-			*(DObject **)((BYTE *)this + *offsets) = notOld;
+			*(DObject **)((uint8_t *)this + *offsets) = notOld;
 			changed++;
 		}
 		offsets++;
@@ -463,7 +463,7 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	}
 	while (*offsets != ~(size_t)0)
 	{
-		auto aray = (TArray<DObject*>*)((BYTE *)this + *offsets);
+		auto aray = (TArray<DObject*>*)((uint8_t *)this + *offsets);
 		for (auto &p : *aray)
 		{
 			if (p == old)

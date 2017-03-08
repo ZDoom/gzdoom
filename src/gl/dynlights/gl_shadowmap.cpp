@@ -32,19 +32,9 @@
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "r_state.h"
 
-void FShadowMap::Clear()
-{
-	if (mLightList != 0)
-	{
-		glDeleteBuffers(1, (GLuint*)&mLightList);
-		mLightList = 0;
-	}
-
-	mLightBSP.Clear();
-}
-
 void FShadowMap::Update()
 {
+	UploadAABBTree();
 	UploadLights();
 
 	FGLDebug::PushGroup("ShadowMap");
@@ -54,8 +44,8 @@ void FShadowMap::Update()
 
 	GLRenderer->mShadowMapShader->Bind();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mLightBSP.GetNodesBuffer());
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLightBSP.GetLinesBuffer());
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mNodesBuffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLinesBuffer);
 
 	glViewport(0, 0, 1024, 1024);
 	GLRenderer->RenderScreenQuad();
@@ -70,6 +60,14 @@ void FShadowMap::Update()
 	GLRenderer->mBuffers->BindShadowMapTexture(16);
 
 	FGLDebug::PopGroup();
+}
+
+bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
+{
+	if (mAABBTree)
+		return mAABBTree->RayTest(light->Pos(), pos) >= 1.0f;
+	else
+		return true;
 }
 
 void FShadowMap::UploadLights()
@@ -107,7 +105,52 @@ void FShadowMap::UploadLights()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }
 
-bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
+void FShadowMap::UploadAABBTree()
 {
-	return mLightBSP.ShadowTest(light->Pos(), pos);
+	if (numnodes != mLastNumNodes || numsegs != mLastNumSegs) // To do: there is probably a better way to detect a map change than this..
+		Clear();
+
+	if (mAABBTree)
+		return;
+
+	mAABBTree.reset(new LevelAABBTree());
+
+	int oldBinding = 0;
+	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
+
+	glGenBuffers(1, (GLuint*)&mNodesBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mNodesBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0], GL_STATIC_DRAW);
+
+	glGenBuffers(1, (GLuint*)&mLinesBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLinesBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
+}
+
+void FShadowMap::Clear()
+{
+	if (mLightList != 0)
+	{
+		glDeleteBuffers(1, (GLuint*)&mLightList);
+		mLightList = 0;
+	}
+
+	if (mNodesBuffer != 0)
+	{
+		glDeleteBuffers(1, (GLuint*)&mNodesBuffer);
+		mNodesBuffer = 0;
+	}
+
+	if (mLinesBuffer != 0)
+	{
+		glDeleteBuffers(1, (GLuint*)&mLinesBuffer);
+		mLinesBuffer = 0;
+	}
+
+	mAABBTree.reset();
+
+	mLastNumNodes = numnodes;
+	mLastNumSegs = numsegs;
 }

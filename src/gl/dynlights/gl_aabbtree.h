@@ -2,7 +2,6 @@
 #pragma once
 
 #include "vectors.h"
-#include <memory>
 
 // Node in a binary AABB tree
 struct AABBTreeNode
@@ -14,7 +13,7 @@ struct AABBTreeNode
 	float aabb_left, aabb_top;
 	float aabb_right, aabb_bottom;
 
-	// Children node indices
+	// Child node indices
 	int left_node;
 	int right_node;
 
@@ -45,7 +44,7 @@ public:
 	// Line segments for the leaf nodes in the tree.
 	TArray<AABBTreeLine> lines;
 
-	// Shoot a ray from ray_start to ray_end and return the first hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
+	// Shoot a ray from ray_start to ray_end and return the closest hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
 	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
 
 private:
@@ -57,33 +56,4 @@ private:
 
 	// Generate a tree node and its children recursively
 	int GenerateTreeNode(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
-};
-
-class FLightBSP
-{
-public:
-	FLightBSP() { }
-	~FLightBSP() { Clear(); }
-
-	int GetNodesBuffer();
-	int GetLinesBuffer();
-	void Clear();
-
-	bool ShadowTest(const DVector3 &light, const DVector3 &pos);
-
-private:
-	void UpdateBuffers();
-	void GenerateBuffers();
-	void UploadNodes();
-	void UploadSegs();
-
-	FLightBSP(const FLightBSP &) = delete;
-	FLightBSP &operator=(FLightBSP &) = delete;
-
-	int NodesBuffer = 0;
-	int LinesBuffer = 0;
-	int NumNodes = 0;
-	int NumSegs = 0;
-
-	std::unique_ptr<LevelAABBTree> Shape;
 };

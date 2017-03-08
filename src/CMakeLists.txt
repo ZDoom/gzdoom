@@ -939,7 +939,7 @@ set( FASTMATH_SOURCES
 	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_dynlight1.cpp
 	gl/dynlights/gl_lightbuffer.cpp
-	gl/dynlights/gl_lightbsp.cpp
+	gl/dynlights/gl_aabbtree.cpp
 	gl/dynlights/gl_shadowmap.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_texshader.cpp

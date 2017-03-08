@@ -1,6 +1,6 @@
 // 
 //---------------------------------------------------------------------------
-// 2D collision tree for 1D shadowmap lights
+// AABB-tree used for ray testing
 // Copyright(C) 2017 Magnus Norddahl
 // All rights reserved.
 //
@@ -22,105 +22,10 @@
 
 #include "gl/system/gl_system.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/dynlights/gl_lightbsp.h"
+#include "gl/dynlights/gl_aabbtree.h"
 #include "gl/system/gl_interface.h"
 #include "r_state.h"
 #include "g_levellocals.h"
-
-int FLightBSP::GetNodesBuffer()
-{
-	UpdateBuffers();
-	return NodesBuffer;
-}
-
-int FLightBSP::GetLinesBuffer()
-{
-	UpdateBuffers();
-	return LinesBuffer;
-}
-
-void FLightBSP::UpdateBuffers()
-{
-	if (numnodes != NumNodes || numsegs != NumSegs) // To do: there is probably a better way to detect a map change than this..
-		Clear();
-
-	if (NodesBuffer == 0)
-		GenerateBuffers();
-}
-
-void FLightBSP::GenerateBuffers()
-{
-	if (!Shape)
-		Shape.reset(new LevelAABBTree());
-	UploadNodes();
-	UploadSegs();
-}
-
-void FLightBSP::UploadNodes()
-{
-#if 0
-	if (Shape->nodes.Size() > 0)
-	{
-		FILE *file = fopen("nodes.txt", "wb");
-		fwrite(&Shape->nodes[0], sizeof(AABBTreeNode) * Shape->nodes.Size(), 1, file);
-		fclose(file);
-	}
-#endif
-
-	int oldBinding = 0;
-	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
-
-	glGenBuffers(1, (GLuint*)&NodesBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, NodesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeNode) * Shape->nodes.Size(), &Shape->nodes[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
-
-	NumNodes = numnodes;
-}
-
-void FLightBSP::UploadSegs()
-{
-#if 0
-	if (Shape->lines.Size() > 0)
-	{
-		FILE *file = fopen("lines.txt", "wb");
-		fwrite(&Shape->lines[0], sizeof(AABBTreeLine) * Shape->lines.Size(), 1, file);
-		fclose(file);
-	}
-#endif
-
-	int oldBinding = 0;
-	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
-
-	glGenBuffers(1, (GLuint*)&LinesBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, LinesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeLine) * Shape->lines.Size(), &Shape->lines[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
-
-	NumSegs = numsegs;
-}
-
-void FLightBSP::Clear()
-{
-	if (NodesBuffer != 0)
-	{
-		glDeleteBuffers(1, (GLuint*)&NodesBuffer);
-		NodesBuffer = 0;
-	}
-	if (LinesBuffer != 0)
-	{
-		glDeleteBuffers(1, (GLuint*)&LinesBuffer);
-		LinesBuffer = 0;
-	}
-	Shape.reset();
-}
-
-bool FLightBSP::ShadowTest(const DVector3 &light, const DVector3 &pos)
-{
-	return Shape->RayTest(light, pos) >= 1.0f;
-}
-
-/////////////////////////////////////////////////////////////////////////////
 
 LevelAABBTree::LevelAABBTree()
 {

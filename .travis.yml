@@ -7,7 +7,7 @@ branches:
     - /^appveyor.*$/
 
 git:
-  depth: 3
+  depth: 10
 
 matrix:
   include:
@@ -85,6 +85,7 @@ before_install:
   - if [ -n "$CLANG_VERSION" ]; then export CC="clang-${CLANG_VERSION}" CXX="clang++-${CLANG_VERSION}"; fi
   - $CC --version
   - $CXX --version
+  # Update dependencies here: https://github.com/coelckers/gzdoom/releases/tag/ci_deps
   - export FMOD_FILENAME=fmod-4.44.64-${TRAVIS_OS_NAME}.tar.bz2
   - curl -LO "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${FMOD_FILENAME}"
   - tar -xf "${FMOD_FILENAME}"

@@ -150,7 +150,7 @@ class PlayerPawn : Actor native
 	}
 	
 	// This is for SBARINFO.
-	int, int GetEffectTicsForItem(class<Inventory> item) const 
+	clearscope int, int GetEffectTicsForItem(class<Inventory> item) const 
 	{
 		let pg = (class<PowerupGiver>)(item);
 		if (pg != null)
@@ -167,7 +167,7 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 
-	native int GetMaxHealth(bool withupgrades = false) const;
+	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);

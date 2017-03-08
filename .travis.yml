@@ -2,30 +2,53 @@ language: c++
 dist: trusty
 sudo: required 
 
+branches:
+  except:
+    - /^appveyor.*$/
+
+git:
+  depth: 3
+
 matrix:
   include:
     - os: osx
       osx_image: xcode8.2
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
-
-    - os: osx
-      osx_image: xcode8.2
-      env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 -DFORCE_INTERNAL_ZLIB=YES -DFORCE_INTERNAL_JPEG=YES -DFORCE_INTERNAL_BZIP2=YES -DFORCE_INTERNAL_GME=YES"
+        - FMOD_LIBRARY=libfmodex.dylib
 
     - os: linux
       compiler: gcc
       env:
         - GCC_VERSION=5
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release"
+        - FMOD_LIBRARY=libfmodex64.so
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - kubuntu-backports
           packages:
             - g++-5
+            - libsdl2-dev
+            - libgme-dev
+            - libopenal-dev
+            - libmpg123-dev
+            - libsndfile-dev
+            - libfluidsynth-dev
+            - libgtk-3-dev
+
+    - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=6
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DDYN_FLUIDSYNTH=NO"
+        - FMOD_LIBRARY=libfmodex64.so
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
             - libsdl2-dev
             - libgme-dev
             - libopenal-dev
@@ -38,13 +61,13 @@ matrix:
       compiler: clang
       env:
         - CLANG_VERSION=3.9
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DDYN_OPENAL=NO -DDYN_FLUIDSYNTH=NO"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DDYN_OPENAL=NO"
+        - FMOD_LIBRARY=libfmodex64.so
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-trusty-3.9
-            - kubuntu-backports
           packages:
             - clang-3.9
             - libstdc++-5-dev
@@ -62,11 +85,15 @@ before_install:
   - if [ -n "$CLANG_VERSION" ]; then export CC="clang-${CLANG_VERSION}" CXX="clang++-${CLANG_VERSION}"; fi
   - $CC --version
   - $CXX --version
+  - export FMOD_FILENAME=fmod-4.44.64-${TRAVIS_OS_NAME}.tar.bz2
+  - curl -LO "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${FMOD_FILENAME}"
+  - tar -xf "${FMOD_FILENAME}"
 
 script:
+  - echo ${TRAVIS_BUILD_DIR}
   - mkdir build
   - cd build
-  - cmake ${CMAKE_OPTIONS} ..
+  - cmake ${CMAKE_OPTIONS} -DFMOD_INCLUDE_DIR="${TRAVIS_BUILD_DIR}/fmod/inc" -DFMOD_LIBRARY="${TRAVIS_BUILD_DIR}/fmod/lib/${FMOD_LIBRARY}" ..
   - make -j2
 
 notifications:

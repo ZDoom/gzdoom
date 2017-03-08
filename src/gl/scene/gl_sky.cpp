@@ -289,7 +289,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::ceiling);
-			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD())
+			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
 				return;
@@ -368,7 +368,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::floor);
-			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD())
+			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
 				return;

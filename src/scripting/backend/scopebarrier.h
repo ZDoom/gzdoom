@@ -53,7 +53,8 @@ struct FScopeBarrier
 	void AddFlags(int flags1, int flags2, const char* name);
 
 	// this is called from vmexec.h
-	static void ValidateNew(PClass* cls, PFunction* callingfunc);
-	static void ValidateCall(PFunction* calledfunc, PFunction* callingfunc, PClass* selftype);
+	static void ValidateNew(PClass* cls, int scope);
+	static void ValidateCall(PClass* selftype, VMFunction *calledfunc, int outerside);
+
 };
 

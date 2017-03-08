@@ -387,4 +387,68 @@ namespace swrenderer
 			return alpha | (red << 16) | (green << 8) | blue;
 		}
 	};
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Vector classes for non-SSE drawers that behave like their SSE counterparts
+
+	namespace drawervectors
+	{
+		struct vec4ui
+		{
+			vec4ui() {}
+			vec4ui(uint32_t v) : a(v), r(v), g(v), b(v) { }
+			vec4ui(uint32_t a, uint32_t r, uint32_t g, uint32_t b) : a(a), r(r), g(g), b(b) { }
+			uint32_t a, r, g, b;
+		};
+
+		struct vec8us
+		{
+			vec8us() {}
+			vec8us(uint16_t v) : a0(v), r0(v), g0(v), b0(v) { }
+			vec8us(uint16_t a0, uint16_t r0, uint16_t g0, uint16_t b0, uint16_t a1, uint16_t r1, uint16_t g1, uint16_t b1) : a0(a0), r0(r0), g0(g0), b0(b0), a1(a1), r1(r1), g1(g1), b1(b1) { }
+			uint16_t a0, r0, g0, b0, a1, r1, g1, b1;
+		};
+
+		inline vec8us unpack(uint32_t lo, uint32_t hi) { return vec8us(APART(lo), RPART(lo), GPART(lo), BPART(lo), APART(hi), RPART(hi), GPART(hi), BPART(hi)); }
+		inline vec4ui unpacklo(vec8us v) { return vec4ui(v.a0, v.r0, v.g0, v.b0); }
+		inline vec4ui unpackhi(vec8us v) { return vec4ui(v.a1, v.r1, v.g1, v.b1); }
+
+		inline vec8us pack(vec4ui lo, vec4ui hi)
+		{
+			return vec8us(lo.a, lo.r, lo.g, lo.b, hi.a, hi.r, hi.g, hi.b);
+		}
+		inline uint32_t packlo(vec8us v)
+		{
+			return MAKEARGB((uint32_t)clamp<int16_t>(v.a0, 0, 255), (uint32_t)clamp<int16_t>(v.r0, 0, 255), (uint32_t)clamp<int16_t>(v.g0, 0, 255), (uint32_t)clamp<int16_t>(v.b0, 0, 255));
+		}
+		inline uint32_t packhi(vec8us v)
+		{
+			return MAKEARGB((uint32_t)clamp<int16_t>(v.a1, 0, 255), (uint32_t)clamp<int16_t>(v.r1, 0, 255), (uint32_t)clamp<int16_t>(v.g1, 0, 255), (uint32_t)clamp<int16_t>(v.b1, 0, 255));
+		}
+
+		inline vec8us operator+(vec8us a, vec8us b)
+		{
+			return vec8us(a.a0 + b.a0, a.r0 + b.r0, a.g0 + b.g0, a.b0 + b.b0, a.a1 + b.a1, a.r1 + b.r1, a.g1 + b.g1, a.b1 + b.b1);
+		}
+
+		inline vec8us operator-(vec8us a, vec8us b)
+		{
+			return vec8us(a.a0 - b.a0, a.r0 - b.r0, a.g0 - b.g0, a.b0 - b.b0, a.a1 - b.a1, a.r1 - b.r1, a.g1 - b.g1, a.b1 - b.b1);
+		}
+
+		inline vec8us operator*(vec8us a, vec8us b)
+		{
+			return vec8us(a.a0 * b.a0, a.r0 * b.r0, a.g0 * b.g0, a.b0 * b.b0, a.a1 * b.a1, a.r1 * b.r1, a.g1 * b.g1, a.b1 * b.b1);
+		}
+
+		inline vec8us operator<<(vec8us a, int bits)
+		{
+			return vec8us(a.a0 << bits, a.r0 << bits, a.g0 << bits, a.b0 << bits, a.a1 << bits, a.r1 << bits, a.g1 << bits, a.b1 << bits);
+		}
+
+		inline vec8us operator>>(vec8us a, int bits)
+		{
+			return vec8us(a.a0 >> bits, a.r0 >> bits, a.g0 >> bits, a.b0 >> bits, a.a1 >> bits, a.r1 >> bits, a.g1 >> bits, a.b1 >> bits);
+		}
+	}
 }

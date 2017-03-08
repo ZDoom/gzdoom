@@ -44,10 +44,10 @@ class TWeightedList
 	template<class U>
 	struct Choice
 	{
-		Choice(WORD w, U v) : Next(NULL), Weight(w), RandomVal(0), Value(v) {}
+		Choice(uint16_t w, U v) : Next(NULL), Weight(w), RandomVal(0), Value(v) {}
 
 		Choice<U> *Next;
-		WORD Weight;
+		uint16_t Weight;
 		BYTE RandomVal;	// 0 (never) - 255 (always)
 		T Value;
 	};
@@ -65,7 +65,7 @@ class TWeightedList
 			}
 		}
 
-		void AddEntry (T value, WORD weight);
+		void AddEntry (T value, uint16_t weight);
 		T PickEntry () const;
 		void ReplaceValues (T oldval, T newval);
 
@@ -79,7 +79,7 @@ class TWeightedList
 };
 
 template<class T> 
-void TWeightedList<T>::AddEntry (T value, WORD weight)
+void TWeightedList<T>::AddEntry (T value, uint16_t weight)
 {
 	if (weight == 0)
 	{ // If the weight is 0, don't bother adding it,

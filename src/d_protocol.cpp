@@ -159,7 +159,7 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 		// We can support up to 29 buttons, using from 0 to 4 bytes to store them.
 		if (flags & UCMDF_BUTTONS)
 		{
-			DWORD buttons = ucmd->buttons;
+			uint32_t buttons = ucmd->buttons;
 			uint8_t in = ReadByte(stream);
 
 			buttons = (buttons & ~0x7F) | (in & 0x7F);
@@ -204,7 +204,7 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream
 	uint8_t *temp = *stream;
 	uint8_t *start = *stream;
 	usercmd_t blank;
-	DWORD buttons_changed;
+	uint32_t buttons_changed;
 
 	if (basis == NULL)
 	{

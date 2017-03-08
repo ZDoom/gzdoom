@@ -317,7 +317,7 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 	return 0;
 }
 
-SWORD ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
+int16_t ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
 {
 	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
 	return ((modifiers & NSShiftKeyMask    ) ? GKM_SHIFT : 0)
@@ -690,7 +690,7 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 
 void ProcessMouseWheelEvent(NSEvent* theEvent)
 {
-	const SWORD modifiers = ModifierFlagsToGUIKeyModifiers(theEvent);
+	const int16_t modifiers = ModifierFlagsToGUIKeyModifiers(theEvent);
 	const CGFloat delta   = (modifiers & GKM_SHIFT)
 		? [theEvent deltaX]
 		: [theEvent deltaY];

@@ -261,7 +261,7 @@ void FIWadManager::ParseIWadInfos(const char *fn)
 	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, NULL, true);
 	if (resfile != NULL)
 	{
-		DWORD cnt = resfile->LumpCount();
+		uint32_t cnt = resfile->LumpCount();
 		for(int i=cnt-1; i>=0; i--)
 		{
 			FResourceLump *lmp = resfile->GetLump(i);
@@ -296,7 +296,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 	if (iwadfile != NULL)
 	{
 		ClearChecks();
-		for(DWORD ii = 0; ii < iwadfile->LumpCount(); ii++)
+		for(uint32_t ii = 0; ii < iwadfile->LumpCount(); ii++)
 		{
 			FResourceLump *lump = iwadfile->GetLump(ii);
 

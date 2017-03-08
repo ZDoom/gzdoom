@@ -401,11 +401,11 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 static int FindSprite (const char *sprname)
 {
 	int i;
-	DWORD nameint = *((DWORD *)sprname);
+	uint32_t nameint = *((uint32_t *)sprname);
 
 	for (i = 0; i < NumUnchangedSprites; ++i)
 	{
-		if (*((DWORD *)&UnchangedSpriteNames[i*4]) == nameint)
+		if (*((uint32_t *)&UnchangedSpriteNames[i*4]) == nameint)
 		{
 			return i;
 		}
@@ -850,7 +850,7 @@ static int PatchThing (int thingy)
 	bool patchedStates = false;
 	ActorFlags oldflags;
 	PClassActor *type;
-	SWORD *ednum, dummyed;
+	int16_t *ednum, dummyed;
 
 	type = NULL;
 	info = (AActor *)&dummy;
@@ -898,7 +898,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 		{
-			info->PainChance = (SWORD)val;
+			info->PainChance = (int16_t)val;
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
@@ -1049,7 +1049,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Bits") == 0)
 			{
-				DWORD value[4] = { 0, 0, 0 };
+				uint32_t value[4] = { 0, 0, 0 };
 				bool vchanged[4] = { false, false, false };
 				// ZDoom used to block the upper range of bits to force use of mnemonics for extra flags.
 				// MBF also defined extra flags in the same range, but without forcing mnemonics. For MBF
@@ -1244,7 +1244,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{
-				*ednum = (SWORD)val;
+				*ednum = (int16_t)val;
 			}
 		}
 		else Printf (unknown_str, Line1, "Thing", thingy);
@@ -2111,7 +2111,7 @@ static int PatchCodePtrs (int dummy)
 				}
 				else
 				{
-					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+					TArray<uint32_t> &args = sym->Variants[0].ArgFlags;
 					unsigned numargs = sym->GetImplicitArgs();
 					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
@@ -2594,7 +2594,7 @@ static bool DoDehPatch()
 
 static inline bool CompareLabel (const char *want, const uint8_t *have)
 {
-	return *(DWORD *)want == *(DWORD *)have;
+	return *(uint32_t *)want == *(uint32_t *)have;
 }
 
 static int DehUseCount;
@@ -2724,7 +2724,7 @@ static bool LoadDehSupp ()
 						}
 						else
 						{
-							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+							TArray<uint32_t> &args = sym->Variants[0].ArgFlags;
 							unsigned numargs = sym->GetImplicitArgs();
 							if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 							{

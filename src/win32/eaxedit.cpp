@@ -56,8 +56,8 @@ typedef struct w32apiFixedOFNA {
 	LPCSTR lpstrInitialDir;
 	LPCSTR lpstrTitle;
 	DWORD Flags;
-	WORD nFileOffset;
-	WORD nFileExtension;
+	uint16_t nFileOffset;
+	uint16_t nFileExtension;
 	LPCSTR lpstrDefExt;
 	LPARAM lCustData;
 	LPOFNHOOKPROC lpfnHook;
@@ -255,7 +255,7 @@ void PopulateEnvDropDown (HWND hCtl, bool showIDs, const ReverbContainer *defEnv
 	}
 }
 
-void SetIDEdits (HWND hDlg, WORD id)
+void SetIDEdits (HWND hDlg, uint16_t id)
 {
 	char text[4];
 
@@ -292,7 +292,7 @@ void PopulateEnvList (HWND hCtl, bool show, const ReverbContainer *defEnv)
 	SendMessage (hCtl, WM_SETREDRAW, TRUE, 0);
 }
 
-WORD FirstFreeID (WORD base, bool builtin)
+uint16_t FirstFreeID (uint16_t base, bool builtin)
 {
 	int tryCount = 0;
 	int priID = HIBYTE(base);
@@ -316,7 +316,7 @@ WORD FirstFreeID (WORD base, bool builtin)
 
 	for (;;)
 	{
-		WORD lastID = Environments->ID;
+		uint16_t lastID = Environments->ID;
 		const ReverbContainer *env = Environments->Next;
 
 		// Find the lowest-numbered free ID with the same primary ID as base

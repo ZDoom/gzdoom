@@ -127,7 +127,7 @@ void D_ProcessEvents (void);
 void G_BuildTiccmd (ticcmd_t *cmd); 
 void D_DoAdvanceDemo (void);
 
-static void SendSetup (DWORD playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len);
+static void SendSetup (uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len);
 static void RunScript(uint8_t **stream, APlayerPawn *pawn, int snum, int argn, int always);
 
 int		reboundpacket;
@@ -1405,7 +1405,7 @@ void NetUpdate (void)
 
 struct ArbitrateData
 {
-	DWORD playersdetected[MAXNETNODES];
+	uint32_t playersdetected[MAXNETNODES];
 	uint8_t  gotsetup[MAXNETNODES];
 };
 
@@ -1490,7 +1490,7 @@ bool DoArbitrate (void *userdata)
 	if (consoleplayer == Net_Arbitrator)
 	{
 		for (i = 0; i < doomcom.numnodes; ++i)
-			if (data->playersdetected[i] != DWORD(1 << doomcom.numnodes) - 1 || !data->gotsetup[i])
+			if (data->playersdetected[i] != uint32_t(1 << doomcom.numnodes) - 1 || !data->gotsetup[i])
 				break;
 
 		if (i == doomcom.numnodes)
@@ -1631,7 +1631,7 @@ void D_ArbitrateNetStart (void)
 	StartScreen->NetDone();
 }
 
-static void SendSetup (DWORD playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len)
+static void SendSetup (uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len)
 {
 	if (consoleplayer != Net_Arbitrator)
 	{
@@ -2270,7 +2270,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_INVUSE:
 	case DEM_INVDROP:
 		{
-			DWORD which = ReadLong (stream);
+			uint32_t which = ReadLong (stream);
 			int amt = -1;
 
 			if (type == DEM_INVDROP) amt = ReadLong(stream);
@@ -2308,7 +2308,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		{
 			PClassActor *typeinfo;
 			int angle = 0;
-			SWORD tid = 0;
+			int16_t tid = 0;
 			uint8_t special = 0;
 			int args[5];
 

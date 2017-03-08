@@ -756,15 +756,15 @@ void Win32Video::SetWindowedScale (float scale)
 //
 //==========================================================================
 
-void BaseWinFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+void BaseWinFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
 	RECT rect;
 
 	int TrueHeight = GetTrueHeight();
 	if (GetClientRect(Window, &rect))
 	{
-		x = SWORD(x * Width / (rect.right - rect.left));
-		y = SWORD(y * TrueHeight / (rect.bottom - rect.top));
+		x = int16_t(x * Width / (rect.right - rect.left));
+		y = int16_t(y * TrueHeight / (rect.bottom - rect.top));
 	}
 	// Subtract letterboxing borders
 	y -= (TrueHeight - Height) / 2;

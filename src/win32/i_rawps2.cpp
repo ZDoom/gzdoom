@@ -126,7 +126,7 @@ protected:
 	float Multiplier;
 	AxisInfo Axes[NUM_AXES];
 	static DefaultAxisConfig DefaultAxes[NUM_AXES];
-	WORD LastButtons;
+	int LastButtons;
 	bool Connected;
 	bool Marked;
 	bool Active;
@@ -481,7 +481,7 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 	}
 
 	// Generate events for buttons that have changed.
-	WORD buttons = 0;
+	int buttons = 0;
 	
 	// If we know we are digital, ignore the D-Pad.
 	if (!digital)

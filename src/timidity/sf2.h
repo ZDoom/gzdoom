@@ -1,4 +1,4 @@
-typedef WORD SFGenerator;
+typedef uint16_t SFGenerator;
 
 struct SFRange
 {
@@ -11,16 +11,16 @@ struct SFPreset
 	char Name[21];
 	BYTE LoadOrder:7;
 	BYTE bHasGlobalZone:1;
-	WORD Program;
-	WORD Bank;
-	WORD BagIndex;
+	uint16_t Program;
+	uint16_t Bank;
+	uint16_t BagIndex;
 	/* Don't care about library, genre, and morphology */
 };
 
 struct SFBag
 {
-	WORD GenIndex;
-//	WORD ModIndex;		// If I am feeling ambitious, I might add support for modulators some day.
+	uint16_t GenIndex;
+//	uint16_t ModIndex;		// If I am feeling ambitious, I might add support for modulators some day.
 	SFRange KeyRange;
 	SFRange VelRange;
 	int Target;			// Either an instrument or sample index
@@ -31,7 +31,7 @@ struct SFInst
 	char Name[21];
 	BYTE Pad:7;
 	BYTE bHasGlobalZone:1;
-	WORD BagIndex;
+	uint16_t BagIndex;
 };
 
 struct SFSample
@@ -44,8 +44,8 @@ struct SFSample
 	DWORD SampleRate;
 	BYTE  OriginalPitch;
 	SBYTE PitchCorrection;
-	WORD  SampleLink;
-	WORD  SampleType;
+	uint16_t  SampleLink;
+	uint16_t  SampleType;
 	char  Name[21];
 };
 
@@ -68,8 +68,8 @@ struct SFGenList
 	union
 	{
 		SFRange Range;
-		SWORD Amount;
-		WORD uAmount;
+		int16_t Amount;
+		uint16_t uAmount;
 	};
 };
 
@@ -142,20 +142,20 @@ enum
 
 struct SFModulator
 {
-	WORD Index:7;
-	WORD CC:1;
-	WORD Dir:1;			/* 0 = min->max, 1 = max->min */
-	WORD Polarity:1;	/* 0 = unipolar, 1 = bipolar */
-	WORD Type:6;
+	uint16_t Index:7;
+	uint16_t CC:1;
+	uint16_t Dir:1;			/* 0 = min->max, 1 = max->min */
+	uint16_t Polarity:1;	/* 0 = unipolar, 1 = bipolar */
+	uint16_t Type:6;
 };
 
 struct SFModList
 {
 	SFModulator SrcOper;
 	SFGenerator DestOper;
-	SWORD		Amount;
+	int16_t		Amount;
 	SFModulator AmtSrcOper;
-	WORD		Transform;
+	uint16_t		Transform;
 };
 
 // Modulator sources when CC is 0
@@ -206,55 +206,55 @@ struct SFGenComposite
 	SFRange velRange;
 	union
 	{
-		WORD instrument;	// At preset level
-		WORD sampleID;		// At instrument level
+		uint16_t instrument;	// At preset level
+		uint16_t sampleID;		// At instrument level
 	};
-	SWORD modLfoToPitch;
-	SWORD vibLfoToPitch;
-	SWORD modEnvToPitch;
-	SWORD initialFilterFc;
-	SWORD initialFilterQ;
-	SWORD modLfoToFilterFc;
-	SWORD modEnvToFilterFc;
-	SWORD modLfoToVolume;
-	SWORD chorusEffectsSend;
-	SWORD reverbEffectsSend;
-	SWORD pan;
-	SWORD delayModLFO;
-	SWORD freqModLFO;
-	SWORD delayVibLFO;
-	SWORD freqVibLFO;
-	SWORD delayModEnv;
-	SWORD attackModEnv;
-	SWORD holdModEnv;
-	SWORD decayModEnv;
-	SWORD sustainModEnv;
-	SWORD releaseModEnv;
-	SWORD keynumToModEnvHold;
-	SWORD keynumToModEnvDecay;
-	SWORD delayVolEnv;
-	SWORD attackVolEnv;
-	SWORD holdVolEnv;
-	SWORD decayVolEnv;
-	SWORD sustainVolEnv;
-	SWORD releaseVolEnv;
-	SWORD keynumToVolEnvHold;
-	SWORD keynumToVolEnvDecay;
-	SWORD initialAttenuation;
-	SWORD coarseTune;
-	SWORD fineTune;
-	SWORD scaleTuning;
+	int16_t modLfoToPitch;
+	int16_t vibLfoToPitch;
+	int16_t modEnvToPitch;
+	int16_t initialFilterFc;
+	int16_t initialFilterQ;
+	int16_t modLfoToFilterFc;
+	int16_t modEnvToFilterFc;
+	int16_t modLfoToVolume;
+	int16_t chorusEffectsSend;
+	int16_t reverbEffectsSend;
+	int16_t pan;
+	int16_t delayModLFO;
+	int16_t freqModLFO;
+	int16_t delayVibLFO;
+	int16_t freqVibLFO;
+	int16_t delayModEnv;
+	int16_t attackModEnv;
+	int16_t holdModEnv;
+	int16_t decayModEnv;
+	int16_t sustainModEnv;
+	int16_t releaseModEnv;
+	int16_t keynumToModEnvHold;
+	int16_t keynumToModEnvDecay;
+	int16_t delayVolEnv;
+	int16_t attackVolEnv;
+	int16_t holdVolEnv;
+	int16_t decayVolEnv;
+	int16_t sustainVolEnv;
+	int16_t releaseVolEnv;
+	int16_t keynumToVolEnvHold;
+	int16_t keynumToVolEnvDecay;
+	int16_t initialAttenuation;
+	int16_t coarseTune;
+	int16_t fineTune;
+	int16_t scaleTuning;
 
 	// The following are only for instruments:
-	SWORD startAddrsOffset,		startAddrsCoarseOffset;
-	SWORD endAddrsOffset,		endAddrsCoarseOffset;
-	SWORD startLoopAddrsOffset,	startLoopAddrsCoarseOffset;
-	SWORD endLoopAddrsOffset,	endLoopAddrsCoarseOffset;
-	SWORD keynum;
-	SWORD velocity;
-	WORD  sampleModes;
-	SWORD exclusiveClass;
-	SWORD overridingRootKey;
+	int16_t startAddrsOffset,		startAddrsCoarseOffset;
+	int16_t endAddrsOffset,		endAddrsCoarseOffset;
+	int16_t startLoopAddrsOffset,	startLoopAddrsCoarseOffset;
+	int16_t endLoopAddrsOffset,	endLoopAddrsCoarseOffset;
+	int16_t keynum;
+	int16_t velocity;
+	uint16_t  sampleModes;
+	int16_t exclusiveClass;
+	int16_t overridingRootKey;
 };
 
 // Intermediate percussion representation

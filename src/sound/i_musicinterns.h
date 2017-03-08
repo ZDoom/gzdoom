@@ -100,7 +100,7 @@ public:
 	virtual bool FakeVolume();
 	virtual bool Pause(bool paused) = 0;
 	virtual bool NeedThreadedCallback();
-	virtual void PrecacheInstruments(const WORD *instruments, int count);
+	virtual void PrecacheInstruments(const uint16_t *instruments, int count);
 	virtual void TimidityVolumeChanged();
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
@@ -133,7 +133,7 @@ public:
 	bool FakeVolume();
 	bool NeedThreadedCallback();
 	bool Pause(bool paused);
-	void PrecacheInstruments(const WORD *instruments, int count);
+	void PrecacheInstruments(const uint16_t *instruments, int count);
 
 protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
@@ -348,7 +348,7 @@ public:
 	~TimidityMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void PrecacheInstruments(const WORD *instruments, int count);
+	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 
 protected:
@@ -382,7 +382,7 @@ public:
 	~WildMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void PrecacheInstruments(const WORD *instruments, int count);
+	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 
 protected:
@@ -618,7 +618,7 @@ protected:
 	TrackInfo *TrackDue;
 	int NumTracks;
 	int Format;
-	WORD DesignationMask;
+	uint16_t DesignationMask;
 };
 
 // HMI file played with a MIDI stream ---------------------------------------

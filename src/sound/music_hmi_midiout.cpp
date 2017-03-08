@@ -94,7 +94,7 @@ struct HMISong::TrackInfo
 	size_t MaxTrackP;
 	DWORD Delay;
 	DWORD PlayedTime;
-	WORD Designation[NUM_HMI_DESIGNATIONS];
+	uint16_t Designation[NUM_HMI_DESIGNATIONS];
 	bool Enabled;
 	bool Finished;
 	BYTE RunningStatus;

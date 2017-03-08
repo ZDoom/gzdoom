@@ -36,8 +36,8 @@ typedef uintptr_t	Bitu;
 typedef intptr_t	Bits;
 typedef DWORD		Bit32u;
 typedef int32_t		Bit32s;
-typedef WORD		Bit16u;
-typedef SWORD		Bit16s;
+typedef uint16_t	Bit16u;
+typedef int16_t		Bit16s;
 typedef uint8_t		Bit8u;
 typedef SBYTE		Bit8s;
 

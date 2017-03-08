@@ -61,7 +61,7 @@
 struct FCompatOption
 {
 	const char *Name;
-	DWORD CompatFlags;
+	uint32_t CompatFlags;
 	int WhichSlot;
 };
 

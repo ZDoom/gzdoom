@@ -256,7 +256,7 @@ struct AMColorset
 			c[i].FromCVar(*values[i]);
 		}
 
-		DWORD ba = *(values[0]);
+		uint32_t ba = *(values[0]);
 
 		int r = RPART(ba) - 16;
 		int g = GPART(ba) - 16;
@@ -791,7 +791,7 @@ static bool stopped = true;
 static void AM_calcMinMaxMtoF();
 
 static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
-	INTBOOL flip, double xscale, double yscale, int translation, double alpha, DWORD fillcolor, FRenderStyle renderstyle);
+	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
 
 void AM_rotatePoint (double *x, double *y);
 void AM_rotate (double *x, double *y, DAngle an);
@@ -1920,7 +1920,7 @@ void AM_drawSubsectors()
 
 		// Fill the points array from the subsector.
 		points.Resize(subsectors[i].numlines);
-		for (DWORD j = 0; j < subsectors[i].numlines; ++j)
+		for (uint32_t j = 0; j < subsectors[i].numlines; ++j)
 		{
 			mpoint_t pt = { subsectors[i].firstline[j].v1->fX(),
 							subsectors[i].firstline[j].v1->fY() };
@@ -2911,7 +2911,7 @@ void AM_drawThings ()
 //=============================================================================
 
 static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
-	INTBOOL flip, double xscale, double yscale, int translation, double alpha, DWORD fillcolor, FRenderStyle renderstyle)
+	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
 	{
@@ -2932,7 +2932,7 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		DTA_TranslationIndex, translation,
 		DTA_Alpha, alpha,
 		DTA_FillColor, fillcolor,
-		DTA_RenderStyle, DWORD(renderstyle),
+		DTA_RenderStyle, uint32_t(renderstyle),
 		TAG_DONE);
 }
 
@@ -2977,7 +2977,7 @@ void AM_drawAuthorMarkers ()
 
 		FTextureID picnum;
 		FTexture *tex;
-		WORD flip = 0;
+		uint16_t flip = 0;
 
 		if (mark->picnum.isValid())
 		{

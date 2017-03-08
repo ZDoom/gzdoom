@@ -89,10 +89,10 @@ private:
 
 struct FDecalLib::FTranslation
 {
-	FTranslation (DWORD start, DWORD end);
-	FTranslation *LocateTranslation (DWORD start, DWORD end);
+	FTranslation (uint32_t start, uint32_t end);
+	FTranslation *LocateTranslation (uint32_t start, uint32_t end);
 
-	DWORD StartColor, EndColor;
+	uint32_t StartColor, EndColor;
 	FTranslation *Next;
 	uint16_t Index;
 };
@@ -546,7 +546,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			break;
 
 		case DECAL_COLORS:
-			DWORD startcolor, endcolor;
+			uint32_t startcolor, endcolor;
 
 			sc.MustGetString (); startcolor = V_GetColor (NULL, sc);
 			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc);
@@ -1009,7 +1009,7 @@ FDecalBase *FDecalLib::ScanTreeForName (const char *name, FDecalBase *root)
 	return root;
 }
 
-FDecalLib::FTranslation *FDecalLib::GenerateTranslation (DWORD start, DWORD end)
+FDecalLib::FTranslation *FDecalLib::GenerateTranslation (uint32_t start, uint32_t end)
 {
 	FTranslation *trans;
 
@@ -1069,9 +1069,9 @@ const FDecalTemplate *FDecalTemplate::GetDecal () const
 	return this;
 }
 
-FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
+FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 {
-	DWORD ri, gi, bi, rs, gs, bs;
+	uint32_t ri, gi, bi, rs, gs, bs;
 	PalEntry *first, *last;
 	uint8_t *table;
 	unsigned int i, tablei;
@@ -1112,7 +1112,7 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 	Index = (uint16_t)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
-FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (DWORD start, DWORD end)
+FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (uint32_t start, uint32_t end)
 {
 	FTranslation *trans = this;
 

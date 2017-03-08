@@ -152,7 +152,7 @@ struct FButtonStatus
 {
 	enum { MAX_KEYS = 6 };	// Maximum number of keys that can press this button
 
-	WORD Keys[MAX_KEYS];
+	uint16_t Keys[MAX_KEYS];
 	BYTE bDown;				// Button is down right now
 	BYTE bWentDown;			// Button went down this tic
 	BYTE bWentUp;			// Button went up this tic

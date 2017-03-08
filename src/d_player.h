@@ -256,7 +256,7 @@ public:
 	bool CheckSkin (int skin);
 
 	PClassActor *Type;
-	DWORD Flags;
+	uint32_t Flags;
 	TArray<int> Skins;
 };
 
@@ -386,7 +386,7 @@ public:
 	uint8_t		playerstate;
 	ticcmd_t	cmd;
 	usercmd_t	original_cmd;
-	DWORD		original_oldbuttons;
+	uint32_t		original_oldbuttons;
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
@@ -411,7 +411,7 @@ public:
 
 	bool		attackdown;
 	bool		usedown;
-	DWORD		oldbuttons;
+	uint32_t		oldbuttons;
 	int			health;					// only used between levels, mo->health
 										// is used during levels
 
@@ -423,7 +423,7 @@ public:
 	int			lastkilltime;			// [RH] For multikills
 	uint8_t		multicount;
 	uint8_t		spreecount;				// [RH] Keep track of killing sprees
-	WORD		WeaponState;
+	uint16_t		WeaponState;
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
@@ -464,11 +464,11 @@ public:
 	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
 
 	TObjPtr<AActor*> MUSINFOactor;		// For MUSINFO purposes
-	SBYTE		MUSINFOtics;
+	int8_t		MUSINFOtics;
 
 	bool		settings_controller;	// Player can control game settings.
-	SBYTE		crouching;
-	SBYTE		crouchdir;
+	int8_t		crouching;
+	int8_t		crouchdir;
 
 	//Added by MC:
 	TObjPtr<DBot*> Bot;

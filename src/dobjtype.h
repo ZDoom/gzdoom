@@ -525,8 +525,8 @@ public:
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
 
-	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
-	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);
+	virtual PField *AddField(FName name, PType *type, uint32_t flags=0);
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0);
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -581,7 +581,7 @@ protected:
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
-	PField *AddMetaField(FName name, PType *type, DWORD flags);
+	PField *AddMetaField(FName name, PType *type, uint32_t flags);
 public:
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
@@ -617,7 +617,7 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	PField *AddField(FName name, PType *type, DWORD flags=0) override;
+	PField *AddField(FName name, PType *type, uint32_t flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();

@@ -135,8 +135,8 @@ struct PreGamePacket
 	};
 	struct
 	{
-		DWORD	address;
-		WORD	port;
+		uint32_t address;
+		uint16_t port;
 		uint8_t	player;
 		uint8_t	pad;
 	} machines[MAXNETNODES];

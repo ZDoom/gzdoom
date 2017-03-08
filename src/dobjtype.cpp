@@ -673,11 +673,11 @@ int PInt::GetValueInt(void *addr) const
 	}
 	else if (Size == 1)
 	{
-		return Unsigned ? *(uint8_t *)addr : *(SBYTE *)addr;
+		return Unsigned ? *(uint8_t *)addr : *(int8_t *)addr;
 	}
 	else if (Size == 2)
 	{
-		return Unsigned ? *(uint16_t *)addr : *(SWORD *)addr;
+		return Unsigned ? *(uint16_t *)addr : *(int16_t *)addr;
 	}
 	else if (Size == 8)
 	{ // truncated output
@@ -2372,7 +2372,7 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 //
 //==========================================================================
 
-PField *PStruct::AddField(FName name, PType *type, DWORD flags)
+PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 {
 	PField *field = new PField(name, type, flags);
 
@@ -2405,7 +2405,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 //
 //==========================================================================
 
-PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD flags, int bitvalue)
+PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
 	PField *field = new PField(name, type, flags|VARF_Native|VARF_Transient, address, bitvalue);
 
@@ -2495,7 +2495,7 @@ PField::PField()
 }
 
 
-PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
+PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
 	if (bitvalue != 0)
@@ -3330,7 +3330,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 //
 //==========================================================================
 
-PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
+PField *PClass::AddMetaField(FName name, PType *type, uint32_t flags)
 {
 	PField *field = new PField(name, type, flags);
 
@@ -3360,7 +3360,7 @@ PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
 //
 //==========================================================================
 
-PField *PClass::AddField(FName name, PType *type, DWORD flags)
+PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 {
 	if (!(flags & VARF_Meta))
 	{

@@ -29,15 +29,15 @@ struct GF1PatchHeader
 	BYTE Instruments;
 	BYTE Voices;
 	BYTE Channels;
-	WORD WaveForms;
-	WORD MasterVolume;
+	uint16_t WaveForms;
+	uint16_t MasterVolume;
 	DWORD DataSize;
 	BYTE Reserved[PATCH_HEADER_RESERVED_SIZE];
 } GCC_PACKED;
 
 struct GF1InstrumentData
 {
-	WORD Instrument;
+	uint16_t Instrument;
 	char InstrumentName[INST_NAME_SIZE];
 	int  InstrumentSize;
 	BYTE Layers;
@@ -60,11 +60,11 @@ struct GF1PatchData
 	int   WaveSize;
 	int   StartLoop;
 	int   EndLoop;
-	WORD  SampleRate;
+	uint16_t  SampleRate;
 	int   LowFrequency;
 	int   HighFrequency;
 	int   RootFrequency;
-	SWORD Tune;
+	int16_t Tune;
 	BYTE  Balance;
 	BYTE  EnvelopeRate[ENVELOPES];
 	BYTE  EnvelopeOffset[ENVELOPES];
@@ -75,8 +75,8 @@ struct GF1PatchData
 	BYTE  VibratoRate;
 	BYTE  VibratoDepth;
 	BYTE  Modes;
-	SWORD ScaleFrequency;
-	WORD  ScaleFactor;		/* From 0 to 2048 or 0 to 2 */
+	int16_t ScaleFrequency;
+	uint16_t  ScaleFactor;		/* From 0 to 2048 or 0 to 2 */
 	BYTE  Reserved[PATCH_DATA_RESERVED_SIZE];
 } GCC_PACKED;
 #ifdef _MSC_VER

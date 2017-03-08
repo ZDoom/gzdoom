@@ -82,9 +82,9 @@ bool CDSong::IsPlaying ()
 CDDAFile::CDDAFile (FileReader &reader)
 	: CDSong ()
 {
-	DWORD chunk;
-	WORD track;
-	DWORD discid;
+	uint32_t chunk;
+	uint16_t track;
+	uint32_t discid;
 	long endpos = reader.Tell() + reader.GetLength() - 8;
 
 	// I_RegisterSong already identified this as a CDDA file, so we

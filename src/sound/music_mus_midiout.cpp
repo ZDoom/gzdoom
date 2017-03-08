@@ -211,14 +211,14 @@ bool MUSSong2::CheckDone()
 
 void MUSSong2::Precache()
 {
-	TArray<WORD> work(LittleShort(MusHeader->NumInstruments));
+	TArray<uint16_t> work(LittleShort(MusHeader->NumInstruments));
 	const BYTE *used = (BYTE *)MusHeader + sizeof(MUSHeader) / sizeof(BYTE);
 	int i, k;
 
 	for (i = k = 0; i < LittleShort(MusHeader->NumInstruments); ++i)
 	{
 		BYTE instr = used[k++];
-		WORD val;
+		uint16_t val;
 		if (instr < 128)
 		{
 			val = instr;

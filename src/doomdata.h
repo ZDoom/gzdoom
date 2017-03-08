@@ -241,7 +241,7 @@ struct mapsubsector_t
 struct mapsubsector4_t
 {
 	uint16_t	numsegs;
-	DWORD	firstseg;	// index of first one, segs are stored sequentially
+	uint32_t	firstseg;	// index of first one, segs are stored sequentially
 };
 #pragma pack()
 
@@ -251,10 +251,10 @@ struct mapseg_t
 {
 	uint16_t	v1;
 	uint16_t	v2;
-	SWORD	angle;
+	int16_t	angle;
 	uint16_t	linedef;
-	SWORD	side;
-	SWORD	offset;
+	int16_t	side;
+	int16_t	offset;
 
 	int V1() { return LittleShort(v1); }
 	int V2() { return LittleShort(v2); }
@@ -264,10 +264,10 @@ struct mapseg4_t
 {
 	int32_t v1;
 	int32_t v2;
-	SWORD angle;
+	int16_t angle;
 	uint16_t linedef;
-	SWORD side;
-	SWORD offset;
+	int16_t side;
+	int16_t offset;
 
 	int V1() { return LittleLong(v1); }
 	int V2() { return LittleLong(v2); }
@@ -286,13 +286,13 @@ struct mapnode_t
 		NF_SUBSECTOR = 0x8000,
 		NF_LUMPOFFSET = 0
 	};
-	SWORD 	x,y,dx,dy;	// partition line
-	SWORD 	bbox[2][4];	// bounding box for each child
+	int16_t 	x,y,dx,dy;	// partition line
+	int16_t 	bbox[2][4];	// bounding box for each child
 	// If NF_SUBSECTOR is or'ed in, it's a subsector,
 	// else it's a node of another subtree.
 	uint16_t 	children[2];
 
-	DWORD Child(int num) { return LittleShort(children[num]); }
+	uint32_t Child(int num) { return LittleShort(children[num]); }
 };
 
 
@@ -303,13 +303,13 @@ struct mapnode4_t
 		NF_SUBSECTOR = 0x80000000,
 		NF_LUMPOFFSET = 8
 	};
-	SWORD 	x,y,dx,dy;	// partition line
-	SWORD 	bbox[2][4];	// bounding box for each child
+	int16_t 	x,y,dx,dy;	// partition line
+	int16_t 	bbox[2][4];	// bounding box for each child
 	// If NF_SUBSECTOR is or'ed in, it's a subsector,
 	// else it's a node of another subtree.
-	DWORD 	children[2];
+	uint32_t 	children[2];
 
-	DWORD Child(int num) { return LittleLong(children[num]); }
+	uint32_t Child(int num) { return LittleLong(children[num]); }
 };
 
 
@@ -318,22 +318,22 @@ struct mapnode4_t
 // plus skill/visibility flags and attributes.
 struct mapthing_t
 {
-	SWORD		x;
-	SWORD		y;
-	SWORD		angle;
-	SWORD		type;
-	SWORD		options;
+	int16_t		x;
+	int16_t		y;
+	int16_t		angle;
+	int16_t		type;
+	int16_t		options;
 };
 
 // [RH] Hexen-compatible MapThing.
 struct mapthinghexen_t
 {
-	SWORD 		thingid;
-	SWORD		x;
-	SWORD		y;
-	SWORD		z;
-	SWORD		angle;
-	SWORD		type;
+	int16_t 		thingid;
+	int16_t		x;
+	int16_t		y;
+	int16_t		z;
+	int16_t		angle;
+	int16_t		type;
 	uint16_t		flags;
 	uint8_t		special;
 	uint8_t		args[5];
@@ -351,19 +351,19 @@ struct FMapThing
 	uint16_t		ClassFilter;
 	int16_t		EdNum;
 	FDoomEdEntry *info;
-	DWORD		flags;
+	uint32_t		flags;
 	int			special;
 	int			args[5];
 	int			Conversation;
 	double		Gravity;
 	double		Alpha;
-	DWORD		fillcolor;
+	uint32_t		fillcolor;
 	DVector2	Scale;
 	double		Health;
 	int			score;
 	int16_t		pitch;
 	int16_t		roll;
-	DWORD		RenderStyle;
+	uint32_t		RenderStyle;
 	int			FloatbobPhase;
 };
 

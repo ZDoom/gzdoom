@@ -63,7 +63,7 @@ struct zdemoheader_s {
 
 struct usercmd_t
 {
-	DWORD	buttons;
+	uint32_t	buttons;
 	short	pitch;			// up/down
 	short	yaw;			// left/right
 	short	roll;			// "tilt"
@@ -141,7 +141,7 @@ enum EDemoCommand
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
 	DEM_UNDONE11,		// 51
-	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
+	DEM_SUMMON2,		// 52 String: Thing to fabricate, uint16_t: angle offset
 	DEM_SUMMONFRIEND2,	// 53
 	DEM_SUMMONFOE2,		// 54
 	DEM_ADDSLOTDEFAULT,	// 55

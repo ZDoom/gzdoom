@@ -59,27 +59,27 @@
 //
 struct doomcom_t
 {
-	DWORD	id;				// should be DOOMCOM_ID
-	SWORD	intnum;			// DOOM executes an int to execute commands
+	uint32_t	id;				// should be DOOMCOM_ID
+	int16_t	intnum;			// DOOM executes an int to execute commands
 
 // communication between DOOM and the driver
-	SWORD	command;		// CMD_SEND or CMD_GET
-	SWORD	remotenode;		// dest for send, set by get (-1 = no packet).
-	SWORD	datalength;		// bytes in doomdata to be sent
+	int16_t	command;		// CMD_SEND or CMD_GET
+	int16_t	remotenode;		// dest for send, set by get (-1 = no packet).
+	int16_t	datalength;		// bytes in doomdata to be sent
 
 // info common to all nodes
-	SWORD	numnodes;		// console is always node 0.
-	SWORD	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
+	int16_t	numnodes;		// console is always node 0.
+	int16_t	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
 #ifdef DJGPP
-	SWORD	pad[5];			// keep things aligned for DOS drivers
+	int16_t	pad[5];			// keep things aligned for DOS drivers
 #endif
 
 // info specific to this node
-	SWORD	consoleplayer;
-	SWORD	numplayers;
+	int16_t	consoleplayer;
+	int16_t	numplayers;
 #ifdef DJGPP
-	SWORD	angleoffset;	// does not work, but needed to preserve
-	SWORD	drone;			// alignment for DOS drivers
+	int16_t	angleoffset;	// does not work, but needed to preserve
+	int16_t	drone;			// alignment for DOS drivers
 #endif
 
 // packet data to be sent

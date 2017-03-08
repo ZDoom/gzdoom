@@ -79,17 +79,17 @@ fail:	delete[] scoredata;
 			 ((DWORD *)scoredata)[1] == MAKE_ID('D','A','T','A'))
 	{
 		RawPlayer = RDosPlay;
-		if (*(WORD *)(scoredata + 8) == 0)
+		if (*(uint16_t *)(scoredata + 8) == 0)
 		{ // A clock speed of 0 is bad
-			*(WORD *)(scoredata + 8) = 0xFFFF; 
+			*(uint16_t *)(scoredata + 8) = 0xFFFF; 
 		}
-		SamplesPerTick = LittleShort(*(WORD *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
+		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 	}
 	// Check for DosBox OPL dump
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
 		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
-		if (LittleShort(((WORD *)scoredata)[5]) == 1)
+		if (LittleShort(((uint16_t *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
@@ -117,7 +117,7 @@ fail:	delete[] scoredata;
 		}
 		else
 		{
-			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((WORD *)scoredata)[4]), LittleShort(((WORD *)scoredata)[5]));
+			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((uint16_t *)scoredata)[4]), LittleShort(((uint16_t *)scoredata)[5]));
 			goto fail;
 		}
 	}
@@ -185,7 +185,7 @@ void OPLmusicFile::Restart ()
 	{
 	case RDosPlay:
 		score = scoredata + 10;
-		SamplesPerTick = LittleShort(*(WORD *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
+		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 		break;
 
 	case DosBox1:
@@ -364,7 +364,7 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 int OPLmusicFile::PlayTick ()
 {
 	uint8_t reg, data;
-	WORD delay;
+	uint16_t delay;
 
 	switch (RawPlayer)
 	{
@@ -385,7 +385,7 @@ int OPLmusicFile::PlayTick ()
 			case 2:		// Speed change or OPL3 switch
 				if (data == 0)
 				{
-					SamplesPerTick = LittleShort(*(WORD *)(score)) / ADLIB_CLOCK_MUL;
+					SamplesPerTick = LittleShort(*(uint16_t *)(score)) / ADLIB_CLOCK_MUL;
 					io->SetClockRate(SamplesPerTick);
 					score += 2;
 				}
@@ -493,7 +493,7 @@ int OPLmusicFile::PlayTick ()
 			}
 			reg = score[0];
 			data = score[1];
-			delay = LittleShort(((WORD *)score)[1]);
+			delay = LittleShort(((uint16_t *)score)[1]);
 			score += 4;
 			io->OPLwriteReg (0, reg, data);
 		}

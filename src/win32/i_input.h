@@ -89,7 +89,7 @@ protected:
 
 	int WheelMove[2];
 	int LastX, LastY;	// for m_filter
-	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
+	int ButtonState;	// bit mask of current button states (1=down, 0=up)
 };
 
 class FKeyboard : public FInputDevice

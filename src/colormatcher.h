@@ -38,10 +38,10 @@ class FColorMatcher
 {
 public:
 	FColorMatcher ();
-	FColorMatcher (const DWORD *palette);
+	FColorMatcher (const uint32_t *palette);
 	FColorMatcher (const FColorMatcher &other);
 
-	void SetPalette (const DWORD *palette);
+	void SetPalette (const uint32_t *palette);
 	uint8_t Pick (int r, int g, int b);
 	uint8_t Pick (PalEntry pe)
 	{

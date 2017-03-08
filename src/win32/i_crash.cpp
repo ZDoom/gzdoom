@@ -169,15 +169,15 @@ namespace zip
 	{
 		DWORD	Magic;						// 0
 		BYTE	VersionToExtract[2];		// 4
-		WORD	Flags;						// 6
-		WORD	Method;						// 8
-		WORD	ModTime;					// 10
-		WORD	ModDate;					// 12
+		uint16_t	Flags;						// 6
+		uint16_t	Method;						// 8
+		uint16_t	ModTime;					// 10
+		uint16_t	ModDate;					// 12
 		DWORD	CRC32;						// 14
 		DWORD	CompressedSize;				// 18
 		DWORD	UncompressedSize;			// 22
-		WORD	NameLength;					// 26
-		WORD	ExtraLength;				// 28
+		uint16_t	NameLength;					// 26
+		uint16_t	ExtraLength;				// 28
 	};
 
 	struct CentralDirectoryEntry
@@ -185,18 +185,18 @@ namespace zip
 		DWORD	Magic;
 		BYTE	VersionMadeBy[2];
 		BYTE	VersionToExtract[2];
-		WORD	Flags;
-		WORD	Method;
-		WORD	ModTime;
-		WORD	ModDate;
+		uint16_t	Flags;
+		uint16_t	Method;
+		uint16_t	ModTime;
+		uint16_t	ModDate;
 		DWORD	CRC32;
 		DWORD	CompressedSize;
 		DWORD	UncompressedSize;
-		WORD	NameLength;
-		WORD	ExtraLength;
-		WORD	CommentLength;
-		WORD	StartingDiskNumber;
-		WORD	InternalAttributes;
+		uint16_t	NameLength;
+		uint16_t	ExtraLength;
+		uint16_t	CommentLength;
+		uint16_t	StartingDiskNumber;
+		uint16_t	InternalAttributes;
 		DWORD	ExternalAttributes;
 		DWORD	LocalHeaderOffset;
 	};
@@ -204,13 +204,13 @@ namespace zip
 	struct EndOfCentralDirectory
 	{
 		DWORD	Magic;
-		WORD	DiskNumber;
-		WORD	FirstDisk;
-		WORD	NumEntries;
-		WORD	NumEntriesOnAllDisks;
+		uint16_t	DiskNumber;
+		uint16_t	FirstDisk;
+		uint16_t	NumEntries;
+		uint16_t	NumEntriesOnAllDisks;
 		DWORD	DirectorySize;
 		DWORD	DirectoryOffset;
-		WORD	ZipCommentLength;
+		uint16_t	ZipCommentLength;
 	};
 #pragma pack(pop)
 }
@@ -803,7 +803,7 @@ HANDLE WriteTextReport ()
 			//" Cr0NpxState=%08x\r\n"
 			"\r\n"
 			,
-			(WORD)ctxt->FloatSave.ControlWord, (WORD)ctxt->FloatSave.StatusWord, (WORD)ctxt->FloatSave.TagWord,
+			(uint16_t)ctxt->FloatSave.ControlWord, (uint16_t)ctxt->FloatSave.StatusWord, (uint16_t)ctxt->FloatSave.TagWord,
 			ctxt->FloatSave.ErrorOffset, ctxt->FloatSave.ErrorSelector, ctxt->FloatSave.DataOffset,
 			ctxt->FloatSave.DataSelector
 			//, ctxt->FloatSave.Cr0NpxState
@@ -1583,7 +1583,7 @@ static HANDLE MakeZip ()
 		central.CRC32 = LittleLong(TarFiles[i].CRC32);
 		central.CompressedSize = LittleLong(TarFiles[i].CompressedSize);
 		central.UncompressedSize = LittleLong(TarFiles[i].UncompressedSize);
-		central.NameLength = LittleShort((WORD)namelen);
+		central.NameLength = LittleShort((uint16_t)namelen);
 		central.LocalHeaderOffset = LittleLong(TarFiles[i].ZipOffset);
 		WriteFile (file, &central, sizeof(central), &len, NULL);
 		WriteFile (file, TarFiles[i].Filename, (DWORD)namelen, &len, NULL);
@@ -1648,7 +1648,7 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 	local.ModTime = dostime;
 	local.ModDate = dosdate;
 	local.UncompressedSize = LittleLong(whichfile->UncompressedSize);
-	local.NameLength = LittleShort((WORD)strlen(whichfile->Filename));
+	local.NameLength = LittleShort((uint16_t)strlen(whichfile->Filename));
 	
 	whichfile->ZipOffset = SetFilePointer (ziphandle, 0, NULL, FILE_CURRENT);
 	WriteFile (ziphandle, &local, sizeof(local), &wrote, NULL);

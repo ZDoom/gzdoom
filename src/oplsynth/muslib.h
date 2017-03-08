@@ -107,7 +107,7 @@ struct OPL2instrument {
 
 /* OP2 instrument file entry */
 struct OP2instrEntry {
-/*00*/	WORD	flags;				// see FL_xxx below
+/*00*/	uint16_t flags;				// see FL_xxx below
 /*02*/	uint8_t	finetune;			// finetune value for 2-voice sounds
 /*03*/	uint8_t	note;				// note # for fixed instruments
 /*04*/	struct OPL2instrument instr[2];	// instruments

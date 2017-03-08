@@ -1939,7 +1939,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 		if (resfile != NULL)
 		{
-			DWORD cnt = resfile->LumpCount();
+			uint32_t cnt = resfile->LumpCount();
 			for(int i=cnt-1; i>=0; i--)
 			{
 				FResourceLump *lmp = resfile->GetLump(i);

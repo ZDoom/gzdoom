@@ -94,7 +94,7 @@ CVAR(Bool, con_notablist, false, CVAR_ARCHIVE)
 
 
 static FTextureID conback;
-static DWORD conshade;
+static uint32_t conshade;
 static bool conline;
 
 extern int		gametic;

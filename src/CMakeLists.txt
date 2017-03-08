@@ -755,6 +755,8 @@ file( GLOB HEADER_FILES
 	scripting/decorate/*.h
 	scripting/zscript/*.h
 	scripting/vm/*.h
+	timidity/*.h
+	wildmidi/*.h
 	xlat/*.h
 	gl/*.h
 	gl/api/*.h

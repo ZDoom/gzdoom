@@ -83,7 +83,7 @@ IMPLEMENT_CLASS(SDLFB, false, false)
 
 struct MiniModeInfo
 {
-	WORD Width, Height;
+	uint16_t Width, Height;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -743,7 +743,7 @@ void SDLFB::SetVSync (bool vsync)
 #endif // __APPLE__
 }
 
-void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+void SDLFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
 	int w, h;
 	SDL_GetWindowSize (Screen, &w, &h);
@@ -773,8 +773,8 @@ void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
 	}
 	else
 	{
-		x = (SWORD)(x*Width/w);
-		y = (SWORD)(y*Height/h);
+		x = (int16_t)(x*Width/w);
+		y = (int16_t)(y*Height/h);
 	}
 }
 

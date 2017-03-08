@@ -101,7 +101,7 @@ public:
 	{
 		if (File != NULL)
 		{
-			WORD endmark = 0xFFFF;
+			uint16_t endmark = 0xFFFF;
 			fwrite(&endmark, 2, 1, File);
 			fclose(File);
 		}
@@ -130,7 +130,7 @@ public:
 
 		double clock_rate;
 		int clock_mul;
-		WORD clock_word;
+		uint16_t clock_word;
 
 		clock_rate = samples_per_tick * ADLIB_CLOCK_MUL;
 		clock_mul = 1;
@@ -141,7 +141,7 @@ public:
 		{
 			clock_mul++;
 		}
-		clock_word = WORD(clock_rate / clock_mul + 0.5);
+		clock_word = uint16_t(clock_rate / clock_mul + 0.5);
 
 		if (NeedClockRate)
 		{ // Set the initial clock rate.

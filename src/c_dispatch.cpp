@@ -297,13 +297,13 @@ static int ListActionCommands (const char *pattern)
 #endif
 
 #if !defined (get16bits)
-#define get16bits(d) ((((DWORD)(((const uint8_t *)(d))[1])) << 8)\
-                       +(DWORD)(((const uint8_t *)(d))[0]) )
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
 #endif
 
-DWORD SuperFastHash (const char *data, size_t len)
+uint32_t SuperFastHash (const char *data, size_t len)
 {
-	DWORD hash = 0, tmp;
+	uint32_t hash = 0, tmp;
 	size_t rem;
 
 	if (len == 0 || data == NULL) return 0;
@@ -352,12 +352,12 @@ DWORD SuperFastHash (const char *data, size_t len)
 /* A modified version to do a case-insensitive hash */
 
 #undef get16bits
-#define get16bits(d) ((((DWORD)tolower(((const uint8_t *)(d))[1])) << 8)\
-                       +(DWORD)tolower(((const uint8_t *)(d))[0]) )
+#define get16bits(d) ((((uint32_t)tolower(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)tolower(((const uint8_t *)(d))[0]) )
 
-DWORD SuperFastHashI (const char *data, size_t len)
+uint32_t SuperFastHashI (const char *data, size_t len)
 {
-	DWORD hash = 0, tmp;
+	uint32_t hash = 0, tmp;
 	size_t rem;
 
 	if (len <= 0 || data == NULL) return 0;

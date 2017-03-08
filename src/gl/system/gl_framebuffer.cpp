@@ -265,7 +265,7 @@ void OpenGLFrameBuffer::DoSetGamma()
 	bool useHWGamma = m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen()));
 	if (useHWGamma)
 	{
-		WORD gammaTable[768];
+		uint16_t gammaTable[768];
 
 		// This formula is taken from Doomsday
 		float gamma = clamp<float>(Gamma, 0.1f, 4.f);
@@ -281,7 +281,7 @@ void OpenGLFrameBuffer::DoSetGamma()
 			val += bright * 128;
 			if(gamma != 1) val = pow(val, invgamma) / norm;
 
-			gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (WORD)clamp<double>(val*256, 0, 0xffff);
+			gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (uint16_t)clamp<double>(val*256, 0, 0xffff);
 		}
 		SetGammaTable(gammaTable);
 

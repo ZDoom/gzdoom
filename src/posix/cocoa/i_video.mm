@@ -1138,7 +1138,7 @@ SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool 
 	{
 		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
 		{
-			m_originalGamma[i] = static_cast<WORD>(gammaTable[i] * 65535.0f);
+			m_originalGamma[i] = static_cast<uint16_t>(gammaTable[i] * 65535.0f);
 		}
 	}
 }
@@ -1222,7 +1222,7 @@ void SDLGLFB::SwapBuffers()
 	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
-void SDLGLFB::SetGammaTable(WORD* table)
+void SDLGLFB::SetGammaTable(uint16_t* table)
 {
 	if (m_supportsGamma)
 	{

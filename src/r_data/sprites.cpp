@@ -211,7 +211,7 @@ static void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxfr
 	
 	// allocate space for the frames present and copy sprtemp to it
 	sprites[num].numframes = maxframe;
-	sprites[num].spriteframes = WORD(framestart = SpriteFrames.Reserve (maxframe));
+	sprites[num].spriteframes = uint16_t(framestart = SpriteFrames.Reserve (maxframe));
 	for (frame = 0; frame < maxframe; ++frame)
 	{
 		memcpy (SpriteFrames[framestart+frame].Texture, sprtemp[frame].Texture, sizeof(sprtemp[frame].Texture));
@@ -428,7 +428,7 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 		newstart = SpriteFrames.Reserve(frame - spr.numframes);
 		if (spr.numframes == 0)
 		{
-			spr.spriteframes = WORD(newstart);
+			spr.spriteframes = uint16_t(newstart);
 		}
 	}
 	else
@@ -440,7 +440,7 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 		{
 			SpriteFrames[newstart + i] = SpriteFrames[spr.spriteframes + i];
 		}
-		spr.spriteframes = WORD(newstart);
+		spr.spriteframes = uint16_t(newstart);
 		newstart += i;
 	}
 	// Initialize all new frames to 0.

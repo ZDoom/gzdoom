@@ -60,7 +60,7 @@ struct ReverbContainer
 {
 	ReverbContainer *Next;
 	const char *Name;
-	WORD ID;
+	uint16_t ID;
 	bool Builtin;
 	bool Modified;
 	REVERB_PROPERTIES Properties;

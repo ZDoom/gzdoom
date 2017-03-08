@@ -60,7 +60,7 @@ protected:
 
 	FDecalBase *Left, *Right;
 	FName Name;
-	WORD SpawnID;
+	uint16_t SpawnID;
 	TArray<const PClass *> Users;	// Which actors generate this decal
 };
 
@@ -75,11 +75,11 @@ public:
 	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to);
 
 	double ScaleX, ScaleY;
-	DWORD ShadeColor;
-	DWORD Translation;
+	uint32_t ShadeColor;
+	uint32_t Translation;
 	FRenderStyle RenderStyle;
 	FTextureID PicNum;
-	WORD RenderFlags;
+	uint16_t RenderFlags;
 	double Alpha;				// same as actor->alpha
 	const FDecalAnimator *Animator;
 	const FDecalBase *LowerDecal;
@@ -97,22 +97,22 @@ public:
 	void ReadDecals (FScanner &sc);
 	void ReadAllDecals ();
 
-	const FDecalTemplate *GetDecalByNum (WORD num) const;
+	const FDecalTemplate *GetDecalByNum (uint16_t num) const;
 	const FDecalTemplate *GetDecalByName (const char *name) const;
 
 private:
 	struct FTranslation;
 
 	static void DelTree (FDecalBase *root);
-	static FDecalBase *ScanTreeForNum (const WORD num, FDecalBase *root);
+	static FDecalBase *ScanTreeForNum (const uint16_t num, FDecalBase *root);
 	static FDecalBase *ScanTreeForName (const char *name, FDecalBase *root);
 	static void ReplaceDecalRef (FDecalBase *from, FDecalBase *to, FDecalBase *root);
-	FTranslation *GenerateTranslation (DWORD start, DWORD end);
-	void AddDecal (const char *name, WORD num, const FDecalTemplate &decal);
+	FTranslation *GenerateTranslation (uint32_t start, uint32_t end);
+	void AddDecal (const char *name, uint16_t num, const FDecalTemplate &decal);
 	void AddDecal (FDecalBase *decal);
 	FDecalAnimator *FindAnimator (const char *name);
 
-	WORD GetDecalID (FScanner &sc);
+	uint16_t GetDecalID (FScanner &sc);
 	void ParseDecal (FScanner &sc);
 	void ParseDecalGroup (FScanner &sc);
 	void ParseGenerator (FScanner &sc);

@@ -19,7 +19,7 @@ struct spriteframe_t
 {
 	struct FVoxelDef *Voxel;// voxel to use for this frame
 	FTextureID Texture[16];	// texture to use for view angles 0-15
-	WORD Flip;				// flip (1 = flip) to use for view angles 0-15.
+	uint16_t Flip;		// flip (1 = flip) to use for view angles 0-15.
 };
 
 //
@@ -32,10 +32,10 @@ struct spritedef_t
 	union
 	{
 		char name[5];
-		DWORD dwName;
+		uint32_t dwName;
 	};
 	uint8_t numframes;
-	WORD spriteframes;
+	uint16_t spriteframes;
 };
 
 extern TArray<spriteframe_t> SpriteFrames;

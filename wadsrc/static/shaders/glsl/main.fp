@@ -139,11 +139,10 @@ float R_DoomLightingEquation(float light)
 //
 //===========================================================================
 
-float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
+float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
 {
 	float u;
-	float v = (abs(shadowIndex) + 0.5) / 1024.0;
-	vec2 dir = (pixelpos.xz - lightpos.xz);
+	vec2 dir = (testpos - lightpos);
 	if (abs(dir.x) > abs(dir.y))
 	{
 		if (dir.x >= 0.0)
@@ -161,6 +160,28 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 	dir -= sign(dir) * 2.0; // margin, to remove wall acne
 	float dist2 = dot(dir, dir);
 	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
+}
+
+//===========================================================================
+//
+// Check if light is in shadow using Percentage Closer Filtering (PCF)
+//
+//===========================================================================
+
+#define PCF_FILTER_STEP_COUNT 3
+#define PCF_COUNT (PCF_FILTER_STEP_COUNT * 2 + 1)
+
+float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
+{
+	float v = (abs(shadowIndex) + 0.5) / 1024.0;
+	vec2 dir = (pixelpos.xz - lightpos.xz);
+	vec2 normal = normalize(vec2(-dir.y, dir.x));
+	float sum = 0.0;
+	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
+	{
+		sum += sampleShadowmap(lightpos.xz, pixelpos.xz + normal * x, v);
+	}
+	return sum / PCF_COUNT;
 }
 
 //===========================================================================

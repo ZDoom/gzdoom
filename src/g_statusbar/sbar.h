@@ -133,7 +133,7 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	TObjPtr<DHUDMessage> Next;
+	TObjPtr<DHUDMessage*> Next;
 	DWORD SBarID;
 	char *SourceText;
 
@@ -415,7 +415,7 @@ private:
 	void DrawConsistancy () const;
 	void DrawWaiting () const;
 
-	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
+	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
 	bool ShowLog;
 };
 

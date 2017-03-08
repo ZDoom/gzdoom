@@ -86,7 +86,7 @@ public:
 	DCorpsePointer (AActor *ptr);
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
-	TObjPtr<AActor> Corpse;
+	TObjPtr<AActor*> Corpse;
 	DWORD Count;	// Only the first corpse pointer's count is valid.
 private:
 	DCorpsePointer () {}

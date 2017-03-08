@@ -1058,17 +1058,17 @@ public:
 	SBYTE			visdir;
 	SWORD			movecount;		// when 0, select a new dir
 	SWORD			strafecount;	// for MF3_AVOIDMELEE
-	TObjPtr<AActor> target;			// thing being chased/attacked (or NULL)
+	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
 									// also the originator for missiles
-	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killough 2/15/98
-	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
+	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
+	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	int32_t			threshold;		// if > 0, the target will be chased
 	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
-	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
+	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	DVector3		SpawnPoint; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				StartHealth;
@@ -1077,9 +1077,9 @@ public:
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
 	FNameNoInit		Species;		// For monster families
-	TObjPtr<AActor>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
-	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
-	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
+	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
+	TObjPtr<AActor*>	tracer;			// Thing being chased/attacked for tracers
+	TObjPtr<AActor*>	master;			// Thing which spawned this one (prevents mutual attacks)
 
 	int				tid;			// thing identifier
 	int				special;		// special
@@ -1088,7 +1088,7 @@ public:
 	int		accuracy, stamina;		// [RH] Strife stats -- [XA] moved here for DECORATE/ACS access.
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
-	TObjPtr<AActor> goal;			// Monster's goal if not chasing anything
+	TObjPtr<AActor*> goal;			// Monster's goal if not chasing anything
 	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
 	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
@@ -1126,7 +1126,7 @@ public:
 	FNameNoInit PoisonDamageTypeReceived; // Damage type received by poison.
 	int PoisonDurationReceived; // Duration left for receiving poison damage.
 	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
-	TObjPtr<AActor> Poisoner; // Last source of received poison damage.
+	TObjPtr<AActor*> Poisoner; // Last source of received poison damage.
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
@@ -1136,7 +1136,7 @@ public:
 	int validcount;
 
 
-	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory
+	TObjPtr<AInventory*>	Inventory;		// [RH] This actor's inventory
 	DWORD			InventoryID;	// A unique ID to keep track of inventory items
 
 	BYTE smokecounter;
@@ -1434,7 +1434,7 @@ public:
 
 
 	// begin of GZDoom specific additions
-	TArray<TObjPtr<AActor> >		dynamiclights;
+	TArray<TObjPtr<AActor*> >		dynamiclights;
 	void *				lightassociations;
 	bool				hasmodel;
 	// end of GZDoom specific additions

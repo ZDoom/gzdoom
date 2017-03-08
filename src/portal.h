@@ -227,7 +227,7 @@ struct FSectorPortal
 	sector_t *mDestination;
 	DVector2 mDisplacement;
 	double mPlaneZ;
-	TObjPtr<AActor> mSkybox;
+	TObjPtr<AActor*> mSkybox;
 
 	bool MergeAllowed() const
 	{

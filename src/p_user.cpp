@@ -3157,7 +3157,7 @@ void P_UnPredictPlayer ()
 		APlayerPawn *act = player->mo;
 		AActor *savedcamera = player->camera;
 
-		TObjPtr<AInventory> InvSel = act->InvSel;
+		TObjPtr<AInventory*> InvSel = act->InvSel;
 		int inventorytics = player->inventorytics;
 
 		*player = PredictionPlayerBackup;

@@ -22,7 +22,7 @@ protected:
 	int m_PolyObj;
 	double m_Speed;
 	double m_Dist;
-	TObjPtr<DInterpolation> m_Interpolation;
+	TObjPtr<DInterpolation*> m_Interpolation;
 
 	void SetInterpolation();
 };
@@ -87,8 +87,8 @@ struct FPolyObj
 	int			seqType;
 	double		Size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	FPolyNode	*subsectorlinks;
-	TObjPtr<DPolyAction> specialdata;	// pointer to a thinker, if the poly is moving
-	TObjPtr<DInterpolation> interpolation;
+	TObjPtr<DPolyAction*> specialdata;	// pointer to a thinker, if the poly is moving
+	TObjPtr<DInterpolation*> interpolation;
 
 	FPolyObj();
 	DInterpolation *SetInterpolation();

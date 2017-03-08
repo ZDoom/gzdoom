@@ -975,7 +975,7 @@ public:
 	PalEntry	SpecialColors[5];
 
 
-	TObjPtr<AActor> SoundTarget;
+	TObjPtr<AActor*> SoundTarget;
 
 	short		special;
 	short		lightlevel;
@@ -996,9 +996,9 @@ public:
 	int			terrainnum[2];
 
 	// thinker_t for reversable actions
-	TObjPtr<DSectorEffect> floordata;			// jff 2/22/98 make thinkers on
-	TObjPtr<DSectorEffect> ceilingdata;			// floors, ceilings, lighting,
-	TObjPtr<DSectorEffect> lightingdata;		// independent of one another
+	TObjPtr<DSectorEffect*> floordata;			// jff 2/22/98 make thinkers on
+	TObjPtr<DSectorEffect*> ceilingdata;			// floors, ceilings, lighting,
+	TObjPtr<DSectorEffect*> lightingdata;		// independent of one another
 
 	enum
 	{
@@ -1007,7 +1007,7 @@ public:
 		CeilingScroll,
 		FloorScroll
 	};
-	TObjPtr<DInterpolation> interpolations[4];
+	TObjPtr<DInterpolation*> interpolations[4];
 
 	int prevsec;		// -1 or number of sector for previous step
 	int nextsec;		// -1 or number of next step sector
@@ -1044,7 +1044,7 @@ public:
 	// flexible in a Bloody way. SecActTarget forms a list of actors
 	// joined by their tracer fields. When a potential sector action
 	// occurs, SecActTarget's TriggerAction method is called.
-	TObjPtr<AActor> SecActTarget;
+	TObjPtr<AActor*> SecActTarget;
 
 	// [RH] The portal or skybox to render for this sector.
 	unsigned Portals[2];
@@ -1126,7 +1126,7 @@ struct side_t
 		double xScale;
 		double yScale;
 		FTextureID texture;
-		TObjPtr<DInterpolation> interpolation;
+		TObjPtr<DInterpolation*> interpolation;
 		//int Light;
 	};
 

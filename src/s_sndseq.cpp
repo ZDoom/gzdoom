@@ -126,7 +126,7 @@ public:
 	}
 private:
 	DSeqActorNode() {}
-	TObjPtr<AActor> m_Actor;
+	TObjPtr<AActor*> m_Actor;
 };
 
 class DSeqPolyNode : public DSeqNode

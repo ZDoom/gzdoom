@@ -491,10 +491,10 @@ void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 {
 	for (int i = start; i < end; ++i)
 	{
-		float br = GPalette.BaseColors[i].r;
-		float bg = GPalette.BaseColors[i].g;
-		float bb = GPalette.BaseColors[i].b;
-		float grey = (br * 0.299 + bg * 0.587 + bb * 0.114) / 255.0f;
+		double br = GPalette.BaseColors[i].r;
+		double bg = GPalette.BaseColors[i].g;
+		double bb = GPalette.BaseColors[i].b;
+		double grey = (br * 0.299 + bg * 0.587 + bb * 0.114) / 255.0f;
 		if (grey > 1.0) grey = 1.0;
 		br = r * grey;
 		bg = g * grey;

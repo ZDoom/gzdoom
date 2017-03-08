@@ -153,7 +153,7 @@ AActor* actorvalue(const svalue_t &svalue)
 	}
 	else
 	{
-		TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+		auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 		// this requires some creativity. We use the intvalue
 		// as the thing number of a thing in the level.
 		intval = intvalue(svalue);

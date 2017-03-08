@@ -95,7 +95,7 @@ protected:
 	float Blends[2][4];
 	int TotalTics;
 	int StartTic;
-	TObjPtr<AActor> ForWho;
+	TObjPtr<AActor*> ForWho;
 
 	void SetBlend (float time);
 	DFlashFader ();
@@ -131,7 +131,7 @@ public:
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
-	TObjPtr<AActor> m_Spot;
+	TObjPtr<AActor*> m_Spot;
 	double m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
 	int m_CountdownStart;
@@ -164,7 +164,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void OnDestroy() override;
 
-	TObjPtr<AActor> UnmorphedMe;
+	TObjPtr<AActor*> UnmorphedMe;
 	int UnmorphTime, MorphStyle;
 	PClassActor *MorphExitFlash;
 	ActorFlags FlagsSave;

@@ -55,8 +55,8 @@ protected:
 	int m_ModeNum;
 
 	TArray<int> m_SequenceChoices;
-	TObjPtr<DSeqNode> m_ChildSeqNode;
-	TObjPtr<DSeqNode> m_ParentSeqNode;
+	TObjPtr<DSeqNode*> m_ChildSeqNode;
+	TObjPtr<DSeqNode*> m_ParentSeqNode;
 
 private:
 	static DSeqNode *SequenceListHead;

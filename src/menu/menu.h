@@ -262,7 +262,7 @@ public:
 		MOUSE_Release
 	};
 
-	TObjPtr<DMenu> mParentMenu;
+	TObjPtr<DMenu*> mParentMenu;
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
 	bool DontDim;

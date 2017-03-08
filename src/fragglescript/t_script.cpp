@@ -388,7 +388,7 @@ IMPLEMENT_POINTERS_START(DFraggleThinker)
 	IMPLEMENT_POINTER(LevelScript)
 IMPLEMENT_POINTERS_END
 
-TObjPtr<DFraggleThinker> DFraggleThinker::ActiveThinker;
+TObjPtr<DFraggleThinker*> DFraggleThinker::ActiveThinker;
 
 //==========================================================================
 //

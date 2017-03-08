@@ -90,8 +90,8 @@ private:
 	void Tick();
 
 public:	// must be public to be able to generate the field export tables. Grrr...
-	TObjPtr<AActor> Caller;
-	TObjPtr<DPSprite> Next;
+	TObjPtr<AActor*> Caller;
+	TObjPtr<DPSprite*> Next;
 	player_t *Owner;
 	FState *State;
 	int Sprite;

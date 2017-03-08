@@ -285,7 +285,7 @@ class DIntermissionController : public DObject
 	HAS_OBJECT_POINTERS
 
 	FIntermissionDescriptor *mDesc;
-	TObjPtr<DIntermissionScreen> mScreen;
+	TObjPtr<DIntermissionScreen*> mScreen;
 	bool mDeleteDesc;
 	bool mFirst;
 	bool mAdvance, mSentAdvance;

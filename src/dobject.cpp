@@ -542,7 +542,7 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 	for (auto &sec : level.sectors)
 	{
 #define SECTOR_CHECK(f,t) \
-if (sec.f.p == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); changed++; }
+if (sec.f.pp == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); changed++; }
 		SECTOR_CHECK( SoundTarget, AActor );
 		SECTOR_CHECK( SecActTarget, AActor );
 		SECTOR_CHECK( floordata, DSectorEffect );
@@ -552,9 +552,9 @@ if (sec.f.p == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); change
 	}
 
 	// Go through bot stuff.
-	if (bglobal.firstthing.p == (AActor *)old)		bglobal.firstthing = (AActor *)notOld, ++changed;
-	if (bglobal.body1.p == (AActor *)old)			bglobal.body1 = (AActor *)notOld, ++changed;
-	if (bglobal.body2.p == (AActor *)old)			bglobal.body2 = (AActor *)notOld, ++changed;
+	if (bglobal.firstthing.pp == (AActor *)old)		bglobal.firstthing = (AActor *)notOld, ++changed;
+	if (bglobal.body1.pp == (AActor *)old)			bglobal.body1 = (AActor *)notOld, ++changed;
+	if (bglobal.body2.pp == (AActor *)old)			bglobal.body2 = (AActor *)notOld, ++changed;
 
 	return changed;
 }

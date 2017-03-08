@@ -348,70 +348,54 @@ class TObjPtr
 {
 	union
 	{
-		T *p;
+		T pp;
 		DObject *o;
 	};
 public:
 	TObjPtr() throw()
 	{
 	}
-	TObjPtr(T *q) throw()
-		: p(q)
+	TObjPtr(T q) throw()
+		: pp(q)
 	{
 	}
 	TObjPtr(const TObjPtr<T> &q) throw()
-		: p(q.p)
+		: pp(q.pp)
 	{
 	}
-	T *operator=(T *q) throw()
+	T operator=(T q) throw()
 	{
-		return p = q;
+		return pp = q;
 		// The caller must now perform a write barrier.
 	}
-	operator T*() throw()
+	operator T() throw()
 	{
-		return GC::ReadBarrier(p);
+		return GC::ReadBarrier(pp);
 	}
 	T &operator*()
 	{
-		T *q = GC::ReadBarrier(p);
+		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);
 		return *q;
 	}
-	T **operator&() throw()
+	T *operator&() throw()
 	{
 		// Does not perform a read barrier. The only real use for this is with
 		// the DECLARE_POINTER macro, where a read barrier would be a very bad
 		// thing.
-		return &p;
+		return &pp;
 	}
-	T *operator->() throw()
+	T operator->() throw()
 	{
-		return GC::ReadBarrier(p);
+		return GC::ReadBarrier(pp);
 	}
-	bool operator<(T *u) throw()
+	bool operator!=(T u) throw()
 	{
-		return GC::ReadBarrier(p) < u;
+		return GC::ReadBarrier(o) != u;
 	}
-	bool operator<=(T *u) throw()
+	bool operator==(T u) throw()
 	{
-		return GC::ReadBarrier(p) <= u;
-	}
-	bool operator>(T *u) throw()
-	{
-		return GC::ReadBarrier(p) > u;
-	}
-	bool operator>=(T *u) throw()
-	{
-		return GC::ReadBarrier(p) >= u;
-	}
-	bool operator!=(T *u) throw()
-	{
-		return GC::ReadBarrier(p) != u;
-	}
-	bool operator==(T *u) throw()
-	{
-		return GC::ReadBarrier(p) == u;
+		return GC::ReadBarrier(o) == u;
 	}
 
 	template<class U> friend inline void GC::Mark(TObjPtr<U> &obj);
@@ -424,7 +408,7 @@ public:
 // the contents of a TObjPtr to a related type.
 template<class T,class U> inline T barrier_cast(TObjPtr<U> &o)
 {
-	return static_cast<T>(static_cast<U *>(o));
+	return static_cast<T>(static_cast<U>(o));
 }
 
 template<class T> inline void GC::Mark(TObjPtr<T> &obj)

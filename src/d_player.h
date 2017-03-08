@@ -131,8 +131,8 @@ public:
 	int			RunHealth;
 	int			PlayerFlags;
 	double		FullHeight;
-	TObjPtr<AInventory> InvFirst;		// first inventory item displayed on inventory bar
-	TObjPtr<AInventory> InvSel;			// selected inventory item
+	TObjPtr<AInventory*> InvFirst;		// first inventory item displayed on inventory bar
+	TObjPtr<AInventory*> InvSel;			// selected inventory item
 
 	// [GRB] Player class properties
 	double		JumpZ;
@@ -427,7 +427,7 @@ public:
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
-	TObjPtr<DPSprite> psprites; // view sprites (gun, etc)
+	TObjPtr<DPSprite*> psprites; // view sprites (gun, etc)
 
 	int			cheats;					// bit flags
 	int			timefreezer;			// Player has an active time freezer
@@ -442,8 +442,8 @@ public:
 	int			poisoncount;			// screen flash for poison damage
 	FName		poisontype;				// type of poison damage to apply
 	FName		poisonpaintype;			// type of Pain state to enter for poison damage
-	TObjPtr<AActor>		poisoner;		// NULL for non-player actors
-	TObjPtr<AActor>		attacker;		// who did damage (NULL for floors)
+	TObjPtr<AActor*>		poisoner;		// NULL for non-player actors
+	TObjPtr<AActor*>		attacker;		// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas
 	short		fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	short		fixedlightlevel;
@@ -451,19 +451,19 @@ public:
 	PClassActor *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle;				// which effects to apply for this player instance when morphed
 	PClassActor *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
-	TObjPtr<AWeapon>	PremorphWeapon;		// ready weapon before morphing
+	TObjPtr<AWeapon*>	PremorphWeapon;		// ready weapon before morphing
 	int			chickenPeck;			// chicken peck countdown
 	int			jumpTics;				// delay the next jump for a moment
 	bool		onground;				// Identifies if this player is on the ground or other object
 
 	int			respawn_time;			// [RH] delay respawning until this tic
-	TObjPtr<AActor>		camera;			// [RH] Whose eyes this player sees through
+	TObjPtr<AActor*>		camera;			// [RH] Whose eyes this player sees through
 
 	int			air_finished;			// [RH] Time when you start drowning
 
 	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
 
-	TObjPtr<AActor> MUSINFOactor;		// For MUSINFO purposes
+	TObjPtr<AActor*> MUSINFOactor;		// For MUSINFO purposes
 	SBYTE		MUSINFOtics;
 
 	bool		settings_controller;	// Player can control game settings.
@@ -471,7 +471,7 @@ public:
 	SBYTE		crouchdir;
 
 	//Added by MC:
-	TObjPtr<DBot> Bot;
+	TObjPtr<DBot*> Bot;
 
 	float		BlendR;		// [RH] Final blending values
 	float		BlendG;
@@ -490,7 +490,7 @@ public:
 	FWeaponSlots weapons;
 
 	// [CW] I moved these here for multiplayer conversation support.
-	TObjPtr<AActor> ConversationNPC, ConversationPC;
+	TObjPtr<AActor*> ConversationNPC, ConversationPC;
 	DAngle ConversationNPCAngle;
 	bool ConversationFaceTalker;
 

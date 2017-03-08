@@ -116,9 +116,9 @@ public:
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	TObjPtr<AActor> firstthing;
-	TObjPtr<AActor>	body1;
-	TObjPtr<AActor> body2;
+	TObjPtr<AActor*> firstthing;
+	TObjPtr<AActor*>	body1;
+	TObjPtr<AActor*> body2;
 
 	bool	 m_Thinking;
 
@@ -152,12 +152,12 @@ public:
 	player_t	*player;
 	DAngle		Angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smooth view movement)
-	TObjPtr<AActor>		dest;		// Move Destination.
-	TObjPtr<AActor>		prev;		// Previous move destination.
-	TObjPtr<AActor>		enemy;		// The dead meat.
-	TObjPtr<AActor>		missile;	// A threatening missile that needs to be avoided.
-	TObjPtr<AActor>		mate;		// Friend (used for grouping in teamplay or coop).
-	TObjPtr<AActor>		last_mate;	// If bots mate disappeared (not if died) that mate is
+	TObjPtr<AActor*>		dest;		// Move Destination.
+	TObjPtr<AActor*>		prev;		// Previous move destination.
+	TObjPtr<AActor*>		enemy;		// The dead meat.
+	TObjPtr<AActor*>		missile;	// A threatening missile that needs to be avoided.
+	TObjPtr<AActor*>		mate;		// Friend (used for grouping in teamplay or coop).
+	TObjPtr<AActor*>		last_mate;	// If bots mate disappeared (not if died) that mate is
 							// pointed to by this. Allows bot to roam to it if
 							// necessary.
 

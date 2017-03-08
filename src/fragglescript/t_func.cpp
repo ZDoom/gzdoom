@@ -3257,7 +3257,7 @@ void FParser::SF_SpawnMissile()
 
 void FParser::SF_MapThingNumExist()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	int intval;
 
@@ -3295,7 +3295,7 @@ void FParser::SF_MapThingNumExist()
 
 void FParser::SF_MapThings()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	t_return.type = svt_int;
 	t_return.value.i = SpawnedThings.Size();

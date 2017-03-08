@@ -254,8 +254,8 @@ protected:
 	double		m_CeilingTarget;
 	int			m_Crush;
 	bool		m_Hexencrush;
-	TObjPtr<DInterpolation> m_Interp_Ceiling;
-	TObjPtr<DInterpolation> m_Interp_Floor;
+	TObjPtr<DInterpolation*> m_Interp_Ceiling;
+	TObjPtr<DInterpolation*> m_Interp_Floor;
 
 private:
 	DPillar ();
@@ -595,8 +595,8 @@ protected:
 	double		m_FloorDestDist;
 	double		m_CeilingDestDist;
 	double		m_Speed;
-	TObjPtr<DInterpolation> m_Interp_Ceiling;
-	TObjPtr<DInterpolation> m_Interp_Floor;
+	TObjPtr<DInterpolation*> m_Interp_Ceiling;
+	TObjPtr<DInterpolation*> m_Interp_Floor;
 
 	void StartFloorSound ();
 

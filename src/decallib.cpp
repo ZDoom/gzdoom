@@ -115,7 +115,7 @@ struct DDecalThinker : public DThinker
 public:
 	DDecalThinker (DBaseDecal *decal) : DThinker (STAT_DECALTHINKER), TheDecal (decal) {}
 	void Serialize(FSerializer &arc);
-	TObjPtr<DBaseDecal> TheDecal;
+	TObjPtr<DBaseDecal*> TheDecal;
 protected:
 	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
 };

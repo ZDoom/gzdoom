@@ -1383,7 +1383,7 @@ private:
 	double WatchD, LastD;
 	int Special;
 	int Args[5];
-	TObjPtr<AActor> Activator;
+	TObjPtr<AActor*> Activator;
 	line_t *Line;
 	bool LineSide;
 	bool bCeiling;
@@ -2879,7 +2879,7 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(Scripts)
 IMPLEMENT_POINTERS_END
 
-TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
+TObjPtr<DACSThinker*> DACSThinker::ActiveThinker;
 
 DACSThinker::DACSThinker ()
 : DThinker(STAT_SCRIPTS)

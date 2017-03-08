@@ -895,7 +895,7 @@ protected:
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
-	TObjPtr<AActor>	activator;
+	TObjPtr<AActor*>	activator;
 	line_t			*activationline;
 	bool			backSide;
 	FFont			*activefont;
@@ -955,7 +955,7 @@ public:
 
 	typedef TMap<int, DLevelScript *> ScriptMap;
 	ScriptMap RunningScripts;	// Array of all synchronous scripts
-	static TObjPtr<DACSThinker> ActiveThinker;
+	static TObjPtr<DACSThinker*> ActiveThinker;
 
 	void DumpScriptStatus();
 	void StopScriptsFor (AActor *actor);

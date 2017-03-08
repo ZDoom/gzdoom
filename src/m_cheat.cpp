@@ -628,7 +628,7 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn> Pawn;
+	TObjPtr<APlayerPawn*> Pawn;
 
 	void Tick()
 	{

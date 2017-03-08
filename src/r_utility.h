@@ -108,7 +108,7 @@ extern void R_ClearPastViewer (AActor *actor);
 struct FCanvasTextureInfo
 {
 	FCanvasTextureInfo *Next;
-	TObjPtr<AActor> Viewpoint;
+	TObjPtr<AActor*> Viewpoint;
 	FCanvasTexture *Texture;
 	FTextureID PicNum;
 	int FOV;

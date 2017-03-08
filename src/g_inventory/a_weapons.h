@@ -113,8 +113,8 @@ public:
 	int SlotPriority;
 
 	// In-inventory instance variables
-	TObjPtr<AInventory> Ammo1, Ammo2;
-	TObjPtr<AWeapon> SisterWeapon;
+	TObjPtr<AInventory*> Ammo1, Ammo2;
+	TObjPtr<AWeapon*> SisterWeapon;
 	float FOVScale;
 	int Crosshair;							// 0 to use player's crosshair
 	bool GivenAsMorphWeapon;

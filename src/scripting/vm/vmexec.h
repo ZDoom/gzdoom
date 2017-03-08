@@ -649,9 +649,9 @@ begin:
 		}
 		NEXTOP;
 	OP(SCOPE) :
-		{
-			ASSERTA(a); ASSERTA(C);
-			FScopeBarrier::ValidateCall(((DObject*)a)->GetClass(), (VMFunction*)C, B - 1);
+	{
+		ASSERTA(a); ASSERTA(C);
+		FScopeBarrier::ValidateCall(((DObject*)konsta[a].v)->GetClass(), (VMFunction*)konsta[C].v, B - 1);
 		}
 		NEXTOP;
 

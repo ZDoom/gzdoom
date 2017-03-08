@@ -50,17 +50,17 @@ struct sfxinfo_t
 	SWORD		NearLimit;				// 0 means unlimited
 	float		LimitRange;				// Range for sound limiting (squared for faster computations)
 
-	WORD		bRandomHeader:1;
-	WORD		bPlayerReserve:1;
-	WORD		bLoadRAW:1;
-	WORD		bPlayerCompat:1;
-	WORD		b16bit:1;
-	WORD		bUsed:1;
-	WORD		bSingular:1;
-	WORD		bTentative:1;
-	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
+	unsigned		bRandomHeader:1;
+	unsigned		bPlayerReserve:1;
+	unsigned		bLoadRAW:1;
+	unsigned		bPlayerCompat:1;
+	unsigned		b16bit:1;
+	unsigned		bUsed:1;
+	unsigned		bSingular:1;
+	unsigned		bTentative:1;
+	unsigned		bPlayerSilent:1;		// This player sound is intentionally silent.
 
-	WORD		RawRate;				// Sample rate to use when bLoadRAW is true
+	int		RawRate;				// Sample rate to use when bLoadRAW is true
 
 	int			LoopStart;				// -1 means no specific loop defined
 

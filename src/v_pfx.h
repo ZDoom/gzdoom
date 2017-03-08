@@ -58,9 +58,9 @@ struct PfxState
 		} Bits16;
 		struct
 		{
-			uint32 Red;
-			uint32 Green;
-			uint32 Blue;
+			uint32_t Red;
+			uint32_t Green;
+			uint32_t Blue;
 		} Bits32;
 	} Masks;
 	BYTE RedShift;
@@ -70,7 +70,7 @@ struct PfxState
 	BITFIELD BlueLeft:1;
 	BITFIELD GreenLeft:1;
 
-	void SetFormat (int bits, uint32 redMask, uint32 greenMask, uint32 blueMask);
+	void SetFormat (int bits, uint32_t redMask, uint32_t greenMask, uint32_t blueMask);
 	void (*SetPalette) (const PalEntry *pal);
 	void (*Convert) (BYTE *src, int srcpitch,
 		void *dest, int destpitch, int destwidth, int destheight,

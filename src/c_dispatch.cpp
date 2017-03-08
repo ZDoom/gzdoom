@@ -293,7 +293,7 @@ static int ListActionCommands (const char *pattern)
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
   || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
-#define get16bits(d) (*((const WORD *) (d)))
+#define get16bits(d) (*((const uint16_t *) (d)))
 #endif
 
 #if !defined (get16bits)
@@ -317,7 +317,7 @@ DWORD SuperFastHash (const char *data, size_t len)
 		hash  += get16bits (data);
 		tmp    = (get16bits (data+2) << 11) ^ hash;
 		hash   = (hash << 16) ^ tmp;
-		data  += 2*sizeof (WORD);
+		data  += 2*sizeof (uint16_t);
 		hash  += hash >> 11;
 	}
 
@@ -326,7 +326,7 @@ DWORD SuperFastHash (const char *data, size_t len)
 	{
 		case 3:	hash += get16bits (data);
 				hash ^= hash << 16;
-				hash ^= data[sizeof (WORD)] << 18;
+				hash ^= data[sizeof (uint16_t)] << 18;
 				hash += hash >> 11;
 				break;
 		case 2:	hash += get16bits (data);
@@ -371,7 +371,7 @@ DWORD SuperFastHashI (const char *data, size_t len)
 		hash  += get16bits (data);
 		tmp    = (get16bits (data+2) << 11) ^ hash;
 		hash   = (hash << 16) ^ tmp;
-		data  += 2*sizeof (WORD);
+		data  += 2*sizeof (uint16_t);
 		hash  += hash >> 11;
 	}
 
@@ -380,7 +380,7 @@ DWORD SuperFastHashI (const char *data, size_t len)
 	{
 		case 3:	hash += get16bits (data);
 				hash ^= hash << 16;
-				hash ^= tolower(data[sizeof (WORD)]) << 18;
+				hash ^= tolower(data[sizeof (uint16_t)]) << 18;
 				hash += hash >> 11;
 				break;
 		case 2:	hash += get16bits (data);

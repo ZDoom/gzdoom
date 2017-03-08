@@ -16,8 +16,8 @@ enum
 
 struct FZipLump : public FResourceLump
 {
-	WORD	GPFlags;
-	BYTE	Method;
+	uint16_t	GPFlags;
+	uint8_t	Method;
 	int		CompressedSize;
 	int		Position;
 	unsigned CRC32;

@@ -273,26 +273,26 @@ void FBackdropTexture::Render()
 
 	int x, y;
 
-	const DWORD a1add = DEGREES(0.5);
-	const DWORD a2add = DEGREES(359);
-	const DWORD a3add = DEGREES(5 / 7.f);
-	const DWORD a4add = DEGREES(358.66666);
+	const uint32_t a1add = DEGREES(0.5);
+	const uint32_t a2add = DEGREES(359);
+	const uint32_t a3add = DEGREES(5 / 7.f);
+	const uint32_t a4add = DEGREES(358.66666);
 
-	const DWORD t1add = DEGREES(358);
-	const DWORD t2add = DEGREES(357.16666);
-	const DWORD t3add = DEGREES(2.285);
-	const DWORD t4add = DEGREES(359.33333);
-	const DWORD x1add = 5 * 524288;
-	const DWORD x2add = 0u - 13 * 524288;
-	const DWORD z1add = 3 * 524288;
-	const DWORD z2add = 4 * 524288;
+	const uint32_t t1add = DEGREES(358);
+	const uint32_t t2add = DEGREES(357.16666);
+	const uint32_t t3add = DEGREES(2.285);
+	const uint32_t t4add = DEGREES(359.33333);
+	const uint32_t x1add = 5 * 524288;
+	const uint32_t x2add = 0u - 13 * 524288;
+	const uint32_t z1add = 3 * 524288;
+	const uint32_t z2add = 4 * 524288;
 
 
-	DWORD a1, a2, a3, a4;
+	uint32_t a1, a2, a3, a4;
 	int32_t c1, c2, c3, c4;
-	DWORD tx, ty, tc, ts;
-	DWORD ux, uy, uc, us;
-	DWORD ltx, lty, lux, luy;
+	uint32_t tx, ty, tc, ts;
+	uint32_t ux, uy, uc, us;
+	uint32_t ltx, lty, lux, luy;
 
 	from = Pixels;
 

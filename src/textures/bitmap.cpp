@@ -46,12 +46,12 @@
 //
 //===========================================================================
 template<class TSrc, class TDest, class TBlend>
-void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf,
-	BYTE tr, BYTE tg, BYTE tb)
+void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyInfo *inf,
+	uint8_t tr, uint8_t tg, uint8_t tb)
 {
 	int i;
 	int fac;
-	BYTE r,g,b;
+	uint8_t r,g,b;
 	int gray;
 	int a;
 
@@ -184,7 +184,7 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 	}
 }
 
-typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf, BYTE r, BYTE g, BYTE b);
+typedef void (*CopyFunc)(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyInfo *inf, uint8_t r, uint8_t g, uint8_t b);
 
 #define COPY_FUNCS(op) \
 	{ \
@@ -219,7 +219,7 @@ static const CopyFunc copyfuncs[][10]={
 //
 //===========================================================================
 bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
-						const BYTE *&patch, int &srcwidth, int &srcheight, 
+						const uint8_t *&patch, int &srcwidth, int &srcheight, 
 						int &pstep_x, int &pstep_y, int rotate)
 {
 	int pixxoffset;
@@ -371,13 +371,13 @@ bool FClipRect::Intersect(int ix, int iy, int iw, int ih)
 // True Color texture copy function
 //
 //===========================================================================
-void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
+void FBitmap::CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth, 
 							   int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf,
 							   int r, int g, int b)
 {
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
-		BYTE *buffer = data + 4 * originx + Pitch * originy;
+		uint8_t *buffer = data + 4 * originx + Pitch * originy;
 		int op = inf==NULL? OP_COPY : inf->op;
 		for (int y=0;y<srcheight;y++)
 		{
@@ -388,7 +388,7 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int 
 
 
 template<class TDest, class TBlend> 
-void iCopyPaletted(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight, int Pitch,
+void iCopyPaletted(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,
 					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
 {
 	int x,y,pos;
@@ -412,7 +412,7 @@ void iCopyPaletted(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight
 	}
 }
 
-typedef void (*CopyPalettedFunc)(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight, int Pitch,
+typedef void (*CopyPalettedFunc)(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,
 					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf);
 
 
@@ -435,18 +435,18 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 // Paletted to True Color texture copy function
 //
 //===========================================================================
-void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
+void FBitmap::CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
 										int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
 {
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
-		BYTE *buffer = data + 4*originx + Pitch*originy;
+		uint8_t *buffer = data + 4*originx + Pitch*originy;
 		PalEntry penew[256];
 
 		memset(penew, 0, sizeof(penew));
 		if (inf && inf->blend)
 		{
-			iCopyColors<cPalEntry, cBGRA, bCopy>((BYTE*)penew, (const BYTE*)palette, 256, 4, inf, 0, 0, 0);
+			iCopyColors<cPalEntry, cBGRA, bCopy>((uint8_t*)penew, (const uint8_t*)palette, 256, 4, inf, 0, 0, 0);
 			palette = penew;
 		}
 
@@ -462,7 +462,7 @@ void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int sr
 //===========================================================================
 void FBitmap::Zero()
 {
-	BYTE *buffer = data;
+	uint8_t *buffer = data;
 	for (int y = ClipRect.y; y < ClipRect.height; ++y)
 	{
 		memset(buffer + ClipRect.x, 0, ClipRect.width*4);

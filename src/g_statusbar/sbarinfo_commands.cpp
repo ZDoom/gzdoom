@@ -344,7 +344,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 		int					maxheight;
 		double				spawnScaleX;
 		double				spawnScaleY;
-		DWORD				flags;
+		uint32_t				flags;
 		bool				applyscale; //Set remotely from from GetInventoryIcon when selected sprite comes from Spawn state
 		// I'm using imgx/imgy here so that I can inherit drawimage with drawnumber for some commands.
 		SBarInfoCoordinate	imgx;
@@ -2132,7 +2132,7 @@ class CommandDrawShader : public SBarInfoCommand
 				DummySpan[1].TopOffset = 0;
 				DummySpan[1].Length = 0;
 			}
-			const BYTE *GetColumn(unsigned int column, const Span **spans_out)
+			const uint8_t *GetColumn(unsigned int column, const Span **spans_out)
 			{
 				if (spans_out != NULL)
 				{
@@ -2140,10 +2140,10 @@ class CommandDrawShader : public SBarInfoCommand
 				}
 				return Pixels + ((column & WidthMask) << HeightBits);
 			}
-			const BYTE *GetPixels() { return Pixels; }
+			const uint8_t *GetPixels() { return Pixels; }
 			void Unload() {}
 		private:
-			BYTE Pixels[512];
+			uint8_t Pixels[512];
 			Span DummySpan[2];
 		};
 

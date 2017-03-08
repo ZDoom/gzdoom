@@ -50,12 +50,12 @@ class FEmptyTexture : public FTexture
 public:
 	FEmptyTexture (int lumpnum);
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload() {}
 
 protected:
-	BYTE Pixels[1];
+	uint8_t Pixels[1];
 	Span DummySpans[1];
 };
 
@@ -103,7 +103,7 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-const BYTE *FEmptyTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FEmptyTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (spans_out != NULL)
 	{
@@ -118,7 +118,7 @@ const BYTE *FEmptyTexture::GetColumn (unsigned int column, const Span **spans_ou
 //
 //==========================================================================
 
-const BYTE *FEmptyTexture::GetPixels ()
+const uint8_t *FEmptyTexture::GetPixels ()
 {
 	return Pixels;
 }

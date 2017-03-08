@@ -123,23 +123,23 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 //
 //-----------------------------------------------------------------------
 
-static DWORD Zip_FindCentralDir(FileReader * fin)
+static uint32_t Zip_FindCentralDir(FileReader * fin)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
-	DWORD FileSize;
-	DWORD uBackRead;
-	DWORD uMaxBack; // maximum size of global comment
-	DWORD uPosFound=0;
+	uint32_t FileSize;
+	uint32_t uBackRead;
+	uint32_t uMaxBack; // maximum size of global comment
+	uint32_t uPosFound=0;
 
 	fin->Seek(0, SEEK_END);
 
 	FileSize = fin->Tell();
-	uMaxBack = MIN<DWORD>(0xffff, FileSize);
+	uMaxBack = MIN<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;
 	while (uBackRead < uMaxBack)
 	{
-		DWORD uReadSize, uReadPos;
+		uint32_t uReadSize, uReadPos;
 		int i;
 		if (uBackRead + BUFREADCOMMENT > uMaxBack) 
 			uBackRead = uMaxBack;
@@ -147,7 +147,7 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 			uBackRead += BUFREADCOMMENT;
 		uReadPos = FileSize - uBackRead;
 
-		uReadSize = MIN<DWORD>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
+		uReadSize = MIN<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
 		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
 
@@ -182,7 +182,7 @@ FZipFile::FZipFile(const char * filename, FileReader *file)
 
 bool FZipFile::Open(bool quiet)
 {
-	DWORD centraldir = Zip_FindCentralDir(Reader);
+	uint32_t centraldir = Zip_FindCentralDir(Reader);
 	FZipEndOfCentralDirectory info;
 	int skipped = 0;
 
@@ -223,7 +223,7 @@ bool FZipFile::Open(bool quiet)
 
 	// Check if all files have the same prefix so that this can be stripped out.
 	// This will only be done if there is either a MAPINFO, ZMAPINFO or GAMEINFO lump in the subdirectory, denoting a ZDoom mod.
-	if (NumLumps > 1) for (DWORD i = 0; i < NumLumps; i++)
+	if (NumLumps > 1) for (uint32_t i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
@@ -292,7 +292,7 @@ bool FZipFile::Open(bool quiet)
 
 	dirptr = (char*)directory;
 	lump_p = Lumps;
-	for (DWORD i = 0; i < NumLumps; i++)
+	for (uint32_t i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
@@ -348,7 +348,7 @@ bool FZipFile::Open(bool quiet)
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
-		lump_p->Method = BYTE(zip_fh->Method);
+		lump_p->Method = uint8_t(zip_fh->Method);
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);

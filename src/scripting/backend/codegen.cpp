@@ -2466,7 +2466,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
-	static const BYTE loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+	static const uint8_t loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
 	assert(Base->ValueType->GetRegType() == Right->ValueType->GetRegType());
 
 	ExpEmit pointer = Base->Emit(build);

@@ -40,11 +40,11 @@ struct FResourceLump
 	{
 		char		Name[9];
 
-		DWORD		dwName;			// These are for accessing the first 4 or 8 chars of
+		uint32_t		dwName;			// These are for accessing the first 4 or 8 chars of
 		QWORD		qwName;			// Name as a unit without breaking strict aliasing rules
 	};
-	BYTE			Flags;
-	SBYTE			RefCount;
+	uint8_t			Flags;
+	int8_t			RefCount;
 	char *			Cache;
 	FResourceFile *	Owner;
 	FTexture *		LinkedTexture;
@@ -84,7 +84,7 @@ public:
 	FileReader *Reader;
 	const char *Filename;
 protected:
-	DWORD NumLumps;
+	uint32_t NumLumps;
 
 	FResourceFile(const char *filename, FileReader *r);
 
@@ -92,21 +92,21 @@ protected:
 	void PostProcessArchive(void *lumps, size_t lumpsize);
 
 private:
-	DWORD FirstLump;
+	uint32_t FirstLump;
 
-	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max);
-	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, DWORD max);
-	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD max, DWORD &start, DWORD &end);
-	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
+	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, uint32_t max);
+	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, uint32_t max);
+	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
+	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
 
 public:
 	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
 	virtual ~FResourceFile();
 	FileReader *GetReader() const { return Reader; }
-	DWORD LumpCount() const { return NumLumps; }
-	DWORD GetFirstLump() const { return FirstLump; }
-	void SetFirstLump(DWORD f) { FirstLump = f; }
+	uint32_t LumpCount() const { return NumLumps; }
+	uint32_t GetFirstLump() const { return FirstLump; }
+	void SetFirstLump(uint32_t f) { FirstLump = f; }
 
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;

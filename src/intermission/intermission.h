@@ -31,15 +31,15 @@ struct FIIntermissionPatch
 
 struct FCastSound
 {
-	BYTE mSequence;
-	BYTE mIndex;
+	uint8_t mSequence;
+	uint8_t mIndex;
 	FString mSound;
 };
 
 struct FICastSound
 {
-	BYTE mSequence;
-	BYTE mIndex;
+	uint8_t mSequence;
+	uint8_t mIndex;
 	FSoundID mSound;
 };
 
@@ -289,7 +289,7 @@ class DIntermissionController : public DObject
 	bool mDeleteDesc;
 	bool mFirst;
 	bool mAdvance, mSentAdvance;
-	BYTE mGameState;
+	uint8_t mGameState;
 	int mIndex;
 
 	bool NextPage();
@@ -297,7 +297,7 @@ class DIntermissionController : public DObject
 public:
 	static DIntermissionController *CurrentIntermission;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, BYTE state = FSTATE_ChangingLevel);
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, uint8_t state = FSTATE_ChangingLevel);
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
@@ -311,8 +311,8 @@ public:
 bool F_Responder (event_t* ev);
 void F_Ticker ();
 void F_Drawer ();
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state);
-void F_StartIntermission(FName desc, BYTE state);
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state);
+void F_StartIntermission(FName desc, uint8_t state);
 void F_EndFinale ();
 void F_AdvanceIntermission();
 

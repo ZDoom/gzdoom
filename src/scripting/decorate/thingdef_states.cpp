@@ -610,7 +610,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	PFunction *afd, FString statestring, FStateDefinitions *statedef)
 {
 	const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
-	const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
+	const TArray<uint32_t> &paramflags = afd->Variants[0].ArgFlags;
 	int numparams = (int)params.Size();
 	int pnum = 0;
 	bool zeroparm;

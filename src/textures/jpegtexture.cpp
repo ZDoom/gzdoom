@@ -185,8 +185,8 @@ public:
 	FJPEGTexture (int lumpnum, int width, int height);
 	~FJPEGTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
@@ -194,7 +194,7 @@ public:
 
 protected:
 
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span DummySpans[2];
 
 	void MakeTexture ();
@@ -212,9 +212,9 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
-		DWORD dw;
-		WORD w[2];
-		BYTE b[4];
+		uint32_t dw;
+		uint16_t w[2];
+		uint8_t b[4];
 	} first4bytes;
 
 	data.Seek(0, SEEK_SET);
@@ -319,7 +319,7 @@ FTextureFormat FJPEGTexture::GetFormat()
 //
 //==========================================================================
 
-const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -349,7 +349,7 @@ const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out
 //
 //==========================================================================
 
-const BYTE *FJPEGTexture::GetPixels ()
+const uint8_t *FJPEGTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -372,7 +372,7 @@ void FJPEGTexture::MakeTexture ()
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	Pixels = new BYTE[Width * Height];
+	Pixels = new uint8_t[Width * Height];
 	memset (Pixels, 0xBA, Width * Height);
 
 	cinfo.err = jpeg_std_error(&jerr);
@@ -394,13 +394,13 @@ void FJPEGTexture::MakeTexture ()
 		jpeg_start_decompress(&cinfo);
 
 		int y = 0;
-		buff = new BYTE[cinfo.output_width * cinfo.output_components];
+		buff = new uint8_t[cinfo.output_width * cinfo.output_components];
 
 		while (cinfo.output_scanline < cinfo.output_height)
 		{
 			int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
-			BYTE *in = buff;
-			BYTE *out = Pixels + y;
+			uint8_t *in = buff;
+			uint8_t *out = Pixels + y;
 			switch (cinfo.out_color_space)
 			{
 			case JCS_RGB:
@@ -496,12 +496,12 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 		jpeg_start_decompress(&cinfo);
 
 		int yc = 0;
-		buff = new BYTE[cinfo.output_height * cinfo.output_width * cinfo.output_components];
+		buff = new uint8_t[cinfo.output_height * cinfo.output_width * cinfo.output_components];
 
 
 		while (cinfo.output_scanline < cinfo.output_height)
 		{
-			BYTE * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
+			uint8_t * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
 			jpeg_read_scanlines(&cinfo, &ptr, 1);
 			yc++;
 		}

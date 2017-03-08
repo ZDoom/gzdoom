@@ -2292,7 +2292,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			}
 			else
 			{
-				(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
+				(*afd->VMPointer)->ImplicitArgs = uint8_t(implicitargs);
 			}
 		}
 		SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, useflags);

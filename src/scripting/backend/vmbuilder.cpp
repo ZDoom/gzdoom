@@ -40,7 +40,7 @@
 
 struct VMRemap
 {
-	BYTE altOp, kReg, kType;
+	uint8_t altOp, kReg, kType;
 };
 
 
@@ -563,7 +563,7 @@ size_t VMFunctionBuilder::GetAddress()
 
 size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 {
-	static BYTE opcodes[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+	static uint8_t opcodes[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
 
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opa >= 0);

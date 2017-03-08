@@ -87,7 +87,7 @@ public:
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor*> Corpse;
-	DWORD Count;	// Only the first corpse pointer's count is valid.
+	uint32_t Count;	// Only the first corpse pointer's count is valid.
 private:
 	DCorpsePointer () {}
 };
@@ -104,7 +104,7 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	{
 		TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 		DCorpsePointer *first = iterator.Next ();
-		while (first != NULL && first->Count > (DWORD)self)
+		while (first != NULL && first->Count > (uint32_t)self)
 		{
 			DCorpsePointer *next = iterator.Next ();
 			first->Destroy ();
@@ -126,7 +126,7 @@ DCorpsePointer::DCorpsePointer (AActor *ptr)
 
 	if (first != this)
 	{
-		if (first->Count >= (DWORD)sv_corpsequeuesize)
+		if (first->Count >= (uint32_t)sv_corpsequeuesize)
 		{
 			DCorpsePointer *next = iterator.Next ();
 			first->Destroy ();

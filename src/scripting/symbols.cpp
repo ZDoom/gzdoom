@@ -79,7 +79,7 @@ PSymbolConstString::PSymbolConstString(FName name, const FString &str)
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
 {
 	Variant variant;
 

@@ -58,7 +58,7 @@
 // all and only while initing the textures is beyond me.
 
 #ifdef ALPHA
-#define SAFESHORT(s)	((short)(((BYTE *)&(s))[0] + ((BYTE *)&(s))[1] * 256))
+#define SAFESHORT(s)	((short)(((uint8_t *)&(s))[0] + ((uint8_t *)&(s))[1] * 256))
 #else
 #define SAFESHORT(s)	LittleShort(s)
 #endif
@@ -78,11 +78,11 @@
 //
 struct mappatch_t
 {
-	SWORD	originx;
-	SWORD	originy;
-	SWORD	patch;
-	SWORD	stepdir;
-	SWORD	colormap;
+	int16_t	originx;
+	int16_t	originy;
+	int16_t	patch;
+	int16_t	stepdir;
+	int16_t	colormap;
 };
 
 //
@@ -91,14 +91,14 @@ struct mappatch_t
 //
 struct maptexture_t
 {
-	BYTE		name[8];
-	WORD		Flags;				// [RH] Was unused
-	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
-	BYTE		ScaleY;				// [RH] Same as above
-	SWORD		width;
-	SWORD		height;
-	BYTE		columndirectory[4];	// OBSOLETE
-	SWORD		patchcount;
+	uint8_t		name[8];
+	uint16_t		Flags;				// [RH] Was unused
+	uint8_t		ScaleX;				// [RH] Scaling (8 is normal)
+	uint8_t		ScaleY;				// [RH] Same as above
+	int16_t		width;
+	int16_t		height;
+	uint8_t		columndirectory[4];	// OBSOLETE
+	int16_t		patchcount;
 	mappatch_t	patches[1];
 };
 
@@ -108,9 +108,9 @@ struct maptexture_t
 
 struct strifemappatch_t
 {
-	SWORD	originx;
-	SWORD	originy;
-	SWORD	patch;
+	int16_t	originx;
+	int16_t	originy;
+	int16_t	patch;
 };
 
 //
@@ -119,13 +119,13 @@ struct strifemappatch_t
 //
 struct strifemaptexture_t
 {
-	BYTE		name[8];
-	WORD		Flags;				// [RH] Was unused
-	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
-	BYTE		ScaleY;				// [RH] Same as above
-	SWORD		width;
-	SWORD		height;
-	SWORD		patchcount;
+	uint8_t		name[8];
+	uint16_t		Flags;				// [RH] Was unused
+	uint8_t		ScaleX;				// [RH] Scaling (8 is normal)
+	uint8_t		ScaleY;				// [RH] Same as above
+	int16_t		width;
+	int16_t		height;
+	int16_t		patchcount;
 	strifemappatch_t	patches[1];
 };
 
@@ -155,8 +155,8 @@ public:
 	FMultiPatchTexture (FScanner &sc, int usetype);
 	~FMultiPatchTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	FTextureFormat GetFormat();
 	bool UseBasePalette() ;
 	void Unload ();
@@ -169,15 +169,15 @@ public:
 	void ResolvePatches();
 
 protected:
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span **Spans;
 	int DefinitionLump;
 
 	struct TexPart
 	{
-		SWORD OriginX, OriginY;
-		BYTE Rotate;
-		BYTE op;
+		int16_t OriginX, OriginY;
+		uint8_t Rotate;
+		uint8_t op;
 		FRemapTable *Translation;
 		PalEntry Blend;
 		FTexture *Texture;
@@ -367,7 +367,7 @@ void FMultiPatchTexture::Unload ()
 //
 //==========================================================================
 
-const BYTE *FMultiPatchTexture::GetPixels ()
+const uint8_t *FMultiPatchTexture::GetPixels ()
 {
 	if (bRedirect)
 	{
@@ -386,7 +386,7 @@ const BYTE *FMultiPatchTexture::GetPixels ()
 //
 //==========================================================================
 
-const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (bRedirect)
 	{
@@ -425,7 +425,7 @@ const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spa
 //
 //==========================================================================
 
-BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
+uint8_t *GetBlendMap(PalEntry blend, uint8_t *blendwork)
 {
 
 	switch (blend.a==0 ? int(blend) : -1)
@@ -485,10 +485,10 @@ void FMultiPatchTexture::MakeTexture ()
 	// Add a little extra space at the end if the texture's height is not
 	// a power of 2, in case somebody accidentally makes it repeat vertically.
 	int numpix = Width * Height + (1 << HeightBits) - Height;
-	BYTE blendwork[256];
+	uint8_t blendwork[256];
 	bool hasTranslucent = false;
 
-	Pixels = new BYTE[numpix];
+	Pixels = new uint8_t[numpix];
 	memset (Pixels, 0, numpix);
 
 	for (int i = 0; i < NumParts; ++i)
@@ -505,7 +505,7 @@ void FMultiPatchTexture::MakeTexture ()
 		{
 			if (Parts[i].Texture->bHasCanvas) continue;	// cannot use camera textures as patch.
 		
-			BYTE *trans = Parts[i].Translation ? Parts[i].Translation->Remap : NULL;
+			uint8_t *trans = Parts[i].Translation ? Parts[i].Translation->Remap : NULL;
 			{
 				if (Parts[i].Blend != 0)
 				{
@@ -520,13 +520,13 @@ void FMultiPatchTexture::MakeTexture ()
 	{
 		// In case there are translucent patches let's do the composition in
 		// True color to keep as much precision as possible before downconverting to the palette.
-		BYTE *buffer = new BYTE[Width * Height * 4];
+		uint8_t *buffer = new uint8_t[Width * Height * 4];
 		memset(buffer, 0, Width * Height * 4);
 		FillBuffer(buffer, Width * 4, Height, TEX_RGB);
 		for(int y = 0; y < Height; y++)
 		{
-			BYTE *in = buffer + Width * y * 4;
-			BYTE *out = Pixels + y;
+			uint8_t *in = buffer + Width * y * 4;
+			uint8_t *out = Pixels + y;
 			for (int x = 0; x < Width; x++)
 			{
 				if (*out == 0 && in[3] != 0)
@@ -823,7 +823,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 {
 	FPatchLookup *patchlookup = NULL;
 	int i;
-	DWORD numpatches;
+	uint32_t numpatches;
 
 	if (firstdup == 0)
 	{
@@ -844,7 +844,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 
 		// Check whether the amount of names reported is correct.
 		int lumplength = Wads.LumpLength(patcheslump);
-		if (numpatches > DWORD((lumplength-4)/8))
+		if (numpatches > uint32_t((lumplength-4)/8))
 		{
 			Printf("PNAMES lump is shorter than required (%u entries reported but only %d bytes (%d entries) long\n",
 				numpatches, lumplength, (lumplength-4)/8);
@@ -855,7 +855,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		// Catalog the patches these textures use so we know which
 		// textures they represent.
 		patchlookup = new FPatchLookup[numpatches];
-		for (DWORD i = 0; i < numpatches; ++i)
+		for (uint32_t i = 0; i < numpatches; ++i)
 		{
 			char pname[9];
 			pnames.Read(pname, 8);
@@ -865,16 +865,16 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 	}
 
 	bool isStrife = false;
-	const DWORD *maptex, *directory;
-	DWORD maxoff;
+	const uint32_t *maptex, *directory;
+	uint32_t maxoff;
 	int numtextures;
-	DWORD offset = 0;   // Shut up, GCC!
+	uint32_t offset = 0;   // Shut up, GCC!
 
-	maptex = (const DWORD *)lumpdata;
+	maptex = (const uint32_t *)lumpdata;
 	numtextures = LittleLong(*maptex);
 	maxoff = lumpsize;
 
-	if (maxoff < DWORD(numtextures+1)*4)
+	if (maxoff < uint32_t(numtextures+1)*4)
 	{
 		Printf ("Texture directory is too short");
 		delete[] patchlookup;
@@ -892,7 +892,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			return;
 		}
 
-		maptexture_t *tex = (maptexture_t *)((BYTE *)maptex + offset);
+		maptexture_t *tex = (maptexture_t *)((uint8_t *)maptex + offset);
 
 		// There is bizzarely a Doom editing tool that writes to the
 		// first two elements of columndirectory, so I can't check those.
@@ -915,7 +915,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			// The very first texture is just a dummy. Copy its dimensions to texture 0.
 			// It still needs to be created in case someone uses it by name.
 			offset = LittleLong(directory[1]);
-			const maptexture_t *tex = (const maptexture_t *)((const BYTE *)maptex + offset);
+			const maptexture_t *tex = (const maptexture_t *)((const uint8_t *)maptex + offset);
 			FDummyTexture *tex0 = static_cast<FDummyTexture *>(Textures[0].Texture);
 			tex0->SetSize (SAFESHORT(tex->width), SAFESHORT(tex->height));
 		}
@@ -939,7 +939,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		}
 		if (j + 1 == firstdup)
 		{
-			FMultiPatchTexture *tex = new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife, deflumpnum);
+			FMultiPatchTexture *tex = new FMultiPatchTexture ((const uint8_t *)maptex + offset, patchlookup, numpatches, isStrife, deflumpnum);
 			if (i == 1 && texture1)
 			{
 				tex->UseType = FTexture::TEX_FirstDefined;

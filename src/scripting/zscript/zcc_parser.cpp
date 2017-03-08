@@ -64,14 +64,14 @@ void AddInclude(ZCC_ExprConstant *node)
 
 struct TokenMapEntry
 {
-	SWORD TokenType;
-	WORD TokenName;
-	TokenMapEntry(SWORD a, WORD b)
+	int16_t TokenType;
+	uint16_t TokenName;
+	TokenMapEntry(int16_t a, uint16_t b)
 	: TokenType(a), TokenName(b)
 	{ }
 };
-static TMap<SWORD, TokenMapEntry> TokenMap;
-static SWORD BackTokenMap[YYERRORSYMBOL];	// YYERRORSYMBOL immediately follows the terminals described by the grammar
+static TMap<int16_t, TokenMapEntry> TokenMap;
+static int16_t BackTokenMap[YYERRORSYMBOL];	// YYERRORSYMBOL immediately follows the terminals described by the grammar
 
 #define TOKENDEF2(sc, zcc, name)	{ TokenMapEntry tme(zcc, name); TokenMap.Insert(sc, tme); } BackTokenMap[zcc] = sc
 #define TOKENDEF(sc, zcc)			TOKENDEF2(sc, zcc, NAME_None)

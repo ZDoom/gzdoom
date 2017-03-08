@@ -122,6 +122,7 @@ void FAutomapTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================

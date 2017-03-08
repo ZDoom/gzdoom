@@ -1389,7 +1389,7 @@ void G_InitLevelLocals ()
 	level_info_t *info;
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-	NormalLight.Maps = realcolormaps;
+	NormalLight.Maps = realcolormaps.Maps;
 
 	// [BB] Instead of just setting the color, we also have to reset Desaturate and build the lights.
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
@@ -1417,6 +1417,7 @@ void G_InitLevelLocals ()
 		R_SetDefaultColormap (info->FadeTable);
 		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
 		{
+			level.fadeto = 0xff939393; //[SP] Hexen True-color compatibility, just use gray.
 			level.flags |= LEVEL_HASFADETABLE;
 		}
 		/*

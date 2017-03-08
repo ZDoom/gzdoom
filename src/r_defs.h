@@ -59,7 +59,6 @@ enum
 	SIL_BOTH
 };
 
-namespace swrenderer { extern size_t MaxDrawSegs; }
 struct FDisplacement;
 
 //

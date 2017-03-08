@@ -176,6 +176,37 @@ FTexture::~FTexture ()
 	KillNative();
 }
 
+void FTexture::Unload()
+{
+	PixelsBgra = std::vector<uint32_t>();
+}
+
+const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
+{
+	const uint32_t *pixels = GetPixelsBgra();
+
+	column %= Width;
+
+	if (spans_out != nullptr)
+		GetColumn(column, spans_out);
+	return pixels + column * Height;
+}
+
+const uint32_t *FTexture::GetPixelsBgra()
+{
+	if (PixelsBgra.empty() || CheckModified())
+	{
+		if (!GetColumn(0, nullptr))
+			return nullptr;
+
+		FBitmap bitmap;
+		bitmap.Create(GetWidth(), GetHeight());
+		CopyTrueColorPixels(&bitmap, 0, 0);
+		GenerateBgraFromBitmap(bitmap);
+	}
+	return PixelsBgra.data();
+}
+
 bool FTexture::CheckModified ()
 {
 	return false;
@@ -320,6 +351,210 @@ void FTexture::FreeSpans (Span **spans) const
 	M_Free (spans);
 }
 
+void FTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
+{
+	CreatePixelsBgraWithMipmaps();
+
+	// Transpose
+	const uint32_t *src = (const uint32_t *)bitmap.GetPixels();
+	uint32_t *dest = PixelsBgra.data();
+	for (int x = 0; x < Width; x++)
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			dest[y + x * Height] = src[x + y * Width];
+		}
+	}
+
+	GenerateBgraMipmaps();
+}
+
+void FTexture::CreatePixelsBgraWithMipmaps()
+{
+	int levels = MipmapLevels();
+	int buffersize = 0;
+	for (int i = 0; i < levels; i++)
+	{
+		int w = MAX(Width >> i, 1);
+		int h = MAX(Height >> i, 1);
+		buffersize += w * h;
+	}
+	PixelsBgra.resize(buffersize, 0xffff0000);
+}
+
+int FTexture::MipmapLevels() const
+{
+	int widthbits = 0;
+	while ((Width >> widthbits) != 0) widthbits++;
+
+	int heightbits = 0;
+	while ((Height >> heightbits) != 0) heightbits++;
+
+	return MAX(widthbits, heightbits);
+}
+
+void FTexture::GenerateBgraMipmaps()
+{
+	struct Color4f
+	{
+		float a, r, g, b;
+		Color4f operator*(const Color4f &v) const { return Color4f{ a * v.a, r * v.r, g * v.g, b * v.b }; }
+		Color4f operator/(const Color4f &v) const { return Color4f{ a / v.a, r / v.r, g / v.g, b / v.b }; }
+		Color4f operator+(const Color4f &v) const { return Color4f{ a + v.a, r + v.r, g + v.g, b + v.b }; }
+		Color4f operator-(const Color4f &v) const { return Color4f{ a - v.a, r - v.r, g - v.g, b - v.b }; }
+		Color4f operator*(float s) const { return Color4f{ a * s, r * s, g * s, b * s }; }
+		Color4f operator/(float s) const { return Color4f{ a / s, r / s, g / s, b / s }; }
+		Color4f operator+(float s) const { return Color4f{ a + s, r + s, g + s, b + s }; }
+		Color4f operator-(float s) const { return Color4f{ a - s, r - s, g - s, b - s }; }
+	};
+
+	int levels = MipmapLevels();
+	std::vector<Color4f> image(PixelsBgra.size());
+
+	// Convert to normalized linear colorspace
+	{
+		for (int x = 0; x < Width; x++)
+		{
+			for (int y = 0; y < Height; y++)
+			{
+				uint32_t c8 = PixelsBgra[x * Height + y];
+				Color4f c;
+				c.a = powf(APART(c8) * (1.0f / 255.0f), 2.2f);
+				c.r = powf(RPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.g = powf(GPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.b = powf(BPART(c8) * (1.0f / 255.0f), 2.2f);
+				image[x * Height + y] = c;
+			}
+		}
+	}
+
+	// Generate mipmaps
+	{
+		std::vector<Color4f> smoothed(Width * Height);
+		Color4f *src = image.data();
+		Color4f *dest = src + Width * Height;
+		for (int i = 1; i < levels; i++)
+		{
+			int srcw = MAX(Width >> (i - 1), 1);
+			int srch = MAX(Height >> (i - 1), 1);
+			int w = MAX(Width >> i, 1);
+			int h = MAX(Height >> i, 1);
+
+			// Downscale
+			for (int x = 0; x < w; x++)
+			{
+				int sx0 = x * 2;
+				int sx1 = MIN((x + 1) * 2, srcw - 1);
+				for (int y = 0; y < h; y++)
+				{
+					int sy0 = y * 2;
+					int sy1 = MIN((y + 1) * 2, srch - 1);
+
+					Color4f src00 = src[sy0 + sx0 * srch];
+					Color4f src01 = src[sy1 + sx0 * srch];
+					Color4f src10 = src[sy0 + sx1 * srch];
+					Color4f src11 = src[sy1 + sx1 * srch];
+					Color4f c = (src00 + src01 + src10 + src11) * 0.25f;
+
+					dest[y + x * h] = c;
+				}
+			}
+
+			// Sharpen filter with a 3x3 kernel:
+			for (int x = 0; x < w; x++)
+			{
+				for (int y = 0; y < h; y++)
+				{
+					Color4f c = { 0.0f, 0.0f, 0.0f, 0.0f };
+					for (int kx = -1; kx < 2; kx++)
+					{
+						for (int ky = -1; ky < 2; ky++)
+						{
+							int a = y + ky;
+							int b = x + kx;
+							if (a < 0) a = h - 1;
+							if (a == h) a = 0;
+							if (b < 0) b = w - 1;
+							if (b == w) b = 0;
+							c = c + dest[a + b * h];
+						}
+					}
+					c = c * (1.0f / 9.0f);
+					smoothed[y + x * h] = c;
+				}
+			}
+			float k = 0.08f;
+			for (int j = 0; j < w * h; j++)
+				dest[j] = dest[j] + (dest[j] - smoothed[j]) * k;
+
+			src = dest;
+			dest += w * h;
+		}
+	}
+
+	// Convert to bgra8 sRGB colorspace
+	{
+		Color4f *src = image.data() + Width * Height;
+		uint32_t *dest = PixelsBgra.data() + Width * Height;
+		for (int i = 1; i < levels; i++)
+		{
+			int w = MAX(Width >> i, 1);
+			int h = MAX(Height >> i, 1);
+			for (int j = 0; j < w * h; j++)
+			{
+				uint32_t a = (uint32_t)clamp(powf(MAX(src[j].a, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t r = (uint32_t)clamp(powf(MAX(src[j].r, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t g = (uint32_t)clamp(powf(MAX(src[j].g, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t b = (uint32_t)clamp(powf(MAX(src[j].b, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				dest[j] = (a << 24) | (r << 16) | (g << 8) | b;
+			}
+			src += w * h;
+			dest += w * h;
+		}
+	}
+}
+
+void FTexture::GenerateBgraMipmapsFast()
+{
+	uint32_t *src = PixelsBgra.data();
+	uint32_t *dest = src + Width * Height;
+	int levels = MipmapLevels();
+	for (int i = 1; i < levels; i++)
+	{
+		int srcw = MAX(Width >> (i - 1), 1);
+		int srch = MAX(Height >> (i - 1), 1);
+		int w = MAX(Width >> i, 1);
+		int h = MAX(Height >> i, 1);
+
+		for (int x = 0; x < w; x++)
+		{
+			int sx0 = x * 2;
+			int sx1 = MIN((x + 1) * 2, srcw - 1);
+
+			for (int y = 0; y < h; y++)
+			{
+				int sy0 = y * 2;
+				int sy1 = MIN((y + 1) * 2, srch - 1);
+
+				uint32_t src00 = src[sy0 + sx0 * srch];
+				uint32_t src01 = src[sy1 + sx0 * srch];
+				uint32_t src10 = src[sy0 + sx1 * srch];
+				uint32_t src11 = src[sy1 + sx1 * srch];
+
+				uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
+				uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
+				uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
+				uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
+
+				dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+			}
+		}
+
+		src = dest;
+		dest += w * h;
+	}
+}
+
 void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const BYTE *translation)
 {
 	const BYTE *pixels = GetPixels();
@@ -386,6 +621,29 @@ void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
 	}
 }
 
+void FTexture::FlipSquareBlockBgra(uint32_t *block, int x, int y)
+{
+	int i, j;
+
+	if (x != y) return;
+
+	for (i = 0; i < x; ++i)
+	{
+		uint32_t *corner = block + x*i + i;
+		int count = x - i;
+		if (count & 1)
+		{
+			count--;
+			swapvalues<uint32_t>(corner[count], corner[count*x]);
+		}
+		for (j = 0; j < count; j += 2)
+		{
+			swapvalues<uint32_t>(corner[j], corner[j*x]);
+			swapvalues<uint32_t>(corner[j + 1], corner[(j + 1)*x]);
+		}
+	}
+}
+
 void FTexture::FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap)
 {
 	int i, j;
@@ -425,6 +683,19 @@ void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y, int
 		for (j = 0; j < y; ++j)
 		{
 			dst[i*y+j] = src[i+j*srcpitch];
+		}
+	}
+}
+
+void FTexture::FlipNonSquareBlockBgra(uint32_t *dst, const uint32_t *src, int x, int y, int srcpitch)
+{
+	int i, j;
+
+	for (i = 0; i < x; ++i)
+	{
+		for (j = 0; j < y; ++j)
+		{
+			dst[i*y + j] = src[i + j*srcpitch];
 		}
 	}
 }
@@ -650,10 +921,6 @@ FDummyTexture::FDummyTexture ()
 	WidthBits = 6;
 	WidthMask = 63;
 	UseType = TEX_Null;
-}
-
-void FDummyTexture::Unload ()
-{
 }
 
 void FDummyTexture::SetSize (int width, int height)

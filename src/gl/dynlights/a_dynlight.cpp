@@ -81,7 +81,6 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/system//gl_interface.h"
 
-EXTERN_CVAR(Int, vid_renderer)
 
 
 //==========================================================================
@@ -233,10 +232,6 @@ void ADynamicLight::Deactivate(AActor *activator)
 //==========================================================================
 void ADynamicLight::Tick()
 {
-	if (vid_renderer == 0)
-	{
-		return;
-	}
 	if (IsOwned())
 	{
 		if (!target || !target->state)

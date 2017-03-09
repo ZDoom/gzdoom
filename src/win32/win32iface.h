@@ -34,21 +34,8 @@
 #ifndef __WIN32IFACE_H
 #define __WIN32IFACE_H
 
-#ifndef DIRECTDRAW_VERSION
-#define DIRECTDRAW_VERSION 0x0300
-#endif
-#ifndef DIRECT3D_VERSION
-#define DIRECT3D_VERSION 0x0900
-#endif
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <ddraw.h>
-#include <d3d9.h>
-
 #include "hardware.h"
 
-#define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
 
 EXTERN_CVAR (Bool, vid_vsync)
 

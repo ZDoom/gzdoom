@@ -9,7 +9,6 @@
 extern IVideo *Video;
 
 
-extern BOOL AppActive;
 
 EXTERN_CVAR (Float, dimamount)
 EXTERN_CVAR (Color, dimcolor)
@@ -19,8 +18,6 @@ EXTERN_CVAR(Int, vid_defheight);
 EXTERN_CVAR(Int, vid_renderer);
 EXTERN_CVAR(Int, vid_adapter);
 
-extern HINSTANCE g_hInst;
-extern HWND Window;
 extern IVideo *Video;
 
 struct FRenderer;
@@ -43,7 +40,7 @@ public:
 	// unused but must be defined
 	virtual void Blank ();
 	virtual bool PaintToWindow ();
-	virtual HRESULT GetHR();
+	virtual long/*HRESULT*/ GetHR();	// windows.h pollution prevention.
 
 	virtual bool CreateResources ();
 	virtual void ReleaseResources ();
@@ -76,12 +73,12 @@ protected:
 	void SetGammaTable(uint16_t * tbl);
 
 	float m_Gamma, m_Brightness, m_Contrast;
-	WORD m_origGamma[768];
-	BOOL m_supportsGamma;
+	uint16_t m_origGamma[768];
+	bool m_supportsGamma;
 	bool m_Fullscreen;
 	int m_Width, m_Height, m_Bits, m_RefreshHz;
 	int m_Lock;
-	char m_displayDeviceNameBuffer[CCHDEVICENAME];
+	char m_displayDeviceNameBuffer[32/*CCHDEVICENAME*/];	// do not use windows.h constants here!
 	char *m_displayDeviceName;
 	int SwapInterval;
 

@@ -285,12 +285,7 @@ class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
-    clearscope static native StaticEventHandler Create(class<StaticEventHandler> type);
-    clearscope static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
     clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
-    
-    clearscope static native bool Register(StaticEventHandler handler);
-    clearscope static native bool Unregister(StaticEventHandler handler);
     
     // these are called when the handler gets registered or unregistered
     // you can set Order/IsUiProcessor here.
@@ -306,11 +301,11 @@ class StaticEventHandler : Object native play version("2.4")
     virtual native void WorldThingDamaged(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
-    virtual native void WorldTick(WorldEvent e);
+    virtual native void WorldTick();
 
     //
-    virtual native ui void RenderFrame(RenderEvent e);
-    virtual native ui void RenderOverlay(RenderEvent e);
+    //virtual native ui void RenderFrame(RenderEvent e);
+    //virtual native ui void RenderOverlay(RenderEvent e);
     
     //
     virtual native void PlayerEntered(PlayerEvent e);
@@ -321,6 +316,7 @@ class StaticEventHandler : Object native play version("2.4")
     //
     virtual native ui bool UiProcess(UiEvent e);
     virtual native ui bool InputProcess(InputEvent e);
+    virtual native ui void UiTick();
     
     //
     virtual native ui void ConsoleProcess(ConsoleEvent e);
@@ -339,12 +335,6 @@ class StaticEventHandler : Object native play version("2.4")
 
 class EventHandler : StaticEventHandler native version("2.4")
 {
-    clearscope static native StaticEventHandler Create(class<StaticEventHandler> type);
-    clearscope static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
     clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
-
-    clearscope static native bool Register(StaticEventHandler handler);
-    clearscope static native bool Unregister(StaticEventHandler handler);
-    
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

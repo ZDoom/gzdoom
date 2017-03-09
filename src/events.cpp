@@ -471,6 +471,7 @@ DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(RenderOverlay)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
+DEFINE_EVENT_LOOPER(UiTick)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, true);
@@ -686,6 +687,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiTick);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
@@ -851,9 +853,8 @@ void DStaticEventHandler::WorldTick()
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_WorldTick_VMPtr)
 			return;
-		FWorldEvent e = E_SetupWorldEvent();
-		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMValue params[2] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }
 
@@ -1052,6 +1053,18 @@ bool DStaticEventHandler::InputProcess(const event_t* ev)
 	}
 
 	return false;
+}
+
+void DStaticEventHandler::UiTick()
+{
+	IFVIRTUAL(DStaticEventHandler, UiTick)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_UiTick_VMPtr)
+			return;
+		VMValue params[2] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual)

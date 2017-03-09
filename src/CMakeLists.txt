@@ -413,6 +413,11 @@ else( X64 )
 	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
 endif( X64 )
 
+# Set up flags for MSVC
+if (MSVC)
+	set( CMAKE_CXX_FLAGS "/MP ${CMAKE_CXX_FLAGS}" )
+endif (MSVC)
+
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -470,6 +475,11 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif()
 	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
+
+	# ARM processors (Raspberry Pi, et al) - enable ARM NEON support.
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm") 
+		set( CMAKE_CXX_FLAGS "-mfpu=neon ${CMAKE_CXX_FLAGS}" )
+	endif ()
 
 	# Use the highest C++ standard available since VS2015 compiles with C++14
 	# but we only require C++11.  The recommended way to do this in CMake is to

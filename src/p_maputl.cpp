@@ -898,6 +898,74 @@ void FMultiBlockLinesIterator::Reset()
 
 //===========================================================================
 //
+// and the scriptable version
+//
+//===========================================================================
+
+class DBlockLinesIterator : public DObject, public FMultiBlockLinesIterator
+{
+	DECLARE_ABSTRACT_CLASS(DBlockLinesIterator, DObject);
+	FPortalGroupArray check;
+
+public:
+	FMultiBlockLinesIterator::CheckResult cres;
+
+	bool Next()
+	{
+		return FMultiBlockLinesIterator::Next(&cres);
+	}
+
+	DBlockLinesIterator(AActor *actor, double checkradius)
+		: FMultiBlockLinesIterator(check, actor, checkradius)
+	{
+		cres.line = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+
+	DBlockLinesIterator(double x, double y, double z, double height, double radius, sector_t *sec)
+		:FMultiBlockLinesIterator(check, x, y, z, height, radius, sec)
+	{
+		cres.line = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+};
+
+IMPLEMENT_CLASS(DBlockLinesIterator, true, false);
+
+DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(origin, AActor);
+	PARAM_FLOAT_DEF(radius);
+	ACTION_RETURN_OBJECT(new DBlockLinesIterator(origin, radius));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockLinesIterator, CreateFromPos)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(radius);
+	PARAM_POINTER_DEF(sec, sector_t);
+	ACTION_RETURN_OBJECT(new DBlockLinesIterator(x, y, z, h, radius, sec));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DBlockLinesIterator);
+	ACTION_RETURN_BOOL(self->Next());
+}
+
+DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.line, curline);
+DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.Position, position);
+DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.portalflags, portalflags);
+
+//===========================================================================
+//
 // FBlockThingsIterator :: FBlockThingsIterator
 //
 //===========================================================================
@@ -1231,9 +1299,9 @@ DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
 	ACTION_RETURN_OBJECT(new DBlockThingsIterator(x, y, z, h, radius, ignore, nullptr));
 }
 
-DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
+DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Next)
 {
-	PARAM_SELF_PROLOGUE(DBlockThingsIterator);
+	PARAM_SELF_PROLOGUE(DBlockLinesIterator);
 	ACTION_RETURN_BOOL(self->Next());
 }
 

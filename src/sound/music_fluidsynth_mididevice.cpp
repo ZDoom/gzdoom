@@ -372,7 +372,7 @@ FluidSynthMIDIDevice::~FluidSynthMIDIDevice()
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int FluidSynthMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	if (FluidSynth == NULL)
 	{

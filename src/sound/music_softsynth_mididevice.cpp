@@ -95,7 +95,7 @@ SoftSynthMIDIDevice::~SoftSynthMIDIDevice()
 //
 //==========================================================================
 
-int SoftSynthMIDIDevice::OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int SoftSynthMIDIDevice::OpenStream(int chunks, int flags, MidiCallback callback, void *userdata)
 {
 	int chunksize = (SampleRate / chunks) * 4;
 	if (!(flags & SoundStream::Mono))
@@ -363,7 +363,7 @@ int SoftSynthMIDIDevice::PlayTick()
 
 			if (Callback != NULL)
 			{
-				Callback(MOM_DONE, CallbackData, 0, 0);
+				Callback(MOM_DONE, CallbackData);
 			}
 		}
 

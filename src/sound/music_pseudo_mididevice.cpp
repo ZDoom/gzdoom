@@ -239,7 +239,7 @@ FString PseudoMIDIDevice::GetStats()
 //
 //==========================================================================
 
-int SndSysMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int SndSysMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	return 0;
 }

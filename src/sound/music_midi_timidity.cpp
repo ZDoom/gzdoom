@@ -178,7 +178,7 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 //
 //==========================================================================
 
-int TimidityPPMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	int pipeSize;
 

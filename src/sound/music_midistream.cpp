@@ -691,7 +691,7 @@ int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 //
 //==========================================================================
 
-void MIDIStreamer::Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2)
+void MIDIStreamer::Callback(unsigned int uMsg, void *userdata)
 {
 	MIDIStreamer *self = (MIDIStreamer *)userdata;
 

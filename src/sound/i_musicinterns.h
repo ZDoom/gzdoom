@@ -79,13 +79,14 @@ typedef uint8_t *LPSTR;
 
 class MIDIStreamer;
 
+typedef void(*MidiCallback)(unsigned int, void *);
 class MIDIDevice
 {
 public:
 	MIDIDevice();
 	virtual ~MIDIDevice();
 
-	virtual int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata) = 0;
+	virtual int Open(MidiCallback, void *userdata) = 0;
 	virtual void Close() = 0;
 	virtual bool IsOpen() const = 0;
 	virtual int GetTechnology() const = 0;
@@ -118,7 +119,7 @@ class WinMIDIDevice : public MIDIDevice
 public:
 	WinMIDIDevice(int dev_id);
 	~WinMIDIDevice();
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	void Close();
 	bool IsOpen() const;
 	int GetTechnology() const;
@@ -143,7 +144,7 @@ protected:
 	DWORD SavedVolume;
 	bool VolumeWorks;
 
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	void (*Callback)(unsigned int, void *);
 	void *CallbackData;
 };
 #endif
@@ -155,7 +156,7 @@ protected:
 class AudioToolboxMIDIDevice : public MIDIDevice
 {
 public:
-	virtual int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userData) override;
+	virtual int Open(MidiCallback, void *userData) override;
 	virtual void Close() override;
 	virtual bool IsOpen() const override;
 	virtual int GetTechnology() const override;
@@ -217,7 +218,7 @@ protected:
 class SndSysMIDIDevice : public PseudoMIDIDevice
 {
 public:
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	bool Preprocess(MIDIStreamer *song, bool looping);
 };
 
@@ -229,7 +230,7 @@ public:
 	TimidityPPMIDIDevice(const char *args);
 	~TimidityPPMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	bool Preprocess(MIDIStreamer *song, bool looping);
 	bool IsOpen() const;
 	int Resume();
@@ -292,12 +293,12 @@ protected:
 	DWORD Position;
 	int SampleRate;
 
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	void (*Callback)(unsigned int, void *);
 	void *CallbackData;
 
 	virtual void CalcTickRate();
 	int PlayTick();
-	int OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int OpenStream(int chunks, int flags, MidiCallback, void *userdata);
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 	virtual bool ServiceStream (void *buff, int numbytes);
 
@@ -312,7 +313,7 @@ class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
 	OPLMIDIDevice(const char *args);
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	void Close();
 	int GetTechnology() const;
 	FString GetStats();
@@ -347,7 +348,7 @@ public:
 	TimidityMIDIDevice(const char *args);
 	~TimidityMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 
@@ -381,7 +382,7 @@ public:
 	WildMIDIDevice(const char *args);
 	~WildMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 
@@ -413,7 +414,7 @@ public:
 	FluidSynthMIDIDevice(const char *args);
 	~FluidSynthMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	int Open(MidiCallback, void *userdata);
 	FString GetStats();
 	void FluidSettingInt(const char *setting, int value);
 	void FluidSettingNum(const char *setting, double value);
@@ -505,7 +506,7 @@ protected:
 	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
 	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
 
-	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
+	static void Callback(unsigned int uMsg, void *userdata);
 
 	// Virtuals for subclasses to override
 	virtual void StartPlayback();

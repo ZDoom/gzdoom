@@ -40,7 +40,7 @@
 	}                                                              \
 }
 
-int AudioToolboxMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userData)
+int AudioToolboxMIDIDevice::Open(MidiCallback callback, void *userData)
 {
 	AT_MIDI_CHECK_ERROR(NewMusicPlayer(&m_player), false);
 	AT_MIDI_CHECK_ERROR(NewMusicSequence(&m_sequence), false);

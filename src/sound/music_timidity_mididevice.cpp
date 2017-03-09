@@ -115,7 +115,7 @@ TimidityMIDIDevice::~TimidityMIDIDevice()
 //
 //==========================================================================
 
-int TimidityMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int TimidityMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	int ret = OpenStream(2, 0, callback, userdata);
 	if (ret == 0)

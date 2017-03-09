@@ -142,7 +142,7 @@ WildMIDIDevice::~WildMIDIDevice()
 //
 //==========================================================================
 
-int WildMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int WildMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	if (Renderer == NULL)
 	{

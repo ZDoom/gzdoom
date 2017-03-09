@@ -94,7 +94,7 @@ WinMIDIDevice::~WinMIDIDevice()
 //
 //==========================================================================
 
-int WinMIDIDevice::Open(void (*callback)(UINT, void *, DWORD, DWORD), void *userdata)
+int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
 	MMRESULT err;
 
@@ -400,7 +400,7 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 	WinMIDIDevice *self = (WinMIDIDevice *)dwInstance;
 	if (self->Callback != NULL)
 	{
-		self->Callback(uMsg, self->CallbackData, dwParam1, dwParam2);
+		self->Callback(uMsg, self->CallbackData);
 	}
 }
 

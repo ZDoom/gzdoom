@@ -844,11 +844,6 @@ struct VMRegisters
 	VMValue *param;
 };
 
-struct VMException : public DObject
-{
-	DECLARE_CLASS(VMException, DObject);
-};
-
 union FVoidObj
 {
 	DObject *o;

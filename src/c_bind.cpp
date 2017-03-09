@@ -45,6 +45,7 @@
 #include "d_event.h"
 #include "w_wad.h"
 #include "templates.h"
+#include "dobject.h"
 
 #include <math.h>
 #include <stdlib.h>

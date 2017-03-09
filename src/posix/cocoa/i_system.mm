@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 #include "doomdef.h"
 #include "doomerrors.h"
 #include "doomstat.h"

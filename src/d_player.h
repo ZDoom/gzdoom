@@ -26,7 +26,7 @@
 // Finally, for odd reasons, the player input
 // is buffered within the player data struct,
 // as commands per game tick.
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 #include "doomstat.h"
 
 #include "a_weapons.h"

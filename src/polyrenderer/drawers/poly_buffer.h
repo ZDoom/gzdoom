@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <vector>
+
 struct TriVertex;
 
 class PolySubsectorGBuffer

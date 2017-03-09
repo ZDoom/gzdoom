@@ -38,7 +38,6 @@
 
 #include "doomtype.h"
 #include "r_data/renderstyle.h"
-#include "textures/textures.h"
 
 class FScanner;
 class FDecalTemplate;

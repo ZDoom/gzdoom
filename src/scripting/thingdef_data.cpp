@@ -50,7 +50,6 @@
 #include "zstring.h"
 #include "d_event.h"
 #include "g_levellocals.h"
-#include "vm.h"
 #include "p_checkposition.h"
 #include "r_sky.h"
 #include "v_font.h"

@@ -25,7 +25,7 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 
 
 //

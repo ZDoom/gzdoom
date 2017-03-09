@@ -25,7 +25,6 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "f_wipe.h"
 #include "m_random.h"
 #include "w_wad.h"

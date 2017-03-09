@@ -1,6 +1,4 @@
-#ifndef __R_BLEND_H
-#define __R_BLEND_H
-
+#pragma once
 /*
 ** r_blend.h
 ** Constants and types for specifying texture blending.
@@ -162,4 +160,3 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 	return *this;
 }
 
-#endif

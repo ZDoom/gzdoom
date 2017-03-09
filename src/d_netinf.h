@@ -36,8 +36,6 @@
 
 #include "c_cvars.h"
 
-EXTERN_CVAR (Float, autoaim)
-
 int D_GenderToInt (const char *gender);
 extern const char *GenderNames[3];
 

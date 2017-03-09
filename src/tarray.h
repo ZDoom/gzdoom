@@ -1,3 +1,4 @@
+#pragma once
 /*
 ** tarray.h
 ** Templated, automatically resizing array
@@ -32,8 +33,6 @@
 **
 */
 
-#ifndef __TARRAY_H__
-#define __TARRAY_H__
 
 #include <stdlib.h>
 #include <assert.h>
@@ -1250,4 +1249,3 @@ protected:
 	hash_t Position;
 };
 
-#endif //__TARRAY_H__

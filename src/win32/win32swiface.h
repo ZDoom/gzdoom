@@ -102,7 +102,7 @@ class D3DFB : public BaseWinFB
 {
 	DECLARE_CLASS(D3DFB, BaseWinFB)
 public:
-	D3DFB (UINT adapter, int width, int height, bool fullscreen);
+	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();
 
 	bool IsValid ();
@@ -296,6 +296,7 @@ private:
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	int FBWidth, FBHeight;
+	D3DFORMAT FBFormat;
 	bool VSync;
 	RECT BlendingRect;
 	int In2D;

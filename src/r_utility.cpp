@@ -101,8 +101,6 @@ CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (self > 1.f) self = 1.f;
 }
 
-DCanvas			*RenderTarget;		// [RH] canvas to render to
-
 int 			viewwindowx;
 int 			viewwindowy;
 
@@ -202,8 +200,6 @@ void R_SetViewSize (int blocks)
 
 void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas)
 {
-	float trueratio;
-
 	if (windowSize >= 11)
 	{
 		viewwidth = fullWidth;
@@ -225,11 +221,10 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, b
 	if (renderingToCanvas)
 	{
 		WidescreenRatio = fullWidth / (float)fullHeight;
-		trueratio = WidescreenRatio;
 	}
 	else
 	{
-		WidescreenRatio = ActiveRatio(fullWidth, fullHeight, &trueratio);
+		WidescreenRatio = ActiveRatio(fullWidth, fullHeight);
 	}
 
 	DrawFSHUD = (windowSize == 11);
@@ -259,7 +254,6 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, b
 		if (fov > 170.) fov = 170.;
 	}
 	FocalTangent = tan(fov.Radians() / 2);
-	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
 //==========================================================================
@@ -899,22 +893,19 @@ void R_SetupFrame (AActor *actor)
 			BaseBlendG = GPART(newblend);
 			BaseBlendB = BPART(newblend);
 			BaseBlendA = APART(newblend) / 255.f;
-			NormalLight.Maps = realcolormaps;
+			NormalLight.Maps = realcolormaps.Maps;
 		}
 		else
 		{
-			NormalLight.Maps = realcolormaps + NUMCOLORMAPS*256*newblend;
+			NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS*256*newblend;
 			BaseBlendR = BaseBlendG = BaseBlendB = 0;
 			BaseBlendA = 0.f;
 		}
 	}
 
-	Renderer->CopyStackedViewParameters();
-	Renderer->SetupFrame(player);
-
 	validcount++;
 
-	if (RenderTarget == screen && r_clearbuffer != 0)
+	if (r_clearbuffer != 0)
 	{
 		int color;
 		int hom = r_clearbuffer;
@@ -939,7 +930,7 @@ void R_SetupFrame (AActor *actor)
 		{
 			color = pr_hom();
 		}
-		Renderer->ClearBuffer(color);
+		Renderer->SetClearColor(color);
 	}
 }
 

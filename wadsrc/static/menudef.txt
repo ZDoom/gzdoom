@@ -345,6 +345,7 @@ OptionMenu "OptionsMenu"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
+	Submenu "$OPTMNU_CHANGERENDER",		"RendererMenu"
 	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
@@ -612,6 +613,18 @@ OptionMenu "JoystickConfigMenu"
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue ColumnMethods
+{
+	0.0, "$OPTVAL_ORIGINAL"
+	1.0, "$OPTVAL_OPTIMIZED"
+}
+
+OptionValue BlendMethods
+{
+	0.0, "$OPTVAL_CLASSIC"
+	1.0, "$OPTVAL_PRECISE"
+}
+
 OptionValue SkyModes
 {
 	0.0, "$OPTVAL_NORMAL"
@@ -670,6 +683,13 @@ OptionValue Fuzziness
 	2.0, "$OPTVAL_SHADOW"
 }
 
+OptionValue GPUSwitch
+{
+	0.0, "$OPTVAL_DEFAULT"
+	1.0, "$OPTVAL_DEDICATED"
+	2.0, "$OPTVAL_INTEGRATED"	
+}
+
 OptionMenu "OpenGLOptions"
 {
 	Title "$GLMNU_TITLE"
@@ -678,11 +698,23 @@ OptionMenu "OpenGLOptions"
 	Submenu "$GLMNU_PREFS", 				"GLPrefOptions"
 }
 
+OptionMenu "TrueColorOptions"
+{
+	Title "$TCMNU_TITLE"
+	StaticText " "
+	//Option "$TCMNU_TRUECOLOR",				"swtruecolor", "OnOff"
+	Option "$TCMNU_MINFILTER",				"r_minfilter", "OnOff"
+	Option "$TCMNU_MAGFILTER",				"r_magfilter", "OnOff"
+	Option "$TCMNU_MIPMAP",					"r_mipmap", "OnOff"
+	Option "$TCMNU_DYNLIGHTS",				"r_dynlights", "OnOff"
+}
+
 OptionMenu "VideoOptions"
 {
 	Title "$DSPLYMNU_TITLE"
 	
 	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
+	Submenu "$DSPLYMNU_TCOPT",			"TrueColorOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 			"ScoreboardOptions"
 	StaticText " "
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 3.0, 12.0, 1.0, 0
@@ -697,6 +729,7 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_WATERFADE",				"underwater_fade_scalar", 0.0, 1.0, 0.05, 2
+	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
@@ -709,6 +742,7 @@ OptionMenu "VideoOptions"
 	}
 	
 	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
+	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
@@ -728,7 +762,11 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1
-
+	IfOption(Windows)
+	{
+		StaticText " "
+		Option "$DSPLYMNU_GPUSWITCH",			vid_gpuswitch, "GPUSwitch"
+	}
 }
 
 //-------------------------------------------------------------------------------------------
@@ -1748,6 +1786,42 @@ OptionMenu ModReplayerOptions
 	// TODO if the menu system is ever rewritten: Provide a decent
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.
+}
+
+/*=======================================
+ *
+ * Change Renderer Menu
+ *
+ *=======================================*/
+
+OptionValue "PolyDoom"
+{
+	0, "$OPTVAL_SWDOOM"
+	1, "$OPTVAL_HWPOLY"
+}
+
+OptionValue "D3DGL"
+{
+	0, "$OPTVAL_GL"
+	1, "$OPTVAL_D3D"
+}
+
+OptionValue "GLD3D"
+{
+	0, "$OPTVAL_D3D"
+	1, "$OPTVAL_GL"
+}
+
+OptionMenu RendererMenu
+{
+	Title "$RNDMNU_TITLE"
+	Option "$RNDMNU_RENDERER",	"vid_renderer", "PolyDoom"
+	Option "$RNDMNU_TRUECOLOR",	"swtruecolor", "OnOff"
+	Option "$RNDMNU_POLY",		"r_polyrenderer", "OnOff"
+	IfOption(Windows)
+	{
+		Option "$RNDMNU_CANVAS",	"vid_used3d", "D3DGL"
+	}
 }
 
 /*=======================================

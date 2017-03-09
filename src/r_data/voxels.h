@@ -15,6 +15,14 @@ struct kvxslab_t
 	BYTE		col[1/*zleng*/];// color data from top to bottom
 };
 
+struct kvxslab_bgra_t
+{
+	uint32_t	ztop;			// starting z coordinate of top of slab
+	uint32_t	zleng;			// # of bytes in the color array - slab height
+	uint32_t	backfacecull;	// low 6 bits tell which of 6 faces are exposed
+	uint32_t	col[1/*zleng*/];// color data from top to bottom
+};
+
 struct FVoxelMipLevel
 {
 	FVoxelMipLevel();
@@ -27,6 +35,7 @@ struct FVoxelMipLevel
 	int			*OffsetX;
 	short		*OffsetXY;
 	BYTE		*SlabData;
+	TArray<uint32_t> SlabDataBgra;
 };
 
 struct FVoxel
@@ -39,6 +48,7 @@ struct FVoxel
 
 	FVoxel();
 	~FVoxel();
+	void CreateBgraSlabData();
 	void Remap();
 	void RemovePalette();
 };

@@ -27,71 +27,6 @@ struct FRenderer;
 FRenderer *gl_CreateInterface();
 
 
-class Win32GLVideo : public IVideo
-{
-public:
-	Win32GLVideo(int parm);
-	virtual ~Win32GLVideo();
-
-	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	void SetWindowedScale (float scale);
-	void StartModeIterator (int bits, bool fs);
-	bool NextMode (int *width, int *height, bool *letterbox);
-	bool GoFullscreen(bool yes);
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
-	virtual bool SetResolution (int width, int height, int bits);
-	void DumpAdapters();
-	bool InitHardware (HWND Window, int multisample);
-	void Shutdown();
-	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
-
-	HDC m_hDC;
-
-protected:
-	struct ModeInfo
-	{
-		ModeInfo (int inX, int inY, int inBits, int inRealY, int inRefresh)
-			: next (NULL),
-			width (inX),
-			height (inY),
-			bits (inBits),
-			refreshHz (inRefresh),
-			realheight (inRealY)
-		{}
-		ModeInfo *next;
-		int width, height, bits, refreshHz, realheight;
-	} *m_Modes;
-
-	ModeInfo *m_IteratorMode;
-	int m_IteratorBits;
-	bool m_IteratorFS;
-	bool m_IsFullscreen;
-	int m_trueHeight;
-	int m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz;
-	HMODULE hmRender;
-
-	char m_DisplayDeviceBuffer[CCHDEVICENAME];
-	char *m_DisplayDeviceName;
-	HMONITOR m_hMonitor;
-
-	HWND m_Window;
-	HGLRC m_hRC;
-
-	HWND InitDummy();
-	void ShutdownDummy(HWND dummy);
-	bool SetPixelFormat();
-	bool SetupPixelFormat(int multisample);
-
-	void GetDisplayDeviceName();
-	void MakeModesList();
-	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
-	void FreeModes();
-public:
-	int GetTrueHeight() { return m_trueHeight; }
-
-};
-
-
 
 class Win32GLFrameBuffer : public BaseWinFB
 {
@@ -120,7 +55,7 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
-	int GetTrueHeight() { return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); }
+	int GetTrueHeight();
 
 	bool Lock(bool buffered);
 	bool Lock ();

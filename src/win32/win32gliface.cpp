@@ -26,6 +26,9 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 
+extern HWND			Window;
+extern BOOL AppActive;
+
 extern "C" {
     _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
@@ -49,6 +52,77 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 
 EXTERN_CVAR(Bool, vr_enable_quadbuffered)
 EXTERN_CVAR(Int, vid_refreshrate)
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+class Win32GLVideo : public IVideo
+{
+public:
+	Win32GLVideo(int parm);
+	virtual ~Win32GLVideo();
+
+	EDisplayType GetDisplayType() { return DISPLAY_Both; }
+	void SetWindowedScale(float scale);
+	void StartModeIterator(int bits, bool fs);
+	bool NextMode(int *width, int *height, bool *letterbox);
+	bool GoFullscreen(bool yes);
+	DFrameBuffer *CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer *old);
+	virtual bool SetResolution(int width, int height, int bits);
+	void DumpAdapters();
+	bool InitHardware(HWND Window, int multisample);
+	void Shutdown();
+	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
+
+	HDC m_hDC;
+
+protected:
+	struct ModeInfo
+	{
+		ModeInfo(int inX, int inY, int inBits, int inRealY, int inRefresh)
+			: next(NULL),
+			width(inX),
+			height(inY),
+			bits(inBits),
+			refreshHz(inRefresh),
+			realheight(inRealY)
+		{}
+		ModeInfo *next;
+		int width, height, bits, refreshHz, realheight;
+	} *m_Modes;
+
+	ModeInfo *m_IteratorMode;
+	int m_IteratorBits;
+	bool m_IteratorFS;
+	bool m_IsFullscreen;
+	int m_trueHeight;
+	int m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz;
+	HMODULE hmRender;
+
+	char m_DisplayDeviceBuffer[CCHDEVICENAME];
+	char *m_DisplayDeviceName;
+	HMONITOR m_hMonitor;
+
+	HWND m_Window;
+	HGLRC m_hRC;
+
+	HWND InitDummy();
+	void ShutdownDummy(HWND dummy);
+	bool SetPixelFormat();
+	bool SetupPixelFormat(int multisample);
+
+	void GetDisplayDeviceName();
+	void MakeModesList();
+	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
+	void FreeModes();
+public:
+	int GetTrueHeight() { return m_trueHeight; }
+
+};
 
 //==========================================================================
 //
@@ -1159,6 +1233,11 @@ int Win32GLFrameBuffer::GetClientHeight()
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.bottom - rect.top;
+}
+
+int Win32GLFrameBuffer::GetTrueHeight() 
+{ 
+	return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); 
 }
 
 IVideo *gl_CreateVideo()

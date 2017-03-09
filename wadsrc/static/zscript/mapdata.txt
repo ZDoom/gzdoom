@@ -443,13 +443,13 @@ struct Sector native play
 
 class SectorTagIterator : Object native
 {
-	native static SectorTagIterator(int tag, line defline = null);
+	native static SectorTagIterator Create(int tag, line defline = null);
 	native int Next();
 	native int NextCompat(bool compat, int secnum);
 }
 
 class LineIdIterator : Object native
 {
-	native static LineIdIterator(int tag);
+	native static LineIdIterator Create(int tag);
 	native int Next();
 }

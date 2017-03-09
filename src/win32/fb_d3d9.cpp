@@ -67,6 +67,7 @@
 #include "f_wipe.h"
 #include "sbar.h"
 #include "win32iface.h"
+#include "win32swiface.h"
 #include "doomstat.h"
 #include "v_palette.h"
 #include "w_wad.h"
@@ -1210,10 +1211,7 @@ void D3DFB::Flip()
 		}
 	}
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	if (FPSLimitEvent != NULL)
-	{
-		WaitForSingleObject(FPSLimitEvent, 1000);
-	}
+	I_FPSLimit();
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
 

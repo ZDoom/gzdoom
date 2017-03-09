@@ -601,7 +601,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
 
-	byte &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];
+	uint8_t &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];
 
 	//
 	//

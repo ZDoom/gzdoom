@@ -82,13 +82,6 @@ struct vertexdata_t
 	uint32_t flags;
 };
 
-#ifdef USE_FLOAT
-typedef float vtype;
-#elif !defined USE_FIXED
-typedef double vtype;
-#endif
-
-
 struct vertex_t
 {
 	DVector2 p;

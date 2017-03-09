@@ -811,7 +811,19 @@ begin:
 	{
 		b = B;
 		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
-		if (cls->ObjectFlags & OF_Abstract) ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		if (cls->ConstructNative == nullptr)
+		{
+			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+		}
+		if (cls->ObjectFlags & OF_Abstract)
+		{
+			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		}
+		// Creating actors here must be outright prohibited,
+		if (cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		}
 		// [ZZ] validate readonly and between scope construction
 		c = C;
 		if (c) FScopeBarrier::ValidateNew(cls, c - 1);

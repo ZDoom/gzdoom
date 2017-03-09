@@ -3084,6 +3084,7 @@ DObject *PClass::CreateNew()
 
 	if (ConstructNative == nullptr)
 	{
+		M_Free(mem);
 		I_Error("Attempt to instantiate abstract class %s.", TypeName.GetChars());
 	}
 	ConstructNative (mem);

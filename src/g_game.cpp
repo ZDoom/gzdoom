@@ -1223,6 +1223,9 @@ void G_Ticker ()
 		}
 	}
 
+	// [ZZ] also tick the UI part of the events
+	E_UiTick();
+
 	// do main actions
 	switch (gamestate)
 	{

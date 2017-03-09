@@ -48,6 +48,7 @@
 #include "doomtype.h"
 #include "f_wipe.h"
 #include "win32iface.h"
+#include "win32swiface.h"
 #include "templates.h"
 #include "m_random.h"
 

@@ -34,7 +34,7 @@
 **
 */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <intrin.h>
@@ -76,7 +76,7 @@ double		gl_MillisecPerCycle = 1e-5;		// 100 MHz
 
 void gl_CalculateCPUSpeed ()
 {
-	#ifdef WIN32
+	#ifdef _WIN32
 		LARGE_INTEGER freq;
 
 		QueryPerformanceFrequency (&freq);

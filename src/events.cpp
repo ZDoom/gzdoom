@@ -471,6 +471,7 @@ DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(RenderOverlay)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
+DEFINE_EVENT_LOOPER(UiTick)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, true);
@@ -551,38 +552,6 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3, false));
 }
 
-DEFINE_ACTION_FUNCTION(DEventHandler, Create)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// check if type inherits dynamic handlers
-	if (E_IsStaticType(t))
-	{
-		// disallow static types creation with Create()
-		ACTION_RETURN_OBJECT(nullptr);
-	}
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
-}
-
-DEFINE_ACTION_FUNCTION(DEventHandler, CreateOnce)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// check if type inherits dynamic handlers
-	if (E_IsStaticType(t))
-	{
-		// disallow static types creation with Create()
-		ACTION_RETURN_OBJECT(nullptr);
-	}
-	// check if there are already registered handlers of this type.
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		if (handler->GetClass() == t) // check precise class
-			ACTION_RETURN_OBJECT(handler);
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
-}
-
 DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;
@@ -591,45 +560,6 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
 	ACTION_RETURN_OBJECT(nullptr);
-}
-
-DEFINE_ACTION_FUNCTION(DEventHandler, Register)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(handler, DStaticEventHandler);
-	if (handler->IsStatic()) ACTION_RETURN_BOOL(false);
-	ACTION_RETURN_BOOL(E_RegisterHandler(handler));
-}
-
-DEFINE_ACTION_FUNCTION(DEventHandler, Unregister)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(handler, DStaticEventHandler);
-	if (handler->IsStatic()) ACTION_RETURN_BOOL(false);
-	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
-}
-
-// for static
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, Create)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// static handlers can create any type of object.
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
-}
-
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, CreateOnce)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(t, DStaticEventHandler);
-	// static handlers can create any type of object.
-	// check if there are already registered handlers of this type.
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		if (handler->GetClass() == t) // check precise class
-			ACTION_RETURN_OBJECT(handler);
-	// generate a new object of this type.
-	ACTION_RETURN_OBJECT(t->CreateNew());
 }
 
 // we might later want to change this
@@ -641,20 +571,6 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Find)
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
 	ACTION_RETURN_OBJECT(nullptr);
-}
-
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, Register)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(handler, DStaticEventHandler);
-	ACTION_RETURN_BOOL(E_RegisterHandler(handler));
-}
-
-DEFINE_ACTION_FUNCTION(DStaticEventHandler, Unregister)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(handler, DStaticEventHandler);
-	ACTION_RETURN_BOOL(E_UnregisterHandler(handler));
 }
 
 #define DEFINE_EMPTY_HANDLER(cls, funcname) DEFINE_ACTION_FUNCTION(cls, funcname) \
@@ -686,6 +602,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiTick);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
@@ -851,9 +768,8 @@ void DStaticEventHandler::WorldTick()
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_WorldTick_VMPtr)
 			return;
-		FWorldEvent e = E_SetupWorldEvent();
-		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }
 
@@ -1052,6 +968,18 @@ bool DStaticEventHandler::InputProcess(const event_t* ev)
 	}
 
 	return false;
+}
+
+void DStaticEventHandler::UiTick()
+{
+	IFVIRTUAL(DStaticEventHandler, UiTick)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_UiTick_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual)

@@ -5281,6 +5281,12 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 			break;
 		}
 	}
+	// If the first choice is constant, swap it with the second one.
+	// Note that all constants have already been folded together so there can only be one constant in the list of choices.
+	if (choices[0]->isConstant())
+	{
+		std::swap(choices[0], choices[1]);
+	}
 	return this;
 }
 
@@ -5307,6 +5313,7 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 	int opcode;
 
 	assert(choices.Size() > 0);
+	assert(!choices[0]->isConstant());
 	assert(OP_MAXF_RK == OP_MAXF_RR+1);
 	assert(OP_MAX_RK == OP_MAX_RR+1);
 	assert(OP_MIN_RK == OP_MIN_RR+1);
@@ -5321,28 +5328,30 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MAXF_RR : OP_MAX_RR;
 	}
 
-	ExpEmit bestreg;
+	ExpEmit firstreg = choices[0]->Emit(build);
+	ExpEmit destreg;
 
-	// Get first value into a register. This will also be the result register.
-	if (choices[0]->isConstant())
+	if (firstreg.Fixed)
 	{
-		bestreg = ExpEmit(build, ValueType->GetRegType());
-		EmitLoad(build, bestreg, static_cast<FxConstant *>(choices[0])->GetValue());
+		destreg = ExpEmit(build, firstreg.RegType);
+		firstreg.Free(build);
 	}
 	else
 	{
-		bestreg = choices[0]->Emit(build);
+		destreg = firstreg;
 	}
+
 
 	// Compare every choice. Better matches get copied to the bestreg.
 	for (i = 1; i < choices.Size(); ++i)
 	{
 		ExpEmit checkreg = choices[i]->Emit(build);
-		assert(checkreg.RegType == bestreg.RegType);
-		build->Emit(opcode + checkreg.Konst, bestreg.RegNum, bestreg.RegNum, checkreg.RegNum);
+		assert(checkreg.RegType == firstreg.RegType);
+		build->Emit(opcode + checkreg.Konst, destreg.RegNum, firstreg.RegNum, checkreg.RegNum);
+		firstreg = destreg;
 		checkreg.Free(build);
 	}
-	return bestreg;
+	return destreg;
 }
 
 //==========================================================================

@@ -73,6 +73,7 @@
 #include "version.h"
 
 #include "win32iface.h"
+#include "win32swiface.h"
 
 #include "optwin32.h"
 
@@ -223,8 +224,8 @@ bool Win32Video::InitD3D9 ()
 
 	// Enumerate available display modes.
 	FreeModes ();
-	AddD3DModes (m_Adapter, D3DFMT_X8R8G8B8);
-	AddD3DModes (m_Adapter, D3DFMT_R5G6B5);
+	AddD3DModes (m_Adapter);
+	AddD3DModes (m_Adapter);
 	if (Args->CheckParm ("-2"))
 	{ // Force all modes to be pixel-doubled.
 		ScaleModes (1);
@@ -251,6 +252,12 @@ d3drelease:
 closelib:
 	FreeLibrary (D3D9_dll);
 	return false;
+}
+
+static HRESULT WINAPI EnumDDModesCB(LPDDSURFACEDESC desc, void *data)
+{
+	((Win32Video *)data)->AddMode(desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
+	return DDENUMRET_OK;
 }
 
 void Win32Video::InitDDraw ()
@@ -436,23 +443,20 @@ void Win32Video::DumpAdapters()
 
 // Mode enumeration --------------------------------------------------------
 
-HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
+void Win32Video::AddD3DModes (unsigned adapter)
 {
-	((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
-	return DDENUMRET_OK;
-}
-
-void Win32Video::AddD3DModes (UINT adapter, D3DFORMAT format)
-{
-	UINT modecount, i;
-	D3DDISPLAYMODE mode;
-
-	modecount = D3D->GetAdapterModeCount (adapter, format);
-	for (i = 0; i < modecount; ++i)
+	for (D3DFORMAT format : { D3DFMT_X8R8G8B8, D3DFMT_R5G6B5})
 	{
-		if (D3D_OK == D3D->EnumAdapterModes (adapter, format, i, &mode))
+		UINT modecount, i;
+		D3DDISPLAYMODE mode;
+
+		modecount = D3D->GetAdapterModeCount(adapter, format);
+		for (i = 0; i < modecount; ++i)
 		{
-			AddMode (mode.Width, mode.Height, 8, mode.Height, 0);
+			if (D3D_OK == D3D->EnumAdapterModes(adapter, format, i, &mode))
+			{
+				AddMode(mode.Width, mode.Height, 8, mode.Height, 0);
+			}
 		}
 	}
 }
@@ -842,4 +846,12 @@ void I_SetFPSLimit(int limit)
 static void StopFPSLimit()
 {
 	I_SetFPSLimit(0);
+}
+
+void I_FPSLimit()
+{
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
+	}
 }

@@ -77,26 +77,41 @@ protected:
 	int searchtag;
 	int start;
 
-public:
-	FSectorTagIterator(int tag)
+	FSectorTagIterator()
+	{
+		// For DSectorTagIterator
+	}
+
+	void Init(int tag)
 	{
 		searchtag = tag;
 		start = tag == 0 ? 0 : tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
 	}
 
-	// Special constructor for actions that treat tag 0 as  'back of activation line'
-	FSectorTagIterator(int tag, line_t *line)
+	void Init(int tag, line_t *line)
 	{
 		if (tag == 0)
 		{
 			searchtag = INT_MIN;
-			start = (line == NULL || line->backsector == NULL)? -1 : line->backsector->Index();
+			start = (line == NULL || line->backsector == NULL) ? -1 : line->backsector->Index();
 		}
 		else
 		{
 			searchtag = tag;
 			start = tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
 		}
+	}
+
+public:
+	FSectorTagIterator(int tag)
+	{
+		Init(tag);
+	}
+
+	// Special constructor for actions that treat tag 0 as  'back of activation line'
+	FSectorTagIterator(int tag, line_t *line)
+	{
+		Init(tag, line);
 	}
 
 	int Next();

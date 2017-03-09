@@ -709,7 +709,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 
 class DThinkerIterator : public DObject, public FThinkerIterator
 {
-	DECLARE_CLASS(DThinkerIterator, DObject)
+	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
 
 	DThinkerIterator()
 	{
@@ -722,7 +722,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DThinkerIterator, false, false);
+IMPLEMENT_CLASS(DThinkerIterator, true, false);
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
 {
 	PARAM_PROLOGUE;

@@ -7866,7 +7866,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
 
 class DActorIterator : public DObject, public NActorIterator
 {
-	DECLARE_CLASS(DActorIterator, DObject)
+	DECLARE_ABSTRACT_CLASS(DActorIterator, DObject)
 
 public:
 	DActorIterator(PClassActor *cls= nullptr, int tid = 0)
@@ -7875,7 +7875,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DActorIterator, false, false);
+IMPLEMENT_CLASS(DActorIterator, true, false);
 DEFINE_ACTION_FUNCTION(DActorIterator, Create)
 {
 	PARAM_PROLOGUE;

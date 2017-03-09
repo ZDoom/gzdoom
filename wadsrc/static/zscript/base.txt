@@ -357,6 +357,18 @@ class BlockThingsIterator : Object native
 	native bool Next();
 }
 
+class BlockLinesIterator : Object native
+{
+	native Line CurLine;
+	native Vector3 position;
+	native int portalflags;
+	
+	native static BlockThingsIterator Create(Actor origin, double checkradius = -1);
+	native static BlockThingsIterator CreateFromPos(Vector3 pos, double checkh, double checkradius, Sector sec = null);
+	native bool Next();
+}
+
+
 struct DropItem native
 {
 	native readonly DropItem Next;

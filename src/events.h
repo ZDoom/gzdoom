@@ -41,8 +41,10 @@ void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int d
 void E_WorldThingDestroyed(AActor* actor);
 // same as ACS SCRIPT_Lightning
 void E_WorldLightning();
-// this executes on every tick, before everything
+// this executes on every tick, before everything, only when in valid level and not paused
 void E_WorldTick();
+// this executes on every tick on UI side, always
+void E_UiTick();
 // called on each render frame once.
 void E_RenderFrame();
 // called after everything's been rendered, but before console/menus
@@ -150,6 +152,7 @@ public:
 	// return true if handled.
 	bool InputProcess(const event_t* ev);
 	bool UiProcess(const event_t* ev);
+	void UiTick();
 	
 	// 
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);

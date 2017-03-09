@@ -1707,7 +1707,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 		}
 	}
 
-	if ((flags7 & MF7_NOINFIGHTSPECIES) && GetSpecies() == target->GetSpecies())
+	if ((flags7 & MF7_NOINFIGHTSPECIES) && GetSpecies() == other->GetSpecies())
 		return false;		// Don't fight own species.
 
 	if ((other->flags3 & MF3_NOTARGET) &&

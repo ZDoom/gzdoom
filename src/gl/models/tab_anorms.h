@@ -1,4 +1,4 @@
-#ifdef WIN32
+#ifdef _WIN32
 #pragma warning(disable:4305)
 #endif
 

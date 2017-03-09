@@ -768,7 +768,7 @@ void DStaticEventHandler::WorldTick()
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_WorldTick_VMPtr)
 			return;
-		VMValue params[2] = { (DStaticEventHandler*)this };
+		VMValue params[1] = { (DStaticEventHandler*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }
@@ -977,7 +977,7 @@ void DStaticEventHandler::UiTick()
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_UiTick_VMPtr)
 			return;
-		VMValue params[2] = { (DStaticEventHandler*)this };
+		VMValue params[1] = { (DStaticEventHandler*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 }

@@ -85,7 +85,7 @@ void gl_CalculateCPUSpeed ()
 		{
 			LARGE_INTEGER count1, count2;
 			unsigned minDiff;
-			long long ClockCalibration = 0;
+			int64_t ClockCalibration = 0;
 
 			// Count cycles for at least 55 milliseconds.
 			// The performance counter is very low resolution compared to CPU

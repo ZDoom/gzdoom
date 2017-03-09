@@ -285,14 +285,14 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	unaligned = ((size_t)from | (size_t)to) & 0xF;
 
 #if defined(__amd64__) || defined(_M_X64)
-	long long color;
+	int64_t color;
 
 	blending256 = _mm_set_epi64x(0x10001000100ll, 0x10001000100ll);
 
-	color = ((long long)r << 32) | (g << 16) | b;
+	color = ((int64_t)r << 32) | (g << 16) | b;
 	blendcolor = _mm_set_epi64x(color, color);
 
-	color = ((long long)a << 32) | (a << 16) | a;
+	color = ((int64_t)a << 32) | (a << 16) | a;
 	blendalpha = _mm_set_epi64x(color, color);
 #else
 	int color;

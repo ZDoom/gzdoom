@@ -2159,7 +2159,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 void FMODSoundRenderer::MarkStartTime(FISoundChannel *chan)
 {
 #if FMOD_STUDIO
-	unsigned long long int dsp_time;
+	uint64_t dsp_time;
 	((FMOD::Channel *)chan->SysChannel)->getDSPClock(&dsp_time,NULL);
 	chan->StartTime.Lo = dsp_time & 0xFFFFFFFF;
 	chan->StartTime.Hi = dsp_time >> 32;
@@ -2186,7 +2186,7 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 	  // it would be in now if it had never been evicted.
 		QWORD_UNION nowtime;
 #if FMOD_STUDIO
-		unsigned long long int delay;
+		uint64_t delay;
 		chan->getDelay(&delay,NULL,NULL);
 		nowtime.Lo = delay & 0xFFFFFFFF;
 		nowtime.Hi = delay >> 32;
@@ -2332,7 +2332,7 @@ FISoundChannel *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, FISou
 	{
 		schan = S_GetChannel(chan);
 #if FMOD_STUDIO
-		unsigned long long int time;
+		uint64_t time;
 		chan->getDelay(&time,NULL,NULL);
 		schan->StartTime.Lo = time & 0xFFFFFFFF;
 		schan->StartTime.Hi = time >> 32;
@@ -2701,7 +2701,7 @@ void FMODSoundRenderer::Sync(bool sync)
 	{
 		Sys->lockDSP();
 #if FMOD_STUDIO
-		unsigned long long int clock;
+		uint64_t clock;
 		SfxGroup->getDSPClock(&clock,NULL);
 		DSPClock.Lo = clock & 0xFFFFFFFF;
 		DSPClock.Hi = clock >> 32;
@@ -2726,7 +2726,7 @@ void FMODSoundRenderer::UpdateSounds()
 	// Any sounds played between now and the next call to this function
 	// will start exactly one tic from now.
 #if FMOD_STUDIO
-	unsigned long long int clock;
+	uint64_t clock;
 	SfxGroup->getDSPClock(&clock,NULL);
 	DSPClock.Lo = clock & 0xFFFFFFFF;
 	DSPClock.Hi = clock >> 32;

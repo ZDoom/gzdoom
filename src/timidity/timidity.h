@@ -255,7 +255,7 @@ struct Sample
 
 	// SF2 stuff
 	int16_t tune;
-	SBYTE velocity;
+	int8_t velocity;
 
 	float initial_attenuation;
 };
@@ -312,7 +312,7 @@ struct ToneBankElement
 
 	FString name;
 	int note, pan, fontbank, fontpreset, fontnote;
-	SBYTE strip_loop, strip_envelope, strip_tail;
+	int8_t strip_loop, strip_envelope, strip_tail;
 };
 
 /* A hack to delay instrument loading until after reading the entire MIDI file. */
@@ -430,7 +430,7 @@ struct Channel
 		pitchsens;
 	BYTE
 		volume, expression;
-	SBYTE
+	int8_t
 		panning;
 	uint16_t
 		rpn, nrpn;

@@ -423,7 +423,7 @@ void OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 //
 //
 //==========================================================================
-void OpenGLFrameBuffer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color)
+void OpenGLFrameBuffer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr) 
 		GLRenderer->m2DDrawer->AddLine(x1, y1, x2, y2, palcolor, color);
@@ -434,7 +434,7 @@ void OpenGLFrameBuffer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, u
 //
 //
 //==========================================================================
-void OpenGLFrameBuffer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
+void OpenGLFrameBuffer::DrawPixel(int x1, int y1, int palcolor, uint32_t color)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
 		GLRenderer->m2DDrawer->AddPixel(x1, y1, palcolor, color);
@@ -475,7 +475,7 @@ void OpenGLFrameBuffer::FlatFill (int left, int top, int right, int bottom, FTex
 //
 //
 //==========================================================================
-void OpenGLFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32 color)
+void OpenGLFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
 		GLRenderer->m2DDrawer->AddClear(left, top, right, bottom, palcolor, color);

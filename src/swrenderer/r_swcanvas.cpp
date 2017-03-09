@@ -384,7 +384,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 	viewport->RenderTarget = screen;
 }
 
-void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)
+void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor)
 {
 	const int WeightingScale = 0;
 	const int WEIGHTBITS = 6;
@@ -581,7 +581,7 @@ void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int pal
 	canvas->Unlock();
 }
 
-void SWCanvas::DrawPixel(DCanvas *canvas, int x, int y, int palColor, uint32 realcolor)
+void SWCanvas::DrawPixel(DCanvas *canvas, int x, int y, int palColor, uint32_t realcolor)
 {
 	if (palColor < 0)
 	{
@@ -653,7 +653,7 @@ void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int l
 	}
 }
 
-void SWCanvas::Clear(DCanvas *canvas, int left, int top, int right, int bottom, int palcolor, uint32 color)
+void SWCanvas::Clear(DCanvas *canvas, int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	int x, y;
 
@@ -828,12 +828,12 @@ void SWCanvas::Dim(DCanvas *canvas, PalEntry color, float damount, int x1, int y
 	}
 }
 
-int SWCanvas::PalFromRGB(uint32 rgb)
+int SWCanvas::PalFromRGB(uint32_t rgb)
 {
 	// For routines that take RGB colors, cache the previous lookup in case there
 	// are several repetitions with the same color.
 	static int LastPal = -1;
-	static uint32 LastRGB;
+	static uint32_t LastRGB;
 
 	if (LastPal >= 0 && LastRGB == rgb)
 	{

@@ -161,8 +161,8 @@ void FTextureManager::AddTiles (void *tiles)
 		int width = LittleShort(tilesizx[pic]);
 		int height = LittleShort(tilesizy[pic]);
 		DWORD anm = LittleLong(picanm[pic]);
-		int xoffs = (SBYTE)((anm >> 8) & 255) + width/2;
-		int yoffs = (SBYTE)((anm >> 16) & 255) + height/2;
+		int xoffs = (int8_t)((anm >> 8) & 255) + width/2;
+		int yoffs = (int8_t)((anm >> 16) & 255) + height/2;
 		int size = width*height;
 		FTextureID texnum;
 		FTexture *tex;

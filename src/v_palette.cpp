@@ -107,7 +107,7 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
-int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
+int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;

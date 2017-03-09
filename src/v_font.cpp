@@ -318,7 +318,7 @@ FFont *V_GetFont(const char *name)
 		
 		if (lump != -1)
 		{
-			uint32 head;
+			uint32_t head;
 			{
 				FWadLump lumpy = Wads.OpenLumpNum (lump);
 				lumpy.Read (&head, 4);

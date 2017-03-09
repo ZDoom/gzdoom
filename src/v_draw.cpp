@@ -873,14 +873,14 @@ void DCanvas::FillBorder (FTexture *img)
 	}
 }
 
-void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)
+void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor)
 {
 #ifndef NO_SWRENDER
 	SWCanvas::DrawLine(this, x0, y0, x1, y1, palColor, realcolor);
 #endif
 }
 
-void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
+void DCanvas::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 {
 #ifndef NO_SWRENDER
 	SWCanvas::DrawPixel(this, x, y, palColor, realcolor);
@@ -895,7 +895,7 @@ void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
 //
 //==========================================================================
 
-void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
+void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 #ifndef NO_SWRENDER
 	if (palcolor < 0 && APART(color) != 255)

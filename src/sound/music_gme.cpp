@@ -102,7 +102,7 @@ CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-const char *GME_CheckFormat(uint32 id)
+const char *GME_CheckFormat(uint32_t id)
 {
 	return gme_identify_header(&id);
 }

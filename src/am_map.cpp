@@ -153,12 +153,12 @@ CVAR (Color, am_ovportalcolor,			0x004022,	CVAR_ARCHIVE);
 struct AMColor
 {
 	int Index;
-	uint32 RGB;
+	uint32_t RGB;
 
 	void FromCVar(FColorCVar & cv)
 	{
 		Index = cv.GetIndex();
-		RGB = uint32(cv) | MAKEARGB(255, 0, 0, 0);
+		RGB = uint32_t(cv) | MAKEARGB(255, 0, 0, 0);
 	}
 
 	void FromRGB(int r,int g, int b)

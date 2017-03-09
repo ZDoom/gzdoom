@@ -44,7 +44,7 @@ static const char *BuiltInTypeNames[] =
 {
 	"sint8", "uint8",
 	"sint16", "uint16",
-	"sint32", "uint32",
+	"sint32", "uint32_t",
 	"intauto",
 
 	"bool",

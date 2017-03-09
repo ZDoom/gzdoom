@@ -529,7 +529,7 @@ void FGLRenderer::CreateTonemapPalette()
 			{
 				for (int b = 0; b < 64; b++)
 				{
-					PalEntry color = GPalette.BaseColors[(BYTE)PTM_BestColor((uint32 *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
+					PalEntry color = GPalette.BaseColors[(BYTE)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
 					int index = ((r * 64 + g) * 64 + b) * 4;
 					lut[index] = color.r;
 					lut[index + 1] = color.g;
@@ -832,7 +832,7 @@ void FGLRenderer::ClearBorders()
 
 // [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
 
-int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
+int FGLRenderer::PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	static double powtable[256];

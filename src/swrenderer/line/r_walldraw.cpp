@@ -112,7 +112,7 @@ namespace swrenderer
 				v_step = 0.0;
 			}
 
-			// Convert to uint32:
+			// Convert to uint32_t:
 			uv_pos = (uint32_t)(v * 0x100000000LL);
 			uv_step = (uint32_t)(v_step * 0x100000000LL);
 			uv_max = 0;

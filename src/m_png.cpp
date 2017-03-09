@@ -1255,7 +1255,7 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_
 		// in a cache line.
 		union
 		{
-			uint32 bits2l;
+			uint32_t bits2l;
 			uint8_t bits2[4];
 		};
 

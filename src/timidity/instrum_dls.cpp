@@ -1123,7 +1123,7 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 
 	sample->type = INST_DLS;
 	sample->self_nonexclusive = !!(rgn->header->fusOptions & F_RGN_OPTION_SELFNONEXCLUSIVE);
-	sample->key_group = (SBYTE)rgn->header->usKeyGroup;
+	sample->key_group = (int8_t)rgn->header->usKeyGroup;
 	sample->low_freq = note_to_freq(rgn->header->RangeKey.usLow);
 	sample->high_freq = note_to_freq(rgn->header->RangeKey.usHigh);
 	sample->root_freq = note_to_freq(rgn->wsmp->usUnityNote + rgn->wsmp->sFineTune * .01f);

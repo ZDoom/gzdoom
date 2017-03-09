@@ -36,7 +36,7 @@ enum
 	LANGIDX_SysPreferred,
 	LANGIDX_SysDefault
 };
-extern uint32 LanguageIDs[4];
+extern uint32_t LanguageIDs[4];
 extern void SetLanguageIDs ();
 
 // [RH] Detects the OS the game is running under.
@@ -66,7 +66,7 @@ extern int (*I_WaitForTic) (int);
 // tic will never arrive (unless it's the current one).
 extern void (*I_FreezeTime) (bool frozen);
 
-double I_GetTimeFrac (uint32 *ms);
+double I_GetTimeFrac (uint32_t *ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();

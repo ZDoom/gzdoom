@@ -2636,7 +2636,7 @@ FNativePalette *D3DFB::CreatePalette(FRemapTable *remap)
 //
 //==========================================================================
 
-void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
+void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
@@ -2735,7 +2735,7 @@ void D3DFB::EndLineBatch()
 //
 //==========================================================================
 
-void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32 color)
+void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
@@ -2783,7 +2783,7 @@ void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
+void D3DFB::DrawPixel(int x, int y, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{

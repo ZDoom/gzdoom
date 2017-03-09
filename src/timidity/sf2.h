@@ -43,7 +43,7 @@ struct SFSample
 	DWORD EndLoop;
 	DWORD SampleRate;
 	BYTE  OriginalPitch;
-	SBYTE PitchCorrection;
+	int8_t PitchCorrection;
 	uint16_t  SampleLink;
 	uint16_t  SampleType;
 	char  Name[21];

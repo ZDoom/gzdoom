@@ -240,7 +240,7 @@ static inline int read_byte(FileReader *f)
 
 static inline int read_char(FileReader *f)
 {
-	SBYTE x;
+	int8_t x;
 	if (f->Read(&x, 1) != 1)
 	{
 		throw CIOErr();
@@ -1487,7 +1487,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 	// Set tuning (in cents)
 	sp->tune = gen->coarseTune * 100 + gen->fineTune;
 
-	sp->velocity = (SBYTE)gen->velocity;
+	sp->velocity = (int8_t)gen->velocity;
 	sp->initial_attenuation = gen->initialAttenuation;
 }
 

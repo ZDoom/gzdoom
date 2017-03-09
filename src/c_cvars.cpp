@@ -1677,7 +1677,7 @@ void C_SetCVarsToDefaults (void)
 	}
 }
 
-void C_ArchiveCVars (FConfigFile *f, uint32 filter)
+void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 {
 	FBaseCVar *cvar = CVars;
 

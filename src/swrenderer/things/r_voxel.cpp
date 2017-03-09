@@ -543,7 +543,7 @@ namespace swrenderer
 							bool bgra = viewport->RenderTarget->IsBgra();
 							if (bgra)
 							{
-								// The true color slab data array is identical, except its using uint32 instead of uint8.
+								// The true color slab data array is identical, except its using uint32_t instead of uint8.
 								//
 								// We can find the same slab column by calculating the offset from the start of SlabData
 								// and use that to offset into the BGRA version of the same data.

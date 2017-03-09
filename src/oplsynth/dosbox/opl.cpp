@@ -39,7 +39,7 @@ typedef int32_t		Bit32s;
 typedef uint16_t	Bit16u;
 typedef int16_t		Bit16s;
 typedef uint8_t		Bit8u;
-typedef SBYTE		Bit8s;
+typedef int8_t		Bit8s;
 
 #define OPLTYPE_IS_OPL3
 #undef PI

@@ -70,7 +70,7 @@ extern FPalette GPalette;
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
-int BestColor (const uint32 *pal, int r, int g, int b, int first=1, int num=255);
+int BestColor (const uint32_t *pal, int r, int g, int b, int first=1, int num=255);
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void InitPalette ();

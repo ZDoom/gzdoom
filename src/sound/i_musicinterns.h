@@ -811,7 +811,7 @@ MusInfo *MOD_OpenSong(FileReader &reader);
 
 // Music played via Game Music Emu ------------------------------------------
 
-const char *GME_CheckFormat(uint32 header);
+const char *GME_CheckFormat(uint32_t header);
 MusInfo *GME_OpenSong(FileReader &reader, const char *fmt);
 
 // --------------------------------------------------------------------------

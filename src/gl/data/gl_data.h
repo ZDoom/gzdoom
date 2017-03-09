@@ -8,7 +8,7 @@
 struct GLRenderSettings
 {
 
-	SBYTE lightmode;
+	int8_t lightmode;
 	bool nocoloredspritelighting;
 	bool nolightfade;
 	bool notexturefill;

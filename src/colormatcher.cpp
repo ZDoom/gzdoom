@@ -76,5 +76,5 @@ BYTE FColorMatcher::Pick (int r, int g, int b)
 	if (Pal == NULL)
 		return 1;
 
-	return (BYTE)BestColor ((uint32 *)Pal, r, g, b);
+	return (BYTE)BestColor ((uint32_t *)Pal, r, g, b);
 }

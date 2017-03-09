@@ -308,7 +308,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_ColorSet));
 	}
-	uint32 GetColor() const
+	uint32_t GetColor() const
 	{
 		return *static_cast<FColorCVar *>(*CheckKey(NAME_Color));
 	}
@@ -356,8 +356,8 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	int GenderChanged(const char *gendername);
 	int PlayerClassChanged(const char *classname);
 	int PlayerClassNumChanged(int classnum);
-	uint32 ColorChanged(const char *colorname);
-	uint32 ColorChanged(uint32 colorval);
+	uint32_t ColorChanged(const char *colorname);
+	uint32_t ColorChanged(uint32_t colorval);
 	int ColorSetChanged(int setnum);
 };
 

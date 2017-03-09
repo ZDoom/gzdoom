@@ -28,7 +28,7 @@ public:
 	friend class SDLGLVideo;
 
 	virtual void SetVSync(bool vsync);
-	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 	SDL_Window *GetSDLWindow() override { return Screen; }
 

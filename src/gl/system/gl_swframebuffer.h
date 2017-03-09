@@ -54,11 +54,11 @@ public:
 	FNativeTexture *CreateTexture(FTexture *gametex, bool wrapping) override;
 	FNativePalette *CreatePalette(FRemapTable *remap) override;
 	void DrawTextureParms(FTexture *img, DrawParms &parms) override;
-	void Clear(int left, int top, int right, int bottom, int palcolor, uint32 color) override;
+	void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color) override;
 	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h) override;
 	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin) override;
-	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor) override;
-	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor) override;
+	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor) override;
+	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor) override;
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints, double originx, double originy, double scalex, double scaley, DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
 	bool WipeStartScreen(int type) override;
 	void WipeEndScreen() override;

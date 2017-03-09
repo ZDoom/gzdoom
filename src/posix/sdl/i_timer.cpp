@@ -177,7 +177,7 @@ void I_SelectTimer()
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
-double I_GetTimeFrac (uint32 *ms)
+double I_GetTimeFrac (uint32_t *ms)
 {
 	DWORD now = SDL_GetTicks ();
 	if (ms) *ms = TicStart + (1000 / TICRATE);

@@ -163,7 +163,7 @@ UINT TimerPeriod;
 UINT TimerEventID;
 UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
-uint32 LanguageIDs[4];
+uint32_t LanguageIDs[4];
 
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
@@ -487,7 +487,7 @@ static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw
 //
 //==========================================================================
 
-double I_GetTimeFrac(uint32 *ms)
+double I_GetTimeFrac(uint32_t *ms)
 {
 	DWORD now = timeGetTime();
 	if (ms != NULL)

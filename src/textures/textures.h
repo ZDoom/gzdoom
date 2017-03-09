@@ -106,10 +106,10 @@ struct FDoorAnimation
 // textures from the TEXTURE1/2 lists of patches.
 struct patch_t
 { 
-	SWORD			width;			// bounding box size 
-	SWORD			height; 
-	SWORD			leftoffset; 	// pixels to the left of origin 
-	SWORD			topoffset;		// pixels below the origin 
+	int16_t			width;			// bounding box size 
+	int16_t			height; 
+	int16_t			leftoffset; 	// pixels to the left of origin 
+	int16_t			topoffset;		// pixels below the origin 
 	DWORD 			columnofs[];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
@@ -140,7 +140,7 @@ public:
 	static FTexture *CreateTexture(int lumpnum, int usetype);
 	virtual ~FTexture ();
 
-	SWORD LeftOffset, TopOffset;
+	int16_t LeftOffset, TopOffset;
 
 	BYTE WidthBits, HeightBits;
 
@@ -166,7 +166,7 @@ public:
 	BYTE bKeepAround:1;		// This texture was used as part of a multi-patch texture. Do not free it.
 
 	WORD Rotations;
-	SWORD SkyOffset;
+	int16_t SkyOffset;
 
 	enum // UseTypes
 	{

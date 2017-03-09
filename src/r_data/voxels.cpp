@@ -105,7 +105,7 @@ static BYTE *GetVoxelRemap(const BYTE *pal)
 		{
 			// The voxel palette uses VGA colors, so we have to expand it
 			// from 6 to 8 bits per component.
-			remap[i] = BestColor((uint32 *)GPalette.BaseColors,
+			remap[i] = BestColor((uint32_t *)GPalette.BaseColors,
 				(oldpal[i*3 + 0] << 2) | (oldpal[i*3 + 0] >> 4),
 				(oldpal[i*3 + 1] << 2) | (oldpal[i*3 + 1] >> 4),
 				(oldpal[i*3 + 2] << 2) | (oldpal[i*3 + 2] >> 4));

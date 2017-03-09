@@ -168,15 +168,15 @@ struct PS2Descriptor
 {
 	const char *AdapterName;
 	 BYTE PacketSize;
-	SBYTE ControllerNumber;
-	SBYTE ControllerStatus;
+	int8_t ControllerNumber;
+	int8_t ControllerStatus;
 	 BYTE LeftX;
 	 BYTE LeftY;
 	 BYTE RightX;
 	 BYTE RightY;
-	SBYTE DPadHat;
+	int8_t DPadHat;
 	 BYTE DPadButtonsNibble:1;
-	SBYTE DPadButtons:7;		// up, right, down, left
+	int8_t DPadButtons:7;		// up, right, down, left
 	 BYTE ButtonSet1:7;			// triangle, circle, cross, square
 	 BYTE ButtonSet1Nibble:1;
 	 BYTE ButtonSet2:7;			// L2, R2, L1, R1

@@ -96,13 +96,13 @@ class FxCVar;
 class FBaseCVar
 {
 public:
-	FBaseCVar (const char *name, uint32 flags, void (*callback)(FBaseCVar &));
+	FBaseCVar (const char *name, uint32_t flags, void (*callback)(FBaseCVar &));
 	virtual ~FBaseCVar ();
 
 	inline void Callback () { if (m_Callback) m_Callback (*this); }
 
 	inline const char *GetName () const { return Name; }
-	inline uint32 GetFlags () const { return Flags; }
+	inline uint32_t GetFlags () const { return Flags; }
 	inline FBaseCVar *GetNext() const { return m_Next; }
 
 	void CmdSet (const char *newval);
@@ -147,11 +147,11 @@ protected:
 	static UCVarValue FromGUID (const GUID &value, ECVarType type);
 
 	char *Name;
-	uint32 Flags;
+	uint32_t Flags;
 
 private:
 	FBaseCVar (const FBaseCVar &var);
-	FBaseCVar (const char *name, uint32 flags);
+	FBaseCVar (const char *name, uint32_t flags);
 
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
@@ -159,26 +159,26 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
-	friend FString C_GetMassCVarString (uint32 filter, bool compact);
+	friend FString C_GetMassCVarString (uint32_t filter, bool compact);
 	friend void C_ReadCVars (uint8_t **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 	friend void UnlatchCVars (void);
 	friend void DestroyCVarsFlagged (uint32_t flags);
-	friend void C_ArchiveCVars (FConfigFile *f, uint32 filter);
+	friend void C_ArchiveCVars (FConfigFile *f, uint32_t filter);
 	friend void C_SetCVarsToDefaults (void);
-	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
+	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter);
 	friend void C_DeinitConsole();
 };
 
 // Returns a string with all cvars whose flags match filter. In compact mode,
 // the cvar names are omitted to save space.
-FString C_GetMassCVarString (uint32 filter, bool compact=false);
+FString C_GetMassCVarString (uint32_t filter, bool compact=false);
 
 // Writes all cvars that could effect demo sync to *demo_p. These are
 // cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
-void C_WriteCVars (uint8_t **demo_p, uint32 filter, bool compact=false);
+void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact=false);
 
 // Read all cvars from *demo_p and set them appropriately.
 void C_ReadCVars (uint8_t **demo_p);
@@ -205,12 +205,12 @@ void UnlatchCVars (void);
 void DestroyCVarsFlagged (uint32_t flags);
 
 // archive cvars to FILE f
-void C_ArchiveCVars (FConfigFile *f, uint32 filter);
+void C_ArchiveCVars (FConfigFile *f, uint32_t filter);
 
 // initialize cvars to default values after they are created
 void C_SetCVarsToDefaults (void);
 
-void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
+void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter);
 
 void C_DeinitConsole();
 
@@ -218,7 +218,7 @@ class FBoolCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FBoolCVar (const char *name, bool def, uint32 flags, void (*callback)(FBoolCVar &)=NULL);
+	FBoolCVar (const char *name, bool def, uint32_t flags, void (*callback)(FBoolCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -244,7 +244,7 @@ class FIntCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FIntCVar (const char *name, int def, uint32 flags, void (*callback)(FIntCVar &)=NULL);
+	FIntCVar (const char *name, int def, uint32_t flags, void (*callback)(FIntCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -272,7 +272,7 @@ class FFloatCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FFloatCVar (const char *name, float def, uint32 flags, void (*callback)(FFloatCVar &)=NULL);
+	FFloatCVar (const char *name, float def, uint32_t flags, void (*callback)(FFloatCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -299,7 +299,7 @@ class FStringCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FStringCVar (const char *name, const char *def, uint32 flags, void (*callback)(FStringCVar &)=NULL);
+	FStringCVar (const char *name, const char *def, uint32_t flags, void (*callback)(FStringCVar &)=NULL);
 	~FStringCVar ();
 
 	virtual ECVarType GetRealType () const;
@@ -326,7 +326,7 @@ class FColorCVar : public FIntCVar
 {
 	friend class FxCVar;
 public:
-	FColorCVar (const char *name, int def, uint32 flags, void (*callback)(FColorCVar &)=NULL);
+	FColorCVar (const char *name, int def, uint32_t flags, void (*callback)(FColorCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -334,8 +334,8 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
 
-	inline operator uint32 () const { return Value; }
-	inline uint32 operator *() const { return Value; }
+	inline operator uint32_t () const { return Value; }
+	inline uint32_t operator *() const { return Value; }
 	inline int GetIndex () const { return Index; }
 
 protected:
@@ -351,7 +351,7 @@ class FFlagCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FFlagCVar (const char *name, FIntCVar &realvar, uint32 bitval);
+	FFlagCVar (const char *name, FIntCVar &realvar, uint32_t bitval);
 
 	virtual ECVarType GetRealType () const;
 
@@ -372,7 +372,7 @@ protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);
 
 	FIntCVar &ValueVar;
-	uint32 BitVal;
+	uint32_t BitVal;
 	int BitNum;
 };
 
@@ -380,7 +380,7 @@ class FMaskCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FMaskCVar (const char *name, FIntCVar &realvar, uint32 bitval);
+	FMaskCVar (const char *name, FIntCVar &realvar, uint32_t bitval);
 
 	virtual ECVarType GetRealType () const;
 
@@ -397,14 +397,14 @@ protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);
 
 	FIntCVar &ValueVar;
-	uint32 BitVal;
+	uint32_t BitVal;
 	int BitNum;
 };
 
 class FGUIDCVar : public FBaseCVar
 {
 public:
-	FGUIDCVar (const char *name, const GUID *defguid, uint32 flags, void (*callback)(FGUIDCVar &)=NULL);
+	FGUIDCVar (const char *name, const GUID *defguid, uint32_t flags, void (*callback)(FGUIDCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 

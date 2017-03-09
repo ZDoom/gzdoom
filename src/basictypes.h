@@ -3,11 +3,8 @@
 
 #include <stdint.h>
 
-typedef int8_t					SBYTE;
 typedef uint8_t					BYTE;
-typedef int16_t					SWORD;
 typedef uint16_t				WORD;
-typedef uint32_t				uint32;
 typedef uint64_t				QWORD;
 
 // windef.h, included by windows.h, has its own incompatible definition
@@ -17,9 +14,9 @@ typedef uint64_t				QWORD;
 // of the source.
 
 #ifndef USE_WINDOWS_DWORD
-typedef uint32					DWORD;
+typedef uint32_t					DWORD;
 #endif
-typedef uint32					BITFIELD;
+typedef uint32_t					BITFIELD;
 typedef int						INTBOOL;
 
 #if !defined(GUID_DEFINED)
@@ -58,8 +55,8 @@ typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
 
-#define DWORD_MIN						((uint32)0)
-#define DWORD_MAX						((uint32)0xffffffff)
+#define DWORD_MIN						((uint32_t)0)
+#define DWORD_MAX						((uint32_t)0xffffffff)
 
 // the last remnants of tables.h
 #define ANGLE_90		(0x40000000)
@@ -67,7 +64,7 @@ typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 #define ANGLE_270		(0xc0000000)
 #define ANGLE_MAX		(0xffffffff)
 
-typedef uint32			angle_t;
+typedef uint32_t			angle_t;
 
 
 #ifdef __GNUC__

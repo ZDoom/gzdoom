@@ -118,9 +118,9 @@ enum
 struct PalEntry
 {
 	PalEntry () {}
-	PalEntry (uint32 argb) { d = argb; }
-	operator uint32 () const { return d; }
-	PalEntry &operator= (uint32 other) { d = other; return *this; }
+	PalEntry (uint32_t argb) { d = argb; }
+	operator uint32_t () const { return d; }
+	PalEntry &operator= (uint32_t other) { d = other; return *this; }
 	PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255 - r; nc.g = 255 - g; nc.b = 255 - b; return nc; }
 #ifdef __BIG_ENDIAN__
 	PalEntry (uint8_t ir, uint8_t ig, uint8_t ib) : a(0), r(ir), g(ig), b(ib) {}
@@ -131,7 +131,7 @@ struct PalEntry
 		{
 			uint8_t a,r,g,b;
 		};
-		uint32 d;
+		uint32_t d;
 	};
 #else
 	PalEntry (uint8_t ir, uint8_t ig, uint8_t ib) : b(ib), g(ig), r(ir), a(0) {}
@@ -142,7 +142,7 @@ struct PalEntry
 		{
 			uint8_t b,g,r,a;
 		};
-		uint32 d;
+		uint32_t d;
 	};
 #endif
 };

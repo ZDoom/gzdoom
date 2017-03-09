@@ -474,7 +474,7 @@ void convert_sample_data(Sample *sp, const void *data)
 	{
 	case 0:
 	  {					/* 8-bit, signed */
-		SBYTE *cp = (SBYTE *)data;
+		int8_t *cp = (int8_t *)data;
 		newdata = (sample_t *)safe_malloc((sp->data_length + 1) * sizeof(sample_t));
 		for (int i = 0; i < sp->data_length; ++i)
 		{

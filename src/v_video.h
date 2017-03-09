@@ -136,7 +136,7 @@ enum
 class FFont;
 struct FRemapTable;
 class player_t;
-typedef uint32 angle_t;
+typedef uint32_t angle_t;
 
 struct DrawParms
 {
@@ -157,9 +157,9 @@ struct DrawParms
 	double top;
 	double left;
 	float Alpha;
-	uint32 fillcolor;
+	uint32_t fillcolor;
 	FRemapTable *remap;
-	uint32 colorOverlay;
+	uint32_t colorOverlay;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
 	//float shadowAlpha;
@@ -235,13 +235,13 @@ public:
 		struct FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
+	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
 
 	// Draws a line
-	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
+	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
 
 	// Draws a single pixel
-	virtual void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
+	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);
@@ -288,7 +288,7 @@ protected:
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
-	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
+	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
 
 	template<class T>
@@ -426,9 +426,9 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
-	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y) {}
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
 
-	uint32 GetLastFPS() const { return LastCount; }
+	uint32_t GetLastFPS() const { return LastCount; }
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -448,7 +448,7 @@ protected:
 	DFrameBuffer () {}
 
 private:
-	uint32 LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint32_t LastMS, LastSec, FrameCount, LastCount, LastTic;
 };
 
 

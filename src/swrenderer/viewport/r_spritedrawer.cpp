@@ -134,7 +134,7 @@ namespace swrenderer
 		double uv_stepd = FIXED2DBL(dc_iscale);
 		double v_step = uv_stepd / tex->GetHeight();
 
-		// Convert to uint32:
+		// Convert to uint32_t:
 		dc_iscale = (uint32_t)(v_step * (1 << 30));
 
 		// Texture mipmap and filter selection:

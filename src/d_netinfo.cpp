@@ -175,7 +175,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 {
 	userinfo_t *info = &players[player].userinfo;
 	FPlayerColorSet *colorset = NULL;
-	uint32 color;
+	uint32_t color;
 	int team;
 
 	if (players[player].mo != NULL)
@@ -485,7 +485,7 @@ int userinfo_t::ColorSetChanged(int setnum)
 	return setnum;
 }
 
-uint32 userinfo_t::ColorChanged(const char *colorname)
+uint32_t userinfo_t::ColorChanged(const char *colorname)
 {
 	FColorCVar *color = static_cast<FColorCVar *>((*this)[NAME_Color]);
 	assert(color != NULL);
@@ -496,7 +496,7 @@ uint32 userinfo_t::ColorChanged(const char *colorname)
 	return *color;
 }
 
-uint32 userinfo_t::ColorChanged(uint32 colorval)
+uint32_t userinfo_t::ColorChanged(uint32_t colorval)
 {
 	FColorCVar *color = static_cast<FColorCVar *>((*this)[NAME_Color]);
 	assert(color != NULL);

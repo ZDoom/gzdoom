@@ -217,7 +217,7 @@ void P_FindParticleSubsectors ()
 
 static TMap<int, int> ColorSaver;
 
-static uint32 ParticleColor(int rgb)
+static uint32_t ParticleColor(int rgb)
 {
 	int *val;
 	int stuff;
@@ -232,7 +232,7 @@ static uint32 ParticleColor(int rgb)
 	return stuff;
 }
 
-static uint32 ParticleColor(int r, int g, int b)
+static uint32_t ParticleColor(int r, int g, int b)
 {
 	return ParticleColor(MAKERGB(r, g, b));
 }

@@ -790,27 +790,11 @@ file( GLOB HEADER_FILES
 	*.h
 )
 
-# These files will be flagged as "headers" so that they appear in project files
-# without being compiled.
-set( NOT_COMPILED_SOURCE_FILES
-	${OTHER_SYSTEM_SOURCES}
-	sc_man_scanner.h
-	sc_man_scanner.re
-	g_statusbar/sbarinfo_commands.cpp
-	xlat/xlat_parser.y
-	xlat_parser.c
-	xlat_parser.h
-	scripting/zscript/zcc-parse.lemon
-	zcc-parse.c
-	zcc-parse.h
-)
-
-set( FASTMATH_PCH_SOURCES
+set ( SWRENDER_SOURCES
 	swrenderer/r_swcanvas.cpp
 	swrenderer/r_swrenderer.cpp
 	swrenderer/r_memory.cpp
 	swrenderer/r_renderthread.cpp
-	swrenderer/drawers/r_draw.cpp
 	swrenderer/drawers/r_draw_pal.cpp
 	swrenderer/drawers/r_draw_rgba.cpp
 	swrenderer/drawers/r_thread.cpp
@@ -848,6 +832,9 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/plane/r_planerenderer.cpp
 	swrenderer/plane/r_flatplane.cpp
 	swrenderer/plane/r_slopeplane.cpp
+)
+
+set( POLYRENDER_SOURCES
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp
@@ -860,20 +847,39 @@ set( FASTMATH_PCH_SOURCES
 	polyrenderer/scene/poly_wallsprite.cpp
 	polyrenderer/scene/poly_sprite.cpp
 	polyrenderer/scene/poly_sky.cpp
-	polyrenderer/drawers/poly_triangle.cpp
 	polyrenderer/drawers/poly_buffer.cpp
+	polyrenderer/drawers/poly_triangle.cpp
 	polyrenderer/drawers/poly_draw_args.cpp
 	polyrenderer/drawers/screen_triangle.cpp
 	polyrenderer/math/tri_matrix.cpp
 	polyrenderer/math/poly_intersection.cpp
 )
+
+# These files will be flagged as "headers" so that they appear in project files
+# without being compiled.
+set( NOT_COMPILED_SOURCE_FILES
+	${OTHER_SYSTEM_SOURCES}
+	${SWRENDER_SOURCES}
+	${POLYRENDER_SOURCES}
+	sc_man_scanner.h
+	sc_man_scanner.re
+	g_statusbar/sbarinfo_commands.cpp
+	xlat/xlat_parser.y
+	xlat_parser.c
+	xlat_parser.h
+	scripting/zscript/zcc-parse.lemon
+	zcc-parse.c
+	zcc-parse.h
+)
+
 # This is disabled for now because I cannot find a way to give the .pch file a different name.
 # Visual C++ 2015 seems hell-bent of only allowing one .pch file with the same name as the executable.
 #enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
 
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
-	${FASTMATH_PCH_SOURCES}
+	swrenderer/r_all.cpp
+	polyrenderer/poly_all.cpp
 	oplsynth/music_opldumper_mididevice.cpp
 	oplsynth/music_opl_mididevice.cpp
 	oplsynth/opl_mus_player.cpp
@@ -903,39 +909,18 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	wildmidi/wildmidi_lib.cpp
-	gl/compatibility/gl_20.cpp
-	gl/data/gl_data.cpp
-	gl/data/gl_portaldata.cpp
-	gl/data/gl_setup.cpp
 	gl/data/gl_matrix.cpp
-	gl/data/gl_vertexbuffer.cpp
 	gl/dynlights/a_dynlight.cpp
 	gl/utility/gl_clock.cpp
 	gl/utility/gl_cycler.cpp
 	gl/utility/gl_geometric.cpp
 	gl/renderer/gl_2ddrawer.cpp
-	gl/renderer/gl_quaddrawer.cpp
-	gl/renderer/gl_renderer.cpp
-	gl/renderer/gl_renderstate.cpp
-	gl/renderer/gl_renderbuffers.cpp
-	gl/renderer/gl_lightdata.cpp
-	gl/renderer/gl_postprocess.cpp
-	gl/renderer/gl_postprocessstate.cpp
 	gl/hqnx/init.cpp
 	gl/hqnx/hq2x.cpp
 	gl/hqnx/hq3x.cpp
 	gl/hqnx/hq4x.cpp
 	gl/xbr/xbrz.cpp
 	gl/xbr/xbrz_old.cpp
-	gl/textures/gl_hwtexture.cpp
-	gl/textures/gl_texture.cpp
-	gl/textures/gl_material.cpp
-	gl/textures/gl_hirestex.cpp
-	gl/textures/gl_bitmap.cpp
-	gl/textures/gl_samplers.cpp
-	gl/textures/gl_translate.cpp
-	gl/textures/gl_hqresize.cpp
-	gl/textures/gl_skyboxtexture.cpp
 	gl/scene/gl_bsp.cpp
 	gl/scene/gl_fakeflat.cpp
 	gl/scene/gl_clipper.cpp
@@ -953,42 +938,9 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_walls_draw.cpp
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
-	gl/stereo3d/gl_stereo3d.cpp
-	gl/stereo3d/gl_stereo_cvars.cpp
-	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/scoped_view_shifter.cpp
-	gl/stereo3d/gl_anaglyph.cpp
-	gl/stereo3d/gl_quadstereo.cpp
-	gl/stereo3d/gl_sidebyside3d.cpp
-	gl/stereo3d/gl_interleaved3d.cpp
-	gl/dynlights/gl_dynlight.cpp
-	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_dynlight1.cpp
-	gl/dynlights/gl_lightbuffer.cpp
-	gl/shaders/gl_shader.cpp
-	gl/shaders/gl_texshader.cpp
-	gl/shaders/gl_shaderprogram.cpp
-	gl/shaders/gl_presentshader.cpp
-	gl/shaders/gl_present3dRowshader.cpp
-	gl/shaders/gl_bloomshader.cpp
-	gl/shaders/gl_ambientshader.cpp
-	gl/shaders/gl_blurshader.cpp
-	gl/shaders/gl_colormapshader.cpp
-	gl/shaders/gl_tonemapshader.cpp
-	gl/shaders/gl_lensshader.cpp
-	gl/shaders/gl_fxaashader.cpp
-	gl/system/gl_interface.cpp
-	gl/system/gl_framebuffer.cpp
-	gl/system/gl_swframebuffer.cpp
-	gl/system/gl_swwipe.cpp
-	gl/system/gl_debug.cpp
-	gl/system/gl_menu.cpp
-	gl/system/gl_wipe.cpp
 	gl/system/gl_load.c
-	gl/models/gl_models_md3.cpp
-	gl/models/gl_models_md2.cpp
 	gl/models/gl_models.cpp
-	gl/models/gl_voxels.cpp
 )
 
 set (PCH_SOURCES
@@ -1152,6 +1104,60 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	g_statusbar/strife_sbar.cpp
+	gl/compatibility/gl_20.cpp
+	gl/data/gl_data.cpp
+	gl/data/gl_portaldata.cpp
+	gl/data/gl_setup.cpp
+	gl/data/gl_vertexbuffer.cpp
+	gl/dynlights/gl_dynlight.cpp
+	gl/dynlights/gl_glow.cpp
+	gl/dynlights/gl_lightbuffer.cpp
+	gl/models/gl_models_md3.cpp
+	gl/models/gl_models_md2.cpp
+	gl/models/gl_voxels.cpp
+	gl/renderer/gl_quaddrawer.cpp
+	gl/renderer/gl_renderer.cpp
+	gl/renderer/gl_renderstate.cpp
+	gl/renderer/gl_renderbuffers.cpp
+	gl/renderer/gl_lightdata.cpp
+	gl/renderer/gl_postprocess.cpp
+	gl/renderer/gl_postprocessstate.cpp
+	gl/shaders/gl_shader.cpp
+	gl/shaders/gl_texshader.cpp
+	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_presentshader.cpp
+	gl/shaders/gl_present3dRowshader.cpp
+	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_ambientshader.cpp
+	gl/shaders/gl_blurshader.cpp
+	gl/shaders/gl_colormapshader.cpp
+	gl/shaders/gl_tonemapshader.cpp
+	gl/shaders/gl_lensshader.cpp
+	gl/shaders/gl_fxaashader.cpp
+	gl/stereo3d/gl_stereo3d.cpp
+	gl/stereo3d/gl_stereo_cvars.cpp
+	gl/stereo3d/gl_stereo_leftright.cpp
+	gl/stereo3d/scoped_view_shifter.cpp
+	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_quadstereo.cpp
+	gl/stereo3d/gl_sidebyside3d.cpp
+	gl/stereo3d/gl_interleaved3d.cpp
+	gl/system/gl_interface.cpp
+	gl/system/gl_framebuffer.cpp
+	gl/system/gl_swframebuffer.cpp
+	gl/system/gl_swwipe.cpp
+	gl/system/gl_debug.cpp
+	gl/system/gl_menu.cpp
+	gl/system/gl_wipe.cpp
+	gl/textures/gl_hwtexture.cpp
+	gl/textures/gl_texture.cpp
+	gl/textures/gl_material.cpp
+	gl/textures/gl_hirestex.cpp
+	gl/textures/gl_bitmap.cpp
+	gl/textures/gl_samplers.cpp
+	gl/textures/gl_translate.cpp
+	gl/textures/gl_hqresize.cpp
+	gl/textures/gl_skyboxtexture.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

@@ -139,15 +139,15 @@ namespace swrenderer
 
 	void R_InitParticleTexture()
 	{
-		float center = PARTICLE_TEXTURE_SIZE * 0.5f;
+		double center = PARTICLE_TEXTURE_SIZE * 0.5f;
 		for (int y = 0; y < PARTICLE_TEXTURE_SIZE; y++)
 		{
 			for (int x = 0; x < PARTICLE_TEXTURE_SIZE; x++)
 			{
-				float dx = (center - x - 0.5f) / center;
-				float dy = (center - y - 0.5f) / center;
-				float dist2 = dx * dx + dy * dy;
-				float alpha = clamp(1.1f - dist2 * 1.1f, 0.0f, 1.0f);
+				double dx = (center - x - 0.5f) / center;
+				double dy = (center - y - 0.5f) / center;
+				double dist2 = dx * dx + dy * dy;
+				double alpha = clamp<double>(1.1f - dist2 * 1.1f, 0.0f, 1.0f);
 
 				particle_texture[x + y * PARTICLE_TEXTURE_SIZE] = (int)(alpha * 128.0f + 0.5f);
 			}

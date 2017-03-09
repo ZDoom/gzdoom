@@ -510,10 +510,10 @@ namespace swrenderer
 			double endz = 1.f / iz;
 			double endu = uz*endz;
 			double endv = vz*endz;
-			uint32_t stepu = (uint32_t)(SQWORD((endu - startu) * INVSPAN));
-			uint32_t stepv = (uint32_t)(SQWORD((endv - startv) * INVSPAN));
-			uint32_t u = (uint32_t)(SQWORD(startu) + _pviewx);
-			uint32_t v = (uint32_t)(SQWORD(startv) + _pviewy);
+			uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
+			uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
+			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
 
 			for (int i = 0; i < SPANSIZE; i++)
 			{
@@ -541,8 +541,8 @@ namespace swrenderer
 			double endz = 1.f / iz;
 			startu = uz*endz;
 			startv = vz*endz;
-			uint32_t u = (uint32_t)(SQWORD(startu) + _pviewx);
-			uint32_t v = (uint32_t)(SQWORD(startv) + _pviewy);
+			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
 
 			uint32_t sx = ((u >> 16) * source_width) >> 16;
 			uint32_t sy = ((v >> 16) * source_height) >> 16;

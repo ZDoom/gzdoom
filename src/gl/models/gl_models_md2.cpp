@@ -78,7 +78,7 @@ struct dmd_chunk_t
 #pragma pack(1)
 struct dmd_packedVertex_t
 {
-	byte            vertex[3];
+	uint8_t         vertex[3];
 	unsigned short  normal;		   // Yaw and pitch.
 };
 
@@ -202,7 +202,7 @@ void FDMDModel::LoadGeometry()
 			for(c = 0; c < 3; c++)
 			{
 				framev->vertices[k].xyz[axis[c]] =
-					(pVtx->vertex[c] * FLOAT(pfr->scale[c]) + FLOAT(pfr->translate[c]));
+					(pVtx->vertex[c] * float(pfr->scale[c]) + float(pfr->translate[c]));
 			}
 		}
 	}
@@ -415,8 +415,8 @@ struct md2_header_t
 
 struct md2_triangleVertex_t
 {
-	byte            vertex[3];
-	byte            lightNormalIndex;
+	uint8_t            vertex[3];
+	uint8_t            lightNormalIndex;
 };
 
 struct md2_packedFrame_t
@@ -437,7 +437,7 @@ bool FMD2Model::Load(const char * path, int lumpnum, const char * buffer, int le
 {
 	md2_header_t * md2header = (md2_header_t *)buffer;
 	ModelFrame *frame;
-	byte   *md2_frames;
+	uint8_t   *md2_frames;
 	int     i;
 
 	// Convert it to DMD.
@@ -481,7 +481,7 @@ bool FMD2Model::Load(const char * path, int lumpnum, const char * buffer, int le
 	}
 
 	// The frames need to be unpacked.
-	md2_frames = (byte*)buffer + info.offsetFrames;
+	md2_frames = (uint8_t*)buffer + info.offsetFrames;
 	frames = new ModelFrame[info.numFrames];
 
 	for (i = 0, frame = frames; i < info.numFrames; i++, frame++)
@@ -504,14 +504,14 @@ bool FMD2Model::Load(const char * path, int lumpnum, const char * buffer, int le
 void FMD2Model::LoadGeometry()
 {
 	static int axis[3] = { VX, VY, VZ };
-	byte   *md2_frames;
+	uint8_t   *md2_frames;
 	FMemLump lumpdata = Wads.ReadLump(mLumpNum);
 	const char *buffer = (const char *)lumpdata.GetMem();
 
 	texCoords = new FTexCoord[info.numTexCoords];
-	memcpy(texCoords, (byte*)buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));
+	memcpy(texCoords, (uint8_t*)buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));
 
-	md2_frames = (byte*)buffer + info.offsetFrames;
+	md2_frames = (uint8_t*)buffer + info.offsetFrames;
 	framevtx = new ModelFrameVertexData[info.numFrames];
 	ModelFrameVertexData *framev;
 	int i, k, c;

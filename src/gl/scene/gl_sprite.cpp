@@ -894,7 +894,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
+	lightlevel = gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;

@@ -47,18 +47,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_2ddrawer.h"
 
-#ifndef _WIN32
-struct POINT {
-  int32_t x; 
-  int32_t y; 
-};
-struct RECT {
-  int32_t left; 
-  int32_t top; 
-  int32_t right; 
-  int32_t bottom; 
-}; 
-#endif
 
 //===========================================================================
 // 
@@ -414,10 +402,19 @@ int OpenGLFrameBuffer::Wiper_Melt::MakeVBO(int ticks, OpenGLFrameBuffer *fb, boo
 			}
 			if (ticks == 0)
 			{
+				struct {
+					int32_t x;
+					int32_t y;
+				} dpt;
+				struct {
+					int32_t left;
+					int32_t top;
+					int32_t right;
+					int32_t bottom;
+				} rect;
+
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
-				RECT rect;
-				POINT dpt;
 
 				dpt.x = i * fb->Width / WIDTH;
 				dpt.y = MAX(0, y[i] * fb->Height / HEIGHT);

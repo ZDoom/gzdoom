@@ -28,6 +28,8 @@
 #include "m_argv.h"
 #include "rawinput.h"
 
+#define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
+
 // WBEMIDL BITS -- because w32api doesn't have this, either -----------------
 
 #ifdef __GNUC__

@@ -1243,17 +1243,11 @@ void FMultiBlockThingsIterator::Reset()
 
 class DBlockThingsIterator : public DObject, public FMultiBlockThingsIterator
 {
-	DECLARE_CLASS(DBlockThingsIterator, DObject);
+	DECLARE_ABSTRACT_CLASS(DBlockThingsIterator, DObject);
 	FPortalGroupArray check;
-protected:
-	DBlockThingsIterator()
-		:FMultiBlockThingsIterator(check)
-	{
-	}
 public:
 	FMultiBlockThingsIterator::CheckResult cres;
 
-public:
 	bool Next()
 	{
 		return FMultiBlockThingsIterator::Next(&cres);
@@ -1276,7 +1270,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DBlockThingsIterator, false, false);
+IMPLEMENT_CLASS(DBlockThingsIterator, true, false);
 
 DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Create)
 {

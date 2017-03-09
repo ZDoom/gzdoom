@@ -59,15 +59,15 @@ class FTexture;
 // Think of TagItems as an array of the following structure:
 //
 // struct TagItem {
-//     DWORD ti_Tag;
-//     DWORD ti_Data;
+//     uint32_t ti_Tag;
+//     uint32_t ti_Data;
 // };
 
 #define TAG_DONE	(0)  /* Used to indicate the end of the Tag list */
 #define TAG_END		(0)  /* Ditto									*/
 						 /* list pointed to in ti_Data 				*/
 
-#define TAG_USER	((DWORD)(1u<<30))
+#define TAG_USER	((uint32_t)(1u<<30))
 
 enum
 {
@@ -104,7 +104,7 @@ enum
 	DTA_HUDRulesC,		// only used internally for marking HUD_HorizCenter
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
 	DTA_RenderStyle,	// same as render style for actors
-	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
+	DTA_ColorOverlay,	// uint32_t: ARGB to overlay on top of image; limited to black for software
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
 	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
 	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
@@ -292,7 +292,7 @@ protected:
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
 
 	template<class T>
-	bool ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const;
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 
@@ -489,18 +489,18 @@ extern "C" ColorTable256k RGB256k;
 // special R10B10G10 format for efficient blending computation.
 //		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64
 //		--------rrrr------bbbb------gggg   at level 1
-extern "C" DWORD Col2RGB8[65][256];
+extern "C" uint32_t Col2RGB8[65][256];
 
 // Col2RGB8_LessPrecision is the same as Col2RGB8, but the LSB for red
 // and blue are forced to zero, so if the blend overflows, it won't spill
 // over into the next component's value.
 //		--RRRRRrrr-#BBBBBbbb-#GGGGGggg--  at level 64
 //      --------rrr#------bbb#------gggg  at level 1
-extern "C" DWORD *Col2RGB8_LessPrecision[65];
+extern "C" uint32_t *Col2RGB8_LessPrecision[65];
 
 // Col2RGB8_Inverse is the same as Col2RGB8_LessPrecision, except the source
 // palette has been inverted.
-extern "C" DWORD Col2RGB8_Inverse[65][256];
+extern "C" uint32_t Col2RGB8_Inverse[65][256];
 
 // "Magic" numbers used during the blending:
 //		--000001111100000111110000011111	= 0x01f07c1f
@@ -523,14 +523,14 @@ void V_MarkRect (int x, int y, int width, int height);
 class FScanner;
 // Returns the closest color to the one desired. String
 // should be of the form "rr gg bb".
-int V_GetColorFromString (const DWORD *palette, const char *colorstring, FScriptPosition *sc = nullptr);
+int V_GetColorFromString (const uint32_t *palette, const char *colorstring, FScriptPosition *sc = nullptr);
 // Scans through the X11R6RGB lump for a matching color
 // and returns a color string suitable for V_GetColorFromString.
 FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr);
 
 // Tries to get color by name, then by string
-int V_GetColor (const DWORD *palette, const char *str, FScriptPosition *sc = nullptr);
-int V_GetColor(const DWORD *palette, FScanner &sc);
+int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
+int V_GetColor(const uint32_t *palette, FScanner &sc);
 void V_DrawFrame (int left, int top, int width, int height);
 
 // If the view size is not full screen, draws a border around it.

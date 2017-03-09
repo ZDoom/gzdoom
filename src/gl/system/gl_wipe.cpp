@@ -527,7 +527,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	uint8_t rgb_buffer[WIDTH*HEIGHT*4];
 
 	const uint8_t *src = BurnArray;
-	DWORD *dest = (DWORD *)rgb_buffer;
+	uint32_t *dest = (uint32_t *)rgb_buffer;
 	for (int y = HEIGHT; y != 0; --y)
 	{
 		for (int x = WIDTH; x != 0; --x)

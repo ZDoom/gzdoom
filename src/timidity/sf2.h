@@ -37,11 +37,11 @@ struct SFInst
 struct SFSample
 {
 	float *InMemoryData;
-	DWORD Start;
-	DWORD End;
-	DWORD StartLoop;
-	DWORD EndLoop;
-	DWORD SampleRate;
+	uint32_t Start;
+	uint32_t End;
+	uint32_t StartLoop;
+	uint32_t EndLoop;
+	uint32_t SampleRate;
 	uint8_t  OriginalPitch;
 	int8_t PitchCorrection;
 	uint16_t  SampleLink;
@@ -302,10 +302,10 @@ struct SFFile : public Timidity::FontFile
 	SFSample	*Samples;
 	TArray<SFPerc> Percussion;
 	int			 MinorVersion;
-	DWORD		 SampleDataOffset;
-	DWORD		 SampleDataLSBOffset;
-	DWORD		 SizeSampleData;
-	DWORD		 SizeSampleDataLSB;
+	uint32_t		 SampleDataOffset;
+	uint32_t		 SampleDataLSBOffset;
+	uint32_t		 SizeSampleData;
+	uint32_t		 SizeSampleDataLSB;
 	int			 NumPresets;
 	int			 NumPresetBags;
 	int			 NumPresetGenerators;

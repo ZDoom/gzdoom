@@ -482,7 +482,7 @@ void FVoxel::RemovePalette()
 //
 //==========================================================================
 
-static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
+static bool VOX_ReadSpriteNames(FScanner &sc, TArray<uint32_t> &vsprites)
 {
 	vsprites.Clear();
 	while (sc.GetString())
@@ -644,7 +644,7 @@ void R_InitVoxels()
 	while ((lump = Wads.FindLump("VOXELDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
-		TArray<DWORD> vsprites;
+		TArray<uint32_t> vsprites;
 
 		while (VOX_ReadSpriteNames(sc, vsprites))
 		{

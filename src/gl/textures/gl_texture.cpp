@@ -167,7 +167,7 @@ void gl_GenerateGlobalBrightmapFromColormap()
 //	component becomes one.
 //
 //===========================================================================
-static PalEntry averageColor(const DWORD *data, int size, int maxout)
+static PalEntry averageColor(const uint32_t *data, int size, int maxout)
 {
 	int				i;
 	unsigned int	r, g, b;
@@ -311,7 +311,7 @@ void FTexture::GetGlowColor(float *data)
 
 		if (buffer)
 		{
-			gl_info.GlowColor = averageColor((DWORD *) buffer, w*h, 153);
+			gl_info.GlowColor = averageColor((uint32_t *) buffer, w*h, 153);
 			delete[] buffer;
 		}
 
@@ -426,10 +426,10 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 		gl_info.mIsTransparent = trans;
 		if (trans == -1)
 		{
-			DWORD * dwbuf = (DWORD*)buffer;
+			uint32_t * dwbuf = (uint32_t*)buffer;
 			for(int i=0;i<size;i++)
 			{
-				DWORD alpha = dwbuf[i]>>24;
+				uint32_t alpha = dwbuf[i]>>24;
 
 				if (alpha != 0xff && alpha != 0)
 				{
@@ -457,7 +457,7 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 #define SOME_MASK 0x00ffffff
 #endif
 
-#define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((DWORD*)l1)[0] = ((DWORD*)l1)[ofs]&SOME_MASK), trans=true ) : false)
+#define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((uint32_t*)l1)[0] = ((uint32_t*)l1)[ofs]&SOME_MASK), trans=true ) : false)
 
 bool FTexture::SmoothEdges(unsigned char * buffer,int w, int h)
 {

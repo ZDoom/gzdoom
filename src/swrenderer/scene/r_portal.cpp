@@ -279,7 +279,7 @@ namespace swrenderer
 		// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
 		if (depth >= r_portal_recursions)
 		{
-			uint8_t color = (uint8_t)BestColor((DWORD *)GPalette.BaseColors, 0, 0, 0, 0, 255);
+			uint8_t color = (uint8_t)BestColor((uint32_t *)GPalette.BaseColors, 0, 0, 0, 0, 255);
 			int spacing = viewport->RenderTarget->GetPitch();
 			for (int x = pds->x1; x < pds->x2; x++)
 			{
@@ -479,7 +479,7 @@ namespace swrenderer
 		if (viewport->RenderTarget->IsBgra()) // Assuming this is just a debug function
 			return;
 
-		uint8_t color = (uint8_t)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
+		uint8_t color = (uint8_t)BestColor((uint32_t *)GPalette.BaseColors, 255, 0, 0, 0, 255);
 
 		uint8_t* pixels = viewport->RenderTarget->GetBuffer();
 		// top edge

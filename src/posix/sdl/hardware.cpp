@@ -195,7 +195,7 @@ void I_ClosestResolution (int *width, int *height, int bits)
 	int twidth, theight;
 	int cwidth = 0, cheight = 0;
 	int iteration;
-	DWORD closest = 4294967295u;
+	uint32_t closest = 4294967295u;
 
 	for (iteration = 0; iteration < 2; iteration++)
 	{
@@ -208,7 +208,7 @@ void I_ClosestResolution (int *width, int *height, int bits)
 			if (iteration == 0 && (twidth < *width || theight < *height))
 				continue;
 
-			DWORD dist = (twidth - *width) * (twidth - *width)
+			uint32_t dist = (twidth - *width) * (twidth - *width)
 				+ (theight - *height) * (theight - *height);
 
 			if (dist < closest)

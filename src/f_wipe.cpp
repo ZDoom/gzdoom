@@ -304,10 +304,10 @@ bool wipe_doBurn (int ticks)
 				else
 				{
 					int bglevel = 64-fglevel;
-					DWORD *fg2rgb = Col2RGB8[fglevel];
-					DWORD *bg2rgb = Col2RGB8[bglevel];
-					DWORD fg = fg2rgb[fromnew[x]];
-					DWORD bg = bg2rgb[fromold[x]];
+					uint32_t *fg2rgb = Col2RGB8[fglevel];
+					uint32_t *bg2rgb = Col2RGB8[bglevel];
+					uint32_t fg = fg2rgb[fromnew[x]];
+					uint32_t bg = bg2rgb[fromold[x]];
 					fg = (fg+bg) | 0x1f07c1f;
 					to[x] = RGB32k.All[fg & (fg>>15)];
 					done = false;
@@ -343,8 +343,8 @@ bool wipe_doBurn (int ticks)
 
 					const PalEntry* pal = GPalette.BaseColors;
 
-					DWORD fg = fromnew[x];
-					DWORD bg = fromold[x];
+					uint32_t fg = fromnew[x];
+					uint32_t bg = fromold[x];
 					int r = MIN((pal[fg].r * fglevel + pal[bg].r * bglevel) >> 8, 63);
 					int g = MIN((pal[fg].g * fglevel + pal[bg].g * bglevel) >> 8, 63);
 					int b = MIN((pal[fg].b * fglevel + pal[bg].b * bglevel) >> 8, 63);
@@ -386,8 +386,8 @@ bool wipe_doFade (int ticks)
 	{
 		int x, y;
 		int bglevel = 64 - fade;
-		DWORD *fg2rgb = Col2RGB8[fade];
-		DWORD *bg2rgb = Col2RGB8[bglevel];
+		uint32_t *fg2rgb = Col2RGB8[fade];
+		uint32_t *bg2rgb = Col2RGB8[bglevel];
 		uint8_t *fromnew = (uint8_t *)wipe_scr_end;
 		uint8_t *fromold = (uint8_t *)wipe_scr_start;
 		uint8_t *to = screen->GetBuffer();
@@ -399,8 +399,8 @@ bool wipe_doFade (int ticks)
 			{
 				for (x = 0; x < SCREENWIDTH; x++)
 				{
-					DWORD fg = fg2rgb[fromnew[x]];
-					DWORD bg = bg2rgb[fromold[x]];
+					uint32_t fg = fg2rgb[fromnew[x]];
+					uint32_t bg = bg2rgb[fromold[x]];
 					fg = (fg+bg) | 0x1f07c1f;
 					to[x] = RGB32k.All[fg & (fg>>15)];
 				}
@@ -415,8 +415,8 @@ bool wipe_doFade (int ticks)
 			{
 				for (x = 0; x < SCREENWIDTH; x++)
 				{
-					DWORD fg = fromnew[x];
-					DWORD bg = fromold[x];
+					uint32_t fg = fromnew[x];
+					uint32_t bg = fromold[x];
 					int r = MIN((pal[fg].r * (64-bglevel) + pal[bg].r * bglevel) >> 8, 63);
 					int g = MIN((pal[fg].g * (64-bglevel) + pal[bg].g * bglevel) >> 8, 63);
 					int b = MIN((pal[fg].b * (64-bglevel) + pal[bg].b * bglevel) >> 8, 63);

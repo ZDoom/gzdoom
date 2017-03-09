@@ -549,7 +549,7 @@ void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int pal
 		}
 		else
 		{ // x-major line
-			fixed_t errorAdj = (((DWORD)deltaY << 16) / (DWORD)deltaX) & 0xffff;
+			fixed_t errorAdj = (((uint32_t)deltaY << 16) / (uint32_t)deltaX) & 0xffff;
 
 			if (WeightingScale == 0)
 			{
@@ -634,10 +634,10 @@ void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int l
 	else if (!r_blendmethod)
 	{
 		uint8_t *spot = canvas->GetBuffer() + oldyyshifted + xx;
-		DWORD *bg2rgb = Col2RGB8[1 + level];
-		DWORD *fg2rgb = Col2RGB8[63 - level];
-		DWORD fg = fg2rgb[basecolor];
-		DWORD bg = bg2rgb[*spot];
+		uint32_t *bg2rgb = Col2RGB8[1 + level];
+		uint32_t *fg2rgb = Col2RGB8[63 - level];
+		uint32_t fg = fg2rgb[basecolor];
+		uint32_t bg = bg2rgb[*spot];
 		bg = (fg + bg) | 0x1f07c1f;
 		*spot = RGB32k.All[bg&(bg >> 15)];
 	}
@@ -771,8 +771,8 @@ void SWCanvas::Dim(DCanvas *canvas, PalEntry color, float damount, int x1, int y
 	}
 	else
 	{
-		DWORD *bg2rgb;
-		DWORD fg;
+		uint32_t *bg2rgb;
+		uint32_t fg;
 
 		uint8_t *spot = canvas->GetBuffer() + x1 + y1*Pitch;
 		int gap = Pitch - w;
@@ -800,7 +800,7 @@ void SWCanvas::Dim(DCanvas *canvas, PalEntry color, float damount, int x1, int y
 			{
 				for (int x = w; x != 0; x--)
 				{
-					DWORD bg;
+					uint32_t bg;
 
 					bg = bg2rgb[(*spot) & 0xff];
 					bg = (fg + bg) | 0x1f07c1f;

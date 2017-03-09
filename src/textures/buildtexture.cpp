@@ -147,12 +147,12 @@ const uint8_t *FBuildTexture::GetColumn (unsigned int column, const Span **spans
 
 void FTextureManager::AddTiles (void *tiles)
 {
-//	int numtiles = LittleLong(((DWORD *)tiles)[1]);	// This value is not reliable
-	int tilestart = LittleLong(((DWORD *)tiles)[2]);
-	int tileend = LittleLong(((DWORD *)tiles)[3]);
+//	int numtiles = LittleLong(((uint32_t *)tiles)[1]);	// This value is not reliable
+	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
+	int tileend = LittleLong(((uint32_t *)tiles)[3]);
 	const uint16_t *tilesizx = &((const uint16_t *)tiles)[8];
 	const uint16_t *tilesizy = &tilesizx[tileend - tilestart + 1];
-	const DWORD *picanm = (const DWORD *)&tilesizy[tileend - tilestart + 1];
+	const uint32_t *picanm = (const uint32_t *)&tilesizy[tileend - tilestart + 1];
 	uint8_t *tiledata = (uint8_t *)&picanm[tileend - tilestart + 1];
 
 	for (int i = tilestart; i <= tileend; ++i)
@@ -160,7 +160,7 @@ void FTextureManager::AddTiles (void *tiles)
 		int pic = i - tilestart;
 		int width = LittleShort(tilesizx[pic]);
 		int height = LittleShort(tilesizy[pic]);
-		DWORD anm = LittleLong(picanm[pic]);
+		uint32_t anm = LittleLong(picanm[pic]);
 		int xoffs = (int8_t)((anm >> 8) & 255) + width/2;
 		int yoffs = (int8_t)((anm >> 16) & 255) + height/2;
 		int size = width*height;
@@ -253,14 +253,14 @@ void FTextureManager::AddTiles (void *tiles)
 
 int FTextureManager::CountTiles (void *tiles)
 {
-	int version = LittleLong(*(DWORD *)tiles);
+	int version = LittleLong(*(uint32_t *)tiles);
 	if (version != 1)
 	{
 		return 0;
 	}
 
-	int tilestart = LittleLong(((DWORD *)tiles)[2]);
-	int tileend = LittleLong(((DWORD *)tiles)[3]);
+	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
+	int tileend = LittleLong(((uint32_t *)tiles)[3]);
 
 	return tileend >= tilestart ? tileend - tilestart + 1 : 0;
 }

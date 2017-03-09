@@ -162,7 +162,7 @@ void GLSprite::CalculateVertices(FVector3 *v)
 
 
 	// [fgsfds] check sprite type mask
-	DWORD spritetype = (DWORD)-1;
+	uint32_t spritetype = (uint32_t)-1;
 	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 
 	// [Nash] is a flat sprite
@@ -758,7 +758,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
-	DWORD spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;

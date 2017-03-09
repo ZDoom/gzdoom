@@ -43,7 +43,7 @@ enum
 	LANGIDX_SysPreferred,
 	LANGIDX_SysDefault
 };
-extern DWORD LanguageIDs[4];
+extern uint32_t LanguageIDs[4];
 extern void SetLanguageIDs ();
 
 // Called by DoomMain.

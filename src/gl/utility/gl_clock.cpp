@@ -104,7 +104,7 @@ void gl_CalculateCPUSpeed ()
 			do
 			{
 				QueryPerformanceCounter (&count2);
-			} while ((DWORD)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart) < minDiff);
+			} while ((uint32_t)((uint64_t)count2.QuadPart - (uint64_t)count1.QuadPart) < minDiff);
 			ClockCalibration = __rdtsc() - ClockCalibration;
 			QueryPerformanceCounter (&count2);
 			SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);

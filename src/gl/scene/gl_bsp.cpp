@@ -468,7 +468,7 @@ static void DoSubsector(subsector_t * sub)
 	{
 		SetupSprite.Clock();
 
-		for (i = ParticlesInSubsec[DWORD(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		for (i = ParticlesInSubsec[uint32_t(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			GLRenderer->ProcessParticle(&Particles[i], fakesector);
 		}

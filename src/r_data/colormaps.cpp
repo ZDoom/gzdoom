@@ -292,7 +292,7 @@ void FDynamicColormap::BuildLights ()
 			Fade.r, Fade.g, Fade.b, l * (256 / NUMCOLORMAPS));
 
 		shade = Maps + 256*l;
-		if ((DWORD)Color == MAKERGB(255,255,255))
+		if ((uint32_t)Color == MAKERGB(255,255,255))
 		{ // White light, so we can just pick the colors directly
 			for (c = 0; c < 256; c++)
 			{
@@ -485,9 +485,9 @@ void R_InitColormaps ()
 	cm.blend = 0;
 	fakecmaps.Push(cm);
 
-	DWORD NumLumps = Wads.GetNumLumps();
+	uint32_t NumLumps = Wads.GetNumLumps();
 
-	for (DWORD i = 0; i < NumLumps; i++)
+	for (uint32_t i = 0; i < NumLumps; i++)
 	{
 		if (Wads.GetLumpNamespace(i) == ns_colormaps)
 		{
@@ -650,7 +650,7 @@ static bool R_CheckForFixedLights(const uint8_t *colormaps)
 //
 //==========================================================================
 
-DWORD R_ColormapNumForName (const char *name)
+uint32_t R_ColormapNumForName (const char *name)
 {
 	if (strnicmp (name, "COLORMAP", 8))
 	{	// COLORMAP always returns 0
@@ -674,8 +674,8 @@ DWORD R_ColormapNumForName (const char *name)
 //
 //==========================================================================
 
-DWORD R_BlendForColormap (DWORD map)
+uint32_t R_BlendForColormap (uint32_t map)
 {
 	return APART(map) ? map : 
-		map < fakecmaps.Size() ? DWORD(fakecmaps[map].blend) : 0;
+		map < fakecmaps.Size() ? uint32_t(fakecmaps[map].blend) : 0;
 }

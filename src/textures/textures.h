@@ -57,11 +57,11 @@ struct FAnimDef
 	uint16_t	CurFrame;
 	uint8_t	AnimType;
 	bool	bDiscrete;			// taken out of AnimType to have better control
-	DWORD	SwitchTime;			// Time to advance to next frame
+	uint32_t	SwitchTime;			// Time to advance to next frame
 	struct FAnimFrame
 	{
-		DWORD	SpeedMin;		// Speeds are in ms, not tics
-		DWORD	SpeedRange;
+		uint32_t	SpeedMin;		// Speeds are in ms, not tics
+		uint32_t	SpeedRange;
 		FTextureID	FramePic;
 	} Frames[1];
 	enum
@@ -73,7 +73,7 @@ struct FAnimDef
 		ANIM_Random
 	};
 
-	void SetSwitchTime (DWORD mstime);
+	void SetSwitchTime (uint32_t mstime);
 };
 
 struct FSwitchDef
@@ -110,7 +110,7 @@ struct patch_t
 	int16_t			height; 
 	int16_t			leftoffset; 	// pixels to the left of origin 
 	int16_t			topoffset;		// pixels below the origin 
-	DWORD 			columnofs[];	// only [width] used
+	uint32_t 			columnofs[];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
 
@@ -470,7 +470,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-	void UpdateAnimations (DWORD mstime);
+	void UpdateAnimations (uint32_t mstime);
 	int GuesstimateNumTextures ();
 
 	FSwitchDef *FindSwitch (FTextureID texture);
@@ -493,7 +493,7 @@ private:
 	void FixAnimations ();
 	void InitAnimated ();
 	void InitAnimDefs ();
-	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, DWORD speedmin, DWORD speedrange=0);
+	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, uint32_t speedmin, uint32_t speedrange=0);
 	FAnimDef *AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
 	void ParseAnim (FScanner &sc, int usetype);
 	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
@@ -501,7 +501,7 @@ private:
 	void ParseWarp(FScanner &sc);
 	void ParseCameraTexture(FScanner &sc);
 	FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing);
-	void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
+	void ParseTime (FScanner &sc, uint32_t &min, uint32_t &max);
 	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
 	void ParseAnimatedDoor(FScanner &sc);
@@ -569,7 +569,7 @@ public:
 	void SetSpeed(float fac) { Speed = fac; }
 	FTexture *GetRedirect(bool wantwarped);
 
-	DWORD GenTime;
+	uint32_t GenTime;
 	float Speed;
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:
@@ -577,7 +577,7 @@ protected:
 	uint8_t *Pixels;
 	Span **Spans;
 
-	virtual void MakeTexture (DWORD time);
+	virtual void MakeTexture (uint32_t time);
 	int NextPo2 (int v); // [mxd]
 	void SetupMultipliers (int width, int height); // [mxd]
 };

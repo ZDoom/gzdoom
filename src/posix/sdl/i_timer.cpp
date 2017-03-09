@@ -13,14 +13,14 @@
 #include "templates.h"
 
 
-static DWORD TicStart;
-static DWORD BaseTime;
+static uint32_t TicStart;
+static uint32_t BaseTime;
 static int TicFrozen;
 
 // Signal based timer.
 static Semaphore timerWait;
 static int tics;
-static DWORD sig_start;
+static uint32_t sig_start;
 
 void I_SelectTimer();
 
@@ -54,7 +54,7 @@ int I_GetTimePolled (bool saveMS)
 		return TicFrozen;
 	}
 
-	DWORD tm = SDL_GetTicks();
+	uint32_t tm = SDL_GetTicks();
 
 	if (saveMS)
 	{
@@ -179,7 +179,7 @@ void I_SelectTimer()
 // Returns the fractional amount of a tic passed since the most recent tic
 double I_GetTimeFrac (uint32_t *ms)
 {
-	DWORD now = SDL_GetTicks ();
+	uint32_t now = SDL_GetTicks ();
 	if (ms) *ms = TicStart + (1000 / TICRATE);
 	if (TicStart == 0)
 	{

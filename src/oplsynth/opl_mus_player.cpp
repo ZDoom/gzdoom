@@ -75,8 +75,8 @@ fail:	delete[] scoredata;
 	}
 
 	// Check for RDosPlay raw OPL format
-	if (((DWORD *)scoredata)[0] == MAKE_ID('R','A','W','A') &&
-			 ((DWORD *)scoredata)[1] == MAKE_ID('D','A','T','A'))
+	if (((uint32_t *)scoredata)[0] == MAKE_ID('R','A','W','A') &&
+			 ((uint32_t *)scoredata)[1] == MAKE_ID('D','A','T','A'))
 	{
 		RawPlayer = RDosPlay;
 		if (*(uint16_t *)(scoredata + 8) == 0)
@@ -86,16 +86,16 @@ fail:	delete[] scoredata;
 		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 	}
 	// Check for DosBox OPL dump
-	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
-		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
+	else if (((uint32_t *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
+		((uint32_t *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
 		if (LittleShort(((uint16_t *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
-			ScoreLen = MIN<int>(ScoreLen - 24, LittleLong(((DWORD *)scoredata)[4])) + 24;
+			ScoreLen = MIN<int>(ScoreLen - 24, LittleLong(((uint32_t *)scoredata)[4])) + 24;
 		}
-		else if (((DWORD *)scoredata)[2] == MAKE_ID(2,0,0,0))
+		else if (((uint32_t *)scoredata)[2] == MAKE_ID(2,0,0,0))
 		{
 			bool okay = true;
 			if (scoredata[21] != 0)
@@ -113,7 +113,7 @@ fail:	delete[] scoredata;
 			RawPlayer = DosBox2;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
 			int headersize = 0x1A + scoredata[0x19];
-			ScoreLen = MIN<int>(ScoreLen - headersize, LittleLong(((DWORD *)scoredata)[3]) * 2) + headersize;
+			ScoreLen = MIN<int>(ScoreLen - headersize, LittleLong(((uint32_t *)scoredata)[3]) * 2) + headersize;
 		}
 		else
 		{
@@ -122,7 +122,7 @@ fail:	delete[] scoredata;
 		}
 	}
 	// Check for modified IMF format (includes a header)
-	else if (((DWORD *)scoredata)[0] == MAKE_ID('A','D','L','I') &&
+	else if (((uint32_t *)scoredata)[0] == MAKE_ID('A','D','L','I') &&
 		     scoredata[4] == 'B' && scoredata[5] == 1)
 	{
 		int songlen;
@@ -143,7 +143,7 @@ fail:	delete[] scoredata;
 			scoredata = NULL;
 			return;
 		}
-		songlen = LittleLong(*(DWORD *)score);
+		songlen = LittleLong(*(uint32_t *)score);
 		if (songlen != 0 && (songlen +=4) < ScoreLen - (score - scoredata))
 		{
 			ScoreLen = songlen + int(score - scoredata);
@@ -207,7 +207,7 @@ void OPLmusicFile::Restart ()
 			while (*score++ != '\0') {}
 		}
 		score++;	// Skip unknown byte
-		if (*(DWORD *)score != 0)
+		if (*(uint32_t *)score != 0)
 		{
 			score += 4;		// Skip song length
 		}
@@ -487,7 +487,7 @@ int OPLmusicFile::PlayTick ()
 		delay = 0;
 		while (delay == 0 && score + 4 - scoredata <= ScoreLen)
 		{
-			if (*(DWORD *)score == 0xFFFFFFFF)
+			if (*(uint32_t *)score == 0xFFFFFFFF)
 			{ // This is a special value that means to end the song.
 				return 0;
 			}

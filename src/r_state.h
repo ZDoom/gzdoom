@@ -40,7 +40,7 @@ extern "C" int			viewheight;
 // Lookup tables for map data.
 //
 extern TArray<spritedef_t> sprites;
-extern DWORD NumStdSprites;
+extern uint32_t NumStdSprites;
 
 extern TArray<vertexdata_t> vertexdatas;
 

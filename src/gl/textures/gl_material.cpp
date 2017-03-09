@@ -130,7 +130,7 @@ unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *heig
 		{
 			// This is a crappy Doomsday color keyed image
 			// We have to remove the key manually. :(
-			DWORD * dwdata=(DWORD*)buffer;
+			uint32_t * dwdata=(uint32_t*)buffer;
 			for (int i=(w*h);i>0;i--)
 			{
 				if (dwdata[i]==0xffffff00 || dwdata[i]==0xffff00ff) dwdata[i]=0;
@@ -285,7 +285,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (translation <= 0) translation = -translation;
 	else
 	{
-		alphatrans = (gl.legacyMode && DWORD(translation) == TRANSLATION(TRANSLATION_Standard, 8));
+		alphatrans = (gl.legacyMode && uint32_t(translation) == TRANSLATION(TRANSLATION_Standard, 8));
 		translation = GLTranslationPalette::GetInternalTranslation(translation);
 	}
 
@@ -319,7 +319,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					// need to do software warping
 					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
 					unsigned char *warpbuffer = new unsigned char[w*h*4];
-					WarpBuffer((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed, tex->bWarped);
+					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed, tex->bWarped);
 					delete[] buffer;
 					buffer = warpbuffer;
 					wt->GenTime = r_FrameTime;

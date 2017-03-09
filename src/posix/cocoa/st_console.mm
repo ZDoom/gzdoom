@@ -53,7 +53,7 @@ static NSColor* RGB(const PalEntry& color)
 	return RGB(color.r, color.g, color.b);
 }
 
-static NSColor* RGB(const DWORD color)
+static NSColor* RGB(const uint32_t color)
 {
 	return RGB(PalEntry(color));
 }

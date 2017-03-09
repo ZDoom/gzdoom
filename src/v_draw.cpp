@@ -323,7 +323,7 @@ static inline FColormapStyle * ListGetColormapStyle(VMVa_List &tags)
 }
 
 template<class T>
-bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const
+bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;
@@ -749,8 +749,8 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag,
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool DCanvas::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, DWORD tag, Va_List& tags, DrawParms *parms, bool fortext) const;
-template bool DCanvas::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, DWORD tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
+template bool DCanvas::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext) const;
+template bool DCanvas::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
 
 void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const

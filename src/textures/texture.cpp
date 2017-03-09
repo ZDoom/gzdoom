@@ -850,7 +850,7 @@ void FTexture::SetScaledSize(int fitwidth, int fitheight)
 
 namespace
 {
-	PalEntry averageColor(const DWORD *data, int size, int maxout)
+	PalEntry averageColor(const uint32_t *data, int size, int maxout)
 	{
 		int				i;
 		unsigned int	r, g, b;
@@ -901,10 +901,10 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
 		if (buffer)
 		{
-			CeilingSkyColor = averageColor((DWORD *)buffer, w * MIN(30, h), 0);
+			CeilingSkyColor = averageColor((uint32_t *)buffer, w * MIN(30, h), 0);
 			if (h>30)
 			{
-				FloorSkyColor = averageColor(((DWORD *)buffer) + (h - 30)*w, w * 30, 0);
+				FloorSkyColor = averageColor(((uint32_t *)buffer) + (h - 30)*w, w * 30, 0);
 			}
 			else FloorSkyColor = CeilingSkyColor;
 		}

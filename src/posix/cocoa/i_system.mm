@@ -53,7 +53,7 @@
 
 EXTERN_CVAR(String, language)
 
-DWORD LanguageIDs[4];
+uint32_t LanguageIDs[4];
 
 
 int (*I_GetTime)(bool saveMS);
@@ -88,7 +88,7 @@ void SetLanguageIDs()
 {
 	size_t langlen = strlen(language);
 
-	DWORD lang = (langlen < 2 || langlen > 3)
+	uint32_t lang = (langlen < 2 || langlen > 3)
 		? MAKE_ID('e', 'n', 'u', '\0')
 		: MAKE_ID(language[0], language[1], language[2], '\0');
 

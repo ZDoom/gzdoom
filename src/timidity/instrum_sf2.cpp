@@ -20,8 +20,8 @@ class CBadVer {};
 
 struct ListHandler
 {
-	DWORD ID;
-	void (*Parser)(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
+	uint32_t ID;
+	void (*Parser)(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
 };
 
 enum
@@ -155,15 +155,15 @@ static const SFGenComposite DefaultGenerators =
 	-1				// overridingRootKey
 };
 
-static void ParseIfil(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseSmpl(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseSm24(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParsePhdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseBag(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseMod(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseGen(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseInst(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
-static void ParseShdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen);
+static void ParseIfil(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseSmpl(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseSm24(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParsePhdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseBag(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseMod(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseGen(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseInst(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseShdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
 
 ListHandler INFOHandlers[] =
 {
@@ -218,9 +218,9 @@ static int32_t calc_rate(Renderer *song, int diff, double sec)
 }
 
 
-static inline DWORD read_id(FileReader *f)
+static inline uint32_t read_id(FileReader *f)
 {
-	DWORD id;
+	uint32_t id;
 	if (f->Read(&id, 4) != 4)
 	{
 		throw CIOErr();
@@ -268,9 +268,9 @@ static inline int read_sword(FileReader *f)
 	return LittleShort(x);
 }
 
-static inline DWORD read_dword(FileReader *f)
+static inline uint32_t read_dword(FileReader *f)
 {
-	DWORD x;
+	uint32_t x;
 	if (f->Read(&x, 4) != 4)
 	{
 		throw CIOErr();
@@ -287,7 +287,7 @@ static inline void read_name(FileReader *f, char name[21])
 	name[20] = 0;
 }
 
-static inline void skip_chunk(FileReader *f, DWORD len)
+static inline void skip_chunk(FileReader *f, uint32_t len)
 {
 	// RIFF, like IFF, adds an extra pad byte to the end of
 	// odd-sized chunks so that new chunks are always on even
@@ -298,7 +298,7 @@ static inline void skip_chunk(FileReader *f, DWORD len)
 	}
 }
 
-static void check_list(FileReader *f, DWORD id, DWORD filelen, DWORD &chunklen)
+static void check_list(FileReader *f, uint32_t id, uint32_t filelen, uint32_t &chunklen)
 {
 	if (read_id(f) != ID_LIST)
 	{
@@ -315,7 +315,7 @@ static void check_list(FileReader *f, DWORD id, DWORD filelen, DWORD &chunklen)
 	}
 }
 
-static void ParseIfil(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseIfil(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	uint16_t major, minor;
 
@@ -334,11 +334,11 @@ static void ParseIfil(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	sf2->MinorVersion = minor;
 }
 
-static void ParseLIST(SFFile *sf2, FileReader *f, DWORD chunklen, ListHandler *handlers)
+static void ParseLIST(SFFile *sf2, FileReader *f, uint32_t chunklen, ListHandler *handlers)
 {
 	ListHandler *handler;
-	DWORD id;
-	DWORD len;
+	uint32_t id;
+	uint32_t len;
 
 	chunklen -= 4;
 	while (chunklen > 0)
@@ -368,7 +368,7 @@ static void ParseLIST(SFFile *sf2, FileReader *f, DWORD chunklen, ListHandler *h
 	}
 }
 
-static void ParseINFO(SFFile *sf2, FileReader *f, DWORD chunklen)
+static void ParseINFO(SFFile *sf2, FileReader *f, uint32_t chunklen)
 {
 	sf2->MinorVersion = -1;
 
@@ -380,7 +380,7 @@ static void ParseINFO(SFFile *sf2, FileReader *f, DWORD chunklen)
 	}
 }
 
-static void ParseSdta(SFFile *sf2, FileReader *f, DWORD chunklen)
+static void ParseSdta(SFFile *sf2, FileReader *f, uint32_t chunklen)
 {
 	ParseLIST(sf2, f, chunklen, SdtaHandlers);
 	if (sf2->SampleDataOffset == 0)
@@ -397,7 +397,7 @@ static void ParseSdta(SFFile *sf2, FileReader *f, DWORD chunklen)
 	}
 }
 
-static void ParseSmpl(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseSmpl(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	// Only use the first smpl chunk. (Or should we reject files with more than one?)
 	if (sf2->SampleDataOffset == 0)
@@ -412,7 +412,7 @@ static void ParseSmpl(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	skip_chunk(f, chunklen);
 }
 
-static void ParseSm24(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseSm24(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	// The sm24 chunk is ignored if the file version is < 2.04
 	if (sf2->MinorVersion >= 4)
@@ -427,12 +427,12 @@ static void ParseSm24(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	skip_chunk(f, chunklen);
 }
 
-static void ParsePdta(SFFile *sf2, FileReader *f, DWORD chunklen)
+static void ParsePdta(SFFile *sf2, FileReader *f, uint32_t chunklen)
 {
 	ParseLIST(sf2, f, chunklen, PdtaHandlers);
 }
 
-static void ParsePhdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParsePhdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFPreset *preset;
 
@@ -470,7 +470,7 @@ static void ParsePhdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	}
 }
 
-static void ParseBag(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseBag(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFBag *bags, *bag;
 	uint16_t prev_mod = 0;
@@ -532,7 +532,7 @@ static void ParseBag(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	}
 }
 
-static void ParseMod(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseMod(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	// Section 7.4, page 23:
 	//		It [the PMOD sub-chunk] is always a multiple of ten bytes in length,
@@ -545,7 +545,7 @@ static void ParseMod(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	skip_chunk(f, chunklen);
 }
 
-static void ParseGen(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseGen(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFGenList *gens, *gen;
 	int numgens;
@@ -597,7 +597,7 @@ static void ParseGen(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	}
 }
 
-static void ParseInst(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseInst(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	int i;
 	SFInst *inst;
@@ -632,7 +632,7 @@ static void ParseInst(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	}
 }
 
-static void ParseShdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
+static void ParseShdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
 {
 	int i;
 	SFSample *sample;
@@ -694,8 +694,8 @@ static void ParseShdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 SFFile *ReadSF2(const char *filename, FileReader *f)
 {
 	SFFile *sf2 = NULL;
-	DWORD filelen;
-	DWORD chunklen;
+	uint32_t filelen;
+	uint32_t chunklen;
 
 	try
 	{
@@ -1502,7 +1502,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 void SFFile::LoadSample(SFSample *sample)
 {
 	FileReader *fp = pathExpander.openFileReader(Filename, NULL);
-	DWORD i;
+	uint32_t i;
 
 	if (fp == NULL)
 	{

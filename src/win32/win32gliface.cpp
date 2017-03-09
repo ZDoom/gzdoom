@@ -61,15 +61,21 @@ EXTERN_CVAR(Int, vid_refreshrate)
 //
 //==========================================================================
 
-	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	void SetWindowedScale (float scale);
-	void StartModeIterator (int bits, bool fs);
-	bool NextMode (int *width, int *height, bool *letterbox);
+class Win32GLVideo : public IVideo
+{
+public:
+	Win32GLVideo(int parm);
+	virtual ~Win32GLVideo();
+
+	EDisplayType GetDisplayType() { return DISPLAY_Both; }
+	void SetWindowedScale(float scale);
+	void StartModeIterator(int bits, bool fs);
+	bool NextMode(int *width, int *height, bool *letterbox);
 	bool GoFullscreen(bool yes);
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
-	virtual bool SetResolution (int width, int height, int bits);
+	virtual bool SetResolution(int width, int height, int bits);
 	void DumpAdapters();
-	bool InitHardware (HWND Window, int multisample);
+	bool InitHardware(HWND Window, int multisample);
 	void Shutdown();
 	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
@@ -78,13 +84,13 @@ EXTERN_CVAR(Int, vid_refreshrate)
 protected:
 	struct ModeInfo
 	{
-		ModeInfo (int inX, int inY, int inBits, int inRealY, int inRefresh)
-			: next (NULL),
-			width (inX),
-			height (inY),
-			bits (inBits),
-			refreshHz (inRefresh),
-			realheight (inRealY)
+		ModeInfo(int inX, int inY, int inBits, int inRealY, int inRefresh)
+			: next(NULL),
+			width(inX),
+			height(inY),
+			bits(inBits),
+			refreshHz(inRefresh),
+			realheight(inRealY)
 		{}
 		ModeInfo *next;
 		int width, height, bits, refreshHz, realheight;
@@ -118,7 +124,6 @@ public:
 	int GetTrueHeight() { return m_trueHeight; }
 
 };
-
 
 //==========================================================================
 //

@@ -119,8 +119,8 @@ struct FState
 	uint8_t		Frame;
 	uint8_t		UseFlags;		
 	uint8_t		DefineFlags;	// Unused byte so let's use it during state creation.
-	int32_t		Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
-	int32_t		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
+	int32_t		Misc1;			// Was changed to int8_t, reverted to long for MBF compat
+	int32_t		Misc2;			// Was changed to uint8_t, reverted to long for MBF compat
 public:
 	inline int GetFrame() const
 	{
@@ -170,7 +170,7 @@ public:
 	{
 		return NextState;
 	}
-	inline void SetFrame(BYTE frame)
+	inline void SetFrame(uint8_t frame)
 	{
 		Frame = frame - 'A';
 	}
@@ -253,7 +253,7 @@ public:
 
 	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void BuildDefaults();
-	void ApplyDefaults(BYTE *defaults);
+	void ApplyDefaults(uint8_t *defaults);
 	void RegisterIDs();
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
@@ -279,11 +279,11 @@ public:
 	PClassActor *Replacement;
 	PClassActor *Replacee;
 	int NumOwnedStates;
-	BYTE GameFilter;
+	uint8_t GameFilter;
 	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.
-	WORD SpawnID;
-	WORD ConversationID;
-	SWORD DoomEdNum;
+	uint16_t SpawnID;
+	uint16_t ConversationID;
+	int16_t DoomEdNum;
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;

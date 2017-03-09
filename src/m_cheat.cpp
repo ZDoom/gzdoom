@@ -352,7 +352,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->SetState (player->mo->SpawnState);
 				if (!(player->mo->flags2 & MF2_DONTTRANSLATE))
 				{
-					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+					player->mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(player-players));
 				}
 				if (player->ReadyWeapon != nullptr)
 				{
@@ -628,7 +628,7 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn> Pawn;
+	TObjPtr<APlayerPawn*> Pawn;
 
 	void Tick()
 	{

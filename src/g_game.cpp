@@ -180,13 +180,13 @@ bool 			demorecording;
 bool 			demoplayback;
 bool			demonew;				// [RH] Only used around G_InitNew for demos
 int				demover;
-BYTE*			demobuffer;
-BYTE*			demo_p;
-BYTE*			democompspot;
-BYTE*			demobodyspot;
+uint8_t*			demobuffer;
+uint8_t*			demo_p;
+uint8_t*			democompspot;
+uint8_t*			demobodyspot;
 size_t			maxdemosize;
-BYTE*			zdemformend;			// end of FORM ZDEM chunk
-BYTE*			zdembodyend;			// end of ZDEM BODY chunk
+uint8_t*			zdemformend;			// end of FORM ZDEM chunk
+uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
@@ -1162,7 +1162,7 @@ void G_Ticker ()
 
 	// [RH] Include some random seeds and player stuff in the consistancy
 	// check, not just the player's x position like BOOM.
-	DWORD rngsum = FRandom::StaticSumSeeds ();
+	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
 	bglobal.Main ();
@@ -1211,7 +1211,7 @@ void G_Ticker ()
 				}
 				if (players[i].mo)
 				{
-					DWORD sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
+					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
 				}
@@ -1394,7 +1394,7 @@ void G_PlayerReborn (int player)
 	int 		itemcount;
 	int 		secretcount;
 	int			chasecam;
-	BYTE		currclass;
+	uint8_t		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	APlayerPawn *actor;
 	PClassActor *cls;
@@ -2034,11 +2034,11 @@ void G_DoLoadGame ()
 	arc("importantcvars", cvar);
 	if (!cvar.IsEmpty())
 	{
-		BYTE *vars_p = (BYTE *)cvar.GetChars();
+		uint8_t *vars_p = (uint8_t *)cvar.GetChars();
 		C_ReadCVars(&vars_p);
 	}
 
-	DWORD time[2] = { 1,0 };
+	uint32_t time[2] = { 1,0 };
 
 	arc("ticrate", time[0])
 		("leveltime", time[1]);
@@ -2206,7 +2206,7 @@ static void PutSaveComment (FSerializer &arc)
 {
 	char comment[256];
 	const char *readableTime;
-	WORD len;
+	uint16_t len;
 	int levelTime;
 
 	// Get the current date and time
@@ -2222,7 +2222,7 @@ static void PutSaveComment (FSerializer &arc)
 	// Get level name
 	//strcpy (comment, level.level_name);
 	mysnprintf(comment, countof(comment), "%s - %s", level.MapName.GetChars(), level.LevelName.GetChars());
-	len = (WORD)strlen (comment);
+	len = (uint16_t)strlen (comment);
 	comment[len] = '\n';
 
 	// Append elapsed time
@@ -2429,7 +2429,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 
 		case DEM_DROPPLAYER:
 			{
-				BYTE i = ReadByte (&demo_p);
+				uint8_t i = ReadByte (&demo_p);
 				if (i < MAXPLAYERS)
 				{
 					playeringame[i] = false;
@@ -2451,11 +2451,11 @@ CCMD (stop)
 	stoprecording = true;
 }
 
-extern BYTE *lenspot;
+extern uint8_t *lenspot;
 
 void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 {
-	BYTE *specdata;
+	uint8_t *specdata;
 	int speclen;
 
 	if (stoprecording)
@@ -2488,7 +2488,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
-		demobuffer = (BYTE *)M_Realloc (demobuffer, maxdemosize);
+		demobuffer = (uint8_t *)M_Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
 		lenspot = demobuffer + spot;
 		democompspot = demobuffer + comp;
@@ -2508,7 +2508,7 @@ void G_RecordDemo (const char* name)
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
 	maxdemosize = 0x20000;
-	demobuffer = (BYTE *)M_Malloc (maxdemosize);
+	demobuffer = (uint8_t *)M_Malloc (maxdemosize);
 	demorecording = true; 
 }
 
@@ -2549,7 +2549,7 @@ void G_BeginRecording (const char *startmap)
 		if (playeringame[i])
 		{
 			StartChunk (UINF_ID, &demo_p);
-			WriteByte ((BYTE)i, &demo_p);
+			WriteByte ((uint8_t)i, &demo_p);
 			D_WriteUserInfoStrings (i, &demo_p);
 			FinishChunk (&demo_p);
 		}
@@ -2635,7 +2635,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 	int numPlayers = 0;
 	int id, len, i;
 	uLong uncompSize = 0;
-	BYTE *nextchunk;
+	uint8_t *nextchunk;
 
 	demoplayback = true;
 
@@ -2763,7 +2763,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = (BYTE*)M_Malloc(uncompSize);
+		uint8_t *uncompressed = (uint8_t*)M_Malloc(uncompSize);
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
@@ -2791,7 +2791,7 @@ void G_DoPlayDemo (void)
 	if (demolump >= 0)
 	{
 		int demolen = Wads.LumpLength (demolump);
-		demobuffer = (BYTE *)M_Malloc(demolen);
+		demobuffer = (uint8_t *)M_Malloc(demolen);
 		Wads.ReadLump (demolump, demobuffer);
 	}
 	else
@@ -2937,7 +2937,7 @@ bool G_CheckDemoStatus (void)
 
 	if (demorecording)
 	{
-		BYTE *formlen;
+		uint8_t *formlen;
 
 		WriteByte (DEM_STOP, &demo_p);
 

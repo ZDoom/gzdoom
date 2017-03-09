@@ -240,13 +240,13 @@ struct Sample
 		tremolo_depth, vibrato_depth,
 		low_vel, high_vel,
 		 type;
-	WORD
+	uint16_t
 		modes;
-	SWORD
+	int16_t
 		panning;
-	WORD
+	uint16_t
 		scale_factor, key_group;
-	SWORD
+	int16_t
 		scale_note;
 	bool
 		self_nonexclusive;
@@ -254,7 +254,7 @@ struct Sample
 		left_offset, right_offset;
 
 	// SF2 stuff
-	SWORD tune;
+	int16_t tune;
 	SBYTE velocity;
 
 	float initial_attenuation;
@@ -432,7 +432,7 @@ struct Channel
 		volume, expression;
 	SBYTE
 		panning;
-	WORD
+	uint16_t
 		rpn, nrpn;
 	bool
 		nrpn_mode;

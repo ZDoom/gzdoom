@@ -331,7 +331,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
 			}
-			bag.Info->DoomEdNum = (SWORD)sc.Number;
+			bag.Info->DoomEdNum = (int16_t)sc.Number;
 		}
 		else if (sc.Compare ("SpawnNum"))
 		{
@@ -340,7 +340,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("SpawnNum must be in the range [0,255]");
 			}
-			bag.Info->SpawnID = (BYTE)sc.Number;
+			bag.Info->SpawnID = (uint8_t)sc.Number;
 		}
 		else if (sc.Compare ("Sprite") || (
 			(def == DEF_BreakableDecoration || def == DEF_Projectile) &&

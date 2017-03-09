@@ -131,11 +131,11 @@ void FNodeBuilder::BuildTree ()
 	CreateSubsectorsForReal ();
 }
 
-int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
+int FNodeBuilder::CreateNode (uint32_t set, unsigned int count, fixed_t bbox[4])
 {
 	node_t node;
 	int skip, selstat;
-	DWORD splitseg;
+	uint32_t splitseg;
 
 	skip = int(count / MaxSegs);
 
@@ -149,7 +149,7 @@ int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
 		CheckSubsector (set, node, splitseg))
 	{
 		// Create a normal node
-		DWORD set1, set2;
+		uint32_t set1, set2;
 		unsigned int count1, count2;
 
 		SplitSegs (set, node, splitseg, set1, set2, count1, count2);
@@ -170,7 +170,7 @@ int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
 	}
 }
 
-int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
+int FNodeBuilder::CreateSubsector (uint32_t set, fixed_t bbox[4])
 {
 	int ssnum, count;
 
@@ -216,8 +216,8 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{
-		DWORD set = SubsectorSets[i];
-		DWORD firstline = (DWORD)SegList.Size();
+		uint32_t set = SubsectorSets[i];
+		uint32_t firstline = (uint32_t)SegList.Size();
 
 		while (set != DWORD_MAX)
 		{
@@ -227,7 +227,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 			SegList.Push (ptr);
 			set = ptr.SegPtr->next;
 		}
-		sub.numlines = (DWORD)(SegList.Size() - firstline);
+		sub.numlines = (uint32_t)(SegList.Size() - firstline);
 		sub.firstline = (seg_t *)(size_t)firstline;
 
 		// Sort segs by linedef for special effects
@@ -247,7 +247,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 				Vertices[SegList[i].SegPtr->v2].y>>16,
 				Vertices[SegList[i].SegPtr->v1].x, Vertices[SegList[i].SegPtr->v1].y,
 				Vertices[SegList[i].SegPtr->v2].x, Vertices[SegList[i].SegPtr->v2].y));
-			SegList[i].SegNum = DWORD(SegList[i].SegPtr - &Segs[0]);
+			SegList[i].SegNum = uint32_t(SegList[i].SegPtr - &Segs[0]);
 		}
 		Subsectors.Push (sub);
 	}
@@ -318,10 +318,10 @@ int FNodeBuilder::SortSegs (const void *a, const void *b)
 // a splitter is synthesized, and true is returned to continue processing
 // down this branch of the tree.
 
-bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg)
+bool FNodeBuilder::CheckSubsector (uint32_t set, node_t &node, uint32_t &splitseg)
 {
 	sector_t *sec;
-	DWORD seg;
+	uint32_t seg;
 
 	sec = NULL;
 	seg = set;
@@ -381,10 +381,10 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg)
 // When creating GL nodes, we need to check for segs with the same start and
 // end vertices and split them into two subsectors.
 
-bool FNodeBuilder::CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD &splitseg)
+bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, uint32_t &splitseg)
 {
 	int v1, v2;
-	DWORD seg1, seg2;
+	uint32_t seg1, seg2;
 
 	for (seg1 = set; seg1 != DWORD_MAX; seg1 = Segs[seg1].next)
 	{
@@ -424,7 +424,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD
 // seg in front of the splitter is partnered with a new miniseg on
 // the back so that the back will have two segs.
 
-bool FNodeBuilder::ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mate)
+bool FNodeBuilder::ShoveSegBehind (uint32_t set, node_t &node, uint32_t seg, uint32_t mate)
 {
 	SetNodeFromSeg (node, &Segs[seg]);
 	HackSeg = seg;
@@ -446,12 +446,12 @@ bool FNodeBuilder::ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mat
 // each unique plane needs to be considered as a splitter. A result of 0 means
 // this set is a convex region. A result of -1 means that there were possible
 // splitters, but they all split segs we want to keep intact.
-int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit)
+int FNodeBuilder::SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg, int step, bool nosplit)
 {
 	int stepleft;
 	int bestvalue;
-	DWORD bestseg;
-	DWORD seg;
+	uint32_t bestseg;
+	uint32_t seg;
 	bool nosplitters = false;
 
 	bestvalue = 0;
@@ -522,7 +522,7 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 // true. A score of 0 means that the splitter does not split any of the segs
 // in the set.
 
-int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
+int FNodeBuilder::Heuristic (node_t &node, uint32_t set, bool honorNoSplit)
 {
 	// Set the initial score above 0 so that near vertex anti-weighting is less likely to produce a negative score.
 	int score = 1000000;
@@ -530,7 +530,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	int counts[2] = { 0, 0 };
 	int realSegs[2] = { 0, 0 };
 	int specialSegs[2] = { 0, 0 };
-	DWORD i = set;
+	uint32_t i = set;
 	int sidev[2];
 	int side;
 	bool splitter = false;
@@ -760,7 +760,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	return score;
 }
 
-void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1, unsigned int &count0, unsigned int &count1)
+void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, unsigned int &count0, unsigned int &count1)
 {
 	unsigned int _count0 = 0;
 	unsigned int _count1 = 0;
@@ -890,7 +890,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 		}
 		if (hack && GLNodes)
 		{
-			DWORD newback, newfront;
+			uint32_t newback, newfront;
 
 			newback = AddMiniseg (seg->v2, seg->v1, DWORD_MAX, set, splitseg);
 			if (HackMate == DWORD_MAX)
@@ -942,7 +942,7 @@ void FNodeBuilder::SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const
 	}
 }
 
-DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
+uint32_t FNodeBuilder::SplitSeg (uint32_t segnum, int splitvert, int v1InFront)
 {
 	double dx, dy;
 	FPrivSeg newseg;
@@ -991,7 +991,7 @@ DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 	return newnum;
 }
 
-void FNodeBuilder::RemoveSegFromVert1 (DWORD segnum, int vertnum)
+void FNodeBuilder::RemoveSegFromVert1 (uint32_t segnum, int vertnum)
 {
 	FPrivVert *v = &Vertices[vertnum];
 
@@ -1001,7 +1001,7 @@ void FNodeBuilder::RemoveSegFromVert1 (DWORD segnum, int vertnum)
 	}
 	else
 	{
-		DWORD prev, curr;
+		uint32_t prev, curr;
 		prev = 0;
 		curr = v->segs;
 		while (curr != DWORD_MAX && curr != segnum)
@@ -1016,7 +1016,7 @@ void FNodeBuilder::RemoveSegFromVert1 (DWORD segnum, int vertnum)
 	}
 }
 
-void FNodeBuilder::RemoveSegFromVert2 (DWORD segnum, int vertnum)
+void FNodeBuilder::RemoveSegFromVert2 (uint32_t segnum, int vertnum)
 {
 	FPrivVert *v = &Vertices[vertnum];
 
@@ -1026,7 +1026,7 @@ void FNodeBuilder::RemoveSegFromVert2 (DWORD segnum, int vertnum)
 	}
 	else
 	{
-		DWORD prev, curr;
+		uint32_t prev, curr;
 		prev = 0;
 		curr = v->segs2;
 		while (curr != DWORD_MAX && curr != segnum)
@@ -1064,7 +1064,7 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 	return frac;
 }
 
-void FNodeBuilder::PrintSet (int l, DWORD set)
+void FNodeBuilder::PrintSet (int l, uint32_t set)
 {
 	Printf (PRINT_LOG, "set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)

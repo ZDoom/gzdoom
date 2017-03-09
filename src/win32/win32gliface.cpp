@@ -1038,7 +1038,7 @@ void Win32GLFrameBuffer::ResetGammaTable()
 	}
 }
 
-void Win32GLFrameBuffer::SetGammaTable(WORD *tbl)
+void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{

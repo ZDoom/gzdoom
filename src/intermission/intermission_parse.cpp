@@ -382,10 +382,10 @@ bool FIntermissionActionCast::ParseKey(FScanner &sc)
 		FCastSound *cs = &mCastSounds[mCastSounds.Reserve(1)];
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
-		cs->mSequence = (BYTE)sc.MatchString(seqs);
+		cs->mSequence = (uint8_t)sc.MatchString(seqs);
 		sc.MustGetToken(',');
 		sc.MustGetToken(TK_IntConst);
-		cs->mIndex = (BYTE)sc.Number;
+		cs->mIndex = (uint8_t)sc.Number;
 		sc.MustGetToken(',');
 		sc.MustGetToken(TK_StringConst);
 		cs->mSound = sc.String;
@@ -573,7 +573,7 @@ void FMapInfoParser::ParseIntermission()
 
 struct EndSequence
 {
-	SBYTE EndType;
+	int8_t EndType;
 	bool MusicLooping;
 	bool PlayTheEnd;
 	FString PicName;

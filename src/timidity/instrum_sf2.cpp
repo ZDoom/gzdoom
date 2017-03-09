@@ -192,7 +192,7 @@ ListHandler PdtaHandlers[] =
 	{ 0, 0 }
 };
 
-static double timecent_to_sec(SWORD timecent)
+static double timecent_to_sec(int16_t timecent)
 {
 	if (timecent == -32768)
 		return 0;
@@ -250,7 +250,7 @@ static inline int read_char(FileReader *f)
 
 static inline int read_uword(FileReader *f)
 {
-	WORD x;
+	uint16_t x;
 	if (f->Read(&x, 2) != 2)
 	{
 		throw CIOErr();
@@ -260,7 +260,7 @@ static inline int read_uword(FileReader *f)
 
 static inline int read_sword(FileReader *f)
 {
-	SWORD x;
+	int16_t x;
 	if (f->Read(&x, 2) != 2)
 	{
 		throw CIOErr();
@@ -317,7 +317,7 @@ static void check_list(FileReader *f, DWORD id, DWORD filelen, DWORD &chunklen)
 
 static void ParseIfil(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 {
-	WORD major, minor;
+	uint16_t major, minor;
 
 	if (chunklen != 4)
 	{
@@ -473,7 +473,7 @@ static void ParsePhdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 static void ParseBag(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 {
 	SFBag *bags, *bag;
-	WORD prev_mod = 0;
+	uint16_t prev_mod = 0;
 	int numbags;
 	int i;
 
@@ -513,7 +513,7 @@ static void ParseBag(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	for (bag = bags, i = numbags; i != 0; --i, ++bag)
 	{
 		bag->GenIndex = read_uword(f);
-		WORD mod = read_uword(f);
+		uint16_t mod = read_uword(f);
 		// Section 7.3, page 22:
 		//		If the generator or modulator indices are non-monotonic or do not
 		//		match the size of the respective PGEN or PMOD sub-chunks, the file
@@ -1165,7 +1165,7 @@ void SFFile::SetInstrumentGenerators(SFGenComposite *composite, int start, int s
 			continue;
 		}
 		// Set the generator
-		((WORD *)composite)[GenDefs[gen->Oper].StructIndex] = gen->uAmount;
+		((uint16_t *)composite)[GenDefs[gen->Oper].StructIndex] = gen->uAmount;
 		if (gen->Oper == GEN_sampleID)
 		{ // Anything past sampleID is ignored.
 			break;
@@ -1209,7 +1209,7 @@ void SFFile::AddPresetGenerators(SFGenComposite *composite, int start, int stop,
 			continue;
 		}
 		// Add to instrument/default generator.
-		int added = ((SWORD *)composite)[def->StructIndex] + gen->Amount;
+		int added = ((int16_t *)composite)[def->StructIndex] + gen->Amount;
 		// Clamp to proper range.
 		if (added <= -32768 && def->Flags & GENF_32768_Ok)
 		{
@@ -1219,7 +1219,7 @@ void SFFile::AddPresetGenerators(SFGenComposite *composite, int start, int stop,
 		{
 			added = clamp<int>(added, def->Min, def->Max);
 		}
-		((SWORD *)composite)[def->StructIndex] = added;
+		((int16_t *)composite)[def->StructIndex] = added;
 		gen_set[gen->Oper] = true;
 		if (gen->Oper == GEN_instrument)
 		{ // Anything past the instrument generator is ignored.
@@ -1513,7 +1513,7 @@ void SFFile::LoadSample(SFSample *sample)
 	// Load 16-bit sample data.
 	for (i = 0; i < sample->End - sample->Start; ++i)
 	{
-		SWORD samp;
+		int16_t samp;
 		*fp >> samp;
 		sample->InMemoryData[i] = samp / 32768.f;
 	}

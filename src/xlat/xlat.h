@@ -69,15 +69,15 @@ struct FBoomArg
 	BYTE ListSize;
 	BYTE ArgNum;
 	BYTE ConstantValue;
-	WORD AndValue;
-	WORD ResultFilter[15];
+	uint16_t AndValue;
+	uint16_t ResultFilter[15];
 	BYTE ResultValue[15];
 };
 
 struct FBoomTranslator
 {
-	WORD FirstLinetype;
-	WORD LastLinetype;
+	uint16_t FirstLinetype;
+	uint16_t LastLinetype;
 	BYTE NewSpecial;
 	TArray<FBoomArg> Args;
 } ;

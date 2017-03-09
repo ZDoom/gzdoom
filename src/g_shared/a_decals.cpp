@@ -173,7 +173,7 @@ void DBaseDecal::GetXY (side_t *wall, double &ox, double &oy) const
 	oy = v1->fY() + LeftDistance * dy;
 }
 
-void DBaseDecal::SetShade (DWORD rgb)
+void DBaseDecal::SetShade (uint32_t rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
 	AlphaColor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);

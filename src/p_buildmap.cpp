@@ -45,17 +45,17 @@
 	//40 bytes
 struct sectortype
 {
-	SWORD wallptr, wallnum;
+	int16_t wallptr, wallnum;
 	int32_t ceilingZ, floorZ;
-	SWORD ceilingstat, floorstat;
-	SWORD ceilingpicnum, ceilingheinum;
-	SBYTE ceilingshade;
-	BYTE ceilingpal, ceilingxpanning, ceilingypanning;
-	SWORD floorpicnum, floorheinum;
-	SBYTE floorshade;
-	BYTE floorpal, floorxpanning, floorypanning;
-	BYTE visibility, filler;
-	SWORD lotag, hitag, extra;
+	int16_t ceilingstat, floorstat;
+	int16_t ceilingpicnum, ceilingheinum;
+	int8_t ceilingshade;
+	uint8_t ceilingpal, ceilingxpanning, ceilingypanning;
+	int16_t floorpicnum, floorheinum;
+	int8_t floorshade;
+	uint8_t floorpal, floorxpanning, floorypanning;
+	uint8_t visibility, filler;
+	int16_t lotag, hitag, extra;
 };
 
 //cstat:
@@ -75,11 +75,11 @@ struct sectortype
 struct walltype
 {
 	int32_t x, y;
-	SWORD point2, nextwall, nextsector, cstat;
-	SWORD picnum, overpicnum;
-	SBYTE shade;
-	BYTE pal, xrepeat, yrepeat, xpanning, ypanning;
-	SWORD lotag, hitag, extra;
+	int16_t point2, nextwall, nextsector, cstat;
+	int16_t picnum, overpicnum;
+	int8_t shade;
+	uint8_t pal, xrepeat, yrepeat, xpanning, ypanning;
+	int16_t lotag, hitag, extra;
 };
 
 //cstat:
@@ -101,29 +101,29 @@ struct walltype
 struct spritetype
 {
 	int32_t x, y, z;
-	SWORD cstat, picnum;
-	SBYTE shade;
-	BYTE pal, clipdist, filler;
-	BYTE xrepeat, yrepeat;
-	SBYTE xoffset, yoffset;
-	SWORD sectnum, statnum;
-	SWORD ang, owner, xvel, yvel, zvel;
-	SWORD lotag, hitag, extra;
+	int16_t cstat, picnum;
+	int8_t shade;
+	uint8_t pal, clipdist, filler;
+	uint8_t xrepeat, yrepeat;
+	int8_t xoffset, yoffset;
+	int16_t sectnum, statnum;
+	int16_t ang, owner, xvel, yvel, zvel;
+	int16_t lotag, hitag, extra;
 };
 
 // I used to have all the Xobjects mapped out. Not anymore.
 // (Thanks for the great firmware, Seagate!)
 struct Xsprite
 {
-	BYTE NotReallyPadding[16];
-	WORD Data1;
-	WORD Data2;
-	WORD Data3;
-	WORD ThisIsntPaddingEither;
-	DWORD NorThis:2;
-	DWORD Data4:16;
-	DWORD WhatIsThisIDontEven:14;
-	BYTE ThisNeedsToBe56Bytes[28];
+	uint8_t NotReallyPadding[16];
+	uint16_t Data1;
+	uint16_t Data2;
+	uint16_t Data3;
+	uint16_t ThisIsntPaddingEither;
+	uint32_t NorThis:2;
+	uint32_t Data4:16;
+	uint32_t WhatIsThisIDontEven:14;
+	uint8_t ThisNeedsToBe56Bytes[28];
 };
 
 struct SlopeWork
@@ -142,7 +142,7 @@ void P_AdjustLine (line_t *line);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *numsprites);
+static bool P_LoadBloodMap (uint8_t *data, size_t len, FMapThing **sprites, int *numsprites);
 static void LoadSectors (sectortype *bsectors, int count);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
 static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
@@ -161,31 +161,31 @@ static void Decrypt (void *to, const void *from, int len, int key);
 
 bool P_IsBuildMap(MapData *map)
 {
-	DWORD len = map->Size(ML_LABEL);
+	uint32_t len = map->Size(ML_LABEL);
 	if (len < 4)
 	{
 		return false;
 	}
-	BYTE *data = new BYTE[len];
+	uint8_t *data = new uint8_t[len];
 
 	map->Seek(ML_LABEL);
 	map->Read(ML_LABEL, data);
 
 	// Check for a Blood map.
-	if (*(DWORD *)data == MAKE_ID('B','L','M','\x1a'))
+	if (*(uint32_t *)data == MAKE_ID('B','L','M','\x1a'))
 	{
 		delete[] data;
 		return true;
 	}
 
-	const int numsec = LittleShort(*(WORD *)(data + 20));
+	const int numsec = LittleShort(*(uint16_t *)(data + 20));
 	int numwalls;
 
 	if (len < 26 + numsec*sizeof(sectortype) ||
-		(numwalls = LittleShort(*(WORD *)(data + 22 + numsec*sizeof(sectortype))),
+		(numwalls = LittleShort(*(uint16_t *)(data + 22 + numsec*sizeof(sectortype))),
 			len < 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
-		LittleLong(*(DWORD *)data) != 7 ||
-		LittleShort(*(WORD *)(data + 16)) >= 2048)
+		LittleLong(*(uint32_t *)data) != 7 ||
+		LittleShort(*(uint16_t *)(data + 16)) >= 2048)
 	{ // Can't possibly be a version 7 BUILD map
 		delete[] data;
 		return false;
@@ -200,7 +200,7 @@ bool P_IsBuildMap(MapData *map)
 //
 //==========================================================================
 
-bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
+bool P_LoadBuildMap (uint8_t *data, size_t len, FMapThing **sprites, int *numspr)
 {
 	if (len < 26)
 	{
@@ -208,20 +208,20 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 	}
 
 	// Check for a Blood map.
-	if (*(DWORD *)data == MAKE_ID('B','L','M','\x1a'))
+	if (*(uint32_t *)data == MAKE_ID('B','L','M','\x1a'))
 	{
 		return P_LoadBloodMap (data, len, sprites, numspr);
 	}
 
-	const int numsec = LittleShort(*(WORD *)(data + 20));
+	const int numsec = LittleShort(*(uint16_t *)(data + 20));
 	int numwalls;
 	int numsprites;
 
 	if (len < 26 + numsec*sizeof(sectortype) ||
-		(numwalls = LittleShort(*(WORD *)(data + 22 + numsec*sizeof(sectortype))),
+		(numwalls = LittleShort(*(uint16_t *)(data + 22 + numsec*sizeof(sectortype))),
 			len < 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
-		LittleLong(*(DWORD *)data) != 7 ||
-		LittleShort(*(WORD *)(data + 16)) >= 2048)
+		LittleLong(*(uint32_t *)data) != 7 ||
+		LittleShort(*(uint16_t *)(data + 16)) >= 2048)
 	{ // Can't possibly be a version 7 BUILD map
 		return false;
 	}
@@ -230,7 +230,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 	LoadWalls ((walltype *)(data + 24 + numsec*sizeof(sectortype)), numwalls,
 		(sectortype *)(data + 22));
 
-	numsprites = *(WORD *)(data + 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype));
+	numsprites = *(uint16_t *)(data + 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype));
 	*sprites = new FMapThing[numsprites + 1];
 	CreateStartSpot ((int32_t *)(data + 4), *sprites);
 	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)),
@@ -245,11 +245,11 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 //
 //==========================================================================
 
-static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *numspr)
+static bool P_LoadBloodMap (uint8_t *data, size_t len, FMapThing **mapthings, int *numspr)
 {
-	BYTE infoBlock[37];
+	uint8_t infoBlock[37];
 	int mapver = data[5];
-	DWORD matt;
+	uint32_t matt;
 	int numRevisions, numWalls, numsprites, skyLen, visibility, parallaxType;
 	int i;
 	int k;
@@ -259,7 +259,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 		return false;
 	}
 
-	matt = *(DWORD *)(data + 28);
+	matt = *(uint32_t *)(data + 28);
 	if (matt != 0 &&
 		matt != MAKE_ID('M','a','t','t') &&
 		matt != MAKE_ID('t','t','a','M'))
@@ -270,13 +270,13 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	{
 		memcpy (infoBlock, data + 6, 37);
 	}
-	skyLen = 2 << LittleShort(*(WORD *)(infoBlock + 16));
-	visibility = LittleLong(*(DWORD *)(infoBlock + 18));
+	skyLen = 2 << LittleShort(*(uint16_t *)(infoBlock + 16));
+	visibility = LittleLong(*(uint32_t *)(infoBlock + 18));
 	parallaxType = infoBlock[26];
-	numRevisions = LittleLong(*(DWORD *)(infoBlock + 27));
-	int numsectors = LittleShort(*(WORD *)(infoBlock + 31));
-	numWalls = LittleShort(*(WORD *)(infoBlock + 33));
-	numsprites = LittleShort(*(WORD *)(infoBlock + 35));
+	numRevisions = LittleLong(*(uint32_t *)(infoBlock + 27));
+	int numsectors = LittleShort(*(uint16_t *)(infoBlock + 31));
+	numWalls = LittleShort(*(uint16_t *)(infoBlock + 33));
+	numsprites = LittleShort(*(uint16_t *)(infoBlock + 35));
 	Printf("Visibility: %d\n", visibility);
 
 	if (mapver == 7)
@@ -397,10 +397,10 @@ static void LoadSectors (sectortype *bsec, int count)
 
 	for (int i = 0; i < count; ++i, ++bsec, ++sec)
 	{
-		bsec->wallptr = WORD(bsec->wallptr);
-		bsec->wallnum = WORD(bsec->wallnum);
-		bsec->ceilingstat = WORD(bsec->ceilingstat);
-		bsec->floorstat = WORD(bsec->floorstat);
+		bsec->wallptr = uint16_t(bsec->wallptr);
+		bsec->wallnum = uint16_t(bsec->wallnum);
+		bsec->ceilingstat = uint16_t(bsec->ceilingstat);
+		bsec->floorstat = uint16_t(bsec->floorstat);
 
 		sec->e = &sec->e[i];
 		double floorheight = -LittleLong(bsec->floorZ) / 256.;
@@ -782,7 +782,7 @@ vertex_t *FindVertex (int32_t xx, int32_t yy)
 
 static void CreateStartSpot (int32_t *pos, FMapThing *start)
 {
-	short angle = LittleShort(*(WORD *)(&pos[3]));
+	short angle = LittleShort(*(uint16_t *)(&pos[3]));
 	FMapThing mt = { 0, };
 
 	mt.pos.X = LittleLong(pos[0]) / 16.;
@@ -844,8 +844,8 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 
 static void Decrypt (void *to_, const void *from_, int len, int key)
 {
-	BYTE *to = (BYTE *)to_;
-	const BYTE *from = (const BYTE *)from_;
+	uint8_t *to = (uint8_t *)to_;
+	const uint8_t *from = (const uint8_t *)from_;
 
 	for (int i = 0; i < len; ++i, ++key)
 	{

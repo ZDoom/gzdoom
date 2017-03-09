@@ -284,7 +284,7 @@ int FTeam::GetTextColor () const
 	if (m_TextColor.IsEmpty ())
 		return CR_UNTRANSLATED;
 
-	const BYTE *pColor = (const BYTE *)m_TextColor.GetChars ();
+	const uint8_t *pColor = (const uint8_t *)m_TextColor.GetChars ();
 	int iColor = V_ParseFontColor (pColor, 0, 0);
 
 	if (iColor == CR_UNDEFINED)

@@ -35,7 +35,7 @@ IMPLEMENT_CLASS(SDLGLFB, true, false)
 
 struct MiniModeInfo
 {
-	WORD Width, Height;
+	uint16_t Width, Height;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -420,7 +420,7 @@ bool SDLGLFB::CanUpdate ()
 	return true;
 }
 
-void SDLGLFB::SetGammaTable(WORD *tbl)
+void SDLGLFB::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{

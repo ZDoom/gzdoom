@@ -53,19 +53,19 @@ struct particle_t
 	double	sizestep;
 	subsector_t * subsector;
 	short	ttl;
-	BYTE	bright;
+	uint8_t	bright;
 	bool	notimefreeze;
 	float	fadestep;
 	float	alpha;
 	int		color;
-	WORD	tnext;
-	WORD	snext;
+	uint16_t	tnext;
+	uint16_t	snext;
 };
 
 extern particle_t *Particles;
-extern TArray<WORD>		ParticlesInSubsec;
+extern TArray<uint16_t>		ParticlesInSubsec;
 
-const WORD NO_PARTICLE = 0xffff;
+const uint16_t NO_PARTICLE = 0xffff;
 
 void P_ClearParticles ();
 void P_FindParticleSubsectors ();

@@ -35,7 +35,7 @@ CUSTOM_CVAR(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Bits 0 is X+, 1 is X-, 2 is Y+, and 3 is Y-.
-static BYTE JoyAngleButtons[8] = { 1, 1+4, 4, 2+4, 2, 2+8, 8, 1+8 };
+static uint8_t JoyAngleButtons[8] = { 1, 1+4, 4, 2+4, 2, 2+8, 8, 1+8 };
 
 // CODE --------------------------------------------------------------------
 
@@ -182,9 +182,9 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 //
 //===========================================================================
 
-double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons)
+double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
 {
-	BYTE butt;
+	uint8_t butt;
 
 	// Cancel out deadzone.
 	if (fabs(axisval) < deadzone)

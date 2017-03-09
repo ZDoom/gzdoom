@@ -101,7 +101,7 @@ FScriptPosition & GetStateSource(FState *state)
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PStruct *cls, uint32_t funcflags, int useflags)
 {
 	// Must be called before adding any other arguments.
 	assert(args == nullptr || args->Size() == 0);

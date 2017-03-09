@@ -204,7 +204,7 @@ FCompressedBuffer FResourceLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)LumpSize, METHOD_STORED, 0, 0, new char[LumpSize] };
 	memcpy(cbuf.mBuffer, CacheLump(), LumpSize);
-	cbuf.mCRC32 = crc32(0, (BYTE*)cbuf.mBuffer, LumpSize);
+	cbuf.mCRC32 = crc32(0, (uint8_t*)cbuf.mBuffer, LumpSize);
 	ReleaseCache();
 	return cbuf;
 }
@@ -365,7 +365,7 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 	// Filter out lumps using the same names as the Autoload.* sections
 	// in the ini file use. We reduce the maximum lump concidered after
 	// each one so that we don't risk refiltering already filtered lumps.
-	DWORD max = NumLumps;
+	uint32_t max = NumLumps;
 	max -= FilterLumpsByGameType(gameinfo.gametype, lumps, lumpsize, max);
 
 	long len;
@@ -390,10 +390,10 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 //
 //==========================================================================
 
-int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max)
+int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize, uint32_t max)
 {
 	FString filter;
-	DWORD start, end;
+	uint32_t start, end;
 
 	if (filtername.IsEmpty())
 	{
@@ -402,11 +402,11 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 	filter << "filter/" << filtername << '/';
 	if (FindPrefixRange(filter, lumps, lumpsize, max, start, end))
 	{
-		void *from = (BYTE *)lumps + start * lumpsize;
+		void *from = (uint8_t *)lumps + start * lumpsize;
 
 		// Remove filter prefix from every name
 		void *lump_p = from;
-		for (DWORD i = start; i < end; ++i, lump_p = (BYTE *)lump_p + lumpsize)
+		for (uint32_t i = start; i < end; ++i, lump_p = (uint8_t *)lump_p + lumpsize)
 		{
 			FResourceLump *lump = (FResourceLump *)lump_p;
 			assert(lump->FullName.CompareNoCase(filter, (int)filter.Len()) == 0);
@@ -415,17 +415,17 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 
 		// Move filtered lumps to the end of the lump list.
 		size_t count = (end - start) * lumpsize;
-		void *to = (BYTE *)lumps + NumLumps * lumpsize - count;
+		void *to = (uint8_t *)lumps + NumLumps * lumpsize - count;
 		assert (to >= from);
 
 		if (from != to)
 		{
 			// Copy filtered lumps to a temporary buffer.
-			BYTE *filteredlumps = new BYTE[count];
+			uint8_t *filteredlumps = new uint8_t[count];
 			memcpy(filteredlumps, from, count);
 
 			// Shift lumps left to make room for the filtered ones at the end.
-			memmove(from, (BYTE *)from + count, (NumLumps - end) * lumpsize);
+			memmove(from, (uint8_t *)from + count, (NumLumps - end) * lumpsize);
 
 			// Copy temporary buffer to newly freed space.
 			memcpy(to, filteredlumps, count);
@@ -445,7 +445,7 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 //
 //==========================================================================
 
-int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize, DWORD max)
+int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize, uint32_t max)
 {
 	static const struct { int match; const char *name; } blanket[] =
 	{
@@ -479,16 +479,16 @@ int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize,
 //
 //==========================================================================
 
-void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max)
+void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max)
 {
-	DWORD start, end;
+	uint32_t start, end;
 	if (FindPrefixRange("filter/", lumps, lumpsize, max, start, end))
 	{
 		// Since the resource lumps may contain non-POD data besides the
 		// full name, we "delete" them by erasing their names so they
 		// can't be found.
-		void *stop = (BYTE *)lumps + end * lumpsize;
-		for (void *p = (BYTE *)lumps + start * lumpsize; p < stop; p = (BYTE *)p + lumpsize)
+		void *stop = (uint8_t *)lumps + end * lumpsize;
+		for (void *p = (uint8_t *)lumps + start * lumpsize; p < stop; p = (uint8_t *)p + lumpsize)
 		{
 			FResourceLump *lump = (FResourceLump *)p;
 			lump->FullName = 0;
@@ -508,9 +508,9 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max)
 //
 //==========================================================================
 
-bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD maxlump, DWORD &start, DWORD &end)
+bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize, uint32_t maxlump, uint32_t &start, uint32_t &end)
 {
-	DWORD min, max, mid, inside;
+	uint32_t min, max, mid, inside;
 	FResourceLump *lump;
 	int cmp;
 
@@ -518,14 +518,14 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 
 	// Pretend that our range starts at 1 instead of 0 so that we can avoid
 	// unsigned overflow if the range starts at the first lump.
-	lumps = (BYTE *)lumps - lumpsize;
+	lumps = (uint8_t *)lumps - lumpsize;
 
 	// Binary search to find any match at all.
 	min = 1, max = maxlump;
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((BYTE *)lumps + mid * lumpsize);
+		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
 		cmp = lump->FullName.CompareNoCase(filter, (int)filter.Len());
 		if (cmp == 0)
 			break;
@@ -545,7 +545,7 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((BYTE *)lumps + mid * lumpsize);
+		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
 		cmp = lump->FullName.CompareNoCase(filter, (int)filter.Len());
 		// Go left on matches and right on misses.
 		if (cmp == 0)
@@ -560,7 +560,7 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((BYTE *)lumps + mid * lumpsize);
+		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
 		cmp = lump->FullName.CompareNoCase(filter, (int)filter.Len());
 		// Go right on matches and left on misses.
 		if (cmp == 0)

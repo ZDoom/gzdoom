@@ -4695,7 +4695,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 //
 //==========================================================================
 
-AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, DWORD wallMask) 
+AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, uint32_t wallMask) 
 {
 	DVector3 direction;
 	double shootz;

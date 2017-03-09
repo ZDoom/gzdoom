@@ -4798,7 +4798,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserVar)
 	PField *var = GetVar(self, varname);
 	if (var != nullptr)
 	{
-		var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
+		var->Type->SetValue(reinterpret_cast<uint8_t *>(self) + var->Offset, value);
 	}
 	return 0;
 }
@@ -4813,7 +4813,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserVarFloat)
 	PField *var = GetVar(self, varname);
 	if (var != nullptr)
 	{
-		var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
+		var->Type->SetValue(reinterpret_cast<uint8_t *>(self) + var->Offset, value);
 	}
 	return 0;
 }
@@ -4857,7 +4857,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserArray)
 	if (var != nullptr)
 	{
 		PArray *arraytype = static_cast<PArray *>(var->Type);
-		arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
+		arraytype->ElementType->SetValue(reinterpret_cast<uint8_t *>(self) + var->Offset + arraytype->ElementSize * pos, value);
 	}
 	return 0;
 }
@@ -4874,7 +4874,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserArrayFloat)
 	if (var != nullptr)
 	{
 		PArray *arraytype = static_cast<PArray *>(var->Type);
-		arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
+		arraytype->ElementType->SetValue(reinterpret_cast<uint8_t *>(self) + var->Offset + arraytype->ElementSize * pos, value);
 	}
 	return 0;
 }

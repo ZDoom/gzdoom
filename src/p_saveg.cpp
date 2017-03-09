@@ -331,7 +331,7 @@ void RecalculateDrawnSubsectors()
 
 FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subsector_t **)
 {
-	BYTE by;
+	uint8_t by;
 	const char *str;
 
 	if (arc.isWriting())
@@ -526,7 +526,7 @@ void P_SerializeSounds(FSerializer &arc)
 	S_SerializeSounds(arc);
 	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
-	BYTE order;
+	uint8_t order;
 
 	if (arc.isWriting())
 	{
@@ -691,8 +691,8 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 	int i, j;
 	const char **nametemp = new const char *[numPlayers];
 	player_t *playertemp = new player_t[numPlayers];
-	BYTE *tempPlayerUsed = new BYTE[numPlayers];
-	BYTE playerUsed[MAXPLAYERS];
+	uint8_t *tempPlayerUsed = new uint8_t[numPlayers];
+	uint8_t playerUsed[MAXPLAYERS];
 
 	for (i = 0; i < numPlayers; ++i)
 	{
@@ -908,7 +908,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		// prevent bad things from happening by doing a check on the size of level arrays and the map's entire checksum.
 		// The old code happily tried to load savegames with any mismatch here, often causing meaningless errors
 		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
-		BYTE chk[16] = { 0 };
+		uint8_t chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
 		if (arc.GetSize("linedefs") != level.lines.Size() ||
 			arc.GetSize("sidedefs") != level.sides.Size() ||

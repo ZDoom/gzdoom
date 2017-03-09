@@ -60,7 +60,7 @@ OPLmusicFile::OPLmusicFile (FileReader *reader)
 		return;
 	}
 
-	scoredata = new BYTE[ScoreLen];
+	scoredata = new uint8_t[ScoreLen];
 
     if (reader->Read(scoredata, ScoreLen) != ScoreLen)
     {
@@ -79,17 +79,17 @@ fail:	delete[] scoredata;
 			 ((DWORD *)scoredata)[1] == MAKE_ID('D','A','T','A'))
 	{
 		RawPlayer = RDosPlay;
-		if (*(WORD *)(scoredata + 8) == 0)
+		if (*(uint16_t *)(scoredata + 8) == 0)
 		{ // A clock speed of 0 is bad
-			*(WORD *)(scoredata + 8) = 0xFFFF; 
+			*(uint16_t *)(scoredata + 8) = 0xFFFF; 
 		}
-		SamplesPerTick = LittleShort(*(WORD *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
+		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 	}
 	// Check for DosBox OPL dump
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
 		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
-		if (LittleShort(((WORD *)scoredata)[5]) == 1)
+		if (LittleShort(((uint16_t *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
@@ -117,7 +117,7 @@ fail:	delete[] scoredata;
 		}
 		else
 		{
-			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((WORD *)scoredata)[4]), LittleShort(((WORD *)scoredata)[5]));
+			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((uint16_t *)scoredata)[4]), LittleShort(((uint16_t *)scoredata)[5]));
 			goto fail;
 		}
 	}
@@ -126,7 +126,7 @@ fail:	delete[] scoredata;
 		     scoredata[4] == 'B' && scoredata[5] == 1)
 	{
 		int songlen;
-		BYTE *max = scoredata + ScoreLen;
+		uint8_t *max = scoredata + ScoreLen;
 		RawPlayer = IMF;
 		SamplesPerTick = OPL_SAMPLE_RATE / IMF_RATE;
 
@@ -185,7 +185,7 @@ void OPLmusicFile::Restart ()
 	{
 	case RDosPlay:
 		score = scoredata + 10;
-		SamplesPerTick = LittleShort(*(WORD *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
+		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 		break;
 
 	case DosBox1:
@@ -363,8 +363,8 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 
 int OPLmusicFile::PlayTick ()
 {
-	BYTE reg, data;
-	WORD delay;
+	uint8_t reg, data;
+	uint16_t delay;
 
 	switch (RawPlayer)
 	{
@@ -385,7 +385,7 @@ int OPLmusicFile::PlayTick ()
 			case 2:		// Speed change or OPL3 switch
 				if (data == 0)
 				{
-					SamplesPerTick = LittleShort(*(WORD *)(score)) / ADLIB_CLOCK_MUL;
+					SamplesPerTick = LittleShort(*(uint16_t *)(score)) / ADLIB_CLOCK_MUL;
 					io->SetClockRate(SamplesPerTick);
 					score += 2;
 				}
@@ -453,14 +453,14 @@ int OPLmusicFile::PlayTick ()
 
 	case DosBox2:
 		{
-			BYTE *to_reg = scoredata + 0x1A;
-			BYTE to_reg_size = scoredata[0x19];
-			BYTE short_delay_code = scoredata[0x17];
-			BYTE long_delay_code = scoredata[0x18];
+			uint8_t *to_reg = scoredata + 0x1A;
+			uint8_t to_reg_size = scoredata[0x19];
+			uint8_t short_delay_code = scoredata[0x17];
+			uint8_t long_delay_code = scoredata[0x18];
 
 			while (score < scoredata + ScoreLen)
 			{
-				BYTE code = *score++;
+				uint8_t code = *score++;
 				data = *score++;
 
 				// Which OPL chip to write to is encoded in the high bit of the code value.
@@ -493,7 +493,7 @@ int OPLmusicFile::PlayTick ()
 			}
 			reg = score[0];
 			data = score[1];
-			delay = LittleShort(((WORD *)score)[1]);
+			delay = LittleShort(((uint16_t *)score)[1]);
 			score += 4;
 			io->OPLwriteReg (0, reg, data);
 		}
@@ -512,7 +512,7 @@ ADD_STAT (opl)
 OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
 {
 	ScoreLen = source->ScoreLen;
-	scoredata = new BYTE[ScoreLen];
+	scoredata = new uint8_t[ScoreLen];
 	memcpy(scoredata, source->scoredata, ScoreLen);
 	SamplesPerTick = source->SamplesPerTick;
 	RawPlayer = source->RawPlayer;

@@ -29,7 +29,7 @@ public:
 	DMover (sector_t *sector);
 	void StopInterpolation(bool force = false);
 protected:
-	TObjPtr<DInterpolation> interpolation;
+	TObjPtr<DInterpolation*> interpolation;
 private:
 protected:
 	DMover ();

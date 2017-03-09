@@ -158,7 +158,7 @@ FKeyBindings DoubleBindings;
 FKeyBindings AutomapBindings;
 
 static unsigned int DClickTime[NUM_KEYS];
-static BYTE DClicked[(NUM_KEYS+7)/8];
+static uint8_t DClicked[(NUM_KEYS+7)/8];
 
 //=============================================================================
 //
@@ -724,7 +724,7 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	FString binding;
 	bool dclick;
 	int dclickspot;
-	BYTE dclickmask;
+	uint8_t dclickmask;
 	unsigned int nowtime;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)

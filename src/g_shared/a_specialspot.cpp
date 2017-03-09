@@ -46,7 +46,7 @@ static FRandom pr_spawnmace ("SpawnMace");
 
 IMPLEMENT_CLASS(DSpotState, false, false)
 IMPLEMENT_CLASS(ASpecialSpot, false, false)
-TObjPtr<DSpotState> DSpotState::SpotState;
+TObjPtr<DSpotState*> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
 //

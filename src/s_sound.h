@@ -46,21 +46,21 @@ struct sfxinfo_t
 	unsigned int next, index;			// [RH] For hashing
 	float		Volume;
 
-	BYTE		PitchMask;
-	SWORD		NearLimit;				// 0 means unlimited
+	uint8_t		PitchMask;
+	int16_t		NearLimit;				// 0 means unlimited
 	float		LimitRange;				// Range for sound limiting (squared for faster computations)
 
-	WORD		bRandomHeader:1;
-	WORD		bPlayerReserve:1;
-	WORD		bLoadRAW:1;
-	WORD		bPlayerCompat:1;
-	WORD		b16bit:1;
-	WORD		bUsed:1;
-	WORD		bSingular:1;
-	WORD		bTentative:1;
-	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
+	unsigned		bRandomHeader:1;
+	unsigned		bPlayerReserve:1;
+	unsigned		bLoadRAW:1;
+	unsigned		bPlayerCompat:1;
+	unsigned		b16bit:1;
+	unsigned		bUsed:1;
+	unsigned		bSingular:1;
+	unsigned		bTentative:1;
+	unsigned		bPlayerSilent:1;		// This player sound is intentionally silent.
 
-	WORD		RawRate;				// Sample rate to use when bLoadRAW is true
+	int		RawRate;				// Sample rate to use when bLoadRAW is true
 
 	int			LoopStart;				// -1 means no specific loop defined
 
@@ -177,7 +177,7 @@ public:
 };
 
 extern FRolloffInfo S_Rolloff;
-extern BYTE *S_SoundCurve;
+extern uint8_t *S_SoundCurve;
 extern int S_SoundCurveSize;
 
 // Information about one playing sound.
@@ -191,11 +191,11 @@ struct FSoundChan : public FISoundChannel
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
 	int			ChanFlags;
-	SWORD		Pitch;		// Pitch variation.
-	BYTE		EntChannel;	// Actor's sound channel.
-	SBYTE		Priority;
-	SWORD		NearLimit;
-	BYTE		SourceType;
+	int16_t		Pitch;		// Pitch variation.
+	uint8_t		EntChannel;	// Actor's sound channel.
+	int8_t		Priority;
+	int16_t		NearLimit;
+	uint8_t		SourceType;
 	float		LimitRange;
 	union
 	{

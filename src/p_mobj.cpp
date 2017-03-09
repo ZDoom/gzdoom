@@ -535,12 +535,12 @@ AActor::AActor () throw()
 AActor::AActor (const AActor &other) throw()
 	: DThinker()
 {
-	memcpy (&snext, &other.snext, (BYTE *)&this[1] - (BYTE *)&snext);
+	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
 }
 
 AActor &AActor::operator= (const AActor &other)
 {
-	memcpy (&snext, &other.snext, (BYTE *)&this[1] - (BYTE *)&snext);
+	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
 	return *this;
 }
 
@@ -3739,7 +3739,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 	return false;
 }
 
-void AActor::SetShade (DWORD rgb)
+void AActor::SetShade (uint32_t rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
 	fillcolor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
@@ -3904,8 +3904,8 @@ void AActor::CheckPortalTransition(bool islinked)
 void AActor::Tick ()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
-	static const SBYTE HexenCompatSpeeds[] = {-25, 0, -10, -5, 0, 5, 10, 0, 25 };
-	static const SBYTE HexenScrollies[24][2] =
+	static const int8_t HexenCompatSpeeds[] = {-25, 0, -10, -5, 0, 5, 10, 0, 25 };
+	static const int8_t HexenScrollies[24][2] =
 	{
 		{  0,  1 }, {  0,  2 }, {  0,  4 },
 		{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -3917,8 +3917,8 @@ void AActor::Tick ()
 		{  1, -1 }, {  2, -2 }, {  4, -4 }
 	};
 
-	static const BYTE HereticScrollDirs[4] = { 6, 9, 1, 4 };
-	static const BYTE HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
+	static const uint8_t HereticScrollDirs[4] = { 6, 9, 1, 4 };
+	static const uint8_t HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
 
 	AActor *onmo;
@@ -4172,7 +4172,7 @@ void AActor::Tick ()
 							 scrolltype <= Carry_West35)
 					{ // Heretic scroll special
 						scrolltype -= Carry_East5;
-						BYTE dir = HereticScrollDirs[scrolltype / 5];
+						uint8_t dir = HereticScrollDirs[scrolltype / 5];
 						double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
 						if (scrolltype < 5 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 						{
@@ -4909,7 +4909,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		actor->SpawnPoint.Z = (actor->Z() - actor->Sector->floorplane.ZatPoint(actor));
 	}
 
-	if (actor->FloatBobPhase == (BYTE)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
+	if (actor->FloatBobPhase == (uint8_t)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
 	if (actor->flags2 & MF2_FLOORCLIP)
 	{
 		actor->AdjustFloorClip ();
@@ -5316,7 +5316,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 {
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
-	BYTE	  state;
+	uint8_t	  state;
 	DVector3 spawn;
 	DAngle SpawnAngle;
 

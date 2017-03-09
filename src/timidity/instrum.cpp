@@ -511,7 +511,7 @@ void convert_sample_data(Sample *sp, const void *data)
 
 	case PATCH_16:
 	  {					/* 16-bit, signed */
-		SWORD *cp = (SWORD *)data;
+		int16_t *cp = (int16_t *)data;
 		/* Convert these to samples */
 		sp->data_length >>= 1;
 		sp->loop_start >>= 1;
@@ -534,7 +534,7 @@ void convert_sample_data(Sample *sp, const void *data)
 
 	case PATCH_16 | PATCH_UNSIGNED:
 	  {					/* 16-bit, unsigned */
-		WORD *cp = (WORD *)data;
+		auto *cp = (uint16_t *)data;
 		/* Convert these to samples */
 		sp->data_length >>= 1;
 		sp->loop_start >>= 1;

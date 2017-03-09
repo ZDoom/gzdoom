@@ -52,7 +52,7 @@ struct FStateDefine
 	FName Label;
 	TArray<FStateDefine> Children;
 	FState *State;
-	BYTE DefineFlags;
+	uint8_t DefineFlags;
 };
 
 class FStateDefinitions
@@ -83,7 +83,7 @@ public:
 		lastlabel = -1;
 	}
 
-	void SetStateLabel(const char *statename, FState *state, BYTE defflags = SDF_STATE);
+	void SetStateLabel(const char *statename, FState *state, uint8_t defflags = SDF_STATE);
 	void AddStateLabel(const char *statename);
 	int GetStateLabelIndex (FName statename);
 	void InstallStates(PClassActor *info, AActor *defaults);
@@ -159,7 +159,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags);
+void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PStruct *cls, uint32_t funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
 PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
 void CreateDamageFunction(PNamespace *ns, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);

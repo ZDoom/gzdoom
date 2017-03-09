@@ -58,7 +58,7 @@ void DLightningThinker::LightningFlash ()
 {
 	int i, j;
 	sector_t *tempSec;
-	BYTE flashLight;
+	uint8_t flashLight;
 
 	if (LightningFlashCount)
 	{

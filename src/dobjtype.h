@@ -92,7 +92,7 @@ public:
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
 	VersionInfo		mVersion = { 0,0,0 };
-	BYTE loadOp, storeOp, moveOp, RegType, RegCount;
+	uint8_t loadOp, storeOp, moveOp, RegType, RegCount;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
@@ -525,8 +525,8 @@ public:
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
 
-	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
-	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);
+	virtual PField *AddField(FName name, PType *type, uint32_t flags=0);
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0);
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -581,7 +581,7 @@ protected:
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
-	PField *AddMetaField(FName name, PType *type, DWORD flags);
+	PField *AddMetaField(FName name, PType *type, uint32_t flags);
 public:
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
@@ -601,8 +601,8 @@ public:
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
-	BYTE				*Defaults;
-	BYTE				*Meta;			// Per-class static script data
+	uint8_t				*Defaults;
+	uint8_t				*Meta;			// Per-class static script data
 	unsigned			 MetaSize;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
@@ -617,7 +617,7 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	PField *AddField(FName name, PType *type, DWORD flags=0) override;
+	PField *AddField(FName name, PType *type, uint32_t flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();

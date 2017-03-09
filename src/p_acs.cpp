@@ -205,7 +205,7 @@ static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, cons
 
 struct FBehavior::ArrayInfo
 {
-	DWORD ArraySize;
+	uint32_t ArraySize;
 	int32_t *Elements;
 };
 
@@ -1383,7 +1383,7 @@ private:
 	double WatchD, LastD;
 	int Special;
 	int Args[5];
-	TObjPtr<AActor> Activator;
+	TObjPtr<AActor*> Activator;
 	line_t *Line;
 	bool LineSide;
 	bool bCeiling;
@@ -1563,7 +1563,7 @@ FBehavior *FBehavior::StaticGetModule (int lib)
 void FBehavior::StaticMarkLevelVarStrings()
 {
 	// Mark map variables.
-	for (DWORD modnum = 0; modnum < StaticModules.Size(); ++modnum)
+	for (uint32_t modnum = 0; modnum < StaticModules.Size(); ++modnum)
 	{
 		StaticModules[modnum]->MarkMapVarStrings();
 	}
@@ -1580,7 +1580,7 @@ void FBehavior::StaticMarkLevelVarStrings()
 void FBehavior::StaticLockLevelVarStrings()
 {
 	// Lock map variables.
-	for (DWORD modnum = 0; modnum < StaticModules.Size(); ++modnum)
+	for (uint32_t modnum = 0; modnum < StaticModules.Size(); ++modnum)
 	{
 		StaticModules[modnum]->LockMapVarStrings();
 	}
@@ -1743,7 +1743,7 @@ void FBehavior::SerializeVarSet (FSerializer &arc, int32_t *vars, int max)
 static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
 {
 	unsigned count = (LittleShort(static_cast<unsigned short>(((unsigned *)chunk)[1]) - 2)) / 4;
-	int *sizes = (int *)((BYTE *)chunk + 10);
+	int *sizes = (int *)((uint8_t *)chunk + 10);
 	arrays->Count = count;
 	if (count > 0)
 	{
@@ -1783,7 +1783,7 @@ FBehavior::FBehavior()
 	
 bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 {
-	BYTE *object;
+	uint8_t *object;
 	int i;
 
 	LumpNum = lumpnum;
@@ -1812,7 +1812,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		return false;
 	}
 
-	object = new BYTE[len];
+	object = new uint8_t[len];
 	if (fr == NULL)
 	{
 		Wads.ReadLump (lumpnum, object);
@@ -1860,8 +1860,8 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 
 	if (Format == ACS_Old)
 	{
-		DWORD dirofs = LittleLong(((DWORD *)object)[1]);
-		DWORD pretag = ((DWORD *)(object + dirofs))[-1];
+		uint32_t dirofs = LittleLong(((uint32_t *)object)[1]);
+		uint32_t pretag = ((uint32_t *)(object + dirofs))[-1];
 
 		Chunks = object + len;
 		// Check for redesigned ACSE/ACSe
@@ -1870,31 +1870,31 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			 pretag == MAKE_ID('A','C','S','E')))
 		{
 			Format = (pretag == MAKE_ID('A','C','S','e')) ? ACS_LittleEnhanced : ACS_Enhanced;
-			Chunks = object + LittleLong(((DWORD *)(object + dirofs))[-2]);
+			Chunks = object + LittleLong(((uint32_t *)(object + dirofs))[-2]);
 			// Forget about the compatibility cruft at the end of the lump
-			DataSize = LittleLong(((DWORD *)object)[1]) - 8;
+			DataSize = LittleLong(((uint32_t *)object)[1]) - 8;
 		}
 	}
 	else
 	{
-		Chunks = object + LittleLong(((DWORD *)object)[1]);
+		Chunks = object + LittleLong(((uint32_t *)object)[1]);
 	}
 
 	LoadScriptsDirectory ();
 
 	if (Format == ACS_Old)
 	{
-		StringTable = LittleLong(((DWORD *)Data)[1]);
-		StringTable += LittleLong(((DWORD *)(Data + StringTable))[0]) * 12 + 4;
+		StringTable = LittleLong(((uint32_t *)Data)[1]);
+		StringTable += LittleLong(((uint32_t *)(Data + StringTable))[0]) * 12 + 4;
 		UnescapeStringTable(Data + StringTable, Data, false);
 	}
 	else
 	{
 		UnencryptStrings ();
-		BYTE *strings = FindChunk (MAKE_ID('S','T','R','L'));
+		uint8_t *strings = FindChunk (MAKE_ID('S','T','R','L'));
 		if (strings != NULL)
 		{
-			StringTable = DWORD(strings - Data + 8);
+			StringTable = uint32_t(strings - Data + 8);
 			UnescapeStringTable(strings + 8, NULL, true);
 		}
 		else
@@ -1914,15 +1914,15 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 	}
 	else
 	{
-		DWORD *chunk;
+		uint32_t *chunk;
 
 		// Load functions
-		BYTE *funcs;
+		uint8_t *funcs;
 		Functions = NULL;
 		funcs = FindChunk (MAKE_ID('F','U','N','C'));
 		if (funcs != NULL)
 		{
-			NumFunctions = LittleLong(((DWORD *)funcs)[1]) / 8;
+			NumFunctions = LittleLong(((uint32_t *)funcs)[1]) / 8;
 			funcs += 8;
 			FunctionProfileData = new ACSProfileInfo[NumFunctions];
 			Functions = new ScriptFunction[NumFunctions];
@@ -1941,12 +1941,12 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		// Load local arrays for functions
 		if (NumFunctions > 0)
 		{
-			for (chunk = (DWORD *)FindChunk(MAKE_ID('F','A','R','Y')); chunk != NULL; chunk = (DWORD *)NextChunk((BYTE *)chunk))
+			for (chunk = (uint32_t *)FindChunk(MAKE_ID('F','A','R','Y')); chunk != NULL; chunk = (uint32_t *)NextChunk((uint8_t *)chunk))
 			{
 				int size = LittleLong(chunk[1]);
 				if (size >= 6)
 				{
-					unsigned int func_num = LittleShort(((WORD *)chunk)[4]);
+					unsigned int func_num = LittleShort(((uint16_t *)chunk)[4]);
 					if (func_num < (unsigned int)NumFunctions)
 					{
 						ScriptFunction *func = &Functions[func_num];
@@ -1958,7 +1958,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		}
 
 		// Load JUMP points
-		chunk = (DWORD *)FindChunk (MAKE_ID('J','U','M','P'));
+		chunk = (uint32_t *)FindChunk (MAKE_ID('J','U','M','P'));
 		if (chunk != NULL)
 		{
 			for (i = 0;i < (int)LittleLong(chunk[1]);i += 4)
@@ -1967,7 +1967,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 
 		// Initialize this object's map variables
 		memset (MapVarStore, 0, sizeof(MapVarStore));
-		chunk = (DWORD *)FindChunk (MAKE_ID('M','I','N','I'));
+		chunk = (uint32_t *)FindChunk (MAKE_ID('M','I','N','I'));
 		while (chunk != NULL)
 		{
 			int numvars = LittleLong(chunk[1])/4 - 1;
@@ -1976,7 +1976,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			{
 				MapVarStore[i+firstvar] = LittleLong(chunk[3+i]);
 			}
-			chunk = (DWORD *)NextChunk ((BYTE *)chunk);
+			chunk = (uint32_t *)NextChunk ((uint8_t *)chunk);
 		}
 
 		// Initialize this object's map variable pointers to defaults. They can be changed
@@ -1987,7 +1987,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		}
 
 		// Create arrays for this module
-		chunk = (DWORD *)FindChunk (MAKE_ID('A','R','A','Y'));
+		chunk = (uint32_t *)FindChunk (MAKE_ID('A','R','A','Y'));
 		if (chunk != NULL)
 		{
 			NumArrays = LittleLong(chunk[1])/8;
@@ -1998,12 +1998,12 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				MapVarStore[LittleLong(chunk[2+i*2])] = i;
 				ArrayStore[i].ArraySize = LittleLong(chunk[3+i*2]);
 				ArrayStore[i].Elements = new int32_t[ArrayStore[i].ArraySize];
-				memset(ArrayStore[i].Elements, 0, ArrayStore[i].ArraySize*sizeof(DWORD));
+				memset(ArrayStore[i].Elements, 0, ArrayStore[i].ArraySize*sizeof(uint32_t));
 			}
 		}
 
 		// Initialize arrays for this module
-		chunk = (DWORD *)FindChunk (MAKE_ID('A','I','N','I'));
+		chunk = (uint32_t *)FindChunk (MAKE_ID('A','I','N','I'));
 		while (chunk != NULL)
 		{
 			int arraynum = MapVarStore[LittleLong(chunk[2])];
@@ -2019,12 +2019,12 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					elems[j] = LittleLong(chunk[3+j]);
 				}
 			}
-			chunk = (DWORD *)NextChunk((BYTE *)chunk);
+			chunk = (uint32_t *)NextChunk((uint8_t *)chunk);
 		}
 
 		// Start setting up array pointers
 		NumTotalArrays = NumArrays;
-		chunk = (DWORD *)FindChunk (MAKE_ID('A','I','M','P'));
+		chunk = (uint32_t *)FindChunk (MAKE_ID('A','I','M','P'));
 		if (chunk != NULL)
 		{
 			NumTotalArrays += LittleLong(chunk[2]);
@@ -2041,10 +2041,10 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		// Tag the library ID to any map variables that are initialized with strings
 		if (LibraryID != 0)
 		{
-			chunk = (DWORD *)FindChunk (MAKE_ID('M','S','T','R'));
+			chunk = (uint32_t *)FindChunk (MAKE_ID('M','S','T','R'));
 			if (chunk != NULL)
 			{
-				for (DWORD i = 0; i < LittleLong(chunk[1])/4; ++i)
+				for (uint32_t i = 0; i < LittleLong(chunk[1])/4; ++i)
 				{
 					const char *str = LookupString(MapVarStore[LittleLong(chunk[i+2])]);
 					if (str != NULL)
@@ -2054,10 +2054,10 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				}
 			}
 
-			chunk = (DWORD *)FindChunk (MAKE_ID('A','S','T','R'));
+			chunk = (uint32_t *)FindChunk (MAKE_ID('A','S','T','R'));
 			if (chunk != NULL)
 			{
-				for (DWORD i = 0; i < LittleLong(chunk[1])/4; ++i)
+				for (uint32_t i = 0; i < LittleLong(chunk[1])/4; ++i)
 				{
 					int arraynum = MapVarStore[LittleLong(chunk[i+2])];
 					if ((unsigned)arraynum < (unsigned)NumArrays)
@@ -2077,10 +2077,10 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			}
 
 			// [BL] Newer version of ASTR for structure aware compilers although we only have one array per chunk
-			chunk = (DWORD *)FindChunk (MAKE_ID('A','T','A','G'));
+			chunk = (uint32_t *)FindChunk (MAKE_ID('A','T','A','G'));
 			while (chunk != NULL)
 			{
-				const BYTE* chunkData = (const BYTE*)(chunk + 2);
+				const uint8_t* chunkData = (const uint8_t*)(chunk + 2);
 				// First byte is version, it should be 0
 				if(*chunkData++ == 0)
 				{
@@ -2110,15 +2110,15 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					}
 				}
 
-				chunk = (DWORD *)NextChunk ((BYTE *)chunk);
+				chunk = (uint32_t *)NextChunk ((uint8_t *)chunk);
 			}
 		}
 
 		// Load required libraries.
-		if (NULL != (chunk = (DWORD *)FindChunk (MAKE_ID('L','O','A','D'))))
+		if (NULL != (chunk = (uint32_t *)FindChunk (MAKE_ID('L','O','A','D'))))
 		{
 			const char *const parse = (char *)&chunk[2];
-			DWORD i;
+			uint32_t i;
 
 			for (i = 0; i < LittleLong(chunk[1]); )
 			{
@@ -2151,7 +2151,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					continue;
 
 				// Resolve functions
-				chunk = (DWORD *)FindChunk(MAKE_ID('F','N','A','M'));
+				chunk = (uint32_t *)FindChunk(MAKE_ID('F','N','A','M'));
 				for (j = 0; j < NumFunctions; ++j)
 				{
 					ScriptFunction *func = &((ScriptFunction *)Functions)[j];
@@ -2185,13 +2185,13 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				}
 
 				// Resolve map variables
-				chunk = (DWORD *)FindChunk(MAKE_ID('M','I','M','P'));
+				chunk = (uint32_t *)FindChunk(MAKE_ID('M','I','M','P'));
 				if (chunk != NULL)
 				{
 					char *parse = (char *)&chunk[2];
-					for (DWORD j = 0; j < LittleLong(chunk[1]); )
+					for (uint32_t j = 0; j < LittleLong(chunk[1]); )
 					{
-						DWORD varNum = LittleLong(*(DWORD *)&parse[j]);
+						uint32_t varNum = LittleLong(*(uint32_t *)&parse[j]);
 						j += 4;
 						int impNum = lib->FindMapVarName (&parse[j]);
 						if (impNum >= 0)
@@ -2206,13 +2206,13 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				// Resolve arrays
 				if (NumTotalArrays > NumArrays)
 				{
-					chunk = (DWORD *)FindChunk(MAKE_ID('A','I','M','P'));
+					chunk = (uint32_t *)FindChunk(MAKE_ID('A','I','M','P'));
 					char *parse = (char *)&chunk[3];
-					for (DWORD j = 0; j < LittleLong(chunk[2]); ++j)
+					for (uint32_t j = 0; j < LittleLong(chunk[2]); ++j)
 					{
-						DWORD varNum = LittleLong(*(DWORD *)parse);
+						uint32_t varNum = LittleLong(*(uint32_t *)parse);
 						parse += 4;
-						DWORD expectedSize = LittleLong(*(DWORD *)parse);
+						uint32_t expectedSize = LittleLong(*(uint32_t *)parse);
 						parse += 4;
 						int impNum = lib->FindMapArray (parse);
 						if (impNum >= 0)
@@ -2285,10 +2285,10 @@ void FBehavior::LoadScriptsDirectory ()
 {
 	union
 	{
-		BYTE *b;
-		DWORD *dw;
-		WORD *w;
-		SWORD *sw;
+		uint8_t *b;
+		uint32_t *dw;
+		uint16_t *w;
+		int16_t *sw;
 		ScriptPtr2 *po;		// Old
 		ScriptPtr1 *pi;		// Intermediate
 		ScriptPtr3 *pe;		// LittleEnhanced
@@ -2302,7 +2302,7 @@ void FBehavior::LoadScriptsDirectory ()
 	switch (Format)
 	{
 	case ACS_Old:
-		scripts.dw = (DWORD *)(Data + LittleLong(((DWORD *)Data)[1]));
+		scripts.dw = (uint32_t *)(Data + LittleLong(((uint32_t *)Data)[1]));
 		NumScripts = LittleLong(scripts.dw[0]);
 		if (NumScripts != 0)
 		{
@@ -2330,7 +2330,7 @@ void FBehavior::LoadScriptsDirectory ()
 		{
 			// There are no scripts!
 		}
-		else if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
+		else if (*(uint32_t *)Data != MAKE_ID('A','C','S',0))
 		{
 			NumScripts = LittleLong(scripts.dw[1]) / 12;
 			Scripts = new ScriptPtr[NumScripts];
@@ -2342,7 +2342,7 @@ void FBehavior::LoadScriptsDirectory ()
 				ScriptPtr  *ptr2 = &Scripts[i];
 
 				ptr2->Number = LittleShort(ptr1->Number);
-				ptr2->Type = BYTE(LittleShort(ptr1->Type));
+				ptr2->Type = uint8_t(LittleShort(ptr1->Type));
 				ptr2->ArgCount = LittleLong(ptr1->ArgCount);
 				ptr2->Address = LittleLong(ptr1->Address);
 			}
@@ -2497,24 +2497,24 @@ int FBehavior::SortScripts (const void *a, const void *b)
 
 void FBehavior::UnencryptStrings ()
 {
-	DWORD *prevchunk = NULL;
-	DWORD *chunk = (DWORD *)FindChunk(MAKE_ID('S','T','R','E'));
+	uint32_t *prevchunk = NULL;
+	uint32_t *chunk = (uint32_t *)FindChunk(MAKE_ID('S','T','R','E'));
 	while (chunk != NULL)
 	{
-		for (DWORD strnum = 0; strnum < LittleLong(chunk[3]); ++strnum)
+		for (uint32_t strnum = 0; strnum < LittleLong(chunk[3]); ++strnum)
 		{
 			int ofs = LittleLong(chunk[5+strnum]);
-			BYTE *data = (BYTE *)chunk + ofs + 8, last;
-			int p = (BYTE)(ofs*157135);
+			uint8_t *data = (uint8_t *)chunk + ofs + 8, last;
+			int p = (uint8_t)(ofs*157135);
 			int i = 0;
 			do
 			{
-				last = (data[i] ^= (BYTE)(p+(i>>1)));
+				last = (data[i] ^= (uint8_t)(p+(i>>1)));
 				++i;
 			} while (last != 0);
 		}
 		prevchunk = chunk;
-		chunk = (DWORD *)NextChunk ((BYTE *)chunk);
+		chunk = (uint32_t *)NextChunk ((uint8_t *)chunk);
 		*prevchunk = MAKE_ID('S','T','R','L');
 	}
 	if (prevchunk != NULL)
@@ -2535,11 +2535,11 @@ void FBehavior::UnencryptStrings ()
 //
 //============================================================================
 
-void FBehavior::UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool has_padding)
+void FBehavior::UnescapeStringTable(uint8_t *chunkstart, uint8_t *datastart, bool has_padding)
 {
 	assert(chunkstart != NULL);
 
-	DWORD *chunk = (DWORD *)chunkstart;
+	uint32_t *chunk = (uint32_t *)chunkstart;
 
 	if (datastart == NULL)
 	{
@@ -2548,7 +2548,7 @@ void FBehavior::UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool has_
 	if (!has_padding)
 	{
 		chunk[0] = LittleLong(chunk[0]);
-		for (DWORD strnum = 0; strnum < chunk[0]; ++strnum)
+		for (uint32_t strnum = 0; strnum < chunk[0]; ++strnum)
 		{
 			int ofs = LittleLong(chunk[1 + strnum]);	// Byte swap offset, if needed.
 			chunk[1 + strnum] = ofs;
@@ -2558,7 +2558,7 @@ void FBehavior::UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool has_
 	else
 	{
 		chunk[1] = LittleLong(chunk[1]);
-		for (DWORD strnum = 0; strnum < chunk[1]; ++strnum)
+		for (uint32_t strnum = 0; strnum < chunk[1]; ++strnum)
 		{
 			int ofs = LittleLong(chunk[3 + strnum]);	// Byte swap offset, if needed.
 			chunk[3 + strnum] = ofs;
@@ -2591,7 +2591,7 @@ bool FBehavior::IsGood ()
 		ScriptFunction *funcdef = (ScriptFunction *)Functions + i;
 		if (funcdef->Address == 0 && funcdef->ImportNum == 0)
 		{
-			DWORD *chunk = (DWORD *)FindChunk (MAKE_ID('F','N','A','M'));
+			uint32_t *chunk = (uint32_t *)FindChunk (MAKE_ID('F','N','A','M'));
 			Printf (TEXTCOLOR_RED "Could not find ACS function %s for use in %s.\n",
 				(char *)(chunk + 2) + chunk[3+i], ModuleName);
 			bad = true;
@@ -2630,7 +2630,7 @@ const ScriptPtr *FBehavior::FindScript (int script) const
 
 const ScriptPtr *FBehavior::StaticFindScript (int script, FBehavior *&module)
 {
-	for (DWORD i = 0; i < StaticModules.Size(); ++i)
+	for (uint32_t i = 0; i < StaticModules.Size(); ++i)
 	{
 		const ScriptPtr *code = StaticModules[i]->FindScript (script);
 		if (code != NULL)
@@ -2660,12 +2660,12 @@ ScriptFunction *FBehavior::GetFunction (int funcnum, FBehavior *&module) const
 
 int FBehavior::FindFunctionName (const char *funcname) const
 {
-	return FindStringInChunk ((DWORD *)FindChunk (MAKE_ID('F','N','A','M')), funcname);
+	return FindStringInChunk ((uint32_t *)FindChunk (MAKE_ID('F','N','A','M')), funcname);
 }
 
 int FBehavior::FindMapVarName (const char *varname) const
 {
-	return FindStringInChunk ((DWORD *)FindChunk (MAKE_ID('M','E','X','P')), varname);
+	return FindStringInChunk ((uint32_t *)FindChunk (MAKE_ID('M','E','X','P')), varname);
 }
 
 int FBehavior::FindMapArray (const char *arrayname) const
@@ -2678,11 +2678,11 @@ int FBehavior::FindMapArray (const char *arrayname) const
 	return -1;
 }
 
-int FBehavior::FindStringInChunk (DWORD *names, const char *varname) const
+int FBehavior::FindStringInChunk (uint32_t *names, const char *varname) const
 {
 	if (names != NULL)
 	{
-		DWORD i;
+		uint32_t i;
 
 		for (i = 0; i < LittleLong(names[2]); ++i)
 		{
@@ -2734,52 +2734,52 @@ inline bool FBehavior::CopyStringToArray(int arraynum, int index, int maxLength,
 	return !(*string); // return true if only terminating 0 was not written
 }
 
-BYTE *FBehavior::FindChunk (DWORD id) const
+uint8_t *FBehavior::FindChunk (uint32_t id) const
 {
-	BYTE *chunk = Chunks;
+	uint8_t *chunk = Chunks;
 
 	while (chunk != NULL && chunk < Data + DataSize)
 	{
-		if (((DWORD *)chunk)[0] == id)
+		if (((uint32_t *)chunk)[0] == id)
 		{
 			return chunk;
 		}
-		chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
+		chunk += LittleLong(((uint32_t *)chunk)[1]) + 8;
 	}
 	return NULL;
 }
 
-BYTE *FBehavior::NextChunk (BYTE *chunk) const
+uint8_t *FBehavior::NextChunk (uint8_t *chunk) const
 {
-	DWORD id = *(DWORD *)chunk;
-	chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
+	uint32_t id = *(uint32_t *)chunk;
+	chunk += LittleLong(((uint32_t *)chunk)[1]) + 8;
 	while (chunk != NULL && chunk < Data + DataSize)
 	{
-		if (((DWORD *)chunk)[0] == id)
+		if (((uint32_t *)chunk)[0] == id)
 		{
 			return chunk;
 		}
-		chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
+		chunk += LittleLong(((uint32_t *)chunk)[1]) + 8;
 	}
 	return NULL;
 }
 
-const char *FBehavior::StaticLookupString (DWORD index)
+const char *FBehavior::StaticLookupString (uint32_t index)
 {
-	DWORD lib = index >> LIBRARYID_SHIFT;
+	uint32_t lib = index >> LIBRARYID_SHIFT;
 
 	if (lib == STRPOOL_LIBRARYID)
 	{
 		return GlobalACSStrings.GetString(index);
 	}
-	if (lib >= (DWORD)StaticModules.Size())
+	if (lib >= (uint32_t)StaticModules.Size())
 	{
 		return NULL;
 	}
 	return StaticModules[lib]->LookupString (index & 0xffff);
 }
 
-const char *FBehavior::LookupString (DWORD index) const
+const char *FBehavior::LookupString (uint32_t index) const
 {
 	if (StringTable == 0)
 	{
@@ -2787,7 +2787,7 @@ const char *FBehavior::LookupString (DWORD index) const
 	}
 	if (Format == ACS_Old)
 	{
-		DWORD *list = (DWORD *)(Data + StringTable);
+		uint32_t *list = (uint32_t *)(Data + StringTable);
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
@@ -2795,7 +2795,7 @@ const char *FBehavior::LookupString (DWORD index) const
 	}
 	else
 	{
-		DWORD *list = (DWORD *)(Data + StringTable);
+		uint32_t *list = (uint32_t *)(Data + StringTable);
 
 		if (index >= list[1])
 			return NULL;	// Out of range for this list
@@ -2803,7 +2803,7 @@ const char *FBehavior::LookupString (DWORD index) const
 	}
 }
 
-void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
+void FBehavior::StaticStartTypedScripts (uint16_t type, AActor *activator, bool always, int arg1, bool runNow)
 {
 	static const char *const TypeNames[] =
 	{
@@ -2833,7 +2833,7 @@ void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool alwa
 	}
 }
 
-void FBehavior::StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
+void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always, int arg1, bool runNow)
 {
 	const ScriptPtr *ptr;
 	int i;
@@ -2879,7 +2879,7 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(Scripts)
 IMPLEMENT_POINTERS_END
 
-TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
+TObjPtr<DACSThinker*> DACSThinker::ActiveThinker;
 
 DACSThinker::DACSThinker ()
 : DThinker(STAT_SCRIPTS)
@@ -4425,7 +4425,7 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 		return false;
 	}
 	type = var->Type;
-	BYTE *baddr = reinterpret_cast<BYTE *>(self) + var->Offset;
+	uint8_t *baddr = reinterpret_cast<uint8_t *>(self) + var->Offset;
 	arraytype = dyn_cast<PArray>(type);
 	if (arraytype != NULL)
 	{
@@ -5843,7 +5843,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					actorMask = ActorFlags::FromInt(args[5]);
 				}
 
-				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
+				uint32_t wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
 				if (argCount >= 7) {
 					wallMask = args[6];
 				}
@@ -6247,15 +6247,15 @@ enum
 
 inline int getbyte (int *&pc)
 {
-	int res = *(BYTE *)pc;
-	pc = (int *)((BYTE *)pc+1);
+	int res = *(uint8_t *)pc;
+	pc = (int *)((uint8_t *)pc+1);
 	return res;
 }
 
 inline int getshort (int *&pc)
 {
-	int res = LittleShort( *(SWORD *)pc);
-	pc = (int *)((BYTE *)pc+2);
+	int res = LittleShort( *(int16_t *)pc);
+	pc = (int *)((uint8_t *)pc+2);
 	return res;
 }
 
@@ -6446,50 +6446,50 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_PUSHBYTE:
-			PushToStack (*(BYTE *)pc);
-			pc = (int *)((BYTE *)pc + 1);
+			PushToStack (*(uint8_t *)pc);
+			pc = (int *)((uint8_t *)pc + 1);
 			break;
 
 		case PCD_PUSH2BYTES:
-			Stack[sp] = ((BYTE *)pc)[0];
-			Stack[sp+1] = ((BYTE *)pc)[1];
+			Stack[sp] = ((uint8_t *)pc)[0];
+			Stack[sp+1] = ((uint8_t *)pc)[1];
 			sp += 2;
-			pc = (int *)((BYTE *)pc + 2);
+			pc = (int *)((uint8_t *)pc + 2);
 			break;
 
 		case PCD_PUSH3BYTES:
-			Stack[sp] = ((BYTE *)pc)[0];
-			Stack[sp+1] = ((BYTE *)pc)[1];
-			Stack[sp+2] = ((BYTE *)pc)[2];
+			Stack[sp] = ((uint8_t *)pc)[0];
+			Stack[sp+1] = ((uint8_t *)pc)[1];
+			Stack[sp+2] = ((uint8_t *)pc)[2];
 			sp += 3;
-			pc = (int *)((BYTE *)pc + 3);
+			pc = (int *)((uint8_t *)pc + 3);
 			break;
 
 		case PCD_PUSH4BYTES:
-			Stack[sp] = ((BYTE *)pc)[0];
-			Stack[sp+1] = ((BYTE *)pc)[1];
-			Stack[sp+2] = ((BYTE *)pc)[2];
-			Stack[sp+3] = ((BYTE *)pc)[3];
+			Stack[sp] = ((uint8_t *)pc)[0];
+			Stack[sp+1] = ((uint8_t *)pc)[1];
+			Stack[sp+2] = ((uint8_t *)pc)[2];
+			Stack[sp+3] = ((uint8_t *)pc)[3];
 			sp += 4;
-			pc = (int *)((BYTE *)pc + 4);
+			pc = (int *)((uint8_t *)pc + 4);
 			break;
 
 		case PCD_PUSH5BYTES:
-			Stack[sp] = ((BYTE *)pc)[0];
-			Stack[sp+1] = ((BYTE *)pc)[1];
-			Stack[sp+2] = ((BYTE *)pc)[2];
-			Stack[sp+3] = ((BYTE *)pc)[3];
-			Stack[sp+4] = ((BYTE *)pc)[4];
+			Stack[sp] = ((uint8_t *)pc)[0];
+			Stack[sp+1] = ((uint8_t *)pc)[1];
+			Stack[sp+2] = ((uint8_t *)pc)[2];
+			Stack[sp+3] = ((uint8_t *)pc)[3];
+			Stack[sp+4] = ((uint8_t *)pc)[4];
 			sp += 5;
-			pc = (int *)((BYTE *)pc + 5);
+			pc = (int *)((uint8_t *)pc + 5);
 			break;
 
 		case PCD_PUSHBYTES:
-			temp = *(BYTE *)pc;
-			pc = (int *)((BYTE *)pc + temp + 1);
+			temp = *(uint8_t *)pc;
+			pc = (int *)((uint8_t *)pc + temp + 1);
 			for (temp = -temp; temp; temp++)
 			{
-				PushToStack (*((BYTE *)pc + temp));
+				PushToStack (*((uint8_t *)pc + temp));
 			}
 			break;
 
@@ -6619,35 +6619,35 @@ int DLevelScript::RunScript ()
 
 		// Parameters for PCD_LSPEC?DIRECTB are by definition bytes so never need and-ing.
 		case PCD_LSPEC1DIRECTB:
-			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
-				((BYTE *)pc)[1], 0, 0, 0, 0);
-			pc = (int *)((BYTE *)pc + 2);
+			P_ExecuteSpecial(((uint8_t *)pc)[0], activationline, activator, backSide,
+				((uint8_t *)pc)[1], 0, 0, 0, 0);
+			pc = (int *)((uint8_t *)pc + 2);
 			break;
 
 		case PCD_LSPEC2DIRECTB:
-			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
-				((BYTE *)pc)[1], ((BYTE *)pc)[2], 0, 0, 0);
-			pc = (int *)((BYTE *)pc + 3);
+			P_ExecuteSpecial(((uint8_t *)pc)[0], activationline, activator, backSide,
+				((uint8_t *)pc)[1], ((uint8_t *)pc)[2], 0, 0, 0);
+			pc = (int *)((uint8_t *)pc + 3);
 			break;
 
 		case PCD_LSPEC3DIRECTB:
-			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
-				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3], 0, 0);
-			pc = (int *)((BYTE *)pc + 4);
+			P_ExecuteSpecial(((uint8_t *)pc)[0], activationline, activator, backSide,
+				((uint8_t *)pc)[1], ((uint8_t *)pc)[2], ((uint8_t *)pc)[3], 0, 0);
+			pc = (int *)((uint8_t *)pc + 4);
 			break;
 
 		case PCD_LSPEC4DIRECTB:
-			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
-				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
-				((BYTE *)pc)[4], 0);
-			pc = (int *)((BYTE *)pc + 5);
+			P_ExecuteSpecial(((uint8_t *)pc)[0], activationline, activator, backSide,
+				((uint8_t *)pc)[1], ((uint8_t *)pc)[2], ((uint8_t *)pc)[3],
+				((uint8_t *)pc)[4], 0);
+			pc = (int *)((uint8_t *)pc + 5);
 			break;
 
 		case PCD_LSPEC5DIRECTB:
-			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
-				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
-				((BYTE *)pc)[4], ((BYTE *)pc)[5]);
-			pc = (int *)((BYTE *)pc + 6);
+			P_ExecuteSpecial(((uint8_t *)pc)[0], activationline, activator, backSide,
+				((uint8_t *)pc)[1], ((uint8_t *)pc)[2], ((uint8_t *)pc)[3],
+				((uint8_t *)pc)[4], ((uint8_t *)pc)[5]);
+			pc = (int *)((uint8_t *)pc + 6);
 			break;
 
 		case PCD_CALLFUNC:
@@ -7673,12 +7673,12 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAYDIRECTB:
-			statedata = *(BYTE *)pc + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
+			statedata = *(uint8_t *)pc + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;
 			}
-			pc = (int *)((BYTE *)pc + 1);
+			pc = (int *)((uint8_t *)pc + 1);
 			break;
 
 		case PCD_RANDOM:
@@ -7692,8 +7692,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_RANDOMDIRECTB:
-			PushToStack (Random (((BYTE *)pc)[0], ((BYTE *)pc)[1]));
-			pc = (int *)((BYTE *)pc + 2);
+			PushToStack (Random (((uint8_t *)pc)[0], ((uint8_t *)pc)[1]));
+			pc = (int *)((uint8_t *)pc + 2);
 			break;
 
 		case PCD_THINGCOUNT:
@@ -10305,7 +10305,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
 		// Script/function name
 		if (functions)
 		{
-			DWORD *fnames = (DWORD *)prof->Module->FindChunk(MAKE_ID('F','N','A','M'));
+			uint32_t *fnames = (uint32_t *)prof->Module->FindChunk(MAKE_ID('F','N','A','M'));
 			if (prof->Index >= 0 && prof->Index < (int)LittleLong(fnames[2]))
 			{
 				mysnprintf(scriptname, sizeof(scriptname), "%s",
@@ -10343,7 +10343,7 @@ CCMD(acsprofile)
 		sort_by_runs
 	};
 	static const char *sort_names[] = { "total", "min", "max", "avg", "runs" };
-	static const BYTE sort_match_len[] = {   1,     2,     2,     1,      1 };
+	static const uint8_t sort_match_len[] = {   1,     2,     2,     1,      1 };
 
 	TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
 	long limit = 10;

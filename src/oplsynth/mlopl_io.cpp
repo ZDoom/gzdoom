@@ -102,7 +102,7 @@ void OPLio::OPLwriteValue(uint32_t regbase, uint32_t channel, uint8_t value)
 	OPLwriteReg (which, reg, value);
 }
 
-static WORD frequencies[] =
+static uint16_t frequencies[] =
 {
 	0x133, 0x133, 0x134, 0x134, 0x135, 0x136, 0x136, 0x137, 0x137, 0x138, 0x138, 0x139,
 	0x139, 0x13a, 0x13b, 0x13b, 0x13c, 0x13c, 0x13d, 0x13d, 0x13e, 0x13f, 0x13f, 0x140,
@@ -195,8 +195,8 @@ void OPLio::OPLwriteFreq(uint32_t channel, uint32_t note, uint32_t pitch, uint32
 	}
 	int i = frequencies[j] | (octave << 10);
 
-	OPLwriteValue (0xA0, channel, (BYTE)i);
-	OPLwriteValue (0xB0, channel, (BYTE)(i>>8)|(keyon<<5));
+	OPLwriteValue (0xA0, channel, (uint8_t)i);
+	OPLwriteValue (0xB0, channel, (uint8_t)(i>>8)|(keyon<<5));
 }
 
 /*

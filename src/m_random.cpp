@@ -94,10 +94,10 @@ extern FRandom pr_damagemobj;
 FRandom M_Random;
 
 // Global seed. This is modified predictably to initialize every RNG.
-DWORD rngseed;
+uint32_t rngseed;
 
 // Static RNG marker. This is only used when the RNG is set for each new game.
-DWORD staticrngseed;
+uint32_t staticrngseed;
 bool use_staticrng;
 
 // Allows checking or staticly setting the global seed.
@@ -169,7 +169,7 @@ FRandom::FRandom ()
 
 FRandom::FRandom (const char *name)
 {
-	NameCRC = CalcCRC32 ((const BYTE *)name, (unsigned int)strlen (name));
+	NameCRC = CalcCRC32 ((const uint8_t *)name, (unsigned int)strlen (name));
 #ifndef NDEBUG
 	initialized = false;
 	Name = name;
@@ -257,12 +257,12 @@ void FRandom::StaticClearRandom ()
 //
 //==========================================================================
 
-void FRandom::Init(DWORD seed)
+void FRandom::Init(uint32_t seed)
 {
 	// [RH] Use the RNG's name's CRC to modify the original seed.
 	// This way, new RNGs can be added later, and it doesn't matter
 	// which order they get initialized in.
-	DWORD seeds[2] = { NameCRC, seed };
+	uint32_t seeds[2] = { NameCRC, seed };
 	InitByArray(seeds, 2);
 }
 
@@ -270,13 +270,13 @@ void FRandom::Init(DWORD seed)
 //
 // FRandom :: StaticSumSeeds
 //
-// This function produces a DWORD that can be used to check the consistancy
+// This function produces a uint32_t that can be used to check the consistancy
 // of network games between different machines. Only a select few RNGs are
 // used for the sum, because not all RNGs are important to network sync.
 //
 //==========================================================================
 
-DWORD FRandom::StaticSumSeeds ()
+uint32_t FRandom::StaticSumSeeds ()
 {
 	return
 		pr_spawnmobj.sfmt.u[0] + pr_spawnmobj.idx +
@@ -377,7 +377,7 @@ void FRandom::StaticReadRNGState(FSerializer &arc)
 
 FRandom *FRandom::StaticFindRNG (const char *name)
 {
-	DWORD NameCRC = CalcCRC32 ((const BYTE *)name, (unsigned int)strlen (name));
+	uint32_t NameCRC = CalcCRC32 ((const uint8_t *)name, (unsigned int)strlen (name));
 
 	// Use the default RNG if this one happens to have a CRC of 0.
 	if (NameCRC == 0) return &pr_exrandom;

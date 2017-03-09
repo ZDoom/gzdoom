@@ -127,7 +127,7 @@ public:
 	virtual void Blank () = 0;
 	virtual bool PaintToWindow () = 0;
 	virtual HRESULT GetHR () = 0;
-	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 protected:
 	virtual bool CreateResources () = 0;
@@ -304,8 +304,8 @@ private:
 		BYTE Desat;
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
-		WORD NumVerts;		// Number of _unique_ vertices used by this set.
-		WORD NumTris;		// Number of triangles used by this set.
+		int NumVerts;		// Number of _unique_ vertices used by this set.
+		int NumTris;		// Number of triangles used by this set.
 	};
 
 	enum
@@ -448,7 +448,7 @@ private:
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	FBVERTEX *VertexData;
 	IDirect3DIndexBuffer9 *IndexBuffer;
-	WORD *IndexData;
+	uint16_t *IndexData;
 	BufferedTris *QuadExtra;
 	int VertexPos;
 	int IndexPos;

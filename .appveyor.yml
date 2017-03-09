@@ -4,7 +4,7 @@ branches:
   except:
     - /^travis.*$/
 
-clone_depth: 1
+clone_depth: 10
 
 os: Visual Studio 2015
 
@@ -52,3 +52,9 @@ build:
   project: build\GZDoom.sln
   parallel: true
   verbosity: minimal
+
+notifications:
+  - provider: Email
+    on_build_success: false
+    on_build_failure: false
+    on_build_status_changed: false

@@ -771,7 +771,7 @@ void M_Drawer (void)
 		{
 			player = camera->player;
 		}
-		fade = PalEntry (BYTE(player->BlendA*255), BYTE(player->BlendR*255), BYTE(player->BlendG*255), BYTE(player->BlendB*255));
+		fade = PalEntry (uint8_t(player->BlendA*255), uint8_t(player->BlendR*255), uint8_t(player->BlendG*255), uint8_t(player->BlendB*255));
 	}
 
 

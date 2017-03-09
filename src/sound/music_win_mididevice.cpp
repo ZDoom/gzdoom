@@ -239,7 +239,7 @@ void WinMIDIDevice::Stop()
 //
 //==========================================================================
 
-void WinMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
+void WinMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
 	// Setting snd_midiprecache to false disables this precaching, since it
 	// does involve sleeping for more than a miniscule amount of time.

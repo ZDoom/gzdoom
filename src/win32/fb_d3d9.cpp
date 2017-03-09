@@ -879,7 +879,7 @@ bool D3DFB::CreateVertexes ()
 	{
 		return false;
 	}
-	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(WORD)*NUM_INDEXES,
+	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*NUM_INDEXES,
 		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &IndexBuffer, NULL)))
 	{
 		return false;

@@ -113,7 +113,7 @@ inline bool P_IsBuildMap(MapData *map)
 	return false;
 }
 
-inline bool P_LoadBuildMap(BYTE *mapdata, size_t len, FMapThing **things, int *numthings)
+inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int *numthings)
 {
 	return false;
 }
@@ -180,7 +180,7 @@ FBlockNode**	blocklinks;		// for thing chains
 // Without special effect, this could be
 //	used as a PVS lookup as well.
 //
-BYTE*			rejectmatrix;
+uint8_t*			rejectmatrix;
 
 bool		ForceNodeBuild;
 
@@ -414,7 +414,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			wadReader = map->resource->GetReader();
 		}
 	}
-	DWORD id;
+	uint32_t id;
 
 	// Although we're using the resource system, we still want to be sure we're
 	// reading from a wad file.
@@ -429,7 +429,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
 		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
 
-		for(DWORD i = 1; i < map->resource->LumpCount(); i++)
+		for(uint32_t i = 1; i < map->resource->LumpCount(); i++)
 		{
 			const char* lumpname = map->resource->GetLump(i)->Name;
 
@@ -534,7 +534,7 @@ bool P_CheckMapData(const char *mapname)
 //
 //===========================================================================
 
-void MapData::GetChecksum(BYTE cksum[16])
+void MapData::GetChecksum(uint8_t cksum[16])
 {
 	MD5Context md5;
 
@@ -674,7 +674,7 @@ static void SummarizeMissingTextures(const FMissingTextureTracker &missing)
 //
 //===========================================================================
 
-static void SetTexture (side_t *side, int position, DWORD *blend, const char *name)
+static void SetTexture (side_t *side, int position, uint32_t *blend, const char *name)
 {
 	FTextureID texture;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
@@ -702,7 +702,7 @@ static void SetTexture (side_t *side, int position, DWORD *blend, const char *na
 	side->SetTexture(position, texture);
 }
 
-static void SetTextureNoErr (side_t *side, int position, DWORD *color, const char *name, bool *validcolor, bool isFog)
+static void SetTextureNoErr (side_t *side, int position, uint32_t *color, const char *name, bool *validcolor, bool isFog)
 {
 	FTextureID texture;
 	*validcolor = false;
@@ -866,9 +866,9 @@ void P_LoadZSegs (FileReaderBase &data)
 	for (int i = 0; i < numsegs; ++i)
 	{
 		line_t *ldef;
-		DWORD v1, v2;
-		WORD line;
-		BYTE side;
+		uint32_t v1, v2;
+		uint16_t line;
+		uint8_t side;
 
 		data >> v1 >> v2 >> line >> side;
 
@@ -904,10 +904,10 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 		for (size_t j = 0; j < subsectors[i].numlines; ++j)
 		{
 			seg_t *seg;
-			DWORD v1, partner;
-			DWORD line;
-			WORD lineword;
-			BYTE side;
+			uint32_t v1, partner;
+			uint32_t line;
+			uint16_t lineword;
+			uint8_t side;
 
 			data >> v1 >> partner;
 			if (type >= 2)
@@ -969,7 +969,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 void LoadZNodes(FileReaderBase &data, int glnodes)
 {
 	// Read extra vertices added during node building
-	DWORD orgVerts, newVerts;
+	uint32_t orgVerts, newVerts;
 	TStaticArray<vertex_t> newvertarray;
 	unsigned int i;
 
@@ -1009,7 +1009,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	level.vertexes = std::move(newvertarray);
 
 	// Read the subsectors
-	DWORD numSubs, currSeg;
+	uint32_t numSubs, currSeg;
 
 	data >> numSubs;
 	numsubsectors = numSubs;
@@ -1018,7 +1018,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 
 	for (i = currSeg = 0; i < numSubs; ++i)
 	{
-		DWORD numsegs;
+		uint32_t numsegs;
 
 		data >> numsegs;
 		subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
@@ -1027,7 +1027,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 
 	// Read the segs
-	DWORD numSegs;
+	uint32_t numSegs;
 
 	data >> numSegs;
 
@@ -1057,7 +1057,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 
 	// Read nodes
-	DWORD numNodes;
+	uint32_t numNodes;
 
 	data >> numNodes;
 	numnodes = numNodes;
@@ -1068,7 +1068,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	{
 		if (glnodes < 3)
 		{
-			SWORD x, y, dx, dy;
+			int16_t x, y, dx, dy;
 
 			data >> x >> y >> dx >> dy;
 			nodes[i].x = x << FRACBITS;
@@ -1084,18 +1084,18 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				SWORD coord;
+				int16_t coord;
 				data >> coord;
 				nodes[i].bbox[j][k] = coord;
 			}
 		}
 		for (int m = 0; m < 2; ++m)
 		{
-			DWORD child;
+			uint32_t child;
 			data >> child;
 			if (child & 0x80000000)
 			{
-				nodes[i].children[m] = (BYTE *)&subsectors[child & 0x7FFFFFFF] + 1;
+				nodes[i].children[m] = (uint8_t *)&subsectors[child & 0x7FFFFFFF] + 1;
 			}
 			else
 			{
@@ -1106,7 +1106,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 }
 
 
-void P_LoadZNodes (FileReader &dalump, DWORD id)
+void P_LoadZNodes (FileReader &dalump, uint32_t id)
 {
 	int type;
 	bool compressed;
@@ -1206,10 +1206,10 @@ template<class segtype>
 void P_LoadSegs (MapData * map)
 {
 	int  i;
-	BYTE *data;
+	uint8_t *data;
 	int numvertexes = level.vertexes.Size();
-	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
-	DWORD segangle;
+	uint8_t *vertchanged = new uint8_t[numvertexes];	// phares 10/4/98
+	uint32_t segangle;
 	//int ptp_angle;		// phares 10/4/98
 	//int delta_angle;	// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
@@ -1232,7 +1232,7 @@ void P_LoadSegs (MapData * map)
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
 
-	data = new BYTE[lumplen];
+	data = new uint8_t[lumplen];
 	map->Read(ML_SEGS, data);
 
 	for (i = 0; i < numsubsectors; ++i)
@@ -1270,7 +1270,7 @@ void P_LoadSegs (MapData * map)
 			li->v1 = &level.vertexes[vnum1];
 			li->v2 = &level.vertexes[vnum2];
 
-			segangle = (WORD)LittleShort(ml->angle);
+			segangle = (uint16_t)LittleShort(ml->angle);
 
 			// phares 10/4/98: In the case of a lineseg that was created by splitting
 			// another line, it appears that the line angle is inherited from the
@@ -1387,7 +1387,7 @@ template<class subsectortype, class segtype>
 void P_LoadSubsectors (MapData * map)
 {
 	int i;
-	DWORD maxseg = map->Size(ML_SEGS) / sizeof(segtype);
+	uint32_t maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
 	numsubsectors = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
@@ -1561,7 +1561,7 @@ void P_LoadNodes (MapData * map)
 	char		*mnp;
 	nodetype	*mn;
 	node_t* 	no;
-	WORD*		used;
+	uint16_t*		used;
 	int			lumplen = map->Size(ML_NODES);
 	int			maxss = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
@@ -1574,8 +1574,8 @@ void P_LoadNodes (MapData * map)
 	}
 	
 	nodes = new node_t[numnodes];		
-	used = (WORD *)alloca (sizeof(WORD)*numnodes);
-	memset (used, 0, sizeof(WORD)*numnodes);
+	used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
+	memset (used, 0, sizeof(uint16_t)*numnodes);
 
 	mnp = new char[lumplen];
 	mn = (nodetype*)(mnp + nodetype::NF_LUMPOFFSET);
@@ -1603,7 +1603,7 @@ void P_LoadNodes (MapData * map)
 					delete[] mnp;
 					return;
 				}
-				no->children[j] = (BYTE *)&subsectors[child] + 1;
+				no->children[j] = (uint8_t *)&subsectors[child] + 1;
 			}
 			else if (child >= numnodes)
 			{
@@ -1685,7 +1685,7 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 		}
 		else
 		{ // Set the value of the specified user variable.
-			var->Type->SetValue(reinterpret_cast<BYTE *>(actor) + var->Offset, value);
+			var->Type->SetValue(reinterpret_cast<uint8_t *>(actor) + var->Offset, value);
 		}
 	}
 }
@@ -1696,9 +1696,9 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 //
 //===========================================================================
 
-WORD MakeSkill(int flags)
+uint16_t MakeSkill(int flags)
 {
-	WORD res = 0;
+	uint16_t res = 0;
 	if (flags & 1) res |= 1+2;
 	if (flags & 2) res |= 4;
 	if (flags & 4) res |= 8+16;
@@ -1973,7 +1973,7 @@ void P_SaveLineSpecial (line_t *ld)
 	if (ld->sidedef[0] == NULL)
 		return;
 
-	DWORD sidenum = ld->sidedef[0]->Index();
+	uint32_t sidenum = ld->sidedef[0]->Index();
 	// killough 4/4/98: support special sidedef interpretation below
 	// [RH] Save Static_Init only if it's interested in the textures
 	if	(ld->special != Static_Init || ld->args[1] == Init_Color)
@@ -2068,7 +2068,7 @@ void P_FinishLoadingLineDefs ()
 	}
 }
 
-static void P_SetSideNum (side_t **sidenum_p, WORD sidenum)
+static void P_SetSideNum (side_t **sidenum_p, uint16_t sidenum)
 {
 	if (sidenum == NO_INDEX)
 	{
@@ -2356,7 +2356,7 @@ static void P_LoopSidedefs (bool firstloop)
 	// one that forms the smallest angle is assumed to be the right one.
 	for (i = 0; i < numsides; ++i)
 	{
-		DWORD right;
+		uint32_t right;
 		line_t *line = level.sides[i].linedef;
 
 		// If the side's line only exists in a single sector,
@@ -2449,7 +2449,7 @@ static void P_LoopSidedefs (bool firstloop)
 int P_DetermineTranslucency (int lumpnum)
 {
 	FWadLump tranmap = Wads.OpenLumpNum (lumpnum);
-	BYTE index;
+	uint8_t index;
 	PalEntry newcolor;
 	PalEntry newcolor2;
 
@@ -2508,7 +2508,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 		// upper "texture" is light color
 		// lower "texture" is fog color
 		{
-			DWORD color = MAKERGB(255,255,255), fog = 0;
+			uint32_t color = MAKERGB(255,255,255), fog = 0;
 			bool colorgood, foggood;
 
 			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood, true);
@@ -3026,7 +3026,7 @@ void P_LoadBlockMap (MapData * map)
 	}
 	else
 	{
-		BYTE *data = new BYTE[count];
+		uint8_t *data = new uint8_t[count];
 		map->Read(ML_BLOCKMAP, data);
 		const short *wadblockmaplump = (short *)data;
 		int i;
@@ -3041,13 +3041,13 @@ void P_LoadBlockMap (MapData * map)
 
 		blockmaplump[0] = LittleShort(wadblockmaplump[0]);
 		blockmaplump[1] = LittleShort(wadblockmaplump[1]);
-		blockmaplump[2] = (DWORD)(LittleShort(wadblockmaplump[2])) & 0xffff;
-		blockmaplump[3] = (DWORD)(LittleShort(wadblockmaplump[3])) & 0xffff;
+		blockmaplump[2] = (uint32_t)(LittleShort(wadblockmaplump[2])) & 0xffff;
+		blockmaplump[3] = (uint32_t)(LittleShort(wadblockmaplump[3])) & 0xffff;
 
 		for (i = 4; i < count; i++)
 		{
 			short t = LittleShort(wadblockmaplump[i]);          // killough 3/1/98
-			blockmaplump[i] = t == -1 ? (DWORD)0xffffffff : (DWORD) t & 0xffff;
+			blockmaplump[i] = t == -1 ? (uint32_t)0xffffffff : (uint32_t) t & 0xffff;
 		}
 		delete[] data;
 
@@ -3266,7 +3266,7 @@ void P_LoadReject (MapData * map, bool junk)
 	{
 		// Check if the reject has some actual content. If not, free it.
 		rejectsize = MIN (rejectsize, neededsize);
-		rejectmatrix = new BYTE[rejectsize];
+		rejectmatrix = new uint8_t[rejectsize];
 
 		map->Seek(ML_REJECT);
 		map->file->Read (rejectmatrix, rejectsize);
@@ -3354,14 +3354,14 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 static void P_PrecacheLevel()
 {
 	int i;
-	BYTE *hitlist;
+	uint8_t *hitlist;
 	TMap<PClassActor *, bool> actorhitlist;
 	int cnt = TexMan.NumTextures();
 
 	if (demoplayback)
 		return;
 
-	hitlist = new BYTE[cnt];
+	hitlist = new uint8_t[cnt];
 	memset(hitlist, 0, cnt);
 
 	AActor *actor;
@@ -3654,7 +3654,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	buildmap = false;
 	if (map->Size(0) > 0)
 	{
-		BYTE *mapdata = new BYTE[map->Size(0)];
+		uint8_t *mapdata = new uint8_t[map->Size(0)];
 		map->Seek(0);
 		map->file->Read(mapdata, map->Size(0));
 		times[0].Clock();
@@ -3802,7 +3802,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
+		uint32_t id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
 		if (map->Size(ML_ZNODES) != 0)
 		{

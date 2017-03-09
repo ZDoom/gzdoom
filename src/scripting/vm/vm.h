@@ -704,7 +704,7 @@ class VMFunction
 public:
 	bool Unsafe = false;
 	int VarFlags = 0; // [ZZ] this replaces 5+ bool fields
-	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
+	uint8_t ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	unsigned VirtualIndex = ~0u;
 	FName Name;
 	TArray<VMValue> DefaultArgs;

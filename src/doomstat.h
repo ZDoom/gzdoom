@@ -234,7 +234,7 @@ struct DehInfo
 	int KFAArmor;
 	int KFAAC;
 	char PlayerSprite[5];
-	BYTE ExplosionStyle;
+	uint8_t ExplosionStyle;
 	double ExplosionAlpha;
 	int NoAutofreeze;
 	int BFGCells;

@@ -133,8 +133,8 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	TObjPtr<DHUDMessage> Next;
-	DWORD SBarID;
+	TObjPtr<DHUDMessage*> Next;
+	uint32_t SBarID;
 	char *SourceText;
 
 	friend class DBaseStatusBar;
@@ -225,11 +225,11 @@ struct FMugShotFrame
 
 struct FMugShotState
 {
-	BYTE bUsesLevels:1;
-	BYTE bHealth2:1;		// Health level is the 2nd character from the end.
-	BYTE bHealthSpecial:1;	// Like health2 only the 2nd frame gets the normal health type.
-	BYTE bDirectional:1;	// Faces direction of damage.
-	BYTE bFinished:1;
+	uint8_t bUsesLevels:1;
+	uint8_t bHealth2:1;		// Health level is the 2nd character from the end.
+	uint8_t bHealthSpecial:1;	// Like health2 only the 2nd frame gets the normal health type.
+	uint8_t bDirectional:1;	// Faces direction of damage.
+	uint8_t bFinished:1;
 
 	unsigned int Position;
 	int Time;
@@ -415,7 +415,7 @@ private:
 	void DrawConsistancy () const;
 	void DrawWaiting () const;
 
-	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
+	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
 	bool ShowLog;
 };
 
@@ -433,7 +433,7 @@ void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 extern FTexture *CrosshairImage;
 
-FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale);
+FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale);
 
 enum DI_Flags
 {

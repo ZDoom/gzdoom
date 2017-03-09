@@ -72,7 +72,7 @@ static int sortforremap2 (const void *a, const void *b);
 /* Gamma correction stuff */
 /**************************/
 
-BYTE newgamma[256];
+uint8_t newgamma[256];
 CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self == 0.f)
@@ -135,12 +135,12 @@ FPalette::FPalette ()
 {
 }
 
-FPalette::FPalette (const BYTE *colors)
+FPalette::FPalette (const uint8_t *colors)
 {
 	SetPalette (colors);
 }
 
-void FPalette::SetPalette (const BYTE *colors)
+void FPalette::SetPalette (const uint8_t *colors)
 {
 	for (int i = 0; i < 256; i++, colors += 3)
 	{
@@ -151,8 +151,8 @@ void FPalette::SetPalette (const BYTE *colors)
 	// Find white and black from the original palette so that they can be
 	// used to make an educated guess of the translucency % for a BOOM
 	// translucency map.
-	WhiteIndex = BestColor ((DWORD *)BaseColors, 255, 255, 255, 0, 255);
-	BlackIndex = BestColor ((DWORD *)BaseColors, 0, 0, 0, 0, 255);
+	WhiteIndex = BestColor ((uint32_t *)BaseColors, 255, 255, 255, 0, 255);
+	BlackIndex = BestColor ((uint32_t *)BaseColors, 0, 0, 0, 0, 255);
 }
 
 // In ZDoom's new texture system, color 0 is used as the transparent color.
@@ -216,18 +216,18 @@ void FPalette::MakeGoodRemap ()
 
 static int sortforremap (const void *a, const void *b)
 {
-	return (*(const DWORD *)a & 0xFFFFFF) - (*(const DWORD *)b & 0xFFFFFF);
+	return (*(const uint32_t *)a & 0xFFFFFF) - (*(const uint32_t *)b & 0xFFFFFF);
 }
 
 struct RemappingWork
 {
-	DWORD Color;
-	BYTE Foreign;	// 0 = local palette, 1 = foreign palette
-	BYTE PalEntry;	// Entry # in the palette
-	BYTE Pad[2];
+	uint32_t Color;
+	uint8_t Foreign;	// 0 = local palette, 1 = foreign palette
+	uint8_t PalEntry;	// Entry # in the palette
+	uint8_t Pad[2];
 };
 
-void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, int numcolors) const
+void FPalette::MakeRemap (const uint32_t *colors, uint8_t *remap, const uint8_t *useful, int numcolors) const
 {
 	RemappingWork workspace[255+256];
 	int i, j, k;
@@ -238,7 +238,7 @@ void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, 
 
 	for (i = 1; i < 256; ++i)
 	{
-		workspace[i-1].Color = DWORD(BaseColors[i]) & 0xFFFFFF;
+		workspace[i-1].Color = uint32_t(BaseColors[i]) & 0xFFFFFF;
 		workspace[i-1].Foreign = 0;
 		workspace[i-1].PalEntry = i;
 	}
@@ -282,7 +282,7 @@ void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, 
 		{
 			if (workspace[i].Foreign == 1)
 			{
-				remap[workspace[i].PalEntry] = BestColor ((DWORD *)BaseColors,
+				remap[workspace[i].PalEntry] = BestColor ((uint32_t *)BaseColors,
 					RPART(workspace[i].Color), GPART(workspace[i].Color), BPART(workspace[i].Color),
 					1, 255);
 			}
@@ -305,7 +305,7 @@ static int sortforremap2 (const void *a, const void *b)
 	}
 }
 
-static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
+static bool FixBuildPalette (uint8_t *opal, int lump, bool blood)
 {
 	if (Wads.LumpLength (lump) < 768)
 	{
@@ -313,7 +313,7 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	}
 
 	FMemLump data = Wads.ReadLump (lump);
-	const BYTE *ipal = (const BYTE *)data.GetMem();
+	const uint8_t *ipal = (const uint8_t *)data.GetMem();
 	
 	// Reverse the palette because BUILD used entry 255 as
 	// transparent, but we use 0 as transparent.
@@ -338,7 +338,7 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 
 void InitPalette ()
 {
-	BYTE pal[768];
+	uint8_t pal[768];
 	bool usingBuild = false;
 	int lump;
 
@@ -359,14 +359,14 @@ void InitPalette ()
 
 	GPalette.SetPalette (pal);
 	GPalette.MakeGoodRemap ();
-	ColorMatcher.SetPalette ((DWORD *)GPalette.BaseColors);
+	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 
 	// The BUILD engine already has a transparent color, so it doesn't need any remapping.
 	if (!usingBuild)
 	{
 		if (GPalette.Remap[0] == 0)
 		{ // No duplicates, so settle for something close to color 0
-			GPalette.Remap[0] = BestColor ((DWORD *)GPalette.BaseColors,
+			GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
 				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
 	}
@@ -385,13 +385,13 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 	{
 		if (from != to)
 		{
-			memcpy (to, from, count * sizeof(DWORD));
+			memcpy (to, from, count * sizeof(uint32_t));
 		}
 		return;
 	}
 	else if (a == 256)
 	{
-		DWORD t = MAKERGB(r,g,b);
+		uint32_t t = MAKERGB(r,g,b);
 		int i;
 
 		for (i = 0; i < count; i++)
@@ -507,7 +507,7 @@ CCMD (testblend)
 CCMD (testfade)
 {
 	FString colorstring;
-	DWORD color;
+	uint32_t color;
 
 	if (argv.argc() < 2)
 	{
@@ -606,7 +606,7 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 CCMD (testcolor)
 {
 	FString colorstring;
-	DWORD color;
+	uint32_t color;
 	int desaturate;
 
 	if (argv.argc() < 2)

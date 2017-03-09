@@ -77,8 +77,8 @@ struct FIWADInfo
 	FString Autoname;		// Name of autoload ini section for this IWAD
 	FString Configname;		// Name of config section for this IWAD
 	FString Required;		// Requires another IWAD
-	DWORD FgColor;			// Foreground color for title banner
-	DWORD BkColor;			// Background color for title banner
+	uint32_t FgColor;			// Foreground color for title banner
+	uint32_t BkColor;			// Background color for title banner
 	EGameType gametype;		// which game are we playing?
 	FString MapInfo;		// Base mapinfo to load
 	TArray<FString> Load;	// Wads to be loaded with this one.
@@ -92,8 +92,8 @@ struct FIWADInfo
 struct FStartupInfo
 {
 	FString Name;
-	DWORD FgColor;			// Foreground color for title banner
-	DWORD BkColor;			// Background color for title banner
+	uint32_t FgColor;			// Foreground color for title banner
+	uint32_t BkColor;			// Background color for title banner
 	FString Song;
 	int Type;
 	enum

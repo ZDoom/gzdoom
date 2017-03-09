@@ -52,18 +52,18 @@
 
 
 struct zdemoheader_s {
-	BYTE	demovermajor;
-	BYTE	demoverminor;
-	BYTE	minvermajor;
-	BYTE	minverminor;
-	BYTE	map[8];
+	uint8_t	demovermajor;
+	uint8_t	demoverminor;
+	uint8_t	minvermajor;
+	uint8_t	minverminor;
+	uint8_t	map[8];
 	unsigned int rngseed;
-	BYTE	consoleplayer;
+	uint8_t	consoleplayer;
 };
 
 struct usercmd_t
 {
-	DWORD	buttons;
+	uint32_t	buttons;
 	short	pitch;			// up/down
 	short	yaw;			// left/right
 	short	roll;			// "tilt"
@@ -141,7 +141,7 @@ enum EDemoCommand
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
 	DEM_UNDONE11,		// 51
-	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
+	DEM_SUMMON2,		// 52 String: Thing to fabricate, uint16_t: angle offset
 	DEM_SUMMONFRIEND2,	// 53
 	DEM_SUMMONFOE2,		// 54
 	DEM_ADDSLOTDEFAULT,	// 55
@@ -221,30 +221,30 @@ enum ECheatCommand
 	CHT_GOD2
 };
 
-void StartChunk (int id, BYTE **stream);
-void FinishChunk (BYTE **stream);
-void SkipChunk (BYTE **stream);
+void StartChunk (int id, uint8_t **stream);
+void FinishChunk (uint8_t **stream);
+void SkipChunk (uint8_t **stream);
 
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
+int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
+int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
+int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
 
 struct ticcmd_t;
 
-int SkipTicCmd (BYTE **stream, int count);
-void ReadTicCmd (BYTE **stream, int player, int tic);
+int SkipTicCmd (uint8_t **stream, int count);
+void ReadTicCmd (uint8_t **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int ReadByte (BYTE **stream);
-int ReadWord (BYTE **stream);
-int ReadLong (BYTE **stream);
-float ReadFloat (BYTE **stream);
-char *ReadString (BYTE **stream);
-const char *ReadStringConst(BYTE **stream);
-void WriteByte (BYTE val, BYTE **stream);
-void WriteWord (short val, BYTE **stream);
-void WriteLong (int val, BYTE **stream);
-void WriteFloat (float val, BYTE **stream);
-void WriteString (const char *string, BYTE **stream);
+int ReadByte (uint8_t **stream);
+int ReadWord (uint8_t **stream);
+int ReadLong (uint8_t **stream);
+float ReadFloat (uint8_t **stream);
+char *ReadString (uint8_t **stream);
+const char *ReadStringConst(uint8_t **stream);
+void WriteByte (uint8_t val, uint8_t **stream);
+void WriteWord (short val, uint8_t **stream);
+void WriteLong (int val, uint8_t **stream);
+void WriteFloat (float val, uint8_t **stream);
+void WriteString (const char *string, uint8_t **stream);
 
 #endif //__D_PROTOCOL_H__

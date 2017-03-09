@@ -79,11 +79,11 @@ struct FWeaponSlots
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
 void Net_WriteWeapon(PClassActor *type);
-PClassActor *Net_ReadWeapon(BYTE **stream);
+PClassActor *Net_ReadWeapon(uint8_t **stream);
 
 void P_SetupWeapons_ntohton();
-void P_WriteDemoWeaponsChunk(BYTE **demo);
-void P_ReadDemoWeaponsChunk(BYTE **demo);
+void P_WriteDemoWeaponsChunk(uint8_t **demo);
+void P_ReadDemoWeaponsChunk(uint8_t **demo);
 
 
 class AWeapon : public AStateProvider
@@ -91,7 +91,7 @@ class AWeapon : public AStateProvider
 	DECLARE_CLASS(AWeapon, AStateProvider)
 	HAS_OBJECT_POINTERS
 public:
-	DWORD WeaponFlags;
+	uint32_t WeaponFlags;
 	PClassActor *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
@@ -113,8 +113,8 @@ public:
 	int SlotPriority;
 
 	// In-inventory instance variables
-	TObjPtr<AInventory> Ammo1, Ammo2;
-	TObjPtr<AWeapon> SisterWeapon;
+	TObjPtr<AInventory*> Ammo1, Ammo2;
+	TObjPtr<AWeapon*> SisterWeapon;
 	float FOVScale;
 	int Crosshair;							// 0 to use player's crosshair
 	bool GivenAsMorphWeapon;

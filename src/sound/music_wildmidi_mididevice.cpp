@@ -167,7 +167,7 @@ int WildMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), v
 //
 //==========================================================================
 
-void WildMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
+void WildMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
 	for (int i = 0; i < count; ++i)
 	{

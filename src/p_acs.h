@@ -198,11 +198,11 @@ struct ACSLocalArrays
 struct ScriptPtr
 {
 	int Number;
-	DWORD Address;
-	BYTE Type;
-	BYTE ArgCount;
-	WORD VarCount;
-	WORD Flags;
+	uint32_t Address;
+	uint8_t Type;
+	uint8_t ArgCount;
+	uint16_t VarCount;
+	uint16_t Flags;
 	ACSLocalArrays LocalArrays;
 
 	ACSProfileInfo ProfileData;
@@ -211,51 +211,51 @@ struct ScriptPtr
 // The present ZDoom version
 struct ScriptPtr3
 {
-	SWORD Number;
-	BYTE Type;
-	BYTE ArgCount;
-	DWORD Address;
+	int16_t Number;
+	uint8_t Type;
+	uint8_t ArgCount;
+	uint32_t Address;
 };
 
 // The intermediate ZDoom version
 struct ScriptPtr1
 {
-	SWORD Number;
-	WORD Type;
-	DWORD Address;
-	DWORD ArgCount;
+	int16_t Number;
+	uint16_t Type;
+	uint32_t Address;
+	uint32_t ArgCount;
 };
 
 // The old Hexen version
 struct ScriptPtr2
 {
-	DWORD Number;	// Type is Number / 1000
-	DWORD Address;
-	DWORD ArgCount;
+	uint32_t Number;	// Type is Number / 1000
+	uint32_t Address;
+	uint32_t ArgCount;
 };
 
 struct ScriptFlagsPtr
 {
-	WORD Number;
-	WORD Flags;
+	uint16_t Number;
+	uint16_t Flags;
 };
 
 struct ScriptFunctionInFile
 {
-	BYTE ArgCount;
-	BYTE LocalCount;
-	BYTE HasReturnValue;
-	BYTE ImportNum;
-	DWORD Address;
+	uint8_t ArgCount;
+	uint8_t LocalCount;
+	uint8_t HasReturnValue;
+	uint8_t ImportNum;
+	uint32_t Address;
 };
 
 struct ScriptFunction
 {
-	BYTE ArgCount;
-	BYTE HasReturnValue;
-	BYTE ImportNum;
+	uint8_t ArgCount;
+	uint8_t HasReturnValue;
+	uint8_t ImportNum;
 	int  LocalCount;
-	DWORD Address;
+	uint32_t Address;
 	ACSLocalArrays LocalArrays;
 };
 
@@ -296,13 +296,13 @@ public:
 	bool Init(int lumpnum, FileReader * fr = NULL, int len = 0);
 
 	bool IsGood ();
-	BYTE *FindChunk (DWORD id) const;
-	BYTE *NextChunk (BYTE *chunk) const;
+	uint8_t *FindChunk (uint32_t id) const;
+	uint8_t *NextChunk (uint8_t *chunk) const;
 	const ScriptPtr *FindScript (int number) const;
-	void StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow);
-	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
-	int *Ofs2PC (DWORD ofs) const {	return (int *)(Data + ofs); }
-	int *Jump2PC (DWORD jumpPoint) const { return Ofs2PC(JumpPoints[jumpPoint]); }
+	void StartTypedScripts (uint16_t type, AActor *activator, bool always, int arg1, bool runNow);
+	uint32_t PC2Ofs (int *pc) const { return (uint32_t)((uint8_t *)pc - Data); }
+	int *Ofs2PC (uint32_t ofs) const {	return (int *)(Data + ofs); }
+	int *Jump2PC (uint32_t jumpPoint) const { return Ofs2PC(JumpPoints[jumpPoint]); }
 	ACSFormat GetFormat() const { return Format; }
 	ScriptFunction *GetFunction (int funcnum, FBehavior *&module) const;
 	int GetArrayVal (int arraynum, int index) const;
@@ -321,7 +321,7 @@ public:
 	const char *GetModuleName() const { return ModuleName; }
 	ACSProfileInfo *GetFunctionProfileData(int index) { return index >= 0 && index < NumFunctions ? &FunctionProfileData[index] : NULL; }
 	ACSProfileInfo *GetFunctionProfileData(ScriptFunction *func) { return GetFunctionProfileData((int)(func - (ScriptFunction *)Functions)); }
-	const char *LookupString (DWORD index) const;
+	const char *LookupString (uint32_t index) const;
 
 	int32_t *MapVars[NUM_MAPVARS];
 
@@ -336,8 +336,8 @@ public:
 	static void StaticUnlockLevelVarStrings();
 
 	static const ScriptPtr *StaticFindScript (int script, FBehavior *&module);
-	static const char *StaticLookupString (DWORD index);
-	static void StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1=0, bool runNow=false);
+	static const char *StaticLookupString (uint32_t index);
+	static void StaticStartTypedScripts (uint16_t type, AActor *activator, bool always, int arg1=0, bool runNow=false);
 	static void StaticStopMyScripts (AActor *actor);
 
 private:
@@ -346,9 +346,9 @@ private:
 	ACSFormat Format;
 
 	int LumpNum;
-	BYTE *Data;
+	uint8_t *Data;
 	int DataSize;
-	BYTE *Chunks;
+	uint8_t *Chunks;
 	ScriptPtr *Scripts;
 	int NumScripts;
 	ScriptFunction *Functions;
@@ -358,10 +358,10 @@ private:
 	int NumArrays;
 	ArrayInfo **Arrays;
 	int NumTotalArrays;
-	DWORD StringTable;
+	uint32_t StringTable;
 	int32_t MapVarStore[NUM_MAPVARS];
 	TArray<FBehavior *> Imports;
-	DWORD LibraryID;
+	uint32_t LibraryID;
 	char ModuleName[9];
 	TArray<int> JumpPoints;
 
@@ -371,8 +371,8 @@ private:
 
 	static int SortScripts (const void *a, const void *b);
 	void UnencryptStrings ();
-	void UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool haspadding);
-	int FindStringInChunk (DWORD *chunk, const char *varname) const;
+	void UnescapeStringTable(uint8_t *chunkstart, uint8_t *datastart, bool haspadding);
+	int FindStringInChunk (uint32_t *chunk, const char *varname) const;
 
 	void SerializeVars (FSerializer &arc);
 	void SerializeVarSet (FSerializer &arc, int32_t *vars, int max);
@@ -895,7 +895,7 @@ protected:
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
-	TObjPtr<AActor>	activator;
+	TObjPtr<AActor*>	activator;
 	line_t			*activationline;
 	bool			backSide;
 	FFont			*activefont;
@@ -955,7 +955,7 @@ public:
 
 	typedef TMap<int, DLevelScript *> ScriptMap;
 	ScriptMap RunningScripts;	// Array of all synchronous scripts
-	static TObjPtr<DACSThinker> ActiveThinker;
+	static TObjPtr<DACSThinker*> ActiveThinker;
 
 	void DumpScriptStatus();
 	void StopScriptsFor (AActor *actor);

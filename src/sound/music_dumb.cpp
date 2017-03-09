@@ -80,26 +80,26 @@ typedef struct tagITFILEHEADER
 {
 	DWORD id;			// 0x4D504D49
 	char songname[26];
-	WORD reserved1;		// 0x1004
-	WORD ordnum;
-	WORD insnum;
-	WORD smpnum;
-	WORD patnum;
-	WORD cwtv;
-	WORD cmwt;
-	WORD flags;
-	WORD special;
-	BYTE globalvol;
-	BYTE mv;
-	BYTE speed;
-	BYTE tempo;
-	BYTE sep;
-	BYTE zero;
-	WORD msglength;
+	uint16_t reserved1;		// 0x1004
+	uint16_t ordnum;
+	uint16_t insnum;
+	uint16_t smpnum;
+	uint16_t patnum;
+	uint16_t cwtv;
+	uint16_t cmwt;
+	uint16_t flags;
+	uint16_t special;
+	uint8_t globalvol;
+	uint8_t mv;
+	uint8_t speed;
+	uint8_t tempo;
+	uint8_t sep;
+	uint8_t zero;
+	uint16_t msglength;
 	DWORD msgoffset;
 	DWORD reserved2;
-	BYTE chnpan[64];
-	BYTE chnvol[64];
+	uint8_t chnpan[64];
+	uint8_t chnvol[64];
 } FORCE_PACKED ITFILEHEADER, *PITFILEHEADER;
 
 typedef struct MODMIDICFG
@@ -242,7 +242,7 @@ static void ReadDUH(DUH * duh, input_mod *info, bool meta, bool dos)
 //
 //==========================================================================
 
-static bool ReadIT(const BYTE * ptr, unsigned size, input_mod *info, bool meta)
+static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool meta)
 {
 	PITFILEHEADER pifh = (PITFILEHEADER) ptr;
 	if ((!ptr) || (size < 0x100)) return false;
@@ -327,7 +327,7 @@ static bool ReadIT(const BYTE * ptr, unsigned size, input_mod *info, bool meta)
 
 	if (pos < size)
 	{
-		WORD val16 = LittleShort( *(WORD *)(ptr + pos) );
+		uint16_t val16 = LittleShort( *(uint16_t *)(ptr + pos) );
 		pos += 2;
 		if (pos + val16 * 8 < size) pos += val16 * 8;
 	}
@@ -395,24 +395,24 @@ static bool ReadIT(const BYTE * ptr, unsigned size, input_mod *info, bool meta)
 
 	offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4 + LittleShort(pifh->smpnum) * 4);
 
-	BYTE chnmask[64];
+	uint8_t chnmask[64];
 
 	for (n = 0, l = LittleShort(pifh->patnum); n < l; n++)
 	{
 		memset(chnmask, 0, sizeof(chnmask));
 		DWORD offset_n = LittleLong( offset[n] );
 		if ((!offset_n) || (offset_n + 4 >= size)) continue;
-		unsigned len = LittleShort(*(WORD *)(ptr + offset_n));
-		unsigned rows = LittleShort(*(WORD *)(ptr + offset_n + 2));
+		unsigned len = LittleShort(*(uint16_t *)(ptr + offset_n));
+		unsigned rows = LittleShort(*(uint16_t *)(ptr + offset_n + 2));
 		if ((rows < 4) || (rows > 256)) continue;
 		if (offset_n + 8 + len > size) continue;
 		unsigned i = 0;
-		const BYTE * p = ptr + offset_n + 8;
+		const uint8_t * p = ptr + offset_n + 8;
 		unsigned nrow = 0;
 		while (nrow < rows)
 		{
 			if (i >= len) break;
-			BYTE b = p[i++];
+			uint8_t b = p[i++];
 			if (!b)
 			{
 				nrow++;
@@ -464,7 +464,7 @@ static bool ReadIT(const BYTE * ptr, unsigned size, input_mod *info, bool meta)
 
 typedef struct tdumbfile_mem_status
 {
-	const BYTE *ptr;
+	const uint8_t *ptr;
 	unsigned int offset, size;
 } dumbfile_mem_status;
 
@@ -537,15 +537,15 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FileReader &reader, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, FileReader &reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
 	if (lenhave >= lenfull)
-		filestate->ptr = (BYTE *)start;
+		filestate->ptr = (uint8_t *)start;
     else
     {
-        BYTE *mem = new BYTE[lenfull];
+        uint8_t *mem = new uint8_t[lenfull];
         memcpy(mem, start, lenhave);
         if (reader.Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
         {
@@ -758,7 +758,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	int headsize;
 	union
 	{
-		BYTE start[64];
+		uint8_t start[64];
 		DWORD dstart[64/4];
 	};
 	dumbfile_mem_status filestate;
@@ -891,7 +891,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	if ( ! duh )
 	{
 		is_dos = false;
-		if (filestate.ptr == (BYTE *)start)
+		if (filestate.ptr == (uint8_t *)start)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
@@ -938,9 +938,9 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 		// Reposition file pointer for other codecs to do their checks.
         reader.Seek(fpos, SEEK_SET);
 	}
-	if (filestate.ptr != (BYTE *)start)
+	if (filestate.ptr != (uint8_t *)start)
 	{
-		delete[] const_cast<BYTE *>(filestate.ptr);
+		delete[] const_cast<uint8_t *>(filestate.ptr);
 	}
 	return state;
 }
@@ -982,7 +982,7 @@ bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *use
 				((float *)buffer)[i] = (((int *)buffer)[i] / (float)(1 << 24)) * mod_dumb_mastervolume;
 			}
 		}
-		buffer = (BYTE *)buffer + written * 8;
+		buffer = (uint8_t *)buffer + written * 8;
 		sizebytes -= written * 8;
 	}
 	state->crit_sec.Leave();

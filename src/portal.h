@@ -29,7 +29,7 @@ struct FDisplacement
 {
 	DVector2 pos;
 	bool isSet;
-	BYTE indirect;	// just for illustration.
+	uint8_t indirect;	// just for illustration.
 
 };
 
@@ -183,10 +183,10 @@ struct FLinePortal
 	line_t *mOrigin;
 	line_t *mDestination;
 	DVector2 mDisplacement;
-	BYTE mType;
-	BYTE mFlags;
-	BYTE mDefFlags;
-	BYTE mAlign;
+	uint8_t mType;
+	uint8_t mFlags;
+	uint8_t mDefFlags;
+	uint8_t mAlign;
 	DAngle mAngleDiff;
 	double mSinRot;
 	double mCosRot;
@@ -227,7 +227,7 @@ struct FSectorPortal
 	sector_t *mDestination;
 	DVector2 mDisplacement;
 	double mPlaneZ;
-	TObjPtr<AActor> mSkybox;
+	TObjPtr<AActor*> mSkybox;
 
 	bool MergeAllowed() const
 	{

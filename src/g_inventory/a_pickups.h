@@ -85,7 +85,7 @@ public:
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
 
-	TObjPtr<AActor> Owner;		// Who owns this item? NULL if it's still a pickup.
+	TObjPtr<AActor*> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
 	int MaxAmount;				// Max amount of item this instance can have
 	int InterHubAmount;			// Amount of item that can be kept between hubs or levels

@@ -156,7 +156,7 @@ void DThinker::SaveList(FSerializer &arc, DThinker *node)
 void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 {
 	//DThinker *thinker;
-	//BYTE stat;
+	//uint8_t stat;
 	//int statcount;
 	int i;
 

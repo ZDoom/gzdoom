@@ -309,7 +309,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::TryAddBot (BYTE **stream, int player)
+void FCajunMaster::TryAddBot (uint8_t **stream, int player)
 {
 	int botshift = ReadByte (stream);
 	char *info = ReadString (stream);
@@ -332,7 +332,7 @@ void FCajunMaster::TryAddBot (BYTE **stream, int player)
 		}
 	}
 
-	if (DoAddBot ((BYTE *)info, skill))
+	if (DoAddBot ((uint8_t *)info, skill))
 	{
 		//Increment this.
 		botnum++;
@@ -353,7 +353,7 @@ void FCajunMaster::TryAddBot (BYTE **stream, int player)
 	delete[] info;
 }
 
-bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
+bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 {
 	int bnum;
 
@@ -564,7 +564,7 @@ bool FCajunMaster::LoadBots ()
 			case BOTCFG_TEAM:
 				{
 					char teamstr[16];
-					BYTE teamnum;
+					uint8_t teamnum;
 
 					sc.MustGetString ();
 					if (IsNum (sc.String))

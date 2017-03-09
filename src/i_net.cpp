@@ -99,7 +99,7 @@ typedef int socklen_t;
 static u_short DOOMPORT = (IPPORT_USERRESERVED + 29);
 static SOCKET mysocket = INVALID_SOCKET;
 static sockaddr_in sendaddress[MAXNETNODES];
-static BYTE sendplayer[MAXNETNODES];
+static uint8_t sendplayer[MAXNETNODES];
 
 #ifdef __WIN32__
 const char *neterror (void);
@@ -125,24 +125,24 @@ enum
 
 struct PreGamePacket
 {
-	BYTE Fake;
-	BYTE Message;
-	BYTE NumNodes;
+	uint8_t Fake;
+	uint8_t Message;
+	uint8_t NumNodes;
 	union
 	{
-		BYTE ConsoleNum;
-		BYTE NumPresent;
+		uint8_t ConsoleNum;
+		uint8_t NumPresent;
 	};
 	struct
 	{
-		DWORD	address;
-		WORD	port;
-		BYTE	player;
-		BYTE	pad;
+		uint32_t address;
+		uint16_t port;
+		uint8_t	player;
+		uint8_t	pad;
 	} machines[MAXNETNODES];
 };
 
-BYTE TransmitBuffer[TRANSMIT_SIZE];
+uint8_t TransmitBuffer[TRANSMIT_SIZE];
 
 //
 // UDPsocket
@@ -452,7 +452,7 @@ void StartNetwork (bool autoPort)
 
 void SendAbort (void)
 {
-	BYTE dis[2] = { PRE_FAKE, PRE_DISCONNECT };
+	uint8_t dis[2] = { PRE_FAKE, PRE_DISCONNECT };
 	int i, j;
 
 	if (doomcom.numnodes > 1)
@@ -515,7 +515,7 @@ bool Host_CheckForConnects (void *userdata)
 			{
 				if (node == -1)
 				{
-					const BYTE *s_addr_bytes = (const BYTE *)&from->sin_addr;
+					const uint8_t *s_addr_bytes = (const uint8_t *)&from->sin_addr;
 					StartScreen->NetMessage ("Got extra connect from %d.%d.%d.%d:%d",
 						s_addr_bytes[0], s_addr_bytes[1], s_addr_bytes[2], s_addr_bytes[3],
 						from->sin_port);

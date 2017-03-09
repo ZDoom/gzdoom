@@ -130,7 +130,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 	}
 }
 
-static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)
+static void PrintMidiDevice (int id, const char *name, uint16_t tech, DWORD support)
 {
 	if (id == snd_mididevice)
 	{

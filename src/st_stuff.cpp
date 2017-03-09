@@ -38,16 +38,16 @@ EXTERN_CVAR (Int, am_cheat);
 
 struct cheatseq_t
 {
-	BYTE *Sequence;
-	BYTE *Pos;
-	BYTE DontCheck;
-	BYTE CurrentArg;
-	BYTE Args[2];
+	uint8_t *Sequence;
+	uint8_t *Pos;
+	uint8_t DontCheck;
+	uint8_t CurrentArg;
+	uint8_t Args[2];
 	bool (*Handler)(cheatseq_t *);
 };
 
 static bool CheatCheckList (event_t *ev, cheatseq_t *cheats, int numcheats);
-static bool CheatAddKey (cheatseq_t *cheat, BYTE key, bool *eat);
+static bool CheatAddKey (cheatseq_t *cheat, uint8_t key, bool *eat);
 static bool Cht_Generic (cheatseq_t *);
 static bool Cht_Music (cheatseq_t *);
 static bool Cht_BeholdMenu (cheatseq_t *);
@@ -60,7 +60,7 @@ static bool Cht_MyPos (cheatseq_t *);
 static bool Cht_Sound (cheatseq_t *);
 static bool Cht_Ticker (cheatseq_t *);
 
-BYTE CheatPowerup[7][10] =
+uint8_t CheatPowerup[7][10] =
 {
 	{ 'i','d','b','e','h','o','l','d','v', 255 },
 	{ 'i','d','b','e','h','o','l','d','s', 255 },
@@ -70,7 +70,7 @@ BYTE CheatPowerup[7][10] =
 	{ 'i','d','b','e','h','o','l','d','l', 255 },
 	{ 'i','d','b','e','h','o','l','d', 255 },
 };
-BYTE CheatPowerup1[11][7] =
+uint8_t CheatPowerup1[11][7] =
 {
 	{ 'g','i','m','m','e','a',255 },
 	{ 'g','i','m','m','e','b',255 },
@@ -84,7 +84,7 @@ BYTE CheatPowerup1[11][7] =
 	{ 'g','i','m','m','e','j',255 },
 	{ 'g','i','m','m','e','z',255 },
 };
-BYTE CheatPowerup2[8][10] =
+uint8_t CheatPowerup2[8][10] =
 {
 	{ 'p','u','m','p','u','p','b',255 },
 	{ 'p','u','m','p','u','p','i',255 },
@@ -97,84 +97,84 @@ BYTE CheatPowerup2[8][10] =
 };
 
 // Smashing Pumpkins Into Small Piles Of Putrid Debris. 
-static BYTE CheatNoclip[] =		{ 'i','d','s','p','i','s','p','o','p','d',255 };
-static BYTE CheatNoclip2[] =	{ 'i','d','c','l','i','p',255 };
-static BYTE CheatMus[] =		{ 'i','d','m','u','s',0,0,255 };
-static BYTE CheatChoppers[] =	{ 'i','d','c','h','o','p','p','e','r','s',255 };
-static BYTE CheatGod[] =		{ 'i','d','d','q','d',255 };
-static BYTE CheatAmmo[] =		{ 'i','d','k','f','a',255 };
-static BYTE CheatAmmoNoKey[] =	{ 'i','d','f','a',255 };
-static BYTE CheatClev[] =		{ 'i','d','c','l','e','v',0,0,255 };
-static BYTE CheatMypos[] =		{ 'i','d','m','y','p','o','s',255 };
-static BYTE CheatAmap[] =		{ 'i','d','d','t',255 };
+static uint8_t CheatNoclip[] =		{ 'i','d','s','p','i','s','p','o','p','d',255 };
+static uint8_t CheatNoclip2[] =	{ 'i','d','c','l','i','p',255 };
+static uint8_t CheatMus[] =		{ 'i','d','m','u','s',0,0,255 };
+static uint8_t CheatChoppers[] =	{ 'i','d','c','h','o','p','p','e','r','s',255 };
+static uint8_t CheatGod[] =		{ 'i','d','d','q','d',255 };
+static uint8_t CheatAmmo[] =		{ 'i','d','k','f','a',255 };
+static uint8_t CheatAmmoNoKey[] =	{ 'i','d','f','a',255 };
+static uint8_t CheatClev[] =		{ 'i','d','c','l','e','v',0,0,255 };
+static uint8_t CheatMypos[] =		{ 'i','d','m','y','p','o','s',255 };
+static uint8_t CheatAmap[] =		{ 'i','d','d','t',255 };
 
-static BYTE CheatQuicken[] =	{ 'q','u','i','c','k','e','n',255 };
-static BYTE CheatKitty[] =		{ 'k','i','t','t','y',255 };
-static BYTE CheatRambo[] =		{ 'r','a','m','b','o',255 };
-static BYTE CheatShazam[] =		{ 's','h','a','z','a','m',255 };
-static BYTE CheatPonce[] =		{ 'p','o','n','c','e',255 };
-static BYTE CheatSkel[] =		{ 's','k','e','l',255 };
-static BYTE CheatNoise[] =		{ 'n','o','i','s','e',255 };
-static BYTE CheatTicker[] =		{ 't','i','c','k','e','r',255 };
-static BYTE CheatEngage[] =		{ 'e','n','g','a','g','e',0,0,255 };
-static BYTE CheatChicken[] =	{ 'c','o','c','k','a','d','o','o','d','l','e','d','o','o',255 };
-static BYTE CheatMassacre[] =	{ 'm','a','s','s','a','c','r','e',255 };
-static BYTE CheatRavMap[] =		{ 'r','a','v','m','a','p',255 };
+static uint8_t CheatQuicken[] =	{ 'q','u','i','c','k','e','n',255 };
+static uint8_t CheatKitty[] =		{ 'k','i','t','t','y',255 };
+static uint8_t CheatRambo[] =		{ 'r','a','m','b','o',255 };
+static uint8_t CheatShazam[] =		{ 's','h','a','z','a','m',255 };
+static uint8_t CheatPonce[] =		{ 'p','o','n','c','e',255 };
+static uint8_t CheatSkel[] =		{ 's','k','e','l',255 };
+static uint8_t CheatNoise[] =		{ 'n','o','i','s','e',255 };
+static uint8_t CheatTicker[] =		{ 't','i','c','k','e','r',255 };
+static uint8_t CheatEngage[] =		{ 'e','n','g','a','g','e',0,0,255 };
+static uint8_t CheatChicken[] =	{ 'c','o','c','k','a','d','o','o','d','l','e','d','o','o',255 };
+static uint8_t CheatMassacre[] =	{ 'm','a','s','s','a','c','r','e',255 };
+static uint8_t CheatRavMap[] =		{ 'r','a','v','m','a','p',255 };
 
-static BYTE CheatSatan[] =		{ 's','a','t','a','n',255 };
-static BYTE CheatCasper[] =		{ 'c','a','s','p','e','r',255 };
-static BYTE CheatNRA[] =		{ 'n','r','a',255 };
-static BYTE CheatClubMed[] =	{ 'c','l','u','b','m','e','d',255 };
-static BYTE CheatLocksmith[] =	{ 'l','o','c','k','s','m','i','t','h',255 };
-static BYTE CheatIndiana[] =	{ 'i','n','d','i','a','n','a',255 };
-static BYTE CheatSherlock[] =	{ 's','h','e','r','l','o','c','k',255 };
-static BYTE CheatVisit[] =		{ 'v','i','s','i','t',0,0,255 };
-static BYTE CheatPig[] =		{ 'd','e','l','i','v','e','r','a','n','c','e',255 };
-static BYTE CheatButcher[] =	{ 'b','u','t','c','h','e','r',255 };
-static BYTE CheatConan[] =		{ 'c','o','n','a','n',255 };
-static BYTE CheatMapsco[] =		{ 'm','a','p','s','c','o',255 };
-static BYTE CheatWhere[] =		{ 'w','h','e','r','e',255 };
+static uint8_t CheatSatan[] =		{ 's','a','t','a','n',255 };
+static uint8_t CheatCasper[] =		{ 'c','a','s','p','e','r',255 };
+static uint8_t CheatNRA[] =		{ 'n','r','a',255 };
+static uint8_t CheatClubMed[] =	{ 'c','l','u','b','m','e','d',255 };
+static uint8_t CheatLocksmith[] =	{ 'l','o','c','k','s','m','i','t','h',255 };
+static uint8_t CheatIndiana[] =	{ 'i','n','d','i','a','n','a',255 };
+static uint8_t CheatSherlock[] =	{ 's','h','e','r','l','o','c','k',255 };
+static uint8_t CheatVisit[] =		{ 'v','i','s','i','t',0,0,255 };
+static uint8_t CheatPig[] =		{ 'd','e','l','i','v','e','r','a','n','c','e',255 };
+static uint8_t CheatButcher[] =	{ 'b','u','t','c','h','e','r',255 };
+static uint8_t CheatConan[] =		{ 'c','o','n','a','n',255 };
+static uint8_t CheatMapsco[] =		{ 'm','a','p','s','c','o',255 };
+static uint8_t CheatWhere[] =		{ 'w','h','e','r','e',255 };
 #if 0
-static BYTE CheatClass1[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',255 };
-static BYTE CheatClass2[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',0,255 };
-static BYTE CheatInit[] =		{ 'i','n','i','t',255 };
-static BYTE CheatScript1[] =	{ 'p','u','k','e',255 };
-static BYTE CheatScript2[] =	{ 'p','u','k','e',0,255 };
-static BYTE CheatScript3[] =	{ 'p','u','k','e',0,0,255 };
+static uint8_t CheatClass1[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',255 };
+static uint8_t CheatClass2[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',0,255 };
+static uint8_t CheatInit[] =		{ 'i','n','i','t',255 };
+static uint8_t CheatScript1[] =	{ 'p','u','k','e',255 };
+static uint8_t CheatScript2[] =	{ 'p','u','k','e',0,255 };
+static uint8_t CheatScript3[] =	{ 'p','u','k','e',0,0,255 };
 #endif
 
-static BYTE CheatSpin[] =		{ 's','p','i','n',0,0,255 };
-static BYTE CheatRift[] =		{ 'r','i','f','t',0,0,255 };
-static BYTE CheatGPS[] =		{ 'g','p','s',255 };
-static BYTE CheatGripper[] =	{ 'g','r','i','p','p','e','r',255 };
-static BYTE CheatLego[] =		{ 'l','e','g','o',255 };
-static BYTE CheatDots[] =		{ 'd','o','t','s',255 };
-static BYTE CheatScoot[] =		{ 's','c','o','o','t',0,255 };
-static BYTE CheatDonnyTrump[] =	{ 'd','o','n','n','y','t','r','u','m','p',255 };
-static BYTE CheatOmnipotent[] =	{ 'o','m','n','i','p','o','t','e','n','t',255 };
-static BYTE CheatJimmy[] =		{ 'j','i','m','m','y',255 };
-static BYTE CheatBoomstix[] =	{ 'b','o','o','m','s','t','i','x',255 };
-static BYTE CheatStoneCold[] =	{ 's','t','o','n','e','c','o','l','d',255 };
-static BYTE CheatElvis[] =		{ 'e','l','v','i','s',255 };
-static BYTE CheatTopo[] =		{ 't','o','p','o',255 };
+static uint8_t CheatSpin[] =		{ 's','p','i','n',0,0,255 };
+static uint8_t CheatRift[] =		{ 'r','i','f','t',0,0,255 };
+static uint8_t CheatGPS[] =		{ 'g','p','s',255 };
+static uint8_t CheatGripper[] =	{ 'g','r','i','p','p','e','r',255 };
+static uint8_t CheatLego[] =		{ 'l','e','g','o',255 };
+static uint8_t CheatDots[] =		{ 'd','o','t','s',255 };
+static uint8_t CheatScoot[] =		{ 's','c','o','o','t',0,255 };
+static uint8_t CheatDonnyTrump[] =	{ 'd','o','n','n','y','t','r','u','m','p',255 };
+static uint8_t CheatOmnipotent[] =	{ 'o','m','n','i','p','o','t','e','n','t',255 };
+static uint8_t CheatJimmy[] =		{ 'j','i','m','m','y',255 };
+static uint8_t CheatBoomstix[] =	{ 'b','o','o','m','s','t','i','x',255 };
+static uint8_t CheatStoneCold[] =	{ 's','t','o','n','e','c','o','l','d',255 };
+static uint8_t CheatElvis[] =		{ 'e','l','v','i','s',255 };
+static uint8_t CheatTopo[] =		{ 't','o','p','o',255 };
 
 //[BL] Graf will probably get rid of this
-static BYTE CheatJoelKoenigs[] =	{ 'j','o','e','l','k','o','e','n','i','g','s',255 };
-static BYTE CheatDavidBrus[] =		{ 'd','a','v','i','d','b','r','u','s',255 };
-static BYTE CheatScottHolman[] =	{ 's','c','o','t','t','h','o','l','m','a','n',255 };
-static BYTE CheatMikeKoenigs[] =	{ 'm','i','k','e','k','o','e','n','i','g','s',255 };
-static BYTE CheatCharlesJacobi[] =	{ 'c','h','a','r','l','e','s','j','a','c','o','b','i',255 };
-static BYTE CheatAndrewBenson[] =	{ 'a','n','d','r','e','w','b','e','n','s','o','n',255 };
-static BYTE CheatDeanHyers[] =		{ 'd','e','a','n','h','y','e','r','s',255 };
-static BYTE CheatMaryBregi[] =		{ 'm','a','r','y','b','r','e','g','i',255 };
-static BYTE CheatAllen[] =			{ 'a','l','l','e','n',255 };
-static BYTE CheatDigitalCafe[] =	{ 'd','i','g','i','t','a','l','c','a','f','e',255 };
-static BYTE CheatJoshuaStorms[] =	{ 'j','o','s','h','u','a','s','t','o','r','m','s',255 };
-static BYTE CheatLeeSnyder[] =		{ 'l','e','e','s','n','y','d','e','r',0,0,255 };
-static BYTE CheatKimHyers[] =		{ 'k','i','m','h','y','e','r','s',255 };
-static BYTE CheatShrrill[] =		{ 's','h','e','r','r','i','l','l',255 };
+static uint8_t CheatJoelKoenigs[] =	{ 'j','o','e','l','k','o','e','n','i','g','s',255 };
+static uint8_t CheatDavidBrus[] =		{ 'd','a','v','i','d','b','r','u','s',255 };
+static uint8_t CheatScottHolman[] =	{ 's','c','o','t','t','h','o','l','m','a','n',255 };
+static uint8_t CheatMikeKoenigs[] =	{ 'm','i','k','e','k','o','e','n','i','g','s',255 };
+static uint8_t CheatCharlesJacobi[] =	{ 'c','h','a','r','l','e','s','j','a','c','o','b','i',255 };
+static uint8_t CheatAndrewBenson[] =	{ 'a','n','d','r','e','w','b','e','n','s','o','n',255 };
+static uint8_t CheatDeanHyers[] =		{ 'd','e','a','n','h','y','e','r','s',255 };
+static uint8_t CheatMaryBregi[] =		{ 'm','a','r','y','b','r','e','g','i',255 };
+static uint8_t CheatAllen[] =			{ 'a','l','l','e','n',255 };
+static uint8_t CheatDigitalCafe[] =	{ 'd','i','g','i','t','a','l','c','a','f','e',255 };
+static uint8_t CheatJoshuaStorms[] =	{ 'j','o','s','h','u','a','s','t','o','r','m','s',255 };
+static uint8_t CheatLeeSnyder[] =		{ 'l','e','e','s','n','y','d','e','r',0,0,255 };
+static uint8_t CheatKimHyers[] =		{ 'k','i','m','h','y','e','r','s',255 };
+static uint8_t CheatShrrill[] =		{ 's','h','e','r','r','i','l','l',255 };
 
-static BYTE CheatTNTem[] =		{ 't','n','t','e','m',255 };
+static uint8_t CheatTNTem[] =		{ 't','n','t','e','m',255 };
 
 static cheatseq_t DoomCheats[] =
 {
@@ -364,7 +364,7 @@ static bool CheatCheckList (event_t *ev, cheatseq_t *cheats, int numcheats)
 
 		for (i = 0; i < numcheats; i++, cheats++)
 		{
-			if (CheatAddKey (cheats, (BYTE)ev->data2, &eat))
+			if (CheatAddKey (cheats, (uint8_t)ev->data2, &eat))
 			{
 				if (cheats->DontCheck || !CheckCheatmode ())
 				{
@@ -390,7 +390,7 @@ static bool CheatCheckList (event_t *ev, cheatseq_t *cheats, int numcheats)
 //
 //--------------------------------------------------------------------------
 
-static bool CheatAddKey (cheatseq_t *cheat, BYTE key, bool *eat)
+static bool CheatAddKey (cheatseq_t *cheat, uint8_t key, bool *eat)
 {
 	if (cheat->Pos == NULL)
 	{

@@ -155,8 +155,8 @@ public:
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
-	BYTE		m_BaseLevel;
-	BYTE		m_Phase;
+	uint8_t		m_BaseLevel;
+	uint8_t		m_Phase;
 private:
 	DPhased();
 	DPhased(sector_t *sector, int baselevel);

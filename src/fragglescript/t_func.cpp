@@ -1218,7 +1218,7 @@ void FParser::SF_ObjFlag(void)
 			
 			if(mo && flagnum<26)          // nullptr check
 			{
-				DWORD tempflags = mo->flags;
+				uint32_t tempflags = mo->flags;
 
 				// remove old bit
 				tempflags &= ~(1 << flagnum);
@@ -1953,7 +1953,7 @@ void FParser::SF_SectorColormap(void)
 
 	if (t_argv[1].type==svt_string)
 	{
-		DWORD cm = R_ColormapNumForName(t_argv[1].value.s);
+		uint32_t cm = R_ColormapNumForName(t_argv[1].value.s);
 
 		FSSectorTagIterator itr(tagnum);
 		while ((i = itr.Next()) >= 0)
@@ -3257,7 +3257,7 @@ void FParser::SF_SpawnMissile()
 
 void FParser::SF_MapThingNumExist()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	int intval;
 
@@ -3295,7 +3295,7 @@ void FParser::SF_MapThingNumExist()
 
 void FParser::SF_MapThings()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	t_return.type = svt_int;
 	t_return.value.i = SpawnedThings.Size();

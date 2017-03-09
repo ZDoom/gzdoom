@@ -2057,6 +2057,6 @@ sector_t *P_PointInSectorBuggy(double x, double y)
 		node = (node_t *)node->children[R_PointOnSideSlow(x, y, node)];
 	} while (!((size_t)node & 1));
 
-	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
+	subsector_t *ssec = (subsector_t *)((uint8_t *)node - 1);
 	return ssec->sector;
 }

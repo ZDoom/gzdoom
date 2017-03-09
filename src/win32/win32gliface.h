@@ -138,7 +138,7 @@ protected:
 
 	bool CanUpdate();
 	void ResetGammaTable();
-	void SetGammaTable(WORD * tbl);
+	void SetGammaTable(uint16_t * tbl);
 
 	float m_Gamma, m_Brightness, m_Contrast;
 	WORD m_origGamma[768];

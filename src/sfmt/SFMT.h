@@ -67,7 +67,7 @@
 /** 128-bit data structure */
 union w128_t {
     vector unsigned int s;
-    DWORD u[4];
+    uint32_t u[4];
 	QWORD u64[2];
 };
 
@@ -77,7 +77,7 @@ union w128_t {
 /** 128-bit data structure */
 union w128_t {
     __m128i si;
-    DWORD u[4];
+    uint32_t u[4];
 	QWORD u64[2];
 };
 
@@ -85,7 +85,7 @@ union w128_t {
 
 /** 128-bit data structure */
 union w128_t {
-    DWORD u[4];
+    uint32_t u[4];
 	QWORD u64[2];
 };
 

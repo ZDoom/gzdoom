@@ -68,6 +68,8 @@ public:
 
 	void DrawWaveDebug(int mode);
 
+	virtual MIDIDevice* CreateMIDIDevice() const override;
+
 private:
 	DWORD ActiveFMODVersion;
 	int SFXPaused;

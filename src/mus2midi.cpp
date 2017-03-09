@@ -43,7 +43,7 @@
 #include "mus2midi.h"
 #include "doomdef.h"
 
-static const BYTE StaticMIDIhead[] =
+static const uint8_t StaticMIDIhead[] =
 { 'M','T','h','d', 0, 0, 0, 6,
 0, 0, // format 0: only one track
 0, 1, // yes, there is really only one track
@@ -53,9 +53,9 @@ static const BYTE StaticMIDIhead[] =
 0, 255, 81, 3, 0x07, 0xa1, 0x20
 };
 
-extern int MUSHeaderSearch(const BYTE *head, int len);
+extern int MUSHeaderSearch(const uint8_t *head, int len);
 
-static const BYTE CtrlTranslate[15] =
+static const uint8_t CtrlTranslate[15] =
 {
 	0,	// program change
 	0,	// bank select
@@ -74,11 +74,11 @@ static const BYTE CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-static size_t ReadVarLen (const BYTE *buf, int *time_out)
+static size_t ReadVarLen (const uint8_t *buf, int *time_out)
 {
 	int time = 0;
 	size_t ofs = 0;
-	BYTE t;
+	uint8_t t;
 	
 	do
 	{
@@ -89,7 +89,7 @@ static size_t ReadVarLen (const BYTE *buf, int *time_out)
 	return ofs;
 }
 
-static size_t WriteVarLen (TArray<BYTE> &file, int time)
+static size_t WriteVarLen (TArray<uint8_t> &file, int time)
 {
 	long buffer;
 	size_t ofs;
@@ -101,7 +101,7 @@ static size_t WriteVarLen (TArray<BYTE> &file, int time)
 	}
 	for (ofs = 0;;)
 	{
-		file.Push(BYTE(buffer & 0xff));
+		file.Push(uint8_t(buffer & 0xff));
 		if (buffer & 0x80)
 			buffer >>= 8;
 		else
@@ -110,16 +110,16 @@ static size_t WriteVarLen (TArray<BYTE> &file, int time)
 	return ofs;
 }
 
-bool ProduceMIDI (const BYTE *musBuf, int len, TArray<BYTE> &outFile)
+bool ProduceMIDI (const uint8_t *musBuf, int len, TArray<uint8_t> &outFile)
 {
-	BYTE midStatus, midArgs, mid1, mid2;
+	uint8_t midStatus, midArgs, mid1, mid2;
 	size_t mus_p, maxmus_p;
-	BYTE event;
+	uint8_t event;
 	int deltaTime;
 	const MUSHeader *musHead;
-	BYTE status;
-	BYTE chanUsed[16];
-	BYTE lastVel[16];
+	uint8_t status;
+	uint8_t chanUsed[16];
+	uint8_t lastVel[16];
 	long trackLen;
 	bool no_op;
 
@@ -159,7 +159,7 @@ bool ProduceMIDI (const BYTE *musBuf, int len, TArray<BYTE> &outFile)
 	while (mus_p < maxmus_p && (event & 0x70) != MUS_SCOREEND)
 	{
 		int channel;
-		BYTE t = 0;
+		uint8_t t = 0;
 		
 		event = musBuf[mus_p++];
 		
@@ -291,16 +291,16 @@ bool ProduceMIDI (const BYTE *musBuf, int len, TArray<BYTE> &outFile)
 	
 	// fill in track length
 	trackLen = outFile.Size() - 22;
-	outFile[18] = BYTE((trackLen >> 24) & 255);
-	outFile[19] = BYTE((trackLen >> 16) & 255);
-	outFile[20] = BYTE((trackLen >> 8) & 255);
-	outFile[21] = BYTE(trackLen & 255);
+	outFile[18] = uint8_t((trackLen >> 24) & 255);
+	outFile[19] = uint8_t((trackLen >> 16) & 255);
+	outFile[20] = uint8_t((trackLen >> 8) & 255);
+	outFile[21] = uint8_t(trackLen & 255);
 	return true;
 }
 
-bool ProduceMIDI(const BYTE *musBuf, int len, FILE *outFile)
+bool ProduceMIDI(const uint8_t *musBuf, int len, FILE *outFile)
 {
-	TArray<BYTE> work;
+	TArray<uint8_t> work;
 	if (ProduceMIDI(musBuf, len, work))
 	{
 		return fwrite(&work[0], 1, work.Size(), outFile) == work.Size();

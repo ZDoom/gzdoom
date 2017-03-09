@@ -21,7 +21,7 @@ struct FSpotList;
 class DSpotState : public DThinker
 {
 	DECLARE_CLASS(DSpotState, DThinker)
-	static TObjPtr<DSpotState> SpotState;
+	static TObjPtr<DSpotState*> SpotState;
 	TArray<FSpotList> SpotLists;
 
 public:

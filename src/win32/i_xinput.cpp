@@ -115,7 +115,7 @@ protected:
 	AxisInfo Axes[NUM_AXES];
 	static DefaultAxisConfig DefaultAxes[NUM_AXES];
 	DWORD LastPacketNumber;
-	WORD LastButtons;
+	int LastButtons;
 	bool Connected;
 
 	void Attached();

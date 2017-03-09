@@ -51,18 +51,18 @@ struct FmtChunk
 {
 	DWORD ChunkID;
 	DWORD ChunkLen;
-	WORD  FormatTag;
-	WORD  Channels;
+	uint16_t  FormatTag;
+	uint16_t  Channels;
 	DWORD SamplesPerSec;
 	DWORD AvgBytesPerSec;
-	WORD  BlockAlign;
-	WORD  BitsPerSample;
-	WORD  ExtensionSize;
-	WORD  ValidBitsPerSample;
+	uint16_t  BlockAlign;
+	uint16_t  BitsPerSample;
+	uint16_t  ExtensionSize;
+	uint16_t  ValidBitsPerSample;
 	DWORD ChannelMask;
 	DWORD SubFormatA;
-	WORD  SubFormatB;
-	WORD  SubFormatC;
+	uint16_t  SubFormatB;
+	uint16_t  SubFormatC;
 	BYTE  SubFormatD[8];
 };
 
@@ -136,7 +136,7 @@ int TimidityMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD
 //
 //==========================================================================
 
-void TimidityMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
+void TimidityMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
 	for (int i = 0; i < count; ++i)
 	{

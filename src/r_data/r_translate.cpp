@@ -57,7 +57,7 @@
 TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
 
-const BYTE IcePalette[16][3] =
+const uint8_t IcePalette[16][3] =
 {
 	{  10,  8, 18 },
 	{  15, 15, 26 },
@@ -109,7 +109,7 @@ FRemapTable::~FRemapTable()
 
 void FRemapTable::Alloc(int count)
 {
-	Remap = (BYTE *)M_Malloc(count*sizeof(*Remap) + count*sizeof(*Palette));
+	Remap = (uint8_t *)M_Malloc(count*sizeof(*Remap) + count*sizeof(*Palette));
 	assert (Remap != NULL);
 	Palette = (PalEntry *)(Remap + count*(sizeof(*Remap)));
 	Native = NULL;
@@ -491,10 +491,10 @@ void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 {
 	for (int i = start; i < end; ++i)
 	{
-		float br = GPalette.BaseColors[i].r;
-		float bg = GPalette.BaseColors[i].g;
-		float bb = GPalette.BaseColors[i].b;
-		float grey = (br * 0.299 + bg * 0.587 + bb * 0.114) / 255.0f;
+		double br = GPalette.BaseColors[i].r;
+		double bg = GPalette.BaseColors[i].g;
+		double bb = GPalette.BaseColors[i].b;
+		double grey = (br * 0.299 + bg * 0.587 + bb * 0.114) / 255.0f;
 		if (grey > 1.0) grey = 1.0;
 		br = r * grey;
 		bg = g * grey;
@@ -934,7 +934,7 @@ void R_InitTranslationTables ()
 	// Doom palette has no good substitutes for these bluish-tinted grays, so
 	// they will just look gray unless you use a different PLAYPAL with Doom.
 
-	BYTE IcePaletteRemap[16];
+	uint8_t IcePaletteRemap[16];
 	for (i = 0; i < 16; ++i)
 	{
 		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
@@ -1060,8 +1060,8 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable, FRemapTable *pillartable)
 {
 	int i;
-	BYTE start = skin->range0start;
-	BYTE end = skin->range0end;
+	uint8_t start = skin->range0start;
+	uint8_t end = skin->range0end;
 	float r, g, b;
 	float bases, basev;
 	float sdelta, vdelta;
@@ -1125,7 +1125,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		else
 		{
 			FMemLump translump = Wads.ReadLump(colorset->Lump);
-			const BYTE *trans = (const BYTE *)translump.GetMem();
+			const uint8_t *trans = (const uint8_t *)translump.GetMem();
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];

@@ -66,7 +66,7 @@ protected:
 	double m_vdx, m_vdy;	// Accumulated velocity if accelerative
 	int m_Accel;			// Whether it's accelerative
 	EScrollPos m_Parts;			// Which parts of a sidedef are being scrolled?
-	TObjPtr<DInterpolation> m_Interpolations[3];
+	TObjPtr<DInterpolation*> m_Interpolations[3];
 
 private:
 	DScroller ()

@@ -150,7 +150,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 
 #define BUTTONTIME TICRATE		// 1 second, in ticks. 
 
-bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
+bool	P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *quest=NULL);
 bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *optpos = NULL);
 
 //
@@ -254,8 +254,8 @@ protected:
 	double		m_CeilingTarget;
 	int			m_Crush;
 	bool		m_Hexencrush;
-	TObjPtr<DInterpolation> m_Interp_Ceiling;
-	TObjPtr<DInterpolation> m_Interp_Floor;
+	TObjPtr<DInterpolation*> m_Interp_Ceiling;
+	TObjPtr<DInterpolation*> m_Interp_Floor;
 
 private:
 	DPillar ();
@@ -595,8 +595,8 @@ protected:
 	double		m_FloorDestDist;
 	double		m_CeilingDestDist;
 	double		m_Speed;
-	TObjPtr<DInterpolation> m_Interp_Ceiling;
-	TObjPtr<DInterpolation> m_Interp_Floor;
+	TObjPtr<DInterpolation*> m_Interp_Ceiling;
+	TObjPtr<DInterpolation*> m_Interp_Floor;
 
 	void StartFloorSound ();
 

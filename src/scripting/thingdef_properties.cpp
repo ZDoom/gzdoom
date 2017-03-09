@@ -123,7 +123,7 @@ void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
 	if (fd->fieldsize == 4)
 #endif
 	{
-		DWORD *flagvar = (DWORD *)((char *)actor + fd->structoffset);
+		uint32_t *flagvar = (uint32_t *)((char *)actor + fd->structoffset);
 		if (set)
 		{
 			*flagvar |= fd->flagbit;
@@ -136,7 +136,7 @@ void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
 #ifdef __BIG_ENDIAN__
 	else if (fd->fieldsize == 2)
 	{
-		WORD *flagvar = (WORD *)((char *)actor + fd->structoffset);
+		uint16_t *flagvar = (uint16_t *)((char *)actor + fd->structoffset);
 		if (set)
 		{
 			*flagvar |= fd->flagbit;
@@ -149,7 +149,7 @@ void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
 	else
 	{
 		assert(fd->fieldsize == 1);
-		BYTE *flagvar = (BYTE *)((char *)actor + fd->structoffset);
+		uint8_t *flagvar = (uint8_t *)((char *)actor + fd->structoffset);
 		if (set)
 		{
 			*flagvar |= fd->flagbit;
@@ -245,17 +245,17 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 	if (fd->fieldsize == 4)
 #endif
 	{
-		return fd->flagbit & *(DWORD *)(((char*)owner) + fd->structoffset);
+		return fd->flagbit & *(uint32_t *)(((char*)owner) + fd->structoffset);
 	}
 #ifdef __BIG_ENDIAN__
 	else if (fd->fieldsize == 2)
 	{
-		return fd->flagbit & *(WORD *)(((char*)owner) + fd->structoffset);
+		return fd->flagbit & *(uint16_t *)(((char*)owner) + fd->structoffset);
 	}
 	else
 	{
 		assert(fd->fieldsize == 1);
-		return fd->flagbit & *(BYTE *)(((char*)owner) + fd->structoffset);
+		return fd->flagbit & *(uint8_t *)(((char*)owner) + fd->structoffset);
 	}
 #endif
 }
@@ -520,7 +520,7 @@ DEFINE_INFO_PROPERTY(spawnid, I, Actor)
 	{
 		I_Error ("SpawnID must be in the range [0,65535]");
 	}
-	else info->SpawnID=(WORD)id;
+	else info->SpawnID=(uint16_t)id;
 }
 
 //==========================================================================
@@ -533,7 +533,7 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 	PROP_INT_PARM(id2, 2);
 
 	if (convid <= 0 || convid > 65535) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
-	else info->ConversationID=(WORD)convid;
+	else info->ConversationID=(uint16_t)convid;
 }
 
 //==========================================================================
@@ -2507,7 +2507,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 	{
 		PROP_DOUBLE_PARM(a, 2);
 
-		color.a = BYTE(255 * clamp<double>(a, 0.f, 1.f));
+		color.a = uint8_t(255 * clamp<double>(a, 0.f, 1.f));
 		defaults->DamageFade = color;
 	}
 	else
@@ -2515,7 +2515,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 		PROP_DOUBLE_PARM(a, 2);
 		PROP_STRING_PARM(type, 3);
 
-		color.a = BYTE(255 * clamp<double>(a, 0.f, 1.f));
+		color.a = uint8_t(255 * clamp<double>(a, 0.f, 1.f));
 		PainFlashes.Push(std::make_tuple(info, type, color));
 	}
 }

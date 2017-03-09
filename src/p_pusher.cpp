@@ -66,7 +66,7 @@ public:
 
 protected:
 	EPusher m_Type;
-	TObjPtr<AActor> m_Source;// Point source if point pusher
+	TObjPtr<AActor*> m_Source;// Point source if point pusher
 	DVector2 m_PushVec;
 	double m_Magnitude;		// Vector strength for point pusher
 	double m_Radius;		// Effective radius for point pusher

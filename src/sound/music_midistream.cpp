@@ -273,7 +273,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 #endif
 
 	case MDEV_SNDSYS:
-		return new SndSysMIDIDevice;
+		return GSnd->CreateMIDIDevice();
 
 	case MDEV_GUS:
 		return new TimidityMIDIDevice(Args);
@@ -1131,13 +1131,13 @@ void MIDIStreamer::Precache()
 	DoRestart();
 
 	// Now pack everything into a contiguous region for the PrecacheInstruments call().
-	TArray<WORD> packed;
+	TArray<uint16_t> packed;
 
 	for (int i = 0; i < 256; ++i)
 	{
 		if (found_instruments[i])
 		{
-			WORD packnum = (i & 127) | ((i & 128) << 7);
+			uint16_t packnum = (i & 127) | ((i & 128) << 7);
 			if (!multiple_banks)
 			{
 				packed.Push(packnum);
@@ -1429,7 +1429,7 @@ MIDIDevice::~MIDIDevice()
 //
 //==========================================================================
 
-void MIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
+void MIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
 }
 

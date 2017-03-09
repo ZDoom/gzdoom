@@ -77,7 +77,7 @@ EXTERN_CVAR (Bool, vid_tft)		// Defined below
 int testingmode;		// Holds time to revert to old mode
 int OldWidth, OldHeight, OldBits;
 static FIntCVar DummyDepthCvar (NULL, 0, 0);
-static BYTE BitTranslate[32];
+static uint8_t BitTranslate[32];
 
 CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {

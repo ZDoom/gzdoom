@@ -34,15 +34,15 @@ class FTexture;
 struct wadinfo_t
 {
 	// Should be "IWAD" or "PWAD".
-	DWORD		Magic;
-	DWORD		NumLumps;
-	DWORD		InfoTableOfs;
+	uint32_t		Magic;
+	uint32_t		NumLumps;
+	uint32_t		InfoTableOfs;
 };
 
 struct wadlump_t
 {
-	DWORD		FilePos;
-	DWORD		Size;
+	uint32_t		FilePos;
+	uint32_t		Size;
 	char		Name[8];
 };
 
@@ -164,14 +164,14 @@ public:
 	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true);
 	int GetNumForName (const char *name, int namespc);
 
-	inline int CheckNumForName (const BYTE *name) { return CheckNumForName ((const char *)name, ns_global); }
+	inline int CheckNumForName (const uint8_t *name) { return CheckNumForName ((const char *)name, ns_global); }
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
 	inline int CheckNumForName (const FString &name) { return CheckNumForName (name.GetChars()); }
-	inline int CheckNumForName (const BYTE *name, int ns) { return CheckNumForName ((const char *)name, ns); }
+	inline int CheckNumForName (const uint8_t *name, int ns) { return CheckNumForName ((const char *)name, ns); }
 	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
 	inline int GetNumForName (const FString &name) { return GetNumForName (name.GetChars(), ns_global); }
-	inline int GetNumForName (const BYTE *name) { return GetNumForName ((const char *)name); }
-	inline int GetNumForName (const BYTE *name, int ns) { return GetNumForName ((const char *)name, ns); }
+	inline int GetNumForName (const uint8_t *name) { return GetNumForName ((const char *)name); }
+	inline int GetNumForName (const uint8_t *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
 	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global);
 	int CheckNumForFullName (const char *name, int wadfile);
@@ -200,7 +200,7 @@ public:
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
 
-	static DWORD LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
+	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
 
 	int LumpLength (int lump) const;
 	int GetLumpOffset (int lump);					// [RH] Returns offset of lump in the wadfile
@@ -229,14 +229,14 @@ protected:
 	TArray<FResourceFile *> Files;
 	TArray<LumpRecord> LumpInfo;
 
-	DWORD *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
-	DWORD *NextLumpIndex;
+	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
+	uint32_t *NextLumpIndex;
 
-	DWORD *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
-	DWORD *NextLumpIndex_FullName;
+	uint32_t *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
+	uint32_t *NextLumpIndex_FullName;
 
-	DWORD NumLumps;					// Not necessarily the same as LumpInfo.Size()
-	DWORD NumWads;
+	uint32_t NumLumps;					// Not necessarily the same as LumpInfo.Size()
+	uint32_t NumWads;
 
 	void SkinHack (int baselump);
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing

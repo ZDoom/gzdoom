@@ -201,7 +201,7 @@ FMemArena::Block *FMemArena::AddBlock(size_t size)
 	// Search for a free block to use
 	for (last = &FreeBlocks, mem = FreeBlocks; mem != NULL; last = &mem->NextBlock, mem = mem->NextBlock)
 	{
-		if ((BYTE *)mem->Limit - (BYTE *)mem >= (ptrdiff_t)size)
+		if ((uint8_t *)mem->Limit - (uint8_t *)mem >= (ptrdiff_t)size)
 		{
 			*last = mem->NextBlock;
 			break;
@@ -220,7 +220,7 @@ FMemArena::Block *FMemArena::AddBlock(size_t size)
 			size += BlockSize/2;
 		}
 		mem = (Block *)M_Malloc(size);
-		mem->Limit = (BYTE *)mem + size;
+		mem->Limit = (uint8_t *)mem + size;
 	}
 	mem->Reset();
 	mem->NextBlock = TopBlock;

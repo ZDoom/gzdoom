@@ -124,12 +124,12 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
 	{
 		PalEntry *palette;
-		const BYTE *orgpal;
+		const uint8_t *orgpal;
 		FMemLump lump;
 		int i;
 
 		lump = Wads.ReadLump (lumpnum);
-		orgpal = (BYTE *)lump.GetMem();
+		orgpal = (uint8_t *)lump.GetMem();
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
@@ -721,7 +721,7 @@ void DIntermissionScreenScroller::Drawer ()
 
 DIntermissionController *DIntermissionController::CurrentIntermission;
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, BYTE state)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, uint8_t state)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -883,7 +883,7 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state)
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
@@ -907,7 +907,7 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE stat
 //
 //==========================================================================
 
-void F_StartIntermission(FName seq, BYTE state)
+void F_StartIntermission(FName seq, uint8_t state)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
 	if (pdesc != NULL)

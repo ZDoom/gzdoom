@@ -131,6 +131,8 @@ public:
 	virtual void PrintDriversList();
 	virtual FString GatherStats();
 
+	virtual MIDIDevice* CreateMIDIDevice() const override;
+
 private:
     struct {
         bool EXT_EFX;
@@ -219,8 +221,8 @@ private:
 
 	const ReverbContainer *PrevEnvironment;
 
-    typedef TMap<WORD,ALuint> EffectMap;
-    typedef TMapIterator<WORD,ALuint> EffectMapIter;
+    typedef TMap<uint16_t,ALuint> EffectMap;
+    typedef TMapIterator<uint16_t,ALuint> EffectMapIter;
     ALuint EnvSlot;
     ALuint EnvFilters[2];
     EffectMap EnvEffects;

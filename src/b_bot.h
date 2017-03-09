@@ -91,7 +91,7 @@ public:
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);
-	void TryAddBot (BYTE **stream, int player);
+	void TryAddBot (uint8_t **stream, int player);
 	void RemoveAllBots (bool fromlist);
 	bool LoadBots ();
 	void ForgetBots ();
@@ -110,21 +110,21 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	BYTE freeze;			//Game in freeze mode.
-	BYTE changefreeze;	//Game wants to change freeze mode.
+	uint8_t freeze;			//Game in freeze mode.
+	uint8_t changefreeze;	//Game wants to change freeze mode.
 	int botnum;
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	TObjPtr<AActor> firstthing;
-	TObjPtr<AActor>	body1;
-	TObjPtr<AActor> body2;
+	TObjPtr<AActor*> firstthing;
+	TObjPtr<AActor*>	body1;
+	TObjPtr<AActor*> body2;
 
 	bool	 m_Thinking;
 
 private:
 	//(b_game.cpp)
-	bool DoAddBot (BYTE *info, botskill_t skill);
+	bool DoAddBot (uint8_t *info, botskill_t skill);
 
 protected:
 	bool	 ctf;
@@ -152,12 +152,12 @@ public:
 	player_t	*player;
 	DAngle		Angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smooth view movement)
-	TObjPtr<AActor>		dest;		// Move Destination.
-	TObjPtr<AActor>		prev;		// Previous move destination.
-	TObjPtr<AActor>		enemy;		// The dead meat.
-	TObjPtr<AActor>		missile;	// A threatening missile that needs to be avoided.
-	TObjPtr<AActor>		mate;		// Friend (used for grouping in teamplay or coop).
-	TObjPtr<AActor>		last_mate;	// If bots mate disappeared (not if died) that mate is
+	TObjPtr<AActor*>		dest;		// Move Destination.
+	TObjPtr<AActor*>		prev;		// Previous move destination.
+	TObjPtr<AActor*>		enemy;		// The dead meat.
+	TObjPtr<AActor*>		missile;	// A threatening missile that needs to be avoided.
+	TObjPtr<AActor*>		mate;		// Friend (used for grouping in teamplay or coop).
+	TObjPtr<AActor*>		last_mate;	// If bots mate disappeared (not if died) that mate is
 							// pointed to by this. Allows bot to roam to it if
 							// necessary.
 

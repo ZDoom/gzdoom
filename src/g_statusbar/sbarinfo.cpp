@@ -189,9 +189,9 @@ class SBarInfoCommand
 			if (!sc.CheckToken(TK_Null)) sc.MustGetToken(TK_Identifier);
 			EColorRange returnVal = CR_UNTRANSLATED;
 			FString namedTranslation; //we must send in "[translation]"
-			const BYTE *trans_ptr;
+			const uint8_t *trans_ptr;
 			namedTranslation.Format("[%s]", sc.String);
-			trans_ptr = (const BYTE *)(&namedTranslation[0]);
+			trans_ptr = (const uint8_t *)(&namedTranslation[0]);
 			if((returnVal = V_ParseFontColor(trans_ptr, CR_UNTRANSLATED, CR_UNTRANSLATED)) == CR_UNDEFINED)
 			{
 				sc.ScriptError("Missing definition for color %s.", sc.String);
@@ -1379,7 +1379,7 @@ public:
 		double xScale = 1.0;
 		double yScale = 1.0;
 
-		const BYTE* str = (const BYTE*) cstring;
+		const uint8_t* str = (const uint8_t*) cstring;
 		const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
 		int fontcolor = translation;
 

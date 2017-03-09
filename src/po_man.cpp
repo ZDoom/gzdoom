@@ -1448,7 +1448,7 @@ static void KillSideLists ()
 //
 //==========================================================================
 
-static void AddPolyVert(TArray<DWORD> &vnum, DWORD vert)
+static void AddPolyVert(TArray<uint32_t> &vnum, uint32_t vert)
 {
 	for (unsigned int i = vnum.Size() - 1; i-- != 0; )
 	{
@@ -1473,22 +1473,22 @@ static void AddPolyVert(TArray<DWORD> &vnum, DWORD vert)
 
 static void IterFindPolySides (FPolyObj *po, side_t *side)
 {
-	static TArray<DWORD> vnum;
+	static TArray<uint32_t> vnum;
 	unsigned int vnumat;
 
 	assert(sidetemp != NULL);
 
 	vnum.Clear();
-	vnum.Push(DWORD(side->V1()->Index()));
+	vnum.Push(uint32_t(side->V1()->Index()));
 	vnumat = 0;
 
 	while (vnum.Size() != vnumat)
 	{
-		DWORD sidenum = sidetemp[vnum[vnumat++]].b.first;
+		uint32_t sidenum = sidetemp[vnum[vnumat++]].b.first;
 		while (sidenum != NO_SIDE)
 		{
 			po->Sidedefs.Push(&level.sides[sidenum]);
-			AddPolyVert(vnum, DWORD(level.sides[sidenum].V2()->Index()));
+			AddPolyVert(vnum, uint32_t(level.sides[sidenum].V2()->Index()));
 			sidenum = sidetemp[sidenum].b.next;
 		}
 	}
@@ -1592,7 +1592,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			if (port && (port->mDefFlags & PORTF_PASSABLE))
 			{
 				int type = port->mType == PORTT_LINKED ? 2 : 1;
-				if (po->bHasPortals < type) po->bHasPortals = (BYTE)type;
+				if (po->bHasPortals < type) po->bHasPortals = (uint8_t)type;
 			}
 			l->validcount = validcount;
 			po->Linedefs.Push(l);
@@ -1753,7 +1753,7 @@ void PO_Init (void)
 	for (int i = 0; i < numsubsectors; i++)
 	{
 		subsector_t *ss = &subsectors[i];
-		for(DWORD j=0;j<ss->numlines; j++)
+		for(uint32_t j=0;j<ss->numlines; j++)
 		{
 			if (ss->firstline[j].sidedef != NULL &&
 				ss->firstline[j].sidedef->Flags & WALLF_POLYOBJ)
@@ -2069,7 +2069,7 @@ static void SplitPoly(FPolyNode *pnode, void *node, float bbox[4])
 	else
 	{
 		// we reached a subsector so we can link the node with this subsector
-		subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 
 		// Link node to subsector
 		pnode->pnext = sub->polys;

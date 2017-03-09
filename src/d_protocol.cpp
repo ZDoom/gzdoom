@@ -41,7 +41,7 @@
 #include "serializer.h"
 
 
-char *ReadString (BYTE **stream)
+char *ReadString (uint8_t **stream)
 {
 	char *string = *((char **)stream);
 
@@ -49,35 +49,35 @@ char *ReadString (BYTE **stream)
 	return copystring (string);
 }
 
-const char *ReadStringConst(BYTE **stream)
+const char *ReadStringConst(uint8_t **stream)
 {
 	const char *string = *((const char **)stream);
 	*stream += strlen (string) + 1;
 	return string;
 }
 
-int ReadByte (BYTE **stream)
+int ReadByte (uint8_t **stream)
 {
-	BYTE v = **stream;
+	uint8_t v = **stream;
 	*stream += 1;
 	return v;
 }
 
-int ReadWord (BYTE **stream)
+int ReadWord (uint8_t **stream)
 {
 	short v = (((*stream)[0]) << 8) | (((*stream)[1]));
 	*stream += 2;
 	return v;
 }
 
-int ReadLong (BYTE **stream)
+int ReadLong (uint8_t **stream)
 {
 	int v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
 	*stream += 4;
 	return v;
 }
 
-float ReadFloat (BYTE **stream)
+float ReadFloat (uint8_t **stream)
 {
 	union
 	{
@@ -88,7 +88,7 @@ float ReadFloat (BYTE **stream)
 	return fakeint.f;
 }
 
-void WriteString (const char *string, BYTE **stream)
+void WriteString (const char *string, uint8_t **stream)
 {
 	char *p = *((char **)stream);
 
@@ -97,24 +97,24 @@ void WriteString (const char *string, BYTE **stream)
 	}
 
 	*p++ = 0;
-	*stream = (BYTE *)p;
+	*stream = (uint8_t *)p;
 }
 
 
-void WriteByte (BYTE v, BYTE **stream)
+void WriteByte (uint8_t v, uint8_t **stream)
 {
 	**stream = v;
 	*stream += 1;
 }
 
-void WriteWord (short v, BYTE **stream)
+void WriteWord (short v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 8;
 	(*stream)[1] = v & 255;
 	*stream += 2;
 }
 
-void WriteLong (int v, BYTE **stream)
+void WriteLong (int v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 24;
 	(*stream)[1] = (v >> 16) & 255;
@@ -123,7 +123,7 @@ void WriteLong (int v, BYTE **stream)
 	*stream += 4;
 }
 
-void WriteFloat (float v, BYTE **stream)
+void WriteFloat (float v, uint8_t **stream)
 {
 	union
 	{
@@ -135,10 +135,10 @@ void WriteFloat (float v, BYTE **stream)
 }
 
 // Returns the number of bytes read
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
+int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 {
-	BYTE *start = *stream;
-	BYTE flags;
+	uint8_t *start = *stream;
+	uint8_t flags;
 
 	if (basis != NULL)
 	{
@@ -159,8 +159,8 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 		// We can support up to 29 buttons, using from 0 to 4 bytes to store them.
 		if (flags & UCMDF_BUTTONS)
 		{
-			DWORD buttons = ucmd->buttons;
-			BYTE in = ReadByte(stream);
+			uint32_t buttons = ucmd->buttons;
+			uint8_t in = ReadByte(stream);
 
 			buttons = (buttons & ~0x7F) | (in & 0x7F);
 			if (in & 0x80)
@@ -198,13 +198,13 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 }
 
 // Returns the number of bytes written
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
+int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 {
-	BYTE flags = 0;
-	BYTE *temp = *stream;
-	BYTE *start = *stream;
+	uint8_t flags = 0;
+	uint8_t *temp = *stream;
+	uint8_t *start = *stream;
 	usercmd_t blank;
-	DWORD buttons_changed;
+	uint32_t buttons_changed;
 
 	if (basis == NULL)
 	{
@@ -217,10 +217,10 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	buttons_changed = ucmd->buttons ^ basis->buttons;
 	if (buttons_changed != 0)
 	{
-		BYTE bytes[4] = {  BYTE(ucmd->buttons        & 0x7F),
-						  BYTE((ucmd->buttons >> 7)  & 0x7F),
-						  BYTE((ucmd->buttons >> 14) & 0x7F),
-						  BYTE((ucmd->buttons >> 21) & 0xFF) };
+		uint8_t bytes[4] = {  uint8_t(ucmd->buttons        & 0x7F),
+						  uint8_t((ucmd->buttons >> 7)  & 0x7F),
+						  uint8_t((ucmd->buttons >> 14) & 0x7F),
+						  uint8_t((ucmd->buttons >> 21) & 0xFF) };
 
 		flags |= UCMDF_BUTTONS;
 
@@ -318,7 +318,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercm
 	return arc;
 }
 
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
+int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 {
 	if (basis == NULL)
 	{
@@ -352,10 +352,10 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 }
 
 
-int SkipTicCmd (BYTE **stream, int count)
+int SkipTicCmd (uint8_t **stream, int count)
 {
 	int i, skip;
-	BYTE *flow = *stream;
+	uint8_t *flow = *stream;
 
 	for (i = count; i > 0; i--)
 	{
@@ -364,7 +364,7 @@ int SkipTicCmd (BYTE **stream, int count)
 		flow += 2;		// Skip consistancy marker
 		while (moreticdata)
 		{
-			BYTE type = *flow++;
+			uint8_t type = *flow++;
 
 			if (type == DEM_USERCMD)
 			{
@@ -410,10 +410,10 @@ int SkipTicCmd (BYTE **stream, int count)
 
 #include <assert.h>
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
-void ReadTicCmd (BYTE **stream, int player, int tic)
+void ReadTicCmd (uint8_t **stream, int player, int tic)
 {
 	int type;
-	BYTE *start;
+	uint8_t *start;
 	ticcmd_t *tcmd;
 
 	int ticmod = tic % BACKUPTICS;
@@ -451,7 +451,7 @@ void ReadTicCmd (BYTE **stream, int player, int tic)
 
 void RunNetSpecs (int player, int buf)
 {
-	BYTE *stream;
+	uint8_t *stream;
 	int len;
 
 	if (gametic % ticdup == 0)
@@ -459,7 +459,7 @@ void RunNetSpecs (int player, int buf)
 		stream = NetSpecs[player][buf].GetData (&len);
 		if (stream)
 		{
-			BYTE *end = stream + len;
+			uint8_t *end = stream + len;
 			while (stream < end)
 			{
 				int type = ReadByte (&stream);
@@ -471,11 +471,11 @@ void RunNetSpecs (int player, int buf)
 	}
 }
 
-BYTE *lenspot;
+uint8_t *lenspot;
 
 // Write the header of an IFF chunk and leave space
 // for the length field.
-void StartChunk (int id, BYTE **stream)
+void StartChunk (int id, uint8_t **stream)
 {
 	WriteLong (id, stream);
 	lenspot = *stream;
@@ -484,7 +484,7 @@ void StartChunk (int id, BYTE **stream)
 
 // Write the length field for the chunk and insert
 // pad byte if the chunk is odd-sized.
-void FinishChunk (BYTE **stream)
+void FinishChunk (uint8_t **stream)
 {
 	int len;
 	
@@ -501,7 +501,7 @@ void FinishChunk (BYTE **stream)
 
 // Skip past an unknown chunk. *stream should be
 // pointing to the chunk's length field.
-void SkipChunk (BYTE **stream)
+void SkipChunk (uint8_t **stream)
 {
 	int len;
 

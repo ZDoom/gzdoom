@@ -511,7 +511,7 @@ typedef TFlags<ActorFlag5> ActorFlags5;
 typedef TFlags<ActorFlag6> ActorFlags6;
 typedef TFlags<ActorFlag7> ActorFlags7;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
-typedef TFlags<ActorBounceFlag, WORD> ActorBounceFlags;
+typedef TFlags<ActorBounceFlag, uint16_t> ActorBounceFlags;
 DEFINE_TFLAGS_OPERATORS (ActorFlags)
 DEFINE_TFLAGS_OPERATORS (ActorFlags2)
 DEFINE_TFLAGS_OPERATORS (ActorFlags3)
@@ -746,7 +746,7 @@ public:
 	void DestroyAllInventory ();
 
 	// Set the alphacolor field properly
-	void SetShade (DWORD rgb);
+	void SetShade (uint32_t rgb);
 	void SetShade (int r, int g, int b);
 
 	// Plays a conversation animation
@@ -991,8 +991,8 @@ public:
 	uint8_t			fountaincolor;		// Split out of 'effect' to have easier access.
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	FTextureID		picnum;				// Draw this instead of sprite if valid
-	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
-	DWORD			Translation;
+	uint32_t			fillcolor;			// Color to draw when STYLE_Shaded
+	uint32_t			Translation;
 
 	ActorRenderFlags	renderflags;		// Different rendering flags
 	ActorFlags		flags;
@@ -1045,7 +1045,7 @@ public:
 	int				projectileKickback;
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
-	DWORD			VisibleToTeam;
+	uint32_t			VisibleToTeam;
 
 	int				special1;		// Special info
 	int				special2;		// Special info
@@ -1054,32 +1054,32 @@ public:
 
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
-	BYTE			movedir;		// 0-7
-	SBYTE			visdir;
-	SWORD			movecount;		// when 0, select a new dir
-	SWORD			strafecount;	// for MF3_AVOIDMELEE
-	TObjPtr<AActor> target;			// thing being chased/attacked (or NULL)
+	uint8_t			movedir;		// 0-7
+	int8_t			visdir;
+	int16_t			movecount;		// when 0, select a new dir
+	int16_t			strafecount;	// for MF3_AVOIDMELEE
+	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
 									// also the originator for missiles
-	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killough 2/15/98
-	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
+	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
+	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	int32_t			threshold;		// if > 0, the target will be chased
 	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
-	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
+	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	DVector3		SpawnPoint; 	// For nightmare respawn
-	WORD			SpawnAngle;
+	uint16_t			SpawnAngle;
 	int				StartHealth;
-	BYTE			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
-	BYTE			WeaveIndexZ;
+	uint8_t			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
+	uint8_t			WeaveIndexZ;
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
 	FNameNoInit		Species;		// For monster families
-	TObjPtr<AActor>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
-	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
-	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
+	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
+	TObjPtr<AActor*>	tracer;			// Thing being chased/attacked for tracers
+	TObjPtr<AActor*>	master;			// Thing which spawned this one (prevents mutual attacks)
 
 	int				tid;			// thing identifier
 	int				special;		// special
@@ -1088,13 +1088,13 @@ public:
 	int		accuracy, stamina;		// [RH] Strife stats -- [XA] moved here for DECORATE/ACS access.
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
-	TObjPtr<AActor> goal;			// Monster's goal if not chasing anything
+	TObjPtr<AActor*> goal;			// Monster's goal if not chasing anything
 	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
-	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
-	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
-	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
+	uint8_t			boomwaterlevel;	// splash information for non-swimmable water sectors
+	uint8_t			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
+	int8_t			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	ActorBounceFlags	BounceFlags;	// which bouncing type?
-	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
+	uint32_t			SpawnFlags;		// Increased to uint32_t because of Doom 64
 	double			meleerange;		// specifies how far a melee attack reaches.
 	double			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
 									// but instead tries to come closer for a melee attack.
@@ -1126,7 +1126,7 @@ public:
 	FNameNoInit PoisonDamageTypeReceived; // Damage type received by poison.
 	int PoisonDurationReceived; // Duration left for receiving poison damage.
 	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
-	TObjPtr<AActor> Poisoner; // Last source of received poison damage.
+	TObjPtr<AActor*> Poisoner; // Last source of received poison damage.
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
@@ -1136,14 +1136,14 @@ public:
 	int validcount;
 
 
-	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory
-	DWORD			InventoryID;	// A unique ID to keep track of inventory items
+	TObjPtr<AInventory*>	Inventory;		// [RH] This actor's inventory
+	uint32_t			InventoryID;	// A unique ID to keep track of inventory items
 
-	BYTE smokecounter;
-	BYTE FloatBobPhase;
-	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
+	uint8_t smokecounter;
+	uint8_t FloatBobPhase;
+	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	PalEntry BloodColor;
-	DWORD BloodTranslation;
+	uint32_t BloodTranslation;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	FSoundIDNoInit SeeSound;
@@ -1160,7 +1160,7 @@ public:
 	double MaxStepHeight;
 
 	int32_t Mass;
-	SWORD PainChance;
+	int16_t PainChance;
 	int PainThreshold;
 	FNameNoInit DamageType;
 	FNameNoInit DamageTypeReceived;
@@ -1434,7 +1434,7 @@ public:
 
 
 	// begin of GZDoom specific additions
-	TArray<TObjPtr<AActor> >		dynamiclights;
+	TArray<TObjPtr<AActor*> >		dynamiclights;
 	void *				lightassociations;
 	bool				hasmodel;
 	// end of GZDoom specific additions
@@ -1545,7 +1545,7 @@ template<class T> inline T *Spawn()	// for inventory items we do not need coordi
 }
 
 void PrintMiscActorInfo(AActor * query);
-AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, DWORD wallMask);
+AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, uint32_t wallMask);
 
 // If we want to make P_AimLineAttack capable of handling arbitrary portals, it needs to pass a lot more info than just the linetarget actor.
 struct FTranslatedLineTarget

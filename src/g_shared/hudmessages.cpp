@@ -281,7 +281,7 @@ void DHUDMessage::ResetText (const char *text)
 		V_FreeBrokenLines (Lines);
 	}
 
-	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (BYTE *)text);
+	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (uint8_t *)text);
 
 	NumLines = 0;
 	Width = 0;

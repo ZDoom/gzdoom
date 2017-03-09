@@ -82,7 +82,7 @@ struct MapData
 		}
 	}
 
-	DWORD Size(unsigned int lumpindex)
+	uint32_t Size(unsigned int lumpindex)
 	{
 		if (lumpindex<countof(MapLumps) && MapLumps[lumpindex].Reader)
 		{
@@ -91,7 +91,7 @@ struct MapData
 		return 0;
 	}
 
-	void GetChecksum(BYTE cksum[16]);
+	void GetChecksum(uint8_t cksum[16]);
 };
 
 MapData * P_OpenMapData(const char * mapname, bool justcheck);
@@ -137,13 +137,13 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		{
 			short tag, special;
 			short alpha;
-			DWORD map;
+			uint32_t map;
 		} a;
 
 		// Used when grouping sidedefs into loops.
 		struct
 		{
-			DWORD first, next;
+			uint32_t first, next;
 			char lineside;
 		} b;
 	};

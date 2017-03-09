@@ -1342,7 +1342,7 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, 
 	{ // net progress notches
 		for (; height > 0; --height)
 		{
-			*((WORD *)dest) = *((const WORD *)src);
+			*((uint16_t *)dest) = *((const uint16_t *)src);
 			dest += destpitch;
 			src += 2;
 		}

@@ -375,7 +375,7 @@ void T_AddSpawnedThing(AActor * ac)
 {
 	if (DFraggleThinker::ActiveThinker)
 	{
-		TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+		auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 		SpawnedThings.Push(GC::ReadBarrier(ac));
 	}
 }

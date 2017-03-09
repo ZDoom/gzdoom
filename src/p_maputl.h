@@ -175,10 +175,10 @@ struct FPortalGroupArray
 		inited = false;
 	}
 
-	void Add(DWORD num)
+	void Add(uint32_t num)
 	{
-		if (varused < MAX_STATIC) entry[varused++] = (WORD)num;
-		else data.Push((WORD)num);
+		if (varused < MAX_STATIC) entry[varused++] = (uint16_t)num;
+		else data.Push((uint16_t)num);
 	}
 
 	unsigned Size()
@@ -186,7 +186,7 @@ struct FPortalGroupArray
 		return varused + data.Size();
 	}
 
-	DWORD operator[](unsigned index)
+	uint32_t operator[](unsigned index)
 	{
 		return index < MAX_STATIC ? entry[index] : data[index - MAX_STATIC];
 	}
@@ -195,9 +195,9 @@ struct FPortalGroupArray
 	int method;
 
 private:
-	WORD entry[MAX_STATIC];
-	BYTE varused;
-	TArray<WORD> data;
+	uint16_t entry[MAX_STATIC];
+	uint8_t varused;
+	TArray<uint16_t> data;
 };
 
 class FBlockLinesIterator

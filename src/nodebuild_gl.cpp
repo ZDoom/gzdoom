@@ -87,7 +87,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 	D(Events.PrintTree());
 	for (unsigned int i = 0; i < SplitSharers.Size(); ++i)
 	{
-		DWORD seg = SplitSharers[i].Seg;
+		uint32_t seg = SplitSharers[i].Seg;
 		int v2 = Segs[seg].v2;
 		FEvent *event = Events.FindEvent (SplitSharers[i].Distance);
 		FEvent *next;
@@ -136,12 +136,12 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 				Vertices[event->Info.Vertex].x>>16,
 				Vertices[event->Info.Vertex].y>>16));
 
-			DWORD newseg = SplitSeg (seg, event->Info.Vertex, 1);
+			uint32_t newseg = SplitSeg (seg, event->Info.Vertex, 1);
 
 			Segs[newseg].next = Segs[seg].next;
 			Segs[seg].next = newseg;
 
-			DWORD partner = Segs[seg].partner;
+			uint32_t partner = Segs[seg].partner;
 			if (partner != DWORD_MAX)
 			{
 				int endpartner = SplitSeg (partner, event->Info.Vertex, 1);
@@ -168,7 +168,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 	}
 }
 
-void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset, DWORD &bset)
+void FNodeBuilder::AddMinisegs (const node_t &node, uint32_t splitseg, uint32_t &fset, uint32_t &bset)
 {
 	FEvent *event = Events.GetMinimum (), *prev = NULL;
 
@@ -176,8 +176,8 @@ void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset,
 	{
 		if (prev != NULL)
 		{
-			DWORD fseg1, bseg1, fseg2, bseg2;
-			DWORD fnseg, bnseg;
+			uint32_t fseg1, bseg1, fseg2, bseg2;
+			uint32_t fnseg, bnseg;
 
 			// Minisegs should only be added when they can create valid loops on both the front and
 			// back of the splitter. This means some subsectors could be unclosed if their sectors
@@ -234,9 +234,9 @@ void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset,
 	}
 }
 
-DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg)
+uint32_t FNodeBuilder::AddMiniseg (int v1, int v2, uint32_t partner, uint32_t seg1, uint32_t splitseg)
 {
-	DWORD nseg;
+	uint32_t nseg;
 	FPrivSeg *seg = &Segs[seg1];
 	FPrivSeg newseg;
 
@@ -283,13 +283,13 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD
 	return nseg;
 }
 
-DWORD FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex2)
+uint32_t FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex2)
 {
 	FPrivVert *v = &Vertices[vertex];
 	angle_t splitAngle = PointToAngle (dx, dy);
-	DWORD segnum;
+	uint32_t segnum;
 	angle_t bestang;
-	DWORD bestseg;
+	uint32_t bestseg;
 
 	// Find the seg ending at this vertex that forms the smallest angle
 	// to the splitter.
@@ -342,13 +342,13 @@ DWORD FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vert
 	return bestseg;
 }
 
-DWORD FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex)
+uint32_t FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex)
 {
 	FPrivVert *v = &Vertices[vertex];
 	angle_t splitAngle = PointToAngle (dx, dy) + ANGLE_180;
-	DWORD segnum;
+	uint32_t segnum;
 	angle_t bestang;
-	DWORD bestseg;
+	uint32_t bestseg;
 
 	// Find the seg starting at this vertex that forms the smallest angle
 	// to the splitter.

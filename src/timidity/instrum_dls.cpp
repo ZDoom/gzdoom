@@ -56,9 +56,9 @@ struct RIFF_Chunk
 		}
 	}
 
-	DWORD	magic;
-	DWORD	length;
-	DWORD	subtype;
+	uint32_t	magic;
+	uint32_t	length;
+	uint32_t	subtype;
 	BYTE	*data;
 	RIFF_Chunk *child;
 	RIFF_Chunk *next;
@@ -75,20 +75,20 @@ void PrintRIFF(RIFF_Chunk *chunk, int level);
 #define RIFF        MAKE_ID('R','I','F','F')
 #define LIST        MAKE_ID('L','I','S','T')
 
-static bool ChunkHasSubType(DWORD magic)
+static bool ChunkHasSubType(uint32_t magic)
 {
 	return (magic == RIFF || magic == LIST);
 }
 
-static int ChunkHasSubChunks(DWORD magic)
+static int ChunkHasSubChunks(uint32_t magic)
 {
 	return (magic == RIFF || magic == LIST);
 }
 
-static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, DWORD left)
+static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, uint32_t left)
 {
 	BYTE *subchunkData;
-	DWORD subchunkDataLen;
+	uint32_t subchunkDataLen;
 
 	while ( left > 8 ) {
 		RIFF_Chunk *child = new RIFF_Chunk;
@@ -102,10 +102,10 @@ static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, DWORD left)
 			chunk->child = child;
 		}
 
-		child->magic = *(DWORD *)data;
+		child->magic = *(uint32_t *)data;
 		data += 4;
 		left -= 4;
-		child->length = LittleLong(*(DWORD *)data);
+		child->length = LittleLong(*(uint32_t *)data);
 		data += 4;
 		left -= 4;
 		child->data = data;
@@ -117,7 +117,7 @@ static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, DWORD left)
 		subchunkData = child->data;
 		subchunkDataLen = child->length;
 		if ( ChunkHasSubType(child->magic) && subchunkDataLen >= 4 ) {
-			child->subtype = *(DWORD *)subchunkData;
+			child->subtype = *(uint32_t *)subchunkData;
 			subchunkData += 4;
 			subchunkDataLen -= 4;
 		}
@@ -134,7 +134,7 @@ RIFF_Chunk *LoadRIFF(FILE *src)
 {
 	RIFF_Chunk *chunk;
 	BYTE *subchunkData;
-	DWORD subchunkDataLen;
+	uint32_t subchunkDataLen;
 
 	/* Allocate the chunk structure */
 	chunk = new RIFF_Chunk;
@@ -162,7 +162,7 @@ RIFF_Chunk *LoadRIFF(FILE *src)
 	subchunkData = chunk->data;
 	subchunkDataLen = chunk->length;
 	if ( ChunkHasSubType(chunk->magic) && subchunkDataLen >= 4 ) {
-		chunk->subtype = *(DWORD *)subchunkData;
+		chunk->subtype = *(uint32_t *)subchunkData;
 		subchunkData += 4;
 		subchunkDataLen -= 4;
 	}
@@ -251,10 +251,10 @@ http://www.midi.org/about-midi/dls/dlsspec.shtml
 
 /* Some typedefs so the public dls headers don't need to be modified */
 #define FAR
-typedef SWORD	SHORT;
-typedef WORD	USHORT;
+typedef int16_t	SHORT;
+typedef uint16_t USHORT;
 typedef int32_t	LONG;
-typedef DWORD	ULONG;
+typedef uint32_t ULONG;
 #define mmioFOURCC	MAKE_ID
 #define DEFINE_GUID(A, B, C, E, F, G, H, I, J, K, L, M)
 
@@ -263,19 +263,19 @@ typedef DWORD	ULONG;
 
 struct WaveFMT
 {
-	WORD wFormatTag;
-	WORD wChannels;
-	DWORD dwSamplesPerSec;
-	DWORD dwAvgBytesPerSec;
-	WORD wBlockAlign;
-	WORD wBitsPerSample;
+	uint16_t wFormatTag;
+	uint16_t wChannels;
+	uint32_t dwSamplesPerSec;
+	uint32_t dwAvgBytesPerSec;
+	uint16_t wBlockAlign;
+	uint16_t wBitsPerSample;
 };
 
 struct DLS_Wave
 {
 	WaveFMT *format;
 	BYTE *data;
-	DWORD length;
+	uint32_t length;
 	WSMPL *wsmp;
 	WLOOP *wsmp_loop;
 };
@@ -303,7 +303,7 @@ struct DLS_Data
 {
 	RIFF_Chunk *chunk;
 
-	DWORD cInstruments;
+	uint32_t cInstruments;
 	DLS_Instrument *instruments;
 
 	POOLTABLE *ptbl;
@@ -367,7 +367,7 @@ static void AllocRegions(DLS_Instrument *instrument)
 static void FreeInstruments(DLS_Data *data)
 {
 	if ( data->instruments ) {
-		DWORD i;
+		uint32_t i;
 		for ( i = 0; i < data->cInstruments; ++i ) {
 			FreeRegions(&data->instruments[i]);
 		}
@@ -404,7 +404,7 @@ static void AllocWaveList(DLS_Data *data)
 
 static void Parse_colh(DLS_Data *data, RIFF_Chunk *chunk)
 {
-	data->cInstruments = LittleLong(*(DWORD *)chunk->data);
+	data->cInstruments = LittleLong(*(uint32_t *)chunk->data);
 	AllocInstruments(data);
 }
 
@@ -442,7 +442,7 @@ static void Parse_wlnk(DLS_Data *data, RIFF_Chunk *chunk, DLS_Region *region)
 
 static void Parse_wsmp(DLS_Data *data, RIFF_Chunk *chunk, WSMPL **wsmp_ptr, WLOOP **wsmp_loop_ptr)
 {
-	DWORD i;
+	uint32_t i;
 	WSMPL *wsmp = (WSMPL *)chunk->data;
 	WLOOP *loop;
 	wsmp->cbSize = LittleLong(wsmp->cbSize);
@@ -465,7 +465,7 @@ static void Parse_wsmp(DLS_Data *data, RIFF_Chunk *chunk, WSMPL **wsmp_ptr, WLOO
 
 static void Parse_art(DLS_Data *data, RIFF_Chunk *chunk, CONNECTIONLIST **art_ptr, CONNECTION **artList_ptr)
 {
-	DWORD i;
+	uint32_t i;
 	CONNECTIONLIST *art = (CONNECTIONLIST *)chunk->data;
 	CONNECTION *artList;
 	art->cbSize = LittleLong(art->cbSize);
@@ -487,7 +487,7 @@ static void Parse_lart(DLS_Data *data, RIFF_Chunk *chunk, CONNECTIONLIST **conn_
 {
 	/* FIXME: This only supports one set of connections */
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_ART1:
 			case FOURCC_ART2:
@@ -500,7 +500,7 @@ static void Parse_lart(DLS_Data *data, RIFF_Chunk *chunk, CONNECTIONLIST **conn_
 static void Parse_rgn(DLS_Data *data, RIFF_Chunk *chunk, DLS_Region *region)
 {
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_RGNH:
 				Parse_rgnh(data, chunk, region);
@@ -521,9 +521,9 @@ static void Parse_rgn(DLS_Data *data, RIFF_Chunk *chunk, DLS_Region *region)
 
 static void Parse_lrgn(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *instrument)
 {
-	DWORD region = 0;
+	uint32_t region = 0;
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_RGN:
 			case FOURCC_RGN2:
@@ -538,7 +538,7 @@ static void Parse_lrgn(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *instru
 static void Parse_INFO_INS(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *instrument)
 {
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_INAM: /* Name */
 				instrument->name = (const char *)chunk->data;
@@ -550,7 +550,7 @@ static void Parse_INFO_INS(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *in
 static void Parse_ins(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *instrument)
 {
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_INSH:
 				Parse_insh(data, chunk, instrument);
@@ -571,9 +571,9 @@ static void Parse_ins(DLS_Data *data, RIFF_Chunk *chunk, DLS_Instrument *instrum
 
 static void Parse_lins(DLS_Data *data, RIFF_Chunk *chunk)
 {
-	DWORD instrument = 0;
+	uint32_t instrument = 0;
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_INS:
 				if ( instrument < data->cInstruments ) {
@@ -586,7 +586,7 @@ static void Parse_lins(DLS_Data *data, RIFF_Chunk *chunk)
 
 static void Parse_ptbl(DLS_Data *data, RIFF_Chunk *chunk)
 {
-	DWORD i;
+	uint32_t i;
 	POOLTABLE *ptbl = (POOLTABLE *)chunk->data;
 	ptbl->cbSize = LittleLong(ptbl->cbSize);
 	ptbl->cCues = LittleLong(ptbl->cCues);
@@ -619,7 +619,7 @@ static void Parse_data(DLS_Data *data, RIFF_Chunk *chunk, DLS_Wave *wave)
 static void Parse_wave(DLS_Data *data, RIFF_Chunk *chunk, DLS_Wave *wave)
 {
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_FMT:
 				Parse_fmt(data, chunk, wave);
@@ -636,9 +636,9 @@ static void Parse_wave(DLS_Data *data, RIFF_Chunk *chunk, DLS_Wave *wave)
 
 static void Parse_wvpl(DLS_Data *data, RIFF_Chunk *chunk)
 {
-	DWORD wave = 0;
+	uint32_t wave = 0;
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_wave:
 				if ( wave < data->ptbl->cCues ) {
@@ -652,7 +652,7 @@ static void Parse_wvpl(DLS_Data *data, RIFF_Chunk *chunk)
 static void Parse_INFO_DLS(DLS_Data *data, RIFF_Chunk *chunk)
 {
 	for ( chunk = chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_IARL: /* Archival Location */
 				break;
@@ -713,7 +713,7 @@ DLS_Data *LoadDLS(FILE *src)
 	}
 
 	for ( chunk = data->chunk->child; chunk; chunk = chunk->next ) {
-		DWORD magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
+		uint32_t magic = (chunk->magic == FOURCC_LIST) ? chunk->subtype : chunk->magic;
 		switch(magic) {
 			case FOURCC_COLH:
 				Parse_colh(data, chunk);
@@ -883,7 +883,7 @@ static const char *DestinationToString(USHORT usDestination)
 
 static void PrintArt(const char *type, CONNECTIONLIST *art, CONNECTION *artList)
 {
-	DWORD i;
+	uint32_t i;
 	printf("%s Connections:\n", type);
 	for ( i = 0; i < art->cConnections; ++i ) {
 		printf("  Source: %s, Control: %s, Destination: %s, Transform: %s, Scale: %d\n",
@@ -895,14 +895,14 @@ static void PrintArt(const char *type, CONNECTIONLIST *art, CONNECTION *artList)
 	}
 }
 
-static void PrintWave(DLS_Wave *wave, DWORD index)
+static void PrintWave(DLS_Wave *wave, uint32_t index)
 {
 	WaveFMT *format = wave->format;
 	if ( format ) {
 		printf("  Wave %u: Format: %hu, %hu channels, %u Hz, %hu bits (length = %u)\n", index, format->wFormatTag, format->wChannels, format->dwSamplesPerSec, format->wBitsPerSample, wave->length);
 	}
 	if ( wave->wsmp ) {
-		DWORD i;
+		uint32_t i;
 		printf("    wsmp->usUnityNote = %hu\n", wave->wsmp->usUnityNote);
 		printf("    wsmp->sFineTune = %hd\n", wave->wsmp->sFineTune);
 		printf("    wsmp->lAttenuation = %d\n", wave->wsmp->lAttenuation);
@@ -917,7 +917,7 @@ static void PrintWave(DLS_Wave *wave, DWORD index)
 	}
 }
 
-static void PrintRegion(DLS_Region *region, DWORD index)
+static void PrintRegion(DLS_Region *region, uint32_t index)
 {
 	printf("  Region %u:\n", index);
 	if ( region->header ) {
@@ -933,7 +933,7 @@ static void PrintRegion(DLS_Region *region, DWORD index)
 		printf("    wlnk->ulTableIndex = %u\n", region->wlnk->ulTableIndex);
 	}
 	if ( region->wsmp ) {
-		DWORD i;
+		uint32_t i;
 		printf("    wsmp->usUnityNote = %hu\n", region->wsmp->usUnityNote);
 		printf("    wsmp->sFineTune = %hd\n", region->wsmp->sFineTune);
 		printf("    wsmp->lAttenuation = %d\n", region->wsmp->lAttenuation);
@@ -951,14 +951,14 @@ static void PrintRegion(DLS_Region *region, DWORD index)
 	}
 }
 
-static void PrintInstrument(DLS_Instrument *instrument, DWORD index)
+static void PrintInstrument(DLS_Instrument *instrument, uint32_t index)
 {
 	printf("Instrument %u:\n", index);
 	if ( instrument->name ) {
 		printf("  Name: %s\n", instrument->name);
 	}
 	if ( instrument->header ) {
-		DWORD i;
+		uint32_t i;
 		printf("  ulBank = 0x%8.8x\n", instrument->header->Locale.ulBank);
 		printf("  ulInstrument = %u\n", instrument->header->Locale.ulInstrument);
 		printf("  Regions: %u\n", instrument->header->cRegions);
@@ -976,13 +976,13 @@ void PrintDLS(DLS_Data *data)
 	printf("DLS Data:\n");
 	printf("cInstruments = %u\n", data->cInstruments); 
 	if ( data->instruments ) {
-		DWORD i;
+		uint32_t i;
 		for ( i = 0; i < data->cInstruments; ++i ) {
 			PrintInstrument(&data->instruments[i], i);
 		}
 	}
 	if ( data->ptbl && data->ptbl->cCues > 0 ) {
-		DWORD i;
+		uint32_t i;
 		printf("Cues: ");
 		for ( i = 0; i < data->ptbl->cCues; ++i ) {
 			if ( i > 0 ) {
@@ -993,7 +993,7 @@ void PrintDLS(DLS_Data *data)
 		printf("\n");
 	}
 	if ( data->waveList && data->ptbl ) {
-		DWORD i;
+		uint32_t i;
 		printf("Waves:\n");
 		for ( i = 0; i < data->ptbl->cCues; ++i ) {
 			PrintWave(&data->waveList[i], i);
@@ -1116,7 +1116,7 @@ static int load_connection(ULONG cConnections, CONNECTION *artList, USHORT desti
 	return value;
 }
 
-static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins, DWORD index)
+static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins, uint32_t index)
 {
 	DLS_Region *rgn = &ins->regions[index];
 	DLS_Wave *wave = &song->patches->waveList[rgn->wlnk->ulTableIndex];
@@ -1187,7 +1187,7 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument)
 {
 	Instrument *inst;
-	DWORD i;
+	uint32_t i;
 	DLS_Instrument *dls_ins = NULL;
 
 	if (song->patches == NULL)

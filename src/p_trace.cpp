@@ -54,7 +54,7 @@ struct FTraceInfo
 	DVector3 Start;
 	DVector3 Vec;
 	ActorFlags ActorMask;
-	DWORD WallMask;
+	uint32_t WallMask;
 	AActor *IgnoreThis;
 	FTraceResults *Results;
 	sector_t *CurSector;
@@ -62,7 +62,7 @@ struct FTraceInfo
 	double EnterDist;
 	ETraceStatus (*TraceCallback)(FTraceResults &res, void *data);
 	void *TraceCallbackData;
-	DWORD TraceFlags;
+	uint32_t TraceFlags;
 	int inshootthrough;
 	double startfrac;
 	double limitz;
@@ -103,7 +103,7 @@ struct FTraceInfo
 
 };
 
-static bool EditTraceResult (DWORD flags, FTraceResults &res);
+static bool EditTraceResult (uint32_t flags, FTraceResults &res);
 
 
 
@@ -150,7 +150,7 @@ static bool isLiquid(F3DFloor *ff)
 //==========================================================================
 
 bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
-	ActorFlags actorMask, DWORD wallMask, AActor *ignore, FTraceResults &res, DWORD flags,
+	ActorFlags actorMask, uint32_t wallMask, AActor *ignore, FTraceResults &res, uint32_t flags,
 	ETraceStatus(*callback)(FTraceResults &res, void *), void *callbackdata)
 {
 	FTraceInfo inf;
@@ -923,7 +923,7 @@ bool FTraceInfo::CheckPlane (const secplane_t &plane)
 //
 //==========================================================================
 
-static bool EditTraceResult (DWORD flags, FTraceResults &res)
+static bool EditTraceResult (uint32_t flags, FTraceResults &res)
 {
 	if (flags & TRACE_NoSky)
 	{ // Throw away sky hits

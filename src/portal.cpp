@@ -81,7 +81,7 @@ DEFINE_FIELD(FSectorPortal, mSkybox);
 
 struct FPortalBits
 {
-	TArray<DWORD> data;
+	TArray<uint32_t> data;
 
 	void setSize(int num)
 	{
@@ -91,7 +91,7 @@ struct FPortalBits
 
 	void clear()
 	{
-		memset(&data[0], 0, data.Size()*sizeof(DWORD));
+		memset(&data[0], 0, data.Size()*sizeof(uint32_t));
 	}
 
 	void setBit(int group)
@@ -287,7 +287,7 @@ void P_SpawnLinePortal(line_t* line)
 		memset(port, 0, sizeof(FLinePortal));
 		port->mOrigin = line;
 		port->mDestination = dst;
-		port->mType = BYTE(line->args[2]);	// range check is done above.
+		port->mType = uint8_t(line->args[2]);	// range check is done above.
 
 		if (port->mType == PORTT_LINKED)
 		{
@@ -296,7 +296,7 @@ void P_SpawnLinePortal(line_t* line)
 		}
 		else
 		{
-			port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+			port->mAlign = uint8_t(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
 			if (port->mType == PORTT_INTERACTIVE && port->mAlign != PORG_ABSOLUTE)
 			{
 				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
@@ -923,7 +923,7 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 static bool ConnectGroups()
 {
 	// Now 
-	BYTE indirect = 1;
+	uint8_t indirect = 1;
 	bool bogus = false;
 	bool changed;
 	do

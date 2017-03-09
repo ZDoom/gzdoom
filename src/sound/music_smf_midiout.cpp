@@ -67,7 +67,7 @@ struct MIDISong2::TrackInfo
 	bool Designated;
 	bool EProgramChange;
 	bool EVolume;
-	WORD Designation;
+	uint16_t Designation;
 
 	size_t LoopBegin;
 	DWORD LoopDelay;

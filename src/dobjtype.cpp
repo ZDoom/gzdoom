@@ -637,11 +637,11 @@ void PInt::SetValue(void *addr, int val)
 	}
 	else if (Size == 1)
 	{
-		*(BYTE *)addr = val;
+		*(uint8_t *)addr = val;
 	}
 	else if (Size == 2)
 	{
-		*(WORD *)addr = val;
+		*(uint16_t *)addr = val;
 	}
 	else if (Size == 8)
 	{
@@ -673,11 +673,11 @@ int PInt::GetValueInt(void *addr) const
 	}
 	else if (Size == 1)
 	{
-		return Unsigned ? *(BYTE *)addr : *(SBYTE *)addr;
+		return Unsigned ? *(uint8_t *)addr : *(int8_t *)addr;
 	}
 	else if (Size == 2)
 	{
-		return Unsigned ? *(WORD *)addr : *(SWORD *)addr;
+		return Unsigned ? *(uint16_t *)addr : *(int16_t *)addr;
 	}
 	else if (Size == 8)
 	{ // truncated output
@@ -1035,7 +1035,7 @@ bool PString::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
 {
-	if (base != nullptr) new((BYTE *)base + offset) FString;
+	if (base != nullptr) new((uint8_t *)base + offset) FString;
 	if (special != nullptr)
 	{
 		special->Push(std::make_pair(this, offset));
@@ -1715,7 +1715,7 @@ void PArray::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
 	if (ar.BeginArray(key))
 	{
-		const BYTE *addrb = (const BYTE *)addr;
+		const uint8_t *addrb = (const uint8_t *)addr;
 		for (unsigned i = 0; i < ElementCount; ++i)
 		{
 			ElementType->WriteValue(ar, nullptr, addrb);
@@ -1738,7 +1738,7 @@ bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 		bool readsomething = false;
 		unsigned count = ar.ArraySize();
 		unsigned loop = MIN(count, ElementCount);
-		BYTE *addrb = (BYTE *)addr;
+		uint8_t *addrb = (uint8_t *)addr;
 		for(unsigned i=0;i<loop;i++)
 		{
 			readsomething |= ElementType->ReadValue(ar, nullptr, addrb);
@@ -2036,7 +2036,7 @@ void PDynArray::WriteValue(FSerializer &ar, const char *key, const void *addr) c
 	{
 		if (ar.BeginArray(key))
 		{
-			const BYTE *addrb = (const BYTE *)aray->Array;
+			const uint8_t *addrb = (const uint8_t *)aray->Array;
 			for (unsigned i = 0; i < aray->Count; ++i)
 			{
 				ElementType->WriteValue(ar, nullptr, addrb);
@@ -2068,7 +2068,7 @@ bool PDynArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 		memset(aray->Array, 0, blocksize);
 		aray->Most = aray->Count = count;
 
-		BYTE *addrb = (BYTE *)aray->Array;
+		uint8_t *addrb = (uint8_t *)aray->Array;
 		for (unsigned i = 0; i<count; i++)
 		{
 			// Strings must be constructed first.
@@ -2318,7 +2318,7 @@ void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField
 		// Skip fields without or with native serialization
 		if (!(field->Flags & (VARF_Transient|VARF_Meta)))
 		{
-			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
+			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
 		}
 	}
 }
@@ -2357,7 +2357,7 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 		else
 		{
 			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
-				(BYTE *)addr + static_cast<const PField *>(sym)->Offset);
+				(uint8_t *)addr + static_cast<const PField *>(sym)->Offset);
 		}
 	}
 	return readsomething || !foundsomething;
@@ -2372,7 +2372,7 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 //
 //==========================================================================
 
-PField *PStruct::AddField(FName name, PType *type, DWORD flags)
+PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 {
 	PField *field = new PField(name, type, flags);
 
@@ -2405,7 +2405,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 //
 //==========================================================================
 
-PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD flags, int bitvalue)
+PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
 	PField *field = new PField(name, type, flags|VARF_Native|VARF_Transient, address, bitvalue);
 
@@ -2495,7 +2495,7 @@ PField::PField()
 }
 
 
-PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
+PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
 	if (bitvalue != 0)
@@ -3073,7 +3073,7 @@ PClass *PClass::FindClass (FName zaname)
 
 DObject *PClass::CreateNew()
 {
-	BYTE *mem = (BYTE *)M_Malloc (Size);
+	uint8_t *mem = (uint8_t *)M_Malloc (Size);
 	assert (mem != nullptr);
 
 	// Set this object's defaults before constructing it.
@@ -3136,7 +3136,7 @@ void PClass::DestroySpecials(void *addr)
 	ParentClass->DestroySpecials(addr);
 	for (auto tao : SpecialInits)
 	{
-		tao.first->DestroyValue((BYTE *)addr + tao.second);
+		tao.first->DestroyValue((uint8_t *)addr + tao.second);
 	}
 }
 
@@ -3172,7 +3172,7 @@ void PClass::InitializeDefaults()
 	if (IsKindOf(RUNTIME_CLASS(PClassActor)))
 	{
 		assert(Defaults == nullptr);
-		Defaults = (BYTE *)M_Malloc(Size);
+		Defaults = (uint8_t *)M_Malloc(Size);
 
 		// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
 		// Temporarily setting bSerialOverride prevents linking into the thinker chains.
@@ -3203,7 +3203,7 @@ void PClass::InitializeDefaults()
 		assert(MetaSize >= ParentClass->MetaSize);
 		if (MetaSize != 0)
 		{
-			Meta = (BYTE*)M_Malloc(MetaSize);
+			Meta = (uint8_t*)M_Malloc(MetaSize);
 
 			// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
 			if (ParentClass->Meta != nullptr)
@@ -3330,7 +3330,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 //
 //==========================================================================
 
-PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
+PField *PClass::AddMetaField(FName name, PType *type, uint32_t flags)
 {
 	PField *field = new PField(name, type, flags);
 
@@ -3360,7 +3360,7 @@ PField *PClass::AddMetaField(FName name, PType *type, DWORD flags)
 //
 //==========================================================================
 
-PField *PClass::AddField(FName name, PType *type, DWORD flags)
+PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 {
 	if (!(flags & VARF_Meta))
 	{
@@ -3372,7 +3372,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 		// setting up any defaults for any class.
 		if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
 		{
-			Defaults = (BYTE *)M_Realloc(Defaults, Size);
+			Defaults = (uint8_t *)M_Realloc(Defaults, Size);
 			memset(Defaults + oldsize, 0, Size - oldsize);
 		}
 		return field;
@@ -3387,7 +3387,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 		// setting up any defaults for any class.
 		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
-			Meta = (BYTE *)M_Realloc(Meta, MetaSize);
+			Meta = (uint8_t *)M_Realloc(Meta, MetaSize);
 			memset(Meta + oldsize, 0, MetaSize - oldsize);
 		}
 		return field;

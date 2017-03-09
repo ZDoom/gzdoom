@@ -16,19 +16,19 @@ struct CPUInfo	// 92 bytes
 		uint32_t dwCPUString[12];
 	};
 
-	BYTE Stepping;
-	BYTE Model;
-	BYTE Family;
-	BYTE Type;
+	uint8_t Stepping;
+	uint8_t Model;
+	uint8_t Family;
+	uint8_t Type;
 
 	union
 	{
 		struct
 		{
-			BYTE BrandIndex;
-			BYTE CLFlush;
-			BYTE CPUCount;
-			BYTE APICID;
+			uint8_t BrandIndex;
+			uint8_t CLFlush;
+			uint8_t CPUCount;
+			uint8_t APICID;
 
 			uint32_t bSSE3:1;
 			uint32_t DontCare1:8;
@@ -81,19 +81,19 @@ struct CPUInfo	// 92 bytes
 		uint32_t FeatureFlags[4];
 	};
 
-	BYTE AMDStepping;
-	BYTE AMDModel;
-	BYTE AMDFamily;
-	BYTE bIsAMD;
+	uint8_t AMDStepping;
+	uint8_t AMDModel;
+	uint8_t AMDFamily;
+	uint8_t bIsAMD;
 
 	union
 	{
 		struct
 		{
-			BYTE DataL1LineSize;
-			BYTE DataL1LinesPerTag;
-			BYTE DataL1Associativity;
-			BYTE DataL1SizeKB;
+			uint8_t DataL1LineSize;
+			uint8_t DataL1LinesPerTag;
+			uint8_t DataL1Associativity;
+			uint8_t DataL1SizeKB;
 		};
 		uint32_t AMD_DataL1Info;
 	};

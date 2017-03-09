@@ -139,7 +139,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	{
 		color = PalEntry(light, light, light);
 	}
-	color.a = (BYTE)(parms.Alpha * 255);
+	color.a = (uint8_t)(parms.Alpha * 255);
 
 	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 	dg.mScissor[0] = GLRenderer->ScreenToWindowX(parms.lclip);

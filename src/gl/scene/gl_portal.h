@@ -108,7 +108,7 @@ private:
 	ActorRenderFlags savedvisibility;
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;
-	TArray<BYTE> savedmapsection;
+	TArray<uint8_t> savedmapsection;
 	TArray<unsigned int> mPrimIndices;
 
 protected:

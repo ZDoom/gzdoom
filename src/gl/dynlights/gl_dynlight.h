@@ -97,9 +97,9 @@ public:
 	virtual void Tick();
 	void Serialize(FSerializer &arc);
 	void PostSerialize();
-	BYTE GetRed() const { return args[LIGHT_RED]; }
-	BYTE GetGreen() const { return args[LIGHT_GREEN]; }
-	BYTE GetBlue() const { return args[LIGHT_BLUE]; }
+	uint8_t GetRed() const { return args[LIGHT_RED]; }
+	uint8_t GetGreen() const { return args[LIGHT_GREEN]; }
+	uint8_t GetBlue() const { return args[LIGHT_BLUE]; }
 	float GetRadius() const { return (IsActive() ? m_currentRadius * 2.f : 0.f); }
 	void LinkLight();
 	void UnlinkLight();
@@ -135,11 +135,11 @@ protected:
 
 public:
 	int m_tickCount;
-	BYTE lightflags;
-	BYTE lighttype;
+	uint8_t lightflags;
+	uint8_t lighttype;
 	bool owned;
 	bool halo;
-	BYTE color2[3];
+	uint8_t color2[3];
 	bool visibletoplayer;
 	bool swapped;
 	int bufferindex;

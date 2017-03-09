@@ -195,7 +195,7 @@ namespace swrenderer
 		spritedef_t*		sprdef;
 		spriteframe_t*		sprframe;
 		FTextureID			picnum;
-		WORD				flip;
+		uint16_t				flip;
 		FTexture*			tex;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
@@ -537,7 +537,7 @@ namespace swrenderer
 					colormap_to_use->Desaturate == 0)
 				{
 					accelSprite.overlay = colormap_to_use->Fade;
-					accelSprite.overlay.a = BYTE(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
+					accelSprite.overlay.a = uint8_t(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
 				}
 				else
 				{

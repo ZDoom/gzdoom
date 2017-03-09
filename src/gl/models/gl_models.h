@@ -59,7 +59,7 @@ public:
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer() = 0;
-	virtual void AddSkins(BYTE *hitlist) = 0;
+	virtual void AddSkins(uint8_t *hitlist) = 0;
 	void DestroyVertexBuffer()
 	{
 		delete mVBuf;
@@ -185,7 +185,7 @@ public:
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void LoadGeometry();
-	virtual void AddSkins(BYTE *hitlist);
+	virtual void AddSkins(uint8_t *hitlist);
 
 	void UnloadGeometry();
 	void BuildVertexBuffer();
@@ -292,7 +292,7 @@ public:
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	void LoadGeometry();
 	void BuildVertexBuffer();
-	virtual void AddSkins(BYTE *hitlist);
+	virtual void AddSkins(uint8_t *hitlist);
 };
 
 struct FVoxelVertexHash
@@ -335,7 +335,7 @@ protected:
 	TArray<unsigned int> mIndices;
 	
 	void MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &check);
-	void AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, BYTE color, FVoxelMap &check);
+	void AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, uint8_t color, FVoxelMap &check);
 	unsigned int AddVertex(FModelVertex &vert, FVoxelMap &check);
 
 public:
@@ -345,7 +345,7 @@ public:
 	void Initialize();
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
-	virtual void AddSkins(BYTE *hitlist);
+	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer();
 	float getAspectFactor();

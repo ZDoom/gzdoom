@@ -81,10 +81,10 @@ inline static int idxof(int i) {
 */
 #ifdef ONLY64
 inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[2] << 32) | ((QWORD)in->u[3]);
-	tl = ((QWORD)in->u[0] << 32) | ((QWORD)in->u[1]);
+	th = ((uint64_t)in->u[2] << 32) | ((uint64_t)in->u[3]);
+	tl = ((uint64_t)in->u[0] << 32) | ((uint64_t)in->u[1]);
 
 	oh = th >> (shift * 8);
 	ol = tl >> (shift * 8);
@@ -96,10 +96,10 @@ inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
 }
 #else
 inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[3] << 32) | ((QWORD)in->u[2]);
-	tl = ((QWORD)in->u[1] << 32) | ((QWORD)in->u[0]);
+	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
+	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
 
 	oh = th >> (shift * 8);
 	ol = tl >> (shift * 8);
@@ -120,10 +120,10 @@ inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
 */
 #ifdef ONLY64
 inline static void lshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[2] << 32) | ((QWORD)in->u[3]);
-	tl = ((QWORD)in->u[0] << 32) | ((QWORD)in->u[1]);
+	th = ((uint64_t)in->u[2] << 32) | ((uint64_t)in->u[3]);
+	tl = ((uint64_t)in->u[0] << 32) | ((uint64_t)in->u[1]);
 
 	oh = th << (shift * 8);
 	ol = tl << (shift * 8);
@@ -135,10 +135,10 @@ inline static void lshift128(w128_t *out, w128_t const *in, int shift) {
 }
 #else
 inline static void lshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[3] << 32) | ((QWORD)in->u[2]);
-	tl = ((QWORD)in->u[1] << 32) | ((QWORD)in->u[0]);
+	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
+	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
 
 	oh = th << (shift * 8);
 	ol = tl << (shift * 8);
@@ -379,12 +379,12 @@ unsigned int FRandom::GenRand32()
 * unless an initialization is again executed. 
 * @return 64-bit pseudorandom number
 */
-QWORD FRandom::GenRand64()
+uint64_t FRandom::GenRand64()
 {
 #if defined(BIG_ENDIAN64) && !defined(ONLY64)
 	uint32_t r1, r2;
 #else
-	QWORD r;
+	uint64_t r;
 #endif
 
 	assert(initialized);
@@ -399,7 +399,7 @@ QWORD FRandom::GenRand64()
 	r1 = sfmt.u[idx];
 	r2 = sfmt.u[idx + 1];
 	idx += 2;
-	return ((QWORD)r2 << 32) | r1;
+	return ((uint64_t)r2 << 32) | r1;
 #else
 	r = sfmt.u64[idx / 2];
 	idx += 2;
@@ -470,7 +470,7 @@ void FRandom::FillArray32(uint32_t *array, int size)
 * memory. Mac OSX doesn't have these functions, but \b malloc of OSX
 * returns the pointer to the aligned memory block.
 */
-void FRandom::FillArray64(QWORD *array, int size)
+void FRandom::FillArray64(uint64_t *array, int size)
 {
 	assert(initialized);
 	assert(idx == SFMT::N32);

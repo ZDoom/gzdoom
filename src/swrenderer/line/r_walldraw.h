@@ -100,8 +100,8 @@ namespace swrenderer
 		uint32_t uv_step;
 		uint32_t uv_max;
 
-		const BYTE *source;
-		const BYTE *source2;
+		const uint8_t *source;
+		const uint8_t *source2;
 		uint32_t texturefracx;
 		uint32_t height;
 	};

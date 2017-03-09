@@ -168,7 +168,7 @@ protected:
 		float DeadZone, DefaultDeadZone;
 		float Multiplier, DefaultMultiplier;
 		EJoyAxis GameAxis, DefaultGameAxis;
-		BYTE ButtonValue;
+		uint8_t ButtonValue;
 	};
 	struct ButtonInfo
 	{
@@ -176,7 +176,7 @@ protected:
 		GUID Guid;
 		DWORD Type;
 		DWORD Ofs;
-		BYTE Value;
+		uint8_t Value;
 	};
 
 	LPDIRECTINPUTDEVICE8 Device;
@@ -259,7 +259,7 @@ CUSTOM_CVAR(Bool, joy_dinput, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCA
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
+static const uint8_t POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
 
 //("dc12a687-737f-11cf-884d-00aa004b2e24")
 static const IID IID_IWbemLocator =		{ 0xdc12a687, 0x737f, 0x11cf,
@@ -383,7 +383,7 @@ bool FDInputJoystick::GetDevice()
 void FDInputJoystick::ProcessInput()
 {
 	HRESULT hr;
-	BYTE *state;
+	uint8_t *state;
 	unsigned i;
 	event_t ev;
 
@@ -402,7 +402,7 @@ void FDInputJoystick::ProcessInput()
 		return;
 	}
 
-	state = (BYTE *)alloca(DataFormat.dwDataSize);
+	state = (uint8_t *)alloca(DataFormat.dwDataSize);
 	hr = Device->GetDeviceState(DataFormat.dwDataSize, state);
 	if (FAILED(hr))
 		return;
@@ -424,7 +424,7 @@ void FDInputJoystick::ProcessInput()
 		AxisInfo *info = &Axes[i];
 		LONG value = *(LONG *)(state + info->Ofs);
 		double axisval;
-		BYTE buttonstate = 0;
+		uint8_t buttonstate = 0;
 
 		// Scale to [-1.0, 1.0]
 		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
@@ -450,7 +450,7 @@ void FDInputJoystick::ProcessInput()
 	for (i = 0; i < Buttons.Size(); ++i)
 	{
 		ButtonInfo *info = &Buttons[i];
-		BYTE newstate = *(BYTE *)(state + info->Ofs) & 0x80;
+		uint8_t newstate = *(uint8_t *)(state + info->Ofs) & 0x80;
 		if (newstate != info->Value)
 		{
 			info->Value = newstate;
@@ -696,7 +696,7 @@ HRESULT FDInputJoystick::SetDataFormat()
 		objects[numobjs + i].dwOfs = Buttons[i].Ofs = nextofs;
 		objects[numobjs + i].dwType = Buttons[i].Type;
 		objects[numobjs + i].dwFlags = 0;
-		nextofs += sizeof(BYTE);
+		nextofs += sizeof(uint8_t);
 	}
 	numobjs += i;
 

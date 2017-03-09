@@ -63,7 +63,7 @@ struct FmtChunk
 	DWORD SubFormatA;
 	uint16_t  SubFormatB;
 	uint16_t  SubFormatC;
-	BYTE  SubFormatD[8];
+	uint8_t  SubFormatD[8];
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -162,7 +162,7 @@ void TimidityMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 //
 //==========================================================================
 
-void TimidityMIDIDevice::HandleLongEvent(const BYTE *data, int len)
+void TimidityMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 	Renderer->HandleLongMessage(data, len);
 }

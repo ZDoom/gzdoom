@@ -110,7 +110,7 @@ int CheckDDPK3(FTexture *tex)
 
 	FString checkName;
 	const char ** checklist;
-	BYTE useType=tex->UseType;
+	uint8_t useType=tex->UseType;
 
 	if (useType==FTexture::TEX_SkinSprite || useType==FTexture::TEX_Decal || useType==FTexture::TEX_FontChar)
 	{
@@ -291,7 +291,7 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 
 	FString checkName;
 	const char ** checklist;
-	BYTE useType=tex->UseType;
+	uint8_t useType=tex->UseType;
 
 	if (useType==FTexture::TEX_SkinSprite || useType==FTexture::TEX_Decal || useType==FTexture::TEX_FontChar)
 	{

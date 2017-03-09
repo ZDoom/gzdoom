@@ -84,7 +84,7 @@ void FSamplerManager::UnbindAll()
 	}
 }
 	
-BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
+uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 {
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
 	{

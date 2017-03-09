@@ -26,13 +26,13 @@ struct GF1PatchHeader
 	char Header[HEADER_SIZE];
 	char GravisID[ID_SIZE];		/* Id = "ID#000002" */
 	char Description[DESC_SIZE];
-	BYTE Instruments;
-	BYTE Voices;
-	BYTE Channels;
+	uint8_t Instruments;
+	uint8_t Voices;
+	uint8_t Channels;
 	uint16_t WaveForms;
 	uint16_t MasterVolume;
 	DWORD DataSize;
-	BYTE Reserved[PATCH_HEADER_RESERVED_SIZE];
+	uint8_t Reserved[PATCH_HEADER_RESERVED_SIZE];
 } GCC_PACKED;
 
 struct GF1InstrumentData
@@ -40,23 +40,23 @@ struct GF1InstrumentData
 	uint16_t Instrument;
 	char InstrumentName[INST_NAME_SIZE];
 	int  InstrumentSize;
-	BYTE Layers;
-	BYTE Reserved[RESERVED_SIZE];
+	uint8_t Layers;
+	uint8_t Reserved[RESERVED_SIZE];
 } GCC_PACKED;
 
 struct GF1LayerData
 {
-	BYTE LayerDuplicate;
-	BYTE Layer;
+	uint8_t LayerDuplicate;
+	uint8_t Layer;
 	int  LayerSize;
-	BYTE Samples;
-	BYTE Reserved[LAYER_RESERVED_SIZE];
+	uint8_t Samples;
+	uint8_t Reserved[LAYER_RESERVED_SIZE];
 } GCC_PACKED;
 
 struct GF1PatchData
 {
 	char  WaveName[7];
-	BYTE  Fractions;
+	uint8_t  Fractions;
 	int   WaveSize;
 	int   StartLoop;
 	int   EndLoop;
@@ -65,19 +65,19 @@ struct GF1PatchData
 	int   HighFrequency;
 	int   RootFrequency;
 	int16_t Tune;
-	BYTE  Balance;
-	BYTE  EnvelopeRate[ENVELOPES];
-	BYTE  EnvelopeOffset[ENVELOPES];
-	BYTE  TremoloSweep;
-	BYTE  TremoloRate;
-	BYTE  TremoloDepth;
-	BYTE  VibratoSweep;
-	BYTE  VibratoRate;
-	BYTE  VibratoDepth;
-	BYTE  Modes;
+	uint8_t  Balance;
+	uint8_t  EnvelopeRate[ENVELOPES];
+	uint8_t  EnvelopeOffset[ENVELOPES];
+	uint8_t  TremoloSweep;
+	uint8_t  TremoloRate;
+	uint8_t  TremoloDepth;
+	uint8_t  VibratoSweep;
+	uint8_t  VibratoRate;
+	uint8_t  VibratoDepth;
+	uint8_t  Modes;
 	int16_t ScaleFrequency;
 	uint16_t  ScaleFactor;		/* From 0 to 2048 or 0 to 2 */
-	BYTE  Reserved[PATCH_DATA_RESERVED_SIZE];
+	uint8_t  Reserved[PATCH_DATA_RESERVED_SIZE];
 } GCC_PACKED;
 #ifdef _MSC_VER
 #pragma pack(pop)

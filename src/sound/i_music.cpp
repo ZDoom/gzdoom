@@ -92,14 +92,14 @@ enum EMIDIType
 	MIDI_MUS
 };
 
-extern int MUSHeaderSearch(const BYTE *head, int len);
+extern int MUSHeaderSearch(const uint8_t *head, int len);
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
 
-static bool ungzip(BYTE *data, int size, TArray<BYTE> &newdata);
+static bool ungzip(uint8_t *data, int size, TArray<uint8_t> &newdata);
 
 MusInfo *currSong;
 int		nomusic = 0;
@@ -351,7 +351,7 @@ static EMIDIType IdentifyMIDIType(DWORD *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
-	if (MUSHeaderSearch((BYTE*)id, size) >= 0)
+	if (MUSHeaderSearch((uint8_t*)id, size) >= 0)
 	{
 		return MIDI_MUS;
 	}
@@ -420,7 +420,7 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 	{
 		int len = reader->GetLength();
-		BYTE *gzipped = new BYTE[len];
+		uint8_t *gzipped = new uint8_t[len];
 		if (reader->Read(gzipped, len) != len)
 		{
 			delete[] gzipped;
@@ -481,7 +481,7 @@ retry_as_sndsys:
 	else if (
 		(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
-		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
 		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
 	}
@@ -590,11 +590,11 @@ MusInfo *I_RegisterURLSong (const char *url)
 //
 //==========================================================================
 
-static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
+static bool ungzip(uint8_t *data, int complen, TArray<uint8_t> &newdata)
 {
-	const BYTE *max = data + complen - 8;
-	const BYTE *compstart = data + 10;
-	BYTE flags = data[3];
+	const uint8_t *max = data + complen - 8;
+	const uint8_t *compstart = data + 10;
+	uint8_t flags = data[3];
 	unsigned isize;
 	z_stream stream;
 	int err;
@@ -827,7 +827,7 @@ CCMD (writemidi)
 		return;
 	}
 
-	TArray<BYTE> midi;
+	TArray<uint8_t> midi;
 	FILE *f;
 	bool success;
 

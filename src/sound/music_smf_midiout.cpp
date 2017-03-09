@@ -57,13 +57,13 @@
 
 struct MIDISong2::TrackInfo
 {
-	const BYTE *TrackBegin;
+	const uint8_t *TrackBegin;
 	size_t TrackP;
 	size_t MaxTrackP;
 	DWORD Delay;
 	DWORD PlayedTime;
 	bool Finished;
-	BYTE RunningStatus;
+	uint8_t RunningStatus;
 	bool Designated;
 	bool EProgramChange;
 	bool EVolume;
@@ -115,7 +115,7 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 	}
 #endif
 	SongLen = reader.GetLength();
-	MusHeader = new BYTE[SongLen];
+	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
 		return;
 
@@ -374,7 +374,7 @@ void MIDISong2::AdvanceTracks(DWORD time)
 DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
 {
 	DWORD len;
-	BYTE event, data1 = 0, data2 = 0;
+	uint8_t event, data1 = 0, data2 = 0;
 	int i;
 
 	sysex_noroom = false;
@@ -610,7 +610,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 			}
 			else
 			{
-				BYTE *msg = (BYTE *)&events[3];
+				uint8_t *msg = (uint8_t *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
 					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
@@ -699,7 +699,7 @@ void MIDISong2::ProcessInitialMetaEvents ()
 {
 	TrackInfo *track;
 	int i;
-	BYTE event;
+	uint8_t event;
 	DWORD len;
 
 	for (i = 0; i < NumTracks; ++i)
@@ -845,7 +845,7 @@ MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevic
 : MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;
-	MusHeader = new BYTE[original->SongLen];
+	MusHeader = new uint8_t[original->SongLen];
 	memcpy(MusHeader, original->MusHeader, original->SongLen);
 	Format = original->Format;
 	NumTracks = original->NumTracks;

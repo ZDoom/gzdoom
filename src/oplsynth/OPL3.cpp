@@ -523,7 +523,7 @@ namespace EnvelopeGeneratorData
 class OPL3 : public OPLEmul
 {
 public:
-	BYTE registers[0x200];
+	uint8_t registers[0x200];
 
 	Operator *operators[2][0x20];
 	Channel2op *channels2op[2][9];

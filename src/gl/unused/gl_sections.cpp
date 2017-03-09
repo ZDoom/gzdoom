@@ -79,8 +79,8 @@ class FSectionCreator
 {
 	static FSectionCreator *creator;
 
-	BYTE *processed_segs;
-	BYTE *processed_subsectors;
+	uint8_t *processed_segs;
+	uint8_t *processed_subsectors;
 	int *section_for_segs;
 
 	vertex_t *v1_l1, *v2_l1;
@@ -97,8 +97,8 @@ public:
 
 	FSectionCreator()
 	{
-		processed_segs = new BYTE[(numsegs+7)/8];
-		processed_subsectors = new BYTE[(numsubsectors+7)/8];
+		processed_segs = new uint8_t[(numsegs+7)/8];
+		processed_subsectors = new uint8_t[(numsubsectors+7)/8];
 
 		memset(processed_segs, 0, (numsegs+7)/8); 
 		memset(processed_subsectors, 0, (numsubsectors+7)/8); 

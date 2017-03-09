@@ -135,12 +135,12 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	std::pair<SoundHandle,bool> LoadSound(BYTE *sfxdata, int length, bool monoize)
+	std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize)
 	{
 		SoundHandle retval = { NULL };
 		return std::make_pair(retval, true);
 	}
-	std::pair<SoundHandle,bool> LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
+	std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
 	{
 		SoundHandle retval = { NULL };
         return std::make_pair(retval, true);
@@ -461,9 +461,9 @@ FString SoundStream::GetStats()
 //
 //==========================================================================
 
-std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length, bool monoize)
+std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length, bool monoize)
 {
-	BYTE * data = NULL;
+	uint8_t * data = NULL;
 	int len, frequency, channels, bits, loopstart, loopend;
 	len = frequency = channels = bits = 0;
 	loopstart = loopend = -1;
@@ -568,7 +568,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int lengt
 		// Second pass to write the data
 		if (okay)
 		{
-			data = new BYTE[len];
+			data = new uint8_t[len];
 			i = 26;
 			int j = 0;
 			while (i < length)

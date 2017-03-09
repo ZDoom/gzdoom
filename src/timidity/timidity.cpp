@@ -579,7 +579,7 @@ int LoadDMXGUS()
 	char readbuffer[1024];
 	long size = data.GetLength();
 	long read = 0;
-	BYTE remap[256];
+	uint8_t remap[256];
 
 	FString patches[256];
 	memset(remap, 255, sizeof(remap));

@@ -296,7 +296,7 @@ struct FCoverageBuilder
 		else
 		{
 			// we reached a subsector so we can link the node with this subsector
-			subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+			subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 			collect.Push(int(sub-subsectors));
 		}
 	}

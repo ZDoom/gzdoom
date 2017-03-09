@@ -168,7 +168,7 @@ namespace zip
 	struct LocalFileHeader
 	{
 		DWORD	Magic;						// 0
-		BYTE	VersionToExtract[2];		// 4
+		uint8_t	VersionToExtract[2];		// 4
 		uint16_t	Flags;						// 6
 		uint16_t	Method;						// 8
 		uint16_t	ModTime;					// 10
@@ -183,8 +183,8 @@ namespace zip
 	struct CentralDirectoryEntry
 	{
 		DWORD	Magic;
-		BYTE	VersionMadeBy[2];
-		BYTE	VersionToExtract[2];
+		uint8_t	VersionMadeBy[2];
+		uint8_t	VersionToExtract[2];
 		uint16_t	Flags;
 		uint16_t	Method;
 		uint16_t	ModTime;
@@ -246,7 +246,7 @@ static HANDLE MakeZip ();
 static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, short dostime);
 static HANDLE CreateTempFile ();
 
-static void DumpBytes (HANDLE file, BYTE *address);
+static void DumpBytes (HANDLE file, uint8_t *address);
 static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *ctxt);
 static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump, CONTEXT *ctxt);
 static void AddToolHelp (HANDLE file);
@@ -388,7 +388,7 @@ DWORD *GetTopOfStack (void *top)
 
 	if (VirtualQuery (top, &memInfo, sizeof(memInfo)))
 	{
-		return (DWORD *)((BYTE *)memInfo.BaseAddress + memInfo.RegionSize);
+		return (DWORD *)((uint8_t *)memInfo.BaseAddress + memInfo.RegionSize);
 	}
 	else
 	{
@@ -607,7 +607,7 @@ void CreateCrashLog (char *custominfo, DWORD customsize, HWND richlog)
 
 		if (file != INVALID_HANDLE_VALUE)
 		{
-			BYTE buffer[512];
+			uint8_t buffer[512];
 			DWORD left;
 
 			for (;; customsize -= left, custominfo += left)
@@ -835,7 +835,7 @@ HANDLE WriteTextReport ()
 #else
 	Writef (file, "\r\nBytes near RIP:");
 #endif
-	DumpBytes (file, (BYTE *)CrashPointers.ExceptionRecord->ExceptionAddress-16);
+	DumpBytes (file, (uint8_t *)CrashPointers.ExceptionRecord->ExceptionAddress-16);
 
 	if (ctxt->ContextFlags & CONTEXT_CONTROL)
 	{
@@ -946,11 +946,11 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *c
 {
 	DWORD *addr = (DWORD *)dumpaddress, *jump;
 	DWORD *topOfStack = GetTopOfStack (dumpaddress);
-	BYTE peekb;
+	uint8_t peekb;
 #ifdef _M_IX86
 	DWORD peekd;
 #else
-	QWORD peekq;
+	uint64_t peekq;
 #endif
 
 	jump = topOfStack;
@@ -1002,9 +1002,9 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *c
 			Writef (file, "         ");
 		}
 #else
-		if ((QWORD *)topOfStack - (QWORD *)scan < 2)
+		if ((uint64_t *)topOfStack - (uint64_t *)scan < 2)
 		{
-			max = (QWORD *)topOfStack - (QWORD *)scan;
+			max = (uint64_t *)topOfStack - (uint64_t *)scan;
 		}
 		else
 		{
@@ -1027,7 +1027,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *c
 		Writef (file, "  ");
 		for (i = 0; i < int(max*sizeof(void*)); ++i)
 		{
-			if (!SafeReadMemory ((BYTE *)scan + i, &peekb, 1))
+			if (!SafeReadMemory ((uint8_t *)scan + i, &peekb, 1))
 			{
 				break;
 			}
@@ -1054,7 +1054,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 {
 	DWORD *addr = (DWORD *)dumpaddress;
 
-	BYTE *pBaseOfImage = (BYTE *)GetModuleHandle (0);
+	uint8_t *pBaseOfImage = (uint8_t *)GetModuleHandle (0);
 	IMAGE_OPTIONAL_HEADER *pHeader = (IMAGE_OPTIONAL_HEADER *)(pBaseOfImage +
 		((IMAGE_DOS_HEADER*)pBaseOfImage)->e_lfanew +
 		sizeof(IMAGE_NT_SIGNATURE) + sizeof(IMAGE_FILE_HEADER));
@@ -1082,8 +1082,8 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 			};
 
 			// Check if address is after a call statement. Print what was called if it is.
-			const BYTE *bytep = (BYTE *)code;
-			BYTE peekb;
+			const uint8_t *bytep = (uint8_t *)code;
+			uint8_t peekb;
 
 #define chkbyte(x,m,v) (SafeReadMemory(x, &peekb, 1) && ((peekb & m) == v))
 
@@ -1364,11 +1364,11 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 //
 //==========================================================================
 
-static void DumpBytes (HANDLE file, BYTE *address)
+static void DumpBytes (HANDLE file, uint8_t *address)
 {
 	char line[68*3], *line_p = line;
 	DWORD len;
-	BYTE peek;
+	uint8_t peek;
 
 	for (int i = 0; i < 16*3; ++i)
 	{
@@ -2157,7 +2157,7 @@ struct BinStreamInfo
 static DWORD CALLBACK StreamEditBinary (DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
 {
 	BinStreamInfo *info = (BinStreamInfo *)cookie;
-	BYTE buf16[16];
+	uint8_t buf16[16];
 	DWORD read, i;
 	char *buff_p = (char *)buffer;
 	char *buff_end = (char *)buffer + cb;
@@ -2207,7 +2207,7 @@ repeat:
 			buff_p += mysnprintf (buff_p, buff_end - buff_p, "\\cf3 ");
 			for (i = 0; i < read; ++i)
 			{
-				BYTE code = buf16[i];
+				uint8_t code = buf16[i];
 				if (code < 0x20 || code > 0x7f) code = 0xB7;
 				if (code == '\\' || code == '{' || code == '}') *buff_p++ = '\\';
 				*buff_p++ = code;

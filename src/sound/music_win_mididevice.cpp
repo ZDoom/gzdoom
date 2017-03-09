@@ -247,7 +247,7 @@ void WinMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 	{
 		return;
 	}
-	BYTE bank[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	uint8_t bank[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int i, chan;
 
 	for (i = 0, chan = 0; i < count; ++i)

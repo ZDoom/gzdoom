@@ -53,7 +53,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int MUSHeaderSearch(const BYTE *head, int len);
+int MUSHeaderSearch(const uint8_t *head, int len);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -61,7 +61,7 @@ int MUSHeaderSearch(const BYTE *head, int len);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const BYTE CtrlTranslate[15] =
+static const uint8_t CtrlTranslate[15] =
 {
 	0,	// program change
 	0,	// bank select
@@ -103,7 +103,7 @@ MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 	}
 #endif
 
-	BYTE front[32];
+	uint8_t front[32];
 	int start;
 
 	if (reader.Read(front, sizeof(front)) != sizeof(front))
@@ -127,9 +127,9 @@ MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 	{ // It's too short.
 		return;
 	}
-	MusHeader = (MUSHeader *)new BYTE[len];
+	MusHeader = (MUSHeader *)new uint8_t[len];
     memcpy(MusHeader, front + start, sizeof(front) - start);
-    if (reader.Read((BYTE *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
+    if (reader.Read((uint8_t *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
     {
         return;
     }
@@ -140,7 +140,7 @@ MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 		return;
 	}
 
-	MusBuffer = (BYTE *)MusHeader + LittleShort(MusHeader->SongStart);
+	MusBuffer = (uint8_t *)MusHeader + LittleShort(MusHeader->SongStart);
 	MaxMusP = MIN<int>(LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
 	Division = 140;
 	InitialTempo = 1000000;
@@ -156,7 +156,7 @@ MUSSong2::~MUSSong2 ()
 {
 	if (MusHeader != NULL)
 	{
-		delete[] (BYTE *)MusHeader;
+		delete[] (uint8_t *)MusHeader;
 	}
 }
 
@@ -212,12 +212,12 @@ bool MUSSong2::CheckDone()
 void MUSSong2::Precache()
 {
 	TArray<uint16_t> work(LittleShort(MusHeader->NumInstruments));
-	const BYTE *used = (BYTE *)MusHeader + sizeof(MUSHeader) / sizeof(BYTE);
+	const uint8_t *used = (uint8_t *)MusHeader + sizeof(MUSHeader) / sizeof(uint8_t);
 	int i, k;
 
 	for (i = k = 0; i < LittleShort(MusHeader->NumInstruments); ++i)
 	{
-		BYTE instr = used[k++];
+		uint8_t instr = used[k++];
 		uint16_t val;
 		if (instr < 128)
 		{
@@ -269,10 +269,10 @@ DWORD *MUSSong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 
 	while (events < max_event_p && tot_time <= max_time)
 	{
-		BYTE mid1, mid2;
-		BYTE channel;
-		BYTE t = 0, status;
-		BYTE event = MusBuffer[MusP++];
+		uint8_t mid1, mid2;
+		uint8_t channel;
+		uint8_t t = 0, status;
+		uint8_t event = MusBuffer[MusP++];
 		
 		if ((event & 0x70) != MUS_SCOREEND)
 		{
@@ -409,9 +409,9 @@ MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice t
 {
 	int songstart = LittleShort(original->MusHeader->SongStart);
 	MaxMusP = original->MaxMusP;
-	MusHeader = (MUSHeader *)new BYTE[songstart + MaxMusP];
+	MusHeader = (MUSHeader *)new uint8_t[songstart + MaxMusP];
 	memcpy(MusHeader, original->MusHeader, songstart + MaxMusP);
-	MusBuffer = (BYTE *)MusHeader + songstart;
+	MusBuffer = (uint8_t *)MusHeader + songstart;
 	Division = 140;
 	InitialTempo = 1000000;
 }
@@ -425,7 +425,7 @@ MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice t
 //
 //==========================================================================
 
-int MUSHeaderSearch(const BYTE *head, int len)
+int MUSHeaderSearch(const uint8_t *head, int len)
 {
 	len -= 4;
 	for (int i = 0; i <= len; ++i)

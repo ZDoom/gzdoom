@@ -48,7 +48,7 @@ class TWeightedList
 
 		Choice<U> *Next;
 		uint16_t Weight;
-		BYTE RandomVal;	// 0 (never) - 255 (always)
+		uint8_t RandomVal;	// 0 (never) - 255 (always)
 		T Value;
 	};
 
@@ -104,7 +104,7 @@ void TWeightedList<T>::AddEntry (T value, uint16_t weight)
 template<class T>
 T TWeightedList<T>::PickEntry () const
 {
-	BYTE randomnum = RandomClass();
+	uint8_t randomnum = RandomClass();
 	Choice<T> *choice = Choices;
 
 	while (choice != NULL && randomnum > choice->RandomVal)
@@ -147,7 +147,7 @@ void TWeightedList<T>::RecalcRandomVals ()
 	for (choice = Choices; choice->Next != NULL; choice = choice->Next)
 	{
 		randVal += (double)choice->Weight * weightDenom;
-		choice->RandomVal = (BYTE)(randVal * 255.0);
+		choice->RandomVal = (uint8_t)(randVal * 255.0);
 	}
 }
 

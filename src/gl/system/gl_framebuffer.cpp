@@ -506,7 +506,7 @@ void OpenGLFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, int 
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type)
 {
 	const auto &viewport = GLRenderer->mOutputLetterbox;
 
@@ -523,7 +523,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESS
 	int h = SCREENHEIGHT;
 
 	ReleaseScreenshotBuffer();
-	ScreenshotBuffer = new BYTE[w * h * 3];
+	ScreenshotBuffer = new uint8_t[w * h * 3];
 
 	float rcpWidth = 1.0f / w;
 	float rcpHeight = 1.0f / h;

@@ -13,7 +13,7 @@ struct FSoftwareRenderer : public FRenderer
 	bool UsesColormap() const override;
 
 	// precache textures
-	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
+	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 
 	// render 3D view
 	void RenderView(player_t *player) override;

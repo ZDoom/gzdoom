@@ -12,7 +12,7 @@
 
 using namespace Timidity;
 
-#define cindex(identifier)	(BYTE)(((size_t)&((SFGenComposite *)1)->identifier - 1) / 2)
+#define cindex(identifier)	(uint8_t)(((size_t)&((SFGenComposite *)1)->identifier - 1) / 2)
 
 class CIOErr {};
 class CBadForm {};
@@ -36,8 +36,8 @@ struct GenDef
 {
 	short Min;
 	short Max;
-	BYTE StructIndex;
-	BYTE Flags;
+	uint8_t StructIndex;
+	uint8_t Flags;
 };
 
 static const GenDef GenDefs[] =
@@ -230,7 +230,7 @@ static inline DWORD read_id(FileReader *f)
 
 static inline int read_byte(FileReader *f)
 {
-	BYTE x;
+	uint8_t x;
 	if (f->Read(&x, 1) != 1)
 	{
 		throw CIOErr();
@@ -1140,7 +1140,7 @@ void SFFile::TranslatePercussionPresetZone(SFPreset *preset, SFBag *pzone)
 			}
 			SetInstrumentGenerators(&perc.Generators, InstrBags[i].GenIndex, InstrBags[i + 1].GenIndex);
 			AddPresetGenerators(&perc.Generators, pzone->GenIndex, (pzone + 1)->GenIndex, preset);
-			perc.Generators.drumset = (BYTE)preset->Program;
+			perc.Generators.drumset = (uint8_t)preset->Program;
 			perc.Generators.key = key;
 			perc.Generators.velRange.Lo = MAX(pzone->VelRange.Lo, InstrBags[i].VelRange.Lo);
 			perc.Generators.velRange.Hi = MIN(pzone->VelRange.Hi, InstrBags[i].VelRange.Hi);
@@ -1522,7 +1522,7 @@ void SFFile::LoadSample(SFSample *sample)
 		fp->Seek(SampleDataLSBOffset + sample->Start, SEEK_SET);
 		for (i = 0; i < sample->End - sample->Start; ++i)
 		{
-			BYTE samp;
+			uint8_t samp;
 			*fp >> samp;
 			sample->InMemoryData[i] = ((((int32_t(sample->InMemoryData[i] * 32768) << 8) | samp) << 8) >> 8) / 8388608.f;
 		}

@@ -101,7 +101,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
-		BYTE ButtonValue;
+		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
@@ -167,22 +167,22 @@ protected:
 struct PS2Descriptor
 {
 	const char *AdapterName;
-	 BYTE PacketSize;
+	 uint8_t PacketSize;
 	int8_t ControllerNumber;
 	int8_t ControllerStatus;
-	 BYTE LeftX;
-	 BYTE LeftY;
-	 BYTE RightX;
-	 BYTE RightY;
+	 uint8_t LeftX;
+	 uint8_t LeftY;
+	 uint8_t RightX;
+	 uint8_t RightY;
 	int8_t DPadHat;
-	 BYTE DPadButtonsNibble:1;
+	 uint8_t DPadButtonsNibble:1;
 	int8_t DPadButtons:7;		// up, right, down, left
-	 BYTE ButtonSet1:7;			// triangle, circle, cross, square
-	 BYTE ButtonSet1Nibble:1;
-	 BYTE ButtonSet2:7;			// L2, R2, L1, R1
-	 BYTE ButtonSet2Nibble:1;
-	 BYTE ButtonSet3:7;			// select, start, lthumb, rthumb
-	 BYTE ButtonSet3Nibble:1;
+	 uint8_t ButtonSet1:7;			// triangle, circle, cross, square
+	 uint8_t ButtonSet1Nibble:1;
+	 uint8_t ButtonSet2:7;			// L2, R2, L1, R1
+	 uint8_t ButtonSet2Nibble:1;
+	 uint8_t ButtonSet3:7;			// select, start, lthumb, rthumb
+	 uint8_t ButtonSet3Nibble:1;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -229,7 +229,7 @@ static const int ButtonKeys[16] =
 	KEY_PAD_RTHUMB
 };
 
-static const BYTE HatButtons[16] =
+static const uint8_t HatButtons[16] =
 {
 	1, 1+2, 2, 2+4, 4, 4+8, 8, 8+1,
 	0, 0, 0, 0, 0, 0, 0, 0
@@ -390,9 +390,9 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 	// w32api has an incompatible definition of bRawData.
 	// (But the version that comes with MinGW64 is fine.)
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
-	BYTE *rawdata = &raw->bRawData;
+	uint8_t *rawdata = &raw->bRawData;
 #else
-	BYTE *rawdata = raw->bRawData;
+	uint8_t *rawdata = raw->bRawData;
 #endif
 	const PS2Descriptor *desc = &Descriptors[Type];
 	bool digital;
@@ -515,7 +515,7 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 
 void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value2, AxisInfo *axis2, int base)
 {
-	BYTE buttonstate;
+	uint8_t buttonstate;
 	double axisval1, axisval2;
 	
 	axisval1 = value1 * (2.0 / 255) - 1.0;

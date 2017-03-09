@@ -690,7 +690,7 @@ GLSectorStackPortal::~GLSectorStackPortal()
 //
 //-----------------------------------------------------------------------------
 
-static BYTE SetCoverage(void *node)
+static uint8_t SetCoverage(void *node)
 {
 	if (numnodes == 0)
 	{
@@ -699,13 +699,13 @@ static BYTE SetCoverage(void *node)
 	if (!((size_t)node & 1))  // Keep going until found a subsector
 	{
 		node_t *bsp = (node_t *)node;
-		BYTE coverage = SetCoverage(bsp->children[0]) | SetCoverage(bsp->children[1]);
+		uint8_t coverage = SetCoverage(bsp->children[0]) | SetCoverage(bsp->children[1]);
 		gl_drawinfo->no_renderflags[bsp-nodes] = coverage;
 		return coverage;
 	}
 	else
 	{
-		subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 		return gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN;
 	}
 }

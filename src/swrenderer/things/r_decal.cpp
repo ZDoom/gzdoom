@@ -66,7 +66,7 @@ namespace swrenderer
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
 		double yscale;
-		BYTE flipx;
+		uint8_t flipx;
 		double zpos;
 		int needrepeat = 0;
 		sector_t *front, *back;
@@ -121,7 +121,7 @@ namespace swrenderer
 		}
 
 		FTexture *WallSpriteTile = TexMan(decal->PicNum, true);
-		flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
+		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
 		if (WallSpriteTile == NULL || WallSpriteTile->UseType == FTexture::TEX_Null)
 		{

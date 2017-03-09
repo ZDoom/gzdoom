@@ -15,8 +15,8 @@ public:
 
 	void SetSfxVolume (float volume);
 	void SetMusicVolume (float volume);
-	std::pair<SoundHandle,bool> LoadSound(BYTE *sfxdata, int length, bool monoize);
-	std::pair<SoundHandle,bool> LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false);
+	std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize);
+	std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false);
 	void UnloadSound (SoundHandle sfx);
 	unsigned int GetMSLength(SoundHandle sfx);
 	unsigned int GetSampleLength(SoundHandle sfx);

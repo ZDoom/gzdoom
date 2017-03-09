@@ -70,7 +70,7 @@ extern bool GUICapture;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Convert DIK_* code to ASCII using Qwerty keymap
-static const BYTE Convert[256] =
+static const uint8_t Convert[256] =
 {
   //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
 	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
@@ -133,8 +133,8 @@ FKeyboard::~FKeyboard()
 
 bool FKeyboard::CheckAndSetKey(int keynum, INTBOOL down)
 {
-	BYTE *statebyte = &KeyStates[keynum >> 3];
-	BYTE mask = 1 << (keynum & 7);
+	uint8_t *statebyte = &KeyStates[keynum >> 3];
+	uint8_t mask = 1 << (keynum & 7);
 	if (down)
 	{
 		if (*statebyte & mask)
@@ -172,7 +172,7 @@ void FKeyboard::AllKeysUp()
 	{
 		if (KeyStates[i] != 0)
 		{
-			BYTE states = KeyStates[i];
+			uint8_t states = KeyStates[i];
 			int j = 0;
 			KeyStates[i] = 0;
 			do
@@ -469,7 +469,7 @@ bool FRawKeyboard::ProcessRawInput(RAWINPUT *raw, int code)
 	  // useful key from the message.
 		if (raw->data.keyboard.VKey >= VK_BROWSER_BACK && raw->data.keyboard.VKey <= VK_LAUNCH_APP2)
 		{
-			static const BYTE MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
+			static const uint8_t MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
 			{
 				DIK_WEBBACK, DIK_WEBFORWARD, DIK_WEBREFRESH, DIK_WEBSTOP,
 				DIK_WEBSEARCH, DIK_WEBFAVORITES, DIK_WEBHOME,

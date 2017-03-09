@@ -29,7 +29,7 @@ struct FRenderer
 	virtual bool UsesColormap() const = 0;
 
 	// precache one texture
-	virtual void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
+	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 
 	// render 3D view
 	virtual void RenderView(player_t *player) = 0;

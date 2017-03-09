@@ -412,9 +412,9 @@ namespace swrenderer
 				case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
 				case 6: case 3: x2 = gxinc+gyinc;	y2 = gyinc-gxinc;	break;
 			}
-			BYTE oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
-			BYTE oand16 = oand + 16;
-			BYTE oand32 = oand + 32;
+			uint8_t oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
+			uint8_t oand16 = oand + 16;
+			uint8_t oand32 = oand + 32;
 
 			if (yi > 0) { dagxinc =  gxinc; dagyinc =  FixedMul(gyinc, viewport->viewingrangerecip); }
 				   else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewport->viewingrangerecip); }
@@ -428,7 +428,7 @@ namespace swrenderer
 
 			for (x = xs; x != xe; x += xi)
 			{
-				BYTE *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
+				uint8_t *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
 				short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
 
 				nx = FixedMul(ggxstart + ggxinc[x], viewport->viewingrangerecip) + x1;
@@ -455,9 +455,9 @@ namespace swrenderer
 
 					fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
 					fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));
-					for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
+					for (; voxptr < voxend; voxptr = (kvxslab_t *)((uint8_t *)voxptr + voxptr->zleng + 3))
 					{
-						const BYTE *col = voxptr->col;
+						const uint8_t *col = voxptr->col;
 						int zleng = voxptr->zleng;
 						int ztop = voxptr->ztop;
 						fixed_t z1, z2;

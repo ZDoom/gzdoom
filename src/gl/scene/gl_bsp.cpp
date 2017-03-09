@@ -131,7 +131,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 	}
 	currentsubsector->flags |= SSECF_DRAWN;
 
-	BYTE ispoly = BYTE(seg->sidedef->Flags & WALLF_POLYOBJ);
+	uint8_t ispoly = uint8_t(seg->sidedef->Flags & WALLF_POLYOBJ);
 
 	if (!seg->backsector)
 	{
@@ -248,7 +248,7 @@ static void RenderPolyBSPNode (void *node)
 
 		node = bsp->children[side];
 	}
-	PolySubsector ((subsector_t *)((BYTE *)node - 1));
+	PolySubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
 //==========================================================================
@@ -512,7 +512,7 @@ static void DoSubsector(subsector_t * sub)
 					fakesector = gl_FakeFlat(sector, &fake, false);
 				}
 
-				BYTE &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];
+				uint8_t &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];
 				if (!(srf & SSRF_PROCESSED))
 				{
 					srf |= SSRF_PROCESSED;
@@ -587,7 +587,7 @@ void gl_RenderBSPNode (void *node)
 
 		node = bsp->children[side];
 	}
-	DoSubsector ((subsector_t *)((BYTE *)node - 1));
+	DoSubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
 

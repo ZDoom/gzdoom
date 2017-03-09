@@ -220,7 +220,7 @@ struct Sample
 	{
 		struct
 		{
-			BYTE rate[6], offset[6];
+			uint8_t rate[6], offset[6];
 		} gf1;
 		struct
 		{
@@ -236,7 +236,7 @@ struct Sample
 	int32_t
 		tremolo_sweep_increment, tremolo_phase_increment,
 		vibrato_sweep_increment, vibrato_control_ratio;
-	BYTE
+	uint8_t
 		tremolo_depth, vibrato_depth,
 		low_vel, high_vel,
 		 type;
@@ -428,7 +428,7 @@ struct Channel
 		bank, program, sustain, pitchbend, 
 		mono, /* one note only on this channel */
 		pitchsens;
-	BYTE
+	uint8_t
 		volume, expression;
 	int8_t
 		panning;
@@ -445,8 +445,8 @@ struct Channel
 
 struct MinEnvelope
 {
-	BYTE stage;
-	BYTE bUpdating;
+	uint8_t stage;
+	uint8_t bUpdating;
 };
 
 struct GF1Envelope : public MinEnvelope
@@ -490,7 +490,7 @@ struct Envelope
 		SF2Envelope sf2;
 	};
 
-	BYTE Type;
+	uint8_t Type;
 
 	void Init(struct Renderer *song, struct Voice *v);
 	bool Update(struct Voice *v)
@@ -515,7 +515,7 @@ struct Envelope
 
 struct Voice
 {
-	BYTE
+	uint8_t
 		status, channel, note, velocity;
 	Sample *sample;
 	float
@@ -633,7 +633,7 @@ struct Renderer
 	~Renderer();
 
 	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongMessage(const BYTE *data, int len);
+	void HandleLongMessage(const uint8_t *data, int len);
 	void HandleController(int chan, int ctrl, int val);
 	void ComputeOutput(float *buffer, int num_samples);
 	void MarkInstrument(int bank, int percussion, int instr);
@@ -641,10 +641,10 @@ struct Renderer
 
 	int load_missing_instruments();
 	int set_default_instrument(const char *name);
-	int convert_tremolo_sweep(BYTE sweep);
-	int convert_vibrato_sweep(BYTE sweep, int vib_control_ratio);
-	int convert_tremolo_rate(BYTE rate);
-	int convert_vibrato_rate(BYTE rate);
+	int convert_tremolo_sweep(uint8_t sweep);
+	int convert_vibrato_sweep(uint8_t sweep, int vib_control_ratio);
+	int convert_tremolo_rate(uint8_t rate);
+	int convert_vibrato_rate(uint8_t rate);
 
 	void recompute_freq(int voice);
 	void recompute_amp(Voice *v);

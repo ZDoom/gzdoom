@@ -214,7 +214,7 @@ namespace swrenderer
 		auto vis = this;
 
 		int spacing;
-		BYTE color = vis->Light.BaseColormap->Maps[vis->startfrac];
+		uint8_t color = vis->Light.BaseColormap->Maps[vis->startfrac];
 		int yl = vis->y1;
 		int ycount = vis->y2 - yl + 1;
 		int x1 = vis->x1;

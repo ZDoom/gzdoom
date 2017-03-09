@@ -34,7 +34,7 @@ public:
 
 private:
 	PalEntry SourcePalette[256];
-	BYTE GammaTable[3][256];
+	uint8_t GammaTable[3][256];
 	PalEntry Flash;
 	int FlashAmount;
 	float Gamma;

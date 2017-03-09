@@ -92,7 +92,7 @@ extern bool r_showviewer;
 
 int			gl_fixedcolormap;
 area_t			in_area;
-TArray<BYTE> currentmapsection;
+TArray<uint8_t> currentmapsection;
 int camtexcount;
 
 void gl_ParseDefs();
@@ -1010,7 +1010,7 @@ struct FGLInterface : public FRenderer
 	bool UsesColormap() const override;
 	void PrecacheTexture(FTexture *tex, int cache);
 	void PrecacheSprite(FTexture *tex, SpriteHits &hits);
-	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
+	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
 	void StateChanged(AActor *actor) override;
@@ -1078,13 +1078,13 @@ void FGLInterface::PrecacheSprite(FTexture *tex, SpriteHits &hits)
 //
 //==========================================================================
 
-void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
+void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {
 	SpriteHits *spritelist = new SpriteHits[sprites.Size()];
 	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
 	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
 	TMap<PClassActor*, bool>::Pair *pair;
-	BYTE *modellist = new BYTE[Models.Size()];
+	uint8_t *modellist = new uint8_t[Models.Size()];
 	memset(modellist, 0, Models.Size());
 	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
 

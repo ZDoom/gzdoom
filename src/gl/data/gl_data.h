@@ -69,7 +69,7 @@ struct FGLLinePortal
 extern TArray<FPortal *> portals;
 extern TArray<FGLLinePortal*> linePortalToGL;
 
-extern TArray<BYTE> currentmapsection;
+extern TArray<uint8_t> currentmapsection;
 
 void gl_InitPortals();
 void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);

@@ -133,7 +133,7 @@ typedef struct _DLSID {
   ULONG    ulData1;
   USHORT   usData2;
   USHORT   usData3;
-  BYTE     abData4[8];
+  uint8_t     abData4[8];
 } DLSID, FAR *LPDLSID;
 
 typedef struct _DLSVERSION {

@@ -40,7 +40,7 @@
 #include "version.h"
 
 
-static NSColor* RGB(const BYTE red, const BYTE green, const BYTE blue)
+static NSColor* RGB(const uint8_t red, const uint8_t green, const uint8_t blue)
 {
 	return [NSColor colorWithCalibratedRed:red   / 255.0f
 									 green:green / 255.0f
@@ -250,7 +250,7 @@ void FConsoleWindow::AddText(const char* message)
 
 		if (TEXTCOLOR_ESCAPE == *message)
 		{
-			const BYTE* colorID = reinterpret_cast<const BYTE*>(message) + 1;
+			const uint8_t* colorID = reinterpret_cast<const uint8_t*>(message) + 1;
 			if ('\0' == *colorID)
 			{
 				break;

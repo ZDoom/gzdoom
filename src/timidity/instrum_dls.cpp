@@ -59,7 +59,7 @@ struct RIFF_Chunk
 	uint32_t	magic;
 	uint32_t	length;
 	uint32_t	subtype;
-	BYTE	*data;
+	uint8_t	*data;
 	RIFF_Chunk *child;
 	RIFF_Chunk *next;
 };
@@ -85,9 +85,9 @@ static int ChunkHasSubChunks(uint32_t magic)
 	return (magic == RIFF || magic == LIST);
 }
 
-static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, uint32_t left)
+static void LoadSubChunks(RIFF_Chunk *chunk, uint8_t *data, uint32_t left)
 {
-	BYTE *subchunkData;
+	uint8_t *subchunkData;
 	uint32_t subchunkDataLen;
 
 	while ( left > 8 ) {
@@ -133,7 +133,7 @@ static void LoadSubChunks(RIFF_Chunk *chunk, BYTE *data, uint32_t left)
 RIFF_Chunk *LoadRIFF(FILE *src)
 {
 	RIFF_Chunk *chunk;
-	BYTE *subchunkData;
+	uint8_t *subchunkData;
 	uint32_t subchunkDataLen;
 
 	/* Allocate the chunk structure */
@@ -148,7 +148,7 @@ RIFF_Chunk *LoadRIFF(FILE *src)
 		delete chunk;
 		return NULL;
 	}
-	chunk->data = (BYTE *)malloc(chunk->length);
+	chunk->data = (uint8_t *)malloc(chunk->length);
 	if ( chunk->data == NULL ) {
 		__Sound_SetError(ERR_OUT_OF_MEMORY);
 		delete chunk;
@@ -274,7 +274,7 @@ struct WaveFMT
 struct DLS_Wave
 {
 	WaveFMT *format;
-	BYTE *data;
+	uint8_t *data;
 	uint32_t length;
 	WSMPL *wsmp;
 	WLOOP *wsmp_loop;
@@ -451,7 +451,7 @@ static void Parse_wsmp(DLS_Data *data, RIFF_Chunk *chunk, WSMPL **wsmp_ptr, WLOO
 	wsmp->lAttenuation = LittleLong(wsmp->lAttenuation);
 	wsmp->fulOptions = LittleLong(wsmp->fulOptions);
 	wsmp->cSampleLoops = LittleLong(wsmp->cSampleLoops);
-	loop = (WLOOP *)((BYTE *)chunk->data + wsmp->cbSize);
+	loop = (WLOOP *)((uint8_t *)chunk->data + wsmp->cbSize);
 	*wsmp_ptr = wsmp;
 	*wsmp_loop_ptr = loop;
 	for ( i = 0; i < wsmp->cSampleLoops; ++i ) {
@@ -470,7 +470,7 @@ static void Parse_art(DLS_Data *data, RIFF_Chunk *chunk, CONNECTIONLIST **art_pt
 	CONNECTION *artList;
 	art->cbSize = LittleLong(art->cbSize);
 	art->cConnections = LittleLong(art->cConnections);
-	artList = (CONNECTION *)((BYTE *)chunk->data + art->cbSize);
+	artList = (CONNECTION *)((uint8_t *)chunk->data + art->cbSize);
 	*art_ptr = art;
 	*artList_ptr = artList;
 	for ( i = 0; i < art->cConnections; ++i ) {
@@ -591,7 +591,7 @@ static void Parse_ptbl(DLS_Data *data, RIFF_Chunk *chunk)
 	ptbl->cbSize = LittleLong(ptbl->cbSize);
 	ptbl->cCues = LittleLong(ptbl->cCues);
 	data->ptbl = ptbl;
-	data->ptblList = (POOLCUE *)((BYTE *)chunk->data + ptbl->cbSize);
+	data->ptblList = (POOLCUE *)((uint8_t *)chunk->data + ptbl->cbSize);
 	for ( i = 0; i < ptbl->cCues; ++i ) {
 		data->ptblList[i].ulOffset = LittleLong(data->ptblList[i].ulOffset);
 	}
@@ -1127,8 +1127,8 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	sample->low_freq = note_to_freq(rgn->header->RangeKey.usLow);
 	sample->high_freq = note_to_freq(rgn->header->RangeKey.usHigh);
 	sample->root_freq = note_to_freq(rgn->wsmp->usUnityNote + rgn->wsmp->sFineTune * .01f);
-	sample->low_vel = (BYTE)rgn->header->RangeVelocity.usLow;
-	sample->high_vel = (BYTE)rgn->header->RangeVelocity.usHigh;
+	sample->low_vel = (uint8_t)rgn->header->RangeVelocity.usLow;
+	sample->high_vel = (uint8_t)rgn->header->RangeVelocity.usHigh;
 
 	sample->modes = wave->format->wBitsPerSample == 8 ? PATCH_UNSIGNED : PATCH_16;
 	sample->sample_rate = wave->format->dwSamplesPerSec;

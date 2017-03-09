@@ -123,9 +123,9 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 	}
 }
 
-void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
+void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {
-	BYTE *spritelist = new BYTE[sprites.Size()];
+	uint8_t *spritelist = new uint8_t[sprites.Size()];
 	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
 	TMap<PClassActor*, bool>::Pair *pair;
 
@@ -249,7 +249,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 {
 	auto viewport = RenderViewport::Instance();
 	
-	BYTE *Pixels = viewport->RenderTarget->IsBgra() ? (BYTE*)tex->GetPixelsBgra() : (BYTE*)tex->GetPixels();
+	uint8_t *Pixels = viewport->RenderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels();
 	DSimpleCanvas *Canvas = viewport->RenderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
@@ -295,7 +295,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		// We need to make sure that both pixel buffers contain data:
 		int width = tex->GetWidth();
 		int height = tex->GetHeight();
-		BYTE *palbuffer = (BYTE *)tex->GetPixels();
+		uint8_t *palbuffer = (uint8_t *)tex->GetPixels();
 		uint32_t *bgrabuffer = (uint32_t*)tex->GetPixelsBgra();
 		for (int x = 0; x < width; x++)
 		{

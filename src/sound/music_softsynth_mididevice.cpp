@@ -313,7 +313,7 @@ int SoftSynthMIDIDevice::PlayTick()
 		}
 		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
 		{
-			HandleLongEvent((BYTE *)&event[3], MEVT_EVENTPARM(event[2]));
+			HandleLongEvent((uint8_t *)&event[3], MEVT_EVENTPARM(event[2]));
 		}
 		else if (MEVT_EVENTTYPE(event[2]) == 0)
 		{ // Short MIDI event

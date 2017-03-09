@@ -62,9 +62,9 @@ namespace swrenderer
 		dc_textureheight = tex->GetHeight();
 
 		const FTexture::Span *span;
-		const BYTE *column;
+		const uint8_t *column;
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
-			column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
+			column = (const uint8_t *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
 			column = tex->GetColumn(col >> FRACBITS, &span);
 
@@ -172,7 +172,7 @@ namespace swrenderer
 			xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
 
 			int tx = xoffset >> FRACBITS;
-			dc_source = (BYTE*)(pixels + tx * mip_height);
+			dc_source = (uint8_t*)(pixels + tx * mip_height);
 			dc_source2 = nullptr;
 			dc_textureheight = mip_height;
 			dc_texturefracx = 0;
@@ -183,8 +183,8 @@ namespace swrenderer
 
 			int tx0 = xoffset >> FRACBITS;
 			int tx1 = MIN(tx0 + 1, mip_width - 1);
-			dc_source = (BYTE*)(pixels + tx0 * mip_height);
-			dc_source2 = (BYTE*)(pixels + tx1 * mip_height);
+			dc_source = (uint8_t*)(pixels + tx0 * mip_height);
+			dc_source2 = (uint8_t*)(pixels + tx1 * mip_height);
 			dc_textureheight = mip_height;
 			dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
 		}

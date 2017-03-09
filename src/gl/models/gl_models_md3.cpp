@@ -300,7 +300,7 @@ void FMD3Model::BuildVertexBuffer()
 //
 //===========================================================================
 
-void FMD3Model::AddSkins(BYTE *hitlist)
+void FMD3Model::AddSkins(uint8_t *hitlist)
 {
 	for (int i = 0; i < numSurfaces; i++)
 	{

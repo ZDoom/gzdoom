@@ -90,9 +90,9 @@ public:
 
 	// SFMT interface
 	unsigned int GenRand32();
-	QWORD GenRand64();
+	uint64_t GenRand64();
 	void FillArray32(uint32_t *array, int size);
-	void FillArray64(QWORD *array, int size);
+	void FillArray64(uint64_t *array, int size);
 	void InitGenRand(uint32_t seed);
 	void InitByArray(uint32_t *init_key, int key_length);
 	int GetMinArraySize32();
@@ -140,7 +140,7 @@ public:
 	/** These real versions are due to Isaku Wada */
 
 	/** generates a random number on [0,1) with 53-bit resolution*/
-	static inline double ToRes53(QWORD v) 
+	static inline double ToRes53(uint64_t v) 
 	{ 
 		return v * (1.0/18446744073709551616.0L);
 	}
@@ -149,7 +149,7 @@ public:
 	 * 32 bit integers */
 	static inline double ToRes53Mix(uint32_t x, uint32_t y) 
 	{ 
-		return ToRes53(x | ((QWORD)y << 32));
+		return ToRes53(x | ((uint64_t)y << 32));
 	}
 
 	/** generates a random number on [0,1) with 53-bit resolution
@@ -204,7 +204,7 @@ private:
 	{
 		w128_t w128[SFMT::N];
 		unsigned int u[SFMT::N32];
-		QWORD u64[SFMT::N64];
+		uint64_t u64[SFMT::N64];
 	} sfmt;
 	/** index counter to the 32-bit internal state array */
 	int idx;

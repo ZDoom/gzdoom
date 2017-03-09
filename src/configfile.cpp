@@ -863,7 +863,7 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 	// isn't in the value. We create the sequences by generating two
 	// 64-bit random numbers and Base64 encoding the first 15 bytes
 	// from them.
-	union { QWORD rand_num[2]; BYTE rand_bytes[16]; };
+	union { uint64_t rand_num[2]; uint8_t rand_bytes[16]; };
 	do
 	{
 		rand_num[0] = pr_endtag.GenRand64();

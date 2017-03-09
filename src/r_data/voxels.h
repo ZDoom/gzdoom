@@ -9,10 +9,10 @@
 
 struct kvxslab_t
 {
-	BYTE		ztop;			// starting z coordinate of top of slab
-	BYTE		zleng;			// # of bytes in the color array - slab height
-	BYTE		backfacecull;	// low 6 bits tell which of 6 faces are exposed
-	BYTE		col[1/*zleng*/];// color data from top to bottom
+	uint8_t		ztop;			// starting z coordinate of top of slab
+	uint8_t		zleng;			// # of bytes in the color array - slab height
+	uint8_t		backfacecull;	// low 6 bits tell which of 6 faces are exposed
+	uint8_t		col[1/*zleng*/];// color data from top to bottom
 };
 
 struct kvxslab_bgra_t
@@ -34,7 +34,7 @@ struct FVoxelMipLevel
 	DVector3	Pivot;
 	int			*OffsetX;
 	short		*OffsetXY;
-	BYTE		*SlabData;
+	uint8_t		*SlabData;
 	TArray<uint32_t> SlabDataBgra;
 };
 
@@ -43,7 +43,7 @@ struct FVoxel
 	int LumpNum;
 	int NumMips;
 	int VoxelIndex;			// Needed by GZDoom
-	BYTE *Palette;
+	uint8_t *Palette;
 	FVoxelMipLevel Mips[MAXVOXMIPS];
 
 	FVoxel();

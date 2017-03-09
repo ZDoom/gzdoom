@@ -250,7 +250,7 @@ bool AudioToolboxMIDIDevice::Preprocess(MIDIStreamer* song, bool looping)
 {
 	assert(nullptr != song);
 
-	TArray<BYTE> midi;
+	TArray<uint8_t> midi;
 	song->CreateSMF(midi, looping ? 0 : 1);
 
 	CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, &midi[0], midi.Size(), kCFAllocatorNull);

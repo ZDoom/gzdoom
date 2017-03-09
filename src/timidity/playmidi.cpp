@@ -116,7 +116,7 @@ void Renderer::recompute_freq(int v)
 	voice[v].sample_increment = (int)(a);
 }
 
-static const BYTE vol_table[] = {
+static const uint8_t vol_table[] = {
 000 /* 000 */,	129 /* 001 */,	145 /* 002 */,	155 /* 003 */,	
 161 /* 004 */,	166 /* 005 */,	171 /* 006 */,	174 /* 007 */,	
 177 /* 008 */,	180 /* 009 */,	182 /* 010 */,	185 /* 011 */,	
@@ -872,7 +872,7 @@ void Renderer::DataEntryFineNRPN(int chan, int nrpn, int val)
 {
 }
 
-void Renderer::HandleLongMessage(const BYTE *data, int len)
+void Renderer::HandleLongMessage(const uint8_t *data, int len)
 {
 	// SysEx handling goes here.
 }

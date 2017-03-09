@@ -1099,7 +1099,7 @@ float OpenALSoundRenderer::GetOutputRate()
 }
 
 
-std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
+std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
 {
 	SoundHandle retval = { NULL };
 
@@ -1195,7 +1195,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int
 	return std::make_pair(retval, channels==1);
 }
 
-std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length, bool monoize)
+std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize)
 {
 	SoundHandle retval = { NULL };
 	MemoryReader reader((const char*)sfxdata, length);
@@ -1245,13 +1245,13 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int le
 		}
 		else if(type == SampleType_UInt8)
 		{
-			BYTE *sfxdata = (BYTE*)&data[0];
+			uint8_t *sfxdata = (uint8_t*)&data[0];
 			for(size_t i = 0;i < frames;i++)
 			{
 				int sum = 0;
 				for(size_t c = 0;c < chancount;c++)
 					sum += sfxdata[i*chancount + c] - 128;
-				sfxdata[i] = BYTE((sum / chancount) + 128);
+				sfxdata[i] = uint8_t((sum / chancount) + 128);
 			}
 		}
 		data.Resize(unsigned(data.Size()/chancount));

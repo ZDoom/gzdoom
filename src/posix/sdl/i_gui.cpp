@@ -26,7 +26,7 @@ bool I_SetCursor(FTexture *cursorpic)
 			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
 
 		SDL_LockSurface(cursorSurface);
-		BYTE buffer[32*32*4];
+		uint8_t buffer[32*32*4];
 		memset(buffer, 0, 32*32*4);
 		FBitmap bmp(buffer, 32*4, 32, 32);
 		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);

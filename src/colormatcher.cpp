@@ -71,10 +71,10 @@ void FColorMatcher::SetPalette (const uint32_t *palette)
 	Pal = (const PalEntry *)palette;
 }
 
-BYTE FColorMatcher::Pick (int r, int g, int b)
+uint8_t FColorMatcher::Pick (int r, int g, int b)
 {
 	if (Pal == NULL)
 		return 1;
 
-	return (BYTE)BestColor ((uint32_t *)Pal, r, g, b);
+	return (uint8_t)BestColor ((uint32_t *)Pal, r, g, b);
 }

@@ -267,7 +267,7 @@ void FTexture::CreateDefaultBrightmap()
 			) 
 		{
 			// May have one - let's check when we use this texture
-			const BYTE *texbuf = GetPixels();
+			const uint8_t *texbuf = GetPixels();
 			const int white = ColorMatcher.Pick(255,255,255);
 
 			int size = GetWidth() * GetHeight();
@@ -556,13 +556,13 @@ FBrightmapTexture::~FBrightmapTexture ()
 {
 }
 
-const BYTE *FBrightmapTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FBrightmapTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	// not needed
 	return NULL;
 }
 
-const BYTE *FBrightmapTexture::GetPixels ()
+const uint8_t *FBrightmapTexture::GetPixels ()
 {
 	// not needed
 	return NULL;

@@ -438,7 +438,7 @@ void FluidSynthMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 //
 //==========================================================================
 
-void FluidSynthMIDIDevice::HandleLongEvent(const BYTE *data, int len)
+void FluidSynthMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 	if (len > 1 && (data[0] == 0xF0 || data[0] == 0xF7))
 	{

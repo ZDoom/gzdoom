@@ -427,7 +427,7 @@ angle_t R_PointToPseudoAngle(double x, double y)
 //  if some part of the bbox might be visible.
 //
 //-----------------------------------------------------------------------------
-	static const BYTE checkcoord[12][4] = // killough -- static const
+	static const uint8_t checkcoord[12][4] = // killough -- static const
 	{
 	  {3,0,2,1},
 	  {3,0,2,0},
@@ -447,7 +447,7 @@ bool Clipper::CheckBox(const float *bspcoord)
 	angle_t angle1, angle2;
 
 	int        boxpos;
-	const BYTE* check;
+	const uint8_t* check;
 	
 	// Find the corners of the box
 	// that define the edges from current viewpoint.

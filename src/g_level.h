@@ -175,7 +175,7 @@ enum ELevelFlags : unsigned int
 	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
 	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
-	// The flags QWORD is now split into 2 DWORDs 
+	// The flags uint64_t is now split into 2 DWORDs 
 	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
 	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
 

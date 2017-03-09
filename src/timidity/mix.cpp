@@ -32,7 +32,7 @@
 namespace Timidity
 {
 
-static int convert_envelope_rate(Renderer *song, BYTE rate)
+static int convert_envelope_rate(Renderer *song, uint8_t rate)
 {
 	int r;
 

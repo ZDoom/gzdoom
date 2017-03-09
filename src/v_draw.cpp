@@ -973,14 +973,14 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 // V_DrawBlock
 // Draw a linear block of pixels into the view buffer.
 //
-void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src) const
+void DCanvas::DrawBlock (int x, int y, int _width, int _height, const uint8_t *src) const
 {
 	if (IsBgra())
 		return;
 
 	int srcpitch = _width;
 	int destpitch;
-	BYTE *dest;
+	uint8_t *dest;
 
 	if (ClipBox (x, y, _width, _height, src, srcpitch))
 	{
@@ -1002,12 +1002,12 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src)
 // V_GetBlock
 // Gets a linear block of pixels from the view buffer.
 //
-void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
+void DCanvas::GetBlock (int x, int y, int _width, int _height, uint8_t *dest) const
 {
 	if (IsBgra())
 		return;
 
-	const BYTE *src;
+	const uint8_t *src;
 
 #ifdef RANGECHECK 
 	if (x<0
@@ -1030,7 +1030,7 @@ void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
 }
 
 // Returns true if the box was completely clipped. False otherwise.
-bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const BYTE *&src, const int srcpitch) const
+bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const uint8_t *&src, const int srcpitch) const
 {
 	if (x >= Width || y >= Height || x+w <= 0 || y+h <= 0)
 	{ // Completely clipped off screen

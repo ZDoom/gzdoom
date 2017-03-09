@@ -53,7 +53,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void WriteVarLen (TArray<BYTE> &file, DWORD value);
+static void WriteVarLen (TArray<uint8_t> &file, DWORD value);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -68,7 +68,7 @@ extern char MIDI_EventLengths[7];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const BYTE StaticMIDIhead[] =
+static const uint8_t StaticMIDIhead[] =
 {
 	'M','T','h','d', 0, 0, 0, 6,
 	0, 0, // format 0: only one track
@@ -955,7 +955,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		VolumeChanged = false;
 		for (i = 0; i < 16; ++i)
 		{
-			BYTE courseVol = (BYTE)(((ChannelVolumes[i]+1) * NewVolume) >> 16);
+			uint8_t courseVol = (uint8_t)(((ChannelVolumes[i]+1) * NewVolume) >> 16);
 			events[0] = 0;				// dwDeltaTime
 			events[1] = 0;				// dwStreamID
 			events[2] = MIDI_CTRLCHANGE | i | (7<<8) | (courseVol<<16);
@@ -1069,8 +1069,8 @@ DWORD *MIDIStreamer::WriteStopNotes(DWORD *events)
 
 void MIDIStreamer::Precache()
 {
-	BYTE found_instruments[256] = { 0, };
-	BYTE found_banks[256] = { 0, };
+	uint8_t found_instruments[256] = { 0, };
+	uint8_t found_banks[256] = { 0, };
 	bool multiple_banks = false;
 
 	LoopLimit = 1;
@@ -1167,10 +1167,10 @@ void MIDIStreamer::Precache()
 //
 //==========================================================================
 
-void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
+void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 {
 	DWORD delay = 0;
-	BYTE running_status = 255;
+	uint8_t running_status = 255;
 
 	// Always create songs aimed at GM devices.
 	CheckCaps(MOD_MIDIPORT);
@@ -1200,9 +1200,9 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 				file.Push(MIDI_META);
 				file.Push(MIDI_META_TEMPO);
 				file.Push(3);
-				file.Push(BYTE(tempo >> 16));
-				file.Push(BYTE(tempo >> 8));
-				file.Push(BYTE(tempo));
+				file.Push(uint8_t(tempo >> 16));
+				file.Push(uint8_t(tempo >> 8));
+				file.Push(uint8_t(tempo));
 				running_status = 255;
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
@@ -1210,7 +1210,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 				WriteVarLen(file, delay);
 				delay = 0;
 				DWORD len = MEVT_EVENTPARM(event[2]);
-				BYTE *bytes = (BYTE *)&event[3];
+				uint8_t *bytes = (uint8_t *)&event[3];
 				if (bytes[0] == MIDI_SYSEX)
 				{
 					len--;
@@ -1230,16 +1230,16 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
-				BYTE status = BYTE(event[2]);
+				uint8_t status = uint8_t(event[2]);
 				if (status != running_status)
 				{
 					running_status = status;
 					file.Push(status);
 				}
-				file.Push(BYTE((event[2] >> 8) & 0x7F));
+				file.Push(uint8_t((event[2] >> 8) & 0x7F));
 				if (MIDI_EventLengths[(status >> 4) & 7] == 2)
 				{
-					file.Push(BYTE((event[2] >> 16) & 0x7F));
+					file.Push(uint8_t((event[2] >> 16) & 0x7F));
 				}
 			}
 			// Advance to next event
@@ -1262,10 +1262,10 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 
 	// Fill in track length
 	DWORD len = file.Size() - 22;
-	file[18] = BYTE(len >> 24);
-	file[19] = BYTE(len >> 16);
-	file[20] = BYTE(len >> 8);
-	file[21] = BYTE(len & 255);
+	file[18] = uint8_t(len >> 24);
+	file[19] = uint8_t(len >> 16);
+	file[20] = uint8_t(len >> 8);
+	file[21] = uint8_t(len & 255);
 
 	LoopLimit = 0;
 }
@@ -1276,7 +1276,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 //
 //==========================================================================
 
-static void WriteVarLen (TArray<BYTE> &file, DWORD value)
+static void WriteVarLen (TArray<uint8_t> &file, DWORD value)
 {
    DWORD buffer = value & 0x7F;
 
@@ -1288,7 +1288,7 @@ static void WriteVarLen (TArray<BYTE> &file, DWORD value)
 
    for (;;)
    {
-	   file.Push(BYTE(buffer));
+	   file.Push(uint8_t(buffer));
 	   if (buffer & 0x80)
 	   {
 		   buffer >>= 8;

@@ -64,7 +64,7 @@ void PolyCull::CullNode(void *node)
 		node = bsp->children[side];
 	}
 
-	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 	CullSubsector(sub);
 }
 

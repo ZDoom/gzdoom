@@ -397,7 +397,7 @@ bool OpenGLSWFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLSWFrameBuffer *fb)
 
 					BufferedTris *quad = &fb->QuadExtra[fb->QuadBatchPos];
 					FBVERTEX *vert = &fb->VertexData[fb->VertexPos];
-					WORD *index = &fb->IndexData[fb->IndexPos];
+					uint16_t *index = &fb->IndexData[fb->IndexPos];
 
 					quad->ClearSetup();
 					quad->Flags = BQF_DisableAlphaTest;

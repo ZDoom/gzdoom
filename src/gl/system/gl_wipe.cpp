@@ -87,7 +87,7 @@ public:
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
-	BYTE BurnArray[WIDTH * (HEIGHT + 5)];
+	uint8_t BurnArray[WIDTH * (HEIGHT + 5)];
 	FHardwareTexture *BurnTexture;
 	int Density;
 	int BurnTime;
@@ -524,15 +524,15 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	BurnTexture = new FHardwareTexture(WIDTH, HEIGHT, true);
 
 	// Update the burn texture with the new burn data
-	BYTE rgb_buffer[WIDTH*HEIGHT*4];
+	uint8_t rgb_buffer[WIDTH*HEIGHT*4];
 
-	const BYTE *src = BurnArray;
+	const uint8_t *src = BurnArray;
 	DWORD *dest = (DWORD *)rgb_buffer;
 	for (int y = HEIGHT; y != 0; --y)
 	{
 		for (int x = WIDTH; x != 0; --x)
 		{
-			BYTE s = clamp<int>((*src++)*2, 0, 255);
+			uint8_t s = clamp<int>((*src++)*2, 0, 255);
 			*dest++ = MAKEARGB(s,255,255,255);
 		}
 	}

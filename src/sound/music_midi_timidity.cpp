@@ -140,7 +140,7 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 
 bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
-	TArray<BYTE> midi;
+	TArray<uint8_t> midi;
 	bool success;
 	FILE *f;
 
@@ -287,9 +287,9 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 	DWORD fileLen;
 	HANDLE diskFile;
 	HANDLE mapping;
-	const BYTE *exeBase;
-	const BYTE *exeEnd;
-	const BYTE *exe;
+	const uint8_t *exeBase;
+	const uint8_t *exeEnd;
+	const uint8_t *exe;
 	bool good;
 
 	pathLen = SearchPath (NULL, timidity_exe, NULL, MAX_PATH, foundPath, &filePart);
@@ -319,7 +319,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 		CloseHandle (diskFile);
 		return false;
 	}
-	exeBase = (const BYTE *)MapViewOfFile (mapping, FILE_MAP_READ, 0, 0, 0);
+	exeBase = (const uint8_t *)MapViewOfFile (mapping, FILE_MAP_READ, 0, 0, 0);
 	if (exeBase == NULL)
 	{
 		Printf(PRINT_BOLD, "Could not map %s\n", foundPath);
@@ -343,7 +343,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 				good = true;
 				break;
 			}
-			exe = (const BYTE *)tSpot + 1;
+			exe = (const uint8_t *)tSpot + 1;
 		}
 	}
 	catch (...)
@@ -509,7 +509,7 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 		didget = 0;
 		for (;;)
 		{
-			ReadFile(song->ReadWavePipe, (BYTE *)buff+didget, len-didget, &got, NULL);
+			ReadFile(song->ReadWavePipe, (uint8_t *)buff+didget, len-didget, &got, NULL);
 			didget += got;
 			if (didget >= (DWORD)len)
 				break;
@@ -518,7 +518,7 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 			Sleep (10);
 			if (!PeekNamedPipe(song->ReadWavePipe, NULL, 0, NULL, &avail, NULL) || avail == 0)
 			{
-				memset ((BYTE *)buff+didget, 0, len-didget);
+				memset ((uint8_t *)buff+didget, 0, len-didget);
 				break;
 			}
 		} 
@@ -549,10 +549,10 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 	}
 //	fprintf(stderr,"something\n");
 
-	got = read(song->WavePipe[0], (BYTE *)buff, len);
+	got = read(song->WavePipe[0], (uint8_t *)buff, len);
 	if (got < len)
 	{
-		memset((BYTE *)buff+got, 0, len-got);
+		memset((uint8_t *)buff+got, 0, len-got);
 	}
 #endif
 	return true;

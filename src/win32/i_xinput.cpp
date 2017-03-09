@@ -91,7 +91,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
-		BYTE ButtonValue;
+		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
@@ -287,7 +287,7 @@ void FXInputController::ProcessInput()
 void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 	int value2, AxisInfo *axis2, int base)
 {
-	BYTE buttonstate;
+	uint8_t buttonstate;
 	double axisval1, axisval2;
 	
 	axisval1 = (value1 - SHRT_MIN) * 2.0 / 65536 - 1.0;
@@ -314,7 +314,7 @@ void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 
 void FXInputController::ProcessTrigger(int value, AxisInfo *axis, int base)
 {
-	BYTE buttonstate;
+	uint8_t buttonstate;
 	double axisval;
 	
 	axisval = Joy_RemoveDeadZone(value / 256.0, axis->DeadZone, &buttonstate);

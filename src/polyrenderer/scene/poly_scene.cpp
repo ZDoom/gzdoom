@@ -177,7 +177,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 
 		node = bsp->children[sideLeft];
 	}
 	
-	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 	
 	auto it = SubsectorDepths.find(sub);
 	if (it != SubsectorDepths.end())

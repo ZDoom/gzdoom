@@ -81,7 +81,7 @@ protected:
 	void InitializeState();
 
 	SDLGLFB () {}
-	BYTE GammaTable[3][256];
+	uint8_t GammaTable[3][256];
 	bool UpdatePending;
 
 	SDL_Window *Screen;

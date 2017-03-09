@@ -2203,11 +2203,11 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 			{
 				chan->setPosition(seekpos, FMOD_TIMEUNIT_PCM);
 			}
-			reuse_chan->StartTime.AsOne = QWORD(nowtime.AsOne - seekpos * OutputRate / freq);
+			reuse_chan->StartTime.AsOne = uint64_t(nowtime.AsOne - seekpos * OutputRate / freq);
 		}
 		else if (reuse_chan->StartTime.AsOne != 0)
 		{
-			QWORD difftime = nowtime.AsOne - reuse_chan->StartTime.AsOne;
+			uint64_t difftime = nowtime.AsOne - reuse_chan->StartTime.AsOne;
 			if (difftime > 0)
 			{
 				// Clamp the position of looping sounds to be within the sound.
@@ -2743,7 +2743,7 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
+std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -2825,7 +2825,7 @@ std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int l
 //
 //==========================================================================
 
-std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length, bool monoize)
+std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -3382,7 +3382,7 @@ short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizeby
 	sound->release();
 	if (result == FMOD_ERR_FILE_EOF)
 	{
-		memset((BYTE *)outbuf + amt_read, 0, len - amt_read);
+		memset((uint8_t *)outbuf + amt_read, 0, len - amt_read);
 	}
 	else if (result != FMOD_OK || amt_read != len)
 	{

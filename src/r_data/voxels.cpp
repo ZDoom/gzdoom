@@ -91,10 +91,10 @@ struct VoxelOptions
 //
 //==========================================================================
 
-static BYTE *GetVoxelRemap(const BYTE *pal)
+static uint8_t *GetVoxelRemap(const uint8_t *pal)
 {
-	static BYTE remap[256];
-	static BYTE oldpal[768];
+	static uint8_t remap[256];
+	static uint8_t oldpal[768];
 	static bool firsttime = true;
 
 	if (firsttime || memcmp(oldpal, pal, 768) != 0)
@@ -142,8 +142,8 @@ static bool CopyVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size)
 			dest->col[j] = src->col[j];
 		}
 		slabzleng += 3;
-		src = (kvxslab_t *)((BYTE *)src + slabzleng);
-		dest = (kvxslab_t *)((BYTE *)dest + slabzleng);
+		src = (kvxslab_t *)((uint8_t *)src + slabzleng);
+		dest = (kvxslab_t *)((uint8_t *)dest + slabzleng);
 		size -= slabzleng;
 	}
 	return true;
@@ -157,7 +157,7 @@ static bool CopyVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size)
 //
 //==========================================================================
 
-static void RemapVoxelSlabs(kvxslab_t *dest, int size, const BYTE *remap)
+static void RemapVoxelSlabs(kvxslab_t *dest, int size, const uint8_t *remap)
 {
 	while (size >= 3)
 	{
@@ -168,7 +168,7 @@ static void RemapVoxelSlabs(kvxslab_t *dest, int size, const BYTE *remap)
 			dest->col[j] = remap[dest->col[j]];
 		}
 		slabzleng += 3;
-		dest = (kvxslab_t *)((BYTE *)dest + slabzleng);
+		dest = (kvxslab_t *)((uint8_t *)dest + slabzleng);
 		size -= slabzleng;
 	}
 }
@@ -183,12 +183,12 @@ FVoxel *R_LoadKVX(int lumpnum)
 {
 	const kvxslab_t *slabs[MAXVOXMIPS];
 	FVoxel *voxel = new FVoxel;
-	const BYTE *rawmip;
+	const uint8_t *rawmip;
 	int mip, maxmipsize;
 	int i, j, n;
 
 	FMemLump lump = Wads.ReadLump(lumpnum);	// FMemLump adds an extra 0 byte to the end.
-	BYTE *rawvoxel = (BYTE *)lump.GetMem();
+	uint8_t *rawvoxel = (uint8_t *)lump.GetMem();
 	int voxelsize = (int)(lump.GetSize()-1);
 
 	// Oh, KVX, why couldn't you have a proper header? We'll just go through
@@ -229,7 +229,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 			// Allocate slab data space.
 			mipl->OffsetX = new int[(numbytes - 24 + 3) / 4];
 			mipl->OffsetXY = (short *)(mipl->OffsetX + mipl->SizeX + 1);
-			mipl->SlabData = (BYTE *)(mipl->OffsetXY + mipl->SizeX * (mipl->SizeY + 1));
+			mipl->SlabData = (uint8_t *)(mipl->OffsetXY + mipl->SizeX * (mipl->SizeY + 1));
 
 			// Load x offsets.
 			for (i = 0, n = mipl->SizeX; i <= n; ++i)
@@ -313,7 +313,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	}
 
 	voxel->LumpNum = lumpnum;
-	voxel->Palette = new BYTE[768];
+	voxel->Palette = new uint8_t[768];
 	memcpy(voxel->Palette, rawvoxel + voxelsize - 768, 768);
 
 	return voxel;
@@ -432,7 +432,7 @@ void FVoxel::CreateBgraSlabData()
 			slabzleng += 3;
 
 			dest = (kvxslab_bgra_t *)((uint32_t *)dest + slabzleng);
-			src = (kvxslab_t *)((BYTE *)src + slabzleng);
+			src = (kvxslab_t *)((uint8_t *)src + slabzleng);
 			size -= slabzleng;
 		}
 	}
@@ -448,7 +448,7 @@ void FVoxel::Remap()
 {
 	if (Palette != NULL)
 	{
-		BYTE *remap = GetVoxelRemap(Palette);
+		uint8_t *remap = GetVoxelRemap(Palette);
 		for (int i = 0; i < NumMips; ++i)
 		{
 			RemapVoxelSlabs((kvxslab_t *)Mips[i].SlabData, Mips[i].OffsetX[Mips[i].SizeX], remap);

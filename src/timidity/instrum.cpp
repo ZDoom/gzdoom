@@ -81,7 +81,7 @@ ToneBank::~ToneBank()
 	}
 }
 
-int convert_tremolo_sweep(Renderer *song, BYTE sweep)
+int convert_tremolo_sweep(Renderer *song, uint8_t sweep)
 {
 	if (sweep == 0)
 		return 0;
@@ -90,7 +90,7 @@ int convert_tremolo_sweep(Renderer *song, BYTE sweep)
 		int(((song->control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) / (song->rate * sweep));
 }
 
-int convert_vibrato_sweep(Renderer *song, BYTE sweep, int vib_control_ratio)
+int convert_vibrato_sweep(Renderer *song, uint8_t sweep, int vib_control_ratio)
 {
 	if (sweep == 0)
 		return 0;
@@ -104,13 +104,13 @@ int convert_vibrato_sweep(Renderer *song, BYTE sweep, int vib_control_ratio)
 	*/
 }
 
-int convert_tremolo_rate(Renderer *song, BYTE rate)
+int convert_tremolo_rate(Renderer *song, uint8_t rate)
 {
 	return
 		int(((song->control_ratio * rate) << RATE_SHIFT) / (TREMOLO_RATE_TUNING * song->rate));
 }
 
-int convert_vibrato_rate(Renderer *song, BYTE rate)
+int convert_vibrato_rate(Renderer *song, uint8_t rate)
 {
 	/* Return a suitable vibrato_control_ratio value */
 	return
@@ -403,7 +403,7 @@ fail:
 		{
 			sp->envelope.gf1.rate[j] = patch_data.EnvelopeRate[j];
 			/* [RH] GF1NEW clamps the offsets to the range [5,251], so we do too. */
-			sp->envelope.gf1.offset[j] = clamp<BYTE>(patch_data.EnvelopeOffset[j], 5, 251);
+			sp->envelope.gf1.offset[j] = clamp<uint8_t>(patch_data.EnvelopeOffset[j], 5, 251);
 		}
 
 		/* Then read the sample data */
@@ -492,7 +492,7 @@ void convert_sample_data(Sample *sp, const void *data)
 
 	case PATCH_UNSIGNED:
 	  {					/* 8-bit, unsigned */
-		BYTE *cp = (BYTE *)data;
+		uint8_t *cp = (uint8_t *)data;
 		newdata = (sample_t *)safe_malloc((sp->data_length + 1) * sizeof(sample_t));
 		for (int i = 0; i < sp->data_length; ++i)
 		{

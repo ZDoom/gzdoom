@@ -153,8 +153,8 @@ public:
 
 	TArray<lightlist_t> *lightlist;
 	int lightlevel;
-	BYTE type;
-	BYTE flags;
+	uint8_t type;
+	uint8_t flags;
 	short rellight;
 
 	float topglowcolor[4];
@@ -309,7 +309,7 @@ public:
 	int lightlevel;
 	bool stack;
 	bool ceiling;
-	BYTE renderflags;
+	uint8_t renderflags;
 	int vboindex;
 	//int vboheight;
 
@@ -348,8 +348,8 @@ public:
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
 	int lightlevel;
-	BYTE foglevel;
-	BYTE hw_styleflags;
+	uint8_t foglevel;
+	uint8_t hw_styleflags;
 	bool fullbright;
 	PalEntry ThingColor;	// thing's own color
 	FColormap Colormap;

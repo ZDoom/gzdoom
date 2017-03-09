@@ -49,10 +49,10 @@ void D_UserInfoChanged (FBaseCVar *info);
 
 void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type);
 void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set);
-void D_DoServerInfoChange (BYTE **stream, bool singlebit);
+void D_DoServerInfoChange (uint8_t **stream, bool singlebit);
 
-void D_WriteUserInfoStrings (int player, BYTE **stream, bool compact=false);
-void D_ReadUserInfoStrings (int player, BYTE **stream, bool update);
+void D_WriteUserInfoStrings (int player, uint8_t **stream, bool compact=false);
+void D_ReadUserInfoStrings (int player, uint8_t **stream, bool update);
 
 struct FPlayerColorSet;
 void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet **colorset);

@@ -61,7 +61,7 @@ private:
 	HRESULT AttemptRestore ();
 
 	HRESULT LastHR;
-	BYTE GammaTable[3][256];
+	uint8_t GammaTable[3][256];
 	PalEntry SourcePalette[256];
 	PALETTEENTRY PalEntries[256];
 	DWORD FlipFlags;
@@ -124,7 +124,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
-	void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type);
 	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
@@ -169,14 +169,14 @@ private:
 		{
 			struct
 			{
-				BYTE Flags;
-				BYTE ShaderNum:4;
-				BYTE BlendOp:4;
-				BYTE SrcBlend, DestBlend;
+				uint8_t Flags;
+				uint8_t ShaderNum:4;
+				uint8_t BlendOp:4;
+				uint8_t SrcBlend, DestBlend;
 			};
 			DWORD Group1;
 		};
-		BYTE Desat;
+		uint8_t Desat;
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
 		int NumVerts;		// Number of _unique_ vertices used by this set.
@@ -304,7 +304,7 @@ private:
 	bool SM14;
 	bool GatheringWipeScreen;
 	bool AALines;
-	BYTE BlockNum;
+	uint8_t BlockNum;
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	Atlas *Atlases;

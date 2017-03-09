@@ -14,7 +14,7 @@ extern size_t numfakecmaps;
 
 struct FSWColormap
 {
-	BYTE *Maps = nullptr;
+	uint8_t *Maps = nullptr;
 	PalEntry Color = 0xffffffff;
 	PalEntry Fade = 0xff000000;
 	int Desaturate = 0;
@@ -57,7 +57,7 @@ struct FSpecialColormap : FSWColormap
 
 	float ColorizeStart[3];
 	float ColorizeEnd[3];
-	BYTE Colormap[256];
+	uint8_t Colormap[256];
 	PalEntry GrayscaleToColor[256];
 };
 
@@ -76,7 +76,7 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 
 
 
-extern BYTE DesaturateColormap[31][256];
+extern uint8_t DesaturateColormap[31][256];
 extern "C" 
 {
 extern FDynamicColormap NormalLight;

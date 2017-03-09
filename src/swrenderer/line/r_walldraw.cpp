@@ -150,7 +150,7 @@ namespace swrenderer
 				int tx = (xoffset >> FRACBITS) % mip_width;
 				if (tx < 0)
 					tx += mip_width;
-				source = (BYTE*)(pixels + tx * mip_height);
+				source = (uint8_t*)(pixels + tx * mip_height);
 				source2 = nullptr;
 				height = mip_height;
 				texturefracx = 0;
@@ -162,8 +162,8 @@ namespace swrenderer
 				if (tx0 < 0)
 					tx0 += mip_width;
 				int tx1 = (tx0 + 1) % mip_width;
-				source = (BYTE*)(pixels + tx0 * mip_height);
-				source2 = (BYTE*)(pixels + tx1 * mip_height);
+				source = (uint8_t*)(pixels + tx0 * mip_height);
+				source2 = (uint8_t*)(pixels + tx1 * mip_height);
 				height = mip_height;
 				texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
 			}

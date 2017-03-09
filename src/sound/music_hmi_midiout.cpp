@@ -89,7 +89,7 @@
 
 struct HMISong::TrackInfo
 {
-	const BYTE *TrackBegin;
+	const uint8_t *TrackBegin;
 	size_t TrackP;
 	size_t MaxTrackP;
 	DWORD Delay;
@@ -97,7 +97,7 @@ struct HMISong::TrackInfo
 	uint16_t Designation[NUM_HMI_DESIGNATIONS];
 	bool Enabled;
 	bool Finished;
-	BYTE RunningStatus;
+	uint8_t RunningStatus;
     
 	DWORD ReadVarLenHMI();
 	DWORD ReadVarLenHMP();
@@ -142,7 +142,7 @@ HMISong::HMISong (FileReader &reader, EMidiDevice type, const char *args)
 	{ // Way too small to be HMI.
 		return;
 	}
-	MusHeader = new BYTE[len];
+	MusHeader = new uint8_t[len];
 	SongLen = len;
 	NumTracks = 0;
 	if (reader.Read(MusHeader, len) != len)
@@ -576,7 +576,7 @@ void HMISong::AdvanceTracks(DWORD time)
 DWORD *HMISong::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
 {
 	DWORD len;
-	BYTE event, data1 = 0, data2 = 0;
+	uint8_t event, data1 = 0, data2 = 0;
 
 	// If the next event comes from the fake track, pop an entry off the note-off queue.
 	if (track == FakeTrack)
@@ -669,7 +669,7 @@ DWORD *HMISong::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdi
 			}
 			else
 			{
-				BYTE *msg = (BYTE *)&events[3];
+				uint8_t *msg = (uint8_t *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
 					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
@@ -782,7 +782,7 @@ void HMISong::ProcessInitialMetaEvents ()
 {
 	TrackInfo *track;
 	int i;
-	BYTE event;
+	uint8_t event;
 	DWORD len;
 
 	for (i = 0; i < NumTracks; ++i)
@@ -877,7 +877,7 @@ DWORD HMISong::TrackInfo::ReadVarLenHMI()
 DWORD HMISong::TrackInfo::ReadVarLenHMP()
 {
 	DWORD time = 0;
-	BYTE t = 0;
+	uint8_t t = 0;
 	int off = 0;
 
 	while (!(t & 0x80) && TrackP < MaxTrackP)
@@ -895,7 +895,7 @@ DWORD HMISong::TrackInfo::ReadVarLenHMP()
 //
 //==========================================================================
 
-void NoteOffQueue::AddNoteOff(DWORD delay, BYTE channel, BYTE key)
+void NoteOffQueue::AddNoteOff(DWORD delay, uint8_t channel, uint8_t key)
 {
 	unsigned int i = Reserve(1);
 	while (i > 0 && (*this)[Parent(i)].Delay > delay)
@@ -1052,7 +1052,7 @@ HMISong::HMISong(const HMISong *original, const char *filename, EMidiDevice type
 : MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;
-	MusHeader = new BYTE[original->SongLen];
+	MusHeader = new uint8_t[original->SongLen];
 	memcpy(MusHeader, original->MusHeader, original->SongLen);
 	NumTracks = original->NumTracks;
 	Division = original->Division;

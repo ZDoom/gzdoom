@@ -2,15 +2,15 @@ typedef uint16_t SFGenerator;
 
 struct SFRange
 {
-	BYTE Lo;
-	BYTE Hi;
+	uint8_t Lo;
+	uint8_t Hi;
 };
 
 struct SFPreset
 {
 	char Name[21];
-	BYTE LoadOrder:7;
-	BYTE bHasGlobalZone:1;
+	uint8_t LoadOrder:7;
+	uint8_t bHasGlobalZone:1;
 	uint16_t Program;
 	uint16_t Bank;
 	uint16_t BagIndex;
@@ -29,8 +29,8 @@ struct SFBag
 struct SFInst
 {
 	char Name[21];
-	BYTE Pad:7;
-	BYTE bHasGlobalZone:1;
+	uint8_t Pad:7;
+	uint8_t bHasGlobalZone:1;
 	uint16_t BagIndex;
 };
 
@@ -42,7 +42,7 @@ struct SFSample
 	DWORD StartLoop;
 	DWORD EndLoop;
 	DWORD SampleRate;
-	BYTE  OriginalPitch;
+	uint8_t  OriginalPitch;
 	int8_t PitchCorrection;
 	uint16_t  SampleLink;
 	uint16_t  SampleType;
@@ -199,8 +199,8 @@ struct SFGenComposite
 		SFRange keyRange;	// For normal use
 		struct				// For intermediate percussion use
 		{
-			BYTE drumset;
-			BYTE key;
+			uint8_t drumset;
+			uint8_t key;
 		};
 	};
 	SFRange velRange;
@@ -263,7 +263,7 @@ struct SFPerc
 {
 	SFPreset *Preset;
 	SFGenComposite Generators;
-	BYTE LoadOrder;
+	uint8_t LoadOrder;
 };
 
 // Container for all parameters from a SoundFont file

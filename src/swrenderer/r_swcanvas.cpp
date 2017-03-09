@@ -451,7 +451,7 @@ void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int pal
 		}
 		else
 		{
-			BYTE *spot = canvas->GetBuffer() + y0*canvas->GetPitch() + x0;
+			uint8_t *spot = canvas->GetBuffer() + y0*canvas->GetPitch() + x0;
 			int pitch = canvas->GetPitch();
 			do
 			{
@@ -475,7 +475,7 @@ void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int pal
 		}
 		else
 		{
-			BYTE *spot = canvas->GetBuffer() + y0*canvas->GetPitch() + x0;
+			uint8_t *spot = canvas->GetBuffer() + y0*canvas->GetPitch() + x0;
 			int advance = canvas->GetPitch() + xDir;
 			do
 			{
@@ -588,7 +588,7 @@ void SWCanvas::DrawPixel(DCanvas *canvas, int x, int y, int palColor, uint32_t r
 		palColor = PalFromRGB(realcolor);
 	}
 
-	canvas->GetBuffer()[canvas->GetPitch() * y + x] = (BYTE)palColor;
+	canvas->GetBuffer()[canvas->GetPitch() * y + x] = (uint8_t)palColor;
 }
 
 void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int level)
@@ -633,7 +633,7 @@ void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int l
 	}
 	else if (!r_blendmethod)
 	{
-		BYTE *spot = canvas->GetBuffer() + oldyyshifted + xx;
+		uint8_t *spot = canvas->GetBuffer() + oldyyshifted + xx;
 		DWORD *bg2rgb = Col2RGB8[1 + level];
 		DWORD *fg2rgb = Col2RGB8[63 - level];
 		DWORD fg = fg2rgb[basecolor];
@@ -643,13 +643,13 @@ void SWCanvas::PUTTRANSDOT(DCanvas *canvas, int xx, int yy, int basecolor, int l
 	}
 	else
 	{
-		BYTE *spot = canvas->GetBuffer() + oldyyshifted + xx;
+		uint8_t *spot = canvas->GetBuffer() + oldyyshifted + xx;
 
 		uint32_t r = (GPalette.BaseColors[*spot].r * (64 - level) + GPalette.BaseColors[basecolor].r * level) / 256;
 		uint32_t g = (GPalette.BaseColors[*spot].g * (64 - level) + GPalette.BaseColors[basecolor].g * level) / 256;
 		uint32_t b = (GPalette.BaseColors[*spot].b * (64 - level) + GPalette.BaseColors[basecolor].b * level) / 256;
 
-		*spot = (BYTE)RGB256k.RGB[r][g][b];
+		*spot = (uint8_t)RGB256k.RGB[r][g][b];
 	}
 }
 
@@ -698,7 +698,7 @@ void SWCanvas::Clear(DCanvas *canvas, int left, int top, int right, int bottom, 
 	}
 	else
 	{
-		BYTE *dest = canvas->GetBuffer() + top * Pitch + left;
+		uint8_t *dest = canvas->GetBuffer() + top * Pitch + left;
 		x = right - left;
 		for (y = top; y < bottom; y++)
 		{
@@ -774,7 +774,7 @@ void SWCanvas::Dim(DCanvas *canvas, PalEntry color, float damount, int x1, int y
 		DWORD *bg2rgb;
 		DWORD fg;
 
-		BYTE *spot = canvas->GetBuffer() + x1 + y1*Pitch;
+		uint8_t *spot = canvas->GetBuffer() + x1 + y1*Pitch;
 		int gap = Pitch - w;
 
 		int alpha = (int)((float)64 * damount);
@@ -819,7 +819,7 @@ void SWCanvas::Dim(DCanvas *canvas, PalEntry color, float damount, int x1, int y
 					uint32_t r = (dimmedcolor_r + GPalette.BaseColors[*spot].r * ialpha) >> 8;
 					uint32_t g = (dimmedcolor_g + GPalette.BaseColors[*spot].g * ialpha) >> 8;
 					uint32_t b = (dimmedcolor_b + GPalette.BaseColors[*spot].b * ialpha) >> 8;
-					*spot = (BYTE)RGB256k.RGB[r][g][b];
+					*spot = (uint8_t)RGB256k.RGB[r][g][b];
 					spot++;
 				}
 				spot += gap;

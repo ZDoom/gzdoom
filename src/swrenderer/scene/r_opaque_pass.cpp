@@ -718,7 +718,7 @@ namespace swrenderer
 		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
 		{ // Only do it for the main BSP.
 			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2 + LightVisibility::ActualExtraLight(foggy), foggy);
-			for (WORD i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+			for (int i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
 				RenderParticle::Project(Thread, Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
 			}
@@ -810,7 +810,7 @@ namespace swrenderer
 
 			node = bsp->children[side];
 		}
-		RenderSubsector((subsector_t *)((BYTE *)node - 1));
+		RenderSubsector((subsector_t *)((uint8_t *)node - 1));
 	}
 
 	void RenderOpaquePass::ClearClip()

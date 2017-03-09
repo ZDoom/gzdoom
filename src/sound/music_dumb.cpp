@@ -145,9 +145,9 @@ CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-static inline QWORD time_to_samples(double p_time,int p_sample_rate)
+static inline uint64_t time_to_samples(double p_time,int p_sample_rate)
 {
-	return (QWORD)floor((double)p_sample_rate * p_time + 0.5);
+	return (uint64_t)floor((double)p_sample_rate * p_time + 0.5);
 }
 
 //==========================================================================

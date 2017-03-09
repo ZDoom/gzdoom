@@ -711,7 +711,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	GLSeg glsave=glseg;
 	float flh=ceilingrefheight-floorrefheight;
 	int texpos;
-	BYTE savedflags = flags;
+	uint8_t savedflags = flags;
 
 	switch (_type)
 	{

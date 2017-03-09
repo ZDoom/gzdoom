@@ -3,10 +3,6 @@
 
 #include <stdint.h>
 
-typedef uint8_t					BYTE;
-typedef uint16_t				WORD;
-typedef uint64_t				QWORD;
-
 // windef.h, included by windows.h, has its own incompatible definition
 // of DWORD as a long. In files that mix Doom and Windows code, you
 // must define USE_WINDOWS_DWORD before including doomtype.h so that
@@ -32,7 +28,7 @@ typedef struct _GUID
 
 union QWORD_UNION
 {
-	QWORD AsOne;
+	uint64_t AsOne;
 	struct
 	{
 #ifdef __BIG_ENDIAN__

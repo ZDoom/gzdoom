@@ -411,7 +411,7 @@ void PolyScreenSprite::Render()
 		Colormap->Desaturate == 0)
 	{
 		overlay = Colormap->Fade;
-		overlay.a = BYTE(ColormapNum * 255 / NUMCOLORMAPS);
+		overlay.a = uint8_t(ColormapNum * 255 / NUMCOLORMAPS);
 	}
 	else
 	{

@@ -65,11 +65,11 @@ struct LoopInfo
 
 struct XMISong::TrackInfo
 {
-	const BYTE *EventChunk;
+	const uint8_t *EventChunk;
 	size_t EventLen;
 	size_t EventP;
 
-	const BYTE *TimbreChunk;
+	const uint8_t *TimbreChunk;
 	size_t TimbreLen;
 
 	DWORD Delay;
@@ -118,7 +118,7 @@ XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 	}
 #endif
 	SongLen = reader.GetLength();
-	MusHeader = new BYTE[SongLen];
+	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
 		return;
 
@@ -172,7 +172,7 @@ XMISong::~XMISong ()
 //
 //==========================================================================
 
-int XMISong::FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const
+int XMISong::FindXMIDforms(const uint8_t *chunk, int len, TrackInfo *songs) const
 {
 	int count = 0;
 
@@ -214,7 +214,7 @@ int XMISong::FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const
 //
 //==========================================================================
 
-void XMISong::FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const
+void XMISong::FoundXMID(const uint8_t *chunk, int len, TrackInfo *song) const
 {
 	for (int p = 0; p <= len - 8; )
 	{
@@ -390,7 +390,7 @@ void XMISong::AdvanceSong(DWORD time)
 DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
 {
 	DWORD len;
-	BYTE event, data1 = 0, data2 = 0;
+	uint8_t event, data1 = 0, data2 = 0;
 
 	if (due == EVENT_Fake)
 	{
@@ -540,7 +540,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 			}
 			else
 			{
-				BYTE *msg = (BYTE *)&events[3];
+				uint8_t *msg = (uint8_t *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
 					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
@@ -616,7 +616,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 void XMISong::ProcessInitialMetaEvents ()
 {
 	TrackInfo *track = CurrSong;
-	BYTE event;
+	uint8_t event;
 	DWORD len;
 
 	while (!track->Finished &&
@@ -736,7 +736,7 @@ XMISong::XMISong(const XMISong *original, const char *filename, EMidiDevice type
 : MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;
-	MusHeader = new BYTE[original->SongLen];
+	MusHeader = new uint8_t[original->SongLen];
 	memcpy(MusHeader, original->MusHeader, original->SongLen);
 	NumSongs = original->NumSongs;
 	Tempo = InitialTempo = original->InitialTempo;

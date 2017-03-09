@@ -9,8 +9,8 @@ public:
 	FBrightmapTexture (FTexture *source);
 	~FBrightmapTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
@@ -18,7 +18,7 @@ public:
 
 protected:
 	FTexture *SourcePic;
-	//BYTE *Pixels;
+	//uint8_t *Pixels;
 	//Span **Spans;
 };
 

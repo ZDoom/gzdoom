@@ -201,7 +201,7 @@ public:
 	virtual ~DCanvas ();
 
 	// Member variable access
-	inline BYTE *GetBuffer () const { return Buffer; }
+	inline uint8_t *GetBuffer () const { return Buffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
@@ -215,10 +215,10 @@ public:
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
 	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
+	virtual void DrawBlock (int x, int y, int width, int height, const uint8_t *src) const;
 
 	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, BYTE *dest) const;
+	virtual void GetBlock (int x, int y, int width, int height, uint8_t *dest) const;
 
 	// Dim the entire canvas for the menus
 	virtual void Dim (PalEntry color = 0);
@@ -244,13 +244,13 @@ public:
 	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 
 	// Calculate gamma table
-	void CalcGamma (float gamma, BYTE gammalookup[256]);
+	void CalcGamma (float gamma, uint8_t gammalookup[256]);
 
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type);
 
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer();
@@ -278,7 +278,7 @@ public:
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 protected:
-	BYTE *Buffer;
+	uint8_t *Buffer;
 	int Width;
 	int Height;
 	int Pitch;
@@ -287,7 +287,7 @@ protected:
 
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
-	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
+	bool ClipBox (int &left, int &top, int &width, int &height, const uint8_t *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
 
@@ -318,7 +318,7 @@ public:
 protected:
 	void Resize(int width, int height);
 
-	BYTE *MemBuffer;
+	uint8_t *MemBuffer;
 
 	DSimpleCanvas() {}
 };
@@ -442,8 +442,8 @@ public:
 
 protected:
 	void DrawRateStuff ();
-	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
-	void CopyWithGammaBgra(void *output, int pitch, const BYTE *gammared, const BYTE *gammagreen, const BYTE *gammablue, PalEntry flash, int flash_amount);
+	void CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest);
+	void CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 
@@ -468,20 +468,20 @@ EXTERN_CVAR (Float, Gamma)
 // Use a union so we can "overflow" without warnings.
 // Otherwise, we get stuff like this from Clang (when compiled
 // with -fsanitize=bounds) while running:
-//   src/v_video.cpp:390:12: runtime error: index 1068 out of bounds for type 'BYTE [32]'
-//   src/r_draw.cpp:273:11: runtime error: index 1057 out of bounds for type 'BYTE [32]'
+//   src/v_video.cpp:390:12: runtime error: index 1068 out of bounds for type 'uint8_t [32]'
+//   src/r_draw.cpp:273:11: runtime error: index 1057 out of bounds for type 'uint8_t [32]'
 union ColorTable32k
 {
-	BYTE RGB[32][32][32];
-	BYTE All[32 *32 *32];
+	uint8_t RGB[32][32][32];
+	uint8_t All[32 *32 *32];
 };
 extern "C" ColorTable32k RGB32k;
 
 // [SP] RGB666 support
 union ColorTable256k
 {
-	BYTE RGB[64][64][64];
-	BYTE All[64 *64 *64];
+	uint8_t RGB[64][64][64];
+	uint8_t All[64 *64 *64];
 };
 extern "C" ColorTable256k RGB256k;
 

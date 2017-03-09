@@ -101,7 +101,7 @@ public:
 	void AllKeysUp();
 
 protected:
-	BYTE KeyStates[256/8];
+	uint8_t KeyStates[256/8];
 
 	int CheckKey(int keynum) const
 	{

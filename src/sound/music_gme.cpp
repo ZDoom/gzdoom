@@ -117,7 +117,7 @@ MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
 {
 	gme_type_t type;
 	gme_err_t err;
-	BYTE *song;
+	uint8_t *song;
 	Music_Emu *emu;
 	int sample_rate;
 	
@@ -135,7 +135,7 @@ MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
 
     int fpos = reader.Tell();
     int len = reader.GetLength();
-    song = new BYTE[len];
+    song = new uint8_t[len];
     if (reader.Read(song, len) != len)
     {
         delete[] song;

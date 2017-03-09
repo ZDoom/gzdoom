@@ -2353,7 +2353,7 @@ void S_SerializeSounds(FSerializer &arc)
 			for (unsigned int i = chans.Size(); i-- != 0; )
 			{
 				// Replace start time with sample position.
-				QWORD start = chans[i]->StartTime.AsOne;
+				uint64_t start = chans[i]->StartTime.AsOne;
 				chans[i]->StartTime.AsOne = GSnd ? GSnd->GetPosition(chans[i]) : 0;
 				arc(nullptr, *chans[i]);
 				chans[i]->StartTime.AsOne = start;

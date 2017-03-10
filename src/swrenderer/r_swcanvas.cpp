@@ -110,6 +110,13 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 		double centeryback = viewport->CenterY;
 		viewport->CenterY = 0;
 
+		int oldviewwindowx = 0;
+		int oldviewwindowy = 0;
+		oldviewwindowx = viewwindowx;
+		oldviewwindowy = viewwindowy;
+		viewwindowx = 0;
+		viewwindowy = 0;
+
 		// There is not enough precision in the drawing routines to keep the full
 		// precision for y0. :(
 		double sprtopscreen;
@@ -187,6 +194,8 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 		}
 
 		viewport->CenterY = centeryback;
+		viewwindowx = oldviewwindowx;
+		viewwindowy = oldviewwindowy;
 	}
 
 	viewport->RenderTarget->Unlock();

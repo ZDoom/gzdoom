@@ -33,6 +33,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
 #include "swrenderer/scene/r_light.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 

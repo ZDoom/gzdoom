@@ -72,6 +72,7 @@
 #include "doomstat.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 
 #include "gl/renderer/gl_renderer.h"

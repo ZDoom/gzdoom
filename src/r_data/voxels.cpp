@@ -62,6 +62,7 @@
 #include "r_data/colormaps.h"
 #include "r_data/sprites.h"
 #include "voxels.h"
+#include "info.h"
 
 void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def);
 

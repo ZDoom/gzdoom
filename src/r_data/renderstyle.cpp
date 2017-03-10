@@ -35,6 +35,7 @@
 #include "templates.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
+#include "serializer.h"
 
 CVAR (Bool, r_drawtrans, true, 0)
 CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
@@ -190,4 +191,9 @@ void FRenderStyle::CheckFuzz()
 	{
 		BlendOp = STYLEOP_Fuzz;
 	}
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FRenderStyle &style, FRenderStyle *def)
+{
+	return arc.Array(key, &style.BlendOp, def ? &def->BlendOp : nullptr, 4);
 }

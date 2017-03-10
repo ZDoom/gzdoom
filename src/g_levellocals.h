@@ -2,6 +2,7 @@
 
 #include "g_level.h"
 #include "r_defs.h"
+#include "portal.h"
 
 struct FLevelLocals
 {
@@ -135,4 +136,57 @@ inline int sector_t::GetPortalType(int plane)
 inline int sector_t::GetOppositePortalGroup(int plane)
 {
 	return level.sectorPortals[Portals[plane]].mDestination->PortalGroup;
+}
+
+inline bool sector_t::PortalBlocksView(int plane)
+{
+	if (GetPortalType(plane) != PORTS_LINKEDPORTAL) return false;
+	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksSight(int plane)
+{
+	return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
+}
+
+inline bool sector_t::PortalBlocksMovement(int plane)
+{
+	return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
+}
+
+inline bool sector_t::PortalBlocksSound(int plane)
+{
+	return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
+}
+
+inline bool sector_t::PortalIsLinked(int plane)
+{
+	return (GetPortalType(plane) == PORTS_LINKEDPORTAL);
+}
+
+inline FLinePortal *line_t::getPortal() const
+{
+	return portalindex >= linePortals.Size() ? (FLinePortal*)NULL : &linePortals[portalindex];
+}
+
+// returns true if the portal is crossable by actors
+inline bool line_t::isLinePortal() const
+{
+	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
+}
+
+// returns true if the portal needs to be handled by the renderer
+inline bool line_t::isVisualPortal() const
+{
+	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
+}
+
+inline line_t *line_t::getPortalDestination() const
+{
+	return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
+}
+
+inline int line_t::getPortalAlignment() const
+{
+	return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
 }

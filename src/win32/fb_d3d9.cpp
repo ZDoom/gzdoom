@@ -71,6 +71,7 @@
 #include "doomstat.h"
 #include "v_palette.h"
 #include "w_wad.h"
+#include "textures.h"
 #include "r_data/colormaps.h"
 #include "SkylineBinPack.h"
 #include "swrenderer/scene/r_light.h"

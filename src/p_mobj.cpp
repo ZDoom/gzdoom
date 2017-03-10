@@ -72,6 +72,7 @@
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
+#include "actorinlines.h"
 
 // MACROS ------------------------------------------------------------------
 

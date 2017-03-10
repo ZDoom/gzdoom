@@ -53,6 +53,7 @@
 #include "math/cmath.h"
 #include "g_levellocals.h"
 #include "virtual.h"
+#include "actorinlines.h"
 
 #include "gi.h"
 

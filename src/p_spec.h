@@ -31,6 +31,7 @@
 
 class FScanner;
 struct level_info_t;
+struct FDoorAnimation;
 
 struct FThinkerCollection
 {

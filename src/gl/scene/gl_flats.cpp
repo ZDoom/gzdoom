@@ -36,6 +36,7 @@
 #include "portal.h"
 #include "templates.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"

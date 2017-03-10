@@ -61,6 +61,7 @@
 #include "colormatcher.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "textures.h"
 
 CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {

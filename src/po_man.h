@@ -4,6 +4,7 @@
 #include "tarray.h"
 #include "r_defs.h"
 #include "m_bbox.h"
+#include "dthinker.h"
 
 class DPolyAction : public DThinker
 {

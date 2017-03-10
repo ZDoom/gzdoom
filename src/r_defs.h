@@ -25,8 +25,8 @@
 
 #include "doomdef.h"
 #include "templates.h"
-#include "memarena.h"
 #include "m_bbox.h"
+#include "dobjgc.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -35,13 +35,15 @@
 // We rely on the thinker data struct
 // to handle sound origins in sectors.
 // SECTORS do store MObjs anyway.
-#include "actor.h"
 struct FLightNode;
 struct FGLSection;
+class FSerializer;
 struct FPortal;
+struct FSectorPortal;
+struct FLinePortal;
 struct seg_t;
-
-#include "dthinker.h"
+struct sector_t;
+class AActor;
 
 #define MAXWIDTH 5760
 #define MAXHEIGHT 3600
@@ -351,11 +353,6 @@ public:
 		return (D + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
 	}
 
-	double ZatPoint(const AActor *ac) const
-	{
-		return (D + normal.X*ac->X() + normal.Y*ac->Y()) * negiC;
-	}
-
 	// Returns the value of z at vertex v if d is equal to dist
 	double ZatPointDist(const vertex_t *v, double dist)
 	{
@@ -434,6 +431,7 @@ public:
 	}
 
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
+	inline double secplane_t::ZatPoint(const AActor *ac) const;
 
 };
 
@@ -875,31 +873,11 @@ public:
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
-	bool PortalBlocksView(int plane)
-	{
-		if (GetPortalType(plane) != PORTS_LINKEDPORTAL) return false;
-		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-	}
-
-	bool PortalBlocksSight(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalBlocksMovement(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalBlocksSound(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalIsLinked(int plane)
-	{
-		return (GetPortalType(plane) == PORTS_LINKEDPORTAL);
-	}
+	inline bool PortalBlocksView(int plane);
+	inline bool PortalBlocksSight(int plane);
+	inline bool PortalBlocksMovement(int plane);
+	inline bool PortalBlocksSound(int plane);
+	inline bool PortalIsLinked(int plane);
 
 	void ClearPortal(int plane)
 	{
@@ -936,16 +914,8 @@ public:
 	double HighestCeilingAt(const DVector2 &a, sector_t **resultsec = NULL);
 	double LowestFloorAt(const DVector2 &a, sector_t **resultsec = NULL);
 
-
-	double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return HighestCeilingAt(a->Pos(), resultsec);
-	}
-
-	double LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return LowestFloorAt(a->Pos(), resultsec);
-	}
+	inline double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL);
+	inline double LowestFloorAt(AActor *a, sector_t **resultsec = NULL);
 
 	bool isClosed() const
 	{
@@ -1283,32 +1253,11 @@ struct line_t
 
 	FSectorPortal *GetTransferredPortal();
 
-	FLinePortal *getPortal() const
-	{
-		return portalindex >= linePortals.Size() ? (FLinePortal*)NULL : &linePortals[portalindex];
-	}
-
-	// returns true if the portal is crossable by actors
-	bool isLinePortal() const
-	{
-		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
-	}
-
-	// returns true if the portal needs to be handled by the renderer
-	bool isVisualPortal() const
-	{
-		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
-	}
-
-	line_t *getPortalDestination() const
-	{
-		return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
-	}
-
-	int getPortalAlignment() const
-	{
-		return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
-	}
+	inline FLinePortal *getPortal() const;
+	inline bool isLinePortal() const;
+	inline bool isVisualPortal() const;
+	inline line_t *getPortalDestination() const;
+	inline int getPortalAlignment() const;
 
 	int Index() const;
 };
@@ -1476,15 +1425,6 @@ struct FMiniBSP
 
 typedef uint8_t lighttable_t;	// This could be wider for >8 bit display.
 
-// This encapsulates the fields of vissprite_t that can be altered by AlterWeaponSprite
-struct visstyle_t
-{
-	bool			Invert;
-	float			Alpha;
-	ERenderStyle	RenderStyle;
-};
-
-
 //----------------------------------------------------------------------------------
 //
 // The playsim can use different nodes than the renderer so this is
@@ -1501,40 +1441,6 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 inline sector_t *P_PointInSector(double X, double Y)
 {
 	return P_PointInSubsector(X, Y)->sector;
-}
-
-inline DVector3 AActor::PosRelative(int portalgroup) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
-}
-
-inline DVector3 AActor::PosRelative(const AActor *other) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
-}
-
-inline DVector3 AActor::PosRelative(sector_t *sec) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
-}
-
-inline DVector3 AActor::PosRelative(line_t *line) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
-}
-
-inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
-}
-
-
-inline void AActor::ClearInterpolation()
-{
-	Prev = Pos();
-	PrevAngles = Angles;
-	if (Sector) PrevPortalGroup = Sector->PortalGroup;
-	else PrevPortalGroup = 0;
 }
 
 inline bool FBoundingBox::inRange(const line_t *ld) const

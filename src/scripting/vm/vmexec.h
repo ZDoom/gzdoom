@@ -820,7 +820,7 @@ begin:
 			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 		}
 		// Creating actors here must be outright prohibited,
-		if (cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		if (cls->IsDescendantOf(NAME_Actor))
 		{
 			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
 		}

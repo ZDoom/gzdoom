@@ -2,6 +2,7 @@
 #pragma once
 
 #include "r_defs.h"
+#include "c_cvars.h"
 #include <memory>
 
 struct FSWColormap;

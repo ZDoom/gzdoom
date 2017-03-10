@@ -42,7 +42,11 @@ static void* PosixGetProcAddress (const GLubyte* name)
 
 #if defined(_WIN32)
 
+#ifdef APIENTRY
+#undef APIENTRY
+#endif
 #include <windows.h>
+
 
 #ifdef _MSC_VER
 // disable inlining here because it creates an incredible amount of bloat in this file.

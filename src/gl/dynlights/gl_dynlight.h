@@ -26,6 +26,7 @@
 #include "c_cvars.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/utility/gl_cycler.h"
+#include "actor.h"
 
 
 EXTERN_CVAR(Bool, gl_lights)

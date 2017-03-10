@@ -6,6 +6,7 @@
 #include "tarray.h"
 #include "r_defs.h"
 #include "resourcefiles/file_zip.h"
+#include "tflags.h"
 
 extern bool save_full;
 
@@ -14,6 +15,15 @@ struct usercmd_t;
 
 struct FWriter;
 struct FReader;
+class PClass;
+class PClassActor;
+struct FStrifeDialogueNode;
+class FFont;
+struct FState;
+struct FDoorAnimation;
+class FSoundID;
+struct FPolyObj;
+union FRenderStyle;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -279,10 +289,7 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, PalEntry &pe, P
 	return Serialize(arc, key, pe.d, def? &def->d : nullptr);
 }
 
-inline FSerializer &Serialize(FSerializer &arc, const char *key, FRenderStyle &style, FRenderStyle *def)
-{
-	return arc.Array(key, &style.BlendOp, def ? &def->BlendOp : nullptr, 4);
-}
+FSerializer &Serialize(FSerializer &arc, const char *key, FRenderStyle &style, FRenderStyle *def);
 
 template<class T, class TT>
 FSerializer &Serialize(FSerializer &arc, const char *key, TFlags<T, TT> &flags, TFlags<T, TT> *def)

@@ -33,6 +33,7 @@
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 // MACROS ------------------------------------------------------------------
 

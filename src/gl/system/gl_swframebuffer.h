@@ -7,6 +7,7 @@
 #endif
 
 #include "SkylineBinPack.h"
+#include "textures.h"
 
 #include <memory>
 

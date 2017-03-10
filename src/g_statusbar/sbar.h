@@ -38,6 +38,7 @@
 #include "dobject.h"
 #include "v_collection.h"
 #include "v_text.h"
+#include "r_data/renderstyle.h"
 
 class player_t;
 struct FRemapTable;

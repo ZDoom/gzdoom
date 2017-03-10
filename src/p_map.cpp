@@ -64,6 +64,7 @@
 #include "g_level.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)

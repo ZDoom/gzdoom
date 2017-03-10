@@ -58,6 +58,7 @@ struct secplane_t;
 struct FDynamicColormap;
 struct line_t;
 struct sector_t;
+class AActor;
 
 struct F3DFloor
 {

@@ -2,6 +2,7 @@
 #define __GL_TEXTURE_H__
 
 #include "r_defs.h"
+#include "textures.h"
 
 class FBrightmapTexture : public FTexture
 {

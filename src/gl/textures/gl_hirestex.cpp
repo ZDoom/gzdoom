@@ -42,6 +42,7 @@
 #include "doomstat.h"
 #include "d_main.h"
 #include "zstring.h"
+#include "textures.h"
 
 #ifndef _WIN32
 #define _access(a,b)	access(a,b)

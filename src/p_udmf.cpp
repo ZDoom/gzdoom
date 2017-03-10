@@ -49,6 +49,7 @@
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "g_levellocals.h"
+#include "info.h"
 
 //===========================================================================
 //

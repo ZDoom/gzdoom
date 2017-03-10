@@ -955,7 +955,7 @@ DEFINE_ACTION_FUNCTION(DBlockLinesIterator, CreateFromPos)
 	ACTION_RETURN_OBJECT(new DBlockLinesIterator(x, y, z, h, radius, sec));
 }
 
-DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
+DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Next)
 {
 	PARAM_SELF_PROLOGUE(DBlockLinesIterator);
 	ACTION_RETURN_BOOL(self->Next());
@@ -1294,9 +1294,9 @@ DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
 	ACTION_RETURN_OBJECT(new DBlockThingsIterator(x, y, z, h, radius, ignore, nullptr));
 }
 
-DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Next)
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
 {
-	PARAM_SELF_PROLOGUE(DBlockLinesIterator);
+	PARAM_SELF_PROLOGUE(DBlockThingsIterator);
 	ACTION_RETURN_BOOL(self->Next());
 }
 

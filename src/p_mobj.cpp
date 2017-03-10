@@ -7354,6 +7354,9 @@ bool AActor::IsFriend (AActor *other)
 			other->FriendPlayer == 0 ||
 			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
+	// [SP] If friendly flags match, then they are on the same team.
+	/*if (!((flags ^ other->flags) & MF_FRIENDLY))
+		return true;*/
 	return false;
 }
 

@@ -213,11 +213,11 @@ MIDISong2::~MIDISong2 ()
 void MIDISong2::CheckCaps(int tech)
 {
 	DesignationMask = 0xFF0F;
-	if (tech == MOD_FMSYNTH)
+	if (tech == MIDIDEV_FMSYNTH)
 	{
 		DesignationMask = 0x00F0;
 	}
-	else if (tech == MOD_MIDIPORT)
+	else if (tech == MIDIDEV_MIDIPORT)
 	{
 		DesignationMask = 0x0001;
 	}
@@ -387,7 +387,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 	// The actual event type will be filled in below.
 	events[0] = delay;
 	events[1] = 0;
-	events[2] = MEVT_NOP << 24;
+	events[2] = MEVENT_NOP << 24;
 
 	if (event != MIDI_SYSEX && event != MIDI_META && event != MIDI_SYSEXEND)
 	{
@@ -613,12 +613,12 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 				uint8_t *msg = (uint8_t *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
-					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
+					events[2] = (MEVENT_LONGMSG << 24) | (len + 1);
 					*msg++ = MIDI_SYSEX;
 				}
 				else
 				{
-					events[2] = (MEVT_LONGMSG << 24) | len;
+					events[2] = (MEVENT_LONGMSG << 24) | len;
 				}
 				memcpy(msg, &track->TrackBegin[track->TrackP], len);
 				msg += len;
@@ -653,7 +653,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 						(track->TrackBegin[track->TrackP+2]);
 					events[0] = delay;
 					events[1] = 0;
-					events[2] = (MEVT_TEMPO << 24) | Tempo;
+					events[2] = (MEVENT_TEMPO << 24) | Tempo;
 					break;
 				}
 				track->TrackP += len;
@@ -673,11 +673,11 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 		track->Delay = track->ReadVarLen();
 	}
 	// Advance events pointer unless this is a non-delaying NOP.
-	if (events[0] != 0 || MEVT_EVENTTYPE(events[2]) != MEVT_NOP)
+	if (events[0] != 0 || MEVENT_EVENTTYPE(events[2]) != MEVENT_NOP)
 	{
-		if (MEVT_EVENTTYPE(events[2]) == MEVT_LONGMSG)
+		if (MEVENT_EVENTTYPE(events[2]) == MEVENT_LONGMSG)
 		{
-			events += 3 + ((MEVT_EVENTPARM(events[2]) + 3) >> 2);
+			events += 3 + ((MEVENT_EVENTPARM(events[2]) + 3) >> 2);
 		}
 		else
 		{

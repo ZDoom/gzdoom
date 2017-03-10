@@ -693,7 +693,7 @@ int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 //
 //==========================================================================
 
-void MIDIStreamer::Callback(unsigned int uMsg, void *userdata)
+void MIDIStreamer::Callback(void *userdata)
 {
 	MIDIStreamer *self = (MIDIStreamer *)userdata;
 
@@ -701,18 +701,15 @@ void MIDIStreamer::Callback(unsigned int uMsg, void *userdata)
 	{
 		return;
 	}
-	if (uMsg == MOM_DONE)
-	{
 #ifdef _WIN32
-		if (self->PlayerThread != NULL)
-		{
-			SetEvent(self->BufferDoneEvent);
-		}
-		else
+	if (self->PlayerThread != NULL)
+	{
+		SetEvent(self->BufferDoneEvent);
+	}
+	else
 #endif
-		{
-			self->ServiceEvent();
-		}
+	{
+		self->ServiceEvent();
 	}
 }
 
@@ -944,7 +941,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		// Send the full master volume SysEx message.
 		events[0] = 0;								// dwDeltaTime
 		events[1] = 0;								// dwStreamID
-		events[2] = (MEVT_LONGMSG << 24) | 8;		// dwEvent
+		events[2] = (MEVENT_LONGMSG << 24) | 8;		// dwEvent
 		events[3] = MAKE_ID(0xf0,0x7f,0x7f,0x04);	// dwParms[0]
 		events[4] = MAKE_ID(0x01,0x7f,0x7f,0xf7);	// dwParms[1]
 		events += 5;
@@ -972,7 +969,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		// for a third of the maximum time.
 		events[0] = MAX<DWORD>(1, (max_time / 3) * Division / Tempo);
 		events[1] = 0;
-		events[2] = MEVT_NOP << 24;
+		events[2] = MEVENT_NOP << 24;
 		events += 3;
 	}
 	else
@@ -983,7 +980,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 			// Reset the tempo to the inital value.
 			events[0] = 0;									// dwDeltaTime
 			events[1] = 0;									// dwStreamID
-			events[2] = (MEVT_TEMPO << 24) | InitialTempo;	// dwEvent
+			events[2] = (MEVENT_TEMPO << 24) | InitialTempo;	// dwEvent
 			events += 3;
 			// Stop all notes in case any were left hanging.
 			events = WriteStopNotes(events);
@@ -1020,7 +1017,7 @@ int MIDIStreamer::FillStopBuffer(int buffer_num)
 	// wait some tics, just so that this buffer takes some time
 	events[0] = 500;
 	events[1] = 0;
-	events[2] = MEVT_NOP << 24;
+	events[2] = MEVENT_NOP << 24;
 	events += 3;
 
 	memset(&Buffer[buffer_num], 0, sizeof(MidiHeader));
@@ -1086,7 +1083,7 @@ void MIDIStreamer::Precache()
 		DWORD *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
 		for (DWORD *event = Events[0]; event < event_end; )
 		{
-			if (MEVT_EVENTTYPE(event[2]) == 0)
+			if (MEVENT_EVENTTYPE(event[2]) == 0)
 			{
 				int command = (event[2] & 0x70);
 				int channel = (event[2] & 0x0f);
@@ -1126,7 +1123,7 @@ void MIDIStreamer::Precache()
 			}
 			else
 			{ // long message
-				event += 3 + ((MEVT_EVENTPARM(event[2]) + 3) >> 2);
+				event += 3 + ((MEVENT_EVENTPARM(event[2]) + 3) >> 2);
 			}
 		}
 	}
@@ -1175,7 +1172,7 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	uint8_t running_status = 255;
 
 	// Always create songs aimed at GM devices.
-	CheckCaps(MOD_MIDIPORT);
+	CheckCaps(MIDIDEV_MIDIPORT);
 	LoopLimit = looplimit <= 0 ? EXPORT_LOOP_LIMIT : looplimit;
 	DoRestart();
 	Tempo = InitialTempo;
@@ -1194,11 +1191,11 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 		for (DWORD *event = Events[0]; event < event_end; )
 		{
 			delay += event[0];
-			if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
+			if (MEVENT_EVENTTYPE(event[2]) == MEVENT_TEMPO)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
-				DWORD tempo = MEVT_EVENTPARM(event[2]);
+				DWORD tempo = MEVENT_EVENTPARM(event[2]);
 				file.Push(MIDI_META);
 				file.Push(MIDI_META_TEMPO);
 				file.Push(3);
@@ -1207,11 +1204,11 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 				file.Push(uint8_t(tempo));
 				running_status = 255;
 			}
-			else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
+			else if (MEVENT_EVENTTYPE(event[2]) == MEVENT_LONGMSG)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
-				DWORD len = MEVT_EVENTPARM(event[2]);
+				DWORD len = MEVENT_EVENTPARM(event[2]);
 				uint8_t *bytes = (uint8_t *)&event[3];
 				if (bytes[0] == MIDI_SYSEX)
 				{
@@ -1228,7 +1225,7 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 				}
 				running_status = 255;
 			}
-			else if (MEVT_EVENTTYPE(event[2]) == 0)
+			else if (MEVENT_EVENTTYPE(event[2]) == 0)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
@@ -1251,7 +1248,7 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 			}
 			else
 			{ // long message
-				event += 3 + ((MEVT_EVENTPARM(event[2]) + 3) >> 2);
+				event += 3 + ((MEVENT_EVENTPARM(event[2]) + 3) >> 2);
 			}
 		}
 	}
@@ -1307,7 +1304,7 @@ static void WriteVarLen (TArray<uint8_t> &file, DWORD value)
 // MIDIStreamer :: SetTempo
 //
 // Sets the tempo from a track's initial meta events. Later tempo changes
-// create MEVT_TEMPO events instead.
+// create MEVENT_TEMPO events instead.
 //
 //==========================================================================
 

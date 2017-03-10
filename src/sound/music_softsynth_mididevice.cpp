@@ -151,7 +151,7 @@ bool SoftSynthMIDIDevice::IsOpen() const
 
 int SoftSynthMIDIDevice::GetTechnology() const
 {
-	return MOD_SWSYNTH;
+	return MIDIDEV_SWSYNTH;
 }
 
 //==========================================================================
@@ -307,15 +307,15 @@ int SoftSynthMIDIDevice::PlayTick()
 	while (delay == 0 && Events != NULL)
 	{
 		DWORD *event = (DWORD *)(Events->lpData + Position);
-		if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
+		if (MEVENT_EVENTTYPE(event[2]) == MEVENT_TEMPO)
 		{
-			SetTempo(MEVT_EVENTPARM(event[2]));
+			SetTempo(MEVENT_EVENTPARM(event[2]));
 		}
-		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
+		else if (MEVENT_EVENTTYPE(event[2]) == MEVENT_LONGMSG)
 		{
-			HandleLongEvent((uint8_t *)&event[3], MEVT_EVENTPARM(event[2]));
+			HandleLongEvent((uint8_t *)&event[3], MEVENT_EVENTPARM(event[2]));
 		}
-		else if (MEVT_EVENTTYPE(event[2]) == 0)
+		else if (MEVENT_EVENTTYPE(event[2]) == 0)
 		{ // Short MIDI event
 			int status = event[2] & 0xff;
 			int parm1 = (event[2] >> 8) & 0x7f;
@@ -352,7 +352,7 @@ int SoftSynthMIDIDevice::PlayTick()
 		}
 		else
 		{ // Long message
-			Position += 12 + ((MEVT_EVENTPARM(event[2]) + 3) & ~3);
+			Position += 12 + ((MEVENT_EVENTPARM(event[2]) + 3) & ~3);
 		}
 
 		// Did we use up this buffer?
@@ -363,7 +363,7 @@ int SoftSynthMIDIDevice::PlayTick()
 
 			if (Callback != NULL)
 			{
-				Callback(MOM_DONE, CallbackData);
+				Callback(CallbackData);
 			}
 		}
 

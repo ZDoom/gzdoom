@@ -47,41 +47,33 @@ struct MidiHeader
 	MidiHeader *lpNext;
 };
 
-
-#ifndef _WIN32
-
+// These constants must match the corresponding values of the Windows headers
+// to avoid readjustment in the native Windows device's playback functions 
+// and should not be changed.
 enum
 {
-	MOD_MIDIPORT = 1,
-	MOD_SYNTH,
-	MOD_SQSYNTH,
-	MOD_FMSYNTH,
-	MOD_MAPPER,
-	MOD_WAVETABLE,
-	MOD_SWSYNTH
+	MIDIDEV_MIDIPORT = 1,
+	MIDIDEV_SYNTH,
+	MIDIDEV_SQSYNTH,
+	MIDIDEV_FMSYNTH,
+	MIDIDEV_MAPPER,
+	MIDIDEV_WAVETABLE,
+	MIDIDEV_SWSYNTH
 };
 
-typedef uint8_t *LPSTR;
+enum : uint8_t
+{
+	MEVENT_TEMPO		= 1,
+	MEVENT_NOP			= 2,
+	MEVENT_LONGMSG		= 128,
+};
 
-#define MEVT_TEMPO			((uint8_t)1)
-#define MEVT_NOP			((uint8_t)2)
-#define MEVT_LONGMSG		((uint8_t)128)
-
-#define MEVT_EVENTTYPE(x)	((uint8_t)((x) >> 24))
-#define MEVT_EVENTPARM(x)   ((x) & 0xffffff)
-
-#define MOM_DONE			969
-#else
-// w32api does not define these
-#ifndef MOD_WAVETABLE
-#define MOD_WAVETABLE   6
-#define MOD_SWSYNTH     7
-#endif
-#endif
+#define MEVENT_EVENTTYPE(x)	((uint8_t)((x) >> 24))
+#define MEVENT_EVENTPARM(x)   ((x) & 0xffffff)
 
 class MIDIStreamer;
 
-typedef void(*MidiCallback)(unsigned int, void *);
+typedef void(*MidiCallback)(void *);
 class MIDIDevice
 {
 public:
@@ -148,7 +140,7 @@ protected:
 	int HeaderIndex;
 	bool VolumeWorks;
 
-	void (*Callback)(unsigned int, void *);
+	MidiCallback Callback;
 	void *CallbackData;
 };
 #endif
@@ -182,7 +174,7 @@ private:
 	CFRunLoopTimerRef m_timer = nullptr;
 	MusicTimeStamp m_length = 0;
 
-	typedef void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	MidiCallback Callback;
 	Callback m_callback = nullptr;
 	void* m_userData = nullptr;
 
@@ -297,7 +289,7 @@ protected:
 	DWORD Position;
 	int SampleRate;
 
-	void (*Callback)(unsigned int, void *);
+	MidiCallback Callback;
 	void *CallbackData;
 
 	virtual void CalcTickRate();
@@ -510,7 +502,7 @@ protected:
 	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
 	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
 
-	static void Callback(unsigned int uMsg, void *userdata);
+	static void Callback(void *userdata);
 
 	// Virtuals for subclasses to override
 	virtual void StartPlayback();

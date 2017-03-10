@@ -416,7 +416,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 	// Otherwise, we do it at the end of the function.
 	events[0] = delay;
 	events[1] = 0;
-	events[2] = MEVT_NOP << 24;
+	events[2] = MEVENT_NOP << 24;
 
 	if (event != MIDI_SYSEX && event != MIDI_META && event != MIDI_SYSEXEND)
 	{
@@ -543,12 +543,12 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 				uint8_t *msg = (uint8_t *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
-					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
+					events[2] = (MEVENT_LONGMSG << 24) | (len + 1);
 					*msg++ = MIDI_SYSEX;
 				}
 				else
 				{
-					events[2] = (MEVT_LONGMSG << 24) | len;
+					events[2] = (MEVENT_LONGMSG << 24) | len;
 				}
 				memcpy(msg, &track->EventChunk[track->EventP++], len);
 				msg += len;
@@ -591,11 +591,11 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 		track->Delay = track->ReadDelay();
 	}
 	// Advance events pointer unless this is a non-delaying NOP.
-	if (events[0] != 0 || MEVT_EVENTTYPE(events[2]) != MEVT_NOP)
+	if (events[0] != 0 || MEVENT_EVENTTYPE(events[2]) != MEVENT_NOP)
 	{
-		if (MEVT_EVENTTYPE(events[2]) == MEVT_LONGMSG)
+		if (MEVENT_EVENTTYPE(events[2]) == MEVENT_LONGMSG)
 		{
-			events += 3 + ((MEVT_EVENTPARM(events[2]) + 3) >> 2);
+			events += 3 + ((MEVENT_EVENTPARM(events[2]) + 3) >> 2);
 		}
 		else
 		{

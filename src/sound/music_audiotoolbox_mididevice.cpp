@@ -101,7 +101,7 @@ bool AudioToolboxMIDIDevice::IsOpen() const
 
 int AudioToolboxMIDIDevice::GetTechnology() const
 {
-	return MOD_SWSYNTH;
+	return MIDIDEV_SWSYNTH;
 }
 
 int AudioToolboxMIDIDevice::SetTempo(int tempo)
@@ -180,7 +180,7 @@ int AudioToolboxMIDIDevice::PrepareHeader(MidiHeader* data)
 		DWORD* const event = reinterpret_cast<DWORD*>(events->lpData + position);
 		const DWORD message = event[2];
 
-		if (0 == MEVT_EVENTTYPE(message))
+		if (0 == MEVENT_EVENTTYPE(message))
 		{
 			static const DWORD VOLUME_CHANGE_EVENT = 7;
 
@@ -197,7 +197,7 @@ int AudioToolboxMIDIDevice::PrepareHeader(MidiHeader* data)
 		// Advance to next event
 		position += 12 + ( (message < 0x80000000)
 			? 0
-			: ((MEVT_EVENTPARM(message) + 3) & ~3) );
+			: ((MEVENT_EVENTPARM(message) + 3) & ~3) );
 
 		// Did we use up this buffer?
 		if (position >= events->dwBytesRecorded)
@@ -275,7 +275,7 @@ void AudioToolboxMIDIDevice::TimerCallback(CFRunLoopTimerRef timer, void* info)
 
 	if (nullptr != self->m_callback)
 	{
-		self->m_callback(MOM_DONE, self->m_userData, 0, 0);
+		self->m_callback(MIDI_DONE, self->m_userData);
 	}
 
 	MusicTimeStamp currentTime = 0;

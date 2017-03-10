@@ -370,7 +370,7 @@ end:
 	{
 		events[0] = time;			// dwDeltaTime
 		events[1] = 0;				// dwStreamID
-		events[2] = MEVT_NOP << 24;	// dwEvent
+		events[2] = MEVENT_NOP << 24;	// dwEvent
 		events += 3;
 	}
 	return events;

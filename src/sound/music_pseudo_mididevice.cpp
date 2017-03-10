@@ -117,7 +117,7 @@ bool PseudoMIDIDevice::IsOpen() const
 
 int PseudoMIDIDevice::GetTechnology() const
 {
-	return MOD_MIDIPORT;
+	return MIDIDEV_MIDIPORT;
 }
 
 //==========================================================================

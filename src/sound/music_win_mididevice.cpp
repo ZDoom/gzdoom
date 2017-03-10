@@ -424,9 +424,9 @@ bool WinMIDIDevice::NeedThreadedCallback()
 void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2)
 {
 	WinMIDIDevice *self = (WinMIDIDevice *)dwInstance;
-	if (self->Callback != NULL)
+	if (self->Callback != NULL && uMsg == MOM_DONE)
 	{
-		self->Callback(uMsg, self->CallbackData);
+		self->Callback(self->CallbackData);
 	}
 }
 
@@ -462,9 +462,9 @@ static bool IgnoreMIDIVolume(UINT id)
 
 	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
 	{
-		// The Microsoft GS Wavetable Synth advertises itself as MOD_SWSYNTH with a VOLUME control.
+		// The Microsoft GS Wavetable Synth advertises itself as MIDIDEV_SWSYNTH with a VOLUME control.
 		// If the one we're using doesn't match that, we don't need to bother checking the name.
-		if (caps.wTechnology == MOD_SWSYNTH && (caps.dwSupport & MIDICAPS_VOLUME))
+		if (caps.wTechnology == MIDIDEV_SWSYNTH && (caps.dwSupport & MIDICAPS_VOLUME))
 		{
 			if (strncmp(caps.szPname, "Microsoft GS", 12) == 0)
 			{

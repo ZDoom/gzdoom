@@ -141,10 +141,9 @@ float R_DoomLightingEquation(float light)
 
 #ifdef SUPPORTS_SHADOWMAPS
 
-float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
+float sampleShadowmap(vec2 dir, float v)
 {
 	float u;
-	vec2 dir = (testpos - lightpos);
 	if (abs(dir.x) > abs(dir.y))
 	{
 		if (dir.x >= 0.0)
@@ -159,7 +158,6 @@ float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
 		else
 			u = dir.x / dir.y * 0.125 + (0.50 + 0.125);
 	}
-	dir -= sign(dir) * 2.0; // margin, to remove wall acne
 	float dist2 = dot(dir, dir);
 	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
 }
@@ -175,16 +173,28 @@ float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
 
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
-	if (shadowIndex <= -1024.0 || shadowIndex >= 1024.0)
+	if (shadowIndex >= 1024.0)
 		return 1.0; // No shadowmap available for this light
 
-	float v = (abs(shadowIndex) + 0.5) / 1024.0;
-	vec2 dir = (pixelpos.xz - lightpos.xz);
-	vec2 normal = normalize(vec2(-dir.y, dir.x));
+	float v = (shadowIndex + 0.5) / 1024.0;
+
+	vec2 ray = pixelpos.xz - lightpos.xz;
+	float length = length(ray);
+	if (length < 3.0)
+		return 1.0;
+
+	vec2 dir = ray / length;
+
+	ray -= dir * 2.0; // margin
+	dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
+
+	vec2 normal = vec2(-dir.y, dir.x);
+	vec2 bias = dir * 10.0;
+
 	float sum = 0.0;
 	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
 	{
-		sum += sampleShadowmap(lightpos.xz, pixelpos.xz + normal * x, v);
+		sum += sampleShadowmap(ray + normal * x - bias * abs(x), v);
 	}
 	return sum / PCF_COUNT;
 }
@@ -210,13 +220,14 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 //
 //===========================================================================
 
-float pointLightAttenuation(vec4 lightpos, float shadowIndex)
+float pointLightAttenuation(vec4 lightpos, float lightcolorA)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 #ifdef SUPPORTS_SHADOWMAPS
+	float shadowIndex = abs(lightcolorA) - 1.0;
 	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
 #endif
-	if (shadowIndex >= 0.0) // Sign bit is the attenuated light flag
+	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
 	{
 		return attenuation;
 	}

@@ -752,8 +752,8 @@ file( GLOB HEADER_FILES
 	g_inventory/*.h
 	intermission/*.h
 	menu/*.h
-	oplsynth/*.h
-	oplsynth/dosbox/*.h
+	sound/oplsynth/*.h
+	sound/oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -768,8 +768,8 @@ file( GLOB HEADER_FILES
 	scripting/decorate/*.h
 	scripting/zscript/*.h
 	scripting/vm/*.h
-	timidity/*.h
-	wildmidi/*.h
+	sound/timidity/*.h
+	sound/wildmidi/*.h
 	xlat/*.h
 	swrenderer/*.h
 	swrenderer/drawers/*.h
@@ -892,9 +892,7 @@ set( NOT_COMPILED_SOURCE_FILES
 set( FASTMATH_SOURCES
 	swrenderer/r_all.cpp
 	polyrenderer/poly_all.cpp
-	oplsynth/music_opldumper_mididevice.cpp
-	oplsynth/music_opl_mididevice.cpp
-	oplsynth/opl_mus_player.cpp
+	sound/oplsynth/opl_mus_player.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
@@ -908,19 +906,20 @@ set( FASTMATH_SOURCES
 	sound/music_xmi_midiout.cpp
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
-	sound/music_midi_timidity.cpp
 	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
-	sound/music_fluidsynth_mididevice.cpp
-	sound/music_softsynth_mididevice.cpp
-	sound/music_timidity_mididevice.cpp
-	sound/music_wildmidi_mididevice.cpp
-	sound/music_win_mididevice.cpp
-	sound/music_audiotoolbox_mididevice.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
-	sound/music_pseudo_mididevice.cpp
-	wildmidi/wildmidi_lib.cpp
+	sound/mididevices/music_opldumper_mididevice.cpp
+	sound/mididevices/music_opl_mididevice.cpp
+	sound/mididevices/music_pseudo_mididevice.cpp
+	sound/mididevices/music_fluidsynth_mididevice.cpp
+	sound/mididevices/music_softsynth_mididevice.cpp
+	sound/mididevices/music_timidity_mididevice.cpp
+	sound/mididevices/music_wildmidi_mididevice.cpp
+	sound/mididevices/music_win_mididevice.cpp
+	sound/mididevices/music_audiotoolbox_mididevice.cpp
+	sound/mididevices/music_midi_timidity.cpp
 	gl/data/gl_matrix.cpp
 	gl/dynlights/a_dynlight.cpp
 	gl/utility/gl_clock.cpp
@@ -1178,12 +1177,6 @@ set (PCH_SOURCES
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
 	menu/videomenu.cpp
-	oplsynth/fmopl.cpp
-	oplsynth/mlopl.cpp
-	oplsynth/mlopl_io.cpp
-	oplsynth/dosbox/opl.cpp
-	oplsynth/OPL3.cpp
-	oplsynth/nukedopl3.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1252,19 +1245,26 @@ set (PCH_SOURCES
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
 	sfmt/SFMT.cpp
-	timidity/common.cpp
-	timidity/instrum.cpp
-	timidity/instrum_dls.cpp
-	timidity/instrum_font.cpp
-	timidity/instrum_sf2.cpp
-	timidity/mix.cpp
-	timidity/playmidi.cpp
-	timidity/resample.cpp
-	timidity/timidity.cpp
-	wildmidi/file_io.cpp
-	wildmidi/gus_pat.cpp
-	wildmidi/reverb.cpp
-	wildmidi/wm_error.cpp
+	sound/oplsynth/fmopl.cpp
+	sound/oplsynth/mlopl.cpp
+	sound/oplsynth/mlopl_io.cpp
+	sound/oplsynth/dosbox/opl.cpp
+	sound/oplsynth/OPL3.cpp
+	sound/oplsynth/nukedopl3.cpp
+	sound/timidity/common.cpp
+	sound/timidity/instrum.cpp
+	sound/timidity/instrum_dls.cpp
+	sound/timidity/instrum_font.cpp
+	sound/timidity/instrum_sf2.cpp
+	sound/timidity/mix.cpp
+	sound/timidity/playmidi.cpp
+	sound/timidity/resample.cpp
+	sound/timidity/timidity.cpp
+	sound/wildmidi/file_io.cpp
+	sound/wildmidi/gus_pat.cpp
+	sound/wildmidi/reverb.cpp
+	sound/wildmidi/wildmidi_lib.cpp
+	sound/wildmidi/wm_error.cpp
 	events.cpp
 	GuillotineBinPack.cpp
 	SkylineBinPack.cpp
@@ -1324,11 +1324,11 @@ include_directories( .
 	g_statusbar
 	g_shared
 	g_inventory
-	oplsynth
 	sound
 	textures
-	timidity
-	wildmidi
+	sound/oplsynth
+	sound/timidity
+	sound/wildmidi
 	xlat
 	scripting
 	scripting/vm
@@ -1440,12 +1440,11 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
-source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
-source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
-source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
-source_group("Audio Files\\WildMidi\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.h$")
-source_group("Audio Files\\WildMidi\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.cpp$")
+source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
+source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
+source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")
+source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
+source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
 source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")

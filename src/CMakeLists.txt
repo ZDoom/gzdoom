@@ -912,7 +912,7 @@ set( FASTMATH_SOURCES
 	sound/music_stream.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
-	sound/mididevices/music_midi_timidity.cpp
+	sound/mididevices/music_timiditypp_mididevice.cpp
 	gl/data/gl_matrix.cpp
 	gl/dynlights/a_dynlight.cpp
 	gl/utility/gl_clock.cpp

@@ -108,10 +108,6 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 	int p;
 	int i;
 
-	if (!CheckExitEvent())
-	{
-		return;
-	}
 	SongLen = reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)

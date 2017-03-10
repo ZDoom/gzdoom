@@ -74,7 +74,8 @@ public:
 	virtual int UnprepareHeader(MidiHeader *data);
 	virtual bool FakeVolume();
 	virtual bool Pause(bool paused) = 0;
-	virtual bool NeedThreadedCallback();
+	virtual void InitPlayback();
+	virtual bool Update();
 	virtual void PrecacheInstruments(const uint16_t *instruments, int count);
 	virtual void TimidityVolumeChanged();
 	virtual void FluidSettingInt(const char *setting, int value);
@@ -357,21 +358,20 @@ public:
 	void FluidSettingStr(const char *setting, const char *value);
 	void WildMidiSetOption(int opt, int set);
 	void CreateSMF(TArray<uint8_t> &file, int looplimit=0);
+	int ServiceEvent();
 
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);
 
-	bool CheckExitEvent();
 	void OutputVolume (uint32_t volume);
 	int FillBuffer(int buffer_num, int max_events, uint32_t max_time);
 	int FillStopBuffer(int buffer_num);
 	uint32_t *WriteStopNotes(uint32_t *events);
-	int ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
 	int ClampLoopCount(int loopcount);
 	void SetTempo(int new_tempo);
 	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
-	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
+	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype);
 
 	static void Callback(void *userdata);
 

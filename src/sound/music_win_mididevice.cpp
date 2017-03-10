@@ -34,19 +34,7 @@
 
 #ifdef _WIN32
 
-#define WIN32_LEAN_AND_MEAN
-#define USE_WINDOWS_DWORD
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
-#undef _WIN32_WINNT
-#endif
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
-#endif
-#ifndef USE_WINDOWS_DWORD
-#define USE_WINDOWS_DWORD
-#endif
-#include <windows.h>
-#include <mmsystem.h>
+#include "i_midi_win32.h"
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -92,13 +80,16 @@ public:
 	int PrepareHeader(MidiHeader *data);
 	int UnprepareHeader(MidiHeader *data);
 	bool FakeVolume();
-	bool NeedThreadedCallback();
 	bool Pause(bool paused);
+	void InitPlayback() override;
+	bool Update() override;
 	void PrecacheInstruments(const uint16_t *instruments, int count);
+	DWORD PlayerLoop();
 
-protected:
+//protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
 
+	MIDIStreamer *Streamer;
 	HMIDISTRM MidiOut;
 	UINT DeviceID;
 	DWORD SavedVolume;
@@ -108,6 +99,12 @@ protected:
 
 	MidiCallback Callback;
 	void *CallbackData;
+
+	HANDLE BufferDoneEvent;
+	HANDLE ExitEvent;
+	HANDLE PlayerThread;
+
+
 };
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -128,6 +125,18 @@ WinMIDIDevice::WinMIDIDevice(int dev_id)
 	MidiOut = 0;
 	HeaderIndex = 0;
 	memset(WinMidiHeaders, 0, sizeof(WinMidiHeaders));
+
+	BufferDoneEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (BufferDoneEvent == nullptr)
+	{
+		Printf(PRINT_BOLD, "Could not create buffer done event for MIDI playback\n");
+	}
+	ExitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (ExitEvent == nullptr)
+	{
+		Printf(PRINT_BOLD, "Could not create exit event for MIDI playback\n");
+	}
+	PlayerThread = nullptr;
 }
 
 //==========================================================================
@@ -139,6 +148,15 @@ WinMIDIDevice::WinMIDIDevice(int dev_id)
 WinMIDIDevice::~WinMIDIDevice()
 {
 	Close();
+
+	if (ExitEvent != nullptr)
+	{
+		CloseHandle(ExitEvent);
+	}
+	if (BufferDoneEvent != nullptr)
+	{
+		CloseHandle(BufferDoneEvent);
+	}
 }
 
 //==========================================================================
@@ -153,7 +171,7 @@ int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
 
 	Callback = callback;
 	CallbackData = userdata;
-	if (MidiOut == NULL)
+	if (MidiOut == nullptr)
 	{
 		err = midiStreamOpen(&MidiOut, &DeviceID, 1, (DWORD_PTR)CallbackFunc, (DWORD_PTR)this, CALLBACK_FUNCTION);
 
@@ -185,10 +203,10 @@ int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
 
 void WinMIDIDevice::Close()
 {
-	if (MidiOut != NULL)
+	if (MidiOut != nullptr)
 	{
 		midiStreamClose(MidiOut);
-		MidiOut = NULL;
+		MidiOut = nullptr;
 	}
 }
 
@@ -200,7 +218,7 @@ void WinMIDIDevice::Close()
 
 bool WinMIDIDevice::IsOpen() const
 {
-	return MidiOut != NULL;
+	return MidiOut != nullptr;
 }
 
 //==========================================================================
@@ -246,13 +264,50 @@ int WinMIDIDevice::SetTimeDiv(int timediv)
 
 //==========================================================================
 //
+// MIDIStreamer :: PlayerProc										Static
+//
+// Entry point for the player thread.
+//
+//==========================================================================
+
+DWORD WINAPI PlayerProc(LPVOID lpParameter)
+{
+	return ((WinMIDIDevice *)lpParameter)->PlayerLoop();
+}
+
+//==========================================================================
+//
 // WinMIDIDevice :: Resume
 //
 //==========================================================================
 
 int WinMIDIDevice::Resume()
 {
-	return midiStreamRestart(MidiOut);
+	DWORD tid;
+	int ret =  midiStreamRestart(MidiOut);
+	if (ret == 0)
+	{
+		PlayerThread = CreateThread(nullptr, 0, PlayerProc, this, 0, &tid);
+		if (PlayerThread == nullptr)
+		{
+			Printf("Creating MIDI thread failed\n");
+			Stop();
+			return MMSYSERR_NOTSUPPORTED;
+		}
+	}
+	return ret;
+}
+
+//==========================================================================
+//
+// WinMIDIDevice :: InitPlayback
+//
+//==========================================================================
+
+void WinMIDIDevice::InitPlayback()
+{
+	ResetEvent(ExitEvent);
+	ResetEvent(BufferDoneEvent);
 }
 
 //==========================================================================
@@ -263,6 +318,14 @@ int WinMIDIDevice::Resume()
 
 void WinMIDIDevice::Stop()
 {
+	if (PlayerThread != nullptr)
+	{
+		SetEvent(ExitEvent);
+		WaitForSingleObject(PlayerThread, INFINITE);
+		CloseHandle(PlayerThread);
+		PlayerThread = nullptr;
+	}
+
 	midiStreamStop(MidiOut);
 	midiOutReset((HMIDIOUT)MidiOut);
 	if (VolumeWorks)
@@ -270,6 +333,40 @@ void WinMIDIDevice::Stop()
 		midiOutSetVolume((HMIDIOUT)MidiOut, SavedVolume);
 	}
 }
+
+//==========================================================================
+//
+// MIDIStreamer :: PlayerLoop
+//
+// Services MIDI playback events.
+//
+//==========================================================================
+
+DWORD WinMIDIDevice::PlayerLoop()
+{
+	HANDLE events[2] = { BufferDoneEvent, ExitEvent };
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+
+	for (;;)
+	{
+		switch (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+		{
+		case WAIT_OBJECT_0:
+			if (Callback != nullptr) Callback(CallbackData);
+			break;
+
+		case WAIT_OBJECT_0 + 1:
+			return 0;
+
+		default:
+			// Should not happen.
+			return MMSYSERR_ERROR;
+		}
+	}
+	return 0;
+}
+
 
 //==========================================================================
 //
@@ -391,9 +488,7 @@ int WinMIDIDevice::StreamOut(MidiHeader *header)
 
 int WinMIDIDevice::StreamOutSync(MidiHeader *header)
 {
-	auto syshdr = (MIDIHDR*)header->lpNext;
-	assert(syshdr == &WinMidiHeaders[0] || syshdr == &WinMidiHeaders[1]);
-	return midiStreamOut(MidiOut, syshdr, sizeof(MIDIHDR));
+	return StreamOut(header);
 }
 
 //==========================================================================
@@ -454,15 +549,71 @@ bool WinMIDIDevice::FakeVolume()
 
 //==========================================================================
 //
-// WinMIDIDevice :: NeedThreadedCallback
-//
-// When using the MM system, the callback can't yet touch the buffer, so
-// the real processing needs to happen in a different thread.
+// WinMIDIDevice :: Update
 //
 //==========================================================================
 
-bool WinMIDIDevice::NeedThreadedCallback()
+bool WinMIDIDevice::Update()
 {
+	// If the PlayerThread is signalled, then it's dead.
+	if (PlayerThread != nullptr &&
+		WaitForSingleObject(PlayerThread, 0) == WAIT_OBJECT_0)
+	{
+		static const char *const MMErrorCodes[] =
+		{
+			"No error",
+			"Unspecified error",
+			"Device ID out of range",
+			"Driver failed enable",
+			"Device already allocated",
+			"Device handle is invalid",
+			"No device driver present",
+			"Memory allocation error",
+			"Function isn't supported",
+			"Error value out of range",
+			"Invalid flag passed",
+			"Invalid parameter passed",
+			"Handle being used simultaneously on another thread",
+			"Specified alias not found",
+			"Bad registry database",
+			"Registry key not found",
+			"Registry read error",
+			"Registry write error",
+			"Registry delete error",
+			"Registry value not found",
+			"Driver does not call DriverCallback",
+			"More data to be returned",
+		};
+		static const char *const MidiErrorCodes[] =
+		{
+			"MIDI header not prepared",
+			"MIDI still playing something",
+			"MIDI no configured instruments",
+			"MIDI hardware is still busy",
+			"MIDI port no longer connected",
+			"MIDI invalid MIF",
+			"MIDI operation unsupported with open mode",
+			"MIDI through device 'eating' a message",
+		};
+		DWORD code = 0xABADCAFE;
+		GetExitCodeThread(PlayerThread, &code);
+		CloseHandle(PlayerThread);
+		PlayerThread = nullptr;
+		Printf("MIDI playback failure: ");
+		if (code < countof(MMErrorCodes))
+		{
+			Printf("%s\n", MMErrorCodes[code]);
+		}
+		else if (code >= MIDIERR_BASE && code < MIDIERR_BASE + countof(MidiErrorCodes))
+		{
+			Printf("%s\n", MidiErrorCodes[code - MIDIERR_BASE]);
+		}
+		else
+		{
+			Printf("%08x\n", code);
+		}
+		return false;
+	}
 	return true;
 }
 
@@ -475,9 +626,9 @@ bool WinMIDIDevice::NeedThreadedCallback()
 void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2)
 {
 	WinMIDIDevice *self = (WinMIDIDevice *)dwInstance;
-	if (self->Callback != NULL && uMsg == MOM_DONE)
+	if (uMsg == MOM_DONE)
 	{
-		self->Callback(self->CallbackData);
+		SetEvent(self->BufferDoneEvent);
 	}
 }
 
@@ -524,9 +675,9 @@ static bool IgnoreMIDIVolume(UINT id)
 				// Now try to create an IMMDeviceEnumerator interface. If it succeeds,
 				// we know we're using the new audio stack introduced with Vista and
 				// should ignore this MIDI device's volume control.
-				if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+				if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
 											   __uuidof(IMMDeviceEnumerator), (void**)&enumerator))
-					&& enumerator != NULL)
+					&& enumerator != nullptr)
 				{
 					enumerator->Release();
 					return true;
@@ -540,7 +691,13 @@ static bool IgnoreMIDIVolume(UINT id)
 
 MIDIDevice *CreateWinMIDIDevice(int mididevice)
 {
-	return new WinMIDIDevice(mididevice);
+	auto d = new WinMIDIDevice(mididevice);
+	if (d->BufferDoneEvent == nullptr || d->ExitEvent == nullptr)
+	{
+		delete d;
+		return nullptr;
+	}
+	return d;
 }
 #endif
 

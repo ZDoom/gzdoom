@@ -111,10 +111,6 @@ extern char MIDI_CommonLengths[15];
 XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 : MIDIStreamer(type, args), MusHeader(0), Songs(0)
 {
-	if (!CheckExitEvent())
-	{
-		return;
-	}
 	SongLen = reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)

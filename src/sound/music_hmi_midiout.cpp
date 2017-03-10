@@ -131,10 +131,6 @@ extern char MIDI_CommonLengths[15];
 HMISong::HMISong (FileReader &reader, EMidiDevice type, const char *args)
 : MIDIStreamer(type, args), MusHeader(0), Tracks(0)
 {
-	if (!CheckExitEvent())
-	{
-		return;
-	}
     int len = reader.GetLength();
 	if (len < 0x100)
 	{ // Way too small to be HMI.

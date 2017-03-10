@@ -122,6 +122,8 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 	}
 }
 
+class MIDIStreamer;
+
 class NullSoundRenderer : public SoundRenderer
 {
 public:

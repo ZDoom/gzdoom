@@ -96,11 +96,6 @@ static const uint8_t CtrlTranslate[15] =
 MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 : MIDIStreamer(type, args), MusHeader(0), MusBuffer(0)
 {
-	if (!CheckExitEvent())
-	{
-		return;
-	}
-
 	uint8_t front[32];
 	int start;
 

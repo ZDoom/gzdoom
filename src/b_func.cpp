@@ -24,6 +24,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "actorinlines.h"
 
 static FRandom pr_botdofire ("BotDoFire");
 

@@ -72,6 +72,7 @@
 #include "p_maputl.h"
 #include "p_blockmap.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif

@@ -81,6 +81,7 @@
 #include "g_levellocals.h"
 #include "r_utility.h"
 #include "sbar.h"
+#include "actorinlines.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 

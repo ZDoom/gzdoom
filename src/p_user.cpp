@@ -60,6 +60,7 @@
 #include "p_spec.h"
 #include "virtual.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "r_data/r_translate.h"
 
 static FRandom pr_skullpop ("SkullPop");

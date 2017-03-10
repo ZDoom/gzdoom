@@ -38,6 +38,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "actorinlines.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"

@@ -48,6 +48,7 @@
 #include "p_spec.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 EXTERN_CVAR(Int, vid_renderer)
 

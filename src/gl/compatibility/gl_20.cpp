@@ -38,6 +38,7 @@
 #include "v_text.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/renderer/gl_renderer.h"

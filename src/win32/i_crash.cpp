@@ -63,7 +63,6 @@
 #include <uxtheme.h>
 #include <stddef.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "resource.h"
 #include "version.h"

@@ -39,7 +39,6 @@
 #include <windows.h>
 #include <mmsystem.h>
 extern HWND Window;
-#define USE_WINDOWS_DWORD
 #else
 #define FALSE 0
 #define TRUE 1

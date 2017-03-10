@@ -63,7 +63,6 @@
 #include <richedit.h>
 #include <wincrypt.h>
 
-#define USE_WINDOWS_DWORD
 #include "hardware.h"
 #include "doomerrors.h"
 #include <math.h>

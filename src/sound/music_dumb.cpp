@@ -78,7 +78,7 @@ protected:
 
 typedef struct tagITFILEHEADER
 {
-	DWORD id;			// 0x4D504D49
+	uint32_t id;			// 0x4D504D49
 	char songname[26];
 	uint16_t reserved1;		// 0x1004
 	uint16_t ordnum;
@@ -96,8 +96,8 @@ typedef struct tagITFILEHEADER
 	uint8_t sep;
 	uint8_t zero;
 	uint16_t msglength;
-	DWORD msgoffset;
-	DWORD reserved2;
+	uint32_t msgoffset;
+	uint32_t reserved2;
 	uint8_t chnpan[64];
 	uint8_t chnvol[64];
 } FORCE_PACKED ITFILEHEADER, *PITFILEHEADER;
@@ -274,16 +274,16 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool met
 	unsigned msgoffset = LittleLong(pifh->msgoffset);
 	unsigned msgend = msgoffset + LittleShort(pifh->msglength);
 
-	DWORD * offset;
+	uint32_t * offset;
 //	FString name;
 	
 	if (meta)
 	{
-		offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4);
+		offset = (uint32_t *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4);
 
 		for (n = 0, l = LittleShort(pifh->smpnum); n < l; n++, offset++)
 		{
-			DWORD offset_n = LittleLong( *offset );
+			uint32_t offset_n = LittleLong( *offset );
 			if ( offset_n >= msgoffset && offset_n < msgend ) msgend = offset_n;
 			if ((!offset_n) || (offset_n + 0x14 + 26 + 2 >= size)) continue;
 			// XXX
@@ -304,11 +304,11 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool met
 #endif
 		}
 
-		offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum));
+		offset = (uint32_t *)(ptr + 0xC0 + LittleShort(pifh->ordnum));
 
 		for (n = 0, l = LittleShort(pifh->insnum); n < l; n++, offset++)
 		{
-			DWORD offset_n = LittleLong( *offset );
+			uint32_t offset_n = LittleLong( *offset );
 			if ( offset_n >= msgoffset && offset_n < msgend ) msgend = offset_n;
 			if ((!offset_n) || (offset_n + 0x20 + 26 >= size)) continue;
 #if 0
@@ -340,9 +340,9 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool met
 		}
 	}
 
-	if ((pos + 8 < size) && (*(DWORD *)(ptr + pos) == MAKE_ID('P','N','A','M')))
+	if ((pos + 8 < size) && (*(uint32_t *)(ptr + pos) == MAKE_ID('P','N','A','M')))
 	{
-		unsigned len = LittleLong(*(DWORD *)(ptr + pos + 4));
+		unsigned len = LittleLong(*(uint32_t *)(ptr + pos + 4));
 		pos += 8;
 		if ((pos + len <= size) && (len <= 240 * 32) && (len >= 32))
 		{
@@ -366,9 +366,9 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool met
 		}
 	}
 
-	if ((pos + 8 < size) && (*(DWORD *)(ptr + pos) == MAKE_ID('C','N','A','M')))
+	if ((pos + 8 < size) && (*(uint32_t *)(ptr + pos) == MAKE_ID('C','N','A','M')))
 	{
-		unsigned len = LittleLong(*(DWORD *)(ptr + pos + 4));
+		unsigned len = LittleLong(*(uint32_t *)(ptr + pos + 4));
 		pos += 8;
 		if ((pos + len <= size) && (len <= 64 * 20) && (len >= 20))
 		{
@@ -393,14 +393,14 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool met
 		}
 	}
 
-	offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4 + LittleShort(pifh->smpnum) * 4);
+	offset = (uint32_t *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4 + LittleShort(pifh->smpnum) * 4);
 
 	uint8_t chnmask[64];
 
 	for (n = 0, l = LittleShort(pifh->patnum); n < l; n++)
 	{
 		memset(chnmask, 0, sizeof(chnmask));
-		DWORD offset_n = LittleLong( offset[n] );
+		uint32_t offset_n = LittleLong( offset[n] );
 		if ((!offset_n) || (offset_n + 4 >= size)) continue;
 		unsigned len = LittleShort(*(uint16_t *)(ptr + offset_n));
 		unsigned rows = LittleShort(*(uint16_t *)(ptr + offset_n + 2));
@@ -759,7 +759,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	union
 	{
 		uint8_t start[64];
-		DWORD dstart[64/4];
+		uint32_t dstart[64/4];
 	};
 	dumbfile_mem_status filestate;
 	DUMBFILE *f = NULL;
@@ -845,7 +845,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 			/*start_order = 0;*/
 		}
 	}
-	else if (size >= 4 && dstart[0] == (DWORD)MAKE_ID('P','S','M',254))
+	else if (size >= 4 && dstart[0] == (uint32_t)MAKE_ID('P','S','M',254))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{

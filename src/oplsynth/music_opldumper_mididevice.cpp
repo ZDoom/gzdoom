@@ -200,11 +200,11 @@ public:
 		if (File != NULL)
 		{
 			long where_am_i = ftell(File);
-			DWORD len[2];
+			uint32_t len[2];
 
 			fseek(File, 12, SEEK_SET);
 			len[0] = LittleLong(CurIntTime);
-			len[1] = LittleLong(DWORD(where_am_i - 24));
+			len[1] = LittleLong(uint32_t(where_am_i - 24));
 			fwrite(len, 4, 2, File);
 			fclose(File);
 		}

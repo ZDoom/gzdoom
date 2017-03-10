@@ -3,16 +3,7 @@
 
 #include <stdint.h>
 
-// windef.h, included by windows.h, has its own incompatible definition
-// of DWORD as a long. In files that mix Doom and Windows code, you
-// must define USE_WINDOWS_DWORD before including doomtype.h so that
-// you are aware that those files have a different DWORD than the rest
-// of the source.
-
-#ifndef USE_WINDOWS_DWORD
-typedef uint32_t					DWORD;
-#endif
-typedef uint32_t					BITFIELD;
+typedef uint32_t				BITFIELD;
 typedef int						INTBOOL;
 
 #if !defined(GUID_DEFINED)

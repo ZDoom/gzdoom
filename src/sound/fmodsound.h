@@ -71,7 +71,7 @@ public:
 	virtual MIDIDevice* CreateMIDIDevice() const override;
 
 private:
-	DWORD ActiveFMODVersion;
+	uint32_t ActiveFMODVersion;
 	int SFXPaused;
 	bool InitSuccess;
 	bool DSPLocked;

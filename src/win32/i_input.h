@@ -37,13 +37,8 @@
 #include "doomtype.h"
 #include "doomdef.h"
 
-void I_SetMouseCapture();
-void I_ReleaseMouseCapture();
-
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
-void I_PutInClipboard (const char *str);
-FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent();
 
@@ -56,7 +51,7 @@ enum
 };
 
 
-#ifdef USE_WINDOWS_DWORD
+#ifdef _WIN32
 #include "m_joy.h"
 
 // Don't make these definitions available to the main body of the source code.

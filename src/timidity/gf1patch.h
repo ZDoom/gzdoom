@@ -31,7 +31,7 @@ struct GF1PatchHeader
 	uint8_t Channels;
 	uint16_t WaveForms;
 	uint16_t MasterVolume;
-	DWORD DataSize;
+	uint32_t DataSize;
 	uint8_t Reserved[PATCH_HEADER_RESERVED_SIZE];
 } GCC_PACKED;
 

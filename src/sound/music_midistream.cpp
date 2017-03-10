@@ -56,7 +56,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void WriteVarLen (TArray<uint8_t> &file, DWORD value);
+static void WriteVarLen (TArray<uint8_t> &file, uint32_t value);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -496,7 +496,7 @@ void MIDIStreamer::MusicVolumeChanged()
 	if (MIDI != NULL && MIDI->FakeVolume())
 	{
 		float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
-		Volume = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
+		Volume = clamp<uint32_t>((uint32_t)(realvolume * 65535.f), 0, 65535);
 	}
 	else
 	{
@@ -773,7 +773,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 	{
 		// Be more responsive when unpausing by only playing each buffer
 		// for a third of the maximum time.
-		events[0] = MAX<DWORD>(1, (max_time / 3) * Division / Tempo);
+		events[0] = MAX<uint32_t>(1, (max_time / 3) * Division / Tempo);
 		events[1] = 0;
 		events[2] = MEVENT_NOP << 24;
 		events += 3;
@@ -828,7 +828,7 @@ int MIDIStreamer::FillStopBuffer(int buffer_num)
 
 	memset(&Buffer[buffer_num], 0, sizeof(MidiHeader));
 	Buffer[buffer_num].lpData = (uint8_t*)Events[buffer_num];
-	Buffer[buffer_num].dwBufferLength = DWORD((uint8_t*)events - Buffer[buffer_num].lpData);
+	Buffer[buffer_num].dwBufferLength = uint32_t((uint8_t*)events - Buffer[buffer_num].lpData);
 	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
 	if (0 != (i = MIDI->PrepareHeader(&Buffer[buffer_num])))
 	{
@@ -974,7 +974,7 @@ void MIDIStreamer::Precache()
 
 void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 {
-	DWORD delay = 0;
+	uint32_t delay = 0;
 	uint8_t running_status = 255;
 
 	// Always create songs aimed at GM devices.
@@ -1066,7 +1066,7 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	file.Push(0);
 
 	// Fill in track length
-	DWORD len = file.Size() - 22;
+	uint32_t len = file.Size() - 22;
 	file[18] = uint8_t(len >> 24);
 	file[19] = uint8_t(len >> 16);
 	file[20] = uint8_t(len >> 8);
@@ -1081,9 +1081,9 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 //
 //==========================================================================
 
-static void WriteVarLen (TArray<uint8_t> &file, DWORD value)
+static void WriteVarLen (TArray<uint8_t> &file, uint32_t value)
 {
-   DWORD buffer = value & 0x7F;
+   uint32_t buffer = value & 0x7F;
 
    while ( (value >>= 7) )
    {

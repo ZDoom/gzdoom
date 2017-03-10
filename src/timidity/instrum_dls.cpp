@@ -255,6 +255,8 @@ typedef int16_t	SHORT;
 typedef uint16_t USHORT;
 typedef int32_t	LONG;
 typedef uint32_t ULONG;
+typedef uint32_t DWORD;
+
 #define mmioFOURCC	MAKE_ID
 #define DEFINE_GUID(A, B, C, E, F, G, H, I, J, K, L, M)
 

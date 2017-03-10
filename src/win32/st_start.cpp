@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include "resource.h"
 
-#define USE_WINDOWS_DWORD
 #include "st_start.h"
 #include "resource.h"
 #include "templates.h"
@@ -659,7 +658,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	union
 	{
 		RGBQUAD color;
-		DWORD	quad;
+		uint32_t	quad;
 	} c;
 
 	Wads.ReadLump (startup_lump, startup_screen);
@@ -1332,8 +1331,8 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const uint8_t *src, int x, int 
 	{ // progress notches
 		for (; height > 0; --height)
 		{
-			((DWORD *)dest)[0] = ((const DWORD *)src)[0];
-			((DWORD *)dest)[1] = ((const DWORD *)src)[1];
+			((uint32_t *)dest)[0] = ((const uint32_t *)src)[0];
+			((uint32_t *)dest)[1] = ((const uint32_t *)src)[1];
 			dest += destpitch;
 			src += 8;
 		}
@@ -1395,7 +1394,7 @@ void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, uint8_t fill, int x, int y, in
 
 BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits)
 {
-	DWORD size_image = (width * height) >> int(color_bits == 4);
+	uint32_t size_image = (width * height) >> int(color_bits == 4);
 	BITMAPINFO *bitmap_info = (BITMAPINFO *)M_Malloc (sizeof(BITMAPINFOHEADER) +
 		(sizeof(RGBQUAD) << color_bits) + size_image);
 

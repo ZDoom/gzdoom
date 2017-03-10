@@ -1,14 +1,10 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#define USE_WINDOWS_DWORD
 #if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
 #undef _WIN32_WINNT
 #endif
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
-#endif
-#ifndef USE_WINDOWS_DWORD
-#define USE_WINDOWS_DWORD
 #endif
 #include <windows.h>
 #include <mmsystem.h>

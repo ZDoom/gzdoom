@@ -39,7 +39,6 @@
 #include <windows.h>
 #include <intrin.h>
 
-#define USE_WINDOWS_DWORD
 #elif defined __APPLE__
 #include <sys/sysctl.h>
 #endif

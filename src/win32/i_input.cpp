@@ -77,7 +77,6 @@
 #endif
 
 
-#define USE_WINDOWS_DWORD
 #include "c_dispatch.h"
 #include "doomtype.h"
 #include "doomdef.h"

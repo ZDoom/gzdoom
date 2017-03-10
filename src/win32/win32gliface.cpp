@@ -5,7 +5,6 @@
 #include <GL/gl.h>
 #include "wglext.h"
 
-#define USE_WINDOWS_DWORD
 #include "win32iface.h"
 #include "win32gliface.h"
 //#include "gl/gl_intern.h"

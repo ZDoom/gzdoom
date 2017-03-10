@@ -261,7 +261,7 @@ int SoftSynthMIDIDevice::StreamOut(MidiHeader *header)
 	if (Events == NULL)
 	{
 		Events = header;
-		NextTickIn = SamplesPerTick * *(DWORD *)header->lpData;
+		NextTickIn = SamplesPerTick * *(uint32_t *)header->lpData;
 		Position = 0;
 	}
 	else
@@ -302,11 +302,11 @@ bool SoftSynthMIDIDevice::Pause(bool paused)
 
 int SoftSynthMIDIDevice::PlayTick()
 {
-	DWORD delay = 0;
+	uint32_t delay = 0;
 
 	while (delay == 0 && Events != NULL)
 	{
-		DWORD *event = (DWORD *)(Events->lpData + Position);
+		uint32_t *event = (uint32_t *)(Events->lpData + Position);
 		if (MEVENT_EVENTTYPE(event[2]) == MEVENT_TEMPO)
 		{
 			SetTempo(MEVENT_EVENTPARM(event[2]));
@@ -373,7 +373,7 @@ int SoftSynthMIDIDevice::PlayTick()
 			return int(Division);
 		}
 
-		delay = *(DWORD *)(Events->lpData + Position);
+		delay = *(uint32_t *)(Events->lpData + Position);
 	}
 	return delay;
 }

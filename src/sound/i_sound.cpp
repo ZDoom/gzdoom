@@ -39,7 +39,6 @@
 #include "resource.h"
 extern HWND Window;
 extern HINSTANCE g_hInst;
-#define USE_WINDOWS_DWORD
 #endif
 
 #include <stdio.h>

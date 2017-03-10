@@ -10,7 +10,7 @@
 #include "v_text.h"
 #include "menu/menu.h"
 
-static DWORD	nummididevices;
+static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
@@ -117,7 +117,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
 
-	for (DWORD id = 0; id < nummididevices; ++id)
+	for (uint32_t id = 0; id < nummididevices; ++id)
 	{
 		MIDIOUTCAPS caps;
 		MMRESULT res;
@@ -133,7 +133,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 	}
 }
 
-static void PrintMidiDevice (int id, const char *name, uint16_t tech, DWORD support)
+static void PrintMidiDevice (int id, const char *name, uint16_t tech, uint32_t support)
 {
 	if (id == snd_mididevice)
 	{

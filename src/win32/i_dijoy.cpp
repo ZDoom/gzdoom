@@ -11,7 +11,6 @@
 #include <oleauto.h>
 #include <malloc.h>
 
-#define USE_WINDOWS_DWORD
 #include "i_input.h"
 #include "i_system.h"
 #include "d_event.h"

@@ -210,20 +210,20 @@ void AudioToolboxMIDIDevice::Stop()
 int AudioToolboxMIDIDevice::PrepareHeader(MidiHeader* data)
 {
 	MidiHeader* events = data;
-	DWORD position = 0;
+	uint32_t position = 0;
 
 	while (nullptr != events)
 	{
-		DWORD* const event = reinterpret_cast<DWORD*>(events->lpData + position);
-		const DWORD message = event[2];
+		uint32_t* const event = reinterpret_cast<uint32_t*>(events->lpData + position);
+		const uint32_t message = event[2];
 
 		if (0 == MEVENT_EVENTTYPE(message))
 		{
-			static const DWORD VOLUME_CHANGE_EVENT = 7;
+			static const uint32_t VOLUME_CHANGE_EVENT = 7;
 
-			const DWORD status =  message        & 0xFF;
-			const DWORD param1 = (message >>  8) & 0x7F;
-			const DWORD param2 = (message >> 16) & 0x7F;
+			const uint32_t status =  message        & 0xFF;
+			const uint32_t param1 = (message >>  8) & 0x7F;
+			const uint32_t param2 = (message >> 16) & 0x7F;
 
 			if (nullptr != m_audioUnit && MIDI_CTRLCHANGE == status && VOLUME_CHANGE_EVENT == param1)
 			{

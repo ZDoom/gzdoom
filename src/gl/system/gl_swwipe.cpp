@@ -48,7 +48,6 @@
 #include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "i_input.h"
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"

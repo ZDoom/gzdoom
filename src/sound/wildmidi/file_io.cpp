@@ -35,7 +35,7 @@
 
 #include <errno.h>
 
-#include "../files.h"
+#include "files.h"
 #include "wm_error.h"
 #include "file_io.h"
 #include "pathexpander.h"

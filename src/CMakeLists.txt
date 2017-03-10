@@ -899,17 +899,7 @@ set( FASTMATH_SOURCES
 	sound/i_music.cpp
 	sound/i_sound.cpp
 	sound/mpg123_decoder.cpp
-	sound/music_cd.cpp
-	sound/music_dumb.cpp
-	sound/music_gme.cpp
-	sound/music_mus_midiout.cpp
-	sound/music_smf_midiout.cpp
-	sound/music_hmi_midiout.cpp
-	sound/music_xmi_midiout.cpp
-	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
-	sound/music_mus_opl.cpp
-	sound/music_stream.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
@@ -1245,6 +1235,16 @@ set (PCH_SOURCES
 	sound/mididevices/music_softsynth_mididevice.cpp
 	sound/mididevices/music_timidity_mididevice.cpp
 	sound/mididevices/music_wildmidi_mididevice.cpp
+	sound/musicformats/music_cd.cpp
+	sound/musicformats/music_dumb.cpp
+	sound/musicformats/music_gme.cpp
+	sound/musicformats/music_mus_midiout.cpp
+	sound/musicformats/music_smf_midiout.cpp
+	sound/musicformats/music_hmi_midiout.cpp
+	sound/musicformats/music_xmi_midiout.cpp
+	sound/musicformats/music_midistream.cpp
+	sound/musicformats/music_opl.cpp
+	sound/musicformats/music_stream.cpp
 	sound/oplsynth/fmopl.cpp
 	sound/oplsynth/mlopl.cpp
 	sound/oplsynth/mlopl_io.cpp
@@ -1445,6 +1445,7 @@ source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cp
 source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")
 source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
 source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
+source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")

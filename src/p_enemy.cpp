@@ -250,9 +250,6 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 	if (emitter == NULL)
 		return;
 
-	/*if (target != NULL && target->player && !(target->flags & MF_FRIENDLY))
-		return;*/
-
 	if (target != NULL && target->player && (target->player->cheats & CF_NOTARGET))
 		return;
 

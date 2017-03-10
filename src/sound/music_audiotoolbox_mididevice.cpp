@@ -25,8 +25,45 @@
 
 #ifdef __APPLE__
 
+#include <AudioToolbox/AudioToolbox.h>
 #include "i_musicinterns.h"
 #include "templates.h"
+
+// AudioToolbox implementation of a MIDI output device ----------------------
+
+class AudioToolboxMIDIDevice : public MIDIDevice
+{
+public:
+	virtual int Open(MidiCallback, void *userData) override;
+	virtual void Close() override;
+	virtual bool IsOpen() const override;
+	virtual int GetTechnology() const override;
+	virtual int SetTempo(int tempo) override;
+	virtual int SetTimeDiv(int timediv) override;
+	virtual int StreamOut(MidiHeader *data) override;
+	virtual int StreamOutSync(MidiHeader *data) override;
+	virtual int Resume() override;
+	virtual void Stop() override;
+	virtual int PrepareHeader(MidiHeader* data) override;
+	virtual bool FakeVolume() override { return true; }
+	virtual bool Pause(bool paused) override;
+	virtual bool Preprocess(MIDIStreamer *song, bool looping) override;
+
+private:
+	MusicPlayer m_player = nullptr;
+	MusicSequence m_sequence = nullptr;
+	AudioUnit m_audioUnit = nullptr;
+	CFRunLoopTimerRef m_timer = nullptr;
+	MusicTimeStamp m_length = 0;
+
+	MidiCallback Callback;
+	Callback m_callback = nullptr;
+	void* m_userData = nullptr;
+
+	static void TimerCallback(CFRunLoopTimerRef timer, void* info);
+};
+
+
 
 #define AT_MIDI_CHECK_ERROR(CALL,...)                              \
 {                                                                  \
@@ -288,5 +325,10 @@ void AudioToolboxMIDIDevice::TimerCallback(CFRunLoopTimerRef timer, void* info)
 }
 
 #undef AT_MIDI_CHECK_ERROR
+
+MIDIDevice *CreateAudioToolboxMIDTDevice(int mididevice)
+{
+	return new AudioToolboxMIDIDevice(mididevice);
+}
 
 #endif // __APPLE__

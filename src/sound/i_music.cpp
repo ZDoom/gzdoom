@@ -36,6 +36,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
+#define USE_WINDOWS_DWORD
 #else
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -46,8 +47,6 @@
 #include <wordexp.h>
 #include <stdio.h>
 #include "mus2midi.h"
-#define FALSE 0
-#define TRUE 1
 extern void ChildSigHandler (int signum);
 #endif
 
@@ -347,7 +346,7 @@ static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype,
 //
 //==========================================================================
 
-static EMIDIType IdentifyMIDIType(DWORD *id, int size)
+static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
@@ -400,7 +399,7 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = NULL;
 	const char *fmt;
-	DWORD id[32/4];
+	uint32_t id[32/4];
 
 	if (nomusic)
 	{
@@ -501,7 +500,7 @@ retry_as_sndsys:
         // Check for CDDA "format"
         if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
         {
-            DWORD subid;
+            uint32_t subid;
 
             reader->Seek(8, SEEK_CUR);
             if (reader->Read (&subid, 4) != 4)
@@ -628,7 +627,7 @@ static bool ungzip(uint8_t *data, int complen, TArray<uint8_t> &newdata)
 	}
 
 	// Decompress
-	isize = LittleLong(*(DWORD *)(data + complen - 4));
+	isize = LittleLong(*(uint32_t *)(data + complen - 4));
     newdata.Resize(isize);
 
 	stream.next_in = (Bytef *)compstart;

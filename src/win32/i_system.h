@@ -175,10 +175,10 @@ FString I_GetLongPathName(FString shortpath);
 
 struct findstate_t
 {
-	DWORD Attribs;
-	DWORD Times[3*2];
-	DWORD Size[2];
-	DWORD Reserved[2];
+	uint32_t Attribs;
+	uint32_t Times[3*2];
+	uint32_t Size[2];
+	uint32_t Reserved[2];
 	char Name[MAX_PATH];
 	char AltName[14];
 };

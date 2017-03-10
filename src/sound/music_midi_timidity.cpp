@@ -1,3 +1,6 @@
+#include "i_midi_win32.h"
+
+
 #include "i_musicinterns.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
@@ -19,6 +22,46 @@ void ChildSigHandler (int signum)
 	ChildQuit = waitpid (-1, NULL, WNOHANG);
 }
 #endif
+
+class TimidityPPMIDIDevice : public PseudoMIDIDevice
+{
+public:
+	TimidityPPMIDIDevice(const char *args);
+	~TimidityPPMIDIDevice();
+
+	int Open(MidiCallback, void *userdata);
+	bool Preprocess(MIDIStreamer *song, bool looping);
+	bool IsOpen() const;
+	int Resume();
+
+	void Stop();
+	bool IsOpen();
+	void TimidityVolumeChanged();
+
+protected:
+	bool LaunchTimidity();
+
+	FTempFileName DiskName;
+#ifdef _WIN32
+	HANDLE ReadWavePipe;
+	HANDLE WriteWavePipe;
+	HANDLE ChildProcess;
+	bool Validated;
+	bool ValidateTimidity();
+#else // _WIN32
+	int WavePipe[2];
+	pid_t ChildProcess;
+#endif
+	FString CommandLine;
+	size_t LoopPos;
+
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+#ifdef _WIN32
+	static const char EventName[];
+#endif
+};
+
+
 
 #ifdef _WIN32
 
@@ -183,7 +226,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 	int pipeSize;
 
 #ifdef _WIN32
-	static SECURITY_ATTRIBUTES inheritable = { sizeof(inheritable), NULL, TRUE };
+	static SECURITY_ATTRIBUTES inheritable = { sizeof(inheritable), NULL, true };
 	
 	if (!Validated && !ValidateTimidity ())
 	{
@@ -392,7 +435,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	startup.lpTitle = TimidityTitle;
 	startup.wShowWindow = SW_SHOWMINNOACTIVE;
 
-	if (CreateProcess(NULL, CommandLine.LockBuffer(), NULL, NULL, TRUE,
+	if (CreateProcess(NULL, CommandLine.LockBuffer(), NULL, NULL, true,
 		DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
 	{
 		ChildProcess = procInfo.hProcess;
@@ -728,3 +771,9 @@ BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode)
 	return bSuccess;
 }
 #endif
+
+
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
+{
+	return new TimidityPPMIDIDevice(args);
+}

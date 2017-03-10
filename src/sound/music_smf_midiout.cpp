@@ -60,8 +60,8 @@ struct MIDISong2::TrackInfo
 	const uint8_t *TrackBegin;
 	size_t TrackP;
 	size_t MaxTrackP;
-	DWORD Delay;
-	DWORD PlayedTime;
+	uint32_t Delay;
+	uint32_t PlayedTime;
 	bool Finished;
 	uint8_t RunningStatus;
 	bool Designated;
@@ -70,11 +70,11 @@ struct MIDISong2::TrackInfo
 	uint16_t Designation;
 
 	size_t LoopBegin;
-	DWORD LoopDelay;
+	uint32_t LoopDelay;
 	int LoopCount;
 	bool LoopFinished;
     
-	DWORD ReadVarLen ();
+	uint32_t ReadVarLen ();
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -108,12 +108,10 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 	int p;
 	int i;
 
-#ifdef _WIN32
-	if (ExitEvent == NULL)
+	if (!CheckExitEvent())
 	{
 		return;
 	}
-#endif
 	SongLen = reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
@@ -149,13 +147,13 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 	// Gather information about each track
 	for (i = 0, p = 14; i < NumTracks && p < SongLen + 8; ++i)
 	{
-		DWORD chunkLen =
+		uint32_t chunkLen =
 			(MusHeader[p+4]<<24) |
 			(MusHeader[p+5]<<16) |
 			(MusHeader[p+6]<<8)  |
 			(MusHeader[p+7]);
 
-		if (chunkLen + p + 8 > (DWORD)SongLen)
+		if (chunkLen + p + 8 > (uint32_t)SongLen)
 		{ // Track too long, so truncate it
 			chunkLen = SongLen - p - 8;
 		}
@@ -298,12 +296,12 @@ bool MIDISong2::CheckDone()
 //
 //==========================================================================
 
-DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
+uint32_t *MIDISong2::MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time)
 {
-	DWORD *start_events;
-	DWORD tot_time = 0;
-	DWORD time = 0;
-	DWORD delay;
+	uint32_t *start_events;
+	uint32_t tot_time = 0;
+	uint32_t time = 0;
+	uint32_t delay;
 
 	start_events = events;
 	while (TrackDue && events < max_event_p && tot_time <= max_time)
@@ -323,7 +321,7 @@ DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 			do
 			{
 				bool sysex_noroom = false;
-				DWORD *new_events = SendCommand(events, TrackDue, time, max_event_p - events, sysex_noroom);
+				uint32_t *new_events = SendCommand(events, TrackDue, time, max_event_p - events, sysex_noroom);
 				if (sysex_noroom)
 				{
 					return events;
@@ -351,7 +349,7 @@ DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 //
 //==========================================================================
 
-void MIDISong2::AdvanceTracks(DWORD time)
+void MIDISong2::AdvanceTracks(uint32_t time)
 {
 	for (int i = 0; i < NumTracks; ++i)
 	{
@@ -371,9 +369,9 @@ void MIDISong2::AdvanceTracks(DWORD time)
 //
 //==========================================================================
 
-DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
+uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom)
 {
-	DWORD len;
+	uint32_t len;
 	uint8_t event, data1 = 0, data2 = 0;
 	int i;
 
@@ -456,7 +454,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 			case 110:	// EMIDI Track Designation - InitBeat only
 				// Instruments 4, 5, 6, and 7 are all FM synth.
 				// The rest are all wavetable.
-				if (track->PlayedTime < (DWORD)Division)
+				if (track->PlayedTime < (uint32_t)Division)
 				{
 					if (data2 == 127)
 					{
@@ -473,7 +471,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 				break;
 
 			case 111:	// EMIDI Track Exclusion - InitBeat only
-				if (track->PlayedTime < (DWORD)Division)
+				if (track->PlayedTime < (uint32_t)Division)
 				{
 					if (track->Designated && data2 <= 9)
 					{
@@ -485,7 +483,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 
 			case 112:	// EMIDI Program Change
 				// Ignored unless it also appears in the InitBeat
-				if (track->PlayedTime < (DWORD)Division || track->EProgramChange)
+				if (track->PlayedTime < (uint32_t)Division || track->EProgramChange)
 				{
 					track->EProgramChange = true;
 					event = 0xC0 | (event & 0x0F);
@@ -496,7 +494,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 
 			case 113:	// EMIDI Volume
 				// Ignored unless it also appears in the InitBeat
-				if (track->PlayedTime < (DWORD)Division || track->EVolume)
+				if (track->PlayedTime < (uint32_t)Division || track->EVolume)
 				{
 					track->EVolume = true;
 					data1 = 7;
@@ -700,7 +698,7 @@ void MIDISong2::ProcessInitialMetaEvents ()
 	TrackInfo *track;
 	int i;
 	uint8_t event;
-	DWORD len;
+	uint32_t len;
 
 	for (i = 0; i < NumTracks; ++i)
 	{
@@ -747,9 +745,9 @@ void MIDISong2::ProcessInitialMetaEvents ()
 //
 //==========================================================================
 
-DWORD MIDISong2::TrackInfo::ReadVarLen ()
+uint32_t MIDISong2::TrackInfo::ReadVarLen ()
 {
-	DWORD time = 0, t = 0x80;
+	uint32_t time = 0, t = 0x80;
 
 	while ((t & 0x80) && TrackP < MaxTrackP)
 	{
@@ -771,7 +769,7 @@ DWORD MIDISong2::TrackInfo::ReadVarLen ()
 MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 {
 	TrackInfo *track;
-	DWORD best;
+	uint32_t best;
 	int i;
 
 	// Give precedence to whichever track last had events taken from it.

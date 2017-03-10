@@ -72,15 +72,15 @@ struct XMISong::TrackInfo
 	const uint8_t *TimbreChunk;
 	size_t TimbreLen;
 
-	DWORD Delay;
-	DWORD PlayedTime;
+	uint32_t Delay;
+	uint32_t PlayedTime;
 	bool Finished;
 
 	LoopInfo ForLoops[MAX_FOR_DEPTH];
 	int ForDepth;
     
-	DWORD ReadVarLen();
-	DWORD ReadDelay();
+	uint32_t ReadVarLen();
+	uint32_t ReadDelay();
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -111,12 +111,10 @@ extern char MIDI_CommonLengths[15];
 XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 : MIDIStreamer(type, args), MusHeader(0), Songs(0)
 {
-#ifdef _WIN32
-	if (ExitEvent == NULL)
+	if (!CheckExitEvent())
 	{
 		return;
 	}
-#endif
 	SongLen = reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
@@ -313,12 +311,12 @@ bool XMISong::CheckDone()
 //
 //==========================================================================
 
-DWORD *XMISong::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
+uint32_t *XMISong::MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time)
 {
-	DWORD *start_events;
-	DWORD tot_time = 0;
-	DWORD time = 0;
-	DWORD delay;
+	uint32_t *start_events;
+	uint32_t tot_time = 0;
+	uint32_t time = 0;
+	uint32_t delay;
 
 	start_events = events;
 	while (EventDue != EVENT_None && events < max_event_p && tot_time <= max_time)
@@ -338,7 +336,7 @@ DWORD *XMISong::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 			do
 			{
 				bool sysex_noroom = false;
-				DWORD *new_events = SendCommand(events, EventDue, time, max_event_p - events, sysex_noroom);
+				uint32_t *new_events = SendCommand(events, EventDue, time, max_event_p - events, sysex_noroom);
 				if (sysex_noroom)
 				{
 					return events;
@@ -366,7 +364,7 @@ DWORD *XMISong::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 //
 //==========================================================================
 
-void XMISong::AdvanceSong(DWORD time)
+void XMISong::AdvanceSong(uint32_t time)
 {
 	if (time != 0)
 	{
@@ -387,9 +385,9 @@ void XMISong::AdvanceSong(DWORD time)
 //
 //==========================================================================
 
-DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
+uint32_t *XMISong::SendCommand (uint32_t *events, EventSource due, uint32_t delay, ptrdiff_t room, bool &sysex_noroom)
 {
-	DWORD len;
+	uint32_t len;
 	uint8_t event, data1 = 0, data2 = 0;
 
 	if (due == EVENT_Fake)
@@ -617,7 +615,7 @@ void XMISong::ProcessInitialMetaEvents ()
 {
 	TrackInfo *track = CurrSong;
 	uint8_t event;
-	DWORD len;
+	uint32_t len;
 
 	while (!track->Finished &&
 			track->EventP < track->EventLen - 3 &&
@@ -646,9 +644,9 @@ void XMISong::ProcessInitialMetaEvents ()
 //
 //==========================================================================
 
-DWORD XMISong::TrackInfo::ReadVarLen()
+uint32_t XMISong::TrackInfo::ReadVarLen()
 {
-	DWORD time = 0, t = 0x80;
+	uint32_t time = 0, t = 0x80;
 
 	while ((t & 0x80) && EventP < EventLen)
 	{
@@ -667,9 +665,9 @@ DWORD XMISong::TrackInfo::ReadVarLen()
 //
 //==========================================================================
 
-DWORD XMISong::TrackInfo::ReadDelay()
+uint32_t XMISong::TrackInfo::ReadDelay()
 {
-	DWORD time = 0, t;
+	uint32_t time = 0, t;
 
 	while (EventP < EventLen && !((t = EventChunk[EventP]) & 0x80))
 	{
@@ -697,8 +695,8 @@ XMISong::EventSource XMISong::FindNextDue()
 	}
 
 	// Which is due sooner? The current song or the note-offs?
-	DWORD real_delay = CurrSong->Finished ? 0xFFFFFFFF : CurrSong->Delay;
-	DWORD fake_delay = NoteOffs.Size() == 0 ? 0xFFFFFFFF : NoteOffs[0].Delay;
+	uint32_t real_delay = CurrSong->Finished ? 0xFFFFFFFF : CurrSong->Delay;
+	uint32_t fake_delay = NoteOffs.Size() == 0 ? 0xFFFFFFFF : NoteOffs[0].Delay;
 
 	return (fake_delay <= real_delay) ? EVENT_Fake : EVENT_Real;
 }

@@ -40,9 +40,6 @@
 extern HWND Window;
 extern HINSTANCE g_hInst;
 #define USE_WINDOWS_DWORD
-#else
-#define FALSE 0
-#define TRUE 1
 #endif
 
 #include <stdio.h>

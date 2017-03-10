@@ -35,6 +35,7 @@
 #ifdef HAVE_FLUIDSYNTH
 
 // HEADER FILES ------------------------------------------------------------
+#include "i_midi_win32.h"
 
 #include "i_musicinterns.h"
 #include "templates.h"
@@ -317,7 +318,7 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 #ifdef _WIN32
 		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
 		char sysdir[MAX_PATH+sizeof("\\CT4MGM.SF2")];
-		UINT filepart;
+		uint32_t filepart;
 		if (0 != (filepart = GetSystemDirectoryA(sysdir, MAX_PATH)))
 		{
 			strcat(sysdir, "\\CT4MGM.SF2");

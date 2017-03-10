@@ -34,6 +34,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "i_midi_win32.h"
+
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
@@ -46,21 +48,22 @@
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+// MIDI file played with TiMidity++ and possibly streamed through the Sound System
 
 struct FmtChunk
 {
-	DWORD ChunkID;
-	DWORD ChunkLen;
+	uint32_t ChunkID;
+	uint32_t ChunkLen;
 	uint16_t  FormatTag;
 	uint16_t  Channels;
-	DWORD SamplesPerSec;
-	DWORD AvgBytesPerSec;
+	uint32_t SamplesPerSec;
+	uint32_t AvgBytesPerSec;
 	uint16_t  BlockAlign;
 	uint16_t  BitsPerSample;
 	uint16_t  ExtensionSize;
 	uint16_t  ValidBitsPerSample;
-	DWORD ChannelMask;
-	DWORD SubFormatA;
+	uint32_t ChannelMask;
+	uint32_t SubFormatA;
 	uint16_t  SubFormatB;
 	uint16_t  SubFormatC;
 	uint8_t  SubFormatD[8];
@@ -250,7 +253,7 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 	File = fopen(filename, "wb");
 	if (File != NULL)
 	{ // Write wave header
-		DWORD work[3];
+		uint32_t work[3];
 		FmtChunk fmt;
 
 		work[0] = MAKE_ID('R','I','F','F');
@@ -259,7 +262,7 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 		if (3 != fwrite(work, 4, 3, File)) goto fail;
 
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
-		fmt.ChunkLen = LittleLong(DWORD(sizeof(fmt) - 8));
+		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
 		fmt.FormatTag = LittleShort(0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
 		fmt.Channels = LittleShort(2);
 		fmt.SamplesPerSec = LittleLong((int)Renderer->rate);
@@ -305,15 +308,15 @@ TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
 	if (File != NULL)
 	{
 		long pos = ftell(File);
-		DWORD size;
+		uint32_t size;
 
 		// data chunk size
-		size = LittleLong(DWORD(pos - 8));
+		size = LittleLong(uint32_t(pos - 8));
 		if (0 == fseek(File, 4, SEEK_SET))
 		{
 			if (1 == fwrite(&size, 4, 1, File))
 			{
-				size = LittleLong(DWORD(pos - 12 - sizeof(FmtChunk) - 8));
+				size = LittleLong(uint32_t(pos - 12 - sizeof(FmtChunk) - 8));
 				if (0 == fseek(File, 4 + sizeof(FmtChunk) + 4, SEEK_CUR))
 				{
 					if (1 == fwrite(&size, 4, 1, File))

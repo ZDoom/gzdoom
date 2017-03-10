@@ -1,3 +1,6 @@
+#include "i_midi_win32.h"
+
+
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -65,7 +68,7 @@ static void MIDIDeviceChanged(int newdev)
 }
 
 #ifdef _WIN32
-UINT mididevice;
+unsigned mididevice;
 
 CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {

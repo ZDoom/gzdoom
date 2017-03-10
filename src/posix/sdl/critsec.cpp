@@ -2,17 +2,14 @@
 // object similar to a mutex but optimized for access by threads belonging to
 // only one process, hence the class name.)
 
-#ifndef CRITSEC_H
-#define CRITSEC_H
-
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "i_system.h"
 
-class FCriticalSection
+class FInternalCriticalSection
 {
 public:
-	FCriticalSection()
+	FSDLCriticalSection()
 	{
 		CritSec = SDL_CreateMutex();
 		if (CritSec == NULL)
@@ -20,7 +17,7 @@ public:
 			I_FatalError("Failed to create a critical section mutex.");
 		}
 	}
-	~FCriticalSection()
+	~FSDLCriticalSection()
 	{
 		if (CritSec != NULL)
 		{
@@ -45,4 +42,22 @@ private:
 	SDL_mutex *CritSec;
 };
 
-#endif
+FInternalCriticalSection *CreateCriticalSection()
+{
+	return new FInternalCriticalSection();
+}
+
+void DeleteCriticalSection(FInternalCriticalSection *c)
+{
+	delete c;
+}
+
+void EnterCriticalSection(FInternalCriticalSection *c)
+{
+	c->Enter();
+}
+
+void LeaveCriticalSection(FInternalCriticalSection *c)
+{
+	c->Leave();
+}

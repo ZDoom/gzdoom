@@ -2055,10 +2055,10 @@ void OpenALSoundRenderer::PrintDriversList()
 MIDIDevice* OpenALSoundRenderer::CreateMIDIDevice() const
 {
 #ifdef _WIN32
-	extern UINT mididevice;
-	return new WinMIDIDevice(mididevice);
+	extern unsigned mididevice;
+	return CreateWinMIDIDevice(mididevice);
 #elif defined __APPLE__
-	return new AudioToolboxMIDIDevice;
+	return CreateAudioToolboxMIDIDevice;
 #else
 	return new OPLMIDIDevice(nullptr);
 #endif

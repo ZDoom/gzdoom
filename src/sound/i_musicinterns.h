@@ -1,24 +1,4 @@
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#define USE_WINDOWS_DWORD
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
-#undef _WIN32_WINNT
-#endif
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
-#endif
-#ifndef USE_WINDOWS_DWORD
-#define USE_WINDOWS_DWORD
-#endif
-#include <windows.h>
-#include <mmsystem.h>
-#else
-#define FALSE 0
-#define TRUE 1
-#endif
-#ifdef __APPLE__
-#include <AudioToolbox/AudioToolbox.h>
-#endif // __APPLE__
+
 #include "tempfiles.h"
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
@@ -105,83 +85,13 @@ public:
 	virtual FString GetStats();
 };
 
-// WinMM implementation of a MIDI output device -----------------------------
 
 #ifdef _WIN32
-class WinMIDIDevice : public MIDIDevice
-{
-public:
-	WinMIDIDevice(int dev_id);
-	~WinMIDIDevice();
-	int Open(MidiCallback, void *userdata);
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MidiHeader *data);
-	int StreamOutSync(MidiHeader *data);
-	int Resume();
-	void Stop();
-	int PrepareHeader(MidiHeader *data);
-	int UnprepareHeader(MidiHeader *data);
-	bool FakeVolume();
-	bool NeedThreadedCallback();
-	bool Pause(bool paused);
-	void PrecacheInstruments(const uint16_t *instruments, int count);
-
-protected:
-	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
-
-	HMIDISTRM MidiOut;
-	UINT DeviceID;
-	DWORD SavedVolume;
-	MIDIHDR WinMidiHeaders[2];
-	int HeaderIndex;
-	bool VolumeWorks;
-
-	MidiCallback Callback;
-	void *CallbackData;
-};
+MIDIDevice *CreateWinMIDIDevice(int mididevice);
+#elif defined __APPLE__
+MIDIDevice *CreateAudioToolboxMIDIDevice(int mididevice);
 #endif
-
-// AudioToolbox implementation of a MIDI output device ----------------------
-
-#ifdef __APPLE__
-
-class AudioToolboxMIDIDevice : public MIDIDevice
-{
-public:
-	virtual int Open(MidiCallback, void *userData) override;
-	virtual void Close() override;
-	virtual bool IsOpen() const override;
-	virtual int GetTechnology() const override;
-	virtual int SetTempo(int tempo) override;
-	virtual int SetTimeDiv(int timediv) override;
-	virtual int StreamOut(MidiHeader *data) override;
-	virtual int StreamOutSync(MidiHeader *data) override;
-	virtual int Resume() override;
-	virtual void Stop() override;
-	virtual int PrepareHeader(MidiHeader* data) override;
-	virtual bool FakeVolume() override { return true; }
-	virtual bool Pause(bool paused) override;
-	virtual bool Preprocess(MIDIStreamer *song, bool looping) override;
-
-private:
-	MusicPlayer m_player = nullptr;
-	MusicSequence m_sequence = nullptr;
-	AudioUnit m_audioUnit = nullptr;
-	CFRunLoopTimerRef m_timer = nullptr;
-	MusicTimeStamp m_length = 0;
-
-	MidiCallback Callback;
-	Callback m_callback = nullptr;
-	void* m_userData = nullptr;
-
-	static void TimerCallback(CFRunLoopTimerRef timer, void* info);
-};
-
-#endif // __APPLE__
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
 
 // Base class for pseudo-MIDI devices ---------------------------------------
 
@@ -218,46 +128,6 @@ public:
 	bool Preprocess(MIDIStreamer *song, bool looping);
 };
 
-// MIDI file played with TiMidity++ and possibly streamed through the Sound System
-
-class TimidityPPMIDIDevice : public PseudoMIDIDevice
-{
-public:
-	TimidityPPMIDIDevice(const char *args);
-	~TimidityPPMIDIDevice();
-
-	int Open(MidiCallback, void *userdata);
-	bool Preprocess(MIDIStreamer *song, bool looping);
-	bool IsOpen() const;
-	int Resume();
-
-	void Stop();
-	bool IsOpen();
-	void TimidityVolumeChanged();
-
-protected:
-	bool LaunchTimidity();
-
-	FTempFileName DiskName;
-#ifdef _WIN32
-	HANDLE ReadWavePipe;
-	HANDLE WriteWavePipe;
-	HANDLE ChildProcess;
-	bool Validated;
-	bool ValidateTimidity();
-#else // _WIN32
-	int WavePipe[2];
-	pid_t ChildProcess;
-#endif
-	FString CommandLine;
-	size_t LoopPos;
-
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-#ifdef _WIN32
-	static const char EventName[];
-#endif
-};
-
 // Base class for software synthesizer MIDI output devices ------------------
 
 class SoftSynthMIDIDevice : public MIDIDevice
@@ -286,7 +156,7 @@ protected:
 	double NextTickIn;
 	MidiHeader *Events;
 	bool Started;
-	DWORD Position;
+	uint32_t Position;
 	int SampleRate;
 
 	MidiCallback Callback;
@@ -491,10 +361,11 @@ public:
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);
 
-	void OutputVolume (DWORD volume);
-	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
+	bool CheckExitEvent();
+	void OutputVolume (uint32_t volume);
+	int FillBuffer(int buffer_num, int max_events, uint32_t max_time);
 	int FillStopBuffer(int buffer_num);
-	DWORD *WriteStopNotes(DWORD *events);
+	uint32_t *WriteStopNotes(uint32_t *events);
 	int ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
 	int ClampLoopCount(int loopcount);
@@ -512,7 +383,7 @@ protected:
 	virtual bool CheckDone() = 0;
 	virtual void Precache();
 	virtual bool SetMIDISubsong(int subsong);
-	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
+	virtual uint32_t *MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time) = 0;
 
 	enum
 	{
@@ -526,29 +397,20 @@ protected:
 		SONG_ERROR
 	};
 
-#ifdef _WIN32
-	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
-	DWORD PlayerLoop();
-	
-	HANDLE PlayerThread;
-	HANDLE ExitEvent;
-	HANDLE BufferDoneEvent;
-#endif
-
 	MIDIDevice *MIDI;
-	DWORD Events[2][MAX_EVENTS*3];
+	uint32_t Events[2][MAX_EVENTS*3];
 	MidiHeader Buffer[2];
 	int BufferNum;
 	int EndQueued;
 	bool VolumeChanged;
 	bool Restarting;
 	bool InitialPlayback;
-	DWORD NewVolume;
+	uint32_t NewVolume;
 	int Division;
 	int Tempo;
 	int InitialTempo;
 	uint8_t ChannelVolumes[16];
-	DWORD Volume;
+	uint32_t Volume;
 	EMidiDevice DeviceType;
 	bool CallbackIsThreaded;
 	int LoopLimit;
@@ -574,7 +436,7 @@ protected:
 	void DoRestart();
 	bool CheckDone();
 	void Precache();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
 
 	MUSHeader *MusHeader;
 	uint8_t *MusBuffer;
@@ -600,13 +462,13 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceTracks(DWORD time);
+	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
+	void AdvanceTracks(uint32_t time);
 
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
 	uint8_t *MusHeader;
@@ -622,15 +484,15 @@ protected:
 
 struct AutoNoteOff
 {
-	DWORD Delay;
+	uint32_t Delay;
 	uint8_t Channel, Key;
 };
 // Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
 class NoteOffQueue : public TArray<AutoNoteOff>
 {
 public:
-	void AddNoteOff(DWORD delay, uint8_t channel, uint8_t key);
-	void AdvanceTime(DWORD time);
+	void AddNoteOff(uint32_t delay, uint8_t channel, uint8_t key);
+	void AdvanceTime(uint32_t time);
 	bool Pop(AutoNoteOff &item);
 
 protected:
@@ -660,17 +522,17 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceTracks(DWORD time);
+	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
+	void AdvanceTracks(uint32_t time);
 
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
-	static DWORD ReadVarLenHMI(TrackInfo *);
-	static DWORD ReadVarLenHMP(TrackInfo *);
+	static uint32_t ReadVarLenHMI(TrackInfo *);
+	static uint32_t ReadVarLenHMP(TrackInfo *);
 
 	uint8_t *MusHeader;
 	int SongLen;
@@ -678,7 +540,7 @@ protected:
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
 	TrackInfo *FakeTrack;
-	DWORD (*ReadVarLen)(TrackInfo *);
+	uint32_t (*ReadVarLen)(TrackInfo *);
 	NoteOffQueue NoteOffs;
 };
 
@@ -705,11 +567,11 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceSong(DWORD time);
+	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
+	void AdvanceSong(uint32_t time);
 
 	void ProcessInitialMetaEvents();
-	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+	uint32_t *SendCommand (uint32_t *event, EventSource track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	EventSource FindNextDue();
 
 	uint8_t *MusHeader;

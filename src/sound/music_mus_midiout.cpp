@@ -96,12 +96,10 @@ static const uint8_t CtrlTranslate[15] =
 MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 : MIDIStreamer(type, args), MusHeader(0), MusBuffer(0)
 {
-#ifdef _WIN32
-	if (ExitEvent == NULL)
+	if (!CheckExitEvent())
 	{
 		return;
 	}
-#endif
 
 	uint8_t front[32];
 	int start;
@@ -260,10 +258,10 @@ void MUSSong2::Precache()
 //
 //==========================================================================
 
-DWORD *MUSSong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
+uint32_t *MUSSong2::MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time)
 {
-	DWORD tot_time = 0;
-	DWORD time = 0;
+	uint32_t tot_time = 0;
+	uint32_t time = 0;
 
 	max_time = max_time * Division / Tempo;
 

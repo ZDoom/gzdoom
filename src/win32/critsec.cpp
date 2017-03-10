@@ -1,22 +1,19 @@
 // Wraps a Windows critical section object.
 
-#ifndef CRITSEC_H
-#define CRITSEC_H
-
 #ifndef _WINNT_
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define USE_WINDOWS_DWORD
 #endif
 
-class FCriticalSection
+class FInternalCriticalSection
 {
 public:
-	FCriticalSection()
+	FInternalCriticalSection()
 	{
 		InitializeCriticalSection(&CritSec);
 	}
-	~FCriticalSection()
+	~FInternalCriticalSection()
 	{
 		DeleteCriticalSection(&CritSec);
 	}
@@ -39,4 +36,23 @@ private:
 	CRITICAL_SECTION CritSec;
 };
 
-#endif
+
+FInternalCriticalSection *CreateCriticalSection()
+{
+	return new FInternalCriticalSection();
+}
+
+void DeleteCriticalSection(FInternalCriticalSection *c)
+{
+	delete c;
+}
+
+void EnterCriticalSection(FInternalCriticalSection *c)
+{
+	c->Enter();
+}
+
+void LeaveCriticalSection(FInternalCriticalSection *c)
+{
+	c->Leave();
+}

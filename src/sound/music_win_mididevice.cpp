@@ -34,6 +34,20 @@
 
 #ifdef _WIN32
 
+#define WIN32_LEAN_AND_MEAN
+#define USE_WINDOWS_DWORD
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
+#undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
+#ifndef USE_WINDOWS_DWORD
+#define USE_WINDOWS_DWORD
+#endif
+#include <windows.h>
+#include <mmsystem.h>
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
@@ -58,6 +72,43 @@ static bool IgnoreMIDIVolume(UINT id);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+// WinMM implementation of a MIDI output device -----------------------------
+
+class WinMIDIDevice : public MIDIDevice
+{
+public:
+	WinMIDIDevice(int dev_id);
+	~WinMIDIDevice();
+	int Open(MidiCallback, void *userdata);
+	void Close();
+	bool IsOpen() const;
+	int GetTechnology() const;
+	int SetTempo(int tempo);
+	int SetTimeDiv(int timediv);
+	int StreamOut(MidiHeader *data);
+	int StreamOutSync(MidiHeader *data);
+	int Resume();
+	void Stop();
+	int PrepareHeader(MidiHeader *data);
+	int UnprepareHeader(MidiHeader *data);
+	bool FakeVolume();
+	bool NeedThreadedCallback();
+	bool Pause(bool paused);
+	void PrecacheInstruments(const uint16_t *instruments, int count);
+
+protected:
+	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
+
+	HMIDISTRM MidiOut;
+	UINT DeviceID;
+	DWORD SavedVolume;
+	MIDIHDR WinMidiHeaders[2];
+	int HeaderIndex;
+	bool VolumeWorks;
+
+	MidiCallback Callback;
+	void *CallbackData;
+};
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -487,4 +538,10 @@ static bool IgnoreMIDIVolume(UINT id)
 	return false;
 }
 
+MIDIDevice *CreateWinMIDIDevice(int mididevice)
+{
+	return new WinMIDIDevice(mididevice);
+}
 #endif
+
+

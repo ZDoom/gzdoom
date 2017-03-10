@@ -34,6 +34,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+
+#include "i_midi_win32.h"
+/*
+#ifdef _WIN32
+DWORD PlayerLoop();
+
+HANDLE PlayerThread;
+HANDLE ExitEvent;
+HANDLE BufferDoneEvent;
+#endif
+*/
+
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
@@ -61,7 +73,9 @@ EXTERN_CVAR(Float, snd_musicvolume)
 EXTERN_CVAR(Int, snd_mididevice)
 
 #ifdef _WIN32
-extern UINT mididevice;
+DWORD WINAPI PlayerProc(LPVOID lpParameter);
+
+extern unsigned mididevice;
 #endif
 
 extern char MIDI_EventLengths[7];
@@ -92,11 +106,12 @@ static const uint8_t StaticMIDIhead[] =
 MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 :
 #ifdef _WIN32
-  PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
+  //PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
   MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), Args(args)
 {
 	memset(Buffer, 0, sizeof(Buffer));
+	/*
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (BufferDoneEvent == NULL)
@@ -110,6 +125,7 @@ MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 		return;
 	}
 #endif
+*/
 }
 
 //==========================================================================
@@ -121,15 +137,17 @@ MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 MIDIStreamer::MIDIStreamer(const char *dumpname, EMidiDevice type)
 :
 #ifdef _WIN32
-  PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
+  //PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
   MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), DumpFilename(dumpname)
 {
 	memset(Buffer, 0, sizeof(Buffer));
+	/*
 #ifdef _WIN32
 	BufferDoneEvent = NULL;
 	ExitEvent = NULL;
 #endif
+*/
 }
 
 //==========================================================================
@@ -141,6 +159,7 @@ MIDIStreamer::MIDIStreamer(const char *dumpname, EMidiDevice type)
 MIDIStreamer::~MIDIStreamer()
 {
 	Stop();
+	/*
 #ifdef _WIN32
 	if (ExitEvent != NULL)
 	{
@@ -151,6 +170,7 @@ MIDIStreamer::~MIDIStreamer()
 		CloseHandle(BufferDoneEvent);
 	}
 #endif
+*/
 	if (MIDI != NULL)
 	{
 		delete MIDI;
@@ -179,7 +199,7 @@ bool MIDIStreamer::IsMIDI() const
 bool MIDIStreamer::IsValid() const
 {
 #ifdef _WIN32
-	return ExitEvent != NULL && Division != 0;
+	return /*ExitEvent != NULL &&*/ Division != 0;
 #else
 	return Division != 0;
 #endif
@@ -264,7 +284,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 	{
 	case MDEV_MMAPI:
 #ifdef _WIN32
-		return new WinMIDIDevice(mididevice);
+		return CreateWinMIDIDevice(mididevice);
 #endif
 		assert(0);
 		// Intentional fall-through for non-Windows systems.
@@ -289,11 +309,11 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		{
 			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
 			Printf("Unable to create OPL MIDI device: %s\nFalling back to Sound System playback", err.GetMessage());
-			return new SndSysMIDIDevice;
+			return GSnd->CreateMIDIDevice();
 		}
 
 	case MDEV_TIMIDITY:
-		return new TimidityPPMIDIDevice(Args);
+		return CreateTimidityPPMIDIDevice(Args);
 
 	case MDEV_WILDMIDI:
 		return new WildMIDIDevice(Args);
@@ -373,6 +393,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	}
 	else
 	{
+	/*
 #ifdef _WIN32
 		if (MIDI->NeedThreadedCallback())
 		{
@@ -389,6 +410,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		}
 		else
 #endif
+*/
 		{
 			m_Status = STATE_Playing;
 		}
@@ -418,10 +440,12 @@ void MIDIStreamer::StartPlayback()
 	MusicVolumeChanged();	// set volume to current music's properties
 	OutputVolume(Volume);
 
+	/*
 #ifdef _WIN32
 	ResetEvent(ExitEvent);
 	ResetEvent(BufferDoneEvent);
 #endif
+*/
 
 	// Fill the initial buffers for the song.
 	BufferNum = 0;
@@ -507,6 +531,8 @@ void MIDIStreamer::Resume()
 void MIDIStreamer::Stop()
 {
 	EndQueued = 4;
+
+	/*
 #ifdef _WIN32
 	if (PlayerThread != NULL)
 	{
@@ -516,6 +542,7 @@ void MIDIStreamer::Stop()
 		PlayerThread = NULL;
 	}
 #endif
+*/
 	if (MIDI != NULL && MIDI->IsOpen())
 	{
 		MIDI->Stop();
@@ -656,7 +683,7 @@ void MIDIStreamer::WildMidiSetOption(int opt, int set)
 //
 //==========================================================================
 
-void MIDIStreamer::OutputVolume (DWORD volume)
+void MIDIStreamer::OutputVolume (uint32_t volume)
 {
 	if (MIDI != NULL && MIDI->FakeVolume())
 	{
@@ -701,6 +728,7 @@ void MIDIStreamer::Callback(void *userdata)
 	{
 		return;
 	}
+	/*
 #ifdef _WIN32
 	if (self->PlayerThread != NULL)
 	{
@@ -708,6 +736,7 @@ void MIDIStreamer::Callback(void *userdata)
 	}
 	else
 #endif
+*/
 	{
 		self->ServiceEvent();
 	}
@@ -724,6 +753,7 @@ void MIDIStreamer::Callback(void *userdata)
 
 void MIDIStreamer::Update()
 {
+	/*
 #ifdef _WIN32
 	// If the PlayerThread is signalled, then it's dead.
 	if (PlayerThread != NULL &&
@@ -785,6 +815,7 @@ void MIDIStreamer::Update()
 		Stop();
 	}
 #endif
+*/
 }
 
 //==========================================================================
@@ -796,9 +827,10 @@ void MIDIStreamer::Update()
 //==========================================================================
 
 #ifdef _WIN32
-DWORD WINAPI MIDIStreamer::PlayerProc (LPVOID lpParameter)
+DWORD WINAPI PlayerProc(LPVOID lpParameter)
 {
-	return ((MIDIStreamer *)lpParameter)->PlayerLoop();
+//	return ((MIDIStreamer *)lpParameter)->PlayerLoop();
+	return 0;
 }
 #endif
 
@@ -809,6 +841,7 @@ DWORD WINAPI MIDIStreamer::PlayerProc (LPVOID lpParameter)
 // Services MIDI playback events.
 //
 //==========================================================================
+/*
 
 #ifdef _WIN32
 DWORD MIDIStreamer::PlayerLoop()
@@ -837,8 +870,10 @@ DWORD MIDIStreamer::PlayerLoop()
 			return MMSYSERR_ERROR;
 		}
 	}
+	return 0;
 }
 #endif
+*/
 
 //==========================================================================
 //
@@ -920,7 +955,7 @@ fill:
 //
 //==========================================================================
 
-int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
+int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 {
 	if (!Restarting && CheckDone())
 	{
@@ -928,9 +963,9 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 	}
 
 	int i;
-	DWORD *events = Events[buffer_num], *max_event_p;
-	DWORD tot_time = 0;
-	DWORD time = 0;
+	uint32_t *events = Events[buffer_num], *max_event_p;
+	uint32_t tot_time = 0;
+	uint32_t time = 0;
 
 	// The final event is for a NOP to hold the delay from the last event.
 	max_event_p = events + (max_events - 1) * 3;
@@ -1009,7 +1044,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 
 int MIDIStreamer::FillStopBuffer(int buffer_num)
 {
-	DWORD *events = Events[buffer_num];
+	uint32_t *events = Events[buffer_num];
 	int i;
 
 	events = WriteStopNotes(events);
@@ -1040,7 +1075,7 @@ int MIDIStreamer::FillStopBuffer(int buffer_num)
 //
 //==========================================================================
 
-DWORD *MIDIStreamer::WriteStopNotes(DWORD *events)
+uint32_t *MIDIStreamer::WriteStopNotes(uint32_t *events)
 {
 	for (int i = 0; i < 16; ++i)
 	{
@@ -1080,8 +1115,8 @@ void MIDIStreamer::Precache()
 	// Simulate playback to pick out used instruments.
 	while (!CheckDone())
 	{
-		DWORD *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
-		for (DWORD *event = Events[0]; event < event_end; )
+		uint32_t *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
+		for (uint32_t *event = Events[0]; event < event_end; )
 		{
 			if (MEVENT_EVENTTYPE(event[2]) == 0)
 			{
@@ -1187,15 +1222,15 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 
 	while (!CheckDone())
 	{
-		DWORD *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
-		for (DWORD *event = Events[0]; event < event_end; )
+		uint32_t *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
+		for (uint32_t *event = Events[0]; event < event_end; )
 		{
 			delay += event[0];
 			if (MEVENT_EVENTTYPE(event[2]) == MEVENT_TEMPO)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
-				DWORD tempo = MEVENT_EVENTPARM(event[2]);
+				uint32_t tempo = MEVENT_EVENTPARM(event[2]);
 				file.Push(MIDI_META);
 				file.Push(MIDI_META_TEMPO);
 				file.Push(3);
@@ -1208,7 +1243,7 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 			{
 				WriteVarLen(file, delay);
 				delay = 0;
-				DWORD len = MEVENT_EVENTPARM(event[2]);
+				uint32_t len = MEVENT_EVENTPARM(event[2]);
 				uint8_t *bytes = (uint8_t *)&event[3];
 				if (bytes[0] == MIDI_SYSEX)
 				{
@@ -1396,6 +1431,27 @@ bool MIDIStreamer::SetSubsong(int subsong)
 bool MIDIStreamer::SetMIDISubsong(int subsong)
 {
 	return subsong == 0;
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: CheckExitEvent
+//
+// 
+//
+//==========================================================================
+
+bool MIDIStreamer::CheckExitEvent()
+{
+	/*
+#ifdef _WIN32
+	if (ExitEvent == NULL)
+	{
+		return false;
+	}
+#endif
+*/
+	return true;
 }
 
 //==========================================================================

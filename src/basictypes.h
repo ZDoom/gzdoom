@@ -19,7 +19,7 @@ typedef int						INTBOOL;
 #define GUID_DEFINED
 typedef struct _GUID
 {
-    DWORD	Data1;
+    uint32_t Data1;
     uint16_t Data2;
 	uint16_t Data3;
     uint8_t	Data4[8];
@@ -46,7 +46,7 @@ union QWORD_UNION
 #define FRACUNIT						(1<<FRACBITS)
 
 typedef int32_t							fixed_t;
-typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
+typedef uint32_t						dsfixed_t;				// fixedpt used by span drawer
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)

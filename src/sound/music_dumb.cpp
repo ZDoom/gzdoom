@@ -908,7 +908,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 		// safe. We'll restrict MOD loading to 31-instrument modules with known
 		// signatures and let the sound system worry about 15-instrument ones.
 		// (Assuming it even supports them)
-		duh = dumb_read_mod_quick(f, TRUE);
+		duh = dumb_read_mod_quick(f, true);
 	}
 
 	if (f != NULL)

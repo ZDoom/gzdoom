@@ -735,7 +735,7 @@ bool SightCheck::P_SightPathTraverse ()
 // step through map blocks
 // Count is present to prevent a round off error from skipping the break
 
-	int itres;
+	int itres = -1;
 	for (count = 0 ; count < 1000 ; count++)
 	{
 		// end traversing when reaching the end of the blockmap

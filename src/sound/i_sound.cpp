@@ -32,15 +32,6 @@
 **
 */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-#include "resource.h"
-extern HWND Window;
-extern HINSTANCE g_hInst;
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -48,7 +39,6 @@ extern HINSTANCE g_hInst;
 #include "doomtype.h"
 #include <math.h>
 
-#include "except.h"
 #include "fmodsound.h"
 #include "oalsound.h"
 

@@ -32,11 +32,7 @@
 **
 */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-#else
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -44,7 +40,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <wordexp.h>
-#include <stdio.h>
 #include "mus2midi.h"
 extern void ChildSigHandler (int signum);
 #endif

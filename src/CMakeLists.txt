@@ -896,8 +896,6 @@ set( FASTMATH_SOURCES
 	polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
 	sound/fmodsound.cpp
-	sound/i_music.cpp
-	sound/i_sound.cpp
 	sound/mpg123_decoder.cpp
 	sound/music_midi_base.cpp
 	sound/oalsound.cpp
@@ -1228,6 +1226,8 @@ set (PCH_SOURCES
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
 	sfmt/SFMT.cpp
+	sound/i_music.cpp
+	sound/i_sound.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
 	sound/mididevices/music_pseudo_mididevice.cpp

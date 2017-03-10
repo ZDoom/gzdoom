@@ -7273,7 +7273,7 @@ bool AActor::IsTeammate (AActor *other)
 	}
 	else if (!deathmatch && player && other->player)
 	{
-		return true;
+		return (!((flags ^ other->flags) & MF_FRIENDLY));
 	}
 	else if (teamplay)
 	{

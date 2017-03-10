@@ -1075,7 +1075,7 @@ void OpenGLSWFrameBuffer::CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_
 
 int OpenGLSWFrameBuffer::GetPageCount()
 {
-	return 1;
+	return 2;
 }
 
 //==========================================================================

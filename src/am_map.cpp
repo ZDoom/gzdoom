@@ -1932,7 +1932,7 @@ void AM_drawSubsectors()
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
 		}
 		// For lighting and texture determination
-		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
+		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight);
 		// Find texture origin.
 		originpt.x = -sec->GetXOffset(sector_t::floor);
 		originpt.y = sec->GetYOffset(sector_t::floor);

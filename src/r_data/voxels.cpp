@@ -394,6 +394,52 @@ FVoxel::~FVoxel()
 
 //==========================================================================
 //
+// Create true color version of the slab data
+//
+//==========================================================================
+
+void FVoxel::CreateBgraSlabData()
+{
+	assert(Palette != NULL);
+
+	for (int i = 0; i < NumMips; ++i)
+	{
+		int size = Mips[i].OffsetX[Mips[i].SizeX];
+		if (size <= 0) continue;
+
+		Mips[i].SlabDataBgra.Resize(size);
+
+		kvxslab_t *src = (kvxslab_t*)Mips[i].SlabData;
+		kvxslab_bgra_t *dest = (kvxslab_bgra_t*)&Mips[i].SlabDataBgra[0];
+
+		while (size >= 3)
+		{
+			dest->backfacecull = src->backfacecull;
+			dest->ztop = src->ztop;
+			dest->zleng = src->zleng;
+
+			int slabzleng = src->zleng;
+			for (int j = 0; j < slabzleng; ++j)
+			{
+				int colorIndex = src->col[j];
+
+				uint32_t red = (Palette[colorIndex * 3 + 0] << 2) | (Palette[colorIndex * 3 + 0] >> 4);
+				uint32_t green = (Palette[colorIndex * 3 + 1] << 2) | (Palette[colorIndex * 3 + 1] >> 4);
+				uint32_t blue = (Palette[colorIndex * 3 + 2] << 2) | (Palette[colorIndex * 3 + 2] >> 4);
+
+				dest->col[j] = 0xff000000 | (red << 16) | (green << 8) | blue;
+			}
+			slabzleng += 3;
+
+			dest = (kvxslab_bgra_t *)((uint32_t *)dest + slabzleng);
+			src = (kvxslab_t *)((BYTE *)src + slabzleng);
+			size -= slabzleng;
+		}
+	}
+}
+
+//==========================================================================
+//
 // Remap the voxel to the game palette
 //
 //==========================================================================

@@ -121,6 +121,9 @@ enum ERenderFlags
 	// Actors only: Ignore sector fade and fade to black. To fade to white,
 	// combine this with STYLEF_InvertOverlay.
 	STYLEF_FadeToBlack = 64,
+
+	// Force alpha.
+	STYLEF_ForceAlpha = 128,
 };
 
 union FRenderStyle

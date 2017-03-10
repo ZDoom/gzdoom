@@ -52,7 +52,7 @@ class SDLGLFB : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen);
+	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
 	~SDLGLFB();
 
 	virtual bool Lock(bool buffered = true);

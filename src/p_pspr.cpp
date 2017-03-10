@@ -120,6 +120,8 @@ DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
+DEFINE_FIELD(DPSprite, alpha)
+DEFINE_FIELD(DPSprite, RenderStyle)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
@@ -141,7 +143,9 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Owner(owner),
   Sprite(0),
   ID(id),
-  processPending(true)
+  processPending(true),
+  alpha(1),
+  RenderStyle(STYLE_Normal)
 {
 	DPSprite *prev = nullptr;
 	DPSprite *next = Owner->psprites;
@@ -1037,7 +1041,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 	player_t *player = self->player;
 	DPSprite *psp;
 
-	if (player && (player->playerstate != PST_DEAD))
+	if (player)
 	{
 		psp = player->FindPSprite(layer);
 
@@ -1184,7 +1188,69 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 	ACTION_RETURN_INT(0);
 }
 
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayAlpha
+// Sets the alpha of an overlay.
+//---------------------------------------------------------------------------
 
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayAlpha)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_FLOAT(alph);
+
+	if (ACTION_CALL_FROM_PSPRITE())
+	{
+		DPSprite *pspr = self->player->FindPSprite((layer != 0) ? layer : stateinfo->mPSPIndex);
+
+		if (pspr != nullptr)
+			pspr->alpha = clamp<double>(alph, 0.0, 1.0);
+	}
+	return 0;
+}
+
+// NON-ACTION function to get the overlay alpha of a layer.
+DEFINE_ACTION_FUNCTION(AActor, OverlayAlpha)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF(layer);
+
+	if (ACTION_CALL_FROM_PSPRITE())
+	{
+		DPSprite *pspr = self->player->FindPSprite((layer != 0) ? layer : stateinfo->mPSPIndex);
+
+		if (pspr != nullptr)
+		{
+			ACTION_RETURN_FLOAT(pspr->alpha);
+		}
+	}
+	ACTION_RETURN_FLOAT(0.0);
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayRenderStyle
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayRenderStyle)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_INT(style);
+
+	if (ACTION_CALL_FROM_PSPRITE())
+	{
+		DPSprite *pspr = self->player->FindPSprite((layer != 0) ? layer : stateinfo->mPSPIndex);
+
+		if (pspr == nullptr || style >= STYLE_Count || style < 0)
+			return 0;
+
+		pspr->RenderStyle = style;
+	}
+	return 0;
+}
 
 //---------------------------------------------------------------------------
 //
@@ -1414,7 +1480,9 @@ void DPSprite::Serialize(FSerializer &arc)
 		("x", x)
 		("y", y)
 		("oldx", oldx)
-		("oldy", oldy);
+		("oldy", oldy)
+		("alpha", alpha)
+		("renderstyle", RenderStyle);
 }
 
 //------------------------------------------------------------------------

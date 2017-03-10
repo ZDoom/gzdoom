@@ -1676,6 +1676,7 @@ OPTMNU_NETWORK				= "Network Options";
 OPTMNU_SOUND				= "Sound Options";
 OPTMNU_DISPLAY				= "Display Options";
 OPTMNU_VIDEO				= "Set video mode";
+OPTMNU_CHANGERENDER		= "Change Rendering Output";
 OPTMNU_DEFAULTS				= "Reset to defaults";
 OPTMNU_RESETTOSAVED			= "Reset to last saved";
 OPTMNU_CONSOLE				= "Go to console";
@@ -1800,6 +1801,9 @@ DSPLYMNU_SCREENSIZE				= "Screen size";
 DSPLYMNU_BRIGHTNESS				= "Brightness";
 DSPLYMNU_VSYNC					= "Vertical Sync";
 DSPLYMNU_CAPFPS					= "Rendering Interpolation";
+DSPLYMNU_COLUMNMETHOD			= "Column render mode";
+DSPLYMNU_BLENDMETHOD			= "Transparency render mode";
+
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
@@ -1808,6 +1812,7 @@ DSPLYMNU_WATERFADE				= "Underwater Blend Intensity";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
+DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
@@ -1827,6 +1832,7 @@ DSPLYMNU_DIMCOLOR				= "Dim color";
 DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
 DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 DSPLYMNU_BOBSPEED				= "Weapon bob speed";
+DSPLYMNU_GPUSWITCH				= "Notebook Switchable GPU";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";
@@ -2166,6 +2172,13 @@ MODMNU_QUALITY			= "Quality";
 MODMNU_VOLUMERAMPING	= "Volume ramping";
 MODMNU_CHIPOMATIC		= "Chip-o-matic";
 
+// Renderer Options
+RNDMNU_TITLE			= "CHANGE RENDERER";
+RNDMNU_RENDERER			= "Hardware Acceleration";
+RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
+RNDMNU_POLY				= "Poly Renderer (experimental)";
+RNDMNU_CANVAS			= "Software Canvas";
+
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
 VIDMNU_FULLSCREEN		= "Fullscreen";
@@ -2208,9 +2221,6 @@ JOYMNU_NOAXES = "No configurable axes";
 // Option Values
 OPTVAL_OFF					= "Off";
 OPTVAL_ON					= "On";
-OPTVAL_LOW					= "Low";
-OPTVAL_MEDIUM				= "Medium";
-OPTVAL_HIGH					= "High";
 OPTVAL_MALE					= "Male";
 OPTVAL_FEMALE				= "Female";
 OPTVAL_OTHER				= "Other";
@@ -2229,6 +2239,8 @@ OPTVAL_INVERTED				= "Inverted";
 OPTVAL_NOTINVERTED			= "Not Inverted";
 OPTVAL_ORIGINAL				= "Original";
 OPTVAL_OPTIMIZED			= "Optimized";
+OPTVAL_CLASSIC				= "Classic (Faster)";
+OPTVAL_PRECISE				= "Precise";
 OPTVAL_NORMAL				= "Normal";
 OPTVAL_STRETCH				= "Stretch";
 OPTVAL_CAPPED				= "Capped";
@@ -2345,6 +2357,13 @@ OPTVAL_WARNINGS				= "Warnings";
 OPTVAL_NOTIFICATIONS		= "Notifications";
 OPTVAL_EVERYTHING			= "Everything";
 OPTVAL_FULLSCREENONLY		= "Fullscreen only";
+OPTVAL_GL 					= "OpenGL";
+OPTVAL_D3D					= "Direct3D";
+OPTVAL_HWPOLY				= "OpenGL-Accelerated";
+OPTVAL_SWDOOM				= "Doom Software Renderer";
+OPTVAL_DEDICATED			= "High-Performance";
+OPTVAL_INTEGRATED			= "Power-Saving";
+
 // Colors
 C_BRICK					= "\cabrick";
 C_TAN					= "\cbtan";
@@ -2656,6 +2675,7 @@ GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
 GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
+GLLIGHTMNU_LIGHTMATH 		= "Light quality";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";
@@ -2772,3 +2792,17 @@ OPTVAL_HIGH					= "High";
 OPTVAL_EXTREME				= "Extreme";
 OPTVAL_OBVERSEFIRST			= "Obverse";
 OPTVAL_REVERSEFIRST			= "Reverse";
+
+// QZDoom exclusive:
+
+DSPLYMNU_TCOPT		= "TrueColor Options";
+
+TCMNU_TITLE		= "TRUECOLOR OPTIONS";
+
+
+TCMNU_TRUECOLOR				= "True color output";
+TCMNU_MINFILTER				= "Linear filter when downscaling";
+TCMNU_MAGFILTER				= "Linear filter when upscaling";
+TCMNU_MIPMAP					= "Use mipmapped textures";
+TCMNU_DYNLIGHTS				= "Dynamic lights";
+

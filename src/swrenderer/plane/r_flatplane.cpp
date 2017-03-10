@@ -69,7 +69,7 @@ namespace swrenderer
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
 			pviewx = pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine;
-			pviewy = pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine;
+			pviewy = pl->xform.yOffs + pl->xform.baseyOffs - ViewPos.X * sine - ViewPos.Y * cosine;
 		}
 		else
 		{

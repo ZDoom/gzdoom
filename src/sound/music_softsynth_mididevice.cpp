@@ -238,7 +238,7 @@ void SoftSynthMIDIDevice::Stop()
 //
 //==========================================================================
 
-int SoftSynthMIDIDevice::StreamOutSync(MIDIHDR *header)
+int SoftSynthMIDIDevice::StreamOutSync(MidiHeader *header)
 {
 	CritSec.Enter();
 	StreamOut(header);
@@ -255,7 +255,7 @@ int SoftSynthMIDIDevice::StreamOutSync(MIDIHDR *header)
 //
 //==========================================================================
 
-int SoftSynthMIDIDevice::StreamOut(MIDIHDR *header)
+int SoftSynthMIDIDevice::StreamOut(MidiHeader *header)
 {
 	header->lpNext = NULL;
 	if (Events == NULL)
@@ -266,7 +266,7 @@ int SoftSynthMIDIDevice::StreamOut(MIDIHDR *header)
 	}
 	else
 	{
-		MIDIHDR **p;
+		MidiHeader **p;
 
 		for (p = &Events; *p != NULL; p = &(*p)->lpNext)
 		{ }

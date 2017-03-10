@@ -75,6 +75,8 @@ WinMIDIDevice::WinMIDIDevice(int dev_id)
 {
 	DeviceID = MAX<DWORD>(dev_id, 0);
 	MidiOut = 0;
+	HeaderIndex = 0;
+	memset(WinMidiHeaders, 0, sizeof(WinMidiHeaders));
 }
 
 //==========================================================================
@@ -323,9 +325,11 @@ bool WinMIDIDevice::Pause(bool paused)
 //
 //==========================================================================
 
-int WinMIDIDevice::StreamOut(MIDIHDR *header)
+int WinMIDIDevice::StreamOut(MidiHeader *header)
 {
-	return midiStreamOut(MidiOut, header, sizeof(MIDIHDR));
+	auto syshdr = (MIDIHDR*)header->lpNext;
+	assert(syshdr == &WinMidiHeaders[0] || syshdr == &WinMidiHeaders[1]);
+	return midiStreamOut(MidiOut, syshdr, sizeof(MIDIHDR));
 }
 
 //==========================================================================
@@ -334,9 +338,11 @@ int WinMIDIDevice::StreamOut(MIDIHDR *header)
 //
 //==========================================================================
 
-int WinMIDIDevice::StreamOutSync(MIDIHDR *header)
+int WinMIDIDevice::StreamOutSync(MidiHeader *header)
 {
-	return midiStreamOut(MidiOut, header, sizeof(MIDIHDR));
+	auto syshdr = (MIDIHDR*)header->lpNext;
+	assert(syshdr == &WinMidiHeaders[0] || syshdr == &WinMidiHeaders[1]);
+	return midiStreamOut(MidiOut, syshdr, sizeof(MIDIHDR));
 }
 
 //==========================================================================
@@ -345,9 +351,19 @@ int WinMIDIDevice::StreamOutSync(MIDIHDR *header)
 //
 //==========================================================================
 
-int WinMIDIDevice::PrepareHeader(MIDIHDR *header)
+int WinMIDIDevice::PrepareHeader(MidiHeader *header)
 {
-	return midiOutPrepareHeader((HMIDIOUT)MidiOut, header, sizeof(MIDIHDR));
+	// This code depends on the driving implementation only having two buffers that get passed alternatingly.
+	// If there were more buffers this would require more intelligent handling.
+	assert(header->lpNext == nullptr);
+	MIDIHDR *syshdr = &WinMidiHeaders[HeaderIndex ^= 1];
+	memset(syshdr, 0, sizeof(MIDIHDR));
+	syshdr->lpData = (LPSTR)header->lpData;
+	syshdr->dwBufferLength = header->dwBufferLength;
+	syshdr->dwBytesRecorded = header->dwBytesRecorded;
+	// this device does not use the lpNext pointer to link MIDI events so use it to point to the system data structure.
+	header->lpNext = (MidiHeader*)syshdr;	
+	return midiOutPrepareHeader((HMIDIOUT)MidiOut, syshdr, sizeof(MIDIHDR));
 }
 
 //==========================================================================
@@ -356,9 +372,19 @@ int WinMIDIDevice::PrepareHeader(MIDIHDR *header)
 //
 //==========================================================================
 
-int WinMIDIDevice::UnprepareHeader(MIDIHDR *header)
+int WinMIDIDevice::UnprepareHeader(MidiHeader *header)
 {
-	return midiOutUnprepareHeader((HMIDIOUT)MidiOut, header, sizeof(MIDIHDR));
+	auto syshdr = (MIDIHDR*)header->lpNext;
+	if (syshdr != nullptr)
+	{
+		assert(syshdr == &WinMidiHeaders[0] || syshdr == &WinMidiHeaders[1]);
+		header->lpNext = nullptr;
+		return midiOutUnprepareHeader((HMIDIOUT)MidiOut, syshdr, sizeof(MIDIHDR));
+	}
+	else
+	{
+		return MMSYSERR_NOERROR;
+	}
 }
 
 //==========================================================================

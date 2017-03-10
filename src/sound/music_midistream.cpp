@@ -96,6 +96,7 @@ MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 #endif
   MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), Args(args)
 {
+	memset(Buffer, 0, sizeof(Buffer));
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (BufferDoneEvent == NULL)
@@ -124,6 +125,7 @@ MIDIStreamer::MIDIStreamer(const char *dumpname, EMidiDevice type)
 #endif
   MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), DumpFilename(dumpname)
 {
+	memset(Buffer, 0, sizeof(Buffer));
 #ifdef _WIN32
 	BufferDoneEvent = NULL;
 	ExitEvent = NULL;
@@ -989,9 +991,9 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		}
 		events = MakeEvents(events, max_event_p, max_time);
 	}
-	memset(&Buffer[buffer_num], 0, sizeof(MIDIHDR));
-	Buffer[buffer_num].lpData = (LPSTR)Events[buffer_num];
-	Buffer[buffer_num].dwBufferLength = DWORD((LPSTR)events - Buffer[buffer_num].lpData);
+	memset(&Buffer[buffer_num], 0, sizeof(MidiHeader));
+	Buffer[buffer_num].lpData = (uint8_t *)Events[buffer_num];
+	Buffer[buffer_num].dwBufferLength = uint32_t((uint8_t *)events - Buffer[buffer_num].lpData);
 	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
 	if (0 != (i = MIDI->PrepareHeader(&Buffer[buffer_num])))
 	{
@@ -1021,9 +1023,9 @@ int MIDIStreamer::FillStopBuffer(int buffer_num)
 	events[2] = MEVT_NOP << 24;
 	events += 3;
 
-	memset(&Buffer[buffer_num], 0, sizeof(MIDIHDR));
-	Buffer[buffer_num].lpData = (LPSTR)Events[buffer_num];
-	Buffer[buffer_num].dwBufferLength = DWORD((LPSTR)events - Buffer[buffer_num].lpData);
+	memset(&Buffer[buffer_num], 0, sizeof(MidiHeader));
+	Buffer[buffer_num].lpData = (uint8_t*)Events[buffer_num];
+	Buffer[buffer_num].dwBufferLength = DWORD((uint8_t*)events - Buffer[buffer_num].lpData);
 	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
 	if (0 != (i = MIDI->PrepareHeader(&Buffer[buffer_num])))
 	{
@@ -1456,7 +1458,7 @@ bool MIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 //
 //==========================================================================
 
-int MIDIDevice::PrepareHeader(MIDIHDR *header)
+int MIDIDevice::PrepareHeader(MidiHeader *header)
 {
 	return 0;
 }
@@ -1469,7 +1471,7 @@ int MIDIDevice::PrepareHeader(MIDIHDR *header)
 //
 //==========================================================================
 
-int MIDIDevice::UnprepareHeader(MIDIHDR *header)
+int MIDIDevice::UnprepareHeader(MidiHeader *header)
 {
 	return 0;
 }

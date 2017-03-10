@@ -39,14 +39,16 @@ EXTERN_CVAR (Float, timidity_mastervolume)
 
 // A device that provides a WinMM-like MIDI streaming interface -------------
 
-#ifndef _WIN32
-struct MIDIHDR
+struct MidiHeader
 {
 	uint8_t *lpData;
-	DWORD dwBufferLength;
-	DWORD dwBytesRecorded;
-	MIDIHDR *lpNext;
+	uint32_t dwBufferLength;
+	uint32_t dwBytesRecorded;
+	MidiHeader *lpNext;
 };
+
+
+#ifndef _WIN32
 
 enum
 {
@@ -92,12 +94,12 @@ public:
 	virtual int GetTechnology() const = 0;
 	virtual int SetTempo(int tempo) = 0;
 	virtual int SetTimeDiv(int timediv) = 0;
-	virtual int StreamOut(MIDIHDR *data) = 0;
-	virtual int StreamOutSync(MIDIHDR *data) = 0;
+	virtual int StreamOut(MidiHeader *data) = 0;
+	virtual int StreamOutSync(MidiHeader *data) = 0;
 	virtual int Resume() = 0;
 	virtual void Stop() = 0;
-	virtual int PrepareHeader(MIDIHDR *data);
-	virtual int UnprepareHeader(MIDIHDR *data);
+	virtual int PrepareHeader(MidiHeader *data);
+	virtual int UnprepareHeader(MidiHeader *data);
 	virtual bool FakeVolume();
 	virtual bool Pause(bool paused) = 0;
 	virtual bool NeedThreadedCallback();
@@ -125,12 +127,12 @@ public:
 	int GetTechnology() const;
 	int SetTempo(int tempo);
 	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
+	int StreamOut(MidiHeader *data);
+	int StreamOutSync(MidiHeader *data);
 	int Resume();
 	void Stop();
-	int PrepareHeader(MIDIHDR *data);
-	int UnprepareHeader(MIDIHDR *data);
+	int PrepareHeader(MidiHeader *data);
+	int UnprepareHeader(MidiHeader *data);
 	bool FakeVolume();
 	bool NeedThreadedCallback();
 	bool Pause(bool paused);
@@ -142,6 +144,8 @@ protected:
 	HMIDISTRM MidiOut;
 	UINT DeviceID;
 	DWORD SavedVolume;
+	MIDIHDR WinMidiHeaders[2];
+	int HeaderIndex;
 	bool VolumeWorks;
 
 	void (*Callback)(unsigned int, void *);
@@ -162,11 +166,11 @@ public:
 	virtual int GetTechnology() const override;
 	virtual int SetTempo(int tempo) override;
 	virtual int SetTimeDiv(int timediv) override;
-	virtual int StreamOut(MIDIHDR *data) override;
-	virtual int StreamOutSync(MIDIHDR *data) override;
+	virtual int StreamOut(MidiHeader *data) override;
+	virtual int StreamOutSync(MidiHeader *data) override;
 	virtual int Resume() override;
 	virtual void Stop() override;
-	virtual int PrepareHeader(MIDIHDR* data) override;
+	virtual int PrepareHeader(MidiHeader* data) override;
 	virtual bool FakeVolume() override { return true; }
 	virtual bool Pause(bool paused) override;
 	virtual bool Preprocess(MIDIStreamer *song, bool looping) override;
@@ -201,8 +205,8 @@ public:
 	bool Pause(bool paused);
 	int Resume();
 	void Stop();
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
+	int StreamOut(MidiHeader *data);
+	int StreamOutSync(MidiHeader *data);
 	int SetTempo(int tempo);
 	int SetTimeDiv(int timediv);
 	FString GetStats();
@@ -275,8 +279,8 @@ public:
 	int GetTechnology() const;
 	int SetTempo(int tempo);
 	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
+	int StreamOut(MidiHeader *data);
+	int StreamOutSync(MidiHeader *data);
 	int Resume();
 	void Stop();
 	bool Pause(bool paused);
@@ -288,7 +292,7 @@ protected:
 	double Division;
 	double SamplesPerTick;
 	double NextTickIn;
-	MIDIHDR *Events;
+	MidiHeader *Events;
 	bool Started;
 	DWORD Position;
 	int SampleRate;
@@ -541,7 +545,7 @@ protected:
 
 	MIDIDevice *MIDI;
 	DWORD Events[2][MAX_EVENTS*3];
-	MIDIHDR Buffer[2];
+	MidiHeader Buffer[2];
 	int BufferNum;
 	int EndQueued;
 	bool VolumeChanged;

@@ -114,12 +114,12 @@ int AudioToolboxMIDIDevice::SetTimeDiv(int timediv)
 	return 0;
 }
 
-int AudioToolboxMIDIDevice::StreamOut(MIDIHDR* data)
+int AudioToolboxMIDIDevice::StreamOut(MidiHeader* data)
 {
 	return 0;
 }
 
-int AudioToolboxMIDIDevice::StreamOutSync(MIDIHDR* data)
+int AudioToolboxMIDIDevice::StreamOutSync(MidiHeader* data)
 {
 	return 0;
 }
@@ -170,9 +170,9 @@ void AudioToolboxMIDIDevice::Stop()
 	AT_MIDI_CHECK_ERROR(MusicPlayerStop(m_player));
 }
 
-int AudioToolboxMIDIDevice::PrepareHeader(MIDIHDR* data)
+int AudioToolboxMIDIDevice::PrepareHeader(MidiHeader* data)
 {
-	MIDIHDR* events = data;
+	MidiHeader* events = data;
 	DWORD position = 0;
 
 	while (nullptr != events)

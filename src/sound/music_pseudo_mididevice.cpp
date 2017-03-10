@@ -177,7 +177,7 @@ bool PseudoMIDIDevice::Pause(bool paused)
 //
 //==========================================================================
 
-int PseudoMIDIDevice::StreamOutSync(MIDIHDR *header)
+int PseudoMIDIDevice::StreamOutSync(MidiHeader *header)
 {
 	assert(0);
 	return 0;
@@ -189,7 +189,7 @@ int PseudoMIDIDevice::StreamOutSync(MIDIHDR *header)
 //
 //==========================================================================
 
-int PseudoMIDIDevice::StreamOut(MIDIHDR *header)
+int PseudoMIDIDevice::StreamOut(MidiHeader *header)
 {
 	assert(0);
 	return 0;

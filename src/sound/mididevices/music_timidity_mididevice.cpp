@@ -34,8 +34,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_midi_win32.h"
-
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"

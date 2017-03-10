@@ -35,9 +35,9 @@
 #ifdef HAVE_FLUIDSYNTH
 
 // HEADER FILES ------------------------------------------------------------
-#include "i_midi_win32.h"
 
 #include "i_musicinterns.h"
+#include "i_system.h"
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
@@ -50,6 +50,10 @@
 #ifdef DYN_FLUIDSYNTH
 
 #ifdef _WIN32
+
+// do this without including windows.h for this one single prototype
+extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize);
+
 #ifndef _M_X64
 #define FLUIDSYNTHLIB1	"fluidsynth.dll"
 #define FLUIDSYNTHLIB2	"libfluidsynth.dll"

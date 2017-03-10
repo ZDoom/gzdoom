@@ -209,19 +209,27 @@ namespace swrenderer
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y - 0.5) / viewport->InvZtoScale * zspan);
 			drawerargs.dc_viewpos_step.X = (float)(zspan / viewport->CenterX);
 
-			static DrawerLight lightbuffer[64 * 1024];
-			static int nextlightindex = 0;
-			
 			// Plane normal
 			drawerargs.dc_normal.X = 0.0f;
 			drawerargs.dc_normal.Y = 0.0f;
 			drawerargs.dc_normal.Z = (y >= viewport->CenterY) ? 1.0f : -1.0f;
 
-			// Setup lights for row
-			drawerargs.dc_num_lights = 0;
-			drawerargs.dc_lights = lightbuffer + nextlightindex;
+			// Calculate max lights that can touch the row so we can allocate memory for the list
+			int max_lights = 0;
 			VisiblePlaneLight *cur_node = light_list;
-			while (cur_node && nextlightindex < 64 * 1024)
+			while (cur_node)
+			{
+				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+					max_lights++;
+				cur_node = cur_node->next;
+			}
+
+			drawerargs.dc_num_lights = 0;
+			drawerargs.dc_lights = Thread->FrameMemory->AllocMemory<DrawerLight>(max_lights);
+
+			// Setup lights for row
+			cur_node = light_list;
+			while (cur_node)
 			{
 				double lightX = cur_node->lightsource->X() - ViewPos.X;
 				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
@@ -244,7 +252,6 @@ namespace swrenderer
 					uint32_t green = cur_node->lightsource->GetGreen();
 					uint32_t blue = cur_node->lightsource->GetBlue();
 
-					nextlightindex++;
 					auto &light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
 					light.x = lx;
 					light.y = lconstant;
@@ -255,9 +262,6 @@ namespace swrenderer
 
 				cur_node = cur_node->next;
 			}
-
-			if (nextlightindex == 64 * 1024)
-				nextlightindex = 0;
 		}
 		else
 		{

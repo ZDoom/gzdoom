@@ -26,6 +26,7 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
+#include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
@@ -67,6 +68,9 @@
 
 void FShadowMap::Update()
 {
+	if (!IsEnabled())
+		return;
+
 	UploadAABBTree();
 	UploadLights();
 
@@ -97,10 +101,23 @@ void FShadowMap::Update()
 
 bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
 {
-	if (mAABBTree)
+	if (IsEnabled() && mAABBTree)
 		return mAABBTree->RayTest(light->Pos(), pos) >= 1.0f;
 	else
 		return true;
+}
+
+bool FShadowMap::IsEnabled() const
+{
+	return gl_light_shadowmap && !!(gl.flags & RFL_SHADER_STORAGE_BUFFER);
+}
+
+int FShadowMap::ShadowMapIndex(ADynamicLight *light)
+{
+	if (IsEnabled())
+		return mLightToShadowmap[light];
+	else
+		return 1024;
 }
 
 void FShadowMap::UploadLights()

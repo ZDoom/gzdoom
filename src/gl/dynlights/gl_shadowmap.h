@@ -20,10 +20,13 @@ public:
 	void Update();
 
 	// Return the assigned shadow map index for a given light
-	int ShadowMapIndex(ADynamicLight *light) { return mLightToShadowmap[light]; }
+	int ShadowMapIndex(ADynamicLight *light);
 
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(ADynamicLight *light, const DVector3 &pos);
+
+	// Returns true if gl_light_shadowmap is enabled and supported by the hardware
+	bool IsEnabled() const;
 
 private:
 	// Upload the AABB-tree to the GPU

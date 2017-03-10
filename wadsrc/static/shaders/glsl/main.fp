@@ -139,6 +139,8 @@ float R_DoomLightingEquation(float light)
 //
 //===========================================================================
 
+#ifdef SUPPORTS_SHADOWMAPS
+
 float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
 {
 	float u;
@@ -173,6 +175,9 @@ float sampleShadowmap(vec2 lightpos, vec2 testpos, float v)
 
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
+	if (shadowIndex <= -1024.0 || shadowIndex >= 1024.0)
+		return 1.0; // No shadowmap available for this light
+
 	float v = (abs(shadowIndex) + 0.5) / 1024.0;
 	vec2 dir = (pixelpos.xz - lightpos.xz);
 	vec2 normal = normalize(vec2(-dir.y, dir.x));
@@ -183,6 +188,8 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 	}
 	return sum / PCF_COUNT;
 }
+
+#endif
 
 //===========================================================================
 //
@@ -206,7 +213,9 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 float pointLightAttenuation(vec4 lightpos, float shadowIndex)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+#ifdef SUPPORTS_SHADOWMAPS
 	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
+#endif
 	if (shadowIndex >= 0.0) // Sign bit is the attenuated light flag
 	{
 		return attenuation;

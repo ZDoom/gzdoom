@@ -226,6 +226,7 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",	gl_light_shadowmap,				"YesNo"
 }
 
 OptionMenu "GLPrefOptions"

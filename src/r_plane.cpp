@@ -1444,7 +1444,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	{
 		double cosine = cos(planeang), sine = sin(planeang);
 		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
-		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
+		pviewy = FLOAT2FIXED(pl->xform.yOffs + pl->xform.baseyOffs - ViewPos.X * sine - ViewPos.Y * cosine);
 	}
 	else
 	{

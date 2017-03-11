@@ -97,7 +97,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 	else
 	{
-		vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		// This differentiation is for Intel which do not seem to expose the full extension, even if marked as required.
+		if (gl.glslversion < 4.3f)
+			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		else
+			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
 	if (gl.buffermethod == BM_DEFERRED)

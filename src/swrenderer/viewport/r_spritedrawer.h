@@ -53,6 +53,8 @@ namespace swrenderer
 		
 		uint32_t DynamicLight() const { return dynlightcolor; }
 
+		bool DrawerNeedsPalInput() const { return drawer_needs_pal_input; }
+
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
 		static fixed_t GetAlpha(int type, fixed_t alpha);

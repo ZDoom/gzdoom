@@ -532,8 +532,7 @@ namespace swrenderer
 							}
 
 							const uint8_t *columnColors = col;
-							bool bgra = viewport->RenderTarget->IsBgra();
-							if (bgra)
+							if (!drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra())
 							{
 								// The true color slab data array is identical, except its using uint32_t instead of uint8.
 								//

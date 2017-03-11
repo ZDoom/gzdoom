@@ -281,6 +281,31 @@ void FIWadManager::ParseIWadInfos(const char *fn)
 	}
 }
 
+void FIWadManager::CheckExternalIWADINFOFile() {
+	FILE *file = fopen ("iwadinfo.cfg", "r");
+	bool succ;
+
+	if (file == NULL)
+	{
+		return;
+	}
+
+	fseek(file, 0L, SEEK_END);
+	int sz = ftell(file);
+
+	rewind(file);
+
+	void* data = malloc(sz);
+
+	fread(data, 1, sz, file);
+
+	ParseIWadInfo("IWADINFO", (const char*)data, sz);
+
+	free(data);
+
+	fclose (file);
+}
+
 
 //==========================================================================
 //

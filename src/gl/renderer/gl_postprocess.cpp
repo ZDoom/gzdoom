@@ -60,6 +60,7 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
+#include "gl/shaders/gl_lensflareshader.h"
 #include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
@@ -70,11 +71,17 @@
 // CVARs
 //
 //==========================================================================
-CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE);
+CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE)
 CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
 {
 	if (self < 0.1f) self = 0.1f;
 }
+
+CVAR(Bool, gl_lensflare, false, CVAR_ARCHIVE)
+CVAR(Int, gl_lensflare_samples, 5, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_disp, 0.37f, CVAR_ARCHIVE)
+CVAR(Float, gl_lensflare_halowidth, 0.7f, CVAR_ARCHIVE)
+//CVAR(Float, gl_lensflare_ghostsdisp, 1.0f, CVAR_ARCHIVE)
 
 CVAR(Float, gl_exposure_scale, 1.3f, CVAR_ARCHIVE)
 CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
@@ -166,6 +173,61 @@ void FGLRenderer::PostProcessScene()
 	ColormapScene();
 	LensDistortScene();
 	ApplyFXAA();
+	LensFlareScene();
+}
+
+void FGLRenderer::LensFlareScene() {
+	if(!gl_lensflare) return;
+
+	FGLDebug::PushGroup("LensFlareScene");
+
+	/*float scale[4] = {
+		gl_lensflare_scale, gl_lensflare_scale, gl_lensflare_scale, 1.0
+	};
+
+	float bias[4] = {
+		gl_lensflare_bias, gl_lensflare_bias, gl_lensflare_bias, 0.0
+	};
+	
+	/*mBuffers->BindSceneFB(false);
+	mBuffers->BindSceneColorTexture(0);
+
+	mLensFlareDownSampleShader->Bind();
+
+	mLensFlareDownSampleShader->InputTexture.Set(0);
+	mLensFlareDownSampleShader->Scale.Set(scale);
+	mLensFlareDownSampleShader->Bias.Set(bias);*/
+
+	//RenderScreenQuad();
+
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	glDisable(GL_DEPTH_TEST);
+
+	float chroma[3] = {
+		0.11, 0.103333, 0.0833333
+	};
+
+	FGLPostProcessState savedState;
+
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+
+	mLensFlareGhostShader->Bind();
+
+	mLensFlareGhostShader->InputTexture.Set(0);
+	mLensFlareGhostShader->nSamples.Set(gl_lensflare_samples);
+	mLensFlareGhostShader->flareDispersal.Set(gl_lensflare_disp);
+	mLensFlareGhostShader->flareHaloWidth.Set(gl_lensflare_halowidth);
+	mLensFlareGhostShader->flareChromaticDistortion.Set(chroma);
+
+	//mBuffers->BindSceneFB(false);
+
+	RenderScreenQuad();
+
+	mBuffers->NextTexture();
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------

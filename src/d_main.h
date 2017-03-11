@@ -130,6 +130,7 @@ class FIWadManager
 	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad);
 public:
 	void ParseIWadInfos(const char *fn);
+	void CheckExternalIWADINFOFile();
 	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 	const FString *GetAutoname(unsigned int num) const
 	{

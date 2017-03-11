@@ -2325,6 +2325,7 @@ void D_DoomMain (void)
 
 	iwad_man = new FIWadManager;
 	iwad_man->ParseIWadInfos(basewad);
+	iwad_man->CheckExternalIWADINFOFile();
 
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
@@ -2356,6 +2357,7 @@ void D_DoomMain (void)
 		{
 			iwad_man = new FIWadManager;
 			iwad_man->ParseIWadInfos(basewad);
+			iwad_man->CheckExternalIWADINFOFile();
 		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
 		gameinfo.gametype = iwad_info->gametype;
@@ -2363,10 +2365,10 @@ void D_DoomMain (void)
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
 
-		if ((gameinfo.flags & GI_SHAREWARE) && pwads.Size() > 0)
+		/*if ((gameinfo.flags & GI_SHAREWARE) && pwads.Size() > 0)
 		{
 			I_FatalError ("You cannot -file with the shareware version. Register!");
-		}
+		}*/
 
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);

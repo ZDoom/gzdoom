@@ -56,8 +56,7 @@ private:
 	CFRunLoopTimerRef m_timer = nullptr;
 	MusicTimeStamp m_length = 0;
 
-	MidiCallback Callback;
-	Callback m_callback = nullptr;
+	MidiCallback m_callback = nullptr;
 	void* m_userData = nullptr;
 
 	static void TimerCallback(CFRunLoopTimerRef timer, void* info);
@@ -312,7 +311,7 @@ void AudioToolboxMIDIDevice::TimerCallback(CFRunLoopTimerRef timer, void* info)
 
 	if (nullptr != self->m_callback)
 	{
-		self->m_callback(MIDI_DONE, self->m_userData);
+		self->m_callback(self->m_userData);
 	}
 
 	MusicTimeStamp currentTime = 0;
@@ -326,9 +325,9 @@ void AudioToolboxMIDIDevice::TimerCallback(CFRunLoopTimerRef timer, void* info)
 
 #undef AT_MIDI_CHECK_ERROR
 
-MIDIDevice *CreateAudioToolboxMIDTDevice(int mididevice)
+MIDIDevice *CreateAudioToolboxMIDTDevice()
 {
-	return new AudioToolboxMIDIDevice(mididevice);
+	return new AudioToolboxMIDIDevice();
 }
 
 #endif // __APPLE__

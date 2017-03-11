@@ -93,7 +93,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
 	ScreenshotBuffer = NULL;
-	LastCamera = NULL;
 
 	InitializeState();
 	mDebug = std::make_shared<FGLDebug>();
@@ -101,8 +100,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	gl_SetupMenu();
 	gl_GenerateGlobalBrightmapFromColormap();
 	DoSetGamma();
-	needsetgamma = true;
-	swapped = false;
 	Accel2D = true;
 }
 
@@ -178,7 +175,6 @@ void OpenGLFrameBuffer::Update()
 	GLRenderer->Flush();
 
 	Swap();
-	swapped = false;
 	Unlock();
 	CheckBench();
 
@@ -215,15 +211,9 @@ void OpenGLFrameBuffer::Swap()
 	Finish.Reset();
 	Finish.Clock();
 	if (swapbefore) glFinish();
-	if (needsetgamma)
-	{
-		//DoSetGamma();
-		needsetgamma = false;
-	}
 	SwapBuffers();
 	if (!swapbefore) glFinish();
 	Finish.Unclock();
-	swapped = true;
 	camtexcount = 0;
 	FHardwareTexture::UnbindAll();
 	mDebug->Update();
@@ -565,7 +555,6 @@ void OpenGLFrameBuffer::GameRestart()
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
 	ScreenshotBuffer = NULL;
-	LastCamera = NULL;
 	gl_GenerateGlobalBrightmapFromColormap();
 }
 

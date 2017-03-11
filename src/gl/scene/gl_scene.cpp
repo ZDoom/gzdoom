@@ -897,17 +897,8 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 void FGLRenderer::RenderView (player_t* player)
 {
-	OpenGLFrameBuffer* GLTarget = static_cast<OpenGLFrameBuffer*>(screen);
-	AActor *&LastCamera = GLTarget->LastCamera;
 
 	checkBenchActive();
-	if (player->camera != LastCamera)
-	{
-		// If the camera changed don't interpolate
-		// Otherwise there will be some not so nice effects.
-		R_ResetViewInterpolation();
-		LastCamera=player->camera;
-	}
 
 	gl_RenderState.SetVertexBuffer(mVBO);
 	GLRenderer->mVBO->Reset();

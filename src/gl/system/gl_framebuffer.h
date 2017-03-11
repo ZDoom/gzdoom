@@ -85,18 +85,13 @@ public:
 
 	void SetVSync(bool vsync);
 
+	int palette_brightness;				// brightness of the active palette - this is used for screen blends
+	bool HWGammaActive = false;			// Are we using hardware or software gamma?
+	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:
-	PalEntry Flash;
-
-	// Texture creation info
-	int cm;
-	int translation;
-	bool iscomplex;
-	bool needsetgamma;
-	bool swapped;
-
-	PalEntry SourcePalette[256];
-	uint8_t *ScreenshotBuffer;
+	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
+	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
+	uint8_t *ScreenshotBuffer;			// What the name says. This must be maintained because the software renderer can return a locked canvas surface which the caller cannot release.
 
 	class Wiper
 	{
@@ -120,13 +115,8 @@ private:
 	FHardwareTexture *wipestartscreen;
 	FHardwareTexture *wipeendscreen;
 
-	bool HWGammaActive = false;
-
-	std::shared_ptr<FGLDebug> mDebug;
 
 public:
-	AActor * LastCamera;
-	int palette_brightness;
 };
 
 

@@ -561,7 +561,6 @@ void FRemapTable::AddToTranslation(const char *range)
 		}
 
 		sc.MustGetAnyToken();
-		Printf(0, "token type: %d", sc.TokenType);
 
 		if (sc.TokenType == '[')
 		{ 

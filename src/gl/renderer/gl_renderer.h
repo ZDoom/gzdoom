@@ -79,7 +79,8 @@ enum
 {
 	DM_MAINVIEW,
 	DM_OFFSCREEN,
-	DM_PORTAL
+	DM_PORTAL,
+	DM_SKYPORTAL
 };
 
 class FGLRenderer

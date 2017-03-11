@@ -491,7 +491,7 @@ void FGLRenderer::DrawScene(int drawmode)
 	{
 		ssao_portals_available = 0;
 	}
-	else if (ssao_portals_available > 0)
+	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
 	{
 		applySSAO = true;
 		ssao_portals_available--;

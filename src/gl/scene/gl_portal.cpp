@@ -655,7 +655,7 @@ void GLSkyboxPortal::DrawContents()
 	SaveMapSection();
 	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 
-	GLRenderer->DrawScene(DM_PORTAL);
+	GLRenderer->DrawScene(DM_SKYPORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
 	inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);

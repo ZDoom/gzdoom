@@ -61,6 +61,7 @@
 #include "virtual.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "actorinlines.h"
 
 static FRandom pr_botrespawn ("BotRespawn");
 static FRandom pr_killmobj ("ActorDie");

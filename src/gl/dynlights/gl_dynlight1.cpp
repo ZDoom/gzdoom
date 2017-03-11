@@ -31,6 +31,7 @@
 #include "vectors.h"
 #include "gl/gl_functions.h"
 #include "g_level.h"
+#include "actorinlines.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"

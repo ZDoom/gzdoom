@@ -159,8 +159,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	}
 	else if (allowreflect && sector->GetReflect(plane) > 0)
 	{
-		if ((plane == sector_t::ceiling && ViewPos.Z > sector->ceilingplane.fD()) ||
-			(plane == sector_t::floor && ViewPos.Z < -sector->floorplane.fD())) return;
+		if ((plane == sector_t::ceiling && r_viewpoint.Pos.Z > sector->ceilingplane.fD()) ||
+			(plane == sector_t::floor && r_viewpoint.Pos.Z < -sector->floorplane.fD())) return;
 		ptype = PORTALTYPE_PLANEMIRROR;
 		planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 	}
@@ -345,7 +345,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 			else
 			{
 				// Special hack for Vrack2b
-				if (bs->floorplane.ZatPoint(ViewPos) > ViewPos.Z) return;
+				if (bs->floorplane.ZatPoint(r_viewpoint.Pos) > r_viewpoint.Pos.Z) return;
 			}
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;

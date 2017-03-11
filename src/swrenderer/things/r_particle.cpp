@@ -77,16 +77,16 @@ namespace swrenderer
 			return;
 
 		// transform the origin point
-		tr_x = particle->Pos.X - ViewPos.X;
-		tr_y = particle->Pos.Y - ViewPos.Y;
+		tr_x = particle->Pos.X - r_viewpoint.Pos.X;
+		tr_y = particle->Pos.Y - r_viewpoint.Pos.Y;
 
-		tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+		tz = tr_x * r_viewpoint.TanCos + tr_y * r_viewpoint.TanSin;
 
 		// particle is behind view plane?
 		if (tz < MINZ)
 			return;
 
-		tx = tr_x * ViewSin - tr_y * ViewCos;
+		tx = tr_x * r_viewpoint.Sin - tr_y * r_viewpoint.Cos;
 
 		// Flip for mirrors
 		if (renderportal->MirrorFlags & RF_XFLIP)
@@ -99,13 +99,13 @@ namespace swrenderer
 			return;
 
 		tiz = 1 / tz;
-		xscale = centerx * tiz;
+		xscale = r_viewwindow.centerx * tiz;
 
 		// calculate edges of the shape
 		double psize = particle->size / 8.0;
 
-		x1 = MAX<int>(renderportal->WindowLeft, centerx + xs_RoundToInt((tx - psize) * xscale));
-		x2 = MIN<int>(renderportal->WindowRight, centerx + xs_RoundToInt((tx + psize) * xscale));
+		x1 = MAX<int>(renderportal->WindowLeft, r_viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
+		x2 = MIN<int>(renderportal->WindowRight, r_viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
 
 		if (x1 >= x2)
 			return;
@@ -113,7 +113,7 @@ namespace swrenderer
 		auto viewport = RenderViewport::Instance();
 
 		yscale = xscale; // YaspectMul is not needed for particles as they should always be square
-		ty = particle->Pos.Z - ViewPos.Z;
+		ty = particle->Pos.Z - r_viewpoint.Pos.Z;
 		y1 = xs_RoundToInt(viewport->CenterY - (ty + psize) * yscale);
 		y2 = xs_RoundToInt(viewport->CenterY - (ty - psize) * yscale);
 

@@ -256,15 +256,15 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
 	CameraLight savedCameraLight = *CameraLight::Instance();
 
-	DAngle savedfov = FieldOfView;
-	R_SetFOV ((double)fov);
+	DAngle savedfov = r_viewpoint.FieldOfView;
+	R_SetFOV (r_viewpoint, (double)fov);
 
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
 		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 
-	R_SetFOV (savedfov);
+	R_SetFOV (r_viewpoint, savedfov);
 
 	if (Canvas->IsBgra())
 	{

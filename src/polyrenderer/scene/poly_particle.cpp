@@ -37,8 +37,8 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	DVector2 points[2] =
 	{
-		{ pos.X - ViewSin * psize, pos.Y + ViewCos * psize },
-		{ pos.X + ViewSin * psize, pos.Y - ViewCos * psize }
+		{ pos.X - r_viewpoint.Sin * psize, pos.Y + r_viewpoint.Cos * psize },
+		{ pos.X + r_viewpoint.Sin * psize, pos.Y - r_viewpoint.Cos * psize }
 	};
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
@@ -46,7 +46,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : extralight << 4;
+	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{

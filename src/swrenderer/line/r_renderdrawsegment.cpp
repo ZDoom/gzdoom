@@ -118,7 +118,7 @@ namespace swrenderer
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
-				clip3d->sclipTop = sec->ceilingplane.ZatPoint(ViewPos);
+				clip3d->sclipTop = sec->ceilingplane.ZatPoint(r_viewpoint.Pos);
 			}
 			for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
@@ -202,7 +202,7 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				texturemid += rowoffset - ViewPos.Z;
+				texturemid += rowoffset - r_viewpoint.Pos.Z;
 				textop = texturemid;
 				texturemid *= MaskedScaleY;
 			}
@@ -210,8 +210,8 @@ namespace swrenderer
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				textop = texturemid + rowoffset / MaskedScaleY - ViewPos.Z;
-				texturemid = (texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+				textop = texturemid + rowoffset / MaskedScaleY - r_viewpoint.Pos.Z;
+				texturemid = (texturemid - r_viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
 			}
 			if (sprflipvert)
 			{
@@ -230,12 +230,12 @@ namespace swrenderer
 				goto clearfog;
 			}
 
-			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && textop < clip3d->sclipBottom - ViewPos.Z)
+			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && textop < clip3d->sclipBottom - r_viewpoint.Pos.Z)
 			{
 				notrelevant = true;
 				goto clearfog;
 			}
-			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && textop - texheight > clip3d->sclipTop - ViewPos.Z)
+			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && textop - texheight > clip3d->sclipTop - r_viewpoint.Pos.Z)
 			{
 				notrelevant = true;
 				goto clearfog;
@@ -248,7 +248,7 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				wallupper.Project(textop < clip3d->sclipTop - ViewPos.Z ? textop : clip3d->sclipTop - ViewPos.Z, &WallC);
+				wallupper.Project(textop < clip3d->sclipTop - r_viewpoint.Pos.Z ? textop : clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
 			}
 			else
 			{
@@ -256,7 +256,7 @@ namespace swrenderer
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				walllower.Project(textop - texheight > clip3d->sclipBottom - ViewPos.Z ? textop - texheight : clip3d->sclipBottom - ViewPos.Z, &WallC);
+				walllower.Project(textop - texheight > clip3d->sclipBottom - r_viewpoint.Pos.Z ? textop - texheight : clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
 			}
 			else
 			{
@@ -319,13 +319,13 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				texturemid = (texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
+				texturemid = (texturemid - r_viewpoint.Pos.Z + rowoffset) * MaskedScaleY;
 			}
 			else
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				texturemid = (texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+				texturemid = (texturemid - r_viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
 			}
 
 			WallC.sz1 = ds->sz1;
@@ -347,7 +347,7 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
+				wallupper.Project(clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
 					if (wallupper.ScreenY[i] < mceilingclip[i])
@@ -357,7 +357,7 @@ namespace swrenderer
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
+				walllower.Project(clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
 					if (walllower.ScreenY[i] > mfloorclip[i])
@@ -450,7 +450,7 @@ namespace swrenderer
 		{
 			rowoffset += rw_pic->GetHeight();
 		}
-		double texturemid = (planez - ViewPos.Z) * yscale;
+		double texturemid = (planez - r_viewpoint.Pos.Z) * yscale;
 		if (rw_pic->bWorldPanning)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
@@ -483,8 +483,8 @@ namespace swrenderer
 		WallT = ds->tmapvals;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
-		wallupper.Project(clip3d->sclipTop - ViewPos.Z, &WallC);
-		walllower.Project(clip3d->sclipBottom - ViewPos.Z, &WallC);
+		wallupper.Project(clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
+		walllower.Project(clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
 
 		for (i = x1; i < x2; i++)
 		{

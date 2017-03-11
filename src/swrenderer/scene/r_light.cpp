@@ -47,6 +47,7 @@ namespace swrenderer
 
 	void CameraLight::SetCamera(AActor *actor)
 	{
+		AActor *camera = r_viewpoint.camera;
 		player_t *player = actor->player;
 		if (camera && camera->player != nullptr)
 			player = camera->player;
@@ -84,10 +85,10 @@ namespace swrenderer
 			}
 		}
 		// [RH] Inverse light for shooting the Sigil
-		if (fixedcolormap == nullptr && extralight == INT_MIN)
+		if (fixedcolormap == nullptr && r_viewpoint.extralight == INT_MIN)
 		{
 			fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
-			extralight = 0;
+			r_viewpoint.extralight = 0;
 		}
 	}
 
@@ -108,7 +109,7 @@ namespace swrenderer
 		CurrentVisibility = vis;
 
 		auto viewport = RenderViewport::Instance();
-		if (FocalTangent == 0 || viewport->FocalLengthY == 0)
+		if (r_viewwindow.FocalTangent == 0 || viewport->FocalLengthY == 0)
 		{ // If r_visibility is called before the renderer is all set up, don't
 		  // divide by zero. This will be called again later, and the proper
 		  // values can be initialized then.
@@ -117,7 +118,7 @@ namespace swrenderer
 
 		BaseVisibility = vis;
 
-		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * FocalTangent));
+		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * r_viewwindow.FocalTangent));
 		MaxVisForWall = 32767.0 / MaxVisForWall;
 		MaxVisForFloor = 32767.0 / (viewheight >> 2) * viewport->FocalLengthY / 160;
 
@@ -129,8 +130,8 @@ namespace swrenderer
 		else
 			WallVisibility = BaseVisibility;
 
-		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
-			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * FocalTangent);
+		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(r_viewwindow.WidescreenRatio) /
+			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * r_viewwindow.FocalTangent);
 
 		// Prevent overflow on floors/ceilings. Note that the calculation of
 		// MaxVisForFloor means that planes less than two units from the player's
@@ -145,7 +146,7 @@ namespace swrenderer
 
 		FloorVisibility = 160.0 * FloorVisibility / viewport->FocalLengthY;
 
-		TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
+		TiltVisibility = float(vis * r_viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
 
 		NoLightFade = glset.nolightfade;
 	}

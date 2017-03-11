@@ -50,7 +50,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	if (level.flags & LEVEL_DOUBLESKY)
 		backskytex = TexMan(sky2tex, true);
 
-	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+	TriMatrix objectToWorld = TriMatrix::translate((float)r_viewpoint.Pos.X, (float)r_viewpoint.Pos.Y, (float)r_viewpoint.Pos.Z);
 	objectToClip = worldToClip * objectToWorld;
 
 	int rc = mRows + 1;

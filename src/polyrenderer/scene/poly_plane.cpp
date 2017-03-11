@@ -57,7 +57,7 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &cl
 			//fakeFloor->alpha
 
 			double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-			if (fakeHeight < ViewPos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+			if (fakeHeight < r_viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
 			{
 				plane.Render3DFloor(worldToClip, clipPlane, sub, subsectorDepth, stencilValue, false, fakeFloor);
 			}
@@ -78,7 +78,7 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &cl
 			//fakeFloor->alpha
 
 			double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
-			if (fakeHeight > ViewPos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+			if (fakeHeight > r_viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
 			{
 				plane.Render3DFloor(worldToClip, clipPlane, sub, subsectorDepth, stencilValue, true, fakeFloor);
 			}
@@ -187,8 +187,8 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		{
 			seg_t *line = &sub->firstline[i];
 
-			DVector2 pt1 = line->v1->fPos() - ViewPos;
-			DVector2 pt2 = line->v2->fPos() - ViewPos;
+			DVector2 pt1 = line->v1->fPos() - r_viewpoint.Pos;
+			DVector2 pt2 = line->v2->fPos() - r_viewpoint.Pos;
 			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 				inside = false;
 
@@ -218,7 +218,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		else if(polyportal->PortalPlane == Vec4f(0.0f) || Vec4f::dot(polyportal->PortalPlane, Vec4f((float)v.X, (float)v.Y, 0.0f, 1.0f)) > 0.0f)
 		{
 			DVector2 planePos = v;
-			DVector2 planeNormal = v - ViewPos;
+			DVector2 planeNormal = v - r_viewpoint.Pos;
 			planeNormal.MakeUnit();
 			double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
 			polyportal->PortalPlane = Vec4f((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
@@ -238,7 +238,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	{
 		// Floor and ceiling texture needs to be swapped sometimes? Why?? :(
 
-		if (ViewPos.Z < fakesector->floorplane.Zat0()) // In water
+		if (r_viewpoint.Pos.Z < fakesector->floorplane.Zat0()) // In water
 		{
 			if (ceiling)
 			{
@@ -254,7 +254,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 				ccw = true;
 			}
 		}
-		else if (ViewPos.Z >= fakesector->ceilingplane.Zat0() && !fakeflooronly) // In ceiling water
+		else if (r_viewpoint.Pos.Z >= fakesector->ceilingplane.Zat0() && !fakeflooronly) // In ceiling water
 		{
 			if (ceiling)
 			{

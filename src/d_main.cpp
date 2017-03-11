@@ -111,6 +111,7 @@
 #include "fragglescript/t_fs.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "r_utility.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -124,7 +125,6 @@ void DrawHUD();
 extern void ReadStatistics();
 extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
-extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern void HUD_InitHud();
@@ -670,7 +670,7 @@ void D_Display ()
 
 	if (viewactive)
 	{
-		R_SetFOV (players[consoleplayer].camera && players[consoleplayer].camera->player ?
+		R_SetFOV (r_viewpoint, players[consoleplayer].camera && players[consoleplayer].camera->player ?
 			players[consoleplayer].camera->player->FOV : 90.f);
 	}
 
@@ -700,7 +700,7 @@ void D_Display ()
 	// change the view size if needed
 	if (setsizeneeded && StatusBar != NULL)
 	{
-		R_ExecuteSetViewSize ();
+		R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
 	}
 	setmodeneeded = false;
 

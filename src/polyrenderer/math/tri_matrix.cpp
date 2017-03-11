@@ -135,13 +135,13 @@ TriMatrix TriMatrix::frustum(float left, float right, float bottom, float top, f
 TriMatrix TriMatrix::worldToView()
 {
 	TriMatrix m = null();
-	m.matrix[0 + 0 * 4] = (float)ViewSin;
-	m.matrix[0 + 1 * 4] = (float)-ViewCos;
+	m.matrix[0 + 0 * 4] = (float)r_viewpoint.Sin;
+	m.matrix[0 + 1 * 4] = (float)-r_viewpoint.Cos;
 	m.matrix[1 + 2 * 4] = 1.0f;
-	m.matrix[2 + 0 * 4] = (float)-ViewCos;
-	m.matrix[2 + 1 * 4] = (float)-ViewSin;
+	m.matrix[2 + 0 * 4] = (float)-r_viewpoint.Cos;
+	m.matrix[2 + 1 * 4] = (float)-r_viewpoint.Sin;
 	m.matrix[3 + 3 * 4] = 1.0f;
-	return m * translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+	return m * translate((float)-r_viewpoint.Pos.X, (float)-r_viewpoint.Pos.Y, (float)-r_viewpoint.Pos.Z);
 }
 
 TriMatrix TriMatrix::viewToClip()
@@ -149,7 +149,7 @@ TriMatrix TriMatrix::viewToClip()
 	auto viewport = swrenderer::RenderViewport::Instance();
 	float near = 5.0f;
 	float far = 65536.0f;
-	float width = (float)(FocalTangent * near);
+	float width = (float)(r_viewwindow.FocalTangent * near);
 	float top = (float)(viewport->CenterY / viewport->InvZtoScale * near);
 	float bottom = (float)(top - viewheight / viewport->InvZtoScale * near);
 	return frustum(-width, width, bottom, top, near, far);

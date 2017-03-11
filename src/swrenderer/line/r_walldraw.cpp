@@ -207,12 +207,12 @@ namespace swrenderer
 			{
 				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 				{
-					double lightX = cur_node->lightsource->X() - ViewPos.X;
-					double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-					double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+					double lightX = cur_node->lightsource->X() - r_viewpoint.Pos.X;
+					double lightY = cur_node->lightsource->Y() - r_viewpoint.Pos.Y;
+					double lightZ = cur_node->lightsource->Z() - r_viewpoint.Pos.Z;
 
-					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - drawerargs.dc_viewpos.X;
-					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - drawerargs.dc_viewpos.Y;
+					float lx = (float)(lightX * r_viewpoint.Sin - lightY * r_viewpoint.Cos) - drawerargs.dc_viewpos.X;
+					float ly = (float)(lightX * r_viewpoint.TanCos + lightY * r_viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
 					float lz = (float)lightZ;
 
 					// Precalculate the constant part of the dot here so the drawer doesn't have to.
@@ -446,17 +446,17 @@ namespace swrenderer
 
 		if (yrepeat >= 0)
 		{ // normal orientation: draw strips from top to bottom
-			partition = top - fmod(top - texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			partition = top - fmod(top - texturemid / yrepeat - r_viewpoint.Pos.Z, scaledtexheight);
 			if (partition == top)
 			{
 				partition -= scaledtexheight;
 			}
 			const short *up = uwal;
 			short *down = most1.ScreenY;
-			texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			texturemid = (partition - r_viewpoint.Pos.Z) * yrepeat + texheight;
 			while (partition > bot)
 			{
-				ProjectedWallCull j = most3.Project(partition - ViewPos.Z, &WallC);
+				ProjectedWallCull j = most3.Project(partition - r_viewpoint.Pos.Z, &WallC);
 				if (j != ProjectedWallCull::OutsideAbove)
 				{
 					for (int j = x1; j < x2; ++j)
@@ -474,13 +474,13 @@ namespace swrenderer
 		}
 		else
 		{ // upside down: draw strips from bottom to top
-			partition = bot - fmod(bot - texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			partition = bot - fmod(bot - texturemid / yrepeat - r_viewpoint.Pos.Z, scaledtexheight);
 			short *up = most1.ScreenY;
 			const short *down = dwal;
-			texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			texturemid = (partition - r_viewpoint.Pos.Z) * yrepeat + texheight;
 			while (partition < top)
 			{
-				ProjectedWallCull j = most3.Project(partition - ViewPos.Z, &WallC);
+				ProjectedWallCull j = most3.Project(partition - r_viewpoint.Pos.Z, &WallC);
 				if (j != ProjectedWallCull::OutsideBelow)
 				{
 					for (int j = x1; j < x2; ++j)

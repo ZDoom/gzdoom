@@ -393,14 +393,14 @@ fixed_t viewx, viewy;
 
 void R_SetView()
 {
-	viewx = FLOAT2FIXED(ViewPos.X);
-	viewy = FLOAT2FIXED(ViewPos.Y);
+	viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
+	viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
 }
 
 angle_t R_PointToPseudoAngle(double x, double y)
 {
-	double vecx = x - ViewPos.X;
-	double vecy = y - ViewPos.Y;
+	double vecx = x - r_viewpoint.Pos.X;
+	double vecy = y - r_viewpoint.Pos.Y;
 
 	if (vecx == 0 && vecy == 0)
 	{
@@ -451,8 +451,8 @@ bool Clipper::CheckBox(const float *bspcoord)
 	
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	boxpos = (ViewPos.X <= bspcoord[BOXLEFT] ? 0 : ViewPos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
-		(ViewPos.Y >= bspcoord[BOXTOP ] ? 0 : ViewPos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+	boxpos = (r_viewpoint.Pos.X <= bspcoord[BOXLEFT] ? 0 : r_viewpoint.Pos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(r_viewpoint.Pos.Y >= bspcoord[BOXTOP ] ? 0 : r_viewpoint.Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
 	
 	if (boxpos == 5) return true;
 	

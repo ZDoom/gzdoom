@@ -50,7 +50,7 @@ namespace swrenderer
 		int stacked_extralight = 0;
 		double stacked_visibility = 0.0;
 		DVector3 stacked_viewpos;
-		DAngle stacked_angle;
+		DRotator stacked_angle;
 		
 		int numskyboxes = 0; // For ADD_STAT(skyboxes)
 

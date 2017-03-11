@@ -101,7 +101,7 @@ private:
 	DVector3 savedviewpath[2];
 	DVector3 savedViewPos;
 	DVector3 savedViewActorPos;
-	DAngle savedAngle;
+	DRotator savedAngles;
 	bool savedshowviewer;
 	AActor * savedviewactor;
 	area_t savedviewarea;

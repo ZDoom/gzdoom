@@ -98,9 +98,9 @@ namespace swrenderer
 		const sector_t *s = sec->GetHeightSec();
 		if (s != nullptr)
 		{
-			sector_t *heightsec = viewsector->heightsec;
+			sector_t *heightsec = r_viewpoint.sector->heightsec;
 			bool underwater = r_fakingunderwater ||
-				(heightsec && heightsec->floorplane.PointOnSide(ViewPos) <= 0);
+				(heightsec && heightsec->floorplane.PointOnSide(r_viewpoint.Pos) <= 0);
 			bool doorunderwater = false;
 			int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
 
@@ -159,8 +159,8 @@ namespace swrenderer
 				}
 			}
 
-			double refceilz = s->ceilingplane.ZatPoint(ViewPos);
-			double orgceilz = sec->ceilingplane.ZatPoint(ViewPos);
+			double refceilz = s->ceilingplane.ZatPoint(r_viewpoint.Pos);
+			double orgceilz = sec->ceilingplane.ZatPoint(r_viewpoint.Pos);
 
 #if 1
 			// [RH] Allow viewing underwater areas through doors/windows that
@@ -234,7 +234,7 @@ namespace swrenderer
 				}
 				FakeSide = WaterFakeSide::BelowFloor;
 			}
-			else if (heightsec && heightsec->ceilingplane.PointOnSide(ViewPos) <= 0 &&
+			else if (heightsec && heightsec->ceilingplane.PointOnSide(r_viewpoint.Pos) <= 0 &&
 				orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
 			{	// Above-ceiling hack
 				tempsec->ceilingplane = s->ceilingplane;
@@ -307,16 +307,16 @@ namespace swrenderer
 
 		// Find the corners of the box
 		// that define the edges from current viewpoint.
-		if (ViewPos.X <= bspcoord[BOXLEFT])
+		if (r_viewpoint.Pos.X <= bspcoord[BOXLEFT])
 			boxx = 0;
-		else if (ViewPos.X < bspcoord[BOXRIGHT])
+		else if (r_viewpoint.Pos.X < bspcoord[BOXRIGHT])
 			boxx = 1;
 		else
 			boxx = 2;
 
-		if (ViewPos.Y >= bspcoord[BOXTOP])
+		if (r_viewpoint.Pos.Y >= bspcoord[BOXTOP])
 			boxy = 0;
-		else if (ViewPos.Y > bspcoord[BOXBOTTOM])
+		else if (r_viewpoint.Pos.Y > bspcoord[BOXBOTTOM])
 			boxy = 1;
 		else
 			boxy = 2;
@@ -325,10 +325,10 @@ namespace swrenderer
 		if (boxpos == 5)
 			return true;
 
-		x1 = bspcoord[checkcoord[boxpos][0]] - ViewPos.X;
-		y1 = bspcoord[checkcoord[boxpos][1]] - ViewPos.Y;
-		x2 = bspcoord[checkcoord[boxpos][2]] - ViewPos.X;
-		y2 = bspcoord[checkcoord[boxpos][3]] - ViewPos.Y;
+		x1 = bspcoord[checkcoord[boxpos][0]] - r_viewpoint.Pos.X;
+		y1 = bspcoord[checkcoord[boxpos][1]] - r_viewpoint.Pos.Y;
+		x2 = bspcoord[checkcoord[boxpos][2]] - r_viewpoint.Pos.X;
+		y2 = bspcoord[checkcoord[boxpos][3]] - r_viewpoint.Pos.Y;
 
 		// check clip list for an open space
 
@@ -336,10 +336,10 @@ namespace swrenderer
 		if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
 			return true;
 
-		rx1 = x1 * ViewSin - y1 * ViewCos;
-		rx2 = x2 * ViewSin - y2 * ViewCos;
-		ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
-		ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
+		rx1 = x1 * r_viewpoint.Sin - y1 * r_viewpoint.Cos;
+		rx2 = x2 * r_viewpoint.Sin - y2 * r_viewpoint.Cos;
+		ry1 = x1 * r_viewpoint.TanCos + y1 * r_viewpoint.TanSin;
+		ry2 = x2 * r_viewpoint.TanCos + y2 * r_viewpoint.TanSin;
 
 		if (Thread->Portal->MirrorFlags & RF_XFLIP)
 		{
@@ -501,7 +501,7 @@ namespace swrenderer
 
 		portal = frontsector->ValidatePortal(sector_t::ceiling);
 
-		VisiblePlane *ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
+		VisiblePlane *ceilingplane = frontsector->ceilingplane.PointOnSide(r_viewpoint.Pos) > 0 ||
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 			portal != nullptr ||
 			(frontsector->heightsec &&
@@ -542,7 +542,7 @@ namespace swrenderer
 		// killough 10/98: add support for skies transferred from sidedefs
 		portal = frontsector->ValidatePortal(sector_t::floor);
 
-		VisiblePlane *floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
+		VisiblePlane *floorplane = frontsector->floorplane.PointOnSide(r_viewpoint.Pos) > 0 || // killough 3/7/98
 			frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 			portal != nullptr ||
 			(frontsector->heightsec &&
@@ -591,7 +591,7 @@ namespace swrenderer
 					clip3d->NewClip();
 				}
 				double fakeHeight = clip3d->fakeFloor->fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-				if (fakeHeight < ViewPos.Z &&
+				if (fakeHeight < r_viewpoint.Pos.Z &&
 					fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
 				{
 					clip3d->fake3D = FAKE3D_FAKEFLOOR;
@@ -654,7 +654,7 @@ namespace swrenderer
 					clip3d->NewClip();
 				}
 				double fakeHeight = clip3d->fakeFloor->fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
-				if (fakeHeight > ViewPos.Z &&
+				if (fakeHeight > r_viewpoint.Pos.Z &&
 					fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
 				{
 					clip3d->fake3D = FAKE3D_FAKECEILING;
@@ -798,7 +798,7 @@ namespace swrenderer
 			node_t *bsp = (node_t *)node;
 
 			// Decide which side the view point is on.
-			int side = R_PointOnSide(ViewPos, bsp);
+			int side = R_PointOnSide(r_viewpoint.Pos, bsp);
 
 			// Recursively divide front space (toward the viewer).
 			RenderBSPNode(bsp->children[side]);
@@ -848,7 +848,7 @@ namespace swrenderer
 			FIntCVar *cvar = thing->GetClass()->distancecheck;
 			if (cvar != nullptr && *cvar >= 0)
 			{
-				double dist = (thing->Pos() - ViewPos).LengthSquared();
+				double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 				double check = (double)**cvar;
 				if (dist >= check * check)
 				{
@@ -930,8 +930,8 @@ namespace swrenderer
 
 	bool RenderOpaquePass::GetThingSprite(AActor *thing, ThingSprite &sprite)
 	{
-		sprite.pos = thing->InterpolatedPosition(r_TicFracF);
-		sprite.pos.Z += thing->GetBobOffset(r_TicFracF);
+		sprite.pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
+		sprite.pos.Z += thing->GetBobOffset(r_viewpoint.TicFrac);
 
 		sprite.spritenum = thing->sprite;
 		sprite.tex = nullptr;
@@ -958,7 +958,7 @@ namespace swrenderer
 			{
 				// choose a different rotation based on player view
 				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->Rotations];
-				DAngle ang = (sprite.pos - ViewPos).Angle();
+				DAngle ang = (sprite.pos - r_viewpoint.Pos).Angle();
 				angle_t rot;
 				if (sprframe->Texture[0] == sprframe->Texture[1])
 				{
@@ -1001,7 +1001,7 @@ namespace swrenderer
 				//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
 				// choose a different rotation based on player view
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-				DAngle ang = (sprite.pos - ViewPos).Angle();
+				DAngle ang = (sprite.pos - r_viewpoint.Pos).Angle();
 				angle_t rot;
 				if (sprframe->Texture[0] == sprframe->Texture[1])
 				{

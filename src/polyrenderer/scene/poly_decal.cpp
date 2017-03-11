@@ -107,7 +107,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : extralight << 4;
+	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{

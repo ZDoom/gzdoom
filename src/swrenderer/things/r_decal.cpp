@@ -144,8 +144,8 @@ namespace swrenderer
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
 		float maskedScaleY;
 
-		decal_left = decal_pos - edge_left * angvec - ViewPos;
-		decal_right = decal_pos + edge_right * angvec - ViewPos;
+		decal_left = decal_pos - edge_left * angvec - r_viewpoint.Pos;
+		decal_right = decal_pos + edge_right * angvec - r_viewpoint.Pos;
 
 		CameraLight *cameraLight;
 		double texturemid;
@@ -222,7 +222,7 @@ namespace swrenderer
 		}
 
 		yscale = decal->ScaleY;
-		texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
+		texturemid = WallSpriteTile->TopOffset + (zpos - r_viewpoint.Pos.Z) / yscale;
 
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);

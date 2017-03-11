@@ -66,16 +66,16 @@ namespace swrenderer
 	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
-		double tr_x = pos.X - ViewPos.X;
-		double tr_y = pos.Y - ViewPos.Y;
+		double tr_x = pos.X - r_viewpoint.Pos.X;
+		double tr_y = pos.Y - r_viewpoint.Pos.Y;
 
-		double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+		double tz = tr_x * r_viewpoint.TanCos + tr_y * r_viewpoint.TanSin;
 
 		// thing is behind view plane?
 		if (tz < MINZ)
 			return;
 
-		double tx = tr_x * ViewSin - tr_y * ViewCos;
+		double tx = tr_x * r_viewpoint.Sin - tr_y * r_viewpoint.Cos;
 
 		// [RH] Flip for mirrors
 		RenderPortal *renderportal = thread->Portal.get();
@@ -129,7 +129,7 @@ namespace swrenderer
 		double xscale = viewport->CenterX / tz;
 
 		// [RH] Reject sprites that are off the top or bottom of the screen
-		if (viewport->globaluclip * tz > ViewPos.Z - gzb || viewport->globaldclip * tz < ViewPos.Z - gzt)
+		if (viewport->globaluclip * tz > r_viewpoint.Pos.Z - gzb || viewport->globaldclip * tz < r_viewpoint.Pos.Z - gzt)
 		{
 			return;
 		}
@@ -142,14 +142,14 @@ namespace swrenderer
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		double dtx1 = tx * xscale;
-		int x1 = centerx + xs_RoundToInt(dtx1);
+		int x1 = r_viewwindow.centerx + xs_RoundToInt(dtx1);
 
 		// off the right side?
 		if (x1 >= renderportal->WindowRight)
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
-		int x2 = centerx + xs_RoundToInt(tx * xscale);
+		int x2 = r_viewwindow.centerx + xs_RoundToInt(tx * xscale);
 
 		// off the left side or too small?
 		if ((x2 < renderportal->WindowLeft || x2 <= x1))
@@ -168,7 +168,7 @@ namespace swrenderer
 		vis->yscale = float(viewport->InvZtoScale * yscale / tz);
 		vis->idepth = float(1 / tz);
 		vis->floorclip = thing->Floorclip / yscale;
-		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
+		vis->texturemid = tex->TopOffset - (r_viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
 		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
 		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
 		//vis->Angle = thing->Angles.Yaw;
@@ -184,7 +184,7 @@ namespace swrenderer
 			vis->xiscale = iscale;
 		}
 
-		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - r_viewwindow.centerx + 0.5 - dtx1));
 
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;
@@ -194,8 +194,8 @@ namespace swrenderer
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
 		vis->gzt = (float)gzt;		// killough 3/27/98
-		vis->deltax = float(pos.X - ViewPos.X);
-		vis->deltay = float(pos.Y - ViewPos.Y);
+		vis->deltax = float(pos.X - r_viewpoint.Pos.X);
+		vis->deltay = float(pos.Y - r_viewpoint.Pos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D

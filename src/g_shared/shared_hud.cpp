@@ -1101,13 +1101,13 @@ void DrawHUD()
 		}
 		else 
 		{
-			if (AspectTallerThanWide(WidescreenRatio))
+			if (AspectTallerThanWide(r_viewwindow.WidescreenRatio))
 			{
-				hudheight = hudwidth * 30 / AspectMultiplier(WidescreenRatio);	// BaseRatioSizes is inverted for this mode
+				hudheight = hudwidth * 30 / AspectMultiplier(r_viewwindow.WidescreenRatio);	// BaseRatioSizes is inverted for this mode
 			}
 			else
 			{
-				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(WidescreenRatio));
+				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(r_viewwindow.WidescreenRatio));
 			}
 		}
 	}

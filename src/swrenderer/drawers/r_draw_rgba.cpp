@@ -474,7 +474,7 @@ namespace swrenderer
 		int count = _x2 - _x1 + 1;
 
 		// Depth (Z) change across the span
-		double iz = _plane_sz[2] + _plane_sz[1] * (centery - _y) + _plane_sz[0] * (_x1 - centerx);
+		double iz = _plane_sz[2] + _plane_sz[1] * (r_viewwindow.centery - _y) + _plane_sz[0] * (_x1 - r_viewwindow.centerx);
 
 		// Light change across the span
 		fixed_t lightstart = _light;
@@ -491,8 +491,8 @@ namespace swrenderer
 		fixed_t steplight = (lightend - lightstart) / count;
 
 		// Texture coordinates
-		double uz = _plane_su[2] + _plane_su[1] * (centery - _y) + _plane_su[0] * (_x1 - centerx);
-		double vz = _plane_sv[2] + _plane_sv[1] * (centery - _y) + _plane_sv[0] * (_x1 - centerx);
+		double uz = _plane_su[2] + _plane_su[1] * (r_viewwindow.centery - _y) + _plane_su[0] * (_x1 - r_viewwindow.centerx);
+		double vz = _plane_sv[2] + _plane_sv[1] * (r_viewwindow.centery - _y) + _plane_sv[0] * (_x1 - r_viewwindow.centerx);
 		double startz = 1.f / iz;
 		double startu = uz*startz;
 		double startv = vz*startz;

@@ -1023,7 +1023,7 @@ void gl_RenderModel(GLSprite * spr)
 	if (spr->actor->renderflags & RF_INTERPOLATEANGLES)
 	{
 		// [Nash] use interpolated angles
-		DRotator Angles = spr->actor->InterpolatedAngles(r_TicFracF);
+		DRotator Angles = spr->actor->InterpolatedAngles(r_viewpoint.TicFrac);
 		angle = Angles.Yaw.Degrees;
 	}
 	

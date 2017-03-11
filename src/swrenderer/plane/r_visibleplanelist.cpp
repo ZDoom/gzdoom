@@ -167,7 +167,7 @@ namespace swrenderer
 										*xform == check->xform
 										)
 										) &&
-									check->viewangle == renderportal->stacked_angle
+									check->viewangle == renderportal->stacked_angle.Yaw
 									)
 								)
 							)
@@ -191,7 +191,7 @@ namespace swrenderer
 					renderportal->CurrentPortalUniq == check->CurrentPortalUniq &&
 					renderportal->MirrorFlags == check->MirrorFlags &&
 					Thread->Clip3D->CurrentSkybox == check->CurrentSkybox &&
-					ViewPos == check->viewpos
+					r_viewpoint.Pos == check->viewpos
 					)
 				{
 					return check;
@@ -210,7 +210,7 @@ namespace swrenderer
 		check->extralight = renderportal->stacked_extralight;
 		check->visibility = renderportal->stacked_visibility;
 		check->viewpos = renderportal->stacked_viewpos;
-		check->viewangle = renderportal->stacked_angle;
+		check->viewangle = renderportal->stacked_angle.Yaw;
 		check->Alpha = alpha;
 		check->Additive = additive;
 		check->CurrentPortalUniq = renderportal->CurrentPortalUniq;
@@ -350,8 +350,8 @@ namespace swrenderer
 		VisiblePlane *pl;
 		int i;
 
-		DVector3 oViewPos = ViewPos;
-		DAngle oViewAngle = ViewAngle;
+		DVector3 oViewPos = r_viewpoint.Pos;
+		DAngle oViewAngle = r_viewpoint.Angles.Yaw;
 		
 		RenderPortal *renderportal = Thread->Portal.get();
 
@@ -364,15 +364,15 @@ namespace swrenderer
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)
 				{
-					ViewPos = pl->viewpos;
-					ViewAngle = pl->viewangle;
+					r_viewpoint.Pos = pl->viewpos;
+					r_viewpoint.Angles.Yaw = pl->viewangle;
 					renderportal->MirrorFlags = pl->MirrorFlags;
 
 					pl->Render(Thread, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 				}
 			}
 		}
-		ViewPos = oViewPos;
-		ViewAngle = oViewAngle;
+		r_viewpoint.Pos = oViewPos;
+		r_viewpoint.Angles.Yaw = oViewAngle;
 	}
 }

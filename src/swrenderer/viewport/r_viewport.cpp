@@ -70,8 +70,8 @@ namespace swrenderer
 
 		fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to
 
-		CenterX = centerx;
-		CenterY = centery;
+		CenterX = r_viewwindow.centerx;
+		CenterY = r_viewwindow.centery;
 
 		virtwidth = virtwidth2 = fullWidth;
 		virtheight = virtheight2 = fullHeight;
@@ -85,13 +85,13 @@ namespace swrenderer
 			virtwidth2 = virtwidth2 * AspectMultiplier(trueratio) / 48;
 		}
 
-		if (AspectTallerThanWide(WidescreenRatio))
+		if (AspectTallerThanWide(r_viewwindow.WidescreenRatio))
 		{
-			virtheight = virtheight * AspectMultiplier(WidescreenRatio) / 48;
+			virtheight = virtheight * AspectMultiplier(r_viewwindow.WidescreenRatio) / 48;
 		}
 		else
 		{
-			virtwidth = virtwidth * AspectMultiplier(WidescreenRatio) / 48;
+			virtwidth = virtwidth * AspectMultiplier(r_viewwindow.WidescreenRatio) / 48;
 		}
 
 		BaseYaspectMul = 320.0 * virtheight2 / (r_Yaspect * virtwidth2);
@@ -117,9 +117,9 @@ namespace swrenderer
 	{
 		double dy;
 
-		if (camera != NULL)
+		if (r_viewpoint.camera != NULL)
 		{
-			dy = FocalLengthY * (-ViewPitch).Tan();
+			dy = FocalLengthY * (-r_viewpoint.Angles.Pitch).Tan();
 		}
 		else
 		{
@@ -127,7 +127,7 @@ namespace swrenderer
 		}
 
 		CenterY = (viewheight / 2.0) + dy;
-		centery = xs_ToInt(CenterY);
+		r_viewwindow.centery = xs_ToInt(CenterY);
 		globaluclip = -CenterY / InvZtoScale;
 		globaldclip = (viewheight - CenterY) / InvZtoScale;
 	}
@@ -153,23 +153,23 @@ namespace swrenderer
 		int i;
 
 		// Calc focallength so FieldOfView angles cover viewwidth.
-		FocalLengthX = CenterX / FocalTangent;
+		FocalLengthX = CenterX / r_viewwindow.FocalTangent;
 		FocalLengthY = FocalLengthX * YaspectMul;
 
 		// This is 1/FocalTangent before the widescreen extension of FOV.
-		viewingrangerecip = FLOAT2FIXED(1. / tan(FieldOfView.Radians() / 2));
+		viewingrangerecip = FLOAT2FIXED(1. / tan(r_viewpoint.FieldOfView.Radians() / 2));
 
 		// Now generate xtoviewangle for sky texture mapping.
 		// [RH] Do not generate viewangletox, because texture mapping is no
 		// longer done with trig, so it's not needed.
-		const double slopestep = FocalTangent / centerx;
+		const double slopestep = r_viewwindow.FocalTangent / r_viewwindow.centerx;
 		double slope;
 
-		for (i = centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
+		for (i = r_viewwindow.centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
 		{
 			xtoviewangle[i] = angle_t((2 * M_PI - atan(slope)) * (ANGLE_180 / M_PI));
 		}
-		for (i = 0; i < centerx; i++)
+		for (i = 0; i < r_viewwindow.centerx; i++)
 		{
 			xtoviewangle[i] = 0 - xtoviewangle[viewwidth - i - 1];
 		}
@@ -177,23 +177,23 @@ namespace swrenderer
 
 	DVector2 RenderViewport::PointWorldToView(const DVector2 &worldPos) const
 	{
-		double translatedX = worldPos.X - ViewPos.X;
-		double translatedY = worldPos.Y - ViewPos.Y;
+		double translatedX = worldPos.X - r_viewpoint.Pos.X;
+		double translatedY = worldPos.Y - r_viewpoint.Pos.Y;
 		return {
-			translatedX * ViewSin - translatedY * ViewCos,
-			translatedX * ViewTanCos + translatedY * ViewTanSin
+			translatedX * r_viewpoint.Sin - translatedY * r_viewpoint.Cos,
+			translatedX * r_viewpoint.TanCos + translatedY * r_viewpoint.TanSin
 		};
 	}
 
 	DVector3 RenderViewport::PointWorldToView(const DVector3 &worldPos) const
 	{
-		double translatedX = worldPos.X - ViewPos.X;
-		double translatedY = worldPos.Y - ViewPos.Y;
-		double translatedZ = worldPos.Z - ViewPos.Z;
+		double translatedX = worldPos.X - r_viewpoint.Pos.X;
+		double translatedY = worldPos.Y - r_viewpoint.Pos.Y;
+		double translatedZ = worldPos.Z - r_viewpoint.Pos.Z;
 		return {
-			translatedX * ViewSin - translatedY * ViewCos,
+			translatedX * r_viewpoint.Sin - translatedY * r_viewpoint.Cos,
 			translatedZ,
-			translatedX * ViewTanCos + translatedY * ViewTanSin
+			translatedX * r_viewpoint.TanCos + translatedY * r_viewpoint.TanSin
 		};
 	}
 

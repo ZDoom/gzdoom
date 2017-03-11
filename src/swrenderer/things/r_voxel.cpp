@@ -45,11 +45,11 @@ namespace swrenderer
 	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
-		double tr_x = pos.X - ViewPos.X;
-		double tr_y = pos.Y - ViewPos.Y;
+		double tr_x = pos.X - r_viewpoint.Pos.X;
+		double tr_y = pos.Y - r_viewpoint.Pos.Y;
 
-		double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
-		double tx = tr_x * ViewSin - tr_y * ViewCos;
+		double tz = tr_x * r_viewpoint.TanCos + tr_y * r_viewpoint.TanSin;
+		double tx = tr_x * r_viewpoint.Sin - tr_y * r_viewpoint.Cos;
 
 		// [RH] Flip for mirrors
 		RenderPortal *renderportal = thread->Portal.get();
@@ -121,8 +121,8 @@ namespace swrenderer
 			vis->Angle -= ang;
 		}
 
-		vis->pa.vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
-		vis->pa.vang = FAngle((float)ViewAngle.Degrees);
+		vis->pa.vpos = { (float)r_viewpoint.Pos.X, (float)r_viewpoint.Pos.Y, (float)r_viewpoint.Pos.Z };
+		vis->pa.vang = FAngle((float)r_viewpoint.Angles.Yaw.Degrees);
 
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;
@@ -132,8 +132,8 @@ namespace swrenderer
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
 		vis->gzt = (float)gzt;		// killough 3/27/98
-		vis->deltax = float(pos.X - ViewPos.X);
-		vis->deltay = float(pos.Y - ViewPos.Y);
+		vis->deltax = float(pos.X - r_viewpoint.Pos.X);
+		vis->deltay = float(pos.Y - r_viewpoint.Pos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
@@ -267,9 +267,9 @@ namespace swrenderer
 
 		auto viewport = RenderViewport::Instance();
 
-		const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
-		const int xdimenscale = FLOAT2FIXED(centerxwide * viewport->YaspectMul / 160);
-		const double centerxwide_f = centerxwide;
+		const int nytooclose = r_viewwindow.centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
+		const int xdimenscale = FLOAT2FIXED(r_viewwindow.centerxwide * viewport->YaspectMul / 160);
+		const double centerxwide_f = r_viewwindow.centerxwide;
 		const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
 
 		// Convert to Build's coordinate system.
@@ -315,8 +315,8 @@ namespace swrenderer
 		daxscale <<= (k+8); dayscale <<= (k+8);
 		dazscale = FixedDiv(dayscale, FLOAT2FIXED(viewport->BaseYaspectMul));
 		daxscale = fixed_t(daxscale / viewport->YaspectMul);
-		daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
-		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewport->viewingrangerecip), centerxwide << 9);
+		daxscale = Scale(daxscale, xdimenscale, r_viewwindow.centerxwide << 9);
+		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewport->viewingrangerecip), r_viewwindow.centerxwide << 9);
 
 		daxscalerecip = (1<<30) / daxscale;
 		dayscalerecip = (1<<30) / dayscale;
@@ -432,9 +432,9 @@ namespace swrenderer
 					voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
 					if (voxptr >= voxend) continue;
 
-					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + centerx;
+					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + r_viewwindow.centerx;
 					if (lx < 0) lx = 0;
-					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
+					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + r_viewwindow.centerx;
 					if (rx > viewwidth) rx = viewwidth;
 					if (rx <= lx) continue;
 
@@ -475,20 +475,20 @@ namespace swrenderer
 							if (k < 0)
 							{
 								if ((voxptr->backfacecull & oand32) == 0) continue;
-								z2 = MulScale32(l2, k) + centery;					/* Below slab */
+								z2 = MulScale32(l2, k) + r_viewwindow.centery;					/* Below slab */
 							}
 							else
 							{
 								if ((voxptr->backfacecull & oand) == 0) continue;	/* Middle of slab */
-								z2 = MulScale32(l1, k) + centery;
+								z2 = MulScale32(l1, k) + r_viewwindow.centery;
 							}
-							z1 = MulScale32(l1, j) + centery;
+							z1 = MulScale32(l1, j) + r_viewwindow.centery;
 						}
 						else
 						{
 							if ((voxptr->backfacecull & oand16) == 0) continue;
-							z1 = MulScale32(l2, j) + centery;						/* Above slab */
-							z2 = MulScale32(l1, j + (zleng << 15)) + centery;
+							z1 = MulScale32(l2, j) + r_viewwindow.centery;						/* Above slab */
+							z2 = MulScale32(l1, j + (zleng << 15)) + r_viewwindow.centery;
 						}
 
 						if (z2 <= z1) continue;

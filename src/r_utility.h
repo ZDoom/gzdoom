@@ -14,11 +14,13 @@ class FSerializer;
 
 struct FRenderViewpoint
 {
+	FRenderViewpoint();
+
 	player_t		*player;		// For which player is this viewpoint being renderered? (can be null for camera textures)
 	DVector3		Pos;			// Camera position
 	DVector3		ActorPos;		// Camera actor's position
 	DRotator		Angles;			// Camera angles
-	DVector3		Path;			// View path for portal calculations
+	DVector3		Path[2];		// View path for portal calculations
 	double			Cos;			// cos(Angles.Yaw)
 	double			Sin;			// sin(Angles.Yaw)
 	double			TanCos;			// FocalTangent * cos(Angles.Yaw)
@@ -35,38 +37,19 @@ struct FRenderViewpoint
 	bool			showviewer;		// show the camera actor?
 };
 
-extern DVector3			ViewPos;
-extern DVector3			ViewActorPos;
-extern DAngle			ViewAngle;
-extern DAngle			ViewPitch;
-extern DAngle			ViewRoll;
-extern DVector3			ViewPath[2];
-extern double			ViewCos;
-extern double			ViewSin;
-extern double			ViewTanCos;
-extern double			ViewTanSin;
-extern AActor*			camera;		// [RH] camera instead of viewplayer
-extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
-extern DAngle			FieldOfView;
-extern double			r_TicFracF;
-extern uint32_t			r_FrameTime;
-extern int				extralight;
-extern bool r_showviewer;
+extern FRenderViewpoint r_viewpoint;
 
 //-----------------------------------
 struct FViewWindow
 {
-	double FocalTangent;
-	int centerx;
-	int centerxwide;
-	int centery;
-	float WidescreenRatio;
+	double FocalTangent = 0.0;
+	int centerx = 0;
+	int centerxwide = 0;
+	int centery = 0;
+	float WidescreenRatio = 0.0f;
 };
 
-extern int			centerx, centerxwide;
-extern int			centery;
-extern double		FocalTangent;
-extern float		WidescreenRatio;
+extern FViewWindow r_viewwindow;
 
 //-----------------------------------
 
@@ -127,17 +110,17 @@ bool R_GetViewInterpolationStatus();
 void R_ClearInterpolationPath();
 void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
-void R_SetFOV (DAngle fov);
-void R_SetupFrame (AActor * camera);
-void R_SetViewAngle ();
+void R_SetFOV (FRenderViewpoint &viewpoint, DAngle fov);
+void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor * camera);
+void R_SetViewAngle (FRenderViewpoint &viewpoint, const FViewWindow &viewwindow);
 
 // Called by startup code.
 void R_Init (void);
-void R_ExecuteSetViewSize (void);
+void R_ExecuteSetViewSize (FRenderViewpoint &viewpoint, FViewWindow &viewwindow);
 
 // Called by M_Responder.
 void R_SetViewSize (int blocks);
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
+void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
 
 
 extern void R_FreePastViewers ();

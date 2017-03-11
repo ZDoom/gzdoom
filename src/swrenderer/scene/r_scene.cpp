@@ -132,7 +132,7 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
 		
-		R_SetupFrame(actor);
+		R_SetupFrame(r_viewpoint, r_viewwindow, actor);
 		CameraLight::Instance()->SetCamera(actor);
 		RenderViewport::Instance()->SetupFreelook();
 
@@ -146,18 +146,18 @@ namespace swrenderer
 		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 		PO_LinkToSubsectors();
 
-		ActorRenderFlags savedflags = camera->renderflags;
+		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
-		if (!r_showviewer)
+		if (!r_viewpoint.showviewer)
 		{
-			camera->renderflags |= RF_INVISIBLE;
+			r_viewpoint.camera->renderflags |= RF_INVISIBLE;
 		}
 
 		RenderThreadSlices();
 		MainThread()->PlayerSprites->Render();
 		RenderDrawQueues();
 
-		camera->renderflags = savedflags;
+		r_viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
 
 		// If we don't want shadered colormaps, NULL it now so that the
@@ -331,17 +331,17 @@ namespace swrenderer
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
 
-		R_SetWindow(12, width, height, height, true);
+		R_SetWindow(r_viewpoint, r_viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
-		viewport->SetViewport(width, height, WidescreenRatio);
+		viewport->SetViewport(width, height, r_viewwindow.WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
 		
 		viewport->RenderTarget = screen;
 
-		R_ExecuteSetViewSize();
+		R_ExecuteSetViewSize(r_viewpoint, r_viewwindow);
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);

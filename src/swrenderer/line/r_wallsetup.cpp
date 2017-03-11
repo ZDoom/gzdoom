@@ -80,7 +80,7 @@ namespace swrenderer
 	{
 		if (!plane.isSlope())
 		{
-			return Project(plane.Zat0() - ViewPos.Z, wallc);
+			return Project(plane.Zat0() - r_viewpoint.Pos.Z, wallc);
 		}
 		else
 		{
@@ -96,7 +96,7 @@ namespace swrenderer
 					x -= frac * (x - curline->v1->fX());
 					y -= frac * (y - curline->v1->fY());
 				}
-				z1 = plane.ZatPoint(x, y) - ViewPos.Z;
+				z1 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
 
 				if (wallc->sx2 > wallc->sx1 + 1)
 				{
@@ -108,7 +108,7 @@ namespace swrenderer
 						x += frac * (curline->v2->fX() - x);
 						y += frac * (curline->v2->fY() - y);
 					}
-					z2 = plane.ZatPoint(x, y) - ViewPos.Z;
+					z2 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
 				}
 				else
 				{
@@ -125,7 +125,7 @@ namespace swrenderer
 					x += frac * (curline->v2->fX() - x);
 					y += frac * (curline->v2->fY() - y);
 				}
-				z1 = plane.ZatPoint(x, y) - ViewPos.Z;
+				z1 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
 
 				if (wallc->sx2 > wallc->sx1 + 1)
 				{
@@ -137,7 +137,7 @@ namespace swrenderer
 						x -= frac * (x - curline->v1->fX());
 						y -= frac * (y - curline->v1->fY());
 					}
-					z2 = plane.ZatPoint(x, y) - ViewPos.Z;
+					z2 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
 				}
 				else
 				{

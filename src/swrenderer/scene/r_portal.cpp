@@ -101,12 +101,12 @@ namespace swrenderer
 		Thread->Clip3D->EnterSkybox();
 		CurrentPortalInSkybox = true;
 
-		int savedextralight = extralight;
-		DVector3 savedpos = ViewPos;
-		DAngle savedangle = ViewAngle;
+		int savedextralight = r_viewpoint.extralight;
+		DVector3 savedpos = r_viewpoint.Pos;
+		DRotator savedangles = r_viewpoint.Angles;
 		double savedvisibility = LightVisibility::Instance()->GetVisibility();
-		AActor *savedcamera = camera;
-		sector_t *savedsector = viewsector;
+		AActor *savedcamera = r_viewpoint.camera;
+		sector_t *savedsector = r_viewpoint.sector;
 
 		for (VisiblePlane *pl = planes->PopFirstPortalPlane(); pl != nullptr; pl = planes->PopFirstPortalPlane())
 		{
@@ -125,11 +125,11 @@ namespace swrenderer
 			{
 				// Don't let gun flashes brighten the sky box
 				AActor *sky = port->mSkybox;
-				extralight = 0;
+				r_viewpoint.extralight = 0;
 				LightVisibility::Instance()->SetVisibility(sky->args[0] * 0.25f);
 
-				ViewPos = sky->InterpolatedPosition(r_TicFracF);
-				ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
+				r_viewpoint.Pos = sky->InterpolatedPosition(r_viewpoint.TicFrac);
+				r_viewpoint.Angles.Yaw = savedangles.Yaw + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_viewpoint.TicFrac);
 
 				CopyStackedViewParameters();
 				break;
@@ -138,12 +138,12 @@ namespace swrenderer
 			case PORTS_STACKEDSECTORTHING:
 			case PORTS_PORTAL:
 			case PORTS_LINKEDPORTAL:
-				extralight = pl->extralight;
+				r_viewpoint.extralight = pl->extralight;
 				LightVisibility::Instance()->SetVisibility(pl->visibility);
-				ViewPos.X = pl->viewpos.X + port->mDisplacement.X;
-				ViewPos.Y = pl->viewpos.Y + port->mDisplacement.Y;
-				ViewPos.Z = pl->viewpos.Z;
-				ViewAngle = pl->viewangle;
+				r_viewpoint.Pos.X = pl->viewpos.X + port->mDisplacement.X;
+				r_viewpoint.Pos.Y = pl->viewpos.Y + port->mDisplacement.Y;
+				r_viewpoint.Pos.Z = pl->viewpos.Z;
+				r_viewpoint.Angles.Yaw = pl->viewangle;
 				break;
 
 			case PORTS_HORIZON:
@@ -158,10 +158,10 @@ namespace swrenderer
 
 			port->mFlags |= PORTSF_INSKYBOX;
 			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
-			camera = nullptr;
-			viewsector = port->mDestination;
+			r_viewpoint.camera = nullptr;
+			r_viewpoint.sector = port->mDestination;
 			assert(viewsector != nullptr);
-			R_SetViewAngle();
+			R_SetViewAngle(r_viewpoint, r_viewwindow);
 			Thread->OpaquePass->ClearSeenSprites();
 			Thread->Clip3D->ClearFakeFloors();
 
@@ -188,7 +188,7 @@ namespace swrenderer
 
 			drawseglist->PushPortal();
 			Thread->SpriteList->PushPortal();
-			viewposStack.Push(ViewPos);
+			viewposStack.Push(r_viewpoint.Pos);
 			visplaneStack.Push(pl);
 
 			// Create a drawseg to clip sprites to the sky plane
@@ -227,7 +227,7 @@ namespace swrenderer
 		while (viewposStack.Size() > 0)
 		{
 			// Masked textures and planes need the view coordinates restored for proper positioning.
-			viewposStack.Pop(ViewPos);
+			viewposStack.Pop(r_viewpoint.Pos);
 			
 			Thread->TranslucentPass->Render();
 
@@ -242,13 +242,13 @@ namespace swrenderer
 			drawseglist->PopPortal();
 		}
 
-		camera = savedcamera;
-		viewsector = savedsector;
-		ViewPos = savedpos;
+		r_viewpoint.camera = savedcamera;
+		r_viewpoint.sector = savedsector;
+		r_viewpoint.Pos = savedpos;
 		LightVisibility::Instance()->SetVisibility(savedvisibility);
-		extralight = savedextralight;
-		ViewAngle = savedangle;
-		R_SetViewAngle();
+		r_viewpoint.extralight = savedextralight;
+		r_viewpoint.Angles = savedangles;
+		R_SetViewAngle(r_viewpoint, r_viewwindow);
 
 		CurrentPortalInSkybox = false;
 		Thread->Clip3D->LeaveSkybox();
@@ -318,12 +318,12 @@ namespace swrenderer
 			return;
 		}
 
-		DAngle startang = ViewAngle;
-		DVector3 startpos = ViewPos;
-		DVector3 savedpath[2] = { ViewPath[0], ViewPath[1] };
-		ActorRenderFlags savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+		DAngle startang = r_viewpoint.Angles.Yaw;
+		DVector3 startpos = r_viewpoint.Pos;
+		DVector3 savedpath[2] = { r_viewpoint.Path[0], r_viewpoint.Path[1] };
+		ActorRenderFlags savedvisibility = r_viewpoint.camera ? r_viewpoint.camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
 		
-		camera->renderflags &= ~RF_INVISIBLE;
+		r_viewpoint.camera->renderflags &= ~RF_INVISIBLE;
 
 		CurrentPortalUniq++;
 
@@ -337,11 +337,11 @@ namespace swrenderer
 			// Reflect the current view behind the mirror.
 			if (pds->src->Delta().X == 0)
 			{ // vertical mirror
-				ViewPos.X = v1->fX() - startpos.X + v1->fX();
+				r_viewpoint.Pos.X = v1->fX() - startpos.X + v1->fX();
 			}
 			else if (pds->src->Delta().Y == 0)
 			{ // horizontal mirror
-				ViewPos.Y = v1->fY() - startpos.Y + v1->fY();
+				r_viewpoint.Pos.Y = v1->fY() - startpos.Y + v1->fY();
 			}
 			else
 			{ // any mirror
@@ -357,40 +357,40 @@ namespace swrenderer
 				// the above two cases catch len == 0
 				double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
 
-				ViewPos.X = (x1 + r * dx) * 2 - x;
-				ViewPos.Y = (y1 + r * dy) * 2 - y;
+				r_viewpoint.Pos.X = (x1 + r * dx) * 2 - x;
+				r_viewpoint.Pos.Y = (y1 + r * dy) * 2 - y;
 			}
-			ViewAngle = pds->src->Delta().Angle() * 2 - startang;
+			r_viewpoint.Angles.Yaw = pds->src->Delta().Angle() * 2 - startang;
 		}
 		else
 		{
-			P_TranslatePortalXY(pds->src, ViewPos.X, ViewPos.Y);
-			P_TranslatePortalZ(pds->src, ViewPos.Z);
-			P_TranslatePortalAngle(pds->src, ViewAngle);
-			P_TranslatePortalXY(pds->src, ViewPath[0].X, ViewPath[0].Y);
-			P_TranslatePortalXY(pds->src, ViewPath[1].X, ViewPath[1].Y);
+			P_TranslatePortalXY(pds->src, r_viewpoint.Pos.X, r_viewpoint.Pos.Y);
+			P_TranslatePortalZ(pds->src, r_viewpoint.Pos.Z);
+			P_TranslatePortalAngle(pds->src, r_viewpoint.Angles.Yaw);
+			P_TranslatePortalXY(pds->src, r_viewpoint.Path[0].X, r_viewpoint.Path[0].Y);
+			P_TranslatePortalXY(pds->src, r_viewpoint.Path[1].X, r_viewpoint.Path[1].Y);
 
-			if (!r_showviewer && camera && P_PointOnLineSidePrecise(ViewPath[0], pds->dst) != P_PointOnLineSidePrecise(ViewPath[1], pds->dst))
+			if (!r_viewpoint.showviewer && r_viewpoint.camera && P_PointOnLineSidePrecise(r_viewpoint.Path[0], pds->dst) != P_PointOnLineSidePrecise(r_viewpoint.Path[1], pds->dst))
 			{
-				double distp = (ViewPath[0] - ViewPath[1]).Length();
+				double distp = (r_viewpoint.Path[0] - r_viewpoint.Path[1]).Length();
 				if (distp > EQUAL_EPSILON)
 				{
-					double dist1 = (ViewPos - ViewPath[0]).Length();
-					double dist2 = (ViewPos - ViewPath[1]).Length();
+					double dist1 = (r_viewpoint.Pos - r_viewpoint.Path[0]).Length();
+					double dist2 = (r_viewpoint.Pos - r_viewpoint.Path[1]).Length();
 
 					if (dist1 + dist2 < distp + 1)
 					{
-						camera->renderflags |= RF_INVISIBLE;
+						r_viewpoint.camera->renderflags |= RF_INVISIBLE;
 					}
 				}
 			}
 		}
 
-		ViewSin = ViewAngle.Sin();
-		ViewCos = ViewAngle.Cos();
+		r_viewpoint.Sin = r_viewpoint.Angles.Yaw.Sin();
+		r_viewpoint.Cos = r_viewpoint.Angles.Yaw.Cos();
 
-		ViewTanSin = FocalTangent * ViewSin;
-		ViewTanCos = FocalTangent * ViewCos;
+		r_viewpoint.TanSin = r_viewwindow.FocalTangent * r_viewpoint.Sin;
+		r_viewpoint.TanCos = r_viewwindow.FocalTangent * r_viewpoint.Cos;
 
 		CopyStackedViewParameters();
 
@@ -425,14 +425,14 @@ namespace swrenderer
 
 		Thread->OpaquePass->RenderScene();
 		Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
-		if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
+		if (!savedvisibility && r_viewpoint.camera) r_viewpoint.camera->renderflags &= ~RF_INVISIBLE;
 
 		PlaneCycles.Clock();
 		Thread->PlaneList->Render();
 		RenderPlanePortals();
 		PlaneCycles.Unclock();
 
-		double vzp = ViewPos.Z;
+		double vzp = r_viewpoint.Pos.Z;
 
 		int prevuniq = CurrentPortalUniq;
 		// depth check is in another place right now
@@ -463,10 +463,10 @@ namespace swrenderer
 
 		CurrentPortal = prevpds;
 		MirrorFlags = prevmf;
-		ViewAngle = startang;
-		ViewPos = startpos;
-		ViewPath[0] = savedpath[0];
-		ViewPath[1] = savedpath[1];
+		r_viewpoint.Angles.Yaw = startang;
+		r_viewpoint.Pos = startpos;
+		r_viewpoint.Path[0] = savedpath[0];
+		r_viewpoint.Path[1] = savedpath[1];
 	}
 
 	void RenderPortal::RenderLinePortalHighlight(PortalDrawseg* pds)
@@ -513,9 +513,9 @@ namespace swrenderer
 	
 	void RenderPortal::CopyStackedViewParameters()
 	{
-		stacked_viewpos = ViewPos;
-		stacked_angle = ViewAngle;
-		stacked_extralight = extralight;
+		stacked_viewpos = r_viewpoint.Pos;
+		stacked_angle = r_viewpoint.Angles;
+		stacked_extralight = r_viewpoint.extralight;
 		stacked_visibility = LightVisibility::Instance()->GetVisibility();
 	}
 	

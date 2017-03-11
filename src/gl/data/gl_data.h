@@ -4,6 +4,7 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include "r_utility.h"
 
 struct GLRenderSettings
 {
@@ -36,12 +37,11 @@ extern GLRenderSettings glset;
 #include "a_sharedglobal.h"
 #include "c_cvars.h"
 
-extern int extralight;
 EXTERN_CVAR(Int, gl_weaponlight);
 
 inline	int getExtraLight()
 {
-	return extralight * gl_weaponlight;
+	return r_viewpoint.extralight * gl_weaponlight;
 }
 
 void gl_RecalcVertexHeights(vertex_t * v);

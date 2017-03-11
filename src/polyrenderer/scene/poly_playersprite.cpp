@@ -43,18 +43,18 @@ void RenderPolyPlayerSprites::Render()
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 
 	if (!r_drawplayersprites ||
-		!camera ||
-		!camera->player ||
+		!r_viewpoint.camera ||
+		!r_viewpoint.camera->player ||
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
-		(r_deathcamera && camera->health <= 0))
+		(r_deathcamera && r_viewpoint.camera->health <= 0))
 		return;
 
 	float bobx, boby;
-	P_BobWeapon(camera->player, &bobx, &boby, r_TicFracF);
+	P_BobWeapon(r_viewpoint.camera->player, &bobx, &boby, r_viewpoint.TicFrac);
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	double wx, wy;
-	DPSprite *weapon = camera->player->FindPSprite(PSP_WEAPON);
+	DPSprite *weapon = r_viewpoint.camera->player->FindPSprite(PSP_WEAPON);
 	if (weapon)
 	{
 		if (weapon->firstTic)
@@ -64,8 +64,8 @@ void RenderPolyPlayerSprites::Render()
 		}
 		else
 		{
-			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_viewpoint.TicFrac;
+			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_viewpoint.TicFrac;
 		}
 	}
 	else
@@ -74,7 +74,7 @@ void RenderPolyPlayerSprites::Render()
 		wy = 0;
 	}
 
-	for (DPSprite *sprite = camera->player->psprites; sprite != nullptr; sprite = sprite->GetNext())
+	for (DPSprite *sprite = r_viewpoint.camera->player->psprites; sprite != nullptr; sprite = sprite->GetNext())
 	{
 		// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 		// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
@@ -82,7 +82,7 @@ void RenderPolyPlayerSprites::Render()
 		// In this case let's simply not draw it to avoid crashing.
 		if ((sprite->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && sprite->GetCaller() != nullptr)
 		{
-			RenderSprite(sprite, camera, bobx, boby, wx, wy, r_TicFracF);
+			RenderSprite(sprite, r_viewpoint.camera, bobx, boby, wx, wy, r_viewpoint.TicFrac);
 		}
 	}
 }
@@ -143,7 +143,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	
 	auto viewport = swrenderer::RenderViewport::Instance();
 
-	double pspritexscale = centerxwide / 160.0;
+	double pspritexscale = r_viewwindow.centerxwide / 160.0;
 	double pspriteyscale = pspritexscale * viewport->YaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
@@ -167,7 +167,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	double texturemid = (BaseYCenter - sy) * tex->Scale.Y + tex->TopOffset;
 
 	// Adjust PSprite for fullscreen views
-	if (camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
+	if (r_viewpoint.camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
 	{
 		AWeapon *weapon = dyn_cast<AWeapon>(sprite->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
@@ -186,7 +186,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	// Move the weapon down for 1280x1024.
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{
-		texturemid -= AspectPspriteOffset(WidescreenRatio);
+		texturemid -= AspectPspriteOffset(r_viewwindow.WidescreenRatio);
 	}
 
 	int clipped_x1 = MAX(x1, 0);
@@ -212,7 +212,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	bool noaccel = false;
 
-	FDynamicColormap *basecolormap = viewsector->ColorMap;
+	FDynamicColormap *basecolormap = r_viewpoint.sector->ColorMap;
 	FDynamicColormap *colormap_to_use = basecolormap;
 
 	int ColormapNum = 0;
@@ -222,7 +222,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	RenderStyle = STYLE_Normal;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : extralight << 4;
+	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
 	int spriteshade = swrenderer::LightVisibility::LightLevelToShade(owner->Sector->lightlevel + actualextralight, foggy);
 	double minz = double((2048 * 4) / double(1 << 20));
 	ColormapNum = GETPALOOKUP(swrenderer::LightVisibility::Instance()->SpriteGlobVis(foggy) / minz, spriteshade);
@@ -287,14 +287,14 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		}
 		*/
 
-		if (camera->Inventory != nullptr)
+		if (r_viewpoint.camera->Inventory != nullptr)
 		{
 			visstyle_t visstyle;
 			visstyle.Alpha = Alpha;
 			visstyle.RenderStyle = STYLE_Count;
 			visstyle.Invert = false;
 
-			camera->Inventory->AlterWeaponSprite(&visstyle);
+			r_viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
 
 			Alpha = visstyle.Alpha;
 

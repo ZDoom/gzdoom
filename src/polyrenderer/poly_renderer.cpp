@@ -40,7 +40,6 @@
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)
 void InitGLRMapinfoData();
-extern bool r_showviewer;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -89,8 +88,8 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 
 	viewwidth = width;
 	viewport->RenderTarget = canvas;
-	R_SetWindow(12, width, height, height, true);
-	viewport->SetViewport(width, height, WidescreenRatio);
+	R_SetWindow(r_viewpoint, r_viewwindow, 12, width, height, height, true);
+	viewport->SetViewport(width, height, r_viewwindow.WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
@@ -103,10 +102,10 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	canvas->Unlock();
 
 	viewport->RenderTarget = screen;
-	R_ExecuteSetViewSize();
+	R_ExecuteSetViewSize(r_viewpoint, r_viewwindow);
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	viewport->SetViewport(width, height, WidescreenRatio);
+	viewport->SetViewport(width, height, r_viewwindow.WidescreenRatio);
 	viewactive = savedviewactive;
 }
 
@@ -118,14 +117,14 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
-	R_SetupFrame(actor);
+	R_SetupFrame(r_viewpoint, r_viewwindow, actor);
 	swrenderer::CameraLight::Instance()->SetCamera(actor);
 	swrenderer::RenderViewport::Instance()->SetupFreelook();
 
-	ActorRenderFlags savedflags = camera->renderflags;
+	ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
 	// Never draw the player unless in chasecam mode
-	if (!r_showviewer)
-		camera->renderflags |= RF_INVISIBLE;
+	if (!r_viewpoint.showviewer)
+		r_viewpoint.camera->renderflags |= RF_INVISIBLE;
 
 	ClearBuffers();
 	SetSceneViewport();
@@ -136,7 +135,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	MainPortal.RenderTranslucent(0);
 	PlayerSprites.Render();
 
-	camera->renderflags = savedflags;
+	r_viewpoint.camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
 	
 	NetUpdate();
@@ -193,23 +192,23 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = ViewPitch.Normalized180().Radians();
+	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * glset.pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	float adjustedPitch = (float)asin(angy / alen);
-	float adjustedViewAngle = (float)(ViewAngle - 90).Radians();
+	float adjustedViewAngle = (float)(r_viewpoint.Angles.Yaw - 90).Radians();
 
-	float ratio = WidescreenRatio;
-	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
-	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
+	float ratio = r_viewwindow.WidescreenRatio;
+	float fovratio = (r_viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(r_viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 
 	TriMatrix worldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
-		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+		TriMatrix::translate((float)-r_viewpoint.Pos.X, (float)-r_viewpoint.Pos.Y, (float)-r_viewpoint.Pos.Z);
 
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 }

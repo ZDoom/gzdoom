@@ -88,7 +88,6 @@ EXTERN_CVAR (Float, underwater_fade_scalar)
 
 extern int viewpitch;
 extern bool NoInterpolateView;
-extern bool r_showviewer;
 
 int			gl_fixedcolormap;
 area_t			in_area;
@@ -111,7 +110,7 @@ angle_t FGLRenderer::FrustumAngle()
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/AspectMultiplier(WidescreenRatio)/90.0;
+	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/AspectMultiplier(r_viewwindow.WidescreenRatio)/90.0;
 	angle_t a1 = DAngle(floatangle).BAMs();
 	if (a1>=ANGLE_180) return 0xffffffff;
 	return a1;
@@ -125,14 +124,14 @@ angle_t FGLRenderer::FrustumAngle()
 void FGLRenderer::SetViewArea()
 {
 	// The render_sector is better suited to represent the current position in GL
-	viewsector = R_PointInSubsector(ViewPos)->render_sector;
+	r_viewpoint.sector = R_PointInSubsector(r_viewpoint.Pos)->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
-	if (viewsector->heightsec && !(viewsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (r_viewpoint.sector->heightsec && !(r_viewpoint.sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
-		in_area = ViewPos.Z <= viewsector->heightsec->floorplane.ZatPoint(ViewPos) ? area_below :
-				(ViewPos.Z > viewsector->heightsec->ceilingplane.ZatPoint(ViewPos) &&
-				!(viewsector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? area_above : area_normal;
+		in_area = r_viewpoint.Pos.Z <= r_viewpoint.sector->heightsec->floorplane.ZatPoint(r_viewpoint.Pos) ? area_below :
+				(r_viewpoint.Pos.Z > r_viewpoint.sector->heightsec->ceilingplane.ZatPoint(r_viewpoint.Pos) &&
+				!(r_viewpoint.sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? area_above : area_normal;
 	}
 	else
 	{
@@ -197,11 +196,11 @@ void FGLRenderer::Set3DViewport(bool mainview)
 void FGLRenderer::SetViewAngle(DAngle viewangle)
 {
 	mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = ViewAngle.ToVector();
+	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
 	mViewVector.X = v.X;
 	mViewVector.Y = v.Y;
 
-	R_SetViewAngle();
+	R_SetViewAngle(r_viewpoint, r_viewwindow);
 }
 	
 
@@ -312,7 +311,7 @@ void FGLRenderer::RenderScene(int recursion)
 	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
 
-	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
+	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -449,7 +448,7 @@ void FGLRenderer::RenderTranslucent()
 	RenderAll.Clock();
 
 	glDepthMask(false);
-	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
+	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
@@ -497,11 +496,11 @@ void FGLRenderer::DrawScene(int drawmode)
 		ssao_portals_available--;
 	}
 
-	if (camera != nullptr)
+	if (r_viewpoint.camera != nullptr)
 	{
-		ActorRenderFlags savedflags = camera->renderflags;
+		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
 		CreateScene();
-		camera->renderflags = savedflags;
+		r_viewpoint.camera->renderflags = savedflags;
 	}
 	else
 	{
@@ -582,11 +581,11 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			{
 				double lightbottom;
 				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(ViewPos);
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
 				else
-					lightbottom = viewsector->floorplane.ZatPoint(ViewPos);
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
 
-				if (lightbottom < ViewPos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
 				{
 					// 3d floor 'fog' is rendered as a blending value
 					blendv = lightlist[i].blend;
@@ -735,7 +734,7 @@ void FGLRenderer::ProcessScene(bool toscreen)
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
-	int mapsection = R_PointInSubsector(ViewPos)->mapsection;
+	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 	memset(&currentmapsection[0], 0, currentmapsection.Size());
 	currentmapsection[mapsection>>3] |= 1 << (mapsection & 7);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
@@ -760,7 +759,7 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 		if (cplayer->extralight == INT_MIN)
 		{
 			gl_fixedcolormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			extralight=0;
+			r_viewpoint.extralight=0;
 		}
 		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
 		{
@@ -801,17 +800,17 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	mSceneClearColor[0] = 0.0f;
 	mSceneClearColor[1] = 0.0f;
 	mSceneClearColor[2] = 0.0f;
-	R_SetupFrame (camera);
+	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
 	SetViewArea();
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = ViewPitch.Normalized180().Radians();
+	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * glset.pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 
 	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	mAngles.Roll.Degrees = ViewRoll.Degrees;
+	mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
 	// Scroll the sky
 	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
@@ -830,7 +829,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	lviewsector = viewsector;
+	lviewsector = r_viewpoint.sector;
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
@@ -847,16 +846,16 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		SetViewAngle(ViewAngle);
+		SetViewAngle(r_viewpoint.Angles.Yaw);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
-		SetViewMatrix(ViewPos.X, ViewPos.Y, ViewPos.Z, false, false);
+		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
 		clipper.Clear();
 		angle_t a1 = FrustumAngle();
-		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
+		clipper.SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
 
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
@@ -916,8 +915,8 @@ void FGLRenderer::RenderView (player_t* player)
 	ResetProfilingData();
 
 	// Get this before everything else
-	if (cl_capfps || r_NoInterpolate) r_TicFracF = 1.;
-	else r_TicFracF = I_GetTimeFrac (&r_FrameTime);
+	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+	else r_viewpoint.TicFrac = I_GetTimeFrac (&r_viewpoint.FrameTime);
 	gl_frameMS = I_MSTime();
 
 	P_FindParticleSubsectors ();
@@ -934,8 +933,8 @@ void FGLRenderer::RenderView (player_t* player)
 
 	// now render the main view
 	float fovratio;
-	float ratio = WidescreenRatio;
-	if (WidescreenRatio >= 1.3f)
+	float ratio = r_viewwindow.WidescreenRatio;
+	if (r_viewwindow.WidescreenRatio >= 1.3f)
 	{
 		fovratio = 1.333333f;
 	}
@@ -950,7 +949,7 @@ void FGLRenderer::RenderView (player_t* player)
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
-	sector_t * viewsector = RenderViewpoint(player->camera, NULL, FieldOfView.Degrees, ratio, fovratio, true, true);
+	sector_t * viewsector = RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 
 	All.Unclock();
 }
@@ -980,7 +979,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, 
-								FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+								r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);

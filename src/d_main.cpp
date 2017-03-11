@@ -808,7 +808,7 @@ void D_Display ()
 			{
 				StatusBar->DrawBottomStuff (HUD_AltHud);
 				if (DrawFSHUD || automapactive) DrawHUD();
-				if (players[consoleplayer].camera && players[consoleplayer].camera->player)
+				if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
 				{
 					StatusBar->DrawCrosshair();
 				}

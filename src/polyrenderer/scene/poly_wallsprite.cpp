@@ -34,8 +34,8 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
 
-	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
-	pos.Z += thing->GetBobOffset(r_TicFracF);
+	DVector3 pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
+	pos.Z += thing->GetBobOffset(r_viewpoint.TicFrac);
 
 	bool flipTextureX = false;
 	FTexture *tex = RenderPolySprite::GetSpriteTexture(thing, flipTextureX);
@@ -73,7 +73,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : extralight << 4;
+	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{

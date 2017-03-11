@@ -187,8 +187,8 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 
 void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
 {
 	// Reject lines not facing viewer
-	DVector2 pt1 = line->v1->fPos() - ViewPos;
-	DVector2 pt2 = line->v2->fPos() - ViewPos;
+	DVector2 pt1 = line->v1->fPos() - r_viewpoint.Pos;
+	DVector2 pt2 = line->v2->fPos() - r_viewpoint.Pos;
 	if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 		return;
 
@@ -335,7 +335,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			DVector2 left, right;
 			if (!RenderPolySprite::GetLine(thing, left, right))
 				continue;
-			double distanceSquared = (thing->Pos() - ViewPos).LengthSquared();
+			double distanceSquared = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 			RenderSprite(thing, distanceSquared, left, right);
 		}
 	}

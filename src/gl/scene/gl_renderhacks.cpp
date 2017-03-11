@@ -493,7 +493,7 @@ void FDrawInfo::HandleMissingTextures()
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingUpperTextures[i].Planez > ViewPos.Z)
+		if (MissingUpperTextures[i].Planez > r_viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -565,7 +565,7 @@ void FDrawInfo::HandleMissingTextures()
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingLowerTextures[i].Planez < ViewPos.Z)
+		if (MissingLowerTextures[i].Planez < r_viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -655,7 +655,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		// already done!
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < r_viewpoint.Pos.Z) continue;	// out of sight
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
@@ -677,7 +677,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
@@ -787,7 +787,7 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 			sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
 			sub->render_sector->GetFloorLight() != anchor->GetFloorLight())
 		{
-			if (sub == viewsubsector && ViewPos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
+			if (sub == viewsubsector && r_viewpoint.Pos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
 			HandledSubsectors.Push(sub);
 		}
 	}
@@ -937,7 +937,7 @@ void FDrawInfo::HandleHackedSubsectors()
 	totalssms.Reset();
 	totalssms.Clock();
 
-	viewsubsector = R_PointInSubsector(ViewPos);
+	viewsubsector = R_PointInSubsector(r_viewpoint.Pos);
 
 	// Each subsector may only be processed once in this loop!
 	validcount++;

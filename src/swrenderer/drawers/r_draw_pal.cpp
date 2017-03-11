@@ -2686,7 +2686,7 @@ namespace swrenderer
 		uint32_t u, v;
 		int i;
 
-		iz = plane_sz[2] + plane_sz[1] * (centery - y) + plane_sz[0] * (x1 - centerx);
+		iz = plane_sz[2] + plane_sz[1] * (r_viewwindow.centery - y) + plane_sz[0] * (x1 - r_viewwindow.centerx);
 
 		// Lighting is simple. It's just linear interpolation from start to end
 		if (plane_shade)
@@ -2703,8 +2703,8 @@ namespace swrenderer
 			}
 		}
 
-		uz = plane_su[2] + plane_su[1] * (centery - y) + plane_su[0] * (x1 - centerx);
-		vz = plane_sv[2] + plane_sv[1] * (centery - y) + plane_sv[0] * (x1 - centerx);
+		uz = plane_su[2] + plane_su[1] * (r_viewwindow.centery - y) + plane_su[0] * (x1 - r_viewwindow.centerx);
+		vz = plane_sv[2] + plane_sv[1] * (r_viewwindow.centery - y) + plane_sv[0] * (x1 - r_viewwindow.centerx);
 
 		fb = _dest;
 

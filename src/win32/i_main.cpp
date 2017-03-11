@@ -1112,10 +1112,10 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 		}
 		else
 		{
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", ViewPos.X);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", ViewPos.Y);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", ViewPos.Z);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", ViewAngle);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", r_viewpoint.Pos.X);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", r_viewpoint.Pos.Y);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", r_viewpoint.Pos.Z);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", r_viewpoint.Angles.Yaw);
 		}
 	}
 	*buffer++ = '\r';

@@ -82,8 +82,8 @@ namespace swrenderer
 		x1 *= scale.X;
 		x2 *= scale.X;
 
-		left.X = pos.X - x1 * angcos - ViewPos.X;
-		left.Y = pos.Y - x1 * angsin - ViewPos.Y;
+		left.X = pos.X - x1 * angcos - r_viewpoint.Pos.X;
+		left.Y = pos.Y - x1 * angsin - r_viewpoint.Pos.Y;
 		right.X = left.X + x2 * angcos;
 		right.Y = right.Y + x2 * angsin;
 
@@ -98,7 +98,7 @@ namespace swrenderer
 
 		// Sprite sorting should probably treat these as walls, not sprites,
 		// but right now, I just want to get them drawing.
-		tz = (pos.X - ViewPos.X) * ViewTanCos + (pos.Y - ViewPos.Y) * ViewTanSin;
+		tz = (pos.X - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (pos.Y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin;
 
 		int scaled_to = pic->GetScaledTopOffset();
 		int scaled_bo = scaled_to - pic->GetScaledHeight();
@@ -117,8 +117,8 @@ namespace swrenderer
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 		vis->gzb = (float)gzb;
 		vis->gzt = (float)gzt;
-		vis->deltax = float(pos.X - ViewPos.X);
-		vis->deltay = float(pos.Y - ViewPos.Y);
+		vis->deltax = float(pos.X - r_viewpoint.Pos.X);
+		vis->deltay = float(pos.Y - r_viewpoint.Pos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
@@ -158,7 +158,7 @@ namespace swrenderer
 		walltexcoords.Project(spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
 
 		iyscale = 1 / spr->yscale;
-		double texturemid = (spr->gzt - ViewPos.Z) * iyscale;
+		double texturemid = (spr->gzt - r_viewpoint.Pos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
 		{
 			int right = (spr->pic->GetWidth() << FRACBITS) - 1;

@@ -299,7 +299,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLWall * ws=&walls[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > ViewPos.Z;
+	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
 	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
@@ -362,7 +362,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > ViewPos.Z;
+	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
 	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
 	{
@@ -770,7 +770,7 @@ void GLDrawList::DoDrawSorted(SortNode * head)
 	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
 		z = flats[drawitems[head->itemindex].index].z;
-		relation = z > ViewPos.Z ? 1 : -1;
+		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
 	}
 
 
@@ -1186,9 +1186,9 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gl_SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
-	float fviewx = ViewPos.X;
-	float fviewy = ViewPos.Y;
-	float fviewz = ViewPos.Z;
+	float fviewx = r_viewpoint.Pos.X;
+	float fviewy = r_viewpoint.Pos.Y;
+	float fviewz = r_viewpoint.Pos.Z;
 
 	gl_SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
@@ -1239,7 +1239,7 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < ViewPos.Z) return;
+	if (backz < r_viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1292,7 +1292,7 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) return;
+	if (fakebsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{

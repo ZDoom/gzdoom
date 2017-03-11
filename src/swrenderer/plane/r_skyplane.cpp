@@ -70,7 +70,7 @@ namespace swrenderer
 		}
 		sky2tex = sky2texture;
 		skymid = skytexturemid;
-		skyangle = ViewAngle.BAMs();
+		skyangle = r_viewpoint.Angles.Yaw.BAMs();
 
 		if (pl->picnum == skyflatnum)
 		{
@@ -188,7 +188,7 @@ namespace swrenderer
 
 		if (r_linearsky)
 		{
-			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * r_viewwindow.FocalTangent * ANGLE_90);
 			ang = (skyangle + xangle) ^ skyflip;
 		}
 		else

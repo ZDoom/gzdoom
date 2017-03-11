@@ -363,7 +363,7 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
-			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 			double check = (double)**cvar;
 			if (dist >= check * check)
 			{
@@ -380,7 +380,7 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
-			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 			double check = (double)**cvar;
 			if (dist >= check * check)
 			{

@@ -95,7 +95,7 @@ namespace swrenderer
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
-				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(ViewPos);
+				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(r_viewpoint.Pos);
 			}
 			sector_t *sec = nullptr;
 			FDynamicColormap *mybasecolormap = nullptr;
@@ -169,7 +169,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
 				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 				{ // seen below floor: clip top
@@ -191,7 +191,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 			{
 				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 				{ // seen above ceiling: clip bottom
@@ -230,12 +230,12 @@ namespace swrenderer
 				if (spr->fakefloor)
 				{
 					double floorz = spr->fakefloor->top.plane->Zat0();
-					if (ViewPos.Z > floorz && floorz == clip3d->sclipBottom)
+					if (r_viewpoint.Pos.Z > floorz && floorz == clip3d->sclipBottom)
 					{
 						hz = spr->fakefloor->bottom.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
 				if (h < botclip)
 				{
 					botclip = MAX<short>(0, h);
@@ -251,12 +251,12 @@ namespace swrenderer
 				if (spr->fakeceiling != nullptr)
 				{
 					double ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
-					if (ViewPos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
+					if (r_viewpoint.Pos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
 					{
 						hz = spr->fakeceiling->top.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(viewport->CenterY - (hz - ViewPos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
 				if (h > topclip)
 				{
 					topclip = short(MIN(h, viewheight));

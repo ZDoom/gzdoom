@@ -519,7 +519,7 @@ void GLSkyPortal::DrawContents()
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	GLRenderer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)

@@ -73,8 +73,8 @@ namespace swrenderer
 		basecolormap = colormap;
 		mLineSegment = line;
 
-		DVector2 pt1 = line->v1->fPos() - ViewPos;
-		DVector2 pt2 = line->v2->fPos() - ViewPos;
+		DVector2 pt1 = line->v1->fPos() - r_viewpoint.Pos;
+		DVector2 pt2 = line->v2->fPos() - r_viewpoint.Pos;
 
 		// Reject lines not facing viewer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
@@ -98,7 +98,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, ViewPos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, r_viewpoint.Pos))
 			return;
 
 		vertex_t *v1 = line->linedef->v1;
@@ -114,7 +114,7 @@ namespace swrenderer
 			{
 				swapvalues(v1, v2);
 			}
-			WallT.InitFromLine(Thread, v1->fPos() - ViewPos, v2->fPos() - ViewPos);
+			WallT.InitFromLine(Thread, v1->fPos() - r_viewpoint.Pos, v2->fPos() - r_viewpoint.Pos);
 		}
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
@@ -363,13 +363,13 @@ namespace swrenderer
 			draw_segment->silhouette = 0;
 
 			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
-				mBackSector->floorplane.PointOnSide(ViewPos) < 0)
+				mBackSector->floorplane.PointOnSide(r_viewpoint.Pos) < 0)
 			{
 				draw_segment->silhouette = SIL_BOTTOM;
 			}
 
 			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 ||
-				mBackSector->ceilingplane.PointOnSide(ViewPos) < 0)
+				mBackSector->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0)
 			{
 				draw_segment->silhouette |= SIL_TOP;
 			}
@@ -564,7 +564,7 @@ namespace swrenderer
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr)
 		{
-			int planeside = mFrontSector->floorplane.PointOnSide(ViewPos);
+			int planeside = mFrontSector->floorplane.PointOnSide(r_viewpoint.Pos);
 			if (mFrontSector->floorplane.fC() < 0)	// 3D floors have the floor backwards
 				planeside = -planeside;
 			if (planeside <= 0)		// above view plane
@@ -621,7 +621,7 @@ namespace swrenderer
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			int planeside = mFrontSector->ceilingplane.PointOnSide(ViewPos);
+			int planeside = mFrontSector->ceilingplane.PointOnSide(r_viewpoint.Pos);
 			if (mFrontSector->ceilingplane.fC() > 0) // 3D floors have the ceiling backwards
 				planeside = -planeside;
 			if (planeside <= 0) // below view plane
@@ -718,8 +718,8 @@ namespace swrenderer
 		if (mLineSegment->linedef->special == Line_Horizon)
 		{
 			// Be aware: Line_Horizon does not work properly with sloped planes
-			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, r_viewwindow.centery);
+			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, r_viewwindow.centery);
 		}
 		else
 		{
@@ -819,7 +819,7 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mTopPart.Texture != NULL)
 				{
 					rowoffset += mTopPart.Texture->GetHeight();
@@ -827,7 +827,7 @@ namespace swrenderer
 			}
 			else
 			{ // bottom of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 			}
 		}
 		else
@@ -835,11 +835,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // bottom of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 			}
 			else
 			{ // top of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
 			}
 		}
 		if (mTopPart.Texture->bWorldPanning)
@@ -875,11 +875,11 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 			}
 			else
 			{ // top of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mMiddlePart.Texture != NULL)
 				{
 					rowoffset += mMiddlePart.Texture->GetHeight();
@@ -891,11 +891,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // top of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // bottom of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 			}
 		}
 		if (mMiddlePart.Texture->bWorldPanning)
@@ -940,11 +940,11 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - ViewPos.Z) * yrepeat;
+				mBottomPart.TextureMid = (frontlowertop - r_viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // top of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mBottomPart.Texture != NULL)
 				{
 					rowoffset += mBottomPart.Texture->GetHeight();
@@ -956,11 +956,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // top of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - ViewPos.Z) * yrepeat;
+				mBottomPart.TextureMid = (frontlowertop - r_viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // bottom of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
 			}
 		}
 		if (mBottomPart.Texture->bWorldPanning)
@@ -1271,11 +1271,11 @@ namespace swrenderer
 	// Transform and clip coordinates. Returns true if it was clipped away
 	bool FWallCoords::Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close)
 	{
-		tleft.X = float(pt1.X * ViewSin - pt1.Y * ViewCos);
-		tright.X = float(pt2.X * ViewSin - pt2.Y * ViewCos);
+		tleft.X = float(pt1.X * r_viewpoint.Sin - pt1.Y * r_viewpoint.Cos);
+		tright.X = float(pt2.X * r_viewpoint.Sin - pt2.Y * r_viewpoint.Cos);
 
-		tleft.Y = float(pt1.X * ViewTanCos + pt1.Y * ViewTanSin);
-		tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
+		tleft.Y = float(pt1.X * r_viewpoint.TanCos + pt1.Y * r_viewpoint.TanSin);
+		tright.Y = float(pt2.X * r_viewpoint.TanCos + pt2.Y * r_viewpoint.TanSin);
 		
 		RenderPortal *renderportal = thread->Portal.get();
 		auto viewport = RenderViewport::Instance();
@@ -1342,9 +1342,9 @@ namespace swrenderer
 		{
 			swapvalues(left, right);
 		}
-		UoverZorg = left->X * centerx;
+		UoverZorg = left->X * r_viewwindow.centerx;
 		UoverZstep = -left->Y;
-		InvZorg = (left->X - right->X) * centerx;
+		InvZorg = (left->X - right->X) * r_viewwindow.centerx;
 		InvZstep = right->Y - left->Y;
 	}
 
@@ -1352,10 +1352,10 @@ namespace swrenderer
 	{
 		// Coordinates should have already had viewx,viewy subtracted
 
-		double fullx1 = left.X * ViewSin - left.Y * ViewCos;
-		double fullx2 = right.X * ViewSin - right.Y * ViewCos;
-		double fully1 = left.X * ViewTanCos + left.Y * ViewTanSin;
-		double fully2 = right.X * ViewTanCos + right.Y * ViewTanSin;
+		double fullx1 = left.X * r_viewpoint.Sin - left.Y * r_viewpoint.Cos;
+		double fullx2 = right.X * r_viewpoint.Sin - right.Y * r_viewpoint.Cos;
+		double fully1 = left.X * r_viewpoint.TanCos + left.Y * r_viewpoint.TanSin;
+		double fully2 = right.X * r_viewpoint.TanCos + right.Y * r_viewpoint.TanSin;
 		
 		RenderPortal *renderportal = thread->Portal.get();
 
@@ -1365,9 +1365,9 @@ namespace swrenderer
 			fullx2 = -fullx2;
 		}
 
-		UoverZorg = float(fullx1 * centerx);
+		UoverZorg = float(fullx1 * r_viewwindow.centerx);
 		UoverZstep = float(-fully1);
-		InvZorg = float((fullx1 - fullx2) * centerx);
+		InvZorg = float((fullx1 - fullx2) * r_viewwindow.centerx);
 		InvZstep = float(fully2 - fully1);
 	}
 }

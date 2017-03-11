@@ -68,20 +68,20 @@ namespace swrenderer
 		if (planeang != 0)
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
-			pviewx = pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine;
-			pviewy = pl->xform.yOffs + pl->xform.baseyOffs - ViewPos.X * sine - ViewPos.Y * cosine;
+			pviewx = pl->xform.xOffs + r_viewpoint.Pos.X * cosine - r_viewpoint.Pos.Y * sine;
+			pviewy = pl->xform.yOffs + pl->xform.baseyOffs - r_viewpoint.Pos.X * sine - r_viewpoint.Pos.Y * cosine;
 		}
 		else
 		{
-			pviewx = pl->xform.xOffs + ViewPos.X;
-			pviewy = pl->xform.yOffs - ViewPos.Y;
+			pviewx = pl->xform.xOffs + r_viewpoint.Pos.X;
+			pviewy = pl->xform.yOffs - r_viewpoint.Pos.Y;
 		}
 
 		pviewx = _xscale * pviewx;
 		pviewy = _yscale * pviewy;
 
 		// left to right mapping
-		planeang += (ViewAngle - 90).Radians();
+		planeang += (r_viewpoint.Angles.Yaw - 90).Radians();
 
 		auto viewport = RenderViewport::Instance();
 
@@ -113,7 +113,7 @@ namespace swrenderer
 
 		minx = pl->left;
 
-		planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
+		planeheight = fabs(pl->height.Zat0() - r_viewpoint.Pos.Z);
 
 		basecolormap = colormap;
 
@@ -231,12 +231,12 @@ namespace swrenderer
 			cur_node = light_list;
 			while (cur_node)
 			{
-				double lightX = cur_node->lightsource->X() - ViewPos.X;
-				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+				double lightX = cur_node->lightsource->X() - r_viewpoint.Pos.X;
+				double lightY = cur_node->lightsource->Y() - r_viewpoint.Pos.Y;
+				double lightZ = cur_node->lightsource->Z() - r_viewpoint.Pos.Z;
 
-				float lx = (float)(lightX * ViewSin - lightY * ViewCos);
-				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - drawerargs.dc_viewpos.Y;
+				float lx = (float)(lightX * r_viewpoint.Sin - lightY * r_viewpoint.Cos);
+				float ly = (float)(lightX * r_viewpoint.TanCos + lightY * r_viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
 				float lz = (float)lightZ - drawerargs.dc_viewpos.Z;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.

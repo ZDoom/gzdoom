@@ -34,7 +34,7 @@ public:
 
 	void SetView()
 	{
-		viewx = FLOAT2FIXED(ViewPos.X);
-		viewy = FLOAT2FIXED(ViewPos.Y);
+		viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
+		viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
 	}
 };

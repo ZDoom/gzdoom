@@ -82,37 +82,37 @@ namespace swrenderer
 		F3DFloor *rover;
 
 		if (!r_drawplayersprites ||
-			!camera ||
-			!camera->player ||
+			!r_viewpoint.camera ||
+			!r_viewpoint.camera->player ||
 			(players[consoleplayer].cheats & CF_CHASECAM) ||
-			(r_deathcamera && camera->health <= 0))
+			(r_deathcamera && r_viewpoint.camera->health <= 0))
 			return;
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size())
+		if (cameraLight->FixedLightLevel() < 0 && r_viewpoint.sector->e && r_viewpoint.sector->e->XFloor.lightlist.Size())
 		{
-			for (i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			for (i = r_viewpoint.sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
-				if (ViewPos.Z <= viewsector->e->XFloor.lightlist[i].plane.Zat0())
+				if (r_viewpoint.Pos.Z <= r_viewpoint.sector->e->XFloor.lightlist[i].plane.Zat0())
 				{
-					rover = viewsector->e->XFloor.lightlist[i].caster;
+					rover = r_viewpoint.sector->e->XFloor.lightlist[i].caster;
 					if (rover)
 					{
-						if (rover->flags & FF_DOUBLESHADOW && ViewPos.Z <= rover->bottom.plane->Zat0())
+						if (rover->flags & FF_DOUBLESHADOW && r_viewpoint.Pos.Z <= rover->bottom.plane->Zat0())
 							break;
 						sec = rover->model;
 						if (rover->flags & FF_FADEWALLS)
 							basecolormap = sec->ColorMap;
 						else
-							basecolormap = viewsector->e->XFloor.lightlist[i].extra_colormap;
+							basecolormap = r_viewpoint.sector->e->XFloor.lightlist[i].extra_colormap;
 					}
 					break;
 				}
 			}
 			if (!sec)
 			{
-				sec = viewsector;
+				sec = r_viewpoint.sector;
 				basecolormap = sec->ColorMap;
 			}
 			floorlight = ceilinglight = sec->lightlevel;
@@ -120,7 +120,7 @@ namespace swrenderer
 		else
 		{	// This used to use camera->Sector but due to interpolation that can be incorrect
 			// when the interpolated viewpoint is in a different sector than the camera.
-			sec = Thread->OpaquePass->FakeFlat(viewsector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
+			sec = Thread->OpaquePass->FakeFlat(r_viewpoint.sector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
 
 			// [RH] set basecolormap
 			basecolormap = sec->ColorMap;
@@ -133,7 +133,7 @@ namespace swrenderer
 		lightnum = ((floorlight + ceilinglight) >> 1) + LightVisibility::ActualExtraLight(foggy);
 		int spriteshade = LightVisibility::LightLevelToShade(lightnum, foggy) - 24 * FRACUNIT;
 
-		if (camera->player != NULL)
+		if (r_viewpoint.camera->player != NULL)
 		{
 			auto viewport = RenderViewport::Instance();
 			
@@ -143,10 +143,10 @@ namespace swrenderer
 
 			viewport->CenterY = viewheight / 2;
 
-			P_BobWeapon(camera->player, &bobx, &boby, r_TicFracF);
+			P_BobWeapon(r_viewpoint.camera->player, &bobx, &boby, r_viewpoint.TicFrac);
 
 			// Interpolate the main weapon layer once so as to be able to add it to other layers.
-			if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
+			if ((weapon = r_viewpoint.camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
 			{
 				if (weapon->firstTic)
 				{
@@ -155,8 +155,8 @@ namespace swrenderer
 				}
 				else
 				{
-					wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-					wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+					wx = weapon->oldx + (weapon->x - weapon->oldx) * r_viewpoint.TicFrac;
+					wy = weapon->oldy + (weapon->y - weapon->oldy) * r_viewpoint.TicFrac;
 				}
 			}
 			else
@@ -166,7 +166,7 @@ namespace swrenderer
 			}
 
 			// add all active psprites
-			psp = camera->player->psprites;
+			psp = r_viewpoint.camera->player->psprites;
 			while (psp)
 			{
 				// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
@@ -176,7 +176,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					RenderSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, spriteshade, basecolormap, foggy);
+					RenderSprite(psp, r_viewpoint.camera, bobx, boby, wx, wy, r_viewpoint.TicFrac, spriteshade, basecolormap, foggy);
 				}
 
 				psp = psp->GetNext();
@@ -245,7 +245,7 @@ namespace swrenderer
 		
 		auto viewport = RenderViewport::Instance();
 
-		double pspritexscale = centerxwide / 160.0;
+		double pspritexscale = r_viewwindow.centerxwide / 160.0;
 		double pspriteyscale = pspritexscale * viewport->YaspectMul;
 		double pspritexiscale = 1 / pspritexscale;
 
@@ -273,7 +273,7 @@ namespace swrenderer
 
 		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 
-		if (camera->player && (viewport->RenderTarget != screen ||
+		if (r_viewpoint.camera->player && (viewport->RenderTarget != screen ||
 			viewheight == viewport->RenderTarget->GetHeight() ||
 			(viewport->RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
 		{	// Adjust PSprite for fullscreen views
@@ -292,7 +292,7 @@ namespace swrenderer
 		}
 		if (pspr->GetID() < PSP_TARGETCENTER)
 		{ // Move the weapon down for 1280x1024.
-			vis.texturemid -= AspectPspriteOffset(WidescreenRatio);
+			vis.texturemid -= AspectPspriteOffset(r_viewwindow.WidescreenRatio);
 		}
 		vis.x1 = x1 < 0 ? 0 : x1;
 		vis.x2 = x2 >= viewwidth ? viewwidth : x2;
@@ -447,14 +447,14 @@ namespace swrenderer
 
 			colormap_to_use = (FDynamicColormap*)vis.Light.BaseColormap;
 
-			if (camera->Inventory != nullptr)
+			if (r_viewpoint.camera->Inventory != nullptr)
 			{
 				visstyle_t visstyle;
 				visstyle.Alpha = vis.Alpha;
 				visstyle.RenderStyle = STYLE_Count;
 				visstyle.Invert = false;
 				
-				camera->Inventory->AlterWeaponSprite(&visstyle);
+				r_viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
 				
 				vis.Alpha = visstyle.Alpha;
 

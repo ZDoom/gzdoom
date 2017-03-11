@@ -557,7 +557,7 @@ private:
 		int bars = (CurrentPop == POP_Status) ? imgINVPOP : imgINVPOP2;
 		int back = (CurrentPop == POP_Status) ? imgINVPBAK : imgINVPBAK2;
 		// Extrapolate the height of the popscreen for smoother movement
-		int height = clamp<int> (PopHeight + int(r_TicFracF * PopHeightChange), -POP_HEIGHT, 0);
+		int height = clamp<int> (PopHeight + int(r_viewpoint.TicFrac * PopHeightChange), -POP_HEIGHT, 0);
 
 		xscale = CleanXfac;
 		yscale = CleanYfac;
@@ -608,7 +608,7 @@ private:
 			if (KeyPopScroll > 0)
 			{
 				// Extrapolate the scroll position for smoother scrolling
-				int scroll = MAX<int> (0,KeyPopScroll - int(r_TicFracF * (280./KEY_TIME)));
+				int scroll = MAX<int> (0,KeyPopScroll - int(r_viewpoint.TicFrac * (280./KEY_TIME)));
 				pos -= 10;
 				leftcol = leftcol - 280 + scroll;
 			}

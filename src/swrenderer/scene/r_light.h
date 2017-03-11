@@ -84,10 +84,10 @@ namespace swrenderer
 		double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
 		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / screenZ; }
 		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
-		double FlatPlaneVis(int screenY, double planeZ, bool foggy) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - ViewPos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
+		double FlatPlaneVis(int screenY, double planeZ, bool foggy) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - r_viewpoint.Pos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
 
 		static fixed_t LightLevelToShade(int lightlevel, bool foggy);
-		static int ActualExtraLight(bool fog) { return fog ? 0 : extralight << 4; }
+		static int ActualExtraLight(bool fog) { return fog ? 0 : r_viewpoint.extralight << 4; }
 
 	private:
 		double BaseVisibility = 0.0;

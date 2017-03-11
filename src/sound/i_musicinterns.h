@@ -90,7 +90,7 @@ public:
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
 #elif defined __APPLE__
-MIDIDevice *CreateAudioToolboxMIDTDevice();
+MIDIDevice *CreateAudioToolboxMIDIDevice();
 #endif
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
 

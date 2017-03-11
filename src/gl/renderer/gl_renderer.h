@@ -168,7 +168,6 @@ public:
 
 	void Initialize(int width, int height);
 
-	void CreateScene();
 	void RenderMultipassStuff();
 	void RenderScene(int recursion);
 	void RenderTranslucent();

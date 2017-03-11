@@ -60,6 +60,7 @@
 #include "gl/scene/gl_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
@@ -267,22 +268,25 @@ void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::CreateScene()
+void GLSceneDrawer::CreateScene()
 {
+	angle_t a1 = GLRenderer->FrustumAngle();
+	InitClipper(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
+	GLPortal::drawer = this;	// NOTE THAT THIS DOES NOT WORK YET!!! (only good to let it compile without further changes.)
+
 	// reset the portal manager
 	GLPortal::StartFrame();
-	PO_LinkToSubsectors();
 
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
 	for(unsigned i=0;i<portals.Size(); i++) portals[i]->glportal = NULL;
-	gl_spriteindex=0;
+	GLRenderer->gl_spriteindex=0;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
-	R_SetView();
+	SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
-	gl_RenderBSPNode (nodes + numnodes - 1);
+	RenderBSPNode (nodes + numnodes - 1);
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
 	Bsp.Unclock();
 
@@ -497,15 +501,17 @@ void FGLRenderer::DrawScene(int drawmode)
 		ssao_portals_available--;
 	}
 
+	GLSceneDrawer drawer;
+
 	if (camera != nullptr)
 	{
 		ActorRenderFlags savedflags = camera->renderflags;
-		CreateScene();
+		drawer.CreateScene();
 		camera->renderflags = savedflags;
 	}
 	else
 	{
-		CreateScene();
+		drawer.CreateScene();
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
@@ -853,10 +859,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		s3d::ScopedViewShifter viewShifter(viewShift);
 		SetViewMatrix(ViewPos.X, ViewPos.Y, ViewPos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
-
-		clipper.Clear();
-		angle_t a1 = FrustumAngle();
-		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.

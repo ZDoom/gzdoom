@@ -77,6 +77,7 @@ extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
 extern UniqueList<FGLLinePortal> UniqueLineToLines;
 struct GLEEHorizonPortal;
+class GLSceneDrawer;
 
 class GLPortal
 {
@@ -90,6 +91,7 @@ protected:
 	static int renderdepth;
 
 public:
+	static GLSceneDrawer *drawer;
 	static int PlaneMirrorMode;
 	static int inupperstack;
 	static int	instack[2];

@@ -36,28 +36,12 @@
 */
 
 #include "gl/scene/gl_clipper.h"
+#include "g_levellocals.h"
 
 
-
-ClipNode * ClipNode::freelist;
-int Clipper::anglecache;
-
-
-//-----------------------------------------------------------------------------
-//
-// Destructor
-//
-//-----------------------------------------------------------------------------
-
-Clipper::~Clipper()
+Clipper::Clipper()
 {
-	Clear();
-	while (ClipNode::freelist != NULL)
-	{
-		ClipNode * node = ClipNode::freelist;
-		ClipNode::freelist = node->next;
-		delete node;
-	}
+	starttime = I_MSTime();
 }
 
 //-----------------------------------------------------------------------------
@@ -78,7 +62,7 @@ void Clipper::RemoveRange(ClipNode * range)
 		if (range->next) range->next->prev = range->prev;
 	}
 	
-	range->Free();
+	Free(range);
 }
 
 //-----------------------------------------------------------------------------
@@ -97,7 +81,7 @@ void Clipper::Clear()
 	{
 		temp = node;
 		node = node->next;
-		temp->Free();
+		Free(temp);
 	}
 	node = silhouette;
 
@@ -105,12 +89,12 @@ void Clipper::Clear()
 	{
 		temp = node;
 		node = node->next;
-		temp->Free();
+		Free(temp);
 	}
 	
 	cliphead = NULL;
 	silhouette = NULL;
-	anglecache++;
+	starttime = I_MSTime();
 }
 
 //-----------------------------------------------------------------------------
@@ -126,7 +110,7 @@ void Clipper::SetSilhouette()
 
 	while (node != NULL)
 	{
-		ClipNode *snode = ClipNode::NewRange(node->start, node->end);
+		ClipNode *snode = NewRange(node->start, node->end);
 		if (silhouette == NULL) silhouette = snode;
 		snode->prev = last;
 		if (last != NULL) last->next = snode;
@@ -134,7 +118,6 @@ void Clipper::SetSilhouette()
 		node = node->next;
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 //
@@ -227,7 +210,7 @@ void Clipper::AddClipRange(angle_t start, angle_t end)
 		//just add range
 		node = cliphead;
 		prevNode = NULL;
-		temp = ClipNode::NewRange(start, end);
+		temp = NewRange(start, end);
 		
 		while (node != NULL && node->start < end)
 		{
@@ -259,7 +242,7 @@ void Clipper::AddClipRange(angle_t start, angle_t end)
 	}
 	else
 	{
-		temp = ClipNode::NewRange(start, end);
+		temp = NewRange(start, end);
 		cliphead = temp;
 		return;
 	}
@@ -343,7 +326,7 @@ void Clipper::DoRemoveClipRange(angle_t start, angle_t end)
 			}
 			else if (node->start < start && node->end > end)
 			{
-				temp=ClipNode::NewRange(end, node->end);
+				temp = NewRange(end, node->end);
 				node->end=start;
 				temp->next=node->next;
 				temp->prev=node;
@@ -389,14 +372,6 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 //-----------------------------------------------------------------------------
 
-fixed_t viewx, viewy;
-
-void R_SetView()
-{
-	viewx = FLOAT2FIXED(ViewPos.X);
-	viewy = FLOAT2FIXED(ViewPos.Y);
-}
-
 angle_t R_PointToPseudoAngle(double x, double y)
 {
 	double vecx = x - ViewPos.X;
@@ -411,7 +386,7 @@ angle_t R_PointToPseudoAngle(double x, double y)
 		double result = vecy / (fabs(vecx) + fabs(vecy));
 		if (vecx < 0)
 		{
-			result = 2.f - result;
+			result = 2. - result;
 		}
 		return xs_Fix<30>::ToFix(result);
 	}

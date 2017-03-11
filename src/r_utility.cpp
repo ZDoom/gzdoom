@@ -684,6 +684,8 @@ void R_SetupFrame (AActor *actor)
 		I_Error ("Tried to render from a NULL actor.");
 	}
 
+	PO_LinkToSubsectors();
+
 	player_t *player = actor->player;
 	unsigned int newblend;
 	InterpolationViewer *iview;

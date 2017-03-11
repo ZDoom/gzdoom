@@ -51,6 +51,7 @@
 #include "gl/scene/gl_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/textures/gl_material.h"
@@ -74,6 +75,7 @@ EXTERN_CVAR(Int, r_mirror_recursions)
 
 extern bool r_showviewer;
 
+GLSceneDrawer *GLPortal::drawer;
 TArray<GLPortal *> GLPortal::portals;
 TArray<float> GLPortal::planestack;
 int GLPortal::recursion;
@@ -310,12 +312,12 @@ inline void GLPortal::ClearClipper()
 {
 	DAngle angleOffset = deltaangle(savedAngle, ViewAngle);
 
-	clipper.Clear();
+	drawer->clipper.Clear();
 
 	static int call=0;
 
 	// Set the clipper to the minimal visible area
-	clipper.SafeAddClipRange(0,0xffffffff);
+	drawer->clipper.SafeAddClipRange(0,0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - savedViewPos).Angle() + angleOffset;
@@ -323,16 +325,16 @@ inline void GLPortal::ClearClipper()
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
-			clipper.SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
+			drawer->clipper.SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
 	}
 
 	// and finally clip it to the visible area
 	angle_t a1 = GLRenderer->FrustumAngle();
-	if (a1 < ANGLE_180) clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
+	if (a1 < ANGLE_180) drawer->clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 	// lock the parts that have just been clipped out.
-	clipper.SetSilhouette();
+	drawer->clipper.SetSilhouette();
 }
 
 //-----------------------------------------------------------------------------
@@ -754,8 +756,8 @@ void GLSectorStackPortal::DrawContents()
 	subsector_t *sub = R_PointInSubsector(ViewPos);
 	if (!(gl_drawinfo->ss_renderflags[sub - ::subsectors] & SSRF_SEEN))
 	{
-		clipper.SafeAddClipRange(0, ANGLE_MAX);
-		clipper.SetBlocked(true);
+		drawer->clipper.SafeAddClipRange(0, ANGLE_MAX);
+		drawer->clipper.SetBlocked(true);
 	}
 
 	GLRenderer->DrawScene(DM_PORTAL);
@@ -969,14 +971,14 @@ void GLMirrorPortal::DrawContents()
 	MirrorFlag++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-	clipper.Clear();
+	drawer->clipper.Clear();
 
 	angle_t af = GLRenderer->FrustumAngle();
-	if (af<ANGLE_180) clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs()+af, ViewAngle.BAMs()-af);
+	if (af<ANGLE_180) drawer->clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs()+af, ViewAngle.BAMs()-af);
 
 	angle_t a2 = linedef->v1->GetClipAngle();
 	angle_t a1 = linedef->v2->GetClipAngle();
-	clipper.SafeAddClipRange(a1,a2);
+	drawer->clipper.SafeAddClipRange(a1,a2);
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);

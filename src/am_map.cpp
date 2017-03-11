@@ -2143,7 +2143,6 @@ void AM_showSS()
 		{
 			AM_drawSeg(sub->firstline + i, yellow);
 		}
-		PO_LinkToSubsectors();
 
 		for (int i = 0; i <po_NumPolyobjs; i++)
 		{

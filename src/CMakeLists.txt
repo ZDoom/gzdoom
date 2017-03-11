@@ -1104,6 +1104,8 @@ set (PCH_SOURCES
 	gl/dynlights/gl_dynlight.cpp
 	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_lightbuffer.cpp
+	gl/dynlights/gl_aabbtree.cpp
+	gl/dynlights/gl_shadowmap.cpp
 	gl/models/gl_models_md3.cpp
 	gl/models/gl_models_md2.cpp
 	gl/models/gl_voxels.cpp
@@ -1117,6 +1119,7 @@ set (PCH_SOURCES
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_texshader.cpp
 	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_shadowmapshader.cpp
 	gl/shaders/gl_presentshader.cpp
 	gl/shaders/gl_present3dRowshader.cpp
 	gl/shaders/gl_bloomshader.cpp

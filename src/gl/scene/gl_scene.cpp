@@ -950,6 +950,8 @@ void FGLRenderer::RenderView (player_t* player)
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
+	GLRenderer->mShadowMap.Update();
+
 	sector_t * viewsector = RenderViewpoint(player->camera, NULL, FieldOfView.Degrees, ratio, fovratio, true, true);
 
 	All.Unclock();

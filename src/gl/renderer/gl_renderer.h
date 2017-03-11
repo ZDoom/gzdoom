@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "gl/data/gl_matrix.h"
+#include "gl/dynlights/gl_shadowmap.h"
 
 struct particle_t;
 class FCanvasTexture;
@@ -40,6 +41,7 @@ class FPresent3DColumnShader;
 class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
+class FShadowMapShader;
 
 inline float DEG2RAD(float deg)
 {
@@ -122,6 +124,9 @@ public:
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
+	FShadowMapShader *mShadowMapShader;
+
+	FShadowMap mShadowMap;
 
 	FTexture *gllight;
 	FTexture *glpart2;

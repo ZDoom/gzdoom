@@ -26,6 +26,7 @@ out vec4 FragNormal;
 
 
 uniform sampler2D tex;
+uniform sampler2D ShadowMap;
 
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
@@ -134,6 +135,74 @@ float R_DoomLightingEquation(float light)
 
 //===========================================================================
 //
+// Check if light is in shadow according to its 1D shadow map
+//
+//===========================================================================
+
+#ifdef SUPPORTS_SHADOWMAPS
+
+float sampleShadowmap(vec2 dir, float v)
+{
+	float u;
+	if (abs(dir.x) > abs(dir.y))
+	{
+		if (dir.x >= 0.0)
+			u = dir.y / dir.x * 0.125 + (0.25 + 0.125);
+		else
+			u = dir.y / dir.x * 0.125 + (0.75 + 0.125);
+	}
+	else
+	{
+		if (dir.y >= 0.0)
+			u = dir.x / dir.y * 0.125 + 0.125;
+		else
+			u = dir.x / dir.y * 0.125 + (0.50 + 0.125);
+	}
+	float dist2 = dot(dir, dir);
+	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
+}
+
+//===========================================================================
+//
+// Check if light is in shadow using Percentage Closer Filtering (PCF)
+//
+//===========================================================================
+
+#define PCF_FILTER_STEP_COUNT 3
+#define PCF_COUNT (PCF_FILTER_STEP_COUNT * 2 + 1)
+
+float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
+{
+	if (shadowIndex >= 1024.0)
+		return 1.0; // No shadowmap available for this light
+
+	float v = (shadowIndex + 0.5) / 1024.0;
+
+	vec2 ray = pixelpos.xz - lightpos.xz;
+	float length = length(ray);
+	if (length < 3.0)
+		return 1.0;
+
+	vec2 dir = ray / length;
+
+	ray -= dir * 2.0; // margin
+	dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
+
+	vec2 normal = vec2(-dir.y, dir.x);
+	vec2 bias = dir * 10.0;
+
+	float sum = 0.0;
+	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
+	{
+		sum += sampleShadowmap(ray + normal * x - bias * abs(x), v);
+	}
+	return sum / PCF_COUNT;
+}
+
+#endif
+
+//===========================================================================
+//
 // Standard lambertian diffuse light calculation
 //
 //===========================================================================
@@ -151,10 +220,14 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 //
 //===========================================================================
 
-float pointLightAttenuation(vec4 lightpos, float attenuate)
+float pointLightAttenuation(vec4 lightpos, float lightcolorA)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuate == 0.0)
+#ifdef SUPPORTS_SHADOWMAPS
+	float shadowIndex = abs(lightcolorA) - 1.0;
+	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
+#endif
+	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
 	{
 		return attenuation;
 	}

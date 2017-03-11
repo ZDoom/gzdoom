@@ -105,6 +105,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb << "#define USE_QUAD_DRAWER\n";
 	}
 
+	if (!!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
+	}
+
 	vp_comb << defines << i_data.GetString().GetChars();
 	FString fp_comb = vp_comb;
 
@@ -269,6 +274,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		int tempindex = glGetUniformLocation(hShader, stringbuf);
 		if (tempindex > 0) glUniform1i(tempindex, i - 1);
 	}
+
+	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
+	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
 
 	glUseProgram(0);
 	return !!linked;

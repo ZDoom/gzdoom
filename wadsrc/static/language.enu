@@ -2675,7 +2675,7 @@ GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
 GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
-GLLIGHTMNU_LIGHTMATH 		= "Light quality";
+GLLIGHTMNU_LIGHTSHADOWMAP 	= "Light shadowmaps";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";

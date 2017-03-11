@@ -49,6 +49,9 @@ public:
 	void BindEyeTexture(int eye, int texunit);
 	void BindEyeFB(int eye, bool readBuffer = false);
 
+	void BindShadowMapFB();
+	void BindShadowMapTexture(int index);
+
 	enum { NumBloomLevels = 4 };
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
 
@@ -89,6 +92,7 @@ private:
 	void CreateBloom(int width, int height);
 	void CreateExposureLevels(int width, int height);
 	void CreateEyeBuffers(int eye);
+	void CreateShadowMap();
 	void CreateAmbientOcclusion(int width, int height);
 	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
 	GLuint Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
@@ -132,6 +136,10 @@ private:
 	// Eye buffers
 	TArray<GLuint> mEyeTextures;
 	TArray<GLuint> mEyeFBs;
+
+	// Shadow map texture
+	GLuint mShadowMapTexture = 0;
+	GLuint mShadowMapFB = 0;
 
 	static bool FailedCreate;
 	static bool BuffersActive;

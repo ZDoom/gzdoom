@@ -91,7 +91,7 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 
 				frac = 1.0f - (dist / radius);
 
-				if (frac > 0)
+				if (frac > 0 && GLRenderer->mShadowMap.ShadowTest(light, { x, y, z }))
 				{
 					lr = light->GetRed() / 255.0f;
 					lg = light->GetGreen() / 255.0f;

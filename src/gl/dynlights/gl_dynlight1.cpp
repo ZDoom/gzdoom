@@ -60,6 +60,7 @@ CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //==========================================================================
 //
@@ -109,6 +110,11 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		i = 1;
 	}
 
+	// Store attenuate flag in the sign bit of the float.
+	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
+	if (!!(light->flags4 & MF4_ATTENUATE))
+		shadowIndex = -shadowIndex;
+
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
@@ -117,7 +123,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[4] = r;
 	data[5] = g;
 	data[6] = b;
-	data[7] = !!(light->flags4 & MF4_ATTENUATE);
+	data[7] = shadowIndex;
 	return true;
 }
 

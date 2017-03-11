@@ -1,3 +1,4 @@
+#include "textures/textures.h"
 
 template<class TYPE> 
 void WarpBuffer(TYPE *Pixels, const TYPE *source, int width, int height, int xmul, int ymul, unsigned time, float Speed, int warptype)

@@ -9,15 +9,15 @@
 class FInternalCriticalSection
 {
 public:
-	FSDLCriticalSection()
+	FInternalCriticalSection()
 	{
-		CritSec = SDL_CreateMutex();
+		auto CritSec = SDL_CreateMutex();
 		if (CritSec == NULL)
 		{
 			I_FatalError("Failed to create a critical section mutex.");
 		}
 	}
-	~FSDLCriticalSection()
+	~FInternalCriticalSection()
 	{
 		if (CritSec != NULL)
 		{

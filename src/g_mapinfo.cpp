@@ -1359,6 +1359,7 @@ MapFlagHandlers[] =
 	{ "compat_multiexit",				MITYPE_COMPATFLAG, 0, COMPATF2_MULTIEXIT },
 	{ "compat_teleport",				MITYPE_COMPATFLAG, 0, COMPATF2_TELEPORT },
 	{ "compat_pushwindow",				MITYPE_COMPATFLAG, 0, COMPATF2_PUSHWINDOW },
+	{ "compat_clipmidtex",				MITYPE_COMPATFLAG, 0, COMPATF2_CLIPMIDTEX },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

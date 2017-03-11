@@ -516,3 +516,28 @@ B68EB7CFB4CC481796E2919B9C16DFBD // Moc11.wad e1m6
 	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
 }
 
+1ED329858AB154C55878DA1C11A4F100 // unloved.pk3:unlovedmaps.wad map01
+{
+	clipmidtex
+}
+
+FA23E72FA955E66EC68609F72C0BA71E // unloved.pk3:unlovedmaps.wad map02
+{
+	clipmidtex
+}
+
+41BEC1F643CFEEC997AF98276A05EC88 // unloved.pk3:unlovedmaps.wad map03
+{
+	clipmidtex
+}
+
+AF9A6370BE562584BC11165ECF364713 // unloved.pk3:unlovedmaps.wad map04
+{
+	clipmidtex
+}
+
+DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
+{
+	clipmidtex
+}
+

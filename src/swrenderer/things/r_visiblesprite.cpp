@@ -358,6 +358,11 @@ namespace swrenderer
 							neardepth = ds->sz2, fardepth = ds->sz1;
 						}
 					}
+					else
+					{
+						// GCC complained about this case, is there something missing here?
+						fardepth = neardepth = 0;
+					}
 
 					// Check if sprite is in front of draw seg:
 					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&

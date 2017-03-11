@@ -231,7 +231,7 @@ namespace swrenderer
 			
 			Thread->TranslucentPass->Render();
 
-			VisiblePlane *pl;
+			VisiblePlane *pl = nullptr;	// quiet, GCC!
 			visplaneStack.Pop(pl);
 			if (pl->Alpha > 0 && pl->picnum != skyflatnum)
 			{

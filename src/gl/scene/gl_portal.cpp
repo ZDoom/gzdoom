@@ -847,7 +847,7 @@ void GLLinePortal::PushState()
 void GLLinePortal::PopState()
 {
 	FStateVec4 &v = gl_RenderState.GetClipLine();
-	float e;
+	float e = 0;
 	planestack.Pop(e);
 	planestack.Pop(v.vec[3]);
 	planestack.Pop(v.vec[2]);

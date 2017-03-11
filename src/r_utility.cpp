@@ -1064,7 +1064,7 @@ void FCanvasTextureInfo::Serialize(FSerializer &arc)
 	{
 		if (arc.BeginArray("canvastextures"))
 		{
-			AActor *viewpoint;
+			AActor *viewpoint = nullptr;
 			int fov;
 			FTextureID picnum;
 			while (arc.BeginObject(nullptr))

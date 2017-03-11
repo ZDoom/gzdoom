@@ -91,6 +91,7 @@
 
 #include "g_hub.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 #include <string.h>
 

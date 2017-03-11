@@ -59,7 +59,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	left.X = pos.X - x1 * angcos;
 	left.Y = pos.Y - x1 * angsin;
 	right.X = left.X + x2 * angcos;
-	right.Y = right.Y + x2 * angsin;
+	right.Y = left.Y + x2 * angsin;
 
 	//int scaled_to = tex->GetScaledTopOffset();
 	//int scaled_bo = scaled_to - tex->GetScaledHeight();

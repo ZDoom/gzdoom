@@ -183,7 +183,7 @@ void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 					int size = arc.ArraySize();
 					for (int j = 0; j < size; j++)
 					{
-						DThinker *thinker;
+						DThinker *thinker = nullptr;
 						arc(nullptr, thinker);
 						if (thinker != nullptr)
 						{

@@ -143,10 +143,11 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Owner(owner),
   Sprite(0),
   ID(id),
-  processPending(true),
-  alpha(1),
-  RenderStyle(STYLE_Normal)
+  processPending(true)
 {
+	alpha = 1;
+	RenderStyle = STYLE_Normal;
+
 	DPSprite *prev = nullptr;
 	DPSprite *next = Owner->psprites;
 	while (next != nullptr && next->ID < ID)

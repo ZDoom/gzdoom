@@ -50,29 +50,29 @@ namespace swrenderer
 
 		int TextureFracBits() const { return dc_wall_fracbits; }
 
-		FVector3 dc_normal;
-		FVector3 dc_viewpos;
-		FVector3 dc_viewpos_step;
+		FVector3 dc_normal = { 0,0,0 };
+		FVector3 dc_viewpos = { 0,0,0 };
+		FVector3 dc_viewpos_step = { 0,0,0 };
 		DrawerLight *dc_lights = nullptr;
 		int dc_num_lights = 0;
 
 	private:
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
-		int dc_count;
+		int dc_count = 0;
 		
-		fixed_t dc_iscale;
-		fixed_t dc_texturefrac;
-		uint32_t dc_texturefracx;
-		uint32_t dc_textureheight;
-		const uint8_t *dc_source;
-		const uint8_t *dc_source2;
-		int dc_wall_fracbits;
+		fixed_t dc_iscale = 0;
+		fixed_t dc_texturefrac = 0;
+		uint32_t dc_texturefracx = 0;
+		uint32_t dc_textureheight = 0;
+		const uint8_t *dc_source = nullptr;
+		const uint8_t *dc_source2 = nullptr;
+		int dc_wall_fracbits = 0;
 		
-		uint32_t *dc_srcblend;
-		uint32_t *dc_destblend;
-		fixed_t dc_srcalpha;
-		fixed_t dc_destalpha;
+		uint32_t *dc_srcblend = nullptr;
+		uint32_t *dc_destblend = nullptr;
+		fixed_t dc_srcalpha = 0;
+		fixed_t dc_destalpha = 0;
 
 		typedef void(SWPixelFormatDrawers::*WallDrawerFunc)(const WallDrawerArgs &args);
 		WallDrawerFunc wallfunc = nullptr;

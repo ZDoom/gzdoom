@@ -21,6 +21,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "actorinlines.h"
 #include "math/cmath.h"
 
 static FRandom pr_botopendoor ("BotOpenDoor");

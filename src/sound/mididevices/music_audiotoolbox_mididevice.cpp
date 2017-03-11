@@ -325,7 +325,7 @@ void AudioToolboxMIDIDevice::TimerCallback(CFRunLoopTimerRef timer, void* info)
 
 #undef AT_MIDI_CHECK_ERROR
 
-MIDIDevice *CreateAudioToolboxMIDTDevice()
+MIDIDevice *CreateAudioToolboxMIDIDevice()
 {
 	return new AudioToolboxMIDIDevice();
 }

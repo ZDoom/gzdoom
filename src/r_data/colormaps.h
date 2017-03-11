@@ -77,11 +77,8 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 
 
 extern uint8_t DesaturateColormap[31][256];
-extern "C" 
-{
 extern FDynamicColormap NormalLight;
 extern FDynamicColormap FullNormalLight;
-}
 extern bool NormalLightHasFixedLights;
 
 FDynamicColormap *GetSpecialLights (PalEntry lightcolor, PalEntry fadecolor, int desaturate);

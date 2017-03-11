@@ -37,11 +37,8 @@
 #include "v_palette.h"
 #include "v_pfx.h"
 
-extern "C"
-{
-	PfxUnion GPfxPal;
-	PfxState GPfx;
-}
+PfxUnion GPfxPal;
+PfxState GPfx;
 
 static bool AnalyzeMask (uint32_t mask, uint8_t *shift);
 

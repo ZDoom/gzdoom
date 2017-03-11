@@ -100,7 +100,7 @@ struct CPUInfo	// 92 bytes
 };
 
 
-extern "C" CPUInfo CPU;
+extern CPUInfo CPU;
 struct PalEntry;
 
 void CheckCPUID (CPUInfo *cpu);

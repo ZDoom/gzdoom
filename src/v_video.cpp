@@ -142,13 +142,11 @@ int DisplayWidth, DisplayHeight, DisplayBits;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
 
-extern "C" {
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
 uint32_t Col2RGB8_Inverse[65][256];
 ColorTable32k RGB32k;
 ColorTable256k RGB256k;
-}
 
 
 static uint32_t Col2RGB8_2[63][256];

@@ -57,10 +57,8 @@
 static bool R_CheckForFixedLights(const uint8_t *colormaps);
 
 
-extern "C" {
 FDynamicColormap NormalLight;
 FDynamicColormap FullNormalLight; //[SP] Emulate GZDoom brightness
-}
 bool NormalLightHasFixedLights;
 
 

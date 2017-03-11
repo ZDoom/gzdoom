@@ -475,7 +475,7 @@ union ColorTable32k
 	uint8_t RGB[32][32][32];
 	uint8_t All[32 *32 *32];
 };
-extern "C" ColorTable32k RGB32k;
+extern ColorTable32k RGB32k;
 
 // [SP] RGB666 support
 union ColorTable256k
@@ -483,24 +483,24 @@ union ColorTable256k
 	uint8_t RGB[64][64][64];
 	uint8_t All[64 *64 *64];
 };
-extern "C" ColorTable256k RGB256k;
+extern ColorTable256k RGB256k;
 
 // Col2RGB8 is a pre-multiplied palette for color lookup. It is stored in a
 // special R10B10G10 format for efficient blending computation.
 //		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64
 //		--------rrrr------bbbb------gggg   at level 1
-extern "C" uint32_t Col2RGB8[65][256];
+extern uint32_t Col2RGB8[65][256];
 
 // Col2RGB8_LessPrecision is the same as Col2RGB8, but the LSB for red
 // and blue are forced to zero, so if the blend overflows, it won't spill
 // over into the next component's value.
 //		--RRRRRrrr-#BBBBBbbb-#GGGGGggg--  at level 64
 //      --------rrr#------bbb#------gggg  at level 1
-extern "C" uint32_t *Col2RGB8_LessPrecision[65];
+extern uint32_t *Col2RGB8_LessPrecision[65];
 
 // Col2RGB8_Inverse is the same as Col2RGB8_LessPrecision, except the source
 // palette has been inverted.
-extern "C" uint32_t Col2RGB8_Inverse[65][256];
+extern uint32_t Col2RGB8_Inverse[65][256];
 
 // "Magic" numbers used during the blending:
 //		--000001111100000111110000011111	= 0x01f07c1f

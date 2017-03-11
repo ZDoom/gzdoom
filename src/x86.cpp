@@ -2,10 +2,7 @@
 #include "doomdef.h"
 #include "x86.h"
 
-extern "C"
-{
-	CPUInfo CPU;
-}
+CPUInfo CPU;
 
 #if !defined(__amd64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
 void CheckCPUID(CPUInfo *cpu)

@@ -103,6 +103,8 @@ CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 int 			viewwindowx;
 int 			viewwindowy;
+int				viewwidth;
+int 			viewheight;
 
 DVector3		ViewPos;
 DVector3		ViewActorPos;	// the actual position of the viewing actor, without interpolation and quake offsets.
@@ -110,27 +112,23 @@ DAngle			ViewAngle;
 DAngle			ViewPitch;
 DAngle			ViewRoll;
 DVector3		ViewPath[2];
+double	 		ViewCos, ViewTanCos;
+double	 		ViewSin, ViewTanSin;
 
-extern "C" 
-{
-		int 	viewwidth;
-		int 	viewheight;
-		int		centerx;
-		int		centery;
-		int		centerxwide;
-}
+
+int		centerx;
+int		centery;
+int		centerxwide;
 
 int				otic;
 
 sector_t		*viewsector;
 
-double	 		ViewCos, ViewTanCos;
-double	 		ViewSin, ViewTanSin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
 double			r_TicFracF;			// same as floating point
-uint32_t			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
+uint32_t		r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
 bool			r_showviewer;
 

@@ -77,10 +77,7 @@ struct PfxState
 		fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
 };
 
-extern "C"
-{
-	extern PfxUnion GPfxPal;
-	extern PfxState GPfx;
-}
+extern PfxUnion GPfxPal;
+extern PfxState GPfx;
 
 #endif //__V_PFX_H__

@@ -97,12 +97,12 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	if (light->IsSubtractive())
 	{
-		Vector v;
+		DVector3 v(r, g, b);
+		float length = (float)v.Length();
 		
-		v.Set(r, g, b);
-		r = v.Length() - r;
-		g = v.Length() - g;
-		b = v.Length() - b;
+		r = length - r;
+		g = length - g;
+		b = length - b;
 		i = 1;
 	}
 

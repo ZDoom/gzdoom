@@ -177,6 +177,7 @@ if( MSVC )
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
 
+
 #	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
 #		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
 #		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")

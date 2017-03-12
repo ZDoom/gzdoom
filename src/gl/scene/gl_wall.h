@@ -6,6 +6,7 @@
 //
 //==========================================================================
 #include "r_defs.h"
+#include "r_data/renderstyle.h"
 #include "textures/textures.h"
 #include "gl/renderer/gl_colormap.h"
 
@@ -66,8 +67,15 @@ struct GLSeg
 		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim
 		float x = y2 - y1;
 		float y = x1 - x2;
+#if defined(__amd64__) || defined(_M_X64)
+		__m128 v; 
+		v.m128_f32[0] = x*x + y*y;
+		float ilength = _mm_rsqrt_ss(v).m128_f32[0];
+		return FVector3(x * ilength, 0, y * ilength);
+#else
 		float length = sqrtf(x*x + y*y);
 		return FVector3(x / length, 0, y / length);
+#endif
 	}
 };
 

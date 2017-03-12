@@ -36,16 +36,39 @@
 
 #include "math.h"
 #include "r_defs.h"
+#include "gl/scene/gl_wall.h"
 
 struct GLSeg;
 
 class Plane
 {
 public:
-	void Set(GLSeg *seg);
-	void Set(secplane_t &plane);
-	float DistToPoint(float x, float y, float z);
-	bool PointOnSide(float x, float y, float z);
+	void Set(GLSeg *seg)
+	{
+		m_normal = seg->Normal();
+		m_d = m_normal | FVector3(-seg->x1, 0, -seg->y1);
+	}
+
+	void Set(secplane_t &plane)
+	{
+		m_normal = { (float)plane.Normal().X, (float)plane.Normal().Z, (float)plane.Normal().Y };
+		m_d = (float)plane.fD();
+	}
+
+
+	float DistToPoint(float x, float y, float z)
+	{
+		FVector3 p(x, y, z);
+
+		return (m_normal | p) + m_d;
+	}
+
+
+	bool PointOnSide(float x, float y, float z)
+	{
+		return DistToPoint(x, y, z) < 0.f;
+	}
+
 	bool PointOnSide(FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
 	bool ValidNormal() { return m_normal.LengthSquared() == 1.f; }
 
@@ -59,6 +82,7 @@ protected:
 	FVector3 m_normal;
 	float m_d;
 };
+
 
 class Matrix3x4	// used like a 4x4 matrix with the last row always being (0,0,0,1)
 {

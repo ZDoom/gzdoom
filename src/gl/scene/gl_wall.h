@@ -64,7 +64,7 @@ struct GLSeg
 
 	FVector3 Normal() const 
 	{
-		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim
+		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim and this is called quite frequently.
 		float x = y2 - y1;
 		float y = x1 - x2;
 #if defined(__amd64__) || defined(_M_X64)

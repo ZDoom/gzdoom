@@ -903,7 +903,6 @@ set( FASTMATH_SOURCES
 	sound/mididevices/music_timiditypp_mididevice.cpp
 	gl/data/gl_matrix.cpp
 	gl/utility/gl_clock.cpp
-	gl/utility/gl_geometric.cpp
 	gl/renderer/gl_2ddrawer.cpp
 	gl/hqnx/init.cpp
 	gl/hqnx/hq2x.cpp

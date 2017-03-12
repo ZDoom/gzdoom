@@ -56,7 +56,7 @@ namespace swrenderer
 
 	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = Thread->Viewport.get();
 		RenderFogBoundary renderfog;
 		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
 		fixed_t *maskedtexturecol = nullptr;
@@ -83,7 +83,7 @@ namespace swrenderer
 
 		SpriteDrawerArgs columndrawerargs;
 		FDynamicColormap *patchstylecolormap = nullptr;
-		bool visible = columndrawerargs.SetStyle(LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
+		bool visible = columndrawerargs.SetStyle(viewport, LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
 
 		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 		{
@@ -118,7 +118,7 @@ namespace swrenderer
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
-				clip3d->sclipTop = sec->ceilingplane.ZatPoint(r_viewpoint.Pos);
+				clip3d->sclipTop = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
 			}
 			for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
@@ -127,7 +127,7 @@ namespace swrenderer
 					lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 					basecolormap = lit->extra_colormap;
 					bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-					wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
+					wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, viewport), foggy);
 					break;
 				}
 			}
@@ -202,7 +202,7 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				texturemid += rowoffset - r_viewpoint.Pos.Z;
+				texturemid += rowoffset - Thread->Viewport->viewpoint.Pos.Z;
 				textop = texturemid;
 				texturemid *= MaskedScaleY;
 			}
@@ -210,8 +210,8 @@ namespace swrenderer
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				textop = texturemid + rowoffset / MaskedScaleY - r_viewpoint.Pos.Z;
-				texturemid = (texturemid - r_viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
+				textop = texturemid + rowoffset / MaskedScaleY - Thread->Viewport->viewpoint.Pos.Z;
+				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
 			}
 			if (sprflipvert)
 			{
@@ -230,12 +230,12 @@ namespace swrenderer
 				goto clearfog;
 			}
 
-			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && textop < clip3d->sclipBottom - r_viewpoint.Pos.Z)
+			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && textop < clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z)
 			{
 				notrelevant = true;
 				goto clearfog;
 			}
-			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && textop - texheight > clip3d->sclipTop - r_viewpoint.Pos.Z)
+			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && textop - texheight > clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z)
 			{
 				notrelevant = true;
 				goto clearfog;
@@ -248,19 +248,19 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				wallupper.Project(textop < clip3d->sclipTop - r_viewpoint.Pos.Z ? textop : clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
+				wallupper.Project(Thread->Viewport.get(), textop < clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z ? textop : clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 			}
 			else
 			{
-				wallupper.Project(textop, &WallC);
+				wallupper.Project(Thread->Viewport.get(), textop, &WallC);
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				walllower.Project(textop - texheight > clip3d->sclipBottom - r_viewpoint.Pos.Z ? textop - texheight : clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
+				walllower.Project(Thread->Viewport.get(), textop - texheight > clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z ? textop - texheight : clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 			}
 			else
 			{
-				walllower.Project(textop - texheight, &WallC);
+				walllower.Project(Thread->Viewport.get(), textop - texheight, &WallC);
 			}
 
 			for (i = x1; i < x2; i++)
@@ -319,13 +319,13 @@ namespace swrenderer
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
-				texturemid = (texturemid - r_viewpoint.Pos.Z + rowoffset) * MaskedScaleY;
+				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z + rowoffset) * MaskedScaleY;
 			}
 			else
 			{
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
-				texturemid = (texturemid - r_viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
+				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
 			}
 
 			WallC.sz1 = ds->sz1;
@@ -347,7 +347,7 @@ namespace swrenderer
 
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
-				wallupper.Project(clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
+				wallupper.Project(Thread->Viewport.get(), clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
 					if (wallupper.ScreenY[i] < mceilingclip[i])
@@ -357,7 +357,7 @@ namespace swrenderer
 			}
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
-				walllower.Project(clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
+				walllower.Project(Thread->Viewport.get(), clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 				for (i = x1; i < x2; i++)
 				{
 					if (walllower.ScreenY[i] > mfloorclip[i])
@@ -450,7 +450,7 @@ namespace swrenderer
 		{
 			rowoffset += rw_pic->GetHeight();
 		}
-		double texturemid = (planez - r_viewpoint.Pos.Z) * yscale;
+		double texturemid = (planez - Thread->Viewport->viewpoint.Pos.Z) * yscale;
 		if (rw_pic->bWorldPanning)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
@@ -483,8 +483,8 @@ namespace swrenderer
 		WallT = ds->tmapvals;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
-		wallupper.Project(clip3d->sclipTop - r_viewpoint.Pos.Z, &WallC);
-		walllower.Project(clip3d->sclipBottom - r_viewpoint.Pos.Z, &WallC);
+		wallupper.Project(Thread->Viewport.get(), clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+		walllower.Project(Thread->Viewport.get(), clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 
 		for (i = x1; i < x2; i++)
 		{
@@ -498,7 +498,7 @@ namespace swrenderer
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectPos(curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
+		walltexcoords.ProjectPos(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
@@ -704,7 +704,7 @@ namespace swrenderer
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
 							}
 						}
@@ -718,7 +718,7 @@ namespace swrenderer
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
 							}
 						}
@@ -881,7 +881,7 @@ namespace swrenderer
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
 							}
 						}
@@ -895,7 +895,7 @@ namespace swrenderer
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = lit->extra_colormap;
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy), foggy);
+								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
 							}
 						}
@@ -923,13 +923,13 @@ namespace swrenderer
 
 		RenderPortal *renderportal = Thread->Portal.get();
 
-		most.Project(curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(Thread->Viewport.get(), curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (wallupper.ScreenY[i] < most.ScreenY[i])
 				wallupper.ScreenY[i] = most.ScreenY[i];
 		}
-		most.Project(curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(Thread->Viewport.get(), curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (walllower.ScreenY[i] > most.ScreenY[i])

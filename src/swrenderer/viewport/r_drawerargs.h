@@ -33,7 +33,7 @@ namespace swrenderer
 		void SetLight(FSWColormap *base_colormap, float light, int shade);
 		void SetTranslationMap(lighttable_t *translation);
 
-		uint8_t *Colormap() const;
+		uint8_t *Colormap(RenderViewport *viewport) const;
 		uint8_t *TranslationMap() const { return mTranslation; }
 
 		ShadeConstants ColormapConstants() const;

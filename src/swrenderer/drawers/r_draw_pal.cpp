@@ -157,12 +157,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
@@ -208,12 +208,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
@@ -267,12 +267,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -329,12 +329,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
@@ -403,12 +403,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
@@ -476,12 +476,12 @@ namespace swrenderer
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
-		uint8_t *colormap = args.Colormap();
+		uint8_t *colormap = args.Colormap(args.Viewport());
 		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
@@ -555,7 +555,7 @@ namespace swrenderer
 	{
 		uint8_t *dest = args.Dest();
 		int count = args.Count();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		const uint8_t *source0 = args.FrontTexturePixels();
 		int textureheight0 = args.FrontTextureHeight();
 
@@ -689,7 +689,7 @@ namespace swrenderer
 	{
 		uint8_t *dest = args.Dest();
 		int count = args.Count();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		const uint8_t *source0 = args.FrontTexturePixels();
 		const uint8_t *source1 = args.BackTexturePixels();
 		int textureheight0 = args.FrontTextureHeight();
@@ -887,7 +887,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
@@ -895,7 +895,7 @@ namespace swrenderer
 
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		
 		uint32_t dynlight = args.DynamicLight();
@@ -948,7 +948,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		pitch *= thread->num_cores;
 
@@ -972,7 +972,7 @@ namespace swrenderer
 
 		bg2rgb = args.DestBlend();
 		fg = args.SrcColorIndex();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
@@ -1025,7 +1025,7 @@ namespace swrenderer
 
 		bg2rgb = args.DestBlend();
 		fg = args.SrcColorIndex();
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
@@ -1082,7 +1082,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = args.DestBlend();
 		uint32_t fg = args.SrcColorIndex();
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
@@ -1142,7 +1142,7 @@ namespace swrenderer
 		uint32_t *bg2rgb = args.DestBlend();
 		uint32_t fg = args.SrcColorIndex();
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
 		count = thread->count_for_thread(args.DestY(), count);
 		if (count <= 0)
@@ -1206,7 +1206,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
@@ -1214,7 +1214,7 @@ namespace swrenderer
 
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		const PalEntry *palette = GPalette.BaseColors;
 
@@ -1270,14 +1270,14 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		// [RH] Local copies of global vars to improve compiler optimizations
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *translation = args.TranslationMap();
 		const uint8_t *source = args.TexturePixels();
 
@@ -1307,7 +1307,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
@@ -1316,7 +1316,7 @@ namespace swrenderer
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
 		const uint8_t *translation = args.TranslationMap();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 
 		const PalEntry *palette = GPalette.BaseColors;
@@ -1370,14 +1370,14 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		const uint8_t *source = args.TexturePixels();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		uint32_t *fgstart = &Col2RGB8[0][args.SolidColor()];
 		const PalEntry *palette = GPalette.BaseColors;
 
@@ -1429,13 +1429,13 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1493,14 +1493,14 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		const uint8_t *translation = args.TranslationMap();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1558,13 +1558,13 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1621,14 +1621,14 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		const uint8_t *translation = args.TranslationMap();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1685,13 +1685,13 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1748,14 +1748,14 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
 		frac += fracstep * thread->skipped_by_thread(args.DestY());
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		const uint8_t *translation = args.TranslationMap();
-		const uint8_t *colormap = args.Colormap();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1802,7 +1802,8 @@ namespace swrenderer
 		_yl = args.FuzzY1();
 		_yh = args.FuzzY2();
 		_x = args.FuzzX();
-		_destorg = RenderViewport::Instance()->GetDest(0, 0);
+		_destorg = args.Viewport()->GetDest(0, 0);
+		_pitch = args.Viewport()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}
@@ -1820,7 +1821,7 @@ namespace swrenderer
 
 		uint8_t *map = &NormalLight.Maps[6 * 256];
 
-		int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		int pitch = _pitch;
 		uint8_t *dest = thread->dest_for_thread(yl, pitch, yl * pitch + _x + _destorg);
 
 		pitch = pitch * thread->num_cores;
@@ -1887,13 +1888,13 @@ namespace swrenderer
 	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
 	{
 		_source = args.TexturePixels();
-		_colormap = args.Colormap();
+		_colormap = args.Colormap(args.Viewport());
 		_xfrac = args.TextureUPos();
 		_yfrac = args.TextureVPos();
 		_y = args.DestY();
 		_x1 = args.DestX1();
 		_x2 = args.DestX2();
-		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
+		_dest = args.Viewport()->GetDest(_x1, _y);
 		_xstep = args.TextureUStep();
 		_ystep = args.TextureVStep();
 		_xbits = args.TextureWidthBits();
@@ -2662,11 +2663,15 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
-		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
+	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
+		: plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
-		_colormap = args.Colormap();
-		_dest = RenderViewport::Instance()->GetDest(x1, y);
+		y = args.DestY();
+		x1 = args.DestX1();
+		x2 = args.DestX2();
+		viewport = args.Viewport();
+		_colormap = args.Colormap(args.Viewport());
+		_dest = args.Viewport()->GetDest(x1, y);
 		_ybits = args.TextureHeightBits();
 		_xbits = args.TextureWidthBits();
 		_source = args.TexturePixels();
@@ -2686,7 +2691,7 @@ namespace swrenderer
 		uint32_t u, v;
 		int i;
 
-		iz = plane_sz[2] + plane_sz[1] * (r_viewwindow.centery - y) + plane_sz[0] * (x1 - r_viewwindow.centerx);
+		iz = plane_sz[2] + plane_sz[1] * (viewport->viewwindow.centery - y) + plane_sz[0] * (x1 - viewport->viewwindow.centerx);
 
 		// Lighting is simple. It's just linear interpolation from start to end
 		if (plane_shade)
@@ -2703,8 +2708,8 @@ namespace swrenderer
 			}
 		}
 
-		uz = plane_su[2] + plane_su[1] * (r_viewwindow.centery - y) + plane_su[0] * (x1 - r_viewwindow.centerx);
-		vz = plane_sv[2] + plane_sv[1] * (r_viewwindow.centery - y) + plane_sv[0] * (x1 - r_viewwindow.centerx);
+		uz = plane_su[2] + plane_su[1] * (viewport->viewwindow.centery - y) + plane_su[0] * (x1 - viewport->viewwindow.centerx);
+		vz = plane_sv[2] + plane_sv[1] * (viewport->viewwindow.centery - y) + plane_sv[0] * (x1 - viewport->viewwindow.centerx);
 
 		fb = _dest;
 
@@ -2838,10 +2843,13 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
+	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args) : PalSpanCommand(args)
 	{
+		y = args.DestY();
+		x1 = args.DestX1();
+		x2 = args.DestX2();
 		color = args.SolidColor();
-		dest = RenderViewport::Instance()->GetDest(x1, y);
+		dest = args.Viewport()->GetDest(x1, y);
 	}
 
 	void DrawColoredSpanPalCommand::Execute(DrawerThread *thread)
@@ -2854,10 +2862,13 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args, int y, int x1, int x2) : PalSpanCommand(args), y(y), x1(x1), x2(x2)
+	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args) : PalSpanCommand(args)
 	{
-		_colormap = args.Colormap();
-		_dest = RenderViewport::Instance()->GetDest(0, y);
+		y = args.DestY();
+		x1 = args.DestX1();
+		x2 = args.DestX2();
+		_colormap = args.Colormap(args.Viewport());
+		_dest = args.Viewport()->GetDest(0, y);
 	}
 
 	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)

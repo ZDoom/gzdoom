@@ -28,11 +28,11 @@ namespace swrenderer
 		mTranslation = translation;
 	}
 
-	uint8_t *DrawerArgs::Colormap() const
+	uint8_t *DrawerArgs::Colormap(RenderViewport *viewport) const
 	{
 		if (mBaseColormap)
 		{
-			if (RenderViewport::Instance()->RenderTarget->IsBgra())
+			if (viewport->RenderTarget->IsBgra())
 				return mBaseColormap->Maps;
 			else
 				return mBaseColormap->Maps + (GETPALOOKUP(mLight, mShade) << COLORMAPSHIFT);

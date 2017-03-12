@@ -77,16 +77,16 @@ namespace swrenderer
 			return;
 
 		// transform the origin point
-		tr_x = particle->Pos.X - r_viewpoint.Pos.X;
-		tr_y = particle->Pos.Y - r_viewpoint.Pos.Y;
+		tr_x = particle->Pos.X - thread->Viewport->viewpoint.Pos.X;
+		tr_y = particle->Pos.Y - thread->Viewport->viewpoint.Pos.Y;
 
-		tz = tr_x * r_viewpoint.TanCos + tr_y * r_viewpoint.TanSin;
+		tz = tr_x * thread->Viewport->viewpoint.TanCos + tr_y * thread->Viewport->viewpoint.TanSin;
 
 		// particle is behind view plane?
 		if (tz < MINZ)
 			return;
 
-		tx = tr_x * r_viewpoint.Sin - tr_y * r_viewpoint.Cos;
+		tx = tr_x * thread->Viewport->viewpoint.Sin - tr_y * thread->Viewport->viewpoint.Cos;
 
 		// Flip for mirrors
 		if (renderportal->MirrorFlags & RF_XFLIP)
@@ -99,21 +99,21 @@ namespace swrenderer
 			return;
 
 		tiz = 1 / tz;
-		xscale = r_viewwindow.centerx * tiz;
+		xscale = thread->Viewport->viewwindow.centerx * tiz;
 
 		// calculate edges of the shape
 		double psize = particle->size / 8.0;
 
-		x1 = MAX<int>(renderportal->WindowLeft, r_viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
-		x2 = MIN<int>(renderportal->WindowRight, r_viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
+		x1 = MAX<int>(renderportal->WindowLeft, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
+		x2 = MIN<int>(renderportal->WindowRight, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
 
 		if (x1 >= x2)
 			return;
 		
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 
 		yscale = xscale; // YaspectMul is not needed for particles as they should always be square
-		ty = particle->Pos.Z - r_viewpoint.Pos.Z;
+		ty = particle->Pos.Z - viewport->viewpoint.Pos.Z;
 		y1 = xs_RoundToInt(viewport->CenterY - (ty + psize) * yscale);
 		y2 = xs_RoundToInt(viewport->CenterY - (ty - psize) * yscale);
 
@@ -231,7 +231,7 @@ namespace swrenderer
 		fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
 		uint32_t alpha = fglevel * 256 / FRACUNIT;
 		
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 
 		spacing = viewport->RenderTarget->GetPitch();
 

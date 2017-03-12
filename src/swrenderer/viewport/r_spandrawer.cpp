@@ -22,7 +22,7 @@ namespace swrenderer
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
-	void SpanDrawerArgs::SetTexture(FTexture *tex)
+	void SpanDrawerArgs::SetTexture(RenderViewport *viewport, FTexture *tex)
 	{
 		tex->GetWidth();
 		ds_xbits = tex->WidthBits;
@@ -36,7 +36,6 @@ namespace swrenderer
 			ds_ybits--;
 		}
 
-		auto viewport = RenderViewport::Instance();
 		ds_source = viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
@@ -99,21 +98,30 @@ namespace swrenderer
 
 	void SpanDrawerArgs::DrawSpan(RenderThread *thread)
 	{
-		(thread->Drawers()->*spanfunc)(*this);
+		(thread->Drawers(ds_viewport)->*spanfunc)(*this);
 	}
 
 	void SpanDrawerArgs::DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 	{
-		thread->Drawers()->DrawTiltedSpan(*this, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		SetDestY(thread->Viewport.get(), y);
+		SetDestX1(x1);
+		SetDestX2(x2);
+		thread->Drawers(ds_viewport)->DrawTiltedSpan(*this, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 
 	void SpanDrawerArgs::DrawFogBoundaryLine(RenderThread *thread, int y, int x1, int x2)
 	{
-		thread->Drawers()->DrawFogBoundaryLine(*this, y, x1, x2);
+		SetDestY(thread->Viewport.get(), y);
+		SetDestX1(x1);
+		SetDestX2(x2);
+		thread->Drawers(ds_viewport)->DrawFogBoundaryLine(*this);
 	}
 
 	void SpanDrawerArgs::DrawColoredSpan(RenderThread *thread, int y, int x1, int x2)
 	{
-		thread->Drawers()->DrawColoredSpan(*this, y, x1, x2);
+		SetDestY(thread->Viewport.get(), y);
+		SetDestX1(x1);
+		SetDestX2(x2);
+		thread->Drawers(ds_viewport)->DrawColoredSpan(*this);
 	}
 }

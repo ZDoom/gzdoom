@@ -107,7 +107,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Thread.Viewport->viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{
@@ -151,7 +151,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 
-	if (swrenderer::RenderViewport::Instance()->RenderTarget->IsBgra())
+	if (PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
 	{
 		args.uniforms.color = 0xff000000 | decal->AlphaColor;
 	}

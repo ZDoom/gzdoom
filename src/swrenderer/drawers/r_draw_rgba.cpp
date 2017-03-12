@@ -233,8 +233,8 @@ namespace swrenderer
 		_x = drawerargs.FuzzX();
 		_yl = drawerargs.FuzzY1();
 		_yh = drawerargs.FuzzY2();
-		_destorg = RenderViewport::Instance()->GetDest(0, 0);
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+		_destorg = drawerargs.Viewport()->GetDest(0, 0);
+		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
 		_fuzzpos = fuzzpos;
 		_fuzzviewheight = fuzzviewheight;
 	}
@@ -341,7 +341,7 @@ namespace swrenderer
 		_x1 = drawerargs.DestX1();
 		_x2 = drawerargs.DestX2();
 		_y = drawerargs.DestY();
-		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
+		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -366,13 +366,12 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLineRGBACommand::DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x, int x2)
+	DrawFogBoundaryLineRGBACommand::DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs)
 	{
-		_y = y;
-		_x = x;
-		_x2 = x2;
-
-		_line = RenderViewport::Instance()->GetDest(0, y);
+		_y = drawerargs.DestY();
+		_x = drawerargs.DestX1();
+		_x2 = drawerargs.DestX2();
+		_line = drawerargs.Viewport()->GetDest(0, _y);
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 	}
@@ -434,12 +433,12 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanRGBACommand::DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+	DrawTiltedSpanRGBACommand::DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
-		_x1 = x1;
-		_x2 = x2;
-		_y = y;
-		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
+		_x1 = drawerargs.DestX1();
+		_x2 = drawerargs.DestX2();
+		_y = drawerargs.DestY();
+		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_shade_constants = drawerargs.ColormapConstants();
 		_plane_sz = plane_sz;
@@ -453,6 +452,7 @@ namespace swrenderer
 		_source = (const uint32_t*)drawerargs.TexturePixels();
 		_xbits = drawerargs.TextureWidthBits();
 		_ybits = drawerargs.TextureHeightBits();
+		viewport = drawerargs.Viewport();
 	}
 
 	void DrawTiltedSpanRGBACommand::Execute(DrawerThread *thread)
@@ -474,7 +474,7 @@ namespace swrenderer
 		int count = _x2 - _x1 + 1;
 
 		// Depth (Z) change across the span
-		double iz = _plane_sz[2] + _plane_sz[1] * (r_viewwindow.centery - _y) + _plane_sz[0] * (_x1 - r_viewwindow.centerx);
+		double iz = _plane_sz[2] + _plane_sz[1] * (viewport->viewwindow.centery - _y) + _plane_sz[0] * (_x1 - viewport->viewwindow.centerx);
 
 		// Light change across the span
 		fixed_t lightstart = _light;
@@ -491,8 +491,8 @@ namespace swrenderer
 		fixed_t steplight = (lightend - lightstart) / count;
 
 		// Texture coordinates
-		double uz = _plane_su[2] + _plane_su[1] * (r_viewwindow.centery - _y) + _plane_su[0] * (_x1 - r_viewwindow.centerx);
-		double vz = _plane_sv[2] + _plane_sv[1] * (r_viewwindow.centery - _y) + _plane_sv[0] * (_x1 - r_viewwindow.centerx);
+		double uz = _plane_su[2] + _plane_su[1] * (viewport->viewwindow.centery - _y) + _plane_su[0] * (_x1 - viewport->viewwindow.centerx);
+		double vz = _plane_sv[2] + _plane_sv[1] * (viewport->viewwindow.centery - _y) + _plane_sv[0] * (_x1 - viewport->viewwindow.centerx);
 		double startz = 1.f / iz;
 		double startu = uz*startz;
 		double startv = vz*startz;
@@ -568,13 +568,12 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2)
+	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs)
 	{
-		_y = y;
-		_x1 = x1;
-		_x2 = x2;
-
-		_dest = RenderViewport::Instance()->GetDest(_x1, _y);
+		_y = drawerargs.DestY();
+		_x1 = drawerargs.DestX1();
+		_x2 = drawerargs.DestX2();
+		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
 		_light = drawerargs.Light();
 		_color = drawerargs.SolidColor();
 	}
@@ -599,67 +598,6 @@ namespace swrenderer
 	FString DrawColoredSpanRGBACommand::DebugInfo()
 	{
 		return "DrawColoredSpan";
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	FillTransColumnRGBACommand::FillTransColumnRGBACommand(const DrawerArgs &drawerargs, int x, int y1, int y2, int color, int a)
-	{
-		_x = x;
-		_y1 = y1;
-		_y2 = y2;
-		_color = color;
-		_a = a;
-
-		_destorg = RenderViewport::Instance()->GetDest(0, 0);
-		_pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-	}
-
-	void FillTransColumnRGBACommand::Execute(DrawerThread *thread)
-	{
-		int x = _x;
-		int y1 = _y1;
-		int y2 = _y2;
-		int color = _color;
-		int a = _a;
-
-		int ycount = thread->count_for_thread(y1, y2 - y1 + 1);
-		if (ycount <= 0)
-			return;
-
-		uint32_t fg = GPalette.BaseColors[color].d;
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-
-		uint32_t alpha = a + 1;
-		uint32_t inv_alpha = 256 - alpha;
-
-		fg_red *= alpha;
-		fg_green *= alpha;
-		fg_blue *= alpha;
-
-		int spacing = _pitch * thread->num_cores;
-		uint32_t *dest = thread->dest_for_thread(y1, _pitch, _pitch * y1 + x + (uint32_t*)_destorg);
-
-		for (int y = 0; y < ycount; y++)
-		{
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
-			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += spacing;
-		}
-	}
-
-	FString FillTransColumnRGBACommand::DebugInfo()
-	{
-		return "FillTransColumn";
 	}
 
 	/////////////////////////////////////////////////////////////////////////////

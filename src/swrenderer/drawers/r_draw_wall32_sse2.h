@@ -112,7 +112,7 @@ namespace swrenderer
 			}
 
 			int count = args.Count();
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
 			uint32_t texturefracx = args.TextureUPos();

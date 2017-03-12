@@ -42,19 +42,21 @@ void RenderPolyPlayerSprites::Render()
 	// This code cannot be moved directly to RenderRemainingSprites because the engine
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+
 	if (!r_drawplayersprites ||
-		!r_viewpoint.camera ||
-		!r_viewpoint.camera->player ||
+		!viewpoint.camera ||
+		!viewpoint.camera->player ||
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
-		(r_deathcamera && r_viewpoint.camera->health <= 0))
+		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
 
 	float bobx, boby;
-	P_BobWeapon(r_viewpoint.camera->player, &bobx, &boby, r_viewpoint.TicFrac);
+	P_BobWeapon(viewpoint.camera->player, &bobx, &boby, viewpoint.TicFrac);
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	double wx, wy;
-	DPSprite *weapon = r_viewpoint.camera->player->FindPSprite(PSP_WEAPON);
+	DPSprite *weapon = viewpoint.camera->player->FindPSprite(PSP_WEAPON);
 	if (weapon)
 	{
 		if (weapon->firstTic)
@@ -64,8 +66,8 @@ void RenderPolyPlayerSprites::Render()
 		}
 		else
 		{
-			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_viewpoint.TicFrac;
-			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_viewpoint.TicFrac;
+			wx = weapon->oldx + (weapon->x - weapon->oldx) * viewpoint.TicFrac;
+			wy = weapon->oldy + (weapon->y - weapon->oldy) * viewpoint.TicFrac;
 		}
 	}
 	else
@@ -74,7 +76,7 @@ void RenderPolyPlayerSprites::Render()
 		wy = 0;
 	}
 
-	for (DPSprite *sprite = r_viewpoint.camera->player->psprites; sprite != nullptr; sprite = sprite->GetNext())
+	for (DPSprite *sprite = viewpoint.camera->player->psprites; sprite != nullptr; sprite = sprite->GetNext())
 	{
 		// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 		// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
@@ -82,7 +84,7 @@ void RenderPolyPlayerSprites::Render()
 		// In this case let's simply not draw it to avoid crashing.
 		if ((sprite->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && sprite->GetCaller() != nullptr)
 		{
-			RenderSprite(sprite, r_viewpoint.camera, bobx, boby, wx, wy, r_viewpoint.TicFrac);
+			RenderSprite(sprite, viewpoint.camera, bobx, boby, wx, wy, viewpoint.TicFrac);
 		}
 	}
 }
@@ -141,9 +143,10 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		sy += wy;
 	}
 	
-	auto viewport = swrenderer::RenderViewport::Instance();
+	auto viewport = PolyRenderer::Instance()->Thread.Viewport.get();
+	const auto &viewpoint = viewport->viewpoint;
 
-	double pspritexscale = r_viewwindow.centerxwide / 160.0;
+	double pspritexscale = PolyRenderer::Instance()->Thread.Viewport->viewwindow.centerxwide / 160.0;
 	double pspriteyscale = pspritexscale * viewport->YaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
@@ -167,7 +170,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	double texturemid = (BaseYCenter - sy) * tex->Scale.Y + tex->TopOffset;
 
 	// Adjust PSprite for fullscreen views
-	if (r_viewpoint.camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
+	if (viewpoint.camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
 	{
 		AWeapon *weapon = dyn_cast<AWeapon>(sprite->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
@@ -186,7 +189,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	// Move the weapon down for 1280x1024.
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{
-		texturemid -= AspectPspriteOffset(r_viewwindow.WidescreenRatio);
+		texturemid -= AspectPspriteOffset(PolyRenderer::Instance()->Thread.Viewport->viewwindow.WidescreenRatio);
 	}
 
 	int clipped_x1 = MAX(x1, 0);
@@ -212,7 +215,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	bool noaccel = false;
 
-	FDynamicColormap *basecolormap = r_viewpoint.sector->ColorMap;
+	FDynamicColormap *basecolormap = viewpoint.sector->ColorMap;
 	FDynamicColormap *colormap_to_use = basecolormap;
 
 	int ColormapNum = 0;
@@ -222,7 +225,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	RenderStyle = STYLE_Normal;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
+	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
 	int spriteshade = swrenderer::LightVisibility::LightLevelToShade(owner->Sector->lightlevel + actualextralight, foggy);
 	double minz = double((2048 * 4) / double(1 << 20));
 	ColormapNum = GETPALOOKUP(swrenderer::LightVisibility::Instance()->SpriteGlobVis(foggy) / minz, spriteshade);
@@ -287,14 +290,14 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		}
 		*/
 
-		if (r_viewpoint.camera->Inventory != nullptr)
+		if (viewpoint.camera->Inventory != nullptr)
 		{
 			visstyle_t visstyle;
 			visstyle.Alpha = Alpha;
 			visstyle.RenderStyle = STYLE_Count;
 			visstyle.Invert = false;
 
-			r_viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
+			viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
 
 			Alpha = visstyle.Alpha;
 
@@ -345,7 +348,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && swrenderer::RenderViewport::Instance()->RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && PolyRenderer::Instance()->Thread.Viewport->RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 	{
 		FRenderStyle style = RenderStyle;
 		style.CheckFuzz();

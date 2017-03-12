@@ -27,15 +27,13 @@
 
 namespace swrenderer
 {
-	ProjectedWallCull ProjectedWallLine::Project(double z, const FWallCoords *wallc)
+	ProjectedWallCull ProjectedWallLine::Project(RenderViewport *viewport, double z, const FWallCoords *wallc)
 	{
-		return Project(z, z, wallc);
+		return Project(viewport, z, z, wallc);
 	}
 
-	ProjectedWallCull ProjectedWallLine::Project(double z1, double z2, const FWallCoords *wallc)
+	ProjectedWallCull ProjectedWallLine::Project(RenderViewport *viewport, double z1, double z2, const FWallCoords *wallc)
 	{
-		auto viewport = RenderViewport::Instance();
-		
 		float y1 = (float)(viewport->CenterY - z1 * viewport->InvZtoScale / wallc->sz1);
 		float y2 = (float)(viewport->CenterY - z2 * viewport->InvZtoScale / wallc->sz2);
 
@@ -76,11 +74,11 @@ namespace swrenderer
 		return ProjectedWallCull::Visible;
 	}
 
-	ProjectedWallCull ProjectedWallLine::Project(const secplane_t &plane, const FWallCoords *wallc, seg_t *curline, bool xflip)
+	ProjectedWallCull ProjectedWallLine::Project(RenderViewport *viewport, const secplane_t &plane, const FWallCoords *wallc, seg_t *curline, bool xflip)
 	{
 		if (!plane.isSlope())
 		{
-			return Project(plane.Zat0() - r_viewpoint.Pos.Z, wallc);
+			return Project(viewport, plane.Zat0() - viewport->viewpoint.Pos.Z, wallc);
 		}
 		else
 		{
@@ -96,7 +94,7 @@ namespace swrenderer
 					x -= frac * (x - curline->v1->fX());
 					y -= frac * (y - curline->v1->fY());
 				}
-				z1 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
+				z1 = plane.ZatPoint(x, y) - viewport->viewpoint.Pos.Z;
 
 				if (wallc->sx2 > wallc->sx1 + 1)
 				{
@@ -108,7 +106,7 @@ namespace swrenderer
 						x += frac * (curline->v2->fX() - x);
 						y += frac * (curline->v2->fY() - y);
 					}
-					z2 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
+					z2 = plane.ZatPoint(x, y) - viewport->viewpoint.Pos.Z;
 				}
 				else
 				{
@@ -125,7 +123,7 @@ namespace swrenderer
 					x += frac * (curline->v2->fX() - x);
 					y += frac * (curline->v2->fY() - y);
 				}
-				z1 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
+				z1 = plane.ZatPoint(x, y) - viewport->viewpoint.Pos.Z;
 
 				if (wallc->sx2 > wallc->sx1 + 1)
 				{
@@ -137,7 +135,7 @@ namespace swrenderer
 						x -= frac * (x - curline->v1->fX());
 						y -= frac * (y - curline->v1->fY());
 					}
-					z2 = plane.ZatPoint(x, y) - r_viewpoint.Pos.Z;
+					z2 = plane.ZatPoint(x, y) - viewport->viewpoint.Pos.Z;
 				}
 				else
 				{
@@ -145,16 +143,14 @@ namespace swrenderer
 				}
 			}
 
-			return Project(z1, z2, wallc);
+			return Project(viewport, z1, z2, wallc);
 		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void ProjectedWallTexcoords::Project(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
-		auto viewport = RenderViewport::Instance();
-		
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float uGradient = WallT.UoverZstep;
@@ -191,10 +187,8 @@ namespace swrenderer
 		}
 	}
 
-	void ProjectedWallTexcoords::ProjectPos(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	void ProjectedWallTexcoords::ProjectPos(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
 	{
-		auto viewport = RenderViewport::Instance();
-		
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float uGradient = WallT.UoverZstep;

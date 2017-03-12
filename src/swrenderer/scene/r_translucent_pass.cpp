@@ -175,7 +175,7 @@ namespace swrenderer
 		else
 		{ // kg3D - correct sorting
 			// ceilings
-			for (HeightLevel *hl = clip3d->height_cur; hl != nullptr && hl->height >= r_viewpoint.Pos.Z; hl = hl->prev)
+			for (HeightLevel *hl = clip3d->height_cur; hl != nullptr && hl->height >= Thread->Viewport->viewpoint.Pos.Z; hl = hl->prev)
 			{
 				if (hl->next)
 				{
@@ -195,7 +195,7 @@ namespace swrenderer
 			clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
 			clip3d->sclipTop = clip3d->height_top->height;
 			DrawMaskedSingle(true);
-			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < r_viewpoint.Pos.Z; hl = hl->next)
+			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < Thread->Viewport->viewpoint.Pos.Z; hl = hl->next)
 			{
 				Thread->PlaneList->RenderHeight(hl->height);
 				if (hl->next)

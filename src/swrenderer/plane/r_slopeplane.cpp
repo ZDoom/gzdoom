@@ -77,16 +77,16 @@ namespace swrenderer
 			return;
 		}
 		
-		auto viewport = RenderViewport::Instance();
+		auto viewport = Thread->Viewport.get();
 
 		drawerargs.SetSolidColor(3);
-		drawerargs.SetTexture(texture);
+		drawerargs.SetTexture(Thread->Viewport.get(), texture);
 
 		lxscale = _xscale * ifloatpow2[drawerargs.TextureWidthBits()];
 		lyscale = _yscale * ifloatpow2[drawerargs.TextureHeightBits()];
 		xscale = 64.f / lxscale;
 		yscale = 64.f / lyscale;
-		zeroheight = pl->height.ZatPoint(r_viewpoint.Pos);
+		zeroheight = pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos);
 
 		pviewx = xs_ToFixed(32 - drawerargs.TextureWidthBits(), pl->xform.xOffs * pl->xform.xScale);
 		pviewy = xs_ToFixed(32 - drawerargs.TextureHeightBits(), pl->xform.yOffs * pl->xform.yScale);
@@ -95,11 +95,11 @@ namespace swrenderer
 		// p is the texture origin in view space
 		// Don't add in the offsets at this stage, because doing so can result in
 		// errors if the flat is rotated.
-		ang = M_PI * 3 / 2 - r_viewpoint.Angles.Yaw.Radians();
+		ang = M_PI * 3 / 2 - Thread->Viewport->viewpoint.Angles.Yaw.Radians();
 		cosine = cos(ang), sine = sin(ang);
-		p[0] = r_viewpoint.Pos.X * cosine - r_viewpoint.Pos.Y * sine;
-		p[2] = r_viewpoint.Pos.X * sine + r_viewpoint.Pos.Y * cosine;
-		p[1] = pl->height.ZatPoint(0.0, 0.0) - r_viewpoint.Pos.Z;
+		p[0] = Thread->Viewport->viewpoint.Pos.X * cosine - Thread->Viewport->viewpoint.Pos.Y * sine;
+		p[2] = Thread->Viewport->viewpoint.Pos.X * sine + Thread->Viewport->viewpoint.Pos.Y * cosine;
+		p[1] = pl->height.ZatPoint(0.0, 0.0) - Thread->Viewport->viewpoint.Pos.Z;
 
 		// m is the v direction vector in view space
 		ang = ang - M_PI / 2 - planeang;
@@ -126,8 +126,8 @@ namespace swrenderer
 		// how much you slope the surface. Use the commented-out code above instead to keep
 		// the textures a constant size across the surface's plane instead.
 		cosine = cos(planeang), sine = sin(planeang);
-		m[1] = pl->height.ZatPoint(r_viewpoint.Pos.X + yscale * sine, r_viewpoint.Pos.Y + yscale * cosine) - zeroheight;
-		n[1] = -(pl->height.ZatPoint(r_viewpoint.Pos.X - xscale * cosine, r_viewpoint.Pos.Y + xscale * sine) - zeroheight);
+		m[1] = pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos.X + yscale * sine, Thread->Viewport->viewpoint.Pos.Y + yscale * cosine) - zeroheight;
+		n[1] = -(pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos.X - xscale * cosine, Thread->Viewport->viewpoint.Pos.Y + xscale * sine) - zeroheight);
 
 		plane_su = p ^ m;
 		plane_sv = p ^ n;
@@ -157,7 +157,7 @@ namespace swrenderer
 		basecolormap = colormap;
 		bool foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);;
 
-		planelightfloat = (LightVisibility::Instance()->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(r_viewpoint.Pos) - r_viewpoint.Pos.Z)) / 65536.f;
+		planelightfloat = (LightVisibility::Instance()->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos) - Thread->Viewport->viewpoint.Pos.Z)) / 65536.f;
 
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;

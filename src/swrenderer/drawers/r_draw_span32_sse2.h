@@ -188,8 +188,8 @@ namespace swrenderer
 			__m128 step_viewpos_x = _mm_set1_ps(stepvpx * 2.0f);
 
 			int count = args.DestX2() - args.DestX1() + 1;
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
-			uint32_t *dest = (uint32_t*)RenderViewport::Instance()->GetDest(args.DestX1(), args.DestY());
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
+			uint32_t *dest = (uint32_t*)args.Viewport()->GetDest(args.DestX1(), args.DestY());
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{

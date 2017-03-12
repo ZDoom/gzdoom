@@ -36,11 +36,13 @@ namespace swrenderer
 	class RenderTranslucentPass;
 	class RenderPlayerSprites;
 	class RenderScene;
+	class RenderViewport;
 	class Clip3DFloors;
 	class VisiblePlaneList;
 	class DrawSegmentList;
 	class RenderClipSegment;
 	class RenderMemory;
+	class RenderViewport;
 	class SWPixelFormatDrawers;
 	class SWTruecolorDrawers;
 	class SWPalDrawers;
@@ -66,6 +68,7 @@ namespace swrenderer
 		std::unique_ptr<VisiblePlaneList> PlaneList;
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
+		std::unique_ptr<RenderViewport> Viewport;
 		DrawerCommandQueuePtr DrawQueue;
 
 		std::thread thread;
@@ -74,7 +77,7 @@ namespace swrenderer
 		short clipbot[MAXWIDTH];
 		short cliptop[MAXWIDTH];
 
-		SWPixelFormatDrawers *Drawers();
+		SWPixelFormatDrawers *Drawers(RenderViewport *viewport);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

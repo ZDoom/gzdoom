@@ -35,10 +35,12 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	double psize = particle->size / 8.0;
 	double zpos = pos.Z;
 
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+
 	DVector2 points[2] =
 	{
-		{ pos.X - r_viewpoint.Sin * psize, pos.Y + r_viewpoint.Cos * psize },
-		{ pos.X + r_viewpoint.Sin * psize, pos.Y - r_viewpoint.Cos * psize }
+		{ pos.X - viewpoint.Sin * psize, pos.Y + viewpoint.Cos * psize },
+		{ pos.X + viewpoint.Sin * psize, pos.Y - viewpoint.Cos * psize }
 	};
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
@@ -46,7 +48,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
+	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{
@@ -90,7 +92,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	uint32_t alpha = (uint32_t)clamp(particle->alpha * 255.0f + 0.5f, 0.0f, 255.0f);
 
-	if (swrenderer::RenderViewport::Instance()->RenderTarget->IsBgra())
+	if (PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
 	{
 		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
 	}

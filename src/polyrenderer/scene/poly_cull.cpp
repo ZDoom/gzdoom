@@ -50,7 +50,7 @@ void PolyCull::CullNode(void *node)
 		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
-		int side = PointOnSide(r_viewpoint.Pos, bsp);
+		int side = PointOnSide(PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos, bsp);
 
 		// Recursively divide front space (toward the viewer).
 		CullNode(bsp->children[side]);
@@ -84,8 +84,8 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		if ((line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ)) && line->backsector == nullptr)
 		{
 			// Skip lines not facing viewer
-			DVector2 pt1 = line->v1->fPos() - r_viewpoint.Pos;
-			DVector2 pt2 = line->v2->fPos() - r_viewpoint.Pos;
+			DVector2 pt1 = line->v1->fPos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos;
+			DVector2 pt2 = line->v2->fPos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos;
 			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 				continue;
 
@@ -179,7 +179,7 @@ bool PolyCull::CheckBBox(float *bspcoord)
 {
 	// Start using a quick frustum AABB test:
 
-	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)r_viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)r_viewpoint.Pos.Z + 1000.0f));
+	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos.Z + 1000.0f));
 	auto result = IntersectionTest::frustum_aabb(frustumPlanes, aabb);
 	if (result == IntersectionTest::outside)
 		return false;
@@ -266,14 +266,15 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 	}
 
 	// Transform to 2D view space:
-	x1 = x1 - r_viewpoint.Pos.X;
-	y1 = y1 - r_viewpoint.Pos.Y;
-	x2 = x2 - r_viewpoint.Pos.X;
-	y2 = y2 - r_viewpoint.Pos.Y;
-	double rx1 = x1 * r_viewpoint.Sin - y1 * r_viewpoint.Cos;
-	double rx2 = x2 * r_viewpoint.Sin - y2 * r_viewpoint.Cos;
-	double ry1 = x1 * r_viewpoint.Cos + y1 * r_viewpoint.Sin;
-	double ry2 = x2 * r_viewpoint.Cos + y2 * r_viewpoint.Sin;
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	x1 = x1 - viewpoint.Pos.X;
+	y1 = y1 - viewpoint.Pos.Y;
+	x2 = x2 - viewpoint.Pos.X;
+	y2 = y2 - viewpoint.Pos.Y;
+	double rx1 = x1 * viewpoint.Sin - y1 * viewpoint.Cos;
+	double rx2 = x2 * viewpoint.Sin - y2 * viewpoint.Cos;
+	double ry1 = x1 * viewpoint.Cos + y1 * viewpoint.Sin;
+	double ry2 = x2 * viewpoint.Cos + y2 * viewpoint.Sin;
 
 	// Is it potentially visible when looking straight up or down?
 	if (!(ry1 < updownnear && ry2 < updownnear) && !(ry1 > znear && ry2 > znear) &&

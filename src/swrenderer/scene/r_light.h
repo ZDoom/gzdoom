@@ -57,7 +57,7 @@ namespace swrenderer
 
 		fixed_t FixedLightLevelShade() const { return (FixedLightLevel() >> COLORMAPSHIFT) << FRACBITS; }
 
-		void SetCamera(AActor *actor);
+		void SetCamera(RenderViewport *viewport, AActor *actor);
 		void ClearShaderColormap() { realfixedcolormap = nullptr; }
 		
 	private:
@@ -71,7 +71,7 @@ namespace swrenderer
 	public:
 		static LightVisibility *Instance();
 
-		void SetVisibility(double visibility);
+		void SetVisibility(RenderViewport *viewport, double visibility);
 		double GetVisibility() const { return CurrentVisibility; }
 
 		double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
@@ -84,10 +84,10 @@ namespace swrenderer
 		double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
 		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / screenZ; }
 		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
-		double FlatPlaneVis(int screenY, double planeZ, bool foggy) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - r_viewpoint.Pos.Z) * fabs(RenderViewport::Instance()->CenterY - screenY); }
+		double FlatPlaneVis(int screenY, double planeZ, bool foggy, RenderViewport *viewport) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - viewport->viewpoint.Pos.Z) * fabs(viewport->CenterY - screenY); }
 
 		static fixed_t LightLevelToShade(int lightlevel, bool foggy);
-		static int ActualExtraLight(bool fog) { return fog ? 0 : r_viewpoint.extralight << 4; }
+		static int ActualExtraLight(bool fog, RenderViewport *viewport) { return fog ? 0 : viewport->viewpoint.extralight << 4; }
 
 	private:
 		double BaseVisibility = 0.0;

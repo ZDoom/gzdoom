@@ -24,6 +24,7 @@
 
 struct TriVertex;
 struct ShadedTriVertex;
+namespace swrenderer { class RenderViewport; }
 
 struct TriMatrix
 {
@@ -36,8 +37,8 @@ struct TriMatrix
 	static TriMatrix perspective(float fovy, float aspect, float near, float far);
 	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
 
-	static TriMatrix worldToView(); // Software renderer world to view space transform
-	static TriMatrix viewToClip(); // Software renderer shearing projection
+	static TriMatrix worldToView(const FRenderViewpoint &viewpoint); // Software renderer world to view space transform
+	static TriMatrix viewToClip(swrenderer::RenderViewport *viewport); // Software renderer shearing projection
 
 	ShadedTriVertex operator*(TriVertex v) const;
 	TriMatrix operator*(const TriMatrix &m) const;

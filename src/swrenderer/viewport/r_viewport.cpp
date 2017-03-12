@@ -40,12 +40,6 @@ CVAR(String, r_viewsize, "", CVAR_NOSET)
 
 namespace swrenderer
 {
-	RenderViewport *RenderViewport::Instance()
-	{
-		static RenderViewport instance;
-		return &instance;
-	}
-
 	RenderViewport::RenderViewport()
 	{
 	}
@@ -70,8 +64,8 @@ namespace swrenderer
 
 		fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to
 
-		CenterX = r_viewwindow.centerx;
-		CenterY = r_viewwindow.centery;
+		CenterX = viewwindow.centerx;
+		CenterY = viewwindow.centery;
 
 		virtwidth = virtwidth2 = fullWidth;
 		virtheight = virtheight2 = fullHeight;
@@ -85,13 +79,13 @@ namespace swrenderer
 			virtwidth2 = virtwidth2 * AspectMultiplier(trueratio) / 48;
 		}
 
-		if (AspectTallerThanWide(r_viewwindow.WidescreenRatio))
+		if (AspectTallerThanWide(viewwindow.WidescreenRatio))
 		{
-			virtheight = virtheight * AspectMultiplier(r_viewwindow.WidescreenRatio) / 48;
+			virtheight = virtheight * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 		}
 		else
 		{
-			virtwidth = virtwidth * AspectMultiplier(r_viewwindow.WidescreenRatio) / 48;
+			virtwidth = virtwidth * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 		}
 
 		BaseYaspectMul = 320.0 * virtheight2 / (r_Yaspect * virtwidth2);
@@ -108,7 +102,7 @@ namespace swrenderer
 
 		// Reset r_*Visibility vars
 		LightVisibility *visibility = LightVisibility::Instance();
-		visibility->SetVisibility(visibility->GetVisibility());
+		visibility->SetVisibility(this, visibility->GetVisibility());
 
 		SetupBuffer();
 	}
@@ -117,9 +111,9 @@ namespace swrenderer
 	{
 		double dy;
 
-		if (r_viewpoint.camera != NULL)
+		if (viewpoint.camera != NULL)
 		{
-			dy = FocalLengthY * (-r_viewpoint.Angles.Pitch).Tan();
+			dy = FocalLengthY * (-viewpoint.Angles.Pitch).Tan();
 		}
 		else
 		{
@@ -127,7 +121,7 @@ namespace swrenderer
 		}
 
 		CenterY = (viewheight / 2.0) + dy;
-		r_viewwindow.centery = xs_ToInt(CenterY);
+		viewwindow.centery = xs_ToInt(CenterY);
 		globaluclip = -CenterY / InvZtoScale;
 		globaldclip = (viewheight - CenterY) / InvZtoScale;
 	}
@@ -153,23 +147,23 @@ namespace swrenderer
 		int i;
 
 		// Calc focallength so FieldOfView angles cover viewwidth.
-		FocalLengthX = CenterX / r_viewwindow.FocalTangent;
+		FocalLengthX = CenterX / viewwindow.FocalTangent;
 		FocalLengthY = FocalLengthX * YaspectMul;
 
 		// This is 1/FocalTangent before the widescreen extension of FOV.
-		viewingrangerecip = FLOAT2FIXED(1. / tan(r_viewpoint.FieldOfView.Radians() / 2));
+		viewingrangerecip = FLOAT2FIXED(1. / tan(viewpoint.FieldOfView.Radians() / 2));
 
 		// Now generate xtoviewangle for sky texture mapping.
 		// [RH] Do not generate viewangletox, because texture mapping is no
 		// longer done with trig, so it's not needed.
-		const double slopestep = r_viewwindow.FocalTangent / r_viewwindow.centerx;
+		const double slopestep = viewwindow.FocalTangent / viewwindow.centerx;
 		double slope;
 
-		for (i = r_viewwindow.centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
+		for (i = viewwindow.centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
 		{
 			xtoviewangle[i] = angle_t((2 * M_PI - atan(slope)) * (ANGLE_180 / M_PI));
 		}
-		for (i = 0; i < r_viewwindow.centerx; i++)
+		for (i = 0; i < viewwindow.centerx; i++)
 		{
 			xtoviewangle[i] = 0 - xtoviewangle[viewwidth - i - 1];
 		}
@@ -177,23 +171,23 @@ namespace swrenderer
 
 	DVector2 RenderViewport::PointWorldToView(const DVector2 &worldPos) const
 	{
-		double translatedX = worldPos.X - r_viewpoint.Pos.X;
-		double translatedY = worldPos.Y - r_viewpoint.Pos.Y;
+		double translatedX = worldPos.X - viewpoint.Pos.X;
+		double translatedY = worldPos.Y - viewpoint.Pos.Y;
 		return {
-			translatedX * r_viewpoint.Sin - translatedY * r_viewpoint.Cos,
-			translatedX * r_viewpoint.TanCos + translatedY * r_viewpoint.TanSin
+			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
+			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
 		};
 	}
 
 	DVector3 RenderViewport::PointWorldToView(const DVector3 &worldPos) const
 	{
-		double translatedX = worldPos.X - r_viewpoint.Pos.X;
-		double translatedY = worldPos.Y - r_viewpoint.Pos.Y;
-		double translatedZ = worldPos.Z - r_viewpoint.Pos.Z;
+		double translatedX = worldPos.X - viewpoint.Pos.X;
+		double translatedY = worldPos.Y - viewpoint.Pos.Y;
+		double translatedZ = worldPos.Z - viewpoint.Pos.Z;
 		return {
-			translatedX * r_viewpoint.Sin - translatedY * r_viewpoint.Cos,
+			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
 			translatedZ,
-			translatedX * r_viewpoint.TanCos + translatedY * r_viewpoint.TanSin
+			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
 		};
 	}
 

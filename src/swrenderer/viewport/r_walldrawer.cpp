@@ -17,16 +17,16 @@
 
 namespace swrenderer
 {
-	void WallDrawerArgs::SetDest(int x, int y)
+	void WallDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)
 	{
-		auto viewport = RenderViewport::Instance();
+		dc_viewport = viewport;
 		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
 	}
 
 	void WallDrawerArgs::DrawColumn(RenderThread *thread)
 	{
-		(thread->Drawers()->*wallfunc)(*this);
+		(thread->Drawers(dc_viewport)->*wallfunc)(*this);
 	}
 
 	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)

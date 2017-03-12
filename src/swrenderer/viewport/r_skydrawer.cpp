@@ -19,24 +19,24 @@ namespace swrenderer
 {
 	void SkyDrawerArgs::DrawSingleSkyColumn(RenderThread *thread)
 	{
-		thread->Drawers()->DrawSingleSkyColumn(*this);
+		thread->Drawers(dc_viewport)->DrawSingleSkyColumn(*this);
 	}
 
 	void SkyDrawerArgs::DrawDoubleSkyColumn(RenderThread *thread)
 	{
-		thread->Drawers()->DrawDoubleSkyColumn(*this);
+		thread->Drawers(dc_viewport)->DrawDoubleSkyColumn(*this);
 	}
 
-	void SkyDrawerArgs::SetDest(int x, int y)
+	void SkyDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)
 	{
-		auto viewport = RenderViewport::Instance();
 		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
+		dc_viewport = viewport;
 	}
 
-	void SkyDrawerArgs::SetFrontTexture(FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetFrontTexture(RenderViewport *viewport, FTexture *texture, uint32_t column)
 	{
-		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		if (viewport->RenderTarget->IsBgra())
 		{
 			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight = texture->GetHeight();
@@ -48,14 +48,14 @@ namespace swrenderer
 		}
 	}
 
-	void SkyDrawerArgs::SetBackTexture(FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetBackTexture(RenderViewport *viewport, FTexture *texture, uint32_t column)
 	{
 		if (texture == nullptr)
 		{
 			dc_source2 = nullptr;
 			dc_sourceheight2 = 1;
 		}
-		else if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		else if (viewport->RenderTarget->IsBgra())
 		{
 			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight2 = texture->GetHeight();

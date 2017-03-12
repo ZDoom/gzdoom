@@ -362,7 +362,7 @@ int RenderPolyWall::GetLightLevel()
 	else
 	{
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Thread.Viewport->viewpoint.extralight << 4;
 		return clamp(Side->GetLightLevel(foggy, LineSeg->frontsector->lightlevel) + actualextralight, 0, 255);
 	}
 }

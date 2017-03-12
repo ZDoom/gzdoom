@@ -61,6 +61,7 @@ namespace swrenderer
 		Scene = scene;
 		MainThread = mainThread;
 		FrameMemory = std::make_unique<RenderMemory>();
+		Viewport = std::make_unique<RenderViewport>();
 		DrawQueue = std::make_shared<DrawerCommandQueue>(this);
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);
 		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
@@ -79,9 +80,9 @@ namespace swrenderer
 	{
 	}
 	
-	SWPixelFormatDrawers *RenderThread::Drawers()
+	SWPixelFormatDrawers *RenderThread::Drawers(RenderViewport *viewport)
 	{
-		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		if (viewport->RenderTarget->IsBgra())
 			return tc_drawers.get();
 		else
 			return pal_drawers.get();

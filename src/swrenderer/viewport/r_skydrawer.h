@@ -13,10 +13,10 @@ namespace swrenderer
 	class SkyDrawerArgs : public DrawerArgs
 	{
 	public:
-		void SetDest(int x, int y);
+		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
-		void SetFrontTexture(FTexture *texture, uint32_t column);
-		void SetBackTexture(FTexture *texture, uint32_t column);
+		void SetFrontTexture(RenderViewport *viewport, FTexture *texture, uint32_t column);
+		void SetBackTexture(RenderViewport *viewport, FTexture *texture, uint32_t column);
 		void SetTextureVPos(uint32_t texturefrac) { dc_texturefrac = texturefrac; }
 		void SetTextureVStep(uint32_t iscale) { dc_iscale = iscale; }
 		void SetSolidTop(uint32_t color) { solid_top = color; }
@@ -39,6 +39,8 @@ namespace swrenderer
 		int FrontTextureHeight() const { return dc_sourceheight; }
 		int BackTextureHeight() const { return dc_sourceheight2; }
 
+		RenderViewport *Viewport() const { return dc_viewport; }
+
 		void DrawSingleSkyColumn(RenderThread *thread);
 		void DrawDoubleSkyColumn(RenderThread *thread);
 
@@ -55,5 +57,6 @@ namespace swrenderer
 		uint32_t solid_top;
 		uint32_t solid_bottom;
 		bool fadeSky;
+		RenderViewport *dc_viewport = nullptr;
 	};
 }

@@ -44,10 +44,8 @@
 
 namespace swrenderer
 {
-	WallSampler::WallSampler(int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)
+	WallSampler::WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)
 	{
-		auto viewport = RenderViewport::Instance();
-		
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
 		if (!viewport->RenderTarget->IsBgra())
@@ -175,7 +173,7 @@ namespace swrenderer
 	{
 		if (r_dynlights && light_list)
 		{
-			auto viewport = RenderViewport::Instance();
+			auto viewport = Thread->Viewport.get();
 			
 			// Find column position in view space
 			float w1 = 1.0f / WallC.sz1;
@@ -207,12 +205,12 @@ namespace swrenderer
 			{
 				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 				{
-					double lightX = cur_node->lightsource->X() - r_viewpoint.Pos.X;
-					double lightY = cur_node->lightsource->Y() - r_viewpoint.Pos.Y;
-					double lightZ = cur_node->lightsource->Z() - r_viewpoint.Pos.Z;
+					double lightX = cur_node->lightsource->X() - Thread->Viewport->viewpoint.Pos.X;
+					double lightY = cur_node->lightsource->Y() - Thread->Viewport->viewpoint.Pos.Y;
+					double lightZ = cur_node->lightsource->Z() - Thread->Viewport->viewpoint.Pos.Z;
 
-					float lx = (float)(lightX * r_viewpoint.Sin - lightY * r_viewpoint.Cos) - drawerargs.dc_viewpos.X;
-					float ly = (float)(lightX * r_viewpoint.TanCos + lightY * r_viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
+					float lx = (float)(lightX * Thread->Viewport->viewpoint.Sin - lightY * Thread->Viewport->viewpoint.Cos) - drawerargs.dc_viewpos.X;
+					float ly = (float)(lightX * Thread->Viewport->viewpoint.TanCos + lightY * Thread->Viewport->viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
 					float lz = (float)lightZ;
 
 					// Precalculate the constant part of the dot here so the drawer doesn't have to.
@@ -245,13 +243,13 @@ namespace swrenderer
 			drawerargs.dc_num_lights = 0;
 		}
 
-		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		if (Thread->Viewport->RenderTarget->IsBgra())
 		{
 			int count = y2 - y1;
 
 			drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
 			drawerargs.SetTextureUPos(sampler.texturefracx);
-			drawerargs.SetDest(x, y1);
+			drawerargs.SetDest(Thread->Viewport.get(), x, y1);
 			drawerargs.SetCount(count);
 			drawerargs.SetTextureVStep(sampler.uv_step);
 			drawerargs.SetTextureVPos(sampler.uv_pos);
@@ -269,7 +267,7 @@ namespace swrenderer
 
 				drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
 				drawerargs.SetTextureUPos(sampler.texturefracx);
-				drawerargs.SetDest(x, y1);
+				drawerargs.SetDest(Thread->Viewport.get(), x, y1);
 				drawerargs.SetCount(count);
 				drawerargs.SetTextureVStep(sampler.uv_step);
 				drawerargs.SetTextureVPos(sampler.uv_pos);
@@ -294,7 +292,7 @@ namespace swrenderer
 
 					drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
 					drawerargs.SetTextureUPos(sampler.texturefracx);
-					drawerargs.SetDest(x, y1);
+					drawerargs.SetDest(Thread->Viewport.get(), x, y1);
 					drawerargs.SetCount(count);
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
@@ -325,7 +323,7 @@ namespace swrenderer
 			texturemid = 0;
 		}
 
-		drawerargs.SetTextureFracBits(RenderViewport::Instance()->RenderTarget->IsBgra() ? FRACBITS : fracbits);
+		drawerargs.SetTextureFracBits(Thread->Viewport->RenderTarget->IsBgra() ? FRACBITS : fracbits);
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0);
@@ -357,7 +355,7 @@ namespace swrenderer
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
-			WallSampler sampler(y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic);
+			WallSampler sampler(Thread->Viewport.get(), y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic);
 			Draw1Column(x, y1, y2, sampler);
 		}
 
@@ -387,7 +385,7 @@ namespace swrenderer
 		// kg3D - fake floors instead of zdoom light list
 		for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 		{
-			ProjectedWallCull j = most3.Project(frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+			ProjectedWallCull j = most3.Project(Thread->Viewport.get(), frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			if (j != ProjectedWallCull::OutsideAbove)
 			{
 				for (int j = x1; j < x2; ++j)
@@ -401,7 +399,7 @@ namespace swrenderer
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 			basecolormap = lit->extra_colormap;
-			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + LightVisibility::ActualExtraLight(foggy), foggy);
+			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);
@@ -446,17 +444,17 @@ namespace swrenderer
 
 		if (yrepeat >= 0)
 		{ // normal orientation: draw strips from top to bottom
-			partition = top - fmod(top - texturemid / yrepeat - r_viewpoint.Pos.Z, scaledtexheight);
+			partition = top - fmod(top - texturemid / yrepeat - Thread->Viewport->viewpoint.Pos.Z, scaledtexheight);
 			if (partition == top)
 			{
 				partition -= scaledtexheight;
 			}
 			const short *up = uwal;
 			short *down = most1.ScreenY;
-			texturemid = (partition - r_viewpoint.Pos.Z) * yrepeat + texheight;
+			texturemid = (partition - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + texheight;
 			while (partition > bot)
 			{
-				ProjectedWallCull j = most3.Project(partition - r_viewpoint.Pos.Z, &WallC);
+				ProjectedWallCull j = most3.Project(Thread->Viewport.get(), partition - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 				if (j != ProjectedWallCull::OutsideAbove)
 				{
 					for (int j = x1; j < x2; ++j)
@@ -474,13 +472,13 @@ namespace swrenderer
 		}
 		else
 		{ // upside down: draw strips from bottom to top
-			partition = bot - fmod(bot - texturemid / yrepeat - r_viewpoint.Pos.Z, scaledtexheight);
+			partition = bot - fmod(bot - texturemid / yrepeat - Thread->Viewport->viewpoint.Pos.Z, scaledtexheight);
 			short *up = most1.ScreenY;
 			const short *down = dwal;
-			texturemid = (partition - r_viewpoint.Pos.Z) * yrepeat + texheight;
+			texturemid = (partition - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + texheight;
 			while (partition < top)
 			{
-				ProjectedWallCull j = most3.Project(partition - r_viewpoint.Pos.Z, &WallC);
+				ProjectedWallCull j = most3.Project(Thread->Viewport.get(), partition - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 				if (j != ProjectedWallCull::OutsideBelow)
 				{
 					for (int j = x1; j < x2; ++j)

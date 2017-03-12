@@ -94,7 +94,7 @@ namespace swrenderer
 	struct WallSampler
 	{
 		WallSampler() { }
-		WallSampler(int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture);
+		WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture);
 
 		uint32_t uv_pos;
 		uint32_t uv_step;

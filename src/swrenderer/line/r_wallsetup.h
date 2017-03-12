@@ -20,9 +20,9 @@ namespace swrenderer
 	public:
 		short ScreenY[MAXWIDTH];
 
-		ProjectedWallCull Project(double z1, double z2, const FWallCoords *wallc);
-		ProjectedWallCull Project(const secplane_t &plane, const FWallCoords *wallc, seg_t *line, bool xflip);
-		ProjectedWallCull Project(double z, const FWallCoords *wallc);
+		ProjectedWallCull Project(RenderViewport *viewport, double z1, double z2, const FWallCoords *wallc);
+		ProjectedWallCull Project(RenderViewport *viewport, const secplane_t &plane, const FWallCoords *wallc, seg_t *line, bool xflip);
+		ProjectedWallCull Project(RenderViewport *viewport, double z, const FWallCoords *wallc);
 	};
 
 	class ProjectedWallTexcoords
@@ -31,7 +31,7 @@ namespace swrenderer
 		float VStep[MAXWIDTH]; // swall
 		fixed_t UPos[MAXWIDTH]; // lwall
 
-		void Project(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
-		void ProjectPos(double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
+		void Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
+		void ProjectPos(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 	};
 }

@@ -52,7 +52,10 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 {
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 
-	auto viewport = RenderViewport::Instance();
+	static RenderThread thread(nullptr);
+	thread.DrawQueue->ThreadedRender = false;
+
+	auto viewport = thread.Viewport.get();
 	viewport->RenderTarget = canvas;
 	viewport->RenderTarget->Lock(true);
 
@@ -100,7 +103,7 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 
 	drawerargs.SetTranslationMap(translation);
 	drawerargs.SetLight(basecolormap, 0.0f, shade);
-	bool visible = drawerargs.SetStyle(parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+	bool visible = drawerargs.SetStyle(viewport, parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
 
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
@@ -184,8 +187,6 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
-		static RenderThread thread(nullptr);
-		thread.DrawQueue->ThreadedRender = false;
 		while (x < x2_i)
 		{
 			drawerargs.DrawMaskedColumn(&thread, x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
@@ -256,7 +257,10 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 		return;
 	}
 
-	auto viewport = RenderViewport::Instance();
+	static RenderThread thread(nullptr);
+	thread.DrawQueue->ThreadedRender = false;
+
+	auto viewport = thread.Viewport.get();
 	viewport->RenderTarget = canvas;
 
 	viewport->RenderTarget->Lock(true);
@@ -270,7 +274,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 
 	// Setup constant texture mapping parameters.
 	SpanDrawerArgs drawerargs;
-	drawerargs.SetTexture(tex);
+	drawerargs.SetTexture(viewport, tex);
 	if (colormap)
 		drawerargs.SetLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
@@ -330,9 +334,6 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 		pt2++;			if (pt2 > npoints) pt2 = 0;
 	} while (pt1 != botpt);
 
-	static RenderThread thread(nullptr);
-	thread.DrawQueue->ThreadedRender = false;
-
 	// Travel down the left edge and fill it in.
 	pt1 = toppt;
 	pt2 = toppt - 1;	if (pt2 < 0) pt2 = npoints;
@@ -364,7 +365,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 #if 0
 					memset(this->Buffer + y * this->Pitch + x1, (int)tex, x2 - x1);
 #else
-					drawerargs.SetDestY(y);
+					drawerargs.SetDestY(viewport, y);
 					drawerargs.SetDestX1(x1);
 					drawerargs.SetDestX2(x2 - 1);
 

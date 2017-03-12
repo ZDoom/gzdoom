@@ -144,8 +144,8 @@ namespace swrenderer
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
 		float maskedScaleY;
 
-		decal_left = decal_pos - edge_left * angvec - r_viewpoint.Pos;
-		decal_right = decal_pos + edge_right * angvec - r_viewpoint.Pos;
+		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos;
+		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos;
 
 		CameraLight *cameraLight;
 		double texturemid;
@@ -222,7 +222,7 @@ namespace swrenderer
 		}
 
 		yscale = decal->ScaleY;
-		texturemid = WallSpriteTile->TopOffset + (zpos - r_viewpoint.Pos.Z) / yscale;
+		texturemid = WallSpriteTile->TopOffset + (zpos - thread->Viewport->viewpoint.Pos.Z) / yscale;
 
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);
@@ -233,7 +233,7 @@ namespace swrenderer
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(WallSpriteTile->GetWidth(), x1, x2, WallT);
+		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT);
 
 		if (flipx)
 		{
@@ -291,7 +291,7 @@ namespace swrenderer
 			else
 				calclighting = true;
 
-			bool visible = drawerargs.SetStyle(decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
+			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
 
 			// R_SetPatchStyle can modify basecolormap.
 			if (rereadcolormap)
@@ -323,7 +323,7 @@ namespace swrenderer
 
 	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 		
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

@@ -76,7 +76,7 @@ namespace swrenderer
 
 	void RenderScene::RenderView(player_t *player)
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = MainThread()->Viewport.get();
 		viewport->RenderTarget = screen;
 
 		int width = SCREENWIDTH;
@@ -132,9 +132,9 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		WallScanCycles.Reset();
 		
-		R_SetupFrame(r_viewpoint, r_viewwindow, actor);
-		CameraLight::Instance()->SetCamera(actor);
-		RenderViewport::Instance()->SetupFreelook();
+		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor);
+		CameraLight::Instance()->SetCamera(MainThread()->Viewport.get(), actor);
+		MainThread()->Viewport->SetupFreelook();
 
 		NetUpdate();
 
@@ -143,23 +143,23 @@ namespace swrenderer
 		// [RH] Setup particles for this frame
 		P_FindParticleSubsectors();
 
-		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
+		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
-		if (!r_viewpoint.showviewer)
+		if (!MainThread()->Viewport->viewpoint.showviewer)
 		{
-			r_viewpoint.camera->renderflags |= RF_INVISIBLE;
+			MainThread()->Viewport->viewpoint.camera->renderflags |= RF_INVISIBLE;
 		}
 
 		RenderThreadSlices();
 		MainThread()->PlayerSprites->Render();
 		RenderDrawQueues();
 
-		r_viewpoint.camera->renderflags = savedflags;
+		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
 
 		// If we don't want shadered colormaps, NULL it now so that the
 		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !RenderViewport::Instance()->RenderTarget->IsBgra())
+		if (!r_shadercolormaps && !MainThread()->Viewport->RenderTarget->IsBgra())
 		{
 			CameraLight::Instance()->ClearShaderColormap();
 		}
@@ -184,6 +184,7 @@ namespace swrenderer
 		std::unique_lock<std::mutex> start_lock(start_mutex);
 		for (int i = 0; i < numThreads; i++)
 		{
+			*Threads[i]->Viewport = *MainThread()->Viewport;
 			Threads[i]->X1 = viewwidth * i / numThreads;
 			Threads[i]->X2 = viewwidth * (i + 1) / numThreads;
 		}
@@ -321,24 +322,24 @@ namespace swrenderer
 
 	void RenderScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = MainThread()->Viewport.get();
 		
 		const bool savedviewactive = viewactive;
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
 
-		R_SetWindow(r_viewpoint, r_viewwindow, 12, width, height, height, true);
+		R_SetWindow(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
-		viewport->SetViewport(width, height, r_viewwindow.WidescreenRatio);
+		viewport->SetViewport(width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
 		
 		viewport->RenderTarget = screen;
 
-		R_ExecuteSetViewSize(r_viewpoint, r_viewwindow);
+		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
@@ -350,7 +351,7 @@ namespace swrenderer
 
 	void RenderScene::ScreenResized()
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = MainThread()->Viewport.get();
 		viewport->RenderTarget = screen;
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;

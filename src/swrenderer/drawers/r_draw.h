@@ -84,9 +84,9 @@ namespace swrenderer
 		virtual void DrawSpanAddClamp(const SpanDrawerArgs &args) = 0;
 		virtual void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) = 0;
 		virtual void FillSpan(const SpanDrawerArgs &args) = 0;
-		virtual void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
-		virtual void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
-		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) = 0;
+		virtual void DrawTiltedSpan(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) = 0;
+		virtual void DrawColoredSpan(const SpanDrawerArgs &args) = 0;
+		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args) = 0;
 		
 		DrawerCommandQueuePtr Queue;
 	};

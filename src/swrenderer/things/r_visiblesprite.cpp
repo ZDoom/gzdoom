@@ -95,7 +95,7 @@ namespace swrenderer
 		{
 			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
 			{
-				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(r_viewpoint.Pos);
+				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(thread->Viewport->viewpoint.Pos);
 			}
 			sector_t *sec = nullptr;
 			FDynamicColormap *mybasecolormap = nullptr;
@@ -138,7 +138,7 @@ namespace swrenderer
 				bool isFullBright = !foggy && (renderflags & RF_FULLBRIGHT);
 				bool fadeToBlack = spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0;
 
-				int spriteshade = LightVisibility::LightLevelToShade(sec->lightlevel + LightVisibility::ActualExtraLight(spr->foggy), foggy);
+				int spriteshade = LightVisibility::LightLevelToShade(sec->lightlevel + LightVisibility::ActualExtraLight(spr->foggy, thread->Viewport.get()), foggy);
 
 				Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis(foggy) / MAX(MINZ, (double)spr->depth), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
 			}
@@ -154,7 +154,7 @@ namespace swrenderer
 		// Clip the sprite against deep water and/or fake ceilings.
 		// [RH] rewrote this to be based on which part of the sector is really visible
 		
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 
 		double scale = viewport->InvZtoScale * spr->idepth;
 		double hzb = -DBL_MAX, hzt = DBL_MAX;
@@ -169,7 +169,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
 				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 				{ // seen below floor: clip top
@@ -191,7 +191,7 @@ namespace swrenderer
 			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 			{
 				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
-				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 				{ // seen above ceiling: clip bottom
@@ -230,12 +230,12 @@ namespace swrenderer
 				if (spr->fakefloor)
 				{
 					double floorz = spr->fakefloor->top.plane->Zat0();
-					if (r_viewpoint.Pos.Z > floorz && floorz == clip3d->sclipBottom)
+					if (viewport->viewpoint.Pos.Z > floorz && floorz == clip3d->sclipBottom)
 					{
 						hz = spr->fakefloor->bottom.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 				if (h < botclip)
 				{
 					botclip = MAX<short>(0, h);
@@ -251,12 +251,12 @@ namespace swrenderer
 				if (spr->fakeceiling != nullptr)
 				{
 					double ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
-					if (r_viewpoint.Pos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
+					if (viewport->viewpoint.Pos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
 					{
 						hz = spr->fakeceiling->top.plane->Zat0();
 					}
 				}
-				int h = xs_RoundToInt(viewport->CenterY - (hz - r_viewpoint.Pos.Z) * scale);
+				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 				if (h > topclip)
 				{
 					topclip = short(MIN(h, viewheight));

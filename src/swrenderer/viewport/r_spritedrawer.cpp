@@ -48,7 +48,7 @@ namespace swrenderer
 		if (x < thread->X1 || x >= thread->X2)
 			return;
 
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 		
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
@@ -57,6 +57,7 @@ namespace swrenderer
 			return;
 		}
 
+		dc_viewport = viewport;
 		dc_x = x;
 		dc_iscale = iscale;
 		dc_textureheight = tex->GetHeight();
@@ -108,7 +109,7 @@ namespace swrenderer
 				dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
 				dc_source = column;
 				dc_source2 = nullptr;
-				SetDest(dc_x, dc_yl);
+				SetDest(viewport, dc_x, dc_yl);
 				dc_count = dc_yh - dc_yl + 1;
 
 				fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
@@ -119,7 +120,7 @@ namespace swrenderer
 				else if (dc_iscale < 0)
 					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-				(thread->Drawers()->*colfunc)(*this);
+				(thread->Drawers(dc_viewport)->*colfunc)(*this);
 			}
 			span++;
 		}
@@ -127,6 +128,7 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
+		dc_viewport = thread->Viewport.get();
 		dc_x = x;
 		dc_iscale = iscale;
 
@@ -228,13 +230,13 @@ namespace swrenderer
 
 			if (dc_yl <= dc_yh)
 			{
-				SetDest(dc_x, dc_yl);
+				SetDest(dc_viewport, dc_x, dc_yl);
 				dc_count = dc_yh - dc_yl + 1;
 
 				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-				(thread->Drawers()->*colfunc)(*this);
+				(thread->Drawers(dc_viewport)->*colfunc)(*this);
 			}
 			span++;
 		}
@@ -376,7 +378,7 @@ namespace swrenderer
 		}
 	}
 
-	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
 		fixed_t fglevel, bglevel;
 
@@ -408,8 +410,6 @@ namespace swrenderer
 			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
 		}
 		
-		auto viewport = RenderViewport::Instance();
-
 		if (translation != -1)
 		{
 			SetTranslationMap(nullptr);
@@ -483,19 +483,19 @@ namespace swrenderer
 		return SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags);
 	}
 
-	bool SpriteDrawerArgs::SetStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
 	{
-		return SetStyle(style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
+		return SetStyle(viewport, style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
 	}
 
 	void SpriteDrawerArgs::FillColumn(RenderThread *thread)
 	{
-		thread->Drawers()->FillColumn(*this);
+		thread->Drawers(dc_viewport)->FillColumn(*this);
 	}
 
 	void SpriteDrawerArgs::DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount)
 	{
-		if (RenderViewport::Instance()->RenderTarget->IsBgra())
+		if (dc_viewport->RenderTarget->IsBgra())
 		{
 			double v = vPos / (double)voxelsCount / FRACUNIT;
 			double vstep = vStep / (double)voxelsCount / FRACUNIT;
@@ -512,13 +512,13 @@ namespace swrenderer
 		dc_source = voxels;
 		dc_source2 = 0;
 		dc_textureheight = voxelsCount;
-		(thread->Drawers()->*colfunc)(*this);
+		(thread->Drawers(dc_viewport)->*colfunc)(*this);
 	}
 
-	void SpriteDrawerArgs::SetDest(int x, int y)
+	void SpriteDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)
 	{
-		auto viewport = RenderViewport::Instance();
 		dc_dest = viewport->GetDest(x, y);
 		dc_dest_y = y;
+		dc_viewport = viewport;
 	}
 }

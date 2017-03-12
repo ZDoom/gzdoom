@@ -191,7 +191,7 @@ namespace swrenderer
 					renderportal->CurrentPortalUniq == check->CurrentPortalUniq &&
 					renderportal->MirrorFlags == check->MirrorFlags &&
 					Thread->Clip3D->CurrentSkybox == check->CurrentSkybox &&
-					r_viewpoint.Pos == check->viewpos
+					Thread->Viewport->viewpoint.Pos == check->viewpos
 					)
 				{
 					return check;
@@ -350,8 +350,8 @@ namespace swrenderer
 		VisiblePlane *pl;
 		int i;
 
-		DVector3 oViewPos = r_viewpoint.Pos;
-		DAngle oViewAngle = r_viewpoint.Angles.Yaw;
+		DVector3 oViewPos = Thread->Viewport->viewpoint.Pos;
+		DAngle oViewAngle = Thread->Viewport->viewpoint.Angles.Yaw;
 		
 		RenderPortal *renderportal = Thread->Portal.get();
 
@@ -364,15 +364,15 @@ namespace swrenderer
 
 				if (pl->sky < 0 && pl->height.Zat0() == height)
 				{
-					r_viewpoint.Pos = pl->viewpos;
-					r_viewpoint.Angles.Yaw = pl->viewangle;
+					Thread->Viewport->viewpoint.Pos = pl->viewpos;
+					Thread->Viewport->viewpoint.Angles.Yaw = pl->viewangle;
 					renderportal->MirrorFlags = pl->MirrorFlags;
 
 					pl->Render(Thread, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 				}
 			}
 		}
-		r_viewpoint.Pos = oViewPos;
-		r_viewpoint.Angles.Yaw = oViewAngle;
+		Thread->Viewport->viewpoint.Pos = oViewPos;
+		Thread->Viewport->viewpoint.Angles.Yaw = oViewAngle;
 	}
 }

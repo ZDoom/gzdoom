@@ -73,8 +73,8 @@ namespace swrenderer
 		basecolormap = colormap;
 		mLineSegment = line;
 
-		DVector2 pt1 = line->v1->fPos() - r_viewpoint.Pos;
-		DVector2 pt2 = line->v2->fPos() - r_viewpoint.Pos;
+		DVector2 pt1 = line->v1->fPos() - Thread->Viewport->viewpoint.Pos;
+		DVector2 pt2 = line->v2->fPos() - Thread->Viewport->viewpoint.Pos;
 
 		// Reject lines not facing viewer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
@@ -98,7 +98,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, r_viewpoint.Pos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
 			return;
 
 		vertex_t *v1 = line->linedef->v1;
@@ -114,7 +114,7 @@ namespace swrenderer
 			{
 				swapvalues(v1, v2);
 			}
-			WallT.InitFromLine(Thread, v1->fPos() - r_viewpoint.Pos, v2->fPos() - r_viewpoint.Pos);
+			WallT.InitFromLine(Thread, v1->fPos() - Thread->Viewport->viewpoint.Pos, v2->fPos() - Thread->Viewport->viewpoint.Pos);
 		}
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
@@ -363,13 +363,13 @@ namespace swrenderer
 			draw_segment->silhouette = 0;
 
 			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
-				mBackSector->floorplane.PointOnSide(r_viewpoint.Pos) < 0)
+				mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
 				draw_segment->silhouette = SIL_BOTTOM;
 			}
 
 			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 ||
-				mBackSector->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0)
+				mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
 				draw_segment->silhouette |= SIL_TOP;
 			}
@@ -496,7 +496,7 @@ namespace swrenderer
 					}
 					else
 					{
-						draw_segment->shade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + LightVisibility::ActualExtraLight(foggy), foggy);
+						draw_segment->shade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
@@ -564,7 +564,7 @@ namespace swrenderer
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr)
 		{
-			int planeside = mFrontSector->floorplane.PointOnSide(r_viewpoint.Pos);
+			int planeside = mFrontSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos);
 			if (mFrontSector->floorplane.fC() < 0)	// 3D floors have the floor backwards
 				planeside = -planeside;
 			if (planeside <= 0)		// above view plane
@@ -621,7 +621,7 @@ namespace swrenderer
 		// deep water check
 		if (mFrontSector->GetHeightSec() == nullptr && mFrontSector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			int planeside = mFrontSector->ceilingplane.PointOnSide(r_viewpoint.Pos);
+			int planeside = mFrontSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos);
 			if (mFrontSector->ceilingplane.fC() > 0) // 3D floors have the ceiling backwards
 				planeside = -planeside;
 			if (planeside <= 0) // below view plane
@@ -706,25 +706,25 @@ namespace swrenderer
 			if (mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2)
 			{
 				rw_havehigh = true;
-				wallupper.Project(mBackSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+				wallupper.Project(Thread->Viewport.get(), mBackSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 			}
 			if (mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2)
 			{
 				rw_havelow = true;
-				walllower.Project(mBackSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+				walllower.Project(Thread->Viewport.get(), mBackSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 			}
 		}
 
 		if (mLineSegment->linedef->special == Line_Horizon)
 		{
 			// Be aware: Line_Horizon does not work properly with sloped planes
-			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, r_viewwindow.centery);
-			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, r_viewwindow.centery);
+			fillshort(walltop.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, Thread->Viewport->viewwindow.centery);
+			fillshort(wallbottom.ScreenY + WallC.sx1, WallC.sx2 - WallC.sx1, Thread->Viewport->viewwindow.centery);
 		}
 		else
 		{
-			mCeilingClipped = walltop.Project(mFrontSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
-			mFloorClipped = wallbottom.Project(mFrontSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+			mCeilingClipped = walltop.Project(Thread->Viewport.get(), mFrontSector->ceilingplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
+			mFloorClipped = wallbottom.Project(Thread->Viewport.get(), mFrontSector->floorplane, &WallC, mLineSegment, renderportal->MirrorFlags & RF_XFLIP);
 		}
 
 		side_t *sidedef = mLineSegment->sidedef;
@@ -758,7 +758,7 @@ namespace swrenderer
 				  // wall but nothing to draw for it.
 				  // Recalculate walltop so that the wall is clipped by the back sector's
 				  // ceiling instead of the front sector's ceiling.
-					walltop.Project(mBackSector->ceilingplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
+					walltop.Project(Thread->Viewport.get(), mBackSector->ceilingplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
 				}
 			}
 		}
@@ -776,12 +776,12 @@ namespace swrenderer
 				mBottomPart.Texture ? (mBottomPart.Texture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 				1.;
 
-			walltexcoords.Project(sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
 
 			CameraLight *cameraLight = CameraLight::Instance();
 			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
-				wallshade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + LightVisibility::ActualExtraLight(foggy), foggy);
+				wallshade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 				double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
@@ -819,7 +819,7 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mTopPart.Texture != NULL)
 				{
 					rowoffset += mTopPart.Texture->GetHeight();
@@ -827,7 +827,7 @@ namespace swrenderer
 			}
 			else
 			{ // bottom of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 			}
 		}
 		else
@@ -835,11 +835,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // bottom of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
+				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
 			}
 			else
 			{ // top of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
+				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 			}
 		}
 		if (mTopPart.Texture->bWorldPanning)
@@ -875,11 +875,11 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 			}
 			else
 			{ // top of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat;
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mMiddlePart.Texture != NULL)
 				{
 					rowoffset += mMiddlePart.Texture->GetHeight();
@@ -891,11 +891,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // top of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat;
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // bottom of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - r_viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
+				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
 			}
 		}
 		if (mMiddlePart.Texture->bWorldPanning)
@@ -940,11 +940,11 @@ namespace swrenderer
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - r_viewpoint.Pos.Z) * yrepeat;
+				mBottomPart.TextureMid = (frontlowertop - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // top of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat;
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 				if (rowoffset < 0 && mBottomPart.Texture != NULL)
 				{
 					rowoffset += mBottomPart.Texture->GetHeight();
@@ -956,11 +956,11 @@ namespace swrenderer
 			rowoffset = -rowoffset;
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // top of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - r_viewpoint.Pos.Z) * yrepeat;
+				mBottomPart.TextureMid = (frontlowertop - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
 			}
 			else
 			{ // bottom of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - r_viewpoint.Pos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
+				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
 			}
 		}
 		if (mBottomPart.Texture->bWorldPanning)
@@ -1134,7 +1134,7 @@ namespace swrenderer
 		double yscale = rw_pic->Scale.Y * mTopPart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1181,7 +1181,7 @@ namespace swrenderer
 		double yscale = rw_pic->Scale.Y * mMiddlePart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1229,7 +1229,7 @@ namespace swrenderer
 		double yscale = rw_pic->Scale.Y * mBottomPart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1271,14 +1271,14 @@ namespace swrenderer
 	// Transform and clip coordinates. Returns true if it was clipped away
 	bool FWallCoords::Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close)
 	{
-		tleft.X = float(pt1.X * r_viewpoint.Sin - pt1.Y * r_viewpoint.Cos);
-		tright.X = float(pt2.X * r_viewpoint.Sin - pt2.Y * r_viewpoint.Cos);
-
-		tleft.Y = float(pt1.X * r_viewpoint.TanCos + pt1.Y * r_viewpoint.TanSin);
-		tright.Y = float(pt2.X * r_viewpoint.TanCos + pt2.Y * r_viewpoint.TanSin);
-		
+		auto viewport = thread->Viewport.get();
 		RenderPortal *renderportal = thread->Portal.get();
-		auto viewport = RenderViewport::Instance();
+
+		tleft.X = float(pt1.X * viewport->viewpoint.Sin - pt1.Y * viewport->viewpoint.Cos);
+		tright.X = float(pt2.X * viewport->viewpoint.Sin - pt2.Y * viewport->viewpoint.Cos);
+
+		tleft.Y = float(pt1.X * viewport->viewpoint.TanCos + pt1.Y * viewport->viewpoint.TanSin);
+		tright.Y = float(pt2.X * viewport->viewpoint.TanCos + pt2.Y * viewport->viewpoint.TanSin);
 
 		if (renderportal->MirrorFlags & RF_XFLIP)
 		{
@@ -1342,9 +1342,9 @@ namespace swrenderer
 		{
 			swapvalues(left, right);
 		}
-		UoverZorg = left->X * r_viewwindow.centerx;
+		UoverZorg = left->X * thread->Viewport->viewwindow.centerx;
 		UoverZstep = -left->Y;
-		InvZorg = (left->X - right->X) * r_viewwindow.centerx;
+		InvZorg = (left->X - right->X) * thread->Viewport->viewwindow.centerx;
 		InvZstep = right->Y - left->Y;
 	}
 
@@ -1352,10 +1352,12 @@ namespace swrenderer
 	{
 		// Coordinates should have already had viewx,viewy subtracted
 
-		double fullx1 = left.X * r_viewpoint.Sin - left.Y * r_viewpoint.Cos;
-		double fullx2 = right.X * r_viewpoint.Sin - right.Y * r_viewpoint.Cos;
-		double fully1 = left.X * r_viewpoint.TanCos + left.Y * r_viewpoint.TanSin;
-		double fully2 = right.X * r_viewpoint.TanCos + right.Y * r_viewpoint.TanSin;
+		auto viewport = thread->Viewport.get();
+
+		double fullx1 = left.X * viewport->viewpoint.Sin - left.Y * viewport->viewpoint.Cos;
+		double fullx2 = right.X * viewport->viewpoint.Sin - right.Y * viewport->viewpoint.Cos;
+		double fully1 = left.X * viewport->viewpoint.TanCos + left.Y * viewport->viewpoint.TanSin;
+		double fully2 = right.X * viewport->viewpoint.TanCos + right.Y * viewport->viewpoint.TanSin;
 		
 		RenderPortal *renderportal = thread->Portal.get();
 
@@ -1365,9 +1367,9 @@ namespace swrenderer
 			fullx2 = -fullx2;
 		}
 
-		UoverZorg = float(fullx1 * r_viewwindow.centerx);
+		UoverZorg = float(fullx1 * viewport->viewwindow.centerx);
 		UoverZstep = float(-fully1);
-		InvZorg = float((fullx1 - fullx2) * r_viewwindow.centerx);
+		InvZorg = float((fullx1 - fullx2) * viewport->viewwindow.centerx);
 		InvZstep = float(fully2 - fully1);
 	}
 }

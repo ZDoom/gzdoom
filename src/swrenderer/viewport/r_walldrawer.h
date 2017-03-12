@@ -9,12 +9,13 @@ struct FLightNode;
 namespace swrenderer
 {
 	class RenderThread;
+	class RenderViewport;
 	
 	class WallDrawerArgs : public DrawerArgs
 	{
 	public:
 		void SetStyle(bool masked, bool additive, fixed_t alpha);
-		void SetDest(int x, int y);
+		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetTexture(const uint8_t *pixels, const uint8_t *pixels2, int height)
 		{
@@ -56,6 +57,8 @@ namespace swrenderer
 		DrawerLight *dc_lights = nullptr;
 		int dc_num_lights = 0;
 
+		RenderViewport *Viewport() const { return dc_viewport; }
+
 	private:
 		uint8_t *dc_dest = nullptr;
 		int dc_dest_y = 0;
@@ -76,5 +79,7 @@ namespace swrenderer
 
 		typedef void(SWPixelFormatDrawers::*WallDrawerFunc)(const WallDrawerArgs &args);
 		WallDrawerFunc wallfunc = nullptr;
+
+		RenderViewport *dc_viewport = nullptr;
 	};
 }

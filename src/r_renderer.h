@@ -62,6 +62,8 @@ struct FRenderer
 	virtual void CleanLevelData() {}
 	virtual bool RequireGLNodes() { return false; }
 
+	virtual double GetVisibility() { return 8.f; }
+	virtual void SetVisibility(double vis) { }
 
 };
 

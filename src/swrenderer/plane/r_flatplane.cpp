@@ -59,7 +59,7 @@ namespace swrenderer
 		}
 
 		drawerargs.SetSolidColor(3);
-		drawerargs.SetTexture(texture);
+		drawerargs.SetTexture(Thread->Viewport.get(), texture);
 
 		double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
@@ -68,22 +68,22 @@ namespace swrenderer
 		if (planeang != 0)
 		{
 			double cosine = cos(planeang), sine = sin(planeang);
-			pviewx = pl->xform.xOffs + r_viewpoint.Pos.X * cosine - r_viewpoint.Pos.Y * sine;
-			pviewy = pl->xform.yOffs + pl->xform.baseyOffs - r_viewpoint.Pos.X * sine - r_viewpoint.Pos.Y * cosine;
+			pviewx = pl->xform.xOffs + Thread->Viewport->viewpoint.Pos.X * cosine - Thread->Viewport->viewpoint.Pos.Y * sine;
+			pviewy = pl->xform.yOffs + pl->xform.baseyOffs - Thread->Viewport->viewpoint.Pos.X * sine - Thread->Viewport->viewpoint.Pos.Y * cosine;
 		}
 		else
 		{
-			pviewx = pl->xform.xOffs + r_viewpoint.Pos.X;
-			pviewy = pl->xform.yOffs - r_viewpoint.Pos.Y;
+			pviewx = pl->xform.xOffs + Thread->Viewport->viewpoint.Pos.X;
+			pviewy = pl->xform.yOffs - Thread->Viewport->viewpoint.Pos.Y;
 		}
 
 		pviewx = _xscale * pviewx;
 		pviewy = _yscale * pviewy;
 
 		// left to right mapping
-		planeang += (r_viewpoint.Angles.Yaw - 90).Radians();
+		planeang += (Thread->Viewport->viewpoint.Angles.Yaw - 90).Radians();
 
-		auto viewport = RenderViewport::Instance();
+		auto viewport = Thread->Viewport.get();
 
 		// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
 		xstep = cos(planeang) / viewport->FocalLengthX;
@@ -113,7 +113,7 @@ namespace swrenderer
 
 		minx = pl->left;
 
-		planeheight = fabs(pl->height.Zat0() - r_viewpoint.Pos.Z);
+		planeheight = fabs(pl->height.Zat0() - Thread->Viewport->viewpoint.Pos.Z);
 
 		basecolormap = colormap;
 
@@ -155,7 +155,7 @@ namespace swrenderer
 		}
 #endif
 
-		auto viewport = RenderViewport::Instance();
+		auto viewport = Thread->Viewport.get();
 
 		double curxfrac = basexfrac + xstepscale * (x1 + 0.5 - minx);
 		double curyfrac = baseyfrac + ystepscale * (x1 + 0.5 - minx);
@@ -231,12 +231,12 @@ namespace swrenderer
 			cur_node = light_list;
 			while (cur_node)
 			{
-				double lightX = cur_node->lightsource->X() - r_viewpoint.Pos.X;
-				double lightY = cur_node->lightsource->Y() - r_viewpoint.Pos.Y;
-				double lightZ = cur_node->lightsource->Z() - r_viewpoint.Pos.Z;
+				double lightX = cur_node->lightsource->X() - Thread->Viewport->viewpoint.Pos.X;
+				double lightY = cur_node->lightsource->Y() - Thread->Viewport->viewpoint.Pos.Y;
+				double lightZ = cur_node->lightsource->Z() - Thread->Viewport->viewpoint.Pos.Z;
 
-				float lx = (float)(lightX * r_viewpoint.Sin - lightY * r_viewpoint.Cos);
-				float ly = (float)(lightX * r_viewpoint.TanCos + lightY * r_viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
+				float lx = (float)(lightX * Thread->Viewport->viewpoint.Sin - lightY * Thread->Viewport->viewpoint.Cos);
+				float ly = (float)(lightX * Thread->Viewport->viewpoint.TanCos + lightY * Thread->Viewport->viewpoint.TanSin) - drawerargs.dc_viewpos.Y;
 				float lz = (float)lightZ - drawerargs.dc_viewpos.Z;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
@@ -268,7 +268,7 @@ namespace swrenderer
 			drawerargs.dc_num_lights = 0;
 		}
 
-		drawerargs.SetDestY(y);
+		drawerargs.SetDestY(viewport, y);
 		drawerargs.SetDestX1(x1);
 		drawerargs.SetDestX2(x2);
 

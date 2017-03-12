@@ -115,7 +115,7 @@ namespace swrenderer
 		ShadeConstants _shade_constants;
 
 	public:
-		DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x, int x2);
+		DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override;
 	};
@@ -139,9 +139,10 @@ namespace swrenderer
 		int _xbits;
 		int _ybits;
 		const uint32_t * RESTRICT _source;
+		RenderViewport *viewport;
 
 	public:
-		DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
+		DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override;
 	};
@@ -156,25 +157,8 @@ namespace swrenderer
 		int _color;
 
 	public:
-		DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs, int y, int x1, int x2);
+		DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs);
 
-		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
-	};
-
-	class FillTransColumnRGBACommand : public DrawerCommand
-	{
-		int _x;
-		int _y1;
-		int _y2;
-		int _color;
-		int _a;
-		uint8_t * RESTRICT _destorg;
-		int _pitch;
-		fixed_t _light;
-
-	public:
-		FillTransColumnRGBACommand(const DrawerArgs &drawerargs, int x, int y1, int y2, int color, int a);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override;
 	};
@@ -273,13 +257,13 @@ namespace swrenderer
 		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override;
 		void FillSpan(const SpanDrawerArgs &args) override { Queue->Push<FillSpanRGBACommand>(args); }
 
-		void DrawTiltedSpan(const SpanDrawerArgs &args, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
+		void DrawTiltedSpan(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
 		{
-			Queue->Push<DrawTiltedSpanRGBACommand>(args, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+			Queue->Push<DrawTiltedSpanRGBACommand>(args, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 		}
 
-		void DrawColoredSpan(const SpanDrawerArgs &args, int y, int x1, int x2) override { Queue->Push<DrawColoredSpanRGBACommand>(args, y, x1, x2); }
-		void DrawFogBoundaryLine(const SpanDrawerArgs &args, int y, int x1, int x2) override { Queue->Push<DrawFogBoundaryLineRGBACommand>(args, y, x1, x2); }
+		void DrawColoredSpan(const SpanDrawerArgs &args) override { Queue->Push<DrawColoredSpanRGBACommand>(args); }
+		void DrawFogBoundaryLine(const SpanDrawerArgs &args) override { Queue->Push<DrawFogBoundaryLineRGBACommand>(args); }
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

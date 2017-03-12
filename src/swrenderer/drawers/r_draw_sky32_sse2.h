@@ -39,7 +39,7 @@ namespace swrenderer
 		{
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int count = args.Count();
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			const uint32_t *source0 = (const uint32_t *)args.FrontTexturePixels();
 			int textureheight0 = args.FrontTextureHeight();
 
@@ -169,7 +169,7 @@ namespace swrenderer
 		{
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int count = args.Count();
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			const uint32_t *source0 = (const uint32_t *)args.FrontTexturePixels();
 			const uint32_t *source1 = (const uint32_t *)args.BackTexturePixels();
 			int textureheight0 = args.FrontTextureHeight();

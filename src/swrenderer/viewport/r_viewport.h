@@ -22,8 +22,6 @@ namespace swrenderer
 	class RenderViewport
 	{
 	public:
-		static RenderViewport *Instance();
-
 		RenderViewport();
 		~RenderViewport();
 		
@@ -31,6 +29,9 @@ namespace swrenderer
 		void SetupFreelook();
 		
 		DCanvas *RenderTarget = nullptr;
+
+		FViewWindow viewwindow;
+		FRenderViewpoint viewpoint;
 
 		double FocalLengthX = 0.0;
 		double FocalLengthY = 0.0;

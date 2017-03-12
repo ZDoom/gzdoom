@@ -15,9 +15,9 @@ namespace swrenderer
 	public:
 		SpriteDrawerArgs();
 
-		bool SetStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		bool SetStyle(FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
-		void SetDest(int x, int y);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
+		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetSolidColor(int color) { dc_color = color; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
@@ -54,6 +54,7 @@ namespace swrenderer
 		uint32_t DynamicLight() const { return dynlightcolor; }
 
 		bool DrawerNeedsPalInput() const { return drawer_needs_pal_input; }
+		RenderViewport *Viewport() const { return dc_viewport; }
 
 	private:
 		bool SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags);
@@ -90,5 +91,7 @@ namespace swrenderer
 
 		typedef void(SWPixelFormatDrawers::*SpriteDrawerFunc)(const SpriteDrawerArgs &args);
 		SpriteDrawerFunc colfunc;
+
+		RenderViewport *dc_viewport = nullptr;
 	};
 }

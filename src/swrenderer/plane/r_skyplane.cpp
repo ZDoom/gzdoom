@@ -70,7 +70,7 @@ namespace swrenderer
 		}
 		sky2tex = sky2texture;
 		skymid = skytexturemid;
-		skyangle = r_viewpoint.Angles.Yaw.BAMs();
+		skyangle = Thread->Viewport->viewpoint.Angles.Yaw.BAMs();
 
 		if (pl->picnum == skyflatnum)
 		{
@@ -169,7 +169,7 @@ namespace swrenderer
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
-		auto viewport = RenderViewport::Instance();
+		auto viewport = Thread->Viewport.get();
 
 		uint32_t height = frontskytex->GetHeight();
 
@@ -188,7 +188,7 @@ namespace swrenderer
 
 		if (r_linearsky)
 		{
-			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * r_viewwindow.FocalTangent * ANGLE_90);
+			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * viewport->viewwindow.FocalTangent * ANGLE_90);
 			ang = (skyangle + xangle) ^ skyflip;
 		}
 		else
@@ -198,11 +198,11 @@ namespace swrenderer
 		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
-		drawerargs.SetFrontTexture(frontskytex, angle1);
-		drawerargs.SetBackTexture(backskytex, angle2);
+		drawerargs.SetFrontTexture(viewport, frontskytex, angle1);
+		drawerargs.SetBackTexture(viewport, backskytex, angle2);
 		drawerargs.SetTextureVStep(uv_step);
 		drawerargs.SetTextureVPos(uv_pos);
-		drawerargs.SetDest(start_x, y1);
+		drawerargs.SetDest(viewport, start_x, y1);
 		drawerargs.SetCount(y2 - y1);
 		drawerargs.SetFadeSky(r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY));
 		drawerargs.SetSolidTop(frontskytex->GetSkyCapColor(false));
@@ -223,7 +223,7 @@ namespace swrenderer
 		}
 		else
 		{
-			auto viewport = RenderViewport::Instance();
+			auto viewport = Thread->Viewport.get();
 			double yrepeat = frontskytex->Scale.Y;
 			double scale = frontskytex->Scale.Y * skyscale;
 			double iscale = 1 / scale;

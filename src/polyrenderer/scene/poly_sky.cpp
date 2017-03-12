@@ -50,7 +50,8 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	if (level.flags & LEVEL_DOUBLESKY)
 		backskytex = TexMan(sky2tex, true);
 
-	TriMatrix objectToWorld = TriMatrix::translate((float)r_viewpoint.Pos.X, (float)r_viewpoint.Pos.Y, (float)r_viewpoint.Pos.Z);
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	TriMatrix objectToWorld = TriMatrix::translate((float)viewpoint.Pos.X, (float)viewpoint.Pos.Y, (float)viewpoint.Pos.Z);
 	objectToClip = worldToClip * objectToWorld;
 
 	int rc = mRows + 1;
@@ -95,7 +96,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor)
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
-	if (!swrenderer::RenderViewport::Instance()->RenderTarget->IsBgra())
+	if (!PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
 
 	args.vinput = &mVertices[mPrimStart[row]];

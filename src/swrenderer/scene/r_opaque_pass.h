@@ -79,7 +79,7 @@ namespace swrenderer
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
 
 		bool IsPotentiallyVisible(AActor *thing);
-		static bool GetThingSprite(AActor *thing, ThingSprite &sprite);
+		bool GetThingSprite(AActor *thing, ThingSprite &sprite);
 
 		subsector_t *InSubsector = nullptr;
 		sector_t *frontsector = nullptr;

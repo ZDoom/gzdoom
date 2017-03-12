@@ -45,9 +45,9 @@ namespace swrenderer
 		return &instance;
 	}
 
-	void CameraLight::SetCamera(AActor *actor)
+	void CameraLight::SetCamera(RenderViewport *viewport, AActor *actor)
 	{
-		AActor *camera = r_viewpoint.camera;
+		AActor *camera = viewport->viewpoint.camera;
 		player_t *player = actor->player;
 		if (camera && camera->player != nullptr)
 			player = camera->player;
@@ -61,7 +61,6 @@ namespace swrenderer
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-				auto viewport = RenderViewport::Instance();
 				if (viewport->RenderTarget == screen && (viewport->RenderTarget->IsBgra() || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 				{
 					// Render everything fullbright. The copy to video memory will
@@ -85,10 +84,10 @@ namespace swrenderer
 			}
 		}
 		// [RH] Inverse light for shooting the Sigil
-		if (fixedcolormap == nullptr && r_viewpoint.extralight == INT_MIN)
+		if (fixedcolormap == nullptr && viewport->viewpoint.extralight == INT_MIN)
 		{
 			fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
-			r_viewpoint.extralight = 0;
+			viewport->viewpoint.extralight = 0;
 		}
 	}
 
@@ -101,15 +100,14 @@ namespace swrenderer
 	}
 
 	// Changes how rapidly things get dark with distance
-	void LightVisibility::SetVisibility(double vis)
+	void LightVisibility::SetVisibility(RenderViewport *viewport, double vis)
 	{
 		// Allow negative visibilities, just for novelty's sake
 		vis = clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
 
 		CurrentVisibility = vis;
 
-		auto viewport = RenderViewport::Instance();
-		if (r_viewwindow.FocalTangent == 0 || viewport->FocalLengthY == 0)
+		if (viewport->viewwindow.FocalTangent == 0 || viewport->FocalLengthY == 0)
 		{ // If r_visibility is called before the renderer is all set up, don't
 		  // divide by zero. This will be called again later, and the proper
 		  // values can be initialized then.
@@ -118,7 +116,7 @@ namespace swrenderer
 
 		BaseVisibility = vis;
 
-		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * r_viewwindow.FocalTangent));
+		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * viewport->viewwindow.FocalTangent));
 		MaxVisForWall = 32767.0 / MaxVisForWall;
 		MaxVisForFloor = 32767.0 / (viewheight >> 2) * viewport->FocalLengthY / 160;
 
@@ -130,8 +128,8 @@ namespace swrenderer
 		else
 			WallVisibility = BaseVisibility;
 
-		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(r_viewwindow.WidescreenRatio) /
-			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * r_viewwindow.FocalTangent);
+		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(viewport->viewwindow.WidescreenRatio) /
+			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * viewport->viewwindow.FocalTangent);
 
 		// Prevent overflow on floors/ceilings. Note that the calculation of
 		// MaxVisForFloor means that planes less than two units from the player's
@@ -146,7 +144,7 @@ namespace swrenderer
 
 		FloorVisibility = 160.0 * FloorVisibility / viewport->FocalLengthY;
 
-		TiltVisibility = float(vis * r_viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
+		TiltVisibility = float(vis * viewport->viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
 
 		NoLightFade = glset.nolightfade;
 	}
@@ -174,11 +172,11 @@ namespace swrenderer
 	{
 		if (argv.argc() < 2)
 		{
-			Printf("Visibility is %g\n", LightVisibility::Instance()->GetVisibility());
+			Printf("Visibility is %g\n", Renderer->GetVisibility());
 		}
 		else if (!netgame)
 		{
-			LightVisibility::Instance()->SetVisibility(atof(argv[1]));
+			Renderer->SetVisibility(atof(argv[1]));
 		}
 		else
 		{

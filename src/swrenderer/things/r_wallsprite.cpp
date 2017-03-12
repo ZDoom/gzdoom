@@ -82,8 +82,8 @@ namespace swrenderer
 		x1 *= scale.X;
 		x2 *= scale.X;
 
-		left.X = pos.X - x1 * angcos - r_viewpoint.Pos.X;
-		left.Y = pos.Y - x1 * angsin - r_viewpoint.Pos.Y;
+		left.X = pos.X - x1 * angcos - thread->Viewport->viewpoint.Pos.X;
+		left.Y = pos.Y - x1 * angsin - thread->Viewport->viewpoint.Pos.Y;
 		right.X = left.X + x2 * angcos;
 		right.Y = right.Y + x2 * angsin;
 
@@ -98,7 +98,7 @@ namespace swrenderer
 
 		// Sprite sorting should probably treat these as walls, not sprites,
 		// but right now, I just want to get them drawing.
-		tz = (pos.X - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (pos.Y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin;
+		tz = (pos.X - thread->Viewport->viewpoint.Pos.X) * thread->Viewport->viewpoint.TanCos + (pos.Y - thread->Viewport->viewpoint.Pos.Y) * thread->Viewport->viewpoint.TanSin;
 
 		int scaled_to = pic->GetScaledTopOffset();
 		int scaled_bo = scaled_to - pic->GetScaledHeight();
@@ -117,8 +117,8 @@ namespace swrenderer
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 		vis->gzb = (float)gzb;
 		vis->gzt = (float)gzt;
-		vis->deltax = float(pos.X - r_viewpoint.Pos.X);
-		vis->deltay = float(pos.Y - r_viewpoint.Pos.Y);
+		vis->deltax = float(pos.X - thread->Viewport->viewpoint.Pos.X);
+		vis->deltay = float(pos.Y - thread->Viewport->viewpoint.Pos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
@@ -155,10 +155,10 @@ namespace swrenderer
 		WallT.InitFromWallCoords(thread, &spr->wallc);
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
+		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
 
 		iyscale = 1 / spr->yscale;
-		double texturemid = (spr->gzt - r_viewpoint.Pos.Z) * iyscale;
+		double texturemid = (spr->gzt - thread->Viewport->viewpoint.Pos.Z) * iyscale;
 		if (spr->renderflags & RF_XFLIP)
 		{
 			int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -182,7 +182,7 @@ namespace swrenderer
 
 		SpriteDrawerArgs drawerargs;
 
-		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel + LightVisibility::ActualExtraLight(spr->foggy), spr->foggy);
+		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel + LightVisibility::ActualExtraLight(spr->foggy, thread->Viewport.get()), spr->foggy);
 		double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
@@ -216,7 +216,7 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
 
-		bool visible = drawerargs.SetStyle(spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
@@ -248,7 +248,7 @@ namespace swrenderer
 
 	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
 	{
-		auto viewport = RenderViewport::Instance();
+		auto viewport = thread->Viewport.get();
 		
 		float iscale = walltexcoords.VStep[x] * maskedScaleY;
 		double spryscale = 1 / iscale;

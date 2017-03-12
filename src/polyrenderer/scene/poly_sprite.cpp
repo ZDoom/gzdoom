@@ -38,7 +38,8 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	if (IsThingCulled(thing))
 		return false;
 
-	DVector3 pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
@@ -59,8 +60,8 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 
 	pos.X += spriteHalfWidth;
 
-	left = DVector2(pos.X - r_viewpoint.Sin * spriteHalfWidth, pos.Y + r_viewpoint.Cos * spriteHalfWidth);
-	right = DVector2(pos.X + r_viewpoint.Sin * spriteHalfWidth, pos.Y - r_viewpoint.Cos * spriteHalfWidth);
+	left = DVector2(pos.X - viewpoint.Sin * spriteHalfWidth, pos.Y + viewpoint.Cos * spriteHalfWidth);
+	right = DVector2(pos.X + viewpoint.Sin * spriteHalfWidth, pos.Y - viewpoint.Cos * spriteHalfWidth);
 	return true;
 }
 
@@ -70,8 +71,9 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	if (!GetLine(thing, line[0], line[1]))
 		return;
 	
-	DVector3 pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
-	pos.Z += thing->GetBobOffset(r_viewpoint.TicFrac);
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
+	pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
@@ -105,7 +107,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : r_viewpoint.extralight << 4;
+	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{
@@ -250,7 +252,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	
-	if (!swrenderer::RenderViewport::Instance()->RenderTarget->IsBgra())
+	if (!PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
 	{
 		uint32_t r = (args.uniforms.color >> 16) & 0xff;
 		uint32_t g = (args.uniforms.color >> 8) & 0xff;
@@ -273,7 +275,7 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	FIntCVar *cvar = thing->GetClass()->distancecheck;
 	if (cvar != nullptr && *cvar >= 0)
 	{
-		double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
+		double dist = (thing->Pos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos).LengthSquared();
 		double check = (double)**cvar;
 		if (dist >= check * check)
 			return true;
@@ -372,6 +374,7 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 
 FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 {
+	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
 	flipX = false;
 	if (thing->picnum.isValid())
 	{
@@ -385,9 +388,9 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 		{
 			// choose a different rotation based on player view
 			spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
-			DVector3 pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
-			pos.Z += thing->GetBobOffset(r_viewpoint.TicFrac);
-			DAngle ang = (pos - r_viewpoint.Pos).Angle();
+			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
+			pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
+			DAngle ang = (pos - viewpoint.Pos).Angle();
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
@@ -420,9 +423,9 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 			//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
 			// choose a different rotation based on player view
 			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-			DVector3 pos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
-			pos.Z += thing->GetBobOffset(r_viewpoint.TicFrac);
-			DAngle ang = (pos - r_viewpoint.Pos).Angle();
+			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
+			pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
+			DAngle ang = (pos - viewpoint.Pos).Angle();
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{

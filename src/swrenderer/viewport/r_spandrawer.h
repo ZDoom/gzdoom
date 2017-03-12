@@ -16,10 +16,10 @@ namespace swrenderer
 		SpanDrawerArgs();
 
 		void SetStyle(bool masked, bool additive, fixed_t alpha);
-		void SetDestY(int y) { ds_y = y; }
+		void SetDestY(RenderViewport *viewport, int y) { ds_viewport = viewport; ds_y = y; }
 		void SetDestX1(int x) { ds_x1 = x; }
 		void SetDestX2(int x) { ds_x2 = x; }
-		void SetTexture(FTexture *tex);
+		void SetTexture(RenderViewport *viewport, FTexture *tex);
 		void SetTextureLOD(double lod) { ds_lod = lod; }
 		void SetTextureUPos(dsfixed_t xfrac) { ds_xfrac = xfrac; }
 		void SetTextureVPos(dsfixed_t yfrac) { ds_yfrac = yfrac; }
@@ -49,6 +49,7 @@ namespace swrenderer
 		const uint8_t *TexturePixels() const { return ds_source; }
 		bool MipmappedTexture() const { return ds_source_mipmapped; }
 		double TextureLOD() const { return ds_lod; }
+		RenderViewport *Viewport() const { return ds_viewport; }
 
 		FVector3 dc_normal;
 		FVector3 dc_viewpos;
@@ -77,5 +78,6 @@ namespace swrenderer
 		fixed_t dc_destalpha;
 		int ds_color = 0;
 		double ds_lod;
+		RenderViewport *ds_viewport = nullptr;
 	};
 }

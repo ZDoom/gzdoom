@@ -1883,6 +1883,124 @@ void AM_drawGrid (int color)
 	}
 }
 
+//==========================================================================
+//
+// This was previously using the variants from the renderers but with
+// all globals being factored out this will become dangerouns and unpredictable
+// as the original R_FakeFlat heavily depended on global variables from
+// the last rendered scene.
+//
+//==========================================================================
+
+sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
+{
+	if (sec->GetHeightSec() == nullptr) return sec;
+
+	DVector3 pos = viewer->Pos();
+	
+	if (viewer->player)
+	{
+		pos.Z = viewer->player->viewz;
+	}
+	else
+	{
+		pos.Z += viewer->GetCameraHeight();
+	}
+
+	int in_area;
+	if (viewer->Sector->GetHeightSec() == nullptr)
+	{
+		in_area = 0;
+	}
+	else
+	{
+		in_area = pos.Z <= viewer->Sector->heightsec->floorplane.ZatPoint(pos) ? -1 :
+			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? 1 : 0;
+	}
+
+	int diffTex = (sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES);
+	sector_t * s = sec->heightsec;
+
+	memcpy(dest, sec, sizeof(sector_t));
+
+	// Replace floor height with control sector's heights.
+	// The automap is only interested in the floor so let's skip the ceiling.
+	if (diffTex)
+	{
+		if (s->floorplane.CopyPlaneIfValid(&dest->floorplane, &sec->ceilingplane))
+		{
+			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
+			dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+		}
+		else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+		{
+			if (in_area == -1)
+			{
+				dest->ColorMap = s->ColorMap;
+				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+				{
+					dest->lightlevel = s->lightlevel;
+					dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
+					dest->ChangeFlags(sector_t::floor, -1, s->GetFlags(sector_t::floor));
+				}
+				return dest;
+			}
+			return sec;
+		}
+	}
+	else
+	{
+		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+		dest->floorplane = s->floorplane;
+	}
+
+	if (in_area == -1)
+	{
+		dest->ColorMap = s->ColorMap;
+		dest->SetPlaneTexZ(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
+		dest->floorplane = sec->floorplane;
+		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		{
+			dest->lightlevel = s->lightlevel;
+		}
+
+		dest->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
+		dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
+
+		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		{
+			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
+			dest->ChangeFlags(sector_t::floor, -1, s->GetFlags(sector_t::floor));
+		}
+	}
+	else if (in_area == 1)
+	{
+		dest->ColorMap = s->ColorMap;
+		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
+		dest->floorplane = s->ceilingplane;
+		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		{
+			dest->lightlevel = s->lightlevel;
+		}
+
+		dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
+
+		if (s->GetTexture(sector_t::floor) != skyflatnum)
+		{
+			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
+			dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
+		}
+
+		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		{
+			dest->lightlevel = s->lightlevel;
+			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
+			dest->ChangeFlags(sector_t::floor, -1, s->GetFlags(sector_t::floor));
+		}
+	}
+	return dest;
+}
+
 //=============================================================================
 //
 // AM_drawSubsectors
@@ -1895,7 +2013,7 @@ void AM_drawSubsectors()
 	double scale = scale_mtof;
 	DAngle rotation;
 	sector_t tempsec;
-	int floorlight, ceilinglight;
+	int floorlight;
 	double scalex, scaley;
 	double originx, originy;
 	FDynamicColormap *colormap;
@@ -1933,7 +2051,8 @@ void AM_drawSubsectors()
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
 		}
 		// For lighting and texture determination
-		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight);
+		sector_t *sec = AM_FakeFlat(players[consoleplayer].camera, subsectors[i].render_sector, &tempsec);
+		floorlight = sec->GetFloorLight();
 		// Find texture origin.
 		originpt.x = -sec->GetXOffset(sector_t::floor);
 		originpt.y = sec->GetYOffset(sector_t::floor);

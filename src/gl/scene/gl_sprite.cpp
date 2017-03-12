@@ -752,7 +752,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
-		rendersector = gl_FakeFlat(thing->Sector, &rs, false);
+		rendersector = gl_FakeFlat(thing->Sector, &rs, mDrawer->in_area, false);
 	}
 	else
 	{
@@ -927,7 +927,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		Colormap=rendersector->ColorMap;
 		if (fullbright)
 		{
-			if (rendersector == &level.sectors[rendersector->sectornum] || in_area != area_below)	
+			if (rendersector == &level.sectors[rendersector->sectornum] || mDrawer->in_area != area_below)
 				// under water areas keep their color for fullbright objects
 			{
 				// Only make the light white but keep everything else (fog, desaturation and Boom colormap.)
@@ -1259,7 +1259,7 @@ void GLSceneDrawer::RenderActorsInPortal(FGLLinePortal *glport)
 					th->Prev += newpos - savedpos;
 
 					GLSprite spr(this);
-					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, false), 2);
+					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, in_area, false), 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

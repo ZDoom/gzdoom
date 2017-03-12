@@ -31,7 +31,7 @@
 #include "a_sharedglobal.h"
 #include "r_sky.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_clipper.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_data.h"
 
 
@@ -160,7 +160,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 //
 //==========================================================================
 
-void gl_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
 	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&

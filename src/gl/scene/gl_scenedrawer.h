@@ -5,6 +5,7 @@
 #include "gl_clipper.h"
 #include "gl_portal.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 
 class GLSceneDrawer
 {
@@ -39,6 +40,7 @@ public:
 
 	Clipper clipper;
 	int		FixedColormap;
+	area_t	in_area;
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -54,6 +56,8 @@ public:
 	void DrawBlend(sector_t * viewsector);
 	void EndDrawScene(sector_t * viewsector);
 	void RenderActorsInPortal(FGLLinePortal *glport);
+
+	void CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector);
 
 	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);

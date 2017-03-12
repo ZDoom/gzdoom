@@ -353,11 +353,6 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	r_viewwindow = viewport->viewwindow;
 }
 
-sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
-{
-	return mScene.MainThread()->OpaquePass->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
-}
-
 void FSoftwareRenderer::PreprocessLevel()
 {
 	gl_PreprocessLevel();

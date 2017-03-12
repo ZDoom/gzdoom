@@ -37,6 +37,7 @@
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 
@@ -280,7 +281,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
+			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
 
 			// Don't bother with slopes
 			if (sec->ceilingplane.isSlope())  return false;
@@ -338,7 +339,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
+			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
 
 			// Don't bother with slopes
 			if (sec->floorplane.isSlope())  return false;
@@ -397,7 +398,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
+			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
 
 			// Don't bother with slopes
 			if (sec->floorplane.isSlope())  return false;
@@ -450,7 +451,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
+			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
 
 			// Don't bother with slopes
 			if (sec->ceilingplane.isSlope())  return false;
@@ -539,7 +540,7 @@ void FDrawInfo::HandleMissingTextures()
 
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
-			sector_t * fakesector = gl_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, false);
+			sector_t * fakesector = gl_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, mDrawer->in_area, false);
 			float planez = (float)fakesector->GetPlaneTexZ(sector_t::ceiling);
 
 			backsub->validcount = validcount;
@@ -610,7 +611,7 @@ void FDrawInfo::HandleMissingTextures()
 
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
-			sector_t * fakesector = gl_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, false);
+			sector_t * fakesector = gl_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, mDrawer->in_area, false);
 			float planez = (float)fakesector->GetPlaneTexZ(sector_t::floor);
 
 			backsub->validcount = validcount;
@@ -1042,7 +1043,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
+	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
 	if (me->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 		me->ceilingplane != anchor->ceilingplane ||
 		me->GetCeilingLight() != anchor->GetCeilingLight() ||
@@ -1085,7 +1086,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
+	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
 	if (me->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 		me->floorplane != anchor->floorplane ||
 		me->GetFloorLight() != anchor->GetFloorLight() ||
@@ -1124,7 +1125,7 @@ void FDrawInfo::ProcessSectorStacks()
 	validcount++;
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, false);
+		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, mDrawer->in_area, false);
 		FPortal *portal = sec->GetGLPortal(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
@@ -1168,7 +1169,7 @@ void FDrawInfo::ProcessSectorStacks()
 	validcount++;
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, false);
+		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, mDrawer->in_area, false);
 		FPortal *portal = sec->GetGLPortal(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{

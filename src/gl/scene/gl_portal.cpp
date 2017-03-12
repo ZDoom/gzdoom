@@ -287,7 +287,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedshowviewer = r_viewpoint.showviewer;
 	savedAngles = r_viewpoint.Angles;
 	savedviewactor=GLRenderer->mViewActor;
-	savedviewarea=in_area;
+	savedviewarea=drawer->in_area;
 	savedviewpath[0] = r_viewpoint.Path[0];
 	savedviewpath[1] = r_viewpoint.Path[1];
 	savedvisibility = r_viewpoint.camera ? r_viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
@@ -359,7 +359,7 @@ void GLPortal::End(bool usestencil)
 		r_viewpoint.ActorPos = savedViewActorPos;
 		r_viewpoint.Angles = savedAngles;
 		GLRenderer->mViewActor=savedviewactor;
-		in_area=savedviewarea;
+		drawer->in_area=savedviewarea;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags = (r_viewpoint.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
@@ -418,7 +418,7 @@ void GLPortal::End(bool usestencil)
 		r_viewpoint.Pos = savedViewPos;
 		r_viewpoint.Angles = savedAngles;
 		GLRenderer->mViewActor=savedviewactor;
-		in_area=savedviewarea;
+		drawer->in_area=savedviewarea;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags |= savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 

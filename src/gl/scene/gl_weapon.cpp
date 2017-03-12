@@ -245,7 +245,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 	else
 	{
-		fakesec    = gl_FakeFlat(viewsector, &fs, false);
+		fakesec    = gl_FakeFlat(viewsector, &fs, in_area, false);
 
 		// calculate light level for weapon sprites
 		lightlevel = gl_ClampLight(fakesec->lightlevel);

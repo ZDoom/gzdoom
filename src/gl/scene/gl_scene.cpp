@@ -85,7 +85,6 @@ EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR (Float, underwater_fade_scalar)
 
 
-extern int viewpitch;
 extern bool NoInterpolateView;
 
 area_t			in_area;
@@ -991,7 +990,6 @@ struct FGLInterface : public FRenderer
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
-	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) override;
 	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
@@ -1163,25 +1161,6 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	tex->SetUpdated();
 	camtexcount++;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-sector_t *FGLInterface::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
-{
-	if (floorlightlevel != NULL)
-	{
-		*floorlightlevel = sec->GetFloorLight ();
-	}
-	if (ceilinglightlevel != NULL)
-	{
-		*ceilinglightlevel = sec->GetCeilingLight ();
-	}
-	return gl_FakeFlat(sec, tempsec, false);
 }
 
 //===========================================================================

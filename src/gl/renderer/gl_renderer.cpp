@@ -189,7 +189,7 @@ void FGLRenderer::Initialize(int width, int height)
 FGLRenderer::~FGLRenderer() 
 {
 	gl_FlushModels();
-	gl_DeleteAllAttachedLights();
+	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
 	if (m2DDrawer != nullptr) delete m2DDrawer;
 	if (mShaderManager != NULL) delete mShaderManager;

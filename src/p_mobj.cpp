@@ -700,7 +700,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 
 	if (Renderer != NULL)
 	{
-		Renderer->StateChanged(this);
+		SetDynamicLights();
 	}
 	return true;
 }
@@ -5074,10 +5074,7 @@ void AActor::CallBeginPlay()
 
 void AActor::PostBeginPlay ()
 {
-	if (Renderer != NULL)
-	{
-		Renderer->StateChanged(this);
-	}
+	SetDynamicLights();
 	PrevAngles = Angles;
 	flags7 |= MF7_HANDLENODELAY;
 }

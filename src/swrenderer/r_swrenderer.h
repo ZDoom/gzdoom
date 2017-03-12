@@ -36,7 +36,6 @@ struct FSoftwareRenderer : public FRenderer
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) override;
 	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) override;
 
-	void StateChanged(AActor *actor) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 

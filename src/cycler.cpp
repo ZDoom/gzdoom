@@ -35,7 +35,7 @@
 
 #include <math.h>
 #include "serializer.h"
-#include "gl/utility/gl_cycler.h"
+#include "cycler.h"
 
 //==========================================================================
 //
@@ -68,11 +68,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FCycler &c, FCycler *d
 
 FCycler::FCycler()
 {
-	m_cycle = 0.f;
+	m_cycle = 0.;
 	m_cycleType = CYCLE_Linear;
 	m_shouldCycle = false;
-	m_start = m_current = 0.f;
-	m_end = 0.f;
+	m_start = m_current = 0.;
+	m_end = 0.;
 	m_increment = true;
 }
 
@@ -83,19 +83,19 @@ FCycler::FCycler()
 //
 //==========================================================================
 
-void FCycler::SetParams(float start, float end, float cycle, bool update)
+void FCycler::SetParams(double start, double end, double cycle, bool update)
 {
 	if (!update || cycle != m_cycle)
 	{
 		m_cycle = cycle;
-		m_time = 0.f;
+		m_time = 0.;
 		m_increment = true;
 		m_current = start;
 	}
 	else
 	{
 		// When updating and keeping the same cycle, scale the current light size to the new dimensions.
-		float fact = (m_current - m_start) / (m_end - m_start);
+		double fact = (m_current - m_start) / (m_end - m_start);
 		m_current = start + fact *(end - start);
 	}
 	m_start = start;
@@ -109,10 +109,10 @@ void FCycler::SetParams(float start, float end, float cycle, bool update)
 //
 //==========================================================================
 
-void FCycler::Update(float diff)
+void FCycler::Update(double diff)
 {
-	float mult, angle;
-	float step = m_end - m_start;
+	double mult, angle;
+	double step = m_end - m_start;
 	
 	if (!m_shouldCycle)
 	{
@@ -140,15 +140,15 @@ void FCycler::Update(float diff)
 		}
 		break;
 	case CYCLE_Sin:
-		angle = float(M_PI * 2.f * mult);
-		mult = sinf(angle);
-		mult = (mult + 1.f) / 2.f;
+		angle = double(M_PI * 2. * mult);
+		mult = g_sin(angle);
+		mult = (mult + 1.) / 2.;
 		m_current = m_start + (step * mult);
 		break;
 	case CYCLE_Cos:
-		angle = float(M_PI * 2.f * mult);
-		mult = cosf(angle);
-		mult = (mult + 1.f) / 2.f;
+		angle = double(M_PI * 2. * mult);
+		mult = g_cos(angle);
+		mult = (mult + 1.) / 2.;
 		m_current = m_start + (step * mult);
 		break;
 	case CYCLE_SawTooth:
@@ -168,7 +168,7 @@ void FCycler::Update(float diff)
 	
 	if (m_time == m_cycle)
 	{
-		m_time = 0.f;
+		m_time = 0.;
 		m_increment = !m_increment;
 	}
 }

@@ -59,7 +59,8 @@ enum
 	STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects!!!
 	STAT_EARTHQUAKE,						// Earthquake actors
 	STAT_MAPMARKER,							// Map marker actors
-
+	STAT_DLIGHT,
+	
 	STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
 	STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
 	STAT_ACTORMOVER,						// actor movers

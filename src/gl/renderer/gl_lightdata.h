@@ -42,9 +42,6 @@ inline bool gl_isFullbright(PalEntry color, int lightlevel)
 	return gl_fixedcolormap || (gl_isWhite(color) && lightlevel==255);
 }
 
-void gl_DeleteAllAttachedLights();
-void gl_RecreateAllAttachedLights();
-
 extern int fogdensity;
 extern int outsidefogdensity;
 extern int skyfog;

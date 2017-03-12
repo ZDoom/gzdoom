@@ -50,9 +50,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "p_setup.h"
 
-void gl_ParseDefs();
 void gl_InitData();
-void gl_SetActorLights(AActor *);
 void gl_PreprocessLevel();
 void gl_CleanLevelData();
 
@@ -85,8 +83,6 @@ FSoftwareRenderer::~FSoftwareRenderer()
 
 void FSoftwareRenderer::Init()
 {
-	gl_ParseDefs();
-
 	mScene.Init();
 }
 
@@ -360,11 +356,6 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 sector_t *FSoftwareRenderer::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel)
 {
 	return mScene.MainThread()->OpaquePass->FakeFlat(sec, tempsec, floorlightlevel, ceilinglightlevel, nullptr, 0, 0, 0, 0);
-}
-
-void FSoftwareRenderer::StateChanged(AActor *actor)
-{
-	gl_SetActorLights(actor);
 }
 
 void FSoftwareRenderer::PreprocessLevel()

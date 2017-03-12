@@ -43,9 +43,6 @@ struct FRenderer
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}
 
-	// notifies the renderer that an actor has changed state.
-	virtual void StateChanged(AActor *actor) {}
-
 	// notify the renderer that serialization of the curent level is about to start/end
 	virtual void StartSerialize(FSerializer &arc) {}
 	virtual void EndSerialize(FSerializer &arc) {}

@@ -1216,7 +1216,6 @@ DEFINE_MAP_OPTION(hazardflash, true)
 	info->hazardflash = V_GetColor(NULL, parse.sc);
 }
 
-
 //==========================================================================
 //
 // All flag based map options 

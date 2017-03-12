@@ -21,17 +21,17 @@ class FCycler
 
 public:
    FCycler();
-   void Update(float diff);
-   void SetParams(float start, float end, float cycle, bool update = false);
+   void Update(double diff);
+   void SetParams(double start, double end, double cycle, bool update = false);
    void ShouldCycle(bool sc) { m_shouldCycle = sc; }
    void SetCycleType(CycleType ct) { m_cycleType = ct; }
-   float GetVal() { return m_current; }
+   double GetVal() { return m_current; }
 
-   inline operator float () const { return m_current; }
+   inline operator double () const { return m_current; }
    
 protected:
-   float m_start, m_end, m_current;
-   float m_time, m_cycle;
+   double m_start, m_end, m_current;
+   double m_time, m_cycle;
    bool m_increment, m_shouldCycle;
 
    CycleType m_cycleType;

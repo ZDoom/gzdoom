@@ -93,8 +93,6 @@ area_t			in_area;
 TArray<uint8_t> currentmapsection;
 int camtexcount;
 
-void gl_ParseDefs();
-
 //-----------------------------------------------------------------------------
 //
 // R_FrustumAngle
@@ -991,7 +989,6 @@ struct FGLInterface : public FRenderer
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
-	void StateChanged(AActor *actor) override;
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
@@ -1030,17 +1027,6 @@ void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actor
 	gl_PrecacheTexture(texhitlist, actorhitlist);
 }
 
-//==========================================================================
-//
-// DFrameBuffer :: StateChanged
-//
-//==========================================================================
-
-void FGLInterface::StateChanged(AActor *actor)
-{
-	gl_SetActorLights(actor);
-}
-
 //===========================================================================
 //
 // notify the renderer that serialization of the curent level is about to start/end
@@ -1062,7 +1048,6 @@ void FGLInterface::EndSerialize(FSerializer &arc)
 {
 	if (arc.isReading())
 	{
-		gl_RecreateAllAttachedLights();
 		gl_InitPortals();
 	}
 }
@@ -1126,7 +1111,6 @@ void FGLInterface::RenderView(player_t *player)
 
 void FGLInterface::Init()
 {
-	gl_ParseDefs();
 	gl_InitData();
 }
 

@@ -83,6 +83,13 @@
 #include "gl/system//gl_interface.h"
 
 
+CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self) AActor::RecreateAllAttachedLights();
+	else AActor::DeleteAllAttachedLights();
+}
+
+CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //==========================================================================
 //
@@ -744,11 +751,11 @@ void ADynamicLight::UnlinkLight ()
 	if (owned && target != NULL)
 	{
 		// Delete reference in owning actor
-		for(int c=target->dynamiclights.Size()-1; c>=0; c--)
+		for(int c=target->AttachedLights.Size()-1; c>=0; c--)
 		{
-			if (target->dynamiclights[c] == this)
+			if (target->AttachedLights[c] == this)
 			{
-				target->dynamiclights.Delete(c);
+				target->AttachedLights.Delete(c);
 				break;
 			}
 		}
@@ -763,23 +770,6 @@ void ADynamicLight::OnDestroy()
 	UnlinkLight();
 	Super::OnDestroy();
 }
-
-
-//==========================================================================
-//
-// Needed for garbage collection
-//
-//==========================================================================
-
-size_t AActor::PropagateMark()
-{
-	for (unsigned i=0; i<dynamiclights.Size(); i++)
-	{
-		GC::Mark(dynamiclights[i]);
-	}
-	return Super::PropagateMark();
-}
-
 
 
 CCMD(listlights)

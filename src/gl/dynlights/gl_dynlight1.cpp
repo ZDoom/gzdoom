@@ -32,6 +32,7 @@
 #include "gl/gl_functions.h"
 #include "g_level.h"
 #include "actorinlines.h"
+#include "a_dynlight.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
@@ -50,17 +51,12 @@
 //
 //==========================================================================
 
-CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self) gl_RecreateAllAttachedLights();
-	else gl_DeleteAllAttachedLights();
-}
-
-CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 
 //==========================================================================
 //
@@ -112,7 +108,11 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	// Store attenuate flag in the sign bit of the float.
 	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
-	if (!!(light->flags4 & MF4_ATTENUATE))
+	bool attenuate;
+
+	if (gl_attenuate == -1) attenuate = !!(light->flags4 & MF4_ATTENUATE);
+	else attenuate = !!gl_attenuate;
+
 		shadowIndex = -shadowIndex;
 
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];

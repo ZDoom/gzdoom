@@ -8,21 +8,18 @@
 
 struct GLRenderSettings
 {
-
 	int8_t lightmode;
 	bool nocoloredspritelighting;
 	bool nolightfade;
 	bool notexturefill;
 	bool brightfog;
 	bool lightadditivesurfaces;
-	bool attenuate;
 
 	int8_t map_lightmode;
 	int8_t map_nocoloredspritelighting;
 	int8_t map_notexturefill;
 	int8_t map_brightfog;
 	int8_t map_lightadditivesurfaces;
-	int8_t map_attenuate;
 
 	FVector3 skyrotatevector;
 	FVector3 skyrotatevector2;

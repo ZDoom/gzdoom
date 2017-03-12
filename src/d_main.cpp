@@ -138,6 +138,7 @@ void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
+void ParseGLDefs();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -2499,6 +2500,8 @@ void D_DoomMain (void)
 		}
 
 		StartScreen->Progress ();
+
+		ParseGLDefs();
 
 		if (!batchrun) Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
 		StartScreen->LoadingStatus ("Loading graphics", 0x3f);

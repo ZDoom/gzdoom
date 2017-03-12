@@ -1,5 +1,5 @@
 /*
-** gl_dynlight.cpp
+** _gl_dynlight.cpp
 ** Light definitions for actors.
 **
 **---------------------------------------------------------------------------
@@ -50,14 +50,8 @@
 #include "d_dehacked.h"
 #include "v_text.h"
 #include "g_levellocals.h"
+#include "a_dynlight.h"
 
-
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/textures/gl_skyboxtexture.h"
-#include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_convert.h"
-#include "gl/data/gl_data.h"
-#include "gl/system//gl_interface.h"
 
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
@@ -205,7 +199,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		else light->m_cycler.SetParams(float(light->args[LIGHT_INTENSITY]), float(light->args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
-		light->m_currentRadius = light->m_cycler.GetVal();
+		light->m_currentRadius = (float)light->m_cycler.GetVal();
 		if (light->m_currentRadius <= 0) light->m_currentRadius = 1;
 		light->swapped = m_swapped;
 	}
@@ -214,7 +208,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	{
 		case 0: light->flags4 &= ~MF4_ATTENUATE; break;
 		case 1: light->flags4 |= MF4_ATTENUATE; break;
-		default: if (glset.attenuate)  light->flags4 |= MF4_ATTENUATE; else light->flags4 &= ~MF4_ATTENUATE; break;
+		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->flags4 |= MF4_ATTENUATE; else light->flags4 &= ~MF4_ATTENUATE; break;
 	}
 	}
 
@@ -277,7 +271,7 @@ extern int ScriptDepth;
 //
 //==========================================================================
 
-inline float gl_ParseFloat(FScanner &sc)
+inline float ParseFloat(FScanner &sc)
 {
    sc.GetFloat();
 
@@ -285,7 +279,7 @@ inline float gl_ParseFloat(FScanner &sc)
 }
 
 
-inline int gl_ParseInt(FScanner &sc)
+inline int ParseInt(FScanner &sc)
 {
    sc.GetNumber();
 
@@ -293,7 +287,7 @@ inline int gl_ParseInt(FScanner &sc)
 }
 
 
-inline char *gl_ParseString(FScanner &sc)
+inline char *ParseString(FScanner &sc)
 {
    sc.GetString();
 
@@ -301,16 +295,16 @@ inline char *gl_ParseString(FScanner &sc)
 }
 
 
-void gl_ParseTriple(FScanner &sc, float floatVal[3])
+static void ParseTriple(FScanner &sc, float floatVal[3])
 {
    for (int i = 0; i < 3; i++)
    {
-      floatVal[i] = gl_ParseFloat(sc);
+      floatVal[i] = ParseFloat(sc);
    }
 }
 
 
-void gl_AddLightDefaults(FLightDefaults *defaults)
+static void AddLightDefaults(FLightDefaults *defaults)
 {
    FLightDefaults *temp;
    unsigned int i;
@@ -327,7 +321,8 @@ void gl_AddLightDefaults(FLightDefaults *defaults)
       }
    }
 
-   if (gl.legacyMode && (defaults->GetAttenuate()))
+   // If the current renderer cannot handle attenuated lights we need to reduce the radius here to account for the far more bright lights this would create.
+   if (/*!Renderer->CanAttenuate() &&*/ (defaults->GetAttenuate()))
    {
 	   defaults->SetArg(LIGHT_INTENSITY, defaults->GetArg(LIGHT_INTENSITY) * 2 / 3);
 	   defaults->SetArg(LIGHT_SECONDARY_INTENSITY, defaults->GetArg(LIGHT_SECONDARY_INTENSITY) * 2 / 3);
@@ -343,7 +338,7 @@ void gl_AddLightDefaults(FLightDefaults *defaults)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParsePointLight(FScanner &sc)
+static void ParsePointLight(FScanner &sc)
 {
 	int type;
 	float floatTriple[3];
@@ -373,39 +368,39 @@ void gl_ParsePointLight(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_COLOR:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetArg(LIGHT_RED, clamp<int>((int)(floatTriple[0] * 255), 0, 255));
 				defaults->SetArg(LIGHT_GREEN, clamp<int>((int)(floatTriple[1] * 255), 0, 255));
 				defaults->SetArg(LIGHT_BLUE, clamp<int>((int)(floatTriple[2] * 255), 0, 255));
 				break;
 			case LIGHTTAG_OFFSET:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
-				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
+				defaults->SetSubtractive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ADDITIVE:
-				defaults->SetAdditive(gl_ParseInt(sc) != 0);
+				defaults->SetAdditive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_HALO:
-				defaults->SetHalo(gl_ParseInt(sc) != 0);
+				defaults->SetHalo(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
-				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				defaults->SetDontLightSelf(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ATTENUATE:
-				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
-		gl_AddLightDefaults(defaults);
+		AddLightDefaults(defaults);
 	}
 	else
 	{
@@ -420,7 +415,7 @@ void gl_ParsePointLight(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParsePulseLight(FScanner &sc)
+static void ParsePulseLight(FScanner &sc)
 {
 	int type;
 	float floatVal, floatTriple[3];
@@ -450,38 +445,38 @@ void gl_ParsePulseLight(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_COLOR:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetArg(LIGHT_RED, clamp<int>((int)(floatTriple[0] * 255), 0, 255));
 				defaults->SetArg(LIGHT_GREEN, clamp<int>((int)(floatTriple[1] * 255), 0, 255));
 				defaults->SetArg(LIGHT_BLUE, clamp<int>((int)(floatTriple[2] * 255), 0, 255));
 				break;
 			case LIGHTTAG_OFFSET:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_INTERVAL:
-				floatVal = gl_ParseFloat(sc);
+				floatVal = ParseFloat(sc);
 				defaults->SetParameter(floatVal * TICRATE);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
-				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
+				defaults->SetSubtractive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_HALO:
-				defaults->SetHalo(gl_ParseInt(sc) != 0);
+				defaults->SetHalo(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
-				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				defaults->SetDontLightSelf(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ATTENUATE:
-				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -489,7 +484,7 @@ void gl_ParsePulseLight(FScanner &sc)
 		}
 		defaults->OrderIntensities();
 
-		gl_AddLightDefaults(defaults);
+		AddLightDefaults(defaults);
 	}
 	else
 	{
@@ -504,7 +499,7 @@ void gl_ParsePulseLight(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseFlickerLight(FScanner &sc)
+void ParseFlickerLight(FScanner &sc)
 {
 	int type;
 	float floatVal, floatTriple[3];
@@ -534,45 +529,45 @@ void gl_ParseFlickerLight(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_COLOR:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetArg(LIGHT_RED, clamp<int>((int)(floatTriple[0] * 255), 0, 255));
 				defaults->SetArg(LIGHT_GREEN, clamp<int>((int)(floatTriple[1] * 255), 0, 255));
 				defaults->SetArg(LIGHT_BLUE, clamp<int>((int)(floatTriple[2] * 255), 0, 255));
 				break;
 			case LIGHTTAG_OFFSET:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_CHANCE:
-				floatVal = gl_ParseFloat(sc);
+				floatVal = ParseFloat(sc);
 				defaults->SetParameter(floatVal*360.);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
-				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
+				defaults->SetSubtractive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_HALO:
-				defaults->SetHalo(gl_ParseInt(sc) != 0);
+				defaults->SetHalo(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
-				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				defaults->SetDontLightSelf(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ATTENUATE:
-				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
 		defaults->OrderIntensities();
-		gl_AddLightDefaults(defaults);
+		AddLightDefaults(defaults);
 	}
 	else
 	{
@@ -587,7 +582,7 @@ void gl_ParseFlickerLight(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseFlickerLight2(FScanner &sc)
+void ParseFlickerLight2(FScanner &sc)
 {
 	int type;
 	float floatVal, floatTriple[3];
@@ -617,38 +612,38 @@ void gl_ParseFlickerLight2(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_COLOR:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetArg(LIGHT_RED, clamp<int>((int)(floatTriple[0] * 255), 0, 255));
 				defaults->SetArg(LIGHT_GREEN, clamp<int>((int)(floatTriple[1] * 255), 0, 255));
 				defaults->SetArg(LIGHT_BLUE, clamp<int>((int)(floatTriple[2] * 255), 0, 255));
 				break;
 			case LIGHTTAG_OFFSET:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 1, 1024);
+				intVal = clamp<int>(ParseInt(sc), 1, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_INTERVAL:
-				floatVal = gl_ParseFloat(sc);
+				floatVal = ParseFloat(sc);
 				defaults->SetParameter(floatVal * 360.);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
-				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
+				defaults->SetSubtractive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_HALO:
-				defaults->SetHalo(gl_ParseInt(sc) != 0);
+				defaults->SetHalo(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
-				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				defaults->SetDontLightSelf(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ATTENUATE:
-				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -660,7 +655,7 @@ void gl_ParseFlickerLight2(FScanner &sc)
 			defaults->SetArg(LIGHT_SECONDARY_INTENSITY, defaults->GetArg(LIGHT_INTENSITY));
 			defaults->SetArg(LIGHT_INTENSITY, v);
 		}
-		gl_AddLightDefaults(defaults);
+		AddLightDefaults(defaults);
 	}
 	else
 	{
@@ -675,7 +670,7 @@ void gl_ParseFlickerLight2(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseSectorLight(FScanner &sc)
+static void ParseSectorLight(FScanner &sc)
 {
 	int type;
 	float floatVal;
@@ -705,36 +700,36 @@ void gl_ParseSectorLight(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_COLOR:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetArg(LIGHT_RED, clamp<int>((int)(floatTriple[0] * 255), 0, 255));
 				defaults->SetArg(LIGHT_GREEN, clamp<int>((int)(floatTriple[1] * 255), 0, 255));
 				defaults->SetArg(LIGHT_BLUE, clamp<int>((int)(floatTriple[2] * 255), 0, 255));
 				break;
 			case LIGHTTAG_OFFSET:
-				gl_ParseTriple(sc, floatTriple);
+				ParseTriple(sc, floatTriple);
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SCALE:
-				floatVal = gl_ParseFloat(sc);
+				floatVal = ParseFloat(sc);
 				defaults->SetArg(LIGHT_SCALE, clamp((int)(floatVal * 255), 1, 1024));
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
-				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
+				defaults->SetSubtractive(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_HALO:
-				defaults->SetHalo(gl_ParseInt(sc) != 0);
+				defaults->SetHalo(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
-				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				defaults->SetDontLightSelf(ParseInt(sc) != 0);
 				break;
 			case LIGHTTAG_ATTENUATE:
-				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
-		gl_AddLightDefaults(defaults);
+		AddLightDefaults(defaults);
 	}
 	else
 	{
@@ -749,7 +744,7 @@ void gl_ParseSectorLight(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_AddLightAssociation(const char *actor, const char *frame, const char *light)
+static void AddLightAssociation(const char *actor, const char *frame, const char *light)
 {
 	FLightAssociation *temp;
 	unsigned int i;
@@ -778,7 +773,7 @@ void gl_AddLightAssociation(const char *actor, const char *frame, const char *li
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseFrame(FScanner &sc, FString name)
+static void ParseFrame(FScanner &sc, FString name)
 {
 	int type, startDepth;
 	FString frameName;
@@ -811,8 +806,8 @@ void gl_ParseFrame(FScanner &sc, FString name)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_LIGHT:
-				gl_ParseString(sc);
-				gl_AddLightAssociation(name, frameName, sc.String);
+				ParseString(sc);
+				AddLightAssociation(name, frameName, sc.String);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -832,7 +827,7 @@ void gl_ParseFrame(FScanner &sc, FString name)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseObject(FScanner &sc)
+void ParseObject(FScanner &sc)
 {
 	int type;
 	FString name;
@@ -840,7 +835,7 @@ void gl_ParseObject(FScanner &sc)
 	// get name
 	sc.GetString();
 	name = sc.String;
-	if (!PClass::FindClass(name))
+	if (!PClass::FindActor(name))
 		sc.ScriptMessage("Warning: dynamic lights attached to non-existent actor %s\n", name.GetChars());
 
 	// check for opening brace
@@ -861,7 +856,7 @@ void gl_ParseObject(FScanner &sc)
 				ScriptDepth--;
 				break;
 			case LIGHTTAG_FRAME:
-				gl_ParseFrame(sc, name);
+				ParseFrame(sc, name);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -881,7 +876,7 @@ void gl_ParseObject(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ReleaseLights()
+static void ReleaseLights()
 {
    unsigned int i;
 
@@ -950,7 +945,7 @@ enum
 // There is no functionality for this stuff!
 //
 //==========================================================================
-bool gl_ParseShader(FScanner &sc)
+bool _gl_ParseShader(FScanner &sc)
 {
 	int  ShaderDepth = 0;
 
@@ -982,8 +977,6 @@ bool gl_ParseShader(FScanner &sc)
 //==========================================================================
 //
 // Light associations per actor class
-//
-// Turn this inefficient mess into something that can be used at run time.
 //
 //==========================================================================
 
@@ -1039,20 +1032,6 @@ FInternalLightAssociation::FInternalLightAssociation(FLightAssociation * asso)
 	}
 }
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-inline TDeletingArray<FInternalLightAssociation *> * gl_GetActorLights(AActor * actor)
-{
-	return (TDeletingArray<FInternalLightAssociation *>*)actor->lightassociations;
-}
-
-TDeletingArray< TDeletingArray<FInternalLightAssociation *> * > AssoDeleter;
-
 //==========================================================================
 //
 // State lights
@@ -1069,7 +1048,7 @@ TArray<FLightDefaults *> StateLights;
 //
 //==========================================================================
 
-void gl_InitializeActorLights()
+void InitializeActorLights()
 {
 	for(unsigned int i=0;i<LightAssociations.Size();i++)
 	{
@@ -1077,28 +1056,11 @@ void gl_InitializeActorLights()
 		if (ti)
 		{
 			ti = GetRealType(ti);
-			AActor * defaults = GetDefaultByType(ti);
-			if (defaults)
-			{
-				FInternalLightAssociation * iasso = new FInternalLightAssociation(&LightAssociations[i]);
-
-				if (!defaults->lightassociations)
-				{
-					TDeletingArray<FInternalLightAssociation*> *p =new TDeletingArray<FInternalLightAssociation*>;
-					defaults->lightassociations = p;
-					AssoDeleter.Push(p);
-				}
-				TDeletingArray<FInternalLightAssociation *> * lights = gl_GetActorLights(defaults);
-				if (iasso->Light()==NULL)
-				{
-					// The definition was not valid.
-					delete iasso;
-				}
-				else
-				{
-					lights->Push(iasso);
-				}
-			}
+			// put this in the class data arena so that we do not have to worry about deleting it ourselves.
+			void *mem = ClassDataAllocator.Alloc(sizeof(FInternalLightAssociation));
+			FInternalLightAssociation * iasso = new(mem) FInternalLightAssociation(&LightAssociations[i]);
+			if (iasso->Light() != nullptr)
+				ti->LightAssociations.Push(iasso);
 		}
 	}
 	// we don't need the parser data for the light associations anymore
@@ -1134,24 +1096,23 @@ void gl_InitializeActorLights()
 //
 //==========================================================================
 
-void gl_AttachLight(AActor *actor, unsigned int count, const FLightDefaults *lightdef)
+void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 {
 	ADynamicLight *light;
 
-		// I'm skipping the single rotations because that really doesn't make sense!
-	if (count < actor->dynamiclights.Size()) 
+	if (count < AttachedLights.Size()) 
 	{
-		light = barrier_cast<ADynamicLight*>(actor->dynamiclights[count]);
+		light = barrier_cast<ADynamicLight*>(AttachedLights[count]);
 		assert(light != NULL);
 	}
 	else
 	{
-		light = Spawn<ADynamicLight>(actor->Pos(), NO_REPLACE);
-		light->target = actor;
+		light = Spawn<ADynamicLight>(Pos(), NO_REPLACE);
+		light->target = this;
 		light->owned = true;
 		light->ObjectFlags |= OF_Transient;
 		//light->flags4 |= MF4_ATTENUATE;
-		actor->dynamiclights.Push(light);
+		AttachedLights.Push(light);
 	}
 	light->flags2&=~MF2_DORMANT;
 	lightdef->ApplyProperties(light);
@@ -1163,51 +1124,59 @@ void gl_AttachLight(AActor *actor, unsigned int count, const FLightDefaults *lig
 //
 //==========================================================================
 
-void gl_SetActorLights(AActor *actor)
+void AActor::SetDynamicLights()
 {
-	TArray<FInternalLightAssociation *> * l = gl_GetActorLights(actor);
+	TArray<FInternalLightAssociation *> & LightAssociations = GetClass()->LightAssociations;
 	unsigned int count = 0;
 
-	All.Clock();
-	if (actor->state == NULL) return;
-	if (l)
+	if (state == NULL) return;
+	if (LightAssociations.Size() > 0)
 	{
-		TArray<FInternalLightAssociation *> & LightAssociations=*l;
 		ADynamicLight *lights, *tmpLight;
 		unsigned int i;
 
-		int sprite = actor->sprite;
-		int frame = actor->frame;
-
 		lights = tmpLight = NULL;
-
 
 		for (i = 0; i < LightAssociations.Size(); i++)
 		{
 			if (LightAssociations[i]->Sprite() == sprite &&
 				(LightAssociations[i]->Frame()==frame || LightAssociations[i]->Frame()==-1))
 			{
-				gl_AttachLight(actor, count++, LightAssociations[i]->Light());
+				AttachLight(count++, LightAssociations[i]->Light());
 			}
 		}
 	}
-	if (count == 0 && actor->state->Light > 0)
+	if (count == 0 && state->Light > 0)
 	{
-		for(int i= actor->state->Light; StateLights[i] != NULL; i++)
+		for(int i= state->Light; StateLights[i] != NULL; i++)
 		{
 			if (StateLights[i] != (FLightDefaults*)-1)
 			{
-				gl_AttachLight(actor, count++, StateLights[i]);
+				AttachLight(count++, StateLights[i]);
 			}
 		}
 	}
 
-	for(;count<actor->dynamiclights.Size();count++)
+	for(;count<AttachedLights.Size();count++)
 	{
-		actor->dynamiclights[count]->flags2 |= MF2_DORMANT;
-		memset(actor->dynamiclights[count]->args, 0, 3*sizeof(actor->args[0]));
+		AttachedLights[count]->flags2 |= MF2_DORMANT;
+		memset(AttachedLights[count]->args, 0, 3*sizeof(args[0]));
 	}
-	All.Unclock();
+}
+
+//==========================================================================
+//
+// Needed for garbage collection
+//
+//==========================================================================
+
+size_t AActor::PropagateMark()
+{
+	for (unsigned i = 0; i<AttachedLights.Size(); i++)
+	{
+		GC::Mark(AttachedLights[i]);
+	}
+	return Super::PropagateMark();
 }
 
 //==========================================================================
@@ -1216,7 +1185,7 @@ void gl_SetActorLights(AActor *actor)
 //
 //==========================================================================
 
-void gl_DeleteAllAttachedLights()
+void AActor::DeleteAllAttachedLights()
 {
 	TThinkerIterator<AActor> it;
 	AActor * a;
@@ -1224,7 +1193,7 @@ void gl_DeleteAllAttachedLights()
 
 	while ((a=it.Next())) 
 	{
-		a->dynamiclights.Clear();
+		a->AttachedLights.Clear();
 	}
 
 	TThinkerIterator<ADynamicLight> it2;
@@ -1236,8 +1205,6 @@ void gl_DeleteAllAttachedLights()
 		if (l->owned) l->Destroy();
 		l=ll;
 	}
-
-
 }
 
 //==========================================================================
@@ -1246,14 +1213,14 @@ void gl_DeleteAllAttachedLights()
 //
 //==========================================================================
 
-void gl_RecreateAllAttachedLights()
+void AActor::RecreateAllAttachedLights()
 {
 	TThinkerIterator<AActor> it;
 	AActor * a;
 
 	while ((a=it.Next())) 
 	{
-		gl_SetActorLights(a);
+		a->SetDynamicLights();
 	}
 }
 
@@ -1264,7 +1231,7 @@ void gl_RecreateAllAttachedLights()
 // by LoadDynLightDefs, which wasn't simply integrated into ParseDefs
 // because of the way the code needs to load two out of five lumps.
 //==========================================================================
-void gl_DoParseDefs(FScanner &sc, int workingLump)
+static void DoParseDefs(FScanner &sc, int workingLump)
 {
 	int recursion=0;
 	int lump, type;
@@ -1289,32 +1256,32 @@ void gl_DoParseDefs(FScanner &sc, int workingLump)
 					sc.ScriptError("Lump '%s' not found", sc.String);
 
 				FScanner newscanner(lump);
-				gl_DoParseDefs(newscanner, lump);
+				DoParseDefs(newscanner, lump);
 				break;
 			}
 		case LIGHT_POINT:
-			gl_ParsePointLight(sc);
+			ParsePointLight(sc);
 			break;
 		case LIGHT_PULSE:
-			gl_ParsePulseLight(sc);
+			ParsePulseLight(sc);
 			break;
 		case LIGHT_FLICKER:
-			gl_ParseFlickerLight(sc);
+			ParseFlickerLight(sc);
 			break;
 		case LIGHT_FLICKER2:
-			gl_ParseFlickerLight2(sc);
+			ParseFlickerLight2(sc);
 			break;
 		case LIGHT_SECTOR:
-			gl_ParseSectorLight(sc);
+			ParseSectorLight(sc);
 			break;
 		case LIGHT_OBJECT:
-			gl_ParseObject(sc);
+			ParseObject(sc);
 			break;
 		case LIGHT_CLEAR:
-			gl_ReleaseLights();
+			// This has been intentionally removed
 			break;
 		case TAG_SHADER:
-			gl_ParseShader(sc);
+			_gl_ParseShader(sc);
 			break;
 		case TAG_CLEARSHADERS:
 			break;
@@ -1355,7 +1322,7 @@ void gl_DoParseDefs(FScanner &sc, int workingLump)
 //
 //==========================================================================
 
-void gl_LoadGLDefs(const char *defsLump)
+static void LoadGLDefs(const char *defsLump)
 {
 	int workingLump, lastLump;
 	static const char *gldefsnames[] = { "GLDEFS", defsLump, nullptr };
@@ -1364,7 +1331,7 @@ void gl_LoadGLDefs(const char *defsLump)
 	while ((workingLump = Wads.FindLumpMulti(gldefsnames, &lastLump)) != -1)
 	{
 		FScanner sc(workingLump);
-		gl_DoParseDefs(sc, workingLump);
+		DoParseDefs(sc, workingLump);
 	}
 }
 
@@ -1375,12 +1342,12 @@ void gl_LoadGLDefs(const char *defsLump)
 //
 //==========================================================================
 
-void gl_ParseDefs()
+void ParseGLDefs()
 {
 	const char *defsLump = NULL;
 
-	atterm( gl_ReleaseLights ); 
-	gl_ReleaseLights();
+	atterm(ReleaseLights ); 
+	ReleaseLights();
 	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
@@ -1403,10 +1370,9 @@ void gl_ParseDefs()
 		break;
 	}
 	gl_ParseVavoomSkybox();
-	gl_LoadGLDefs(defsLump);
-	gl_InitializeActorLights();
+	LoadGLDefs(defsLump);
+	InitializeActorLights();
 }
-
 
 //==========================================================================
 //

@@ -902,9 +902,7 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
 	gl/data/gl_matrix.cpp
-	gl/dynlights/a_dynlight.cpp
 	gl/utility/gl_clock.cpp
-	gl/utility/gl_cycler.cpp
 	gl/utility/gl_geometric.cpp
 	gl/renderer/gl_2ddrawer.cpp
 	gl/hqnx/init.cpp
@@ -957,6 +955,7 @@ set (PCH_SOURCES
 	compatibility.cpp
 	configfile.cpp
 	ct_chat.cpp
+	cycler.cpp
 	d_dehacked.cpp
 	d_iwad.cpp
 	d_main.cpp
@@ -1085,6 +1084,8 @@ set (PCH_SOURCES
 	g_inventory/a_weapons.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
+	g_shared/a_dynlight.cpp
+	g_shared/a_dynlightdata.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
@@ -1101,7 +1102,6 @@ set (PCH_SOURCES
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp
 	gl/data/gl_vertexbuffer.cpp
-	gl/dynlights/gl_dynlight.cpp
 	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_aabbtree.cpp

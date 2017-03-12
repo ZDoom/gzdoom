@@ -998,6 +998,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 			}
 		}
 	}
+	AActor::RecreateAllAttachedLights();
 	Renderer->EndSerialize(arc);
 
 }

@@ -1486,7 +1486,7 @@ bool FLevelLocals::IsJumpingAllowed() const
 		return false;
 	if (dmflags & DF_YES_JUMP)
 		return true;
-	return !(level.flags & LEVEL_JUMP_NO);
+	return !(flags & LEVEL_JUMP_NO);
 }
 
 //==========================================================================
@@ -1500,7 +1500,7 @@ bool FLevelLocals::IsCrouchingAllowed() const
 		return false;
 	if (dmflags & DF_YES_CROUCH)
 		return true;
-	return !(level.flags & LEVEL_CROUCH_NO);
+	return !(flags & LEVEL_CROUCH_NO);
 }
 
 //==========================================================================
@@ -1514,7 +1514,7 @@ bool FLevelLocals::IsFreelookAllowed() const
 		return false;
 	if (dmflags & DF_YES_FREELOOK)
 		return true;
-	return !(level.flags & LEVEL_FREELOOK_NO);
+	return !(flags & LEVEL_FREELOOK_NO);
 }
 
 //==========================================================================

@@ -47,6 +47,7 @@ struct subsector_t;
 struct FBlockNode;
 struct FPortalGroupArray;
 struct visstyle_t;
+class FLightDefaults;
 //
 // NOTES: AActor
 //
@@ -974,6 +975,10 @@ public:
 	void ClearRenderSectorList();
 	void ClearRenderLineList();
 
+	void AttachLight(unsigned int count, const FLightDefaults *lightdef);
+	void SetDynamicLights();
+
+
 // info for drawing
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
@@ -1191,6 +1196,7 @@ public:
 	DVector3 Prev;
 	DRotator PrevAngles;
 	int PrevPortalGroup;
+	TArray<TObjPtr<AActor*> > AttachedLights;
 
 	// ThingIDs
 	static void ClearTIDHashes ();
@@ -1432,12 +1438,10 @@ public:
 	int ApplyDamageFactor(FName damagetype, int damage) const;
 	int GetModifiedDamage(FName damagetype, int damage, bool passive);
 
+	static void DeleteAllAttachedLights();
+	static void RecreateAllAttachedLights();
 
-	// begin of GZDoom specific additions
-	TArray<TObjPtr<AActor*> >		dynamiclights;
-	void *				lightassociations;
 	bool				hasmodel;
-	// end of GZDoom specific additions
 
 	size_t PropagateMark();
 };
@@ -1469,6 +1473,7 @@ public:
 	{
 		base = nullptr;
 	}
+
 private:
 	AActor *base;
 	int id;

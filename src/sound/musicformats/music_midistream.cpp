@@ -641,7 +641,7 @@ void MIDIStreamer::Callback(void *userdata)
 
 void MIDIStreamer::Update()
 {
-	if (!MIDI->Update()) Stop();
+	if (MIDI != nullptr && !MIDI->Update()) Stop();
 }
 
 //==========================================================================

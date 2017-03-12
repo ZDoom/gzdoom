@@ -80,6 +80,9 @@ namespace swrenderer
 		short cliptop[MAXWIDTH];
 
 		SWPixelFormatDrawers *Drawers(RenderViewport *viewport);
+
+		// Make sure texture can accessed safely
+		void PrepareTexture(FTexture *texture);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

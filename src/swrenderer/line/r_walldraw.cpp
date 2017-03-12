@@ -515,6 +515,8 @@ namespace swrenderer
 		this->rw_pic = pic;
 		this->mask = mask;
 
+		Thread->PrepareTexture(pic);
+
 		if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 		{
 			ProcessWallNP2(walltop, wallbottom, texturemid, swall, lwall, top, bottom);

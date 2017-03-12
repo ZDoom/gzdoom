@@ -34,9 +34,10 @@ namespace swrenderer
 		dc_viewport = viewport;
 	}
 
-	void SkyDrawerArgs::SetFrontTexture(RenderViewport *viewport, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FTexture *texture, uint32_t column)
 	{
-		if (viewport->RenderTarget->IsBgra())
+		thread->PrepareTexture(texture);
+		if (thread->Viewport->RenderTarget->IsBgra())
 		{
 			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight = texture->GetHeight();
@@ -48,14 +49,15 @@ namespace swrenderer
 		}
 	}
 
-	void SkyDrawerArgs::SetBackTexture(RenderViewport *viewport, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FTexture *texture, uint32_t column)
 	{
+		thread->PrepareTexture(texture);
 		if (texture == nullptr)
 		{
 			dc_source2 = nullptr;
 			dc_sourceheight2 = 1;
 		}
-		else if (viewport->RenderTarget->IsBgra())
+		else if (thread->Viewport->RenderTarget->IsBgra())
 		{
 			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
 			dc_sourceheight2 = texture->GetHeight();

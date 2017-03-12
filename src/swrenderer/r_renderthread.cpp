@@ -88,4 +88,38 @@ namespace swrenderer
 		else
 			return pal_drawers.get();
 	}
+
+	void RenderThread::PrepareTexture(FTexture *texture)
+	{
+		if (texture == nullptr)
+			return;
+
+		// Textures may not have loaded/refreshed yet. The shared code doing
+		// this is not thread safe. By calling GetPixels in a mutex lock we
+		// make sure that only one thread is loading a texture at any given
+		// time.
+		//
+		// It is critical that this function is called before any direct
+		// calls to GetPixels for this to work.
+
+		static std::mutex loadmutex;
+		loadmutex.lock();
+		try
+		{
+			texture->GetPixels();
+			const FTexture::Span *spans;
+			texture->GetColumn(0, &spans);
+			if (Viewport->RenderTarget->IsBgra())
+			{
+				texture->GetPixelsBgra();
+				texture->GetColumnBgra(0, &spans);
+			}
+			loadmutex.unlock();
+		}
+		catch (...)
+		{
+			loadmutex.unlock();
+			throw;
+		}
+	}
 }

@@ -198,8 +198,8 @@ namespace swrenderer
 		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
-		drawerargs.SetFrontTexture(viewport, frontskytex, angle1);
-		drawerargs.SetBackTexture(viewport, backskytex, angle2);
+		drawerargs.SetFrontTexture(Thread, frontskytex, angle1);
+		drawerargs.SetBackTexture(Thread, backskytex, angle2);
 		drawerargs.SetTextureVStep(uv_step);
 		drawerargs.SetTextureVPos(uv_pos);
 		drawerargs.SetDest(viewport, start_x, y1);

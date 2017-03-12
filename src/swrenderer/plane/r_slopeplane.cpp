@@ -80,7 +80,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 
 		drawerargs.SetSolidColor(3);
-		drawerargs.SetTexture(Thread->Viewport.get(), texture);
+		drawerargs.SetTexture(Thread, texture);
 
 		lxscale = _xscale * ifloatpow2[drawerargs.TextureWidthBits()];
 		lyscale = _yscale * ifloatpow2[drawerargs.TextureHeightBits()];

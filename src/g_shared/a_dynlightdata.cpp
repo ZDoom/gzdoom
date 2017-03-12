@@ -150,7 +150,7 @@ protected:
    bool m_swapped = false;
 };
 
-TArray<FLightDefaults *> LightDefaults;
+TDeletingArray<FLightDefaults *> LightDefaults;
 
 //-----------------------------------------------------------------------------
 //
@@ -870,25 +870,6 @@ void ParseObject(FScanner &sc)
 }
 
 
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-static void ReleaseLights()
-{
-   unsigned int i;
-
-   for (i = 0; i < LightDefaults.Size(); i++)
-   {
-      delete LightDefaults[i];
-   }
-
-   LightAssociations.Clear();
-   LightDefaults.Clear();
-}
-
 //==========================================================================
 //
 //
@@ -945,7 +926,7 @@ enum
 // There is no functionality for this stuff!
 //
 //==========================================================================
-bool _gl_ParseShader(FScanner &sc)
+bool ParseShader(FScanner &sc)
 {
 	int  ShaderDepth = 0;
 
@@ -1281,7 +1262,7 @@ static void DoParseDefs(FScanner &sc, int workingLump)
 			// This has been intentionally removed
 			break;
 		case TAG_SHADER:
-			_gl_ParseShader(sc);
+			ParseShader(sc);
 			break;
 		case TAG_CLEARSHADERS:
 			break;
@@ -1346,8 +1327,8 @@ void ParseGLDefs()
 {
 	const char *defsLump = NULL;
 
-	atterm(ReleaseLights ); 
-	ReleaseLights();
+   LightAssociations.Clear();
+   LightDefaults.Clear();
 	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{

@@ -160,7 +160,7 @@ namespace swrenderer
 			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
 			r_viewpoint.camera = nullptr;
 			r_viewpoint.sector = port->mDestination;
-			assert(viewsector != nullptr);
+			assert(r_viewpoint.sector != nullptr);
 			R_SetViewAngle(r_viewpoint, r_viewwindow);
 			Thread->OpaquePass->ClearSeenSprites();
 			Thread->Clip3D->ClearFakeFloors();

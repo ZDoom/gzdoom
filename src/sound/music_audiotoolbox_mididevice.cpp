@@ -35,7 +35,7 @@
 	{                                                              \
 		DPrintf(DMSG_ERROR,                                        \
 			"Failed with error 0x%08X at " __FILE__ ":%d:\n> %s",  \
-			result, __LINE__, #CALL);                              \
+			int(result), __LINE__, #CALL);                         \
 		return __VA_ARGS__;                                        \
 	}                                                              \
 }
@@ -55,7 +55,7 @@ int AudioToolboxMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, D
 		return 1;
 	}
 
-	CFRunLoopAddTimer(CFRunLoopGetMain(), m_timer, kCFRunLoopDefaultMode);
+	CFRunLoopAddTimer(CFRunLoopGetCurrent(), m_timer, kCFRunLoopDefaultMode);
 
 	m_callback = callback;
 	m_userData = userData;
@@ -73,7 +73,7 @@ void AudioToolboxMIDIDevice::Close()
 
 	if (nullptr != m_timer)
 	{
-		CFRunLoopRemoveTimer(CFRunLoopGetMain(), m_timer, kCFRunLoopDefaultMode);
+		CFRunLoopRemoveTimer(CFRunLoopGetCurrent(), m_timer, kCFRunLoopDefaultMode);
 
 		CFRelease(m_timer);
 		m_timer = nullptr;
@@ -142,9 +142,16 @@ int AudioToolboxMIDIDevice::Resume()
 			AUNode node;
 			AT_MIDI_CHECK_ERROR(AUGraphGetIndNode(graph, i, &node), false);
 
-			AudioComponentDescription desc = {};
 			AudioUnit audioUnit = nullptr;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+			ComponentDescription desc = {};
+			UInt32 classdatasize = 0;
+			void *classdata = nullptr;
+			AT_MIDI_CHECK_ERROR(AUGraphGetNodeInfo(graph, node, &desc, &classdatasize, &classdata, &audioUnit), false);
+#else // 10.5 and above
+			AudioComponentDescription desc = {};
 			AT_MIDI_CHECK_ERROR(AUGraphNodeInfo(graph, node, &desc, &audioUnit), false);
+#endif // prior to 10.5
 
 			if (   kAudioUnitType_Output           != desc.componentType
 				|| kAudioUnitSubType_DefaultOutput != desc.componentSubType)
@@ -260,7 +267,11 @@ bool AudioToolboxMIDIDevice::Preprocess(MIDIStreamer* song, bool looping)
 		return false;
 	}
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+	AT_MIDI_CHECK_ERROR(MusicSequenceLoadSMFDataWithFlags(m_sequence, data, 0), false);
+#else // 10.5 and above
 	AT_MIDI_CHECK_ERROR(MusicSequenceFileLoadData(m_sequence, data, kMusicSequenceFile_MIDIType, 0), CFRelease(data), false);
+#endif // prior to 10.5
 
 	CFRelease(data);
 

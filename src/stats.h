@@ -130,6 +130,15 @@ inline unsigned long long rdtsc()
 	unsigned long long tsc;
 	asm volatile ("rdtsc; shlq $32, %%rdx; orq %%rdx, %%rax" : "=a" (tsc) :: "%rdx");
 	return tsc;
+#elif defined __ppc__
+	unsigned int lower, upper, temp;
+	do
+	{
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n" 
+			: "=r"(upper), "=r"(lower), "=r"(temp));
+	}
+	while (upper != temp);
+	return (static_cast<unsigned long long>(upper) << 32) | lower;
 #else // i386
 	if (CPU.bRDTSC)
 	{

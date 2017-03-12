@@ -173,7 +173,9 @@ static void I_DetectOS()
 		"Unknown";
 #endif
 	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name, majorVersion, minorVersion, bugFixVersion, release, architecture);
+	Printf("OS: %s %d.%d.%d (%s) %s\n", name, 
+		int(majorVersion), int(minorVersion), int(bugFixVersion),
+		release, architecture);
 }
 
 

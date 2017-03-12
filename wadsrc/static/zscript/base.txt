@@ -44,6 +44,8 @@ struct TexMan
 	native static void ReplaceTextures(String from, String to, int flags);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
+    
+    native static void SetCameraToTexture(Actor viewpoint, String texture, int fov);
 }
 
 enum DrawTextureTags

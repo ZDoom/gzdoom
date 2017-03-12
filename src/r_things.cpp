@@ -1301,21 +1301,30 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		avis.Reserve(avis.Size() - vispspindex + 1);
 
 	// decide which patch to use
-	if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
+	picnum = pspr->GetPicNum();
+	if (!picnum.isValid())
 	{
-		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
-		return;
-	}
-	sprdef = &sprites[pspr->GetSprite()];
-	if (pspr->GetFrame() >= sprdef->numframes)
-	{
-		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
-		return;
-	}
-	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
+		if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
+		{
+			DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
+			return;
+		}
+		sprdef = &sprites[pspr->GetSprite()];
+		if (pspr->GetFrame() >= sprdef->numframes)
+		{
+			DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
+			return;
+		}
+		sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
 
-	picnum = sprframe->Texture[0];
-	flip = sprframe->Flip & 1;
+		picnum = sprframe->Texture[0];
+		flip = sprframe->Flip & 1;
+	}
+	else
+	{
+		flip = false;
+	}
+
 	tex = TexMan(picnum);
 
 	if (tex->UseType == FTexture::TEX_Null)

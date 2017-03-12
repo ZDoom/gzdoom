@@ -994,6 +994,18 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, int fov)
 	List = probe;
 }
 
+// [ZZ] expose this to ZScript
+DEFINE_ACTION_FUNCTION(_TexMan, SetCameraToTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(viewpoint, AActor);
+	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
+	PARAM_INT(fov);
+	FTextureID textureid = TexMan.CheckForTexture(texturename, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+	FCanvasTextureInfo::Add(viewpoint, textureid, fov);
+	return 0;
+}
+
 //==========================================================================
 //
 // FCanvasTextureInfo :: UpdateAll

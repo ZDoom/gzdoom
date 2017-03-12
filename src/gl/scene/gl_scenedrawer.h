@@ -3,6 +3,7 @@
 #include "r_defs.h"
 #include "m_fixed.h"
 #include "gl_clipper.h"
+#include "gl_portal.h"
 
 class GLSceneDrawer
 {
@@ -10,7 +11,9 @@ class GLSceneDrawer
 	
 	subsector_t *currentsubsector;	// used by the line processing code.
 	sector_t *currentsector;
-	
+
+	void RenderMultipassStuff();
+
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine (seg_t *seg, bool portalclip);
 	void PolySubsector(subsector_t * sub);
@@ -22,10 +25,28 @@ class GLSceneDrawer
 	void DoSubsector(subsector_t * sub);
 	void RenderBSPNode(void *node);
 
-public:
-	Clipper clipper;
-	
+	void RenderScene(int recursion);
+	void RenderTranslucent();
+
 	void CreateScene();
+
+public:
+	GLSceneDrawer()
+	{
+		GLPortal::drawer = this;
+	}
+
+	Clipper clipper;
+
+	angle_t FrustumAngle();
+	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
+	void SetViewArea();
+	void SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
+	void SetViewAngle(DAngle viewangle);
+	void SetProjection(VSMatrix matrix);
+	void Set3DViewport(bool mainview);
+	void DrawScene(int drawmode);
+	void ProcessScene(bool toscreen = false);
 
 	void InitClipper(angle_t a1, angle_t a2)
 	{

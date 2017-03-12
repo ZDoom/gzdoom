@@ -47,6 +47,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_vertexbuffer.h"
 
 
@@ -756,7 +757,7 @@ void GLWall::RenderLightsCompat(int pass)
 //
 //==========================================================================
 
-void FGLRenderer::RenderMultipassStuff()
+void GLSceneDrawer::RenderMultipassStuff()
 {
 	// First pass: empty background with sector light only
 
@@ -790,7 +791,7 @@ void FGLRenderer::RenderMultipassStuff()
 
 	// second pass: draw lights
 	glDepthMask(false);
-	if (mLightCount && !gl_fixedcolormap)
+	if (GLRenderer->mLightCount && !gl_fixedcolormap)
 	{
 		if (gl_SetupLightTexture())
 		{

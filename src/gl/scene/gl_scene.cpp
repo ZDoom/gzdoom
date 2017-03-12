@@ -100,18 +100,18 @@ void gl_ParseDefs();
 // R_FrustumAngle
 //
 //-----------------------------------------------------------------------------
-angle_t FGLRenderer::FrustumAngle()
+angle_t GLSceneDrawer::FrustumAngle()
 {
-	float tilt= fabs(mAngles.Pitch.Degrees);
+	float tilt = fabs(GLRenderer->mAngles.Pitch.Degrees);
 
 	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt>46.0f) return 0xffffffff;
+	if (tilt > 46.0f) return 0xffffffff;
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/AspectMultiplier(r_viewwindow.WidescreenRatio)/90.0;
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*GLRenderer->mCurrentFoV*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
 	angle_t a1 = DAngle(floatangle).BAMs();
-	if (a1>=ANGLE_180) return 0xffffffff;
+	if (a1 >= ANGLE_180) return 0xffffffff;
 	return a1;
 }
 
@@ -120,7 +120,7 @@ angle_t FGLRenderer::FrustumAngle()
 // Sets the area the camera is in
 //
 //-----------------------------------------------------------------------------
-void FGLRenderer::SetViewArea()
+void GLSceneDrawer::SetViewArea()
 {
 	// The render_sector is better suited to represent the current position in GL
 	r_viewpoint.sector = R_PointInSubsector(r_viewpoint.Pos)->render_sector;
@@ -155,12 +155,12 @@ void FGLRenderer::Reset3DViewport()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Set3DViewport(bool mainview)
+void GLSceneDrawer::Set3DViewport(bool mainview)
 {
-	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
+	if (mainview && GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height))
 	{
 		bool useSSAO = (gl_ssao != 0);
-		mBuffers->BindSceneFB(useSSAO);
+		GLRenderer->mBuffers->BindSceneFB(useSSAO);
 		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
@@ -170,10 +170,10 @@ void FGLRenderer::Set3DViewport(bool mainview)
 	// This is faster on newer hardware because it allows the GPU to skip
 	// reading from slower memory where the full buffers are stored.
 	glDisable(GL_SCISSOR_TEST);
-	glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
+	glClearColor(GLRenderer->mSceneClearColor[0], GLRenderer->mSceneClearColor[1], GLRenderer->mSceneClearColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	const auto &bounds = mSceneViewport;
+	const auto &bounds = GLRenderer->mSceneViewport;
 	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 
@@ -192,12 +192,12 @@ void FGLRenderer::Set3DViewport(bool mainview)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetViewAngle(DAngle viewangle)
+void GLSceneDrawer::SetViewAngle(DAngle viewangle)
 {
-	mAngles.Yaw = float(270.0-viewangle.Degrees);
+	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
 	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
-	mViewVector.X = v.X;
-	mViewVector.Y = v.Y;
+	GLRenderer->mViewVector.X = v.X;
+	GLRenderer->mViewVector.Y = v.Y;
 
 	R_SetViewAngle(r_viewpoint, r_viewwindow);
 }
@@ -210,15 +210,7 @@ void FGLRenderer::SetViewAngle(DAngle viewangle)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
-{
-
-	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
-}
-
-// raw matrix input from stereo 3d modes
-void FGLRenderer::SetProjection(VSMatrix matrix)
+void GLSceneDrawer::SetProjection(VSMatrix matrix)
 {
 	gl_RenderState.mProjectionMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
@@ -230,7 +222,7 @@ void FGLRenderer::SetProjection(VSMatrix matrix)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
+void GLSceneDrawer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -glset.pixelstretch : glset.pixelstretch;
@@ -250,7 +242,7 @@ void FGLRenderer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool 
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
 {
 	SetViewAngle(va);
 	SetViewMatrix(vx, vy, vz, mirror, planemirror);
@@ -267,9 +259,8 @@ void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror
 
 void GLSceneDrawer::CreateScene()
 {
-	angle_t a1 = GLRenderer->FrustumAngle();
+	angle_t a1 = FrustumAngle();
 	InitClipper(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
-	GLPortal::drawer = this;
 
 	// reset the portal manager
 	GLPortal::StartFrame();
@@ -306,7 +297,7 @@ void GLSceneDrawer::CreateScene()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderScene(int recursion)
+void GLSceneDrawer::RenderScene(int recursion)
 {
 	RenderAll.Clock();
 
@@ -329,7 +320,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	bool haslights = mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights;
+	bool haslights = GLRenderer->mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights;
 	if (gl.lightmethod == LM_DEFERRED && haslights)
 	{
 		GLRenderer->mLights->Begin();
@@ -358,7 +349,7 @@ void FGLRenderer::RenderScene(int recursion)
 	{
 		pass = GLPASS_ALL;
 	}
-	else
+	else // GL 2.x legacy mode
 	{
 		// process everything that needs to handle textured dynamic lights.
 		if (haslights) RenderMultipassStuff();
@@ -445,7 +436,7 @@ void FGLRenderer::RenderScene(int recursion)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderTranslucent()
+void GLSceneDrawer::RenderTranslucent()
 {
 	RenderAll.Clock();
 
@@ -477,7 +468,7 @@ void FGLRenderer::RenderTranslucent()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::DrawScene(int drawmode)
+void GLSceneDrawer::DrawScene(int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
@@ -498,17 +489,15 @@ void FGLRenderer::DrawScene(int drawmode)
 		ssao_portals_available--;
 	}
 
-	GLSceneDrawer drawer;
-
 	if (r_viewpoint.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
-		drawer.CreateScene();
+		CreateScene();
 		r_viewpoint.camera->renderflags = savedflags;
 	}
 	else
 	{
-		drawer.CreateScene();
+		CreateScene();
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
@@ -517,8 +506,8 @@ void FGLRenderer::DrawScene(int drawmode)
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
-		AmbientOccludeScene();
-		mBuffers->BindSceneFB(true);
+		GLRenderer->AmbientOccludeScene();
+		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();
@@ -732,7 +721,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::ProcessScene(bool toscreen)
+void GLSceneDrawer::ProcessScene(bool toscreen)
 {
 	FDrawInfo::StartDrawInfo();
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
@@ -800,12 +789,14 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 
 sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
+	GLSceneDrawer drawer;
+
 	sector_t * lviewsector;
 	mSceneClearColor[0] = 0.0f;
 	mSceneClearColor[1] = 0.0f;
 	mSceneClearColor[2] = 0.0f;
 	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
-	SetViewArea();
+	drawer.SetViewArea();
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
@@ -844,20 +835,20 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
 		SetOutputViewport(bounds);
-		Set3DViewport(mainview);
+		drawer.Set3DViewport(mainview);
 		mDrawingScene2D = true;
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
-		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
+		drawer.SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		SetViewAngle(r_viewpoint.Angles.Yaw);
+		drawer.SetViewAngle(r_viewpoint.Angles.Yaw);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
-		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
+		drawer.SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
-		ProcessScene(toscreen);
+		drawer.ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{

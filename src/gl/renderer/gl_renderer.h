@@ -158,21 +158,12 @@ public:
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 
-	angle_t FrustumAngle();
-	void SetViewArea();
-	void Set3DViewport(bool mainview);
 	void Reset3DViewport();
 	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
-	void SetViewAngle(DAngle viewangle);
-	void SetupView(float viewx, float viewy, float viewz, DAngle viewangle, bool mirror, bool planemirror);
 
 	void Initialize(int width, int height);
 
-	void RenderMultipassStuff();
-	void RenderScene(int recursion);
-	void RenderTranslucent();
-	void DrawScene(int drawmode);
 	void DrawBlend(sector_t * viewsector);
 
 	void DrawPSprite (player_t * player,DPSprite *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
@@ -208,10 +199,6 @@ public:
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();
 
-	void SetProjection(float fov, float ratio, float fovratio);
-	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes
-	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
-	void ProcessScene(bool toscreen = false);
 
 	bool StartOffscreen();
 	void EndOffscreen();

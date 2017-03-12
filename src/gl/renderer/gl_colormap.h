@@ -5,8 +5,6 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 
-extern int gl_fixedcolormap;
-
 struct lightlist_t;
 
 enum EColorManipulation

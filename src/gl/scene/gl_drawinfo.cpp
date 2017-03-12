@@ -39,6 +39,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/textures/gl_material.h"
@@ -1034,9 +1035,10 @@ FDrawInfo::~FDrawInfo()
 // Sets up a new drawinfo struct
 //
 //==========================================================================
-void FDrawInfo::StartDrawInfo()
+void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
+	di->mDrawer = drawer;
 	di->StartScene();
 }
 
@@ -1165,7 +1167,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
-	if (gl_fixedcolormap) 
+	if (mDrawer->FixedColormap) 
 	{
 		Colormap.Clear();
 		lightlevel=255;
@@ -1182,8 +1184,8 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	}
 
 	int rel = getExtraLight();
-	gl_SetColor(lightlevel, rel, Colormap, 1.0f);
-	gl_SetFog(lightlevel, rel, &Colormap, false);
+	mDrawer->SetColor(lightlevel, rel, Colormap, 1.0f);
+	mDrawer->SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	float fviewx = r_viewpoint.Pos.X;

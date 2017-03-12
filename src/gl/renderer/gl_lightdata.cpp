@@ -260,9 +260,9 @@ static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 // set current light color
 //
 //==========================================================================
-void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float alpha, bool weapon)
+void gl_SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
 { 
-	if (gl_fixedcolormap != CM_DEFAULT)
+	if (fullbright)
 	{
 		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0);
 		gl_RenderState.SetSoftLightLevel(255);
@@ -390,7 +390,6 @@ bool gl_CheckFog(FColormap *cm, int lightlevel)
 
 bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 {
-	if (gl_fixedcolormap) return false;
 	if (frontsector == backsector) return false;	// there can't be a boundary if both sides are in the same sector.
 
 	// Check for fog boundaries. This needs a few more checks for the sectors
@@ -479,7 +478,7 @@ void gl_SetShaderLight(float level, float olight)
 //
 //==========================================================================
 
-void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
+void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
 {
 	PalEntry fogcolor;
 	float fogdensity;
@@ -489,7 +488,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		fogdensity=70;
 		fogcolor=0x808080;
 	}
-	else if (cmap != NULL && gl_fixedcolormap == 0)
+	else if (cmap != NULL && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
 		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->fogdensity);

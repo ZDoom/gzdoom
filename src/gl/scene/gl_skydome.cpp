@@ -545,7 +545,7 @@ void GLSkyPortal::DrawContents()
 			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
-		if (skyfog>0 && gl_fixedcolormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
+		if (skyfog>0 && drawer->FixedColormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
 		{
 			PalEntry FadeColor = origin->fadecolor;
 			FadeColor.a = clamp<int>(skyfog, 0, 255);

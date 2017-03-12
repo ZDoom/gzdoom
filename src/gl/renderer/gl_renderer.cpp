@@ -361,55 +361,6 @@ void FGLRenderer::Begin2D()
 //
 //===========================================================================
 
-void FGLRenderer::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * backsector)
-{
-	GLWall wall;
-	wall.ProcessLowerMiniseg(seg, frontsector, backsector);
-	rendered_lines++;
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessSprite(AActor *thing, sector_t *sector, bool thruportal)
-{
-	GLSprite glsprite;
-	glsprite.Process(thing, sector, thruportal);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessParticle(particle_t *part, sector_t *sector)
-{
-	GLSprite glsprite;
-	glsprite.ProcessParticle(part, sector);//, 0, 0);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessSector(sector_t *fakesector)
-{
-	GLFlat glflat;
-	glflat.ProcessSector(fakesector);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
 void FGLRenderer::FlushTextures()
 {
 	FMaterial::FlushAll();

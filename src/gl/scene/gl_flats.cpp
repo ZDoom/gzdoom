@@ -50,6 +50,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
@@ -378,8 +379,8 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	{
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:			// Same, but also creates the dynlight data.
-		gl_SetColor(lightlevel, rel, Colormap,1.0f);
-		gl_SetFog(lightlevel, rel, &Colormap, false);
+		mDrawer->SetColor(lightlevel, rel, Colormap,1.0f);
+		mDrawer->SetFog(lightlevel, rel, &Colormap, false);
 		if (!gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
 		if (sector->special != GLSector_Skybox)
@@ -406,8 +407,8 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 
 	case GLPASS_TRANSLUCENT:
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		gl_SetColor(lightlevel, rel, Colormap, alpha);
-		gl_SetFog(lightlevel, rel, &Colormap, false);
+		mDrawer->SetColor(lightlevel, rel, Colormap, alpha);
+		mDrawer->SetFog(lightlevel, rel, &Colormap, false);
 		if (!gltexture || !gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
 		if (!gltexture)
@@ -458,7 +459,7 @@ inline void GLFlat::PutFlat(bool fog)
 {
 	int list;
 
-	if (gl_fixedcolormap) 
+	if (mDrawer->FixedColormap) 
 	{
 		Colormap.Clear();
 	}
@@ -755,7 +756,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
+				if (rover->flags&FF_FOG && mDrawer->FixedColormap) continue;
 				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
@@ -795,7 +796,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
+				if (rover->flags&FF_FOG && mDrawer->FixedColormap) continue;
 				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);

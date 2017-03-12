@@ -318,7 +318,7 @@ void FRenderState::DrawColormapOverlay()
 	float r, g, b;
 	if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
 	{
-		FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+		FSpecialColormap *scm = &SpecialColormaps[mColormapState - CM_FIRSTSPECIALCOLORMAP];
 		float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
 			scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
@@ -453,7 +453,7 @@ bool GLWall::PutWallCompat(int passflag)
 	{ { GLLDL_WALLS_PLAIN, GLLDL_WALLS_FOG },{ GLLDL_WALLS_MASKED, GLLDL_WALLS_FOGMASKED } };
 
 	// are lights possible?
-	if (gl_fixedcolormap != CM_DEFAULT || !gl_lights || seg->sidedef == nullptr || type == RENDERWALL_M2SNF || !gltexture) return false;
+	if (mDrawer->FixedColormap != CM_DEFAULT || !gl_lights || seg->sidedef == nullptr || type == RENDERWALL_M2SNF || !gltexture) return false;
 
 	// multipassing these is problematic.
 	if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S)) return false;
@@ -486,7 +486,7 @@ bool GLWall::PutWallCompat(int passflag)
 bool GLFlat::PutFlatCompat(bool fog)
 {
 	// are lights possible?
-	if (gl_fixedcolormap != CM_DEFAULT || !gl_lights || !gltexture || renderstyle != STYLE_Translucent || alpha < 1.f - FLT_EPSILON || sector->lighthead == NULL) return false;
+	if (mDrawer->FixedColormap != CM_DEFAULT || !gl_lights || !gltexture || renderstyle != STYLE_Translucent || alpha < 1.f - FLT_EPSILON || sector->lighthead == NULL) return false;
 
 	static int list_indices[2][2] =
 	{ { GLLDL_FLATS_PLAIN, GLLDL_FLATS_FOG },{ GLLDL_FLATS_MASKED, GLLDL_FLATS_FOGMASKED } };
@@ -699,8 +699,8 @@ void GLWall::RenderLightsCompat(int pass)
 	FLightNode * node;
 
 	// black fog is diminishing light and should affect lights less than the rest!
-	if (pass == GLPASS_LIGHTTEX) gl_SetFog((255 + lightlevel) >> 1, 0, NULL, false);
-	else gl_SetFog(lightlevel, 0, &Colormap, true);
+	if (pass == GLPASS_LIGHTTEX) mDrawer->SetFog((255 + lightlevel) >> 1, 0, NULL, false);
+	else mDrawer->SetFog(lightlevel, 0, &Colormap, true);
 
 	if (seg->sidedef == NULL)
 	{
@@ -785,7 +785,7 @@ void GLSceneDrawer::RenderMultipassStuff()
 
 	// second pass: draw lights
 	glDepthMask(false);
-	if (GLRenderer->mLightCount && !gl_fixedcolormap)
+	if (GLRenderer->mLightCount && !FixedColormap)
 	{
 		if (gl_SetupLightTexture())
 		{

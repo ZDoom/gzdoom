@@ -91,8 +91,6 @@ UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
 UniqueList<FGLLinePortal> UniqueLineToLines;
 
-void gl_RenderActorsInPortal(FGLLinePortal *glport);
-
 //==========================================================================
 //
 //
@@ -246,7 +244,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 						return false;
 					}
 				}
-				FDrawInfo::StartDrawInfo();
+				FDrawInfo::StartDrawInfo(drawer);
 			}
 			else
 			{
@@ -274,7 +272,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	{
 		if (NeedDepthBuffer())
 		{
-			FDrawInfo::StartDrawInfo();
+			FDrawInfo::StartDrawInfo(drawer);
 		}
 		else
 		{
@@ -1061,7 +1059,7 @@ void GLLineToLinePortal::DrawContents()
 
 void GLLineToLinePortal::RenderAttached()
 {
-	gl_RenderActorsInPortal(glport);
+	drawer->RenderActorsInPortal(glport);
 }
 
 //-----------------------------------------------------------------------------
@@ -1172,14 +1170,14 @@ void GLHorizonPortal::DrawContents()
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		gl_SetColor(255, 0, origin->colormap, 1.f);
-		gl_SetFog(255, 0, &origin->colormap, false);
+		drawer->SetColor(255, 0, origin->colormap, 1.f);
+		drawer->SetFog(255, 0, &origin->colormap, false);
 	}
 	else 
 	{
 		int rel = getExtraLight();
-		gl_SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
-		gl_SetFog(origin->lightlevel, rel, &origin->colormap, false);
+		drawer->SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
+		drawer->SetFog(origin->lightlevel, rel, &origin->colormap, false);
 	}
 
 

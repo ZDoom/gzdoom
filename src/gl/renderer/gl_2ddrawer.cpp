@@ -437,7 +437,7 @@ void F2DDrawer::Draw()
 
 			FColormap cm;
 			cm = dsp->mColormap;
-			gl_SetColor(dsp->mLightLevel, 0, cm, 1.f);
+			gl_SetColor(dsp->mLightLevel, 0, false, cm, 1.f);
 			gl_RenderState.SetMaterial(dsp->mTexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetObjectColor(dsp->mFlatColor|0xff000000);
 			gl_RenderState.Apply();

@@ -962,7 +962,9 @@ void FDrawInfo::HandleHackedSubsectors()
 				if (inview) for(unsigned int j=0;j<lowersegs.Size();j++)
 				{
 					seg_t * seg=lowersegs[j];
-					GLRenderer->ProcessLowerMiniseg (seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+					GLWall wall(mDrawer);
+					wall.ProcessLowerMiniseg(seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+					rendered_lines++;
 				}
 				lowershcount+=HandledSubsectors.Size();
 			}

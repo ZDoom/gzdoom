@@ -49,6 +49,7 @@
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
 #include "gl/shaders/gl_shader.h"
@@ -277,7 +278,7 @@ void GLSprite::Draw(int pass)
 
 		gl_SetRenderStyle(RenderStyle, false, 
 			// The rest of the needed checks are done inside gl_SetRenderStyle
-			trans > 1.f - FLT_EPSILON && gl_usecolorblending && gl_fixedcolormap == CM_DEFAULT && actor && 
+			trans > 1.f - FLT_EPSILON && gl_usecolorblending && mDrawer->FixedColormap == CM_DEFAULT && actor && 
 			fullbright && gltexture && !gltexture->GetTransparent());
 
 		if (hw_styleflags == STYLEHW_NoAlphaTest)
@@ -323,7 +324,7 @@ void GLSprite::Draw(int pass)
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
-		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && !fullbright)
+		if (gl_lights && GLRenderer->mLightCount && mDrawer->FixedColormap == CM_DEFAULT && !fullbright)
 		{
 			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
@@ -337,7 +338,7 @@ void GLSprite::Draw(int pass)
 
 			gl_RenderState.SetObjectColor(finalcol);
 		}
-		gl_SetColor(lightlevel, rel, Colormap, trans);
+		mDrawer->SetColor(lightlevel, rel, Colormap, trans);
 	}
 
 
@@ -364,7 +365,7 @@ void GLSprite::Draw(int pass)
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
 	}
 
-	if (!foglayer) gl_SetFog(foglevel, rel, &Colormap, additivefog);
+	if (!foglayer) mDrawer->SetFog(foglevel, rel, &Colormap, additivefog);
 	else
 	{
 		gl_RenderState.EnableFog(false);
@@ -374,7 +375,7 @@ void GLSprite::Draw(int pass)
 	if (gltexture) gl_RenderState.SetMaterial(gltexture, CLAMP_XY, translation, OverrideShader, !!(RenderStyle.Flags & STYLEF_RedIsAlpha));
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
 
-		//gl_SetColor(lightlevel, rel, Colormap, trans);
+		//mDrawer->SetColor(lightlevel, rel, Colormap, trans);
 
 	unsigned int iter = lightlist? lightlist->Size() : 1;
 	bool clipping = false;
@@ -406,10 +407,10 @@ void GLSprite::Draw(int pass)
 				thiscm.Decolorize();
 			}
 
-			gl_SetColor(thisll, rel, thiscm, trans);
+			mDrawer->SetColor(thisll, rel, thiscm, trans);
 			if (!foglayer)
 			{
-				gl_SetFog(thislight, rel, &thiscm, additivefog);
+				mDrawer->SetFog(thislight, rel, &thiscm, additivefog);
 			}
 			gl_RenderState.SetSplitPlanes(*topplane, *lowplane);
 		}
@@ -436,7 +437,7 @@ void GLSprite::Draw(int pass)
 			if (foglayer)
 			{
 				// If we get here we know that we have colored fog and no fixed colormap.
-				gl_SetFog(foglevel, rel, &Colormap, additivefog);
+				mDrawer->SetFog(foglevel, rel, &Colormap, additivefog);
 				gl_RenderState.SetFixedColormap(CM_FOGLAYER);
 				gl_RenderState.BlendEquation(GL_FUNC_ADD);
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -507,7 +508,7 @@ inline void GLSprite::PutSprite(bool translucent)
 //==========================================================================
 void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 {
-	GLSprite copySprite;
+	GLSprite copySprite(mDrawer);
 	double lightbottom;
 	unsigned int i;
 	bool put=false;
@@ -674,7 +675,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
-		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision || thing == camera)
+		if (!(thing->flags & MF_STEALTH) || !mDrawer->FixedColormap || !gl_enhanced_nightvision || thing == camera)
 			return;
 	}
 	int spritenum = thing->sprite;
@@ -903,16 +904,16 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	RenderStyle = thing->RenderStyle;
 
 	// colormap stuff is a little more complicated here...
-	if (gl_fixedcolormap) 
+	if (mDrawer->FixedColormap) 
 	{
-		if ((gl_enhanced_nv_stealth > 0 && gl_fixedcolormap == CM_LITE)		// Infrared powerup only
-			|| (gl_enhanced_nv_stealth == 2 && gl_fixedcolormap >= CM_TORCH)// Also torches
+		if ((gl_enhanced_nv_stealth > 0 && mDrawer->FixedColormap == CM_LITE)		// Infrared powerup only
+			|| (gl_enhanced_nv_stealth == 2 && mDrawer->FixedColormap >= CM_TORCH)// Also torches
 			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
 			enhancedvision=true;
 
 		Colormap.Clear();
 
-		if (gl_fixedcolormap==CM_LITE)
+		if (mDrawer->FixedColormap==CM_LITE)
 		{
 			if (gl_enhanced_nightvision &&
 				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
@@ -1049,7 +1050,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	// 3. any bright object
 	// 4. any with render style shadow (which doesn't use the sector light)
 	// 5. anything with render style reverse subtract (light effect is not what would be desired here)
-	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && gl_fixedcolormap == CM_DEFAULT && !fullbright &&
+	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && mDrawer->FixedColormap == CM_DEFAULT && !fullbright &&
 		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
 	{
 		if (gl.flags & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
@@ -1097,7 +1098,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		sector->GetCeilingLight() : sector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
-	if (gl_fixedcolormap) 
+	if (mDrawer->FixedColormap) 
 	{
 		Colormap.Clear();
 	}
@@ -1199,7 +1200,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
 	else hw_styleflags = STYLEHW_NoAlphaTest;
 
-	if (sector->e->XFloor.lightlist.Size() != 0 && gl_fixedcolormap == CM_DEFAULT && !fullbright)
+	if (sector->e->XFloor.lightlist.Size() != 0 && mDrawer->FixedColormap == CM_DEFAULT && !fullbright)
 		lightlist = &sector->e->XFloor.lightlist;
 	else
 		lightlist = NULL;
@@ -1214,7 +1215,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 //
 //==========================================================================
 
-void gl_RenderActorsInPortal(FGLLinePortal *glport)
+void GLSceneDrawer::RenderActorsInPortal(FGLLinePortal *glport)
 {
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame
@@ -1257,7 +1258,7 @@ void gl_RenderActorsInPortal(FGLLinePortal *glport)
 					th->SetXYZ(newpos);
 					th->Prev += newpos - savedpos;
 
-					GLSprite spr;
+					GLSprite spr(this);
 					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, false), 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);

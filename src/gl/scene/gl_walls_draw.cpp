@@ -41,6 +41,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
@@ -227,12 +228,12 @@ void GLWall::RenderWall(int textured)
 
 void GLWall::RenderFogBoundary()
 {
-	if (gl_fogmode && gl_fixedcolormap == 0)
+	if (gl_fogmode && mDrawer->FixedColormap == 0)
 	{
 		if (!gl.legacyMode)
 		{
 			int rel = rellight + getExtraLight();
-			gl_SetFog(lightlevel, rel, &Colormap, false);
+			mDrawer->SetFog(lightlevel, rel, &Colormap, false);
 			gl_RenderState.EnableDrawBuffers(1);
 			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -281,8 +282,8 @@ void GLWall::RenderMirrorSurface()
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
-	gl_SetColor(lightlevel, 0, Colormap ,0.1f);
-	gl_SetFog(lightlevel, 0, &Colormap, true);
+	mDrawer->SetColor(lightlevel, 0, Colormap ,0.1f);
+	mDrawer->SetFog(lightlevel, 0, &Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
@@ -342,7 +343,7 @@ void GLWall::RenderTextured(int rflags)
 		{
 			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
 		}
-		gl_SetFog(255, 0, NULL, false);
+		mDrawer->SetFog(255, 0, NULL, false);
 	}
 	gl_RenderState.SetObjectColor(seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
 	gl_RenderState.SetObjectColor2(seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
@@ -350,8 +351,8 @@ void GLWall::RenderTextured(int rflags)
 	float absalpha = fabsf(alpha);
 	if (lightlist == NULL)
 	{
-		if (type != RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
-		gl_SetColor(lightlevel, rel, Colormap, absalpha);
+		if (type != RENDERWALL_M2SNF) mDrawer->SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
+		mDrawer->SetColor(lightlevel, rel, Colormap, absalpha);
 		RenderWall(rflags);
 	}
 	else
@@ -371,8 +372,8 @@ void GLWall::RenderTextured(int rflags)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
-				gl_SetColor(thisll, rel, thiscm, absalpha);
-				if (type != RENDERWALL_M2SNF) gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
+				mDrawer->SetColor(thisll, rel, thiscm, absalpha);
+				if (type != RENDERWALL_M2SNF) mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
 				gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, lowplane);
 				RenderWall(rflags);
 			}
@@ -397,7 +398,7 @@ void GLWall::RenderTranslucentWall()
 {
 	if (gltexture)
 	{
-		if (gl_fixedcolormap == CM_DEFAULT && gl_lights && gl.lightmethod == LM_DIRECT)
+		if (mDrawer->FixedColormap == CM_DEFAULT && gl_lights && gl.lightmethod == LM_DIRECT)
 		{
 			SetupLights();
 		}
@@ -410,8 +411,8 @@ void GLWall::RenderTranslucentWall()
 	else
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		gl_SetColor(lightlevel, 0, Colormap, fabsf(alpha));
-		gl_SetFog(lightlevel, 0, &Colormap, RenderStyle == STYLE_Add);
+		mDrawer->SetColor(lightlevel, 0, Colormap, fabsf(alpha));
+		mDrawer->SetFog(lightlevel, 0, &Colormap, RenderStyle == STYLE_Add);
 		gl_RenderState.EnableTexture(false);
 		RenderWall(RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);

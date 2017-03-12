@@ -206,6 +206,8 @@ struct FDrawInfo
 		uint8_t flags;
 	};
 
+	GLSceneDrawer *mDrawer;
+
 	TArray<uint8_t> sectorrenderflags;
 	TArray<uint8_t> ss_renderflags;
 	TArray<uint8_t> no_renderflags;
@@ -266,7 +268,7 @@ struct FDrawInfo
 	void FloodUpperGap(seg_t * seg);
 	void FloodLowerGap(seg_t * seg);
 
-	static void StartDrawInfo();
+	static void StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();
 
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)

@@ -157,13 +157,13 @@ void FGLRenderer::RenderScreenQuad()
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
-void FGLRenderer::PostProcessScene()
+void FGLRenderer::PostProcessScene(int fixedcm)
 {
 	mBuffers->BlitSceneToTexture();
 	UpdateCameraExposure();
-	BloomScene();
+	BloomScene(fixedcm);
 	TonemapScene();
-	ColormapScene();
+	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
 }
@@ -382,10 +382,10 @@ void FGLRenderer::UpdateCameraExposure()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::BloomScene()
+void FGLRenderer::BloomScene(int fixedcm)
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
+	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");
@@ -559,9 +559,9 @@ void FGLRenderer::ClearTonemapPalette()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::ColormapScene()
+void FGLRenderer::ColormapScene(int fixedcm)
 {
-	if (gl_fixedcolormap < CM_FIRSTSPECIALCOLORMAP || gl_fixedcolormap >= CM_MAXCOLORMAP)
+	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
 		return;
 
 	FGLDebug::PushGroup("ColormapScene");
@@ -572,7 +572,7 @@ void FGLRenderer::ColormapScene()
 	mBuffers->BindCurrentTexture(0);
 	mColormapShader->Bind();
 	
-	FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
 	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
 		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 

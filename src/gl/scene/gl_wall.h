@@ -23,6 +23,7 @@ struct FTexCoordInfo;
 struct FPortal;
 struct FFlatVertex;
 struct FGLLinePortal;
+class GLSceneDrawer;
 
 enum
 {
@@ -147,6 +148,7 @@ public:
 	friend struct GLDrawList;
 	friend class GLPortal;
 
+	GLSceneDrawer *mDrawer;
 	GLSeg glseg;
 	vertex_t * vertexes[2];				// required for polygon splitting
 	float ztop[2],zbottom[2];
@@ -271,6 +273,11 @@ private:
 
 public:
 
+	GLWall(GLSceneDrawer *drawer)
+	{
+		mDrawer = drawer;
+	}
+
 	void Process(seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void ProcessLowerMiniseg(seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void Draw(int pass);
@@ -303,6 +310,7 @@ class GLFlat
 public:
 	friend struct GLDrawList;
 
+	GLSceneDrawer *mDrawer;
 	sector_t * sector;
 	float dz; // z offset for rendering hacks
 	float z; // the z position of the flat (only valid for non-sloped planes)
@@ -323,6 +331,10 @@ public:
 
 	int dynlightindex;
 
+	GLFlat(GLSceneDrawer *drawer)
+	{
+		mDrawer = drawer;
+	}
 	// compatibility fallback stuff.
 	void DrawSubsectorLights(subsector_t * sub, int pass);
 	void DrawLightsCompat(int pass);
@@ -355,6 +367,7 @@ public:
 	friend struct GLDrawList;
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
+	GLSceneDrawer *mDrawer;
 	int lightlevel;
 	uint8_t foglevel;
 	uint8_t hw_styleflags;
@@ -393,6 +406,10 @@ public:
 
 public:
 
+	GLSprite(GLSceneDrawer *drawer)
+	{
+		mDrawer = drawer;
+	}
 	void Draw(int pass);
 	void PutSprite(bool translucent);
 	void Process(AActor* thing,sector_t * sector, int thruportal = false);
@@ -412,6 +429,5 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 
 void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *subsec);
 void gl_SetDynSpriteLight(AActor *actor, particle_t *particle);
-void gl_RenderActorsInPortal(FGLLinePortal *glport);
 
 #endif

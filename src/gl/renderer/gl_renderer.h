@@ -160,29 +160,20 @@ public:
 
 	void Initialize(int width, int height);
 
-
-	void DrawPSprite (player_t * player,DPSprite *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
-	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
-	void DrawTargeterSprites();
-
 	void Begin2D();
 	void ClearBorders();
 
-	void ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * backsector);
-	void ProcessSprite(AActor *thing, sector_t *sector, bool thruportal);
-	void ProcessParticle(particle_t *part, sector_t *sector);
-	void ProcessSector(sector_t *fakesector);
 	void FlushTextures();
 	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
 
 	void RenderScreenQuad();
-	void PostProcessScene();
+	void PostProcessScene(int fixedcm);
 	void AmbientOccludeScene();
 	void UpdateCameraExposure();
-	void BloomScene();
+	void BloomScene(int fixedcm);
 	void TonemapScene();
-	void ColormapScene();
+	void ColormapScene(int fixedcm);
 	void CreateTonemapPalette();
 	void ClearTonemapPalette();
 	void LensDistortScene();

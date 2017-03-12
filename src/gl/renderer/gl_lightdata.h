@@ -16,14 +16,14 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 void gl_SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog);
 
 int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon);
-void gl_SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon=false);
+void gl_SetColor(int light, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon=false);
 
 float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity);
 struct sector_t;
 bool gl_CheckFog(FColormap *cm, int lightlevel);
 bool gl_CheckFog(sector_t *frontsector, sector_t *backsector);
 
-void gl_SetFog(int lightlevel, int rellight, const FColormap *cm, bool isadditive);
+void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cm, bool isadditive);
 
 inline bool gl_isBlack(PalEntry color)
 {
@@ -33,13 +33,6 @@ inline bool gl_isBlack(PalEntry color)
 inline bool gl_isWhite(PalEntry color)
 {
 	return color.r + color.g + color.b == 3*0xff;
-}
-
-extern int gl_fixedcolormap;
-
-inline bool gl_isFullbright(PalEntry color, int lightlevel)
-{
-	return gl_fixedcolormap || (gl_isWhite(color) && lightlevel==255);
 }
 
 extern int fogdensity;

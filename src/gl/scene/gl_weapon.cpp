@@ -43,6 +43,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
@@ -62,7 +63,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
+void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -189,7 +190,7 @@ static bool isBright(DPSprite *psp)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
+void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 {
 	bool brightflash = false;
 	unsigned int i;
@@ -236,7 +237,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		wy = 0;
 	}
 
-	if (gl_fixedcolormap) 
+	if (FixedColormap) 
 	{
 		lightlevel=255;
 		cm.Clear();
@@ -415,11 +416,11 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			}
 			else
 			{
-				if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
+				if (gl_lights && GLRenderer->mLightCount && FixedColormap == CM_DEFAULT && gl_light_sprites)
 				{
 					gl_SetDynSpriteLight(playermo, NULL);
 				}
-				gl_SetColor(ll, 0, cmc, trans, true);
+				SetColor(ll, 0, cmc, trans, true);
 			}
 
 			if (psp->firstTic)
@@ -460,13 +461,13 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 //
 //==========================================================================
 
-void FGLRenderer::DrawTargeterSprites()
+void GLSceneDrawer::DrawTargeterSprites()
 {
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
 	if(!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites ||
-		mViewActor!=playermo) return;
+		GLRenderer->mViewActor!=playermo) return;
 
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

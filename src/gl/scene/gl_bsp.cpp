@@ -173,7 +173,7 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 		{
 			SetupWall.Clock();
 
-			GLWall wall;
+			GLWall wall(this);
 			wall.sub = currentsubsector;
 			wall.Process(seg, currentsector, backsector);
 			rendered_lines++;
@@ -371,7 +371,8 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
-		GLRenderer->ProcessSprite(thing, sector, false);
+		GLSprite sprite(this);
+		sprite.Process(thing, sector, false);
 	}
 	
 	for (msecnode_t *node = sec->sectorportal_thinglist; node; node = node->m_snext)
@@ -388,7 +389,8 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
-		GLRenderer->ProcessSprite(thing, sector, true);
+		GLSprite sprite(this);
+		sprite.Process(thing, sector, true);
 	}
 	SetupSprite.Unclock();
 }
@@ -460,7 +462,8 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 
 		for (i = ParticlesInSubsec[uint32_t(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
-			GLRenderer->ProcessParticle(&Particles[i], fakesector);
+			GLSprite sprite(this);
+			sprite.ProcessParticle(&Particles[i], fakesector);
 		}
 		SetupSprite.Unclock();
 	}
@@ -508,7 +511,8 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 					srf |= SSRF_PROCESSED;
 
 					SetupFlat.Clock();
-					GLRenderer->ProcessSector(fakesector);
+					GLFlat flat(this);
+					flat.ProcessSector(fakesector);
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.

@@ -88,7 +88,6 @@ EXTERN_CVAR (Float, underwater_fade_scalar)
 extern int viewpitch;
 extern bool NoInterpolateView;
 
-int			gl_fixedcolormap;
 area_t			in_area;
 TArray<uint8_t> currentmapsection;
 int camtexcount;
@@ -318,7 +317,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	bool haslights = GLRenderer->mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights;
+	bool haslights = GLRenderer->mLightCount > 0 && FixedColormap == CM_DEFAULT && gl_lights;
 	if (gl.lightmethod == LM_DEFERRED && haslights)
 	{
 		GLRenderer->mLights->Begin();
@@ -549,7 +548,7 @@ void GLSceneDrawer::DrawBlend(sector_t * viewsector)
 	}
 
 	// don't draw sector based blends when an invulnerability colormap is active
-	if (!gl_fixedcolormap)
+	if (!FixedColormap)
 	{
 		if (!viewsector->e->XFloor.ffloors.Size())
 		{
@@ -678,7 +677,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		GLRenderer->DrawPlayerSprites (viewsector, true);
+		DrawPlayerSprites (viewsector, true);
 	}
 
 	glDisable(GL_STENCIL_TEST);
@@ -690,7 +689,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
-		GLRenderer->DrawPlayerSprites (viewsector, false);
+		DrawPlayerSprites (viewsector, false);
 	}
 	if (gl.legacyMode)
 	{
@@ -699,7 +698,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	GLRenderer->DrawTargeterSprites();
+	DrawTargeterSprites();
 	if (!FGLRenderBuffers::IsEnabled())
 	{
 		DrawBlend(viewsector);
@@ -721,7 +720,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 
 void GLSceneDrawer::ProcessScene(bool toscreen)
 {
-	FDrawInfo::StartDrawInfo();
+	FDrawInfo::StartDrawInfo(this);
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
@@ -741,7 +740,7 @@ void GLSceneDrawer::ProcessScene(bool toscreen)
 
 void GLSceneDrawer::SetFixedColormap (player_t *player)
 {
-	gl_fixedcolormap=CM_DEFAULT;
+	FixedColormap=CM_DEFAULT;
 
 	// check for special colormaps
 	player_t * cplayer = player->camera->player;
@@ -749,12 +748,12 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 	{
 		if (cplayer->extralight == INT_MIN)
 		{
-			gl_fixedcolormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			FixedColormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
 			r_viewpoint.extralight=0;
 		}
 		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
 		{
-			gl_fixedcolormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
+			FixedColormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
 		}
 		else if (cplayer->fixedlightlevel != -1)
 		{
@@ -767,16 +766,16 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 				// Need special handling for light amplifiers 
 				if (in->IsKindOf(torchtype))
 				{
-					gl_fixedcolormap = cplayer->fixedlightlevel + CM_TORCH;
+					FixedColormap = cplayer->fixedlightlevel + CM_TORCH;
 				}
 				else if (in->IsKindOf(litetype))
 				{
-					gl_fixedcolormap = CM_LITE;
+					FixedColormap = CM_LITE;
 				}
 			}
 		}
 	}
-	gl_RenderState.SetFixedColormap(gl_fixedcolormap);
+	gl_RenderState.SetFixedColormap(FixedColormap);
 }
 
 //-----------------------------------------------------------------------------
@@ -848,7 +847,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			GLRenderer->PostProcessScene();
+			GLRenderer->PostProcessScene(FixedColormap);
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();
@@ -1147,7 +1146,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	bounds.height=FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
 	GLSceneDrawer drawer;
-	gl_fixedcolormap = CM_DEFAULT;
+	drawer.FixedColormap = CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 

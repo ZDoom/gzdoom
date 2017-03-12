@@ -226,7 +226,7 @@ bool FRenderState::ApplyShader()
 			}
 			else
 			{
-				FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+				FSpecialColormap *scm = &SpecialColormaps[mColormapState - CM_FIRSTSPECIALCOLORMAP];
 				float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
 					scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 

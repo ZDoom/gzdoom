@@ -35,11 +35,7 @@
 #define __INFO_H__
 
 #include <stddef.h>
-#if !defined(_WIN32)
-#include <inttypes.h>		// for intptr_t
-#else
-#include <stdint.h>			// for mingw
-#endif
+#include <stdint.h>
 
 #include "dobject.h"
 #include "doomdef.h"
@@ -53,6 +49,7 @@ class FScanner;
 struct FActorInfo;
 class FIntCVar;
 class FStateDefinitions;
+class FInternalLightAssociation;
 
 enum EStateDefineFlags
 {
@@ -118,7 +115,7 @@ struct FState
 	uint16_t	StateFlags;
 	uint8_t		Frame;
 	uint8_t		UseFlags;		
-	uint8_t		DefineFlags;	// Unused byte so let's use it during state creation.
+	uint8_t		DefineFlags;
 	int32_t		Misc1;			// Was changed to int8_t, reverted to long for MBF compat
 	int32_t		Misc2;			// Was changed to uint8_t, reverted to long for MBF compat
 public:
@@ -275,6 +272,7 @@ public:
 	PClassActor *GetReplacement(bool lookskill=true);
 	PClassActor *GetReplacee(bool lookskill=true);
 
+	TArray<FInternalLightAssociation *> LightAssociations;
 	FState *OwnedStates;
 	PClassActor *Replacement;
 	PClassActor *Replacee;

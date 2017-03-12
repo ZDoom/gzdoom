@@ -20,6 +20,7 @@
 #include "doomtype.h"
 #include "md5.h"
 #include "templates.h"
+#include "files.h"
 
 #ifdef __BIG_ENDIAN__
 void byteSwap(uint32_t *buf, unsigned words)

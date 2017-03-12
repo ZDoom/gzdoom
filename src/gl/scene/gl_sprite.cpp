@@ -38,6 +38,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "actorinlines.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -77,7 +78,6 @@ EXTERN_CVAR (Float, transsouls)
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern TArray<PalEntry> BloodTranslationColors;
-extern bool r_showviewer;
 
 enum HWRenderStyle
 {
@@ -162,7 +162,7 @@ void GLSprite::CalculateVertices(FVector3 *v)
 
 
 	// [fgsfds] check sprite type mask
-	DWORD spritetype = (DWORD)-1;
+	uint32_t spritetype = (uint32_t)-1;
 	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 
 	// [Nash] is a flat sprite
@@ -188,8 +188,8 @@ void GLSprite::CalculateVertices(FVector3 *v)
 		{
 			// [CMB] Rotate relative to camera XY position, not just camera direction,
 			// which is nicer in VR
-			float xrel = xcenter - ViewPos.X;
-			float yrel = ycenter - ViewPos.Y;
+			float xrel = xcenter - r_viewpoint.Pos.X;
+			float yrel = ycenter - r_viewpoint.Pos.Y;
 			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
 			float counterRotationDeg = 270. - GLRenderer->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
 			float relAngleDeg = counterRotationDeg + absAngleDeg;
@@ -297,7 +297,7 @@ void GLSprite::Draw(int pass)
 			// fog + fuzz don't work well without some fiddling with the alpha value!
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
-				float dist=Dist2(ViewPos.X, ViewPos.Y, x,y);
+				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, x,y);
 				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.fogdensity);
 
 				// this value was determined by trial and error and is scale dependent!
@@ -395,7 +395,7 @@ void GLSprite::Draw(int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
-			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_TicFracF));
+			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
 
 			FColormap thiscm;
 			thiscm.FadeColor = Colormap.FadeColor;
@@ -670,6 +670,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		return;
 	}
 
+	AActor *camera = r_viewpoint.camera;
+
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
 		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision || thing == camera)
@@ -686,26 +688,26 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	if (!thruportal && !(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
+	DVector3 thingpos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
 	if (thruportal == 1) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
-	if (thing == camera && !r_showviewer)
+	if (thing == camera && !r_viewpoint.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
 		if (thruportal == 1) thingorigin += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
-		if (fabs(thingorigin.X - ViewActorPos.X) < 2 && fabs(thingorigin.Y - ViewActorPos.Y) < 2) return;
+		if (fabs(thingorigin.X - r_viewpoint.ActorPos.X) < 2 && fabs(thingorigin.Y - r_viewpoint.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.
 	if (thing->renderflags & RF_MAYBEINVISIBLE)
 	{
-		if (fabs(thingpos.X - ViewPos.X) < 32 && fabs(thingpos.Y - ViewPos.Y) < 32) return;
+		if (fabs(thingpos.X - r_viewpoint.Pos.X) < 32 && fabs(thingpos.Y - r_viewpoint.Pos.Y) < 32) return;
 	}
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)
+	if (fabs(thingpos.X - r_viewpoint.Pos.X) < 2 && fabs(thingpos.Y - r_viewpoint.Pos.Y) < 2)
 	{
-		if (ViewPos.Z >= thingpos.Z - 2 && ViewPos.Z <= thingpos.Z + thing->Height + 2)
+		if (r_viewpoint.Pos.Z >= thingpos.Z - 2 && r_viewpoint.Pos.Z <= thingpos.Z + thing->Height + 2)
 		{
 			// exclude vertically moving objects from this check.
 			if (!thing->Vel.isZero())
@@ -727,7 +729,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			if (speed >= thing->target->radius / 2)
 			{
 				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
-				if ((thingpos - ViewPos).LengthSquared() < clipdist * clipdist) return;
+				if ((thingpos - r_viewpoint.Pos).LengthSquared() < clipdist * clipdist) return;
 			}
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
@@ -740,7 +742,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
 	if (thing->renderflags & RF_INTERPOLATEANGLES)
-		Angles = thing->InterpolatedAngles(r_TicFracF);
+		Angles = thing->InterpolatedAngles(r_viewpoint.TicFrac);
 	else
 		Angles = thing->Angles;
 
@@ -758,7 +760,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
-	DWORD spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;
@@ -767,7 +769,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		float fz = thing->GetBobOffset(r_TicFracF);
+		float fz = thing->GetBobOffset(r_viewpoint.TicFrac);
 		z += fz;
 	}
 
@@ -775,7 +777,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	if (!modelframe)
 	{
 		bool mirror;
-		DAngle ang = (thingpos - ViewPos).Angle();
+		DAngle ang = (thingpos - r_viewpoint.Pos).Angle();
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -878,7 +880,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		gltexture=NULL;
 	}
 
-	depth = FloatToFixed((x - ViewPos.X) * ViewTanCos + (y - ViewPos.Y) * ViewTanSin);
+	depth = FloatToFixed((x - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin);
 
 	// light calculation
 
@@ -892,7 +894,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	lightlevel=fullbright? 255 : 
 		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
-	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
+	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
 
 	lightlevel = gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
 
@@ -1093,7 +1095,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	lightlevel = gl_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 		sector->GetCeilingLight() : sector->GetFloorLight());
-	foglevel = (BYTE)clamp<short>(sector->lightlevel, 0, 255);
+	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
 	if (gl_fixedcolormap) 
 	{
@@ -1187,7 +1189,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	z1=z-scalefac;
 	z2=z+scalefac;
 
-	depth = FloatToFixed((x - ViewPos.X) * ViewTanCos + (y - ViewPos.Y) * ViewTanSin);
+	depth = FloatToFixed((x - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin);
 
 	actor=NULL;
 	this->particle=particle;
@@ -1241,9 +1243,9 @@ void gl_RenderActorsInPortal(FGLLinePortal *glport)
 					DVector3 newpos = savedpos;
 					sector_t fakesector;
 
-					if (!r_showviewer && th == camera)
+					if (!r_viewpoint.showviewer && th == r_viewpoint.camera)
 					{
-						if (fabs(savedpos.X - ViewActorPos.X) < 2 && fabs(savedpos.Y - ViewActorPos.Y) < 2)
+						if (fabs(savedpos.X - r_viewpoint.ActorPos.X) < 2 && fabs(savedpos.Y - r_viewpoint.ActorPos.Y) < 2)
 						{
 							continue;
 						}

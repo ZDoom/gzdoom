@@ -37,11 +37,8 @@
 #include "v_palette.h"
 #include "v_pfx.h"
 
-extern "C"
-{
-	PfxUnion GPfxPal;
-	PfxState GPfx;
-}
+PfxUnion GPfxPal;
+PfxState GPfx;
 
 static bool AnalyzeMask (uint32_t mask, uint8_t *shift);
 
@@ -68,7 +65,7 @@ static void Convert32 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
 
-void PfxState::SetFormat (int bits, uint32 redMask, uint32 greenMask, uint32 blueMask)
+void PfxState::SetFormat (int bits, uint32_t redMask, uint32_t greenMask, uint32_t blueMask)
 {
 	switch (bits)
 	{

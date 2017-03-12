@@ -14,7 +14,7 @@ public:
 	FGLBitmap()
 	{
 	}
-	FGLBitmap(BYTE *buffer, int pitch, int width, int height)
+	FGLBitmap(uint8_t *buffer, int pitch, int width, int height)
 		: FBitmap(buffer, pitch, width, height)
 	{
 	}
@@ -25,11 +25,11 @@ public:
 		alphatrans = _alphatrans;
 	}
 
-	virtual void CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
+	virtual void CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth, 
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL,
 		/* for PNG tRNS */		int r=0, int g=0, int b=0);
 
-	virtual void CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
+	virtual void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
 								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
 };
 

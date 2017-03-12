@@ -77,7 +77,6 @@
 #endif
 
 
-#define USE_WINDOWS_DWORD
 #include "c_dispatch.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -400,7 +399,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (!MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) &&
 				size != 0)
 			{
-				BYTE *buffer = (BYTE *)alloca(size);
+				uint8_t *buffer = (uint8_t *)alloca(size);
 				if (MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) == size)
 				{
 					int code = GET_RAWINPUT_CODE_WPARAM(wParam);

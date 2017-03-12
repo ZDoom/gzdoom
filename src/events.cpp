@@ -776,12 +776,12 @@ void DStaticEventHandler::WorldTick()
 static FRenderEvent E_SetupRenderEvent()
 {
 	FRenderEvent e;
-	e.ViewPos = ::ViewPos;
-	e.ViewAngle = ::ViewAngle;
-	e.ViewPitch = ::ViewPitch;
-	e.ViewRoll = ::ViewRoll;
-	e.FracTic = ::r_TicFracF;
-	e.Camera = ::camera;
+	e.ViewPos = r_viewpoint.Pos;
+	e.ViewAngle = r_viewpoint.Angles.Yaw;
+	e.ViewPitch = r_viewpoint.Angles.Pitch;
+	e.ViewRoll = r_viewpoint.Angles.Roll;
+	e.FracTic = r_viewpoint.TicFrac;
+	e.Camera = r_viewpoint.camera;
 	return e;
 }
 

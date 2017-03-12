@@ -31,6 +31,7 @@ struct vertex_t;
 struct secplane_t;
 struct subsector_t;
 struct sector_t;
+class FMaterial;
 
 enum
 {

@@ -27,7 +27,7 @@
 #include "v_video.h"
 #include "gi.h"
 #include "d_gui.h"
-#include "i_input.h"
+#include "g_input.h"
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"

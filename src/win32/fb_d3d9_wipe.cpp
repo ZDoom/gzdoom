@@ -44,7 +44,6 @@
 #include <d3d9.h>
 #include <stdio.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "f_wipe.h"
 #include "win32iface.h"
@@ -87,7 +86,7 @@ public:
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
-	BYTE BurnArray[WIDTH * (HEIGHT + 5)];
+	uint8_t BurnArray[WIDTH * (HEIGHT + 5)];
 	IDirect3DTexture9 *BurnTexture;
 	int Density;
 	int BurnTime;
@@ -602,8 +601,8 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	D3DLOCKED_RECT lrect;
 	if (SUCCEEDED(BurnTexture->LockRect(0, &lrect, NULL, D3DLOCK_DISCARD)))
 	{
-		const BYTE *src = BurnArray;
-		BYTE *dest = (BYTE *)lrect.pBits;
+		const uint8_t *src = BurnArray;
+		uint8_t *dest = (uint8_t *)lrect.pBits;
 		for (int y = HEIGHT; y != 0; --y)
 		{
 			for (int x = WIDTH; x != 0; --x)

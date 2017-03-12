@@ -32,6 +32,8 @@
 **
 */
 
+#include "g_level.h"
+
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
@@ -50,7 +52,6 @@
 #include "w_wad.h"
 #include "i_video.h"
 #include "c_dispatch.h"
-#include "g_level.h"
 #include "st_stuff.h"
 #include "gi.h"
 #include "x86.h"
@@ -107,7 +108,7 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
-int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
+int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;

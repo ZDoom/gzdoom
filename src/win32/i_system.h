@@ -36,7 +36,7 @@ enum
 	LANGIDX_SysPreferred,
 	LANGIDX_SysDefault
 };
-extern uint32 LanguageIDs[4];
+extern uint32_t LanguageIDs[4];
 extern void SetLanguageIDs ();
 
 // [RH] Detects the OS the game is running under.
@@ -66,7 +66,7 @@ extern int (*I_WaitForTic) (int);
 // tic will never arrive (unless it's the current one).
 extern void (*I_FreezeTime) (bool frozen);
 
-double I_GetTimeFrac (uint32 *ms);
+double I_GetTimeFrac (uint32_t *ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();
@@ -175,10 +175,10 @@ FString I_GetLongPathName(FString shortpath);
 
 struct findstate_t
 {
-	DWORD Attribs;
-	DWORD Times[3*2];
-	DWORD Size[2];
-	DWORD Reserved[2];
+	uint32_t Attribs;
+	uint32_t Times[3*2];
+	uint32_t Size[2];
+	uint32_t Reserved[2];
 	char Name[MAX_PATH];
 	char AltName[14];
 };

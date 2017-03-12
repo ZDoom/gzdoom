@@ -491,14 +491,14 @@ void S_PrecacheLevel ()
 				actor->MarkPrecacheSounds();
 			}
 		}
-		for (auto i : gameinfo.PrecachedSounds)
+		for (auto snd : gameinfo.PrecachedSounds)
 		{
-			level.info->PrecacheSounds[i].MarkUsed();
+			FSoundID(snd).MarkUsed();
 		}
 		// Precache all extra sounds requested by this map.
-		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
+		for (auto snd : level.info->PrecacheSounds)
 		{
-			level.info->PrecacheSounds[i].MarkUsed();
+			FSoundID(snd).MarkUsed();
 		}
 		// Don't unload sounds that are playing right now.
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
@@ -2353,7 +2353,7 @@ void S_SerializeSounds(FSerializer &arc)
 			for (unsigned int i = chans.Size(); i-- != 0; )
 			{
 				// Replace start time with sample position.
-				QWORD start = chans[i]->StartTime.AsOne;
+				uint64_t start = chans[i]->StartTime.AsOne;
 				chans[i]->StartTime.AsOne = GSnd ? GSnd->GetPosition(chans[i]) : 0;
 				arc(nullptr, *chans[i]);
 				chans[i]->StartTime.AsOne = start;

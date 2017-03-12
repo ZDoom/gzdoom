@@ -2,6 +2,9 @@
 
 #include "zstring.h"
 
+class PClass;
+class VMFunction;
+
 //
 // [ZZ] this really should be in codegen.h, but vmexec needs to access it
 struct FScopeBarrier

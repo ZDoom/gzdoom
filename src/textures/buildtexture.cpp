@@ -51,15 +51,14 @@
 class FBuildTexture : public FTexture
 {
 public:
-	FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top);
+	FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top);
 	~FBuildTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
-	void Unload ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 
 protected:
-	const BYTE *Pixels;
+	const uint8_t *Pixels;
 	Span **Spans;
 };
 
@@ -70,7 +69,7 @@ protected:
 //
 //==========================================================================
 
-FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top)
+FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top)
 : Pixels (pixels), Spans (NULL)
 {
 	Width = width;
@@ -103,18 +102,7 @@ FBuildTexture::~FBuildTexture ()
 //
 //==========================================================================
 
-void FBuildTexture::Unload ()
-{
-	// Nothing to do, since the pixels are accessed from memory-mapped files directly
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const BYTE *FBuildTexture::GetPixels ()
+const uint8_t *FBuildTexture::GetPixels ()
 {
 	return Pixels;
 }
@@ -125,7 +113,7 @@ const BYTE *FBuildTexture::GetPixels ()
 //
 //==========================================================================
 
-const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FBuildTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (column >= Width)
 	{
@@ -159,22 +147,22 @@ const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_ou
 
 void FTextureManager::AddTiles (void *tiles)
 {
-//	int numtiles = LittleLong(((DWORD *)tiles)[1]);	// This value is not reliable
-	int tilestart = LittleLong(((DWORD *)tiles)[2]);
-	int tileend = LittleLong(((DWORD *)tiles)[3]);
-	const WORD *tilesizx = &((const WORD *)tiles)[8];
-	const WORD *tilesizy = &tilesizx[tileend - tilestart + 1];
-	const DWORD *picanm = (const DWORD *)&tilesizy[tileend - tilestart + 1];
-	BYTE *tiledata = (BYTE *)&picanm[tileend - tilestart + 1];
+//	int numtiles = LittleLong(((uint32_t *)tiles)[1]);	// This value is not reliable
+	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
+	int tileend = LittleLong(((uint32_t *)tiles)[3]);
+	const uint16_t *tilesizx = &((const uint16_t *)tiles)[8];
+	const uint16_t *tilesizy = &tilesizx[tileend - tilestart + 1];
+	const uint32_t *picanm = (const uint32_t *)&tilesizy[tileend - tilestart + 1];
+	uint8_t *tiledata = (uint8_t *)&picanm[tileend - tilestart + 1];
 
 	for (int i = tilestart; i <= tileend; ++i)
 	{
 		int pic = i - tilestart;
 		int width = LittleShort(tilesizx[pic]);
 		int height = LittleShort(tilesizy[pic]);
-		DWORD anm = LittleLong(picanm[pic]);
-		int xoffs = (SBYTE)((anm >> 8) & 255) + width/2;
-		int yoffs = (SBYTE)((anm >> 16) & 255) + height/2;
+		uint32_t anm = LittleLong(picanm[pic]);
+		int xoffs = (int8_t)((anm >> 8) & 255) + width/2;
+		int yoffs = (int8_t)((anm >> 16) & 255) + height/2;
 		int size = width*height;
 		FTextureID texnum;
 		FTexture *tex;
@@ -265,14 +253,14 @@ void FTextureManager::AddTiles (void *tiles)
 
 int FTextureManager::CountTiles (void *tiles)
 {
-	int version = LittleLong(*(DWORD *)tiles);
+	int version = LittleLong(*(uint32_t *)tiles);
 	if (version != 1)
 	{
 		return 0;
 	}
 
-	int tilestart = LittleLong(((DWORD *)tiles)[2]);
-	int tileend = LittleLong(((DWORD *)tiles)[3]);
+	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
+	int tileend = LittleLong(((uint32_t *)tiles)[3]);
 
 	return tileend >= tilestart ? tileend - tilestart + 1 : 0;
 }
@@ -325,7 +313,7 @@ int FTextureManager::CountBuildTiles ()
 			}
 
 			size_t len = Q_filelength (f);
-			BYTE *art = new BYTE[len];
+			uint8_t *art = new uint8_t[len];
 			if (fread (art, 1, len, f) != len || (numtiles = CountTiles(art)) == 0)
 			{
 				delete[] art;
@@ -350,7 +338,7 @@ int FTextureManager::CountBuildTiles ()
 			break;
 		}
 
-		BYTE *art = new BYTE[Wads.LumpLength (lumpnum)];
+		uint8_t *art = new uint8_t[Wads.LumpLength (lumpnum)];
 		Wads.ReadLump (lumpnum, art);
 
 		if ((numtiles = CountTiles(art)) == 0)

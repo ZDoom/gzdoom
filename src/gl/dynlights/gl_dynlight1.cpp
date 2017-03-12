@@ -31,6 +31,8 @@
 #include "vectors.h"
 #include "gl/gl_functions.h"
 #include "g_level.h"
+#include "actorinlines.h"
+#include "a_dynlight.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
@@ -49,16 +51,12 @@
 //
 //==========================================================================
 
-CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self) gl_RecreateAllAttachedLights();
-	else gl_DeleteAllAttachedLights();
-}
-
-CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 
 //==========================================================================
 //
@@ -99,14 +97,23 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	if (light->IsSubtractive())
 	{
-		Vector v;
+		DVector3 v(r, g, b);
+		float length = (float)v.Length();
 		
-		v.Set(r, g, b);
-		r = v.Length() - r;
-		g = v.Length() - g;
-		b = v.Length() - b;
+		r = length - r;
+		g = length - g;
+		b = length - b;
 		i = 1;
 	}
+
+	// Store attenuate flag in the sign bit of the float.
+	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
+	bool attenuate;
+
+	if (gl_attenuate == -1) attenuate = !!(light->flags4 & MF4_ATTENUATE);
+	else attenuate = !!gl_attenuate;
+
+		shadowIndex = -shadowIndex;
 
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
 	data[0] = pos.X;
@@ -116,7 +123,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[4] = r;
 	data[5] = g;
 	data[6] = b;
-	data[7] = !!(light->flags4 & MF4_ATTENUATE);
+	data[7] = shadowIndex;
 	return true;
 }
 

@@ -30,6 +30,7 @@
 
 #include "stats.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 static FRandom pr_botchecksight ("BotCheckSight");
 static FRandom pr_checksight ("CheckSight");

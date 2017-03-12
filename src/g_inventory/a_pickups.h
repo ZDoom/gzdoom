@@ -9,7 +9,16 @@
 
 class player_t;
 class FConfigFile;
-struct visstyle_t;
+
+// This encapsulates the fields of vissprite_t that can be altered by AlterWeaponSprite
+struct visstyle_t
+{
+	bool			Invert;
+	float			Alpha;
+	ERenderStyle	RenderStyle;
+};
+
+
 
 /************************************************************************/
 /* Class definitions													*/

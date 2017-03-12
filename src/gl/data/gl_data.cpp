@@ -61,7 +61,6 @@ long gl_frameCount;
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_brightfog)
 EXTERN_CVAR(Bool, gl_lightadditivesurfaces)
-EXTERN_CVAR(Bool, gl_attenuate)
 
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -240,7 +239,6 @@ struct FGLROptions : public FOptionalMapinfoData
 		skyfog = 0;
 		brightfog = false;
 		lightmode = -1;
-		attenuate = -1;
 		nocoloredspritelighting = -1;
 		nolightfade = false;
 		notexturefill = -1;
@@ -257,7 +255,6 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->outsidefogdensity = outsidefogdensity;
 		newopt->skyfog = skyfog;
 		newopt->lightmode = lightmode;
-		newopt->attenuate = attenuate;
 		newopt->nocoloredspritelighting = nocoloredspritelighting;
 		newopt->nolightfade = nolightfade;
 		newopt->notexturefill = notexturefill;
@@ -272,7 +269,6 @@ struct FGLROptions : public FOptionalMapinfoData
 	int			skyfog;
 	int			lightmode;
 	int			brightfog;
-	int8_t		attenuate;
 	int8_t		lightadditivesurfaces;
 	int8_t		nocoloredspritelighting;
 	int8_t		notexturefill;
@@ -378,20 +374,6 @@ DEFINE_MAP_OPTION(lightadditivesurfaces, false)
 	}
 }
 
-DEFINE_MAP_OPTION(attenuate, false)
-{
-	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
-	if (parse.CheckAssign())
-	{
-		parse.sc.MustGetNumber();
-		opt->attenuate = !!parse.sc.Number;
-	}
-	else
-	{
-		opt->attenuate = true;
-	}
-}
-
 DEFINE_MAP_OPTION(skyrotate, false)
 {
 	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
@@ -450,8 +432,6 @@ static void ResetOpts()
 	else glset.brightfog = !!glset.map_brightfog;
 	if (glset.map_lightadditivesurfaces == -1) glset.lightadditivesurfaces = gl_lightadditivesurfaces;
 	else glset.lightadditivesurfaces = !!glset.map_lightadditivesurfaces;
-	if (glset.map_attenuate == -1) glset.attenuate = gl_attenuate;
-	else glset.attenuate = !!glset.map_attenuate;
 }
 
 void InitGLRMapinfoData()
@@ -463,7 +443,6 @@ void InitGLRMapinfoData()
 		gl_SetFogParams(clamp(opt->fogdensity, 0, 255), level.info->outsidefog, clamp(opt->outsidefogdensity, 0, 255), opt->skyfog);
 		glset.map_lightmode = opt->lightmode;
 		glset.map_lightadditivesurfaces = opt->lightadditivesurfaces;
-		glset.map_attenuate = opt->attenuate;
 		glset.map_brightfog = opt->brightfog;
 		glset.map_nocoloredspritelighting = opt->nocoloredspritelighting;
 		glset.map_notexturefill = opt->notexturefill;
@@ -478,7 +457,6 @@ void InitGLRMapinfoData()
 		glset.map_lightmode = -1;
 		glset.map_lightadditivesurfaces = -1;
 		glset.map_brightfog = -1;
-		glset.map_attenuate = -1;
 		glset.map_nocoloredspritelighting = -1;
 		glset.map_notexturefill = -1;
 		glset.skyrotatevector = FVector3(0, 0, 1);
@@ -590,7 +568,7 @@ CCMD(dumpgeometry)
 			subsector_t * sub = sector.subsectors[j];
 
 			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub-subsectors), sub->sector->sectornum, sub->hacked&1? "hacked":"");
-			for(DWORD k=0;k<sub->numlines;k++)
+			for(uint32_t k=0;k<sub->numlines;k++)
 			{
 				seg_t * seg = sub->firstline + k;
 				if (seg->linedef)

@@ -7,6 +7,7 @@
 #include "m_bbox.h"
 
 extern int validcount;
+struct FBlockNode;
 
 struct divline_t
 {

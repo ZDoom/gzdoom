@@ -217,7 +217,7 @@ void P_FindParticleSubsectors ()
 
 static TMap<int, int> ColorSaver;
 
-static uint32 ParticleColor(int rgb)
+static uint32_t ParticleColor(int rgb)
 {
 	int *val;
 	int stuff;
@@ -232,7 +232,7 @@ static uint32 ParticleColor(int rgb)
 	return stuff;
 }
 
-static uint32 ParticleColor(int r, int g, int b)
+static uint32_t ParticleColor(int r, int g, int b)
 {
 	return ParticleColor(MAKERGB(r, g, b));
 }
@@ -732,7 +732,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				{
 					if (shortest == NULL || shortest->sounddist > seg.sounddist) shortest = &seg;
 				}
-				S_Sound (DVector3(shortest->soundpos, ViewPos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
+				S_Sound (DVector3(shortest->soundpos, r_viewpoint.Pos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
 	}

@@ -57,15 +57,15 @@ class F2DDrawer : public FSimpleVertexBuffer
 public:
 	void AddTexture(FTexture *img, DrawParms &parms);
 	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
-	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32 color);
+	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 	
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel);
 		
-	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
-	void AddPixel(int x1, int y1, int palcolor, uint32 color);
+	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color);
+	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
 		
 	void Draw();
 	void Clear();

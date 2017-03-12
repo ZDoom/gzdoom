@@ -1,3 +1,6 @@
+#include "i_midi_win32.h"
+
+
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -7,7 +10,7 @@
 #include "v_text.h"
 #include "menu/menu.h"
 
-static DWORD	nummididevices;
+static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
@@ -65,7 +68,7 @@ static void MIDIDeviceChanged(int newdev)
 }
 
 #ifdef _WIN32
-UINT mididevice;
+unsigned mididevice;
 
 CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -114,7 +117,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
 
-	for (DWORD id = 0; id < nummididevices; ++id)
+	for (uint32_t id = 0; id < nummididevices; ++id)
 	{
 		MIDIOUTCAPS caps;
 		MMRESULT res;
@@ -130,7 +133,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 	}
 }
 
-static void PrintMidiDevice (int id, const char *name, uint16_t tech, DWORD support)
+static void PrintMidiDevice (int id, const char *name, uint16_t tech, uint32_t support)
 {
 	if (id == snd_mididevice)
 	{
@@ -139,13 +142,13 @@ static void PrintMidiDevice (int id, const char *name, uint16_t tech, DWORD supp
 	Printf ("% 2d. %s : ", id, name);
 	switch (tech)
 	{
-	case MOD_MIDIPORT:		Printf ("MIDIPORT");		break;
-	case MOD_SYNTH:			Printf ("SYNTH");			break;
-	case MOD_SQSYNTH:		Printf ("SQSYNTH");			break;
-	case MOD_FMSYNTH:		Printf ("FMSYNTH");			break;
-	case MOD_MAPPER:		Printf ("MAPPER");			break;
-	case MOD_WAVETABLE:		Printf ("WAVETABLE");		break;
-	case MOD_SWSYNTH:		Printf ("SWSYNTH");			break;
+	case MIDIDEV_MIDIPORT:		Printf ("MIDIPORT");		break;
+	case MIDIDEV_SYNTH:			Printf ("SYNTH");			break;
+	case MIDIDEV_SQSYNTH:		Printf ("SQSYNTH");			break;
+	case MIDIDEV_FMSYNTH:		Printf ("FMSYNTH");			break;
+	case MIDIDEV_MAPPER:		Printf ("MAPPER");			break;
+	case MIDIDEV_WAVETABLE:		Printf ("WAVETABLE");		break;
+	case MIDIDEV_SWSYNTH:		Printf ("SWSYNTH");			break;
 	}
 	if (support & MIDICAPS_CACHE)
 	{
@@ -172,13 +175,13 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
-	PrintMidiDevice (-6, "WildMidi", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
 #ifdef HAVE_FLUIDSYNTH
-	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
 #endif
-	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
-	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
-	PrintMidiDevice (-2, "TiMidity++", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
+	PrintMidiDevice (-3, "Emulated OPL FM Synth", MIDIDEV_FMSYNTH, 0);
+	PrintMidiDevice (-2, "TiMidity++", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-1, "Sound System", 0, 0);
 	if (nummididevices != 0)
 	{

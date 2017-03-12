@@ -65,8 +65,8 @@ public:
 
 	FVoxelTexture(FVoxel *voxel);
 	~FVoxelTexture();
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
@@ -74,7 +74,7 @@ public:
 
 protected:
 	FVoxel *SourceVox;
-	BYTE *Pixels;
+	uint8_t *Pixels;
 
 };
 
@@ -107,20 +107,20 @@ FVoxelTexture::~FVoxelTexture()
 {
 }
 
-const BYTE *FVoxelTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FVoxelTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	// not needed
 	return NULL;
 }
 
-const BYTE *FVoxelTexture::GetPixels ()
+const uint8_t *FVoxelTexture::GetPixels ()
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
 	if (Pixels == NULL)
 	{
-		Pixels = new BYTE[256];
+		Pixels = new uint8_t[256];
 
-		BYTE *pp = SourceVox->Palette;
+		uint8_t *pp = SourceVox->Palette;
 
 		if(pp != NULL)
 		{
@@ -137,7 +137,7 @@ const BYTE *FVoxelTexture::GetPixels ()
 		{
 			for(int i=0;i<256;i++, pp+=3)
 			{
-				Pixels[i] = (BYTE)i;
+				Pixels[i] = (uint8_t)i;
 			}
 		}  
 	}
@@ -165,14 +165,14 @@ void FVoxelTexture::Unload ()
 int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
-	BYTE bitmap[256];
-	BYTE *pp = SourceVox->Palette;
+	uint8_t bitmap[256];
+	uint8_t *pp = SourceVox->Palette;
 
 	if(pp != NULL)
 	{
 		for(int i=0;i<256;i++, pp+=3)
 		{
-			bitmap[i] = (BYTE)i;
+			bitmap[i] = (uint8_t)i;
 			pe[i].r = (pp[0] << 2) | (pp[0] >> 4);
 			pe[i].g = (pp[1] << 2) | (pp[1] >> 4);
 			pe[i].b = (pp[2] << 2) | (pp[2] >> 4);
@@ -183,7 +183,7 @@ int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, F
 	{
 		for(int i=0;i<256;i++, pp+=3)
 		{
-			bitmap[i] = (BYTE)i;
+			bitmap[i] = (uint8_t)i;
 			pe[i] = GPalette.BaseColors[i];
 			pe[i].a = 255;
 		}
@@ -239,7 +239,7 @@ unsigned int FVoxelModel::AddVertex(FModelVertex &vert, FVoxelMap &check)
 //
 //===========================================================================
 
-void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, BYTE col, FVoxelMap &check)
+void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, uint8_t col, FVoxelMap &check)
 {
 	float PivotX = mVoxel->Mips[0].Pivot.X;
 	float PivotY = mVoxel->Mips[0].Pivot.Y;
@@ -289,7 +289,7 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 
 void FVoxelModel::MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &check)
 {
-	const BYTE *col = voxptr->col;
+	const uint8_t *col = voxptr->col;
 	int zleng = voxptr->zleng;
 	int ztop = voxptr->ztop;
 	int cull = voxptr->backfacecull;
@@ -342,13 +342,13 @@ void FVoxelModel::Initialize()
 	FVoxelMipLevel *mip = &mVoxel->Mips[0];
 	for (int x = 0; x < mip->SizeX; x++)
 	{
-		BYTE *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
+		uint8_t *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
 		short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
 		for (int y = 0; y < mip->SizeY; y++)
 		{
 			kvxslab_t *voxptr = (kvxslab_t *)(slabxoffs + xyoffs[y]);
 			kvxslab_t *voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
-			for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
+			for (; voxptr < voxend; voxptr = (kvxslab_t *)((uint8_t *)voxptr + voxptr->zleng + 3))
 			{
 				MakeSlabPolys(x, y, voxptr, check);
 			}
@@ -394,7 +394,7 @@ void FVoxelModel::BuildVertexBuffer()
 //
 //===========================================================================
 
-void FVoxelModel::AddSkins(BYTE *hitlist)
+void FVoxelModel::AddSkins(uint8_t *hitlist)
 {
 	hitlist[mPalette.GetIndex()] |= FTexture::TEX_Flat;
 }

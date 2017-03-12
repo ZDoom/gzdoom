@@ -6,6 +6,7 @@
 //
 //==========================================================================
 #include "r_defs.h"
+#include "r_data/renderstyle.h"
 #include "textures/textures.h"
 #include "gl/renderer/gl_colormap.h"
 
@@ -63,11 +64,18 @@ struct GLSeg
 
 	FVector3 Normal() const 
 	{
-		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim
+		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim and this is called quite frequently.
 		float x = y2 - y1;
 		float y = x1 - x2;
+#if defined(__amd64__) || defined(_M_X64)
+		__m128 v; 
+		v.m128_f32[0] = x*x + y*y;
+		float ilength = _mm_rsqrt_ss(v).m128_f32[0];
+		return FVector3(x * ilength, 0, y * ilength);
+#else
 		float length = sqrtf(x*x + y*y);
 		return FVector3(x / length, 0, y / length);
+#endif
 	}
 };
 
@@ -153,8 +161,8 @@ public:
 
 	TArray<lightlist_t> *lightlist;
 	int lightlevel;
-	BYTE type;
-	BYTE flags;
+	uint8_t type;
+	uint8_t flags;
 	short rellight;
 
 	float topglowcolor[4];
@@ -309,7 +317,7 @@ public:
 	int lightlevel;
 	bool stack;
 	bool ceiling;
-	BYTE renderflags;
+	uint8_t renderflags;
 	int vboindex;
 	//int vboheight;
 
@@ -348,8 +356,8 @@ public:
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
 	int lightlevel;
-	BYTE foglevel;
-	BYTE hw_styleflags;
+	uint8_t foglevel;
+	uint8_t hw_styleflags;
 	bool fullbright;
 	PalEntry ThingColor;	// thing's own color
 	FColormap Colormap;

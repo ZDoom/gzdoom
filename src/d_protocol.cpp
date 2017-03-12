@@ -33,7 +33,7 @@
 */
 
 #include "i_system.h"
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 #include "d_net.h"
 #include "doomdef.h"
 #include "doomstat.h"

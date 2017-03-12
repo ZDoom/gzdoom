@@ -59,7 +59,6 @@ CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 }
 CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
 CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE);
-CVAR(Bool, gl_attenuate, false, CVAR_ARCHIVE);
 
 
 
@@ -253,7 +252,7 @@ static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 		g = (mixlight + pe.g * blendfactor) / 255;
 		b = (mixlight + pe.b * blendfactor) / 255;
 	}
-	return PalEntry(255, BYTE(r), BYTE(g), BYTE(b));
+	return PalEntry(255, uint8_t(r), uint8_t(g), uint8_t(b));
 }
 
 //==========================================================================

@@ -50,6 +50,7 @@
 #include "g_levellocals.h"
 #include "virtual.h"
 #include "events.h"
+#include "p_acs.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code

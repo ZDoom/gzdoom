@@ -23,10 +23,10 @@
 
 #include "doomtype.h"
 #include "i_soundinternal.h"
-#include "dobject.h"
 
 class AActor;
 class FScanner;
+class FSerializer;
 
 //
 // SoundFX struct.

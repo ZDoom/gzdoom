@@ -41,7 +41,7 @@ struct FResourceLump
 		char		Name[9];
 
 		uint32_t		dwName;			// These are for accessing the first 4 or 8 chars of
-		QWORD		qwName;			// Name as a unit without breaking strict aliasing rules
+		uint64_t		qwName;			// Name as a unit without breaking strict aliasing rules
 	};
 	uint8_t			Flags;
 	int8_t			RefCount;

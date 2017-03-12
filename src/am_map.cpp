@@ -70,6 +70,7 @@
 #include "a_keys.h"
 #include "r_data/colormaps.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 
 //=============================================================================
@@ -153,12 +154,12 @@ CVAR (Color, am_ovportalcolor,			0x004022,	CVAR_ARCHIVE);
 struct AMColor
 {
 	int Index;
-	uint32 RGB;
+	uint32_t RGB;
 
 	void FromCVar(FColorCVar & cv)
 	{
 		Index = cv.GetIndex();
-		RGB = uint32(cv) | MAKEARGB(255, 0, 0, 0);
+		RGB = uint32_t(cv) | MAKEARGB(255, 0, 0, 0);
 	}
 
 	void FromRGB(int r,int g, int b)
@@ -1932,7 +1933,7 @@ void AM_drawSubsectors()
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
 		}
 		// For lighting and texture determination
-		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
+		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight);
 		// Find texture origin.
 		originpt.x = -sec->GetXOffset(sector_t::floor);
 		originpt.y = sec->GetYOffset(sector_t::floor);
@@ -1958,13 +1959,13 @@ void AM_drawSubsectors()
 			double secx;
 			double secy;
 			double seczb, seczt;
-			double cmpz = ViewPos.Z;
+			double cmpz = r_viewpoint.Pos.Z;
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
 			{
 				// For the actual camera sector use the current viewpoint as reference.
-				secx = ViewPos.X;
-				secy = ViewPos.Y;
+				secx = r_viewpoint.Pos.X;
+				secy = r_viewpoint.Pos.Y;
 			}
 			else
 			{
@@ -2142,7 +2143,6 @@ void AM_showSS()
 		{
 			AM_drawSeg(sub->firstline + i, yellow);
 		}
-		PO_LinkToSubsectors();
 
 		for (int i = 0; i <po_NumPolyobjs; i++)
 		{

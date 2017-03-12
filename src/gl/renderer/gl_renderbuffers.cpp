@@ -26,7 +26,6 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "gl/gl_functions.h"
@@ -739,6 +738,49 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 {
 	CreateEyeBuffers(eye);
 	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye]);
+}
+
+//==========================================================================
+//
+// Shadow map texture and frame buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindShadowMapFB()
+{
+	CreateShadowMap();
+	glBindFramebuffer(GL_FRAMEBUFFER, mShadowMapFB);
+}
+
+void FGLRenderBuffers::BindShadowMapTexture(int texunit)
+{
+	CreateShadowMap();
+	glActiveTexture(GL_TEXTURE0 + texunit);
+	glBindTexture(GL_TEXTURE_2D, mShadowMapTexture);
+}
+
+void FGLRenderBuffers::CreateShadowMap()
+{
+	if (mShadowMapTexture != 0)
+		return;
+
+	GLint activeTex, textureBinding, frameBufferBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
+
+	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, 1024, 1024);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	mShadowMapFB = CreateFrameBuffer("ShadowMapFB", mShadowMapTexture);
+
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	glActiveTexture(activeTex);
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferBinding);
 }
 
 //==========================================================================

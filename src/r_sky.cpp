@@ -133,8 +133,8 @@ void R_InitSkyMap ()
 		skyiscale = float(r_Yaspect / freelookviewheight);
 		skyscale = freelookviewheight / r_Yaspect;
 
-		skyiscale *= float(FieldOfView.Degrees / 90.);
-		skyscale *= float(90. / FieldOfView.Degrees);
+		skyiscale *= float(r_viewpoint.FieldOfView.Degrees / 90.);
+		skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
 	}
 
 	if (skystretch)
@@ -161,7 +161,7 @@ void R_InitSkyMap ()
 //
 //==========================================================================
 
-void R_UpdateSky (DWORD mstime)
+void R_UpdateSky (uint32_t mstime)
 {
 	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;

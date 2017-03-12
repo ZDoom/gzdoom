@@ -29,7 +29,7 @@ struct FRenderer
 	virtual bool UsesColormap() const = 0;
 
 	// precache one texture
-	virtual void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
+	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 
 	// render 3D view
 	virtual void RenderView(player_t *player) = 0;
@@ -43,9 +43,6 @@ struct FRenderer
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}
 
-	// notifies the renderer that an actor has changed state.
-	virtual void StateChanged(AActor *actor) {}
-
 	// notify the renderer that serialization of the curent level is about to start/end
 	virtual void StartSerialize(FSerializer &arc) {}
 	virtual void EndSerialize(FSerializer &arc) {}
@@ -53,19 +50,17 @@ struct FRenderer
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
 	virtual void OnModeSet () {}
-	virtual void ErrorCleanup () {}
-	virtual void ClearBuffer(int color) = 0;
+	virtual void SetClearColor(int color) = 0;
 	virtual void Init() = 0;
-	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) {}
-	virtual void SetupFrame(player_t *player) {}
-	virtual void CopyStackedViewParameters() {}
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) = 0;
-	virtual sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) = 0;
+	virtual sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel) = 0;
 	virtual void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) {}
 	virtual void PreprocessLevel() {}
 	virtual void CleanLevelData() {}
 	virtual bool RequireGLNodes() { return false; }
 
+	virtual double GetVisibility() { return 8.f; }
+	virtual void SetVisibility(double vis) { }
 
 };
 

@@ -65,7 +65,6 @@
 #include "sbar.h"
 #include "stats.h"
 #include "c_dispatch.h"
-#include "p_acs.h"
 #include "s_sndseq.h"
 #include "r_data/r_interpolate.h"
 #include "doomstat.h"
@@ -79,6 +78,8 @@
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
 #include "events.h"
+
+void MarkACSThinker();
 
 // MACROS ------------------------------------------------------------------
 
@@ -331,7 +332,7 @@ static void MarkRoot()
 	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
-	Mark(DACSThinker::ActiveThinker);
+	MarkACSThinker();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
 	for (auto &s : level.sectorPortals)

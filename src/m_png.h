@@ -36,8 +36,9 @@
 #include <stdio.h>
 #include "doomtype.h"
 #include "v_video.h"
-#include "files.h"
 
+class FileReader;
+class FileWriter;
 // PNG Writing --------------------------------------------------------------
 
 // Start writing an 8-bit palettized PNG file.

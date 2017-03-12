@@ -184,7 +184,7 @@ unsigned int I_FPSTime()
 }
 
 
-double I_GetTimeFrac(uint32* ms)
+double I_GetTimeFrac(uint32_t* ms)
 {
 	const uint32_t now = I_MSTime();
 

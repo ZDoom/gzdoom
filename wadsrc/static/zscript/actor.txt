@@ -624,6 +624,7 @@ class Actor : Thinker native
 	action native int OverlayID();
 	action native double OverlayX(int layer = 0);
 	action native double OverlayY(int layer = 0);
+	action native double OverlayAlpha(int layer = 0);
 
 	// DECORATE setters - it probably makes more sense to set these values directly now...
 	void A_SetMass(int newmass) { mass = newmass; }
@@ -1041,6 +1042,8 @@ class Actor : Thinker native
 	native void A_WeaponOffset(double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayOffset(int layer = PSP_WEAPON, double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
+	action native void A_OverlayAlpha(int layer, double alph);
+	action native void A_OverlayRenderStyle(int layer, int style);
 
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{

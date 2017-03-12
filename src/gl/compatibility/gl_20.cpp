@@ -38,6 +38,7 @@
 #include "v_text.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/renderer/gl_renderer.h"
@@ -46,6 +47,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_vertexbuffer.h"
 
 
@@ -370,10 +372,10 @@ void FRenderState::DrawColormapOverlay()
 //
 //==========================================================================
 
-bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right,
+bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearPt, FVector3 & up, FVector3 & right,
 	float & scale, bool checkside, bool additive)
 {
-	Vector fn, pos;
+	FVector3 fn, pos;
 
 	DVector3 lpos = light->PosRelative(group);
 
@@ -396,16 +398,12 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 	// project light position onto plane (find closest point on plane)
 
 
-	pos.Set(lpos.X, lpos.Z, lpos.Y);
+	pos = { (float)lpos.X, (float)lpos.Z, (float)lpos.Y };
 	fn = p.Normal();
 	fn.GetRightUp(right, up);
 
-#ifdef _MSC_VER
-	nearPt = pos + fn * dist;
-#else
-	Vector tmpVec = fn * dist;
+	FVector3 tmpVec = fn * dist;
 	nearPt = pos + tmpVec;
-#endif
 
 	float cs = 1.0f - (dist / radius);
 	if (additive) cs *= 0.2f;	// otherwise the light gets too strong.
@@ -415,13 +413,11 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 
 	if (light->IsSubtractive())
 	{
-		Vector v;
-
 		gl_RenderState.BlendEquation(GL_FUNC_REVERSE_SUBTRACT);
-		v.Set(r, g, b);
-		r = v.Length() - r;
-		g = v.Length() - g;
-		b = v.Length() - b;
+		float length = float(FVector3(r, g, b).Length());
+		r = length - r;
+		g = length - g;
+		b = length - b;
 	}
 	else
 	{
@@ -517,8 +513,8 @@ void GLWall::RenderFogBoundaryCompat()
 	// as the shader version but it's an acceptable compromise.
 	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.fogdensity);
 
-	float dist1 = Dist2(ViewPos.X, ViewPos.Y, glseg.x1, glseg.y1);
-	float dist2 = Dist2(ViewPos.X, ViewPos.Y, glseg.x2, glseg.y2);
+	float dist1 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x1, glseg.y1);
+	float dist2 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x2, glseg.y2);
 
 	// these values were determined by trial and error and are scale dependent!
 	float fogd1 = (0.95f - exp(-fogdensity*dist1 / 62500.f)) * 1.05f;
@@ -562,7 +558,7 @@ void GLWall::RenderFogBoundaryCompat()
 void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 {
 	Plane p;
-	Vector nearPt, up, right, t1;
+	FVector3 nearPt, up, right, t1;
 	float scale;
 
 	FLightNode * node = sub->lighthead;
@@ -602,11 +598,11 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 			ptr->x = vt->fX();
 			ptr->z = plane.plane.ZatPoint(vt) + dz;
 			ptr->y = vt->fY();
-			t1.Set(ptr->x, ptr->z, ptr->y);
-			Vector nearToVert = t1 - nearPt;
+			t1 = { ptr->x, ptr->z, ptr->y };
+			FVector3 nearToVert = t1 - nearPt;
 
-			ptr->u = (nearToVert.Dot(right) * scale) + 0.5f;
-			ptr->v = (nearToVert.Dot(up) * scale) + 0.5f;
+			ptr->u = ((nearToVert | right) * scale) + 0.5f;
+			ptr->v = ((nearToVert | up) * scale) + 0.5f;
 			ptr++;
 		}
 		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
@@ -658,10 +654,10 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 {
 	float vtx[] = { glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2 };
 	Plane p;
-	Vector nearPt, up, right;
+	FVector3 nearPt, up, right;
 	float scale;
 
-	p.Init(vtx, 4);
+	p.Set(&glseg);
 
 	if (!p.ValidNormal())
 	{
@@ -673,15 +669,15 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 		return false;
 	}
 
-	Vector t1;
+	FVector3 t1;
 	int outcnt[4] = { 0,0,0,0 };
 
 	for (int i = 0; i<4; i++)
 	{
-		t1.Set(&vtx[i * 3]);
-		Vector nearToVert = t1 - nearPt;
-		tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-		tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
+		t1 = &vtx[i * 3];
+		FVector3 nearToVert = t1 - nearPt;
+		tcs[i].u = ((nearToVert | right) * scale) + 0.5f;
+		tcs[i].v = ((nearToVert | up) * scale) + 0.5f;
 
 		// quick check whether the light touches this polygon
 		if (tcs[i].u<0) outcnt[0]++;
@@ -755,7 +751,7 @@ void GLWall::RenderLightsCompat(int pass)
 //
 //==========================================================================
 
-void FGLRenderer::RenderMultipassStuff()
+void GLSceneDrawer::RenderMultipassStuff()
 {
 	// First pass: empty background with sector light only
 
@@ -789,7 +785,7 @@ void FGLRenderer::RenderMultipassStuff()
 
 	// second pass: draw lights
 	glDepthMask(false);
-	if (mLightCount && !gl_fixedcolormap)
+	if (GLRenderer->mLightCount && !gl_fixedcolormap)
 	{
 		if (gl_SetupLightTexture())
 		{

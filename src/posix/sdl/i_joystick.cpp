@@ -139,7 +139,7 @@ public:
 
 	void ProcessInput()
 	{
-		BYTE buttonstate;
+		uint8_t buttonstate;
 
 		for (int i = 0; i < NumAxes; ++i)
 		{
@@ -206,7 +206,7 @@ protected:
 		float Multiplier;
 		EJoyAxis GameAxis;
 		double Value;
-		BYTE ButtonValue;
+		uint8_t ButtonValue;
 	};
 	static const EJoyAxis DefaultAxes[5];
 

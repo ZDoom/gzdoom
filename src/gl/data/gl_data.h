@@ -4,24 +4,22 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include "r_utility.h"
 
 struct GLRenderSettings
 {
-
-	SBYTE lightmode;
+	int8_t lightmode;
 	bool nocoloredspritelighting;
 	bool nolightfade;
 	bool notexturefill;
 	bool brightfog;
 	bool lightadditivesurfaces;
-	bool attenuate;
 
 	int8_t map_lightmode;
 	int8_t map_nocoloredspritelighting;
 	int8_t map_notexturefill;
 	int8_t map_brightfog;
 	int8_t map_lightadditivesurfaces;
-	int8_t map_attenuate;
 
 	FVector3 skyrotatevector;
 	FVector3 skyrotatevector2;
@@ -36,12 +34,11 @@ extern GLRenderSettings glset;
 #include "a_sharedglobal.h"
 #include "c_cvars.h"
 
-extern int extralight;
 EXTERN_CVAR(Int, gl_weaponlight);
 
 inline	int getExtraLight()
 {
-	return extralight * gl_weaponlight;
+	return r_viewpoint.extralight * gl_weaponlight;
 }
 
 void gl_RecalcVertexHeights(vertex_t * v);
@@ -69,7 +66,7 @@ struct FGLLinePortal
 extern TArray<FPortal *> portals;
 extern TArray<FGLLinePortal*> linePortalToGL;
 
-extern TArray<BYTE> currentmapsection;
+extern TArray<uint8_t> currentmapsection;
 
 void gl_InitPortals();
 void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);

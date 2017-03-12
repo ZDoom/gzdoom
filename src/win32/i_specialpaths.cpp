@@ -37,7 +37,6 @@
 #include <windows.h>
 #include <lmcons.h>
 #include <shlobj.h>
-#define USE_WINDOWS_DWORD
 
 #include "cmdlib.h"
 #include "m_misc.h"

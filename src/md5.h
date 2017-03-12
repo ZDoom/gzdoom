@@ -18,7 +18,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "files.h"
+class FileReader;
 
 struct MD5Context
 {

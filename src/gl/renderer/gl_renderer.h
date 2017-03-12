@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "gl/data/gl_matrix.h"
+#include "gl/dynlights/gl_shadowmap.h"
 
 struct particle_t;
 class FCanvasTexture;
@@ -40,6 +41,7 @@ class FPresent3DColumnShader;
 class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
+class FShadowMapShader;
 
 inline float DEG2RAD(float deg)
 {
@@ -123,6 +125,9 @@ public:
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
+	FShadowMapShader *mShadowMapShader;
+
+	FShadowMap mShadowMap;
 
 	FTexture *gllight;
 	FTexture *glpart2;
@@ -153,23 +158,8 @@ public:
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 
-	angle_t FrustumAngle();
-	void SetViewArea();
-	void Set3DViewport(bool mainview);
-	void Reset3DViewport();
-	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
-	void RenderView(player_t *player);
-	void SetViewAngle(DAngle viewangle);
-	void SetupView(float viewx, float viewy, float viewz, DAngle viewangle, bool mirror, bool planemirror);
-
 	void Initialize(int width, int height);
 
-	void CreateScene();
-	void RenderMultipassStuff();
-	void RenderScene(int recursion);
-	void RenderTranslucent();
-	void DrawScene(int drawmode);
-	void DrawBlend(sector_t * viewsector);
 
 	void DrawPSprite (player_t * player,DPSprite *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
@@ -187,12 +177,9 @@ public:
 	void SetupLevel();
 
 	void RenderScreenQuad();
-	void SetFixedColormap (player_t *player);
-	void WriteSavePic (player_t *player, FileWriter *file, int width, int height);
-	void EndDrawScene(sector_t * viewsector);
-	void UpdateCameraExposure();
 	void PostProcessScene();
 	void AmbientOccludeScene();
+	void UpdateCameraExposure();
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();
@@ -204,10 +191,6 @@ public:
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();
 
-	void SetProjection(float fov, float ratio, float fovratio);
-	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes
-	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
-	void ProcessScene(bool toscreen = false);
 
 	bool StartOffscreen();
 	void EndOffscreen();
@@ -216,7 +199,7 @@ public:
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
-	int PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num);
+	int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
 
 	static float GetZNear() { return 5.f; }
 	static float GetZFar() { return 65536.f; }

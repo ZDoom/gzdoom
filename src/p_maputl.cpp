@@ -39,6 +39,8 @@
 #include "p_3dmidtex.h"
 #include "p_blockmap.h"
 #include "r_utility.h"
+#include "actor.h"
+#include "actorinlines.h"
 
 // State.
 #include "r_state.h"

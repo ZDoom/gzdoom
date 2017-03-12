@@ -325,6 +325,11 @@ struct TVector3
 	{
 	}
 
+	TVector3(vec_t *o)
+		: X(o[0]), Y(o[1]), Z(o[2])
+	{
+	}
+
 	TVector3 (const TVector3 &other)
 		: X(other.X), Y(other.Y), Z(other.Z)
 	{
@@ -520,6 +525,53 @@ struct TVector3
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
 	}
 
+	void GetRightUp(TVector3 &right, TVector3 &up)
+	{
+		TVector3 n(X, Y, Z);
+		TVector3 fn(fabs(n.X), fabs(n.Y), fabs(n.Z));
+		int major = 0;
+
+		if (fn[1] > fn[major]) major = 1;
+		if (fn[2] > fn[major]) major = 2;
+
+		// build right vector by hand
+		if (fabs(fn[0] - 1.0f) < FLT_EPSILON || fabs(fn[1] - 1.0f) < FLT_EPSILON || fabs(fn[2] - 1.0f) < FLT_EPSILON)
+		{
+			if (major == 0 && n[0] > 0.f)
+			{
+				right = { 0.f, 0.f, -1.f };
+			}
+			else if (major == 0)
+			{
+				right = { 0.f, 0.f, 1.f };
+			}
+
+			if (major == 1 || (major == 2 && n[2] > 0.f))
+			{
+				right = { 1.f, 0.f, 0.f };
+			}
+
+			if (major == 2 && n[2] < 0.0f)
+			{
+				right = { -1.f, 0.f, 0.f };
+			}
+		}
+		else
+		{
+			static TVector3 axis[3] =
+			{
+				{ 1.0f, 0.0f, 0.0f },
+				{ 0.0f, 1.0f, 0.0f },
+				{ 0.0f, 0.0f, 1.0f }
+			};
+
+			right = axis[major] ^ n;
+		}
+
+		up = n ^right;
+		right.MakeUnit();;
+		up.MakeUnit();
+	}
 
 
 	// Returns the angle (in radians) that the ray (0,0)-(X,Y) faces
@@ -542,7 +594,7 @@ struct TVector3
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		return *this * len;
+		return *this * (vec_t)len;
 	}
 
 	// Scales this vector into a unit vector
@@ -550,7 +602,7 @@ struct TVector3
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		*this *= len;
+		*this *= (vec_t)len;
 	}
 
 	// Resizes this vector to be the specified length (if it is not 0)
@@ -582,7 +634,7 @@ struct TVector3
 	}
 
 	// Dot product
-	double operator | (const TVector3 &other) const
+	vec_t operator | (const TVector3 &other) const
 	{
 		return X*other.X + Y*other.Y + Z*other.Z;
 	}

@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define USE_WINDOWS_DWORD
 #include "resource.h"
 #include "s_sound.h"
 #include "templates.h"

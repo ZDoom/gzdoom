@@ -77,6 +77,7 @@ extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
 extern UniqueList<FGLLinePortal> UniqueLineToLines;
 struct GLEEHorizonPortal;
+class GLSceneDrawer;
 
 class GLPortal
 {
@@ -90,6 +91,7 @@ protected:
 	static int renderdepth;
 
 public:
+	static GLSceneDrawer *drawer;
 	static int PlaneMirrorMode;
 	static int inupperstack;
 	static int	instack[2];
@@ -101,14 +103,14 @@ private:
 	DVector3 savedviewpath[2];
 	DVector3 savedViewPos;
 	DVector3 savedViewActorPos;
-	DAngle savedAngle;
+	DRotator savedAngles;
 	bool savedshowviewer;
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	ActorRenderFlags savedvisibility;
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;
-	TArray<BYTE> savedmapsection;
+	TArray<uint8_t> savedmapsection;
 	TArray<unsigned int> mPrimIndices;
 
 protected:

@@ -49,6 +49,9 @@
 #include "serializer.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "textures.h"
+#include "actor.h"
+#include "actorinlines.h"
 
 #include "gi.h"
 

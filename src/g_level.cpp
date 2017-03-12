@@ -91,6 +91,7 @@
 
 #include "g_hub.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 #include <string.h>
 
@@ -1389,7 +1390,7 @@ void G_InitLevelLocals ()
 	level_info_t *info;
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-	NormalLight.Maps = realcolormaps;
+	NormalLight.Maps = realcolormaps.Maps;
 
 	// [BB] Instead of just setting the color, we also have to reset Desaturate and build the lights.
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
@@ -1417,6 +1418,7 @@ void G_InitLevelLocals ()
 		R_SetDefaultColormap (info->FadeTable);
 		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
 		{
+			level.fadeto = 0xff939393; //[SP] Hexen True-color compatibility, just use gray.
 			level.flags |= LEVEL_HASFADETABLE;
 		}
 		/*
@@ -1484,7 +1486,7 @@ bool FLevelLocals::IsJumpingAllowed() const
 		return false;
 	if (dmflags & DF_YES_JUMP)
 		return true;
-	return !(level.flags & LEVEL_JUMP_NO);
+	return !(flags & LEVEL_JUMP_NO);
 }
 
 //==========================================================================
@@ -1498,7 +1500,7 @@ bool FLevelLocals::IsCrouchingAllowed() const
 		return false;
 	if (dmflags & DF_YES_CROUCH)
 		return true;
-	return !(level.flags & LEVEL_CROUCH_NO);
+	return !(flags & LEVEL_CROUCH_NO);
 }
 
 //==========================================================================
@@ -1512,7 +1514,7 @@ bool FLevelLocals::IsFreelookAllowed() const
 		return false;
 	if (dmflags & DF_YES_FREELOOK)
 		return true;
-	return !(level.flags & LEVEL_FREELOOK_NO);
+	return !(flags & LEVEL_FREELOOK_NO);
 }
 
 //==========================================================================

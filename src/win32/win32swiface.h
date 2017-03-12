@@ -61,7 +61,7 @@ private:
 	HRESULT AttemptRestore ();
 
 	HRESULT LastHR;
-	BYTE GammaTable[3][256];
+	uint8_t GammaTable[3][256];
 	PalEntry SourcePalette[256];
 	PALETTEENTRY PalEntries[256];
 	DWORD FlipFlags;
@@ -102,7 +102,7 @@ class D3DFB : public BaseWinFB
 {
 	DECLARE_CLASS(D3DFB, BaseWinFB)
 public:
-	D3DFB (UINT adapter, int width, int height, bool fullscreen);
+	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();
 
 	bool IsValid ();
@@ -124,7 +124,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
-	void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type);
 	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
@@ -132,11 +132,11 @@ public:
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
 	void DrawTextureParms (FTexture *img, DrawParms &parms);
-	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
+	void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
-	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
-	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
+	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
+	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
@@ -169,14 +169,14 @@ private:
 		{
 			struct
 			{
-				BYTE Flags;
-				BYTE ShaderNum:4;
-				BYTE BlendOp:4;
-				BYTE SrcBlend, DestBlend;
+				uint8_t Flags;
+				uint8_t ShaderNum:4;
+				uint8_t BlendOp:4;
+				uint8_t SrcBlend, DestBlend;
 			};
 			DWORD Group1;
 		};
-		BYTE Desat;
+		uint8_t Desat;
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
 		int NumVerts;		// Number of _unique_ vertices used by this set.
@@ -296,6 +296,7 @@ private:
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	int FBWidth, FBHeight;
+	D3DFORMAT FBFormat;
 	bool VSync;
 	RECT BlendingRect;
 	int In2D;
@@ -303,7 +304,7 @@ private:
 	bool SM14;
 	bool GatheringWipeScreen;
 	bool AALines;
-	BYTE BlockNum;
+	uint8_t BlockNum;
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	Atlas *Atlases;

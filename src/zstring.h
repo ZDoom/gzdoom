@@ -1,3 +1,4 @@
+#pragma once
 /*
 ** zstring.h
 **
@@ -31,8 +32,6 @@
 **
 */
 
-#ifndef ZSTRING_H
-#define ZSTRING_H
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -450,4 +449,3 @@ template<> struct THashTraits<FString>
 	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
 };
 
-#endif

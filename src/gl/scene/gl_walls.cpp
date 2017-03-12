@@ -87,7 +87,7 @@ void GLWall::PutWall(bool translucent)
 
 	if (translucent) // translucent walls
 	{
-		ViewDistance = (ViewPos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
+		ViewDistance = (r_viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
 		if (gl.buffermethod == BM_DEFERRED) MakeVertices(true);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
@@ -430,10 +430,10 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 	ztop[1] = ztop[0] = fs->GetPlaneTexZ(sector_t::ceiling);
 	zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 
-	if (ViewPos.Z < fs->GetPlaneTexZ(sector_t::ceiling))
+	if (r_viewpoint.Pos.Z < fs->GetPlaneTexZ(sector_t::ceiling))
 	{
-		if (ViewPos.Z > fs->GetPlaneTexZ(sector_t::floor))
-			zbottom[1] = zbottom[0] = ViewPos.Z;
+		if (r_viewpoint.Pos.Z > fs->GetPlaneTexZ(sector_t::floor))
+			zbottom[1] = zbottom[0] = r_viewpoint.Pos.Z;
 
 		if (fs->GetTexture(sector_t::ceiling) == skyflatnum)
 		{
@@ -460,7 +460,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		ztop[1] = ztop[0] = zbottom[0];
 	} 
 
-	if (ViewPos.Z > fs->GetPlaneTexZ(sector_t::floor))
+	if (r_viewpoint.Pos.Z > fs->GetPlaneTexZ(sector_t::floor))
 	{
 		zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 		if (fs->GetTexture(sector_t::floor) == skyflatnum)
@@ -711,7 +711,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	GLSeg glsave=glseg;
 	float flh=ceilingrefheight-floorrefheight;
 	int texpos;
-	BYTE savedflags = flags;
+	uint8_t savedflags = flags;
 
 	switch (_type)
 	{

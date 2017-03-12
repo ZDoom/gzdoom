@@ -96,7 +96,7 @@ void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float 
 	tex->GetSpriteRect(&r);
 
 	// calculate edges of the shape
-	scalex = (320.0f / (240.0f * WidescreenRatio)) * vw / 320;
+	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
 
 	tx = sx - (160 - r.left);
 	x1 = tx * scalex + vw/2;
@@ -201,6 +201,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	
 	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites();
 
+	AActor *camera = r_viewpoint.camera;
+
 	// this is the same as the software renderer
 	if (!player ||
 		!r_drawplayersprites ||
@@ -212,7 +214,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	float bobx, boby, wx, wy;
 	DPSprite *weapon;
 
-	P_BobWeapon(camera->player, &bobx, &boby, r_TicFracF);
+	P_BobWeapon(camera->player, &bobx, &boby, r_viewpoint.TicFrac);
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
@@ -224,8 +226,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		}
 		else
 		{
-			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_viewpoint.TicFrac;
+			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_viewpoint.TicFrac;
 		}
 	}
 	else
@@ -257,11 +259,11 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 				if (i<lightlist.Size()-1) 
 				{
-					lightbottom=lightlist[i+1].plane.ZatPoint(ViewPos);
+					lightbottom=lightlist[i+1].plane.ZatPoint(r_viewpoint.Pos);
 				}
 				else 
 				{
-					lightbottom=viewsector->floorplane.ZatPoint(ViewPos);
+					lightbottom=viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
 				}
 
 				if (lightbottom<player->viewz) 
@@ -427,8 +429,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				psp->oldy = psp->y;
 			}
 
-			float sx = psp->oldx + (psp->x - psp->oldx) * r_TicFracF;
-			float sy = psp->oldy + (psp->y - psp->oldy) * r_TicFracF;
+			float sx = psp->oldx + (psp->x - psp->oldx) * r_viewpoint.TicFrac;
+			float sy = psp->oldy + (psp->y - psp->oldy) * r_viewpoint.TicFrac;
 
 			if (psp->Flags & PSPF_ADDBOB)
 			{

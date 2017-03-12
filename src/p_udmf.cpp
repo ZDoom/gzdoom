@@ -49,6 +49,7 @@
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "g_levellocals.h"
+#include "info.h"
 
 //===========================================================================
 //
@@ -1812,7 +1813,7 @@ public:
 		vd->zCeiling = vd->zFloor = vd->flags = 0;
 
 		sc.MustGetToken('{');
-		double x, y;
+		double x = 0, y = 0;
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();

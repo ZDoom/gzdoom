@@ -32,6 +32,7 @@
 #include "serializer.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "textures.h"
 
 //============================================================================
 //

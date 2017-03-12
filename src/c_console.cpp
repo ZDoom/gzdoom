@@ -48,7 +48,7 @@
 #include "hu_stuff.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "i_input.h"
+#include "g_input.h"
 #include "m_swap.h"
 #include "v_palette.h"
 #include "v_video.h"
@@ -162,10 +162,14 @@ int active_con_scale()
 	int scale = con_scale;
 	if (scale <= 0)
 	{
-		scale = CleanXfac - 1;
-		if (scale <= 0)
+		scale = uiscale;
+		if (scale == 0)
 		{
-			scale = 1;
+			scale = CleanXfac - 1;
+			if (scale <= 0)
+			{
+				scale = 1;
+			}
 		}
 	}
 	return scale;

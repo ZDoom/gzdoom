@@ -645,7 +645,7 @@ void PInt::SetValue(void *addr, int val)
 	}
 	else if (Size == 8)
 	{
-		*(QWORD *)addr = val;
+		*(uint64_t *)addr = val;
 	}
 	else
 	{
@@ -681,7 +681,7 @@ int PInt::GetValueInt(void *addr) const
 	}
 	else if (Size == 8)
 	{ // truncated output
-		return (int)*(QWORD *)addr;
+		return (int)*(uint64_t *)addr;
 	}
 	else
 	{

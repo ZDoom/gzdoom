@@ -4,57 +4,41 @@
 #include "doomtype.h"
 #include "xs_Float.h"
 #include "r_utility.h"
+#include "memarena.h"
+
+angle_t R_PointToPseudoAngle(double x, double y);
+
+// Used to speed up angle calculations during clipping
+inline angle_t vertex_t::GetClipAngle()
+{
+	return  R_PointToPseudoAngle(p.X, p.Y);
+}
 
 class ClipNode
 {
 	friend class Clipper;
-	friend class ClipNodesFreer;
 	
 	ClipNode *prev, *next;
 	angle_t start, end;
-	static ClipNode * freelist;
 
 	bool operator== (const ClipNode &other)
 	{
 		return other.start == start && other.end == end;
 	}
-
-	void Free()
-	{
-		next=freelist;
-		freelist=this;
-	}
-
-	static ClipNode * GetNew()
-	{
-		if (freelist)
-		{
-			ClipNode * p=freelist;
-			freelist=p->next;
-			return p;
-		}
-		else return new ClipNode;
-	}
-
-	static ClipNode * NewRange(angle_t start, angle_t end)
-	{
-		ClipNode * c=GetNew();
-
-		c->start=start;
-		c->end=end;
-		c->next=c->prev=NULL;
-		return c;
-	}
-
 };
 
 
 class Clipper
 {
-	ClipNode * clipnodes;
-	ClipNode * cliphead;
-	ClipNode * silhouette;	// will be preserved even when RemoveClipRange is called
-	bool blocked;
+	unsigned starttime;
+	TStaticArray<angle_t> anglecache;
+	FMemArena nodearena;
+	ClipNode * freelist = nullptr;
+
+	ClipNode * clipnodes = nullptr;
+	ClipNode * cliphead = nullptr;
+	ClipNode * silhouette = nullptr;	// will be preserved even when RemoveClipRange is called
+	bool blocked = false;
 
 	static angle_t AngleToPseudo(angle_t ang);
 	bool IsRangeVisible(angle_t startangle, angle_t endangle);
@@ -65,18 +49,36 @@ class Clipper
 
 public:
 
-	static int anglecache;
-
-	Clipper()
-	{
-		blocked = false;
-		clipnodes=cliphead=NULL;
-	}
-
-	~Clipper();
+	Clipper();
 
 	void Clear();
 
+	void Free(ClipNode *node)
+	{
+		node->next = freelist;
+		freelist = node;
+	}
+
+	ClipNode * GetNew()
+	{
+		if (freelist)
+		{
+			ClipNode * p = freelist;
+			freelist = p->next;
+			return p;
+		}
+		else return (ClipNode*)nodearena.Alloc(sizeof(ClipNode));
+	}
+
+	ClipNode * NewRange(angle_t start, angle_t end)
+	{
+		ClipNode * c = GetNew();
+
+		c->start = start;
+		c->end = end;
+		c->next = c->prev = NULL;
+		return c;
+	}
 
 	void SetSilhouette();
 
@@ -142,18 +144,13 @@ public:
 	}
 
 	bool CheckBox(const float *bspcoord);
+
+	// Used to speed up angle calculations during clipping
+	inline angle_t GetClipAngle(vertex_t *v)
+	{
+		return v->angletime == starttime ? v->viewangle : (v->angletime = starttime, v->viewangle = R_PointToPseudoAngle(v->p.X, v->p.Y));
+	}
+
 };
-
-
-extern Clipper clipper;
-
-angle_t R_PointToPseudoAngle(double x, double y);
-void R_SetView();
-
-// Used to speed up angle calculations during clipping
-inline angle_t vertex_t::GetClipAngle()
-{
-	return angletime == Clipper::anglecache? viewangle : (angletime = Clipper::anglecache, viewangle = R_PointToPseudoAngle(p.X, p.Y));
-}
 
 #endif

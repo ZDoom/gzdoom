@@ -61,7 +61,6 @@
 #include <stdarg.h>
 #include <math.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomerrors.h"
 #include "hardware.h"
 
@@ -109,7 +108,7 @@
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
-extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+extern uint8_t *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 void I_FlushBufferedConsoleStuff();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1113,10 +1112,10 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 		}
 		else
 		{
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", ViewPos.X);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", ViewPos.Y);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", ViewPos.Z);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", ViewAngle);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", r_viewpoint.Pos.X);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", r_viewpoint.Pos.Y);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", r_viewpoint.Pos.Z);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", r_viewpoint.Angles.Yaw);
 		}
 	}
 	*buffer++ = '\r';

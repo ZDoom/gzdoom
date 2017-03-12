@@ -10,7 +10,7 @@
 #include "c_cvars.h"
 #include "info.h"
 #include "doomdef.h"
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 #include "r_defs.h"
 #include "a_pickups.h"
 #include "stats.h"

@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "r_defs.h"
+
 #include "doomtype.h"
 #include "version.h"
 
@@ -40,6 +42,7 @@
 #else
 #include <unistd.h>
 #endif
+
 
 #include <ctype.h>
 
@@ -57,7 +60,6 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
-#include "r_defs.h"
 
 #include "hu_stuff.h"
 

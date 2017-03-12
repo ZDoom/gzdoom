@@ -8,6 +8,13 @@
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 class PStruct;
 
+// This is intentionally not in vm.h so that this file remains free of DObject pollution.
+class VMException : public DObject
+{
+	DECLARE_CLASS(VMException, DObject);
+};
+
+
 #include "vm.h"
 
 // Variable/parameter/field flags -------------------------------------------

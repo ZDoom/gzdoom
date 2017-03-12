@@ -84,7 +84,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
-DWORD LanguageIDs[4];
+uint32_t LanguageIDs[4];
 	
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
@@ -123,7 +123,7 @@ void SetLanguageIDs ()
 {
 	size_t langlen = strlen(language);
 
-	DWORD lang = (langlen < 2 || langlen > 3) ?
+	uint32_t lang = (langlen < 2 || langlen > 3) ?
 		MAKE_ID('e','n','u','\0') :
 		MAKE_ID(language[0],language[1],language[2],'\0');
 

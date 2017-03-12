@@ -33,9 +33,7 @@
 **
 */
 
-#ifdef _WIN32
-#define USE_WINDOWS_DWORD
-#endif
+// This also pulls in windows.h
 #include "LzmaDec.h"
 
 #include "files.h"
@@ -392,7 +390,7 @@ ISzAlloc g_Alloc = { SzAlloc, SzFree };
 FileReaderLZMA::FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip)
 : File(file), SawEOF(false)
 {
-	BYTE header[4 + LZMA_PROPS_SIZE];
+	uint8_t header[4 + LZMA_PROPS_SIZE];
 	int err;
 
 	assert(zip == true);

@@ -203,12 +203,12 @@ struct FDrawInfo
 	struct SubsectorHackInfo
 	{
 		subsector_t * sub;
-		BYTE flags;
+		uint8_t flags;
 	};
 
-	TArray<BYTE> sectorrenderflags;
-	TArray<BYTE> ss_renderflags;
-	TArray<BYTE> no_renderflags;
+	TArray<uint8_t> sectorrenderflags;
+	TArray<uint8_t> ss_renderflags;
+	TArray<uint8_t> no_renderflags;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;

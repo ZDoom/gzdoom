@@ -39,6 +39,7 @@
 #include "r_utility.h"
 #include "textures/textures.h"
 #include "warpbuffer.h"
+#include "v_palette.h"
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
@@ -74,16 +75,17 @@ void FWarpTexture::Unload ()
 		Spans = NULL;
 	}
 	SourcePic->Unload ();
+	FTexture::Unload();
 }
 
 bool FWarpTexture::CheckModified ()
 {
-	return r_FrameTime != GenTime;
+	return r_viewpoint.FrameTime != GenTime;
 }
 
-const BYTE *FWarpTexture::GetPixels ()
+const uint8_t *FWarpTexture::GetPixels ()
 {
-	DWORD time = r_FrameTime;
+	uint32_t time = r_viewpoint.FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -92,9 +94,28 @@ const BYTE *FWarpTexture::GetPixels ()
 	return Pixels;
 }
 
-const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	DWORD time = r_FrameTime;
+	uint32_t time = r_viewpoint.FrameTime;
+	if (Pixels == NULL || time != GenTime)
+	{
+		MakeTexture(time);
+		CreatePixelsBgraWithMipmaps();
+		for (int i = 0; i < Width * Height; i++)
+		{
+			if (Pixels[i] != 0)
+				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[Pixels[i]].d;
+			else
+				PixelsBgra[i] = 0;
+		}
+		GenerateBgraMipmapsFast();
+	}
+	return PixelsBgra.data();
+}
+
+const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	uint32_t time = r_viewpoint.FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -123,13 +144,13 @@ const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out
 }
 
 
-void FWarpTexture::MakeTexture(DWORD time)
+void FWarpTexture::MakeTexture(uint32_t time)
 {
-	const BYTE *otherpix = SourcePic->GetPixels();
+	const uint8_t *otherpix = SourcePic->GetPixels();
 
 	if (Pixels == NULL)
 	{
-		Pixels = new BYTE[Width * Height];
+		Pixels = new uint8_t[Width * Height];
 	}
 	if (Spans != NULL)
 	{

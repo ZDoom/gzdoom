@@ -72,6 +72,7 @@
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
+#include "actorinlines.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -699,7 +700,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 
 	if (Renderer != NULL)
 	{
-		Renderer->StateChanged(this);
+		SetDynamicLights();
 	}
 	return true;
 }
@@ -1493,7 +1494,7 @@ bool AActor::IsInsideVisibleAngles() const
 	if (mo != nullptr)
 	{
 		
-		DVector3 diffang = ViewPos - Pos();
+		DVector3 diffang = r_viewpoint.Pos - Pos();
 		DAngle to = diffang.Angle();
 
 		if (!(renderflags & RF_ABSMASKANGLE)) 
@@ -5073,10 +5074,7 @@ void AActor::CallBeginPlay()
 
 void AActor::PostBeginPlay ()
 {
-	if (Renderer != NULL)
-	{
-		Renderer->StateChanged(this);
-	}
+	SetDynamicLights();
 	PrevAngles = Angles;
 	flags7 |= MF7_HANDLENODELAY;
 }

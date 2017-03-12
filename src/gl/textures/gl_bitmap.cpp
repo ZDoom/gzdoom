@@ -39,7 +39,7 @@
 //
 //===========================================================================
 template<class T>
-void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int step, BYTE tr, BYTE tg, BYTE tb)
+void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int step, uint8_t tr, uint8_t tg, uint8_t tb)
 {
 	int i;
 	unsigned char a;
@@ -58,7 +58,7 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int
 	}
 }
 
-typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int count, int step, BYTE tr, BYTE tg, BYTE tb);
+typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int count, int step, uint8_t tr, uint8_t tg, uint8_t tb);
 
 static CopyFunc copyfuncs[]={
 	iCopyColors<cRGB>,
@@ -81,15 +81,15 @@ static CopyFunc copyfuncs[]={
 //
 //===========================================================================
 void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
-								const BYTE * patch, int srcwidth, int srcheight, int step_x, int step_y,
+								const uint8_t * patch, int srcwidth, int srcheight, int step_x, int step_y,
 								int rotate, int ct, FCopyInfo *inf,	int r, int g, int b)
 {
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
-		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
+		uint8_t *buffer = GetPixels() + 4*originx + Pitch*originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, (BYTE)r, (BYTE)g, (BYTE)b);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, (uint8_t)r, (uint8_t)g, (uint8_t)b);
 		}
 	}
 }
@@ -99,7 +99,7 @@ void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 // Paletted to True Color texture copy function
 //
 //===========================================================================
-void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
+void FGLBitmap::CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
 										int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
 {
 	PalEntry penew[256];
@@ -108,7 +108,7 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
-		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
+		uint8_t *buffer = GetPixels() + 4*originx + Pitch*originy;
 
 		if (translation > 0)
 		{

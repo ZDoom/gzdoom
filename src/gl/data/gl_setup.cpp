@@ -67,7 +67,7 @@ static void DoSetMapSection(subsector_t *sub, int num)
 	for (unsigned a = 0; a < MapSectionCollector.Size(); a++)
 	{
 		sub = MapSectionCollector[a];
-		for (DWORD i = 0; i < sub->numlines; i++)
+		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t * seg = sub->firstline + i;
 
@@ -126,7 +126,7 @@ static int MergeMapSections(int num)
 	cvertex_t vt;
 
 	// first step: Set mapsection for all vertex positions.
-	for(DWORD i=0;i<(DWORD)numsegs;i++)
+	for(uint32_t i=0;i<(uint32_t)numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
 		int section = seg->Subsector->mapsection;
@@ -138,7 +138,7 @@ static int MergeMapSections(int num)
 	}
 
 	// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
-	for(DWORD i=0;i<(DWORD)numsegs;i++)
+	for(uint32_t i=0;i<(uint32_t)numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
 		int section = seg->Subsector->mapsection;
@@ -219,7 +219,7 @@ static void SetMapSections()
 static void SpreadHackedFlag(subsector_t * sub)
 {
 	// The subsector pointer hasn't been set yet!
-	for(DWORD i=0;i<sub->numlines;i++)
+	for(uint32_t i=0;i<sub->numlines;i++)
 	{
 		seg_t * seg = sub->firstline + i;
 
@@ -276,7 +276,7 @@ static void PrepareSectorData()
 		if (subsectors[i].sector == subsectors[i].render_sector)
 		{
 			seg_t * seg = subsectors[i].firstline;
-			for(DWORD j=0;j<subsectors[i].numlines;j++)
+			for(uint32_t j=0;j<subsectors[i].numlines;j++)
 			{
 				if (!(subsectors[i].hacked&1) && seg[j].linedef==0 && 
 						seg[j].PartnerSeg!=NULL && 

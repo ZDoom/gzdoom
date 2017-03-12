@@ -71,6 +71,7 @@
 #include "r_utility.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 static FRandom pr_script("FScript");
 

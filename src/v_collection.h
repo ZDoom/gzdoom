@@ -37,6 +37,8 @@
 #include "doomtype.h"
 #include "r_defs.h"
 
+class FTexture;
+
 class FImageCollection
 {
 public:

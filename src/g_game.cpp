@@ -45,7 +45,6 @@
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
-#include "i_input.h"
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "d_main.h"
@@ -234,7 +233,7 @@ FString			shotfile;
 AActor* 		bodyque[BODYQUESIZE]; 
 int 			bodyqueslot; 
 
-void R_ExecuteSetViewSize (void);
+void R_ExecuteSetViewSize (FViewWindow &viewwindow);
 
 FString savename;
 FString BackupSaveName;

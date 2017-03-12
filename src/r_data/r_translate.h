@@ -81,15 +81,15 @@ extern TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANS
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)
 #define TRANSLATIONTYPE_MASK (255<<TRANSLATION_SHIFT)
 
-inline DWORD TRANSLATION(uint8_t a, DWORD b)
+inline uint32_t TRANSLATION(uint8_t a, uint32_t b)
 {
 	return (a<<TRANSLATION_SHIFT) | b;
 }
-inline int GetTranslationType(DWORD trans)
+inline int GetTranslationType(uint32_t trans)
 {
 	return (trans&TRANSLATIONTYPE_MASK) >> TRANSLATION_SHIFT;
 }
-inline int GetTranslationIndex(DWORD trans)
+inline int GetTranslationIndex(uint32_t trans)
 {
 	return (trans&TRANSLATION_MASK);
 }

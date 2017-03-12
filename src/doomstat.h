@@ -122,8 +122,8 @@ extern	bool	 		noblit;
 
 extern	int 			viewwindowx;
 extern	int 			viewwindowy;
-extern	"C" int 		viewheight;
-extern	"C" int 		viewwidth;
+extern	int 			viewheight;
+extern	int		 		viewwidth;
 
 
 

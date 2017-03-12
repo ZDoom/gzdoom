@@ -111,6 +111,7 @@
 #include "fragglescript/t_fs.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "r_utility.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -124,7 +125,6 @@ void DrawHUD();
 extern void ReadStatistics();
 extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
-extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern void HUD_InitHud();
@@ -138,6 +138,7 @@ void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
+void ParseGLDefs();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -670,7 +671,7 @@ void D_Display ()
 
 	if (viewactive)
 	{
-		R_SetFOV (players[consoleplayer].camera && players[consoleplayer].camera->player ?
+		R_SetFOV (r_viewpoint, players[consoleplayer].camera && players[consoleplayer].camera->player ?
 			players[consoleplayer].camera->player->FOV : 90.f);
 	}
 
@@ -697,12 +698,10 @@ void D_Display ()
 		}
 	}
 
-	RenderTarget = screen;
-
 	// change the view size if needed
 	if (setsizeneeded && StatusBar != NULL)
 	{
-		R_ExecuteSetViewSize ();
+		R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
 	}
 	setmodeneeded = false;
 
@@ -973,7 +972,6 @@ void D_ErrorCleanup ()
 		menuactive = MENU_Off;
 	}
 	insave = false;
-	Renderer->ErrorCleanup();
 }
 
 //==========================================================================
@@ -2502,6 +2500,8 @@ void D_DoomMain (void)
 		}
 
 		StartScreen->Progress ();
+
+		ParseGLDefs();
 
 		if (!batchrun) Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
 		StartScreen->LoadingStatus ("Loading graphics", 0x3f);

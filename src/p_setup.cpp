@@ -3276,7 +3276,7 @@ void P_LoadReject (MapData * map, bool junk)
 
 		if (qwords > 0)
 		{
-			const QWORD *qreject = (const QWORD *)rejectmatrix;
+			const uint64_t *qreject = (const uint64_t *)rejectmatrix;
 
 			i = 0;
 			do

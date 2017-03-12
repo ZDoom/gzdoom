@@ -38,6 +38,7 @@
 #include "dobject.h"
 #include "v_collection.h"
 #include "v_text.h"
+#include "r_data/renderstyle.h"
 
 class player_t;
 struct FRemapTable;
@@ -343,9 +344,9 @@ public:
 	DBaseStatusBar (int reltop, int hres=320, int vres=200);
 	void OnDestroy() override;
 
-	void AttachMessage (DHUDMessage *msg, uint32 id=0, int layer=HUDMSGLayer_Default);
+	void AttachMessage (DHUDMessage *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
-	DHUDMessage *DetachMessage (uint32 id);
+	DHUDMessage *DetachMessage (uint32_t id);
 	void DetachAllMessages ();
 	void ShowPlayerName ();
 	double GetDisplacement() { return Displacement; }

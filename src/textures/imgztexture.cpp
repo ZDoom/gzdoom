@@ -142,6 +142,7 @@ void FIMGZTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================

@@ -33,23 +33,22 @@ class FHealthBar : public FTexture
 public:
 	FHealthBar ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	bool CheckModified ();
-	void Unload ();
 
 	void SetVial (int level);
 
 protected:
-	BYTE Pixels[200*2];
-	BYTE Colors[8];
+	uint8_t Pixels[200*2];
+	uint8_t Colors[8];
 	static const Span DummySpan[2];
 
 	int VialLevel;
 	bool NeedRefresh;
 
 	void MakeTexture ();
-	void FillBar (int min, int max, BYTE light, BYTE dark);
+	void FillBar (int min, int max, uint8_t light, uint8_t dark);
 };
 
 const FTexture::Span FHealthBar::DummySpan[2] = { { 0, 2 }, { 0, 0 } };
@@ -59,7 +58,7 @@ FHealthBar::FHealthBar ()
 {
 	int i;
 
-	static const BYTE rgbs[8*3] =
+	static const uint8_t rgbs[8*3] =
 	{
 		180, 228, 128,	// light green
 		128, 180, 80,	// dark green
@@ -91,11 +90,7 @@ bool FHealthBar::CheckModified ()
 	return NeedRefresh;
 }
 
-void FHealthBar::Unload ()
-{
-}
-
-const BYTE *FHealthBar::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FHealthBar::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (NeedRefresh)
 	{
@@ -112,7 +107,7 @@ const BYTE *FHealthBar::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*2;
 }
 
-const BYTE *FHealthBar::GetPixels ()
+const uint8_t *FHealthBar::GetPixels ()
 {
 	if (NeedRefresh)
 	{
@@ -171,7 +166,7 @@ void FHealthBar::MakeTexture ()
 	}
 }
 
-void FHealthBar::FillBar (int min, int max, BYTE light, BYTE dark)
+void FHealthBar::FillBar (int min, int max, uint8_t light, uint8_t dark)
 {
 	for (int i = min*2; i < max*2; i++)
 	{
@@ -562,7 +557,7 @@ private:
 		int bars = (CurrentPop == POP_Status) ? imgINVPOP : imgINVPOP2;
 		int back = (CurrentPop == POP_Status) ? imgINVPBAK : imgINVPBAK2;
 		// Extrapolate the height of the popscreen for smoother movement
-		int height = clamp<int> (PopHeight + int(r_TicFracF * PopHeightChange), -POP_HEIGHT, 0);
+		int height = clamp<int> (PopHeight + int(r_viewpoint.TicFrac * PopHeightChange), -POP_HEIGHT, 0);
 
 		xscale = CleanXfac;
 		yscale = CleanYfac;
@@ -613,7 +608,7 @@ private:
 			if (KeyPopScroll > 0)
 			{
 				// Extrapolate the scroll position for smoother scrolling
-				int scroll = MAX<int> (0,KeyPopScroll - int(r_TicFracF * (280./KEY_TIME)));
+				int scroll = MAX<int> (0,KeyPopScroll - int(r_viewpoint.TicFrac * (280./KEY_TIME)));
 				pos -= 10;
 				leftcol = leftcol - 280 + scroll;
 			}

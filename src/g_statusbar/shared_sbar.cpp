@@ -611,7 +611,7 @@ void DBaseStatusBar::DrawCrosshair ()
 	ST_LoadCrosshair();
 
 	// Don't draw the crosshair if there is none
-	if (CrosshairImage == NULL || gamestate == GS_TITLELEVEL || camera->health <= 0)
+	if (CrosshairImage == NULL || gamestate == GS_TITLELEVEL || r_viewpoint.camera->health <= 0)
 	{
 		return;
 	}

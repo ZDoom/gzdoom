@@ -601,7 +601,9 @@ endif()
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
+	sound/mididevices/music_win_mididevice.cpp
 	win32/eaxedit.cpp
+	win32/critsec.cpp
 	win32/fb_d3d9.cpp
 	win32/fb_d3d9_wipe.cpp
 	win32/fb_ddraw.cpp
@@ -626,6 +628,7 @@ set( PLAT_POSIX_SOURCES
 	posix/i_steam.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
+	posix/sdl/critsec.cpp
 	posix/sdl/hardware.cpp
 	posix/sdl/i_gui.cpp
 	posix/sdl/i_input.cpp
@@ -640,6 +643,7 @@ set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp
 	posix/unix/iwadpicker_gtk.cpp )
 set( PLAT_OSX_SOURCES
+	sound/mididevices/music_audiotoolbox_mididevice.cpp
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm
 	posix/osx/zdoom.icns )
@@ -702,6 +706,7 @@ if( HAVE_MMX )
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
+
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
@@ -749,8 +754,8 @@ file( GLOB HEADER_FILES
 	g_inventory/*.h
 	intermission/*.h
 	menu/*.h
-	oplsynth/*.h
-	oplsynth/dosbox/*.h
+	sound/oplsynth/*.h
+	sound/oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -765,9 +770,22 @@ file( GLOB HEADER_FILES
 	scripting/decorate/*.h
 	scripting/zscript/*.h
 	scripting/vm/*.h
-	timidity/*.h
-	wildmidi/*.h
+	sound/timidity/*.h
+	sound/wildmidi/*.h
 	xlat/*.h
+	swrenderer/*.h
+	swrenderer/drawers/*.h
+	swrenderer/scene/*.h
+	swrenderer/segments/*.h
+	swrenderer/line/*.h
+	swrenderer/plane/*.h
+	swrenderer/things/*.h
+	swrenderer/viewport/*.h
+	polyrenderer/*.h
+	polyrenderer/math/*.h
+	polyrenderer/drawers/*.h
+	polyrenderer/drawers/*.php
+	polyrenderer/scene/*.h
 	gl/*.h
 	gl/api/*.h
 	gl/data/*.h
@@ -786,10 +804,77 @@ file( GLOB HEADER_FILES
 	*.h
 )
 
+set ( SWRENDER_SOURCES
+	swrenderer/r_swcanvas.cpp
+	swrenderer/r_swrenderer.cpp
+	swrenderer/r_memory.cpp
+	swrenderer/r_renderthread.cpp
+	swrenderer/drawers/r_draw_pal.cpp
+	swrenderer/drawers/r_draw_rgba.cpp
+	swrenderer/drawers/r_thread.cpp
+	swrenderer/scene/r_3dfloors.cpp
+	swrenderer/scene/r_light.cpp
+	swrenderer/scene/r_opaque_pass.cpp
+	swrenderer/scene/r_portal.cpp
+	swrenderer/scene/r_scene.cpp
+	swrenderer/scene/r_translucent_pass.cpp
+	swrenderer/viewport/r_drawerargs.cpp
+	swrenderer/viewport/r_skydrawer.cpp
+	swrenderer/viewport/r_spandrawer.cpp
+	swrenderer/viewport/r_spritedrawer.cpp
+	swrenderer/viewport/r_viewport.cpp
+	swrenderer/viewport/r_walldrawer.cpp
+	swrenderer/line/r_line.cpp
+	swrenderer/line/r_walldraw.cpp
+	swrenderer/line/r_wallsetup.cpp
+	swrenderer/line/r_fogboundary.cpp
+	swrenderer/line/r_renderdrawsegment.cpp
+	swrenderer/segments/r_clipsegment.cpp
+	swrenderer/segments/r_drawsegment.cpp
+	swrenderer/segments/r_portalsegment.cpp
+	swrenderer/things/r_visiblesprite.cpp
+	swrenderer/things/r_visiblespritelist.cpp
+	swrenderer/things/r_voxel.cpp
+	swrenderer/things/r_particle.cpp
+	swrenderer/things/r_playersprite.cpp
+	swrenderer/things/r_sprite.cpp
+	swrenderer/things/r_wallsprite.cpp
+	swrenderer/things/r_decal.cpp
+	swrenderer/plane/r_visibleplane.cpp
+	swrenderer/plane/r_visibleplanelist.cpp
+	swrenderer/plane/r_skyplane.cpp
+	swrenderer/plane/r_planerenderer.cpp
+	swrenderer/plane/r_flatplane.cpp
+	swrenderer/plane/r_slopeplane.cpp
+)
+
+set( POLYRENDER_SOURCES
+	polyrenderer/poly_renderer.cpp
+	polyrenderer/scene/poly_scene.cpp
+	polyrenderer/scene/poly_portal.cpp
+	polyrenderer/scene/poly_cull.cpp
+	polyrenderer/scene/poly_decal.cpp
+	polyrenderer/scene/poly_particle.cpp
+	polyrenderer/scene/poly_plane.cpp
+	polyrenderer/scene/poly_playersprite.cpp
+	polyrenderer/scene/poly_wall.cpp
+	polyrenderer/scene/poly_wallsprite.cpp
+	polyrenderer/scene/poly_sprite.cpp
+	polyrenderer/scene/poly_sky.cpp
+	polyrenderer/drawers/poly_buffer.cpp
+	polyrenderer/drawers/poly_triangle.cpp
+	polyrenderer/drawers/poly_draw_args.cpp
+	polyrenderer/drawers/screen_triangle.cpp
+	polyrenderer/math/tri_matrix.cpp
+	polyrenderer/math/poly_intersection.cpp
+)
+
 # These files will be flagged as "headers" so that they appear in project files
 # without being compiled.
 set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
+	${SWRENDER_SOURCES}
+	${POLYRENDER_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
@@ -801,128 +886,30 @@ set( NOT_COMPILED_SOURCE_FILES
 	zcc-parse.h
 )
 
-set( FASTMATH_PCH_SOURCES
-	r_swrenderer.cpp
-	r_3dfloors.cpp
-	r_bsp.cpp
-	r_draw.cpp
-	r_draw_pal.cpp
-	r_drawt_pal.cpp
-	r_thread.cpp
-	r_main.cpp
-	r_plane.cpp
-	r_segs.cpp
-	r_sky.cpp
-	r_things.cpp
-	r_walldraw.cpp
-	s_advsound.cpp
-	s_environment.cpp
-	s_playlist.cpp
-	s_sndseq.cpp
-	s_sound.cpp
-	GuillotineBinPack.cpp
-	SkylineBinPack.cpp
-	intermission/intermission.cpp
-	intermission/intermission_parse.cpp
-	menu/joystickmenu.cpp
-	menu/loadsavemenu.cpp
-	menu/menu.cpp
-	menu/menudef.cpp
-	menu/messagebox.cpp
-	menu/optionmenu.cpp
-	menu/playermenu.cpp
-	menu/videomenu.cpp
-	oplsynth/fmopl.cpp
-	oplsynth/mlopl.cpp
-	oplsynth/mlopl_io.cpp
-	oplsynth/dosbox/opl.cpp
-	oplsynth/OPL3.cpp
-	oplsynth/nukedopl3.cpp
-	timidity/common.cpp
-	timidity/instrum.cpp
-	timidity/instrum_dls.cpp
-	timidity/instrum_font.cpp
-	timidity/instrum_sf2.cpp
-	timidity/mix.cpp
-	timidity/playmidi.cpp
-	timidity/resample.cpp
-	timidity/timidity.cpp
-	wildmidi/file_io.cpp
-	wildmidi/gus_pat.cpp
-	wildmidi/reverb.cpp
-	wildmidi/wm_error.cpp
-	r_data/colormaps.cpp
-	r_data/r_translate.cpp
-)
 # This is disabled for now because I cannot find a way to give the .pch file a different name.
 # Visual C++ 2015 seems hell-bent of only allowing one .pch file with the same name as the executable.
 #enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
 
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
-	${FASTMATH_PCH_SOURCES}
-	oplsynth/music_opldumper_mididevice.cpp
-	oplsynth/music_opl_mididevice.cpp
-	oplsynth/opl_mus_player.cpp
+	swrenderer/r_all.cpp
+	polyrenderer/poly_all.cpp
+	sound/oplsynth/opl_mus_player.cpp
 	sound/fmodsound.cpp
-	sound/i_music.cpp
-	sound/i_sound.cpp
 	sound/mpg123_decoder.cpp
-	sound/music_cd.cpp
-	sound/music_dumb.cpp
-	sound/music_gme.cpp
-	sound/music_mus_midiout.cpp
-	sound/music_smf_midiout.cpp
-	sound/music_hmi_midiout.cpp
-	sound/music_xmi_midiout.cpp
-	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
-	sound/music_midi_timidity.cpp
-	sound/music_mus_opl.cpp
-	sound/music_stream.cpp
-	sound/music_fluidsynth_mididevice.cpp
-	sound/music_softsynth_mididevice.cpp
-	sound/music_timidity_mididevice.cpp
-	sound/music_wildmidi_mididevice.cpp
-	sound/music_win_mididevice.cpp
-	sound/music_audiotoolbox_mididevice.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
-	sound/music_pseudo_mididevice.cpp
-	wildmidi/wildmidi_lib.cpp
-	gl/compatibility/gl_20.cpp
-	gl/data/gl_data.cpp
-	gl/data/gl_portaldata.cpp
-	gl/data/gl_setup.cpp
+	sound/mididevices/music_timiditypp_mididevice.cpp
 	gl/data/gl_matrix.cpp
-	gl/data/gl_vertexbuffer.cpp
-	gl/dynlights/a_dynlight.cpp
 	gl/utility/gl_clock.cpp
-	gl/utility/gl_cycler.cpp
-	gl/utility/gl_geometric.cpp
 	gl/renderer/gl_2ddrawer.cpp
-	gl/renderer/gl_quaddrawer.cpp
-	gl/renderer/gl_renderer.cpp
-	gl/renderer/gl_renderstate.cpp
-	gl/renderer/gl_renderbuffers.cpp
-	gl/renderer/gl_lightdata.cpp
-	gl/renderer/gl_postprocess.cpp
-	gl/renderer/gl_postprocessstate.cpp
 	gl/hqnx/init.cpp
 	gl/hqnx/hq2x.cpp
 	gl/hqnx/hq3x.cpp
 	gl/hqnx/hq4x.cpp
 	gl/xbr/xbrz.cpp
 	gl/xbr/xbrz_old.cpp
-	gl/textures/gl_hwtexture.cpp
-	gl/textures/gl_texture.cpp
-	gl/textures/gl_material.cpp
-	gl/textures/gl_hirestex.cpp
-	gl/textures/gl_bitmap.cpp
-	gl/textures/gl_samplers.cpp
-	gl/textures/gl_translate.cpp
-	gl/textures/gl_hqresize.cpp
-	gl/textures/gl_skyboxtexture.cpp
 	gl/scene/gl_bsp.cpp
 	gl/scene/gl_fakeflat.cpp
 	gl/scene/gl_clipper.cpp
@@ -940,40 +927,9 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_walls_draw.cpp
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
-	gl/stereo3d/gl_stereo3d.cpp
-	gl/stereo3d/gl_stereo_cvars.cpp
-	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/scoped_view_shifter.cpp
-	gl/stereo3d/gl_anaglyph.cpp
-	gl/stereo3d/gl_quadstereo.cpp
-	gl/stereo3d/gl_sidebyside3d.cpp
-	gl/stereo3d/gl_interleaved3d.cpp
-	gl/dynlights/gl_dynlight.cpp
-	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_dynlight1.cpp
-	gl/dynlights/gl_lightbuffer.cpp
-	gl/shaders/gl_shader.cpp
-	gl/shaders/gl_texshader.cpp
-	gl/shaders/gl_shaderprogram.cpp
-	gl/shaders/gl_presentshader.cpp
-	gl/shaders/gl_present3dRowshader.cpp
-	gl/shaders/gl_bloomshader.cpp
-	gl/shaders/gl_ambientshader.cpp
-	gl/shaders/gl_blurshader.cpp
-	gl/shaders/gl_colormapshader.cpp
-	gl/shaders/gl_tonemapshader.cpp
-	gl/shaders/gl_lensshader.cpp
-	gl/shaders/gl_fxaashader.cpp
-	gl/system/gl_interface.cpp
-	gl/system/gl_framebuffer.cpp
-	gl/system/gl_debug.cpp
-	gl/system/gl_menu.cpp
-	gl/system/gl_wipe.cpp
 	gl/system/gl_load.c
-	gl/models/gl_models_md3.cpp
-	gl/models/gl_models_md2.cpp
 	gl/models/gl_models.cpp
-	gl/models/gl_voxels.cpp
 )
 
 set (PCH_SOURCES
@@ -998,6 +954,7 @@ set (PCH_SOURCES
 	compatibility.cpp
 	configfile.cpp
 	ct_chat.cpp
+	cycler.cpp
 	d_dehacked.cpp
 	d_iwad.cpp
 	d_main.cpp
@@ -1096,6 +1053,12 @@ set (PCH_SOURCES
 	po_man.cpp
 	portal.cpp
 	r_utility.cpp
+	r_sky.cpp
+	s_advsound.cpp
+	s_environment.cpp
+	s_playlist.cpp
+	s_sndseq.cpp
+	s_sound.cpp
 	serializer.cpp
 	sc_man.cpp
 	st_stuff.cpp
@@ -1120,6 +1083,8 @@ set (PCH_SOURCES
 	g_inventory/a_weapons.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
+	g_shared/a_dynlight.cpp
+	g_shared/a_dynlightdata.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
@@ -1131,6 +1096,70 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	g_statusbar/strife_sbar.cpp
+	gl/compatibility/gl_20.cpp
+	gl/data/gl_data.cpp
+	gl/data/gl_portaldata.cpp
+	gl/data/gl_setup.cpp
+	gl/data/gl_vertexbuffer.cpp
+	gl/dynlights/gl_glow.cpp
+	gl/dynlights/gl_lightbuffer.cpp
+	gl/dynlights/gl_aabbtree.cpp
+	gl/dynlights/gl_shadowmap.cpp
+	gl/models/gl_models_md3.cpp
+	gl/models/gl_models_md2.cpp
+	gl/models/gl_voxels.cpp
+	gl/renderer/gl_quaddrawer.cpp
+	gl/renderer/gl_renderer.cpp
+	gl/renderer/gl_renderstate.cpp
+	gl/renderer/gl_renderbuffers.cpp
+	gl/renderer/gl_lightdata.cpp
+	gl/renderer/gl_postprocess.cpp
+	gl/renderer/gl_postprocessstate.cpp
+	gl/shaders/gl_shader.cpp
+	gl/shaders/gl_texshader.cpp
+	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_shadowmapshader.cpp
+	gl/shaders/gl_presentshader.cpp
+	gl/shaders/gl_present3dRowshader.cpp
+	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_ambientshader.cpp
+	gl/shaders/gl_blurshader.cpp
+	gl/shaders/gl_colormapshader.cpp
+	gl/shaders/gl_tonemapshader.cpp
+	gl/shaders/gl_lensshader.cpp
+	gl/shaders/gl_fxaashader.cpp
+	gl/stereo3d/gl_stereo3d.cpp
+	gl/stereo3d/gl_stereo_cvars.cpp
+	gl/stereo3d/gl_stereo_leftright.cpp
+	gl/stereo3d/scoped_view_shifter.cpp
+	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_quadstereo.cpp
+	gl/stereo3d/gl_sidebyside3d.cpp
+	gl/stereo3d/gl_interleaved3d.cpp
+	gl/system/gl_interface.cpp
+	gl/system/gl_framebuffer.cpp
+	gl/system/gl_swframebuffer.cpp
+	gl/system/gl_swwipe.cpp
+	gl/system/gl_debug.cpp
+	gl/system/gl_menu.cpp
+	gl/system/gl_wipe.cpp
+	gl/textures/gl_hwtexture.cpp
+	gl/textures/gl_texture.cpp
+	gl/textures/gl_material.cpp
+	gl/textures/gl_hirestex.cpp
+	gl/textures/gl_bitmap.cpp
+	gl/textures/gl_samplers.cpp
+	gl/textures/gl_translate.cpp
+	gl/textures/gl_hqresize.cpp
+	gl/textures/gl_skyboxtexture.cpp
+	menu/joystickmenu.cpp
+	menu/loadsavemenu.cpp
+	menu/menu.cpp
+	menu/menudef.cpp
+	menu/messagebox.cpp
+	menu/optionmenu.cpp
+	menu/playermenu.cpp
+	menu/videomenu.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1172,6 +1201,10 @@ set (PCH_SOURCES
 	fragglescript/t_spec.cpp
 	fragglescript/t_variable.cpp
 	fragglescript/t_cmd.cpp
+	intermission/intermission.cpp
+	intermission/intermission_parse.cpp
+	r_data/colormaps.cpp
+	r_data/r_translate.cpp
 	r_data/sprites.cpp
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
@@ -1195,8 +1228,50 @@ set (PCH_SOURCES
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
 	sfmt/SFMT.cpp
+	sound/i_music.cpp
+	sound/i_sound.cpp
+	sound/mididevices/music_opldumper_mididevice.cpp
+	sound/mididevices/music_opl_mididevice.cpp
+	sound/mididevices/music_pseudo_mididevice.cpp
+	sound/mididevices/music_fluidsynth_mididevice.cpp
+	sound/mididevices/music_softsynth_mididevice.cpp
+	sound/mididevices/music_timidity_mididevice.cpp
+	sound/mididevices/music_wildmidi_mididevice.cpp
+	sound/musicformats/music_cd.cpp
+	sound/musicformats/music_dumb.cpp
+	sound/musicformats/music_gme.cpp
+	sound/musicformats/music_mus_midiout.cpp
+	sound/musicformats/music_smf_midiout.cpp
+	sound/musicformats/music_hmi_midiout.cpp
+	sound/musicformats/music_xmi_midiout.cpp
+	sound/musicformats/music_midistream.cpp
+	sound/musicformats/music_opl.cpp
+	sound/musicformats/music_stream.cpp
+	sound/oplsynth/fmopl.cpp
+	sound/oplsynth/mlopl.cpp
+	sound/oplsynth/mlopl_io.cpp
+	sound/oplsynth/dosbox/opl.cpp
+	sound/oplsynth/OPL3.cpp
+	sound/oplsynth/nukedopl3.cpp
+	sound/timidity/common.cpp
+	sound/timidity/instrum.cpp
+	sound/timidity/instrum_dls.cpp
+	sound/timidity/instrum_font.cpp
+	sound/timidity/instrum_sf2.cpp
+	sound/timidity/mix.cpp
+	sound/timidity/playmidi.cpp
+	sound/timidity/resample.cpp
+	sound/timidity/timidity.cpp
+	sound/wildmidi/file_io.cpp
+	sound/wildmidi/gus_pat.cpp
+	sound/wildmidi/reverb.cpp
+	sound/wildmidi/wildmidi_lib.cpp
+	sound/wildmidi/wm_error.cpp
 	events.cpp
+	GuillotineBinPack.cpp
+	SkylineBinPack.cpp
 )
+
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE
@@ -1246,15 +1321,16 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+
 include_directories( .
 	g_statusbar
 	g_shared
 	g_inventory
-	oplsynth
 	sound
 	textures
-	timidity
-	wildmidi
+	sound/oplsynth
+	sound/timidity
+	sound/wildmidi
 	xlat
 	scripting
 	scripting/vm
@@ -1366,12 +1442,12 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
-source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
-source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
-source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
-source_group("Audio Files\\WildMidi\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.h$")
-source_group("Audio Files\\WildMidi\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.cpp$")
+source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
+source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
+source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")
+source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
+source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
+source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
@@ -1393,8 +1469,18 @@ source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOU
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
 source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
-source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
-source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
+source_group("Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/.+")
+source_group("Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/drawers/.+")
+source_group("Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/scene/.+")
+source_group("Software Renderer\\Segments" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/segments/.+")
+source_group("Software Renderer\\Line" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/line/.+")
+source_group("Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/plane/.+")
+source_group("Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/things/.+")
+source_group("Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/viewport/.+")
+source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")
+source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/math/.+")
+source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")
+source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")
 source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")

@@ -25,6 +25,8 @@
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"
 #include "g_levellocals.h"
+#include "actor.h"
+#include "actorinlines.h"
 #include "gl/gl_functions.h"
 
 #include "gl/system/gl_interface.h"
@@ -72,12 +74,14 @@ void GLWall::SetupLights()
 	Plane p;
 
 	lightdata.Clear();
-	p.Init(vtx,4);
+	p.Set(&glseg);
 
+	/*
 	if (!p.ValidNormal()) 
 	{
 		return;
 	}
+	*/
 	FLightNode *node;
 	if (seg->sidedef == NULL)
 	{
@@ -101,8 +105,6 @@ void GLWall::SetupLights()
 		{
 			iter_dlight++;
 
-			Vector fn, pos;
-
 			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector);
 			float x = posrel.X;
 			float y = posrel.Y;
@@ -110,29 +112,31 @@ void GLWall::SetupLights()
 			float dist = fabsf(p.DistToPoint(x, z, y));
 			float radius = node->lightsource->GetRadius();
 			float scale = 1.0f / ((2.f * radius) - dist);
+			FVector3 fn, pos;
 
 			if (radius > 0.f && dist < radius)
 			{
-				Vector nearPt, up, right;
+				FVector3 nearPt, up, right;
 
-				pos.Set(x,z,y);
-				fn=p.Normal();
+				pos = { x, z, y };
+				fn = p.Normal();
+
 				fn.GetRightUp(right, up);
 
-				Vector tmpVec = fn * dist;
+				FVector3 tmpVec = fn * dist;
 				nearPt = pos + tmpVec;
 
-				Vector t1;
+				FVector3 t1;
 				int outcnt[4]={0,0,0,0};
 				texcoord tcs[4];
 
 				// do a quick check whether the light touches this polygon
 				for(int i=0;i<4;i++)
 				{
-					t1.Set(&vtx[i*3]);
-					Vector nearToVert = t1 - nearPt;
-					tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-					tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
+					t1 = FVector3(&vtx[i*3]);
+					FVector3 nearToVert = t1 - nearPt;
+					tcs[i].u = ((nearToVert | right) * scale) + 0.5f;
+					tcs[i].v = ((nearToVert | up) * scale) + 0.5f;
 
 					if (tcs[i].u<0) outcnt[0]++;
 					if (tcs[i].u>1) outcnt[1]++;

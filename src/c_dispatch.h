@@ -153,10 +153,10 @@ struct FButtonStatus
 	enum { MAX_KEYS = 6 };	// Maximum number of keys that can press this button
 
 	uint16_t Keys[MAX_KEYS];
-	BYTE bDown;				// Button is down right now
-	BYTE bWentDown;			// Button went down this tic
-	BYTE bWentUp;			// Button went up this tic
-	BYTE padTo16Bytes;
+	uint8_t bDown;				// Button is down right now
+	uint8_t bWentDown;			// Button went down this tic
+	uint8_t bWentUp;			// Button went up this tic
+	uint8_t padTo16Bytes;
 
 	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
 	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.

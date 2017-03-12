@@ -318,7 +318,7 @@ FFont *V_GetFont(const char *name)
 		
 		if (lump != -1)
 		{
-			uint32 head;
+			uint32_t head;
 			{
 				FWadLump lumpy = Wads.OpenLumpNum (lump);
 				lumpy.Read (&head, 4);
@@ -1716,6 +1716,7 @@ void FFontChar1::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -1777,6 +1778,7 @@ void FFontChar2::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================

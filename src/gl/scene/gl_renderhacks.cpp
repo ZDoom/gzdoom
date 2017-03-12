@@ -260,13 +260,13 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
@@ -318,13 +318,13 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this subsector?
 	// Do this first to avoid unnecessary recursion
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
@@ -377,13 +377,13 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
@@ -430,13 +430,13 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for (DWORD i = 0; i < subsec->numlines; i++)
+	for (uint32_t i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
@@ -493,7 +493,7 @@ void FDrawInfo::HandleMissingTextures()
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingUpperTextures[i].Planez > ViewPos.Z)
+		if (MissingUpperTextures[i].Planez > r_viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -565,7 +565,7 @@ void FDrawInfo::HandleMissingTextures()
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingLowerTextures[i].Planez < ViewPos.Z)
+		if (MissingLowerTextures[i].Planez < r_viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -655,7 +655,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		// already done!
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < r_viewpoint.Pos.Z) continue;	// out of sight
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
@@ -677,7 +677,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
@@ -732,7 +732,7 @@ bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
 	if (sub->hacked==3) return true;
 	if (sub->flags & SSECF_DEGENERATE) return false;
 
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (!seg->PartnerSeg) return true;
@@ -781,20 +781,20 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 	if (!(sub->flags & SSECF_DEGENERATE))
 	{
 		// Is not being rendered so don't bother.
-		if (!(ss_renderflags[DWORD(sub - subsectors)] & SSRF_PROCESSED)) return true;
+		if (!(ss_renderflags[uint32_t(sub - subsectors)] & SSRF_PROCESSED)) return true;
 
 		if (sub->render_sector->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 			sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
 			sub->render_sector->GetFloorLight() != anchor->GetFloorLight())
 		{
-			if (sub == viewsubsector && ViewPos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
+			if (sub == viewsubsector && r_viewpoint.Pos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
 			HandledSubsectors.Push(sub);
 		}
 	}
 
 	// We can assume that all segs in this subsector are connected to a subsector that has
 	// to be checked as well
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (seg->PartnerSeg)
@@ -838,7 +838,7 @@ bool FDrawInfo::CheckAnchorCeiling(subsector_t * sub)
 	if (sub->hacked==3) return true;
 	if (sub->flags & SSECF_DEGENERATE) return false;
 
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (!seg->PartnerSeg) return true;
@@ -883,7 +883,7 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 	if (!(sub->flags & SSECF_DEGENERATE)) 
 	{
 		// Is not being rendererd so don't bother.
-		if (!(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return true;
+		if (!(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return true;
 
 		if (sub->render_sector->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 			sub->render_sector->GetPlaneTexZ(sector_t::ceiling) != anchor->GetPlaneTexZ(sector_t::ceiling) ||
@@ -895,7 +895,7 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 
 	// We can assume that all segs in this subsector are connected to a subsector that has
 	// to be checked as well
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (seg->PartnerSeg)
@@ -937,7 +937,7 @@ void FDrawInfo::HandleHackedSubsectors()
 	totalssms.Reset();
 	totalssms.Clock();
 
-	viewsubsector = R_PointInSubsector(ViewPos);
+	viewsubsector = R_PointInSubsector(r_viewpoint.Pos);
 
 	// Each subsector may only be processed once in this loop!
 	validcount++;
@@ -1037,7 +1037,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (sub->render_sector->GetGLPortal(sector_t::ceiling) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
-	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
+	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
 	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
@@ -1053,7 +1053,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 
 	HandledSubsectors.Push (sub);
 
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (seg->PartnerSeg)
@@ -1080,7 +1080,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (sub->render_sector->GetGLPortal(sector_t::floor) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
-	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
+	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
 	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
@@ -1096,7 +1096,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 
 	HandledSubsectors.Push (sub);
 
-	for(DWORD j=0;j<sub->numlines;j++)
+	for(uint32_t j=0;j<sub->numlines;j++)
 	{
 		seg_t * seg = sub->firstline + j;
 		if (seg->PartnerSeg)
@@ -1130,7 +1130,7 @@ void FDrawInfo::ProcessSectorStacks()
 			if (ss_renderflags[sub-subsectors] & SSRF_PROCESSED)
 			{
 				HandledSubsectors.Clear();
-				for(DWORD j=0;j<sub->numlines;j++)
+				for(uint32_t j=0;j<sub->numlines;j++)
 				{
 					seg_t * seg = sub->firstline + j;
 					if (seg->PartnerSeg)
@@ -1143,7 +1143,7 @@ void FDrawInfo::ProcessSectorStacks()
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
-					ss_renderflags[DWORD(sub-subsectors)] &= ~SSRF_RENDERCEILING;
+					ss_renderflags[uint32_t(sub-subsectors)] &= ~SSRF_RENDERCEILING;
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
@@ -1174,7 +1174,7 @@ void FDrawInfo::ProcessSectorStacks()
 			if (ss_renderflags[sub-subsectors] & SSRF_PROCESSED)
 			{
 				HandledSubsectors.Clear();
-				for(DWORD j=0;j<sub->numlines;j++)
+				for(uint32_t j=0;j<sub->numlines;j++)
 				{
 					seg_t * seg = sub->firstline + j;
 					if (seg->PartnerSeg)
@@ -1188,7 +1188,7 @@ void FDrawInfo::ProcessSectorStacks()
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
-					ss_renderflags[DWORD(sub-subsectors)] &= ~SSRF_RENDERFLOOR;
+					ss_renderflags[uint32_t(sub-subsectors)] &= ~SSRF_RENDERFLOOR;
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{

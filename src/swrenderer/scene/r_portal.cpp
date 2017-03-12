@@ -156,8 +156,8 @@ namespace swrenderer
 				continue;
 			}
 
-			port->mFlags |= PORTSF_INSKYBOX;
-			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
+			SetInSkyBox(port);
+			if (port->mPartner > 0) SetInSkyBox(&level.sectorPortals[port->mPartner]);
 			Thread->Viewport->viewpoint.camera = nullptr;
 			Thread->Viewport->viewpoint.sector = port->mDestination;
 			assert(Thread->Viewport->viewpoint.sector != nullptr);
@@ -217,8 +217,8 @@ namespace swrenderer
 			Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 			planes->Render();
 
-			port->mFlags &= ~PORTSF_INSKYBOX;
-			if (port->mPartner > 0) level.sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
+			ClearInSkyBox(port);
+			if (port->mPartner > 0) SetInSkyBox(&level.sectorPortals[port->mPartner]);
 		}
 
 		// Draw all the masked textures in a second pass, in the reverse order they
@@ -528,6 +528,7 @@ namespace swrenderer
 		CurrentPortal = nullptr;
 		CurrentPortalUniq = 0;
 		WallPortals.Clear();
+		SectorPortalsInSkyBox.clear();
 	}
 
 	void RenderPortal::AddLinePortal(line_t *linedef, int x1, int x2, const short *topclip, const short *bottomclip)

@@ -102,6 +102,8 @@ namespace swrenderer
 
 		FTransform nulltransform;
 
+		RenderPortal *renderportal = Thread->Portal.get();
+
 		if (picnum == skyflatnum)	// killough 10/98
 		{ // most skies map together
 			lightlevel = 0;
@@ -115,9 +117,9 @@ namespace swrenderer
 			// same column but separated by a wall. If they both try to reside in the
 			// same visplane, then only the floor sky will be drawn.
 			plane.set(0., 0., height.fC(), 0.);
-			isskybox = portal != nullptr && !(portal->mFlags & PORTSF_INSKYBOX);
+			isskybox = portal != nullptr && !renderportal->InSkyBox(portal);
 		}
-		else if (portal != nullptr && !(portal->mFlags & PORTSF_INSKYBOX))
+		else if (portal != nullptr && !renderportal->InSkyBox(portal))
 		{
 			plane = height;
 			isskybox = true;
@@ -139,8 +141,6 @@ namespace swrenderer
 		// New visplane algorithm uses hash table -- killough
 		hash = isskybox ? ((unsigned)MAXVISPLANES) : CalcHash(picnum.GetIndex(), lightlevel, height);
 		
-		RenderPortal *renderportal = Thread->Portal.get();
-
 		for (check = visplanes[hash]; check; check = check->next)	// killough
 		{
 			if (isskybox)
@@ -265,7 +265,7 @@ namespace swrenderer
 			// make a new visplane
 			unsigned hash;
 
-			if (pl->portal != nullptr && !(pl->portal->mFlags & PORTSF_INSKYBOX) && viewactive)
+			if (pl->portal != nullptr && !Thread->Portal->InSkyBox(pl->portal) && viewactive)
 			{
 				hash = MAXVISPLANES;
 			}

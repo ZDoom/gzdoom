@@ -14,6 +14,7 @@
 #pragma once
 
 #include "swrenderer/segments/r_portalsegment.h"
+#include <set>
 
 namespace swrenderer
 {
@@ -54,6 +55,10 @@ namespace swrenderer
 		
 		int numskyboxes = 0; // For ADD_STAT(skyboxes)
 
+		void SetInSkyBox(FSectorPortal *portal) { SectorPortalsInSkyBox.insert(portal); }
+		void ClearInSkyBox(FSectorPortal *portal) { SectorPortalsInSkyBox.erase(portal); }
+		bool InSkyBox(FSectorPortal *portal) const { return SectorPortalsInSkyBox.find(portal) != SectorPortalsInSkyBox.end(); }
+
 	private:
 		void RenderLinePortal(PortalDrawseg* pds, int depth);
 		void RenderLinePortalHighlight(PortalDrawseg* pds);
@@ -61,5 +66,7 @@ namespace swrenderer
 		TArray<DVector3> viewposStack;
 		TArray<VisiblePlane *> visplaneStack;
 		TArray<PortalDrawseg *> WallPortals;
+
+		std::set<FSectorPortal *> SectorPortalsInSkyBox; // Instead of portal->mFlags & PORTSF_INSKYBOX
 	};
 }

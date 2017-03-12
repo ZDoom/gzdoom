@@ -658,12 +658,12 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							Error(c->cls, "Can't change class scope in class %s", c->NodeName().GetChars());
 						}
-						c->Type()->ObjectFlags = (c->Type()->ObjectFlags & ~(OF_UI | OF_Play)) | (parent->ObjectFlags & (OF_UI | OF_Play));
+						c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(parent->ObjectFlags));
 					}
 				}
 				else
 				{
-					c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
+					c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::Side_Play);
 				}
 
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)

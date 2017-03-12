@@ -545,7 +545,6 @@ static void PrepareSegs()
 // Initialize the level data for the GL renderer
 //
 //==========================================================================
-extern int restart;
 
 void gl_PreprocessLevel()
 {

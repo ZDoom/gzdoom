@@ -66,7 +66,7 @@ void PolyRenderer::RenderView(player_t *player)
 	int stHeight = gST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	viewport->SetViewport(width, height, trueratio);
+	viewport->SetViewport(&Thread, width, height, trueratio);
 
 	RenderActorView(player->mo, false);
 
@@ -89,7 +89,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	viewwidth = width;
 	viewport->RenderTarget = canvas;
 	R_SetWindow(viewport->viewpoint, viewport->viewwindow, 12, width, height, height, true);
-	viewport->SetViewport(width, height, viewport->viewwindow.WidescreenRatio);
+	viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
@@ -105,7 +105,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	R_ExecuteSetViewSize(viewport->viewpoint, viewport->viewwindow);
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	viewport->SetViewport(width, height, viewport->viewwindow.WidescreenRatio);
+	viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
 	viewactive = savedviewactive;
 }
 

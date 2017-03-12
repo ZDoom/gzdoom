@@ -83,7 +83,7 @@ namespace swrenderer
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(width, height, trueratio);
+		viewport->SetViewport(MainThread(), width, height, trueratio);
 
 		if (r_clearbuffer != 0)
 		{
@@ -185,6 +185,7 @@ namespace swrenderer
 		for (int i = 0; i < numThreads; i++)
 		{
 			*Threads[i]->Viewport = *MainThread()->Viewport;
+			*Threads[i]->Light = *MainThread()->Light;
 			Threads[i]->X1 = viewwidth * i / numThreads;
 			Threads[i]->X2 = viewwidth * (i + 1) / numThreads;
 		}
@@ -333,7 +334,7 @@ namespace swrenderer
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
-		viewport->SetViewport(width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
+		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
 		
@@ -343,7 +344,7 @@ namespace swrenderer
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
-		viewport->SetViewport(width, height, trueratio);
+		viewport->SetViewport(MainThread(), width, height, trueratio);
 		screen->Unlock();
 
 		viewactive = savedviewactive;
@@ -358,7 +359,7 @@ namespace swrenderer
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		screen->Lock(true);
-		viewport->SetViewport(SCREENWIDTH, SCREENHEIGHT, trueratio);
+		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
 		screen->Unlock();
 	}
 

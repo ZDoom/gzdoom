@@ -170,7 +170,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		thread->SpriteList->Push(vis, true);
 	}

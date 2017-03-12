@@ -139,7 +139,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.uniforms.flags = 0;
 	args.SetColormap(front->ColorMap);
 	args.SetTexture(tex, decal->Translation, true);
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		args.uniforms.light = 256;

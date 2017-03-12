@@ -76,7 +76,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	PolyDrawArgs args;
 
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->ParticleGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->ParticleGlobVis(foggy);
 
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{

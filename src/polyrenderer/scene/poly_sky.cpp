@@ -57,7 +57,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	int rc = mRows + 1;
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)swrenderer::LightVisibility::Instance()->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
 	args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;

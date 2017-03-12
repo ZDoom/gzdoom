@@ -69,8 +69,6 @@ namespace swrenderer
 	class LightVisibility
 	{
 	public:
-		static LightVisibility *Instance();
-
 		void SetVisibility(RenderViewport *viewport, double visibility);
 		double GetVisibility() const { return CurrentVisibility; }
 

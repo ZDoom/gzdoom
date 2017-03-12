@@ -120,7 +120,7 @@ namespace swrenderer
 		// [RH] set foggy flag
 		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
-		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis(foggy) / planeheight;
+		GlobVis = Thread->Light->FlatPlaneGlobVis(foggy) / planeheight;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)

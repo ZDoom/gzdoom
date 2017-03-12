@@ -133,7 +133,7 @@ namespace swrenderer
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
+		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, false, false, false);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -183,7 +183,7 @@ namespace swrenderer
 		SpriteDrawerArgs drawerargs;
 
 		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel + LightVisibility::ActualExtraLight(spr->foggy, thread->Viewport.get()), spr->foggy);
-		double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
+		double GlobVis = thread->Light->WallGlobVis(foggy);
 		float lightleft = float(GlobVis / spr->wallc.sz1);
 		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;

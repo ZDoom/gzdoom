@@ -64,9 +64,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
@@ -1001,8 +999,6 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 struct FGLInterface : public FRenderer
 {
 	bool UsesColormap() const override;
-	void PrecacheTexture(FTexture *tex, int cache);
-	void PrecacheSprite(FTexture *tex, SpriteHits &hits);
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
@@ -1035,186 +1031,15 @@ bool FGLInterface::UsesColormap() const
 
 //==========================================================================
 //
-// DFrameBuffer :: PrecacheTexture
-//
-//==========================================================================
-
-void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
-{
-	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
-	{
-		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-		if (gltex) gltex->Precache();
-	}
-	else
-	{
-		// make sure that software pixel buffers do not stick around for unneeded textures.
-		tex->Unload();
-	}
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: PrecacheSprite
-//
-//==========================================================================
-
-void FGLInterface::PrecacheSprite(FTexture *tex, SpriteHits &hits)
-{
-	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
-	if (gltex) gltex->PrecacheList(hits);
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: Precache
 //
 //==========================================================================
+void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
-{
-	SpriteHits *spritelist = new SpriteHits[sprites.Size()];
-	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
-	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
-	TMap<PClassActor*, bool>::Pair *pair;
-	uint8_t *modellist = new uint8_t[Models.Size()];
-	memset(modellist, 0, Models.Size());
-	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
-
-	// this isn't done by the main code so it needs to be done here first:
-	// check skybox textures and mark the separate faces as used
-	for (int i = 0; i<TexMan.NumTextures(); i++)
-	{
-		// HIT_Wall must be checked for MBF-style sky transfers. 
-		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
-		{
-			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->gl_info.bSkybox)
-			{
-				FSkyBox *sb = static_cast<FSkyBox*>(tex);
-				for (int i = 0; i<6; i++)
-				{
-					if (sb->faces[i])
-					{
-						int index = sb->faces[i]->id.GetIndex();
-						texhitlist[index] |= FTextureManager::HIT_Flat;
-					}
-				}
-			}
-		}
-	}
-
-	// Check all used actors.
-	// 1. mark all sprites associated with its states
-	// 2. mark all model data and skins associated with its states
-	while (it.NextPair(pair))
-	{
-		PClassActor *cls = pair->Key;
-		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
-
-		for (int i = 0; i < cls->NumOwnedStates; i++)
-		{
-			spritelist[cls->OwnedStates[i].sprite].Insert(gltrans, true);
-			FSpriteModelFrame * smf = gl_FindModelFrame(cls, cls->OwnedStates[i].sprite, cls->OwnedStates[i].Frame, false);
-			if (smf != NULL)
-			{
-				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)
-				{
-					if (smf->skinIDs[i].isValid())
-					{
-						texhitlist[smf->skinIDs[i].GetIndex()] |= FTexture::TEX_Flat;
-					}
-					else if (smf->modelIDs[i] != -1)
-					{
-						Models[smf->modelIDs[i]]->PushSpriteMDLFrame(smf, i);
-						Models[smf->modelIDs[i]]->AddSkins(texhitlist);
-					}
-					if (smf->modelIDs[i] != -1)
-					{
-						modellist[smf->modelIDs[i]] = 1;
-					}
-				}
-			}
-		}
-	}
-
-	// mark all sprite textures belonging to the marked sprites.
-	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
-	{
-		if (spritelist[i].CountUsed())
-		{
-			int j, k;
-			for (j = 0; j < sprites[i].numframes; j++)
-			{
-				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
-
-				for (k = 0; k < 16; k++)
-				{
-					FTextureID pic = frame->Texture[k];
-					if (pic.isValid())
-					{
-						spritehitlist[pic.GetIndex()] = &spritelist[i];
-					}
-				}
-			}
-		}
-	}
-
-	// delete everything unused before creating any new resources to avoid memory usage peaks.
-
-	// delete unused models
-	for (unsigned i = 0; i < Models.Size(); i++)
-	{
-		if (!modellist[i]) Models[i]->DestroyVertexBuffer();
-	}
-
-	// delete unused textures
-	int cnt = TexMan.NumTextures();
-	for (int i = cnt - 1; i >= 0; i--)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-		if (tex != nullptr)
-		{
-			if (!texhitlist[i])
-			{
-				if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
-			}
-			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
-			{
-				if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
-			}
-		}
-	}
-
-	if (gl_precache)
-	{
-		// cache all used textures
-		for (int i = cnt - 1; i >= 0; i--)
-		{
-			FTexture *tex = TexMan.ByIndex(i);
-			if (tex != nullptr)
-			{
-				PrecacheTexture(tex, texhitlist[i]);
-				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
-				{
-					PrecacheSprite(tex, *spritehitlist[i]);
-				}
-			}
-		}
-
-		// cache all used models
-		for (unsigned i = 0; i < Models.Size(); i++)
-		{
-			if (modellist[i]) 
-				Models[i]->BuildVertexBuffer();
-		}
-	}
-
-	delete[] spritehitlist;
-	delete[] spritelist;
-	delete[] modellist;
+{	
+	gl_PrecacheTexture(texhitlist, actorhitlist);
 }
-
 
 //==========================================================================
 //

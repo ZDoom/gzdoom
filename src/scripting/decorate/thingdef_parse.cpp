@@ -97,7 +97,8 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 			sc.Message(MSG_FATAL, "Tried to define class '%s' more than twice in the same file.", typeName.GetChars());
 		}
 	}
-	else
+	
+	if (type != nullptr)
 	{
 		// [ZZ] DECORATE classes are always play
 		type->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(type->ObjectFlags, FScopeBarrier::Side_Play);

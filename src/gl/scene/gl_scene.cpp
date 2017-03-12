@@ -144,9 +144,9 @@ void GLSceneDrawer::SetViewArea()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Reset3DViewport()
+void GLSceneDrawer::Reset3DViewport()
 {
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+	glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
 }
 
 //-----------------------------------------------------------------------------
@@ -536,7 +536,7 @@ void gl_FillScreen()
 // Draws a blend over the entire view
 //
 //==========================================================================
-void FGLRenderer::DrawBlend(sector_t * viewsector)
+void GLSceneDrawer::DrawBlend(sector_t * viewsector)
 {
 	float blend[4]={0,0,0,0};
 	PalEntry blendv=0;
@@ -597,7 +597,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			if (blendv.a == 255)
 			{
 				// The calculated average is too dark so brighten it according to the palettes's overall brightness
-				int maxcol = MAX<int>(MAX<int>(framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
+				int maxcol = MAX<int>(MAX<int>(GLRenderer->framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
 				blendv.r = blendv.r * 255 / maxcol;
 				blendv.g = blendv.g * 255 / maxcol;
 				blendv.b = blendv.b * 255 / maxcol;
@@ -668,7 +668,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 //-----------------------------------------------------------------------------
 
 
-void FGLRenderer::EndDrawScene(sector_t * viewsector)
+void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 {
 	gl_RenderState.EnableFog(false);
 
@@ -680,19 +680,19 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		DrawPlayerSprites (viewsector, true);
+		GLRenderer->DrawPlayerSprites (viewsector, true);
 	}
 
 	glDisable(GL_STENCIL_TEST);
 
-	framebuffer->Begin2D(false);
+	GLRenderer->framebuffer->Begin2D(false);
 
 	Reset3DViewport();
 
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
-		DrawPlayerSprites (viewsector, false);
+		GLRenderer->DrawPlayerSprites (viewsector, false);
 	}
 	if (gl.legacyMode)
 	{
@@ -701,7 +701,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	DrawTargeterSprites();
+	GLRenderer->DrawTargeterSprites();
 	if (!FGLRenderBuffers::IsEnabled())
 	{
 		DrawBlend(viewsector);
@@ -741,7 +741,7 @@ void GLSceneDrawer::ProcessScene(bool toscreen)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetFixedColormap (player_t *player)
+void GLSceneDrawer::SetFixedColormap (player_t *player)
 {
 	gl_fixedcolormap=CM_DEFAULT;
 
@@ -787,16 +787,14 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 //
 //-----------------------------------------------------------------------------
 
-sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
-	GLSceneDrawer drawer;
-
 	sector_t * lviewsector;
-	mSceneClearColor[0] = 0.0f;
-	mSceneClearColor[1] = 0.0f;
-	mSceneClearColor[2] = 0.0f;
+	GLRenderer->mSceneClearColor[0] = 0.0f;
+	GLRenderer->mSceneClearColor[1] = 0.0f;
+	GLRenderer->mSceneClearColor[2] = 0.0f;
 	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
-	drawer.SetViewArea();
+	SetViewArea();
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
@@ -804,23 +802,23 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	double angy = sin(radPitch) * glset.pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 
-	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
+	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
 	// Scroll the sky
-	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
-	mSky2Pos = (float)fmod(gl_frameMS * level.skyspeed2, 1024.f) * 90.f/256.f;
+	GLRenderer->mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
+	GLRenderer->mSky2Pos = (float)fmod(gl_frameMS * level.skyspeed2, 1024.f) * 90.f/256.f;
 
 
 
 	if (camera->player && camera->player-players==consoleplayer &&
 		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)
 	{
-		mViewActor=NULL;
+		GLRenderer->mViewActor=NULL;
 	}
 	else
 	{
-		mViewActor=camera;
+		GLRenderer->mViewActor=camera;
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
@@ -834,42 +832,42 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	{
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
-		SetOutputViewport(bounds);
-		drawer.Set3DViewport(mainview);
-		mDrawingScene2D = true;
-		mCurrentFoV = fov;
+		GLRenderer->SetOutputViewport(bounds);
+		Set3DViewport(mainview);
+		GLRenderer->mDrawingScene2D = true;
+		GLRenderer->mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
-		drawer.SetProjection( eye->GetProjection(fov, ratio, fovratio) );
+		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		drawer.SetViewAngle(r_viewpoint.Angles.Yaw);
+		SetViewAngle(r_viewpoint.Angles.Yaw);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
-		drawer.SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
+		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
-		drawer.ProcessScene(toscreen);
+		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			PostProcessScene();
+			GLRenderer->PostProcessScene();
 
 			// This should be done after postprocessing, not before.
-			mBuffers->BindCurrentFB();
-			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			GLRenderer->mBuffers->BindCurrentFB();
+			glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
 
 			if (!toscreen)
 			{
 				gl_RenderState.mViewMatrix.loadIdentity();
-				gl_RenderState.mProjectionMatrix.ortho(mScreenViewport.left, mScreenViewport.width, mScreenViewport.height, mScreenViewport.top, -1.0f, 1.0f);
+				gl_RenderState.mProjectionMatrix.ortho(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mScreenViewport.top, -1.0f, 1.0f);
 				gl_RenderState.ApplyMatrices();
 			}
 
 			DrawBlend(lviewsector);
 		}
-		mDrawingScene2D = false;
+		GLRenderer->mDrawingScene2D = false;
 		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
-			mBuffers->BlitToEyeTexture(eye_ix);
+			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}
 	stereo3dMode.TearDown();
@@ -885,12 +883,12 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderView (player_t* player)
+void GLSceneDrawer::RenderView (player_t* player)
 {
 
 	checkBenchActive();
 
-	gl_RenderState.SetVertexBuffer(mVBO);
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
 
 	// reset statistics counters
@@ -943,7 +941,7 @@ void FGLRenderer::RenderView (player_t* player)
 //
 //===========================================================================
 
-void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
+void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	GL_IRECT bounds;
 
@@ -953,7 +951,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	bounds.height=height;
 	glFlush();
 	SetFixedColormap(player);
-	gl_RenderState.SetVertexBuffer(mVBO);
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
 	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
@@ -961,7 +959,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
-	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, 
+	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds,
 								r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
@@ -971,7 +969,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	{
 		DrawBlend(viewsector);
 	}
-	CopyToBackbuffer(&bounds, false);
+	GLRenderer->CopyToBackbuffer(&bounds, false);
 	glFlush();
 
 	uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
@@ -1104,7 +1102,8 @@ void FGLInterface::SetClearColor(int color)
 
 void FGLInterface::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	GLRenderer->WriteSavePic(player, file, width, height);
+	GLSceneDrawer drawer;
+	drawer.WriteSavePic(player, file, width, height);
 }
 
 //===========================================================================
@@ -1115,7 +1114,8 @@ void FGLInterface::WriteSavePic (player_t *player, FileWriter *file, int width, 
 
 void FGLInterface::RenderView(player_t *player)
 {
-	GLRenderer->RenderView(player);
+	GLSceneDrawer drawer;
+	drawer.RenderView(player);
 }
 
 //===========================================================================
@@ -1145,9 +1145,6 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	int width = gltex->TextureWidth();
 	int height = gltex->TextureHeight();
 
-	gl_fixedcolormap=CM_DEFAULT;
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
-
 	if (gl.legacyMode)
 	{
 		// In legacy mode, fail if the requested texture is too large.
@@ -1165,7 +1162,10 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	bounds.width=FHardwareTexture::GetTexDimension(gltex->GetWidth());
 	bounds.height=FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
-	GLRenderer->RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
+	GLSceneDrawer drawer;
+	gl_fixedcolormap = CM_DEFAULT;
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 
 	if (gl.legacyMode)
 	{

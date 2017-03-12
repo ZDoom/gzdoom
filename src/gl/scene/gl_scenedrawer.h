@@ -45,8 +45,16 @@ public:
 	void SetViewAngle(DAngle viewangle);
 	void SetProjection(VSMatrix matrix);
 	void Set3DViewport(bool mainview);
+	void Reset3DViewport();
+	void SetFixedColormap(player_t *player);
 	void DrawScene(int drawmode);
 	void ProcessScene(bool toscreen = false);
+	void DrawBlend(sector_t * viewsector);
+	void EndDrawScene(sector_t * viewsector);
+
+	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+	void RenderView(player_t *player);
+	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 
 	void InitClipper(angle_t a1, angle_t a2)
 	{

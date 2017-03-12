@@ -158,13 +158,8 @@ public:
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 
-	void Reset3DViewport();
-	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
-	void RenderView(player_t *player);
-
 	void Initialize(int width, int height);
 
-	void DrawBlend(sector_t * viewsector);
 
 	void DrawPSprite (player_t * player,DPSprite *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
@@ -182,9 +177,6 @@ public:
 	void SetupLevel();
 
 	void RenderScreenQuad();
-	void SetFixedColormap (player_t *player);
-	void WriteSavePic (player_t *player, FileWriter *file, int width, int height);
-	void EndDrawScene(sector_t * viewsector);
 	void PostProcessScene();
 	void AmbientOccludeScene();
 	void UpdateCameraExposure();

@@ -19,13 +19,15 @@
 
 namespace swrenderer
 {
+	class RenderThread;
+
 	class RenderViewport
 	{
 	public:
 		RenderViewport();
 		~RenderViewport();
 		
-		void SetViewport(int width, int height, float trueratio);
+		void SetViewport(RenderThread *thread, int width, int height, float trueratio);
 		void SetupFreelook();
 		
 		DCanvas *RenderTarget = nullptr;

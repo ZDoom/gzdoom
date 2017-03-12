@@ -48,7 +48,7 @@ namespace swrenderer
 	{
 	}
 
-	void RenderViewport::SetViewport(int fullWidth, int fullHeight, float trueratio)
+	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
@@ -101,8 +101,7 @@ namespace swrenderer
 		InitTextureMapping();
 
 		// Reset r_*Visibility vars
-		LightVisibility *visibility = LightVisibility::Instance();
-		visibility->SetVisibility(this, visibility->GetVisibility());
+		thread->Light->SetVisibility(this, thread->Light->GetVisibility());
 
 		SetupBuffer();
 	}

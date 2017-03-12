@@ -43,6 +43,7 @@ namespace swrenderer
 	class RenderClipSegment;
 	class RenderMemory;
 	class RenderViewport;
+	class LightVisibility;
 	class SWPixelFormatDrawers;
 	class SWTruecolorDrawers;
 	class SWPalDrawers;
@@ -69,6 +70,7 @@ namespace swrenderer
 		std::unique_ptr<DrawSegmentList> DrawSegments;
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		std::unique_ptr<RenderViewport> Viewport;
+		std::unique_ptr<LightVisibility> Light;
 		DrawerCommandQueuePtr DrawQueue;
 
 		std::thread thread;
@@ -78,6 +80,9 @@ namespace swrenderer
 		short cliptop[MAXWIDTH];
 
 		SWPixelFormatDrawers *Drawers(RenderViewport *viewport);
+
+		// Make sure texture can accessed safely
+		void PrepareTexture(FTexture *texture);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

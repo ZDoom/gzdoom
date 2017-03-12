@@ -59,7 +59,7 @@ namespace swrenderer
 		}
 
 		drawerargs.SetSolidColor(3);
-		drawerargs.SetTexture(Thread->Viewport.get(), texture);
+		drawerargs.SetTexture(Thread, texture);
 
 		double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 		double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
@@ -120,7 +120,7 @@ namespace swrenderer
 		// [RH] set foggy flag
 		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
-		GlobVis = LightVisibility::Instance()->FlatPlaneGlobVis(foggy) / planeheight;
+		GlobVis = Thread->Light->FlatPlaneGlobVis(foggy) / planeheight;
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)

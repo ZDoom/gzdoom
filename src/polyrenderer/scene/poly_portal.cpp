@@ -93,7 +93,7 @@ void PolyDrawSectorPortal::SaveGlobals()
 	savedextralight = viewpoint.extralight;
 	savedpos = viewpoint.Pos;
 	savedangles = viewpoint.Angles;
-	savedvisibility = swrenderer::LightVisibility::Instance()->GetVisibility();
+	savedvisibility = PolyRenderer::Instance()->Thread.Light->GetVisibility();
 	savedcamera = viewpoint.camera;
 	savedsector = viewpoint.sector;
 
@@ -102,7 +102,7 @@ void PolyDrawSectorPortal::SaveGlobals()
 		// Don't let gun flashes brighten the sky box
 		AActor *sky = Portal->mSkybox;
 		viewpoint.extralight = 0;
-		swrenderer::LightVisibility::Instance()->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), sky->args[0] * 0.25f);
+		PolyRenderer::Instance()->Thread.Light->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), sky->args[0] * 0.25f);
 		viewpoint.Pos = sky->InterpolatedPosition(viewpoint.TicFrac);
 		viewpoint.Angles.Yaw = savedangles.Yaw + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * viewpoint.TicFrac);
 	}
@@ -133,7 +133,7 @@ void PolyDrawSectorPortal::RestoreGlobals()
 	viewpoint.camera = savedcamera;
 	viewpoint.sector = savedsector;
 	viewpoint.Pos = savedpos;
-	swrenderer::LightVisibility::Instance()->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), savedvisibility);
+	PolyRenderer::Instance()->Thread.Light->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), savedvisibility);
 	viewpoint.extralight = savedextralight;
 	viewpoint.Angles = savedangles;
 	R_SetViewAngle(viewpoint, viewwindow);

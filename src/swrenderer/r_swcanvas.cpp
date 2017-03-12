@@ -274,7 +274,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 
 	// Setup constant texture mapping parameters.
 	SpanDrawerArgs drawerargs;
-	drawerargs.SetTexture(viewport, tex);
+	drawerargs.SetTexture(&thread, tex);
 	if (colormap)
 		drawerargs.SetLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else

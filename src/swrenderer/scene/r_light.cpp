@@ -93,12 +93,6 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	LightVisibility *LightVisibility::Instance()
-	{
-		static LightVisibility instance;
-		return &instance;
-	}
-
 	// Changes how rapidly things get dark with distance
 	void LightVisibility::SetVisibility(RenderViewport *viewport, double vis)
 	{

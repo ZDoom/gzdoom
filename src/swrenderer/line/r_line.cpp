@@ -782,7 +782,7 @@ namespace swrenderer
 			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
 				wallshade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
-				double GlobVis = LightVisibility::Instance()->WallGlobVis(foggy);
+				double GlobVis = Thread->Light->WallGlobVis(foggy);
 				rw_lightleft = float(GlobVis / WallC.sz1);
 				rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 			}

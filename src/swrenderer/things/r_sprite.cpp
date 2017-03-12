@@ -280,7 +280,7 @@ namespace swrenderer
 			vis->dynlightcolor = 0;
 		}
 
-		vis->Light.SetColormap(LightVisibility::Instance()->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		thread->SpriteList->Push(vis);
 	}

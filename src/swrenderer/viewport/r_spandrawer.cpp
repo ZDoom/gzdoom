@@ -22,8 +22,10 @@ namespace swrenderer
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
-	void SpanDrawerArgs::SetTexture(RenderViewport *viewport, FTexture *tex)
+	void SpanDrawerArgs::SetTexture(RenderThread *thread, FTexture *tex)
 	{
+		thread->PrepareTexture(tex);
+
 		tex->GetWidth();
 		ds_xbits = tex->WidthBits;
 		ds_ybits = tex->HeightBits;
@@ -36,7 +38,7 @@ namespace swrenderer
 			ds_ybits--;
 		}
 
-		ds_source = viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		ds_source = thread->Viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 

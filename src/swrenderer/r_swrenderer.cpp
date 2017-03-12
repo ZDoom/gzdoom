@@ -365,10 +365,10 @@ void FSoftwareRenderer::CleanLevelData()
 
 double FSoftwareRenderer::GetVisibility()
 {
-	return LightVisibility::Instance()->GetVisibility();
+	return mScene.MainThread()->Light->GetVisibility();
 }
 
 void FSoftwareRenderer::SetVisibility(double vis)
 {
-	LightVisibility::Instance()->SetVisibility(mScene.MainThread()->Viewport.get(), vis);
+	mScene.MainThread()->Light->SetVisibility(mScene.MainThread()->Viewport.get(), vis);
 }

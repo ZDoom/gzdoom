@@ -82,6 +82,39 @@ public:
 	}
 };
 
+class FBufferedUniform3f
+{
+	float mBuffer[3];
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		memset(mBuffer, 0, sizeof(mBuffer));
+	}
+
+	void Set(const float *newvalue)
+	{
+		if (memcmp(newvalue, mBuffer, sizeof(mBuffer)))
+		{
+			memcpy(mBuffer, newvalue, sizeof(mBuffer));
+			glUniform3fv(mIndex, 1, newvalue);
+		}
+	}
+
+	void Set(float f1, float f2)
+	{
+		if (mBuffer[0] != f1 || mBuffer[1] != f2)
+		{
+			mBuffer[0] = f1;
+			mBuffer[1] = f2;
+			glUniform3fv(mIndex, 1, mBuffer);
+		}
+	}
+
+};
+
 class FBufferedUniform4i
 {
 	int mBuffer[4];

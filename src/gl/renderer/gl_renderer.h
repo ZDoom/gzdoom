@@ -38,6 +38,7 @@ class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
 class FPresent3DRowShader;
+class FLensFlareGhostShader;
 class F2DDrawer;
 class FHardwareTexture;
 
@@ -123,6 +124,7 @@ public:
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
+	FLensFlareGhostShader *mLensFlareGhostShader;
 
 	FTexture *gllight;
 	FTexture *glpart2;
@@ -200,6 +202,7 @@ public:
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void ApplyFXAA();
+	void LensFlareScene();
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();

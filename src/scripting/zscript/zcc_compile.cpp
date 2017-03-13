@@ -1855,7 +1855,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 	}
 	else if (parmcount != prop->Variables.Size())
 	{
-		Error(x, "Argument count mismatch: Got %u, expected %u", parmcount, prop->Variables.Size());
+		Error(x == nullptr? property : x, "Argument count mismatch: Got %u, expected %u", parmcount, prop->Variables.Size());
 		return;
 	}
 

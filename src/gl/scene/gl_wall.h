@@ -9,9 +9,6 @@
 #include "r_data/renderstyle.h"
 #include "textures/textures.h"
 #include "gl/renderer/gl_colormap.h"
-#if defined(__amd64__) || defined(_M_X64)
-#include <xmmintrin.h>
-#endif // x64
 
 struct GLHorizonInfo;
 struct F3DFloor;
@@ -71,16 +68,8 @@ struct GLSeg
 		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim and this is called quite frequently.
 		float x = y2 - y1;
 		float y = x1 - x2;
-#if defined(__amd64__) || defined(_M_X64)
-        __m128 v = _mm_set_ss(x*x + y*y);
-        v = _mm_rsqrt_ss(v);
-        float ilength;
-        _mm_store_ss(&ilength, v);
-        return FVector3(x * ilength, 0, y * ilength);
-#else
-		float length = sqrtf(x*x + y*y);
-		return FVector3(x / length, 0, y / length);
-#endif
+		float ilength = 1.f / sqrtf(x*x + y*y);
+		return FVector3(x * ilength, 0, y * ilength);
 	}
 };
 

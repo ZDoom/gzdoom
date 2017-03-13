@@ -1236,7 +1236,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 							if (OutNamespace->Symbols.AddSymbol(field) == nullptr)
 							{ // name is already in use
 								field->Destroy();
-								return nullptr;
+								return false;
 							}
 						}
 					}

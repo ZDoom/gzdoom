@@ -1898,7 +1898,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
 
 		// Temporarily adjusts the pitch
 		DAngle saved_player_pitch = self->Angles.Pitch;
-		self->Angles.Pitch -= pitch;
+		self->Angles.Pitch += pitch;
 		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, spawnheight, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 		self->Angles.Pitch = saved_player_pitch;
 

@@ -41,7 +41,7 @@
 #define VECTORS_H
 
 #include <math.h>
-#include <limits.h>
+#include <float.h>
 #include <string.h>
 #include "xs_Float.h"
 #include "math/cmath.h"

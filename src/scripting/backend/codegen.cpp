@@ -8104,7 +8104,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_GlobalVariable)
 				{
 					auto member = static_cast<FxMemberBase*>(Self);
-					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
+					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + sizeof(void*));	// the size is stored right behind the pointer.
 					member->membervar = newfield;
 					Self = nullptr;
 					delete this;

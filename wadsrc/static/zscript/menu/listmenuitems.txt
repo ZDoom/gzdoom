@@ -267,7 +267,7 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 	
 	override int GetWidth()
 	{
-		return min(1, mFont.StringWidth(StringTable.Localize(mText))); 
+		return max(1, mFont.StringWidth(StringTable.Localize(mText))); 
 	}
 }
 

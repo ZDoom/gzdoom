@@ -853,16 +853,6 @@ void InitThingdef()
 		}
 	);
 
-	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
-	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
-	sectorstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(linestruct, false)), false), myoffsetof(sector_t, Lines), VARF_Native);
-
-	sectorstruct->AddNativeField("ceilingplane", secplanestruct, myoffsetof(sector_t, ceilingplane), VARF_Native | VARF_ReadOnly);
-	sectorstruct->AddNativeField("floorplane", secplanestruct, myoffsetof(sector_t, floorplane), VARF_Native | VARF_ReadOnly);
-
-
-
-
 	// expose the global validcount variable.
 	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(vcf);
@@ -876,27 +866,19 @@ void InitThingdef()
 	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(levelf);
 
-	// Add the game data arrays to LevelLocals.
-	lstruct->AddNativeField("sectors", NewPointer(NewResizableArray(sectorstruct), false), myoffsetof(FLevelLocals, sectors), VARF_Native);
-	lstruct->AddNativeField("lines", NewPointer(NewResizableArray(linestruct), false), myoffsetof(FLevelLocals, lines), VARF_Native);
-	lstruct->AddNativeField("sides", NewPointer(NewResizableArray(sidestruct), false), myoffsetof(FLevelLocals, sides), VARF_Native);
-	lstruct->AddNativeField("vertexes", NewPointer(NewResizableArray(vertstruct), false), myoffsetof(FLevelLocals, vertexes), VARF_Native|VARF_ReadOnly);
-	lstruct->AddNativeField("sectorportals", NewPointer(NewResizableArray(sectorportalstruct), false), myoffsetof(FLevelLocals, sectorPortals), VARF_Native);
-
-
-	auto aact = NewPointer(NewResizableArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
+	auto aact = NewPointer(NewStaticArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
 	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(aacf);
 
-	auto plrcls = NewPointer(NewResizableArray(playerclassstruct), false);
+	auto plrcls = NewPointer(NewStaticArray(playerclassstruct), false);
 	PField *plrclsf = new PField("PlayerClasses", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PlayerClasses);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
 
-	auto plrskn = NewPointer(NewResizableArray(playerskinstruct), false);
+	auto plrskn = NewPointer(NewStaticArray(playerskinstruct), false);
 	PField *plrsknf = new PField("PlayerSkins", plrskn, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Skins);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrsknf);
 
-	auto teamst = NewPointer(NewResizableArray(teamstruct), false);
+	auto teamst = NewPointer(NewStaticArray(teamstruct), false);
 	PField *teamf = new PField("Teams", teamst, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Teams);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(teamf);
 
@@ -920,9 +902,6 @@ void InitThingdef()
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *fieldptr = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	pstruct->AddNativeField("weapons", NewNativeStruct("WeaponSlots", nullptr), myoffsetof(player_t, weapons), VARF_Native);
-
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	fieldptr = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);

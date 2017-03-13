@@ -1806,7 +1806,7 @@ PArray *NewArray(PType *type, unsigned int count)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_CLASS(PResizableArray, false, false)
+IMPLEMENT_CLASS(PStaticArray, false, false)
 
 //==========================================================================
 //
@@ -1814,7 +1814,7 @@ IMPLEMENT_CLASS(PResizableArray, false, false)
 //
 //==========================================================================
 
-PResizableArray::PResizableArray()
+PStaticArray::PStaticArray()
 {
 	mDescriptiveName = "ResizableArray";
 }
@@ -1825,7 +1825,7 @@ PResizableArray::PResizableArray()
 //
 //==========================================================================
 
-PResizableArray::PResizableArray(PType *etype)
+PStaticArray::PStaticArray(PType *etype)
 	: PArray(etype, 0)
 {
 	mDescriptiveName.Format("ResizableArray<%s>", etype->DescriptiveName());
@@ -1837,7 +1837,7 @@ PResizableArray::PResizableArray(PType *etype)
 //
 //==========================================================================
 
-bool PResizableArray::IsMatch(intptr_t id1, intptr_t id2) const
+bool PStaticArray::IsMatch(intptr_t id1, intptr_t id2) const
 {
 	const PType *elemtype = (const PType *)id1;
 	unsigned int count = (unsigned int)(intptr_t)id2;
@@ -1851,7 +1851,7 @@ bool PResizableArray::IsMatch(intptr_t id1, intptr_t id2) const
 //
 //==========================================================================
 
-void PResizableArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
+void PStaticArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)ElementType;
 	id2 = 0;
@@ -1859,23 +1859,23 @@ void PResizableArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
-// NewResizableArray
+// NewStaticArray
 //
 // Returns a PArray for the given type and size, making sure not to create
 // duplicates.
 //
 //==========================================================================
 
-PResizableArray *NewResizableArray(PType *type)
+PStaticArray *NewStaticArray(PType *type)
 {
 	size_t bucket;
-	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PResizableArray), (intptr_t)type, 0, &bucket);
+	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PStaticArray), (intptr_t)type, 0, &bucket);
 	if (atype == nullptr)
 	{
-		atype = new PResizableArray(type);
-		TypeTable.AddType(atype, RUNTIME_CLASS(PResizableArray), (intptr_t)type, 0, bucket);
+		atype = new PStaticArray(type);
+		TypeTable.AddType(atype, RUNTIME_CLASS(PStaticArray), (intptr_t)type, 0, bucket);
 	}
-	return (PResizableArray *)atype;
+	return (PStaticArray *)atype;
 }
 
 /* PDynArray **************************************************************/

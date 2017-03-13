@@ -764,11 +764,34 @@ type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) 
 	id->Id = A.Name();
 	X = type;
 }
+
+type_name(X) ::= ATSIGN IDENTIFIER(A).
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_NativeType;
+	type->UserType = id;
+	type->isconst = false;
+	id->Id = A.Name();
+	X = type;
+}
+
 type_name(X) ::= READONLY LT IDENTIFIER(A) GT.
 {
 	NEW_AST_NODE(BasicType, type, A);
 	NEW_AST_NODE(Identifier, id, A);
 	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	id->Id = A.Name();
+	X = type;
+}
+
+type_name(X) ::= READONLY LT ATSIGN IDENTIFIER(A) GT.
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_NativeType;
 	type->UserType = id;
 	type->isconst = true;
 	id->Id = A.Name();

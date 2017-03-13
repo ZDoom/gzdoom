@@ -341,7 +341,7 @@ class ThinkerIterator : Object native
 }
 
 class ActorIterator : Object native
-{
+{	
 	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
 	native Actor Next();
 	native void Reinit();
@@ -396,6 +396,12 @@ struct LevelLocals native
 		//UDMF_Thing // not implemented
 	};
 
+	native Array<@Sector> Sectors;
+	native Array<@Line> Lines;
+	native Array<@Side> Sides;
+	native readonly Array<@Vertex> Vertexes;
+	native Array<@SectorPortal> SectorPortals;
+	
 	native readonly int time;
 	native readonly int maptime;
 	native readonly int totaltime;

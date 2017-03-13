@@ -1204,7 +1204,8 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 						{
 							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
 						}
-						else if (thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0)
+						// For native structs a size check cannot be done because they normally have no size. But for a native reference they are still fine.
+						else if (thisfieldtype->Size != ~0u && thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0 && !thisfieldtype->IsA(RUNTIME_CLASS(PNativeStruct)))
 						{
 							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
 						}
@@ -1424,6 +1425,16 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			retval = TypeAuto;
 			break;
 
+		case ZCC_NativeType:
+
+			// Creating an instance of a native struct is only allowed for internal definitions of native variables.
+			if (Wads.GetLumpFile(Lump) != 0 || !formember)
+			{
+				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
+			}
+			retval = ResolveUserType(btype, &outertype->Symbols, true);
+			break;
+
 		case ZCC_UserType:
 			// statelabel et.al. are not tokens - there really is no need to, it works just as well as an identifier. Maybe the same should be done for some other types, too?
 			switch (btype->UserType->Id)
@@ -1445,7 +1456,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				break;
 
 			default:
-				retval = ResolveUserType(btype, &outertype->Symbols);
+				retval = ResolveUserType(btype, &outertype->Symbols, false);
 				break;
 			}
 			break;
@@ -1473,7 +1484,18 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
 		if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
 		{
-			Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+			if (field->NodeType == AST_VarDeclarator && (static_cast<ZCC_VarDeclarator*>(field)->Flags & ZCC_Native) && Wads.GetLumpFile(Lump) == 0)
+			{
+				// the internal definitions may declare native arrays to complex types.
+				// As long as they can be mapped to a static array type the VM can handle them, in a limited but sufficient fashion.
+				retval = NewPointer(NewStaticArray(ftype), false);
+				retval->Size = ~0u;	// don't check for a size match, it's likely to fail anyway.
+				retval->Align = ~0u;
+			}
+			else
+			{
+				Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+			}
 		}
 		else
 		{
@@ -1537,7 +1559,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 //
 //==========================================================================
 
-PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
+PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, bool nativetype)
 {
 	// Check the symbol table for the identifier.
 	PSymbol *sym = symt->FindSymbol(type->UserType->Id, true);
@@ -1554,15 +1576,16 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 
 		if (ptype->IsKindOf(RUNTIME_CLASS(PEnum)))
 		{
-			return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
+			if (!nativetype) return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
 		if (ptype->IsKindOf(RUNTIME_CLASS(PNativeStruct)))	// native structs and classes cannot be instantiated, they always get used as reference.
 		{
-			return NewPointer(ptype, type->isconst);
+			if (!nativetype) return NewPointer(ptype, type->isconst);
+			if (!ptype->IsKindOf(RUNTIME_CLASS(PClass))) return ptype;	// instantiation of native structs. Only for internal use.
 		}
-		return ptype;
+		if (!nativetype) return ptype;
 	}
-	Error(type, "Unable to resolve %s as type.", FName(type->UserType->Id).GetChars());
+	Error(type, "Unable to resolve %s%s as type.", nativetype? "@" : "", FName(type->UserType->Id).GetChars());
 	return TypeError;
 }
 

@@ -335,7 +335,7 @@ public:
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
 	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
 	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
-	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PResizableArray))); } // can only exist in pointer form.
+	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PDynArray))); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);

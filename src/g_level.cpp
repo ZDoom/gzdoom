@@ -1902,6 +1902,11 @@ void FLevelLocals::AddScroller (int secnum)
 //
 //==========================================================================
 
+DEFINE_FIELD(FLevelLocals, sectors)
+DEFINE_FIELD(FLevelLocals, lines)
+DEFINE_FIELD(FLevelLocals, sides)
+DEFINE_FIELD(FLevelLocals, vertexes)
+DEFINE_FIELD(FLevelLocals, sectorPortals)
 DEFINE_FIELD(FLevelLocals, time)
 DEFINE_FIELD(FLevelLocals, maptime)
 DEFINE_FIELD(FLevelLocals, totaltime)

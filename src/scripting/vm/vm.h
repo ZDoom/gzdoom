@@ -1099,7 +1099,7 @@ struct FieldDesc
 {
 	const char *ClassName;
 	const char *FieldName;
-	unsigned FieldOffset;
+	intptr_t FieldOffset;
 	unsigned FieldSize;
 	int BitValue;
 };
@@ -1168,6 +1168,12 @@ struct AFuncDesc
 		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), bitval }; \
 	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
+
+#define DEFINE_GLOBAL(name) \
+	static const FieldDesc VMGlobal_##name = { nullptr, #name, (intptr_t)&name, (unsigned)sizeof(name), 0 }; \
+	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
+
 
 class AActor;
 

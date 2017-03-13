@@ -92,6 +92,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_XorEq,			ZCC_XOREQ);
 	TOKENDEF ('?',				ZCC_QUESTION);
 	TOKENDEF (':',				ZCC_COLON);
+	TOKENDEF ('@',				ZCC_ATSIGN);
 	TOKENDEF (TK_OrOr,			ZCC_OROR);
 	TOKENDEF (TK_AndAnd,		ZCC_ANDAND);
 	TOKENDEF (TK_Eq,			ZCC_EQEQ);

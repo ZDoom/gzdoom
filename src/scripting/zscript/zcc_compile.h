@@ -109,7 +109,7 @@ private:
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls);
-	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
+	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym, bool nativetype);
 
 	void InitDefaults();
 	void ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg);

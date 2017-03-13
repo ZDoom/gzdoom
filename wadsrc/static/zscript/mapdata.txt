@@ -201,7 +201,7 @@ struct SecSpecial play
 
 struct Sector native play
 {
-	//secplane_t	floorplane, ceilingplane;	// defined internally
+
 	//FDynamicColormap *ColorMap;
 
 	native Actor 		SoundTarget;
@@ -245,8 +245,11 @@ struct Sector native play
 	native int 			prevsec;
 	native int	 		nextsec;
 
-	//TStaticPointedArray<line_t *> Lines; // this is defined internally to avoid exposing some overly complicated type to the parser
+	native readonly Array<Line> lines;
 
+	native readonly @secplane floorplane;
+	native readonly @secplane ceilingplane;
+	
 	native readonly Sector		heightsec;
 
 	native uint			bottommap, midmap, topmap;

@@ -7147,7 +7147,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	{
 		PDynArray *darraytype = static_cast<PDynArray*>(Array->ValueType);
 		elementtype = darraytype->ElementType;
-		Array->ValueType = NewPointer(NewResizableArray(elementtype));	// change type so that this can use the code for resizable arrays unchanged.
+		Array->ValueType = NewPointer(NewStaticArray(elementtype));	// change type so that this can use the code for resizable arrays unchanged.
 		arrayispointer = true;
 	}
 	else

@@ -326,7 +326,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native Actor ConversationPC;
 	native double ConversationNPCAngle;
 	native bool ConversationFaceTalker;
-	//native WeaponSlots weapons; <- defined internally
+	native @WeaponSlots weapons;
 
 /* these are not doable yet
 ticcmd_t	cmd;

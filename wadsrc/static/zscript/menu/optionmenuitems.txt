@@ -637,9 +637,9 @@ class OptionMenuSliderBase : OptionMenuItem
 	int mDrawX;
 	int mSliderShort;
 
-	protected void Init(String label, double min, double max, double step, int showval)
+	protected void Init(String label, double min, double max, double step, int showval, Name command = 'none')
 	{
-		Super.Init(label, 'None');
+		Super.Init(label, command);
 		mMin = min;
 		mMax = max;
 		mStep = step;
@@ -784,7 +784,7 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 	
 	OptionMenuItemSlider Init(String label, Name command, double min, double max, double step, int showval = 1)
 	{
-		Super.Init(label, min, max, step, showval);
+		Super.Init(label, min, max, step, showval, command);
 		mCVar =CVar.FindCVar(command);
 		return self;
 	}

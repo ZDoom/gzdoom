@@ -67,6 +67,8 @@ void Stereo3DMode::setCurrentMode(const Stereo3DMode& mode) {
 /* static */
 const Stereo3DMode& Stereo3DMode::getCurrentMode() 
 {
+	if (gl.legacyMode) vr_mode = 0;	// GL 2 does not support this feature.
+
 	// NOTE: Ensure that these vr_mode values correspond to the ones in wadsrc/static/menudef.z
 	switch (vr_mode)
 	{

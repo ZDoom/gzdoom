@@ -2642,7 +2642,8 @@ MUSIC_DM2INT = "dm2int";
 
 // GZDoom exclusive:
 
-DSPLYMNU_GLOPT		= "OpenGL Options";
+DSPLYMNU_GLOPT		= "OpenGL Renderer";
+DSPLYMNU_SWOPT		= "Software Renderer";
 DSPLYMNU_GAMMA		= "Gamma correction";
 DSPLYMNU_CONTRAST 	="Contrast";
 DSPLYMNU_HWGAMMA	= "Hardware Gamma";

@@ -94,7 +94,30 @@ void gl_PatchMenu()
 	if (gl_lightmode == 2 || gl_lightmode == 8) gl_lightmode = 3;
 	if (gl_fogmode == 2) gl_fogmode = 1;
 
-	// todo: remove more unsupported stuff like postprocessing options.
+	// remove more unsupported stuff like postprocessing options.
+	// This cannot be done with a menu filter because the renderer gets initialized long after the menu is set up.
+	DMenuDescriptor **desc = MenuDescriptors.CheckKey("OpenGLOptions");
+	if (desc != nullptr && (*desc)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
+	{
+		auto md = static_cast<DOptionMenuDescriptor*>(*desc);
+		for (int i = md->mItems.Size() - 1; i >= 0; i--)
+		{
+			if (!stricmp(md->mItems[i]->mAction.GetChars(), "gl_multisample") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_tonemap") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_bloom") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_lens") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_ssao") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_ssao_portals") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_fxaa") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_paltonemap_powtable") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "vr_mode") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "vr_enable_quadbuffered") ||
+				!stricmp(md->mItems[i]->mAction.GetChars(), "gl_paltonemap_reverselookup"))
+			{
+				md->mItems.Delete(i);
+			}
+		}
+	}
 }
 
 

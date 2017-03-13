@@ -87,11 +87,7 @@ namespace swrenderer
 				col = width + (col % width);
 			}
 
-			if (viewport->RenderTarget->IsBgra())
-				source = (const uint8_t *)texture->GetColumnBgra(col, nullptr);
-			else
-				source = texture->GetColumn(col, nullptr);
-
+			source = texture->GetColumn(col, nullptr);
 			source2 = nullptr;
 			texturefracx = 0;
 		}

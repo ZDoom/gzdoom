@@ -209,6 +209,10 @@ namespace swrenderer
 			end_condition.wait(end_lock, [&]() { return finished_threads == Threads.size(); });
 			finished_threads = 0;
 		}
+
+		// Change main thread back to covering the whole screen for player sprites
+		MainThread()->X1 = 0;
+		MainThread()->X2 = viewwidth;
 	}
 
 	void RenderScene::RenderThreadSlice(RenderThread *thread)

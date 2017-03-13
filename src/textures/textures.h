@@ -570,6 +570,7 @@ public:
 	FTexture *GetRedirect(bool wantwarped);
 
 	uint32_t GenTime;
+	uint32_t GenTimeBgra;
 	float Speed;
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:

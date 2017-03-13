@@ -43,7 +43,7 @@
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
-: GenTime (0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
+: GenTime (0), GenTimeBgra(0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
 {
 	CopyInfo(source);
 	if (warptype == 2) SetupMultipliers(256, 128); 
@@ -98,8 +98,10 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 {
 	uint32_t time = r_viewpoint.FrameTime;
 	if (Pixels == NULL || time != GenTime)
-	{
 		MakeTexture(time);
+
+	if (PixelsBgra.empty() || time != GenTimeBgra)
+	{
 		CreatePixelsBgraWithMipmaps();
 		for (int i = 0; i < Width * Height; i++)
 		{
@@ -109,6 +111,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 				PixelsBgra[i] = 0;
 		}
 		GenerateBgraMipmapsFast();
+		GenTimeBgra = time;
 	}
 	return PixelsBgra.data();
 }

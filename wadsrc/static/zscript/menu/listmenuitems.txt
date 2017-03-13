@@ -119,7 +119,7 @@ class ListMenuItemStaticText : ListMenuItem
 	int mColor;
 	bool mCentered;
 
-	void Init(ListMenuDescriptor desc, double x, double y, String text, int color = Font.CR_UNTRANSLATED)
+	void Init(ListMenuDescriptor desc, double x, double y, String text, int color = -1)
 	{
 		Super.Init(x, y);
 		mText = text;

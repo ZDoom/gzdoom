@@ -260,6 +260,7 @@ void GLSceneDrawer::CreateScene()
 
 	// reset the portal manager
 	GLPortal::StartFrame();
+	PO_LinkToSubsectors();
 
 	ProcessAll.Clock();
 

@@ -1783,14 +1783,23 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 	ZCC_ExprConstant one;
 	unsigned parmcount = 1;
 	ZCC_TreeNode *x = property->Values;
-	while (x->SiblingNext != property->Values)
+	if (x == nullptr)
 	{
-		x = x->SiblingNext;
-		parmcount++;
+		parmcount = 0;
+	}
+	else
+	{
+		while (x->SiblingNext != property->Values)
+		{
+			x = x->SiblingNext;
+			parmcount++;
+		}
 	}
 	if (parmcount == 0 && prop->Variables.Size() == 1 && prop->Variables[0]->Type == TypeBool)
 	{
 		// allow boolean properties to have the parameter omitted
+		memset(&one, 0, sizeof(one));
+		one.SourceName = property->SourceName;	// This may not be null!
 		one.Operation = PEX_ConstValue;
 		one.NodeType = AST_ExprConstant;
 		one.Type = TypeBool;

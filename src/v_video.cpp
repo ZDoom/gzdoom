@@ -1783,3 +1783,17 @@ CCMD(vid_listadapters)
 	if (Video != NULL)
 		Video->DumpAdapters();
 }
+
+DEFINE_GLOBAL(SmallFont)
+DEFINE_GLOBAL(SmallFont2)
+DEFINE_GLOBAL(BigFont)
+DEFINE_GLOBAL(ConFont)
+DEFINE_GLOBAL(IntermissionFont)
+DEFINE_GLOBAL(CleanXfac)
+DEFINE_GLOBAL(CleanYfac)
+DEFINE_GLOBAL(CleanWidth)
+DEFINE_GLOBAL(CleanHeight)
+DEFINE_GLOBAL(CleanXfac_1)
+DEFINE_GLOBAL(CleanYfac_1)
+DEFINE_GLOBAL(CleanWidth_1)
+DEFINE_GLOBAL(CleanHeight_1)

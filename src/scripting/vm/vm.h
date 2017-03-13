@@ -1170,7 +1170,12 @@ struct AFuncDesc
 	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
 #define DEFINE_GLOBAL(name) \
-	static const FieldDesc VMGlobal_##name = { nullptr, #name, (intptr_t)&name, (unsigned)sizeof(name), 0 }; \
+	static const FieldDesc VMGlobal_##name = { "", #name, (intptr_t)&name, (unsigned)sizeof(name), 0 }; \
+	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
+
+#define DEFINE_GLOBAL_NAMED(iname, name) \
+	static const FieldDesc VMGlobal_##name = { "", #name, (intptr_t)&iname, (unsigned)sizeof(iname), 0 }; \
 	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
 

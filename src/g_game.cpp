@@ -2982,3 +2982,18 @@ bool G_CheckDemoStatus (void)
 
 	return false; 
 }
+
+DEFINE_GLOBAL(players)
+DEFINE_GLOBAL(playeringame)
+DEFINE_GLOBAL(PlayerClasses)
+DEFINE_GLOBAL_NAMED(Skins, PlayerSkins)
+DEFINE_GLOBAL(consoleplayer)
+DEFINE_GLOBAL_NAMED(PClassActor::AllActorClasses, AllActorClasses)
+DEFINE_GLOBAL(validcount)
+DEFINE_GLOBAL(multiplayer)
+DEFINE_GLOBAL(gameaction)
+DEFINE_GLOBAL(gamestate)
+DEFINE_GLOBAL(skyflatnum)
+DEFINE_GLOBAL_NAMED(bglobal.freeze, globalfreeze)
+DEFINE_GLOBAL(gametic)
+DEFINE_GLOBAL(demoplayback)

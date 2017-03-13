@@ -664,11 +664,12 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 FieldDesc *FindField(PStruct *cls, const char * string)
 {
 	int min = 0, max = FieldTable.Size() - 1;
+	const char * cname = cls ? cls->TypeName.GetChars() : "";
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp(cls->TypeName.GetChars(), FieldTable[mid].ClassName + 1);
+		int lexval = stricmp(cname, FieldTable[mid].ClassName + 1);
 		if (lexval == 0) lexval = stricmp(string, FieldTable[mid].FieldName);
 		if (lexval == 0)
 		{
@@ -740,9 +741,7 @@ static int fieldcmp(const void * a, const void * b)
 
 void InitThingdef()
 {
-	// Create all global variables here because this cannot be done on the script side and really isn't worth adding support for.
-	// Also create all special fields here that cannot be declared by script syntax plus the pointer serializers. Doing all these with class overrides would be a bit messy.
-
+	// Some native types need size and serialization information added before the scripts get compiled.
 	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
 	secplanestruct->Size = sizeof(secplane_t);
 	secplanestruct->Align = alignof(secplane_t);
@@ -853,140 +852,11 @@ void InitThingdef()
 		}
 	);
 
-	// expose the global validcount variable.
-	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(vcf);
-
-	// expose the global Multiplayer variable.
-	PField *multif = new PField("multiplayer", TypeBool, VARF_Native | VARF_ReadOnly | VARF_Static, (intptr_t)&multiplayer);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(multif);
-
-	// set up a variable for the global level data structure
-	PStruct *lstruct = NewNativeStruct("LevelLocals", nullptr);
-	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(levelf);
-
-	auto aact = NewPointer(NewStaticArray(NewClassPointer(RUNTIME_CLASS(AActor))), true);
-	PField *aacf = new PField("AllActorClasses", aact, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PClassActor::AllActorClasses);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(aacf);
-
-	auto plrcls = NewPointer(NewStaticArray(playerclassstruct), false);
-	PField *plrclsf = new PField("PlayerClasses", plrcls, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&PlayerClasses);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrclsf);
-
-	auto plrskn = NewPointer(NewStaticArray(playerskinstruct), false);
-	PField *plrsknf = new PField("PlayerSkins", plrskn, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Skins);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(plrsknf);
-
-	auto teamst = NewPointer(NewStaticArray(teamstruct), false);
-	PField *teamf = new PField("Teams", teamst, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&Teams);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(teamf);
-
-	auto bindcls = NewNativeStruct("KeyBindings", nullptr);
-	PField *binding = new PField("Bindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&Bindings);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
-	binding = new PField("AutomapBindings", bindcls, VARF_Native | VARF_Static, (intptr_t)&AutomapBindings);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(binding);
-
-	// set up a variable for the DEH data
-	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
-	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(dehf);
-
-	// set up a variable for the global gameinfo data
-	PStruct *gistruct = NewNativeStruct("GameInfoStruct", nullptr);
-	PField *gi = new PField("gameinfo", gistruct, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gameinfo);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(gi);
-
-	// set up a variable for the global players array.
-	PArray *parray = NewArray(pstruct, MAXPLAYERS);
-	PField *fieldptr = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	parray = NewArray(TypeBool, MAXPLAYERS);
-	fieldptr = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("gameaction", TypeUInt32, VARF_Native | VARF_Static, (intptr_t)&gameaction);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("gamestate", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gamestate);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("skyflatnum", TypeTextureID, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&skyflatnum);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("globalfreeze", TypeUInt8, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&bglobal.freeze);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("consoleplayer", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&consoleplayer);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	auto fontptr = NewPointer(NewNativeStruct("Font", nullptr));
-
-	fieldptr = new PField("smallfont", fontptr, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&SmallFont);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("smallfont2", fontptr, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&SmallFont2);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("bigfont", fontptr, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&BigFont);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("confont", fontptr, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&ConFont);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("intermissionfont", fontptr, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&IntermissionFont);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanXFac", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanXfac);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanYFac", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanYfac);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanWidth", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanWidth);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanHeight", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanHeight);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanXFac_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanXfac_1);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanYFac_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanYfac_1);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanWidth_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanWidth_1);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("CleanHeight_1", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&CleanHeight_1);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("menuactive", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&menuactive);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("OptionMenuSettings", NewStruct("FOptionMenuSettings", nullptr), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&OptionSettings);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("gametic", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&gametic);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("demoplayback", TypeBool, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&demoplayback);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("BackbuttonTime", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&BackbuttonTime);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	fieldptr = new PField("BackbuttonAlpha", TypeFloat32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&BackbuttonAlpha);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
 	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
 	// is to create a static variable from it and reference that in the script. Yuck!!!
 	wpnochg = WP_NOCHANGE;
-	fieldptr = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
+	PField *fieldptr = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
 
 	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.

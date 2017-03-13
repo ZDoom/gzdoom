@@ -487,7 +487,13 @@ void ZCCCompiler::CreateStructTypes()
 			syms = &OutNamespace->Symbols;
 		}
 
-		if (s->strct->Flags & ZCC_Native)
+		if (s->NodeName() == NAME__ && Wads.GetLumpFile(Lump) == 0)
+		{
+			// This is just a container for syntactic purposes.
+			s->strct->Type = nullptr;
+			continue;
+		}
+		else if (s->strct->Flags & ZCC_Native)
 		{
 			s->strct->Type = NewNativeStruct(s->NodeName(), outer);
 		}
@@ -776,7 +782,8 @@ void ZCCCompiler::CompileAllConstants()
 	}
 	for (auto s : Structs)
 	{
-		CopyConstants(constantwork, s->Constants, s->Type(), &s->Type()->Symbols);
+		if (s->Type() != nullptr)
+			CopyConstants(constantwork, s->Constants, s->Type(), &s->Type()->Symbols);
 	}
 
 	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.
@@ -1048,7 +1055,7 @@ void ZCCCompiler::CompileAllFields()
 		donesomething = false;
 		for (unsigned i = 0; i < Structs.Size(); i++)
 		{
-			if (CompileFields(Structs[i]->Type(), Structs[i]->Fields, Structs[i]->Outer, &Structs[i]->TreeNodes, true))
+			if (CompileFields(Structs[i]->Type(), Structs[i]->Fields, Structs[i]->Outer, Structs[i]->Type() == 0? GlobalTreeNodes : &Structs[i]->TreeNodes, true))
 			{
 				// Remove from the list if all fields got compiled.
 				Structs.Delete(i--);
@@ -1132,10 +1139,13 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		if (field->Flags & ZCC_Transient) varflags |= VARF_Transient;
 		if (mVersion >= MakeVersion(2, 4, 0))
 		{
-			if (type->ObjectFlags & OF_UI)
-				varflags |= VARF_UI;
-			if (type->ObjectFlags & OF_Play)
-				varflags |= VARF_Play;
+			if (type != nullptr)
+			{
+				if (type->ObjectFlags & OF_UI)
+					varflags |= VARF_UI;
+				if (type->ObjectFlags & OF_Play)
+					varflags |= VARF_Play;
+			}
 			if (field->Flags & ZCC_UIFlag)
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 			if (field->Flags & ZCC_Play)
@@ -1202,20 +1212,32 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 						fd = FindField(type, FName(name->Name).GetChars());
 						if (fd == nullptr)
 						{
-							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());
+							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type == nullptr? "" : type->TypeName.GetChars(), FName(name->Name).GetChars());
 						}
 						// For native structs a size check cannot be done because they normally have no size. But for a native reference they are still fine.
 						else if (thisfieldtype->Size != ~0u && thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0 && !thisfieldtype->IsA(RUNTIME_CLASS(PNativeStruct)))
 						{
-							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
+							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type == nullptr ? "" : type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
 						}
 						// Q: Should we check alignment, too? A mismatch may be an indicator for bad assumptions.
-						else
+						else if (type != nullptr)
 						{
 							// for bit fields the type must point to the source variable.
 							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
 							auto f = type->AddNativeField(name->Name, thisfieldtype, fd->FieldOffset, varflags, fd->BitValue);
 							if (field->Flags & (ZCC_Version | ZCC_Deprecated)) f->mVersion = field->Version;
+						}
+						else
+						{
+							// This is a global variable.
+							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
+							PField *field = new PField(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
+
+							if (OutNamespace->Symbols.AddSymbol(field) == nullptr)
+							{ // name is already in use
+								field->Destroy();
+								return nullptr;
+							}
 						}
 					}
 				}
@@ -1432,7 +1454,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			{
 				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
 			}
-			retval = ResolveUserType(btype, &outertype->Symbols, true);
+			retval = ResolveUserType(btype, outertype? &outertype->Symbols : nullptr, true);
 			break;
 
 		case ZCC_UserType:
@@ -1456,7 +1478,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				break;
 
 			default:
-				retval = ResolveUserType(btype, &outertype->Symbols, false);
+				retval = ResolveUserType(btype, outertype ? &outertype->Symbols : nullptr, false);
 				break;
 			}
 			break;
@@ -1515,7 +1537,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			// This doesn't check the class list directly but the current symbol table to ensure that
 			// this does not reference a type that got shadowed by a more local definition.
 			// We first look in the current class and its parents, and then in the current namespace and its parents.
-			auto sym = outertype->Symbols.FindSymbol(ctype->Restriction->Id, true);
+			auto sym = outertype ? outertype->Symbols.FindSymbol(ctype->Restriction->Id, true) : nullptr;
 			if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(ctype->Restriction->Id, true);
 			if (sym == nullptr)
 			{
@@ -1562,8 +1584,10 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, bool nativetype)
 {
 	// Check the symbol table for the identifier.
-	PSymbol *sym = symt->FindSymbol(type->UserType->Id, true);
+	PSymbol *sym = nullptr;
+	
 	// We first look in the current class and its parents, and then in the current namespace and its parents.
+	if (symt != nullptr) sym = symt->FindSymbol(type->UserType->Id, true);
 	if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(type->UserType->Id, true);
 	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{

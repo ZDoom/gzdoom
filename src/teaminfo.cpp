@@ -335,4 +335,5 @@ CCMD (teamlist)
 }
 
 
+DEFINE_GLOBAL(Teams)
 DEFINE_FIELD_NAMED(FTeam, m_Name, mName)

@@ -67,6 +67,8 @@ PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
 
+DEFINE_GLOBAL_NAMED(OptionSettings, OptionMenuSettings)
+
 DEFINE_ACTION_FUNCTION(FOptionValues, GetCount)
 {
 	PARAM_PROLOGUE;

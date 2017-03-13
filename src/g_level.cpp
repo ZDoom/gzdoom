@@ -1901,7 +1901,7 @@ void FLevelLocals::AddScroller (int secnum)
 //
 //
 //==========================================================================
-
+DEFINE_GLOBAL(level);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)

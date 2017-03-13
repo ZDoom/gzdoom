@@ -212,6 +212,7 @@ DehInfo deh =
 	40,		// BFG cells per shot
 };
 
+DEFINE_GLOBAL(deh)
 DEFINE_FIELD_X(DehInfo, DehInfo, MaxSoulsphere)
 DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionStyle)
 DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)

@@ -158,6 +158,9 @@ FKeyBindings Bindings;
 FKeyBindings DoubleBindings;
 FKeyBindings AutomapBindings;
 
+DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)
+
 static unsigned int DClickTime[NUM_KEYS];
 static uint8_t DClicked[(NUM_KEYS+7)/8];
 

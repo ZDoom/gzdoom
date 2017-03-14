@@ -198,7 +198,10 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 			break;
 
 		case AST_StaticArrayStatement:
-			cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
+			if (AddTreeNode(static_cast<ZCC_StaticArrayStatement *>(node)->Id, node, &cls->TreeNodes))
+			{
+				cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
+			}
 			break;
 
 		default:
@@ -265,7 +268,10 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 			break;
 
 		case AST_StaticArrayStatement:
-			cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
+			if (AddTreeNode(static_cast<ZCC_StaticArrayStatement *>(node)->Id, node, &cls->TreeNodes))
+			{
+				cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
+			}
 			break;
 
 		default:
@@ -826,6 +832,16 @@ void ZCCCompiler::CompileAllConstants()
 	{
 		Error(constantwork[i].node, "%s is not a constant", FName(constantwork[i].node->NodeName).GetChars());
 	}
+
+
+	for (auto s : Structs)
+	{
+		CompileArrays(s);
+	}
+	for (auto c : Classes)
+	{
+		CompileArrays(c);
+	}
 }
 
 //==========================================================================
@@ -941,6 +957,69 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 	}
 }
 
+
+void ZCCCompiler::CompileArrays(ZCC_StructWork *work)
+{
+	for(auto sas : work->Arrays)
+	{
+		PType *ztype = DetermineType(work->Type(), sas, sas->Id, sas->Type, false, true);
+		PType *ctype = ztype;
+		FArgumentList values;
+
+		// Don't use narrow typea for casting.
+		if (ctype->IsA(RUNTIME_CLASS(PInt))) ctype = static_cast<PInt*>(ztype)->Unsigned ? TypeUInt32 : TypeSInt32;
+		else if (ctype == TypeFloat32) ctype = TypeFloat64;
+
+		ConvertNodeList(values, sas->Values);
+
+		bool fail = false;
+		FCompileContext ctx(OutNamespace, work->Type(), false);
+
+		char *destmem = (char *)ClassDataAllocator.Alloc(values.Size() * ztype->Align);
+		memset(destmem, 0, values.Size() * ztype->Align);
+		char *copyp = destmem;
+		for (unsigned i = 0; i < values.Size(); i++)
+		{
+			values[i] = new FxTypeCast(values[i], ctype, false);
+			values[i] = values[i]->Resolve(ctx);
+			if (values[i] == nullptr) fail = true;
+			else if (!values[i]->isConstant())
+			{
+				Error(sas, "Initializer must be constant");
+				fail = true;
+			}
+			else
+			{
+				ExpVal val = static_cast<FxConstant*>(values[i])->GetValue();
+				switch (ztype->GetRegType())
+				{
+				default:
+					// should never happen
+					Error(sas, "Non-integral type in constant array");
+					return;
+
+				case REGT_INT:
+					ztype->SetValue(copyp, val.GetInt());
+					break;
+
+				case REGT_FLOAT:
+					ztype->SetValue(copyp, val.GetFloat());
+					break;
+
+				case REGT_POINTER:
+					*(void**)copyp = val.GetPointer();
+					break;
+
+				case REGT_STRING:
+					::new(copyp) FString(val.GetString());
+					break;
+				}
+				copyp += ztype->Align;
+			}
+		}
+		work->Type()->Symbols.AddSymbol(new PField(sas->Id, NewArray(ztype, values.Size()), VARF_Static | VARF_ReadOnly, (size_t)destmem));
+	}
+}
 
 //==========================================================================
 //

@@ -102,6 +102,7 @@ private:
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
 	bool CompileConstant(ZCC_ConstantWork *def);
+	void CompileArrays(ZCC_StructWork *work);
 
 	void CompileAllFields();
 	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);

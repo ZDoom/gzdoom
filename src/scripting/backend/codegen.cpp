@@ -6292,9 +6292,19 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					}
 					else
 					{
-						ScriptPosition.Message(MSG_ERROR, "Unable to access '%s.%s' in a static context\n", ccls->TypeName.GetChars(), Identifier.GetChars());
-						delete this;
-						return nullptr;
+						auto f = dyn_cast<PField>(sym);
+						if (f != nullptr && (f->Flags & VARF_Static | VARF_ReadOnly) == (VARF_Static | VARF_ReadOnly))
+						{
+							auto x = new FxGlobalVariable(f, ScriptPosition);
+							delete this;
+							return x->Resolve(ctx);
+						}
+						else
+						{
+							ScriptPosition.Message(MSG_ERROR, "Unable to access '%s.%s' in a static context\n", ccls->TypeName.GetChars(), Identifier.GetChars());
+							delete this;
+							return nullptr;
+						}
 					}
 				}
 			}
@@ -6931,6 +6941,15 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		FxStructMember* pmember = (FxStructMember*)classx;
 		if (BarrierSide == FScopeBarrier::Side_PlainData && pmember)
 			BarrierSide = pmember->BarrierSide;
+	}
+
+	// Even though this is global, static and readonly, we still need to do the scope checks for consistency.
+	if ((membervar->Flags & (VARF_Static | VARF_ReadOnly)) == (VARF_Static | VARF_ReadOnly))
+	{
+		// This is a static constant array, which is stored at a constant address, like a global variable.
+		auto x = new FxGlobalVariable(membervar, ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
 	}
 
 	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))

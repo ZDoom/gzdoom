@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 2.8.7 )
-project(GZDoom)
+project(QZDoom)
 
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )
@@ -122,7 +122,7 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created." )
-set( ZDOOM_EXE_NAME "gzdoom" CACHE FILEPATH "Name of the executable to create" )
+set( ZDOOM_EXE_NAME "qzdoom" CACHE FILEPATH "Name of the executable to create" )
 if( MSVC )
 	# Allow the user to use ZDOOM_OUTPUT_DIR as a single release point.
 	# Use zdoom, zdoomd, zdoom64, and zdoomd64 for the binary names

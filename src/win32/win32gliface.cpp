@@ -717,6 +717,7 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 
 	if (myWglChoosePixelFormatARB)
 	{
+	again:
 		attributes[0]	=	WGL_RED_BITS_ARB; //bits
 		attributes[1]	=	8;
 		attributes[2]	=	WGL_GREEN_BITS_ARB; //bits
@@ -772,6 +773,12 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 	
 		if (numFormats == 0)
 		{
+			if (vr_enable_quadbuffered)
+			{
+				Printf("R_OPENGL: No valid pixel formats found for VR quadbuffering. Retrying without this feature\n");
+				vr_enable_quadbuffered = false;
+				goto again;
+			}
 			Printf("R_OPENGL: No valid pixel formats found. Retrying in compatibility mode\n");
 			goto oldmethod;
 		}

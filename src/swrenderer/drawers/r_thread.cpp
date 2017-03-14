@@ -53,90 +53,36 @@ DrawerThreads::~DrawerThreads()
 	StopThreads();
 }
 
-void DrawerThreads::Execute(const std::vector<DrawerCommandQueuePtr> &queues)
+void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 {
-	bool hasWork = false;
-	for (const auto &queue : queues)
-		hasWork = hasWork || !queue->commands.empty();
-	if (!hasWork)
+	if (!commands || commands->commands.empty())
 		return;
 	
 	auto queue = Instance();
-
-	// Give worker threads something to do:
-
-	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
-	queue->active_commands = queues;
-	queue->run_id++;
-	start_lock.unlock();
-
 	queue->StartThreads();
-	queue->start_condition.notify_all();
 
-	// Do one thread ourselves:
-
-	static DrawerThread thread;
-	thread.core = 0;
-	thread.num_cores = (int)(queue->threads.size() + 1);
-
-	struct TryCatchData
-	{
-		DrawerThreads *queue;
-		DrawerThread *thread;
-		size_t list_index;
-		size_t command_index;
-	} data;
-
-	data.queue = queue;
-	data.thread = &thread;
-	data.list_index = 0;
-	data.command_index = 0;
-	VectoredTryCatch(&data,
-	[](void *data)
-	{
-		TryCatchData *d = (TryCatchData*)data;
-
-		for (int pass = 0; pass < d->queue->num_passes; pass++)
-		{
-			d->thread->pass_start_y = pass * d->queue->rows_in_pass;
-			d->thread->pass_end_y = (pass + 1) * d->queue->rows_in_pass;
-			if (pass + 1 == d->queue->num_passes)
-				d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
-
-			for (auto &list : d->queue->active_commands)
-			{
-				size_t size = list->commands.size();
-				for (d->command_index = 0; d->command_index < size; d->command_index++)
-				{
-					auto &command = list->commands[d->command_index];
-					command->Execute(d->thread);
-				}
-				d->list_index++;
-			}
-		}
-	},
-	[](void *data, const char *reason, bool fatal)
-	{
-		TryCatchData *d = (TryCatchData*)data;
-		ReportDrawerError(d->queue->active_commands[d->list_index]->commands[d->command_index], true, reason, fatal);
-	});
-
-	// Wait for everyone to finish:
-
+	// Add to queue and awaken worker threads
+	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
 	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
-	queue->end_condition.wait(end_lock, [&]() { return queue->finished_threads == queue->threads.size(); });
+	queue->active_commands.push_back(commands);
+	queue->tasks_left += queue->threads.size();
+	end_lock.unlock();
+	start_lock.unlock();
+	queue->start_condition.notify_all();
+}
 
-	if (!queue->thread_error.IsEmpty())
-	{
-		static bool first = true;
-		if (queue->thread_error_fatal)
-			I_FatalError("%s", queue->thread_error.GetChars());
-		else if (first)
-			Printf("%s\n", queue->thread_error.GetChars());
-		first = false;
-	}
+void DrawerThreads::WaitForWorkers()
+{
+	// Wait for workers to finish
+	auto queue = Instance();
+	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
+	queue->end_condition.wait(end_lock, [&]() { return queue->tasks_left == 0; });
+	end_lock.unlock();
 
-	// Clean up batch:
+	// Clean up
+	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
+	for (auto &thread : queue->threads)
+		thread.current_queue = 0;
 
 	for (auto &list : queue->active_commands)
 	{
@@ -145,7 +91,39 @@ void DrawerThreads::Execute(const std::vector<DrawerCommandQueuePtr> &queues)
 		list->Clear();
 	}
 	queue->active_commands.clear();
-	queue->finished_threads = 0;
+}
+
+void DrawerThreads::WorkerMain(DrawerThread *thread)
+{
+	while (true)
+	{
+		// Wait until we are signalled to run:
+		std::unique_lock<std::mutex> start_lock(start_mutex);
+		start_condition.wait(start_lock, [&]() { return thread->current_queue < active_commands.size() || shutdown_flag; });
+		if (shutdown_flag)
+			break;
+
+		// Grab the commands
+		DrawerCommandQueuePtr list = active_commands[thread->current_queue];
+		thread->current_queue++;
+		start_lock.unlock();
+
+		// Do the work:
+		size_t size = list->commands.size();
+		for (int i = 0; i < size; i++)
+		{
+			auto &command = list->commands[i];
+			command->Execute(thread);
+		}
+
+		// Notify main thread that we finished:
+		std::unique_lock<std::mutex> end_lock(end_mutex);
+		tasks_left--;
+		bool finishedTasks = tasks_left == 0;
+		end_lock.unlock();
+		if (finishedTasks)
+			end_condition.notify_all();
+	}
 }
 
 void DrawerThreads::StartThreads()
@@ -157,78 +135,15 @@ void DrawerThreads::StartThreads()
 	if (num_threads == 0)
 		num_threads = 4;
 
-	threads.resize(num_threads - 1);
+	threads.resize(num_threads);
 
-	for (int i = 0; i < num_threads - 1; i++)
+	for (int i = 0; i < num_threads; i++)
 	{
 		DrawerThreads *queue = this;
 		DrawerThread *thread = &threads[i];
-		thread->core = i + 1;
+		thread->core = i;
 		thread->num_cores = num_threads;
-		thread->thread = std::thread([=]()
-		{
-			int run_id = 0;
-			while (true)
-			{
-				// Wait until we are signalled to run:
-				std::unique_lock<std::mutex> start_lock(queue->start_mutex);
-				queue->start_condition.wait(start_lock, [&]() { return queue->run_id != run_id || queue->shutdown_flag; });
-				if (queue->shutdown_flag)
-					break;
-				run_id = queue->run_id;
-				start_lock.unlock();
-
-				// Do the work:
-
-				struct TryCatchData
-				{
-					DrawerThreads *queue;
-					DrawerThread *thread;
-					size_t list_index;
-					size_t command_index;
-				} data;
-
-				data.queue = queue;
-				data.thread = thread;
-				data.list_index = 0;
-				data.command_index = 0;
-				VectoredTryCatch(&data,
-				[](void *data)
-				{
-					TryCatchData *d = (TryCatchData*)data;
-
-					for (int pass = 0; pass < d->queue->num_passes; pass++)
-					{
-						d->thread->pass_start_y = pass * d->queue->rows_in_pass;
-						d->thread->pass_end_y = (pass + 1) * d->queue->rows_in_pass;
-						if (pass + 1 == d->queue->num_passes)
-							d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
-
-						for (auto &list : d->queue->active_commands)
-						{
-							size_t size = list->commands.size();
-							for (d->command_index = 0; d->command_index < size; d->command_index++)
-							{
-								auto &command = list->commands[d->command_index];
-								command->Execute(d->thread);
-							}
-							d->list_index++;
-						}
-					}
-				},
-				[](void *data, const char *reason, bool fatal)
-				{
-					TryCatchData *d = (TryCatchData*)data;
-					ReportDrawerError(d->queue->active_commands[d->list_index]->commands[d->command_index], true, reason, fatal);
-				});
-
-				// Notify main thread that we finished:
-				std::unique_lock<std::mutex> end_lock(queue->end_mutex);
-				queue->finished_threads++;
-				end_lock.unlock();
-				queue->end_condition.notify_all();
-			}
-		});
+		thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
 	}
 }
 
@@ -243,28 +158,6 @@ void DrawerThreads::StopThreads()
 	threads.clear();
 	lock.lock();
 	shutdown_flag = false;
-}
-
-void DrawerThreads::ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal)
-{
-	if (worker_thread)
-	{
-		std::unique_lock<std::mutex> end_lock(Instance()->end_mutex);
-		if (Instance()->thread_error.IsEmpty() || (!Instance()->thread_error_fatal && fatal))
-		{
-			Instance()->thread_error = reason + (FString)": " + command->DebugInfo();
-			Instance()->thread_error_fatal = fatal;
-		}
-	}
-	else
-	{
-		static bool first = true;
-		if (fatal)
-			I_FatalError("%s: %s", reason, command->DebugInfo().GetChars());
-		else if (first)
-			Printf("%s: %s\n", reason, command->DebugInfo().GetChars());
-		first = false;
-	}
 }
 
 #ifndef WIN32

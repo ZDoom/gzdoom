@@ -375,8 +375,6 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	WorkerThreadData thread_data;
 	thread_data.core = thread->core;
 	thread_data.num_cores = thread->num_cores;
-	thread_data.pass_start_y = thread->pass_start_y;
-	thread_data.pass_end_y = thread->pass_end_y;
 	thread_data.FullSpans = thread->FullSpansBuffer.data();
 	thread_data.PartialBlocks = thread->PartialBlocksBuffer.data();
 

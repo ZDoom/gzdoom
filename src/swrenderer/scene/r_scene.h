@@ -51,9 +51,9 @@ namespace swrenderer
 
 	private:
 		void RenderActorView(AActor *actor, bool dontmaplines = false);
-		void RenderDrawQueues();
 		void RenderThreadSlices();
 		void RenderThreadSlice(RenderThread *thread);
+		void RenderPSprites();
 
 		void StartThreads(size_t numThreads);
 		void StopThreads();

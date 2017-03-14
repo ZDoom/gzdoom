@@ -44,16 +44,13 @@ public:
 	}
 
 	std::thread thread;
+	size_t current_queue = 0;
 
 	// Thread line index of this thread
 	int core = 0;
 
 	// Number of active threads
 	int num_cores = 1;
-
-	// Range of rows processed this pass
-	int pass_start_y = 0;
-	int pass_end_y = MAXHEIGHT;
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
@@ -65,22 +62,19 @@ public:
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{
-		return line < pass_start_y || line >= pass_end_y || line % num_cores != core;
+		return line % num_cores != core;
 	}
 
 	// The number of lines to skip to reach the first line to be rendered by this thread
 	int skipped_by_thread(int first_line)
 	{
-		int pass_skip = MAX(pass_start_y - first_line, 0);
-		int core_skip = (num_cores - (first_line + pass_skip - core) % num_cores) % num_cores;
-		return pass_skip + core_skip;
+		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
+		return core_skip;
 	}
 
 	// The number of lines to be rendered by this thread
 	int count_for_thread(int first_line, int count)
 	{
-		int lines_until_pass_end = MAX(pass_end_y - first_line, 0);
-		count = MIN(count, lines_until_pass_end);
 		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
 		return MAX(c, 0);
 	}
@@ -118,7 +112,10 @@ class DrawerThreads
 {
 public:
 	// Runs the collected commands on worker threads
-	static void Execute(const std::vector<DrawerCommandQueuePtr> &queues);
+	static void Execute(DrawerCommandQueuePtr queue);
+
+	// Waits for all commands to finish executing
+	static void WaitForWorkers();
 	
 private:
 	DrawerThreads();
@@ -126,6 +123,7 @@ private:
 	
 	void StartThreads();
 	void StopThreads();
+	void WorkerMain(DrawerThread *thread);
 
 	static DrawerThreads *Instance();
 	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
@@ -136,18 +134,12 @@ private:
 	std::condition_variable start_condition;
 	std::vector<DrawerCommandQueuePtr> active_commands;
 	bool shutdown_flag = false;
-	int run_id = 0;
 
 	std::mutex end_mutex;
 	std::condition_variable end_condition;
-	size_t finished_threads = 0;
-	FString thread_error;
-	bool thread_error_fatal = false;
+	size_t tasks_left = 0;
 
-	int threaded_render = 0;
 	DrawerThread single_core_thread;
-	int num_passes = 1;
-	int rows_in_pass = MAXHEIGHT;
 	
 	friend class DrawerCommandQueue;
 };

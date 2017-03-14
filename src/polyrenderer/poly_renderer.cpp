@@ -78,7 +78,9 @@ void PolyRenderer::RenderView(player_t *player)
 		Thread.DrawQueue->Push<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
 	}
 	
-	DrawerThreads::Execute({ Thread.DrawQueue });
+	DrawerThreads::Execute(Thread.DrawQueue);
+	DrawerThreads::WaitForWorkers();
+	Thread.DrawQueue->Clear();
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
@@ -98,7 +100,8 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	canvas->Lock(true);
 	
 	RenderActorView(actor, dontmaplines);
-	DrawerThreads::Execute({ Thread.DrawQueue });
+	DrawerThreads::Execute(Thread.DrawQueue);
+	DrawerThreads::WaitForWorkers();
 	
 	canvas->Unlock();
 

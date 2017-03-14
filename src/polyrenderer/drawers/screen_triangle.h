@@ -46,8 +46,6 @@ struct WorkerThreadData
 {
 	int32_t core;
 	int32_t num_cores;
-	int32_t pass_start_y;
-	int32_t pass_end_y;
 	uint32_t *temp;
 
 	// Triangle working data:

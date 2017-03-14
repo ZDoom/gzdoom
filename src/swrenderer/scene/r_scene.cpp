@@ -106,23 +106,12 @@ namespace swrenderer
 		// Apply special colormap if the target cannot do it
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
-			MainThread()->DrawQueue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
-			RenderDrawQueues();
+			auto queue = std::make_shared<DrawerCommandQueue>(MainThread());
+			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
+			DrawerThreads::Execute(queue);
 		}
-	}
 
-	void RenderScene::RenderDrawQueues()
-	{
-		// Use reverse order so main thread is drawn last
-		std::vector<DrawerCommandQueuePtr> queues;
-		for (auto it = Threads.rbegin(); it != Threads.rend(); ++it)
-		{
-			queues.push_back((*it)->DrawQueue);
-		}
-		DrawerThreads::Execute(queues);
-
-		//using namespace std::chrono_literals;
-		//std::this_thread::sleep_for(0.5s);
+		DrawerThreads::WaitForWorkers();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -154,8 +143,7 @@ namespace swrenderer
 		}
 
 		RenderThreadSlices();
-		MainThread()->PlayerSprites->Render();
-		RenderDrawQueues();
+		RenderPSprites();
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
@@ -166,6 +154,16 @@ namespace swrenderer
 		{
 			CameraLight::Instance()->ClearShaderColormap();
 		}
+	}
+
+	void RenderScene::RenderPSprites()
+	{
+		// Player sprites needs to be rendered after all the slices because they may be hardware accelerated.
+		// If they are not hardware accelerated the drawers must run after all sliced drawers finished.
+		DrawerThreads::WaitForWorkers();
+		MainThread()->DrawQueue->Clear();
+		MainThread()->PlayerSprites->Render();
+		DrawerThreads::Execute(MainThread()->DrawQueue);
 	}
 
 	void RenderScene::RenderThreadSlices()
@@ -220,6 +218,7 @@ namespace swrenderer
 
 	void RenderScene::RenderThreadSlice(RenderThread *thread)
 	{
+		thread->DrawQueue->Clear();
 		thread->FrameMemory->Clear();
 		thread->Clip3D->Cleanup();
 		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
@@ -278,6 +277,8 @@ namespace swrenderer
 			if (thread->MainThread)
 				NetUpdate();
 		}
+
+		DrawerThreads::Execute(thread->DrawQueue);
 	}
 
 	void RenderScene::StartThreads(size_t numThreads)
@@ -344,7 +345,8 @@ namespace swrenderer
 		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
-		
+		DrawerThreads::WaitForWorkers();
+
 		viewport->RenderTarget = screen;
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);

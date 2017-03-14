@@ -944,7 +944,10 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.maptime", level.maptime)
 		("level.totaltime", i)
 		("level.skytexture1", level.skytexture1)
-		("level.skytexture2", level.skytexture2);
+		("level.skytexture2", level.skytexture2)
+		("level.fogdensity", level.fogdensity)
+		("level.outsidefogdensity", level.outsidefogdensity)
+		("level.skyfog", level.skyfog);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

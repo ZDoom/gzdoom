@@ -39,7 +39,6 @@
 #include "gl/utility/gl_convert.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
-extern int skyfog;
 
 //==========================================================================
 //
@@ -98,7 +97,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 			x_offset[0] = GLRenderer->mSky1Pos;
 		}
 	}
-	if (skyfog > 0)
+	if (level.skyfog > 0)
 	{
 		fadecolor = FadeColor;
 		fadecolor.a = 0;

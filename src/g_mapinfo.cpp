@@ -1216,6 +1216,28 @@ DEFINE_MAP_OPTION(hazardflash, true)
 	info->hazardflash = V_GetColor(NULL, parse.sc);
 }
 
+DEFINE_MAP_OPTION(fogdensity, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->fogdensity = clamp(parse.sc.Number, 0, 512) >> 1;
+}
+
+DEFINE_MAP_OPTION(outsidefogdensity, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->outsidefogdensity = clamp(parse.sc.Number, 0, 512) >> 1;
+}
+
+DEFINE_MAP_OPTION(skyfog, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->skyfog = parse.sc.Number;
+}
+
+
 //==========================================================================
 //
 // All flag based map options 

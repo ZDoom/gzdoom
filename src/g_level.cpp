@@ -1466,6 +1466,11 @@ void G_InitLevelLocals ()
 	level.F1Pic = info->F1Pic;
 	level.hazardcolor = info->hazardcolor;
 	level.hazardflash = info->hazardflash;
+	
+	// GL fog stuff modifiable by SetGlobalFogParameter.
+	level.fogdensity = info->fogdensity;
+	level.outsidefogdensity = info->outsidefogdensity;
+	level.skyfog = info->skyfog;
 
 	compatflags.Callback();
 	compatflags2.Callback();
@@ -1935,6 +1940,9 @@ DEFINE_FIELD(FLevelLocals, aircontrol)
 DEFINE_FIELD(FLevelLocals, airfriction)
 DEFINE_FIELD(FLevelLocals, airsupply)
 DEFINE_FIELD(FLevelLocals, teamdamage)
+DEFINE_FIELD(FLevelLocals, fogdensity)
+DEFINE_FIELD(FLevelLocals, outsidefogdensity)
+DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
 DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
@@ -1970,6 +1978,16 @@ CCMD(listmaps)
 	}
 }
 
-
-
+//==========================================================================
+//
+// For testing sky fog sheets
+//
+//==========================================================================
+CCMD(skyfog)
+{
+	if (argv.argc()>1)
+	{
+		level.skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+	}
+}
 

@@ -39,6 +39,7 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "g_levellocals.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/renderer/gl_renderer.h"
@@ -462,6 +463,39 @@ bool gl_SetupLightTexture()
 	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight, false);
 	gl_RenderState.SetMaterial(pat, CLAMP_XY_NOMIP, 0, -1, false);
 	return true;
+}
+
+//==========================================================================
+//
+// Check fog in current sector for placing into the proper draw list.
+//
+//==========================================================================
+
+static bool gl_CheckFog(FColormap *cm, int lightlevel)
+{
+	bool frontfog;
+
+	PalEntry fogcolor = cm->FadeColor;
+
+	if ((fogcolor.d & 0xffffff) == 0)
+	{
+		frontfog = false;
+	}
+	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
+	{
+		frontfog = true;
+	}
+	else  if (level.fogdensity != 0 || (glset.lightmode & 4) || cm->fogdensity > 0)
+	{
+		// case 3: level has fog density set
+		frontfog = true;
+	}
+	else
+	{
+		// case 4: use light level
+		frontfog = lightlevel < 248;
+	}
+	return frontfog;
 }
 
 //==========================================================================

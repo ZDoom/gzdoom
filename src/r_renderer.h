@@ -53,7 +53,6 @@ struct FRenderer
 	virtual void SetClearColor(int color) = 0;
 	virtual void Init() = 0;
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) = 0;
-	virtual void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) {}
 	virtual void PreprocessLevel() {}
 	virtual void CleanLevelData() {}
 	virtual bool RequireGLNodes() { return false; }

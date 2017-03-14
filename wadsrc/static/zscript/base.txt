@@ -485,6 +485,9 @@ struct LevelLocals native
 	native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
+	native readonly int fogdensity;
+	native readonly int outsidefogdensity;
+	native readonly int skyfog;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);

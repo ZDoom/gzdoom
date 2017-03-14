@@ -3350,6 +3350,79 @@ FUNC(LS_Line_SetPortalTarget)
 	return P_ChangePortal(ln, arg0, arg1);
 }
 
+FUNC(LS_Sector_SetPlaneReflection)
+// Sector_SetPlaneReflection (tag, floor, ceiling)
+{
+	int secnum;
+	FSectorTagIterator itr(arg0);
+
+	while ((secnum = itr.Next()) >= 0)
+	{
+		sector_t * s = &level.sectors[secnum];
+		if (!s->floorplane.isSlope()) s->reflect[sector_t::floor] = arg1 / 255.f;
+		if (!s->ceilingplane.isSlope()) level.sectors[secnum].reflect[sector_t::ceiling] = arg2 / 255.f;
+	}
+
+	return true;
+}
+
+
+FUNC(LS_SetGlobalFogParameter)
+// SetGlobalFogParameter (type, value)
+{
+	switch (arg0)
+	{
+	case 0:
+		level.fogdensity = arg1 >> 1;
+		return true;
+
+	case 1:
+		level.outsidefogdensity = arg1 >> 1;
+		return true;
+
+	case 2:
+		level.skyfog = arg1;
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+FUNC(LS_Sector_SetFloorGlow)
+// Sector_SetFloorGlow(tag, height, r, g, b)
+{
+	int secnum;
+	PalEntry color(arg2, arg3, arg4);
+	if (arg1 < 0) color = -1;	// negative height invalidates the glow.
+	FSectorTagIterator itr(arg0);
+
+	while ((secnum = itr.Next()) >= 0)
+	{
+		sector_t * s = &level.sectors[secnum];
+		s->SetGlowColor(sector_t::floor, color);
+		s->SetGlowHeight(sector_t::floor, float(arg1));
+	}
+	return true;
+}
+
+FUNC(LS_Sector_SetCeilingGlow)
+// Sector_SetCeilingGlow(tag, height, r, g, b)
+{
+	int secnum;
+	PalEntry color(arg2, arg3, arg4);
+	if (arg1 < 0) color = -1;	// negative height invalidates the glow.
+	FSectorTagIterator itr(arg0);
+
+	while ((secnum = itr.Next()) >= 0)
+	{
+		sector_t * s = &level.sectors[secnum];
+		s->SetGlowColor(sector_t::ceiling, color);
+		s->SetGlowHeight(sector_t::ceiling, float(arg1));
+	}
+	return true;
+}
+
 static lnSpecFunc LineSpecials[] =
 {
 	/*   0 */ LS_NOP,
@@ -3630,6 +3703,9 @@ static lnSpecFunc LineSpecials[] =
 	/* 274 */ LS_Door_AnimatedClose,
 	/* 275 */ LS_Floor_Stop,
 	/* 276 */ LS_Ceiling_Stop,
+	/* 277 */ LS_Sector_SetFloorGlow,
+	/* 278 */ LS_Sector_SetCeilingGlow,
+
 
 };
 

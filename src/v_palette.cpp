@@ -323,7 +323,7 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 	{
 		FScanner sc;
 		
-		sc.OpenMem(Wads.GetLumpFullName(lumpnum), (char*)lumpmem, lump.GetSize());
+		sc.OpenMem(Wads.GetLumpFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
 		sc.MustGetString();
 		sc.MustGetNumber();	// version - ignore
 		sc.MustGetNumber();	

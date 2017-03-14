@@ -794,6 +794,26 @@ public:
 		planes[pos].Light = level;
 	}
 
+	double GetGlowHeight(int pos)
+	{
+		return planes[pos].GlowHeight;
+	}
+
+	PalEntry GetGlowColor(int pos)
+	{
+		return planes[pos].GlowColor;
+	}
+
+	void SetGlowHeight(int pos, float height)
+	{
+		planes[pos].GlowHeight = height;
+	}
+
+	void SetGlowColor(int pos, PalEntry color)
+	{
+		planes[pos].GlowColor = color;
+	}
+
 	FTextureID GetTexture(int pos) const
 	{
 		return planes[pos].Texture;

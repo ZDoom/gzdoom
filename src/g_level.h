@@ -332,6 +332,9 @@ struct level_info_t
 	FName		slideshow;
 	uint32_t		hazardcolor;
 	uint32_t		hazardflash;
+	int			fogdensity;
+	int			outsidefogdensity;
+	int			skyfog;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

@@ -360,6 +360,11 @@ struct Sector native play
 	native void ChangeFlags(int pos, int And, int Or);
 	native int GetPlaneLight(int pos);
 	native void SetPlaneLight(int pos, int level);
+	native double GetGlowHeight(int pos);
+	native color GetGlowColor(int pos);
+	native void SetGlowHeight(int pos, double height);
+	native void SetGlowColor(int pos, color color);
+	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);
 	native double GetPlaneTexZ(int pos);

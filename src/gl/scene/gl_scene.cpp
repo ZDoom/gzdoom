@@ -991,7 +991,6 @@ struct FGLInterface : public FRenderer
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
-	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 	bool RequireGLNodes() override;
@@ -1033,19 +1032,13 @@ void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actor
 
 void FGLInterface::StartSerialize(FSerializer &arc)
 {
-	if (arc.BeginObject("glinfo"))
-	{
-		arc("fogdensity", fogdensity)
-			("outsidefogdensity", outsidefogdensity)
-			("skyfog", skyfog)
-			.EndObject();
-	}
 }
 
 void FGLInterface::EndSerialize(FSerializer &arc)
 {
 	if (arc.isReading())
 	{
+		// The portal data needs to be recreated after reading a savegame.
 		gl_InitPortals();
 	}
 }
@@ -1169,11 +1162,6 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 // 
 //
 //===========================================================================
-
-void FGLInterface::SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog)
-{
-	gl_SetFogParams(_fogdensity, _outsidefogcolor, _outsidefogdensity, _skyfog);
-}
 
 void FGLInterface::PreprocessLevel() 
 {

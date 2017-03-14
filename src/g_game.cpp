@@ -147,6 +147,7 @@ CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
+FName			SelectedSlideshow;		// what to start when ga_slideshow
 
 int 			paused;
 bool			pauseext;
@@ -1119,7 +1120,7 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-			if (gamestate == GS_LEVEL) F_StartIntermission(level.info->slideshow, FSTATE_InLevel);
+			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -2981,6 +2982,20 @@ bool G_CheckDemoStatus (void)
 	}
 
 	return false; 
+}
+
+void G_StartSlideshow(FName whichone)
+{
+	gameaction = ga_slideshow;
+	SelectedSlideshow = whichone == NAME_None ? level.info->slideshow : whichone;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME_DEF(whichone);
+	G_StartSlideshow(whichone);
+	return 0;
 }
 
 DEFINE_GLOBAL(players)

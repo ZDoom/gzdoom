@@ -64,6 +64,7 @@ void G_Ticker (void);
 bool G_Responder (event_t*	ev);
 
 void G_ScreenShot (char *filename);
+void G_StartSlideshow(FName whichone);
 
 FString G_BuildSaveName (const char *prefix, int slot);
 

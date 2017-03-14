@@ -74,6 +74,11 @@ class ListMenu : Menu
 				}
 			}
 		}
+		// notify all items that the menu was just created.
+		for(int i=0;i<mDesc.mItems.Size(); i++)
+		{
+			mDesc.mItems[i].OnMenuCreated();
+		}
 	}
 	
 	//=============================================================================

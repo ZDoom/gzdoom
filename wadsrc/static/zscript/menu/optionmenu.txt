@@ -107,6 +107,12 @@ class OptionMenu : Menu
 		DontDim = desc.mDontDim;
 		if (mDesc != NULL && mDesc.mSelectedItem == -1) mDesc.mSelectedItem = FirstSelectable();
 		mDesc.CalcIndent();
+
+		// notify all items that the menu was just created.
+		for(int i=0;i<mDesc.mItems.Size(); i++)
+		{
+			mDesc.mItems[i].OnMenuCreated();
+		}
 	}
 
 	

@@ -62,6 +62,7 @@
 #include "r_sky.h"
 #include "gstrings.h"
 #include "gi.h"
+#include "g_game.h"
 #include "sc_man.h"
 #include "c_bind.h"
 #include "info.h"
@@ -4961,6 +4962,7 @@ enum EACSFunctions
 	ACSF_Round,
 	ACSF_Ceil,
 	ACSF_ScriptCall,
+	ACSF_StartSlideshow,
 
 
 	// OpenGL stuff
@@ -6807,6 +6809,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_ScriptCall:
 			return ScriptCall(argCount, args);
+
+		case ACSF_StartSlideshow:
+			G_StartSlideshow(FName(FBehavior::StaticLookupString(args[0])));
+			break;
 
 		default:
 			break;

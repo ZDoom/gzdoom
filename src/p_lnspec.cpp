@@ -75,9 +75,6 @@
 */
 static const uint8_t ChangeMap[8] = { 0, 1, 5, 3, 7, 2, 6, 0 };
 
-int LS_Sector_SetPlaneReflection(line_t *ln, AActor *it, bool backSide, int arg0, int arg1, int arg2, int arg3, int arg4);
-int LS_SetGlobalFogParameter(line_t *ln, AActor *it, bool backSide, int arg0, int arg1, int arg2, int arg3, int arg4);
-
 
 #define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
 	int arg0, int arg1, int arg2, int arg3, int arg4)

@@ -47,6 +47,7 @@ public:
 	void FreeAll();
 	void FreeAllBlocks();
 	void DumpInfo();
+	void DumpData(FILE *f);
 
 protected:
 	struct Block;

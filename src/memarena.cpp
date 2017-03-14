@@ -168,6 +168,23 @@ void FMemArena::DumpInfo()
 
 //==========================================================================
 //
+// FMemArena :: DumpInfo
+//
+// Dumps the arena to a file (for debugging)
+//
+//==========================================================================
+
+void FMemArena::DumpData(FILE *f)
+{
+	for (auto block = TopBlock; block != NULL; block = block->NextBlock)
+	{
+		auto used = BlockSize - ((char*)block->Limit - (char*)block->Avail);
+		fwrite(block, 1, used, f);
+	}
+}
+
+//==========================================================================
+//
 // FMemArena :: FreeBlockChain
 //
 // Frees a chain of blocks.

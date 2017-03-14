@@ -197,6 +197,10 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 			cls->Defaults.Push(static_cast<ZCC_Default *>(node));
 			break;
 
+		case AST_StaticArrayStatement:
+			cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
+			break;
+
 		default:
 			assert(0 && "Unhandled AST node type");
 			break;
@@ -258,6 +262,10 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 
 		case AST_EnumTerminator:
 			enumType = nullptr;
+			break;
+
+		case AST_StaticArrayStatement:
+			cls->Arrays.Push(static_cast<ZCC_StaticArrayStatement *>(node));
 			break;
 
 		default:

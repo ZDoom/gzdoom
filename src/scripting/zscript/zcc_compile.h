@@ -22,6 +22,7 @@ struct ZCC_StructWork
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_VarDeclarator *> Fields;
 	TArray<ZCC_FuncDeclarator *> Functions;
+	TArray<ZCC_StaticArrayStatement *> Arrays;
 
 	ZCC_StructWork()
 	{

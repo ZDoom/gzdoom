@@ -305,6 +305,25 @@ static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void 
 			tokentype = ZCC_NWS;
 			break;
 
+		case TK_Static:
+			sc.MustGetAnyToken();
+			// The oh so wonderful grammar has problems with the 'const' token thanks to the overly broad rule for constants,
+			// which effectively prevents use of this token nearly anywhere else. So in order to get 'static const' through
+			// on the class/struct level we have to muck around with the token type here so that both words get combined into 
+			// a single token that doesn't make the grammar throw a fit.
+			if (sc.TokenType == TK_Const)
+			{
+				tokentype = ZCC_STATICCONST;
+				value.Int = NAME_Staticconst;
+			}
+			else
+			{
+				tokentype = ZCC_STATIC;
+				value.Int = NAME_Static;
+				sc.UnGet();
+			}
+			break;
+
 		default:
 			TokenMapEntry *zcctoken = TokenMap.CheckKey(sc.TokenType);
 			if (zcctoken != nullptr)

@@ -643,6 +643,8 @@ xx(floorglowheight)
 xx(ceilingglowcolor)
 xx(ceilingglowheight)
 xx(fogdensity)
+xx(Static)
+xx(Staticconst)
 
 // USDF keywords
 xx(Amount)

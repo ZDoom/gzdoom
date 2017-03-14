@@ -155,6 +155,7 @@ struct gameinfo_t
 	FString CursorPic;
 	uint32_t dimcolor;
 	float dimamount;
+	float bluramount;
 	int definventorymaxamount;
 	int defaultrespawntime;
 	int defaultdropstyle;

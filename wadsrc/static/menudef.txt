@@ -2169,6 +2169,8 @@ OptionMenu "OpenGLOptions"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
 	StaticText " "
+	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
+	StaticText " "
 	Option "$GLPREFMNU_VRMODE",					vr_mode, 						"VRMode"
 	Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"
 	StaticText " "

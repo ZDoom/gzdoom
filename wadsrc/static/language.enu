@@ -2696,6 +2696,7 @@ GLPREFMNU_SPRBILLFACECAMERA 	= "Sprites face camera";
 GLPREFMNU_PARTICLESTYLE 		= "Particle style";
 GLPREFMNU_AMBLIGHT 				= "Ambient light level";
 GLPREFMNU_RENDERQUALITY 		= "Rendering quality";
+GLPREFMNU_MENUBLUR				= "Menu Blur";
 GLPREFMNU_VRMODE 				= "Stereo 3D VR";
 GLPREFMNU_VRQUADSTEREO 			= "Enable Quad Stereo";
 GLPREFMNU_MULTISAMPLE			= "Multisample";

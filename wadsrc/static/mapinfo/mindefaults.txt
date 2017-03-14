@@ -27,6 +27,7 @@ gameinfo
 	intermissioncounter = true
 	dimcolor = "6f 00 6b"
 	dimamount = 0.8
+	bluramount = 0.0
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1

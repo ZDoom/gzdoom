@@ -145,8 +145,7 @@ CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITC
 		GLRenderer->ClearTonemapPalette();
 }
 
-CVAR(Float, gl_menu_blur, 1.0f, CVAR_ARCHIVE)
-CVAR(Bool, gl_menu_blur_enabled, true, CVAR_ARCHIVE)
+CVAR(Float, gl_menu_blur, -1.0f, CVAR_ARCHIVE)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -475,10 +474,17 @@ void FGLRenderer::BloomScene(int fixedcm)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::BlurScene()
+void FGLRenderer::BlurScene(float gameinfobluramount)
 {
+	// first, respect the CVar
 	float blurAmount = gl_menu_blur;
-	if ((!gl_menu_blur_enabled) || (gl_menu_blur <= 0.0) || !FGLRenderBuffers::IsEnabled())
+
+	// if CVar is negative, use the gameinfo entry
+	if (gl_menu_blur < 0)
+		blurAmount = gameinfobluramount;
+
+	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
+	if ((blurAmount <= 0.0) || !FGLRenderBuffers::IsEnabled())
 		return;
 
 	FGLDebug::PushGroup("BlurScene");

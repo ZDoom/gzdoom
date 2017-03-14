@@ -178,7 +178,7 @@ public:
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void ApplyFXAA();
-	void BlurScene();
+	void BlurScene(float gameinfobluramount);
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();

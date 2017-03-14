@@ -57,6 +57,7 @@
 #include "textures/textures.h"
 #include "virtual.h"
 #include "events.h"
+#include "gl/renderer/gl_renderer.h" // for menu blur
 
 //
 // Todo: Move these elsewhere
@@ -780,6 +781,8 @@ void M_Drawer (void)
 		if (!CurrentMenu->DontDim)
 		{
 			screen->Dim(fade);
+			if (GLRenderer)
+				GLRenderer->BlurScene();
 			V_SetBorderNeedRefresh();
 		}
 		CurrentMenu->CallDrawer();

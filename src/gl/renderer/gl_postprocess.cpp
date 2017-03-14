@@ -166,7 +166,7 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
-	BlurScene();
+	//BlurScene();
 }
 
 //-----------------------------------------------------------------------------
@@ -474,14 +474,19 @@ void FGLRenderer::BloomScene(int fixedcm)
 //
 //-----------------------------------------------------------------------------
 
+CVAR(Float, gl_menu_blur, 5.0f, CVAR_ARCHIVE)
+CVAR(Bool, gl_menu_blur_enabled, false, CVAR_ARCHIVE)
+
 void FGLRenderer::BlurScene()
 {
+	if ((!gl_menu_blur_enabled) || (gl_menu_blur <= 0.0))
+		return;
 	FGLDebug::PushGroup("BlurScene");
 
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
 
-	const float blurAmount = 5.0f;
+	const float blurAmount = gl_menu_blur;
 	int sampleCount = 9;
 	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
 	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);

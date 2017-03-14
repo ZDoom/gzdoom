@@ -1099,7 +1099,7 @@ struct FieldDesc
 {
 	const char *ClassName;
 	const char *FieldName;
-	intptr_t FieldOffset;
+	size_t FieldOffset;
 	unsigned FieldSize;
 	int BitValue;
 };
@@ -1144,6 +1144,12 @@ struct AFuncDesc
 	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##icls##_##name;
 
+// This is for cases where the internal size does not match the part that gets exported.
+#define DEFINE_FIELD_UNSIZED(cls, icls, name) \
+	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), ~0u, 0 }; \
+	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##icls##_##name;
+
 #define DEFINE_FIELD_NAMED_X(cls, icls, name, scriptname) \
 	static const FieldDesc VMField_##cls##_##scriptname = { "A" #cls, #scriptname, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
 	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
@@ -1170,12 +1176,12 @@ struct AFuncDesc
 	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
 #define DEFINE_GLOBAL(name) \
-	static const FieldDesc VMGlobal_##name = { "", #name, (intptr_t)&name, (unsigned)sizeof(name), 0 }; \
+	static const FieldDesc VMGlobal_##name = { "", #name, (size_t)&name, (unsigned)sizeof(name), 0 }; \
 	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
 
 #define DEFINE_GLOBAL_NAMED(iname, name) \
-	static const FieldDesc VMGlobal_##name = { "", #name, (intptr_t)&iname, (unsigned)sizeof(iname), 0 }; \
+	static const FieldDesc VMGlobal_##name = { "", #name, (size_t)&iname, (unsigned)sizeof(iname), 0 }; \
 	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
 

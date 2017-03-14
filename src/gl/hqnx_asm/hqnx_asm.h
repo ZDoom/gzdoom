@@ -33,7 +33,7 @@
 // To re-implement this class for different platform you need check very carefully
 // the Intel C++ Intrinsic Reference at http://software.intel.com/file/18072/
 
-#if defined _MSC_VER && defined _M_X64
+#if _M_IX86_FP>=2 || defined(_M_X64) || defined(__SSE2__)
 
 // Implementation via SSE2 intrinsics
 // MSVC doesn't support MMX intrinsics on x64

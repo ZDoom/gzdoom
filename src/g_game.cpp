@@ -1766,6 +1766,8 @@ void G_DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
+		bool isUnfriendly = players[playernum].mo && !(players[playernum].mo->flags & MF_FRIENDLY);
+
 		// respawn at the start
 		// first disassociate the corpse
 		if (players[playernum].mo)
@@ -1775,7 +1777,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 
 		// spawn at random spot if in deathmatch
-		if (deathmatch)
+		if (deathmatch || isUnfriendly)
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;

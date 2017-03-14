@@ -145,6 +145,8 @@ CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITC
 		GLRenderer->ClearTonemapPalette();
 }
 
+CVAR(Float, gl_menu_blur, 1.0f, CVAR_ARCHIVE)
+CVAR(Bool, gl_menu_blur_enabled, true, CVAR_ARCHIVE)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -166,7 +168,6 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
-	//BlurScene();
 }
 
 //-----------------------------------------------------------------------------
@@ -474,19 +475,17 @@ void FGLRenderer::BloomScene(int fixedcm)
 //
 //-----------------------------------------------------------------------------
 
-CVAR(Float, gl_menu_blur, 5.0f, CVAR_ARCHIVE)
-CVAR(Bool, gl_menu_blur_enabled, false, CVAR_ARCHIVE)
-
 void FGLRenderer::BlurScene()
 {
-	if ((!gl_menu_blur_enabled) || (gl_menu_blur <= 0.0))
+	float blurAmount = gl_menu_blur;
+	if ((!gl_menu_blur_enabled) || (gl_menu_blur <= 0.0) || !FGLRenderBuffers::IsEnabled())
 		return;
+
 	FGLDebug::PushGroup("BlurScene");
 
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
 
-	const float blurAmount = gl_menu_blur;
 	int sampleCount = 9;
 	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
 	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);

@@ -920,6 +920,75 @@ DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
 	ACTION_RETURN_BOOL(self->TakeInventory(item, amount, fromdecorate, notakeinfinite));
 }
 
+
+
+bool AActor::SetInventory(PClassActor *itemtype, int amount, bool beyondMax)
+{
+	AInventory *item = FindInventory(itemtype);
+
+	if (item != nullptr)
+	{
+		// A_SetInventory sets the absolute amount. 
+		// Subtract or set the appropriate amount as necessary.
+
+		if (amount == item->Amount)
+		{
+			// Nothing was changed.
+			return false;
+		}
+		else if (amount <= 0)
+		{
+			//Remove it all.
+			return TakeInventory(itemtype, item->Amount, true, false);
+		}
+		else if (amount < item->Amount)
+		{
+			int amt = abs(item->Amount - amount);
+			return TakeInventory(itemtype, amt, true, false);
+		}
+		else
+		{
+			item->Amount = (beyondMax ? amount : clamp(amount, 0, item->MaxAmount));
+			return true;
+		}
+	}
+	else
+	{
+		if (amount <= 0)
+		{
+			return true;
+		}
+		item = static_cast<AInventory *>(Spawn(itemtype));
+		if (item == nullptr)
+		{
+			return false;
+		}
+		else
+		{
+			item->Amount = amount;
+			item->flags |= MF_DROPPED;
+			item->ItemFlags |= IF_IGNORESKILL;
+			item->ClearCounters();
+			if (!item->CallTryPickup(this))
+			{
+				item->Destroy();
+				return false;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(item, AInventory);
+	PARAM_INT(amount);
+	PARAM_BOOL_DEF(beyondMax);
+	ACTION_RETURN_BOOL(self->SetInventory(item, amount, beyondMax));
+}
+
 //============================================================================
 //
 // AActor :: DestroyAllInventory

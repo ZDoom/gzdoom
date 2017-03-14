@@ -61,7 +61,7 @@ const char *GetVersionString();
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 233
+#define NETGAMEVERSION 234
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -71,7 +71,7 @@ const char *GetVersionString();
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
 // Otherwise, it should be safe to leave it alone.
-#define DEMOGAMEVERSION 0x21F
+#define DEMOGAMEVERSION 0x220
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.

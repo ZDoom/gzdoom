@@ -602,6 +602,30 @@ const char *cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo
 	return "";
 }
 
+void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
+{
+	if (!stricmp(string, "health"))
+	{
+		if (amount <= 0)
+		{
+			cht_Suicide(player);
+			return;
+		}
+		if (!beyond) amount = MIN(amount, player->mo->GetMaxHealth(true));
+		player->health = player->mo->health = amount;
+	}
+	else
+	{
+		auto item = PClass::FindActor(string);
+		if (item != nullptr && item->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		{
+			player->mo->SetInventory(item, amount, beyond);
+			return;
+		}
+		Printf("Unknown item \"%s\"\n", string);
+	}
+}
+
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	if (player->mo == nullptr)	return;

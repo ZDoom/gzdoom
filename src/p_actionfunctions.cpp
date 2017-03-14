@@ -2382,63 +2382,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetInventory)
 	{
 		mobj = mobj->player->mo;
 	}
-
-	AInventory *item = mobj->FindInventory(itemtype);
-
-	if (item != nullptr)
-	{
-		// A_SetInventory sets the absolute amount. 
-		// Subtract or set the appropriate amount as necessary.
-
-		if (amount == item->Amount)
-		{
-			// Nothing was changed.
-			ACTION_RETURN_BOOL(false);
-		}
-		else if (amount <= 0)
-		{
-			//Remove it all.
-			res = (mobj->TakeInventory(itemtype, item->Amount, true, false));
-			ACTION_RETURN_BOOL(res);
-		}
-		else if (amount < item->Amount)
-		{
-			int amt = abs(item->Amount - amount);
-			res = (mobj->TakeInventory(itemtype, amt, true, false));
-			ACTION_RETURN_BOOL(res);
-		}
-		else
-		{
-			item->Amount = (beyondMax ? amount : clamp(amount, 0, item->MaxAmount));
-			ACTION_RETURN_BOOL(true);
-		}
-	}
-	else
-	{
-		if (amount <= 0)
-		{
-			ACTION_RETURN_BOOL(false);
-		}
-		item = static_cast<AInventory *>(Spawn(itemtype));
-		if (item == nullptr)
-		{
-			ACTION_RETURN_BOOL(false);
-		}
-		else
-		{
-			item->Amount = amount;
-			item->flags |= MF_DROPPED;
-			item->ItemFlags |= IF_IGNORESKILL;
-			item->ClearCounters();
-			if (!item->CallTryPickup(mobj))
-			{
-				item->Destroy();
-				ACTION_RETURN_BOOL(false);
-			}
-			ACTION_RETURN_BOOL(true);
-		}
-	}
-	ACTION_RETURN_BOOL(false);
+	ACTION_RETURN_BOOL(mobj->SetInventory(itemtype, amount, beyondMax));
 }
 
 //===========================================================================

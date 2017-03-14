@@ -714,6 +714,8 @@ public:
 	// Returns true if the initial item count is positive.
 	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 
+	bool SetInventory(PClassActor *itemclass, int amount, bool beyondMax);
+
 	// Uses an item and removes it from the inventory.
 	virtual bool UseInventory (AInventory *item);
 

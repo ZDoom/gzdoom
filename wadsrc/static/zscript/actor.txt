@@ -596,6 +596,7 @@ class Actor : Thinker native
 	native void RemoveInventory(Inventory inv);
 	native void ClearInventory();
 	native bool GiveInventory(class<Inventory> type, int amount, bool givecheat = false);
+	native bool SetInventory(class<Inventory> itemclass, int amount, bool beyondMax = false);
 	native bool TakeInventory(class<Inventory> itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 	native clearscope Inventory FindInventory(class<Inventory> itemtype, bool subclass = false) const;
 	native Inventory GiveInventoryType(class<Inventory> itemtype);

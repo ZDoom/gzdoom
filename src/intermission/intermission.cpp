@@ -124,12 +124,13 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
 	{
 		PalEntry *palette;
+		uint8_t palbuffer[768];
 		const uint8_t *orgpal;
 		FMemLump lump;
 		int i;
 
-		lump = Wads.ReadLump (lumpnum);
-		orgpal = (uint8_t *)lump.GetMem();
+		ReadPalette(lumpnum, palbuffer);
+		orgpal = (uint8_t *)palbuffer;
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{

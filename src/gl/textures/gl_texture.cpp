@@ -133,9 +133,11 @@ void gl_GenerateGlobalBrightmapFromColormap()
 	if (lump == -1) lump = Wads.CheckNumForName("COLORMAP", ns_colormaps);
 	if (lump == -1) return;
 	FMemLump cmap = Wads.ReadLump(lump);
-	FMemLump palette = Wads.ReadLump("PLAYPAL");
+	uint8_t palbuffer[768];
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), palbuffer);
+
 	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
-	const unsigned char *paldata = (const unsigned char *)palette.GetMem();
+	const uint8_t *paldata = palbuffer;
 
 	const int black = 0;
 	const int white = ColorMatcher.Pick(255,255,255);

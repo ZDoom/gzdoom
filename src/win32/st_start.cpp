@@ -52,6 +52,7 @@
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"
+#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1452,13 +1453,9 @@ void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
 void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info)
 {
 	uint8_t playpal[768];
-	int i;
 
-	{
-		FWadLump lumpr = Wads.OpenLumpName ("PLAYPAL");
-		lumpr.Read (playpal, 768);
-	}
-	for (i = 0; i < 256; ++i)
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), playpal);
+	for (int i = 0; i < 256; ++i)
 	{
 		bitmap_info->bmiColors[i].rgbBlue	= playpal[i*3+2];
 		bitmap_info->bmiColors[i].rgbGreen	= playpal[i*3+1];

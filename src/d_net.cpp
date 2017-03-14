@@ -2210,7 +2210,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_SETINV:
 		s = ReadString(stream);
 		i = ReadLong(stream);
-		cht_SetInv(&players[player], s, i, ReadByte(stream));
+		cht_SetInv(&players[player], s, i, !!ReadByte(stream));
 		break;
 
 	case DEM_WARPCHEAT:

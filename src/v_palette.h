@@ -73,6 +73,7 @@ extern FPalette GPalette;
 int BestColor (const uint32_t *pal, int r, int g, int b, int first=1, int num=255);
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
+void ReadPalette(int lumpnum, uint8_t *buffer);
 void InitPalette ();
 
 // V_SetBlend()

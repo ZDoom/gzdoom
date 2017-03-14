@@ -306,6 +306,40 @@ static int sortforremap2 (const void *a, const void *b)
 	}
 }
 
+void ReadPalette(int lumpnum, uint8_t *buffer)
+{
+	if (lumpnum < 0)
+	{
+		I_FatalError("Palette not found");
+	}
+	FMemLump lump = Wads.ReadLump(lumpnum);
+	uint8_t *lumpmem = (uint8_t*)lump.GetMem();
+	memset(buffer, 0, 768);
+	if (memcmp(lumpmem, "JASC-PAL", 8))
+	{
+		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
+	}
+	else
+	{
+		FScanner sc;
+		
+		sc.OpenMem(Wads.GetLumpFullName(lumpnum), (char*)lumpmem, lump.GetSize());
+		sc.MustGetString();
+		sc.MustGetNumber();	// version - ignore
+		sc.MustGetNumber();	
+		int colors = MIN(256, sc.Number) * 3;
+		for (int i = 0; i < colors; i++)
+		{
+			sc.MustGetNumber();
+			if (sc.Number < 0 || sc.Number > 255)
+			{
+				sc.ScriptError("Color %d value out of range.", sc.Number);
+			}
+			buffer[i] = sc.Number;
+		}
+	}
+}
+
 static bool FixBuildPalette (uint8_t *opal, int lump, bool blood)
 {
 	if (Wads.LumpLength (lump) < 768)
@@ -354,8 +388,7 @@ void InitPalette ()
 
 	if (!usingBuild)
 	{
-		FWadLump palump = Wads.OpenLumpName ("PLAYPAL");
-		palump.Read (pal, 768);
+		ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
 	}
 
 	GPalette.SetPalette (pal);

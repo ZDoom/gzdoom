@@ -37,6 +37,7 @@
 #include "g_level.h"
 #include "colormatcher.h"
 #include "textures/bitmap.h"
+#include "g_levellocals.h"
 //#include "gl/gl_intern.h"
 
 #include "gl/system/gl_interface.h"
@@ -429,7 +430,7 @@ int FVoxelModel::FindFrame(const char * name)
 
 float FVoxelModel::getAspectFactor()
 {
-	return glset.pixelstretch;
+	return level.info->pixelstretch;
 }
 
 //===========================================================================

@@ -51,7 +51,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * glset.pixelstretch;
+	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	float adjustedPitch = (float)asin(angy / alen);
 	float adjustedViewAngle = (float)(viewpoint.Angles.Yaw - 90).Radians();
@@ -61,7 +61,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	TriMatrix worldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
+		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
@@ -160,7 +160,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * glset.pixelstretch;
+	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	float adjustedPitch = (float)asin(angy / alen);
 	float adjustedViewAngle = (float)(viewpoint.Angles.Yaw - 90).Radians();
@@ -170,7 +170,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	TriMatrix worldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
+		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 	if (Mirror)

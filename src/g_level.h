@@ -239,6 +239,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
 	LEVEL3_REMOVEITEMS			= 0x00000002,	// kills all INVBAR items on map change.
 	LEVEL3_ATTENUATE			= 0x00000004,	// attenuate lights?
+	LEVEL3_NOLIGHTFADE			= 0x00000008,	// no light fading to black.
 };
 
 
@@ -303,9 +304,9 @@ struct level_info_t
 	int			cluster;
 	int			partime;
 	int			sucktime;
-	uint32_t		flags;
-	uint32_t		flags2;
-	uint32_t		flags3;
+	int32_t		flags;
+	uint32_t	flags2;
+	uint32_t	flags3;
 
 	FString		Music;
 	FString		LevelName;
@@ -315,27 +316,28 @@ struct level_info_t
 	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
-	uint32_t		fadeto;
-	uint32_t		outsidefog;
+	uint32_t	fadeto;
+	uint32_t	outsidefog;
 	int			cdtrack;
 	unsigned int cdid;
 	double		gravity;
 	double		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
-	uint32_t		compatflags, compatflags2;
-	uint32_t		compatmask, compatmask2;
+	uint32_t	compatflags, compatflags2;
+	uint32_t	compatmask, compatmask2;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
 	FName		Intermission;
 	FName		deathsequence;
 	FName		slideshow;
-	uint32_t		hazardcolor;
-	uint32_t		hazardflash;
+	uint32_t	hazardcolor;
+	uint32_t	hazardflash;
 	int			fogdensity;
 	int			outsidefogdensity;
 	int			skyfog;
-
+	float		pixelstretch;
+	
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;

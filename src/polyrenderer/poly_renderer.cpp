@@ -32,6 +32,7 @@
 #include "d_net.h"
 #include "po_man.h"
 #include "st_stuff.h"
+#include "g_levellocals.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
@@ -196,7 +197,7 @@ void PolyRenderer::SetupPerspectiveMatrix()
 	const auto &viewwindow = Thread.Viewport->viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * glset.pixelstretch;
+	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	float adjustedPitch = (float)asin(angy / alen);
 	float adjustedViewAngle = (float)(viewpoint.Angles.Yaw - 90).Radians();
@@ -208,7 +209,7 @@ void PolyRenderer::SetupPerspectiveMatrix()
 	TriMatrix worldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
+		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 

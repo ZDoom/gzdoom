@@ -140,12 +140,12 @@ namespace swrenderer
 
 		TiltVisibility = float(vis * viewport->viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
 
-		NoLightFade = glset.nolightfade;
+		NoLightFade = !!(level.flags3 & LEVEL3_NOLIGHTFADE);
 	}
 
 	fixed_t LightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 	{
-		bool nolightfade = !foggy && (glset.nolightfade);
+		bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
 		if (nolightfade)
 		{
 			return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);

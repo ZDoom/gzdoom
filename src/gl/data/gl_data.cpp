@@ -56,7 +56,6 @@
 
 GLRenderSettings glset;
 long gl_frameMS;
-long gl_frameCount;
 
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_brightfog)
@@ -193,11 +192,9 @@ struct FGLROptions : public FOptionalMapinfoData
 		brightfog = false;
 		lightmode = -1;
 		nocoloredspritelighting = -1;
-		nolightfade = false;
 		notexturefill = -1;
 		skyrotatevector = FVector3(0,0,1);
 		skyrotatevector2 = FVector3(0,0,1);
-		pixelstretch = 1.2f;
 		lightadditivesurfaces = false;
 	}
 	virtual FOptionalMapinfoData *Clone() const
@@ -206,11 +203,9 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->identifier = identifier;
 		newopt->lightmode = lightmode;
 		newopt->nocoloredspritelighting = nocoloredspritelighting;
-		newopt->nolightfade = nolightfade;
 		newopt->notexturefill = notexturefill;
 		newopt->skyrotatevector = skyrotatevector;
 		newopt->skyrotatevector2 = skyrotatevector2;
-		newopt->pixelstretch = pixelstretch;
 		newopt->lightadditivesurfaces = lightadditivesurfaces;
 		return newopt;
 	}
@@ -219,10 +214,8 @@ struct FGLROptions : public FOptionalMapinfoData
 	int8_t		lightadditivesurfaces;
 	int8_t		nocoloredspritelighting;
 	int8_t		notexturefill;
-	bool		nolightfade;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
-	float		pixelstretch;
 };
 
 DEFINE_MAP_OPTION(brightfog, false)
@@ -252,20 +245,6 @@ DEFINE_MAP_OPTION(nocoloredspritelighting, false)
 	else
 	{
 		opt->nocoloredspritelighting = true;
-	}
-}
-
-DEFINE_MAP_OPTION(nolightfade, false)
-{
-	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
-	if (parse.CheckAssign())
-	{
-		parse.sc.MustGetNumber();
-		opt->nolightfade = !!parse.sc.Number;
-	}
-	else
-	{
-		opt->nolightfade = true;
 	}
 }
 
@@ -329,15 +308,6 @@ DEFINE_MAP_OPTION(skyrotate2, false)
 	opt->skyrotatevector2.MakeUnit();
 }
 
-DEFINE_MAP_OPTION(pixelratio, false)
-{
-	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
-
-	parse.ParseAssign();
-	parse.sc.MustGetFloat();
-	opt->pixelstretch = (float)parse.sc.Float;
-}
-
 bool IsLightmodeValid()
 {
 	return (glset.map_lightmode >= 0 && glset.map_lightmode <= 4) || glset.map_lightmode == 8;
@@ -370,8 +340,6 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = opt->notexturefill;
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
-		glset.pixelstretch = opt->pixelstretch;
-		glset.nolightfade = opt->nolightfade;
 	}
 	else
 	{
@@ -382,8 +350,6 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = -1;
 		glset.skyrotatevector = FVector3(0, 0, 1);
 		glset.skyrotatevector2 = FVector3(0, 0, 1);
-		glset.pixelstretch = 1.2f;
-		glset.nolightfade = false;
 	}
 	ResetOpts();
 }

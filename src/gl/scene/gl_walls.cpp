@@ -1649,7 +1649,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
-		bool drawfogboundary = mDrawer->FixedColormap != CM_DEFAULT && gl_CheckFog(frontsector, backsec);
+		bool drawfogboundary = mDrawer->FixedColormap == CM_DEFAULT && gl_CheckFog(frontsector, backsec);
 		FTexture *tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 		if (tex != NULL)
 		{

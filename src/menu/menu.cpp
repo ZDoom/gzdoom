@@ -782,7 +782,7 @@ void M_Drawer (void)
 		{
 			screen->Dim(fade);
 			if (GLRenderer)
-				GLRenderer->BlurScene();
+				GLRenderer->BlurScene(gameinfo.bluramount);
 			V_SetBorderNeedRefresh();
 		}
 		CurrentMenu->CallDrawer();

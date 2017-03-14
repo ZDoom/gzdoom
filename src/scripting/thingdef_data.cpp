@@ -626,6 +626,30 @@ FPropertyInfo *FindProperty(const char * string)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+template <typename Desc>
+static int CompareClassNames(const char* const aname, const Desc& b)
+{
+	// ++ to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	const char* bname = b.ClassName;
+	if ('\0' != *bname) ++bname;
+	return stricmp(aname, bname);
+}
+
+template <typename Desc>
+static int CompareClassNames(const Desc& a, const Desc& b)
+{
+	// ++ to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	const char* aname = a.ClassName;
+	if ('\0' != *aname) ++aname;
+	return CompareClassNames(aname, b);
+}
+
+//==========================================================================
+//
 // Find a function by name using a binary search
 //
 //==========================================================================
@@ -637,7 +661,7 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp(cls->TypeName.GetChars(), AFTable[mid].ClassName + 1);
+		int lexval = CompareClassNames(cls->TypeName.GetChars(), AFTable[mid]);
 		if (lexval == 0) lexval = stricmp(string, AFTable[mid].FuncName);
 		if (lexval == 0)
 		{
@@ -669,7 +693,7 @@ FieldDesc *FindField(PStruct *cls, const char * string)
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp(cname, FieldTable[mid].ClassName + 1);
+		int lexval = CompareClassNames(cname, FieldTable[mid]);
 		if (lexval == 0) lexval = stricmp(string, FieldTable[mid].FieldName);
 		if (lexval == 0)
 		{
@@ -719,16 +743,14 @@ static int propcmp(const void * a, const void * b)
 
 static int funccmp(const void * a, const void * b)
 {
-	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
-	int res = stricmp(((AFuncDesc*)a)->ClassName + 1, ((AFuncDesc*)b)->ClassName + 1);
+	int res = CompareClassNames(*(AFuncDesc*)a, *(AFuncDesc*)b);
 	if (res == 0) res = stricmp(((AFuncDesc*)a)->FuncName, ((AFuncDesc*)b)->FuncName);
 	return res;
 }
 
 static int fieldcmp(const void * a, const void * b)
 {
-	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
-	int res = stricmp(((FieldDesc*)a)->ClassName + 1, ((FieldDesc*)b)->ClassName + 1);
+	int res = CompareClassNames(*(FieldDesc*)a, *(FieldDesc*)b);
 	if (res == 0) res = stricmp(((FieldDesc*)a)->FieldName, ((FieldDesc*)b)->FieldName);
 	return res;
 }

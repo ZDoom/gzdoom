@@ -59,11 +59,11 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 		return;
 	
 	auto queue = Instance();
-	queue->StartThreads();
 
 	// Add to queue and awaken worker threads
 	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
 	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
+	queue->StartThreads();
 	queue->active_commands.push_back(commands);
 	queue->tasks_left += queue->threads.size();
 	end_lock.unlock();

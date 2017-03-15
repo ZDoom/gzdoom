@@ -301,6 +301,7 @@ namespace swrenderer
 
 			if (visible)
 			{
+				thread->PrepareTexture(WallSpriteTile);
 				while (x < x2)
 				{
 					if (calclighting)

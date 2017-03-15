@@ -36,7 +36,6 @@ namespace swrenderer
 
 	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FTexture *texture, uint32_t column)
 	{
-		thread->PrepareTexture(texture);
 		if (thread->Viewport->RenderTarget->IsBgra())
 		{
 			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
@@ -51,7 +50,6 @@ namespace swrenderer
 
 	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FTexture *texture, uint32_t column)
 	{
-		thread->PrepareTexture(texture);
 		if (texture == nullptr)
 		{
 			dc_source2 = nullptr;

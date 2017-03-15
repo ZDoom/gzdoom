@@ -292,6 +292,7 @@ namespace swrenderer
 			// draw the columns one at a time
 			if (visible)
 			{
+				Thread->PrepareTexture(tex);
 				for (int x = x1; x < x2; ++x)
 				{
 					if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)

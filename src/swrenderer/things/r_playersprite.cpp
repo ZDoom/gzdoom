@@ -628,6 +628,7 @@ namespace swrenderer
 		short *mceilingclip = zeroarray;
 
 		fixed_t frac = startfrac;
+		thread->PrepareTexture(pic);
 		for (int x = x1; x < x2; x++)
 		{
 			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);

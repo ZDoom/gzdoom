@@ -163,6 +163,9 @@ namespace swrenderer
 			drawerargs.SetLight(&NormalLight, 0, 0);
 		}
 
+		Thread->PrepareTexture(frontskytex);
+		Thread->PrepareTexture(backskytex);
+
 		DrawSky(pl);
 	}
 

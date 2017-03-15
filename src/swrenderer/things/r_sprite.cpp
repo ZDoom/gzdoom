@@ -343,6 +343,7 @@ namespace swrenderer
 			{
 				RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
+				thread->PrepareTexture(tex);
 				while (x < x2)
 				{
 					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))

@@ -232,6 +232,7 @@ namespace swrenderer
 		{
 			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
+			thread->PrepareTexture(WallSpriteTile);
 			while (x < x2)
 			{
 				if (calclighting)

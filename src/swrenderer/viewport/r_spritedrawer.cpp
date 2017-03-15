@@ -62,8 +62,6 @@ namespace swrenderer
 		dc_iscale = iscale;
 		dc_textureheight = tex->GetHeight();
 
-		thread->PrepareTexture(tex);
-
 		const FTexture::Span *span;
 		const uint8_t *column;
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
@@ -133,8 +131,6 @@ namespace swrenderer
 		dc_viewport = thread->Viewport.get();
 		dc_x = x;
 		dc_iscale = iscale;
-
-		thread->PrepareTexture(tex);
 
 		// Normalize to 0-1 range:
 		double uv_stepd = FIXED2DBL(dc_iscale);

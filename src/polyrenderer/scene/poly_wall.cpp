@@ -73,7 +73,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 	wall.LineSeg = line;
 	wall.Line = line->linedef;
 	wall.Side = line->sidedef;
-	wall.Colormap = GetColorTable(frontsector->Colormap);
+	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
@@ -175,7 +175,7 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f
 	wall.LineSeg = line;
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
-	wall.Colormap = GetColorTable(frontsector->Colormap);
+	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
@@ -262,7 +262,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	args.stencilwritevalue = StencilValue + 1;
 	if (tex)
 		args.SetTexture(tex);
-	args.SetColormap(GetColorTable(Line->frontsector->Colormap));
+	args.SetColormap(GetColorTable(Line->frontsector->Colormap, Line->frontsector->SpecialColors[sector_t::walltop]));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
 	//if (Side && Side->lighthead)

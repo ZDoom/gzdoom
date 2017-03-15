@@ -124,6 +124,24 @@ struct PalEntry
 	{
 		d = other.d & 0xffffff;
 	}
+	PalEntry Modulate(PalEntry other) const
+	{
+		if (isWhite())
+		{
+			return other;
+		}
+		else if (other.isWhite())
+		{
+			return *this;
+		}
+		else
+		{
+			other.r = (r * other.r) / 255;
+			other.g = (g * other.g) / 255;
+			other.b = (b * other.b) / 255;
+			return other;
+		}
+	}
 	bool isBlack() const
 	{
 		return (d & 0xffffff) == 0;

@@ -224,12 +224,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  floorglowheight = <float>;      // Height of floor glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
 	  ceilingglowcolor = <integer>;   // Sector's ceiling glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
 	  ceilingglowheight = <float>;    // Height of ceiling glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
-	  color_floor = <int>;            // Material color of sector's floor (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later) Default is white (0xffffff)
-	  color_ceiling = <int>;          // Material color of sector's ceiling (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later) Default is white (0xffffff)
-	  color_walltop = <int>;          // Material color of top of sector's sidedefs (OpenGL only, dynamic lighting only works properly in OpenGL 3.x and later, 
-	                                     in OpenGL 2.x this will define the entire wall's color) Default is white (0xffffff)
+	  color_floor = <int>;            // Material color of sector's floor. Default is white (0xffffff)
+	  color_ceiling = <int>;          // Material color of sector's ceiling. Default is white (0xffffff)
+	  color_walltop = <int>;          // Material color of top of sector's sidedefs. In OpenGL 2.x and the software renderer this will define the entire wall's color) Default is white (0xffffff)
 	  color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
-	  color_sprites = <int>;          // Material color of sprites in sector (OpenGL only.) Default is white (0xffffff)
+	  color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
 							  
 
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.

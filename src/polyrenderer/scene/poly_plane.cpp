@@ -345,7 +345,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.ccw = ccw;
 	args.stenciltestvalue = stencilValue;
 	args.stencilwritevalue = stencilValue + 1;
-	args.SetColormap(GetColorTable(frontsector->Colormap));
+	args.SetColormap(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
 	if (!isSky)

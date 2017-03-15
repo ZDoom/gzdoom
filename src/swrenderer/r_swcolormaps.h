@@ -46,15 +46,16 @@ void SetDefaultColormap (const char *name);
 #endif
 
 // MSVC needs the forceinline here.
-FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm)
+FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm, PalEntry SpecialColor = 0xffffff)
 {
+	auto c =  SpecialColor.Modulate(cm.LightColor);
 	auto p = &NormalLight;
-	if (cm.LightColor == p->Color &&
+	if (c == p->Color &&
 		cm.FadeColor == p->Fade &&
 		cm.Desaturation == p->Desaturate)
 	{
 		return p;
 	}
 
-	return GetSpecialLights(cm.LightColor, cm.FadeColor, cm.Desaturation);
+	return GetSpecialLights(c, cm.FadeColor, cm.Desaturation);
 }

@@ -103,9 +103,9 @@ namespace swrenderer
 							break;
 						sec = rover->model;
 						if (rover->flags & FF_FADEWALLS)
-							basecolormap = GetColorTable(sec->Colormap);
+							basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites]);
 						else
-							basecolormap = GetColorTable(Thread->Viewport->viewpoint.sector->e->XFloor.lightlist[i].extra_colormap);
+							basecolormap = GetColorTable(Thread->Viewport->viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites]);
 					}
 					break;
 				}
@@ -113,7 +113,7 @@ namespace swrenderer
 			if (!sec)
 			{
 				sec = Thread->Viewport->viewpoint.sector;
-				basecolormap = GetColorTable(sec->Colormap);
+				basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites]);
 			}
 			floorlight = ceilinglight = sec->lightlevel;
 		}
@@ -123,7 +123,7 @@ namespace swrenderer
 			sec = Thread->OpaquePass->FakeFlat(Thread->Viewport->viewpoint.sector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
 
 			// [RH] set basecolormap
-			basecolormap = GetColorTable(sec->Colormap);
+			basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites]);
 		}
 
 		// [RH] set foggy flag

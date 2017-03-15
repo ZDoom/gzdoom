@@ -692,6 +692,7 @@ public:
 	int SpecialMissileHit (AActor *victim);
 
 	// Returns true if it's okay to switch target to "other" after being attacked by it.
+	bool CallOkayToSwitchTarget(AActor *other);
 	bool OkayToSwitchTarget (AActor *other);
 
 	// Note: Although some of the inventory functions are virtual, this

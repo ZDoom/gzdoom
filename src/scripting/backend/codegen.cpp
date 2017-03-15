@@ -6293,7 +6293,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					else
 					{
 						auto f = dyn_cast<PField>(sym);
-						if (f != nullptr && (f->Flags & VARF_Static | VARF_ReadOnly) == (VARF_Static | VARF_ReadOnly))
+						if (f != nullptr && (f->Flags & (VARF_Static | VARF_ReadOnly | VARF_Meta)) == (VARF_Static | VARF_ReadOnly))
 						{
 							auto x = new FxGlobalVariable(f, ScriptPosition);
 							delete this;
@@ -6944,7 +6944,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	}
 
 	// Even though this is global, static and readonly, we still need to do the scope checks for consistency.
-	if ((membervar->Flags & (VARF_Static | VARF_ReadOnly)) == (VARF_Static | VARF_ReadOnly))
+	if ((membervar->Flags & (VARF_Static | VARF_ReadOnly | VARF_Meta)) == (VARF_Static | VARF_ReadOnly))
 	{
 		// This is a static constant array, which is stored at a constant address, like a global variable.
 		auto x = new FxGlobalVariable(membervar, ScriptPosition);

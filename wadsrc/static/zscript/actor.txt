@@ -438,7 +438,7 @@ class Actor : Thinker native
 		return Obituary;
 	}
 	
-
+	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);
 	native static int GetSpriteIndex(name sprt);

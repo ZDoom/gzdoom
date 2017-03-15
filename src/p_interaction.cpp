@@ -1682,8 +1682,13 @@ DEFINE_ACTION_FUNCTION(AActor, PoisonMobj)
 	return 0;
 }
 
+//==========================================================================
+//
+// OkayToSwitchTarget
+//
+//==========================================================================
 
-bool AActor::OkayToSwitchTarget (AActor *other)
+bool AActor::OkayToSwitchTarget(AActor *other)
 {
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
@@ -1742,6 +1747,27 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 
 	return true;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, OkayToSwitchTarget)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_BOOL(self->OkayToSwitchTarget(other));
+}
+
+bool AActor::CallOkayToSwitchTarget(AActor *other)
+{
+	IFVIRTUAL(AActor, OkayToSwitchTarget)
+	{
+		VMValue params[] = { (DObject*)this, other };
+		int retv;
+		VMReturn ret(&retv);
+		GlobalVMStack.Call(func, params, 2, &ret, 1);
+		return !!retv;
+	}
+	return false;
+}
+
 
 //==========================================================================
 //

@@ -240,6 +240,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_REMOVEITEMS			= 0x00000002,	// kills all INVBAR items on map change.
 	LEVEL3_ATTENUATE			= 0x00000004,	// attenuate lights?
 	LEVEL3_NOLIGHTFADE			= 0x00000008,	// no light fading to black.
+	LEVEL3_NOCOLOREDSPRITELIGHTING = 0x00000010,	// draw sprites only with color-less light
 };
 
 

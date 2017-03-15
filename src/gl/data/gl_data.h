@@ -9,13 +9,11 @@
 struct GLRenderSettings
 {
 	int8_t lightmode;
-	bool nocoloredspritelighting;
 	bool notexturefill;
 	bool brightfog;
 	bool lightadditivesurfaces;
 
 	int8_t map_lightmode;
-	int8_t map_nocoloredspritelighting;
 	int8_t map_notexturefill;
 	int8_t map_brightfog;
 	int8_t map_lightadditivesurfaces;

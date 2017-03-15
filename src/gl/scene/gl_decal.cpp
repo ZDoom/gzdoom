@@ -29,6 +29,7 @@
 #include "gl/system/gl_system.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_data.h"
@@ -161,7 +162,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	
 	FColormap p = Colormap;
 	
-	if (glset.nocoloredspritelighting)
+	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 	{
 		p.Decolorize();
 	}
@@ -346,7 +347,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&(*lightlist)[k]);
 				mDrawer->SetColor(thisll, rel, thiscm, a);
-				if (glset.nocoloredspritelighting) thiscm.Decolorize();
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
 				gl_RenderState.SetSplitPlanes((*lightlist)[k].plane, lowplane);
 

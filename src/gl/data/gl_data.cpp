@@ -79,11 +79,6 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, 0)
 }
 
 
-CUSTOM_CVAR(Bool, gl_nocoloredspritelighting, false, 0)
-{
-	glset.nocoloredspritelighting = self;
-}
-
 void gl_CreateSections();
 
 //-----------------------------------------------------------------------------
@@ -191,7 +186,6 @@ struct FGLROptions : public FOptionalMapinfoData
 		identifier = "gl_renderer";
 		brightfog = false;
 		lightmode = -1;
-		nocoloredspritelighting = -1;
 		notexturefill = -1;
 		skyrotatevector = FVector3(0,0,1);
 		skyrotatevector2 = FVector3(0,0,1);
@@ -202,7 +196,6 @@ struct FGLROptions : public FOptionalMapinfoData
 		FGLROptions *newopt = new FGLROptions;
 		newopt->identifier = identifier;
 		newopt->lightmode = lightmode;
-		newopt->nocoloredspritelighting = nocoloredspritelighting;
 		newopt->notexturefill = notexturefill;
 		newopt->skyrotatevector = skyrotatevector;
 		newopt->skyrotatevector2 = skyrotatevector2;
@@ -212,7 +205,6 @@ struct FGLROptions : public FOptionalMapinfoData
 	int			lightmode;
 	int			brightfog;
 	int8_t		lightadditivesurfaces;
-	int8_t		nocoloredspritelighting;
 	int8_t		notexturefill;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
@@ -232,20 +224,6 @@ DEFINE_MAP_OPTION(lightmode, false)
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	opt->lightmode = uint8_t(parse.sc.Number);
-}
-
-DEFINE_MAP_OPTION(nocoloredspritelighting, false)
-{
-	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
-	if (parse.CheckAssign())
-	{
-		parse.sc.MustGetNumber();
-		opt->nocoloredspritelighting = !!parse.sc.Number;
-	}
-	else
-	{
-		opt->nocoloredspritelighting = true;
-	}
 }
 
 DEFINE_MAP_OPTION(notexturefill, false)
@@ -317,8 +295,6 @@ static void ResetOpts()
 {
 	if (!IsLightmodeValid()) glset.lightmode = gl_lightmode;
 	else glset.lightmode = glset.map_lightmode;
-	if (glset.map_nocoloredspritelighting == -1) glset.nocoloredspritelighting = gl_nocoloredspritelighting;
-	else glset.nocoloredspritelighting = !!glset.map_nocoloredspritelighting;
 	if (glset.map_notexturefill == -1) glset.notexturefill = gl_notexturefill;
 	else glset.notexturefill = !!glset.map_notexturefill;
 	if (glset.map_brightfog == -1) glset.brightfog = gl_brightfog;
@@ -336,7 +312,6 @@ void InitGLRMapinfoData()
 		glset.map_lightmode = opt->lightmode;
 		glset.map_lightadditivesurfaces = opt->lightadditivesurfaces;
 		glset.map_brightfog = opt->brightfog;
-		glset.map_nocoloredspritelighting = opt->nocoloredspritelighting;
 		glset.map_notexturefill = opt->notexturefill;
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
@@ -346,7 +321,6 @@ void InitGLRMapinfoData()
 		glset.map_lightmode = -1;
 		glset.map_lightadditivesurfaces = -1;
 		glset.map_brightfog = -1;
-		glset.map_nocoloredspritelighting = -1;
 		glset.map_notexturefill = -1;
 		glset.skyrotatevector = FVector3(0, 0, 1);
 		glset.skyrotatevector2 = FVector3(0, 0, 1);

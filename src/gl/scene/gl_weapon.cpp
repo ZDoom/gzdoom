@@ -251,7 +251,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		lightlevel = gl_ClampLight(fakesec->lightlevel);
 
 		// calculate colormap for weapon sprites
-		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)
+		if (viewsector->e->XFloor.ffloors.Size() && !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING))
 		{
 			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
 			for(i=0;i<lightlist.Size();i++)
@@ -278,7 +278,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		else 
 		{
 			cm=fakesec->Colormap;
-			if (glset.nocoloredspritelighting) cm.ClearColor();
+			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) cm.ClearColor();
 		}
 
 		lightlevel = gl_CalcLightLevel(lightlevel, getExtraLight(), true);

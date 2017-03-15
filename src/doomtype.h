@@ -142,6 +142,11 @@ struct PalEntry
 			return other;
 		}
 	}
+	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
+	{
+		int v = (r + g + b);
+		r = g = b = ((255*3) + v + v) / 9;
+	}
 	bool isBlack() const
 	{
 		return (d & 0xffffff) == 0;

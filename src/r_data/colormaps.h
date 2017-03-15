@@ -64,10 +64,9 @@ struct FColormap
 
 	void CopyFrom3DLight(lightlist_t *light);
 
-	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
+	void Decolorize()
 	{
-		int v = (LightColor.r + LightColor.g + LightColor.b) / 3;
-		LightColor.r = LightColor.g = LightColor.b = (255 + v + v) / 3;
+		LightColor.Decolorize();
 	}
 
 	bool operator == (const FColormap &other)

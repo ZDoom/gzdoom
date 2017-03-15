@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include "g_levellocals.h"
 
 struct FSWColormap
 {
@@ -46,9 +47,16 @@ void SetDefaultColormap (const char *name);
 #endif
 
 // MSVC needs the forceinline here.
-FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm, PalEntry SpecialColor = 0xffffff)
+FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm, PalEntry SpecialColor = 0xffffff, bool forsprites = false)
 {
-	auto c =  SpecialColor.Modulate(cm.LightColor);
+	PalEntry c;
+	if (!forsprites || !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)) c =  SpecialColor.Modulate(cm.LightColor);
+	else
+	{
+		c = cm.LightColor;
+		c.Decolorize();
+		c = SpecialColor.Modulate(c);
+	}
 	auto p = &NormalLight;
 	if (c == p->Color &&
 		cm.FadeColor == p->Fade &&

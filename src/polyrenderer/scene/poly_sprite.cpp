@@ -162,7 +162,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	args.stenciltestvalue = stencilValue;
 	args.stencilwritevalue = stencilValue;
 	args.SetTexture(tex, thing->Translation);
-	args.SetColormap(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites]));
+	args.SetColormap(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
 	TriBlendMode blendmode;

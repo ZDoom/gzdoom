@@ -401,7 +401,7 @@ void GLSprite::Draw(int pass)
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
 			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
-			if (glset.nocoloredspritelighting)
+			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				thiscm.Decolorize();
 			}
@@ -527,7 +527,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 			copySprite.lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
 			copySprite.Colormap.CopyLight(lightlist[i].extra_colormap);
 
-			if (glset.nocoloredspritelighting)
+			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				copySprite.Colormap.Decolorize();
 			}
@@ -940,7 +940,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 				Colormap.LightColor.b = (3 * Colormap.LightColor.b + 0xff) / 4;
 			}
 		}
-		else if (glset.nocoloredspritelighting)
+		else if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 		{
 			Colormap.Decolorize();
 		}
@@ -1118,7 +1118,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 				break;
 			}
 		}
-		if (glset.nocoloredspritelighting)
+		if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 		{
 			Colormap.Decolorize();	// ZDoom never applies colored light to particles.
 		}

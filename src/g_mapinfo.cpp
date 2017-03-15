@@ -1357,6 +1357,7 @@ MapFlagHandlers[] =
 	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
+	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
@@ -1431,7 +1432,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG:
-				info.flags |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags |= handler->data1;
+					else info.flags &= ~handler->data1;
+				}
 				info.flags |= handler->data2;
 				break;
 
@@ -1445,7 +1455,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG2:
-				info.flags2 |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags2 |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags2 |= handler->data1;
+					else info.flags2 &= ~handler->data1;
+				}
 				info.flags2 |= handler->data2;
 				break;
 
@@ -1459,7 +1478,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG3:
-				info.flags3 |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags3 |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags3 |= handler->data1;
+					else info.flags3 &= ~handler->data1;
+				}
 				info.flags3 |= handler->data2;
 				break;
 

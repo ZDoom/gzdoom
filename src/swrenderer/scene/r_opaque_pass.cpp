@@ -702,7 +702,7 @@ namespace swrenderer
 			ceilingplane = backupcp;
 		}
 
-		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites]);
+		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true);
 		floorlightlevel = fll;
 		ceilinglightlevel = cll;
 
@@ -886,7 +886,7 @@ namespace swrenderer
 					{
 						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
 						thingShade = LightVisibility::LightLevelToShade(lightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
-						thingColormap = GetColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites]);
+						thingColormap = GetColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites], true);
 					}
 
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)

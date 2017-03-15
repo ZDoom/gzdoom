@@ -465,15 +465,15 @@ namespace swrenderer
 
 				if (visstyle.Invert)
 				{
-					vis.Light.BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
+					vis.Light.BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
 					vis.Light.ColormapNum = 0;
 					noaccel = true;
 				}
 			}
 			// If we're drawing with a special colormap, but shaders for them are disabled, do
 			// not accelerate.
-			if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialColormaps[0] &&
-				vis.Light.BaseColormap <= &SpecialColormaps.Last()))
+			if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
+				vis.Light.BaseColormap <= &SpecialSWColormaps.Last()))
 			{
 				noaccel = true;
 			}
@@ -524,10 +524,10 @@ namespace swrenderer
 				accelSprite.x1 = x1;
 				accelSprite.flip = vis.xiscale < 0;
 
-				if (vis.Light.BaseColormap >= &SpecialColormaps[0] &&
-					vis.Light.BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
+				if (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
+					vis.Light.BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
 				{
-					accelSprite.special = static_cast<FSpecialColormap*>(vis.Light.BaseColormap);
+					accelSprite.special = &SpecialColormaps[vis.Light.BaseColormap - &SpecialSWColormaps[0]];
 				}
 				else if (CameraLight::Instance()->ShaderColormap())
 				{

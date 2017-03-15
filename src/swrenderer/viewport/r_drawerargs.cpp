@@ -19,6 +19,7 @@ namespace swrenderer
 	void DrawerArgs::SetLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		mBaseColormap = base_colormap;
+		assert(mBaseColormap->Maps != nullptr);
 		mLight = light;
 		mShade = shade;
 	}

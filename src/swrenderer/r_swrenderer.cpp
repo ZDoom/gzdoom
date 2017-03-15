@@ -49,6 +49,7 @@
 #include "drawers/r_draw_rgba.h"
 #include "polyrenderer/poly_renderer.h"
 #include "p_setup.h"
+#include "g_levellocals.h"
 
 void gl_InitData();
 void gl_PreprocessLevel();
@@ -84,11 +85,7 @@ FSoftwareRenderer::~FSoftwareRenderer()
 void FSoftwareRenderer::Init()
 {
 	mScene.Init();
-}
-
-bool FSoftwareRenderer::UsesColormap() const
-{
-	return true;
+	InitSWColorMaps();		
 }
 
 void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
@@ -356,6 +353,19 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 void FSoftwareRenderer::PreprocessLevel()
 {
 	gl_PreprocessLevel();
+	// This just sets the default colormap for the spftware renderer.
+	NormalLight.Maps = realcolormaps.Maps;
+	NormalLight.ChangeColor(PalEntry(255, 255, 255), 0);
+	NormalLight.ChangeFade(level.fadeto);
+
+	if (level.fadeto == 0)
+	{
+		SetDefaultColormap(level.info->FadeTable);
+		if (level.flags & LEVEL_HASFADETABLE)
+		{
+			level.fadeto = 0xff939393; //[SP] Hexen True-color compatibility, just use gray.
+		}
+	}
 }
 
 void FSoftwareRenderer::CleanLevelData()
@@ -372,3 +382,4 @@ void FSoftwareRenderer::SetVisibility(double vis)
 {
 	mScene.MainThread()->Light->SetVisibility(mScene.MainThread()->Viewport.get(), vis);
 }
+

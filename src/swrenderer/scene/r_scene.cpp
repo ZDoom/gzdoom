@@ -122,6 +122,10 @@ namespace swrenderer
 		WallScanCycles.Reset();
 		
 		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor);
+
+		if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
+		else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
+
 		CameraLight::Instance()->SetCamera(MainThread()->Viewport.get(), actor);
 		MainThread()->Viewport->SetupFreelook();
 

@@ -38,6 +38,7 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "m_png.h"
+#include "r_swcolormaps.h"
 #include "colormatcher.h"
 #include "r_swcanvas.h"
 #include "textures/textures.h"

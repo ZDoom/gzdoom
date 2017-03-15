@@ -25,9 +25,6 @@ struct FRenderer
 		Renderer = NULL;
 	}
 
-	// Can be overridden so that the colormaps for sector color/fade won't be built.
-	virtual bool UsesColormap() const = 0;
-
 	// precache one texture
 	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 

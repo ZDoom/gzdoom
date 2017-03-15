@@ -385,7 +385,6 @@ static bool P_LoadBloodMap (uint8_t *data, size_t len, FMapThing **mapthings, in
 
 static void LoadSectors (sectortype *bsec, int count)
 {
-	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto, 0);
 	sector_t *sec;
 	char tnam[9];
 

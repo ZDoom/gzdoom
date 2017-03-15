@@ -1,5 +1,6 @@
 /*
-** r_data.cpp
+** colormaps.cpp
+** common Colormap handling 
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
@@ -54,27 +55,7 @@
 #include "r_utility.h"
 #include "r_renderer.h"
 
-static bool R_CheckForFixedLights(const uint8_t *colormaps);
-
-
-FDynamicColormap NormalLight;
-FDynamicColormap FullNormalLight; //[SP] Emulate GZDoom brightness
-bool NormalLightHasFixedLights;
-
-
-struct FakeCmap 
-{
-	char name[8];
-	PalEntry blend;
-	int lump;
-};
-
 TArray<FakeCmap> fakecmaps;
-FSWColormap realcolormaps;
-FSWColormap realfbcolormaps; //[SP] For fullbright use
-size_t numfakecmaps;
-
-
 
 TArray<FSpecialColormap> SpecialColormaps;
 uint8_t DesaturateColormap[31][256];
@@ -176,273 +157,6 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 	return SpecialColormaps.Size() - 1;
 }
 
-
-//==========================================================================
-//
-// Colored Lighting Stuffs
-//
-//==========================================================================
-
-FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturate)
-{
-	FDynamicColormap *colormap;
-
-	// If this colormap has already been created, just return it
-	for (colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
-	{
-		if (color == colormap->Color &&
-			fade == colormap->Fade &&
-			desaturate == colormap->Desaturate)
-		{
-			return colormap;
-		}
-	}
-
-	// Not found. Create it.
-	colormap = new FDynamicColormap;
-	colormap->Next = NormalLight.Next;
-	colormap->Color = color;
-	colormap->Fade = fade;
-	colormap->Desaturate = desaturate;
-	NormalLight.Next = colormap;
-
-	if (Renderer->UsesColormap())
-	{
-		colormap->Maps = new uint8_t[NUMCOLORMAPS*256];
-		colormap->BuildLights ();
-	}
-	else colormap->Maps = NULL;
-	return colormap;
-}
-
-//==========================================================================
-//
-// Free all lights created with GetSpecialLights
-//
-//==========================================================================
-
-static void FreeSpecialLights()
-{
-	FDynamicColormap *colormap, *next;
-
-	for (colormap = NormalLight.Next; colormap != NULL; colormap = next)
-	{
-		next = colormap->Next;
-		delete[] colormap->Maps;
-		delete colormap;
-	}
-	NormalLight.Next = NULL;
-}
-
-//==========================================================================
-//
-// Builds NUMCOLORMAPS colormaps lit with the specified color
-//
-//==========================================================================
-
-void FDynamicColormap::BuildLights ()
-{
-	int l, c;
-	int lr, lg, lb, ld, ild;
-	PalEntry colors[256], basecolors[256];
-	uint8_t *shade;
-
-	if (Maps == NULL)
-		return;
-
-	// Scale light to the range 0-256, so we can avoid
-	// dividing by 255 in the bottom loop.
-	lr = Color.r*256/255;
-	lg = Color.g*256/255;
-	lb = Color.b*256/255;
-	ld = Desaturate*256/255;
-	if (ld < 0)	// No negative desaturations, please.
-	{
-		ld = -ld;
-	}
-	ild = 256-ld;
-
-	if (ld == 0)
-	{
-		memcpy (basecolors, GPalette.BaseColors, sizeof(basecolors));
-	}
-	else
-	{
-		// Desaturate the palette before lighting it.
-		for (c = 0; c < 256; c++)
-		{
-			int r = GPalette.BaseColors[c].r;
-			int g = GPalette.BaseColors[c].g;
-			int b = GPalette.BaseColors[c].b;
-			int intensity = ((r * 77 + g * 143 + b * 37) >> 8) * ld;
-			basecolors[c].r = (r*ild + intensity) >> 8;
-			basecolors[c].g = (g*ild + intensity) >> 8;
-			basecolors[c].b = (b*ild + intensity) >> 8;
-			basecolors[c].a = 0;
-		}
-	}
-
-	// build normal (but colored) light mappings
-	for (l = 0; l < NUMCOLORMAPS; l++)
-	{
-		DoBlending (basecolors, colors, 256,
-			Fade.r, Fade.g, Fade.b, l * (256 / NUMCOLORMAPS));
-
-		shade = Maps + 256*l;
-		if ((uint32_t)Color == MAKERGB(255,255,255))
-		{ // White light, so we can just pick the colors directly
-			for (c = 0; c < 256; c++)
-			{
-				*shade++ = ColorMatcher.Pick (colors[c].r, colors[c].g, colors[c].b);
-			}
-		}
-		else
-		{ // Colored light, so do the (slightly) slower thing
-			for (c = 0; c < 256; c++)
-			{
-				*shade++ = ColorMatcher.Pick (
-					(colors[c].r*lr)>>8,
-					(colors[c].g*lg)>>8,
-					(colors[c].b*lb)>>8);
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDynamicColormap::ChangeColor (PalEntry lightcolor, int desaturate)
-{
-	if (lightcolor != Color || desaturate != Desaturate)
-	{
-		Color = lightcolor;
-		// [BB] desaturate must be in [0,255]
-		Desaturate = clamp(desaturate, 0, 255);
-		if (Maps) BuildLights ();
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDynamicColormap::ChangeFade (PalEntry fadecolor)
-{
-	if (fadecolor != Fade)
-	{
-		Fade = fadecolor;
-		if (Maps) BuildLights ();
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDynamicColormap::ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor)
-{
-	if (lightcolor != Color || fadecolor != Fade)
-	{
-		Color = lightcolor;
-		Fade = fadecolor;
-		if (Maps) BuildLights ();
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDynamicColormap::RebuildAllLights()
-{
-	if (Renderer->UsesColormap())
-	{
-		FDynamicColormap *cm;
-
-		for (cm = &NormalLight; cm != NULL; cm = cm->Next)
-		{
-			if (cm->Maps == NULL)
-			{
-				cm->Maps = new uint8_t[NUMCOLORMAPS*256];
-				cm->BuildLights ();
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// R_SetDefaultColormap
-//
-//==========================================================================
-
-void R_SetDefaultColormap (const char *name)
-{
-	if (strnicmp (fakecmaps[0].name, name, 8) != 0)
-	{
-		int lump, i, j;
-		uint8_t map[256];
-		uint8_t unremap[256];
-		uint8_t remap[256];
-
-		lump = Wads.CheckNumForFullName (name, true, ns_colormaps);
-		if (lump == -1)
-			lump = Wads.CheckNumForName (name, ns_global);
-
-		// [RH] If using BUILD's palette, generate the colormap
-		if (lump == -1 || Wads.CheckNumForFullName("palette.dat") >= 0 || Wads.CheckNumForFullName("blood.pal") >= 0)
-		{
-			Printf ("Make colormap\n");
-			FDynamicColormap foo;
-
-			foo.Color = 0xFFFFFF;
-			foo.Fade = 0;
-			foo.Maps = realcolormaps.Maps;
-			foo.Desaturate = 0;
-			foo.Next = NULL;
-			foo.BuildLights ();
-		}
-		else
-		{
-			FWadLump lumpr = Wads.OpenLumpNum (lump);
-
-			// [RH] The colormap may not have been designed for the specific
-			// palette we are using, so remap it to match the current palette.
-			memcpy (remap, GPalette.Remap, 256);
-			memset (unremap, 0, 256);
-			for (i = 0; i < 256; ++i)
-			{
-				unremap[remap[i]] = i;
-			}
-			// Mapping to color 0 is okay, because the colormap won't be used to
-			// produce a masked texture.
-			remap[0] = 0;
-			for (i = 0; i < NUMCOLORMAPS; ++i)
-			{
-				uint8_t *map2 = &realcolormaps.Maps[i*256];
-				lumpr.Read (map, 256);
-				for (j = 0; j < 256; ++j)
-				{
-					map2[j] = remap[map[unremap[j]]];
-				}
-			}
-		}
-
-		uppercopy (fakecmaps[0].name, name);
-		fakecmaps[0].blend = 0;
-	}
-}
-
 //==========================================================================
 //
 // R_DeinitColormaps
@@ -453,13 +167,6 @@ void R_DeinitColormaps ()
 {
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
-	delete[] realcolormaps.Maps;
-	if (realfbcolormaps.Maps)
-	{
-		delete[] realfbcolormaps.Maps;
-		realfbcolormaps.Maps = nullptr;
-	}
-	FreeSpecialLights();
 }
 
 //==========================================================================
@@ -501,41 +208,32 @@ void R_InitColormaps ()
 			}
 		}
 	}
-	realcolormaps.Maps = new uint8_t[256*NUMCOLORMAPS*fakecmaps.Size()];
-	R_SetDefaultColormap ("COLORMAP");
 
+	int rr = 0, gg = 0, bb = 0;
+	for(int x=0;x<256;x++)
+	{
+		rr += GPalette.BaseColors[x].r;
+		gg += GPalette.BaseColors[x].g;
+		bb += GPalette.BaseColors[x].b;
+	}
+	rr >>= 8;
+	gg >>= 8;
+	bb >>= 8;
+
+	int palette_brightness = (rr*77 + gg*143 + bb*35) / 255;
+
+	// To calculate the blend it will just average the colors of the first map
 	if (fakecmaps.Size() > 1)
 	{
-		uint8_t unremap[256], remap[256], mapin[256];
-		int i;
-		unsigned j;
+		uint8_t map[256];
 
-		memcpy (remap, GPalette.Remap, 256);
-		memset (unremap, 0, 256);
-		for (i = 0; i < 256; ++i)
+		for (unsigned j = 1; j < fakecmaps.Size(); j++)
 		{
-			unremap[remap[i]] = i;
-		}
-		remap[0] = 0;
-		for (j = 1; j < fakecmaps.Size(); j++)
-		{
-			if (Wads.LumpLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
+			if (Wads.LumpLength (fakecmaps[j].lump) >= 256)
 			{
 				int k, r, g, b;
 				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
-				uint8_t *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
-
-				for (k = 0; k < NUMCOLORMAPS; ++k)
-				{
-					uint8_t *map2 = &map[k*256];
-					lump.Read (mapin, 256);
-					map2[0] = 0;
-					for (r = 1; r < 256; ++r)
-					{
-						map2[r] = remap[mapin[unremap[r]]];
-					}
-				}
-
+				lump.Read(map, 256);
 				r = g = b = 0;
 
 				for (k = 0; k < 256; k++)
@@ -544,26 +242,16 @@ void R_InitColormaps ()
 					g += GPalette.BaseColors[map[k]].g;
 					b += GPalette.BaseColors[map[k]].b;
 				}
-				fakecmaps[j].blend = PalEntry (255, r/256, g/256, b/256);
+				r /= 256;
+				g /= 256;
+				b /= 256;
+				// The calculated average is too dark so brighten it according to the palettes's overall brightness
+				int maxcol = MAX<int>(MAX<int>(palette_brightness, r), MAX<int>(g, b));
+				
+				fakecmaps[j].blend = PalEntry (255, r * 255 / maxcol, g * 255 / maxcol, b * 255 / maxcol);
 			}
 		}
 	}
-
-	// [SP] Create a copy of the colormap
-	if (!realfbcolormaps.Maps)
-	{
-		realfbcolormaps.Maps = new uint8_t[256*NUMCOLORMAPS*fakecmaps.Size()];
-		memcpy(realfbcolormaps.Maps, realcolormaps.Maps, 256*NUMCOLORMAPS*fakecmaps.Size());
-	}
-
-	NormalLight.Color = PalEntry (255, 255, 255);
-	NormalLight.Fade = 0;
-	NormalLight.Maps = realcolormaps.Maps;
-	FullNormalLight.Color = PalEntry (255, 255, 255);
-	FullNormalLight.Fade = 0;
-	FullNormalLight.Maps = realfbcolormaps.Maps;
-	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps.Maps);
-	numfakecmaps = fakecmaps.Size();
 
 	// build default special maps (e.g. invulnerability)
 
@@ -589,54 +277,6 @@ void R_InitColormaps ()
 			shade[c] = ColorMatcher.Pick(r, g, b);
 		}
 	}
-}
-
-//==========================================================================
-//
-// R_CheckForFixedLights
-//
-// Returns true if there are any entries in the colormaps that are the
-// same for every colormap and not the fade color.
-//
-//==========================================================================
-
-static bool R_CheckForFixedLights(const uint8_t *colormaps)
-{
-	const uint8_t *lastcolormap = colormaps + (NUMCOLORMAPS - 1) * 256;
-	uint8_t freq[256];
-	int i, j;
-
-	// Count the frequencies of different colors in the final colormap.
-	// If they occur more than X amount of times, we ignore them as a
-	// potential fixed light.
-
-	memset(freq, 0, sizeof(freq));
-	for (i = 0; i < 256; ++i)
-	{
-		freq[lastcolormap[i]]++;
-	}
-
-	// Now check the colormaps for fixed lights that are uncommon in the
-	// final coloramp.
-	for (i = 255; i >= 0; --i)
-	{
-		uint8_t color = lastcolormap[i];
-		if (freq[color] > 10)		// arbitrary number to decide "common" colors
-		{
-			continue;
-		}
-		// It's rare in the final colormap. See if it's the same for all colormaps.
-		for (j = 0; j < NUMCOLORMAPS - 1; ++j)
-		{
-			if (colormaps[j * 256 + i] != color)
-				break;
-		}
-		if (j == NUMCOLORMAPS - 1)
-		{ // It was the same all the way across.
-			return true;
-		}
-	}
-	return false;
 }
 
 //==========================================================================
@@ -676,3 +316,4 @@ uint32_t R_BlendForColormap (uint32_t map)
 	return APART(map) ? map : 
 		map < fakecmaps.Size() ? uint32_t(fakecmaps[map].blend) : 0;
 }
+

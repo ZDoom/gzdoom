@@ -691,7 +691,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = GetColorTable(frontsector->Colormap);
+				FDynamicColormap *basecolormap = nullptr;
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
@@ -725,6 +725,8 @@ namespace swrenderer
 						}
 					}
 				}
+				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap);
+
 				if (rw_pic != DONT_DRAW)
 				{
 					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
@@ -868,7 +870,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = GetColorTable(frontsector->Colormap);
+				FDynamicColormap *basecolormap = nullptr;
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
@@ -902,6 +904,7 @@ namespace swrenderer
 						}
 					}
 				}
+				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap);
 
 				if (rw_pic != DONT_DRAW)
 				{

@@ -308,19 +308,6 @@ bool OpenGLFrameBuffer::SetContrast(float contrast)
 
 void OpenGLFrameBuffer::UpdatePalette()
 {
-	int rr=0,gg=0,bb=0;
-	for(int x=0;x<256;x++)
-	{
-		rr+=GPalette.BaseColors[x].r;
-		gg+=GPalette.BaseColors[x].g;
-		bb+=GPalette.BaseColors[x].b;
-	}
-	rr>>=8;
-	gg>>=8;
-	bb>>=8;
-
-	palette_brightness = (rr*77 + gg*143 + bb*35)/255;
-
 	if (GLRenderer)
 		GLRenderer->ClearTonemapPalette();
 }

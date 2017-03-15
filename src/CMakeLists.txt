@@ -806,6 +806,7 @@ file( GLOB HEADER_FILES
 
 set ( SWRENDER_SOURCES
 	swrenderer/r_swcanvas.cpp
+	swrenderer/r_swcolormaps.cpp
 	swrenderer/r_swrenderer.cpp
 	swrenderer/r_memory.cpp
 	swrenderer/r_renderthread.cpp

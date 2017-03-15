@@ -538,30 +538,6 @@ CCMD (testblend)
 	}
 }
 
-CCMD (testfade)
-{
-	FString colorstring;
-	uint32_t color;
-
-	if (argv.argc() < 2)
-	{
-		Printf ("testfade <color>\n");
-	}
-	else
-	{
-		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
-		{
-			color = V_GetColorFromString (NULL, colorstring);
-		}
-		else
-		{
-			color = V_GetColorFromString (NULL, argv[1]);
-		}
-		level.fadeto = color;
-		NormalLight.ChangeFade (color);
-	}
-}
-
 /****** Colorspace Conversion Functions ******/
 
 // Code from http://www.cs.rit.edu/~yxv4997/t_convert.html
@@ -637,34 +613,3 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 	}
 }
 
-CCMD (testcolor)
-{
-	FString colorstring;
-	uint32_t color;
-	int desaturate;
-
-	if (argv.argc() < 2)
-	{
-		Printf ("testcolor <color> [desaturation]\n");
-	}
-	else
-	{
-		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
-		{
-			color = V_GetColorFromString (NULL, colorstring);
-		}
-		else
-		{
-			color = V_GetColorFromString (NULL, argv[1]);
-		}
-		if (argv.argc() > 2)
-		{
-			desaturate = atoi (argv[2]);
-		}
-		else
-		{
-			desaturate = NormalLight.Desaturate;
-		}
-		NormalLight.ChangeColor (color, desaturate);
-	}
-}

@@ -84,7 +84,6 @@ public:
 
 	void SetVSync(bool vsync);
 
-	int palette_brightness;				// brightness of the active palette - this is used for screen blends
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:

@@ -591,14 +591,6 @@ void GLSceneDrawer::DrawBlend(sector_t * viewsector)
 		if (blendv.a == 0)
 		{
 			blendv = R_BlendForColormap(blendv);
-			if (blendv.a == 255)
-			{
-				// The calculated average is too dark so brighten it according to the palettes's overall brightness
-				int maxcol = MAX<int>(MAX<int>(GLRenderer->framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
-				blendv.r = blendv.r * 255 / maxcol;
-				blendv.g = blendv.g * 255 / maxcol;
-				blendv.b = blendv.b * 255 / maxcol;
-			}
 		}
 
 		if (blendv.a == 255)
@@ -983,7 +975,6 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 
 struct FGLInterface : public FRenderer
 {
-	bool UsesColormap() const override;
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
@@ -998,18 +989,6 @@ struct FGLInterface : public FRenderer
 	void SetClearColor(int color) override;
 	void Init() override;
 };
-
-//===========================================================================
-//
-// The GL renderer has no use for colormaps so let's
-// not create them and save us some time.
-//
-//===========================================================================
-
-bool FGLInterface::UsesColormap() const
-{
-	return false;
-}
 
 //==========================================================================
 //

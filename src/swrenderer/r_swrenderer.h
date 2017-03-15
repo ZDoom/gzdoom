@@ -9,9 +9,6 @@ struct FSoftwareRenderer : public FRenderer
 	FSoftwareRenderer();
 	~FSoftwareRenderer();
 
-	// Can be overridden so that the colormaps for sector color/fade won't be built.
-	bool UsesColormap() const override;
-
 	// precache textures
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 

@@ -248,7 +248,6 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&clst, PClass **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);

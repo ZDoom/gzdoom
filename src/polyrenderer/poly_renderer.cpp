@@ -37,6 +37,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/viewport/r_viewport.h"
+#include "swrenderer/r_swcolormaps.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)
@@ -122,6 +123,11 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 	R_SetupFrame(Thread.Viewport->viewpoint, Thread.Viewport->viewwindow, actor);
+
+	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
+	else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
+
+
 	swrenderer::CameraLight::Instance()->SetCamera(Thread.Viewport.get(), actor);
 	Thread.Viewport->SetupFreelook();
 

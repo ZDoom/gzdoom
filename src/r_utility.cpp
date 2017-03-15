@@ -871,7 +871,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 				: s->ceilingplane.PointOnSide(viewpoint.Pos) < 0
 				? s->topmap
 				: s->midmap;
-			if (APART(newblend) == 0 && newblend >= numfakecmaps)
+			if (APART(newblend) == 0 && newblend >= fakecmaps.Size())
 				newblend = 0;
 		}
 	}
@@ -888,11 +888,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			BaseBlendG = GPART(newblend);
 			BaseBlendB = BPART(newblend);
 			BaseBlendA = APART(newblend) / 255.f;
-			NormalLight.Maps = realcolormaps.Maps;
 		}
 		else
 		{
-			NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS*256*newblend;
 			BaseBlendR = BaseBlendG = BaseBlendB = 0;
 			BaseBlendA = 0.f;
 		}

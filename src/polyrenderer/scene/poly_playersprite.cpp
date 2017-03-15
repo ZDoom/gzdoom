@@ -308,7 +308,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 			if (visstyle.Invert)
 			{
-				BaseColormap = &SpecialColormaps[INVERSECOLORMAP];
+				BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
 				ColormapNum = 0;
 				if (BaseColormap->Maps < mybasecolormap->Maps || BaseColormap->Maps >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
 				{
@@ -319,8 +319,8 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		
 		// If we're drawing with a special colormap, but shaders for them are disabled, do
 		// not accelerate.
-		if (!r_shadercolormaps && (BaseColormap >= &SpecialColormaps[0] &&
-			BaseColormap <= &SpecialColormaps.Last()))
+		if (!r_shadercolormaps && (BaseColormap >= &SpecialSWColormaps[0] &&
+			BaseColormap <= &SpecialSWColormaps.Last()))
 		{
 			noaccel = true;
 		}
@@ -405,10 +405,10 @@ void PolyScreenSprite::Render()
 	FColormapStyle colormapstyle;
 	PalEntry overlay = 0;
 	bool usecolormapstyle = false;
-	if (BaseColormap >= &SpecialColormaps[0] &&
-		BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
+	if (BaseColormap >= &SpecialSWColormaps[0] &&
+		BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
 	{
-		special = static_cast<FSpecialColormap*>(BaseColormap);
+		special = &SpecialColormaps[BaseColormap - &SpecialSWColormaps[0]];
 	}
 	else if (Colormap->Color == PalEntry(255, 255, 255) &&
 		Colormap->Desaturate == 0)

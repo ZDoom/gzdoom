@@ -70,7 +70,7 @@ namespace swrenderer
 				}
 				else
 				{
-					fixedcolormap = &SpecialColormaps[player->fixedcolormap];
+					fixedcolormap = &SpecialSWColormaps[player->fixedcolormap];
 				}
 			}
 			else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
@@ -86,7 +86,7 @@ namespace swrenderer
 		// [RH] Inverse light for shooting the Sigil
 		if (fixedcolormap == nullptr && viewport->viewpoint.extralight == INT_MIN)
 		{
-			fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
+			fixedcolormap = &SpecialSWColormaps[INVERSECOLORMAP];
 			viewport->viewpoint.extralight = 0;
 		}
 	}

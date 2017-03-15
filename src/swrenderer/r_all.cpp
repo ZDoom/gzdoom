@@ -2,6 +2,7 @@
 #include "r_renderthread.cpp"
 #include "r_swcanvas.cpp"
 #include "r_swrenderer.cpp"
+#include "r_swcolormaps.cpp"
 #include "drawers/r_draw.cpp"
 #include "drawers/r_draw_pal.cpp"
 #include "drawers/r_draw_rgba.cpp"

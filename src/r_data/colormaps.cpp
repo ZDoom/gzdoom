@@ -212,7 +212,6 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 		colormap->BuildLights ();
 	}
 	else colormap->Maps = NULL;
-
 	return colormap;
 }
 

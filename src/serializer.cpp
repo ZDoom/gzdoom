@@ -1715,52 +1715,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 //
 //==========================================================================
 
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def)
-{
-	if (arc.isWriting())
-	{
-		if (arc.w->inObject() && def != nullptr && cm->Color == (*def)->Color && cm->Fade == (*def)->Fade && cm->Desaturate == (*def)->Desaturate)
-		{
-			return arc;
-		}
-
-		arc.WriteKey(key);
-		arc.w->StartArray();
-		arc.w->Uint(cm->Color);
-		arc.w->Uint(cm->Fade);
-		arc.w->Uint(cm->Desaturate);
-		arc.w->EndArray();
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			if (val->IsArray())
-			{
-				const rapidjson::Value &colorval = (*val)[0];
-				const rapidjson::Value &fadeval = (*val)[1];
-				const rapidjson::Value &desatval = (*val)[2];
-				if (colorval.IsUint() && fadeval.IsUint() && desatval.IsUint())
-				{
-					cm = GetSpecialLights(colorval.GetUint(), fadeval.GetUint(), desatval.GetUint());
-					return arc;
-				}
-			}
-			assert(false && "not a colormap");
-			Printf(TEXTCOLOR_RED "object does not represent a colormap for '%s'\n", key);
-			cm = &NormalLight;
-		}
-	}
-	return arc;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def)
 {
 	if (arc.isWriting())

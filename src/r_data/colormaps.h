@@ -1,6 +1,8 @@
 #ifndef __RES_CMAP_H
 #define __RES_CMAP_H
 
+#include "m_fixed.h"
+
 struct FSWColormap;
 struct lightlist_t;
 
@@ -149,8 +151,16 @@ extern bool NormalLightHasFixedLights;
 
 FDynamicColormap *GetSpecialLights (PalEntry lightcolor, PalEntry fadecolor, int desaturate);
 
-inline FDynamicColormap *GetColorTable(const FColormap &cm)
+__forceinline FDynamicColormap *GetColorTable(const FColormap &cm)
 {
+	auto p = &NormalLight;
+	if (cm.LightColor == p->Color &&
+		cm.FadeColor == p->Fade &&
+		cm.Desaturation == p->Desaturate)
+	{
+		return p;
+	}
+
 	return GetSpecialLights(cm.LightColor, cm.FadeColor, cm.Desaturation);
 }
 

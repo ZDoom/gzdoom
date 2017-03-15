@@ -188,7 +188,7 @@ public:
 
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
 

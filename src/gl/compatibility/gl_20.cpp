@@ -485,7 +485,7 @@ static bool gl_CheckFog(FColormap *cm, int lightlevel)
 	{
 		frontfog = true;
 	}
-	else  if (level.fogdensity != 0 || (glset.lightmode & 4) || cm->fogdensity > 0)
+	else  if (level.fogdensity != 0 || (glset.lightmode & 4) || cm->FogDensity > 0)
 	{
 		// case 3: level has fog density set
 		frontfog = true;
@@ -568,7 +568,7 @@ void GLWall::RenderFogBoundaryCompat()
 {
 	// without shaders some approximation is needed. This won't look as good
 	// as the shader version but it's an acceptable compromise.
-	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.fogdensity);
+	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
 
 	float dist1 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x1, glseg.y1);
 	float dist2 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x2, glseg.y2);

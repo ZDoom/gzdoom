@@ -118,7 +118,7 @@ namespace swrenderer
 				{
 					if (underwater)
 					{
-						tempsec->ColorMap = s->ColorMap;
+						tempsec->Colormap = s->Colormap;
 						if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 						{
 							tempsec->lightlevel = s->lightlevel;
@@ -192,7 +192,7 @@ namespace swrenderer
 				tempsec->ceilingplane = s->floorplane;
 				tempsec->ceilingplane.FlipVert();
 				tempsec->ceilingplane.ChangeHeight(-1 / 65536.);
-				tempsec->ColorMap = s->ColorMap;
+				tempsec->Colormap = s->Colormap;
 			}
 
 			// killough 11/98: prevent sudden light changes from non-water sectors:
@@ -241,8 +241,7 @@ namespace swrenderer
 				tempsec->floorplane = s->ceilingplane;
 				tempsec->floorplane.FlipVert();
 				tempsec->floorplane.ChangeHeight(+1 / 65536.);
-				tempsec->ColorMap = s->ColorMap;
-				tempsec->ColorMap = s->ColorMap;
+				tempsec->Colormap = s->Colormap;
 
 				tempsec->SetTexture(sector_t::ceiling, diffTex ? sec->GetTexture(sector_t::ceiling) : s->GetTexture(sector_t::ceiling), false);
 				tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
@@ -478,7 +477,7 @@ namespace swrenderer
 		cll = ceilinglightlevel;
 
 		// [RH] set foggy flag
-		bool foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
+		bool foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
 
 		// kg3D - fake lights
 		CameraLight *cameraLight = CameraLight::Instance();
@@ -486,7 +485,7 @@ namespace swrenderer
 		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
 			light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
-			basecolormap = light->extra_colormap;
+			basecolormap = GetColorTable(light->extra_colormap);
 			// If this is the real ceiling, don't discard plane lighting R_FakeFlat()
 			// accounted for.
 			if (light->p_lightlevel != &frontsector->lightlevel)
@@ -496,7 +495,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : GetColorTable(frontsector->Colormap);
 		}
 
 		portal = frontsector->ValidatePortal(sector_t::ceiling);
@@ -524,7 +523,7 @@ namespace swrenderer
 		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
 			light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
-			basecolormap = light->extra_colormap;
+			basecolormap = GetColorTable(light->extra_colormap);
 			// If this is the real floor, don't discard plane lighting R_FakeFlat()
 			// accounted for.
 			if (light->p_lightlevel != &frontsector->lightlevel)
@@ -534,7 +533,7 @@ namespace swrenderer
 		}
 		else
 		{
-			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : frontsector->ColorMap;
+			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : GetColorTable(frontsector->Colormap);
 		}
 
 		// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
@@ -609,7 +608,7 @@ namespace swrenderer
 					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
 						light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
-						basecolormap = light->extra_colormap;
+						basecolormap = GetColorTable(light->extra_colormap);
 						floorlightlevel = *light->p_lightlevel;
 					}
 
@@ -674,7 +673,7 @@ namespace swrenderer
 					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
 						light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
-						basecolormap = light->extra_colormap;
+						basecolormap = GetColorTable(light->extra_colormap);
 						ceilinglightlevel = *light->p_lightlevel;
 					}
 					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
@@ -703,7 +702,7 @@ namespace swrenderer
 			ceilingplane = backupcp;
 		}
 
-		basecolormap = frontsector->ColorMap;
+		basecolormap = GetColorTable(frontsector->Colormap);
 		floorlightlevel = fll;
 		ceilinglightlevel = cll;
 
@@ -886,7 +885,7 @@ namespace swrenderer
 					{
 						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
 						thingShade = LightVisibility::LightLevelToShade(lightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
-						thingColormap = thing->Sector->ColorMap;
+						thingColormap = GetColorTable(thing->Sector->Colormap);
 					}
 
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)

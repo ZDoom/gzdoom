@@ -215,7 +215,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	bool noaccel = false;
 
-	FDynamicColormap *basecolormap = viewpoint.sector->ColorMap;
+	FDynamicColormap *basecolormap = GetColorTable(viewpoint.sector->Colormap);
 	FDynamicColormap *colormap_to_use = basecolormap;
 
 	int ColormapNum = 0;

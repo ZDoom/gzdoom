@@ -277,7 +277,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		}
 		else 
 		{
-			cm=fakesec->ColorMap;
+			cm=fakesec->Colormap;
 			if (glset.nocoloredspritelighting) cm.ClearColor();
 		}
 
@@ -396,9 +396,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				if (fakesec == viewsector || in_area != area_below)	
 				{
-					cmc.LightColor.r=
-					cmc.LightColor.g=
-					cmc.LightColor.b=0xff;
+					cmc.MakeWhite();
 				}
 				else
 				{
@@ -412,7 +410,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			// set the lighting parameters
 			if (RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
-				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.desaturation);
+				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.Desaturation);
 			}
 			else
 			{

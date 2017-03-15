@@ -52,6 +52,7 @@ void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
 class FTexture;
+struct FColormap;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -232,7 +233,7 @@ public:
 	// Fill a simple polygon with a texture
 	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley, DAngle rotation,
-		struct FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color);

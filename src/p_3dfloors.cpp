@@ -64,26 +64,26 @@ EXTERN_CVAR(Int, vid_renderer)
 //
 //==========================================================================
 
-FDynamicColormap *F3DFloor::GetColormap()
+FColormap F3DFloor::GetColormap()
 {
 	// If there's no fog in either model or target sector this is easy and fast.
-	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & (FF_FADEWALLS|FF_FOG)))
+	if ((target->Colormap.FadeColor.isBlack() && model->Colormap.FadeColor.isBlack()) || (flags & (FF_FADEWALLS|FF_FOG)))
 	{
-		return model->ColorMap;
+		return model->Colormap;
 	}
 	else
 	{
 		// We must create a new colormap combining the properties we need
-		return GetSpecialLights(model->ColorMap->Color, target->ColorMap->Fade, model->ColorMap->Desaturate);
+		return{ model->Colormap.LightColor, target->Colormap.FadeColor, model->Colormap.Desaturation, model->Colormap.BlendFactor, target->Colormap.FogDensity };
 	}
 }
 
 PalEntry F3DFloor::GetBlend()
 {
 	// The model sector's fog is used as blend unless FF_FADEWALLS is set.
-	if (!(flags & FF_FADEWALLS) && target->ColorMap->Fade != model->ColorMap->Fade)
+	if (!(flags & FF_FADEWALLS) && target->Colormap.FadeColor != model->Colormap.FadeColor)
 	{
-		return model->ColorMap->Fade;
+		return model->Colormap.FadeColor;
 	}
 	else
 	{
@@ -91,22 +91,17 @@ PalEntry F3DFloor::GetBlend()
 	}
 }
 
-void F3DFloor::UpdateColormap(FDynamicColormap *&map)
+void F3DFloor::UpdateColormap(FColormap &map)
 {
-	// If there's no fog in either model or target sector (or both have the same fog) this is easy and fast.
-	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS) ||
-		target->ColorMap->Fade == model->ColorMap->Fade)
+	// Note that this is a bit different from GetColormap.
+	if ((target->Colormap.FadeColor.isBlack() && model->Colormap.FadeColor.isBlack()) || (flags & FF_FADEWALLS) ||
+		target->Colormap.FadeColor == model->Colormap.FadeColor)
 	{
-		map = model->ColorMap;
+		map = model->Colormap;
 	}
 	else
 	{
-		// since rebuilding the map is not a cheap operation let's only do it if something really changed.
-		if (map->Color != model->ColorMap->Color || map->Fade != target->ColorMap->Fade ||
-			map->Desaturate != model->ColorMap->Desaturate)
-		{
-			map = GetSpecialLights(model->ColorMap->Color, target->ColorMap->Fade, model->ColorMap->Desaturate);
-		}
+		map = { model->Colormap.LightColor, target->Colormap.FadeColor, model->Colormap.Desaturation, model->Colormap.BlendFactor, target->Colormap.FogDensity };
 	}
 }
 
@@ -251,10 +246,8 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 							VC_BLOOD, VC_SLUDGE, VC_HAZARD, VC_BOOMWATER };
 						flags |= FF_SWIMMABLE | FF_BOTHPLANES | FF_ALLSIDES | FF_FLOOD;
 
-						l->frontsector->ColorMap =
-							GetSpecialLights(l->frontsector->ColorMap->Color,
-							vavoomcolors[l->args[0]],
-							l->frontsector->ColorMap->Desaturate);
+						l->frontsector->Colormap.FadeColor = vavoomcolors[l->args[0]] & VC_COLORMASK;
+						l->frontsector->Colormap.FogDensity = 0;
 					}
 					alpha = (alpha * 255) / 100;
 					break;
@@ -587,7 +580,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].p_lightlevel = &sector->lightlevel;
 		lightlist[0].caster = NULL;
 		lightlist[0].lightsource = NULL;
-		lightlist[0].extra_colormap = sector->ColorMap;
+		lightlist[0].extra_colormap = sector->Colormap;
 		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
 
@@ -637,7 +630,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			{
 				resetlight.p_lightlevel = &sector->lightlevel;
 				resetlight.lightsource = NULL;
-				resetlight.extra_colormap = sector->ColorMap;
+				resetlight.extra_colormap = sector->Colormap;
 				resetlight.blend = 0;
 			}
 
@@ -697,7 +690,7 @@ void P_RecalculateLights(sector_t *sector)
 		}
 		else
 		{
-			ll->extra_colormap = sector->ColorMap;
+			ll->extra_colormap = sector->Colormap;
 			ll->blend = 0;
 		}
 	}

@@ -139,7 +139,7 @@ public:
 	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);

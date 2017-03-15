@@ -148,7 +148,7 @@ namespace swrenderer
 				botplane = &heightsec->ceilingplane;
 				toppic = sector->GetTexture(sector_t::ceiling);
 				botpic = heightsec->GetTexture(sector_t::ceiling);
-				map = heightsec->ColorMap;
+				map = GetColorTable(heightsec->Colormap);
 			}
 			else if (fakeside == WaterFakeSide::BelowFloor)
 			{
@@ -156,7 +156,7 @@ namespace swrenderer
 				botplane = &sector->floorplane;
 				toppic = heightsec->GetTexture(sector_t::floor);
 				botpic = sector->GetTexture(sector_t::floor);
-				map = heightsec->ColorMap;
+				map = GetColorTable(heightsec->Colormap);
 			}
 			else
 			{
@@ -164,7 +164,7 @@ namespace swrenderer
 				botplane = &heightsec->floorplane;
 				toppic = heightsec->GetTexture(sector_t::ceiling);
 				botpic = heightsec->GetTexture(sector_t::floor);
-				map = sector->ColorMap;
+				map = GetColorTable(sector->Colormap);
 			}
 		}
 		else
@@ -173,7 +173,7 @@ namespace swrenderer
 			botplane = &sector->floorplane;
 			toppic = sector->GetTexture(sector_t::ceiling);
 			botpic = sector->GetTexture(sector_t::floor);
-			map = sector->ColorMap;
+			map = GetColorTable(sector->Colormap);
 		}
 
 		if (botpic != skyflatnum && particle->Pos.Z < botplane->ZatPoint(particle->Pos))

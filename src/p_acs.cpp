@@ -6760,9 +6760,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int d = clamp(args[1]/2, 0, 255);
 			while ((s = it.Next()) >= 0)
 			{
-				auto &sec = level.sectors[s];
-				auto f = sec.ColorMap->Fade;
-				sec.ColorMap = GetSpecialLights(sec.ColorMap->Color, PalEntry(d, f.r, f.g, f.b), sec.ColorMap->Desaturate);
+				level.sectors[s].SetFogDensity(d);
 			}
 			break;
 		}

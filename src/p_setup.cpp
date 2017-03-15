@@ -1458,7 +1458,6 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	mapsector_t			*ms;
 	sector_t*			ss;
 	int					defSeqType;
-	FDynamicColormap	*fogMap, *normMap;
 	int					lumplen = map->Size(ML_SECTORS);
 
 	unsigned numsectors = lumplen / sizeof(mapsector_t);
@@ -1470,8 +1469,6 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		defSeqType = 0;
 	else
 		defSeqType = -1;
-
-	fogMap = normMap = NULL;
 
 	msp = new char[lumplen];
 	map->Read(ML_SECTORS, msp);
@@ -1523,17 +1520,14 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
+		ss->Colormap.LightColor = PalEntry(255, 255, 255);
 		if (level.outsidefog != 0xff000000 && (ss->GetTexture(sector_t::ceiling) == skyflatnum || (ss->special&0xff) == Sector_Outside))
 		{
-			if (fogMap == NULL)
-				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);
-			ss->ColorMap = fogMap;
+			ss->Colormap.FadeColor.SetRGB(level.outsidefog);
 		}
 		else
 		{
-			if (normMap == NULL)
-				normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto, NormalLight.Desaturate);
-			ss->ColorMap = normMap;
+			ss->Colormap.FadeColor.SetRGB(level.fadeto);
 		}
 
 		// killough 8/28/98: initialize all sectors to normal friction
@@ -2517,21 +2511,16 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 			if (colorgood | foggood)
 			{
-				FDynamicColormap *colormap = NULL;
-
 				for (unsigned s = 0; s < level.sectors.Size(); s++)
 				{
 					if (tagManager.SectorHasTag(s, tag))
 					{
-						if (!colorgood) color = level.sectors[s].ColorMap->Color;
-						if (!foggood) fog = level.sectors[s].ColorMap->Fade;
-						if (colormap == NULL ||
-							colormap->Color != color ||
-							colormap->Fade != fog)
+						if (colorgood)
 						{
-							colormap = GetSpecialLights (color, fog, 0);
+							level.sectors[s].Colormap.LightColor.SetRGB(color);
+							level.sectors[s].Colormap.BlendFactor = APART(color);
 						}
-						level.sectors[s].ColorMap = colormap;
+						if (foggood) level.sectors[s].Colormap.FadeColor.SetRGB(fog);
 					}
 				}
 			}

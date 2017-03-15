@@ -804,8 +804,8 @@ DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
 
 void sector_t::SetColor(int r, int g, int b, int desat)
 {
-	PalEntry color = PalEntry (r,g,b);
-	ColorMap = GetSpecialLights (color, ColorMap->Fade, desat);
+	Colormap.LightColor = PalEntry(r, g, b);
+	Colormap.Desaturation = desat;
 	P_RecalculateAttachedLights(this);
 }
 
@@ -814,7 +814,8 @@ DEFINE_ACTION_FUNCTION(_Sector, SetColor)
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_COLOR(color);
 	PARAM_INT(desat);
-	self->ColorMap = GetSpecialLights(color, self->ColorMap->Fade, desat);
+	self->Colormap.LightColor.SetRGB(color);
+	self->Colormap.Desaturation = desat;
 	P_RecalculateAttachedLights(self);
 	return 0;
 }
@@ -826,8 +827,7 @@ DEFINE_ACTION_FUNCTION(_Sector, SetColor)
 
 void sector_t::SetFade(int r, int g, int b)
 {
-	PalEntry fade = PalEntry (r,g,b);
-	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
+	Colormap.FadeColor = PalEntry (r,g,b);
 	P_RecalculateAttachedLights(this);
 }
 
@@ -835,11 +835,28 @@ DEFINE_ACTION_FUNCTION(_Sector, SetFade)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_COLOR(fade);
-	self->ColorMap = GetSpecialLights(self->ColorMap->Color, fade, self->ColorMap->Desaturate);
+	self->Colormap.FadeColor.SetRGB(fade);
 	P_RecalculateAttachedLights(self);
 	return 0;
 }
 
+//=====================================================================================
+//
+//
+//=====================================================================================
+
+void sector_t::SetFogDensity(int dens)
+{
+	Colormap.FogDensity = dens;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, SetFogDensity)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(dens);
+	self->Colormap.FogDensity = dens;
+	return 0;
+}
 
 //===========================================================================
 //
@@ -2396,7 +2413,7 @@ DEFINE_ACTION_FUNCTION(_Secplane, PointToDist)
 
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
-DEFINE_FIELD_X(Sector, sector_t, ColorMap)
+DEFINE_FIELD_X(Sector, sector_t, Colormap)
 DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
 DEFINE_FIELD_X(Sector, sector_t, special)
 DEFINE_FIELD_X(Sector, sector_t, lightlevel)

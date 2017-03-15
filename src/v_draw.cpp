@@ -955,7 +955,7 @@ void DCanvas::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
 
 void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley, DAngle rotation,
-	FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
+	const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 #ifndef NO_SWRENDER
 	SWCanvas::FillSimplePoly(this, tex, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, bottomclip);

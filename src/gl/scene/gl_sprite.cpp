@@ -299,7 +299,7 @@ void GLSprite::Draw(int pass)
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
 				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, x,y);
-				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.fogdensity);
+				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
 
 				// this value was determined by trial and error and is scale dependent!
 				float factor = 0.05f + exp(-fogd*dist / 62500.f);
@@ -308,7 +308,7 @@ void GLSprite::Draw(int pass)
 			}
 
 			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, Colormap.desaturation);
+			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, Colormap.Desaturation);
 			additivefog = true;
 			lightlist = nullptr;	// the fuzz effect does not use the sector's light level so splitting is not needed.
 		}
@@ -399,8 +399,7 @@ void GLSprite::Draw(int pass)
 			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
 
 			FColormap thiscm;
-			thiscm.FadeColor = Colormap.FadeColor;
-			thiscm.fogdensity = Colormap.fogdensity;
+			thiscm.CopyFog(Colormap);
 			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
 			if (glset.nocoloredspritelighting)
 			{
@@ -526,7 +525,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 		{
 			copySprite=*this;
 			copySprite.lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
-			copySprite.Colormap.CopyLightColor(lightlist[i].extra_colormap);
+			copySprite.Colormap.CopyLight(lightlist[i].extra_colormap);
 
 			if (glset.nocoloredspritelighting)
 			{
@@ -535,9 +534,9 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 
 			if (!gl_isWhite(ThingColor))
 			{
-				copySprite.Colormap.LightColor.r=(copySprite.Colormap.LightColor.r*ThingColor.r)>>8;
-				copySprite.Colormap.LightColor.g=(copySprite.Colormap.LightColor.g*ThingColor.g)>>8;
-				copySprite.Colormap.LightColor.b=(copySprite.Colormap.LightColor.b*ThingColor.b)>>8;
+				copySprite.Colormap.LightColor.r = (copySprite.Colormap.LightColor.r*ThingColor.r) >> 8;
+				copySprite.Colormap.LightColor.g = (copySprite.Colormap.LightColor.g*ThingColor.g) >> 8;
+				copySprite.Colormap.LightColor.b = (copySprite.Colormap.LightColor.b*ThingColor.b) >> 8;
 			}
 
 			z1=copySprite.z2=lightbottom;
@@ -666,7 +665,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	bool isPicnumOverride = thing->picnum.isValid();
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() ||  ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
 	{
 		return;
 	}
@@ -853,9 +852,9 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
 			break;
-			
+
 		case RF_FLATSPRITE:
-		{	
+		{
 			x1 = x + leftfac;
 			x2 = x + rightfac;
 			y1 = y - topfac;
@@ -873,27 +872,27 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			break;
 		}
 	}
-	else 
+	else
 	{
 		x1 = x2 = x;
 		y1 = y2 = y;
 		z1 = z2 = z;
-		gltexture=NULL;
+		gltexture = NULL;
 	}
 
 	depth = FloatToFixed((x - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin);
 
 	// light calculation
 
-	bool enhancedvision=false;
+	bool enhancedvision = false;
 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
 		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->gl_info.bDisableFullbright));
 
-	lightlevel=fullbright? 255 : 
-		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ? 
+	lightlevel = fullbright ? 255 :
+		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
 
@@ -904,16 +903,16 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	RenderStyle = thing->RenderStyle;
 
 	// colormap stuff is a little more complicated here...
-	if (mDrawer->FixedColormap) 
+	if (mDrawer->FixedColormap)
 	{
 		if ((gl_enhanced_nv_stealth > 0 && mDrawer->FixedColormap == CM_LITE)		// Infrared powerup only
 			|| (gl_enhanced_nv_stealth == 2 && mDrawer->FixedColormap >= CM_TORCH)// Also torches
 			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
-			enhancedvision=true;
+			enhancedvision = true;
 
 		Colormap.Clear();
 
-		if (mDrawer->FixedColormap==CM_LITE)
+		if (mDrawer->FixedColormap == CM_LITE)
 		{
 			if (gl_enhanced_nightvision &&
 				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
@@ -922,24 +921,23 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			}
 		}
 	}
-	else 
+	else
 	{
-		Colormap=rendersector->ColorMap;
+		Colormap = rendersector->Colormap;
 		if (fullbright)
 		{
 			if (rendersector == &level.sectors[rendersector->sectornum] || mDrawer->in_area != area_below)
 				// under water areas keep their color for fullbright objects
 			{
 				// Only make the light white but keep everything else (fog, desaturation and Boom colormap.)
-				Colormap.LightColor.r=
-				Colormap.LightColor.g=
-				Colormap.LightColor.b=0xff;
+				Colormap.MakeWhite();
 			}
 			else
 			{
-				Colormap.LightColor.r = (3*Colormap.LightColor.r + 0xff)/4;
-				Colormap.LightColor.g = (3*Colormap.LightColor.g + 0xff)/4;
-				Colormap.LightColor.b = (3*Colormap.LightColor.b + 0xff)/4;
+				// Keep the color, but brighten things a bit so that a difference can be seen.
+				Colormap.LightColor.r = (3 * Colormap.LightColor.r + 0xff) / 4;
+				Colormap.LightColor.g = (3 * Colormap.LightColor.g + 0xff) / 4;
+				Colormap.LightColor.b = (3 * Colormap.LightColor.b + 0xff) / 4;
 			}
 		}
 		else if (glset.nocoloredspritelighting)
@@ -948,7 +946,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		}
 	}
 
-	translation=thing->Translation;
+	translation = thing->Translation;
 
 	OverrideShader = -1;
 	trans = thing->Alpha;
@@ -983,15 +981,15 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		trans = 1.f;
 	}
 
-	if (trans >= 1.f-FLT_EPSILON && RenderStyle.BlendOp != STYLEOP_Shadow && (
-			(RenderStyle.SrcAlpha == STYLEALPHA_One && RenderStyle.DestAlpha == STYLEALPHA_Zero) ||
-			(RenderStyle.SrcAlpha == STYLEALPHA_Src && RenderStyle.DestAlpha == STYLEALPHA_InvSrc)
-			))
+	if (trans >= 1.f - FLT_EPSILON && RenderStyle.BlendOp != STYLEOP_Shadow && (
+		(RenderStyle.SrcAlpha == STYLEALPHA_One && RenderStyle.DestAlpha == STYLEALPHA_Zero) ||
+		(RenderStyle.SrcAlpha == STYLEALPHA_Src && RenderStyle.DestAlpha == STYLEALPHA_InvSrc)
+		))
 	{
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
-		trans=1.f;
-		
-		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE|RF_WALLSPRITE)) || gl_billboard_faces_camera)
+		trans = 1.f;
+
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) || gl_billboard_faces_camera)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
@@ -1011,37 +1009,37 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 		hw_styleflags = STYLEHW_NoAlphaTest;
- 	}
+	}
 
 	if (enhancedvision && gl_enhanced_nightvision)
 	{
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
 		{
 			// enhanced vision makes them more visible!
-			trans=0.5f;
+			trans = 0.5f;
 			FRenderStyle rs = RenderStyle;
 			RenderStyle = STYLE_Translucent;
 			RenderStyle.Flags = rs.Flags;	// Flags must be preserved, at this point it can only be STYLEF_InvertSource
 		}
-		else if (thing->flags & MF_STEALTH)	
+		else if (thing->flags & MF_STEALTH)
 		{
 			// enhanced vision overcomes stealth!
 			if (trans < 0.5f) trans = 0.5f;
 		}
 	}
 
-	if (trans==0.0f) return;
+	if (trans == 0.0f) return;
 
 	// end of light calculation
 
-	actor=thing;
+	actor = thing;
 	index = GLRenderer->gl_spriteindex++;
-	particle=NULL;
-	
-	const bool drawWithXYBillboard = ( !(actor->renderflags & RF_FORCEYBILLBOARD)
-									   && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
-									   && players[consoleplayer].camera
-									   && (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD ) );
+	particle = NULL;
+
+	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
+		&& (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
+		&& players[consoleplayer].camera
+		&& (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD));
 
 
 	// no light splitting when:
@@ -1107,7 +1105,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		TArray<lightlist_t> & lightlist=sector->e->XFloor.lightlist;
 		double lightbottom;
 
-		Colormap = sector->ColorMap;
+		Colormap = sector->Colormap;
 		for(unsigned int i=0;i<lightlist.Size();i++)
 		{
 			if (i<lightlist.Size()-1) lightbottom = lightlist[i+1].plane.ZatPoint(particle->Pos);
@@ -1116,7 +1114,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 			if (lightbottom < particle->Pos.Z)
 			{
 				lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
-				Colormap.LightColor = (lightlist[i].extra_colormap)->Color;
+				Colormap.CopyLight(lightlist[i].extra_colormap);
 				break;
 			}
 		}
@@ -1128,7 +1126,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	else
 	{
 		lightlevel = 255;
-		Colormap = sector->ColorMap;
+		Colormap = sector->Colormap;
 		Colormap.ClearColor();
 	}
 

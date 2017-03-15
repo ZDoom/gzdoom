@@ -110,7 +110,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	args.ccw = true;
 	args.stenciltestvalue = stencilValue;
 	args.stencilwritevalue = stencilValue;
-	args.SetColormap(sub->sector->ColorMap);
+	args.SetColormap(GetColorTable(sub->sector->Colormap));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 	args.subsectorTest = true;
 	args.writeStencil = false;

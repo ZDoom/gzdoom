@@ -205,7 +205,7 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 
 void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley, DAngle rotation,
-	FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
+	const FColormap &fcolormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LightVisibility::LightLevelToShade(lightlevel, true) - 12 * FRACUNIT;
@@ -216,6 +216,7 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 	fixed_t x;
 	bool dorotate = rotation != 0.;
 	double cosrot, sinrot;
+	auto colormap = GetColorTable(fcolormap);
 
 	if (--npoints < 2)
 	{ // not a polygon or we're not locked

@@ -120,6 +120,18 @@ struct PalEntry
 	PalEntry () {}
 	PalEntry (uint32_t argb) { d = argb; }
 	operator uint32_t () const { return d; }
+	void SetRGB(PalEntry other)
+	{
+		d = other.d & 0xffffff;
+	}
+	bool isBlack() const
+	{
+		return (d & 0xffffff) == 0;
+	}
+	bool isWhite() const
+	{
+		return (d & 0xffffff) == 0xffffff;
+	}
 	PalEntry &operator= (uint32_t other) { d = other; return *this; }
 	PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255 - r; nc.g = 255 - g; nc.b = 255 - b; return nc; }
 #ifdef __BIG_ENDIAN__

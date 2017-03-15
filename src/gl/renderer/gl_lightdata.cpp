@@ -249,8 +249,8 @@ void gl_SetColor(int sectorlightlevel, int rellight, bool fullbright, const FCol
 	else
 	{
 		int hwlightlevel = gl_CalcLightLevel(sectorlightlevel, rellight, weapon);
-		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.blendfactor);
-		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation);
+		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
+		gl_RenderState.SetColorAlpha(pe, alpha, cm.Desaturation);
 		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight));
 	}
 }
@@ -339,7 +339,7 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 
 	// Check for fog boundaries. This needs a few more checks for the sectors
 
-	PalEntry fogcolor = frontsector->ColorMap->Fade;
+	PalEntry fogcolor = frontsector->Colormap.FadeColor;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
@@ -361,7 +361,7 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 		if (frontsector->lightlevel >= 248) return false;
 	}
 
-	fogcolor = backsector->ColorMap->Fade;
+	fogcolor = backsector->Colormap.FadeColor;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
@@ -439,7 +439,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 	else if (cmap != NULL && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->fogdensity);
+		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->FogDensity);
 		fogcolor.a=0;
 	}
 	else

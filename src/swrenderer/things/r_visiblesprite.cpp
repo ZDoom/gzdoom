@@ -113,11 +113,11 @@ namespace swrenderer
 						sec = rover->model;
 						if (rover->flags & FF_FADEWALLS)
 						{
-							mybasecolormap = sec->ColorMap;
+							mybasecolormap = GetColorTable(sec->Colormap);
 						}
 						else
 						{
-							mybasecolormap = spr->sector->e->XFloor.lightlist[i].extra_colormap;
+							mybasecolormap = GetColorTable(spr->sector->e->XFloor.lightlist[i].extra_colormap);
 						}
 					}
 					break;

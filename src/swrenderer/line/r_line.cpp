@@ -214,7 +214,7 @@ namespace swrenderer
 		if (mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)) return false;
 		if (mBackSector->GetVisFlags(sector_t::ceiling) != mFrontSector->GetVisFlags(sector_t::ceiling)) return false;
 
-		if (mBackSector->ColorMap != mFrontSector->ColorMap) return false;
+		if (mBackSector->Colormap != mFrontSector->Colormap) return false;
 
 		if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return false;
 		if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return false;
@@ -603,7 +603,7 @@ namespace swrenderer
 			if (mFrontSector->heightsec) return true;
 
 			if (mBackSector->GetVisFlags(sector_t::floor) != mFrontSector->GetVisFlags(sector_t::floor)) return true;
-			if (mBackSector->ColorMap != mFrontSector->ColorMap) return true;
+			if (mBackSector->Colormap != mFrontSector->Colormap) return true;
 			if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return true;
 			if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return true;
 
@@ -663,7 +663,7 @@ namespace swrenderer
 				if (mBackSector->GetPlaneLight(sector_t::ceiling) != mFrontSector->GetPlaneLight(sector_t::ceiling)) return true;
 				if (mBackSector->GetFlags(sector_t::ceiling) != mFrontSector->GetFlags(sector_t::ceiling)) return true;
 
-				if (mBackSector->ColorMap != mFrontSector->ColorMap) return true;
+				if (mBackSector->Colormap != mFrontSector->Colormap) return true;
 				if (mFrontSector->e && mFrontSector->e->XFloor.lightlist.Size()) return true;
 				if (mBackSector->e && mBackSector->e->XFloor.lightlist.Size()) return true;
 
@@ -975,8 +975,8 @@ namespace swrenderer
 
 	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const
 	{
-		return r_fogboundary && CameraLight::Instance()->FixedColormap() == nullptr && front->ColorMap->Fade &&
-			front->ColorMap->Fade != back->ColorMap->Fade &&
+		return r_fogboundary && CameraLight::Instance()->FixedColormap() == nullptr && front->Colormap.FadeColor &&
+			front->Colormap.FadeColor != back->Colormap.FadeColor &&
 			(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 	}
 	

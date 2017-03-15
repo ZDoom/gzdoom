@@ -1526,11 +1526,11 @@ public:
 					break;
 
 				case NAME_Desaturation:
-					desaturation = int(255*CheckFloat(key));
+					desaturation = int(255*CheckFloat(key) + FLT_EPSILON);	// FLT_EPSILON to avoid rounding errors with numbers slightly below a full integer.
 					continue;
 
 				case NAME_fogdensity:
-					fogdensity = clamp(CheckInt(key), 0, 511);
+					fogdensity = CheckInt(key);
 					break;
 
 				case NAME_Silent:
@@ -1770,22 +1770,19 @@ public:
 		{
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
+			sec->Colormap.LightColor = PalEntry(255, 255, 255);
 			if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 			{
-				if (fogMap == NULL)
-					fogMap = GetSpecialLights(PalEntry(255, 255, 255), level.outsidefog, 0);
-				sec->ColorMap = fogMap;
+				sec->Colormap.FadeColor.SetRGB(level.outsidefog);
 			}
 			else
 			{
-				if (normMap == NULL)
-					normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto, NormalLight.Desaturate);
-				sec->ColorMap = normMap;
+				sec->Colormap.FadeColor.SetRGB(level.fadeto);
 			}
 		}
 		else
 		{
-			if (lightcolor == ~0u) lightcolor = PalEntry(255,255,255);
+			sec->Colormap.LightColor.SetRGB(lightcolor);
 			if (fadecolor == ~0u)
 			{
 				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
@@ -1793,11 +1790,9 @@ public:
 				else
 					fadecolor = level.fadeto;
 			}
-			if (desaturation == -1) desaturation = NormalLight.Desaturate;
-			if (fogdensity != -1) fadecolor.a = fogdensity / 2;
-			else fadecolor.a = 0;
-
-			sec->ColorMap = GetSpecialLights (lightcolor, fadecolor, desaturation);
+			sec->Colormap.FadeColor.SetRGB(fadecolor);
+			sec->Colormap.Desaturation = clamp(desaturation, 0, 255);
+			sec->Colormap.FogDensity = clamp(fogdensity, 0, 512) / 2;
 		}
 	}
 

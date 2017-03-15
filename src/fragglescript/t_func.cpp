@@ -3885,7 +3885,9 @@ void FParser::SF_SetColor(void)
 		while ((i = itr.Next()) >= 0)
 		{
 			if (!DFraggleThinker::ActiveThinker->setcolormaterial)
-				level.sectors[i].ColorMap = GetSpecialLights(color, level.sectors[i].ColorMap->Fade, 0);
+			{
+				level.sectors[i].SetColor(color.r, color.g, color.b, 0);
+			}
 			else
 			{
 				// little hack for testing the D64 color stuff.

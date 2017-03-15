@@ -123,7 +123,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	args.stenciltestvalue = stencilValue;
 	args.stencilwritevalue = stencilValue;
 	args.SetTexture(tex);
-	args.SetColormap(sub->sector->ColorMap);
+	args.SetColormap(GetColorTable(sub->sector->Colormap));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 	args.subsectorTest = true;
 	args.writeSubsector = false;

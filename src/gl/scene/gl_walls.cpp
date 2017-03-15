@@ -441,14 +441,14 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		{
 			hi.plane.GetFromSector(fs, sector_t::ceiling);
 			hi.lightlevel = gl_ClampLight(fs->GetCeilingLight());
-			hi.colormap = fs->ColorMap;
+			hi.colormap = fs->Colormap;
 
 			if (fs->e->XFloor.ffloors.Size())
 			{
 				light = P_GetPlaneLight(fs, &fs->ceilingplane, true);
 
 				if(!(fs->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING)) hi.lightlevel = gl_ClampLight(*light->p_lightlevel);
-				hi.colormap.LightColor = (light->extra_colormap)->Color;
+				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
 			if (mDrawer->FixedColormap) hi.colormap.Clear();
@@ -469,14 +469,14 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		{
 			hi.plane.GetFromSector(fs, sector_t::floor);
 			hi.lightlevel = gl_ClampLight(fs->GetFloorLight());
-			hi.colormap = fs->ColorMap;
+			hi.colormap = fs->Colormap;
 
 			if (fs->e->XFloor.ffloors.Size())
 			{
 				light = P_GetPlaneLight(fs, &fs->floorplane, false);
 
 				if(!(fs->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING)) hi.lightlevel = gl_ClampLight(*light->p_lightlevel);
-				hi.colormap.LightColor = (light->extra_colormap)->Color;
+				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
 			if (mDrawer->FixedColormap) hi.colormap.Clear();
@@ -1110,7 +1110,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 			// this may not yet be done
 			light = P_GetPlaneLight(rover->target, rover->top.plane, true);
 			Colormap.Clear();
-			Colormap.LightColor = (light->extra_colormap)->Fade;
+			Colormap.LightColor = light->extra_colormap.FadeColor;
 			// the fog plane defines the light level, not the front sector
 			lightlevel = gl_ClampLight(*light->p_lightlevel);
 			gltexture = NULL;
@@ -1510,7 +1510,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	glseg.y1 = v1->fY();
 	glseg.x2 = v2->fX();
 	glseg.y2 = v2->fY();
-	Colormap = frontsector->ColorMap;
+	Colormap = frontsector->Colormap;
 	flags = 0;
 	dynlightindex = -1;
 	lightlist = NULL;
@@ -1771,7 +1771,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 
 		alpha = 1.0f;
 		RenderStyle = STYLE_Normal;
-		Colormap = frontsector->ColorMap;
+		Colormap = frontsector->Colormap;
 
 		if (gl_GetWallGlow(frontsector, topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
 		topplane = frontsector->ceilingplane;

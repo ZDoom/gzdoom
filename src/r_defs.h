@@ -639,6 +639,7 @@ public:
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
+	void SetFogDensity(int dens);
 	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
@@ -953,8 +954,27 @@ public:
 	secplane_t	floorplane, ceilingplane;
 
 	// [RH] give floor and ceiling even more properties
-	FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
-	PalEntry	SpecialColors[5];
+	PalEntry SpecialColors[5];
+	FColormap Colormap;
+
+private:
+	FDynamicColormap *_ColorMap;	// [RH] Per-sector colormap
+
+public:
+	// just a helper for refactoring 
+	FDynamicColormap *GetColorMap()
+	{
+		return _ColorMap;
+	}
+
+	void CopyColors(sector_t *other)
+	{
+		memcpy(SpecialColors, other->SpecialColors, sizeof(SpecialColors));
+		Colormap = other->Colormap;
+
+		_ColorMap = other->_ColorMap;
+	}
+
 
 
 	TObjPtr<AActor*> SoundTarget;
@@ -1472,5 +1492,13 @@ inline bool FBoundingBox::inRange(const line_t *ld) const
 }
 
 
+inline void FColormap::CopyFrom3DLight(lightlist_t *light)
+{
+	CopyLight(light->extra_colormap);
+	if (light->caster && (light->caster->flags&FF_FADEWALLS) && light->extra_colormap.FadeColor != 0)
+	{
+		CopyFog(light->extra_colormap);
+	}
+}
 
 #endif

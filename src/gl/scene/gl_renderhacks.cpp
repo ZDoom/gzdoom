@@ -1047,7 +1047,8 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (me->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 		me->ceilingplane != anchor->ceilingplane ||
 		me->GetCeilingLight() != anchor->GetCeilingLight() ||
-		me->ColorMap != anchor->ColorMap ||
+		me->Colormap != anchor->Colormap ||
+		me->SpecialColors[sector_t::ceiling] != anchor->SpecialColors[sector_t::ceiling] ||
 		me->planes[sector_t::ceiling].xform != anchor->planes[sector_t::ceiling].xform)
 	{
 		// different visplane so it can't belong to this stack
@@ -1090,7 +1091,8 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (me->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 		me->floorplane != anchor->floorplane ||
 		me->GetFloorLight() != anchor->GetFloorLight() ||
-		me->ColorMap != anchor->ColorMap ||
+		me->Colormap != anchor->Colormap ||
+		me->SpecialColors[sector_t::floor] != anchor->SpecialColors[sector_t::floor] ||
 		me->planes[sector_t::floor].xform != anchor->planes[sector_t::floor].xform)
 	{
 		// different visplane so it can't belong to this stack

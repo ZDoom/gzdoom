@@ -394,7 +394,7 @@ namespace swrenderer
 			}
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
-			basecolormap = lit->extra_colormap;
+			basecolormap = GetColorTable(lit->extra_colormap);
 			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 		}
 

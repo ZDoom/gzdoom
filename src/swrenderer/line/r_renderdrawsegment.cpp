@@ -105,7 +105,7 @@ namespace swrenderer
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
 		sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
-		FDynamicColormap *basecolormap = sec->ColorMap;	// [RH] Set basecolormap
+		FDynamicColormap *basecolormap = GetColorTable(sec->Colormap);	// [RH] Set basecolormap
 
 		int wallshade = ds->shade;
 		rw_lightstep = ds->lightstep;
@@ -125,7 +125,7 @@ namespace swrenderer
 				if (clip3d->sclipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
 				{
 					lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
-					basecolormap = lit->extra_colormap;
+					basecolormap = GetColorTable(lit->extra_colormap);
 					bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
 					wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, viewport), foggy);
 					break;
@@ -691,7 +691,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = frontsector->ColorMap;
+				FDynamicColormap *basecolormap = GetColorTable(frontsector->Colormap);
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
@@ -703,7 +703,7 @@ namespace swrenderer
 							if (clip3d->sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
-								basecolormap = lit->extra_colormap;
+								basecolormap = GetColorTable(lit->extra_colormap);
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
 								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
@@ -717,7 +717,7 @@ namespace swrenderer
 							if (clip3d->sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
-								basecolormap = lit->extra_colormap;
+								basecolormap = GetColorTable(lit->extra_colormap);
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
 								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
@@ -868,7 +868,7 @@ namespace swrenderer
 					}
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = frontsector->ColorMap;
+				FDynamicColormap *basecolormap = GetColorTable(frontsector->Colormap);
 				wallshade = ds->shade;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
@@ -880,7 +880,7 @@ namespace swrenderer
 							if (clip3d->sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
-								basecolormap = lit->extra_colormap;
+								basecolormap = GetColorTable(lit->extra_colormap);
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
 								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;
@@ -894,7 +894,7 @@ namespace swrenderer
 							if (clip3d->sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
-								basecolormap = lit->extra_colormap;
+								basecolormap = GetColorTable(lit->extra_colormap);
 								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
 								wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr) + LightVisibility::ActualExtraLight(ds->foggy, Thread->Viewport.get()), foggy);
 								break;

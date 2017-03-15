@@ -1,6 +1,7 @@
 #ifndef __SECTORE_H
 #define __SECTORE_H
 
+#include "r_data/colormaps.h"
 
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
@@ -93,8 +94,8 @@ struct F3DFloor
 	int					lastlight;
 	int					alpha;
 
-	FDynamicColormap *GetColormap();
-	void UpdateColormap(FDynamicColormap *&map);
+	FColormap GetColormap();
+	void UpdateColormap(FColormap &map);
 	PalEntry GetBlend();
 };
 
@@ -104,7 +105,7 @@ struct lightlist_t
 {
 	secplane_t				plane;
 	short *					p_lightlevel;
-	FDynamicColormap *		extra_colormap;
+	FColormap				extra_colormap;
 	PalEntry				blend;
 	int						flags;
 	F3DFloor*				lightsource;

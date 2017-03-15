@@ -23,58 +23,5 @@ enum EColorManipulation
 
 #define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())
 
-  // for internal use
-struct FColormap
-{
-	PalEntry		LightColor;		// a is saturation (0 full, 31=b/w, other=custom colormap)
-	PalEntry		FadeColor;		// a is fadedensity>>1
-	int				desaturation;
-	int				blendfactor;
-	int				fogdensity;
-
-	void Clear()
-	{
-		LightColor=0xffffff;
-		FadeColor=0;
-		desaturation = 0;
-		blendfactor=0;
-		fogdensity = 0;
-	}
-
-	void ClearColor()
-	{
-		LightColor.r=LightColor.g=LightColor.b=0xff;
-		blendfactor=0;
-		desaturation = 0;
-	}
-
-
-	FColormap & operator=(FDynamicColormap * from)
-	{
-		LightColor = from->Color;
-		desaturation = from->Desaturate;
-		FadeColor = from->Fade;
-		FadeColor.a = 0;
-		blendfactor = from->Color.a;
-		fogdensity = from->Fade.a*2;
-		return * this;
-	}
-
-	void CopyLightColor(FDynamicColormap * from)
-	{
-		LightColor = from->Color;
-		desaturation = from->Desaturate;
-		blendfactor = from->Color.a;
-	}
-
-	void CopyFrom3DLight(lightlist_t *light);
-
-	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
-	{
-		int v = (LightColor.r + LightColor.g + LightColor.b) / 3;
-		LightColor.r = LightColor.g = LightColor.b = (255 + v + v) / 3;
-	}
-};
-
 
 #endif

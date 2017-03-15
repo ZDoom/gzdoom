@@ -160,6 +160,30 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FLinkedSector &ls, FLi
 	return arc;
 }
 
+//============================================================================
+//
+// Save a sector portal for savegames.
+//
+//============================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FColormap &port, FColormap *def)
+{
+	if (arc.canSkip() && def != nullptr && port == *def)
+	{
+		return arc;
+	}
+
+	if (arc.BeginObject(key))
+	{
+		arc("lightcolor", port.LightColor)
+			("fadecolor", port.FadeColor)
+			("desaturation", port.Desaturation)
+			("fogdensity", port.FogDensity)
+			.EndObject();
+	}
+	return arc;
+}
+
 //==========================================================================
 //
 //
@@ -275,7 +299,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("midtexc_sectors", p.e->Midtex.Ceiling.AttachedSectors)
 			("linked_floor", p.e->Linked.Floor.Sectors)
 			("linked_ceiling", p.e->Linked.Ceiling.Sectors)
-			("colormap", p.ColorMap, def->ColorMap)
+			("colormap", p.Colormap, def->Colormap)
 			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 5, true)
 			("gravity", p.gravity, def->gravity)
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])

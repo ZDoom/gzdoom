@@ -6852,3 +6852,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 		StatusBar->SetMugShotState(name);
 	return 0;
 }
+
+// This needs to account for the fact that internally renderstyles are stored as a series of operations, 
+// but the script side only cares about symbolic constants.
+DEFINE_ACTION_FUNCTION(AActor, GetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	for(unsigned i=0;i<STYLE_Count;i++)
+	{
+		if (self->RenderStyle == LegacyRenderStyles[i]) ACTION_RETURN_INT(i);
+	}
+	ACTION_RETURN_INT(-1);	// no symbolic constant exists to handle this style.
+}

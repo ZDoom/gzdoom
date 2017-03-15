@@ -1412,6 +1412,48 @@ namespace swrenderer
 		}
 	}
 
+	void DrawColumnAddClampShadedPalCommand::Execute(DrawerThread *thread)
+	{
+		int  count;
+		uint8_t *dest;
+		fixed_t frac, fracstep;
+
+		count = args.Count();
+		dest = args.Dest();
+
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
+
+		count = thread->count_for_thread(args.DestY(), count);
+		if (count <= 0)
+			return;
+
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *source = args.TexturePixels();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
+		//uint32_t *fgstart = &Col2RGB8[0][args.SolidColor()]; // if someone wants to write the 555's, be my guest.
+		const PalEntry *palette = GPalette.BaseColors;
+
+		int color = args.SolidColor();
+		do
+		{
+			uint32_t val = source[frac >> FRACBITS];
+
+			int r = (palette[*dest].r * (255) + palette[color].r * val) >> 10;
+			int g = (palette[*dest].g * (255) + palette[color].g * val) >> 10;
+			int b = (palette[*dest].b * (255) + palette[color].b * val) >> 10;
+			*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
+
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+
 	void DrawColumnAddClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;

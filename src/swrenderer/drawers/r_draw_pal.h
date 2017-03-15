@@ -65,6 +65,7 @@ namespace swrenderer
 	class DrawColumnTranslatedPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
 	class DrawColumnTlatedAddPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
 	class DrawColumnShadedPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
+	class DrawColumnAddClampShadedPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
 	class DrawColumnAddClampPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
 	class DrawColumnAddClampTranslatedPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
 	class DrawColumnSubClampPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
@@ -236,6 +237,7 @@ namespace swrenderer
 		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTranslatedPalCommand>(args); }
 		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTlatedAddPalCommand>(args); }
 		void DrawShadedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnShadedPalCommand>(args); }
+		void DrawAddClampShadedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddClampShadedPalCommand>(args); }
 		void DrawAddClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddClampPalCommand>(args); }
 		void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddClampTranslatedPalCommand>(args); }
 		void DrawSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnSubClampPalCommand>(args); }

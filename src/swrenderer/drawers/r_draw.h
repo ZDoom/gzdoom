@@ -71,6 +71,7 @@ namespace swrenderer
 		virtual void DrawTranslatedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawShadedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawAddClampShadedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawAddClampColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawSubClampColumn(const SpriteDrawerArgs &args) = 0;

@@ -156,6 +156,11 @@ namespace swrenderer
 		Queue->Push<DrawSpriteShaded32Command>(args);
 	}
 
+	void SWTruecolorDrawers::DrawAddClampShadedColumn(const SpriteDrawerArgs &args)
+	{
+		Queue->Push<DrawSpriteAddClampShaded32Command>(args);
+	}
+
 	void SWTruecolorDrawers::DrawAddClampColumn(const SpriteDrawerArgs &args)
 	{
 		Queue->Push<DrawSpriteAddClamp32Command>(args);

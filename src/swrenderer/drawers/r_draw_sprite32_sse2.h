@@ -29,10 +29,11 @@ namespace swrenderer
 {
 	namespace DrawSprite32TModes
 	{
-		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClamp, SubClamp, RevSubClamp };
+		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
 		struct CopySprite { static const int Mode = (int)SpriteBlendModes::Copy; };
 		struct OpaqueSprite { static const int Mode = (int)SpriteBlendModes::Opaque; };
 		struct ShadedSprite { static const int Mode = (int)SpriteBlendModes::Shaded; };
+		struct AddClampShadedSprite { static const int Mode = (int)SpriteBlendModes::AddClampShaded; };
 		struct AddClampSprite { static const int Mode = (int)SpriteBlendModes::AddClamp; };
 		struct SubClampSprite { static const int Mode = (int)SpriteBlendModes::SubClamp; };
 		struct RevSubClampSprite { static const int Mode = (int)SpriteBlendModes::RevSubClamp; };
@@ -381,6 +382,16 @@ namespace swrenderer
 				outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 				return outcolor;
 			}
+			else if (BlendT::Mode == (int)SpriteBlendModes::AddClampShaded)
+			{
+				__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
+
+				fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, alpha), 8);
+				__m128i outcolor = _mm_add_epi16(fgcolor, bgcolor);
+				outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+				outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+				return outcolor;
+			}
 			else
 			{
 				uint32_t alpha0 = APART(ifgcolor0);
@@ -448,6 +459,7 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteRevSubClamp32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::ShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteShaded32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::AddClampShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteAddClampShaded32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslated32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedAddClamp32Command;

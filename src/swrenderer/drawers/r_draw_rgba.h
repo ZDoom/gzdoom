@@ -243,6 +243,7 @@ namespace swrenderer
 		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override;
 		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override;
 		void DrawShadedColumn(const SpriteDrawerArgs &args) override;
+		void DrawAddClampShadedColumn(const SpriteDrawerArgs &args) override;
 		void DrawAddClampColumn(const SpriteDrawerArgs &args) override;
 		void DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args) override;
 		void DrawSubClampColumn(const SpriteDrawerArgs &args) override;

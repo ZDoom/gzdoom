@@ -401,10 +401,6 @@ FVoxel::~FVoxel()
 
 void FVoxel::CreateBgraSlabData()
 {
-	uint8_t *palette = Palette;
-	if (palette == nullptr)
-		palette = (uint8_t *)GPalette.BaseColors;
-
 	for (int i = 0; i < NumMips; ++i)
 	{
 		int size = Mips[i].OffsetX[Mips[i].SizeX];
@@ -426,9 +422,19 @@ void FVoxel::CreateBgraSlabData()
 			{
 				int colorIndex = src->col[j];
 
-				uint32_t red = (palette[colorIndex * 3 + 0] << 2) | (palette[colorIndex * 3 + 0] >> 4);
-				uint32_t green = (palette[colorIndex * 3 + 1] << 2) | (palette[colorIndex * 3 + 1] >> 4);
-				uint32_t blue = (palette[colorIndex * 3 + 2] << 2) | (palette[colorIndex * 3 + 2] >> 4);
+				uint32_t red, green, blue;
+				if (Palette)
+				{
+					red = (Palette[colorIndex * 3 + 0] << 2) | (Palette[colorIndex * 3 + 0] >> 4);
+					green = (Palette[colorIndex * 3 + 1] << 2) | (Palette[colorIndex * 3 + 1] >> 4);
+					blue = (Palette[colorIndex * 3 + 2] << 2) | (Palette[colorIndex * 3 + 2] >> 4);
+				}
+				else
+				{
+					red = GPalette.BaseColors[colorIndex].r;
+					green = GPalette.BaseColors[colorIndex].g;
+					blue = GPalette.BaseColors[colorIndex].b;
+				}
 
 				dest->col[j] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}

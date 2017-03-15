@@ -363,7 +363,12 @@ void FSoftwareRenderer::PreprocessLevel()
 		SetDefaultColormap(level.info->FadeTable);
 		if (level.flags & LEVEL_HASFADETABLE)
 		{
+			// This should really be done differently.
 			level.fadeto = 0xff939393; //[SP] Hexen True-color compatibility, just use gray.
+			for (auto &s : level.sectors)
+			{
+				s.Colormap.FadeColor = level.fadeto;
+			}
 		}
 	}
 }

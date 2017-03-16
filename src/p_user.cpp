@@ -2039,12 +2039,11 @@ void P_CalcHeight (player_t *player)
 		return;
 	}
 
-	//[SP] Added (x*player->mo->ViewBob) to allow DECORATE changes to view bobbing speed.
 	if (still)
 	{
 		if (player->health > 0)
 		{
-			angle = level.time / (120 * TICRATE / 35.) * 360. * player->mo->ViewBob;
+			angle = level.time / (120 * TICRATE / 35.) * 360.;
 			bob = player->userinfo.GetStillBob() * angle.Sin();
 		}
 		else
@@ -2054,7 +2053,7 @@ void P_CalcHeight (player_t *player)
 	}
 	else
 	{
-		angle = level.time / (20 * TICRATE / 35.) * 360. * player->mo->ViewBob;
+		angle = level.time / (20 * TICRATE / 35.) * 360.;
 		bob = player->bob * angle.Sin() * (player->mo->waterlevel > 1 ? 0.25f : 0.5f);
 	}
 

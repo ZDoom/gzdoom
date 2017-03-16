@@ -1115,3 +1115,14 @@ CUSTOM_CVAR(Float, transsouls, 0.75f, CVAR_ARCHIVE)
 		self = 1.f;
 	}
 }
+
+CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
+{
+	if (self>90.f) self = 90.f;
+	else if (self<-90.f) self = -90.f;
+	if (usergame)
+	{
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+	}
+}

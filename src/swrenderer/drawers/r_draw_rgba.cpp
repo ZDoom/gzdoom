@@ -36,7 +36,6 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_draw_rgba.h"
-//#include "gl/data/gl_matrix.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 #ifdef NO_SSE

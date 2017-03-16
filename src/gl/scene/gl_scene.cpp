@@ -265,7 +265,7 @@ void GLSceneDrawer::CreateScene()
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	for(unsigned i=0;i<portals.Size(); i++) portals[i]->glportal = NULL;
+	for(unsigned i=0;i<glSectorPortals.Size(); i++) glSectorPortals[i]->glportal = NULL;
 	GLRenderer->gl_spriteindex=0;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
@@ -459,7 +459,7 @@ void GLSceneDrawer::RenderTranslucent()
 //-----------------------------------------------------------------------------
 //
 // gl_drawscene - this function renders the scene from the current
-// viewpoint, including mirrors and skyboxes and other portals
+// viewpoint, including mirrors and skyboxes and other glSectorPortals
 // It is assumed that the GLPortal::EndFrame returns with the 
 // stencil, z-buffer and the projection matrix intact!
 //
@@ -510,7 +510,7 @@ void GLSceneDrawer::DrawScene(int drawmode)
 		gl_RenderState.ApplyMatrices();
 	}
 
-	// Handle all portals after rendering the opaque objects but before
+	// Handle all glSectorPortals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
 	GLPortal::EndFrame();

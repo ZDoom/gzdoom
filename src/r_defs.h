@@ -132,6 +132,7 @@ struct vertex_t
 
 	int Index() const;
 
+
 	angle_t viewangle;	// precalculated angle for clipping
 	int angletime;		// recalculation time for view angle
 	bool dirty;			// something has changed and needs to be recalculated
@@ -1023,6 +1024,7 @@ public:
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector
+	FLightNode *				lighthead;
 
 	uint32_t bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
 										// [RH] these can also be blend values if
@@ -1066,7 +1068,6 @@ public:
 	double						transdoorheight;	// for transparent door hacks
 	subsector_t **				subsectors;
 	FPortal *					portals[2];			// floor and ceiling portals
-	FLightNode *				lighthead;
 
 	enum
 	{
@@ -1138,12 +1139,12 @@ struct side_t
 	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	part		textures[3];
 	line_t		*linedef;
-	//uint32_t		linenum;
-	uint32_t		LeftSide, RightSide;	// [RH] Group walls into loops
-	uint16_t		TexelLength;
+	uint32_t	LeftSide, RightSide;	// [RH] Group walls into loops
+	uint16_t	TexelLength;
 	int16_t		Light;
 	uint8_t		Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
+	FLightNode * lighthead;		// all dynamic lights that may affect this wall
 
 	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
@@ -1254,7 +1255,6 @@ struct side_t
 	int Index() const;
 
 	//For GL
-	FLightNode * lighthead;				// all blended lights that may affect this wall
 
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;

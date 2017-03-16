@@ -488,12 +488,6 @@ static void PrepareSegs()
 	int *segcount = new int[numsides];
 	int realsegs = 0;
 
-	// Get floatng point coordinates of vertices
-	for(auto &v : level.vertexes)
-	{
-		v.dirty = true;
-	}
-
 	// count the segs
 	memset(segcount, 0, numsides * sizeof(int));
 
@@ -638,11 +632,11 @@ void gl_CleanLevelData()
 			}
 		}
 	}
-	for(unsigned i=0;i<portals.Size(); i++)
+	for(unsigned i=0;i<glSectorPortals.Size(); i++)
 	{
-		delete portals[i];
+		delete glSectorPortals[i];
 	}
-	portals.Clear();
+	glSectorPortals.Clear();
 }
 
 

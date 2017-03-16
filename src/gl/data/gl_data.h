@@ -56,7 +56,7 @@ struct FGLLinePortal
 	int validcount = 0;
 };
 
-extern TArray<FPortal *> portals;
+extern TArray<FPortal *> glSectorPortals;
 extern TArray<FGLLinePortal*> linePortalToGL;
 
 extern TArray<uint8_t> currentmapsection;

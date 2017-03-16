@@ -28,7 +28,6 @@
 #include "r_data/r_translate.h"
 #include "polyrenderer/scene/poly_scene.h"
 #include "polyrenderer/poly_renderer.h"
-#include "gl/data/gl_data.h"
 #include "swrenderer/scene/r_light.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)

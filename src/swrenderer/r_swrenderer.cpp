@@ -51,10 +51,6 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 
-void gl_InitData();
-void gl_PreprocessLevel();
-void gl_CleanLevelData();
-
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
@@ -352,7 +348,6 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 void FSoftwareRenderer::PreprocessLevel()
 {
-	gl_PreprocessLevel();
 	// This just sets the default colormap for the spftware renderer.
 	NormalLight.Maps = realcolormaps.Maps;
 	NormalLight.ChangeColor(PalEntry(255, 255, 255), 0);
@@ -375,7 +370,6 @@ void FSoftwareRenderer::PreprocessLevel()
 
 void FSoftwareRenderer::CleanLevelData()
 {
-	gl_CleanLevelData();
 }
 
 double FSoftwareRenderer::GetVisibility()

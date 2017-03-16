@@ -28,7 +28,6 @@
 #include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
 #include "poly_renderer.h"
-#include "gl/data/gl_data.h"
 #include "d_net.h"
 #include "po_man.h"
 #include "st_stuff.h"

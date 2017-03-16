@@ -30,7 +30,6 @@
 #include "poly_portal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "swrenderer/scene/r_light.h"
-#include "gl/data/gl_data.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

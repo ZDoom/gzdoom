@@ -32,7 +32,6 @@
 #include "d_player.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "gl/data/gl_data.h"
 
 CVAR(Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)

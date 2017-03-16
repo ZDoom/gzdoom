@@ -55,8 +55,6 @@
 **
 */
 
-#include "gl/system/gl_system.h"
-
 #include "templates.h"
 #include "m_random.h"
 #include "p_local.h"
@@ -205,14 +203,14 @@ void ADynamicLight::Activate(AActor *activator)
 
 	if (lighttype == PulseLight)
 	{
-		float pulseTime = specialf1 / TICRATE;
+		float pulseTime = float(specialf1 / TICRATE);
 		
 		m_lastUpdate = level.maptime;
 		if (!swapped) m_cycler.SetParams(float(args[LIGHT_SECONDARY_INTENSITY]), float(args[LIGHT_INTENSITY]), pulseTime);
 		else m_cycler.SetParams(float(args[LIGHT_INTENSITY]), float(args[LIGHT_SECONDARY_INTENSITY]), pulseTime);
 		m_cycler.ShouldCycle(true);
 		m_cycler.SetCycleType(CYCLE_Sin);
-		m_currentRadius = m_cycler.GetVal();
+		m_currentRadius = float(m_cycler.GetVal());
 	}
 	if (m_currentRadius <= 0) m_currentRadius = 1;
 }
@@ -261,14 +259,14 @@ void ADynamicLight::Tick()
 		
 		m_lastUpdate = level.maptime;
 		m_cycler.Update(diff);
-		m_currentRadius = m_cycler.GetVal();
+		m_currentRadius = float(m_cycler.GetVal());
 		break;
 	}
 
 	case FlickerLight:
 	{
 		int rnd = randLight();
-		float pct = specialf1 / 360.f;
+		float pct = float(specialf1 / 360.f);
 		
 		m_currentRadius = float(args[LIGHT_INTENSITY + (rnd >= pct * 255)]);
 		break;
@@ -696,7 +694,7 @@ void ADynamicLight::LinkLight()
 		// passing in radius*radius allows us to do a distance check without any calls to sqrt
 		subsector_t * subSec = R_PointInSubsector(Pos());
 		::validcount++;
-		CollectWithinRadius(Pos(), subSec, radius*radius);
+		CollectWithinRadius(Pos(), subSec, float(radius*radius));
 
 	}
 		

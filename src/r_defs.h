@@ -640,6 +640,8 @@ public:
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
 	void SetFogDensity(int dens);
+	void SetSpecialColor(int num, int r, int g, int b);
+	void SetSpecialColor(int num, PalEntry rgb);
 	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;

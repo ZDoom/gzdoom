@@ -135,7 +135,10 @@ uint8_t *S_SoundCurve;
 int S_SoundCurveSize;
 
 FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
-CVAR (Int, snd_channels, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
+CUSTOM_CVAR (Int, snd_channels, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
+{
+	if (self < 64) self = 64;
+}
 CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------

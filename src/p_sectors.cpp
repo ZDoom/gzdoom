@@ -845,6 +845,35 @@ DEFINE_ACTION_FUNCTION(_Sector, SetFade)
 //
 //=====================================================================================
 
+void sector_t::SetSpecialColor(int slot, int r, int g, int b)
+{
+	SpecialColors[slot] = PalEntry(255, r, g, b);
+}
+
+void sector_t::SetSpecialColor(int slot, PalEntry rgb)
+{
+	rgb.a = 255;
+	SpecialColors[slot] = rgb;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, SetSpecialColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(num);
+	PARAM_COLOR(color);
+	if (num >= 0 && num < 5)
+	{
+		color.a = 255;
+		self->SetSpecialColor(num, color);
+	}
+	return 0;
+}
+
+//=====================================================================================
+//
+//
+//=====================================================================================
+
 void sector_t::SetFogDensity(int dens)
 {
 	Colormap.FogDensity = dens;
@@ -2414,6 +2443,7 @@ DEFINE_ACTION_FUNCTION(_Secplane, PointToDist)
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
 DEFINE_FIELD_X(Sector, sector_t, Colormap)
+DEFINE_FIELD_X(Sector, sector_t, SpecialColors)
 DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
 DEFINE_FIELD_X(Sector, sector_t, special)
 DEFINE_FIELD_X(Sector, sector_t, lightlevel)

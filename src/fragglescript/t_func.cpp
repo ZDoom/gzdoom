@@ -3891,11 +3891,11 @@ void FParser::SF_SetColor(void)
 			else
 			{
 				// little hack for testing the D64 color stuff.
-				for (int j = 0; j < 4; j++) level.sectors[i].SpecialColors[j] = color;
+				for (int j = 0; j < 4; j++) level.sectors[i].SetSpecialColor(j, color);
 				// simulates 'nocoloredspritelighting' settings.
 				int v = (color.r + color.g + color.b) / 3;
 				v = (255 + v + v) / 3;
-				level.sectors[i].SpecialColors[sector_t::sprites] = PalEntry(255, v, v, v);
+				level.sectors[i].SetSpecialColor(sector_t::sprites, v, v, v);
 			}
 		}
 	}

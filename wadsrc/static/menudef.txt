@@ -1642,7 +1642,7 @@ OptionMenu SoundOptions
 	StaticText " "
 	Option "$SNDMNU_UNDERWATERREVERB",	"snd_waterreverb", "OnOff"
 	Option "$SNDMNU_RANDOMIZEPITCHES",	"snd_pitched", "OnOff"
-	Slider "$SNDMNU_CHANNELS",			"snd_channels", 8, 256, 8, 0
+	Slider "$SNDMNU_CHANNELS",			"snd_channels", 64, 256, 8, 0
 	StaticText " "
 
 	ifoption(fmodex)

@@ -27,7 +27,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "a_dynlight.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/plane/r_planerenderer.h"
 

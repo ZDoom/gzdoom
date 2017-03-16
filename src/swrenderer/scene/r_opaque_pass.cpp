@@ -997,34 +997,20 @@ namespace swrenderer
 			}
 			else
 			{
-				//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
-				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-				DAngle ang = (sprite.pos - Thread->Viewport->viewpoint.Pos).Angle();
-				angle_t rot;
-				if (sprframe->Texture[0] == sprframe->Texture[1])
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
-				}
-				else
-				{
-					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-				}
-				sprite.picnum = sprframe->Texture[rot];
-				if (sprframe->Flip & (1 << rot))
+				auto &viewpoint = Thread->Viewport->viewpoint;
+				DAngle sprangle = thing->GetSpriteAngle((sprite.pos - viewpoint.Pos).Angle(), viewpoint.TicFrac);
+				bool flipX;
+				FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX);
+				if (!tex.isValid()) return false;
+
+				if (flipX)
 				{
 					sprite.renderflags ^= RF_XFLIP;
 				}
-				sprite.tex = TexMan[sprite.picnum];	// Do not animate the rotation
+				sprite.tex = TexMan[tex];	// Do not animate the rotation
 				if (r_drawvoxels)
 				{
-					sprite.voxel = sprframe->Voxel;
+					sprite.voxel = SpriteFrames[sprdef->spriteframes + thing->frame].Voxel;
 				}
 			}
 

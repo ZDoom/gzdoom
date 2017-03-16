@@ -27,7 +27,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "a_dynlight.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/scene/r_opaque_pass.h"

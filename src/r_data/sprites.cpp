@@ -35,6 +35,39 @@ uint8_t			OtherGameSkinRemap[256];
 PalEntry		OtherGameSkinPalette[256];
 
 
+//===========================================================================
+//
+//  Gets the texture index for a sprite frame
+//
+//===========================================================================
+
+FTextureID spritedef_t::GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror)
+{
+	if ((unsigned)frame >= numframes)
+	{
+		// If there are no frames at all for this sprite, don't draw it.
+		return FNullTextureID();
+	}
+	else
+	{
+		// choose a different rotation based on player view
+		spriteframe_t *sprframe = &SpriteFrames[spriteframes + frame];
+		if (rot == -1)
+		{
+			if (sprframe->Texture[0] == sprframe->Texture[1])
+			{
+				rot = (ang + 45.0 / 2 * 9).BAMs() >> 28;
+			}
+			else
+			{
+				rot = (ang + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+			}
+		}
+		if (mirror) *mirror = !!(sprframe->Flip&(1 << rot));
+		return sprframe->Texture[rot];
+	}
+}
+
 
 //
 // R_InstallSpriteLump

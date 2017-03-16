@@ -82,7 +82,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 
 	// decide which patch to use
 	bool mirror;
-	FTextureID lump = gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, &mirror);
+	FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., &mirror);
 	if (!lump.isValid()) return;
 
 	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
@@ -172,7 +172,7 @@ static bool isBright(DPSprite *psp)
 	if (psp != nullptr && psp->GetState() != nullptr)
 	{
 		bool disablefullbright = false;
-		FTextureID lump = gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, NULL);
+		FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
 		if (lump.isValid())
 		{
 			FMaterial * tex = FMaterial::ValidateTexture(lump, false, false);

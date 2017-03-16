@@ -1324,6 +1324,20 @@ public:
 		result.Roll = PrevAngles.Roll + deltaangle(PrevAngles.Roll, Angles.Roll) * ticFrac;
 		return result;
 	}
+	DAngle GetSpriteAngle(DAngle viewangle, double ticFrac)
+	{
+		if (flags7 & MF7_SPRITEANGLE)
+		{
+			return SpriteAngle;
+		}
+		else
+		{
+			DAngle thisang;
+			if (renderflags & RF_INTERPOLATEANGLES) thisang = PrevAngles.Yaw + deltaangle(PrevAngles.Yaw, Angles.Yaw) * ticFrac;
+			else thisang = Angles.Yaw;
+			return viewangle - (thisang + SpriteRotation);
+		}
+	}
 	DVector3 PosPlusZ(double zadd) const
 	{
 		return { X(), Y(), Z() + zadd };

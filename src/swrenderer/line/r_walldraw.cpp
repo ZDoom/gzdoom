@@ -28,7 +28,7 @@
 #include "r_walldraw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "a_dynlight.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_opaque_pass.h"

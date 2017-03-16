@@ -28,7 +28,7 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "a_dynlight.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"

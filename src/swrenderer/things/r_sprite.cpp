@@ -56,7 +56,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "a_dynlight.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)

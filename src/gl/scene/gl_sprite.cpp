@@ -785,18 +785,22 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			patch = thing->picnum;
 			mirror = false;
 		}
-		else if (thing->flags7 & MF7_SPRITEANGLE)
-		{
-			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (thing->SpriteAngle).BAMs(), &mirror);
-		}
-		else if (!(thing->renderflags & RF_FLATSPRITE))
-		{
-			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - (Angles.Yaw + thing->SpriteRotation)).BAMs(), &mirror);
-		}
 		else
 		{
-			// Flat sprites cannot rotate in a predictable manner.
-			patch = gl_GetSpriteFrame(spritenum, thing->frame, 0, 0, &mirror);
+			DAngle sprangle;
+			int rot;
+			if (!(thing->renderflags & RF_FLATSPRITE))
+			{
+				sprangle = thing->GetSpriteAngle(ang, r_viewpoint.TicFrac);
+				rot = -1;
+			}
+			else
+			{
+				// Flat sprites cannot rotate in a predictable manner.
+				sprangle = 0.;
+				rot = 0;
+			}
+			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror);
 		}
 
 		if (!patch.isValid()) return;

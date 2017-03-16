@@ -72,15 +72,12 @@
 #include "doomstat.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "a_dynlight.h"
 #include "actorinlines.h"
-
-
-#include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/utility/gl_convert.h"
-#include "gl/utility/gl_templates.h"
+#include "c_cvars.h"
 #include "gl/system//gl_interface.h"
+
+EXTERN_CVAR(Int, vid_renderer)
 
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -168,7 +165,7 @@ void ADynamicLight::BeginPlay()
 	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
 
-	if (gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	if (vid_renderer == 1 && gl.legacyMode && (flags4 & MF4_ATTENUATE))
 	{
 		args[LIGHT_INTENSITY] = args[LIGHT_INTENSITY] * 2 / 3;
 		args[LIGHT_SECONDARY_INTENSITY] = args[LIGHT_SECONDARY_INTENSITY] * 2 / 3;
@@ -793,7 +790,7 @@ CCMD(listlights)
 
 		if (dl->target)
 		{
-			FTextureID spr = gl_GetSpriteFrame(dl->target->sprite, dl->target->frame, 0, 0, NULL);
+			FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
 			Printf(", frame = %s ", TexMan[spr]->Name.GetChars());
 		}
 

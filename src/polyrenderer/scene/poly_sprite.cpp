@@ -376,6 +376,10 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
 	flipX = false;
+
+	if (thing->renderflags & RF_FLATSPRITE)
+		return nullptr;	// do not draw flat sprites.
+
 	if (thing->picnum.isValid())
 	{
 		FTexture *tex = TexMan(thing->picnum);
@@ -422,21 +426,15 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 		{
 			//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
 			// choose a different rotation based on player view
-			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
+
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 			pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 			DAngle ang = (pos - viewpoint.Pos).Angle();
-			angle_t rot;
-			if (sprframe->Texture[0] == sprframe->Texture[1])
-			{
-				rot = (ang - thing->Angles.Yaw + 45.0 / 2 * 9).BAMs() >> 28;
-			}
-			else
-			{
-				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
-			}
-			flipX = (sprframe->Flip & (1 << rot)) != 0;
-			return TexMan[sprframe->Texture[rot]];	// Do not animate the rotation
+
+			DAngle sprangle = thing->GetSpriteAngle((pos - viewpoint.Pos).Angle(), viewpoint.TicFrac);
+			FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX);
+			if (!tex.isValid()) return nullptr;
+			return TexMan[tex];
 		}
 	}
 }

@@ -70,12 +70,16 @@ TArray<FSWColormap> SpecialSWColormaps;
 //
 //==========================================================================
 
-FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturate)
+static FDynamicColormap *CreateSpecialLights (PalEntry color, PalEntry fade, int desaturate)
 {
-	FDynamicColormap *colormap;
+	// GetSpecialLights is called by the scene worker threads.
+	// If we didn't find the colormap, search again, but this time one thread at a time
+	static std::mutex buildmapmutex;
+	std::unique_lock<std::mutex> lock(buildmapmutex);
 
 	// If this colormap has already been created, just return it
-	for (colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
+	// This may happen if another thread beat us to it
+	for (FDynamicColormap *colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
 	{
 		if (color == colormap->Color &&
 			fade == colormap->Fade &&
@@ -86,7 +90,7 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 	}
 
 	// Not found. Create it.
-	colormap = new FDynamicColormap;
+	FDynamicColormap *colormap = new FDynamicColormap;
 	colormap->Next = NormalLight.Next;
 	colormap->Color = color;
 	colormap->Fade = fade;
@@ -96,6 +100,22 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 	colormap->Maps = new uint8_t[NUMCOLORMAPS*256];
 	colormap->BuildLights ();
 	return colormap;
+}
+
+FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturate)
+{
+	// If this colormap has already been created, just return it
+	for (FDynamicColormap *colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
+	{
+		if (color == colormap->Color &&
+			fade == colormap->Fade &&
+			desaturate == colormap->Desaturate)
+		{
+			return colormap;
+		}
+	}
+
+	return CreateSpecialLights(color, fade, desaturate);
 }
 
 //==========================================================================

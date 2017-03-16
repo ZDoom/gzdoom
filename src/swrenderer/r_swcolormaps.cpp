@@ -55,6 +55,7 @@
 #include "templates.h"
 #include "r_utility.h"
 #include "r_renderer.h"
+#include <atomic>
 
 FDynamicColormap NormalLight;
 FDynamicColormap FullNormalLight; //[SP] Emulate GZDoom brightness
@@ -95,10 +96,13 @@ static FDynamicColormap *CreateSpecialLights (PalEntry color, PalEntry fade, int
 	colormap->Color = color;
 	colormap->Fade = fade;
 	colormap->Desaturate = desaturate;
-	NormalLight.Next = colormap;
-
 	colormap->Maps = new uint8_t[NUMCOLORMAPS*256];
 	colormap->BuildLights ();
+
+	// Make sure colormap is fully built before making it publicly visible
+	std::atomic_thread_fence(std::memory_order_release);
+	NormalLight.Next = colormap;
+
 	return colormap;
 }
 

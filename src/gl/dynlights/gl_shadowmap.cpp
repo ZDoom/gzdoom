@@ -32,6 +32,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "r_state.h"
+#include "g_levellocals.h"
 
 /*
 	The 1D shadow maps are stored in a 1024x1024 texture as float depth values (R32F).
@@ -157,7 +158,9 @@ void FShadowMap::UploadLights()
 
 void FShadowMap::UploadAABBTree()
 {
-	if (numnodes != mLastNumNodes || numsegs != mLastNumSegs) // To do: there is probably a better way to detect a map change than this..
+	// Just comparing the level info is not enough. If two MAPINFO-less levels get played after each other, 
+	// they can both refer to the same default level info.
+	if (level.info != mLastLevel && numnodes != mLastNumNodes || level.segs.Size() != mLastNumSegs) 
 		Clear();
 
 	if (mAABBTree)
@@ -201,6 +204,7 @@ void FShadowMap::Clear()
 
 	mAABBTree.reset();
 
+	mLastLevel = level.info;
 	mLastNumNodes = numnodes;
-	mLastNumSegs = numsegs;
+	mLastNumSegs = level.segs.Size();
 }

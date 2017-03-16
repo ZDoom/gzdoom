@@ -6,6 +6,7 @@
 #include <memory>
 
 class ADynamicLight;
+struct level_info_t;
 
 class FShadowMap
 {
@@ -49,8 +50,9 @@ private:
 	int mLinesBuffer = 0;
 
 	// Used to detect when a level change requires the AABB tree to be regenerated
+	level_info_t *mLastLevel = nullptr;
 	int mLastNumNodes = 0;
-	int mLastNumSegs = 0;
+	unsigned mLastNumSegs = 0;
 
 	// AABB-tree of the level, used for ray tests
 	std::unique_ptr<LevelAABBTree> mAABBTree;

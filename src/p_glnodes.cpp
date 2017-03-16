@@ -135,25 +135,23 @@ static int CheckForMissingSegs()
 	int missing = 0;
 
 	memset(added_seglen, 0, sizeof(double)*numsides);
-	for(int i=0;i<numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-
-		if (seg->sidedef!=NULL)
+		if (seg.sidedef != nullptr)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
-			added_seglen[seg->sidedef->Index()] += vec1.Length();
+			DVector2 vec1(seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY());
+			added_seglen[seg.sidedef->Index()] += vec1.Length();
 		}
 	}
 
-	for(unsigned i=0;i<numsides;i++)
+	for (unsigned i = 0; i < numsides; i++)
 	{
 		double linelen = level.sides[i].linedef->Delta().Length();
 		missing += (added_seglen[i] < linelen - 1.);
 	}
 
-	delete [] added_seglen;
+	delete[] added_seglen;
 	return missing;
 }
 
@@ -183,7 +181,7 @@ bool P_CheckForGLNodes()
 		{
 			for(uint32_t j=0;j<sub->numlines;j++)
 			{
-				if (segs[j].linedef==NULL)	// miniseg
+				if (level.segs[j].linedef==NULL)	// miniseg
 				{
 					// We already have GL nodes. Great!
 					return true;
@@ -304,11 +302,11 @@ static bool LoadGLSegs(FileReader * lump)
 	int			i;
 	line_t		*ldef=NULL;
 	
-	numsegs = lump->GetLength();
+	int numsegs = lump->GetLength();
 	data= new char[numsegs];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(data, numsegs);
-	segs=NULL;
+	auto &segs = level.segs;
 
 #ifdef _MSC_VER
 	__try
@@ -317,12 +315,13 @@ static bool LoadGLSegs(FileReader * lump)
 		if (!format5 && memcmp(data, "gNd3", 4))
 		{
 			numsegs/=sizeof(glseg_t);
-			segs = new seg_t[numsegs];
-			memset(segs,0,sizeof(seg_t)*numsegs);
+			level.segs.Alloc(numsegs);
+			memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 			glseg_t * ml = (glseg_t*)data;
 			for(i = 0; i < numsegs; i++)
-			{							// check for gl-vertices
+			{		
+				// check for gl-vertices
 				segs[i].v1 = &level.vertexes[checkGLVertex(LittleShort(ml->v1))];
 				segs[i].v2 = &level.vertexes[checkGLVertex(LittleShort(ml->v2))];
 				segs[i].PartnerSeg = ml->partner == 0xFFFF ? nullptr : &segs[LittleShort(ml->partner)];
@@ -368,8 +367,8 @@ static bool LoadGLSegs(FileReader * lump)
 		{
 			if (!format5) numsegs-=4;
 			numsegs/=sizeof(glseg3_t);
-			segs = new seg_t[numsegs];
-			memset(segs,0,sizeof(seg_t)*numsegs);
+			level.segs.Alloc(numsegs);
+			memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 			glseg3_t * ml = (glseg3_t*)(data+ (format5? 0:4));
 			for(i = 0; i < numsegs; i++)
@@ -428,8 +427,7 @@ static bool LoadGLSegs(FileReader * lump)
 		// (at least under MSVC. GCC can't do SEH even for Windows... :( )
 		Printf("Invalid GL segs. The BSP will have to be rebuilt.\n");
 		delete [] data;
-		delete [] segs;
-		segs = NULL;
+		level.segs.Clear();
 		return false;
 	}
 #endif
@@ -468,7 +466,7 @@ static bool LoadGLSubsectors(FileReader * lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleShort(data[i].numsegs );
-			subsectors[i].firstline = segs + LittleShort(data[i].firstseg);
+			subsectors[i].firstline = &level.segs[LittleShort(data[i].firstseg)];
 
 			if (subsectors[i].numlines == 0)
 			{
@@ -487,7 +485,7 @@ static bool LoadGLSubsectors(FileReader * lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleLong(data[i].numsegs );
-			subsectors[i].firstline = segs + LittleLong(data[i].firstseg);
+			subsectors[i].firstline = &level.segs[LittleLong(data[i].firstseg)];
 
 			if (subsectors[i].numlines == 0)
 			{
@@ -672,16 +670,14 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 	}
 	if (!LoadGLSegs(lumps[1]))
 	{
-		delete [] segs;
-		segs = NULL;
+		level.segs.Clear();
 		return false;
 	}
 	if (!LoadGLSubsectors(lumps[2]))
 	{
 		delete [] subsectors;
 		subsectors = NULL;
-		delete [] segs;
-		segs = NULL;
+		level.segs.Clear();
 		return false;
 	}
 	if (!LoadNodes(lumps[3]))
@@ -690,8 +686,7 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 		nodes = NULL;
 		delete [] subsectors;
 		subsectors = NULL;
-		delete [] segs;
-		segs = NULL;
+		level.segs.Clear();
 		return false;
 	}
 
@@ -708,8 +703,7 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 			nodes = NULL;
 			delete [] subsectors;
 			subsectors = NULL;
-			delete [] segs;
-			segs = NULL;
+			level.segs.Clear();
 			return false;
 		}
 	}
@@ -864,7 +858,7 @@ bool P_LoadGLNodes(MapData * map)
 			try
 			{
 				subsectors = NULL;
-				segs = NULL;
+				level.segs.Clear();
 				nodes = NULL;
 				P_LoadZNodes (*map->file, id);
 				return true;
@@ -876,11 +870,7 @@ bool P_LoadGLNodes(MapData * map)
 					delete[] subsectors;
 					subsectors = NULL;
 				}
-				if (segs != NULL)
-				{
-					delete[] segs;
-					segs = NULL;
-				}
+				level.segs.Clear();
 				if (nodes != NULL)
 				{
 					delete[] nodes;
@@ -984,9 +974,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		numnodes = 0;
 		subsectors = NULL;
 		numsubsectors = 0;
-		if (segs) delete [] segs;
-		segs = NULL;
-		numsegs = 0;
+		level.segs.Clear();
 
 		// Try to load GL nodes (cached or GWA)
 		loaded = P_LoadGLNodes(map);
@@ -1009,11 +997,11 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
 			
 			builder.Extract (nodes, numnodes,
-				segs, numsegs,
+				level.segs,
 				subsectors, numsubsectors,
 				level.vertexes);
 			endTime = I_FPSTime ();
-			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 			buildtime = endTime - startTime;
 		}
 	}
@@ -1106,15 +1094,15 @@ static void CreateCachedNodes(MapData *map)
 		WriteLong(ZNodes, subsectors[i].numlines);
 	}
 
-	WriteLong(ZNodes, numsegs);
-	for(int i=0;i<numsegs;i++)
+	WriteLong(ZNodes, level.segs.Size());
+	for(auto &seg : level.segs)
 	{
-		WriteLong(ZNodes, segs[i].v1->Index());
-		WriteLong(ZNodes, segs[i].PartnerSeg == nullptr? 0xffffffffu : uint32_t(segs[i].PartnerSeg - segs));
-		if (segs[i].linedef)
+		WriteLong(ZNodes, seg.v1->Index());
+		WriteLong(ZNodes, seg.PartnerSeg == nullptr? 0xffffffffu : uint32_t(seg.PartnerSeg->Index()));
+		if (seg.linedef)
 		{
-			WriteLong(ZNodes, uint32_t(segs[i].linedef->Index()));
-			WriteByte(ZNodes, segs[i].sidedef == segs[i].linedef->sidedef[0]? 0:1);
+			WriteLong(ZNodes, uint32_t(seg.linedef->Index()));
+			WriteByte(ZNodes, seg.sidedef == seg.linedef->sidedef[0]? 0:1);
 		}
 		else
 		{
@@ -1247,11 +1235,7 @@ static bool CheckCachedNodes(MapData *map)
 			delete[] subsectors;
 			subsectors = NULL;
 		}
-		if (segs != NULL)
-		{
-			delete[] segs;
-			segs = NULL;
-		}
+		level.segs.Clear();
 		if (nodes != NULL)
 		{
 			delete[] nodes;
@@ -1438,30 +1422,30 @@ void P_SetRenderSector()
 
 	// Check for incorrect partner seg info so that the following code does not crash.
 
-	for (i = 0; i < numsegs; i++)
+	for (auto &seg : level.segs)
 	{
-		auto p = segs[i].PartnerSeg;
+		auto p = seg.PartnerSeg;
 		if (p != nullptr)
 		{
-			int partner = (int)(p - segs);
+			int partner = p->Index();
 
-			if (partner < 0 || partner >= numsegs || &segs[partner] != p)
+			if (partner < 0 || partner >= (int)level.segs.Size() || &level.segs[partner] != p)
 			{
-				segs[i].PartnerSeg = nullptr;
+				seg.PartnerSeg = nullptr;
 			}
 
 			// glbsp creates such incorrect references for Strife.
-			if (segs[i].linedef && segs[i].PartnerSeg != nullptr && !segs[i].PartnerSeg->linedef)
+			if (seg.linedef && seg.PartnerSeg != nullptr && !seg.PartnerSeg->linedef)
 			{
-				segs[i].PartnerSeg = segs[i].PartnerSeg->PartnerSeg = nullptr;
+				seg.PartnerSeg = seg.PartnerSeg->PartnerSeg = nullptr;
 			}
 		}
 	}
-	for (i = 0; i < numsegs; i++)
+	for (auto &seg : level.segs)
 	{
-		if (segs[i].PartnerSeg != nullptr && segs[i].PartnerSeg->PartnerSeg != &segs[i])
+		if (seg.PartnerSeg != nullptr && seg.PartnerSeg->PartnerSeg != &seg)
 		{
-			segs[i].PartnerSeg = nullptr;
+			seg.PartnerSeg = nullptr;
 		}
 	}
 

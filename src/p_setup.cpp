@@ -3914,7 +3914,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract (nodes, numnodes,
-			segs, numsegs,
+			level.segs,
 			subsectors, numsubsectors,
 			level.vertexes);
 		endTime = I_FPSTime ();

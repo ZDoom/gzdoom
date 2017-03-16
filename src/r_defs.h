@@ -1375,9 +1375,11 @@ struct seg_t
 	subsector_t*	Subsector;
 
 	float			sidefrac;		// relative position of seg's ending vertex on owning sidedef
+
+	int Index() const;
 };
 
-extern seg_t *segs;
+//extern seg_t *segs;
 
 
 //

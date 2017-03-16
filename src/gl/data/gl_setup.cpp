@@ -115,7 +115,7 @@ static int MergeMapSections(int num)
 	TArray<bool> sectvalid;
 	sectmap.Resize(num);
 	sectvalid.Resize(num);
-	for(int i=0;i<num;i++) 
+	for (int i = 0; i < num; i++)
 	{
 		sectmap[i] = -1;
 		sectvalid[i] = true;
@@ -126,31 +126,29 @@ static int MergeMapSections(int num)
 	cvertex_t vt;
 
 	// first step: Set mapsection for all vertex positions.
-	for(uint32_t i=0;i<(uint32_t)numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-		int section = seg->Subsector->mapsection;
-		for(int j=0;j<2;j++)
+		int section = seg.Subsector->mapsection;
+		for (int j = 0; j < 2; j++)
 		{
-			vt = j==0? seg->v1:seg->v2;
+			vt = j == 0 ? seg.v1 : seg.v2;
 			vmap[vt] = section;
 		}
 	}
 
 	// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
-	for(uint32_t i=0;i<(uint32_t)numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-		int section = seg->Subsector->mapsection;
-		for(int j=0;j<2;j++)
+		int section = seg.Subsector->mapsection;
+		for (int j = 0; j < 2; j++)
 		{
-			vt = j==0? seg->v1:seg->v2;
+			vt = j == 0 ? seg.v1 : seg.v2;
 			int vsection = vmap[vt];
 
 			if (vsection != section)
 			{
 				// These 2 sections should be merged
-				for(int k=0;k<numsubsectors;k++)
+				for (int k = 0; k < numsubsectors; k++)
 				{
 					if (subsectors[k].mapsection == vsection) subsectors[k].mapsection = section;
 				}
@@ -159,20 +157,20 @@ static int MergeMapSections(int num)
 				{
 					if (pair->Value == vsection) pair->Value = section;
 				}
-				sectvalid[vsection-1] = false;
+				sectvalid[vsection - 1] = false;
 			}
 		}
 	}
-	for(int i=0;i<num;i++)
+	for (int i = 0; i < num; i++)
 	{
 		if (sectvalid[i]) sectmap[i] = mergecount++;
 	}
-	for(int i=0;i<numsubsectors;i++)
+	for (int i = 0; i < numsubsectors; i++)
 	{
-		subsectors[i].mapsection = sectmap[subsectors[i].mapsection-1];
-		assert(subsectors[i].mapsection!=-1);
+		subsectors[i].mapsection = sectmap[subsectors[i].mapsection - 1];
+		assert(subsectors[i].mapsection != -1);
 	}
-	return mergecount-1;
+	return mergecount - 1;
 }
 
 //==========================================================================
@@ -491,22 +489,20 @@ static void PrepareSegs()
 	// count the segs
 	memset(segcount, 0, numsides * sizeof(int));
 
-	for(int i=0;i<numsegs;i++)
+	for(auto &seg : level.segs)
 	{
-		seg_t *seg = &segs[i];
-
-		if (seg->sidedef == NULL) continue;	// miniseg
-		int sidenum = seg->sidedef->Index();
+		if (seg.sidedef == NULL) continue;	// miniseg
+		int sidenum = seg.sidedef->Index();
 
 		realsegs++;
 		segcount[sidenum]++;
-		DVector2 sidestart, sideend, segend = seg->v2->fPos();
+		DVector2 sidestart, sideend, segend = seg.v2->fPos();
 		GetSideVertices(sidenum, &sidestart, &sideend);
 
 		sideend -=sidestart;
 		segend -= sidestart;
 
-		seg->sidefrac = float(segend.Length() / sideend.Length());
+		seg.sidefrac = float(segend.Length() / sideend.Length());
 	}
 
 	// allocate memory
@@ -521,10 +517,9 @@ static void PrepareSegs()
 	delete [] segcount;
 
 	// assign the segs
-	for(int i=0;i<numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t *seg = &segs[i];
-		if (seg->sidedef != NULL) seg->sidedef->segs[seg->sidedef->numsegs++] = seg;
+		if (seg.sidedef != NULL) seg.sidedef->segs[seg.sidedef->numsegs++] = &seg;
 	}
 
 	// sort the segs

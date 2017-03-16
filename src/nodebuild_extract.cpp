@@ -53,7 +53,7 @@
 #endif
 
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
-	seg_t *&outSegs, int &segCount,
+	TStaticArray<seg_t> &outSegs,
 	subsector_t *&outSubs, int &subCount,
 	TStaticArray<vertex_t> &outVerts)
 {
@@ -114,10 +114,10 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			outSubs[i].firstline = (seg_t *)(size_t)(segs.Size() - numsegs);
 		}
 
-		segCount = segs.Size ();
-		outSegs = new seg_t[segCount];
+		auto segCount = segs.Size ();
+		outSegs.Alloc(segCount);
 
-		for (i = 0; i < segCount; ++i)
+		for (unsigned i = 0; i < segCount; ++i)
 		{
 			outSegs[i] = *(seg_t *)&segs[i];
 
@@ -135,9 +135,9 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	else
 	{
 		memcpy (outSubs, &Subsectors[0], subCount*sizeof(subsector_t));
-		segCount = Segs.Size ();
-		outSegs = new seg_t[segCount];
-		for (i = 0; i < segCount; ++i)
+		auto segCount = Segs.Size ();
+		outSegs.Alloc(segCount);
+		for (unsigned i = 0; i < segCount; ++i)
 		{
 			const FPrivSeg *org = &Segs[SegList[i].SegNum];
 			seg_t *out = &outSegs[i];

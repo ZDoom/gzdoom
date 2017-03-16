@@ -33,6 +33,7 @@ struct FLevelLocals
 	TStaticArray<sector_t> sectors;
 	TStaticArray<line_t> lines;
 	TStaticArray<side_t> sides;
+	TStaticArray<seg_t> segs;
 
 	TArray<FSectorPortal> sectorPortals;
 
@@ -107,6 +108,11 @@ inline int side_t::Index() const
 inline int line_t::Index() const
 {
 	return int(this - &level.lines[0]);
+}
+
+inline int seg_t::Index() const
+{
+	return int(this - &level.segs[0]);
 }
 
 inline FSectorPortal *line_t::GetTransferredPortal()

@@ -46,8 +46,8 @@ extern uint32_t NumStdSprites;
 
 extern TArray<vertexdata_t> vertexdatas;
 
-extern int				numsegs;
-extern seg_t*			segs;
+//extern int				numsegs;
+//extern seg_t*			segs;
 
 extern int				numsubsectors;
 extern subsector_t* 	subsectors;

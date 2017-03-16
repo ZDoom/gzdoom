@@ -113,7 +113,7 @@ namespace swrenderer
 		auto viewport = thread->Viewport.get();
 
 		yscale = xscale; // YaspectMul is not needed for particles as they should always be square
-		ty = particle->Pos.Z - viewport->viewpoint.Pos.Z;
+		ty = (particle->Pos.Z - viewport->viewpoint.Pos.Z) * thread->Viewport->YaspectMul;
 		y1 = xs_RoundToInt(viewport->CenterY - (ty + psize) * yscale);
 		y2 = xs_RoundToInt(viewport->CenterY - (ty - psize) * yscale);
 

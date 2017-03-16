@@ -314,7 +314,7 @@ static bool R_CheckForFixedLights(const uint8_t *colormaps)
 //
 //==========================================================================
 
-static void SetDefaultColormap (const char *name)
+void SetDefaultColormap (const char *name)
 {
 	if (strnicmp (fakecmaps[0].name, name, 8) != 0)
 	{

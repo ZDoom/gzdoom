@@ -3436,12 +3436,17 @@ void P_FreeLevelData ()
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 		
-	FBehavior::StaticUnloadModules ();
-	level.segs.Clear();
 	if (level.sectors.Size() > 0)
 	{
 		delete[] level.sectors[0].e;
 	}
+	for (auto &sub : level.subsectors)
+	{
+		if (sub.BSP != nullptr) delete sub.BSP;
+	}
+
+	FBehavior::StaticUnloadModules ();
+	level.segs.Clear();
 	level.sectors.Clear();
 	level.lines.Clear();
 	level.sides.Clear();

@@ -1409,7 +1409,7 @@ struct subsector_t
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
 	sector_t	*render_sector;
-	uint32_t		numlines;
+	uint32_t	numlines;
 	int			flags;
 
 	void BuildPolyBSP();
@@ -1461,7 +1461,6 @@ struct FMiniBSP
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
 };
-
 
 //
 // OTHER TYPES

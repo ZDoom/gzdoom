@@ -449,8 +449,8 @@ namespace swrenderer
 		}
 
 #ifdef RANGECHECK
-		if (outersubsector && sub - subsectors >= (ptrdiff_t)numsubsectors)
-			I_Error("RenderSubsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
+		if (outersubsector && (unsigned)sub->Index() >= level.subsectors.Size())
+			I_Error("RenderSubsector: ss %i with numss = %u", sub->Index(), level.subsectors.Size());
 #endif
 
 		assert(sub->sector != nullptr);
@@ -714,12 +714,12 @@ namespace swrenderer
 		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, basecolormap);
 
 		// [RH] Add particles
-		if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
+		if ((unsigned int)(sub->Index()) < level.subsectors.Size())
 		{ // Only do it for the main BSP.
 			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2 + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
-			for (int i = ParticlesInSubsec[(unsigned int)(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Thread, Particles + i, subsectors[sub - subsectors].sector, shade, FakeSide, foggy);
+				RenderParticle::Project(Thread, Particles + i, sub->sector, shade, FakeSide, foggy);
 			}
 		}
 
@@ -790,7 +790,7 @@ namespace swrenderer
 	{
 		if (numnodes == 0)
 		{
-			RenderSubsector(subsectors);
+			RenderSubsector(&level.subsectors[0]);
 			return;
 		}
 		while (!((size_t)node & 1))  // Keep going until found a subsector

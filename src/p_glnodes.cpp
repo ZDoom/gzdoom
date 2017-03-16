@@ -163,13 +163,10 @@ static int CheckForMissingSegs()
 
 bool P_CheckForGLNodes()
 {
-	int i;
-
-	for(i=0;i<numsubsectors;i++)
+	for(auto &sub : level.subsectors)
 	{
-		subsector_t * sub = &subsectors[i];
-		seg_t * firstseg = sub->firstline;
-		seg_t * lastseg = sub->firstline + sub->numlines - 1;
+		seg_t * firstseg = sub.firstline;
+		seg_t * lastseg = sub.firstline + sub.numlines - 1;
 
 		if (firstseg->v1 != lastseg->v2)
 		{
@@ -179,7 +176,7 @@ bool P_CheckForGLNodes()
 		}
 		else
 		{
-			for(uint32_t j=0;j<sub->numlines;j++)
+			for(uint32_t j=0;j<sub.numlines;j++)
 			{
 				if (level.segs[j].linedef==NULL)	// miniseg
 				{
@@ -445,7 +442,7 @@ static bool LoadGLSubsectors(FileReader * lump)
 	char * datab;
 	int  i;
 	
-	numsubsectors = lump->GetLength();
+	auto numsubsectors = lump->GetLength();
 	datab = new char[numsubsectors];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(datab, numsubsectors);
@@ -460,8 +457,9 @@ static bool LoadGLSubsectors(FileReader * lump)
 	{
 		mapsubsector_t * data = (mapsubsector_t*) datab;
 		numsubsectors /= sizeof(mapsubsector_t);
-		subsectors = new subsector_t[numsubsectors];
-		memset(subsectors,0,numsubsectors * sizeof(subsector_t));
+		level.subsectors.Alloc(numsubsectors);
+		auto &subsectors = level.subsectors;
+		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{
@@ -479,8 +477,9 @@ static bool LoadGLSubsectors(FileReader * lump)
 	{
 		gl3_mapsubsector_t * data = (gl3_mapsubsector_t*) (datab+(format5? 0:4));
 		numsubsectors /= sizeof(gl3_mapsubsector_t);
-		subsectors = new subsector_t[numsubsectors];
-		memset(subsectors,0,numsubsectors * sizeof(subsector_t));
+		level.subsectors.Alloc(numsubsectors);
+		auto &subsectors = level.subsectors;
+		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{
@@ -495,15 +494,15 @@ static bool LoadGLSubsectors(FileReader * lump)
 		}
 	}
 
-	for (i=0; i<numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		for(unsigned j=0;j<subsectors[i].numlines;j++)
+		for(unsigned j=0;j<sub.numlines;j++)
 		{
-			seg_t * seg = subsectors[i].firstline + j;
-			if (seg->linedef==NULL) seg->frontsector = seg->backsector = subsectors[i].firstline->frontsector;
+			seg_t * seg = sub.firstline + j;
+			if (seg->linedef==NULL) seg->frontsector = seg->backsector = sub.firstline->frontsector;
 		}
-		seg_t *firstseg = subsectors[i].firstline;
-		seg_t *lastseg = subsectors[i].firstline + subsectors[i].numlines - 1;
+		seg_t *firstseg = sub.firstline;
+		seg_t *lastseg = sub.firstline + sub.numlines - 1;
 		// The subsector must be closed. If it isn't we can't use these nodes and have to do a rebuild.
 		if (lastseg->v2 != firstseg->v1)
 		{
@@ -563,12 +562,12 @@ static bool LoadNodes (FileReader * lump)
 				if (child & NF_SUBSECTOR)
 				{
 					child &= ~NF_SUBSECTOR;
-					if (child >= numsubsectors)
+					if (child >= level.subsectors.Size())
 					{
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (uint8_t *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 				}
 				else if (child >= numnodes)
 				{
@@ -623,12 +622,12 @@ static bool LoadNodes (FileReader * lump)
 				if (child & GL5_NF_SUBSECTOR)
 				{
 					child &= ~GL5_NF_SUBSECTOR;
-					if (child >= numsubsectors)
+					if ((unsigned)child >= level.subsectors.Size())
 					{
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (uint8_t *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 				}
 				else if (child >= numnodes)
 				{
@@ -675,8 +674,7 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 	}
 	if (!LoadGLSubsectors(lumps[2]))
 	{
-		delete [] subsectors;
-		subsectors = NULL;
+		level.subsectors.Clear();
 		level.segs.Clear();
 		return false;
 	}
@@ -684,8 +682,7 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 	{
 		delete [] nodes;
 		nodes = NULL;
-		delete [] subsectors;
-		subsectors = NULL;
+		level.subsectors.Clear();
 		level.segs.Clear();
 		return false;
 	}
@@ -693,16 +690,15 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 	// Quick check for the validity of the nodes
 	// For invalid nodes there is a high chance that this test will fail
 
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		seg_t * seg = subsectors[i].firstline;
+		seg_t * seg = sub.firstline;
 		if (!seg->sidedef) 
 		{
 			Printf("GL nodes contain invalid data. The BSP has to be rebuilt.\n");
 			delete [] nodes;
 			nodes = NULL;
-			delete [] subsectors;
-			subsectors = NULL;
+			level.subsectors.Clear();
 			level.segs.Clear();
 			return false;
 		}
@@ -857,7 +853,7 @@ bool P_LoadGLNodes(MapData * map)
 		{
 			try
 			{
-				subsectors = NULL;
+				level.subsectors.Clear();
 				level.segs.Clear();
 				nodes = NULL;
 				P_LoadZNodes (*map->file, id);
@@ -865,11 +861,7 @@ bool P_LoadGLNodes(MapData * map)
 			}
 			catch (CRecoverableError &)
 			{
-				if (subsectors != NULL)
-				{
-					delete[] subsectors;
-					subsectors = NULL;
-				}
+				level.subsectors.Clear();
 				level.segs.Clear();
 				if (nodes != NULL)
 				{
@@ -965,15 +957,14 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 	if (!rebuilt && !P_CheckForGLNodes())
 	{
 		ret = true;	// we are not using the level's original nodes if we get here.
-		for (int i = 0; i < numsubsectors; i++)
+		for (auto &sub : level.gamesubsectors)
 		{
-			gamesubsectors[i].sector = gamesubsectors[i].firstline->sidedef->sector;
+			sub.sector = sub.firstline->sidedef->sector;
 		}
 
 		nodes = NULL;
 		numnodes = 0;
-		subsectors = NULL;
-		numsubsectors = 0;
+		level.subsectors.Clear();
 		level.segs.Clear();
 
 		// Try to load GL nodes (cached or GWA)
@@ -998,7 +989,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			
 			builder.Extract (nodes, numnodes,
 				level.segs,
-				subsectors, numsubsectors,
+				level.subsectors,
 				level.vertexes);
 			endTime = I_FPSTime ();
 			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
@@ -1027,8 +1018,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 	{
 		gamenodes = nodes;
 		numgamenodes = numnodes;
-		gamesubsectors = subsectors;
-		numgamesubsectors = numsubsectors;
+		level.gamesubsectors.Point(level.subsectors);
 	}
 	return ret;
 }
@@ -1088,10 +1078,10 @@ static void CreateCachedNodes(MapData *map)
 		WriteLong(ZNodes, vert.fixY());
 	}
 
-	WriteLong(ZNodes, numsubsectors);
-	for(int i=0;i<numsubsectors;i++)
+	WriteLong(ZNodes, level.subsectors.Size());
+	for (auto &sub : level.subsectors)
 	{
-		WriteLong(ZNodes, subsectors[i].numlines);
+		WriteLong(ZNodes, sub.numlines);
 	}
 
 	WriteLong(ZNodes, level.segs.Size());
@@ -1131,7 +1121,7 @@ static void CreateCachedNodes(MapData *map)
 			uint32_t child;
 			if ((size_t)nodes[i].children[j] & 1)
 			{
-				child = 0x80000000 | uint32_t((subsector_t *)((uint8_t *)nodes[i].children[j] - 1) - subsectors);
+				child = 0x80000000 | uint32_t(((subsector_t *)((uint8_t *)nodes[i].children[j] - 1))->Index());
 			}
 			else
 			{
@@ -1230,11 +1220,7 @@ static bool CheckCachedNodes(MapData *map)
 	{
 		Printf ("Error loading nodes: %s\n", error.GetMessage());
 
-		if (subsectors != NULL)
-		{
-			delete[] subsectors;
-			subsectors = NULL;
-		}
+		level.subsectors.Clear();
 		level.segs.Clear();
 		if (nodes != NULL)
 		{
@@ -1324,7 +1310,7 @@ subsector_t *P_PointInSubsector (double x, double y)
 
 	// single subsector is a special case
 	if (numgamenodes == 0)
-		return gamesubsectors;
+		return &level.gamesubsectors[0];
 				
 	node = gamenodes + numgamenodes - 1;
 
@@ -1450,39 +1436,38 @@ void P_SetRenderSector()
 	}
 
 	// look up sector number for each subsector
-	for (i = 0; i < numsubsectors; i++)
+	for (auto &ss : level.subsectors)
 	{
 		// For rendering pick the sector from the first seg that is a sector boundary
 		// this takes care of self-referencing sectors
-		ss = &subsectors[i];
-		seg_t *seg = ss->firstline;
+		seg_t *seg = ss.firstline;
 
 		// Check for one-dimensional subsectors. These should be ignored when
 		// being processed for automap drawing etc.
-		ss->flags |= SSECF_DEGENERATE;
-		for(j=2; j<ss->numlines; j++)
+		ss.flags |= SSECF_DEGENERATE;
+		for(j=2; j<ss.numlines; j++)
 		{
 			if (!PointOnLine(seg[j].v1->fixX(), seg[j].v1->fixY(), seg->v1->fixX(), seg->v1->fixY(), seg->v2->fixX() -seg->v1->fixX(), seg->v2->fixY() -seg->v1->fixY()))
 			{
 				// Not on the same line
-				ss->flags &= ~SSECF_DEGENERATE;
+				ss.flags &= ~SSECF_DEGENERATE;
 				break;
 			}
 		}
 
-		seg = ss->firstline;
-		for(j=0; j<ss->numlines; j++)
+		seg = ss.firstline;
+		for(j=0; j<ss.numlines; j++)
 		{
 			if(seg->sidedef && (seg->PartnerSeg == nullptr || (seg->PartnerSeg->sidedef != nullptr && seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector)))
 			{
-				ss->render_sector = seg->sidedef->sector;
+				ss.render_sector = seg->sidedef->sector;
 				break;
 			}
 			seg++;
 		}
-		if(ss->render_sector == NULL) 
+		if(ss.render_sector == NULL) 
 		{
-			undetermined.Push(ss);
+			undetermined.Push(&ss);
 		}
 	}
 

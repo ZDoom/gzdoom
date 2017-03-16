@@ -1047,11 +1047,11 @@ void FDrawInfo::StartScene()
 	ClearBuffers();
 
 	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(numsubsectors);
-	no_renderflags.Resize(numsubsectors);
+	ss_renderflags.Resize(level.subsectors.Size());
+	no_renderflags.Resize(level.subsectors.Size());
 
 	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, numsubsectors * sizeof(ss_renderflags[0]));
+	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
 	memset(&no_renderflags[0], 0, numnodes * sizeof(no_renderflags[0]));
 
 	next = gl_drawinfo;

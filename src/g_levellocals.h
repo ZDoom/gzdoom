@@ -34,6 +34,8 @@ struct FLevelLocals
 	TStaticArray<line_t> lines;
 	TStaticArray<side_t> sides;
 	TStaticArray<seg_t> segs;
+	TStaticPointableArray<subsector_t> subsectors;
+	TStaticPointableArray<subsector_t> gamesubsectors;
 
 	TArray<FSectorPortal> sectorPortals;
 
@@ -113,6 +115,11 @@ inline int line_t::Index() const
 inline int seg_t::Index() const
 {
 	return int(this - &level.segs[0]);
+}
+
+inline int subsector_t::Index() const
+{
+	return int(this - &level.subsectors[0]);
 }
 
 inline FSectorPortal *line_t::GetTransferredPortal()

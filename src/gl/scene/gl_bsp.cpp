@@ -426,7 +426,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	if (!(currentmapsection[sub->mapsection>>3] & (1 << (sub->mapsection & 7)))) return;
 	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
-	if (gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN)
+	if (gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN)
 	{
 		// This means that we have reached a subsector in a portal that has been marked 'seen'
 		// from the other side of the portal. This means we must clear the clipper for the
@@ -460,7 +460,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	{
 		SetupSprite.Clock();
 
-		for (i = ParticlesInSubsec[uint32_t(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			GLSprite sprite(this);
 			sprite.ProcessParticle(&Particles[i], fakesector);
@@ -516,7 +516,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
-				gl_drawinfo->ss_renderflags[sub-subsectors] = 
+				gl_drawinfo->ss_renderflags[sub->Index()] = 
 					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) gl_drawinfo->AddHackedSubsector(sub);
 
@@ -556,7 +556,7 @@ void GLSceneDrawer::RenderBSPNode (void *node)
 {
 	if (numnodes == 0)
 	{
-		DoSubsector (subsectors);
+		DoSubsector (&level.subsectors[0]);
 		return;
 	}
 	while (!((size_t)node & 1))  // Keep going until found a subsector

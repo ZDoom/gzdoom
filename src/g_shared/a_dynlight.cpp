@@ -829,19 +829,18 @@ CCMD(listlights)
 
 CCMD(listsublights)
 {
-	for(int i=0;i<numsubsectors;i++)
+	for(auto &sub : level.subsectors)
 	{
-		subsector_t *sub = &subsectors[i];
 		int lights = 0;
 
-		FLightNode * node = sub->lighthead;
+		FLightNode * node = sub.lighthead;
 		while (node != NULL)
 		{
 			lights++;
 			node = node->nextLight;
 		}
 
-		Printf(PRINT_LOG, "Subsector %d - %d lights\n", i, lights);
+		Printf(PRINT_LOG, "Subsector %d - %d lights\n", sub.Index(), lights);
 	}
 }
 

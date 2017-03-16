@@ -381,7 +381,7 @@ CCMD(dumpgeometry)
 		{
 			subsector_t * sub = sector.subsectors[j];
 
-			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub-subsectors), sub->sector->sectornum, sub->hacked&1? "hacked":"");
+			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked&1? "hacked":"");
 			for(uint32_t k=0;k<sub->numlines;k++)
 			{
 				seg_t * seg = sub->firstline + k;

@@ -706,7 +706,7 @@ static uint8_t SetCoverage(void *node)
 	else
 	{
 		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
-		return gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN;
+		return gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN;
 	}
 }
 
@@ -718,9 +718,9 @@ void GLSectorStackPortal::SetupCoverage()
 		int plane = origin->plane;
 		for(int j=0;j<sub->portalcoverage[plane].sscount; j++)
 		{
-			subsector_t *dsub = &::subsectors[sub->portalcoverage[plane].subsectors[j]];
+			subsector_t *dsub = &::level.subsectors[sub->portalcoverage[plane].subsectors[j]];
 			currentmapsection[dsub->mapsection>>3] |= 1 << (dsub->mapsection&7);
-			gl_drawinfo->ss_renderflags[dsub-::subsectors] |= SSRF_SEEN;
+			gl_drawinfo->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
 	SetCoverage(&nodes[numnodes-1]);
@@ -750,7 +750,7 @@ void GLSectorStackPortal::DrawContents()
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
 	subsector_t *sub = R_PointInSubsector(r_viewpoint.Pos);
-	if (!(gl_drawinfo->ss_renderflags[sub - ::subsectors] & SSRF_SEEN))
+	if (!(gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
 		drawer->clipper.SafeAddClipRange(0, ANGLE_MAX);
 		drawer->clipper.SetBlocked(true);

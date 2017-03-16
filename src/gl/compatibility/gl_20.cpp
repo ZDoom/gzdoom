@@ -680,7 +680,7 @@ void GLFlat::DrawLightsCompat(int pass)
 	for (int i = 0; i<sector->subsectorcount; i++)
 	{
 		subsector_t * sub = sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub - subsectors] & renderflags)
+		if (gl_drawinfo->ss_renderflags[sub->Index()] & renderflags)
 		{
 			DrawSubsectorLights(sub, pass);
 		}

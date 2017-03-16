@@ -297,7 +297,7 @@ struct FCoverageBuilder
 		{
 			// we reached a subsector so we can link the node with this subsector
 			subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
-			collect.Push(int(sub-subsectors));
+			collect.Push(int(sub->Index()));
 		}
 	}
 };
@@ -493,22 +493,21 @@ CCMD(dumpportals)
 		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, glSectorPortals[i]->plane==0? "floor":"ceiling",
 			xdisp, ydisp);
 		Printf(PRINT_LOG, "Coverage:\n");
-		for(int j=0;j<numsubsectors;j++)
+		for(auto &sub : level.subsectors)
 		{
-			subsector_t *sub = &subsectors[j];
-			FPortal *port = sub->render_sector->GetGLPortal(glSectorPortals[i]->plane);
+			FPortal *port = sub.render_sector->GetGLPortal(glSectorPortals[i]->plane);
 			if (port == glSectorPortals[i])
 			{
-				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", j, sub->render_sector->sectornum);
-				for(unsigned k = 0;k< sub->numlines; k++)
+				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", sub.Index(), sub.render_sector->sectornum);
+				for(unsigned k = 0;k< sub.numlines; k++)
 				{
-					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub->firstline[k].v1->fX() + xdisp, sub->firstline[k].v1->fY() + ydisp);
+					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub.firstline[k].v1->fX() + xdisp, sub.firstline[k].v1->fY() + ydisp);
 				}
 				Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
-				FPortalCoverage *cov = &sub->portalcoverage[glSectorPortals[i]->plane];
+				FPortalCoverage *cov = &sub.portalcoverage[glSectorPortals[i]->plane];
 				for(int l = 0;l< cov->sscount; l++)
 				{
-					subsector_t *csub = &subsectors[cov->subsectors[l]];
+					subsector_t *csub = &level.subsectors[cov->subsectors[l]];
 					Printf(PRINT_LOG, "\t\t\t%5d (%4d): ", cov->subsectors[l], csub->render_sector->sectornum);
 					for(unsigned m = 0;m< csub->numlines; m++)
 					{

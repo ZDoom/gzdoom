@@ -148,9 +148,9 @@ static int MergeMapSections(int num)
 			if (vsection != section)
 			{
 				// These 2 sections should be merged
-				for (int k = 0; k < numsubsectors; k++)
+				for (auto &sub : level.subsectors)
 				{
-					if (subsectors[k].mapsection == vsection) subsectors[k].mapsection = section;
+					if (sub.mapsection == vsection) sub.mapsection = section;
 				}
 				FSectionVertexMap::Iterator it(vmap);
 				while (it.NextPair(pair))
@@ -165,10 +165,10 @@ static int MergeMapSections(int num)
 	{
 		if (sectvalid[i]) sectmap[i] = mergecount++;
 	}
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		subsectors[i].mapsection = sectmap[subsectors[i].mapsection - 1];
-		assert(subsectors[i].mapsection != -1);
+		sub.mapsection = sectmap[sub.mapsection - 1];
+		assert(sub.mapsection != -1);
 	}
 	return mergecount - 1;
 }
@@ -186,12 +186,12 @@ static void SetMapSections()
 	do
 	{
 		set = false;
-		for(int i=0; i<numsubsectors; i++)
+		for (auto &sub : level.subsectors)
 		{
-			if (subsectors[i].mapsection == 0)
+			if (sub.mapsection == 0)
 			{
 				num++;
-				DoSetMapSection(&subsectors[i], num);
+				DoSetMapSection(&sub, num);
 				set = true;
 				break;
 			}
@@ -244,16 +244,14 @@ static void SpreadHackedFlag(subsector_t * sub)
 
 static void PrepareSectorData()
 {
-	int 				i;
 	TArray<subsector_t *> undetermined;
-	subsector_t *		ss;
 
 	// now group the subsectors by sector
-	subsector_t ** subsectorbuffer = new subsector_t * [numsubsectors];
+	subsector_t ** subsectorbuffer = new subsector_t * [level.subsectors.Size()];
 
-	for(i=0, ss=subsectors; i<numsubsectors; i++, ss++)
+	for (auto &sub : level.subsectors)
 	{
-		ss->render_sector->subsectorcount++;
+		sub.render_sector->subsectorcount++;
 	}
 
 	for (auto &sec : level.sectors) 
@@ -263,28 +261,28 @@ static void PrepareSectorData()
 		sec.subsectorcount = 0;
 	}
 	
-	for(i=0, ss = subsectors; i<numsubsectors; i++, ss++)
+	for (auto &sub : level.subsectors)
 	{
-		ss->render_sector->subsectors[ss->render_sector->subsectorcount++]=ss;
+		sub.render_sector->subsectors[sub.render_sector->subsectorcount++] = &sub;
 	}
 
 	// marks all malformed subsectors so rendering tricks using them can be handled more easily
-	for (i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		if (subsectors[i].sector == subsectors[i].render_sector)
+		if (sub.sector == sub.render_sector)
 		{
-			seg_t * seg = subsectors[i].firstline;
-			for(uint32_t j=0;j<subsectors[i].numlines;j++)
+			seg_t * seg = sub.firstline;
+			for(uint32_t j=0;j<sub.numlines;j++)
 			{
-				if (!(subsectors[i].hacked&1) && seg[j].linedef==0 && 
+				if (!(sub.hacked&1) && seg[j].linedef==0 && 
 						seg[j].PartnerSeg!=NULL && 
-						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
+						sub.render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
 					DPrintf(DMSG_NOTIFY, "Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
-					subsectors[i].hacked|=5;
-					SpreadHackedFlag(&subsectors[i]);
+					sub.hacked|=5;
+					SpreadHackedFlag(&sub);
 				}
-				if (seg[j].PartnerSeg==NULL) subsectors[i].hacked|=2;	// used for quick termination checks
+				if (seg[j].PartnerSeg==NULL) sub.hacked|=2;	// used for quick termination checks
 			}
 		}
 	}
@@ -616,14 +614,14 @@ void gl_CleanLevelData()
 		delete [] level.sectors[0].subsectors;
 		level.sectors[0].subsectors = nullptr;
 	}
-	for (int i=0;i<numsubsectors;i++)
+	for (auto &sub : level.subsectors)
 	{
 		for(int j=0;j<2;j++)
 		{
-			if (subsectors[i].portalcoverage[j].subsectors != NULL)
+			if (sub.portalcoverage[j].subsectors != NULL)
 			{
-				delete [] subsectors[i].portalcoverage[j].subsectors;
-				subsectors[i].portalcoverage[j].subsectors = NULL;
+				delete [] sub.portalcoverage[j].subsectors;
+				sub.portalcoverage[j].subsectors = NULL;
 			}
 		}
 	}
@@ -643,13 +641,13 @@ void gl_CleanLevelData()
 
 CCMD(listmapsections)
 {
-	for(int i=0;i<100;i++)
+	for (int i = 0; i < 100; i++)
 	{
-		for (int j=0;j<numsubsectors;j++)
+		for (auto &sub : level.subsectors)
 		{
-			if (subsectors[j].mapsection == i)
+			if (sub.mapsection == i)
 			{
-				Printf("Mapsection %d, sector %d, line %d\n", i, subsectors[j].render_sector->Index(), subsectors[j].firstline->linedef->Index());
+				Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
 				break;
 			}
 		}

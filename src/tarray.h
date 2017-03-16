@@ -596,6 +596,51 @@ public:
 	}
 };
 
+template <class T>
+class TStaticPointableArray : public TStaticArray<T>
+{
+	bool pointed = false;
+public:
+
+	////////
+	TStaticPointableArray()
+	{
+	}
+	// This is not supposed to be copyable.
+	TStaticPointableArray(const TStaticArray<T> &other) = delete;
+
+	void Clear()
+	{
+		if (!pointed && this->Array) delete[] this->Array;
+		this->Count = 0;
+		this->Array = nullptr;
+	}
+	void Alloc(unsigned int amount)
+	{
+		// intentionally first deletes and then reallocates.
+		if (!pointed && this->Array) delete[] this->Array;
+		this->Array = new T[amount];
+		this->Count = amount;
+		pointed = false;
+	}
+	void Point(TStaticArray<T> & other)
+	{
+		if (!pointed && this->Array) delete[] this->Array;
+		this->Array = other.Array;
+		this->Count = other.Count;
+		pointed = true;
+	}
+	TStaticPointableArray &operator=(TStaticArray &&other)
+	{
+		if (!pointed && this->Array) delete[] this->Array;
+		this->Array = other.Array;
+		this->Count = other.Count;
+		other.Array = nullptr;
+		other.Count = 0;
+		pointed = false;
+		return *this;
+	}
+};
 
 // TAutoGrowArray -----------------------------------------------------------
 // An array with accessors that automatically grow the array as needed.

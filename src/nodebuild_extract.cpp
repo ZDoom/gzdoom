@@ -54,7 +54,7 @@
 
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	TStaticArray<seg_t> &outSegs,
-	subsector_t *&outSubs, int &subCount,
+	TStaticPointableArray<subsector_t> &outSubs,
 	TStaticArray<vertex_t> &outVerts)
 {
 	int i;
@@ -67,9 +67,9 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		outVerts[i].set(Vertices[i].x, Vertices[i].y);
 	}
 
-	subCount = Subsectors.Size();
-	outSubs = new subsector_t[subCount];
-	memset(outSubs, 0, subCount * sizeof(subsector_t));
+	auto subCount = Subsectors.Size();
+	outSubs.Alloc(subCount);
+	memset(&outSubs[0], 0, subCount * sizeof(subsector_t));
 
 	nodeCount = Nodes.Size ();
 	outNodes = new node_t[nodeCount];
@@ -86,7 +86,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			if (outNodes[i].intchildren[j] & 0x80000000)
 			{
 				D(Printf(PRINT_LOG, "  subsector %d\n", outNodes[i].intchildren[j] & 0x7FFFFFFF));
-				outNodes[i].children[j] = (uint8_t *)(outSubs + (outNodes[i].intchildren[j] & 0x7fffffff)) + 1;
+				outNodes[i].children[j] = (uint8_t *)(&outSubs[(outNodes[i].intchildren[j] & 0x7fffffff)]) + 1;
 			}
 			else
 			{
@@ -107,7 +107,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	{
 		TArray<glseg_t> segs (Segs.Size()*5/4);
 
-		for (i = 0; i < subCount; ++i)
+		for (unsigned i = 0; i < subCount; ++i)
 		{
 			uint32_t numsegs = CloseSubsector (segs, i, &outVerts[0]);
 			outSubs[i].numlines = numsegs;
@@ -134,7 +134,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	}
 	else
 	{
-		memcpy (outSubs, &Subsectors[0], subCount*sizeof(subsector_t));
+		memcpy (&outSubs[0], &Subsectors[0], subCount*sizeof(subsector_t));
 		auto segCount = Segs.Size ();
 		outSegs.Alloc(segCount);
 		for (unsigned i = 0; i < segCount; ++i)
@@ -153,7 +153,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			out->PartnerSeg = nullptr;
 		}
 	}
-	for (i = 0; i < subCount; ++i)
+	for (unsigned i = 0; i < subCount; ++i)
 	{
 		outSubs[i].firstline = &outSegs[(size_t)outSubs[i].firstline];
 	}

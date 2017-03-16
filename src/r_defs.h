@@ -1413,6 +1413,7 @@ struct subsector_t
 	int			flags;
 
 	void BuildPolyBSP();
+	int Index() const;
 	// subsector related GL data
 	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
@@ -1460,7 +1461,6 @@ struct FMiniBSP
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
 };
-
 
 
 //

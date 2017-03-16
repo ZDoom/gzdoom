@@ -194,12 +194,12 @@ void P_ClearParticles ()
 
 void P_FindParticleSubsectors ()
 {
-	if (ParticlesInSubsec.Size() < (size_t)numsubsectors)
+	if (ParticlesInSubsec.Size() < level.subsectors.Size())
 	{
-		ParticlesInSubsec.Reserve (numsubsectors - ParticlesInSubsec.Size());
+		ParticlesInSubsec.Reserve (level.subsectors.Size() - ParticlesInSubsec.Size());
 	}
 
-	fillshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
+	fillshort (&ParticlesInSubsec[0], level.subsectors.Size(), NO_PARTICLE);
 
 	if (!r_particles)
 	{
@@ -209,7 +209,7 @@ void P_FindParticleSubsectors ()
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
 		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
-		int ssnum = int(Particles[i].subsector - subsectors);
+		int ssnum = Particles[i].subsector->Index();
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
 	}

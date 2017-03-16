@@ -302,7 +302,7 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 
 	// single subsector is a special case
 	if (numnodes == 0)
-		return subsectors;
+		return &level.subsectors[0];
 				
 	node = nodes + numnodes - 1;
 

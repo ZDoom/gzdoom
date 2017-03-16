@@ -333,15 +333,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 
 void RecalculateDrawnSubsectors()
 {
-	for (int i = 0; i<numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		subsector_t *sub = &subsectors[i];
-		for (unsigned int j = 0; j<sub->numlines; j++)
+		for (unsigned int j = 0; j<sub.numlines; j++)
 		{
-			if (sub->firstline[j].linedef != NULL &&
-				(sub->firstline[j].linedef->flags & ML_MAPPED))
+			if (sub.firstline[j].linedef != NULL &&
+				(sub.firstline[j].linedef->flags & ML_MAPPED))
 			{
-				sub->flags |= SSECF_DRAWN;
+				sub.flags |= SSECF_DRAWN;
 			}
 		}
 	}
@@ -353,23 +352,24 @@ void RecalculateDrawnSubsectors()
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subsector_t **)
+FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 {
 	uint8_t by;
 	const char *str;
 
+	auto numsubsectors = level.subsectors.Size();
 	if (arc.isWriting())
 	{
 		if (hasglnodes)
 		{
 			TArray<char> encoded(1 + (numsubsectors + 5) / 6);
 			int p = 0;
-			for (int i = 0; i < numsubsectors; i += 6)
+			for (unsigned i = 0; i < numsubsectors; i += 6)
 			{
 				by = 0;
 				for (int j = 0; j < 6; j++)
 				{
-					if (i + j < numsubsectors && (subsectors[i + j].flags & SSECF_DRAWN))
+					if (i + j < (int)numsubsectors && (level.subsectors[i + j].flags & SSECF_DRAWN))
 					{
 						by |= (1 << j);
 					}
@@ -423,9 +423,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 					}
 					for (int s = 0; s < 6; s++)
 					{
-						if (sub + s < numsubsectors && (by & (1 << s)))
+						if (sub + s < (int)numsubsectors && (by & (1 << s)))
 						{
-							subsectors[sub + s].flags |= SSECF_DRAWN;
+							level.subsectors[sub + s].flags |= SSECF_DRAWN;
 						}
 					}
 					sub += 6;
@@ -1003,7 +1003,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, !hubload);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
-	arc("subsectors", subsectors);
+	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
 	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);

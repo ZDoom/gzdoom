@@ -50,7 +50,7 @@ namespace swrenderer
 		secplane_t	height;
 		FTextureID	picnum;
 		int lightlevel = 0;
-		int left = viewwidth;
+		int left;// = viewwidth;
 		int right = 0;
 		int sky = 0;
 

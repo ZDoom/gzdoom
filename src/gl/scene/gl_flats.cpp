@@ -224,7 +224,7 @@ void GLFlat::ProcessLights(bool istrans)
 	for (int i=0; i<sector->subsectorcount; i++)
 	{
 		subsector_t * sub = sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+		if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
 		{
 			SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
 		}
@@ -264,7 +264,7 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 		{
 			subsector_t * sub = sector->subsectors[i];
 				
-			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
 			{
 				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 				drawcalls.Clock();
@@ -283,7 +283,7 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 		for (int i=0; i<sector->subsectorcount; i++)
 		{
 			subsector_t * sub = sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
 			{
 				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 				DrawSubsector(sub);

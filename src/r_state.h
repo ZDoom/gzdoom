@@ -46,12 +46,6 @@ extern uint32_t NumStdSprites;
 
 extern TArray<vertexdata_t> vertexdatas;
 
-//extern int				numsegs;
-//extern seg_t*			segs;
-
-extern int				numsubsectors;
-extern subsector_t* 	subsectors;
-
 extern int				numnodes;
 extern node_t*			nodes;
 
@@ -59,9 +53,6 @@ extern TArray<zone_t>	Zones;
 
 extern node_t * 		gamenodes;
 extern int 				numgamenodes;
-
-extern subsector_t * 	gamesubsectors;
-extern int 				numgamesubsectors;
 
 
 //

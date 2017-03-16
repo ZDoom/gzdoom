@@ -117,10 +117,10 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 		}
 	}
 
-	bool mainBSP = ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors);
+	bool mainBSP = ((unsigned int)(sub->Index()) < level.subsectors.Size());
 	if (mainBSP)
 	{
-		int subsectorIndex = (int)(sub - subsectors);
+		int subsectorIndex = sub->Index();
 		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			particle_t *particle = Particles + i;
@@ -136,7 +136,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVe
 {
 	if (numnodes == 0)
 	{
-		subsector_t *sub = subsectors;
+		subsector_t *sub = &level.subsectors[0];
 		auto it = SubsectorDepths.find(sub);
 		if (it != SubsectorDepths.end())
 			TranslucentObjects.push_back({ thing, sub, it->second, sortDistance, 0.0f, 1.0f });

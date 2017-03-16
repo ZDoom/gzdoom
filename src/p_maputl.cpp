@@ -2104,7 +2104,7 @@ sector_t *P_PointInSectorBuggy(double x, double y)
 {
 	// single subsector is a special case
 	if (numgamenodes == 0)
-		return gamesubsectors->sector;
+		return level.gamesubsectors[0].sector;
 
 	node_t *node = gamenodes + numgamenodes - 1;
 

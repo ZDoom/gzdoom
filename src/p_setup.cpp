@@ -125,12 +125,6 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 //
 TArray<vertexdata_t> vertexdatas;
 
-int 			numsegs;
-seg_t*			segs;
-
-int 			numsubsectors;
-subsector_t*	subsectors;
-
 int 			numnodes;
 node_t* 		nodes;
 
@@ -138,9 +132,6 @@ TArray<zone_t>	Zones;
 
 node_t * 		gamenodes;
 int 			numgamenodes;
-
-subsector_t * 	gamesubsectors;
-int 			numgamesubsectors;
 
 bool			hasglnodes;
 
@@ -190,7 +181,6 @@ FPlayerStart		playerstarts[MAXPLAYERS];
 TArray<FPlayerStart> AllPlayerStarts;
 
 static void P_AllocateSideDefs (MapData *map, int count);
-
 
 //===========================================================================
 //
@@ -863,7 +853,7 @@ void P_LoadVertexes (MapData * map)
 
 void P_LoadZSegs (FileReaderBase &data)
 {
-	for (int i = 0; i < numsegs; ++i)
+	for (auto &seg : level.segs)
 	{
 		line_t *ldef;
 		uint32_t v1, v2;
@@ -872,18 +862,18 @@ void P_LoadZSegs (FileReaderBase &data)
 
 		data >> v1 >> v2 >> line >> side;
 
-		segs[i].v1 = &level.vertexes[v1];
-		segs[i].v2 = &level.vertexes[v2];
-		segs[i].linedef = ldef = &level.lines[line];
-		segs[i].sidedef = ldef->sidedef[side];
-		segs[i].frontsector = ldef->sidedef[side]->sector;
+		seg.v1 = &level.vertexes[v1];
+		seg.v2 = &level.vertexes[v2];
+		seg.linedef = ldef = &level.lines[line];
+		seg.sidedef = ldef->sidedef[side];
+		seg.frontsector = ldef->sidedef[side]->sector;
 		if (ldef->flags & ML_TWOSIDED && ldef->sidedef[side^1] != NULL)
 		{
-			segs[i].backsector = ldef->sidedef[side^1]->sector;
+			seg.backsector = ldef->sidedef[side^1]->sector;
 		}
 		else
 		{
-			segs[i].backsector = 0;
+			seg.backsector = 0;
 			ldef->flags &= ~ML_TWOSIDED;
 		}
 	}
@@ -899,9 +889,10 @@ void P_LoadZSegs (FileReaderBase &data)
 
 void P_LoadGLZSegs (FileReaderBase &data, int type)
 {
-	for (int i = 0; i < numsubsectors; ++i)
+	for (unsigned i = 0; i < level.subsectors.Size(); ++i)
 	{
-		for (size_t j = 0; j < subsectors[i].numlines; ++j)
+
+		for (size_t j = 0; j < level.subsectors[i].numlines; ++j)
 		{
 			seg_t *seg;
 			uint32_t v1, partner;
@@ -921,18 +912,18 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			}
 			data >> side;
 
-			seg = subsectors[i].firstline + j;
+			seg = level.subsectors[i].firstline + j;
 			seg->v1 = &level.vertexes[v1];
 			if (j == 0)
 			{
-				seg[subsectors[i].numlines - 1].v2 = seg->v1;
+				seg[level.subsectors[i].numlines - 1].v2 = seg->v1;
 			}
 			else
 			{
 				seg[-1].v2 = seg->v1;
 			}
 			
-			seg->PartnerSeg = partner == 0xffffffffu? nullptr : &segs[partner];
+			seg->PartnerSeg = partner == 0xffffffffu? nullptr : &level.segs[partner];
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
@@ -954,7 +945,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg->linedef = NULL;
 				seg->sidedef = NULL;
-				seg->frontsector = seg->backsector = subsectors[i].firstline->frontsector;
+				seg->frontsector = seg->backsector = level.subsectors[i].firstline->frontsector;
 			}
 		}
 	}
@@ -1012,17 +1003,16 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	uint32_t numSubs, currSeg;
 
 	data >> numSubs;
-	numsubsectors = numSubs;
-	subsectors = new subsector_t[numSubs];
-	memset (subsectors, 0, numsubsectors*sizeof(subsector_t));
+	level.subsectors.Alloc(numSubs);
+	memset (&level.subsectors[0], 0, level.subsectors.Size()*sizeof(subsector_t));
 
 	for (i = currSeg = 0; i < numSubs; ++i)
 	{
 		uint32_t numsegs;
 
 		data >> numsegs;
-		subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
-		subsectors[i].numlines = numsegs;
+		level.subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
+		level.subsectors[i].numlines = numsegs;
 		currSeg += numsegs;
 	}
 
@@ -1038,13 +1028,12 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 		throw CRecoverableError("Incorrect number of segs in nodes.\n");
 	}
 
-	numsegs = numSegs;
-	segs = new seg_t[numsegs];
-	memset (segs, 0, numsegs*sizeof(seg_t));
+	level.segs.Alloc(numSegs);
+	memset (&level.segs[0], 0, numSegs*sizeof(seg_t));
 
-	for (i = 0; i < numSubs; ++i)
+	for (auto &sub : level.subsectors)
 	{
-		subsectors[i].firstline = &segs[(size_t)subsectors[i].firstline];
+		sub.firstline = &level.segs[(size_t)sub.firstline];
 	}
 
 	if (glnodes == 0)
@@ -1095,7 +1084,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 			data >> child;
 			if (child & 0x80000000)
 			{
-				nodes[i].children[m] = (uint8_t *)&subsectors[child & 0x7FFFFFFF] + 1;
+				nodes[i].children[m] = (uint8_t *)&level.subsectors[child & 0x7FFFFFFF] + 1;
 			}
 			else
 			{
@@ -1205,7 +1194,6 @@ struct badseg
 template<class segtype>
 void P_LoadSegs (MapData * map)
 {
-	int  i;
 	uint8_t *data;
 	int numvertexes = level.vertexes.Size();
 	uint8_t *vertchanged = new uint8_t[numvertexes];	// phares 10/4/98
@@ -1217,27 +1205,28 @@ void P_LoadSegs (MapData * map)
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
-	numsegs = lumplen / sizeof(segtype);
+	unsigned numsegs = lumplen / sizeof(segtype);
 
 	if (numsegs == 0)
 	{
 		Printf ("This map has no segs.\n");
-		delete[] subsectors;
+		level.subsectors.Clear();
 		delete[] nodes;
 		delete[] vertchanged;
 		ForceNodeBuild = true;
 		return;
 	}
 
-	segs = new seg_t[numsegs];
-	memset (segs, 0, numsegs*sizeof(seg_t));
+	level.segs.Alloc(numsegs);
+	auto &segs = level.segs;
+	memset (&segs[0], 0, numsegs*sizeof(seg_t));
 
 	data = new uint8_t[lumplen];
 	map->Read(ML_SEGS, data);
 
-	for (i = 0; i < numsubsectors; ++i)
+	for (auto &sub : level.subsectors)
 	{
-		subsectors[i].firstline = &segs[(size_t)subsectors[i].firstline];
+		sub.firstline = &segs[(size_t)sub.firstline];
 	}
 
 	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
@@ -1251,9 +1240,9 @@ void P_LoadSegs (MapData * map)
 
 	try
 	{
-		for (i = 0; i < numsegs; i++)
+		for (unsigned i = 0; i < numsegs; i++)
 		{
-			seg_t *li = segs + i;
+			seg_t *li = &segs[i];
 			segtype *ml = ((segtype *) data) + i;
 
 			int side, linedef;
@@ -1366,8 +1355,8 @@ void P_LoadSegs (MapData * map)
 			break;
 		}
 		Printf ("The BSP will be rebuilt.\n");
-		delete[] segs;
-		delete[] subsectors;
+		level.segs.Clear();
+		level.subsectors.Clear();
 		delete[] nodes;
 		ForceNodeBuild = true;
 	}
@@ -1386,10 +1375,9 @@ void P_LoadSegs (MapData * map)
 template<class subsectortype, class segtype>
 void P_LoadSubsectors (MapData * map)
 {
-	int i;
 	uint32_t maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
-	numsubsectors = map->Size(ML_SSECTORS) / sizeof(subsectortype);
+	unsigned numsubsectors = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
 	if (numsubsectors == 0 || maxseg == 0 )
 	{
@@ -1399,12 +1387,13 @@ void P_LoadSubsectors (MapData * map)
 		return;
 	}
 
-	subsectors = new subsector_t[numsubsectors];		
+	auto &subsectors = level.subsectors;
+	subsectors.Alloc(numsubsectors);
 	map->Seek(ML_SSECTORS);
 		
-	memset (subsectors, 0, numsubsectors*sizeof(subsector_t));
+	memset (&subsectors[0], 0, numsubsectors*sizeof(subsector_t));
 	
-	for (i = 0; i < numsubsectors; i++)
+	for (unsigned i = 0; i < numsubsectors; i++)
 	{
 		subsectortype subd;
 
@@ -1413,7 +1402,7 @@ void P_LoadSubsectors (MapData * map)
 		if (subd.numsegs == 0)
 		{
 			Printf ("Subsector %i is empty.\n", i);
-			delete[] subsectors;
+			level.subsectors.Clear();
 			delete[] nodes;
 			ForceNodeBuild = true;
 			return;
@@ -1429,7 +1418,7 @@ void P_LoadSubsectors (MapData * map)
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
-			delete[] subsectors;
+			level.subsectors.Clear();
 			break;
 		}
 		else if ((size_t)subsectors[i].firstline + subsectors[i].numlines > maxseg)
@@ -1439,7 +1428,7 @@ void P_LoadSubsectors (MapData * map)
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
-			delete[] subsectors;
+			level.subsectors.Clear();
 			break;
 		}
 	}
@@ -1597,7 +1586,7 @@ void P_LoadNodes (MapData * map)
 					delete[] mnp;
 					return;
 				}
-				no->children[j] = (uint8_t *)&subsectors[child] + 1;
+				no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 			}
 			else if (child >= numnodes)
 			{
@@ -3085,15 +3074,15 @@ static void P_GroupLines (bool buildmap)
 
 	// look up sector number for each subsector
 	times[0].Clock();
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
+		sub.sector = sub.firstline->sidedef->sector;
 	}
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		for (jj = 0; jj < subsectors[i].numlines; ++jj)
+		for (jj = 0; jj < sub.numlines; ++jj)
 		{
-			subsectors[i].firstline[jj].Subsector = &subsectors[i];
+			sub.firstline[jj].Subsector = &sub;
 		}
 	}
 	times[0].Unclock();
@@ -3448,12 +3437,7 @@ void P_FreeLevelData ()
 		wminfo.maxfrags = 0;
 		
 	FBehavior::StaticUnloadModules ();
-	if (segs != NULL)
-	{
-		delete[] segs;
-		segs = NULL;
-	}
-	numsegs = 0;
+	level.segs.Clear();
 	if (level.sectors.Size() > 0)
 	{
 		delete[] level.sectors[0].e;
@@ -3467,27 +3451,12 @@ void P_FreeLevelData ()
 	{
 		delete[] gamenodes;
 	}
-	if (gamesubsectors != NULL && gamesubsectors != subsectors)
-	{
-		delete[] gamesubsectors;
-	}
-	if (subsectors != NULL)
-	{
-		for (int i = 0; i < numsubsectors; ++i)
-		{
-			if (subsectors[i].BSP != NULL)
-			{
-				delete subsectors[i].BSP;
-			}
-		}
-		delete[] subsectors;
-	}
+	level.subsectors.Clear();
+	level.gamesubsectors.Clear();
 	if (nodes != NULL)
 	{
 		delete[] nodes;
 	}
-	subsectors = gamesubsectors = NULL;
-	numsubsectors = numgamesubsectors = 0;
 	nodes = gamenodes = NULL;
 	numnodes = numgamenodes = 0;
 
@@ -3823,16 +3792,8 @@ void P_SetupLevel (const char *lumpname, int position)
 				Printf ("Error loading nodes: %s\n", error.GetMessage());
 
 				ForceNodeBuild = true;
-				if (subsectors != NULL)
-				{
-					delete[] subsectors;
-					subsectors = NULL;
-				}
-				if (segs != NULL)
-				{
-					delete[] segs;
-					segs = NULL;
-				}
+				level.subsectors.Clear();
+				level.segs.Clear();
 				if (nodes != NULL)
 				{
 					delete[] nodes;
@@ -3915,10 +3876,10 @@ void P_SetupLevel (const char *lumpname, int position)
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract (nodes, numnodes,
 			level.segs,
-			subsectors, numsubsectors,
+			level.subsectors,
 			level.vertexes);
 		endTime = I_FPSTime ();
-		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 		oldvertextable = builder.GetOldVertexTable();
 		reloop = true;
 	}
@@ -3926,38 +3887,38 @@ void P_SetupLevel (const char *lumpname, int position)
 	{
 		BuildGLNodes = false;
 		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
-		for(i=0;i<numsegs;i++)
+		for(auto &seg : level.segs)
 		{
-			seg_t * seg=&segs[i];
-			if (seg->backsector == seg->frontsector && seg->linedef)
+			if (seg.backsector == seg.frontsector && seg.linedef)
 			{
-				double d1 = (seg->v1->fPos() - seg->linedef->v1->fPos()).LengthSquared();
-				double d2 = (seg->v2->fPos() - seg->linedef->v1->fPos()).LengthSquared();
+				double d1 = (seg.v1->fPos() - seg.linedef->v1->fPos()).LengthSquared();
+				double d2 = (seg.v2->fPos() - seg.linedef->v1->fPos()).LengthSquared();
 
 				if (d2<d1)	// backside
 				{
-					seg->sidedef = seg->linedef->sidedef[1];
+					seg.sidedef = seg.linedef->sidedef[1];
 				}
 				else	// front side
 				{
-					seg->sidedef = seg->linedef->sidedef[0];
+					seg.sidedef = seg.linedef->sidedef[0];
 				}
 			}
 		}
 	}
 
 	// Copy pointers to the old nodes so that R_PointInSubsector can use them
-	if (nodes && subsectors)
+	if (nodes)
 	{
 		gamenodes = nodes;
 		numgamenodes = numnodes;
-		gamesubsectors = subsectors;
-		numgamesubsectors = numsubsectors;
 	}
 	else
 	{
 		gamenodes=NULL;
 	}
+	// let the game data take ownership, because that is guaranteed to remain intact after here.
+	level.gamesubsectors = std::move(level.subsectors);
+	level.subsectors.Point(level.gamesubsectors);
 
 	if (RequireGLNodes)
 	{

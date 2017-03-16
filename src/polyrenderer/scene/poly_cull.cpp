@@ -38,7 +38,7 @@ void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPl
 	MaxCeilingHeight = 0.0;
 	MinFloorHeight = 0.0;
 	if (numnodes == 0)
-		CullSubsector(subsectors);
+		CullSubsector(&level.subsectors[0]);
 	else
 		CullNode(nodes + numnodes - 1);	// The head node is the last node output.
 }

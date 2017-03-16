@@ -782,7 +782,7 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 	if (!(sub->flags & SSECF_DEGENERATE))
 	{
 		// Is not being rendered so don't bother.
-		if (!(ss_renderflags[uint32_t(sub - subsectors)] & SSRF_PROCESSED)) return true;
+		if (!(ss_renderflags[sub->Index()] & SSRF_PROCESSED)) return true;
 
 		if (sub->render_sector->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 			sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
@@ -884,7 +884,7 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 	if (!(sub->flags & SSECF_DEGENERATE)) 
 	{
 		// Is not being rendererd so don't bother.
-		if (!(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return true;
+		if (!(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return true;
 
 		if (sub->render_sector->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 			sub->render_sector->GetPlaneTexZ(sector_t::ceiling) != anchor->GetPlaneTexZ(sector_t::ceiling) ||
@@ -1040,7 +1040,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (sub->render_sector->GetGLPortal(sector_t::ceiling) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
-	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
+	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
 	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
@@ -1084,7 +1084,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (sub->render_sector->GetGLPortal(sector_t::floor) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
-	if (sub->numlines>2 && !(ss_renderflags[uint32_t(sub-subsectors)]&SSRF_PROCESSED)) return;
+	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
 	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
@@ -1132,7 +1132,7 @@ void FDrawInfo::ProcessSectorStacks()
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
-			if (ss_renderflags[sub-subsectors] & SSRF_PROCESSED)
+			if (ss_renderflags[sub->Index()] & SSRF_PROCESSED)
 			{
 				HandledSubsectors.Clear();
 				for(uint32_t j=0;j<sub->numlines;j++)
@@ -1148,7 +1148,7 @@ void FDrawInfo::ProcessSectorStacks()
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
-					ss_renderflags[uint32_t(sub-subsectors)] &= ~SSRF_RENDERCEILING;
+					ss_renderflags[sub->Index()] &= ~SSRF_RENDERCEILING;
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
@@ -1176,7 +1176,7 @@ void FDrawInfo::ProcessSectorStacks()
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
-			if (ss_renderflags[sub-subsectors] & SSRF_PROCESSED)
+			if (ss_renderflags[sub->Index()] & SSRF_PROCESSED)
 			{
 				HandledSubsectors.Clear();
 				for(uint32_t j=0;j<sub->numlines;j++)
@@ -1193,7 +1193,7 @@ void FDrawInfo::ProcessSectorStacks()
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
-					ss_renderflags[uint32_t(sub-subsectors)] &= ~SSRF_RENDERFLOOR;
+					ss_renderflags[sub->Index()] &= ~SSRF_RENDERFLOOR;
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{

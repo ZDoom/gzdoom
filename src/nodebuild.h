@@ -195,7 +195,7 @@ public:
 
 	void Extract(node_t *&nodes, int &nodeCount,
 		TStaticArray<seg_t> &segs,
-		subsector_t *&ssecs, int &subCount,
+		TStaticPointableArray<subsector_t> &ssecs,
 		TStaticArray<vertex_t> &vertexes);
 	const int *GetOldVertexTable();
 

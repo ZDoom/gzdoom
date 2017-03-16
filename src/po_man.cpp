@@ -1751,15 +1751,14 @@ void PO_Init (void)
 
 	// mark all subsectors which have a seg belonging to a polyobj
 	// These ones should not be rendered on the textured automap.
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &ss : level.subsectors)
 	{
-		subsector_t *ss = &subsectors[i];
-		for(uint32_t j=0;j<ss->numlines; j++)
+		for(uint32_t j=0;j<ss.numlines; j++)
 		{
-			if (ss->firstline[j].sidedef != NULL &&
-				ss->firstline[j].sidedef->Flags & WALLF_POLYOBJ)
+			if (ss.firstline[j].sidedef != NULL &&
+				ss.firstline[j].sidedef->Flags & WALLF_POLYOBJ)
 			{
-				ss->flags |= SSECF_POLYORG;
+				ss.flags |= SSECF_POLYORG;
 				break;
 			}
 		}

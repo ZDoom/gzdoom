@@ -2020,7 +2020,8 @@ void AM_drawSubsectors()
 	PalEntry flatcolor;
 	mpoint_t originpt;
 
-	for (int i = 0; i < numsubsectors; ++i)
+	auto &subsectors = level.subsectors;
+	for (unsigned i = 0; i < subsectors.Size(); ++i)
 	{
 		if (subsectors[i].flags & SSECF_POLYORG)
 		{
@@ -2247,14 +2248,14 @@ void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
 
 void AM_showSS()
 {
-	if (am_showsubsector >= 0 && am_showsubsector < numsubsectors)
+	if (am_showsubsector >= 0 && (unsigned)am_showsubsector < level.subsectors.Size())
 	{
 		AMColor yellow;
 		yellow.FromRGB(255,255,0);
 		AMColor red;
 		red.FromRGB(255,0,0);
 
-		subsector_t *sub = &subsectors[am_showsubsector];
+		subsector_t *sub = &level.subsectors[am_showsubsector];
 		for (unsigned int i = 0; i < sub->numlines; i++)
 		{
 			AM_drawSeg(sub->firstline + i, yellow);

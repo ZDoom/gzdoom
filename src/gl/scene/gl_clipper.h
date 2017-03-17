@@ -31,7 +31,6 @@ class ClipNode
 class Clipper
 {
 	unsigned starttime;
-	TStaticArray<angle_t> anglecache;
 	FMemArena nodearena;
 	ClipNode * freelist = nullptr;
 

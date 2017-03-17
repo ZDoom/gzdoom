@@ -125,14 +125,6 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 //
 TArray<vertexdata_t> vertexdatas;
 
-//int 			numnodes;
-//node_t* 		nodes;
-
-TArray<zone_t>	Zones;
-
-//node_t * 		gamenodes;
-//int 			numgamenodes;
-
 bool			hasglnodes;
 
 TArray<FMapThing> MapThingsConverted;
@@ -799,7 +791,7 @@ void P_FloodZones ()
 			P_FloodZone (&sec, z++);
 		}
 	}
-	Zones.Resize(z);
+	level.Zones.Resize(z);
 	reverb = S_FindEnvironment(level.DefaultEnvironment);
 	if (reverb == NULL)
 	{
@@ -808,7 +800,7 @@ void P_FloodZones ()
 	}
 	for (i = 0; i < z; ++i)
 	{
-		Zones[i].Environment = reverb;
+		level.Zones[i].Environment = reverb;
 	}
 }
 
@@ -961,7 +953,6 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	uint32_t orgVerts, newVerts;
-	TStaticArray<vertex_t> newvertarray;
 	unsigned int i;
 
 	data >> orgVerts >> newVerts;
@@ -970,34 +961,25 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	  // We can't use them.
 		throw CRecoverableError("Incorrect number of vertexes in nodes.\n");
 	}
-	bool fix;
-	if (orgVerts + newVerts == level.vertexes.Size())
+	auto oldvertexes = &level.vertexes[0];
+	if (orgVerts + newVerts != level.vertexes.Size())
 	{
-		newvertarray = std::move(level.vertexes);
-		fix = false;
-	}
-	else
-	{
-		newvertarray.Alloc(orgVerts + newVerts);
-		memcpy (&newvertarray[0], &level.vertexes[0], orgVerts * sizeof(vertex_t));
-		fix = true;
+		level.vertexes.Reserve(newVerts);
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
 		fixed_t x, y;
 		data >> x >> y;
-		newvertarray[i + orgVerts].set(x, y);
+		level.vertexes[i + orgVerts].set(x, y);
 	}
-	if (fix)
+	if (oldvertexes != &level.vertexes[0])
 	{
 		for (auto &line : level.lines)
 		{
-			line.v1 = line.v1 - &level.vertexes[0] + &newvertarray[0];
-			line.v2 = line.v2 - &level.vertexes[0] + &newvertarray[0];
+			line.v1 = line.v1 - oldvertexes + &level.vertexes[0];
+			line.v2 = line.v2 - oldvertexes + &level.vertexes[0];
 		}
 	}
-
-	level.vertexes = std::move(newvertarray);
 
 	// Read the subsectors
 	uint32_t numSubs, currSeg;
@@ -3424,7 +3406,6 @@ void P_FreeLevelData ()
 	// [RH] Clear all ThingID hash chains.
 	AActor::ClearTIDHashes();
 
-	P_FreeMapDataBackup();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
@@ -3450,11 +3431,14 @@ void P_FreeLevelData ()
 	level.sectors.Clear();
 	level.lines.Clear();
 	level.sides.Clear();
+	level.loadsectors.Clear();
+	level.loadlines.Clear();
+	level.loadsides.Clear();
 	level.vertexes.Clear();
 	level.nodes.Clear();
-	level.gamenodes.Clear();
+	level.gamenodes.Reset();
 	level.subsectors.Clear();
-	level.gamesubsectors.Clear();
+	level.gamesubsectors.Reset();
 
 	if (blockmaplump != NULL)
 	{
@@ -3497,7 +3481,7 @@ void P_FreeLevelData ()
 		polyobjs = NULL;
 	}
 	po_NumPolyobjs = 0;
-	Zones.Clear();
+	level.Zones.Clear();
 	P_FreeStrifeConversations ();
 	level.Scrolls.Clear();
 	P_ClearUDMFKeys();
@@ -3895,13 +3879,6 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 	}
 
-	// duplicate the nodes in the game* arrays so that replacement nodes do not overwrite them.
-	// let the game data take ownership, because that is guaranteed to remain intact after here.
-	level.gamesubsectors = std::move(level.subsectors);
-	level.subsectors.Point(level.gamesubsectors);
-	level.gamenodes = std::move(level.nodes);
-	level.nodes.Point(level.gamenodes);
-
 	if (RequireGLNodes)
 	{
 		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
@@ -3915,6 +3892,9 @@ void P_SetupLevel (const char *lumpname, int position)
 	{
 		hasglnodes = P_CheckForGLNodes();
 	}
+
+	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
+	level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : &level.nodes[level.nodes.Size() - 1];
 
 	times[10].Clock();
 	P_LoadBlockMap (map);
@@ -4119,7 +4099,10 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
 
-	P_BackupMapData();
+	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
+	level.loadsectors = level.sectors;
+	level.loadlines = level.lines;
+	level.loadsides = level.sides;
 }
 
 

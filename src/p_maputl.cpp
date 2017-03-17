@@ -2101,14 +2101,10 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 
 subsector_t *P_PointInSubsector(double x, double y)
 {
-	node_t *node;
 	int side;
 
-	// single subsector is a special case
-	if (level.gamenodes.Size() == 0)
-		return &level.gamesubsectors[0];
-
-	node = level.HeadGamenode();
+	auto node = level.HeadGamenode();
+	if (node == nullptr) return &level.subsectors[0];
 
 	fixed_t xx = FLOAT2FIXED(x);
 	fixed_t yy = FLOAT2FIXED(y);
@@ -2131,11 +2127,8 @@ subsector_t *P_PointInSubsector(double x, double y)
 sector_t *P_PointInSectorBuggy(double x, double y)
 {
 	// single subsector is a special case
-	if (level.gamenodes.Size() == 0)
-		return level.gamesubsectors[0].sector;
-
 	auto node = level.HeadGamenode();
-
+	if (node == nullptr) return level.subsectors[0].sector;
 	do
 	{
 		// Use original buggy point-on-side test when spawning

@@ -29,17 +29,25 @@ struct FLevelLocals
 	FString		F1Pic;
 	EMapType	maptype;
 
-	TStaticArray<vertex_t> vertexes;
-	TStaticArray<sector_t> sectors;
-	TStaticArray<line_t> lines;
-	TStaticArray<side_t> sides;
-	TStaticArray<seg_t> segs;
-	TStaticPointableArray<subsector_t> subsectors;
-	TStaticPointableArray<subsector_t> gamesubsectors;
-	TStaticPointableArray<node_t> nodes;
-	TStaticPointableArray<node_t> gamenodes;
+	TArray<vertex_t> vertexes;
+	TArray<sector_t> sectors;
+	TArray<line_t> lines;
+	TArray<side_t> sides;
+	TArray<seg_t> segs;
+	TArray<subsector_t> subsectors;
+	TArray<node_t> nodes;
+	TArray<subsector_t> gamesubsectors;
+	TArray<node_t> gamenodes;
+	node_t *headgamenode;
 
 	TArray<FSectorPortal> sectorPortals;
+	TArray<zone_t>	Zones;
+
+	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
+	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
+	TArray<sector_t>	loadsectors;
+	TArray<line_t>	loadlines;
+	TArray<side_t>	loadsides;
 
 
 	uint32_t		flags;
@@ -102,7 +110,7 @@ struct FLevelLocals
 	}
 	node_t		*HeadGamenode() const
 	{
-		return &gamenodes[gamenodes.Size() - 1];
+		return headgamenode;
 	}
 };
 

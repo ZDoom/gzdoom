@@ -65,11 +65,6 @@
 #include "g_levellocals.h"
 #include "events.h"
 
-static TStaticArray<sector_t>	loadsectors;
-static TStaticArray<line_t>		loadlines;
-static TStaticArray<side_t>		loadsides;
-
-
 //==========================================================================
 //
 //
@@ -991,10 +986,10 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	FBehavior::StaticSerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
-	arc.Array("linedefs", &level.lines[0], &loadlines[0], level.lines.Size());
-	arc.Array("sidedefs", &level.sides[0], &loadsides[0], level.sides.Size());
-	arc.Array("sectors", &level.sectors[0], &loadsectors[0], level.sectors.Size());
-	arc("zones", Zones);
+	arc("linedefs", level.lines, level.loadlines);
+	arc("sidedefs", level.sides, level.loadsides);
+	arc("sectors", level.sectors, level.loadsectors);
+	arc("zones", level.Zones);
 	arc("lineportals", linePortals);
 	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
@@ -1028,20 +1023,4 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	AActor::RecreateAllAttachedLights();
 	Renderer->EndSerialize(arc);
 
-}
-
-// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
-
-void P_BackupMapData()
-{
-	loadsectors = level.sectors;
-	loadlines = level.lines;
-	loadsides = level.sides;
-}
-
-void P_FreeMapDataBackup()
-{
-	loadsectors.Clear();
-	loadlines.Clear();
-	loadsides.Clear();
 }

@@ -2109,8 +2109,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		listener.velocity.Zero();
 		listener.position = listenactor->SoundPos();
 		listener.underwater = listenactor->waterlevel == 3;
-		assert(Zones.Size() > listenactor->Sector->ZoneNumber);
-		listener.Environment = Zones[listenactor->Sector->ZoneNumber].Environment;
+		assert(level.Zones.Size() > listenactor->Sector->ZoneNumber);
+		listener.Environment = level.Zones[listenactor->Sector->ZoneNumber].Environment;
 		listener.valid = true;
 	}
 	else

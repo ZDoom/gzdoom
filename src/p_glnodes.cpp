@@ -247,15 +247,14 @@ static bool LoadGLVertexes(FileReader * lump)
 	mapglvertex_t*	mgl = (mapglvertex_t *)(gldata + GL_VERT_OFFSET);
 	unsigned numvertexes = firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
 
-	TStaticArray<vertex_t> oldvertexes = std::move(level.vertexes);
-	level.vertexes.Alloc(numvertexes);
+	auto oldvertexes = &level.vertexes[0];
+	level.vertexes.Resize(numvertexes);
 
-	memcpy(&level.vertexes[0], &oldvertexes[0], firstglvertex * sizeof(vertex_t));
 	for(auto &line : level.lines)
 	{
 		// Remap vertex pointers in linedefs
-		line.v1 = &level.vertexes[line.v1 - &oldvertexes[0]];
-		line.v2 = &level.vertexes[line.v2 - &oldvertexes[0]];
+		line.v1 = &level.vertexes[line.v1 - oldvertexes];
+		line.v2 = &level.vertexes[line.v2 - oldvertexes];
 	}
 
 	for (i = firstglvertex; i < (int)numvertexes; i++)
@@ -940,13 +939,14 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 	if (!rebuilt && !P_CheckForGLNodes())
 	{
 		ret = true;	// we are not using the level's original nodes if we get here.
-		for (auto &sub : level.gamesubsectors)
+		for (auto &sub : level.subsectors)
 		{
 			sub.sector = sub.firstline->sidedef->sector;
 		}
 
-		level.nodes.Clear();
-		level.subsectors.Clear();
+		// The nodes and subsectors need to be preserved for gameplay related purposes.
+		level.gamenodes = std::move(level.nodes);
+		level.gamesubsectors = std::move(level.subsectors);
 		level.segs.Clear();
 
 		// Try to load GL nodes (cached or GWA)
@@ -991,12 +991,6 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		{
 			DPrintf(DMSG_NOTIFY, "Not caching nodes (time = %f)\n", buildtime/1000.f);
 		}
-	}
-
-	if (level.gamenodes.Size() == 0)
-	{
-		level.gamenodes.Point(level.nodes);
-		level.gamesubsectors.Point(level.subsectors);
 	}
 	return ret;
 }

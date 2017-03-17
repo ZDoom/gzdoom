@@ -630,7 +630,7 @@ public:
 		this->Count = other.Count;
 		pointed = true;
 	}
-	TStaticPointableArray &operator=(TStaticArray &&other)
+	TStaticPointableArray &operator=(TStaticArray<T> &&other)
 	{
 		if (!pointed && this->Array) delete[] this->Array;
 		this->Array = other.Array;

@@ -780,10 +780,10 @@ CCMD(listlights)
 		walls=0;
 		sectors=0;
 		subsecs = 0;
-		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f ",
+		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
 			dl->X(), dl->Y(), dl->Z(), dl->args[LIGHT_RED], 
-			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius);
+			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius, (dl->flags4 & MF4_ATTENUATE)? "attenuated" : "");
 		i++;
 
 		if (dl->target)

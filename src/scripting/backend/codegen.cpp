@@ -10528,8 +10528,12 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				ScriptPosition.Message(MSG_OPTERROR,
 					"Unknown class name '%s' of type '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
-				delete this;
-				return nullptr;
+				// When originating from DECORATE this must pass, when in ZScript it's an error that must abort the code generation here.
+				if (!ctx.FromDecorate)
+				{
+					delete this;
+					return nullptr;
+				}
 			}
 			else
 			{

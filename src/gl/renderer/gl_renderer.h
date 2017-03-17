@@ -167,6 +167,8 @@ public:
 	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
 
+	void RenderView(player_t* player);
+
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm);
 	void AmbientOccludeScene();

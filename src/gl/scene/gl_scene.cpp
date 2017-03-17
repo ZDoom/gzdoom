@@ -871,13 +871,12 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderView (player_t* player)
+void FGLRenderer::RenderView (player_t* player)
 {
-
 	checkBenchActive();
 
-	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	GLRenderer->mVBO->Reset();
+	gl_RenderState.SetVertexBuffer(mVBO);
+	mVBO->Reset();
 
 	// reset statistics counters
 	ResetProfilingData();
@@ -889,7 +888,7 @@ void GLSceneDrawer::RenderView (player_t* player)
 
 	P_FindParticleSubsectors ();
 
-	if (!gl.legacyMode) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) mLights->Clear();
 
 	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 	bool saved_niv = NoInterpolateView;
@@ -910,15 +909,16 @@ void GLSceneDrawer::RenderView (player_t* player)
 	{
 		fovratio = ratio;
 	}
+	GLSceneDrawer drawer;
 
-	SetFixedColormap (player);
+	drawer.SetFixedColormap (player);
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	GLRenderer->mLightCount = ((it.Next()) != NULL);
+	mLightCount = ((it.Next()) != NULL);
 
-	GLRenderer->mShadowMap.Update();
-	sector_t * viewsector = RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+	mShadowMap.Update();
+	sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 
 	All.Unclock();
 }
@@ -1068,8 +1068,7 @@ void FGLInterface::WriteSavePic (player_t *player, FileWriter *file, int width, 
 
 void FGLInterface::RenderView(player_t *player)
 {
-	GLSceneDrawer drawer;
-	drawer.RenderView(player);
+	GLRenderer->RenderView(player);
 }
 
 //===========================================================================

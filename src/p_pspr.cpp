@@ -839,15 +839,6 @@ void DoReadyWeaponToGeneric(AActor *self, int paramflags)
 	}
 }
 
-// This function replaces calls to A_WeaponReady in other codepointers.
-void DoReadyWeapon(AActor *self)
-{
-	DoReadyWeaponToBob(self);
-	DoReadyWeaponToFire(self);
-	DoReadyWeaponToSwitch(self);
-	DoReadyWeaponToGeneric(self, ~0);
-}
-
 DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
 	PARAM_ACTION_PROLOGUE(AStateProvider);

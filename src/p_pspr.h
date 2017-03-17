@@ -119,7 +119,6 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
 DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
 AActor *P_AimTarget(AActor *mo);
 
-void DoReadyWeapon(AActor *self);
 void DoReadyWeaponToBob(AActor *self);
 void DoReadyWeaponToFire(AActor *self, bool primary = true, bool secondary = true);
 void DoReadyWeaponToSwitch(AActor *self, bool switchable = true);

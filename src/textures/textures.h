@@ -358,6 +358,7 @@ public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	void CheckTrans(unsigned char * buffer, int size, int trans);
 	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
+	int CheckRealHeight();
 };
 
 class FxAddSub;

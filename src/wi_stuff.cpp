@@ -780,42 +780,6 @@ public:
 
 	//====================================================================
 	//
-	// CheckRealHeight
-	//
-	// Checks the posts in a texture and returns the lowest row (plus one)
-	// of the texture that is actually used.
-	//
-	//====================================================================
-
-	int CheckRealHeight(FTexture *tex)
-	{
-		const FTexture::Span *span;
-		int maxy = 0, miny = tex->GetHeight();
-
-		for (int i = 0; i < tex->GetWidth(); ++i)
-		{
-			tex->GetColumn(i, &span);
-			while (span->Length != 0)
-			{
-				if (span->TopOffset < miny)
-				{
-					miny = span->TopOffset;
-				}
-				if (span->TopOffset + span->Length > maxy)
-				{
-					maxy = span->TopOffset + span->Length;
-				}
-				span++;
-			}
-		}
-		// Scale maxy before returning it
-		maxy = int((maxy *2) / tex->Scale.Y);
-		maxy = (maxy >> 1) + (maxy & 1);
-		return maxy;
-	}
-
-	//====================================================================
-	//
 	// Draws a single character with a shadow
 	//
 	//====================================================================
@@ -847,7 +811,7 @@ public:
 			if (h > 50)
 			{ // Fix for Deus Vult II and similar wads that decide to make these hugely tall
 			  // patches with vast amounts of empty space at the bottom.
-				h = CheckRealHeight(tex);
+				h = tex->CheckRealHeight();
 			}
 			return y + (h + BigFont->GetHeight()/4) * CleanYfac;
 		}

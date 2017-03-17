@@ -912,6 +912,44 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 	return bottom ? FloorSkyColor : CeilingSkyColor;
 }
 
+//====================================================================
+//
+// CheckRealHeight
+//
+// Checks the posts in a texture and returns the lowest row (plus one)
+// of the texture that is actually used.
+//
+//====================================================================
+
+int FTexture::CheckRealHeight()
+{
+	const FTexture::Span *span;
+	int maxy = 0, miny = GetHeight();
+
+	for (int i = 0; i < GetWidth(); ++i)
+	{
+		GetColumn(i, &span);
+		while (span->Length != 0)
+		{
+			if (span->TopOffset < miny)
+			{
+				miny = span->TopOffset;
+			}
+			if (span->TopOffset + span->Length > maxy)
+			{
+				maxy = span->TopOffset + span->Length;
+			}
+			span++;
+		}
+	}
+	// Scale maxy before returning it
+	maxy = int((maxy * 2) / Scale.Y);
+	maxy = (maxy >> 1) + (maxy & 1);
+	return maxy;
+}
+
+
+
 
 FDummyTexture::FDummyTexture ()
 {

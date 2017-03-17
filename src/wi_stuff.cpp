@@ -748,19 +748,13 @@ public:
 	FPatchInfo finished;
 	FPatchInfo entering;
 
-	FTexture* 		sp_secret;	// "secret"
-	FTexture* 		kills;		// "Kills", "Scrt", "Items", "Frags"
-	FTexture* 		secret;
-	FTexture* 		items;
-	FTexture* 		frags;
-	FTexture* 		timepic;	// Time sucks.
-	FTexture* 		par;
-	FTexture* 		sucks;
-	FTexture* 		killers;	// "killers", "victims"
-	FTexture* 		victims;
-	FTexture* 		total;		// "Total", your face, your dead face
-	FTexture* 		p;			// Player graphic
-	FTexture*		lnames[2];	// Name graphics of each level (centered)
+	FTextureID 		Sp_secret;	// "secret"
+	FTextureID 		Kills;		// "Kills", "Scrt", "Items", "Frags"
+	FTextureID 		Secret;
+	FTextureID 		Items;
+	FTextureID 		Timepic;	// Time sucks.
+	FTextureID 		Par;
+	FTextureID 		Sucks;
 
 	// [RH] Info to dynamically generate the level name graphics
 	FString			lnametexts[2];
@@ -1028,9 +1022,9 @@ public:
 
 		if (sucky)
 		{ // "sucks"
-			if (sucks != NULL)
+			if (Sucks.isValid())
 			{
-				screen->DrawTexture (sucks, x - sucks->GetScaledWidth(), y - IntermissionFont->GetHeight() - 2,
+				screen->DrawTexture (TexMan[Sucks], x - TexMan[Sucks]->GetScaledWidth(), y - IntermissionFont->GetHeight() - 2,
 					DTA_Clean, true, TAG_DONE); 
 			}
 			else
@@ -1883,16 +1877,16 @@ public:
 	
 		if (gameinfo.gametype & GAME_DoomChex)
 		{
-			screen->DrawTexture (kills, SP_STATSX, SP_STATSY, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (TexMan[Kills], SP_STATSX, SP_STATSY, DTA_Clean, true, TAG_DONE);
 			WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs->maxkills);
 
-			screen->DrawTexture (items, SP_STATSX, SP_STATSY+lh, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (TexMan[Items], SP_STATSX, SP_STATSY+lh, DTA_Clean, true, TAG_DONE);
 			WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs->maxitems);
 
-			screen->DrawTexture (sp_secret, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (TexMan[Sp_secret], SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
 			WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
 
-			screen->DrawTexture (timepic, SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (TexMan[Timepic], SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 			WI_drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
 			if (wi_showtotaltime)
 			{
@@ -1901,7 +1895,7 @@ public:
 
 			if (wbs->partime)
 			{
-				screen->DrawTexture (par, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
+				screen->DrawTexture (TexMan[Par], 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 				WI_drawTime (320 - SP_TIMEX, SP_TIMEY, cnt_par);
 			}
 
@@ -2028,41 +2022,14 @@ public:
 
 		if (gameinfo.gametype & GAME_DoomChex)
 		{
-			kills = TexMan["WIOSTK"];		// "kills"
-			secret = TexMan["WIOSTS"];		// "scrt"
-			sp_secret = TexMan["WISCRT2"];	// "secret"
-			items = TexMan["WIOSTI"];		// "items"
-			frags = TexMan["WIFRGS"];		// "frgs"
-			timepic = TexMan["WITIME"];		// "time"
-			sucks = TexMan["WISUCKS"];		// "sucks"
-			par = TexMan["WIPAR"];			// "par"
-			killers = TexMan["WIKILRS"];	// "killers" (vertical]
-			victims = TexMan["WIVCTMS"];	// "victims" (horiz]
-			total = TexMan["WIMSTT"];		// "total"
-	//		star = TexMan["STFST01"];		// your face
-	//		bstar = TexMan["STFDEAD0"];		// dead face
- 			p = TexMan["STPBANY"];
+			Kills = TexMan.CheckForTexture("WIOSTK", FTexture::TEX_MiscPatch);		// "kills"
+			Secret = TexMan.CheckForTexture("WIOSTS", FTexture::TEX_MiscPatch);		// "scrt"
+			Sp_secret = TexMan.CheckForTexture("WISCRT2", FTexture::TEX_MiscPatch);	// "secret"
+			Items = TexMan.CheckForTexture("WIOSTI", FTexture::TEX_MiscPatch);		// "items"
+			Timepic = TexMan.CheckForTexture("WITIME", FTexture::TEX_MiscPatch);		// "time"
+			Sucks = TexMan.CheckForTexture("WISUCKS", FTexture::TEX_MiscPatch);		// "sucks"
+			Par = TexMan.CheckForTexture("WIPAR", FTexture::TEX_MiscPatch);			// "par"
 		}
-	#if 0
-		else if (gameinfo.gametype & GAME_Raven)
-		{
-			if (gameinfo.gametype == GAME_Heretic)
-			{
-				star = TexMan["FACEA0"];
-				bstar = TexMan["FACEB0"];
-			}
-			else
-			{
-				star = BigFont->GetChar('*', NULL);
-				bstar = star;
-			}
-		}
-		else // Strife needs some handling, too!
-		{
-			star = BigFont->GetChar('*', NULL);
-			bstar = star;
-		}
-	#endif
 
 		// Use the local level structure which can be overridden by hubs
 		lnametexts[0] = level.LevelName;		

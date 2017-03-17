@@ -73,7 +73,7 @@ struct FBlockmap
 		return blockmaplump + *(blockmap + offset) + 1;
 	}
 
-	bool FBlockmap::VerifyBlockMap(int count);
+	bool VerifyBlockMap(int count);
 
 	void Clear()
 	{

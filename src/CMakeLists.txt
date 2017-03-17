@@ -1152,7 +1152,6 @@ set (PCH_SOURCES
 	gl/textures/gl_samplers.cpp
 	gl/textures/gl_translate.cpp
 	gl/textures/gl_hqresize.cpp
-	gl/textures/gl_skyboxtexture.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1192,6 +1191,7 @@ set (PCH_SOURCES
 	textures/texturemanager.cpp
 	textures/tgatexture.cpp
 	textures/warptexture.cpp
+	textures/skyboxtexture.cpp
 	xlat/parse_xlat.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp

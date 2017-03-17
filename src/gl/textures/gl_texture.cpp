@@ -38,13 +38,13 @@
 #endif
 #include "v_palette.h"
 #include "sc_man.h"
+#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/models/gl_models.h"
 

@@ -61,6 +61,7 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
@@ -73,7 +74,6 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_bitmap.h"
 #include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/textures/gl_material.h"
 
 

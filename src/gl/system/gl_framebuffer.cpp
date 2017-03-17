@@ -35,6 +35,7 @@
 #include "vectors.h"
 #include "v_palette.h"
 #include "templates.h"
+#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -45,7 +46,6 @@
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"

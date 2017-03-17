@@ -23,8 +23,8 @@
 #include "doomtype.h"
 #include "sc_man.h"
 #include "w_wad.h"
-#include "textures/textures.h"
-#include "gl/textures/gl_skyboxtexture.h"
+#include "textures.h"
+#include "skyboxtexture.h"
 
 
 
@@ -117,7 +117,7 @@ void FSkyBox::Unload ()
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseSkybox(FScanner &sc)
+void ParseGldefSkybox(FScanner &sc)
 {
 	int facecount=0;
 
@@ -154,7 +154,7 @@ void gl_ParseSkybox(FScanner &sc)
 //
 //-----------------------------------------------------------------------------
 
-void gl_ParseVavoomSkybox()
+void ParseVavoomSkybox()
 {
 	int lump = Wads.CheckNumForName("SKYBOXES");
 
@@ -165,6 +165,7 @@ void gl_ParseVavoomSkybox()
 	{
 		int facecount=0;
 		int maplump = -1;
+		bool error = false;
 		FSkyBox * sb = new FSkyBox;
 		sb->Name = sc.String;
 		sb->Name.ToUpper();
@@ -183,7 +184,8 @@ void gl_ParseVavoomSkybox()
 				FTexture *tex = TexMan.FindTexture(sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
 				{
-					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name.GetChars());
+					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name.GetChars());
+					error = true;
 				}
 				sb->faces[facecount] = tex;
 				sc.MustGetStringName("}");
@@ -195,7 +197,7 @@ void gl_ParseVavoomSkybox()
 			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->Name.GetChars());
 		}
 		sb->SetSize();
-		TexMan.AddTexture(sb);
+		if (!error) TexMan.AddTexture(sb);
 	}
 }
 

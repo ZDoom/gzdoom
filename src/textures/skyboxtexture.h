@@ -1,5 +1,6 @@
+#pragma once
 
-
+#include "textures.h"
 //-----------------------------------------------------------------------------
 //
 // This is not a real texture but will be added to the texture manager
@@ -42,3 +43,8 @@ public:
 		return fliptop;
 	}
 };
+
+
+void ParseGldefSkybox(FScanner &sc);
+void ParseVavoomSkybox();
+

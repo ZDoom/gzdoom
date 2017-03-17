@@ -51,16 +51,14 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
-
+#include "textures/skyboxtexture.h"
 
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
 void gl_ParseBrightmap(FScanner &sc, int);
 void gl_DestroyUserShaders();
 void gl_ParseHardwareShader(FScanner &sc, int deflump);
-void gl_ParseSkybox(FScanner &sc);
 void gl_ParseDetailTexture(FScanner &sc);
-void gl_ParseVavoomSkybox();
 
 //==========================================================================
 //
@@ -1207,10 +1205,9 @@ void AActor::RecreateAllAttachedLights()
 
 
 //==========================================================================
-// The actual light def parsing code is there.
-// DoParseDefs is no longer called directly by ParseDefs, now it's called
-// by LoadDynLightDefs, which wasn't simply integrated into ParseDefs
-// because of the way the code needs to load two out of five lumps.
+//
+//
+//
 //==========================================================================
 static void DoParseDefs(FScanner &sc, int workingLump)
 {
@@ -1267,7 +1264,7 @@ static void DoParseDefs(FScanner &sc, int workingLump)
 		case TAG_CLEARSHADERS:
 			break;
 		case TAG_SKYBOX:
-			gl_ParseSkybox(sc);
+			ParseGldefSkybox(sc);
 			break;
 		case TAG_GLOW:
 			gl_InitGlow(sc);
@@ -1327,8 +1324,8 @@ void ParseGLDefs()
 {
 	const char *defsLump = NULL;
 
-   LightAssociations.Clear();
-   LightDefaults.Clear();
+	LightAssociations.Clear();
+	LightDefaults.Clear();
 	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
@@ -1350,7 +1347,7 @@ void ParseGLDefs()
 	default: // silence GCC
 		break;
 	}
-	gl_ParseVavoomSkybox();
+	ParseVavoomSkybox();
 	LoadGLDefs(defsLump);
 	InitializeActorLights();
 }

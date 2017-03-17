@@ -38,11 +38,9 @@ namespace swrenderer
 		
 		void Execute(DrawerThread *thread) override
 		{
-			using namespace drawervectors;
-
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int count = args.Count();
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			const uint32_t *source0 = (const uint32_t *)args.FrontTexturePixels();
 			int textureheight0 = args.FrontTextureHeight();
 
@@ -87,8 +85,8 @@ namespace swrenderer
 				return;
 			}
 
-			vec8us solid_top_fill = unpack(solid_top, 0);
-			vec8us solid_bottom_fill = unpack(solid_bottom, 0);
+			BgraColor solid_top_fill = solid_top;
+			BgraColor solid_bottom_fill = solid_bottom;
 
 			int index = skipped;
 
@@ -107,12 +105,14 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				vec8us alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-				vec8us inv_alpha = vec8us(256) - alpha;
+				uint32_t alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+				uint32_t inv_alpha = 256 - alpha;
 				
-				vec8us c = unpack(fg, 0);
-				c = (c * alpha + solid_top_fill * inv_alpha) >> 8;
-				*dest = packlo(c);
+				BgraColor c = fg;
+				c.r = (c.r * alpha + solid_top_fill.r * inv_alpha) >> 8;
+				c.g = (c.g * alpha + solid_top_fill.g * inv_alpha) >> 8;
+				c.b = (c.b * alpha + solid_top_fill.b * inv_alpha) >> 8;
+				*dest = c;
 
 				frac += fracstep;
 				dest += pitch;
@@ -136,12 +136,14 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				vec8us alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-				vec8us inv_alpha = vec8us(256) - alpha;
+				uint32_t alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+				uint32_t inv_alpha = 256 - alpha;
 				
-				vec8us c = unpack(fg, 0);
-				c = (c * alpha + solid_top_fill * inv_alpha) >> 8;
-				*dest = packlo(c);
+				BgraColor c = fg;
+				c.r = (c.r * alpha + solid_top_fill.r * inv_alpha) >> 8;
+				c.g = (c.g * alpha + solid_top_fill.g * inv_alpha) >> 8;
+				c.b = (c.b * alpha + solid_top_fill.b * inv_alpha) >> 8;
+				*dest = c;
 
 				frac += fracstep;
 				dest += pitch;
@@ -170,11 +172,9 @@ namespace swrenderer
 		
 		void Execute(DrawerThread *thread) override
 		{
-			using namespace drawervectors;
-
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int count = args.Count();
-			int pitch = RenderViewport::Instance()->RenderTarget->GetPitch();
+			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			const uint32_t *source0 = (const uint32_t *)args.FrontTexturePixels();
 			const uint32_t *source1 = (const uint32_t *)args.BackTexturePixels();
 			int textureheight0 = args.FrontTextureHeight();
@@ -228,8 +228,8 @@ namespace swrenderer
 				return;
 			}
 
-			vec8us solid_top_fill = unpack(solid_top, 0);
-			vec8us solid_bottom_fill = unpack(solid_bottom, 0);
+			BgraColor solid_top_fill = solid_top;
+			BgraColor solid_bottom_fill = solid_bottom;
 
 			int index = skipped;
 
@@ -253,12 +253,12 @@ namespace swrenderer
 					fg = source1[sample_index2];
 				}
 
-				vec8us alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-				vec8us inv_alpha = vec8us(256) - alpha;
+				uint32_t alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+				uint32_t inv_alpha = 256 - alpha;
 				
-				vec8us c = unpack(fg, 0);
+				BgraColor c = fg;
 				c = (c * alpha + solid_top_fill * inv_alpha) >> 8;
-				*dest = packlo(c);
+				*dest = c;
 
 				frac += fracstep;
 				dest += pitch;
@@ -293,12 +293,12 @@ namespace swrenderer
 					fg = source1[sample_index2];
 				}
 
-				vec8us alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-				vec8us inv_alpha = vec8us(256) - alpha;
+				uint32_t alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+				uint32_t inv_alpha = 256 - alpha;
 				
-				vec8us c = unpack(fg, 0);
+				BgraColor c = fg;
 				c = (c * alpha + solid_top_fill * inv_alpha) >> 8;
-				*dest = packlo(c);
+				*dest = c;
 
 				frac += fracstep;
 				dest += pitch;

@@ -362,7 +362,7 @@ void P_RunEffects ()
 		{
 			// Only run the effect if the actor is potentially visible
 			int rnum = pnum + actor->Sector->Index();
-			if (rejectmatrix == NULL || !(rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
+			if (level.rejectmatrix.Size() > 0 || !(level.rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
 				P_RunEffect (actor, actor->effects);
 		}
 	}

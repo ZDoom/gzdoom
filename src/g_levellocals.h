@@ -1,5 +1,6 @@
 #pragma once
 
+#include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
 #include "portal.h"
@@ -31,6 +32,7 @@ struct FLevelLocals
 
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
+	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
 	TArray<line_t> lines;
 	TArray<side_t> sides;
 	TArray<seg_t> segs;
@@ -39,6 +41,7 @@ struct FLevelLocals
 	TArray<subsector_t> gamesubsectors;
 	TArray<node_t> gamenodes;
 	node_t *headgamenode;
+	TArray<uint8_t> rejectmatrix;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<zone_t>	Zones;
@@ -48,6 +51,11 @@ struct FLevelLocals
 	TArray<sector_t>	loadsectors;
 	TArray<line_t>	loadlines;
 	TArray<side_t>	loadsides;
+
+	// Maintain single and multi player starting spots.
+	TArray<FPlayerStart> deathmatchstarts;
+	FPlayerStart		playerstarts[MAXPLAYERS];
+	TArray<FPlayerStart> AllPlayerStarts;
 
 
 	uint32_t		flags;

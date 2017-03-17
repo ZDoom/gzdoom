@@ -163,14 +163,8 @@ FBlockNode**	blocklinks;		// for thing chains
 // Without special effect, this could be
 //	used as a PVS lookup as well.
 //
-uint8_t*			rejectmatrix;
 
 bool		ForceNodeBuild;
-
-// Maintain single and multi player starting spots.
-TArray<FPlayerStart> deathmatchstarts (16);
-FPlayerStart		playerstarts[MAXPLAYERS];
-TArray<FPlayerStart> AllPlayerStarts;
 
 static void P_AllocateSideDefs (MapData *map, int count);
 
@@ -3035,9 +3029,7 @@ void P_LoadBlockMap (MapData * map)
 // P_GroupLines
 // Builds sector line lists and subsector sector numbers.
 // Finds block bounding boxes for sectors.
-// [RH] Handles extra lights
 //
-line_t**				linebuffer;
 
 static void P_GroupLines (bool buildmap)
 {
@@ -3104,8 +3096,8 @@ static void P_GroupLines (bool buildmap)
 
 	// build line tables for each sector
 	times[3].Clock();
-	linebuffer = new line_t *[total];
-	line_t **lineb_p = linebuffer;
+	level.linebuffer.Alloc(total);
+	line_t **lineb_p = &level.linebuffer[0];
 	auto numsectors = level.sectors.Size();
 	linesDoneInEachSector = new unsigned int[numsectors];
 	memset (linesDoneInEachSector, 0, sizeof(int)*numsectors);
@@ -3220,23 +3212,23 @@ void P_LoadReject (MapData * map, bool junk)
 			Printf ("REJECT is %d byte%s too small.\n", neededsize - rejectsize,
 				neededsize-rejectsize==1?"":"s");
 		}
-		rejectmatrix = NULL;
+		level.rejectmatrix.Reset();
 	}
 	else
 	{
 		// Check if the reject has some actual content. If not, free it.
 		rejectsize = MIN (rejectsize, neededsize);
-		rejectmatrix = new uint8_t[rejectsize];
+		level.rejectmatrix.Alloc(rejectsize);
 
 		map->Seek(ML_REJECT);
-		map->file->Read (rejectmatrix, rejectsize);
+		map->file->Read (&level.rejectmatrix[0], rejectsize);
 
 		int qwords = rejectsize / 8;
 		int i;
 
 		if (qwords > 0)
 		{
-			const uint64_t *qreject = (const uint64_t *)rejectmatrix;
+			const uint64_t *qreject = (const uint64_t *)&level.rejectmatrix[0];
 
 			i = 0;
 			do
@@ -3249,13 +3241,12 @@ void P_LoadReject (MapData * map, bool junk)
 		qwords *= 8;
 		for (i = 0; i < rejectsize; ++i)
 		{
-			if (rejectmatrix[qwords + i] != 0)
+			if (level.rejectmatrix[qwords + i] != 0)
 				return;
 		}
 
 		// Reject has no data, so pretend it isn't there.
-		delete[] rejectmatrix;
-		rejectmatrix = NULL;
+		level.rejectmatrix.Reset();
 	}
 }
 
@@ -3439,6 +3430,8 @@ void P_FreeLevelData ()
 	level.gamenodes.Reset();
 	level.subsectors.Clear();
 	level.gamesubsectors.Reset();
+	level.rejectmatrix.Clear();
+	level.Zones.Clear();
 
 	if (blockmaplump != NULL)
 	{
@@ -3465,23 +3458,17 @@ void P_FreeLevelData ()
 		delete[] PolyBlockMap;
 		PolyBlockMap = NULL;
 	}
-	if (rejectmatrix != NULL)
-	{
-		delete[] rejectmatrix;
-		rejectmatrix = NULL;
-	}
-	if (linebuffer != NULL)
-	{
-		delete[] linebuffer;
-		linebuffer = NULL;
-	}
 	if (polyobjs != NULL)
 	{
 		delete[] polyobjs;
 		polyobjs = NULL;
 	}
 	po_NumPolyobjs = 0;
-	level.Zones.Clear();
+
+	level.deathmatchstarts.Clear();
+	level.AllPlayerStarts.Clear();
+	memset(level.playerstarts, 0, sizeof(level.playerstarts));
+
 	P_FreeStrifeConversations ();
 	level.Scrolls.Clear();
 	P_ClearUDMFKeys();
@@ -3923,10 +3910,6 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
-
-	deathmatchstarts.Clear();
-	AllPlayerStarts.Clear();
-	memset(playerstarts, 0, sizeof(playerstarts));
 
 	if (!buildmap)
 	{

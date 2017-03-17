@@ -172,7 +172,7 @@ void FMapInfoParser::ParseDoomEdNums()
 			defined[ednum] = true;
 			if (sc.String[0] == '$')
 			{
-				// todo: add special stuff like playerstarts and sound sequence overrides here, too.
+				// add special stuff like playerstarts and sound sequence overrides here, too.
 				editem.classname = NAME_None;
 				editem.special = sc.MustMatchString(SpecialMapthingNames) + 1; // todo: assign proper constants
 			}

@@ -1098,10 +1098,9 @@ void P_CreateLinkedPortals()
 	}
 
 	// reject would just get in the way when checking sight through portals.
-	if (Displacements.size > 1 && rejectmatrix != nullptr)
+	if (Displacements.size > 1)
 	{
-		delete[] rejectmatrix;
-		rejectmatrix = nullptr;
+		level.rejectmatrix.Reset();
 	}
 	// finally we must flag all planes which are obstructed by the sector's own ceiling or floor.
 	for (auto &sec : level.sectors)

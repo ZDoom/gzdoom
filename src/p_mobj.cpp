@@ -5690,7 +5690,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		{
 			// count deathmatch start positions
 			FPlayerStart start(mthing, 0);
-			deathmatchstarts.Push(start);
+			level.deathmatchstarts.Push(start);
 			return NULL;
 		}
 
@@ -5793,10 +5793,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 		// save spots for respawning in network games
 		FPlayerStart start(mthing, pnum+1);
-		playerstarts[pnum] = start;
+		level.playerstarts[pnum] = start;
 		if (level.flags2 & LEVEL2_RANDOMPLAYERSTARTS)
 		{ // When using random player starts, all starts count
-			AllPlayerStarts.Push(start);
+			level.AllPlayerStarts.Push(start);
 		}
 		else
 		{ // When not using random player starts, later single player
@@ -5804,17 +5804,17 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		  // ones are for voodoo dolls and not likely to be ideal for
 		  // spawning regular players.
 			unsigned i;
-			for (i = 0; i < AllPlayerStarts.Size(); ++i)
+			for (i = 0; i < level.AllPlayerStarts.Size(); ++i)
 			{
-				if (AllPlayerStarts[i].type == pnum+1)
+				if (level.AllPlayerStarts[i].type == pnum+1)
 				{
-					AllPlayerStarts[i] = start;
+					level.AllPlayerStarts[i] = start;
 					break;
 				}
 			}
-			if (i == AllPlayerStarts.Size())
+			if (i == level.AllPlayerStarts.Size())
 			{
-				AllPlayerStarts.Push(start);
+				level.AllPlayerStarts.Push(start);
 			}
 		}
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))

@@ -435,12 +435,6 @@ struct FPlayerStart
 	  type(pnum)
 	{ }
 };
-// Player spawn spots for deathmatch.
-extern TArray<FPlayerStart> deathmatchstarts;
-
-// Player spawn spots.
-extern FPlayerStart playerstarts[MAXPLAYERS];
-extern TArray<FPlayerStart> AllPlayerStarts;
 
 
 #endif					// __DOOMDATA__

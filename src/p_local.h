@@ -405,13 +405,6 @@ double		P_GetFriction(const AActor *mo, double *frictionfactor);
 const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move);
 
 //
-// P_SETUP
-//
-extern uint8_t*			rejectmatrix;	// for fast sight rejection
-
-
-
-//
 // P_INTER
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);

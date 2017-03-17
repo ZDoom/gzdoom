@@ -847,8 +847,8 @@ bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 //
 // check for trivial rejection
 //
-	if (rejectmatrix != NULL &&
-		(rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
+	if (level.rejectmatrix.Size() > 0 &&
+		(level.rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
 	{
 sightcounts[0]++;
 		res = false;			// can't possibly be connected

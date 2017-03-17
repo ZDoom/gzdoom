@@ -113,7 +113,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	if (gl_attenuate == -1) attenuate = !!(light->flags4 & MF4_ATTENUATE);
 	else attenuate = !!gl_attenuate;
 
-		shadowIndex = -shadowIndex;
+	if (attenuate) shadowIndex = -shadowIndex;
 
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
 	data[0] = pos.X;

@@ -121,7 +121,7 @@ namespace swrenderer
 #ifdef NO_SSE
 			float rcp_dist = 1.0f / (dist2 * 0.01f);
 #else
-			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
 #endif
 			float dist = dist2 * rcp_dist;
 			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));

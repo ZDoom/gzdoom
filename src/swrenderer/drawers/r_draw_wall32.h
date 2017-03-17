@@ -89,7 +89,7 @@ namespace swrenderer
 
 			// Shade constants
 			uint32_t light = 256 - (args.Light() >> (FRACBITS - 8));
-			uint32_t inv_light = 256;
+			uint32_t inv_light = 256 - light;
 
 			int inv_desaturate;
 			BgraColor shade_fade, shade_light;

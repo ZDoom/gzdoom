@@ -692,7 +692,7 @@ GLSectorStackPortal::~GLSectorStackPortal()
 
 static uint8_t SetCoverage(void *node)
 {
-	if (numnodes == 0)
+	if (level.nodes.Size() == 0)
 	{
 		return 0;
 	}
@@ -700,7 +700,7 @@ static uint8_t SetCoverage(void *node)
 	{
 		node_t *bsp = (node_t *)node;
 		uint8_t coverage = SetCoverage(bsp->children[0]) | SetCoverage(bsp->children[1]);
-		gl_drawinfo->no_renderflags[bsp-nodes] = coverage;
+		gl_drawinfo->no_renderflags[bsp->Index()] = coverage;
 		return coverage;
 	}
 	else
@@ -723,7 +723,7 @@ void GLSectorStackPortal::SetupCoverage()
 			gl_drawinfo->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
-	SetCoverage(&nodes[numnodes-1]);
+	SetCoverage(::level.HeadNode());
 }
 
 //-----------------------------------------------------------------------------

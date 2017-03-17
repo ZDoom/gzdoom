@@ -1052,7 +1052,7 @@ void FDrawInfo::StartScene()
 
 	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
 	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, numnodes * sizeof(no_renderflags[0]));
+	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
 
 	next = gl_drawinfo;
 	gl_drawinfo = this;

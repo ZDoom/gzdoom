@@ -1741,14 +1741,6 @@ void PO_Init (void)
 	// [RH] Don't need the side lists anymore
 	KillSideLists ();
 
-	for(int i=0;i<numnodes;i++)
-	{
-		node_t *no = &nodes[i];
-		double fdx = FIXED2DBL(no->dx);
-		double fdy = FIXED2DBL(no->dy);
-		no->len = (float)g_sqrt(fdx * fdx + fdy * fdy);
-	}
-
 	// mark all subsectors which have a seg belonging to a polyobj
 	// These ones should not be rendered on the textured automap.
 	for (auto &ss : level.subsectors)
@@ -2128,7 +2120,7 @@ void FPolyObj::CreateSubsectorLinks()
 	}
 	if (!(i_compatflags & COMPATF_POLYOBJ))
 	{
-		SplitPoly(node, nodes + numnodes - 1, dummybbox);
+		SplitPoly(node, level.HeadNode(), dummybbox);
 	}
 	else
 	{

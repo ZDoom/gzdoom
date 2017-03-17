@@ -1447,6 +1447,8 @@ struct node_t
 		void	*children[2];	// If bit 0 is set, it's a subsector.
 		int		intchildren[2];	// Used by nodebuilder.
 	};
+
+	int Index() const;
 };
 
 

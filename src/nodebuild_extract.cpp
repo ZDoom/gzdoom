@@ -43,6 +43,7 @@
 
 #include "nodebuild.h"
 #include "templates.h"
+#include "g_levellocals.h"
 
 #if 0
 #define D(x) x
@@ -52,13 +53,11 @@
 #undef DD
 #endif
 
-void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
-	TStaticArray<seg_t> &outSegs,
-	TStaticPointableArray<subsector_t> &outSubs,
-	TStaticArray<vertex_t> &outVerts)
+void FNodeBuilder::Extract (FLevelLocals &level)
 {
 	int i;
 
+	auto &outVerts = level.vertexes; 
 	int vertCount = Vertices.Size ();
 	outVerts.Alloc(vertCount);
 
@@ -67,15 +66,17 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		outVerts[i].set(Vertices[i].x, Vertices[i].y);
 	}
 
+	auto &outSubs = level.subsectors;
 	auto subCount = Subsectors.Size();
 	outSubs.Alloc(subCount);
 	memset(&outSubs[0], 0, subCount * sizeof(subsector_t));
 
-	nodeCount = Nodes.Size ();
-	outNodes = new node_t[nodeCount];
+	auto &outNodes = level.nodes;
+	auto nodeCount = Nodes.Size ();
+	outNodes.Alloc(nodeCount);
 
-	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
-	for (i = 0; i < nodeCount; ++i)
+	memcpy (&outNodes[0], &Nodes[0], nodeCount*sizeof(node_t));
+	for (unsigned i = 0; i < nodeCount; ++i)
 	{
 		D(Printf(PRINT_LOG, "Node %d:  Splitter[%08x,%08x] [%08x,%08x]\n", i,
 			outNodes[i].x, outNodes[i].y, outNodes[i].dx, outNodes[i].dy));
@@ -91,7 +92,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			else
 			{
 				D(Printf(PRINT_LOG, "  node %d\n", outNodes[i].intchildren[j]));
-				outNodes[i].children[j] = outNodes + outNodes[i].intchildren[j];
+				outNodes[i].children[j] = &outNodes[outNodes[i].intchildren[j]];
 			}
 		}
 		for (int j = 0; j < 2; ++j)
@@ -103,6 +104,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		}
 	}
 
+	auto &outSegs = level.segs;
 	if (GLNodes)
 	{
 		TArray<glseg_t> segs (Segs.Size()*5/4);

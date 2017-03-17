@@ -324,7 +324,7 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, c
 	build.center.x = xs_CRoundToInt(centerx / subsector->numlines);
 	build.center.y = xs_CRoundToInt(centery / subsector->numlines);
 
-	build.CollectNode(nodes + numnodes - 1, shape);
+	build.CollectNode(level.HeadNode(), shape);
 	coverage->subsectors = new uint32_t[build.collect.Size()]; 
 	coverage->sscount = build.collect.Size();
 	memcpy(coverage->subsectors, &build.collect[0], build.collect.Size() * sizeof(uint32_t));
@@ -359,17 +359,9 @@ void gl_InitPortals()
 {
 	FPortalMap collection;
 
-	if (numnodes == 0) return;
+	if (level.nodes.Size() == 0) return;
 
-	for(int i=0;i<numnodes;i++)
-	{
-		node_t *no = &nodes[i];
-		// Must be converted because the len value is also needed for polyobjects.
-		double fdx = FIXED2DBL(no->dx);
-		double fdy = FIXED2DBL(no->dy);
-		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
-	}
-
+	
 	CollectPortalSectors(collection);
 	glSectorPortals.Clear();
 

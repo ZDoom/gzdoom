@@ -271,7 +271,7 @@ void GLSceneDrawer::CreateScene()
 	GLRenderer->mVBO->Map();
 	SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
-	RenderBSPNode (nodes + numnodes - 1);
+	RenderBSPNode (level.HeadNode());
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
 	Bsp.Unclock();
 

@@ -36,6 +36,8 @@ struct FLevelLocals
 	TStaticArray<seg_t> segs;
 	TStaticPointableArray<subsector_t> subsectors;
 	TStaticPointableArray<subsector_t> gamesubsectors;
+	TStaticPointableArray<node_t> nodes;
+	TStaticPointableArray<node_t> gamenodes;
 
 	TArray<FSectorPortal> sectorPortals;
 
@@ -93,6 +95,15 @@ struct FLevelLocals
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
+
+	node_t		*HeadNode() const
+	{
+		return &nodes[nodes.Size() - 1];
+	}
+	node_t		*HeadGamenode() const
+	{
+		return &gamenodes[gamenodes.Size() - 1];
+	}
 };
 
 extern FLevelLocals level;
@@ -120,6 +131,11 @@ inline int seg_t::Index() const
 inline int subsector_t::Index() const
 {
 	return int(this - &level.subsectors[0]);
+}
+
+inline int node_t::Index() const
+{
+	return int(this - &level.nodes[0]);
 }
 
 inline FSectorPortal *line_t::GetTransferredPortal()

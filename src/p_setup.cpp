@@ -125,13 +125,13 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 //
 TArray<vertexdata_t> vertexdatas;
 
-int 			numnodes;
-node_t* 		nodes;
+//int 			numnodes;
+//node_t* 		nodes;
 
 TArray<zone_t>	Zones;
 
-node_t * 		gamenodes;
-int 			numgamenodes;
+//node_t * 		gamenodes;
+//int 			numgamenodes;
 
 bool			hasglnodes;
 
@@ -1049,9 +1049,9 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	uint32_t numNodes;
 
 	data >> numNodes;
-	numnodes = numNodes;
-	nodes = new node_t[numNodes];
-	memset (nodes, 0, sizeof(node_t)*numNodes);
+	auto &nodes = level.nodes;
+	nodes.Alloc(numNodes);
+	memset (&nodes[0], 0, sizeof(node_t)*numNodes);
 
 	for (i = 0; i < numNodes; ++i)
 	{
@@ -1211,7 +1211,7 @@ void P_LoadSegs (MapData * map)
 	{
 		Printf ("This map has no segs.\n");
 		level.subsectors.Clear();
-		delete[] nodes;
+		level.nodes.Clear();
 		delete[] vertchanged;
 		ForceNodeBuild = true;
 		return;
@@ -1357,7 +1357,7 @@ void P_LoadSegs (MapData * map)
 		Printf ("The BSP will be rebuilt.\n");
 		level.segs.Clear();
 		level.subsectors.Clear();
-		delete[] nodes;
+		level.nodes.Clear();
 		ForceNodeBuild = true;
 	}
 
@@ -1382,7 +1382,7 @@ void P_LoadSubsectors (MapData * map)
 	if (numsubsectors == 0 || maxseg == 0 )
 	{
 		Printf ("This map has an incomplete BSP tree.\n");
-		delete[] nodes;
+		level.nodes.Clear();
 		ForceNodeBuild = true;
 		return;
 	}
@@ -1403,7 +1403,7 @@ void P_LoadSubsectors (MapData * map)
 		{
 			Printf ("Subsector %i is empty.\n", i);
 			level.subsectors.Clear();
-			delete[] nodes;
+			level.nodes.Clear();
 			ForceNodeBuild = true;
 			return;
 		}
@@ -1417,7 +1417,7 @@ void P_LoadSubsectors (MapData * map)
 				"The BSP will be rebuilt.\n", i, (unsigned)((size_t)subsectors[i].firstline),
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
-			delete[] nodes;
+			level.nodes.Clear();
 			level.subsectors.Clear();
 			break;
 		}
@@ -1427,7 +1427,7 @@ void P_LoadSubsectors (MapData * map)
 				"The BSP will be rebuilt.\n", i, maxseg,
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
-			delete[] nodes;
+			level.nodes.Clear();
 			level.subsectors.Clear();
 			break;
 		}
@@ -1538,7 +1538,6 @@ template<class nodetype, class subsectortype>
 void P_LoadNodes (MapData * map)
 {
 	FMemLump	data;
-	int 		i;
 	int 		j;
 	int 		k;
 	char		*mnp;
@@ -1548,7 +1547,7 @@ void P_LoadNodes (MapData * map)
 	int			lumplen = map->Size(ML_NODES);
 	int			maxss = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
-	numnodes = (lumplen - nodetype::NF_LUMPOFFSET) / sizeof(nodetype);
+	unsigned numnodes = (lumplen - nodetype::NF_LUMPOFFSET) / sizeof(nodetype);
 
 	if ((numnodes == 0 && maxss != 1) || maxss == 0)
 	{
@@ -1556,16 +1555,17 @@ void P_LoadNodes (MapData * map)
 		return;
 	}
 	
-	nodes = new node_t[numnodes];		
+	auto &nodes = level.nodes;
+	nodes.Alloc(numnodes);		
 	used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 	memset (used, 0, sizeof(uint16_t)*numnodes);
 
 	mnp = new char[lumplen];
 	mn = (nodetype*)(mnp + nodetype::NF_LUMPOFFSET);
 	map->Read(ML_NODES, mnp);
-	no = nodes;
+	no = &nodes[0];
 	
-	for (i = 0; i < numnodes; i++, no++, mn++)
+	for (unsigned i = 0; i < numnodes; i++, no++, mn++)
 	{
 		no->x = LittleShort(mn->x)<<FRACBITS;
 		no->y = LittleShort(mn->y)<<FRACBITS;
@@ -1582,18 +1582,18 @@ void P_LoadNodes (MapData * map)
 					Printf ("BSP node %d references invalid subsector %d.\n"
 						"The BSP will be rebuilt.\n", i, child);
 					ForceNodeBuild = true;
-					delete[] nodes;
+					level.nodes.Clear();
 					delete[] mnp;
 					return;
 				}
 				no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 			}
-			else if (child >= numnodes)
+			else if ((unsigned)child >= numnodes)
 			{
 				Printf ("BSP node %d references invalid node %td.\n"
-					"The BSP will be rebuilt.\n", i, (node_t *)no->children[j] - nodes);
+					"The BSP will be rebuilt.\n", i, ((node_t *)no->children[j])->Index());
 				ForceNodeBuild = true;
-				delete[] nodes;
+				level.nodes.Clear();
 				delete[] mnp;
 				return;
 			}
@@ -1603,7 +1603,7 @@ void P_LoadNodes (MapData * map)
 					"which is already used by node %d.\n"
 					"The BSP will be rebuilt.\n", i, child, used[child]-1);
 				ForceNodeBuild = true;
-				delete[] nodes;
+				level.nodes.Clear();
 				delete[] mnp;
 				return;
 			}
@@ -3451,19 +3451,10 @@ void P_FreeLevelData ()
 	level.lines.Clear();
 	level.sides.Clear();
 	level.vertexes.Clear();
-
-	if (gamenodes != NULL && gamenodes != nodes)
-	{
-		delete[] gamenodes;
-	}
+	level.nodes.Clear();
+	level.gamenodes.Clear();
 	level.subsectors.Clear();
 	level.gamesubsectors.Clear();
-	if (nodes != NULL)
-	{
-		delete[] nodes;
-	}
-	nodes = gamenodes = NULL;
-	numnodes = numgamenodes = 0;
 
 	if (blockmaplump != NULL)
 	{
@@ -3799,11 +3790,7 @@ void P_SetupLevel (const char *lumpname, int position)
 				ForceNodeBuild = true;
 				level.subsectors.Clear();
 				level.segs.Clear();
-				if (nodes != NULL)
-				{
-					delete[] nodes;
-					nodes = NULL;
-				}
+				level.nodes.Clear();
 			}
 		}
 		else if (!map->isText)	// regular nodes are not supported for text maps
@@ -3879,10 +3866,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// In case a sync critical game mode is started, also build GL nodes to avoid problems
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
-		builder.Extract (nodes, numnodes,
-			level.segs,
-			level.subsectors,
-			level.vertexes);
+		builder.Extract (level);
 		endTime = I_FPSTime ();
 		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 		oldvertextable = builder.GetOldVertexTable();
@@ -3911,19 +3895,12 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 	}
 
-	// Copy pointers to the old nodes so that R_PointInSubsector can use them
-	if (nodes)
-	{
-		gamenodes = nodes;
-		numgamenodes = numnodes;
-	}
-	else
-	{
-		gamenodes=NULL;
-	}
+	// duplicate the nodes in the game* arrays so that replacement nodes do not overwrite them.
 	// let the game data take ownership, because that is guaranteed to remain intact after here.
 	level.gamesubsectors = std::move(level.subsectors);
 	level.subsectors.Point(level.gamesubsectors);
+	level.gamenodes = std::move(level.nodes);
+	level.nodes.Point(level.gamenodes);
 
 	if (RequireGLNodes)
 	{
@@ -4017,6 +3994,12 @@ void P_SetupLevel (const char *lumpname, int position)
 	{
 		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
 		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
+	}
+	for (auto &node : level.nodes)
+	{
+		double fdx = FIXED2DBL(node.dx);
+		double fdy = FIXED2DBL(node.dy);
+		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
 	// This must be done BEFORE the PolyObj Spawn!!!

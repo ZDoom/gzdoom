@@ -5,6 +5,7 @@
 
 struct FPolySeg;
 struct FMiniBSP;
+struct FLevelLocals;
 
 struct FEventInfo
 {
@@ -193,10 +194,7 @@ public:
 		bool makeGLNodes);
 	~FNodeBuilder ();
 
-	void Extract(node_t *&nodes, int &nodeCount,
-		TStaticArray<seg_t> &segs,
-		TStaticPointableArray<subsector_t> &ssecs,
-		TStaticArray<vertex_t> &vertexes);
+	void Extract(FLevelLocals &level);
 	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.

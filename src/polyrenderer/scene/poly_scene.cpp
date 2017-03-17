@@ -134,7 +134,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 
 void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
 {
-	if (numnodes == 0)
+	if (level.nodes.Size() == 0)
 	{
 		subsector_t *sub = &level.subsectors[0];
 		auto it = SubsectorDepths.find(sub);
@@ -143,7 +143,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVe
 	}
 	else
 	{
-		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, nodes + numnodes - 1); // The head node is the last node output.
+		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, level.HeadNode());
 	}
 }
 

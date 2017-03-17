@@ -526,7 +526,6 @@ static bool LoadNodes (FileReader * lump)
 	const int NF_SUBSECTOR = 0x8000;
 	const int GL5_NF_SUBSECTOR = (1 << 31);
 
-	int 		i;
 	int 		j;
 	int 		k;
 	node_t* 	no;
@@ -535,11 +534,11 @@ static bool LoadNodes (FileReader * lump)
 	if (!format5)
 	{
 		mapnode_t*	mn, * basemn;
-		numnodes = lump->GetLength() / sizeof(mapnode_t);
+		unsigned numnodes = unsigned(lump->GetLength() / sizeof(mapnode_t));
 
 		if (numnodes == 0) return false;
 
-		nodes = new node_t[numnodes];		
+		level.nodes.Alloc(numnodes);
 		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new mapnode_t[numnodes];
@@ -548,9 +547,9 @@ static bool LoadNodes (FileReader * lump)
 		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 		memset (used, 0, sizeof(uint16_t)*numnodes);
 
-		no = nodes;
+		no = &level.nodes[0];
 
-		for (i = 0; i < numnodes; i++, no++, mn++)
+		for (unsigned i = 0; i < numnodes; i++, no++, mn++)
 		{
 			no->x = LittleShort(mn->x)<<FRACBITS;
 			no->y = LittleShort(mn->y)<<FRACBITS;
@@ -581,7 +580,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				else
 				{
-					no->children[j] = &nodes[child];
+					no->children[j] = &level.nodes[child];
 					used[child] = j + 1;
 				}
 				for (k = 0; k < 4; k++)
@@ -595,11 +594,11 @@ static bool LoadNodes (FileReader * lump)
 	else
 	{
 		gl5_mapnode_t*	mn, * basemn;
-		numnodes = lump->GetLength() / sizeof(gl5_mapnode_t);
+		auto numnodes = unsigned(lump->GetLength() / sizeof(gl5_mapnode_t));
 
 		if (numnodes == 0) return false;
 
-		nodes = new node_t[numnodes];		
+		level.nodes.Alloc(numnodes);
 		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new gl5_mapnode_t[numnodes];
@@ -608,9 +607,9 @@ static bool LoadNodes (FileReader * lump)
 		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 		memset (used, 0, sizeof(uint16_t)*numnodes);
 
-		no = nodes;
+		no = &level.nodes[0];
 
-		for (i = 0; i < numnodes; i++, no++, mn++)
+		for (unsigned i = 0; i < numnodes; i++, no++, mn++)
 		{
 			no->x = LittleShort(mn->x)<<FRACBITS;
 			no->y = LittleShort(mn->y)<<FRACBITS;
@@ -629,7 +628,7 @@ static bool LoadNodes (FileReader * lump)
 					}
 					no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 				}
-				else if (child >= numnodes)
+				else if ((unsigned)child >= numnodes)
 				{
 					delete [] basemn;
 					return false;
@@ -641,7 +640,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				else
 				{
-					no->children[j] = &nodes[child];
+					no->children[j] = &level.nodes[child];
 					used[child] = j + 1;
 				}
 				for (k = 0; k < 4; k++)
@@ -663,28 +662,12 @@ static bool LoadNodes (FileReader * lump)
 
 static bool DoLoadGLNodes(FileReader ** lumps)
 {
-	if (!LoadGLVertexes(lumps[0]))
+	if (!LoadGLVertexes(lumps[0]) ||
+		!LoadGLSegs(lumps[1]) ||
+		!LoadGLSubsectors(lumps[2]) ||
+		!LoadNodes(lumps[3]))
 	{
-		return false;
-	}
-	if (!LoadGLSegs(lumps[1]))
-	{
-		level.segs.Clear();
-		return false;
-	}
-	if (!LoadGLSubsectors(lumps[2]))
-	{
-		level.subsectors.Clear();
-		level.segs.Clear();
-		return false;
-	}
-	if (!LoadNodes(lumps[3]))
-	{
-		delete [] nodes;
-		nodes = NULL;
-		level.subsectors.Clear();
-		level.segs.Clear();
-		return false;
+		goto fail;
 	}
 
 	// Quick check for the validity of the nodes
@@ -696,11 +679,7 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 		if (!seg->sidedef) 
 		{
 			Printf("GL nodes contain invalid data. The BSP has to be rebuilt.\n");
-			delete [] nodes;
-			nodes = NULL;
-			level.subsectors.Clear();
-			level.segs.Clear();
-			return false;
+			goto fail;
 		}
 	}
 
@@ -711,6 +690,12 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt.\n", missing);
 	}
 	return missing == 0;
+
+fail:
+	level.nodes.Clear();
+	level.subsectors.Clear();
+	level.segs.Clear();
+	return false;
 }
 
 
@@ -855,7 +840,7 @@ bool P_LoadGLNodes(MapData * map)
 			{
 				level.subsectors.Clear();
 				level.segs.Clear();
-				nodes = NULL;
+				level.nodes.Clear();
 				P_LoadZNodes (*map->file, id);
 				return true;
 			}
@@ -863,11 +848,7 @@ bool P_LoadGLNodes(MapData * map)
 			{
 				level.subsectors.Clear();
 				level.segs.Clear();
-				if (nodes != NULL)
-				{
-					delete[] nodes;
-					nodes = NULL;
-				}
+				level.nodes.Clear();
 			}
 		}
 	}
@@ -962,8 +943,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			sub.sector = sub.firstline->sidedef->sector;
 		}
 
-		nodes = NULL;
-		numnodes = 0;
+		level.nodes.Clear();
 		level.subsectors.Clear();
 		level.segs.Clear();
 
@@ -987,10 +967,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
 			
-			builder.Extract (nodes, numnodes,
-				level.segs,
-				level.subsectors,
-				level.vertexes);
+			builder.Extract (level);
 			endTime = I_FPSTime ();
 			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 			buildtime = endTime - startTime;
@@ -1014,10 +991,9 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		}
 	}
 
-	if (!gamenodes)
+	if (level.gamenodes.Size() == 0)
 	{
-		gamenodes = nodes;
-		numgamenodes = numnodes;
+		level.gamenodes.Point(level.nodes);
 		level.gamesubsectors.Point(level.subsectors);
 	}
 	return ret;
@@ -1101,31 +1077,31 @@ static void CreateCachedNodes(MapData *map)
 		}
 	}
 
-	WriteLong(ZNodes, numnodes);
-	for(int i=0;i<numnodes;i++)
+	WriteLong(ZNodes, level.nodes.Size());
+	for(auto &node : level.nodes)
 	{
-		WriteLong(ZNodes, nodes[i].x);
-		WriteLong(ZNodes, nodes[i].y);
-		WriteLong(ZNodes, nodes[i].dx);
-		WriteLong(ZNodes, nodes[i].dy);
+		WriteLong(ZNodes, node.x);
+		WriteLong(ZNodes, node.y);
+		WriteLong(ZNodes, node.dx);
+		WriteLong(ZNodes, node.dy);
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				WriteWord(ZNodes, (short)nodes[i].bbox[j][k]);
+				WriteWord(ZNodes, (short)node.bbox[j][k]);
 			}
 		}
 
 		for (int j = 0; j < 2; ++j)
 		{
 			uint32_t child;
-			if ((size_t)nodes[i].children[j] & 1)
+			if ((size_t)node.children[j] & 1)
 			{
-				child = 0x80000000 | uint32_t(((subsector_t *)((uint8_t *)nodes[i].children[j] - 1))->Index());
+				child = 0x80000000 | uint32_t(((subsector_t *)((uint8_t *)node.children[j] - 1))->Index());
 			}
 			else
 			{
-				child = uint32_t((node_t *)nodes[i].children[j] - nodes);
+				child = ((node_t *)node.children[j])->Index();
 			}
 			WriteLong(ZNodes, child);
 		}
@@ -1222,11 +1198,7 @@ static bool CheckCachedNodes(MapData *map)
 
 		level.subsectors.Clear();
 		level.segs.Clear();
-		if (nodes != NULL)
-		{
-			delete[] nodes;
-			nodes = NULL;
-		}
+		level.nodes.Clear();
 		goto errorout;
 	}
 
@@ -1296,35 +1268,6 @@ CCMD(clearnodecache)
 //
 //==========================================================================
 
-
-//==========================================================================
-//
-// P_PointInSubsector
-//
-//==========================================================================
-
-subsector_t *P_PointInSubsector (double x, double y)
-{
-	node_t *node;
-	int side;
-
-	// single subsector is a special case
-	if (numgamenodes == 0)
-		return &level.gamesubsectors[0];
-				
-	node = gamenodes + numgamenodes - 1;
-
-	fixed_t xx = FLOAT2FIXED(x);
-	fixed_t yy = FLOAT2FIXED(y);
-	do
-	{
-		side = R_PointOnSide (xx, yy, node);
-		node = (node_t *)node->children[side];
-	}
-	while (!((size_t)node & 1));
-		
-	return (subsector_t *)((uint8_t *)node - 1);
-}
 
 //==========================================================================
 //

@@ -777,7 +777,7 @@ namespace swrenderer
 		SeenActors.clear();
 
 		InSubsector = nullptr;
-		RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
+		RenderBSPNode(level.HeadNode());	// The head node is the last node output.
 	}
 
 	//
@@ -788,7 +788,7 @@ namespace swrenderer
 
 	void RenderOpaquePass::RenderBSPNode(void *node)
 	{
-		if (numnodes == 0)
+		if (level.nodes.Size() == 0)
 		{
 			RenderSubsector(&level.subsectors[0]);
 			return;

@@ -426,7 +426,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 
 	if (sector == NULL)
 	{
-		if (!spawning || numgamenodes == 0)
+		if (!spawning)
 		{
 			sector = P_PointInSector(Pos());
 		}
@@ -2095,6 +2095,34 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 
 //==========================================================================
 //
+// P_PointInSubsector
+//
+//==========================================================================
+
+subsector_t *P_PointInSubsector(double x, double y)
+{
+	node_t *node;
+	int side;
+
+	// single subsector is a special case
+	if (level.gamenodes.Size() == 0)
+		return &level.gamesubsectors[0];
+
+	node = level.HeadGamenode();
+
+	fixed_t xx = FLOAT2FIXED(x);
+	fixed_t yy = FLOAT2FIXED(y);
+	do
+	{
+		side = R_PointOnSide(xx, yy, node);
+		node = (node_t *)node->children[side];
+	} while (!((size_t)node & 1));
+
+	return (subsector_t *)((uint8_t *)node - 1);
+}
+
+//==========================================================================
+//
 // Use buggy PointOnSide and fix actors that lie on
 // lines to compensate for some IWAD maps.
 //
@@ -2103,10 +2131,10 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 sector_t *P_PointInSectorBuggy(double x, double y)
 {
 	// single subsector is a special case
-	if (numgamenodes == 0)
+	if (level.gamenodes.Size() == 0)
 		return level.gamesubsectors[0].sector;
 
-	node_t *node = gamenodes + numgamenodes - 1;
+	auto node = level.HeadGamenode();
 
 	do
 	{

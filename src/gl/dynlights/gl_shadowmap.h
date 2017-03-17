@@ -51,7 +51,7 @@ private:
 
 	// Used to detect when a level change requires the AABB tree to be regenerated
 	level_info_t *mLastLevel = nullptr;
-	int mLastNumNodes = 0;
+	unsigned mLastNumNodes = 0;
 	unsigned mLastNumSegs = 0;
 
 	// AABB-tree of the level, used for ray tests

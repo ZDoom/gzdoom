@@ -301,10 +301,10 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 	int side;
 
 	// single subsector is a special case
-	if (numnodes == 0)
+	if (level.nodes.Size() == 0)
 		return &level.subsectors[0];
 				
-	node = nodes + numnodes - 1;
+	node = level.HeadNode();
 
 	do
 	{

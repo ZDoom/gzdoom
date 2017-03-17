@@ -322,16 +322,15 @@ bool AActor::FixMapthingPos()
 {
 	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
 
-	int blockx = GetBlockX(X());
-	int blocky = GetBlockY(Y());
+	int blockx = level.blockmap.GetBlockX(X());
+	int blocky = level.blockmap.GetBlockY(Y());
 	bool success = false;
 
-	if ((unsigned int)blockx < (unsigned int)bmapwidth &&
-		(unsigned int)blocky < (unsigned int)bmapheight)
+	if (level.blockmap.isValidBlock(blockx, blocky))
 	{
 		int *list;
 
-		for (list = blockmaplump + blockmap[blocky*bmapwidth + blockx] + 1; *list != -1; ++list)
+		for (list = level.blockmap.GetLines(blockx, blocky); *list != -1; ++list)
 		{
 			line_t *ldef = &level.lines[*list];
 
@@ -487,25 +486,25 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 		{
 			DVector3 pos = i==-1? Pos() : PosRelative(check[i] & ~FPortalGroupArray::FLAT);
 
-			int x1 = GetBlockX(pos.X - radius);
-			int x2 = GetBlockX(pos.X + radius);
-			int y1 = GetBlockY(pos.Y - radius);
-			int y2 = GetBlockY(pos.Y + radius);
+			int x1 = level.blockmap.GetBlockX(pos.X - radius);
+			int x2 = level.blockmap.GetBlockX(pos.X + radius);
+			int y1 = level.blockmap.GetBlockY(pos.Y - radius);
+			int y2 = level.blockmap.GetBlockY(pos.Y + radius);
 
-			if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
+			if (x1 >= level.blockmap.bmapwidth || x2 < 0 || y1 >= level.blockmap.bmapheight || y2 < 0)
 			{ // thing is off the map
 			}
 			else
 			{ // [RH] Link into every block this actor touches, not just the center one
 				x1 = MAX(0, x1);
 				y1 = MAX(0, y1);
-				x2 = MIN(bmapwidth - 1, x2);
-				y2 = MIN(bmapheight - 1, y2);
+				x2 = MIN(level.blockmap.bmapwidth - 1, x2);
+				y2 = MIN(level.blockmap.bmapheight - 1, y2);
 				for (int y = y1; y <= y2; ++y)
 				{
 					for (int x = x1; x <= x2; ++x)
 					{
-						FBlockNode **link = &blocklinks[y*bmapwidth + x];
+						FBlockNode **link = &level.blockmap.blocklinks[y*level.blockmap.bmapwidth + x];
 						FBlockNode *node = FBlockNode::Create(this, x, y, this->Sector->PortalGroup);
 
 						// Link in to block
@@ -580,7 +579,7 @@ FBlockNode *FBlockNode::Create (AActor *who, int x, int y, int group)
 	{
 		block = new FBlockNode;
 	}
-	block->BlockIndex = x + y*bmapwidth;
+	block->BlockIndex = x + y*level.blockmap.bmapwidth;
 	block->Me = who;
 	block->NextActor = NULL;
 	block->PrevActor = NULL;
@@ -624,10 +623,10 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 void FBlockLinesIterator::init(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = GetBlockY(box.Top());
-	miny = GetBlockY(box.Bottom());
-	maxx = GetBlockX(box.Right());
-	minx = GetBlockX(box.Left());
+	maxy = level.blockmap.GetBlockY(box.Top());
+	miny = level.blockmap.GetBlockY(box.Bottom());
+	maxx = level.blockmap.GetBlockX(box.Right());
+	minx = level.blockmap.GetBlockX(box.Left());
 	Reset();
 }
 
@@ -646,16 +645,13 @@ void FBlockLinesIterator::StartBlock(int x, int y)
 { 
 	curx = x; 
 	cury = y; 
-	if (x >= 0 && y >= 0 && x < bmapwidth && y <bmapheight)
+	if (level.blockmap.isValidBlock(x, y))
 	{
-		int offset = y*bmapwidth + x;
+		int offset = y*level.blockmap.bmapwidth + x;
 		polyLink = PolyBlockMap? PolyBlockMap[offset] : NULL;
 		polyIndex = 0;
 
-		// There is an extra entry at the beginning of every block.
-		// Apparently, id had originally intended for it to be used
-		// to keep track of things, but the final code does not do that.
-		list = blockmaplump + *(blockmap + offset) + 1;
+		list = level.blockmap.GetLines(x, y);
 	}
 	else
 	{
@@ -994,10 +990,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 
 void FBlockThingsIterator::init(const FBoundingBox &box)
 {
-	maxy = GetBlockY(box.Top());
-	miny = GetBlockY(box.Bottom());
-	maxx = GetBlockX(box.Right());
-	minx = GetBlockX(box.Left());
+	maxy = level.blockmap.GetBlockY(box.Top());
+	miny = level.blockmap.GetBlockY(box.Bottom());
+	maxx = level.blockmap.GetBlockX(box.Right());
+	minx = level.blockmap.GetBlockX(box.Left());
 	ClearHash();
 	Reset();
 }
@@ -1021,13 +1017,13 @@ void FBlockThingsIterator::ClearHash()
 //
 //===========================================================================
 
-void FBlockThingsIterator::StartBlock(int x, int y) 
-{ 
-	curx = x; 
-	cury = y; 
-	if (x >= 0 && y >= 0 && x < bmapwidth && y <bmapheight)
+void FBlockThingsIterator::StartBlock(int x, int y)
+{
+	curx = x;
+	cury = y;
+	if (level.blockmap.isValidBlock(x, y))
 	{
-		block = blocklinks[y*bmapwidth + x];
+		block = level.blockmap.blocklinks[y*level.blockmap.bmapwidth + x];
 	}
 	else
 	{
@@ -1075,10 +1071,10 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 			if (centeronly)
 			{
 				// Block boundaries for compatibility mode
-				double blockleft = (curx * MAPBLOCKUNITS) + bmaporgx;
-				double blockright = blockleft + MAPBLOCKUNITS;
-				double blockbottom = (cury * MAPBLOCKUNITS) + bmaporgy;
-				double blocktop = blockbottom + MAPBLOCKUNITS;
+				double blockleft = (curx * FBlockmap::MAPBLOCKUNITS) + level.blockmap.bmaporgx;
+				double blockright = blockleft + FBlockmap::MAPBLOCKUNITS;
+				double blockbottom = (cury * FBlockmap::MAPBLOCKUNITS) + level.blockmap.bmaporgy;
+				double blocktop = blockbottom + FBlockmap::MAPBLOCKUNITS;
 
 				// only return actors with the center in this block
 				if (me->X() >= blockleft && me->X() < blockright &&
@@ -1618,15 +1614,15 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 		y2 += y1;
 	}
 
-	x1 -= bmaporgx;
-	y1 -= bmaporgy;
-	xt1 = x1 / MAPBLOCKUNITS;
-	yt1 = y1 / MAPBLOCKUNITS;
+	x1 -= level.blockmap.bmaporgx;
+	y1 -= level.blockmap.bmaporgy;
+	xt1 = x1 / FBlockmap::MAPBLOCKUNITS;
+	yt1 = y1 / FBlockmap::MAPBLOCKUNITS;
 
-	x2 -= bmaporgx;
-	y2 -= bmaporgy;
-	xt2 = x2 / MAPBLOCKUNITS;
-	yt2 = y2 / MAPBLOCKUNITS;
+	x2 -= level.blockmap.bmaporgx;
+	y2 -= level.blockmap.bmaporgy;
+	xt2 = x2 / FBlockmap::MAPBLOCKUNITS;
+	yt2 = y2 / FBlockmap::MAPBLOCKUNITS;
 
 	mapx = xs_FloorToInt(xt1);
 	mapy = xs_FloorToInt(yt1);
@@ -1834,7 +1830,7 @@ FPathTraverse::~FPathTraverse()
 // P_RoughMonsterSearch
 //
 // Searches though the surrounding mapblocks for monsters/players
-//		distance is in MAPBLOCKUNITS
+//		distance is in FBlockmap::MAPBLOCKUNITS
 //===========================================================================
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
@@ -1849,12 +1845,14 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int finalStop;
 	int count;
 	AActor *target;
+	int bmapwidth = level.blockmap.bmapwidth;
+	int bmapheight = level.blockmap.bmapheight;
 
-	startX = GetBlockX(mo->X());
-	startY = GetBlockY(mo->Y());
+	startX = level.blockmap.GetBlockX(mo->X());
+	startY = level.blockmap.GetBlockY(mo->Y());
 	validcount++;
 	
-	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
+	if (level.blockmap.isValidBlock(startX, startY))
 	{
 		if ( (target = check (mo, startY*bmapwidth+startX, params)) )
 		{ // found a target right away
@@ -1945,7 +1943,7 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 
 	FBlockNode *link;
 
-	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
+	for (link = level.blockmap.blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{

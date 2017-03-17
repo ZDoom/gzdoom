@@ -22,30 +22,73 @@ struct FBlockNode
 	static FBlockNode *FreeBlocks;
 };
 
-extern int*				blockmaplump;	// offsets in blockmap are from here
+// BLOCKMAP
+// Created from axis aligned bounding box
+// of the map, a rectangular array of
+// blocks of size 128x128.
+// Used to speed up collision detection
+// by spatial subdivision in 2D.
+//
 
-extern int*				blockmap;
-extern int				bmapwidth;
-extern int				bmapheight; 	// in mapblocks
-extern double			bmaporgx;
-extern double			bmaporgy;		// origin of block map
-extern FBlockNode**		blocklinks; 	// for thing chains
-
-										// mapblocks are used to check movement
-										// against lines and things
-enum
+struct FBlockmap
 {
-	MAPBLOCKUNITS = 128
+	int*				blockmaplump;	// offsets in blockmap are from here
+
+	int*				blockmap;
+	int					bmapwidth;
+	int					bmapheight; 	// in mapblocks
+	double				bmaporgx;
+	double				bmaporgy;		// origin of block map
+	FBlockNode**		blocklinks; 	// for thing chains
+
+	// mapblocks are used to check movement
+	// against lines and things
+	enum
+	{
+		MAPBLOCKUNITS = 128
+	};
+
+	inline int GetBlockX(double xpos)
+	{
+		return int((xpos - bmaporgx) / MAPBLOCKUNITS);
+	}
+
+	inline int GetBlockY(double ypos)
+	{
+		return int((ypos - bmaporgy) / MAPBLOCKUNITS);
+	}
+
+	inline bool isValidBlock(int x, int y) const
+	{
+		return ((unsigned int)x < (unsigned int)bmapwidth &&
+			(unsigned int)y < (unsigned int)bmapheight);
+	}
+
+	inline int *GetLines(int x, int y) const
+	{
+		// There is an extra entry at the beginning of every block.
+		// Apparently, id had originally intended for it to be used
+		// to keep track of things, but the final code does not do that.
+		int offset = y*bmapwidth + x;
+		return blockmaplump + *(blockmap + offset) + 1;
+	}
+
+	bool FBlockmap::VerifyBlockMap(int count);
+
+	void Clear()
+	{
+		if (blockmaplump != NULL)
+		{
+			delete[] blockmaplump;
+			blockmaplump = NULL;
+		}
+		if (blocklinks != NULL)
+		{
+			delete[] blocklinks;
+			blocklinks = NULL;
+		}
+	}
+
 };
-
-inline int GetBlockX(double xpos)
-{
-	return int((xpos - bmaporgx) / MAPBLOCKUNITS);
-}
-
-inline int GetBlockY(double ypos)
-{
-	return int((ypos - bmaporgy) / MAPBLOCKUNITS);
-}
 
 #endif

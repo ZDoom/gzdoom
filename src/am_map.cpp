@@ -1831,6 +1831,8 @@ void AM_drawGrid (int color)
 	mline_t ml;
 	double minlen, extx, exty;
 	double minx, miny;
+	auto bmaporgx = level.blockmap.bmaporgx;
+	auto bmaporgy = level.blockmap.bmaporgy;
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
@@ -1843,12 +1845,12 @@ void AM_drawGrid (int color)
 
 	// Figure out start of vertical gridlines
 	start = minx - extx;
-	start = ceil((start - bmaporgx) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgx;
+	start = ceil((start - bmaporgx) / FBlockmap::MAPBLOCKUNITS) * FBlockmap::MAPBLOCKUNITS + bmaporgx;
 
 	end = minx + minlen - extx;
 
 	// draw vertical gridlines
-	for (x = start; x < end; x += MAPBLOCKUNITS)
+	for (x = start; x < end; x += FBlockmap::MAPBLOCKUNITS)
 	{
 		ml.a.x = x;
 		ml.b.x = x;
@@ -1864,11 +1866,11 @@ void AM_drawGrid (int color)
 
 	// Figure out start of horizontal gridlines
 	start = miny - exty;
-	start = ceil((start - bmaporgy) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgy;
+	start = ceil((start - bmaporgy) / FBlockmap::MAPBLOCKUNITS) * FBlockmap::MAPBLOCKUNITS + bmaporgy;
 	end = miny + minlen - exty;
 
 	// draw horizontal gridlines
-	for (y=start; y<end; y+=MAPBLOCKUNITS)
+	for (y=start; y<end; y+=FBlockmap::MAPBLOCKUNITS)
 	{
 		ml.a.x = minx - extx;
 		ml.b.x = ml.a.x + minlen;

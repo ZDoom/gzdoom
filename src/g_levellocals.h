@@ -4,6 +4,7 @@
 #include "g_level.h"
 #include "r_defs.h"
 #include "portal.h"
+#include "p_blockmap.h"
 
 struct FLevelLocals
 {
@@ -45,6 +46,8 @@ struct FLevelLocals
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<zone_t>	Zones;
+
+	FBlockmap blockmap;
 
 	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
 	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.

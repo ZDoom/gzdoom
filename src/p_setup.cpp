@@ -136,34 +136,6 @@ sidei_t *sidetemp;
 
 TArray<int>		linemap;
 
-// BLOCKMAP
-// Created from axis aligned bounding box
-// of the map, a rectangular array of
-// blocks of size 256x256.
-// Used to speed up collision detection
-// by spatial subdivision in 2D.
-//
-// Blockmap size.
-int 			bmapwidth;
-int 			bmapheight; 	// size in mapblocks
-
-int				*blockmap;		// int for larger maps ([RH] Made int because BOOM does)
-int				*blockmaplump;	// offsets in blockmap are from here	
-
-double	 		bmaporgx;		// origin of block map
-double	 		bmaporgy;
-
-FBlockNode**	blocklinks;		// for thing chains
-
-
-// REJECT
-// For fast sight rejection.
-// Speeds up enemy AI by skipping detailed
-//	LineOf Sight calculation.
-// Without special effect, this could be
-//	used as a PVS lookup as well.
-//
-
 bool		ForceNodeBuild;
 
 static void P_AllocateSideDefs (MapData *map, int count);
@@ -2868,10 +2840,10 @@ static void P_CreateBlockMap ()
 	CreatePackedBlockmap (BlockMap, BlockLists, bmapwidth, bmapheight);
 	delete[] BlockLists;
 
-	blockmaplump = new int[BlockMap.Size()];
+	level.blockmap.blockmaplump = new int[BlockMap.Size()];
 	for (unsigned int ii = 0; ii < BlockMap.Size(); ++ii)
 	{
-		blockmaplump[ii] = BlockMap[ii];
+		level.blockmap.blockmaplump[ii] = BlockMap[ii];
 	}
 }
 
@@ -2882,7 +2854,7 @@ static void P_CreateBlockMap ()
 //
 // haleyjd 03/04/10: do verification on validity of blockmap.
 //
-static bool P_VerifyBlockMap(int count)
+bool FBlockmap::VerifyBlockMap(int count)
 {
 	int x, y;
 	int *maxoffs = blockmaplump + count;
@@ -2905,7 +2877,7 @@ static bool P_VerifyBlockMap(int count)
 			// check that block offset is in bounds
 			if(blockoffset >= maxoffs)
 			{
-				Printf(PRINT_HIGH, "P_VerifyBlockMap: block offset overflow\n");
+				Printf(PRINT_HIGH, "VerifyBlockMap: block offset overflow\n");
 				return false;
 			}
 
@@ -2914,7 +2886,7 @@ static bool P_VerifyBlockMap(int count)
 			// check that list offset is in bounds
 			if(offset < 4 || offset >= count)
 			{
-				Printf(PRINT_HIGH, "P_VerifyBlockMap: list offset overflow\n");
+				Printf(PRINT_HIGH, "VerifyBlockMap: list offset overflow\n");
 				return false;
 			}
 
@@ -2926,7 +2898,7 @@ static bool P_VerifyBlockMap(int count)
 				// we have overflowed the lump?
 				if(tmplist >= maxoffs)
 				{
-					Printf(PRINT_HIGH, "P_VerifyBlockMap: open blocklist\n");
+					Printf(PRINT_HIGH, "VerifyBlockMap: open blocklist\n");
 					return false;
 				}
 				if(*tmplist == -1) // found -1
@@ -2938,7 +2910,7 @@ static bool P_VerifyBlockMap(int count)
 			// to be on the safe side.
 			if (*list != 0)
 			{
-				Printf(PRINT_HIGH, "P_VerifyBlockMap: first entry is not 0.\n");
+				Printf(PRINT_HIGH, "VerifyBlockMap: first entry is not 0.\n");
 				return false;
 			}
 
@@ -2947,7 +2919,7 @@ static bool P_VerifyBlockMap(int count)
 			{
 				if((unsigned)*tmplist >= level.lines.Size())
 				{
-					Printf(PRINT_HIGH, "P_VerifyBlockMap: index >= numlines\n");
+					Printf(PRINT_HIGH, "VerifyBlockMap: index >= numlines\n");
 					return false;
 				}
 			}
@@ -2986,26 +2958,26 @@ void P_LoadBlockMap (MapData * map)
 		int i;
 
 		count/=2;
-		blockmaplump = new int[count];
+		level.blockmap.blockmaplump = new int[count];
 
 		// killough 3/1/98: Expand wad blockmap into larger internal one,
 		// by treating all offsets except -1 as unsigned and zero-extending
 		// them. This potentially doubles the size of blockmaps allowed,
 		// because Doom originally considered the offsets as always signed.
 
-		blockmaplump[0] = LittleShort(wadblockmaplump[0]);
-		blockmaplump[1] = LittleShort(wadblockmaplump[1]);
-		blockmaplump[2] = (uint32_t)(LittleShort(wadblockmaplump[2])) & 0xffff;
-		blockmaplump[3] = (uint32_t)(LittleShort(wadblockmaplump[3])) & 0xffff;
+		level.blockmap.blockmaplump[0] = LittleShort(wadblockmaplump[0]);
+		level.blockmap.blockmaplump[1] = LittleShort(wadblockmaplump[1]);
+		level.blockmap.blockmaplump[2] = (uint32_t)(LittleShort(wadblockmaplump[2])) & 0xffff;
+		level.blockmap.blockmaplump[3] = (uint32_t)(LittleShort(wadblockmaplump[3])) & 0xffff;
 
 		for (i = 4; i < count; i++)
 		{
 			short t = LittleShort(wadblockmaplump[i]);          // killough 3/1/98
-			blockmaplump[i] = t == -1 ? (uint32_t)0xffffffff : (uint32_t) t & 0xffff;
+			level.blockmap.blockmaplump[i] = t == -1 ? (uint32_t)0xffffffff : (uint32_t) t & 0xffff;
 		}
 		delete[] data;
 
-		if (!P_VerifyBlockMap(count))
+		if (!level.blockmap.VerifyBlockMap(count))
 		{
 			DPrintf (DMSG_SPAMMY, "Generating BLOCKMAP\n");
 			P_CreateBlockMap();
@@ -3013,16 +2985,16 @@ void P_LoadBlockMap (MapData * map)
 
 	}
 
-	bmaporgx = blockmaplump[0];
-	bmaporgy = blockmaplump[1];
-	bmapwidth = blockmaplump[2];
-	bmapheight = blockmaplump[3];
+	level.blockmap.bmaporgx = level.blockmap.blockmaplump[0];
+	level.blockmap.bmaporgy = level.blockmap.blockmaplump[1];
+	level.blockmap.bmapwidth = level.blockmap.blockmaplump[2];
+	level.blockmap.bmapheight = level.blockmap.blockmaplump[3];
 
 	// clear out mobj chains
-	count = bmapwidth*bmapheight;
-	blocklinks = new FBlockNode *[count];
-	memset (blocklinks, 0, count*sizeof(*blocklinks));
-	blockmap = blockmaplump+4;
+	count = level.blockmap.bmapwidth*level.blockmap.bmapheight;
+	level.blockmap.blocklinks = new FBlockNode *[count];
+	memset (level.blockmap.blocklinks, 0, count*sizeof(*level.blockmap.blocklinks));
+	level.blockmap.blockmap = level.blockmap.blockmaplump+4;
 }
 
 //
@@ -3432,20 +3404,11 @@ void P_FreeLevelData ()
 	level.gamesubsectors.Reset();
 	level.rejectmatrix.Clear();
 	level.Zones.Clear();
+	level.blockmap.Clear();
 
-	if (blockmaplump != NULL)
-	{
-		delete[] blockmaplump;
-		blockmaplump = NULL;
-	}
-	if (blocklinks != NULL)
-	{
-		delete[] blocklinks;
-		blocklinks = NULL;
-	}
 	if (PolyBlockMap != NULL)
 	{
-		for (int i = bmapwidth*bmapheight-1; i >= 0; --i)
+		for (int i = level.blockmap.bmapwidth*level.blockmap.bmapheight-1; i >= 0; --i)
 		{
 			polyblock_t *link = PolyBlockMap[i];
 			while (link != NULL)

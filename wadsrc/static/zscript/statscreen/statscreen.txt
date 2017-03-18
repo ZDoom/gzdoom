@@ -1,4 +1,12 @@
 
+class InterBackground native
+{
+	native InterBackground Create(wbstartstruct wbst);
+	native bool LoadBackground(bool isenterpic);
+	native void updateAnimatedBack();
+	native void drawBackground(int state, bool drawsplat, bool snl_pointeron);
+}
+
 struct PatchInfo
 {
 	Font mFont;
@@ -60,7 +68,7 @@ struct IntermissionScreen native
 
 	const SHOWNEXTLOCDELAY = 4;			// in seconds
 
-	//FInterBackground *bg;
+	InterBackground 		bg;
 	native int				acceleratestage;	// used to accelerate or skip a stage
 	native bool				playerready[MAXPLAYERS];
 	native int				me;					// wbs.pnum

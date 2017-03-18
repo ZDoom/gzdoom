@@ -4159,9 +4159,14 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsUserData.Clear();
 
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
-	level.loadsectors = level.sectors;
-	level.loadlines = level.lines;
-	level.loadsides = level.sides;
+	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
+	// Note that none of these structures may contain non POD fields anyway.
+	level.loadsectors.Resize(level.sectors.Size());
+	memcpy(&level.loadsectors[0], &level.sectors[0], level.sectors.Size() * sizeof(level.sectors[0]));
+	level.loadlines.Resize(level.lines.Size());
+	memcpy(&level.loadlines[0], &level.lines[0], level.lines.Size() * sizeof(level.lines[0]));
+	level.loadsides.Resize(level.sides.Size());
+	memcpy(&level.loadsides[0], &level.sides[0], level.sides.Size() * sizeof(level.sides[0]));
 }
 
 

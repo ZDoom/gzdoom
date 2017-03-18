@@ -218,6 +218,7 @@ public:
 
 	template<class U> friend inline void GC::Mark(TObjPtr<U> &obj);
 	template<class U> friend FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<U> &value, TObjPtr<U> *);
+	template<class U> friend FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<U> &value, U *);
 
 	friend class DObject;
 };

@@ -301,7 +301,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
 			("scrolls", scroll, nul)
 			// GZDoom exclusive:
-			.Array("reflect", p.reflect, def->reflect, 2)
+			.Array("reflect", p.reflect, def->reflect, 2, true)
 			.EndObject();
 
 		if (arc.isReading() && !scroll.isZero())

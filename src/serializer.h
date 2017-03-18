@@ -215,8 +215,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<T> &value, TOb
 	return arc; 
 }
 
+template<class T>
+FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<T> &value, T *)
+{
+	Serialize(arc, key, value.o, nullptr);
+	return arc;
+}
+
 template<class T, class TT>
-FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, TArray<T, TT> *)
+FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, TArray<T, TT> *def)
 {
 	if (arc.isWriting())
 	{
@@ -234,7 +241,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, 
 	}
 	for (unsigned i = 0; i < value.Size(); i++)
 	{
-		Serialize(arc, nullptr, value[i], (T*)nullptr);
+		Serialize(arc, nullptr, value[i], def? &(*def)[i] : nullptr);
 	}
 	arc.EndArray();
 	return arc;

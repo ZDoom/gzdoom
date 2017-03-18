@@ -91,8 +91,10 @@ static const char *WI_Cmd[] = {
 	NULL
 };
 
-struct FInterBackground
+class DInterBackground : public DObject
 {
+	DECLARE_ABSTRACT_CLASS(DInterBackground, DObject)
+	
 	// These animation variables, structures, etc. are used for the
 	// DOOM/Ultimate DOOM intermission screen animations.  This is
 	// totally different from any sprite or texture/flat animations
@@ -161,436 +163,23 @@ private:
 	FTexture* 		splat = nullptr;		// splat
 	FTexture		*background = nullptr;
 	wbstartstruct_t *wbs;
+	
 public:
 
-	FInterBackground(wbstartstruct_t *wbst)
-	{
-		wbs = wbst;
+	DInterBackground(wbstartstruct_t *wbst);
+	bool LoadBackground(bool isenterpic);
+	void updateAnimatedBack();
+	void drawBackground(int state, bool drawsplat, bool snl_pointeron);
 
-	};
-	//====================================================================
-	// 
-	//	Loads the background - either from a single texture
-	//	or an intermission lump.
-	//	Unfortunately the texture manager is incapable of recognizing text
-	//	files so if you use a script you have to prefix its name by '$' in 
-	//  MAPINFO.
-	//
-	//====================================================================
+private:
+
 	bool IsExMy(const char * name)
 	{
 		// Only check for the first 3 episodes. They are the only ones with default intermission scripts.
-		// Level names can be upper- and lower case so use tolower to check!
+		// Level names can be upper- and lower case so use tolower to check.
 		return (tolower(name[0]) == 'e' && name[1] >= '1' && name[1] <= '3' && tolower(name[2]) == 'm');
 	}
-
-	bool LoadBackground(bool isenterpic)
-	{
-		const char *lumpname = NULL;
-		char buffer[10];
-		in_anim_t an;
-		lnode_t pt;
-		FTextureID texture;
-		bool noautostartmap = false;
-
-		bcnt = 0;
-
-		texture.SetInvalid();
-		if (isenterpic)
-		{
-			level_info_t * li = FindLevelInfo(wbs->next);
-			if (li != NULL) lumpname = li->EnterPic;
-		}
-		else
-		{
-			lumpname = level.info->ExitPic;
-		}
-
-		// Try to get a default if nothing specified
-		if (lumpname == NULL || lumpname[0] == 0)
-		{
-			lumpname = NULL;
-			switch (gameinfo.gametype)
-			{
-			case GAME_Chex:
-			case GAME_Doom:
-				if (!(gameinfo.flags & GI_MAPxx))
-				{
-					const char *level = isenterpic ? wbs->next : wbs->current;
-					if (IsExMy(level))
-					{
-						mysnprintf(buffer, countof(buffer), "$IN_EPI%c", level[1]);
-						lumpname = buffer;
-					}
-				}
-				if (!lumpname)
-				{
-					if (isenterpic)
-					{
-						// One special case needs to be handled here!
-						// If going from E1-E3 to E4 the default should be used, not the exit pic.
-
-						// Not if the exit pic is user defined!
-						if (level.info->ExitPic.IsNotEmpty()) return false;
-
-						// E1-E3 need special treatment when playing Doom 1.
-						if (!(gameinfo.flags & GI_MAPxx))
-						{
-							// not if the last level is not from the first 3 episodes
-							if (!IsExMy(wbs->current)) return false;
-
-							// not if the next level is one of the first 3 episodes
-							if (IsExMy(wbs->next)) return false;
-						}
-					}
-					lumpname = "INTERPIC";
-				}
-				break;
-
-			case GAME_Heretic:
-				if (isenterpic)
-				{
-					if (IsExMy(wbs->next))
-					{
-						mysnprintf(buffer, countof(buffer), "$IN_HTC%c", wbs->next[1]);
-						lumpname = buffer;
-					}
-				}
-				if (!lumpname)
-				{
-					if (isenterpic) return false;
-					lumpname = "FLOOR16";
-				}
-				break;
-
-			case GAME_Hexen:
-				if (isenterpic) return false;
-				lumpname = "INTERPIC";
-				break;
-
-			case GAME_Strife:
-			default:
-				// Strife doesn't have an intermission pic so choose something neutral.
-				if (isenterpic) return false;
-				lumpname = gameinfo.BorderFlat;
-				break;
-			}
-		}
-		if (lumpname == NULL)
-		{
-			// shouldn't happen!
-			background = NULL;
-			return false;
-		}
-
-		lnodes.Clear();
-		anims.Clear();
-		yah.Clear();
-		splat = NULL;
-
-		// a name with a starting '$' indicates an intermission script
-		if (*lumpname != '$')
-		{
-			texture = TexMan.CheckForTexture(lumpname, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
-		}
-		else
-		{
-			int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
-			if (lumpnum >= 0)
-			{
-				FScanner sc(lumpnum);
-				while (sc.GetString())
-				{
-					an.Reset();
-					int caseval = sc.MustMatchString(WI_Cmd);
-					switch (caseval)
-					{
-					case 0:		// Background
-						sc.MustGetString();
-						texture = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
-						break;
-
-					case 1:		// Splat
-						sc.MustGetString();
-						splat = TexMan[sc.String];
-						break;
-
-					case 2:		// Pointers
-						while (sc.GetString() && !sc.Crossed)
-						{
-							yah.Push(TexMan[sc.String]);
-						}
-						if (sc.Crossed)
-							sc.UnGet();
-						break;
-
-					case 3:		// Spots
-						sc.MustGetStringName("{");
-						while (!sc.CheckString("}"))
-						{
-							sc.MustGetString();
-							pt.Level = sc.String;
-							sc.MustGetNumber();
-							pt.x = sc.Number;
-							sc.MustGetNumber();
-							pt.y = sc.Number;
-							lnodes.Push(pt);
-						}
-						break;
-
-					case 4:		// IfEntering
-						an.type = ANIM_IFENTERING;
-						goto readanimation;
-
-					case 5:		// IfEntering
-						an.type = ANIM_IFNOTENTERING;
-						goto readanimation;
-
-					case 6:		// IfVisited
-						an.type = ANIM_IFVISITED;
-						goto readanimation;
-
-					case 7:		// IfNotVisited
-						an.type = ANIM_IFNOTVISITED;
-						goto readanimation;
-
-					case 8:		// IfLeaving
-						an.type = ANIM_IFLEAVING;
-						goto readanimation;
-
-					case 9:		// IfNotLeaving
-						an.type = ANIM_IFNOTLEAVING;
-						goto readanimation;
-
-					case 10:	// IfTravelling
-						an.type = ANIM_IFTRAVELLING;
-						sc.MustGetString();
-						an.LevelName2 = sc.String;
-						goto readanimation;
-
-					case 11:	// IfNotTravelling
-						an.type = ANIM_IFTRAVELLING;
-						sc.MustGetString();
-						an.LevelName2 = sc.String;
-						goto readanimation;
-
-					case 14:	// NoAutostartMap
-						noautostartmap = true;
-						break;
-
-					readanimation:
-						sc.MustGetString();
-						an.LevelName = sc.String;
-						sc.MustGetString();
-						caseval = sc.MustMatchString(WI_Cmd);
-
-					default:
-						switch (caseval)
-						{
-						case 12:	// Animation
-							an.type |= ANIM_ALWAYS;
-							sc.MustGetNumber();
-							an.loc.x = sc.Number;
-							sc.MustGetNumber();
-							an.loc.y = sc.Number;
-							sc.MustGetNumber();
-							an.period = sc.Number;
-							an.nexttic = 1 + (M_Random() % an.period);
-							if (sc.GetString())
-							{
-								if (sc.Compare("ONCE"))
-								{
-									an.data = 1;
-								}
-								else
-								{
-									sc.UnGet();
-								}
-							}
-							if (!sc.CheckString("{"))
-							{
-								sc.MustGetString();
-								an.frames.Push(TexMan[sc.String]);
-							}
-							else
-							{
-								while (!sc.CheckString("}"))
-								{
-									sc.MustGetString();
-									an.frames.Push(TexMan[sc.String]);
-								}
-							}
-							an.ctr = -1;
-							anims.Push(an);
-							break;
-
-						case 13:		// Pic
-							an.type |= ANIM_PIC;
-							sc.MustGetNumber();
-							an.loc.x = sc.Number;
-							sc.MustGetNumber();
-							an.loc.y = sc.Number;
-							sc.MustGetString();
-							an.frames.Reserve(1);	// allocate exactly one element
-							an.frames[0] = TexMan[sc.String];
-							anims.Push(an);
-							break;
-
-						default:
-							sc.ScriptError("Unknown token %s in intermission script", sc.String);
-						}
-					}
-				}
-			}
-			else
-			{
-				Printf("Intermission script %s not found!\n", lumpname + 1);
-				texture = TexMan.GetTexture("INTERPIC", FTexture::TEX_MiscPatch);
-			}
-		}
-		background = TexMan[texture];
-		return noautostartmap;
-	}
-
-	//====================================================================
-	// 
-	//	made this more generic and configurable through a script
-	//	Removed all the ugly special case handling for different game modes
-	//
-	//====================================================================
-
-	void updateAnimatedBack()
-	{
-		unsigned int i;
-
-		bcnt++;
-		for (i = 0; i<anims.Size(); i++)
-		{
-			in_anim_t * a = &anims[i];
-			switch (a->type & ANIM_TYPE)
-			{
-			case ANIM_ALWAYS:
-				if (bcnt >= a->nexttic)
-				{
-					if (++a->ctr >= (int)a->frames.Size())
-					{
-						if (a->data == 0) a->ctr = 0;
-						else a->ctr--;
-					}
-					a->nexttic = bcnt + a->period;
-				}
-				break;
-
-			case ANIM_PIC:
-				a->ctr = 0;
-				break;
-
-			}
-		}
-	}
-
-	//====================================================================
-	// 
-	//	Draws the background including all animations
-	//
-	//====================================================================
-
-	void drawBackground(int state, bool drawsplat, bool snl_pointeron)
-	{
-		unsigned int i;
-		double animwidth = 320;		// For a flat fill or clear background scale animations to 320x200
-		double animheight = 200;
-
-		if (background)
-		{
-			// background
-			if (background->UseType == FTexture::TEX_MiscPatch)
-			{
-				// scale all animations below to fit the size of the base pic
-				// The base pic is always scaled to fit the screen so this allows
-				// placing the animations precisely where they belong on the base pic
-				animwidth = background->GetScaledWidthDouble();
-				animheight = background->GetScaledHeightDouble();
-				screen->FillBorder(NULL);
-				screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
-			}
-			else
-			{
-				screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
-			}
-		}
-		else
-		{
-			screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
-		}
-
-		for (i = 0; i<anims.Size(); i++)
-		{
-			in_anim_t * a = &anims[i];
-			level_info_t * li;
-
-			switch (a->type & ANIM_CONDITION)
-			{
-			case ANIM_IFVISITED:
-				li = FindLevelInfo(a->LevelName);
-				if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
-				break;
-
-			case ANIM_IFNOTVISITED:
-				li = FindLevelInfo(a->LevelName);
-				if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
-				break;
-
-				// StatCount means 'leaving' - everything else means 'entering'!
-			case ANIM_IFENTERING:
-				if (state == StatCount || strnicmp(a->LevelName, wbs->next, 8)) continue;
-				break;
-
-			case ANIM_IFNOTENTERING:
-				if (state != StatCount && !strnicmp(a->LevelName, wbs->next, 8)) continue;
-				break;
-
-			case ANIM_IFLEAVING:
-				if (state != StatCount || strnicmp(a->LevelName, wbs->current, 8)) continue;
-				break;
-
-			case ANIM_IFNOTLEAVING:
-				if (state == StatCount && !strnicmp(a->LevelName, wbs->current, 8)) continue;
-				break;
-
-			case ANIM_IFTRAVELLING:
-				if (strnicmp(a->LevelName2, wbs->current, 8) || strnicmp(a->LevelName, wbs->next, 8)) continue;
-				break;
-
-			case ANIM_IFNOTTRAVELLING:
-				if (!strnicmp(a->LevelName2, wbs->current, 8) && !strnicmp(a->LevelName, wbs->next, 8)) continue;
-				break;
-			}
-			if (a->ctr >= 0)
-				screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y,
-					DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
-		}
-
-		if (drawsplat)
-		{
-			for (i = 0; i<lnodes.Size(); i++)
-			{
-				level_info_t * li = FindLevelInfo(lnodes[i].Level);
-				if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
-			}
-		}
-
-		// draw flashing ptr
-		if (snl_pointeron && yah.Size())
-		{
-			unsigned int v = MapToIndex(wbs->next);
-			// Draw only if it points to a valid level on the current screen!
-			if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size());
-		}
-
-	}
-
-private:
+	
 	//====================================================================
 	//
 	// Draws the splats and the 'You are here' arrows
@@ -641,9 +230,467 @@ private:
 			}
 		}
 	}
-
-
 };
+
+DInterBackground:: DInterBackground(wbstartstruct_t *wbst)
+{
+	wbs = wbst;
+}
+
+DEFINE_ACTION_FUNCTION(DInterBackground, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(wbst, wbstartstruct_t);
+	ACTION_RETURN_POINTER(new DInterBackground(wbst));
+}
+
+//====================================================================
+// 
+//	Loads the background - either from a single texture
+//	or an intermission lump.
+//	Unfortunately the texture manager is incapable of recognizing text
+//	files so if you use a script you have to prefix its name by '$' in 
+//  MAPINFO.
+//
+//====================================================================
+
+bool DInterBackground::LoadBackground(bool isenterpic)
+{
+	const char *lumpname = NULL;
+	char buffer[10];
+	in_anim_t an;
+	lnode_t pt;
+	FTextureID texture;
+	bool noautostartmap = false;
+
+	bcnt = 0;
+
+	texture.SetInvalid();
+	if (isenterpic)
+	{
+		level_info_t * li = FindLevelInfo(wbs->next);
+		if (li != NULL) lumpname = li->EnterPic;
+	}
+	else
+	{
+		lumpname = level.info->ExitPic;
+	}
+
+	// Try to get a default if nothing specified
+	if (lumpname == NULL || lumpname[0] == 0)
+	{
+		lumpname = NULL;
+		switch (gameinfo.gametype)
+		{
+		case GAME_Chex:
+		case GAME_Doom:
+			if (!(gameinfo.flags & GI_MAPxx))
+			{
+				const char *level = isenterpic ? wbs->next : wbs->current;
+				if (IsExMy(level))
+				{
+					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", level[1]);
+					lumpname = buffer;
+				}
+			}
+			if (!lumpname)
+			{
+				if (isenterpic)
+				{
+					// One special case needs to be handled here!
+					// If going from E1-E3 to E4 the default should be used, not the exit pic.
+
+					// Not if the exit pic is user defined!
+					if (level.info->ExitPic.IsNotEmpty()) return false;
+
+					// E1-E3 need special treatment when playing Doom 1.
+					if (!(gameinfo.flags & GI_MAPxx))
+					{
+						// not if the last level is not from the first 3 episodes
+						if (!IsExMy(wbs->current)) return false;
+
+						// not if the next level is one of the first 3 episodes
+						if (IsExMy(wbs->next)) return false;
+					}
+				}
+				lumpname = "INTERPIC";
+			}
+			break;
+
+		case GAME_Heretic:
+			if (isenterpic)
+			{
+				if (IsExMy(wbs->next))
+				{
+					mysnprintf(buffer, countof(buffer), "$IN_HTC%c", wbs->next[1]);
+					lumpname = buffer;
+				}
+			}
+			if (!lumpname)
+			{
+				if (isenterpic) return false;
+				lumpname = "FLOOR16";
+			}
+			break;
+
+		case GAME_Hexen:
+			if (isenterpic) return false;
+			lumpname = "INTERPIC";
+			break;
+
+		case GAME_Strife:
+		default:
+			// Strife doesn't have an intermission pic so choose something neutral.
+			if (isenterpic) return false;
+			lumpname = gameinfo.BorderFlat;
+			break;
+		}
+	}
+	if (lumpname == NULL)
+	{
+		// shouldn't happen!
+		background = NULL;
+		return false;
+	}
+
+	lnodes.Clear();
+	anims.Clear();
+	yah.Clear();
+	splat = NULL;
+
+	// a name with a starting '$' indicates an intermission script
+	if (*lumpname != '$')
+	{
+		texture = TexMan.CheckForTexture(lumpname, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
+	}
+	else
+	{
+		int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
+		if (lumpnum >= 0)
+		{
+			FScanner sc(lumpnum);
+			while (sc.GetString())
+			{
+				an.Reset();
+				int caseval = sc.MustMatchString(WI_Cmd);
+				switch (caseval)
+				{
+				case 0:		// Background
+					sc.MustGetString();
+					texture = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
+					break;
+
+				case 1:		// Splat
+					sc.MustGetString();
+					splat = TexMan[sc.String];
+					break;
+
+				case 2:		// Pointers
+					while (sc.GetString() && !sc.Crossed)
+					{
+						yah.Push(TexMan[sc.String]);
+					}
+					if (sc.Crossed)
+						sc.UnGet();
+					break;
+
+				case 3:		// Spots
+					sc.MustGetStringName("{");
+					while (!sc.CheckString("}"))
+					{
+						sc.MustGetString();
+						pt.Level = sc.String;
+						sc.MustGetNumber();
+						pt.x = sc.Number;
+						sc.MustGetNumber();
+						pt.y = sc.Number;
+						lnodes.Push(pt);
+					}
+					break;
+
+				case 4:		// IfEntering
+					an.type = ANIM_IFENTERING;
+					goto readanimation;
+
+				case 5:		// IfEntering
+					an.type = ANIM_IFNOTENTERING;
+					goto readanimation;
+
+				case 6:		// IfVisited
+					an.type = ANIM_IFVISITED;
+					goto readanimation;
+
+				case 7:		// IfNotVisited
+					an.type = ANIM_IFNOTVISITED;
+					goto readanimation;
+
+				case 8:		// IfLeaving
+					an.type = ANIM_IFLEAVING;
+					goto readanimation;
+
+				case 9:		// IfNotLeaving
+					an.type = ANIM_IFNOTLEAVING;
+					goto readanimation;
+
+				case 10:	// IfTravelling
+					an.type = ANIM_IFTRAVELLING;
+					sc.MustGetString();
+					an.LevelName2 = sc.String;
+					goto readanimation;
+
+				case 11:	// IfNotTravelling
+					an.type = ANIM_IFTRAVELLING;
+					sc.MustGetString();
+					an.LevelName2 = sc.String;
+					goto readanimation;
+
+				case 14:	// NoAutostartMap
+					noautostartmap = true;
+					break;
+
+				readanimation:
+					sc.MustGetString();
+					an.LevelName = sc.String;
+					sc.MustGetString();
+					caseval = sc.MustMatchString(WI_Cmd);
+
+				default:
+					switch (caseval)
+					{
+					case 12:	// Animation
+						an.type |= ANIM_ALWAYS;
+						sc.MustGetNumber();
+						an.loc.x = sc.Number;
+						sc.MustGetNumber();
+						an.loc.y = sc.Number;
+						sc.MustGetNumber();
+						an.period = sc.Number;
+						an.nexttic = 1 + (M_Random() % an.period);
+						if (sc.GetString())
+						{
+							if (sc.Compare("ONCE"))
+							{
+								an.data = 1;
+							}
+							else
+							{
+								sc.UnGet();
+							}
+						}
+						if (!sc.CheckString("{"))
+						{
+							sc.MustGetString();
+							an.frames.Push(TexMan[sc.String]);
+						}
+						else
+						{
+							while (!sc.CheckString("}"))
+							{
+								sc.MustGetString();
+								an.frames.Push(TexMan[sc.String]);
+							}
+						}
+						an.ctr = -1;
+						anims.Push(an);
+						break;
+
+					case 13:		// Pic
+						an.type |= ANIM_PIC;
+						sc.MustGetNumber();
+						an.loc.x = sc.Number;
+						sc.MustGetNumber();
+						an.loc.y = sc.Number;
+						sc.MustGetString();
+						an.frames.Reserve(1);	// allocate exactly one element
+						an.frames[0] = TexMan[sc.String];
+						anims.Push(an);
+						break;
+
+					default:
+						sc.ScriptError("Unknown token %s in intermission script", sc.String);
+					}
+				}
+			}
+		}
+		else
+		{
+			Printf("Intermission script %s not found!\n", lumpname + 1);
+			texture = TexMan.GetTexture("INTERPIC", FTexture::TEX_MiscPatch);
+		}
+	}
+	background = TexMan[texture];
+	return noautostartmap;
+}
+
+DEFINE_ACTION_FUNCTION(DInterBackground, LoadBackground)
+{
+	PARAM_SELF_PROLOGUE(DInterBackground);
+	PARAM_BOOL(isenterpic);
+	ACTION_RETURN_BOOL(self->LoadBackground(isenterpic));
+}
+
+//====================================================================
+// 
+//	made this more generic and configurable through a script
+//	Removed all the ugly special case handling for different game modes
+//
+//====================================================================
+
+void DInterBackground::updateAnimatedBack()
+{
+	unsigned int i;
+
+	bcnt++;
+	for (i = 0; i<anims.Size(); i++)
+	{
+		in_anim_t * a = &anims[i];
+		switch (a->type & ANIM_TYPE)
+		{
+		case ANIM_ALWAYS:
+			if (bcnt >= a->nexttic)
+			{
+				if (++a->ctr >= (int)a->frames.Size())
+				{
+					if (a->data == 0) a->ctr = 0;
+					else a->ctr--;
+				}
+				a->nexttic = bcnt + a->period;
+			}
+			break;
+
+		case ANIM_PIC:
+			a->ctr = 0;
+			break;
+
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DInterBackground, updateAnimatedBack)
+{
+	PARAM_SELF_PROLOGUE(DInterBackground);
+	self->updateAnimatedBack();
+	return 0;
+}
+
+//====================================================================
+// 
+//	Draws the background including all animations
+//
+//====================================================================
+
+void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointeron)
+{
+	unsigned int i;
+	double animwidth = 320;		// For a flat fill or clear background scale animations to 320x200
+	double animheight = 200;
+
+	if (background)
+	{
+		// background
+		if (background->UseType == FTexture::TEX_MiscPatch)
+		{
+			// scale all animations below to fit the size of the base pic
+			// The base pic is always scaled to fit the screen so this allows
+			// placing the animations precisely where they belong on the base pic
+			animwidth = background->GetScaledWidthDouble();
+			animheight = background->GetScaledHeightDouble();
+			screen->FillBorder(NULL);
+			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
+		}
+		else
+		{
+			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
+		}
+	}
+	else
+	{
+		screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+	}
+
+	for (i = 0; i<anims.Size(); i++)
+	{
+		in_anim_t * a = &anims[i];
+		level_info_t * li;
+
+		switch (a->type & ANIM_CONDITION)
+		{
+		case ANIM_IFVISITED:
+			li = FindLevelInfo(a->LevelName);
+			if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
+			break;
+
+		case ANIM_IFNOTVISITED:
+			li = FindLevelInfo(a->LevelName);
+			if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
+			break;
+
+			// StatCount means 'leaving' - everything else means 'entering'!
+		case ANIM_IFENTERING:
+			if (state == StatCount || strnicmp(a->LevelName, wbs->next, 8)) continue;
+			break;
+
+		case ANIM_IFNOTENTERING:
+			if (state != StatCount && !strnicmp(a->LevelName, wbs->next, 8)) continue;
+			break;
+
+		case ANIM_IFLEAVING:
+			if (state != StatCount || strnicmp(a->LevelName, wbs->current, 8)) continue;
+			break;
+
+		case ANIM_IFNOTLEAVING:
+			if (state == StatCount && !strnicmp(a->LevelName, wbs->current, 8)) continue;
+			break;
+
+		case ANIM_IFTRAVELLING:
+			if (strnicmp(a->LevelName2, wbs->current, 8) || strnicmp(a->LevelName, wbs->next, 8)) continue;
+			break;
+
+		case ANIM_IFNOTTRAVELLING:
+			if (!strnicmp(a->LevelName2, wbs->current, 8) && !strnicmp(a->LevelName, wbs->next, 8)) continue;
+			break;
+		}
+		if (a->ctr >= 0)
+			screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y,
+				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
+	}
+
+	if (drawsplat)
+	{
+		for (i = 0; i<lnodes.Size(); i++)
+		{
+			level_info_t * li = FindLevelInfo(lnodes[i].Level);
+			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
+		}
+	}
+
+	// draw flashing ptr
+	if (snl_pointeron && yah.Size())
+	{
+		unsigned int v = MapToIndex(wbs->next);
+		// Draw only if it points to a valid level on the current screen!
+		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size());
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DInterBackground, drawBackground)
+{
+	PARAM_SELF_PROLOGUE(DInterBackground);
+	PARAM_INT(state);
+	PARAM_BOOL(splat);
+	PARAM_BOOL(pointer);
+	self->drawBackground(state, splat, pointer);
+	return 0;
+}
+
+IMPLEMENT_CLASS(DInterBackground, true, false)
+
+//====================================================================
+// 
+//
+//
+//====================================================================
+
 
 struct FPatchInfo
 {
@@ -715,7 +762,7 @@ public:
 	//
 
 
-	FInterBackground *bg;
+	DInterBackground *bg;
 	int				acceleratestage;	// used to accelerate or skip a stage
 	bool			playerready[MAXPLAYERS];
 	int				me;					// wbs->pnum
@@ -2039,14 +2086,15 @@ public:
 		if (li) lnametexts[1] = li->LookupLevelName();
 		else lnametexts[1] = "";
 
-		bg = new FInterBackground(wbs);
+		bg = new DInterBackground(wbs);
+		GC::AddSoftRoot(bg);
 		noautostartmap = bg->LoadBackground(false);
 	}
 
 	void WI_unloadData ()
 	{
-		// [RH] The texture data gets unloaded at pre-map time, so there's nothing to do here
-		if (bg != nullptr) delete bg;
+		GC::DelSoftRoot(bg);
+		bg->Destroy();
 		bg = nullptr;
 		return;
 	}
@@ -2149,6 +2197,7 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, totaltime);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, pnum);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, plyr);
 
+DEFINE_FIELD(FIntermissionScreen, bg);
 DEFINE_FIELD(FIntermissionScreen, acceleratestage);
 DEFINE_FIELD(FIntermissionScreen, playerready);
 DEFINE_FIELD(FIntermissionScreen, me);

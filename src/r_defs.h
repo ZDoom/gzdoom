@@ -1130,8 +1130,8 @@ struct side_t
 		double yOffset;
 		double xScale;
 		double yScale;
-		FTextureID texture;
 		TObjPtr<DInterpolation*> interpolation;
+		FTextureID texture;
 		//int Light;
 	};
 

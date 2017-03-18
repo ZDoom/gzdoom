@@ -939,7 +939,6 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
-	int c;
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{

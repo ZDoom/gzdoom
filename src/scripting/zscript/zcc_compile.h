@@ -92,6 +92,8 @@ public:
 	int Compile();
 
 private:
+	const char * GetStringConst(FxExpression *ex, FCompileContext &ctx);
+
 	int IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	FString StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);

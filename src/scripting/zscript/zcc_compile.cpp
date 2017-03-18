@@ -64,11 +64,13 @@ static double GetFloatConst(FxExpression *ex, FCompileContext &ctx)
 	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetFloat() : 0;
 }
 
-static FString GetStringConst(FxExpression *ex, FCompileContext &ctx)
+const char * ZCCCompiler::GetStringConst(FxExpression *ex, FCompileContext &ctx)
 {
 	ex = new FxStringCast(ex);
 	ex = ex->Resolve(ctx);
-	return ex ? static_cast<FxConstant*>(ex)->GetValue().GetString() : FString();
+	if (!ex) return "";
+	// The string here must be stored in a persistent place that lasts long enough to have it processed.
+	return AST.Strings.Alloc(static_cast<FxConstant*>(ex)->GetValue().GetString())->GetChars();
 }
 
 int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
@@ -1851,6 +1853,12 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 							params[0].i++;
 						}
 						exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
+						if (exp != property->Values)
+						{
+							ex = ConvertNode(exp);
+							ex = ex->Resolve(ctx);
+							if (ex == nullptr) return;
+						}
 					} while (exp != property->Values);
 					goto endofparm;
 				}
@@ -1988,7 +1996,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		}
 		else if (f->Type == TypeColor && ex->ValueType == TypeString)	// colors can also be specified as ints.
 		{
-			*(PalEntry*)addr = V_GetColor(nullptr, GetStringConst(ex, ctx).GetChars(), &ex->ScriptPosition);
+			*(PalEntry*)addr = V_GetColor(nullptr, GetStringConst(ex, ctx), &ex->ScriptPosition);
 		}
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 		{
@@ -2012,7 +2020,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			}
 			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
 			{
-				Error(property, "class %s is not compatible with property type %s", clsname.GetChars(), static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
 			}
 			*(PClass**)addr = cls;
 		}

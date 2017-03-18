@@ -1,13 +1,14 @@
+// Note that the status screen needs to run in 'play' scope!
 
-class InterBackground native
+class InterBackground native play
 {
 	native InterBackground Create(wbstartstruct wbst);
 	native bool LoadBackground(bool isenterpic);
 	native void updateAnimatedBack();
-	native void drawBackground(int state, bool drawsplat, bool snl_pointeron);
+	native void drawBackground(int CurState, bool drawsplat, bool snl_pointeron);
 }
 
-struct PatchInfo
+struct PatchInfo play
 {
 	Font mFont;
 	TextureID mPatch;
@@ -36,7 +37,7 @@ struct PatchInfo
 
 
 // Will be made a class later, but for now needs to mirror the internal version.
-struct IntermissionScreen native
+class StatusScreen native play
 {
 	enum EValues
 	{
@@ -54,7 +55,13 @@ struct IntermissionScreen native
 		NG_STATSY = 50,
 	};
 
-
+	enum EState
+	{
+		NoState = -1,
+		StatCount,
+		ShowNextLoc,
+		LeavingIntermission
+	};
 
 	// States for single-player
 	enum ESPState
@@ -73,7 +80,7 @@ struct IntermissionScreen native
 	native bool				playerready[MAXPLAYERS];
 	native int				me;					// wbs.pnum
 	native int				bcnt;
-	native int				state;				// specifies current state
+	native int				CurState;				// specifies current CurState
 	native wbstartstruct	wbs;				// contains information passed into intermission
 	native wbplayerstruct	Plrs[MAXPLAYERS];				// wbs.plyr[]
 	native int				cnt;				// used for general timing
@@ -347,6 +354,7 @@ struct IntermissionScreen native
 	// Display level completion time and par, or "sucks" message if overflow.
 	//
 	//====================================================================
+
 	protected void drawTime (int x, int y, int t, bool no_sucks=false)
 	{
 		bool sucky;
@@ -390,5 +398,145 @@ struct IntermissionScreen native
 		}
 	}
 
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void End ()
+	{
+		CurState = LeavingIntermission;
+
+		//Added by mc
+		if (deathmatch)
+		{
+			level.RemoveAllBots (consoleplayer != Net_Arbitrator);
+		}
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected bool autoSkip()
+	{
+		return wi_autoadvance > 0 && bcnt > (wi_autoadvance * Thinker.TICRATE);
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void initNoState ()
+	{
+		CurState = NoState;
+		acceleratestage = 0;
+		cnt = 10;
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void updateNoState ()
+	{
+		if (acceleratestage)
+		{
+			cnt = 0;
+		}
+		else
+		{
+			bool noauto = noautostartmap;
+
+			for (int i = 0; !noauto && i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i])
+				{
+					noauto |= players[i].GetNoAutostartMap();
+				}
+			}
+			if (!noauto || autoSkip())
+			{
+				cnt--;
+			}
+		}
+
+		if (cnt == 0)
+		{
+			End();
+			level.WorldDone();
+		}
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void initShowNextLoc ()
+	{
+		if (wbs.next == "") 
+		{
+			// Last map in episode - there is no next location!
+			End();
+			level.WorldDone();
+			return;
+		}
+
+		CurState = ShowNextLoc;
+		acceleratestage = 0;
+		cnt = SHOWNEXTLOCDELAY * Thinker.TICRATE;
+		bg.LoadBackground(true);
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void updateShowNextLoc ()
+	{
+		if (!--cnt || acceleratestage)
+			initNoState();
+		else
+			snl_pointeron = (cnt & 31) < 20;
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	protected void drawShowNextLoc(void)
+	{
+		bg.drawBackground(CurState, true, snl_pointeron);
+
+		// draws which level you are entering..
+		drawEL ();  
+
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	void WI_drawNoState ()
+	{
+		snl_pointeron = true;
+		drawShowNextLoc();
+	}
 	
 }

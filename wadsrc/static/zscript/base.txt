@@ -1,4 +1,4 @@
-struct _ native
+struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class<Actor> > AllActorClasses;
 	native readonly Array<@PlayerClass> PlayerClasses;
@@ -38,6 +38,7 @@ struct _ native
 	native readonly bool demoplayback;
 	native ui int BackbuttonTime;
 	native ui float BackbuttonAlpha;
+	native readonly int Net_Arbitrator;
 	
 }
 
@@ -496,6 +497,8 @@ struct LevelLocals native
 	native double GetUDMFFloat(int type, int index, Name key);
 	native bool ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
 	native static void StartSlideshow(Name whichone = 'none');
+	native static void WorldDone();
+	native static void RemoveAllBots(bool fromlist);
 }
 
 struct StringTable native

@@ -761,6 +761,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetTeam)
 	ACTION_RETURN_INT(self->userinfo.GetTeam());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNoAutostartMap)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(self->userinfo.GetNoAutostartMap());
+}
+
 
 //===========================================================================
 //

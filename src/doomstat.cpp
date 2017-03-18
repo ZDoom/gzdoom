@@ -61,6 +61,7 @@ CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 
 // [RH] Network arbitrator
 int Net_Arbitrator = 0;
+DEFINE_GLOBAL(Net_Arbitrator);
 
 int NextSkill = -1;
 

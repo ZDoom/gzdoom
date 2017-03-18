@@ -719,10 +719,13 @@ struct FPatchInfo
 	}
 };
 
+class DStatusScreen;
+static DStatusScreen *WI_Screen;
 
 
-class FIntermissionScreen
+class DStatusScreen : public DObject
 {
+	DECLARE_CLASS(DStatusScreen, DObject)
 public:
 
 	enum EValues
@@ -2137,6 +2140,12 @@ public:
 
 	void WI_Start (wbstartstruct_t *wbstartstruct)
 	{
+		auto info = FindLevelInfo(wbstartstruct->next, false);
+		if (info == nullptr)
+		{
+			wbstartstruct->next = "";
+		}
+
 		noautostartmap = false;
 		V_SetBlend (0,0,0,0);
 		WI_initVariables (wbstartstruct);
@@ -2152,25 +2161,37 @@ public:
 	}
 };
 
-static FIntermissionScreen WI_Screen;
-
 void WI_Ticker()
 {
-	WI_Screen.bg->updateAnimatedBack();
-	WI_Screen.WI_Ticker();
+	if (WI_Screen)
+	{
+		WI_Screen->bg->updateAnimatedBack();
+		WI_Screen->WI_Ticker();
+	}
 }
 
 // Called by main loop,
 // draws the intermission directly into the screen buffer.
 void WI_Drawer()
 {
-	WI_Screen.WI_Drawer();
+	if (WI_Screen)
+	{
+		WI_Screen->WI_Drawer();
+		if (WI_Screen->state == LeavingIntermission)
+		{
+			WI_Screen->Destroy();
+			GC::DelSoftRoot(WI_Screen);
+			WI_Screen = nullptr;
+		}
+	}
 }
 
 // Setup for an intermission screen.
 void WI_Start(wbstartstruct_t *wbstartstruct)
 {
-	WI_Screen.WI_Start(wbstartstruct);
+	WI_Screen = new DStatusScreen;
+	WI_Screen->WI_Start(wbstartstruct);
+	GC::AddSoftRoot(WI_Screen);
 }
 
 
@@ -2197,41 +2218,42 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, totaltime);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, pnum);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, plyr);
 
-DEFINE_FIELD(FIntermissionScreen, bg);
-DEFINE_FIELD(FIntermissionScreen, acceleratestage);
-DEFINE_FIELD(FIntermissionScreen, playerready);
-DEFINE_FIELD(FIntermissionScreen, me);
-DEFINE_FIELD(FIntermissionScreen, bcnt);
-DEFINE_FIELD(FIntermissionScreen, state);
-DEFINE_FIELD(FIntermissionScreen, wbs);
-DEFINE_FIELD(FIntermissionScreen, Plrs);
-DEFINE_FIELD(FIntermissionScreen, cnt);			
-DEFINE_FIELD(FIntermissionScreen, cnt_kills);
-DEFINE_FIELD(FIntermissionScreen, cnt_items);
-DEFINE_FIELD(FIntermissionScreen, cnt_secret);
-DEFINE_FIELD(FIntermissionScreen, cnt_frags);
-DEFINE_FIELD(FIntermissionScreen, cnt_deaths);
-DEFINE_FIELD(FIntermissionScreen, cnt_time);
-DEFINE_FIELD(FIntermissionScreen, cnt_total_time);
-DEFINE_FIELD(FIntermissionScreen, cnt_par);
-DEFINE_FIELD(FIntermissionScreen, cnt_pause);
-DEFINE_FIELD(FIntermissionScreen, total_frags);
-DEFINE_FIELD(FIntermissionScreen, total_deaths);
-DEFINE_FIELD(FIntermissionScreen, noautostartmap);
-DEFINE_FIELD(FIntermissionScreen, dofrags);
-DEFINE_FIELD(FIntermissionScreen, ng_state);
-DEFINE_FIELD(FIntermissionScreen, shadowalpha);
-DEFINE_FIELD(FIntermissionScreen, mapname);
-DEFINE_FIELD(FIntermissionScreen, finished);
-DEFINE_FIELD(FIntermissionScreen, entering);
-DEFINE_FIELD(FIntermissionScreen, P_secret);
-DEFINE_FIELD(FIntermissionScreen, Kills);
-DEFINE_FIELD(FIntermissionScreen, Secret);
-DEFINE_FIELD(FIntermissionScreen, Items);
-DEFINE_FIELD(FIntermissionScreen, Timepic);
-DEFINE_FIELD(FIntermissionScreen, Par);
-DEFINE_FIELD(FIntermissionScreen, Sucks);
-DEFINE_FIELD(FIntermissionScreen, lnametexts);
-DEFINE_FIELD(FIntermissionScreen, snl_pointeron);
-DEFINE_FIELD(FIntermissionScreen, player_deaths);
-DEFINE_FIELD(FIntermissionScreen, sp_state);
+IMPLEMENT_CLASS(DStatusScreen, false, false)
+DEFINE_FIELD(DStatusScreen, bg);
+DEFINE_FIELD(DStatusScreen, acceleratestage);
+DEFINE_FIELD(DStatusScreen, playerready);
+DEFINE_FIELD(DStatusScreen, me);
+DEFINE_FIELD(DStatusScreen, bcnt);
+DEFINE_FIELD_NAMED(DStatusScreen, state, CurState);
+DEFINE_FIELD(DStatusScreen, wbs);
+DEFINE_FIELD(DStatusScreen, Plrs);
+DEFINE_FIELD(DStatusScreen, cnt);			
+DEFINE_FIELD(DStatusScreen, cnt_kills);
+DEFINE_FIELD(DStatusScreen, cnt_items);
+DEFINE_FIELD(DStatusScreen, cnt_secret);
+DEFINE_FIELD(DStatusScreen, cnt_frags);
+DEFINE_FIELD(DStatusScreen, cnt_deaths);
+DEFINE_FIELD(DStatusScreen, cnt_time);
+DEFINE_FIELD(DStatusScreen, cnt_total_time);
+DEFINE_FIELD(DStatusScreen, cnt_par);
+DEFINE_FIELD(DStatusScreen, cnt_pause);
+DEFINE_FIELD(DStatusScreen, total_frags);
+DEFINE_FIELD(DStatusScreen, total_deaths);
+DEFINE_FIELD(DStatusScreen, noautostartmap);
+DEFINE_FIELD(DStatusScreen, dofrags);
+DEFINE_FIELD(DStatusScreen, ng_state);
+DEFINE_FIELD(DStatusScreen, shadowalpha);
+DEFINE_FIELD(DStatusScreen, mapname);
+DEFINE_FIELD(DStatusScreen, finished);
+DEFINE_FIELD(DStatusScreen, entering);
+DEFINE_FIELD(DStatusScreen, P_secret);
+DEFINE_FIELD(DStatusScreen, Kills);
+DEFINE_FIELD(DStatusScreen, Secret);
+DEFINE_FIELD(DStatusScreen, Items);
+DEFINE_FIELD(DStatusScreen, Timepic);
+DEFINE_FIELD(DStatusScreen, Par);
+DEFINE_FIELD(DStatusScreen, Sucks);
+DEFINE_FIELD(DStatusScreen, lnametexts);
+DEFINE_FIELD(DStatusScreen, snl_pointeron);
+DEFINE_FIELD(DStatusScreen, player_deaths);
+DEFINE_FIELD(DStatusScreen, sp_state);

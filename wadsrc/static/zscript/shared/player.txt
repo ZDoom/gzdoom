@@ -356,6 +356,7 @@ usercmd_t	original_cmd;
 	native int GetGender() const;
 	native int GetTeam() const;
 	native float GetAutoaim() const;
+	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
 }
 

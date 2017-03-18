@@ -1186,6 +1186,12 @@ void G_WorldDone (void)
 	}
 } 
  
+DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
+{
+	G_WorldDone();
+	return 0;
+}
+
 //==========================================================================
 //
 //

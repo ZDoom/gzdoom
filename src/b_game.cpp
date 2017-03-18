@@ -632,3 +632,11 @@ ADD_STAT (bots)
 		BotWTG);
 	return out;
 }
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, RemoveAllBots)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(fromlist);
+	bglobal.RemoveAllBots(fromlist);
+	return 0;
+}

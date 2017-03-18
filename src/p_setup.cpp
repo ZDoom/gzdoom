@@ -3957,7 +3957,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	}
 
 	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
-	level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : &level.nodes[level.nodes.Size() - 1];
+	level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : level.nodes.Size()? &level.nodes[level.nodes.Size() - 1] : nullptr;
 
 	times[10].Clock();
 	P_LoadBlockMap (map);

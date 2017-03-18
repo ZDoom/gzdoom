@@ -118,7 +118,7 @@ struct FLevelLocals
 
 	node_t		*HeadNode() const
 	{
-		return &nodes[nodes.Size() - 1];
+		return nodes.Size() == 0? nullptr : &nodes[nodes.Size() - 1];
 	}
 	node_t		*HeadGamenode() const
 	{

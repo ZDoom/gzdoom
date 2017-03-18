@@ -314,7 +314,7 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompar
 
 static FxExpression *StringConstToChar(FxExpression *basex)
 {
-	if (!basex->isConstant()) return false;
+	if (!basex->isConstant()) return nullptr;
 	// Allow single character string literals be convertible to integers.
 	// This serves as workaround for not being able to use single quoted literals because those are taken for names.
 	ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();

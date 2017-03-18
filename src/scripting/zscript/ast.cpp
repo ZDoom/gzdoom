@@ -48,17 +48,19 @@ static const char *BuiltInTypeNames[] =
 	"intauto",
 
 	"bool",
-	"float32", "float64", "floatauto",
+	"float64", "floatauto",
 	"string",
 	"vector2",
 	"vector3",
 	"name",
+
 	"color",
 	"state",
 	"sound",
 
 	"usertype",
-
+	"nativetype",
+	"let",
 };
 
 class FLispString

@@ -10,7 +10,7 @@ struct FLevelLocals
 {
 	void Tick ();
 	void AddScroller (int secnum);
-	void FLevelLocals::SetInterMusic(const char *nextmap);
+	void SetInterMusic(const char *nextmap);
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

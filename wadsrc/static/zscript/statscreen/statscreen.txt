@@ -37,7 +37,7 @@ struct PatchInfo play version("2.4")
 
 
 // Will be made a class later, but for now needs to mirror the internal version.
-class StatusScreen native play version("2.4")
+class StatusScreen abstract play version("2.4")
 {
 	enum EValues
 	{
@@ -75,55 +75,50 @@ class StatusScreen native play version("2.4")
 
 	const SHOWNEXTLOCDELAY = 4;			// in seconds
 
-	InterBackground 		bg;
-	native int				acceleratestage;	// used to accelerate or skip a stage
-	native bool				playerready[MAXPLAYERS];
-	native int				me;					// wbs.pnum
-	native int				bcnt;
-	native int				CurState;				// specifies current CurState
-	native wbstartstruct	wbs;				// contains information passed into intermission
-	native wbplayerstruct	Plrs[MAXPLAYERS];				// wbs.plyr[]
-	native int				cnt;				// used for general timing
-	native int				cnt_kills[MAXPLAYERS];
-	native int				cnt_items[MAXPLAYERS];
-	native int				cnt_secret[MAXPLAYERS];
-	native int				cnt_frags[MAXPLAYERS];
-	native int				cnt_deaths[MAXPLAYERS];
-	native int				cnt_time;
-	native int				cnt_total_time;
-	native int				cnt_par;
-	native int				cnt_pause;
-	native int				total_frags;
-	native int				total_deaths;
-	native bool				noautostartmap;
-	native int				dofrags;
-	native int				ng_state;
-	native float			shadowalpha;
+	InterBackground bg;
+	int				acceleratestage;	// used to accelerate or skip a stage
+	bool				playerready[MAXPLAYERS];
+	int				me;					// wbs.pnum
+	int				bcnt;
+	int				CurState;				// specifies current CurState
+	wbstartstruct	wbs;				// contains information passed into intermission
+	wbplayerstruct	Plrs[MAXPLAYERS];				// wbs.plyr[]
+	int				cnt;				// used for general timing
+	int				cnt_kills[MAXPLAYERS];
+	int				cnt_items[MAXPLAYERS];
+	int				cnt_secret[MAXPLAYERS];
+	int				cnt_frags[MAXPLAYERS];
+	int				cnt_deaths[MAXPLAYERS];
+	int				cnt_time;
+	int				cnt_total_time;
+	int				cnt_par;
+	int				cnt_pause;
+	int				total_frags;
+	int				total_deaths;
+	bool			noautostartmap;
+	int				dofrags;
+	int				ng_state;
+	float			shadowalpha;
 
-	//
-	//		GRAPHICS
-	//
+	PatchInfo 		mapname;
+	PatchInfo 		finished;
+	PatchInfo 		entering;
 
-	native PatchInfo mapname;
-	native PatchInfo finished;
-	native PatchInfo entering;
-
-	native TextureID 		p_secret;
-	native TextureID 		kills;
-	native TextureID 		secret;
-	native TextureID 		items;
-	native TextureID 		timepic;
-	native TextureID 		par;
-	native TextureID 		sucks;
+	TextureID 		p_secret;
+	TextureID 		kills;
+	TextureID 		secret;
+	TextureID 		items;
+	TextureID 		timepic;
+	TextureID 		par;
+	TextureID 		sucks;
 
 	// [RH] Info to dynamically generate the level name graphics
-	native String			lnametexts[2];
+	String			lnametexts[2];
 
+	bool 			snl_pointeron;
 
-	native bool snl_pointeron;
-
-	native int player_deaths[MAXPLAYERS];
-	native int  sp_state;
+	int 			player_deaths[MAXPLAYERS];
+	int  			sp_state;
 
 
 	//====================================================================
@@ -660,7 +655,7 @@ class StatusScreen native play version("2.4")
 			break;
 		}
 	}
-
+	
 	//====================================================================
 	//
 	//
@@ -672,6 +667,8 @@ class StatusScreen native play version("2.4")
 		switch (CurState)
 		{
 		case StatCount:
+			// draw animated background
+			bg.drawBackground(CurState, false, false);
 			drawStats();
 			break;
 	
@@ -717,10 +714,10 @@ class StatusScreen native play version("2.4")
 
 		// Use the local level structure which can be overridden by hubs
 		lnametexts[0] = level.LevelName;		
-		lnametexts[1] = wbs.nextname;
+		lnametexts[1] = wbstartstruct.nextname;
 
 		bg = InterBackground.Create(wbs);
-
+		bg.LoadBackground(false);
 		initStats();
 	}
 	
@@ -729,7 +726,7 @@ class StatusScreen native play version("2.4")
 	protected virtual void updateStats() {}
 	protected virtual void drawStats() {}
 
-	native int, int, int GetPlayerWidths();
-	native Color GetRowColor(PlayerInfo player, bool highlight);
-	native void GetSortedPlayers(in out Array<int> sorted, bool teamplay);
+	native static int, int, int GetPlayerWidths();
+	native static Color GetRowColor(PlayerInfo player, bool highlight);
+	native static void GetSortedPlayers(in out Array<int> sorted, bool teamplay);
 }

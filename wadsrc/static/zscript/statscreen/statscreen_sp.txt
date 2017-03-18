@@ -135,9 +135,6 @@ class DoomStatusScreen : StatusScreen
 		// line height
 		int lh = IntermissionFont.GetHeight() * 3 / 2;
 
-		// draw animated background
-		bg.drawBackground(CurState, false, false);
-
 		drawLF();
 	
 		screen.DrawTexture (Kills, true, SP_STATSX, SP_STATSY, DTA_Clean, true);
@@ -170,9 +167,6 @@ class RavenStatusScreen : DoomStatusScreen
 	{
 		// line height
 		int lh = IntermissionFont.GetHeight() * 3 / 2;
-
-		// draw animated background
-		bg.drawBackground(CurState, false, false);
 
 		drawLF();
 	

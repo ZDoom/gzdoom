@@ -2577,7 +2577,7 @@ EColorRange V_FindFontColor (FName name)
 
 DEFINE_ACTION_FUNCTION(FFont, FindFontColor)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_PROLOGUE;
 	PARAM_NAME(code);
 	ACTION_RETURN_INT((int)V_FindFontColor(code));
 }

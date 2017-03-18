@@ -971,6 +971,7 @@ void D_ErrorCleanup ()
 	{
 		menuactive = MENU_Off;
 	}
+	if (gamestate == GS_INTERMISSION) gamestate = GS_DEMOSCREEN;
 	insave = false;
 }
 

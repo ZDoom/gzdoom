@@ -59,6 +59,9 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenEnteringFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenFinishedFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gibfactor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, intermissioncounter)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
 
 
 const char *GameNames[17] =
@@ -393,6 +396,9 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 		GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
 		GAMEINFOKEY_STRING(Dialogue, "dialogue")
+		GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
+		GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
+		GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 
 		else
 		{

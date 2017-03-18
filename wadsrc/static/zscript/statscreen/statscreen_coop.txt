@@ -215,19 +215,14 @@ class CoopStatusScreen : StatusScreen
 		String text_bonus, text_secret, text_kills;
 		TextureID readyico = TexMan.CheckForTexture("READYICO", TexMan.Type_MiscPatch);
 
-		// draw animated background
-		bg.drawBackground(CurState, false, false); 
-
 		y = drawLF();
 
 		[maxnamewidth, maxscorewidth, maxiconheight] = GetPlayerWidths();
 		// Use the readyico height if it's bigger.
 		Vector2 readysize = TexMan.GetScaledSize(readyico);
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
-		if (readysize.Y > maxiconheight)
-		{
-			maxiconheight = height;
-		}
+		height = readysize.Y - readyoffset.Y;
+		maxiconheight = MAX(height, maxiconheight);
 		height = SmallFont.GetHeight() * CleanYfac;
 		lineheight = MAX(height, maxiconheight * CleanYfac);
 		ypadding = (lineheight - height + 1) / 2;

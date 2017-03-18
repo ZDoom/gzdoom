@@ -645,6 +645,9 @@ xx(ceilingglowheight)
 xx(fogdensity)
 xx(Static)
 xx(Staticconst)
+xx(DeathmatchStatusScreen)
+xx(CoopStatusScreen)
+xx(RavenStatusScreen)
 
 // USDF keywords
 xx(Amount)

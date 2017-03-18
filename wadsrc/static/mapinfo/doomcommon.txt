@@ -65,6 +65,9 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+	statscreen_coop = "CoopStatusScreen"
+	statscreen_dm = "DeathmatchStatusScreen"
+	statscreen_single = "DoomStatusScreen"
 }
 
 spawnnums

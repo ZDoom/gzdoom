@@ -152,9 +152,6 @@ class DeathmatchStatusScreen : StatusScreen
 		String text_deaths, text_frags;
 		TextureID readyico = TexMan.CheckForTexture("READYICO", TexMan.Type_MiscPatch);
 
-		// draw animated background
-		bg.drawBackground(CurState, false, false);
-
 		y = drawLF();
 
 		[maxnamewidth, maxscorewidth, maxiconheight] = GetPlayerWidths();

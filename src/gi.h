@@ -181,6 +181,9 @@ struct gameinfo_t
 	FGIFont mStatscreenEnteringFont;
 	bool norandomplayerclass;
 	bool forcekillscripts;
+	FName statusscreen_single;
+	FName statusscreen_coop;
+	FName statusscreen_dm;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

@@ -446,11 +446,11 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 			auto code = static_cast<VMScriptFunction *>(func)->Code;
 			// handle empty functions consisting of a single return explicitly so that empty virtual callbacks do not need to set up an entire VM frame.
 			// code cann be null here in case of some non-fatal DECORATE errors.
-			if (code == nullptr || code->word == 0x0080804e)
+			if (code == nullptr || code->word == (0x00808000|OP_RET))
 			{
 				return 0;
 			}
-			else if (code->word == 0x0004804e)
+			else if (code->word == (0x00048000|OP_RET))
 			{
 				if (numresults == 0) return 0;
 				results[0].SetInt(static_cast<VMScriptFunction *>(func)->KonstD[0]);

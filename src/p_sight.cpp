@@ -739,7 +739,7 @@ bool SightCheck::P_SightPathTraverse ()
 	{
 		// end traversing when reaching the end of the blockmap
 		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
-		if (level.blockmap.isValidBlock(mapx, mapy))
+		if (!level.blockmap.isValidBlock(mapx, mapy))
 		{
 			break;
 		}

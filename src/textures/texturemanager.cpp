@@ -1199,7 +1199,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan[FSetTextureID(texid)];
+	auto tex = TexMan.ByIndex(texid);
 	int x, y;
 	if (tex != nullptr)
 	{
@@ -1212,16 +1212,40 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 	return MIN(numret, 2);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan[FSetTextureID(texid)];
+	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
 		ACTION_RETURN_VEC2(DVector2(tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()));
 	}
 	ACTION_RETURN_VEC2(DVector2(-1, -1));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, CheckRealHeight)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr)
+	{
+		ACTION_RETURN_INT(tex->CheckRealHeight());
+	}
+	ACTION_RETURN_INT(-1);
 }
 
 //==========================================================================

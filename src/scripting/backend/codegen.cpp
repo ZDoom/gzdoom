@@ -58,6 +58,7 @@
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
+int utf8_decode(const char *src, int *size);
 
 struct FLOP
 {
@@ -304,6 +305,36 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompar
 	return false;
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static FxExpression *StringConstToChar(FxExpression *basex)
+{
+	if (!basex->isConstant()) return false;
+	// Allow single character string literals be convertible to integers.
+	// This serves as workaround for not being able to use single quoted literals because those are taken for names.
+	ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+	FString str = constval.GetString();
+	if (str.Len() == 1)
+	{
+		return new FxConstant(str[0], basex->ScriptPosition);
+	}
+	else if (str.Len() > 1)
+	{
+		// If the string is UTF-8, allow a single character UTF-8 sequence.
+		int size;
+		int c = utf8_decode(str.GetChars(), &size);
+		if (c >= 0 && size == str.Len())
+		{
+			return new FxConstant(str[0], basex->ScriptPosition);
+		}
+	}
+	return nullptr;
+}
 //==========================================================================
 //
 //
@@ -908,6 +939,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
+	int c;
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{
@@ -951,6 +983,17 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		}
 
 		return this;
+	}
+	else if (basex->ValueType == TypeString && basex->isConstant())
+	{
+		FxExpression *x = StringConstToChar(basex);
+		if (x)
+		{
+			x->ValueType = ValueType;
+			basex = nullptr;
+			delete this;
+			return x;
+		}
 	}
 	ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 	delete this;
@@ -3302,6 +3345,18 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
+	FxExpression *x;
+	if (left->IsNumeric() && right->ValueType == TypeString && (x = StringConstToChar(right)))
+	{
+		delete right;
+		right = x;
+	}
+	else if (right->IsNumeric() && left->ValueType == TypeString && (x = StringConstToChar(left)))
+	{
+		delete left;
+		left = x;
+	}
+
 	if (left->ValueType == TypeString || right->ValueType == TypeString)
 	{
 		if (left->ValueType != TypeString)
@@ -3528,6 +3583,17 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 
 	if (left->ValueType != right->ValueType)	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
 	{
+		FxExpression *x;
+		if (left->IsNumeric() && right->ValueType == TypeString && (x = StringConstToChar(right)))
+		{
+			delete right;
+			right = x;
+		}
+		else if (right->IsNumeric() && left->ValueType == TypeString && (x = StringConstToChar(left)))
+		{
+			delete left;
+			left = x;
+		}
 		// Special cases: Compare strings and names with names, sounds, colors, state labels and class types.
 		// These are all types a string can be implicitly cast into, so for convenience, so they should when doing a comparison.
 		if ((left->ValueType == TypeString || left->ValueType == TypeName) &&

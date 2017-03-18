@@ -87,6 +87,7 @@ struct TexMan
 	native static void ReplaceTextures(String from, String to, int flags);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
+	native static int CheckRealHeight(TextureID tex);
 }
 
 enum DrawTextureTags

@@ -206,10 +206,9 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Protected) && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
-			return nullptr;
 		}
 		else if (funcsym->Variants[0].Flags & VARF_Deprecated)
 		{

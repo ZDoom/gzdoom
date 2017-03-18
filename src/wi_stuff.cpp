@@ -648,22 +648,22 @@ private:
 struct FPatchInfo
 {
 	FFont *mFont;
-	FTexture *mPatch;
+	FTextureID mPatch;
 	EColorRange mColor;
 
 	void Init(FGIFont &gifont)
 	{
 		if (gifont.color == NAME_Null)
 		{
-			mPatch = TexMan[gifont.fontname];	// "entering"
-			mColor = mPatch == NULL ? CR_UNTRANSLATED : CR_UNDEFINED;
+			mPatch = TexMan.CheckForTexture(gifont.fontname, FTexture::TEX_MiscPatch);
+			mColor = mPatch.isValid() ? CR_UNTRANSLATED : CR_UNDEFINED;
 			mFont = NULL;
 		}
 		else
 		{
 			mFont = V_GetFont(gifont.fontname);
 			mColor = V_FindFontColor(gifont.color);
-			mPatch = NULL;
+			mPatch.SetNull();
 		}
 		if (mFont == NULL)
 		{
@@ -748,7 +748,7 @@ public:
 	FPatchInfo finished;
 	FPatchInfo entering;
 
-	FTextureID 		Sp_secret;	// "secret"
+	FTextureID 		P_secret;	// "secret"
 	FTextureID 		Kills;		// "Kills", "Scrt", "Items", "Frags"
 	FTextureID 		Secret;
 	FTextureID 		Items;
@@ -851,10 +851,11 @@ public:
 		const char *string = GStrings(stringname);
 		int midx = screen->GetWidth() / 2;
 
-		if (pinfo->mPatch != NULL)
+		if (pinfo->mPatch.isValid())
 		{
-			screen->DrawTexture(pinfo->mPatch, midx - pinfo->mPatch->GetScaledWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-			return y + (pinfo->mPatch->GetScaledHeight() * CleanYfac);
+			FTexture *tex = TexMan[pinfo->mPatch];
+			screen->DrawTexture(tex, midx - tex->GetScaledWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+			return y + (tex->GetScaledHeight() * CleanYfac);
 		}
 		else 
 		{
@@ -1883,7 +1884,7 @@ public:
 			screen->DrawTexture (TexMan[Items], SP_STATSX, SP_STATSY+lh, DTA_Clean, true, TAG_DONE);
 			WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs->maxitems);
 
-			screen->DrawTexture (TexMan[Sp_secret], SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (TexMan[P_secret], SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
 			WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
 
 			screen->DrawTexture (TexMan[Timepic], SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
@@ -2024,7 +2025,7 @@ public:
 		{
 			Kills = TexMan.CheckForTexture("WIOSTK", FTexture::TEX_MiscPatch);		// "kills"
 			Secret = TexMan.CheckForTexture("WIOSTS", FTexture::TEX_MiscPatch);		// "scrt"
-			Sp_secret = TexMan.CheckForTexture("WISCRT2", FTexture::TEX_MiscPatch);	// "secret"
+			P_secret = TexMan.CheckForTexture("WISCRT2", FTexture::TEX_MiscPatch);	// "secret"
 			Items = TexMan.CheckForTexture("WIOSTI", FTexture::TEX_MiscPatch);		// "items"
 			Timepic = TexMan.CheckForTexture("WITIME", FTexture::TEX_MiscPatch);		// "time"
 			Sucks = TexMan.CheckForTexture("WISUCKS", FTexture::TEX_MiscPatch);		// "sucks"
@@ -2147,3 +2148,41 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, sucktime);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, totaltime);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, pnum);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, plyr);
+
+DEFINE_FIELD(FIntermissionScreen, acceleratestage);
+DEFINE_FIELD(FIntermissionScreen, playerready);
+DEFINE_FIELD(FIntermissionScreen, me);
+DEFINE_FIELD(FIntermissionScreen, bcnt);
+DEFINE_FIELD(FIntermissionScreen, state);
+DEFINE_FIELD(FIntermissionScreen, wbs);
+DEFINE_FIELD(FIntermissionScreen, Plrs);
+DEFINE_FIELD(FIntermissionScreen, cnt);			
+DEFINE_FIELD(FIntermissionScreen, cnt_kills);
+DEFINE_FIELD(FIntermissionScreen, cnt_items);
+DEFINE_FIELD(FIntermissionScreen, cnt_secret);
+DEFINE_FIELD(FIntermissionScreen, cnt_frags);
+DEFINE_FIELD(FIntermissionScreen, cnt_deaths);
+DEFINE_FIELD(FIntermissionScreen, cnt_time);
+DEFINE_FIELD(FIntermissionScreen, cnt_total_time);
+DEFINE_FIELD(FIntermissionScreen, cnt_par);
+DEFINE_FIELD(FIntermissionScreen, cnt_pause);
+DEFINE_FIELD(FIntermissionScreen, total_frags);
+DEFINE_FIELD(FIntermissionScreen, total_deaths);
+DEFINE_FIELD(FIntermissionScreen, noautostartmap);
+DEFINE_FIELD(FIntermissionScreen, dofrags);
+DEFINE_FIELD(FIntermissionScreen, ng_state);
+DEFINE_FIELD(FIntermissionScreen, shadowalpha);
+DEFINE_FIELD(FIntermissionScreen, mapname);
+DEFINE_FIELD(FIntermissionScreen, finished);
+DEFINE_FIELD(FIntermissionScreen, entering);
+DEFINE_FIELD(FIntermissionScreen, P_secret);
+DEFINE_FIELD(FIntermissionScreen, Kills);
+DEFINE_FIELD(FIntermissionScreen, Secret);
+DEFINE_FIELD(FIntermissionScreen, Items);
+DEFINE_FIELD(FIntermissionScreen, Timepic);
+DEFINE_FIELD(FIntermissionScreen, Par);
+DEFINE_FIELD(FIntermissionScreen, Sucks);
+DEFINE_FIELD(FIntermissionScreen, lnametexts);
+DEFINE_FIELD(FIntermissionScreen, snl_pointeron);
+DEFINE_FIELD(FIntermissionScreen, player_deaths);
+DEFINE_FIELD(FIntermissionScreen, sp_state);

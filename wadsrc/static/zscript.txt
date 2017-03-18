@@ -27,6 +27,7 @@ version "2.4"
 #include "zscript/menu/conversationmenu.txt"
 
 #include "zscript/statscreen/types.txt"
+#include "zscript/statscreen/statscreen.txt"
 
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"

@@ -1,6 +1,6 @@
 // Note that the status screen needs to run in 'play' scope!
 
-class InterBackground native play version("2.4")
+class InterBackground native play version("2.5")
 {
 	native static InterBackground Create(wbstartstruct wbst);
 	native virtual bool LoadBackground(bool isenterpic);
@@ -8,7 +8,7 @@ class InterBackground native play version("2.4")
 	native virtual void drawBackground(int CurState, bool drawsplat, bool snl_pointeron);
 }
 
-struct PatchInfo play version("2.4")
+struct PatchInfo play version("2.5")
 {
 	Font mFont;
 	TextureID mPatch;
@@ -37,7 +37,7 @@ struct PatchInfo play version("2.4")
 
 
 // Will be made a class later, but for now needs to mirror the internal version.
-class StatusScreen abstract play version("2.4")
+class StatusScreen abstract play version("2.5")
 {
 	enum EValues
 	{

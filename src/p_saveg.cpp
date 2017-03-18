@@ -362,9 +362,9 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 			for (unsigned i = 0; i < numsubsectors; i += 6)
 			{
 				by = 0;
-				for (int j = 0; j < 6; j++)
+				for (unsigned j = 0; j < 6; j++)
 				{
-					if (i + j < (int)numsubsectors && (level.subsectors[i + j].flags & SSECF_DRAWN))
+					if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECF_DRAWN))
 					{
 						by |= (1 << j);
 					}
@@ -399,7 +399,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == (int)level.vertexes.Size() && num_subs == numsubsectors && hasglnodes)
+			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors && hasglnodes)
 			{
 				success = true;
 				int sub = 0;

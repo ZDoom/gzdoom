@@ -328,7 +328,7 @@ static FxExpression *StringConstToChar(FxExpression *basex)
 		// If the string is UTF-8, allow a single character UTF-8 sequence.
 		int size;
 		int c = utf8_decode(str.GetChars(), &size);
-		if (c >= 0 && size == str.Len())
+		if (c >= 0 && size_t(size) == str.Len())
 		{
 			return new FxConstant(str[0], basex->ScriptPosition);
 		}

@@ -290,7 +290,7 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 //==========================================================================
 
 ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PNamespace *_outnamespc, int lumpnum, const VersionInfo &ver)
-	: Outer(_outer), GlobalTreeNodes(&_symbols), OutNamespace(_outnamespc), AST(ast), mVersion(ver), Lump(lumpnum)
+	: mVersion(ver), Outer(_outer), ConvertClass(nullptr), GlobalTreeNodes(&_symbols), OutNamespace(_outnamespc), AST(ast), Lump(lumpnum)
 {
 	FScriptPosition::ResetErrorCounter();
 	// Group top-level nodes by type

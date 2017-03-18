@@ -160,7 +160,7 @@ void FShadowMap::UploadAABBTree()
 {
 	// Just comparing the level info is not enough. If two MAPINFO-less levels get played after each other, 
 	// they can both refer to the same default level info.
-	if (level.info != mLastLevel && level.nodes.Size() != mLastNumNodes || level.segs.Size() != mLastNumSegs)
+	if (level.info != mLastLevel && (level.nodes.Size() != mLastNumNodes || level.segs.Size() != mLastNumSegs))
 		Clear();
 
 	if (mAABBTree)

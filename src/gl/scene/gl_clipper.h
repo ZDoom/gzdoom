@@ -147,7 +147,7 @@ public:
 	// Used to speed up angle calculations during clipping
 	inline angle_t GetClipAngle(vertex_t *v)
 	{
-		return v->angletime == starttime ? v->viewangle : (v->angletime = starttime, v->viewangle = R_PointToPseudoAngle(v->p.X, v->p.Y));
+		return unsigned(v->angletime) == starttime ? v->viewangle : (v->angletime = starttime, v->viewangle = R_PointToPseudoAngle(v->p.X, v->p.Y));
 	}
 
 };

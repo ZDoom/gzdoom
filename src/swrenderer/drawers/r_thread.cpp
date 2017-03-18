@@ -109,10 +109,8 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 		start_lock.unlock();
 
 		// Do the work:
-		size_t size = list->commands.size();
-		for (int i = 0; i < size; i++)
+		for (auto& command : list->commands)
 		{
-			auto &command = list->commands[i];
 			command->Execute(thread);
 		}
 

@@ -1549,7 +1549,7 @@ void P_LoadNodes (MapData * map)
 			}
 			else if ((unsigned)child >= numnodes)
 			{
-				Printf ("BSP node %d references invalid node %td.\n"
+				Printf ("BSP node %d references invalid node %d.\n"
 					"The BSP will be rebuilt.\n", i, ((node_t *)no->children[j])->Index());
 				ForceNodeBuild = true;
 				level.nodes.Clear();

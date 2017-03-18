@@ -134,14 +134,14 @@ bool LevelAABBTree::OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &
 
 	c -= (aabb_max + aabb_min) * 0.5f; // aabb.center();
 
-	DVector3 v = DVector3(abs(w.X), abs(w.Y), abs(w.Z));
+	DVector3 v = DVector3(fabs(w.X), fabs(w.Y), fabs(w.Z));
 
-	if (abs(c.X) > v.X + h.X || abs(c.Y) > v.Y + h.Y || abs(c.Z) > v.Z + h.Z)
+	if (fabs(c.X) > v.X + h.X || fabs(c.Y) > v.Y + h.Y || fabs(c.Z) > v.Z + h.Z)
 		return false; // disjoint;
 
-	if (abs(c.Y * w.Z - c.Z * w.Y) > h.Y * v.Z + h.Z * v.Y ||
-		abs(c.X * w.Z - c.Z * w.X) > h.X * v.Z + h.Z * v.X ||
-		abs(c.X * w.Y - c.Y * w.X) > h.X * v.Y + h.Y * v.X)
+	if (fabs(c.Y * w.Z - c.Z * w.Y) > h.Y * v.Z + h.Z * v.Y ||
+		fabs(c.X * w.Z - c.Z * w.X) > h.X * v.Z + h.Z * v.X ||
+		fabs(c.X * w.Y - c.Y * w.X) > h.X * v.Y + h.Y * v.X)
 		return false; // disjoint;
 
 	return true; // overlap;
@@ -164,7 +164,7 @@ double LevelAABBTree::IntersectRayLine(const DVector2 &ray_start, const DVector2
 	DVector2 line_delta(line.dx, line.dy);
 
 	double den = raynormal | line_delta;
-	if (abs(den) > epsilon)
+	if (fabs(den) > epsilon)
 	{
 		double t_line = (rayd - (raynormal | line_pos)) / den;
 		if (t_line >= 0.0 && t_line <= 1.0)

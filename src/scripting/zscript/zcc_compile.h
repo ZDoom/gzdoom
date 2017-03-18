@@ -124,7 +124,6 @@ private:
 	void CompileStates();
 	FxExpression *SetupActionFunction(PClass *cls, ZCC_TreeNode *sl, int stateflags);
 
-	bool SimplifyingConstant;
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;

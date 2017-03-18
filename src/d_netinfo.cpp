@@ -217,6 +217,18 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetDisplayColor)
+{
+	float h, s, v, r, g, b;
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	D_GetPlayerColor(int(self-players), &h, &s, &v, NULL);
+	HSVtoRGB(&r, &g, &b, h, s, v);
+	int c = MAKERGB(clamp(int(r*255.f), 0, 255),
+		clamp(int(g*255.f), 0, 255),
+		clamp(int(b*255.f), 0, 255));
+	ACTION_RETURN_INT(c);
+}
+
 // Find out which teams are present. If there is only one,
 // then another team should be chosen at random.
 //

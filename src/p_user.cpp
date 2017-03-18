@@ -3471,6 +3471,7 @@ DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
 DEFINE_FIELD_X(PlayerInfo, player_t, weapons)
+DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd.buttons, buttons)
 
 DEFINE_FIELD(FPlayerClass, Type)
 DEFINE_FIELD(FPlayerClass, Flags)

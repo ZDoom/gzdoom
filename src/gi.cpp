@@ -58,6 +58,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenMapNameFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenEnteringFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenFinishedFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gibfactor)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, intermissioncounter)
 
 
 const char *GameNames[17] =

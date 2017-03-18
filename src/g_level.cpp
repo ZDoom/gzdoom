@@ -1896,6 +1896,30 @@ void FLevelLocals::AddScroller (int secnum)
 //==========================================================================
 //
 //
+//==========================================================================
+
+void FLevelLocals::SetInterMusic(const char *nextmap)
+{
+	auto mus = level.info->MapInterMusic.CheckKey(nextmap);
+	if (mus != nullptr)
+		S_ChangeMusic(mus->first, mus->second);
+	else if (level.info->InterMusic.IsNotEmpty())
+		S_ChangeMusic(level.info->InterMusic, level.info->intermusicorder);
+	else
+		S_ChangeMusic(gameinfo.intermissionMusic.GetChars(), gameinfo.intermissionOrder);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_STRING(map);
+	self->SetInterMusic(map);
+	return 0;
+}
+
+//==========================================================================
+//
+//
 //
 //==========================================================================
 DEFINE_GLOBAL(level);

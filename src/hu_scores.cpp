@@ -119,6 +119,16 @@ int compareteams (const void *arg1, const void *arg2)
 	return diff;
 }
 
+/*
+void HU_SortPlayers
+{
+	if (teamplay)
+	qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
+	else
+		qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
+}
+*/
+
 bool SB_ForceActive = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

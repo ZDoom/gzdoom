@@ -88,6 +88,7 @@ struct TexMan
 	native static void ReplaceTextures(String from, String to, int flags);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
+	native static Vector2 GetScaledOffset(TextureID tex);
 	native static int CheckRealHeight(TextureID tex);
 }
 
@@ -304,6 +305,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
 	native double gibfactor;
+	native bool intermissioncounter;
 }
 
 class Object native
@@ -499,6 +501,7 @@ struct LevelLocals native
 	native static void StartSlideshow(Name whichone = 'none');
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
+	native void SetInterMusic(String nextmap);
 }
 
 struct StringTable native

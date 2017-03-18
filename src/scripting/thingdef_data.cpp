@@ -59,6 +59,7 @@
 #include "teaminfo.h"
 #include "r_data/sprites.h"
 #include "serializer.h"
+#include "wi_stuff.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -873,6 +874,11 @@ void InitThingdef()
 			return true;
 		}
 	);
+
+	auto wbplayerstruct = NewNativeStruct("WBPlayerStruct", nullptr);
+	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
+	wbplayerstruct->Align = alignof(wbplayerstruct_t);
+	
 
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
 	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'

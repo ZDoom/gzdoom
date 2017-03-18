@@ -1236,6 +1236,24 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
 //
 //==========================================================================
 
+DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr)
+	{
+		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(), tex->GetScaledTopOffsetDouble()));
+	}
+	ACTION_RETURN_VEC2(DVector2(-1, -1));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 DEFINE_ACTION_FUNCTION(_TexMan, CheckRealHeight)
 {
 	PARAM_PROLOGUE;

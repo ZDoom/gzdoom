@@ -247,6 +247,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	
 	native PlayerPawn mo;
 	native uint8 playerstate;
+	native readonly uint buttons;
 	native uint original_oldbuttons;
 	native readonly Class<PlayerPawn> cls;
 	native float DesiredFOV;
@@ -349,6 +350,7 @@ usercmd_t	original_cmd;
 
 	native String GetUserName() const;
 	native Color GetColor() const;
+	native Color GetDisplayColor() const;
 	native int GetColorSet() const;
 	native int GetPlayerClassNum() const;
 	native int GetSkin() const;

@@ -2084,10 +2084,7 @@ public:
 
 		// Use the local level structure which can be overridden by hubs
 		lnametexts[0] = level.LevelName;		
-
-		level_info_t *li = FindLevelInfo(wbs->next);
-		if (li) lnametexts[1] = li->LookupLevelName();
-		else lnametexts[1] = "";
+		lnametexts[1] = wbs->nextname;
 
 		bg = new DInterBackground(wbs);
 		GC::AddSoftRoot(bg);
@@ -2140,14 +2137,7 @@ public:
 
 	void WI_Start (wbstartstruct_t *wbstartstruct)
 	{
-		auto info = FindLevelInfo(wbstartstruct->next, false);
-		if (info == nullptr)
-		{
-			wbstartstruct->next = "";
-		}
-
 		noautostartmap = false;
-		V_SetBlend (0,0,0,0);
 		WI_initVariables (wbstartstruct);
 		WI_loadData ();
 		if (deathmatch)
@@ -2156,8 +2146,6 @@ public:
 			WI_initNetgameStats();
 		else
 			WI_initStats();
-		S_StopAllChannels ();
-		SN_StopAllSequences ();
 	}
 };
 
@@ -2190,8 +2178,64 @@ void WI_Drawer()
 void WI_Start(wbstartstruct_t *wbstartstruct)
 {
 	WI_Screen = new DStatusScreen;
+	auto info = FindLevelInfo(wbstartstruct->next, false);
+	if (info == nullptr)
+	{
+		wbstartstruct->next = "";
+	}
+	else wbstartstruct->nextname = info->LookupLevelName();
+	V_SetBlend(0, 0, 0, 0);
+	S_StopAllChannels();
+	SN_StopAllSequences();
+
 	WI_Screen->WI_Start(wbstartstruct);
 	GC::AddSoftRoot(WI_Screen);
+}
+
+
+DEFINE_ACTION_FUNCTION(DStatusScreen, GetPlayerWidths)
+{
+	PARAM_PROLOGUE;
+	int maxnamewidth, maxscorewidth, maxiconheight;
+	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
+	if (numret > 0) ret[0].SetInt(maxnamewidth);
+	if (numret > 1) ret[1].SetInt(maxscorewidth);
+	if (numret > 2) ret[2].SetInt(maxiconheight);
+	return MIN(numret, 3);
+}
+
+DEFINE_ACTION_FUNCTION(DStatusScreen, GetRowColor)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(p, player_t);
+	PARAM_BOOL(highlight);
+	ACTION_RETURN_INT(HU_GetRowColor(p, highlight));
+}
+
+DEFINE_ACTION_FUNCTION(DStatusScreen, GetSortedPlayers)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(array, TArray<int>);
+	PARAM_BOOL(teamplay);
+
+	player_t *sortedplayers[MAXPLAYERS];
+	// Sort all players
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		sortedplayers[i] = &players[i];
+	}
+
+	if (teamplay)
+		qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
+	else
+		qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
+
+	array->Resize(MAXPLAYERS);
+	for (unsigned i = 0; i < MAXPLAYERS; i++)
+	{
+		(*array)[i] = int(sortedplayers[i] - players);
+	}
+	return 0;
 }
 
 
@@ -2206,6 +2250,7 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, finished_ep);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next_ep);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextname);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);

@@ -18,9 +18,11 @@ struct WBStartStruct native version("2.4")
 {
 	native int			finished_ep;
 	native int			next_ep;
+	native @WBPlayerStruct plyr[MAXPLAYERS];
 
 	native String		current;	// [RH] Name of map just finished
 	native String		next;		// next level, [RH] actual map name
+	native String		nextname;	// next level, printable name
 
 	native TextureID	LName0;
 	native TextureID	LName1;

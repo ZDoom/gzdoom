@@ -1551,7 +1551,7 @@ dopain:
 				target->SetState (target->SeeState);
 			}
 		}
-		else if (source != target->target && target->OkayToSwitchTarget (source))
+		else if (source != target->target && target->CallOkayToSwitchTarget (source))
 		{
 			// Target actor is not intent on another actor,
 			// so make him chase after source
@@ -1765,7 +1765,7 @@ bool AActor::CallOkayToSwitchTarget(AActor *other)
 		GlobalVMStack.Call(func, params, 2, &ret, 1);
 		return !!retv;
 	}
-	return false;
+	return OkayToSwitchTarget(other;;
 }
 
 

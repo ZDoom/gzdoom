@@ -16,9 +16,11 @@ public:
 
 	sector_t *GetSector() const { return m_Sector; }
 
-protected:
-	DSectorEffect ();
 	sector_t *m_Sector;
+
+protected:
+	DSectorEffect();
+
 };
 
 class DMover : public DSectorEffect

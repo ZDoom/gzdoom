@@ -72,6 +72,9 @@ void DSectorEffect::Serialize(FSerializer &arc)
 	arc("sector", m_Sector);
 }
 
+DEFINE_FIELD(DSectorEffect, m_Sector)
+
+
 IMPLEMENT_CLASS(DMover, false, true)
 
 IMPLEMENT_POINTERS_START(DMover)

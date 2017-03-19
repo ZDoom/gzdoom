@@ -2563,7 +2563,7 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 
 		if (IsBitWrite == -1)
 		{
-			build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+			build->Emit(Base->ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
 		}
 		else
 		{

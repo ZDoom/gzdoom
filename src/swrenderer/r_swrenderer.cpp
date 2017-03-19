@@ -51,6 +51,14 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 
+// [BB] Use ZDoom's freelook limit for the sotfware renderer.
+// Note: ZDoom's limit is chosen such that the sky is rendered properly.
+CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (usergame) // [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+}
+
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
@@ -248,7 +256,7 @@ int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
 	const int MAX_DN_ANGLE = 56; // Max looking down angle
 	const int MAX_UP_ANGLE = 32; // Max looking up angle
-	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : MAX_UP_ANGLE);
+	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
 }
 
 bool FSoftwareRenderer::RequireGLNodes()

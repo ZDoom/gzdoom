@@ -1765,7 +1765,7 @@ bool AActor::CallOkayToSwitchTarget(AActor *other)
 		GlobalVMStack.Call(func, params, 2, &ret, 1);
 		return !!retv;
 	}
-	return OkayToSwitchTarget(other;;
+	return OkayToSwitchTarget(other);
 }
 
 

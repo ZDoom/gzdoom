@@ -1959,6 +1959,11 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 	for (auto f : prop->Variables)
 	{
 		void *addr;
+		if (f == nullptr)
+		{
+			// This variable was missing. The error had been reported for the property itself already.
+			return;
+		}
 
 		if (f->Flags & VARF_Meta)
 		{

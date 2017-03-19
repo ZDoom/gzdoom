@@ -586,33 +586,6 @@ DEFINE_PROPERTY(tag, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(health, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->health=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(woundhealth, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->WoundHealth = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(reactiontime, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->reactiontime=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(painchance, ZI, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -629,16 +602,6 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 
 		info->SetPainChance(painType, id);
 	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(painthreshold, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-
-	defaults->PainThreshold = id;
 }
 
 //==========================================================================
@@ -685,106 +648,6 @@ DEFINE_PROPERTY(damage, X, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(damagemultiply, F, Actor)
-{
-	PROP_FLOAT_PARM(dmgm, 0);
-	defaults->DamageMultiply = dmgm;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(projectilekickback, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-
-	defaults->projectileKickback = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(speed, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->Speed = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(floatspeed, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->FloatSpeed = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(radius, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->radius = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(renderradius, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->renderradius = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(height, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->Height=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(projectilepassheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->projectilepassheight=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(mass, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->Mass=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(xscale, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->Scale.X = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(yscale, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->Scale.Y = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(scale, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
@@ -812,78 +675,6 @@ DEFINE_PROPERTY(args, Iiiii, Actor)
 		defaults->args[i] = id;
 	}
 	defaults->flags2|=MF2_ARGSDEFINED;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(seesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->SeeSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(attacksound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->AttackSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(bouncesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->BounceSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(wallbouncesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->WallBounceSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(painsound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->PainSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(deathsound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->DeathSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(activesound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->ActiveSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(crushpainsound, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->CrushPainSound = str;
 }
 
 //==========================================================================
@@ -949,51 +740,6 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 DEFINE_PROPERTY(defaultalpha, 0, Actor)
 {
 	defaults->Alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(alpha, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->Alpha = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(maxtargetrange, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->maxtargetrange = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(meleethreshold, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->meleethreshold = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(meleerange, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->meleerange = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(pushfactor, F, Actor)
-{
-	PROP_DOUBLE_PARM(id, 0);
-	defaults->pushfactor = id;
 }
 
 //==========================================================================
@@ -1128,42 +874,6 @@ DEFINE_PROPERTY(wallbouncefactor, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(bouncecount, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->bouncecount = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(weaveindexXY, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->WeaveIndexXY = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(weaveindexZ, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->WeaveIndexZ = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(minmissilechance, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->MinMissileChance=id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(damagetype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1225,24 +935,6 @@ DEFINE_PROPERTY(decal, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(maxstepheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->MaxStepHeight = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(maxdropoffheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->MaxDropOffHeight = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(poisondamage, Iii, Actor)
 {
 	PROP_INT_PARM(poisondamage, 0);
@@ -1268,61 +960,6 @@ DEFINE_PROPERTY(poisondamage, Iii, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(poisondamagetype, S, Actor)
-{
-	PROP_STRING_PARM(poisondamagetype, 0);
-
-	defaults->PoisonDamageType = poisondamagetype;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->RadiusDamageFactor = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(selfdamagefactor, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->SelfDamageFactor = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(stealthalpha, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->StealthAlpha = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(cameraheight, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->CameraHeight = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(vspeed, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->Vel.Z = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(gravity, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
@@ -1343,52 +980,12 @@ DEFINE_PROPERTY(spriteangle, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(spriterotation, F, Actor)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->SpriteRotation = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(visibleangles, FF, Actor)
-{
-	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 1);
-	defaults->VisibleStartAngle = visstart;
-	defaults->VisibleEndAngle = visend;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(visiblepitch, FF, Actor)
-{
-	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 1);
-	defaults->VisibleStartPitch = visstart;
-	defaults->VisibleEndPitch = visend;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(friction, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
 
 	if (i < 0) I_Error ("Friction must not be negative.");
 	defaults->Friction = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(species, S, Actor)
-{
-	PROP_STRING_PARM(n, 0);
-	defaults->Species = n;
 }
 
 //==========================================================================
@@ -1475,71 +1072,6 @@ DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(accuracy, I, Actor)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->accuracy = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(stamina, I, Actor)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->stamina = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(telefogsourcetype, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-
-	defaults->TeleFogSourceType = FindClassTentative(str, RUNTIME_CLASS(AActor));
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(telefogdesttype, S, Actor)
-{
-	PROP_STRING_PARM(str, 0);
-
-	defaults->TeleFogDestType = FindClassTentative(str, RUNTIME_CLASS(AActor));
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(ripperlevel, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->RipperLevel = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(riplevelmin, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->RipLevelMin = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_PROPERTY(riplevelmax, I, Actor)
-{
-	PROP_INT_PARM(id, 0);
-	defaults->RipLevelMax = id;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_PROPERTY(distancecheck, S, Actor)
 {
 	PROP_STRING_PARM(cvar, 0);
@@ -1596,15 +1128,6 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(amount, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->Amount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 {
 	if (i == NULL || i[0] == '\0')
@@ -1649,46 +1172,9 @@ DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(interhubamount, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->InterHubAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(maxamount, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->MaxAmount = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 {
 	defaults->MaxAmount = gameinfo.definventorymaxamount;
-}
-
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->PickupFlash = FindClassTentative(str, RUNTIME_CLASS(AActor));
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->PickupSound = str;
 }
 
 //==========================================================================
@@ -1696,51 +1182,6 @@ DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 {
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(respawntics, I, Inventory)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->RespawnTics = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->UseSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammogive, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoGive1 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammogive1, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoGive1 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammogive2, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoGive2 = i;
 }
 
 //==========================================================================
@@ -1776,108 +1217,9 @@ DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(ammouse, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoUse1 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammouse1, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoUse1 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammouse2, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->AmmoUse2 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(kickback, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->Kickback = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 {
 	defaults->Kickback = gameinfo.defKickback;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(readysound, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->ReadySound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(selectionorder, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->SelectionOrder = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(minselectionammo1, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->MinSelAmmo1 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(minselectionammo2, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->MinSelAmmo2 = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(sisterweapon, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->SisterWeaponType = FindClassTentativeWeapon(str);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(upsound, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->UpSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(yadjust, F, Weapon)
-{
-	PROP_FLOAT_PARM(i, 0);
-	defaults->YAdjust = i;
 }
 
 //==========================================================================
@@ -1897,42 +1239,6 @@ DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 		match = 0;
 	}
 	defaults->BobStyle = styles[match];
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(bobspeed, F, Weapon)
-{
-	PROP_FLOAT_PARM(i, 0);
-	defaults->BobSpeed = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(bobrangex, F, Weapon)
-{
-	PROP_FLOAT_PARM(i, 0);
-	defaults->BobRangeX = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(bobrangey, F, Weapon)
-{
-	PROP_FLOAT_PARM(i, 0);
-	defaults->BobRangeY = i;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
-{
-	PROP_INT_PARM(i, 0);
-	defaults->SlotNumber = i;
 }
 
 //==========================================================================
@@ -2058,35 +1364,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 
 	PROP_INT_PARM(i, 0);
 	defaults->IntVar(NAME_EffectTics) = (i >= 0) ? i : -i * TICRATE;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
-{
-	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
-	{
-		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
-		return;
-	}
-	PROP_DOUBLE_PARM(f, 0);
-	defaults->FloatVar(NAME_Strength) = f;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-
-	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
-	{
-		I_Error("\"powerup.mode\" requires an actor of type \"Powerup\"\n");
-		return;
-	}
-	defaults->NameVar(NAME_Mode) = (FName)str;
 }
 
 //==========================================================================
@@ -2289,44 +1566,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->AttackZOffset = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->JumpZ = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->GruntSpeed = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, FallingScreamSpeed, FF, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(minz, 0);
-	PROP_DOUBLE_PARM(maxz, 1);
-	defaults->FallingScreamMinSpeed = minz;
-	defaults->FallingScreamMaxSpeed = maxz;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 {
 	PROP_INT_PARM(type, 0);
@@ -2358,33 +1597,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->ViewHeight = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->UseRange = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
-{
-	PROP_DOUBLE_PARM(z, 0);
-	defaults->AirCapacity = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
 	PROP_DOUBLE_PARM(m, 0);
@@ -2408,51 +1620,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 		PROP_DOUBLE_PARM(m2, 1);
 		defaults->SideMove2 = m2;
 	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, maxhealth, I, PlayerPawn)
-{
-	PROP_INT_PARM(z, 0);
-	defaults->MaxHealth = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, mugshotmaxhealth, I, PlayerPawn)
-{
-	PROP_INT_PARM(z, 0);
-	defaults->MugShotMaxHealth = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, runhealth, I, PlayerPawn)
-{
-	PROP_INT_PARM(z, 0);
-	defaults->RunHealth = z;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
-{
-	PROP_STRING_PARM(z, 0);
-	defaults->MorphWeapon = FName(z);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, flechettetype, S, PlayerPawn)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->FlechetteType = FindClassTentative(str, PClass::FindActor("ArtiPoisonBag"));
 }
 
 //==========================================================================
@@ -2560,15 +1727,6 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 		PROP_DOUBLE_PARM(val, i);
 		defaults->HexenArmor[i] = val;
 	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
-{
-	PROP_STRING_PARM(val, 0);
-	defaults->Portrait = val;
 }
 
 //==========================================================================

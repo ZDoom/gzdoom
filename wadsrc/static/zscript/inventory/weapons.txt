@@ -35,6 +35,26 @@ class Weapon : StateProvider native
 	native bool GivenAsMorphWeapon;
 	native bool bAltFire;							// Set when this weapon's alternate fire is used.
 	native readonly bool bDehAmmo;
+	native readonly int SlotNumber;
+	
+	property AmmoGive: AmmoGive1;
+	property AmmoGive1: AmmoGive1;
+	property AmmoGive2: AmmoGive2;
+	property AmmoUse: AmmoUse1;
+	property AmmoUse1: AmmoUse1;
+	property AmmoUse2: AmmoUse2;
+	property Kickback: Kickback;
+	property ReadySound: ReadySound;
+	property SelectionOrder: SelectionOrder;
+	property MinSelectionAmmo1: MinSelAmmo1;
+	property MinSelectionAmmo2: MinSelAmmo2;
+	property SisterWeapon: SisterWeaponType;
+	property UpSound: UpSound;
+	property YAdjust: YAdjust;
+	property BobSpeed: BobSpeed;
+	property BobRangeX: BobRangeX;
+	property BobRangeY: BobRangeY;
+	property SlotNumber: SlotNumber;
 
 	Default
 	{

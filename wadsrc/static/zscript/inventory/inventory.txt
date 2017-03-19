@@ -26,9 +26,16 @@ class Inventory : Actor native
 	meta String PickupMsg;
 	meta int GiveQuest;
 	
-	Property PickupMessage: PickupMsg;
-	Property GiveQuest: GiveQuest;
-	
+	property PickupMessage: PickupMsg;
+	property GiveQuest: GiveQuest;
+	property Amount: Amount;
+	property InterHubAmount: InterHubAmount;
+	property MaxAmount: MaxAmount;
+	property PickupFlash: PickupFlash;
+	property PickupSound: PickupSound;
+	property UseSound: UseSound;
+	property RespawnTics: RespawnTics;
+		
 	Default
 	{
 		Inventory.Amount 1;

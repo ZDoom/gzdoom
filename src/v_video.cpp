@@ -1396,6 +1396,12 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	int cheight;
 	int cx1, cy1, cx2, cy2;
 
+	// For larger screems always use at least a 16:9 ratio for clean factor calculation, even if the actual ratio is narrower.
+	if (realwidth > 1280 && (double)realwidth / realheight < 16./9)
+	{
+		realheight = realwidth * 9 / 16;
+	}
+
 	ratio = ActiveRatio(realwidth, realheight);
 	if (AspectTallerThanWide(ratio))
 	{
@@ -1413,7 +1419,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	cy1 = MAX(cheight / designheight, 1);
 	cx2 = MAX(realwidth / designwidth, 1);
 	cy2 = MAX(realheight / designheight, 1);
-	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || cx1 >= 4)
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || MAX(cx1, cx2) >= 4)
 	{ // e.g. 640x360 looks better with this.
 		*cleanx = cx1;
 		*cleany = cy1;

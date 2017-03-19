@@ -1035,7 +1035,6 @@ public:
 		{ // Calculate cleanX and cleanY
 			wrapper->ScreenSizeChanged();
 		}
-		wrapper->GetCoords(ST_X, ST_Y);
 		int hud = STBAR_NORMAL;
 		if(state == HUD_StatusBar)
 		{
@@ -1225,8 +1224,10 @@ public:
 		if(!fullScreenOffsets)
 		{
 			double tmp = 0;
-			dx += ST_X;
-			dy += ST_Y - (Scaled ? script->resH : 200) + script->height;
+			int stX, stY;
+			wrapper->GetCoords(stX, stY);
+			dx += stX;
+			dy += stY - (Scaled ? script->resH : 200) + script->height;
 			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
 			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
 			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble();
@@ -1451,8 +1452,10 @@ public:
 
 			if(!fullScreenOffsets)
 			{
-				rx += ST_X;
-				ry += ST_Y - (Scaled ? script->resH : 200) + script->height;
+				int stX, stY;
+				wrapper->GetCoords(stX, stY);
+				rx += stX;
+				ry += stY - (Scaled ? script->resH : 200) + script->height;
 				if(Scaled)
 					screen->VirtualToRealCoords(rx, ry, rw, rh, script->resW, script->resH, true);
 				else
@@ -1520,7 +1523,6 @@ public:
 	player_t *CPlayer = nullptr;
 	DBaseStatusBar *wrapper;
 	bool Scaled;
-	int ST_X, ST_Y;
 
 private:
 	SBarInfo *script;

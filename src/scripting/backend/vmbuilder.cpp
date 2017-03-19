@@ -570,6 +570,7 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	assert(opb >= 0);
 	assert(opc >= 0);
 
+	assert(opcode != OP_NOP);
 
 	// The following were just asserts, meaning this would silently create broken code if there was an overflow
 	// if this happened in a release build. Not good.

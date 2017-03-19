@@ -407,7 +407,6 @@ class FxClassDefaults : public FxExpression
 public:
 	FxClassDefaults(FxExpression *, const FScriptPosition &);
 	~FxClassDefaults();
-	PPrototype *ReturnProto();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
@@ -1704,8 +1703,9 @@ class FxVMFunctionCall : public FxExpression
 {
 	friend class FxMultiAssign;
 
-	bool EmitTail;
+	bool EmitTail = false;
 	bool NoVirtual;
+	bool hasStringArgs = false;
 	FxExpression *Self;
 	PFunction *Function;
 	FArgumentList ArgList;

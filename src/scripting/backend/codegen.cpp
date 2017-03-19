@@ -503,7 +503,7 @@ static int EncodeRegType(ExpEmit reg)
 //
 //==========================================================================
 
-static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos)
+static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos, TArray<ExpEmit> *tempstrings = nullptr)
 {
 	ExpEmit where = operand->Emit(build);
 
@@ -516,7 +516,14 @@ static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const 
 	else
 	{
 		build->Emit(OP_PARAM, 0, EncodeRegType(where), where.RegNum);
-		where.Free(build);
+		if (tempstrings != nullptr && where.RegType == REGT_STRING && !where.Fixed && !where.Konst)
+		{
+			tempstrings->Push(where);	// keep temp strings until after the function call.
+		}
+		else
+		{
+			where.Free(build);
+		}
 		return where.RegCount;
 	}
 }
@@ -6587,18 +6594,6 @@ FxClassDefaults::~FxClassDefaults()
 //
 //==========================================================================
 
-PPrototype *FxClassDefaults::ReturnProto()
-{
-	EmitTail = true;
-	return FxExpression::ReturnProto();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FxExpression *FxClassDefaults::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
@@ -8572,7 +8567,6 @@ FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumen
 	Self = self;
 	Function = func;
 	ArgList = std::move(args);
-	EmitTail = false;
 	NoVirtual = novirtual;
 	CallingFunction = nullptr;
 }
@@ -8595,6 +8589,8 @@ FxVMFunctionCall::~FxVMFunctionCall()
 
 PPrototype *FxVMFunctionCall::ReturnProto()
 {
+	if (hasStringArgs) 
+		return FxExpression::ReturnProto();
 	EmitTail = true;
 	return Function->Variants[0].Proto;
 }
@@ -8810,6 +8806,10 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			failed |= (x == nullptr);
 			ArgList[i] = x;
+			if (!failed && x->ValueType == TypeString)
+			{
+				hasStringArgs = true;
+			}
 		}
 		int numargs = ArgList.Size() + implicit;
 		if ((unsigned)numargs < argtypes.Size() && argtypes[numargs] != nullptr)
@@ -8861,6 +8861,8 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
+	TArray<ExpEmit> tempstrings;
+
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= build->NumImplicits);
 	int count = 0;
 
@@ -8873,6 +8875,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		{
 			ArgList.DeleteAndClear();
 			ArgList.ShrinkToFit();
+			for (auto & exp : tempstrings) exp.Free(build);
 			return reg;
 		}
 	}
@@ -8939,7 +8942,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	// Emit code to pass explicit parameters
 	for (unsigned i = 0; i < ArgList.Size(); ++i)
 	{
-		count += EmitParameter(build, ArgList[i], ScriptPosition);
+		count += EmitParameter(build, ArgList[i], ScriptPosition, &tempstrings);
 	}
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
@@ -8954,6 +8957,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			build->Emit(OP_TAIL_K, funcaddr, count, 0);
 			ExpEmit call;
 			call.Final = true;
+			for (auto & exp : tempstrings) exp.Free(build);
 			return call;
 		}
 		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
@@ -8964,6 +8968,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		else
 		{ // Call, expecting no results
 			build->Emit(OP_CALL_K, funcaddr, count, 0);
+			for (auto & exp : tempstrings) exp.Free(build);
 			return ExpEmit();
 		}
 	}
@@ -8978,6 +8983,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			build->Emit(OP_TAIL, funcreg.RegNum, count, 0);
 			ExpEmit call;
 			call.Final = true;
+			for (auto & exp : tempstrings) exp.Free(build);
 			return call;
 		}
 		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
@@ -8988,6 +8994,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		else
 		{ // Call, expecting no results
 			build->Emit(OP_CALL, funcreg.RegNum, count, 0);
+			for (auto & exp : tempstrings) exp.Free(build);
 			return ExpEmit();
 		}
 	}
@@ -8997,6 +9004,7 @@ handlereturns:
 		// Regular call, will not write to ReturnRegs
 		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
 		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+		for (auto & exp : tempstrings) exp.Free(build);
 		return reg;
 	}
 	else
@@ -9009,8 +9017,9 @@ handlereturns:
 			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
 			ReturnRegs.Push(reg);
 		}
-		return ExpEmit();
 	}
+	for (auto & exp : tempstrings) exp.Free(build);
+	return ExpEmit();
 }
 
 //==========================================================================

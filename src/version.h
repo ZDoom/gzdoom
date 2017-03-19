@@ -46,12 +46,12 @@ const char *GetVersionString();
 #ifdef GIT_DESCRIPTION
 #define VERSIONSTR GIT_DESCRIPTION
 #else
-#define VERSIONSTR "2.3pre"
+#define VERSIONSTR "2.4.0"
 #endif
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,3,9999,0
-#define RC_PRODUCTVERSION 2,3,9999,0
+#define RC_FILEVERSION 2,4,0,0
+#define RC_PRODUCTVERSION 2,4,0,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
 // These are for content versioning. The current state is '2.4'.
 #define VER_MAJOR 2

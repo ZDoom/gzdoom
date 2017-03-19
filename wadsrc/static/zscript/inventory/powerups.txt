@@ -7,6 +7,10 @@ class PowerupGiver : Inventory
 	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	double Strength;	// Meaning depends on powerup - currently used only by Invisibility
 	
+	property prefix: Powerup;
+	property Strength: Strength;
+	property Mode: Mode;
+	
 	Default
 	{
 		Inventory.DefMaxAmount;
@@ -67,6 +71,9 @@ class Powerup : Inventory
 	int Colormap;
 	const SPECIALCOLORMAP_MASK =  0x00b60000;
 
+	property Strength: Strength;
+	property Mode: Mode;
+	
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
 	override bool GetNoTeleportFreeze() 
 	{ 

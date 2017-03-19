@@ -38,9 +38,22 @@ class PlayerPawn : Actor native
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
 	
-	Property prefix: Player;
-	Property HealRadiusType: HealingradiusType;
-	Property InvulnerabilityMode: InvulMode;
+	property prefix: Player;
+	property HealRadiusType: HealingradiusType;
+	property InvulnerabilityMode: InvulMode;
+	property AttackZOffset: AttackZOffset;
+	property JumpZ: JumpZ;
+	property GruntSpeed: GruntSpeed;
+	property FallingScreamSpeed: FallingScreamMinSpeed, FallingScreamMaxSpeed;
+	property ViewHeight: ViewHeight;
+	property UseRange: UseRange;
+	property AirCapacity: AirCapacity;
+	property MaxHealth: MaxHealth;
+	property MugshotMaxHealth: MugshotMaxHealth;
+	property RunHealth: RunHealth;
+	property MorphWeapon: MorphWeapon;
+	property FlechetteType: FlechetteType;
+	property Portrait: Portrait;
 	
 	Default
 	{

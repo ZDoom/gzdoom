@@ -2018,16 +2018,23 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{
 			auto clsname = GetStringConst(ex, ctx);
-			auto cls = PClass::FindClass(clsname);
-			if (cls == nullptr)
+			if (*clsname == 0 || !stricmp(clsname, "none"))
 			{
-				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(clsname);
+				*(PClass**)addr = nullptr;
 			}
-			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			else
 			{
-				Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				auto cls = PClass::FindClass(clsname);
+				if (cls == nullptr)
+				{
+					cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(clsname);
+				}
+				else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+				{
+					Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+				}
+				*(PClass**)addr = cls;
 			}
-			*(PClass**)addr = cls;
 		}
 		else
 		{

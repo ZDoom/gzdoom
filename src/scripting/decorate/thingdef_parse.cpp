@@ -883,18 +883,25 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 		{
 			sc.MustGetString();
-			auto cls = PClass::FindClass(sc.String);
-			*(PClass**)addr = cls;
-			if (cls == nullptr)
+
+			if (*sc.String == 0 || !stricmp(sc.String, "none"))
 			{
-				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+				*(PClass**)addr = nullptr;
 			}
-			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			else
 			{
-				sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
-				FScriptPosition::ErrorCounter++;
+				auto cls = PClass::FindClass(sc.String);
+				if (cls == nullptr)
+				{
+					cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+				}
+				else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+				{
+					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+					FScriptPosition::ErrorCounter++;
+				}
+				*(PClass**)addr = cls;
 			}
-			*(PClass**)addr = cls;
 		}
 		else
 		{

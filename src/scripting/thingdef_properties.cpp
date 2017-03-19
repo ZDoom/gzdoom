@@ -96,18 +96,6 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool 
 	}
 	return static_cast<PClassActor *>(cls);
 }
-static AInventory::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
-{
-	return static_cast<AInventory::MetaClass *>(FindClassTentative(name, PClass::FindActor(NAME_Ammo), optional));
-}
-static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optional = false)
-{
-	return static_cast<AWeapon::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AWeapon), optional));
-}
-static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name, bool optional = false)
-{
-	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn), optional));
-}
 
 //==========================================================================
 //
@@ -1065,7 +1053,7 @@ DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->VisibleToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			info->VisibleToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 
@@ -1107,7 +1095,7 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 
@@ -1121,7 +1109,7 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 
@@ -1182,36 +1170,6 @@ DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 {
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType1 = FindClassTentativeAmmo(str);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType1 = FindClassTentativeAmmo(str);
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
-{
-	PROP_STRING_PARM(str, 0);
-	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType2 = FindClassTentativeAmmo(str);
 }
 
 //==========================================================================
@@ -1779,7 +1737,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewbob, F, PlayerPawn)
 DEFINE_SCRIPTED_PROPERTY(playerclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(APlayerPawn), bag.fromDecorate);
 }
 
 //==========================================================================
@@ -1833,7 +1791,7 @@ DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, MorphProjectile)
 DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(APlayerPawn), bag.fromDecorate);
 }
 
 //==========================================================================

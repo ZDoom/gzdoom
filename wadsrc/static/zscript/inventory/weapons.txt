@@ -43,6 +43,9 @@ class Weapon : StateProvider native
 	property AmmoUse: AmmoUse1;
 	property AmmoUse1: AmmoUse1;
 	property AmmoUse2: AmmoUse2;
+	property AmmoType: AmmoType1;
+	property AmmoType1: AmmoType1;
+	property AmmoType2: AmmoType2;
 	property Kickback: Kickback;
 	property ReadySound: ReadySound;
 	property SelectionOrder: SelectionOrder;

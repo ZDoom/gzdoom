@@ -21,11 +21,12 @@ enum
    LIGHT_SCALE = 3,
 };
 
-// This is as good as something new - and it can be set directly in the ActorInfo!
+// This is as good as something new
 #define MF4_SUBTRACTIVE MF4_MISSILEEVENMORE
 #define MF4_ADDITIVE MF4_MISSILEMORE
 #define MF4_DONTLIGHTSELF MF4_SEESDAGGERS
 #define MF4_ATTENUATE MF4_INCOMBAT
+#define MF4_NOSHADOWMAP MF4_STANDSTILL
 
 enum ELightType
 {
@@ -117,6 +118,7 @@ public:
 	uint8_t color2[3];
 	bool visibletoplayer;
 	bool swapped;
+	bool shadowmapped;
 	int bufferindex;
 
 

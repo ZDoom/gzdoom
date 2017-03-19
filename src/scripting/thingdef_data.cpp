@@ -60,6 +60,7 @@
 #include "r_data/sprites.h"
 #include "serializer.h"
 #include "wi_stuff.h"
+#include "a_dynlight.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -477,6 +478,16 @@ static FFlagDef PlayerPawnFlagDefs[] =
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
+};
+
+static FFlagDef DynLightFlagDefs[] =
+{
+	// PlayerPawn flags
+	DEFINE_FLAG(MF4, SUBTRACTIVE, ADynamicLight, flags4),
+	DEFINE_FLAG(MF4, ADDITIVE, ADynamicLight, flags4),
+	DEFINE_FLAG(MF4, DONTLIGHTSELF, ADynamicLight, flags4),
+	DEFINE_FLAG(MF4, ATTENUATE, ADynamicLight, flags4),
+	DEFINE_FLAG(MF4, NOSHADOWMAP, ADynamicLight, flags4),
 };
 
 static FFlagDef PowerSpeedFlagDefs[] =

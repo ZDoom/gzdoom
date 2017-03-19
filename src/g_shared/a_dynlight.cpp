@@ -568,6 +568,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 	collected_ss.Push({ subSec, opos });
 	subSec->validcount = ::validcount;
 
+	bool hitonesidedback = false;
 	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
 		subSec = collected_ss[i].sub;
@@ -595,6 +596,10 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 					{
 						seg->linedef->validcount = validcount;
 						touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
+					}
+					else if (seg->linedef->sidedef[0] == seg->sidedef && seg->linedef->sidedef[1] == nullptr)
+					{
+						hitonesidedback = true;
 					}
 				}
 				if (seg->linedef)
@@ -657,6 +662,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 			}
 		}
 	}
+	shadowmapped = hitonesidedback && !(flags4 & MF4_NOSHADOWMAP);
 }
 
 //==========================================================================
@@ -758,6 +764,7 @@ void ADynamicLight::UnlinkLight ()
 	while (touching_sides) touching_sides = DeleteLightNode(touching_sides);
 	while (touching_subsectors) touching_subsectors = DeleteLightNode(touching_subsectors);
 	while (touching_sector) touching_sector = DeleteLightNode(touching_sector);
+	shadowmapped = false;
 }
 
 void ADynamicLight::OnDestroy()
@@ -771,7 +778,7 @@ CCMD(listlights)
 {
 	int walls, sectors, subsecs;
 	int allwalls=0, allsectors=0, allsubsecs = 0;
-	int i=0;
+	int i=0, shadowcount = 0;
 	ADynamicLight * dl;
 	TThinkerIterator<ADynamicLight> it;
 
@@ -780,11 +787,12 @@ CCMD(listlights)
 		walls=0;
 		sectors=0;
 		subsecs = 0;
-		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s",
+		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
 			dl->X(), dl->Y(), dl->Z(), dl->args[LIGHT_RED], 
-			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius, (dl->flags4 & MF4_ATTENUATE)? "attenuated" : "");
+			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius, (dl->flags4 & MF4_ATTENUATE)? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
 		i++;
+		shadowcount += dl->shadowmapped;
 
 		if (dl->target)
 		{
@@ -824,7 +832,7 @@ CCMD(listlights)
 		Printf("- %d walls, %d subsectors, %d sectors\n", walls, subsecs, sectors);
 
 	}
-	Printf("%i dynamic lights, %d walls, %d subsectors, %d sectors\n\n\n", i, allwalls, allsubsecs, allsectors);
+	Printf("%i dynamic lights, %d shadowmapped, %d walls, %d subsectors, %d sectors\n\n\n", i, shadowcount, allwalls, allsubsecs, allsectors);
 }
 
 CCMD(listsublights)

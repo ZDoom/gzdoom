@@ -116,35 +116,43 @@ bool FShadowMap::IsEnabled() const
 int FShadowMap::ShadowMapIndex(ADynamicLight *light)
 {
 	if (IsEnabled())
-		return mLightToShadowmap[light];
-	else
-		return 1024;
+	{
+		auto val = mLightToShadowmap.CheckKey(light);
+		if (val != nullptr) return *val;
+	}
+	return 1024;
 }
 
 void FShadowMap::UploadLights()
 {
-	mLights.Clear();
+	if (mLights.Size() != 1024 * 4) mLights.Resize(1024 * 4);
+	int lightindex = 0;
 	mLightToShadowmap.Clear(mLightToShadowmap.CountUsed() * 2); // To do: allow clearing a TMap while building up a reserve
 
+	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	while (true)
+	while (auto light = it.Next())
 	{
-		ADynamicLight *light = it.Next();
-		if (!light) break;
+		if (light->shadowmapped)
+		{
+			mLightToShadowmap[light] = lightindex >> 2;
 
-		mLightToShadowmap[light] = mLights.Size() / 4;
+			mLights[lightindex] = light->X();
+			mLights[lightindex+1] = light->Y();
+			mLights[lightindex+2] = light->Z();
+			mLights[lightindex+3] = light->GetRadius();
+			lightindex += 4;
 
-		mLights.Push(light->X());
-		mLights.Push(light->Y());
-		mLights.Push(light->Z());
-		mLights.Push(light->GetRadius());
+			if (lightindex == 1024*4) // Only 1024 lights for now
+				break;
+		}
 
-		if (mLights.Size() == 1024) // Only 1024 lights for now
-			break;
 	}
 
-	while (mLights.Size() < 1024 * 4)
-		mLights.Push(0.0f);
+	for (; lightindex < 1024 * 4; lightindex++)
+	{
+		mLights[lightindex] = 0;
+	}
 
 	if (mLightList == 0)
 		glGenBuffers(1, (GLuint*)&mLightList);

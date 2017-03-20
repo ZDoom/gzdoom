@@ -27,9 +27,9 @@ class DoomStatusScreen : StatusScreen
 			cnt_kills[0] = Plrs[me].skills;
 			cnt_items[0] = Plrs[me].sitems;
 			cnt_secret[0] = Plrs[me].ssecret;
-			cnt_time = Plrs[me].stime / Thinker.TICRATE;
-			cnt_par = wbs.partime / Thinker.TICRATE;
-			cnt_total_time = wbs.totaltime / Thinker.TICRATE;
+			cnt_time = Thinker.Tics2Seconds(Plrs[me].stime);
+			cnt_par = Thinker.Tics2Seconds(wbs.partime);
+			cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
 		}
 
 		if (sp_state == 2)
@@ -92,17 +92,18 @@ class DoomStatusScreen : StatusScreen
 				cnt_total_time += 3;
 			}
 
-			int sec = Plrs[me].stime / Thinker.TICRATE;
+			int sec = Thinker.Tics2Seconds(Plrs[me].stime);
 			if (!intermissioncounter || cnt_time >= sec)
 				cnt_time = sec;
 
-			int tsec = wbs.totaltime / Thinker.TICRATE;
+			int tsec = Thinker.Tics2Seconds(wbs.totaltime);
 			if (!intermissioncounter || cnt_total_time >= tsec)
 				cnt_total_time = tsec;
 
-			if (!intermissioncounter || cnt_par >= wbs.partime / Thinker.TICRATE)
+			int psec = Thinker.Tics2Seconds(wbs.partime);
+			if (!intermissioncounter || cnt_par >= psec)
 			{
-				cnt_par = wbs.partime / Thinker.TICRATE;
+				cnt_par = psec;
 
 				if (cnt_time >= sec)
 				{

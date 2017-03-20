@@ -229,7 +229,7 @@ class DeathmatchStatusScreen : StatusScreen
 		// Draw game time
 		y += height + CleanYfac;
 
-		int seconds = Plrs[me].stime * Thinker.TICRATE;
+		int seconds = Thinker.Tics2Seconds(Plrs[me].stime);
 		int hours = seconds / 3600;
 		int minutes = (seconds % 3600) / 60;
 		seconds = seconds % 60;

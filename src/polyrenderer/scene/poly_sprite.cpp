@@ -28,7 +28,7 @@
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/math/poly_intersection.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
@@ -38,7 +38,7 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	if (IsThingCulled(thing))
 		return false;
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
@@ -71,7 +71,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	if (!GetLine(thing, line[0], line[1]))
 		return;
 	
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 	pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 
@@ -138,10 +138,10 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	}
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->SpriteGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
 	args.uniforms.flags = 0;
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
@@ -252,7 +252,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	
-	if (!PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
+	if (!PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		uint32_t r = (args.uniforms.color >> 16) & 0xff;
 		uint32_t g = (args.uniforms.color >> 8) & 0xff;
@@ -275,7 +275,7 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	FIntCVar *cvar = thing->GetClass()->distancecheck;
 	if (cvar != nullptr && *cvar >= 0)
 	{
-		double dist = (thing->Pos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos).LengthSquared();
+		double dist = (thing->Pos() - PolyRenderer::Instance()->Viewpoint.Pos).LengthSquared();
 		double check = (double)**cvar;
 		if (dist >= check * check)
 			return true;
@@ -293,88 +293,9 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	return false;
 }
 
-#if 0
-visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
-{
-	visstyle_t visstyle;
-
-	bool foggy = false;
-	int actualextralight = foggy ? 0 : extralight << 4;
-	int spriteshade = LIGHT2SHADE(thing->Sector->lightlevel + actualextralight);
-
-	FRenderStyle RenderStyle;
-	RenderStyle = thing->RenderStyle;
-	float Alpha = float(thing->Alpha);
-	int ColormapNum = 0;
-
-	// The software renderer cannot invert the source without inverting the overlay
-	// too. That means if the source is inverted, we need to do the reverse of what
-	// the invert overlay flag says to do.
-	bool invertcolormap = (RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
-
-	if (RenderStyle.Flags & STYLEF_InvertSource)
-	{
-		invertcolormap = !invertcolormap;
-	}
-
-	FDynamicColormap *mybasecolormap = thing->Sector->ColorMap;
-
-	// Sprites that are added to the scene must fade to black.
-	if (RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
-	{
-		mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
-	}
-
-	if (RenderStyle.Flags & STYLEF_FadeToBlack)
-	{
-		if (invertcolormap)
-		{ // Fade to white
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
-			invertcolormap = false;
-		}
-		else
-		{ // Fade to black
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
-		}
-	}
-
-	// get light level
-	if (swrenderer::fixedcolormap != nullptr)
-	{ // fixed map
-		BaseColormap = swrenderer::fixedcolormap;
-		ColormapNum = 0;
-	}
-	else
-	{
-		if (invertcolormap)
-		{
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-		}
-		if (swrenderer::fixedlightlev >= 0)
-		{
-			BaseColormap = mybasecolormap;
-			ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
-		}
-		else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
-		{ // full bright
-			BaseColormap = mybasecolormap;
-			ColormapNum = 0;
-		}
-		else
-		{ // diminished light
-			double minz = double((2048 * 4) / double(1 << 20));
-			ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / MAX(z, minz), spriteshade);
-			BaseColormap = mybasecolormap;
-		}
-	}
-
-	return visstyle;
-}
-#endif
-
 FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 {
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	flipX = false;
 
 	if (thing->renderflags & RF_FLATSPRITE)

@@ -29,7 +29,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "d_player.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
@@ -42,7 +42,7 @@ void RenderPolyPlayerSprites::Render()
 	// This code cannot be moved directly to RenderRemainingSprites because the engine
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	if (!r_drawplayersprites ||
 		!viewpoint.camera ||
@@ -143,25 +143,26 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		sy += wy;
 	}
 	
-	auto viewport = PolyRenderer::Instance()->Thread.Viewport.get();
-	const auto &viewpoint = viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
+	double YaspectMul = 1.2f;
 
-	double pspritexscale = PolyRenderer::Instance()->Thread.Viewport->viewwindow.centerxwide / 160.0;
-	double pspriteyscale = pspritexscale * viewport->YaspectMul;
+	double pspritexscale = PolyRenderer::Instance()->Viewwindow.centerxwide / 160.0;
+	double pspriteyscale = pspritexscale * YaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
 	// calculate edges of the shape
 	double tx = sx - BaseXCenter;
 
 	tx -= tex->GetScaledLeftOffset();
-	int x1 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
+	int x1 = xs_RoundToInt(renderTarget->GetWidth() * 0.5 + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
 	tx += tex->GetScaledWidth();
-	int x2 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
+	int x2 = xs_RoundToInt(renderTarget->GetWidth() * 0.5 + tx * pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
@@ -170,12 +171,12 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	double texturemid = (BaseYCenter - sy) * tex->Scale.Y + tex->TopOffset;
 
 	// Adjust PSprite for fullscreen views
-	if (viewpoint.camera->player && (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight() || (viewport->RenderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
+	if (viewpoint.camera->player && (renderTarget != screen || viewheight == renderTarget->GetHeight() || (renderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
 	{
 		AWeapon *weapon = dyn_cast<AWeapon>(sprite->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
-			if (viewport->RenderTarget != screen || viewheight == viewport->RenderTarget->GetHeight())
+			if (renderTarget != screen || viewheight == renderTarget->GetHeight())
 			{
 				texturemid -= weapon->YAdjust;
 			}
@@ -189,7 +190,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	// Move the weapon down for 1280x1024.
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{
-		texturemid -= AspectPspriteOffset(PolyRenderer::Instance()->Thread.Viewport->viewwindow.WidescreenRatio);
+		texturemid -= AspectPspriteOffset(PolyRenderer::Instance()->Viewwindow.WidescreenRatio);
 	}
 
 	int clipped_x1 = MAX(x1, 0);
@@ -226,9 +227,9 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
-	int spriteshade = swrenderer::LightVisibility::LightLevelToShade(owner->Sector->lightlevel + actualextralight, foggy);
+	int spriteshade = PolyLightVisibility::LightLevelToShade(owner->Sector->lightlevel + actualextralight, foggy);
 	double minz = double((2048 * 4) / double(1 << 20));
-	ColormapNum = GETPALOOKUP(PolyRenderer::Instance()->Thread.Light->SpriteGlobVis(foggy) / minz, spriteshade);
+	ColormapNum = GETPALOOKUP(PolyRenderer::Instance()->Light.SpriteGlobVis(foggy) / minz, spriteshade);
 
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{
@@ -261,9 +262,9 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		}
 
 		/*
-		if (swrenderer::realfixedcolormap != nullptr && (!swrenderer::r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
+		if (realfixedcolormap != nullptr && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
 		{ // fixed color
-			BaseColormap = swrenderer::realfixedcolormap;
+			BaseColormap = realfixedcolormap;
 			ColormapNum = 0;
 		}
 		else
@@ -272,10 +273,10 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 			{
 				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
 			}
-			if (swrenderer::fixedlightlev >= 0)
+			if (fixedlightlev >= 0)
 			{
 				BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-				ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
+				ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && sprite->GetState()->GetFullbright())
 			{ // full bright
@@ -331,7 +332,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
-		swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+		PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 		if (!noaccel && cameraLight->ShaderColormap() == nullptr &&
 			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
 			tex->UseBasePalette())
@@ -348,7 +349,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && PolyRenderer::Instance()->Thread.Viewport->RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && renderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 	{
 		FRenderStyle style = RenderStyle;
 		style.CheckFuzz();

@@ -28,7 +28,7 @@
 #include "r_data/r_translate.h"
 #include "polyrenderer/scene/poly_scene.h"
 #include "polyrenderer/poly_renderer.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)
 EXTERN_CVAR(Int, r_portal_recursions)
@@ -185,7 +185,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 
 
 void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
 {
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	// Reject lines not facing viewer
 	DVector2 pt1 = line->v1->fPos() - viewpoint.Pos;
@@ -243,7 +243,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
-		args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
+		args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 		args.uniforms.color = 0;
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;
@@ -329,7 +329,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		}
 	}
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	for (sector_t *sector : SeenSectors)
 	{
 		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)

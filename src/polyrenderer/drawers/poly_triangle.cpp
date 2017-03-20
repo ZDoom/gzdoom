@@ -82,7 +82,7 @@ void PolyTriangleDrawer::toggle_mirror()
 
 void PolyTriangleDrawer::draw(const PolyDrawArgs &args)
 {
-	PolyRenderer::Instance()->Thread.DrawQueue->Push<DrawPolyTrianglesCommand>(args, mirror);
+	PolyRenderer::Instance()->DrawQueue->Push<DrawPolyTrianglesCommand>(args, mirror);
 }
 
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadData *thread)

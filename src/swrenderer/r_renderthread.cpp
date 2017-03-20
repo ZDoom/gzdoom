@@ -63,7 +63,7 @@ namespace swrenderer
 		FrameMemory = std::make_unique<RenderMemory>();
 		Viewport = std::make_unique<RenderViewport>();
 		Light = std::make_unique<LightVisibility>();
-		DrawQueue = std::make_shared<DrawerCommandQueue>(this);
+		DrawQueue = std::make_shared<DrawerCommandQueue>(FrameMemory.get());
 		OpaquePass = std::make_unique<RenderOpaquePass>(this);
 		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
 		SpriteList = std::make_unique<VisibleSpriteList>();

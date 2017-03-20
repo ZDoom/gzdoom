@@ -32,7 +32,7 @@
 #include "poly_decal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
@@ -249,7 +249,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	}
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	args.uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = SubsectorDepth;
@@ -354,7 +354,7 @@ FTexture *RenderPolyWall::GetTexture()
 
 int RenderPolyWall::GetLightLevel()
 {
-	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		return 255;
@@ -362,7 +362,7 @@ int RenderPolyWall::GetLightLevel()
 	else
 	{
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Thread.Viewport->viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 		return clamp(Side->GetLightLevel(foggy, LineSeg->frontsector->lightlevel) + actualextralight, 0, 255);
 	}
 }

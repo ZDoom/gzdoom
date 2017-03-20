@@ -173,11 +173,11 @@ void FSoftwareRenderer::RenderView(player_t *player)
 {
 	if (r_polyrenderer)
 	{
-		PolyRenderer::Instance()->Thread.Viewport->viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Thread.Viewport->viewwindow = r_viewwindow;
+		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
+		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
 		PolyRenderer::Instance()->RenderView(player);
-		r_viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
+		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
 	else
 	{
@@ -210,11 +210,11 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	pic->Lock ();
 	if (r_polyrenderer)
 	{
-		PolyRenderer::Instance()->Thread.Viewport->viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Thread.Viewport->viewwindow = r_viewwindow;
+		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
+		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
 		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
-		r_viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
+		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
 	else
 	{
@@ -244,11 +244,11 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 	}
 	else
 	{
-		PolyRenderer::Instance()->Thread.Viewport->viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Thread.Viewport->viewwindow = r_viewwindow;
+		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
+		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
 		PolyRenderer::Instance()->RenderRemainingPlayerSprites();
-		r_viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
+		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
 }
 
@@ -276,28 +276,30 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)
 {
-	auto viewport = r_polyrenderer ? PolyRenderer::Instance()->Thread.Viewport.get() : mScene.MainThread()->Viewport.get();
+	auto renderTarget = r_polyrenderer ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
+	auto &cameraViewpoint = r_polyrenderer ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
+	auto &cameraViewwindow = r_polyrenderer ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
 
 	// Grab global state shared with rest of zdoom
-	viewport->viewpoint = r_viewpoint;
-	viewport->viewwindow = r_viewwindow;
+	cameraViewpoint = r_viewpoint;
+	cameraViewwindow = r_viewwindow;
 	
-	uint8_t *Pixels = viewport->RenderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels();
-	DSimpleCanvas *Canvas = viewport->RenderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
+	uint8_t *Pixels = renderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels();
+	DSimpleCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
 	CameraLight savedCameraLight = *CameraLight::Instance();
 
-	DAngle savedfov = viewport->viewpoint.FieldOfView;
-	R_SetFOV (viewport->viewpoint, (double)fov);
+	DAngle savedfov = cameraViewpoint.FieldOfView;
+	R_SetFOV (cameraViewpoint, (double)fov);
 
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
 		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 
-	R_SetFOV (viewport->viewpoint, savedfov);
+	R_SetFOV (cameraViewpoint, savedfov);
 
 	if (Canvas->IsBgra())
 	{
@@ -322,7 +324,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		}
 	}
 
-	if (viewport->RenderTarget->IsBgra())
+	if (renderTarget->IsBgra())
 	{
 		// True color render still sometimes uses palette textures (for sprites, mostly).
 		// We need to make sure that both pixel buffers contain data:
@@ -350,8 +352,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	*CameraLight::Instance() = savedCameraLight;
 
 	// Sync state back to zdoom
-	r_viewpoint = viewport->viewpoint;
-	r_viewwindow = viewport->viewwindow;
+	r_viewpoint = cameraViewpoint;
+	r_viewwindow = cameraViewwindow;
 }
 
 void FSoftwareRenderer::PreprocessLevel()

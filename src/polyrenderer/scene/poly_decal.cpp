@@ -27,9 +27,9 @@
 #include "r_data/r_translate.h"
 #include "poly_decal.h"
 #include "polyrenderer/poly_renderer.h"
+#include "polyrenderer/scene/poly_light.h"
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_light.h"
 
 void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
@@ -107,7 +107,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		return;
 
 	bool foggy = false;
-	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Thread.Viewport->viewpoint.extralight << 4;
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 
 	std::pair<float, float> offsets[4] =
 	{
@@ -133,13 +133,13 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
 
-	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 
 	PolyDrawArgs args;
 	args.uniforms.flags = 0;
 	args.SetColormap(GetColorTable(front->Colormap));
 	args.SetTexture(tex, decal->Translation, true);
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		args.uniforms.light = 256;
@@ -151,7 +151,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 
-	if (PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
+	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		args.uniforms.color = 0xff000000 | decal->AlphaColor;
 	}

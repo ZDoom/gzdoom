@@ -15,6 +15,7 @@
 
 #include <stddef.h>
 #include <memory>
+#include "v_video.h"
 #include "r_defs.h"
 
 namespace swrenderer

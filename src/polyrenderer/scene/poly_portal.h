@@ -64,7 +64,7 @@ private:
 	int savedextralight;
 	DVector3 savedpos;
 	DRotator savedangles;
-	double savedvisibility;
+	//double savedvisibility;
 	AActor *savedcamera;
 	sector_t *savedsector;
 };

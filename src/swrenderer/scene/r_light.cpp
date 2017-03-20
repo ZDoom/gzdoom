@@ -44,9 +44,9 @@ namespace swrenderer
 		return &instance;
 	}
 
-	void CameraLight::SetCamera(RenderViewport *viewport, AActor *actor)
+	void CameraLight::SetCamera(FRenderViewpoint &viewpoint, DCanvas *renderTarget, AActor *actor)
 	{
-		AActor *camera = viewport->viewpoint.camera;
+		AActor *camera = viewpoint.camera;
 		player_t *player = actor->player;
 		if (camera && camera->player != nullptr)
 			player = camera->player;
@@ -60,7 +60,7 @@ namespace swrenderer
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-				if (viewport->RenderTarget == screen && (viewport->RenderTarget->IsBgra() || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
+				if (renderTarget == screen && (renderTarget->IsBgra() || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 				{
 					// Render everything fullbright. The copy to video memory will
 					// apply the special colormap, so it won't be restricted to the
@@ -83,10 +83,10 @@ namespace swrenderer
 			}
 		}
 		// [RH] Inverse light for shooting the Sigil
-		if (fixedcolormap == nullptr && viewport->viewpoint.extralight == INT_MIN)
+		if (fixedcolormap == nullptr && viewpoint.extralight == INT_MIN)
 		{
 			fixedcolormap = &SpecialSWColormaps[INVERSECOLORMAP];
-			viewport->viewpoint.extralight = 0;
+			viewpoint.extralight = 0;
 		}
 	}
 

@@ -32,8 +32,8 @@
 #include "po_man.h"
 #include "st_stuff.h"
 #include "g_levellocals.h"
+#include "polyrenderer/scene/poly_light.h"
 #include "swrenderer/scene/r_scene.h"
-#include "swrenderer/scene/r_light.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_swcolormaps.h"
@@ -50,49 +50,46 @@ PolyRenderer *PolyRenderer::Instance()
 	return &scene;
 }
 
-PolyRenderer::PolyRenderer() : Thread(nullptr)
+PolyRenderer::PolyRenderer()
 {
+	DrawQueue = std::make_shared<DrawerCommandQueue>(&FrameMemory);
 }
 
 void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
 	
-	auto viewport = Thread.Viewport.get();
-
-	viewport->RenderTarget = screen;
+	RenderTarget = screen;
 
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
 	int stHeight = gST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	viewport->SetViewport(&Thread, width, height, trueratio);
+	//viewport->SetViewport(&Thread, width, height, trueratio);
 
 	RenderActorView(player->mo, false);
 
 	// Apply special colormap if the target cannot do it
 	CameraLight *cameraLight = CameraLight::Instance();
-	if (cameraLight->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
+	if (cameraLight->ShaderColormap() && RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 	{
-		Thread.DrawQueue->Push<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
+		DrawQueue->Push<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
 	}
 	
-	DrawerThreads::Execute(Thread.DrawQueue);
+	DrawerThreads::Execute(DrawQueue);
 	DrawerThreads::WaitForWorkers();
-	Thread.DrawQueue->Clear();
+	DrawQueue->Clear();
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
-	auto viewport = Thread.Viewport.get();
-	
 	const bool savedviewactive = viewactive;
 
 	viewwidth = width;
-	viewport->RenderTarget = canvas;
-	R_SetWindow(viewport->viewpoint, viewport->viewwindow, 12, width, height, height, true);
-	viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
+	RenderTarget = canvas;
+	R_SetWindow(Viewpoint, Viewwindow, 12, width, height, height, true);
+	//viewport->SetViewport(&Thread, width, height, Viewwindow.WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
@@ -100,16 +97,16 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	canvas->Lock(true);
 	
 	RenderActorView(actor, dontmaplines);
-	DrawerThreads::Execute(Thread.DrawQueue);
+	DrawerThreads::Execute(DrawQueue);
 	DrawerThreads::WaitForWorkers();
 	
 	canvas->Unlock();
 
-	viewport->RenderTarget = screen;
-	R_ExecuteSetViewSize(viewport->viewpoint, viewport->viewwindow);
+	RenderTarget = screen;
+	R_ExecuteSetViewSize(Viewpoint, Viewwindow);
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
-	viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
+	//viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
 	viewactive = savedviewactive;
 }
 
@@ -121,19 +118,19 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
-	R_SetupFrame(Thread.Viewport->viewpoint, Thread.Viewport->viewwindow, actor);
+	R_SetupFrame(Viewpoint, Viewwindow, actor);
 
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 	else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
 
 
-	swrenderer::CameraLight::Instance()->SetCamera(Thread.Viewport.get(), actor);
-	Thread.Viewport->SetupFreelook();
+	PolyCameraLight::Instance()->SetCamera(Viewpoint, RenderTarget, actor);
+	//Viewport->SetupFreelook();
 
-	ActorRenderFlags savedflags = Thread.Viewport->viewpoint.camera->renderflags;
+	ActorRenderFlags savedflags = Viewpoint.camera->renderflags;
 	// Never draw the player unless in chasecam mode
-	if (!Thread.Viewport->viewpoint.showviewer)
-		Thread.Viewport->viewpoint.camera->renderflags |= RF_INVISIBLE;
+	if (!Viewpoint.showviewer)
+		Viewpoint.camera->renderflags |= RF_INVISIBLE;
 
 	ClearBuffers();
 	SetSceneViewport();
@@ -144,7 +141,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	MainPortal.RenderTranslucent(0);
 	PlayerSprites.Render();
 
-	Thread.Viewport->viewpoint.camera->renderflags = savedflags;
+	Viewpoint.camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
 	
 	NetUpdate();
@@ -158,9 +155,8 @@ void PolyRenderer::RenderRemainingPlayerSprites()
 void PolyRenderer::ClearBuffers()
 {
 	PolyVertexBuffer::Clear();
-	auto viewport = Thread.Viewport.get();
-	PolyStencilBuffer::Instance()->Clear(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), 0);
-	PolySubsectorGBuffer::Instance()->Resize(viewport->RenderTarget->GetPitch(), viewport->RenderTarget->GetHeight());
+	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
+	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 	NextStencilValue = 0;
 	SeenLinePortals.clear();
 	SeenMirrors.clear();
@@ -170,9 +166,7 @@ void PolyRenderer::SetSceneViewport()
 {
 	using namespace swrenderer;
 	
-	auto viewport = Thread.Viewport.get();
-
-	if (viewport->RenderTarget == screen) // Rendering to screen
+	if (RenderTarget == screen) // Rendering to screen
 	{
 		int height;
 		if (screenblocks >= 10)
@@ -181,11 +175,11 @@ void PolyRenderer::SetSceneViewport()
 			height = (screenblocks*SCREENHEIGHT / 10) & ~7;
 
 		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-		PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, viewport->RenderTarget);
+		PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
 	}
 	else // Rendering to camera texture
 	{
-		PolyTriangleDrawer::set_viewport(0, 0, viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), viewport->RenderTarget);
+		PolyTriangleDrawer::set_viewport(0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), RenderTarget);
 	}
 }
 
@@ -201,25 +195,23 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	const auto &viewpoint = Thread.Viewport->viewpoint;
-	const auto &viewwindow = Thread.Viewport->viewwindow;
-	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
+	double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	float adjustedPitch = (float)asin(angy / alen);
-	float adjustedViewAngle = (float)(viewpoint.Angles.Yaw - 90).Radians();
+	float adjustedViewAngle = (float)(Viewpoint.Angles.Yaw - 90).Radians();
 
-	float ratio = viewwindow.WidescreenRatio;
-	float fovratio = (viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
-	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
+	float ratio = Viewwindow.WidescreenRatio;
+	float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 
 	TriMatrix worldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
-		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+		TriMatrix::translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 }

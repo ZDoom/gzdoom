@@ -144,12 +144,12 @@ private:
 	friend class DrawerCommandQueue;
 };
 
-namespace swrenderer { class RenderThread; }
+class RenderMemory;
 
 class DrawerCommandQueue
 {
 public:
-	DrawerCommandQueue(swrenderer::RenderThread *renderthread);
+	DrawerCommandQueue(RenderMemory *memoryAllocator);
 	
 	void Clear() { commands.clear(); }
 	
@@ -178,7 +178,7 @@ private:
 	void *AllocMemory(size_t size);
 	
 	std::vector<DrawerCommand *> commands;
-	swrenderer::RenderThread *renderthread;
+	RenderMemory *FrameMemory;
 	
 	friend class DrawerThreads;
 };

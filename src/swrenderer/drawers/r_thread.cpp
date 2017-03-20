@@ -167,11 +167,11 @@ void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)
 
 #endif
 
-DrawerCommandQueue::DrawerCommandQueue(swrenderer::RenderThread *renderthread) : renderthread(renderthread)
+DrawerCommandQueue::DrawerCommandQueue(RenderMemory *frameMemory) : FrameMemory(frameMemory)
 {
 }
 
 void *DrawerCommandQueue::AllocMemory(size_t size)
 {
-	return renderthread->FrameMemory->AllocMemory<uint8_t>((int)size);
+	return FrameMemory->AllocMemory<uint8_t>((int)size);
 }

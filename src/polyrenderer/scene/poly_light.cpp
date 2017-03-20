@@ -1,5 +1,5 @@
 /*
-**  Triangle drawers
+**  Light calculations
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
@@ -20,28 +20,24 @@
 **
 */
 
-#pragma once
+#include <stdlib.h>
+#include "templates.h"
+#include "doomdef.h"
+#include "sbar.h"
+#include "poly_light.h"
 
-struct TriVertex;
-struct ShadedTriVertex;
-struct FRenderViewpoint;
-
-struct TriMatrix
+fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 {
-	static TriMatrix null();
-	static TriMatrix identity();
-	static TriMatrix translate(float x, float y, float z);
-	static TriMatrix scale(float x, float y, float z);
-	static TriMatrix rotate(float angle, float x, float y, float z);
-	static TriMatrix swapYZ();
-	static TriMatrix perspective(float fovy, float aspect, float near, float far);
-	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
-
-	//static TriMatrix worldToView(const FRenderViewpoint &viewpoint); // Software renderer world to view space transform
-	//static TriMatrix viewToClip(double focalTangent, double centerY, double invZtoScale); // Software renderer shearing projection
-
-	ShadedTriVertex operator*(TriVertex v) const;
-	TriMatrix operator*(const TriMatrix &m) const;
-
-	float matrix[16];
-};
+	bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
+	if (nolightfade)
+	{
+		return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);
+	}
+	else
+	{
+		// Convert a light level into an unbounded colormap index (shade). Result is
+		// fixed point. Why the +12? I wish I knew, but experimentation indicates it
+		// is necessary in order to best reproduce Doom's original lighting.
+		return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
+	}
+}

@@ -27,6 +27,7 @@
 
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
+class RenderMemory;
 
 namespace swrenderer
 {
@@ -41,7 +42,6 @@ namespace swrenderer
 	class VisiblePlaneList;
 	class DrawSegmentList;
 	class RenderClipSegment;
-	class RenderMemory;
 	class RenderViewport;
 	class LightVisibility;
 	class SWPixelFormatDrawers;

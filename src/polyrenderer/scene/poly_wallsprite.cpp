@@ -27,14 +27,14 @@
 #include "r_data/r_translate.h"
 #include "poly_wallsprite.h"
 #include "polyrenderer/poly_renderer.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 	pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 
@@ -99,10 +99,10 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	}
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		args.uniforms.light = 256;

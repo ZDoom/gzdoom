@@ -31,7 +31,8 @@
 #include "scene/poly_portal.h"
 #include "scene/poly_playersprite.h"
 #include "scene/poly_sky.h"
-#include "swrenderer/r_renderthread.h"
+#include "scene/poly_light.h"
+#include "swrenderer/r_memory.h"
 
 class AActor;
 class DCanvas;
@@ -56,7 +57,12 @@ public:
 
 	bool DontMapLines = false;
 	
-	swrenderer::RenderThread Thread;
+	RenderMemory FrameMemory;
+	DrawerCommandQueuePtr DrawQueue;
+	DCanvas *RenderTarget = nullptr;
+	FViewWindow Viewwindow;
+	FRenderViewpoint Viewpoint;
+	PolyLightVisibility Light;
 
 private:
 	void RenderActorView(AActor *actor, bool dontmaplines);

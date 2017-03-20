@@ -31,41 +31,38 @@
 #include "r_data/colormaps.h"
 #include "r_memory.h"
 
-namespace swrenderer
+void *RenderMemory::AllocBytes(int size)
 {
-	void *RenderMemory::AllocBytes(int size)
+	size = (size + 15) / 16 * 16; // 16-byte align
+		
+	if (UsedBlocks.empty() || UsedBlocks.back()->Position + size > BlockSize)
 	{
-		size = (size + 15) / 16 * 16; // 16-byte align
-		
-		if (UsedBlocks.empty() || UsedBlocks.back()->Position + size > BlockSize)
+		if (!FreeBlocks.empty())
 		{
-			if (!FreeBlocks.empty())
-			{
-				auto block = std::move(FreeBlocks.back());
-				block->Position = 0;
-				FreeBlocks.pop_back();
-				UsedBlocks.push_back(std::move(block));
-			}
-			else
-			{
-				UsedBlocks.push_back(std::make_unique<MemoryBlock>());
-			}
+			auto block = std::move(FreeBlocks.back());
+			block->Position = 0;
+			FreeBlocks.pop_back();
+			UsedBlocks.push_back(std::move(block));
 		}
-		
-		auto &block = UsedBlocks.back();
-		void *data = block->Data + block->Position;
-		block->Position += size;
-
-		return data;
+		else
+		{
+			UsedBlocks.push_back(std::make_unique<MemoryBlock>());
+		}
 	}
+		
+	auto &block = UsedBlocks.back();
+	void *data = block->Data + block->Position;
+	block->Position += size;
+
+	return data;
+}
 	
-	void RenderMemory::Clear()
+void RenderMemory::Clear()
+{
+	while (!UsedBlocks.empty())
 	{
-		while (!UsedBlocks.empty())
-		{
-			auto block = std::move(UsedBlocks.back());
-			UsedBlocks.pop_back();
-			FreeBlocks.push_back(std::move(block));
-		}
+		auto block = std::move(UsedBlocks.back());
+		UsedBlocks.pop_back();
+		FreeBlocks.push_back(std::move(block));
 	}
 }

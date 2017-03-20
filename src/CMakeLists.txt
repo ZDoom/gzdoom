@@ -862,6 +862,7 @@ set( POLYRENDER_SOURCES
 	polyrenderer/scene/poly_wallsprite.cpp
 	polyrenderer/scene/poly_sprite.cpp
 	polyrenderer/scene/poly_sky.cpp
+	polyrenderer/scene/poly_light.cpp
 	polyrenderer/drawers/poly_buffer.cpp
 	polyrenderer/drawers/poly_triangle.cpp
 	polyrenderer/drawers/poly_draw_args.cpp

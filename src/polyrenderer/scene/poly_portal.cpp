@@ -29,7 +29,7 @@
 #include "r_data/r_translate.h"
 #include "poly_portal.h"
 #include "polyrenderer/poly_renderer.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -46,8 +46,8 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	SaveGlobals();
 
 	// To do: get this information from PolyRenderer instead of duplicating the code..
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * level.info->pixelstretch;
@@ -86,13 +86,13 @@ void PolyDrawSectorPortal::RenderTranslucent(int portalDepth)
 
 void PolyDrawSectorPortal::SaveGlobals()
 {
-	auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 
 	savedextralight = viewpoint.extralight;
 	savedpos = viewpoint.Pos;
 	savedangles = viewpoint.Angles;
-	savedvisibility = PolyRenderer::Instance()->Thread.Light->GetVisibility();
+	//savedvisibility = PolyRenderer::Instance()->Light.GetVisibility();
 	savedcamera = viewpoint.camera;
 	savedsector = viewpoint.sector;
 
@@ -101,14 +101,14 @@ void PolyDrawSectorPortal::SaveGlobals()
 		// Don't let gun flashes brighten the sky box
 		AActor *sky = Portal->mSkybox;
 		viewpoint.extralight = 0;
-		PolyRenderer::Instance()->Thread.Light->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), sky->args[0] * 0.25f);
+		//PolyRenderer::Instance()->Light.SetVisibility(sky->args[0] * 0.25f);
 		viewpoint.Pos = sky->InterpolatedPosition(viewpoint.TicFrac);
 		viewpoint.Angles.Yaw = savedangles.Yaw + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * viewpoint.TicFrac);
 	}
 	else //if (Portal->mType == PORTS_STACKEDSECTORTHING || Portal->mType == PORTS_PORTAL || Portal->mType == PORTS_LINKEDPORTAL)
 	{
 		//extralight = pl->extralight;
-		//swrenderer::R_SetVisibility(pl->visibility);
+		//SetVisibility(pl->visibility);
 		viewpoint.Pos.X += Portal->mDisplacement.X;
 		viewpoint.Pos.Y += Portal->mDisplacement.Y;
 	}
@@ -126,13 +126,13 @@ void PolyDrawSectorPortal::RestoreGlobals()
 	Portal->mFlags &= ~PORTSF_INSKYBOX;
 	if (Portal->mPartner > 0) level.sectorPortals[Portal->mPartner].mFlags &= ~PORTSF_INSKYBOX;
 
-	auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 
 	viewpoint.camera = savedcamera;
 	viewpoint.sector = savedsector;
 	viewpoint.Pos = savedpos;
-	PolyRenderer::Instance()->Thread.Light->SetVisibility(PolyRenderer::Instance()->Thread.Viewport.get(), savedvisibility);
+	//PolyRenderer::Instance()->Light.SetVisibility(savedvisibility);
 	viewpoint.extralight = savedextralight;
 	viewpoint.Angles = savedangles;
 	R_SetViewAngle(viewpoint, viewwindow);
@@ -155,8 +155,8 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	SaveGlobals();
 
 	// To do: get this information from PolyRenderer instead of duplicating the code..
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * level.info->pixelstretch;
@@ -200,8 +200,8 @@ void PolyDrawLinePortal::RenderTranslucent(int portalDepth)
 
 void PolyDrawLinePortal::SaveGlobals()
 {
-	auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 
 	savedextralight = viewpoint.extralight;
 	savedpos = viewpoint.Pos;
@@ -287,8 +287,8 @@ void PolyDrawLinePortal::SaveGlobals()
 
 void PolyDrawLinePortal::RestoreGlobals()
 {
-	auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
-	const auto &viewwindow = PolyRenderer::Instance()->Thread.Viewport->viewwindow;
+	auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	if (viewpoint.camera)
 	{
 		if (savedinvisibility)

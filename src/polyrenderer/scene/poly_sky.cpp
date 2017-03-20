@@ -28,7 +28,7 @@
 #include "poly_portal.h"
 #include "r_sky.h" // for skyflatnum
 #include "g_levellocals.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 PolySkyDome::PolySkyDome()
 {
@@ -50,14 +50,14 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	if (level.flags & LEVEL_DOUBLESKY)
 		backskytex = TexMan(sky2tex, true);
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	TriMatrix objectToWorld = TriMatrix::translate((float)viewpoint.Pos.X, (float)viewpoint.Pos.Y, (float)viewpoint.Pos.Z);
 	objectToClip = worldToClip * objectToWorld;
 
 	int rc = mRows + 1;
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->WallGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;
@@ -96,7 +96,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor)
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
-	if (!PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
+	if (!PolyRenderer::Instance()->RenderTarget->IsBgra())
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
 
 	args.vinput = &mVertices[mPrimStart[row]];

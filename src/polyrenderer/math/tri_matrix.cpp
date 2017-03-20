@@ -132,6 +132,7 @@ TriMatrix TriMatrix::frustum(float left, float right, float bottom, float top, f
 	return m;
 }
 
+#if 0
 TriMatrix TriMatrix::worldToView(const FRenderViewpoint &viewpoint)
 {
 	TriMatrix m = null();
@@ -144,15 +145,16 @@ TriMatrix TriMatrix::worldToView(const FRenderViewpoint &viewpoint)
 	return m * translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 }
 
-TriMatrix TriMatrix::viewToClip(swrenderer::RenderViewport *viewport)
+TriMatrix TriMatrix::viewToClip(double focalTangent, double centerY, double invZtoScale)
 {
 	float near = 5.0f;
 	float far = 65536.0f;
-	float width = (float)(viewport->viewwindow.FocalTangent * near);
-	float top = (float)(viewport->CenterY / viewport->InvZtoScale * near);
-	float bottom = (float)(top - viewheight / viewport->InvZtoScale * near);
+	float width = (float)(focalTangent * near);
+	float top = (float)(centerY / invZtoScale * near);
+	float bottom = (float)(top - viewheight / invZtoScale * near);
 	return frustum(-width, width, bottom, top, near, far);
 }
+#endif
 
 TriMatrix TriMatrix::operator*(const TriMatrix &mult) const
 {

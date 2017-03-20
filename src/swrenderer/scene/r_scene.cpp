@@ -106,7 +106,7 @@ namespace swrenderer
 		// Apply special colormap if the target cannot do it
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
-			auto queue = std::make_shared<DrawerCommandQueue>(MainThread());
+			auto queue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
 			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 			DrawerThreads::Execute(queue);
 		}
@@ -126,7 +126,7 @@ namespace swrenderer
 		if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 		else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
 
-		CameraLight::Instance()->SetCamera(MainThread()->Viewport.get(), actor);
+		CameraLight::Instance()->SetCamera(MainThread()->Viewport->viewpoint, MainThread()->Viewport->RenderTarget, actor);
 		MainThread()->Viewport->SetupFreelook();
 
 		NetUpdate();

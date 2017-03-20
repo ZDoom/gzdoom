@@ -50,7 +50,7 @@ void PolyCull::CullNode(void *node)
 		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
-		int side = PointOnSide(PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos, bsp);
+		int side = PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos, bsp);
 
 		// Recursively divide front space (toward the viewer).
 		CullNode(bsp->children[side]);
@@ -84,8 +84,8 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		if ((line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ)) && line->backsector == nullptr)
 		{
 			// Skip lines not facing viewer
-			DVector2 pt1 = line->v1->fPos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos;
-			DVector2 pt2 = line->v2->fPos() - PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos;
+			DVector2 pt1 = line->v1->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
+			DVector2 pt2 = line->v2->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
 			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 				continue;
 
@@ -179,7 +179,7 @@ bool PolyCull::CheckBBox(float *bspcoord)
 {
 	// Start using a quick frustum AABB test:
 
-	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)PolyRenderer::Instance()->Thread.Viewport->viewpoint.Pos.Z + 1000.0f));
+	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z + 1000.0f));
 	auto result = IntersectionTest::frustum_aabb(frustumPlanes, aabb);
 	if (result == IntersectionTest::outside)
 		return false;
@@ -266,7 +266,7 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 	}
 
 	// Transform to 2D view space:
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	x1 = x1 - viewpoint.Pos.X;
 	y1 = y1 - viewpoint.Pos.Y;
 	x2 = x2 - viewpoint.Pos.X;

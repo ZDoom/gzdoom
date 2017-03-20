@@ -57,7 +57,7 @@ namespace swrenderer
 
 		fixed_t FixedLightLevelShade() const { return (FixedLightLevel() >> COLORMAPSHIFT) << FRACBITS; }
 
-		void SetCamera(RenderViewport *viewport, AActor *actor);
+		void SetCamera(FRenderViewpoint &viewpoint, DCanvas *renderTarget, AActor *actor);
 		void ClearShaderColormap() { realfixedcolormap = nullptr; }
 		
 	private:

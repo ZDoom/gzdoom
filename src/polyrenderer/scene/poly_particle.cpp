@@ -27,7 +27,7 @@
 #include "r_data/r_translate.h"
 #include "poly_particle.h"
 #include "polyrenderer/poly_renderer.h"
-#include "swrenderer/scene/r_light.h"
+#include "polyrenderer/scene/poly_light.h"
 
 void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
@@ -35,7 +35,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	double psize = particle->size / 8.0;
 	double zpos = pos.Z;
 
-	const auto &viewpoint = PolyRenderer::Instance()->Thread.Viewport->viewpoint;
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	DVector2 points[2] =
 	{
@@ -72,11 +72,11 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	// int color = (particle->color >> 24) & 0xff; // pal index, I think
 	bool fullbrightSprite = particle->bright != 0;
-	swrenderer::CameraLight *cameraLight = swrenderer::CameraLight::Instance();
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 
 	PolyDrawArgs args;
 
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Thread.Light->ParticleGlobVis(foggy);
+	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.ParticleGlobVis(foggy);
 
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
@@ -92,7 +92,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	uint32_t alpha = (uint32_t)clamp(particle->alpha * 255.0f + 0.5f, 0.0f, 255.0f);
 
-	if (PolyRenderer::Instance()->Thread.Viewport->RenderTarget->IsBgra())
+	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
 	}

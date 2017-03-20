@@ -30,7 +30,7 @@ class ClipNode
 
 class Clipper
 {
-	unsigned starttime;
+	static unsigned starttime;
 	FMemArena nodearena;
 	ClipNode * freelist = nullptr;
 

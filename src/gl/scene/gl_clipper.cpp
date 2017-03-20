@@ -38,10 +38,11 @@
 #include "gl/scene/gl_clipper.h"
 #include "g_levellocals.h"
 
+unsigned Clipper::starttime;
 
 Clipper::Clipper()
 {
-	starttime = I_MSTime();
+	starttime++;
 }
 
 //-----------------------------------------------------------------------------
@@ -94,7 +95,7 @@ void Clipper::Clear()
 	
 	cliphead = NULL;
 	silhouette = NULL;
-	starttime = I_MSTime();
+	starttime++;
 }
 
 //-----------------------------------------------------------------------------

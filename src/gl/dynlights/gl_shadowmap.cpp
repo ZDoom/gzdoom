@@ -102,7 +102,7 @@ void FShadowMap::Update()
 
 bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
 {
-	if (IsEnabled() && mAABBTree)
+	if (light->shadowmapped && light->radius > 0.0 && IsEnabled() && mAABBTree)
 		return mAABBTree->RayTest(light->Pos(), pos) >= 1.0f;
 	else
 		return true;

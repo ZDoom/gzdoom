@@ -481,6 +481,75 @@ struct VMValue
 		atag = tag;
 		Type = REGT_POINTER;
 	}
+	VMValue &operator=(const VMValue &o)
+	{
+		if (o.Type == REGT_STRING)
+		{
+			if (Type == REGT_STRING)
+			{
+				s() = o.s();
+			}
+			else
+			{
+				new(&s()) FString(o.s());
+				Type = REGT_STRING;
+			}
+		}
+		else
+		{
+			Kill();
+			biggest = o.biggest;
+		}
+		return *this;
+	}
+	VMValue &operator=(int v)
+	{
+		Kill();
+		i = v;
+		Type = REGT_INT;
+		return *this;
+	}
+	VMValue &operator=(double v)
+	{
+		Kill();
+		f = v;
+		Type = REGT_FLOAT;
+		return *this;
+	}
+	VMValue &operator=(const FString &v)
+	{
+		if (Type == REGT_STRING)
+		{
+			s() = v;
+		}
+		else
+		{
+			::new(&s()) FString(v);
+			Type = REGT_STRING;
+		}
+		return *this;
+	}
+	VMValue &operator=(const char *v)
+	{
+		if (Type == REGT_STRING)
+		{
+			s() = v;
+		}
+		else
+		{
+			::new(&s()) FString(v);
+			Type = REGT_STRING;
+		}
+		return *this;
+	}
+	VMValue &operator=(DObject *v)
+	{
+		Kill();
+		a = v;
+		atag = ATAG_OBJECT;
+		Type = REGT_POINTER;
+		return *this;
+	}
 	int ToInt()
 	{
 		if (Type == REGT_INT)

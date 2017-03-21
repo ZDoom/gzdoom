@@ -329,7 +329,7 @@ namespace swrenderer
 				float Lyz2 = light_y; // L.y*L.y + L.z*L.z
 				float Lx = light_x - viewpos_x;
 				float dist2 = Lyz2 + Lx * Lx;
-				float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
+				float rcp_dist = 1.f/sqrt(dist2);
 				float dist = dist2 * rcp_dist;
 				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
 

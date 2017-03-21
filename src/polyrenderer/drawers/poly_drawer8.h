@@ -264,7 +264,7 @@ public:
 	}
 
 private:
-	FORCEINLINE static unsigned int VECTORCALL Sample(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight, uint32_t color, const uint8_t *translation)
+	FORCEINLINE static unsigned int Sample(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight, uint32_t color, const uint8_t *translation)
 	{
 		using namespace TriScreenDrawerModes;
 

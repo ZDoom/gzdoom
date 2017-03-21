@@ -77,7 +77,6 @@ CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
 	V_SetBorderNeedRefresh();
-	ST_SetNeedRefresh();
 }
 #else
 EXTERN_CVAR(Bool, vid_hwaalines)

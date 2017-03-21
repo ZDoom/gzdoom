@@ -39,6 +39,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native ui int BackbuttonTime;
 	native ui float BackbuttonAlpha;
 	native readonly int Net_Arbitrator;
+	native ui BaseStatusBar StatusBar;
 	
 }
 
@@ -379,10 +380,10 @@ class Thinker : Object native play
 	virtual native void PostBeginPlay();
 	virtual native void ChangeStatNum(int stat);
 	
-	static int Tics2Seconds(int tics)
+	static clearscope int Tics2Seconds(int tics)
 	{
 		// This compensates for one tic being slightly less than 1/35 of a second.
-		return int(tics * (0.98 * TICRATE));
+		return int(tics * (0.98 / TICRATE));
 	}
 
 }

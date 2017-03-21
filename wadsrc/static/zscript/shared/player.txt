@@ -7,8 +7,8 @@ class PlayerPawn : Actor native
 	native int			MugShotMaxHealth;
 	native int			RunHealth;
 	native int			PlayerFlags;
-	native Inventory	InvFirst;		// first inventory item displayed on inventory bar
-	native Inventory	InvSel;			// selected inventory item
+	native clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
+	native clearscope Inventory	InvSel;			// selected inventory item
 	native Name 		SoundClass;		// Sound class
 	native Name 		Face;			// Doom status bar face (when used)
 	native Name 		Portrait;
@@ -179,7 +179,7 @@ class PlayerPawn : Actor native
 		}
 		return -1, -1;
 	}
-
+	
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
@@ -276,7 +276,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native bool usedown;
 	native uint oldbuttons;
 	native int health;
-	native int inventorytics;
+	native clearscope int inventorytics;
 	native uint8 CurrentPlayerClass;
 	native int frags[MAXPLAYERS];
 	native int fragcount;

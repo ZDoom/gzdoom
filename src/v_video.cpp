@@ -1384,7 +1384,7 @@ void V_OutputResized (int width, int height)
 	setsizeneeded = true;
 	if (StatusBar != NULL)
 	{
-		StatusBar->ScreenSizeChanged();
+		StatusBar->CallScreenSizeChanged();
 	}
 	C_NewModeAdjust();
 }
@@ -1634,7 +1634,7 @@ CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	setsizeneeded = true;
 	if (StatusBar != NULL)
 	{
-		StatusBar->ScreenSizeChanged();
+		StatusBar->CallScreenSizeChanged();
 	}
 }
 
@@ -1643,7 +1643,7 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	setsizeneeded = true;
 	if (StatusBar != NULL)
 	{
-		StatusBar->ScreenSizeChanged();
+		StatusBar->CallScreenSizeChanged();
 	}
 }
 

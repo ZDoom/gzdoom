@@ -31,10 +31,3 @@ extend class StateProvider
 		A_FireProjectile(missiletype, angle, useammo, spawnofs_xy, spawnheight, flags, -pitch);
 	}
 }
-
-// this is just a placeholder until the statusbar gets properly exported.
-struct StatusBar native
-{
-	native static void ReceivedWeapon(Weapon weap);
-}
-

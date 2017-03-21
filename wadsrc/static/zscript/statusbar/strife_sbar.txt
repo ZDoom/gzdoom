@@ -1,0 +1,854 @@
+
+class StrifeStatusBar : BaseStatusBar
+{
+	
+	// Number of tics to move the popscreen up and down.
+	const POP_TIME = (Thinker.TICRATE/8);
+
+	// Popscreen height when fully extended
+	const POP_HEIGHT = 104;
+
+	// Number of tics to scroll keys left
+	const KEY_TIME = (Thinker.TICRATE/3);
+
+	enum eImg
+	{
+		imgINVCURS,
+		imgCURSOR01,
+		imgINVBACK,
+		imgINVTOP,
+		imgINVPOP,
+		imgINVPOP2,
+		imgINVPBAK,
+		imgINVPBAK2,
+		imgFONG0,
+		imgFONG1,
+		imgFONG2,
+		imgFONG3,
+		imgFONG4,
+		imgFONG5,
+		imgFONG6,
+		imgFONG7,
+		imgFONG8,
+		imgFONG9,
+		imgFONG_PERCENT,
+		imgFONY0,
+		imgFONY1,
+		imgFONY2,
+		imgFONY3,
+		imgFONY4,
+		imgFONY5,
+		imgFONY6,
+		imgFONY7,
+		imgFONY8,
+		imgFONY9,
+		imgFONY_PERCENT,
+		imgCOMM,
+		imgMEDI,
+		imgARM1,
+		imgARM2,
+		imgNEGATIVE,
+		imgINumbers = imgFONG0,
+	};
+	
+	TextureID Images[imgNEGATIVE + 1];
+	int CursorImage;
+	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
+	int KeyPopPos, KeyPopScroll;
+	double ItemFlash;
+
+	override void Init()
+	{
+		DoCommonInit();
+	}
+
+	override void NewGame ()
+	{
+		DoCommonInit ();
+		if (CPlayer != NULL)
+		{
+			AttachToPlayer (CPlayer);
+		}
+	}
+
+	override void Draw (int state, double TicFrac)
+	{
+		Super.Draw (state, TicFrac);
+
+		if (state == HUD_StatusBar)
+		{
+			DrawMainBar (TicFrac);
+		}
+		else
+		{
+			if (state == HUD_Fullscreen)
+			{
+				DrawFullScreenStuff ();
+			}
+
+			// Draw pop screen (log, keys, and status)
+			if (CurrentPop != POP_None && PopHeight < 0)
+			{
+				DrawPopScreen (screen.GetHeight(), TicFrac);
+			}
+		}
+	}
+
+	override void ShowPop (int popnum)
+	{
+		Super.ShowPop(popnum);
+		if (popnum == CurrentPop)
+		{
+			if (popnum == POP_Keys)
+			{
+				Inventory item;
+
+				KeyPopPos += 10;
+				KeyPopScroll = 280;
+
+				int i = 0;
+				for (item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+				{
+					if (item is "Key")
+					{
+						if (i == KeyPopPos)
+						{
+							return;
+						}
+						i++;
+					}
+				}
+			}
+			PendingPop = POP_None;
+			// Do not scroll keys horizontally when dropping the popscreen
+			KeyPopScroll = 0;
+			KeyPopPos -= 10;
+		}
+		else
+		{
+			KeyPopPos = 0;
+			PendingPop = popnum;
+		}
+	}
+
+	override bool MustDrawLog(int state)
+	{
+		// Tell the base class to draw the log if the pop screen won't be displayed.
+		return false;
+	}
+
+	void DoCommonInit ()
+	{
+		static const String strifeLumpNames[] =
+		{
+			"INVCURS", "CURSOR01", "INVBACK", "INVTOP", "INVPOP", "INVPOP2",
+			"INVPBAK", "INVPBAK2",
+			"INVFONG0", "INVFONG1", "INVFONG2", "INVFONG3", "INVFONG4",
+			"INVFONG5", "INVFONG6", "INVFONG7", "INVFONG8", "INVFONG9",
+			"INVFONG%",
+			"INVFONY0", "INVFONY1", "INVFONY2", "INVFONY3", "INVFONY4",
+			"INVFONY5", "INVFONY6", "INVFONY7", "INVFONY8", "INVFONY9",
+			"INVFONY%",
+			"I_COMM", "I_MDKT", "I_ARM1", "I_ARM2", ""
+
+		};
+		
+		for(int i = 0; i <= imgNEGATIVE; i++)
+		{
+			Images[i] = TexMan.CheckForTexture(strifeLumpNames[i], TexMan.TYPE_MiscPatch);
+		}
+
+		CursorImage = Images[imgINVCURS].IsValid() ? imgINVCURS : imgCURSOR01;
+
+		CurrentPop = POP_None;
+		PendingPop = POP_NoChange;
+		PopHeight = 0;
+		KeyPopPos = 0;
+		KeyPopScroll = 0;
+		ItemFlash = 0;
+	}
+
+	override void Tick ()
+	{
+		Super.Tick ();
+
+		if (ItemFlash > 0)
+		{
+			ItemFlash -= 1/14.;
+			if (ItemFlash < 0)
+			{
+				ItemFlash = 0;
+			}
+		}
+
+		PopHeightChange = 0;
+		if (PendingPop != POP_NoChange)
+		{
+			if (PopHeight < 0)
+			{
+				PopHeightChange = POP_HEIGHT / POP_TIME;
+				PopHeight += POP_HEIGHT / POP_TIME;
+			}
+			else
+			{
+				CurrentPop = PendingPop;
+				PendingPop = POP_NoChange;
+			}
+		}
+		else
+		{
+			if (CurrentPop == POP_None)
+			{
+				PopHeight = 0;
+			}
+			else if (PopHeight > -POP_HEIGHT)
+			{
+				PopHeight -= POP_HEIGHT / POP_TIME;
+				if (PopHeight < -POP_HEIGHT)
+				{
+					PopHeight = -POP_HEIGHT;
+				}
+				else
+				{
+					PopHeightChange = -POP_HEIGHT / POP_TIME;
+				}
+			}
+			if (KeyPopScroll > 0)
+			{
+				KeyPopScroll -= 280 / KEY_TIME;
+				if (KeyPopScroll < 0)
+				{
+					KeyPopScroll = 0;
+				}
+			}
+		}
+	}
+
+	override void FlashItem (Class<Inventory> itemtype)
+	{
+		ItemFlash = 0.75;
+	}
+	
+	private void FillBar(int x, int y, int start, int stopp, Color color1, Color color2)
+	{
+		// right now there is no function to draw this.
+		// The old code used a crude texture hack to work arounf this omission.
+	}
+	
+	protected void DrawHealthBar(int health, int x, int y)
+	{
+		Color green1 = Color(180, 228, 128);	// light green
+		Color green2 = Color(128, 180, 80);		// dark green
+
+		Color blue1 = Color(196, 204, 252);		// light blue
+		Color blue2 = Color(148, 152, 200);		// dark blue
+
+		Color gold1 = Color(224, 188, 0);	// light gold
+		Color gold2 = Color(208, 128, 0);	// dark gold
+
+		Color red1 = Color(216, 44,  44);	// light red
+		Color red2 = Color(172, 28,  28);	// dark red
+		
+		if (health == 999)
+		{
+			FillBar (x, y, 0, 200, gold1, gold2);
+		}
+		else
+		{
+			if (health <= 100)
+			{
+				if (health <= 10)
+				{
+					FillBar (x, y, 0, health*2, red1, red2);
+				}
+				else if (health <= 20)
+				{
+					FillBar (x, y, 0, health*2, gold1, gold2);
+				}
+				else
+				{
+					FillBar (x, y, 0, health, green1, green2);
+				}
+				FillBar (x, y, health, 200, 0, 0);
+			}
+			else
+			{
+				int stopp = 100 - (health - 100);
+				FillBar (x, y, 0, stopp*2, green1, green2);
+				FillBar (x, y, stopp*2, 200, blue1, blue2);
+			}
+		}
+	}
+
+	protected void DrawMainBar (double TicFrac)
+	{
+		Inventory item;
+		int i;
+
+		// Pop screen (log, keys, and status)
+		if (CurrentPop != POP_None && PopHeight < 0)
+		{
+			DrawPopScreen (Scaled ? (ST_Y - 8) * screen.GetHeight() / 200 : ST_Y - 8, TicFrac);
+		}
+
+		DrawImage (Images[imgINVBACK], 0, 0);
+		DrawImage (Images[imgINVTOP], 0, -8);
+
+		// Health
+		DrINumber (CPlayer.health, 79, -6, imgFONG0);
+		int points;
+		if (CPlayer.cheats & CF_GODMODE)
+		{
+			points = 999;
+		}
+		else
+		{
+			points = min(CPlayer.health, 200);
+		}
+		DrawHealthBar (points, 49, 4);
+		DrawHealthBar (points, 49, 7);
+
+		// Armor
+		item = CPlayer.mo.FindInventory('BasicArmor');
+		if (item != NULL && item.Amount > 0)
+		{
+			DrawImage (item.Icon, 2, 9);
+			DrINumber (item.Amount, 27, 23, imgFONY0);
+		}
+
+		// Ammo
+		Inventory ammo1, ammo2;
+		int ammocount1, ammocount2;
+
+		[ammo1, ammo2, ammocount1, ammocount2] = GetCurrentAmmo ();
+		if (ammo1 != NULL)
+		{
+			DrINumber (ammo1.Amount, 311, -6, imgFONG0);
+			DrawImage (ammo1.Icon, 290, 13);
+		}
+
+		// Sigil
+		item = CPlayer.mo.FindInventory('Sigil');
+		if (item != NULL)
+		{
+			DrawImage (item.Icon, 253, 7);
+		}
+
+		// Inventory
+		CPlayer.inventorytics = 0;
+		CPlayer.mo.InvFirst = ValidateInvFirst (6);
+		i = 0;
+		for (item = CPlayer.mo.InvFirst; item != NULL && i < 6; item = item.NextInv())
+		{
+			if (item == CPlayer.mo.InvSel)
+			{
+				screen.DrawTexture (Images[CursorImage], true,
+					42 + 35*i + ST_X, 12 + ST_Y,
+					DTA_Bottom320x200, Scaled,
+					DTA_Alpha, 1. - ItemFlash);
+			}
+			if (item.Icon.isValid())
+			{
+				DrawDimImage (item.Icon, 48 + 35*i, 14, item.Amount <= 0);
+			}
+			DrINumber (item.Amount, 74 + 35*i, 23, imgFONY0);
+			i++;
+		}
+	}
+
+	protected void DrawFullScreenStuff ()
+	{
+		// Draw health
+		DrINumberOuter (CPlayer.health, 4, -10, false, 7);
+		screen.DrawTexture (Images[imgMEDI], true, 14, -17,
+			DTA_HUDRules, HUD_Normal,
+			DTA_CenterBottomOffset, true);
+
+		// Draw armor
+		let armor = CPlayer.mo.FindInventory('BasicArmor');
+		if (armor != NULL && armor.Amount != 0)
+		{
+			DrINumberOuter (armor.Amount, 35, -10, false, 7);
+			screen.DrawTexture (armor.Icon, true, 45, -17,
+				DTA_HUDRules, HUD_Normal,
+				DTA_CenterBottomOffset, true);
+		}
+
+		// Draw ammo
+		Inventory ammo1, ammo2;
+		int ammocount1, ammocount2;
+
+		[ammo1, ammo2, ammocount1, ammocount2] = GetCurrentAmmo ();
+		if (ammo1 != NULL)
+		{
+			// Draw primary ammo in the bottom-right corner
+			DrINumberOuter (ammo1.Amount, -23, -10, false, 7);
+			screen.DrawTexture (ammo1.Icon, true, -14, -17,
+				DTA_HUDRules, HUD_Normal,
+				DTA_CenterBottomOffset, true);
+			if (ammo2 != NULL && ammo1!=ammo2)
+			{
+				// Draw secondary ammo just above the primary ammo
+				DrINumberOuter (ammo2.Amount, -23, -48, false, 7);
+				screen.DrawTexture (ammo2.Icon, -14, -55,
+					DTA_HUDRules, HUD_Normal,
+					DTA_CenterBottomOffset, true);
+			}
+		}
+
+		if (deathmatch)
+		{ // Draw frags (in DM)
+			DrBNumberOuterFont (CPlayer.fragcount, -44, 1);
+		}
+
+		// Draw inventory
+		if (CPlayer.inventorytics == 0)
+		{
+			if (CPlayer.mo.InvSel != null)
+			{
+				if (ItemFlash > 0)
+				{
+					vector2 size = TexMan.GetScaledSize(Images[CursorImage]);
+					screen.DrawTexture (Images[CursorImage], true, -28, -15,
+						DTA_HUDRules, HUD_Normal,
+						DTA_LeftOffsetF, size.X,
+						DTA_TopOffsetF, size.Y,
+						DTA_Alpha, ItemFlash);
+				}
+				DrINumberOuter (CPlayer.mo.InvSel.Amount, -51, -10, false, 7);
+				screen.DrawTexture (CPlayer.mo.InvSel.Icon, true, -42, -17,
+					DTA_HUDRules, HUD_Normal,
+					DTA_CenterBottomOffset, true,
+					DTA_ColorOverlay, CPlayer.mo.InvSel.Amount > 0 ? 0 : Color(170, 0, 0, 0));
+			}
+		}
+		else
+		{
+			CPlayer.mo.InvFirst = ValidateInvFirst (6);
+			int i = 0;
+			Inventory item;
+			if (CPlayer.mo.InvFirst != NULL)
+			{
+				for (item = CPlayer.mo.InvFirst; item != NULL && i < 6; item = item.NextInv())
+				{
+					if (item == CPlayer.mo.InvSel)
+					{
+						screen.DrawTexture (Images[CursorImage], true, -100+i*35, -21,
+							DTA_HUDRules, HUD_HorizCenter,
+							DTA_Alpha, 0.75);
+					}
+					if (item.Icon.isValid())
+					{
+						screen.DrawTexture (item.Icon, true, -94 + i*35, -19,
+							DTA_HUDRules, HUD_HorizCenter,
+							DTA_ColorOverlay, CPlayer.mo.InvSel.Amount > 0 ? 0 : Color(170, 0, 0, 0));
+					}
+					DrINumberOuter (item.Amount, -89 + i*35, -10, true, 7);
+					++i;
+				}
+			}
+		}
+	}
+
+	protected void DrawPopScreen (int bottom, double TicFrac)
+	{
+		String buff;
+		String label;
+		int i;
+		Inventory item;
+		int xscale, yscale, left, top;
+		int bars = (CurrentPop == POP_Status) ? imgINVPOP : imgINVPOP2;
+		int back = (CurrentPop == POP_Status) ? imgINVPBAK : imgINVPBAK2;
+		// Extrapolate the height of the popscreen for smoother movement
+		int height = clamp (PopHeight + int(TicFrac * PopHeightChange), -POP_HEIGHT, 0);
+
+		xscale = CleanXfac;
+		yscale = CleanYfac;
+		left = screen.GetWidth()/2 - 160*CleanXfac;
+		top = bottom + height * yscale;
+
+		screen.DrawTexture (Images[back], true, left, top, DTA_CleanNoMove, true, DTA_Alpha, 0.75);
+		screen.DrawTexture (Images[bars], true, left, top, DTA_CleanNoMove, true);
+
+
+		switch (CurrentPop)
+		{
+		case POP_Log:
+		{
+			int seconds = Thinker.Tics2Seconds(level.time);
+			// Draw the latest log message.
+			buff = String.Format("%02d:%02d:%02d",
+				seconds / 3600,
+				(seconds % 3600) / 60,
+				(seconds) % 60);
+
+			screen.DrawText(SmallFont2, Font.CR_UNTRANSLATED, left + 210 * xscale, top + 8 * yscale, buff,
+				DTA_CleanNoMove, true);
+
+			if (CPlayer.LogText.Length() > 0)
+			{
+				BrokenLines lines = SmallFont2.BreakLines(CPlayer.LogText, 272);
+				for (i = 0; i < lines.Count(); ++i)
+				{
+					screen.DrawText(SmallFont2, Font.CR_UNTRANSLATED, left + 24 * xscale, top + (18 + i * 12)*yscale,
+						lines.StringAt(i), DTA_CleanNoMove, true);
+				}
+			}
+			break;
+		}
+
+		case POP_Keys:
+			// List the keys the player has.
+			int pos, endpos, leftcol;
+			int clipleft, clipright;
+			
+			pos = KeyPopPos;
+			endpos = pos + 10;
+			leftcol = 20;
+			clipleft = left + 17*xscale;
+			clipright = left + (320-17)*xscale;
+			if (KeyPopScroll > 0)
+			{
+				// Extrapolate the scroll position for smoother scrolling
+				int scroll = MAX (0, KeyPopScroll - int(TicFrac * (280./KEY_TIME)));
+				pos -= 10;
+				leftcol = leftcol - 280 + scroll;
+			}
+			i = 0;
+			for (item = CPlayer.mo.Inv; i < endpos && item != NULL; item = item.Inv)
+			{
+				if (!(item is "Key"))
+					continue;
+				
+				if (i < pos)
+				{
+					i++;
+					continue;
+				}
+
+				label = item.GetTag();
+
+				int colnum = ((i-pos) / 5) & (KeyPopScroll > 0 ? 3 : 1);
+				int rownum = (i % 5) * 18;
+
+				screen.DrawTexture (item.Icon, true,
+					left + (colnum * 140 + leftcol)*xscale,
+					top + (6 + rownum)*yscale,
+					DTA_CleanNoMove, true,
+					DTA_ClipLeft, clipleft,
+					DTA_ClipRight, clipright);
+				screen.DrawText (SmallFont2, Font.CR_UNTRANSLATED,
+					left + (colnum * 140 + leftcol + 17)*xscale,
+					top + (11 + rownum)*yscale,
+					label,
+					DTA_CleanNoMove, true,
+					DTA_ClipLeft, clipleft,
+					DTA_ClipRight, clipright);
+				i++;
+			}
+			break;
+
+		case POP_Status:
+			// Show miscellaneous status items.
+			
+			// Print stats
+			DrINumber2 (CPlayer.mo.accuracy, left+268*xscale, top+28*yscale, 7*xscale, imgFONY0);
+			DrINumber2 (CPlayer.mo.stamina, left+268*xscale, top+52*yscale, 7*xscale, imgFONY0);
+
+			// How many keys does the player have?
+			i = 0;
+			for (item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+			{
+				if (item is "Key")
+				{
+					i++;
+				}
+			}
+			DrINumber2 (i, left+268*xscale, top+76*yscale, 7*xscale, imgFONY0);
+
+			// Does the player have a communicator?
+			item = CPlayer.mo.FindInventory ("Communicator");
+			if (item != NULL)
+			{
+				screen.DrawTexture (item.Icon, true,
+					left + 280*xscale,
+					top + 74*yscale,
+					DTA_CleanNoMove, true);
+			}
+
+			// How much ammo does the player have?
+			static const class<Ammo> AmmoList[] = {
+				"ClipOfBullets",			
+				"PoisonBolts",				
+				"ElectricBolts",			
+				"HEGrenadeRounds",			
+				"PhosphorusGrenadeRounds",	
+				"MiniMissiles",			
+				"EnergyPod"};				
+				
+			static const int AmmoY[] = {19, 35, 43, 59, 67, 75, 83};
+			
+			for (i = 0; i < 7; ++i)
+			{
+				item = CPlayer.mo.FindInventory (AmmoList[i]);
+
+				if (item == NULL)
+				{
+					DrINumber2 (0, left+206*xscale, top+AmmoY[i] * yscale, 7*xscale, imgFONY0);
+					DrINumber2 (GetDefaultByType(AmmoList[i]).MaxAmount, left+239*xscale, top+AmmoY[i] * yscale, 7*xscale, imgFONY0);
+				}
+				else
+				{
+					DrINumber2 (item.Amount, left+206*xscale, top+AmmoY[i] * yscale, 7*xscale, imgFONY0);
+					DrINumber2 (item.MaxAmount, left+239*xscale, top+AmmoY[i] * yscale, 7*xscale, imgFONY0);
+				}
+			}
+					
+
+			// What weapons does the player have?
+			static const class<Weapon> WeaponList[] = 
+			{
+				"StrifeCrossbow",
+				"AssaultGun",
+				"FlameThrower",
+				"MiniMissileLauncher",
+				"StrifeGrenadeLauncher",
+				"Mauler"
+			};
+			static const int WeaponX[] = {23, 21, 57, 20, 55, 52};
+			static const int WeaponY[] = {19, 41, 50, 64, 20, 75};
+
+			for (i = 0; i < 6; ++i)
+			{
+				item = CPlayer.mo.FindInventory (WeaponList[i]);
+				if (item != NULL)
+				{
+					screen.DrawTexture (item.Icon, true,
+						left + WeaponX[i] * xscale,
+						top + WeaponY[i] * yscale,
+						DTA_CleanNoMove, true,
+						DTA_LeftOffset, 0,
+						DTA_TopOffset, 0);
+				}
+			}
+			break;
+		}
+	}
+
+	void DrINumber (int val, int x, int y, int imgBase) const
+	{
+		x -= 7;
+
+		if (val == 0)
+		{
+			DrawImage (Images[imgBase], x, y);
+		}
+		else
+		{
+			while (val != 0)
+			{
+				DrawImage (Images[imgBase+val%10], x, y);
+				val /= 10;
+				x -= 7;
+			}
+		}
+	}
+
+	void DrINumber2 (int val, int x, int y, int width, int imgBase) const
+	{
+		x -= width;
+
+		if (val == 0)
+		{
+			screen.DrawTexture (Images[imgBase], true, x, y, DTA_CleanNoMove, true);
+		}
+		else
+		{
+			while (val != 0)
+			{
+				screen.DrawTexture (Images[imgBase+val%10], true, x, y, DTA_CleanNoMove, true);
+				val /= 10;
+				x -= width;
+			}
+		}
+	}
+
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC DrINumberOuter
+	//
+	// Draws a number outside the status bar, possibly scaled.
+	//
+	//---------------------------------------------------------------------------
+
+	void DrINumberOuter(int val, int x, int y, bool center, int w) const
+	{
+		bool negative = false;
+
+		x += w * 2;
+		if (val < 0)
+		{
+			negative = true;
+			val = -val;
+		}
+		else if (val == 0)
+		{
+			screen.DrawTexture(Images[imgINumbers], true, x + 1, y + 1,
+				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+			screen.DrawTexture(Images[imgINumbers], true, x, y,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+			return;
+		}
+
+		int oval = val;
+		int ox = x;
+
+		// First the shadow
+		while (val != 0)
+		{
+			screen.DrawTexture(Images[imgINumbers + val % 10], true, x + 1, y + 1,
+				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+			x -= w;
+			val /= 10;
+		}
+		if (negative)
+		{
+			screen.DrawTexture(Images[imgNEGATIVE], true, x + 1, y + 1,
+				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+		}
+
+		// Then the real deal
+		val = oval;
+		x = ox;
+		while (val != 0)
+		{
+			screen.DrawTexture(Images[imgINumbers + val % 10], true, x, y,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+			x -= w;
+			val /= 10;
+		}
+		if (negative)
+		{
+			screen.DrawTexture(Images[imgNEGATIVE], true, x, y,
+				DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal);
+		}
+	}
+
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC DrBNumberOuter
+	//
+	// Draws a three digit number using the real big font outside the status bar.
+	//
+	//---------------------------------------------------------------------------
+
+	void DrBNumberOuterFont(int val, int x, int y, int size = 3) const
+	{
+		int v;
+		bool negative = false;
+		TextureID pic;
+
+		int w = BigFont.GetCharWidth("0");
+		int ww = w;
+
+		if (w > 1)
+		{
+			w--;
+		}
+		int xpos = x + w / 2 + (size - 1)*w;
+
+		if (val == 0)
+		{
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2, "0",
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0);
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2, y, "0",
+				DTA_HUDRules, HUD_Normal);
+			return;
+		}
+		else if (val < 0)
+		{
+			negative = true;
+			val = -val;
+		}
+
+		int oval = val;
+		int oxpos = xpos;
+
+		// First the shadow
+		while (val != 0)
+		{
+			v = BigFont.GetCharWidth(int("0") + val % 10);
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0);
+			val /= 10;
+			xpos -= w;
+		}
+		if (negative)
+		{
+			v = BigFont.GetCharWidth("-");
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2 + 2, y + 2, "-",
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0);
+		}
+
+		// Then the foreground number
+		val = oval;
+		xpos = oxpos;
+		while (val != 0)
+		{
+			v = BigFont.GetCharWidth(int("0") + val % 10);
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2, y, "0", DTA_HUDRules, HUD_Normal);
+			val /= 10;
+			xpos -= w;
+		}
+		if (negative)
+		{
+			v = BigFont.GetCharWidth("-");
+			screen.DrawChar(BigFont, Font.CR_UNTRANSLATED, xpos - v / 2, y, "-", DTA_HUDRules, HUD_Normal);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC DrawImage
+	//
+	// Draws an image with the status bar's upper-left corner as the origin.
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawImage(TextureID img, int x, int y) const
+	{
+		if (img.IsValid())
+		{
+			screen.DrawTexture(img, true, x + ST_X, y + ST_Y, DTA_Bottom320x200, Scaled);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC DrawImage
+	//
+	// Draws an optionally dimmed image with the status bar's upper-left corner
+	// as the origin.
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawDimImage(TextureID img, int x, int y, bool dimmed) const
+	{
+		if (img.IsValid())
+		{
+			screen.DrawTexture(img, true, x + ST_X, y + ST_Y, DTA_ColorOverlay, dimmed ? Color(170, 0, 0, 0) : 0, DTA_Bottom320x200, Scaled);
+		}
+	}
+}
+

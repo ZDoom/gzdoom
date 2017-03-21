@@ -1452,7 +1452,6 @@ void AM_ToggleMap ()
 	if (dmflags2 & DF2_NO_AUTOMAP)
 		return;
 
-	ST_SetNeedRefresh();
 	if (!automapactive)
 	{
 		AM_Start ();
@@ -1463,7 +1462,6 @@ void AM_ToggleMap ()
 		if (am_overlay==1 && viewactive)
 		{
 			viewactive = false;
-			ST_SetNeedRefresh();
 		}
 		else
 		{

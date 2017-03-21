@@ -342,7 +342,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 	R_BuildPlayerTranslation (pnum);
 	if (StatusBar != NULL && StatusBar->GetPlayer() == pnum)
 	{
-		StatusBar->AttachToPlayer (&players[pnum]);
+		StatusBar->CallAttachToPlayer (&players[pnum]);
 	}
 	// Double-check
 	if (!TeamLibrary.IsValidTeam (team))
@@ -884,7 +884,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 				R_BuildPlayerTranslation(pnum);
 				if (StatusBar != NULL && pnum == StatusBar->GetPlayer())
 				{
-					StatusBar->AttachToPlayer(&players[pnum]);
+					StatusBar->CallAttachToPlayer(&players[pnum]);
 				}
 			}
 		}

@@ -85,7 +85,6 @@ void FStat::ToggleStat (const char *name)
 void FStat::ToggleStat ()
 {
 	m_Active = !m_Active;
-	ST_SetNeedRefresh();
 }
 
 void FStat::PrintStat ()
@@ -112,10 +111,6 @@ void FStat::PrintStat ()
 				count++;
 			}
 		}
-	}
-	if (count)
-	{
-		ST_SetNeedRefresh();
 	}
 }
 

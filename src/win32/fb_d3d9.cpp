@@ -228,7 +228,6 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
 	V_SetBorderNeedRefresh();
-	ST_SetNeedRefresh();
 }
 
 CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

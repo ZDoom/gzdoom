@@ -1,0 +1,79 @@
+
+class BaseStatusBar native ui
+{
+	enum EPop
+	{
+		POP_NoChange = -1,
+		POP_None,
+		POP_Log,
+		POP_Keys,
+		POP_Status
+	}
+
+	// Status face stuff
+	enum EMug
+	{
+		ST_NUMPAINFACES		= 5,
+		ST_NUMSTRAIGHTFACES	= 3,
+		ST_NUMTURNFACES		= 2,
+		ST_NUMSPECIALFACES	= 3,
+		ST_NUMEXTRAFACES	= 2,
+		ST_FACESTRIDE		= ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES,
+		ST_NUMFACES			= ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES,
+
+		ST_TURNOFFSET		= ST_NUMSTRAIGHTFACES,
+		ST_OUCHOFFSET		= ST_TURNOFFSET + ST_NUMTURNFACES,
+		ST_EVILGRINOFFSET	= ST_OUCHOFFSET + 1,
+		ST_RAMPAGEOFFSET	= ST_EVILGRINOFFSET + 1,
+		ST_GODFACE			= ST_NUMPAINFACES*ST_FACESTRIDE,
+		ST_DEADFACE			= ST_GODFACE + 1
+	}
+	
+	enum EHudState
+	{
+		HUD_StatusBar,
+		HUD_Fullscreen,
+		HUD_None,
+
+		HUD_AltHud // Used for passing through popups to the alt hud
+	}
+	
+
+	enum EHudDraw
+	{
+		HUD_Normal,
+		HUD_HorizCenter
+	}
+	
+	const XHAIRSHRINKSIZE =(1./18);
+	const XHAIRPICKUPSIZE = (2+XHAIRSHRINKSIZE);
+	
+
+	native int ST_X, ST_Y;
+	native int RelTop;
+	native int HorizontalResolution, VerticalResolution;
+	native bool Scaled;
+	native bool Centering;
+	native bool FixedOrigin;
+	native bool CompleteBorder;
+	native double CrosshairSize;
+	native double Displacement;
+	native PlayerInfo CPlayer;
+	
+	virtual void Init() {}
+	native virtual void SetScaled(bool scale, bool force = false);
+	native virtual void Tick ();
+	native virtual void Draw (int state, double TicFrac);
+	virtual void FlashItem (class<Inventory> itemtype) {}
+	native virtual void AttachToPlayer (PlayerInfo player);
+	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
+	virtual void NewGame () {}
+	native virtual void ScreenSizeChanged ();
+	native virtual void ShowPop (int popnum);
+	native virtual clearscope void ReceivedWeapon (Weapon weapn);
+	virtual bool MustDrawLog(int state) { return true; }
+//	native virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false); later - at the moment the backing code is not accessible from the script side.
+	native void RefreshBackground () const;
+	native Inventory, Inventory, int, int GetCurrentAmmo () const;
+	native Inventory ValidateInvFirst (int numVisible) const;
+}

@@ -387,11 +387,6 @@ bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 		Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
 
 	G_DoReborn (bnum, true);
-	if (StatusBar != NULL)
-	{
-		StatusBar->MultiplayerChanged ();
-	}
-
 	return true;
 }
 
@@ -414,7 +409,7 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 						players[j].camera = players[j].mo;
 						if (j == consoleplayer)
 						{
-							StatusBar->AttachToPlayer (players + j);
+							StatusBar->CallAttachToPlayer (players + j);
 						}
 					}
 				}

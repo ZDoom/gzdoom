@@ -1096,7 +1096,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	g_statusbar/strife_sbar.cpp
 	gl/compatibility/gl_20.cpp
 	gl/data/gl_data.cpp
 	gl/data/gl_portaldata.cpp

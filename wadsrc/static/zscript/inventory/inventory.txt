@@ -855,6 +855,25 @@ class Inventory : Actor native
 		return false;
 	}
 
+	//===========================================================================
+	//
+	// AInventory :: NextInv
+	//
+	// Returns the next item with IF_INVBAR set.
+	//
+	//===========================================================================
+
+	clearscope Inventory NextInv () const
+	{
+		Inventory item = Inv;
+
+		while (item != NULL && !item.bInvBar)
+		{
+			item = item.Inv;
+		}
+		return item;
+	}
+
 	
 }
 

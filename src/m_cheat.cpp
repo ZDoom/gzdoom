@@ -109,7 +109,6 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQDON");
 		else
 			msg = GStrings("STSTR_DQDOFF");
-		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA:
@@ -126,7 +125,6 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQD2ON");
 		else
 			msg = GStrings("STSTR_DQD2OFF");
-		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA2:

@@ -118,7 +118,7 @@ CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	setsizeneeded = true;
 	if (StatusBar != NULL)
 	{
-		StatusBar->ScreenSizeChanged();
+		StatusBar->CallScreenSizeChanged();
 	}	
 }
 

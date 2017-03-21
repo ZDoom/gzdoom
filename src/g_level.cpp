@@ -328,7 +328,6 @@ void G_NewInit ()
 	}
 
 	G_ClearSnapshots ();
-	ST_SetNeedRefresh();
 	netgame = false;
 	multiplayer = multiplayernext;
 	multiplayernext = false;
@@ -485,7 +484,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 	}
 	GC::WriteBarrier(StatusBar);
-	StatusBar->AttachToPlayer (&players[consoleplayer]);
+	StatusBar->CallAttachToPlayer (&players[consoleplayer]);
 	StatusBar->NewGame ();
 	setsizeneeded = true;
 
@@ -1091,7 +1090,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
 	}
 
-	StatusBar->AttachToPlayer (&players[consoleplayer]);
+	StatusBar->CallAttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)

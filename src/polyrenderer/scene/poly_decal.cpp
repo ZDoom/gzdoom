@@ -136,7 +136,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 
 	PolyDrawArgs args;
-	args.uniforms.flags = 0;
+	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.SetColormap(GetColorTable(front->Colormap));
 	args.SetTexture(tex, decal->Translation, true);
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);

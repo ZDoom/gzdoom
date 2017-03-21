@@ -142,7 +142,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
-	args.uniforms.flags = 0;
+	args.uniforms.flags = TriUniforms::nearest_filter;
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
 		args.uniforms.light = 256;

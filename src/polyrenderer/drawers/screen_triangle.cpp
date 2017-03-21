@@ -36,7 +36,10 @@
 #include "poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
-#include "poly_drawers.h"
+#ifndef NO_SSE
+#include "poly_drawer32_sse2.h"
+#endif
+#include "poly_drawer8.h"
 
 void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
@@ -702,265 +705,87 @@ void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThrea
 	}
 }
 
-#if 0
-float ScreenTriangle::FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriDraw8 =
 {
-	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
-	float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
-	return top / bottom;
-}
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,      // "Copy", "opaque", false
+	&TriScreenDrawer8<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,      // "AlphaBlend", "masked", false
+	&TriScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "AddSolid", "translucent", false
+	&TriScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "Add", "add", false
+	&TriScreenDrawer8<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "Sub", "sub", false
+	&TriScreenDrawer8<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute, // "RevSub", "revsub", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Stencil", "stencil", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Shaded", "shaded", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateCopy", "opaque", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAlphaBlend", "masked", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAdd", "add", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateSub", "sub", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateRevSub", "revsub", true
+	&TriScreenDrawer8<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute, // "AddSrcColorOneMinusSrcColor", "addsrccolor", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute        // "Skycap", "skycap", false
+};
 
-float ScreenTriangle::FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriFill8 =
 {
-	float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
-	float bottom = (x0 - x2) * (y1 - y2) - (x1 - x2) * (y0 - y2);
-	return top / bottom;
-}
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,         // "Copy", "opaque", false
+	&TriScreenDrawer8<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::FillSampler>::Execute,         // "AlphaBlend", "masked", false
+	&TriScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "AddSolid", "translucent", false
+	&TriScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "Add", "add", false
+	&TriScreenDrawer8<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "Sub", "sub", false
+	&TriScreenDrawer8<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,    // "RevSub", "revsub", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Stencil", "stencil", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Shaded", "shaded", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateCopy", "opaque", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAlphaBlend", "masked", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAdd", "add", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateSub", "sub", true
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateRevSub", "revsub", true
+	&TriScreenDrawer8<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,    // "AddSrcColorOneMinusSrcColor", "addsrccolor", false
+	&TriScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute          // "Skycap", "skycap", false
+};
 
-void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+#ifdef NO_SSE
+
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriDraw32;
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriFill32;
+
+#else
+
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriDraw32 =
 {
-	int numSpans = thread->NumFullSpans;
-	auto fullSpans = thread->FullSpans;
-	int numBlocks = thread->NumPartialBlocks;
-	auto partialBlocks = thread->PartialBlocks;
-	int startX = thread->StartX;
-	int startY = thread->StartY;
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,      // "Copy", "opaque", false
+	&TriScreenDrawer32<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,      // "AlphaBlend", "masked", false
+	&TriScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "AddSolid", "translucent", false
+	&TriScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "Add", "add", false
+	&TriScreenDrawer32<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // "Sub", "sub", false
+	&TriScreenDrawer32<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute, // "RevSub", "revsub", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Stencil", "stencil", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Shaded", "shaded", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateCopy", "opaque", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAlphaBlend", "masked", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAdd", "add", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateSub", "sub", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateRevSub", "revsub", true
+	&TriScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute, // "AddSrcColorOneMinusSrcColor", "addsrccolor", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute        // "Skycap", "skycap", false
+};
 
-	// Calculate gradients
-	const TriVertex &v1 = *args->v1;
-	const TriVertex &v2 = *args->v2;
-	const TriVertex &v3 = *args->v3;
-	ScreenTriangleStepVariables gradientX;
-	ScreenTriangleStepVariables gradientY;
-	ScreenTriangleStepVariables start;
-	gradientX.W = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	gradientY.W = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	start.W = v1.w + gradientX.W * (startX - v1.x) + gradientY.W * (startY - v1.y);
-	for (int i = 0; i < TriVertex::NumVarying; i++)
-	{
-		gradientX.Varying[i] = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		gradientY.Varying[i] = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
-	}
+std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> ScreenTriangle::TriFill32 =
+{
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,         // "Copy", "opaque", false
+	&TriScreenDrawer32<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::FillSampler>::Execute,         // "AlphaBlend", "masked", false
+	&TriScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "AddSolid", "translucent", false
+	&TriScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "Add", "add", false
+	&TriScreenDrawer32<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // "Sub", "sub", false
+	&TriScreenDrawer32<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,    // "RevSub", "revsub", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Stencil", "stencil", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::ShadedSampler>::Execute,       // "Shaded", "shaded", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateCopy", "opaque", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAlphaBlend", "masked", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateAdd", "add", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateSub", "sub", true
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,   // "TranslateRevSub", "revsub", true
+	&TriScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,    // "AddSrcColorOneMinusSrcColor", "addsrccolor", false
+	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute          // "Skycap", "skycap", false
+};
 
-	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
-	uint32_t texWidth = args->textureWidth;
-	uint32_t texHeight = args->textureHeight;
-
-	uint32_t * RESTRICT destOrg = (uint32_t*)args->dest;
-	uint32_t * RESTRICT subsectorGBuffer = (uint32_t*)args->subsectorGBuffer;
-	int pitch = args->pitch;
-
-	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
-
-	uint32_t light = args->uniforms->light;
-	float shade = (64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f) / 32.0f;
-	float globVis = 1706.0f;
-
-	for (int i = 0; i < numSpans; i++)
-	{
-		const auto &span = fullSpans[i];
-
-		uint32_t *dest = destOrg + span.X + span.Y * pitch;
-		uint32_t *subsector = subsectorGBuffer + span.X + span.Y * pitch;
-		int width = span.Length;
-		int height = 8;
-
-		ScreenTriangleStepVariables blockPosY;
-		blockPosY.W = start.W + gradientX.W * (span.X - startX) + gradientY.W * (span.Y - startY);
-		for (int j = 0; j < TriVertex::NumVarying; j++)
-			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (span.X - startX) + gradientY.Varying[j] * (span.Y - startY);
-
-		for (int y = 0; y < height; y++)
-		{
-			ScreenTriangleStepVariables blockPosX = blockPosY;
-
-			float rcpW = 0x01000000 / blockPosX.W;
-			int32_t varyingPos[TriVertex::NumVarying];
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
-			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-
-			for (int x = 0; x < width; x++)
-			{
-				blockPosX.W += gradientX.W * 8;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
-
-				rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingStep[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-				{
-					int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-				}
-
-				int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-				int lightstep = (lightnext - lightpos) / 8;
-
-				for (int ix = 0; ix < 8; ix++)
-				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
-
-					uint32_t r = RPART(fg);
-					uint32_t g = GPART(fg);
-					uint32_t b = BPART(fg);
-					r = r * lightpos / 256;
-					g = g * lightpos / 256;
-					b = b * lightpos / 256;
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-
-					dest[x * 8 + ix] = fg;
-					subsector[x * 8 + ix] = subsectorDepth;
-
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] += varyingStep[j];
-					lightpos += lightstep;
-				}
-			}
-		
-			blockPosY.W += gradientY.W;
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosY.Varying[j] += gradientY.Varying[j];
-
-			dest += pitch;
-			subsector += pitch;
-		}
-	}
-	
-	for (int i = 0; i < numBlocks; i++)
-	{
-		const auto &block = partialBlocks[i];
-
-		ScreenTriangleStepVariables blockPosY;
-		blockPosY.W = start.W + gradientX.W * (block.X - startX) + gradientY.W * (block.Y - startY);
-		for (int j = 0; j < TriVertex::NumVarying; j++)
-			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (block.X - startX) + gradientY.Varying[j] * (block.Y - startY);
-
-		uint32_t *dest = destOrg + block.X + block.Y * pitch;
-		uint32_t *subsector = subsectorGBuffer + block.X + block.Y * pitch;
-		uint32_t mask0 = block.Mask0;
-		uint32_t mask1 = block.Mask1;
-		for (int y = 0; y < 4; y++)
-		{
-			ScreenTriangleStepVariables blockPosX = blockPosY;
-
-			float rcpW = 0x01000000 / blockPosX.W;
-			int32_t varyingPos[TriVertex::NumVarying];
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
-
-			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-
-			blockPosX.W += gradientX.W * 8;
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
-
-			rcpW = 0x01000000 / blockPosX.W;
-			int32_t varyingStep[TriVertex::NumVarying];
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-			{
-				int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-			}
-
-			int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-			int lightstep = (lightnext - lightpos) / 8;
-
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask0 & (1 << 31))
-				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
-
-					uint32_t r = RPART(fg);
-					uint32_t g = GPART(fg);
-					uint32_t b = BPART(fg);
-					r = r * lightpos / 256;
-					g = g * lightpos / 256;
-					b = b * lightpos / 256;
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-
-					dest[x] = fg;
-					subsector[x] = subsectorDepth;
-				}
-				mask0 <<= 1;
-
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					varyingPos[j] += varyingStep[j];
-				lightpos += lightstep;
-			}
-
-			blockPosY.W += gradientY.W;
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosY.Varying[j] += gradientY.Varying[j];
-
-			dest += pitch;
-			subsector += pitch;
-		}
-		for (int y = 4; y < 8; y++)
-		{
-			ScreenTriangleStepVariables blockPosX = blockPosY;
-
-			float rcpW = 0x01000000 / blockPosX.W;
-			int32_t varyingPos[TriVertex::NumVarying];
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
-
-			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-
-			blockPosX.W += gradientX.W * 8;
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
-
-			rcpW = 0x01000000 / blockPosX.W;
-			int32_t varyingStep[TriVertex::NumVarying];
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-			{
-				int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-			}
-
-			int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-			int lightstep = (lightnext - lightpos) / 8;
-
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask1 & (1 << 31))
-				{
-					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
-					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
-					uint32_t fg = texPixels[texelX * texHeight + texelY];
-
-					uint32_t r = RPART(fg);
-					uint32_t g = GPART(fg);
-					uint32_t b = BPART(fg);
-					r = r * lightpos / 256;
-					g = g * lightpos / 256;
-					b = b * lightpos / 256;
-					fg = 0xff000000 | (r << 16) | (g << 8) | b;
-
-					dest[x] = fg;
-					subsector[x] = subsectorDepth;
-				}
-				mask1 <<= 1;
-
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					varyingPos[j] += varyingStep[j];
-				lightpos += lightstep;
-			}
-
-			blockPosY.W += gradientY.W;
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosY.Varying[j] += gradientY.Varying[j];
-
-			dest += pitch;
-			subsector += pitch;
-		}
-	}
-}
 #endif

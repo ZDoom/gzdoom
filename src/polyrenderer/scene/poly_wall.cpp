@@ -251,7 +251,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	args.uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
-	args.uniforms.flags = 0;
+	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = SubsectorDepth;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;

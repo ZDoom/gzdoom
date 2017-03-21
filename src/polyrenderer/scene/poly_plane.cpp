@@ -116,7 +116,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 		args.uniforms.light = 256;
-	args.uniforms.flags = 0;
+	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
@@ -314,7 +314,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 		args.uniforms.light = 256;
-	args.uniforms.flags = 0;
+	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);

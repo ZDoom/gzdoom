@@ -160,3 +160,29 @@ struct ScreenTriangleStepVariables
 	float W;
 	float Varying[TriVertex::NumVarying];
 };
+
+namespace TriScreenDrawerModes
+{
+	enum class BlendModes { Opaque, Masked, AddClamp, SubClamp, RevSubClamp, AddSrcColorOneMinusSrcColor };
+	struct OpaqueBlend { static const int Mode = (int)BlendModes::Opaque; };
+	struct MaskedBlend { static const int Mode = (int)BlendModes::Masked; };
+	struct AddClampBlend { static const int Mode = (int)BlendModes::AddClamp; };
+	struct SubClampBlend { static const int Mode = (int)BlendModes::SubClamp; };
+	struct RevSubClampBlend { static const int Mode = (int)BlendModes::RevSubClamp; };
+	struct AddSrcColorBlend { static const int Mode = (int)BlendModes::AddSrcColorOneMinusSrcColor; };
+
+	enum class FilterModes { Nearest, Linear };
+	struct NearestFilter { static const int Mode = (int)FilterModes::Nearest; };
+	struct LinearFilter { static const int Mode = (int)FilterModes::Linear; };
+
+	enum class ShadeMode { Simple, Advanced };
+	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
+	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
+
+	enum class Samplers { Texture, Fill, Shaded, Translated, Skycap };
+	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
+	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
+	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
+	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
+	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
+}

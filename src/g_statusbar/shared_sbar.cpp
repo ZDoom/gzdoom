@@ -1379,49 +1379,6 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, ValidateInvFirst)
 
 //============================================================================
 //
-// DBaseStatusBar :: GetCurrentAmmo
-//
-// Returns the types and amounts of ammo used by the current weapon. If the
-// weapon only uses one type of ammo, it is always returned as ammo1.
-//
-//============================================================================
-
-void DBaseStatusBar::GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const
-{
-	if (CPlayer->ReadyWeapon != NULL)
-	{
-		ammo1 = CPlayer->ReadyWeapon->Ammo1;
-		ammo2 = CPlayer->ReadyWeapon->Ammo2;
-		if (ammo1 == NULL)
-		{
-			ammo1 = ammo2;
-			ammo2 = NULL;
-		}
-	}
-	else
-	{
-		ammo1 = ammo2 = NULL;
-	}
-	ammocount1 = ammo1 != NULL ? ammo1->Amount : 0;
-	ammocount2 = ammo2 != NULL ? ammo2->Amount : 0;
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetCurrentAmmo)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	AInventory *ammo1, *ammo2;
-	int ammocount1, ammocount2;
-	self->GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
-	if (numret >= 1) ret[0].SetPointer(ammo1, ATAG_OBJECT);
-	if (numret >= 2) ret[1].SetPointer(ammo2, ATAG_OBJECT);
-	if (numret >= 3) ret[2].SetInt(ammocount1);
-	if (numret >= 4) ret[3].SetInt(ammocount2);
-	return MIN(numret, 4);
-}
-
-
-//============================================================================
-//
 // CCMD showpop
 //
 // Asks the status bar to show a pop screen.

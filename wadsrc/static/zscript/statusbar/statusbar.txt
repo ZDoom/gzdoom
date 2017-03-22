@@ -79,6 +79,38 @@ class BaseStatusBar native ui
 	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
 	
 	native void RefreshBackground () const;
-	native Inventory, Inventory, int, int GetCurrentAmmo () const;
 	native Inventory ValidateInvFirst (int numVisible) const;
+	
+	//============================================================================
+	//
+	// DBaseStatusBar :: GetCurrentAmmo
+	//
+	// Returns the types and amounts of ammo used by the current weapon. If the
+	// weapon only uses one type of ammo, it is always returned as ammo1.
+	//
+	//============================================================================
+
+	Inventory, Inventory, int, int GetCurrentAmmo () const
+	{
+		Ammo ammo1, ammo2;
+		if (CPlayer.ReadyWeapon != NULL)
+		{
+			ammo1 = CPlayer.ReadyWeapon.Ammo1;
+			ammo2 = CPlayer.ReadyWeapon.Ammo2;
+			if (ammo1 == NULL)
+			{
+				ammo1 = ammo2;
+				ammo2 = NULL;
+			}
+		}
+		else
+		{
+			ammo1 = ammo2 = NULL;
+		}
+		let ammocount1 = ammo1 != NULL ? ammo1.Amount : 0;
+		let ammocount2 = ammo2 != NULL ? ammo2.Amount : 0;
+		return ammo1, ammo2, ammocount1, ammocount2;
+	}
+
+	
 }

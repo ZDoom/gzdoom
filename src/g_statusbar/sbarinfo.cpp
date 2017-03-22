@@ -1068,8 +1068,24 @@ public:
 			}
 		}
 
+		if (CPlayer->ReadyWeapon != NULL)
+		{
+			ammo1 = CPlayer->ReadyWeapon->Ammo1;
+			ammo2 = CPlayer->ReadyWeapon->Ammo2;
+			if (ammo1 == NULL)
+			{
+				ammo1 = ammo2;
+				ammo2 = NULL;
+			}
+		}
+		else
+		{
+			ammo1 = ammo2 = NULL;
+		}
+		ammocount1 = ammo1 != NULL ? ammo1->Amount : 0;
+		ammocount2 = ammo2 != NULL ? ammo2->Amount : 0;
+
 		//prepare ammo counts
-		wrapper->GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
 		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
 
 		if(state != HUD_AltHud)

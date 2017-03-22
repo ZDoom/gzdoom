@@ -387,8 +387,6 @@ public:
 	
 	void RefreshBackground () const;
 
-	void GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const;
-
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();

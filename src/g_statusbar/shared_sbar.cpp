@@ -1429,3 +1429,65 @@ DBaseStatusBar *CreateStrifeStatusBar()
 	}
 	return sb;
 }
+
+
+static DObject *InitObject(PClass *type, int paramnum, VM_ARGS)
+{
+	auto obj =  type->CreateNew();
+	// Todo: init
+	return obj;
+}
+
+DEFINE_ACTION_FUNCTION(DStatusbarWidget, AppendWidget)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	PARAM_CLASS(type, DObject); 
+	if (!type->IsDescendantOf(NAME_StatusbarWidget) || type->IsDescendantOf(NAME_StatusbarCondition))
+	{
+		ThrowAbortException(X_OTHER, "Invalid class %s for AppendWidget", type->TypeName.GetChars());
+	}
+	auto obj = InitObject(type, paramnum, VM_ARGS_NAMES);
+	auto owner = self->PointerVar<DObject>(NAME_Owner);
+	self->PointerVar<DObject>(NAME_Next) = obj;
+	obj->PointerVar<DObject>(NAME_Prev) = self;
+	obj->PointerVar<DObject>(NAME_Owner) = owner;
+	ACTION_RETURN_POINTER(obj);
+}
+
+DEFINE_ACTION_FUNCTION(DStatusbarWidget, BeginCondition)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	PARAM_CLASS(type, DObject);
+	if (!type->IsDescendantOf(NAME_StatusbarCondition))
+	{
+		ThrowAbortException(X_OTHER, "Invalid class %s for BeginCondition", type->TypeName.GetChars());
+	}
+	auto obj = InitObject(type, paramnum, VM_ARGS_NAMES);
+	auto head = PClass::FindClass(NAME_StatusbarWidget)->CreateNew();
+	
+	head->PointerVar<DObject>(NAME_Owner) = self;
+	self->PointerVar<DObject>(NAME_Children) = head;
+	ACTION_RETURN_POINTER(head);
+}
+
+DEFINE_ACTION_FUNCTION(DStatusbarWidget, EndCondition)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	auto owner = self->PointerVar<DObject>(NAME_Owner);
+	if (owner == nullptr || !owner->IsKindOf(NAME_StatusbarCondition))
+	{
+		ThrowAbortException(X_OTHER, "No matching BeginCondition found for EndCondition");
+	}
+	ACTION_RETURN_POINTER(owner);
+}
+
+DEFINE_ACTION_FUNCTION(DStatusbarWidget, Finish)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	auto owner = self->PointerVar<DObject>(NAME_Owner);
+	if (owner == nullptr || owner->PointerVar<DObject>(NAME_Owner) != owner || owner->GetClass()->TypeName != NAME_StatusbarWidget)
+	{
+		ThrowAbortException(X_OTHER, "No matching Begin found for Finish");
+	}
+	ACTION_RETURN_POINTER(owner);
+}

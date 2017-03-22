@@ -648,6 +648,12 @@ xx(Staticconst)
 xx(DeathmatchStatusScreen)
 xx(CoopStatusScreen)
 xx(RavenStatusScreen)
+xx(StatusbarWidget)
+xx(StatusbarCondition)
+xx(Next)
+xx(Prev)
+xx(Children)
+xx(Owner)
 
 // USDF keywords
 xx(Amount)

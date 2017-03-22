@@ -796,6 +796,23 @@ void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, VirtualToRealCoords)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(vw);
+	PARAM_FLOAT(vh);
+	PARAM_BOOL_DEF(vbottom);
+	PARAM_BOOL_DEF(handleaspect);
+	screen->VirtualToRealCoords(x, y, w, h, vw, vh, vbottom, handleaspect);
+	if (numret >= 1) ret[0].SetVector2(DVector2(x, y));
+	if (numret >= 2) ret[1].SetVector2(DVector2(w, h));
+	return MIN(numret, 2);
+}
+
 void DCanvas::VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h,
 	int vwidth, int vheight, bool vbottom, bool handleaspect) const
 {

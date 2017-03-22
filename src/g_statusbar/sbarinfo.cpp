@@ -1212,7 +1212,7 @@ public:
 		{
 			if (forceWidth < 0)	dx -= (texture->GetScaledWidthDouble()/2.0)-texture->GetScaledLeftOffsetDouble();
 			else	dx -= forceWidth*(0.5-(texture->GetScaledLeftOffsetDouble()/texture->GetScaledWidthDouble()));
-			//Unoptimalized formula is dx -= forceWidth/2.0-(texture->GetScaledLeftOffsetDouble()*forceWidth/texture->GetScaledWidthDouble());
+			//Unoptimalized ^^formula is dx -= forceWidth/2.0-(texture->GetScaledLeftOffsetDouble()*forceWidth/texture->GetScaledWidthDouble());
 			
 			if (forceHeight < 0)	dy -= (texture->GetScaledHeightDouble()/2.0)-texture->GetScaledTopOffsetDouble();
 			else	dy -= forceHeight*(0.5-(texture->GetScaledTopOffsetDouble()/texture->GetScaledHeightDouble()));

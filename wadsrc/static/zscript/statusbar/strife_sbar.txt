@@ -229,10 +229,19 @@ class StrifeStatusBar : BaseStatusBar
 		ItemFlash = 0.75;
 	}
 	
-	private void FillBar(int x, int y, int start, int stopp, Color color1, Color color2)
+	private void FillBar(double x, double y, double start, double stopp, Color color1, Color color2)
 	{
-		// right now there is no function to draw this.
-		// The old code used a crude texture hack to work arounf this omission.
+		Vector2 virt = Scaled? (320., 200.) : (screen.GetWidth(), screen.GetHeight());
+		Vector2 pos, sizev;
+		
+		start *=2;
+		stopp *=2;
+		
+		[pos, sizev] = screen.VirtualToRealCoords((ST_X + x + start, ST_Y + y), (stopp - start, 1), virt, true, Scaled); 
+		screen.Dim(color1, 1.0, pos.X + 0.5, pos.Y + 0.5, sizev.X + 0.5, sizev.Y + 0.5);
+
+		[pos, sizev] = screen.VirtualToRealCoords((ST_X + x + start, ST_Y + y + 1), (stopp - start, 1), virt, true, Scaled); 
+		screen.Dim(color2, 1.0, pos.X + 0.5, pos.Y + 0.5, sizev.X + 0.5, sizev.Y + 0.5);
 	}
 	
 	protected void DrawHealthBar(int health, int x, int y)
@@ -251,7 +260,7 @@ class StrifeStatusBar : BaseStatusBar
 		
 		if (health == 999)
 		{
-			FillBar (x, y, 0, 200, gold1, gold2);
+			FillBar (x, y, 0, 100, gold1, gold2);
 		}
 		else
 		{
@@ -259,23 +268,23 @@ class StrifeStatusBar : BaseStatusBar
 			{
 				if (health <= 10)
 				{
-					FillBar (x, y, 0, health*2, red1, red2);
+					FillBar (x, y, 0, health, red1, red2);
 				}
 				else if (health <= 20)
 				{
-					FillBar (x, y, 0, health*2, gold1, gold2);
+					FillBar (x, y, 0, health, gold1, gold2);
 				}
 				else
 				{
 					FillBar (x, y, 0, health, green1, green2);
 				}
-				FillBar (x, y, health, 200, 0, 0);
+				//FillBar (x, y, health, 100, 0, 0);
 			}
 			else
 			{
-				int stopp = 100 - (health - 100);
-				FillBar (x, y, 0, stopp*2, green1, green2);
-				FillBar (x, y, stopp*2, 200, blue1, blue2);
+				int stopp = 200 - health;
+				FillBar (x, y, 0, stopp, green1, green2);
+				FillBar (x, y, stopp, 100, blue1, blue2);
 			}
 		}
 	}

@@ -163,13 +163,15 @@ struct ScreenTriangleStepVariables
 
 namespace TriScreenDrawerModes
 {
-	enum class BlendModes { Opaque, Masked, AddClamp, SubClamp, RevSubClamp, AddSrcColorOneMinusSrcColor };
+	enum class BlendModes { Opaque, Masked, AddClamp, SubClamp, RevSubClamp, AddSrcColorOneMinusSrcColor, Shaded, AddClampShaded };
 	struct OpaqueBlend { static const int Mode = (int)BlendModes::Opaque; };
 	struct MaskedBlend { static const int Mode = (int)BlendModes::Masked; };
 	struct AddClampBlend { static const int Mode = (int)BlendModes::AddClamp; };
 	struct SubClampBlend { static const int Mode = (int)BlendModes::SubClamp; };
 	struct RevSubClampBlend { static const int Mode = (int)BlendModes::RevSubClamp; };
 	struct AddSrcColorBlend { static const int Mode = (int)BlendModes::AddSrcColorOneMinusSrcColor; };
+	struct ShadedBlend { static const int Mode = (int)BlendModes::Shaded; };
+	struct AddClampShadedBlend { static const int Mode = (int)BlendModes::AddClampShaded; };
 
 	enum class FilterModes { Nearest, Linear };
 	struct NearestFilter { static const int Mode = (int)FilterModes::Nearest; };

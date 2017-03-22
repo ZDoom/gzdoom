@@ -59,20 +59,25 @@ class BaseStatusBar native ui
 	native double CrosshairSize;
 	native double Displacement;
 	native PlayerInfo CPlayer;
+	native bool ShowLog;
 	
+	native void SetSize(int height, int vwidth, int vheight);
 	virtual void Init() {}
+
 	native virtual void SetScaled(bool scale, bool force = false);
 	native virtual void Tick ();
 	native virtual void Draw (int state, double TicFrac);
+	native virtual void ScreenSizeChanged ();
+
 	virtual void FlashItem (class<Inventory> itemtype) {}
-	native virtual void AttachToPlayer (PlayerInfo player);
+	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
 	virtual void NewGame () {}
-	native virtual void ScreenSizeChanged ();
-	native virtual void ShowPop (int popnum);
-	native virtual clearscope void ReceivedWeapon (Weapon weapn);
+	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
+	virtual clearscope void ReceivedWeapon (Weapon weapn) {}
 	virtual bool MustDrawLog(int state) { return true; }
-//	native virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false); later - at the moment the backing code is not accessible from the script side.
+	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
+	
 	native void RefreshBackground () const;
 	native Inventory, Inventory, int, int GetCurrentAmmo () const;
 	native Inventory ValidateInvFirst (int numVisible) const;

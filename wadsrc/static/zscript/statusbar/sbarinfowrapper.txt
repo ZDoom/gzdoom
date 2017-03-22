@@ -1,0 +1,99 @@
+
+struct SBarInfo native ui
+{
+	native void SetScaled(bool scaled);
+	native void Destroy();
+	native void AttachToPlayer(PlayerInfo player);
+	native void ScreenSizeChanged();
+	native void Draw(int state);
+	native void NewGame();
+	native bool MustDrawLog(int state);
+	native void SetMugShotState(String state_name, bool wait_till_done, bool reset);
+	native void Tick();
+	native clearscope void ReceivedWeapon(Weapon weapon);
+	native void FlashItem(class<Inventory> itemtype);
+	native void ShowPop(int popnum);
+}
+
+
+// The sole purpose of this wrapper is to elimintate the native dependencies of the status bar object
+// because those would seriously impede the script conversion of the base class.
+
+class SBarInfoWrapper : BaseStatusBar
+{
+	private clearscope SBarInfo core;
+
+	override void OnDestroy()
+	{
+		if (core != null) core.Destroy();	// note that the core is not a GC'd object!
+		Super.OnDestroy();
+	}
+
+	override void SetScaled(bool scale, bool force)
+	{
+		Super.SetScaled(scale, force);
+		core.SetScaled(Scaled);
+	}
+
+	override void AttachToPlayer(PlayerInfo player)
+	{
+		Super.AttachToPlayer(player);
+		core.AttachToPlayer(player);
+	}
+
+	override void ScreenSizeChanged()
+	{
+		Super.ScreenSizeChanged();
+		core.ScreenSizeChanged();
+	}
+
+	override void Draw(int state, double TicFrac)
+	{
+		Super.Draw(state, TicFrac);
+		core.Draw(state);
+	}
+
+	override void NewGame()
+	{
+		Super.NewGame();
+		if (CPlayer != NULL)
+		{
+			AttachToPlayer(CPlayer);
+			core.NewGame();
+		}
+	}
+
+	override bool MustDrawLog(int state)
+	{
+		return core.MustDrawLog(state);
+	}
+
+	override void SetMugShotState(String state_name, bool wait_till_done, bool reset)
+	{
+		core.SetMugShotState(state_name, wait_till_done, reset);
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		core.Tick();
+	}
+
+	override void ReceivedWeapon(Weapon weapon)
+	{
+		core.ReceivedWeapon(weapon);
+	}
+
+	override void FlashItem(class<Inventory> itemtype)
+	{
+		core.FlashItem(itemtype);
+	}
+
+	override void ShowPop(int popnum)
+	{
+		Super.ShowPop(popnum);
+		core.ShowPop(popnum);
+	}
+
+
+}

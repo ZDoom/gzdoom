@@ -444,7 +444,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	if (bTitleLevel)
 	{
-		StatusBar = new DBaseStatusBar (0);
+		StatusBar = new DBaseStatusBar ();
+		StatusBar->SetSize(0);
 	}
 	else if (cls && gameinfo.gametype == GAME_Doom)
 	{
@@ -480,11 +481,12 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 		else
 		{
-			StatusBar = new DBaseStatusBar (0);
+			StatusBar = new DBaseStatusBar();
+			StatusBar->SetSize(0);
 		}
 	}
 	GC::WriteBarrier(StatusBar);
-	StatusBar->CallAttachToPlayer (&players[consoleplayer]);
+	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	StatusBar->NewGame ();
 	setsizeneeded = true;
 
@@ -1090,7 +1092,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
 	}
 
-	StatusBar->CallAttachToPlayer (&players[consoleplayer]);
+	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)

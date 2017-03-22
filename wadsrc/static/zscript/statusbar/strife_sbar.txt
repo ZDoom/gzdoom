@@ -59,6 +59,7 @@ class StrifeStatusBar : BaseStatusBar
 
 	override void Init()
 	{
+		SetSize(32, 320, 200);
 		DoCommonInit();
 	}
 

@@ -224,22 +224,37 @@ void ST_Clear()
 //
 //---------------------------------------------------------------------------
 
-DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
+DBaseStatusBar::DBaseStatusBar ()
 {
 	CompleteBorder = false;
 	Centering = false;
 	FixedOrigin = false;
 	CrosshairSize = 1.;
-	RelTop = reltop;
 	memset(Messages, 0, sizeof(Messages));
 	Displacement = 0;
 	CPlayer = NULL;
 	ShowLog = false;
+}
+
+void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
+{
+	RelTop = reltop;
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
 
-	CallSetScaled (st_scale);
+	CallSetScaled(st_scale);
 }
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetSize)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT_DEF(rt);
+	PARAM_INT_DEF(vw);
+	PARAM_INT_DEF(vh);
+	self->SetSize(rt, vw, vh);
+	return 0;
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -334,27 +349,13 @@ void DBaseStatusBar::CallSetScaled(bool scale, bool force)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::AttachToPlayer (player_t *player)
-{
-	CPlayer = player;
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, AttachToPlayer)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(player, player_t);
-	self->AttachToPlayer(player);
-	return 0;
-}
-
-void DBaseStatusBar::CallAttachToPlayer(player_t *player)
+void DBaseStatusBar::AttachToPlayer(player_t *player)
 {
 	IFVIRTUAL(DBaseStatusBar, AttachToPlayer)
 	{
 		VMValue params[] = { (DObject*)this, player };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
-	else AttachToPlayer(player);
 }
 
 //---------------------------------------------------------------------------
@@ -1019,6 +1020,12 @@ bool DBaseStatusBar::MustDrawLog(EHudState state)
 
 void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, bool reset)
 {
+	IFVIRTUAL(DBaseStatusBar, SetMugShotState)
+	{
+		FString statestring = stateName;
+		VMValue params[] = { (DObject*)this, &statestring, waitTillDone, reset };
+		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -1223,42 +1230,15 @@ void DBaseStatusBar::NewGame ()
 	}
 }
 
-void DBaseStatusBar::ShowPop (int popnum)
-{
-	ShowLog = (popnum == POP_Log && !ShowLog);
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, ShowPop)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(state);
-	self->ShowPop(state);
-	return 0;
-}
-
-void DBaseStatusBar::CallShowPop(int pop)
+void DBaseStatusBar::ShowPop(int pop)
 {
 	IFVIRTUAL(DBaseStatusBar, ShowPop)
 	{
 		VMValue params[] = { (DObject*)this, pop };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
-	else ShowPop(pop);
 }
 
-
-
-void DBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
-{
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, ReceivedWeapon)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(w, AWeapon);
-	self->ReceivedWeapon(w);
-	return 0;
-}
 
 
 void DBaseStatusBar::SerializeMessages(FSerializer &arc)
@@ -1461,7 +1441,7 @@ CCMD (showpop)
 		{
 			popnum = 0;
 		}
-		StatusBar->CallShowPop (popnum);
+		StatusBar->ShowPop (popnum);
 	}
 }
 
@@ -1477,6 +1457,8 @@ DEFINE_FIELD(DBaseStatusBar, CompleteBorder);
 DEFINE_FIELD(DBaseStatusBar, CrosshairSize);
 DEFINE_FIELD(DBaseStatusBar, Displacement);
 DEFINE_FIELD(DBaseStatusBar, CPlayer);
+DEFINE_FIELD(DBaseStatusBar, ShowLog);
+
 DEFINE_GLOBAL(StatusBar);
 
 

@@ -409,7 +409,7 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 						players[j].camera = players[j].mo;
 						if (j == consoleplayer)
 						{
-							StatusBar->CallAttachToPlayer (players + j);
+							StatusBar->AttachToPlayer (players + j);
 						}
 					}
 				}

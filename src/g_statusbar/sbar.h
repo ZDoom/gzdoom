@@ -337,7 +337,8 @@ public:
 		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
-	DBaseStatusBar (int reltop = 32, int hres=320, int vres=200);
+	DBaseStatusBar ();
+	void SetSize(int reltop = 32, int hres = 320, int vres = 200);
 	void OnDestroy() override;
 
 	void AttachMessage (DHUDMessage *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
@@ -361,17 +362,14 @@ public:
 	void CallDraw(EHudState state);
 			void DrawBottomStuff (EHudState state);
 			void DrawTopStuff (EHudState state);
-	virtual void FlashItem (const PClass *itemtype);
-	virtual void AttachToPlayer (player_t *player);
-	void CallAttachToPlayer(player_t *player);
+	void FlashItem (const PClass *itemtype);
+	void AttachToPlayer(player_t *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
-	virtual void NewGame ();
+	void NewGame ();
 	virtual void ScreenSizeChanged ();
 	void CallScreenSizeChanged();
-	virtual void ShowPop (int popnum);
-	void CallShowPop(int popnum);
-	virtual void ReceivedWeapon (AWeapon *weapon);
+	void ShowPop (int popnum);
 	virtual bool MustDrawLog(EHudState state);
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
@@ -404,6 +402,7 @@ public:
 	bool CompleteBorder;
 	double CrosshairSize;
 	double Displacement;
+	bool ShowLog;
 
 	FImageCollection Images;
 
@@ -416,7 +415,6 @@ private:
 	void DrawWaiting () const;
 
 	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
-	bool ShowLog;
 };
 
 extern DBaseStatusBar *StatusBar;

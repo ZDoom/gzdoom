@@ -473,7 +473,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
 				p->camera = p->mo;
 
 				S_UpdateSounds (p->camera);
-				StatusBar->CallAttachToPlayer (p);
+				StatusBar->AttachToPlayer (p);
 
 				if (demoplayback || multiplayer)
 					StatusBar->ShowPlayerName ();

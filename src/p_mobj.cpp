@@ -5584,7 +5584,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (StatusBar != NULL && (playernum == consoleplayer || StatusBar->GetPlayer() == playernum))
 	{
-		StatusBar->CallAttachToPlayer (p);
+		StatusBar->AttachToPlayer (p);
 	}
 
 	if (multiplayer)

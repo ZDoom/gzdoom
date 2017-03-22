@@ -923,7 +923,7 @@ static void ChangeSpy (int changespy)
 
 	players[consoleplayer].camera = players[pnum].mo;
 	S_UpdateSounds(players[consoleplayer].camera);
-	StatusBar->CallAttachToPlayer (&players[pnum]);
+	StatusBar->AttachToPlayer (&players[pnum]);
 	if (demoplayback || multiplayer)
 	{
 		StatusBar->ShowPlayerName ();
@@ -1823,7 +1823,7 @@ void G_DoPlayerPop(int playernum)
 			players[ii].camera = players[ii].mo;
 			if (ii == consoleplayer && StatusBar != NULL)
 			{
-				StatusBar->CallAttachToPlayer(&players[ii]);
+				StatusBar->AttachToPlayer(&players[ii]);
 			}
 		}
 	}
@@ -2909,7 +2909,7 @@ bool G_CheckDemoStatus (void)
 		players[0].camera = NULL;
 		if (StatusBar != NULL)
 		{
-			StatusBar->CallAttachToPlayer (&players[0]);
+			StatusBar->AttachToPlayer (&players[0]);
 		}
 		if (singledemo || timingdemo)
 		{

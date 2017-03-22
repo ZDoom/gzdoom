@@ -1033,7 +1033,7 @@ public:
 	{
 		if (script->cleanX <= 0)
 		{ // Calculate cleanX and cleanY
-			wrapper->ScreenSizeChanged();
+			wrapper->CallScreenSizeChanged();
 		}
 		int hud = STBAR_NORMAL;
 		if(state == HUD_StatusBar)
@@ -1572,102 +1572,117 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 
 //==========================================================================
 //
-// SBarinfoWrapper
-//
-// This class abstracts SBARINFO from the rest of the engine.
-// The idea is, when status bars are moved to ZScript that only
-// this small wrapper class needs to be dealt with and the implementation
-// can be left alone.
+// This routes all access through a scripted class because a native
+// side class of an entire scripted hierarchy would be a major obstacle.
 //
 //==========================================================================
 
-
-DSBarInfoWrapper::DSBarInfoWrapper(SBarInfo *script)
-	: DBaseStatusBar(script->height, script->resW, script->resH)
+DEFINE_ACTION_FUNCTION(DSBarInfo, Destroy)
 {
-	core = new DSBarInfo(this, script);
-	core->_SetScaled(Scaled);
-	CompleteBorder = script->completeBorder;
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	delete self;
+	return 0;
 }
 
-void DSBarInfoWrapper::OnDestroy()
+DEFINE_ACTION_FUNCTION(DSBarInfo, SetScaled)
 {
-	if (core != nullptr) delete core;
-	Super::OnDestroy();
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_BOOL(scale);
+	self->_SetScaled(scale);
+	return 0;
 }
 
-void DSBarInfoWrapper::SetScaled(bool scale, bool force)
+DEFINE_ACTION_FUNCTION(DSBarInfo, AttachToPlayer)
 {
-	Super::SetScaled(scale, force);
-	core->_SetScaled(Scaled);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_POINTER(player, player_t);
+	self->_AttachToPlayer(player);
+	return 0;
 }
 
-void DSBarInfoWrapper::AttachToPlayer(player_t *player)
+DEFINE_ACTION_FUNCTION(DSBarInfo, ScreenSizeChanged)
 {
-	Super::AttachToPlayer(player);
-	core->_AttachToPlayer(player);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	self->_ScreenSizeChanged();
+	return 0;
 }
 
-void DSBarInfoWrapper::ScreenSizeChanged()
+DEFINE_ACTION_FUNCTION(DSBarInfo, Draw)
 {
-	Super::ScreenSizeChanged();
-	core->_ScreenSizeChanged();
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_INT(State);
+	self->_Draw((EHudState)State);
+	return 0;
 }
 
-void DSBarInfoWrapper::Draw(EHudState state)
+DEFINE_ACTION_FUNCTION(DSBarInfo, NewGame)
 {
-	Super::Draw(state);
-	core->_Draw(state);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	self->_NewGame();
+	return 0;
 }
 
-void DSBarInfoWrapper::NewGame()
+DEFINE_ACTION_FUNCTION(DSBarInfo, MustDrawLog)
 {
-	Super::NewGame();
-	if (CPlayer != NULL)
-	{
-		AttachToPlayer(CPlayer);
-		core->_NewGame();
-	}
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_INT(State);
+	ACTION_RETURN_BOOL(self->_MustDrawLog((EHudState)State));
 }
 
-bool DSBarInfoWrapper::MustDrawLog(EHudState state)
+DEFINE_ACTION_FUNCTION(DSBarInfo, SetMugshotState)
 {
-	return core->_MustDrawLog(state);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_STRING(name);
+	PARAM_BOOL(wait);
+	PARAM_BOOL(reset);
+	self->_SetMugShotState(name, wait, reset);
+	return 0;
 }
 
-void DSBarInfoWrapper::SetMugShotState(const char *state_name, bool wait_till_done, bool reset)
+DEFINE_ACTION_FUNCTION(DSBarInfo, Tick)
 {
-	core->_SetMugShotState(state_name, wait_till_done, reset);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	self->_Tick();
+	return 0;
 }
 
-void DSBarInfoWrapper::Tick()
+DEFINE_ACTION_FUNCTION(DSBarInfo, ReceivedWeapon)
 {
-	DBaseStatusBar::Tick();
-	core->_Tick();
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_OBJECT(w, AWeapon);
+	self->_ReceivedWeapon(w);
+	return 0;
 }
 
-void DSBarInfoWrapper::ReceivedWeapon(AWeapon *weapon)
+DEFINE_ACTION_FUNCTION(DSBarInfo, FlashItem)
 {
-	core->_ReceivedWeapon(weapon);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_CLASS(w, AInventory);
+	self->_FlashItem(w);
+	return 0;
 }
 
-void DSBarInfoWrapper::FlashItem(const PClass *itemtype)
+DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
 {
-	core->_FlashItem(itemtype);
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_INT(State);
+	self->_ShowPop(State);
+	return 0;
 }
 
-void DSBarInfoWrapper::ShowPop(int popnum)
-{
-	DBaseStatusBar::ShowPop(popnum);	//DBaseStatusBar supercall
-	core->_ShowPop(popnum);
-}
 
-IMPLEMENT_CLASS(DSBarInfoWrapper, false, false)
-
-DBaseStatusBar *CreateCustomStatusBar(int script)
+DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 {
-	if (SBarInfoScript[script] == NULL)
+	auto script = SBarInfoScript[scriptno];
+	if (script == NULL)
 		I_FatalError("Tried to create a status bar with no script!");
-	return new DSBarInfoWrapper(SBarInfoScript[script]);
+
+	auto sbar = (DBaseStatusBar*)PClass::FindClass("SBarInfoWrapper")->CreateNew();
+	auto core = new DSBarInfo(sbar, script);
+	sbar->PointerVar<DSBarInfo>("core") = core;
+	sbar->SetSize(script->height, script->resW, script->resH);
+	core->_SetScaled(sbar->Scaled);
+	sbar->CompleteBorder = script->completeBorder;
+	return sbar;
 }
 

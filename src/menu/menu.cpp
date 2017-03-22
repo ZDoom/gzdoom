@@ -1118,7 +1118,8 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
 {
 	auto c = PClass::FindClass("OptionMenuItemStaticText");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(name), v };
+	FString namestr = name;
+	VMValue params[] = { p, &namestr, v };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1128,7 +1129,8 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 {
 	auto c = PClass::FindClass("OptionMenuItemJoyConfigMenu");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), joy };
+	FString namestr = label;
+	VMValue params[] = { p, &namestr, joy };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1138,7 +1140,8 @@ DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int ce
 {
 	auto c = PClass::FindClass("OptionMenuItemSubmenu");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), cmd.GetIndex(), center };
+	FString namestr = label;
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), center };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1148,7 +1151,8 @@ DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBi
 {
 	auto c = PClass::FindClass("OptionMenuItemControlBase");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, FString(label), cmd.GetIndex(), bindings };
+	FString namestr = label;
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), bindings };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1158,7 +1162,8 @@ DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotk
 {
 	auto c = PClass::FindClass("ListMenuItemPatchItem");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, x, y, height, tex.GetIndex(), FString(char(hotkey)), command.GetIndex(), param };
+	FString keystr = FString(char(hotkey));
+	VMValue params[] = { p, x, y, height, tex.GetIndex(), &keystr, command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1168,7 +1173,9 @@ DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotke
 {
 	auto c = PClass::FindClass("ListMenuItemTextItem");
 	auto p = c->CreateNew();
-	VMValue params[] = { p, x, y, height, FString(char(hotkey)), text, font, int(color1.d), int(color2.d), command.GetIndex(), param };
+	FString keystr = FString(char(hotkey));
+	FString textstr = text;
+	VMValue params[] = { p, x, y, height, &keystr, &textstr, font, int(color1.d), int(color2.d), command.GetIndex(), param };
 	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1191,7 +1198,8 @@ bool DMenuItemBase::SetString(int i, const char *s)
 {
 	IFVIRTUAL(DMenuItemBase, SetString)
 	{
-		VMValue params[] = { (DObject*)this, i, FString(s) };
+		FString namestr = s;
+		VMValue params[] = { (DObject*)this, i, &namestr };
 		int retval;
 		VMReturn ret(&retval);
 		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);

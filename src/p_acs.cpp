@@ -5368,6 +5368,9 @@ static int ScriptCall(unsigned argc, int32_t *args)
 		{
 			I_Error("ACS call to non-static script function %s.%s", clsname, funcname);
 		}
+
+		// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
+		TArray<FString> strings(argc);
 		TArray<VMValue> params;
 		for (unsigned i = 2; i < argc; i++)
 		{
@@ -5395,7 +5398,8 @@ static int ScriptCall(unsigned argc, int32_t *args)
 			}
 			else if (argtype == TypeString)
 			{
-				params.Push(FBehavior::StaticLookupString(args[i]));
+				strings.Push(FBehavior::StaticLookupString(args[i]));
+				params.Push(&strings.Last());
 			}
 			else if (argtype == TypeSound)
 			{

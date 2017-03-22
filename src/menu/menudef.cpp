@@ -386,12 +386,15 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					}
 					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
 
+					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
+					TArray<FString> strings(args.Size());
 					for (unsigned i = start; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
 						{
-							params.Push(FString(sc.String));
+							strings.Push(sc.String);
+							params.Push(&strings.Last());
 						}
 						else if (args[i] == TypeName)
 						{
@@ -751,12 +754,16 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 
 					params.Push(0);
 					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+
+					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
+					TArray<FString> strings(args.Size());
 					for (unsigned i = 1; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
 						{
-							params.Push(FString(sc.String));
+							strings.Push(sc.String);
+							params.Push(&strings.Last());
 						}
 						else if (args[i] == TypeName)
 						{

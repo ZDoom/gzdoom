@@ -384,12 +384,6 @@ VMFrame *VMFrameStack::PopFrame()
 	{
 		(regs++)->~FString();
 	}
-	// Free any parameters this frame left behind.
-	VMValue *param = frame->GetParam();
-	for (int i = frame->NumParam; i != 0; --i)
-	{
-		(param++)->~VMValue();
-	}
 	VMFrame *parent = frame->ParentFrame;
 	if (parent == NULL)
 	{

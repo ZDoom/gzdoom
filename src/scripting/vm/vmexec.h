@@ -583,7 +583,7 @@ begin:
 					break;
 				case REGT_STRING:
 					assert(C < f->NumRegS);
-					::new(param) VMValue(reg.s[C]);
+					::new(param) VMValue(&reg.s[C]);
 					break;
 				case REGT_STRING | REGT_ADDROF:
 					assert(C < f->NumRegS);
@@ -591,7 +591,7 @@ begin:
 					break;
 				case REGT_STRING | REGT_KONST:
 					assert(C < sfunc->NumKonstS);
-					::new(param) VMValue(konsts[C]);
+					::new(param) VMValue(&konsts[C]);
 					break;
 				case REGT_POINTER:
 					assert(C < f->NumRegA);
@@ -707,10 +707,7 @@ begin:
 				stack->PopFrame();
 			}
 			assert(numret == C && "Number of parameters returned differs from what was expected by the caller");
-			for (b = B; b != 0; --b)
-			{
-				reg.param[--f->NumParam].~VMValue();
-			}
+			f->NumParam -= B;
 			pc += C;			// Skip RESULTs
 		}
 		NEXTOP;

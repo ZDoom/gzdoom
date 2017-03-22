@@ -419,29 +419,21 @@ struct VMValue
 		double f;
 		struct { int pad[3]; VM_UBYTE Type; };
 		struct { int foo[4]; } biggest;
+		const FString *sp;
 	};
 
 	// Unfortunately, FString cannot be used directly.
 	// Fortunately, it is relatively simple.
-	FString &s() { return *(FString *)&a; }
-	const FString &s() const { return *(FString *)&a; }
+	const FString &s() const { return *sp; }
 
 	VMValue()
 	{
 		a = NULL;
 		Type = REGT_NIL;
 	}
-	~VMValue()
-	{
-		Kill();
-	}
 	VMValue(const VMValue &o)
 	{
 		biggest = o.biggest;
-		if (Type == REGT_STRING)
-		{
-			::new(&s()) FString(o.s());
-		}
 	}
 	VMValue(int v)
 	{
@@ -453,14 +445,12 @@ struct VMValue
 		f = v;
 		Type = REGT_FLOAT;
 	}
-	VMValue(const char *s)
+	VMValue(const char *s) = delete;
+	VMValue(const FString &s) = delete;
+
+	VMValue(const FString *s)
 	{
-		::new(&a) FString(s);
-		Type = REGT_STRING;
-	}
-	VMValue(const FString &s)
-	{
-		::new(&a) FString(s);
+		sp = s;
 		Type = REGT_STRING;
 	}
 	VMValue(DObject *v)
@@ -483,68 +473,31 @@ struct VMValue
 	}
 	VMValue &operator=(const VMValue &o)
 	{
-		if (o.Type == REGT_STRING)
-		{
-			if (Type == REGT_STRING)
-			{
-				s() = o.s();
-			}
-			else
-			{
-				new(&s()) FString(o.s());
-				Type = REGT_STRING;
-			}
-		}
-		else
-		{
-			Kill();
-			biggest = o.biggest;
-		}
+		biggest = o.biggest;
 		return *this;
 	}
 	VMValue &operator=(int v)
 	{
-		Kill();
 		i = v;
 		Type = REGT_INT;
 		return *this;
 	}
 	VMValue &operator=(double v)
 	{
-		Kill();
 		f = v;
 		Type = REGT_FLOAT;
 		return *this;
 	}
-	VMValue &operator=(const FString &v)
+	VMValue &operator=(const FString *v)
 	{
-		if (Type == REGT_STRING)
-		{
-			s() = v;
-		}
-		else
-		{
-			::new(&s()) FString(v);
-			Type = REGT_STRING;
-		}
+		sp = v;
+		Type = REGT_STRING;
 		return *this;
 	}
-	VMValue &operator=(const char *v)
-	{
-		if (Type == REGT_STRING)
-		{
-			s() = v;
-		}
-		else
-		{
-			::new(&s()) FString(v);
-			Type = REGT_STRING;
-		}
-		return *this;
-	}
+	VMValue &operator=(const FString &v) = delete;
+	VMValue &operator=(const char *v) = delete;
 	VMValue &operator=(DObject *v)
 	{
-		Kill();
 		a = v;
 		atag = ATAG_OBJECT;
 		Type = REGT_POINTER;
@@ -583,13 +536,6 @@ struct VMValue
 		}
 		// FIXME
 		return 0;
-	}
-	void Kill()
-	{
-		if (Type == REGT_STRING)
-		{
-			s().~FString();
-		}
 	}
 };
 

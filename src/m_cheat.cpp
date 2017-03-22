@@ -630,7 +630,8 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
 	{
-		VMValue params[3] = { player->mo, FString(name), amount };
+		FString namestr = name;
+		VMValue params[3] = { player->mo, &namestr, amount };
 		GlobalVMStack.Call(func, params, 3, nullptr, 0);
 	}
 }
@@ -641,7 +642,8 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
 	{
-		VMValue params[3] = { player->mo, FString(name), amount };
+		FString namestr = name;
+		VMValue params[3] = { player->mo, &namestr, amount };
 		GlobalVMStack.Call(func, params, 3, nullptr, 0);
 	}
 }

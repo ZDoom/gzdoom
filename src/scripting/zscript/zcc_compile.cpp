@@ -50,6 +50,8 @@
 #include "gdtoa.h"
 #include "backend/vmbuilder.h"
 
+FSharedStringArena VMStringConstants;
+
 static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
 {
 	ex = new FxIntCast(ex, false);
@@ -2555,7 +2557,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 									break;
 
 								case REGT_STRING:
-									vmval[0] = cnst->GetValue().GetString();
+									// We need a reference to something permanently stored here.
+									vmval[0] = VMStringConstants.Alloc(cnst->GetValue().GetString());
 									break;
 
 								default:

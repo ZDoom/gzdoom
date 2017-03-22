@@ -1700,6 +1700,11 @@ float ActiveRatio(int width, int height, float *trueratio)
 	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : ratio;
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
+{
+	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr));
+}
+
 // Tries to guess the physical dimensions of the screen based on the
 // screen's pixel dimensions. Can return:
 // 0: 4:3

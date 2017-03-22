@@ -565,6 +565,14 @@ void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
 	va_end(ap);
 }
 
+DEFINE_ACTION_FUNCTION(DObject, ThrowAbortException)
+{
+	PARAM_PROLOGUE;
+	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	ThrowAbortException(X_OTHER, s.GetChars());
+	return 0;
+}
+
 void NullParam(const char *varname)
 {
 	ThrowAbortException(X_READ_NIL, "In function parameter %s", varname);

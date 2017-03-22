@@ -1470,24 +1470,4 @@ DEFINE_ACTION_FUNCTION(DStatusbarWidget, BeginCondition)
 	ACTION_RETURN_POINTER(head);
 }
 
-DEFINE_ACTION_FUNCTION(DStatusbarWidget, EndCondition)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	auto owner = self->PointerVar<DObject>(NAME_Owner);
-	if (owner == nullptr || !owner->IsKindOf(NAME_StatusbarCondition))
-	{
-		ThrowAbortException(X_OTHER, "No matching BeginCondition found for EndCondition");
-	}
-	ACTION_RETURN_POINTER(owner);
-}
 
-DEFINE_ACTION_FUNCTION(DStatusbarWidget, Finish)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	auto owner = self->PointerVar<DObject>(NAME_Owner);
-	if (owner == nullptr || owner->PointerVar<DObject>(NAME_Owner) != owner || owner->GetClass()->TypeName != NAME_StatusbarWidget)
-	{
-		ThrowAbortException(X_OTHER, "No matching Begin found for Finish");
-	}
-	ACTION_RETURN_POINTER(owner);
-}

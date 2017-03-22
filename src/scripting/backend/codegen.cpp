@@ -6872,7 +6872,8 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 	{
 		if (offsetreg == -1) offsetreg = build->GetConstantInt(0);
 		auto op = membervar->Type->GetLoadOp();
-		if (op == OP_LO) op = OP_LOS;
+		if (op == OP_LO)
+			op = OP_LOS;
 		build->Emit(op, loc.RegNum, build->FramePointer.RegNum, offsetreg);
 	}
 	else

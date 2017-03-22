@@ -713,6 +713,32 @@ IMPLEMENT_CLASS(PBool, false, false)
 
 //==========================================================================
 //
+// PInt :: SetValue
+//
+//==========================================================================
+
+void PBool::SetValue(void *addr, int val)
+{
+	*(bool*)addr = !!val;
+}
+
+void PBool::SetValue(void *addr, double val)
+{
+	*(bool*)addr = val != 0.;
+}
+
+int PBool::GetValueInt(void *addr) const
+{
+	return *(bool *)addr;
+}
+
+double PBool::GetValueFloat(void *addr) const
+{
+	return *(bool *)addr;
+}
+
+//==========================================================================
+//
 // PBool Default Constructor
 //
 //==========================================================================

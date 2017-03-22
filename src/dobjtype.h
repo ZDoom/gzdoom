@@ -263,6 +263,10 @@ class PBool : public PInt
 	DECLARE_CLASS(PBool, PInt);
 public:
 	PBool();
+	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
+	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 };
 
 class PFloat : public PBasicType

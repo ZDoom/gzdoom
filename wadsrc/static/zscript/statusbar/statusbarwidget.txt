@@ -1,0 +1,79 @@
+
+class StatusbarWidget ui
+{
+	StatusbarWidget Next;
+	StatusbarWidget Prev;
+	StatusbarWidget Owner;
+	
+	native vararg StatusbarWidget AppendWidget(class<StatusbarWidget> cls, ...);
+	native vararg StatusbarWidget BeginCondition(class<StatusbarCondition> cls, ...);
+	native StatusbarWidget EndCondition();
+	native void Finish();
+}
+
+class StatusbarCondition : StatusbarWidget
+{
+	StatusbarWidget Children;
+}
+
+class WidgetStatusBar : BaseStatusBar
+{
+	private StatusbarWidget Head;
+	
+	StatusbarWidget Begin()
+	{
+		Head = new("StatusbarWidget");
+		Head.Owner = Head;
+		return Head;
+	}
+}
+
+
+/* for testing the above. This block compiles.
+class TestWidgets : WidgetStatusBar
+{
+	override void Init()
+	{
+		Begin()
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.BeginCondition("StatusbarCondition")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+			.EndCondition()
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.BeginCondition("StatusbarCondition")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+				.BeginCondition("StatusbarCondition")
+					.AppendWidget("StatusbarWidget")
+					.AppendWidget("StatusbarWidget")
+					.AppendWidget("StatusbarWidget")
+					.AppendWidget("StatusbarWidget")
+				.EndCondition()
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+			.EndCondition()
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.AppendWidget("StatusbarWidget")
+			.BeginCondition("StatusbarCondition")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+				.AppendWidget("StatusbarWidget")
+			.EndCondition()
+			.AppendWidget("StatusbarWidget")
+		.Finish();
+	}
+}
+*/

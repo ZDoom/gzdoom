@@ -82,7 +82,6 @@ public:
 		auto flags = args->uniforms->flags;
 		bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
 		uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
-		auto colormaps = args->colormaps;
 		uint32_t srcalpha = args->uniforms->srcalpha;
 		uint32_t destalpha = args->uniforms->destalpha;
 
@@ -202,12 +201,14 @@ public:
 							bgcolor = _mm_setzero_si128();
 
 						// Sample fgcolor
-						unsigned int ifgcolor[2];
+						unsigned int ifgcolor[2], ifgshade[2];
 						ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+						ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 						for (int j = 0; j < TriVertex::NumVarying; j++)
 							varyingPos[j] += varyingStep[j];
 
 						ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+						ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 						for (int j = 0; j < TriVertex::NumVarying; j++)
 							varyingPos[j] += varyingStep[j];
 
@@ -232,7 +233,7 @@ public:
 						// Shade and blend
 						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 						fgcolor = Shade<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-						__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], srcalpha, destalpha);
+						__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 						// Store result
 						_mm_storel_epi64((__m128i*)(dest + x * 8 + ix * 2), outcolor);
@@ -303,12 +304,14 @@ public:
 						bgcolor = _mm_setzero_si128();
 
 					// Sample fgcolor
-					unsigned int ifgcolor[2];
+					unsigned int ifgcolor[2], ifgshade[2];
 					ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
 
 					ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
 
@@ -333,7 +336,7 @@ public:
 					// Shade and blend
 					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 					fgcolor = Shade<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], srcalpha, destalpha);
+					__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 					// Store result
 					_mm_storel_epi64((__m128i*)desttmp, outcolor);
@@ -393,12 +396,14 @@ public:
 						bgcolor = _mm_setzero_si128();
 
 					// Sample fgcolor
-					unsigned int ifgcolor[2];
+					unsigned int ifgcolor[2], ifgshade[2];
 					ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
 
 					ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
 
@@ -423,7 +428,7 @@ public:
 					// Shade and blend
 					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
 					fgcolor = Shade<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], srcalpha, destalpha);
+					__m128i outcolor = Blend(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 					// Store result
 					_mm_storel_epi64((__m128i*)desttmp, outcolor);
@@ -525,6 +530,25 @@ private:
 		}
 	}
 
+	FORCEINLINE static unsigned int VECTORCALL SampleShade(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight)
+	{
+		using namespace TriScreenDrawerModes;
+
+		if (SamplerT::Mode == (int)Samplers::Shaded)
+		{
+			const uint8_t *texpal = (const uint8_t *)texPixels;
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			unsigned int sampleshadeout = texpal[texelX * texHeight + texelY];
+			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
+			return sampleshadeout;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	template<typename ShadeModeT>
 	FORCEINLINE static __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light)
 	{
@@ -556,7 +580,7 @@ private:
 		return fgcolor;
 	}
 
-	FORCEINLINE static __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, uint32_t srcalpha, uint32_t destalpha)
+	FORCEINLINE static __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -580,6 +604,30 @@ private:
 			__m128i inv_srccolor = _mm_sub_epi16(_mm_set1_epi16(256), _mm_add_epi16(fgcolor, _mm_srli_epi16(fgcolor, 7)));
 			__m128i outcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(bgcolor, inv_srccolor), 8));
 			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			return outcolor;
+		}
+		else if (BlendT::Mode == (int)BlendModes::Shaded)
+		{
+			ifgshade0 = (ifgshade0 * srcalpha + 128) >> 8;
+			ifgshade1 = (ifgshade1 * srcalpha + 128) >> 8;
+			__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
+			__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+
+			fgcolor = _mm_mullo_epi16(fgcolor, alpha);
+			bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
+			__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
+			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+			return outcolor;
+		}
+		else if (BlendT::Mode == (int)BlendModes::AddClampShaded)
+		{
+			__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
+
+			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, alpha), 8);
+			__m128i outcolor = _mm_add_epi16(fgcolor, bgcolor);
+			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 			return outcolor;
 		}
 		else

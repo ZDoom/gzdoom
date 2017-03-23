@@ -672,6 +672,13 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 //---------------------------------------------------------------------------
 FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale=NULL)	// This function is also used by SBARINFO
 {
+	if (applyscale != NULL)
+	{
+		*applyscale = false;
+	}
+
+	if (item == nullptr) return FNullTextureID();
+
 	FTextureID picnum, AltIcon = item->AltHUDIcon;
 	FState * state=NULL, *ReadyState;
 	
@@ -718,6 +725,17 @@ FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale=N
 	return picnum;
 }
 
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetInventoryIcon)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(item, AInventory);
+	PARAM_INT(flags);
+	bool applyscale;
+	FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
+	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
+	if (numret >= 2) ret[1].SetInt(applyscale);
+	return MIN(numret, 2);
+}
 
 static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 {

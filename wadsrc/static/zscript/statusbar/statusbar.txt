@@ -80,6 +80,11 @@ class BaseStatusBar native ui
 	
 	native void RefreshBackground () const;
 	native Inventory ValidateInvFirst (int numVisible) const;
+	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
+
+	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, 
+		int imgAlign, int screenalign, bool alphamap, Vector2 box, Vector2 scale, bool fso);
+	
 	
 	//============================================================================
 	//
@@ -111,6 +116,444 @@ class BaseStatusBar native ui
 		let ammocount2 = ammo2 != NULL ? ammo2.Amount : 0;
 		return ammo1, ammo2, ammocount1, ammocount2;
 	}
+}
+
+//============================================================================
+//
+// This is only needed to shadow the native base class because a native class
+// cannot have scripted variables added.
+//
+//============================================================================
+
+class CustomStatusBar : BaseStatusBar
+{
+	enum DI_Flags
+	{
+		DI_SKIPICON = 0x1,
+		DI_SKIPALTICON = 0x2,
+		DI_SKIPSPAWN = 0x4,
+		DI_SKIPREADY = 0x8,
+		DI_ALTICONFIRST = 0x10,
+		DI_TRANSLATABLE = 0x20,
+		DI_FORCESCALE = 0x40
+	};
+
+	enum IconType
+	{
+		PLAYERICON = 1000,
+		AMMO1,
+		AMMO2,
+		ARMOR,
+		WEAPONICON,
+		SIGIL,
+		WEAPONSLOT,
+		SELECTEDINVENTORYICON,
+		HEXENARMOR_ARMOR,
+		HEXENARMOR_SHIELD,
+		HEXENARMOR_HELM,
+		HEXENARMOR_AMULET,
+	};
+	
+	enum EAlign
+	{
+		TOP = 0,
+		VCENTER = 1,
+		BOTTOM = 2,
+		VOFFSET = 3,
+		VMASK = 3,
+
+		LEFT = 0,
+		HCENTER = 4,
+		RIGHT = 8,
+		HOFFSET = 12,
+		HMASK = 12,
+
+		CENTER = VCENTER|HCENTER,
+		CENTER_BOTTOM = BOTTOM|HCENTER
+	};
+	
+	enum SBGameModes
+	{
+		SINGLEPLAYER	= 0x1,
+		COOPERATIVE		= 0x2,
+		DEATHMATCH		= 0x4,
+		TEAMGAME		= 0x8
+	};
+
+	enum AmmoModes
+	{
+		AMMO_PRIMARY,
+		AMMO_SECONDARY,
+		AMMO_ANY,
+		AMMO_BOTH
+	};
+	
 
 	
+	double Alpha;
+	Vector2 drawOffset;		// can be set by subclasses to offset drawing operations
+	double drawClip[4];		// defines a clipping rectangle (not used yet)
+	bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
+	
+	Vector2 cleanScale;		// factor for scaled fullscreen display.
+
+	override void Init()
+	{
+		Super.Init();
+		Alpha = 1;
+		DrawOffset = (0, 0);
+		drawClip[0] = 0;
+		drawClip[1] = 0;
+		drawClip[2] = 0;
+		drawClip[3] = 0;
+		cleanScale = (CleanXfac, CleanYfac);
+		fullscreenOffsets = false;
+	}
+	
+	//============================================================================
+	//
+	// Get an icon
+	//
+	//============================================================================
+
+	TextureID, Vector2 GetIcon(Inventory item, int flags, bool showdepleted = false)
+	{
+		TextureID icon;
+		Vector2 scale = (1,1);
+		icon.SetInvalid();
+		if (item != null)
+		{
+			bool applyscale;
+			[icon, applyscale] = GetInventoryIcon(item, flags);
+			
+			if (item.Amount == 0 && !showdepleted) return icon;
+			
+			if (applyscale)
+				scale = item.Scale;
+		}
+		return icon;
+	}
+	
+	//============================================================================
+	//
+	// various checker functions, based on SBARINFOs condition nodes.
+	//
+	//============================================================================
+
+	//============================================================================
+	//
+	// checks current game mode against a flag mask
+	//
+	//============================================================================
+
+	bool CheckGameMode(int ValidModes)
+	{
+		return  (!multiplayer && (ValidModes & SINGLEPLAYER)) ||
+				(deathmatch && (ValidModes & DEATHMATCH)) ||
+				(multiplayer && !deathmatch && (ValidModes & COOPERATIVE)) ||
+				(teamplay && (ValidModes & TEAMGAME));
+	}
+
+	//============================================================================
+	//
+	// checks ammo use of current weapon
+	//
+	//============================================================================
+
+	bool WeaponUsesAmmo(int ValidModes)
+	{
+		if (CPlayer == null) return false;
+		let w = CPlayer.ReadyWeapon;
+		if (w == null) return false;
+		bool usesammo1 = w.AmmoType1 != NULL;
+		bool usesammo2 = w.AmmoType2 != NULL;
+		
+		if (ValidModes == AMMO_PRIMARY) return usesammo1;
+		if (ValidModes == AMMO_SECONDARY) return usesammo2;
+		if (ValidModes == AMMO_ANY) return (usesammo1 || usesammo2);
+		if (ValidModes == AMMO_BOTH) return (usesammo1 && usesammo2);
+		return false;
+	}
+
+	//============================================================================
+	//
+	// checks if inventory bar is visible
+	//
+	//============================================================================
+
+	bool isInventoryBarVisible()
+	{
+		if (CPlayer == null) return false;
+		return (CPlayer.inventorytics <= 0 || level.NoInventoryBar);
+	}
+	
+	//============================================================================
+	//
+	// checks if aspect ratio is in a given range
+	//
+	//============================================================================
+	
+	bool CheckAspectRatio(double min, double max)
+	{
+		if (CPlayer == null) return false;
+		double aspect = screen.GetAspectRatio();
+		return (aspect >= min && aspect < max);
+	}
+
+	//============================================================================
+	//
+	// checks if weapon is selected.
+	//
+	//============================================================================
+
+	bool CheckWeaponSelected(class<Weapon> weap, bool checksister = true)
+	{
+		if (CPlayer == null) return false;
+		let w = CPlayer.ReadyWeapon;
+		if (w == null) return false;
+		if (w.GetClass() == weap) return true;
+		if (checksister && w.SisterWeapon != null && w.SisterWeapon.GetClass() == weap) return true;
+		return false;
+	}
+
+	//============================================================================
+	//
+	// checks if player has the given display name
+	//
+	//============================================================================
+
+	bool CheckDiplayName(String displayname)
+	{
+		if (CPlayer == null) return false;
+		return displayname == PlayerPawn.GetPrintableDisplayName(CPlayer.mo.GetClass());
+	}
+
+	//============================================================================
+	//
+	// checks if player has the given weapon piece
+	//
+	//============================================================================
+
+	bool CheckWeaponPiece(class<Weapon> weap, int piecenum)
+	{
+		if (CPlayer == null) return false;
+		for(let inv = CPlayer.mo.Inv; inv != NULL; inv = inv.Inv)
+		{
+			let wh = WeaponHolder(inv);
+			if (wh != null && wh.PieceWeapon == weap)
+			{
+				return (!!(wh.PieceMask & (1 << (PieceNum-1))));
+			}
+		}
+		return false;
+	}
+
+	//============================================================================
+	//
+	// checks if player has the given weapon piece
+	//
+	//============================================================================
+
+	bool WeaponUsesAmmoType(class<Ammo> ammotype)
+	{
+		if (CPlayer == null) return false;
+		let w = CPlayer.ReadyWeapon;
+		if (w == NULL) return false;
+		return w.AmmoType1 == ammotype || w.AmmoType2 == ammotype;
+	}
+
+	//============================================================================
+	//
+	// checks if player has the required health
+	//
+	//============================================================================
+
+	bool CheckHealth(int Amount, bool percentage = false)
+	{
+		if (CPlayer == null) return false;
+		
+		int phealth = percentage ? CPlayer.mo.health * 100 / CPlayer.mo.GetMaxHealth() : CPlayer.mo.health;
+		return (phealth >= Amount);
+	}
+	
+	//============================================================================
+	//
+	// checks if player is invulnerable
+	//
+	//============================================================================
+
+	bool isInvulnerable()
+	{
+		if (CPlayer == null) return false;
+		return ((CPlayer.mo.bInvulnerable) || (CPlayer.cheats & (CF_GODMODE | CF_GODMODE2)));
+	}
+
+	//============================================================================
+	//
+	// checks if player owns enough of the item
+	//
+	//============================================================================
+
+	bool CheckInventory(class<Inventory> item, int amount = 1)
+	{
+		if (CPlayer == null) return false;
+
+		let it = CPlayer.mo.FindInventory(item);
+		return it != null && it.Amount >= amount;
+	}
+
+	
+	//============================================================================
+	//
+	// draw stuff
+	//
+	//============================================================================
+	
+	int GetTranslation() const
+	{
+		if(gameinfo.gametype & GAME_Raven)
+			return Translation.MakeID(TRANSLATION_PlayersExtra, CPlayer.mo.PlayerNumber());
+		else
+			return Translation.MakeID(TRANSLATION_Players, CPlayer.mo.PlayerNumber());
+	}
+	
+	//============================================================================
+	//
+	// draw stuff
+	//
+	//============================================================================
+
+	void DrawTexture(TextureID texture, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0, Vector2 scale = (1., 1.) )
+	{
+		if (!texture.IsValid()) return;	// nothing to draw
+		
+		alpha *= self.alpha;
+		if (alpha <= 0) return;					// invisible
+
+		Vector2 texsize = TexMan.GetScaledSize(texture);
+		texsize.X *= scale.X;
+		texsize.Y *= scale.Y;
+		if (boxsize.X > 0 || boxsize.Y > 0)
+		{
+			double scale1 = 1., scale2 = 1.;
+			
+			if (boxsize.X != -1 && (boxsize.X < texsize.X || (flags & DI_FORCESCALE)))
+			{
+				scale1 = boxsize.X / texsize.X;
+			}
+			if (boxsize.Y != -1 && (boxsize.Y < texsize.Y || (flags & DI_FORCESCALE)))
+			{
+				scale2 = boxsize.Y / texsize.Y;
+			}
+			
+			if (flags & DI_FORCESCALE)
+			{
+				if (boxsize.X == -1 || (boxsize.Y != -1 && scale2 < scale1))
+					scale1 = scale2;
+			}
+			else scale1 = min(scale1, scale2);
+			
+			boxsize = texsize * scale1;
+			screenAlign = TOP|LEFT;	// anything else makes no sense here.
+		}
+		else
+		{
+			boxsize = texsize;
+		}
+		DrawGraphic(texture, animated, pos + drawOffset, Alpha * self.Alpha, !!(flags & DI_TRANSLATABLE), false, itemAlign, screenAlign, false, boxsize, cleanscale, fullscreenoffsets);
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	void DrawImage(String imagename, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0, Vector2 scale = (1., 1.) )
+	{
+		let tex = TexMan.CheckForTexture(imagename, TexMan.TYPE_MiscPatch);
+		DrawTexture(tex, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, scale);
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	void DrawIcon(int icontype, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	{
+		TextureID texture;
+		Vector2 applyscale = (1, 1);
+		Inventory atype1, atype2;
+		switch (icontype)
+		{
+			case PLAYERICON:
+				texture = CPlayer.mo.ScoreIcon;
+				break;
+				
+			case AMMO1:
+			case AMMO2:
+				[atype1, atype2] = GetCurrentAmmo();
+				[texture, applyscale] = GetIcon(icontype == AMMO1? atype1 : atype2, flags, true);
+				break;
+				
+			case ARMOR:
+				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("BasicArmor"), flags, false);
+				break;
+			
+			case WEAPONICON:
+				[texture, applyscale] = GetIcon(CPlayer.ReadyWeapon, flags, false);
+				break;
+				
+			case SIGIL:
+				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("Sigil"), flags, false);
+				break;
+				
+			case SELECTEDINVENTORYICON:
+				if (CPlayer.mo.InvSel != NULL)
+					texture = CPlayer.mo.InvSel.Icon;
+				break;
+		}
+		DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, applyscale);
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	{
+		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
+		if (harmor != NULL)
+		{
+			let slotval = harmor.Slots[armorType];
+			let slotincr = harmor.SlotsIncrement[armorType];
+			
+			if (slotval > 0 && slotincr > 0)
+			{
+				//combine the alpha values
+				alpha *= MIN(1., slotval / slotincr);
+			}
+			else return;
+		}
+		DrawImage(image, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	void DrawInventoryIcon(class<Inventory> item, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	{
+		let texture = GetDefaultByType(item).Icon;
+		if (texture.IsValid())
+		{
+			DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+		}
+	}
 }

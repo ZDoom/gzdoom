@@ -373,6 +373,28 @@ public:
 	virtual bool MustDrawLog(EHudState state);
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
+	uint32_t GetTranslation() const;
+
+	enum EAlign
+	{
+		TOP = 0,
+		VCENTER = 1,
+		BOTTOM = 2,
+		VOFFSET = 3,
+		VMASK = 3,
+
+		LEFT = 0,
+		HCENTER = 4,
+		RIGHT = 8,
+		HOFFSET = 12,
+		HMASK = 12,
+
+		CENTER = VCENTER | HCENTER,
+		CENTER_BOTTOM = BOTTOM | HCENTER
+	};
+
+	void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha = 1., bool translatable = false, bool dim = false,
+		int imgAlign = TOP | LEFT, int screenalign = TOP | LEFT, bool alphamap = false, double width = -1, double height = -1, double scaleX = 1, double scaleY = 1, bool fullscreenoffsets = false);
 
 	void GetCoords(int &x, int &y)
 	{

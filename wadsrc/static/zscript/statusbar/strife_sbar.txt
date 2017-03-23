@@ -1,5 +1,5 @@
 
-class StrifeStatusBar : BaseStatusBar
+class StrifeStatusBar : CustomStatusBar
 {
 	
 	// Number of tics to move the popscreen up and down.
@@ -59,6 +59,7 @@ class StrifeStatusBar : BaseStatusBar
 
 	override void Init()
 	{
+		Super.Init();
 		SetSize(32, 320, 200);
 		DoCommonInit();
 	}
@@ -368,20 +369,17 @@ class StrifeStatusBar : BaseStatusBar
 
 	protected void DrawFullScreenStuff ()
 	{
+		fullscreenoffsets = true;
 		// Draw health
 		DrINumberOuter (CPlayer.health, 4, -10, false, 7);
-		screen.DrawTexture (Images[imgMEDI], true, 14, -17,
-			DTA_HUDRules, HUD_Normal,
-			DTA_CenterBottomOffset, true);
+		DrawTexture(Images[imgMEDI], (14, -17), false, 1.0, BOTTOM|LEFT, itemalign: BOTTOM|HCENTER);
 
 		// Draw armor
 		let armor = CPlayer.mo.FindInventory('BasicArmor');
 		if (armor != NULL && armor.Amount != 0)
 		{
 			DrINumberOuter (armor.Amount, 35, -10, false, 7);
-			screen.DrawTexture (armor.Icon, true, 45, -17,
-				DTA_HUDRules, HUD_Normal,
-				DTA_CenterBottomOffset, true);
+			DrawTexture(armor.Icon, (45, -17), false, 1.0, BOTTOM|LEFT, itemalign: BOTTOM|HCENTER);
 		}
 
 		// Draw ammo
@@ -393,16 +391,12 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			// Draw primary ammo in the bottom-right corner
 			DrINumberOuter (ammo1.Amount, -23, -10, false, 7);
-			screen.DrawTexture (ammo1.Icon, true, -14, -17,
-				DTA_HUDRules, HUD_Normal,
-				DTA_CenterBottomOffset, true);
+			DrawTexture(ammo1.Icon, (-14, -17), false, 1.0, BOTTOM|RIGHT, itemalign: BOTTOM|HCENTER);
 			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
 				DrINumberOuter (ammo2.Amount, -23, -48, false, 7);
-				screen.DrawTexture (ammo2.Icon, -14, -55,
-					DTA_HUDRules, HUD_Normal,
-					DTA_CenterBottomOffset, true);
+				DrawTexture(ammo1.Icon, (-14, -55), false, 1.0, BOTTOM|RIGHT, itemalign: BOTTOM|HCENTER);
 			}
 		}
 
@@ -458,6 +452,7 @@ class StrifeStatusBar : BaseStatusBar
 				}
 			}
 		}
+		fullscreenoffsets = false;
 	}
 
 	protected void DrawPopScreen (int bottom, double TicFrac)

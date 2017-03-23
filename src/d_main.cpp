@@ -803,6 +803,10 @@ void D_Display ()
 				V_RefreshViewBorder ();
 			}
 
+			// for timing the statusbar code.
+			//cycle_t stb;
+			//stb.Reset();
+			//stb.Clock();
 			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 			{
 				StatusBar->DrawBottomStuff (HUD_AltHud);
@@ -828,6 +832,8 @@ void D_Display ()
 				StatusBar->CallDraw (HUD_StatusBar);
 				StatusBar->DrawTopStuff (HUD_StatusBar);
 			}
+			//stb.Unclock();
+			//Printf("Stbar = %f\n", stb.TimeMS());
 			CT_Drawer ();
 			break;
 

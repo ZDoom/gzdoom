@@ -35,7 +35,6 @@ version "2.5"
 #include "zscript/statusbar/statusbar.txt"
 #include "zscript/statusbar/strife_sbar.txt"
 #include "zscript/statusbar/sbarinfowrapper.txt"
-#include "zscript/statusbar/statusbarwidget.txt"
 
 #include "zscript/inventory/inventory.txt"
 #include "zscript/inventory/inv_misc.txt"

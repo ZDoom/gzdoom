@@ -57,6 +57,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "virtual.h"
+#include "r_data/r_translate.h"
 
 #include "../version.h"
 
@@ -624,9 +625,6 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, RefreshBackground)
 
 void DBaseStatusBar::DrawCrosshair ()
 {
-	static uint32_t prevcolor = 0xffffffff;
-	static int palettecolor = 0;
-
 	uint32_t color;
 	double size;
 	int w, h;
@@ -693,19 +691,13 @@ void DBaseStatusBar::DrawCrosshair ()
 		color = crosshaircolor;
 	}
 
-	if (color != prevcolor)
-	{
-		prevcolor = color;
-		palettecolor = ColorMatcher.Pick (RPART(color), GPART(color), BPART(color));
-	}
-
 	screen->DrawTexture (CrosshairImage,
 		viewwidth / 2 + viewwindowx,
 		viewheight / 2 + viewwindowy,
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,
 		DTA_AlphaChannel, true,
-		DTA_FillColor, (palettecolor << 24) | (color & 0xFFFFFF),
+		DTA_FillColor, color & 0xFFFFFF,
 		TAG_DONE);
 }
 
@@ -1377,6 +1369,120 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, ValidateInvFirst)
 }
 
 
+uint32_t DBaseStatusBar::GetTranslation() const
+{
+	if (gameinfo.gametype & GAME_Raven)
+		return TRANSLATION(TRANSLATION_PlayersExtra, int(CPlayer - players));
+	return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
+}
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+EXTERN_CVAR(Bool, hud_scale)
+EXTERN_CVAR(Bool, vid_fps)
+
+void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha, bool translatable, bool dim,
+	int imgAlign, int screenalign, bool alphamap, double width, double height, double scaleX, double scaleY, bool fullscreenoffsets)
+{
+	if (!texture.isValid())
+		return;
+
+	FTexture *tex = animate ? TexMan(texture) : TexMan[texture];
+
+	switch (imgAlign & HMASK)
+	{
+	case HCENTER: x -= width / 2; break;
+	case RIGHT:   x -= width; break;
+	case HOFFSET: x -= tex->GetScaledLeftOffsetDouble() * width / tex->GetScaledWidthDouble(); break;
+	}
+
+	switch (imgAlign & VMASK)
+	{
+	case VCENTER: y -= height / 2; break;
+	case BOTTOM:  y -= height; break;
+	case VOFFSET: y -= tex->GetScaledTopOffsetDouble() * height / tex->GetScaledHeightDouble(); break;
+	}
+
+	if (!fullscreenoffsets)
+	{
+		x += ST_X;
+		y += ST_Y;
+
+		// Todo: Allow other scaling values, too.
+		if (Scaled)
+		{
+			y += RelTop - VerticalResolution;
+			screen->VirtualToRealCoords(x, y, width, height, HorizontalResolution, VerticalResolution, true, true);
+		}
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (screenalign & HMASK)
+		{
+		default: orgx = 0; break;
+		case HCENTER: orgx = screen->GetWidth() / 2; break;
+		case RIGHT:   orgx = screen->GetWidth(); break;
+		}
+
+		switch (screenalign & VMASK)
+		{
+		default: orgy = 0; break;
+		case VCENTER: orgy = screen->GetHeight() / 2; break;
+		case BOTTOM: orgy = screen->GetHeight(); break;
+		}
+
+		if (screenalign == (RIGHT | TOP) && vid_fps) y += 10;
+
+		if (hud_scale)
+		{
+			x *= scaleX;
+			y *= scaleY;
+			width *= scaleX;
+			height *= scaleY;
+		}
+		x += orgx;
+		y += orgy;
+	}
+	screen->DrawTexture(tex, x, y, 
+		DTA_TopOffset, 0,
+		DTA_LeftOffset, 0,
+		DTA_DestWidthF, width,
+		DTA_DestHeightF, height,
+		DTA_TranslationIndex, translatable ? GetTranslation() : 0,
+		DTA_ColorOverlay, dim ? PalEntry(170, 0, 0, 0) : 0,
+		DTA_Alpha, Alpha,
+		DTA_AlphaChannel, alphamap,
+		DTA_FillColor, alphamap ? 0 : -1);
+}
+
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawGraphic)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(texid);
+	PARAM_BOOL(animate);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(alpha);
+	PARAM_BOOL(translatable);
+	PARAM_BOOL(dim);
+	PARAM_INT(ialign);
+	PARAM_INT(salign);
+	PARAM_BOOL(alphamap);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(sx);
+	PARAM_FLOAT(sy);
+	PARAM_BOOL(fso);
+	self->DrawGraphic(FSetTextureID(texid), animate, x, y, alpha, translatable, dim, ialign, salign, alphamap, w, h, sx, sy, fso);
+	return 0;
+}
+
 //============================================================================
 //
 // CCMD showpop
@@ -1437,37 +1543,4 @@ static DObject *InitObject(PClass *type, int paramnum, VM_ARGS)
 	// Todo: init
 	return obj;
 }
-
-DEFINE_ACTION_FUNCTION(DStatusbarWidget, AppendWidget)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	PARAM_CLASS(type, DObject); 
-	if (!type->IsDescendantOf(NAME_StatusbarWidget) || type->IsDescendantOf(NAME_StatusbarCondition))
-	{
-		ThrowAbortException(X_OTHER, "Invalid class %s for AppendWidget", type->TypeName.GetChars());
-	}
-	auto obj = InitObject(type, paramnum, VM_ARGS_NAMES);
-	auto owner = self->PointerVar<DObject>(NAME_Owner);
-	self->PointerVar<DObject>(NAME_Next) = obj;
-	obj->PointerVar<DObject>(NAME_Prev) = self;
-	obj->PointerVar<DObject>(NAME_Owner) = owner;
-	ACTION_RETURN_POINTER(obj);
-}
-
-DEFINE_ACTION_FUNCTION(DStatusbarWidget, BeginCondition)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	PARAM_CLASS(type, DObject);
-	if (!type->IsDescendantOf(NAME_StatusbarCondition))
-	{
-		ThrowAbortException(X_OTHER, "Invalid class %s for BeginCondition", type->TypeName.GetChars());
-	}
-	auto obj = InitObject(type, paramnum, VM_ARGS_NAMES);
-	auto head = PClass::FindClass(NAME_StatusbarWidget)->CreateNew();
-	
-	head->PointerVar<DObject>(NAME_Owner) = self;
-	self->PointerVar<DObject>(NAME_Children) = head;
-	ACTION_RETURN_POINTER(head);
-}
-
 

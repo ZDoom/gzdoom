@@ -521,7 +521,15 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 
 		case DTA_FillColor:
 			parms->fillcolor = ListGetInt(tags);
-			fillcolorset = true;
+			if (parms->fillcolor != -1)
+			{
+				fillcolorset = true;
+			}
+			else if (parms->fillcolor != 0)
+			{
+				// The crosshair is the only thing which uses a non-black fill color.
+				parms->fillcolor = PalEntry(ColorMatcher.Pick(parms->fillcolor), RPART(parms->fillcolor), GPART(parms->fillcolor), BPART(parms->fillcolor));
+			}
 			break;
 
 		case DTA_TranslationIndex:

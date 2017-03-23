@@ -16,6 +16,7 @@ protected:
 	FName ParseKey(bool checkblock = false, bool *isblock = NULL);
 	int CheckInt(const char *key);
 	double CheckFloat(const char *key);
+	double CheckCoordinate(const char *key);
 	DAngle CheckAngle(const char *key);
 	bool CheckBool(const char *key);
 	const char *CheckString(const char *key);

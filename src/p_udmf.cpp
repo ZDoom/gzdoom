@@ -254,6 +254,20 @@ double UDMFParserBase::CheckFloat(const char *key)
 	return sc.Float;
 }
 
+double UDMFParserBase::CheckCoordinate(const char *key)
+{
+	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
+	{
+		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+	}
+	if (sc.Float < -32768 || sc.Float > 32768)
+	{
+		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is ]-32768 .. 32768]", key);
+		sc.Float = clamp(sc.Float, -32768 + EQUAL_EPSILON*2, 32768 - EQUAL_EPSILON*2);
+	}
+	return sc.Float;
+}
+
 DAngle UDMFParserBase::CheckAngle(const char *key)
 {
 	return DAngle(CheckFloat(key)).Normalized360();
@@ -532,15 +546,15 @@ public:
 				break;
 
 			case NAME_X:
-				th->pos.X = CheckFloat(key);
+				th->pos.X = CheckCoordinate(key);
 				break;
 
 			case NAME_Y:
-				th->pos.Y = CheckFloat(key);
+				th->pos.Y = CheckCoordinate(key);
 				break;
 
 			case NAME_Height:
-				th->pos.Z = CheckFloat(key);
+				th->pos.Z = CheckCoordinate(key);
 				break;
 
 			case NAME_Angle:
@@ -1370,11 +1384,11 @@ public:
 			switch(key)
 			{
 			case NAME_Heightfloor:
-				sec->SetPlaneTexZ(sector_t::floor, CheckFloat(key));
+				sec->SetPlaneTexZ(sector_t::floor, CheckCoordinate(key));
 				continue;
 
 			case NAME_Heightceiling:
-				sec->SetPlaneTexZ(sector_t::ceiling, CheckFloat(key));
+				sec->SetPlaneTexZ(sector_t::ceiling, CheckCoordinate(key));
 				continue;
 
 			case NAME_Texturefloor:
@@ -1815,20 +1829,20 @@ public:
 			switch (key)
 			{
 			case NAME_X:
-				x = CheckFloat(key);
+				x = CheckCoordinate(key);
 				break;
 
 			case NAME_Y:
-				y = CheckFloat(key);
+				y = CheckCoordinate(key);
 				break;
 
 			case NAME_ZCeiling:
-				vd->zCeiling = CheckFloat(key);
+				vd->zCeiling = CheckCoordinate(key);
 				vd->flags |= VERTEXFLAG_ZCeilingEnabled;
 				break;
 
 			case NAME_ZFloor:
-				vd->zFloor = CheckFloat(key);
+				vd->zFloor = CheckCoordinate(key);
 				vd->flags |= VERTEXFLAG_ZFloorEnabled;
 				break;
 

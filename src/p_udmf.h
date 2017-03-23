@@ -11,6 +11,7 @@ protected:
 	FName namespc;
 	int namespace_bits;
 	FString parsedString;
+	bool BadCoordinates = false;
 
 	void Skip();
 	FName ParseKey(bool checkblock = false, bool *isblock = NULL);

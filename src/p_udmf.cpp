@@ -262,8 +262,8 @@ double UDMFParserBase::CheckCoordinate(const char *key)
 	}
 	if (sc.Float < -32768 || sc.Float > 32768)
 	{
-		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is ]-32768 .. 32768]", key);
-		sc.Float = clamp(sc.Float, -32768 + EQUAL_EPSILON*2, 32768 - EQUAL_EPSILON*2);
+		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is ]-32768 .. 32768]", sc.Float, key);
+		BadCoordinates = true;	// If this happens the map must not allowed to be started.
 	}
 	return sc.Float;
 }
@@ -2083,10 +2083,11 @@ public:
 		}
 
 		// Catch bogus maps here rather than during nodebuilding
-		if (ParsedVertices.Size() == 0)	I_Error("Map has no vertices.\n");
-		if (ParsedSectors.Size() == 0)	I_Error("Map has no sectors. \n");
-		if (ParsedLines.Size() == 0)	I_Error("Map has no linedefs.\n");
-		if (ParsedSides.Size() == 0)	I_Error("Map has no sidedefs.\n");
+		if (ParsedVertices.Size() == 0)	I_Error("Map has no vertices.");
+		if (ParsedSectors.Size() == 0)	I_Error("Map has no sectors. ");
+		if (ParsedLines.Size() == 0)	I_Error("Map has no linedefs.");
+		if (ParsedSides.Size() == 0)	I_Error("Map has no sidedefs.");
+		if (BadCoordinates)				I_Error("Map has out of range coordinates");
 
 		// Create the real vertices
 		level.vertexes.Alloc(ParsedVertices.Size());

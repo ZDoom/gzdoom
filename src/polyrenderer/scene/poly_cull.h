@@ -25,22 +25,15 @@
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "polyrenderer/math/poly_intersection.h"
 
-enum class LineSegmentRange
-{
-	NotVisible,
-	HasSegment,
-	AlwaysVisible
-};
-
 class PolyCull
 {
 public:
 	void ClearSolidSegments();
 	void CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane);
 
-	LineSegmentRange GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
-	void MarkSegmentCulled(int x1, int x2);
-	bool IsSegmentCulled(int x1, int x2) const;
+	bool GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const;
+	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
+	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
 	void InvertSegments();
 
 	std::vector<subsector_t *> PvsSectors;
@@ -50,8 +43,8 @@ public:
 private:
 	struct SolidSegment
 	{
-		SolidSegment(int x1, int x2) : X1(x1), X2(x2) { }
-		int X1, X2;
+		SolidSegment(angle_t start, angle_t end) : Start(start), End(end) { }
+		angle_t Start, End;
 	};
 
 	void CullNode(void *node);
@@ -68,4 +61,6 @@ private:
 
 	FrustumPlanes frustumPlanes;
 	Vec4f PortalClipPlane;
+
+	static angle_t PointToPseudoAngle(double x, double y);
 };

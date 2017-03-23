@@ -89,10 +89,10 @@ void PolyCull::CullSubsector(subsector_t *sub)
 			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 				continue;
 
-			int sx1, sx2;
-			if (GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2) == LineSegmentRange::HasSegment)
+			angle_t angle1, angle2;
+			if (GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
 			{
-				MarkSegmentCulled(sx1, sx2);
+				MarkSegmentCulled(angle1, angle2);
 			}
 		}
 	}
@@ -101,73 +101,95 @@ void PolyCull::CullSubsector(subsector_t *sub)
 void PolyCull::ClearSolidSegments()
 {
 	SolidSegments.clear();
-	SolidSegments.reserve(SolidCullScale + 2);
-	SolidSegments.push_back({ -0x7fff, -SolidCullScale });
-	SolidSegments.push_back({ SolidCullScale , 0x7fff });
 }
 
 void PolyCull::InvertSegments()
 {
 	TempInvertSolidSegments.swap(SolidSegments);
 	ClearSolidSegments();
-	int x = -0x7fff;
+	angle_t cur = 0;
 	for (const auto &segment : TempInvertSolidSegments)
 	{
-		MarkSegmentCulled(x, segment.X1 - 1);
-		x = segment.X2 + 1;
+		MarkSegmentCulled(cur, segment.Start - 1);
+		cur = segment.End + 1;
 	}
+	if (cur != 0)
+		MarkSegmentCulled(cur, ANGLE_MAX);
 }
 
-bool PolyCull::IsSegmentCulled(int x1, int x2) const
+bool PolyCull::IsSegmentCulled(angle_t startAngle, angle_t endAngle) const
 {
-	x1 = clamp(x1, -0x7ffe, 0x7ffd);
-	x2 = clamp(x2, -0x7ffd, 0x7ffe);
-
-	int next = 0;
-	while (SolidSegments[next].X2 <= x2)
-		next++;
-	return (x1 >= SolidSegments[next].X1 && x2 <= SolidSegments[next].X2);
-}
-
-void PolyCull::MarkSegmentCulled(int x1, int x2)
-{
-	if (x1 >= x2)
-		return;
-
-	x1 = clamp(x1, -0x7ffe, 0x7ffd);
-	x2 = clamp(x2, -0x7ffd, 0x7ffe);
-
-	int cur = 0;
-	while (true)
+	if (startAngle > endAngle)
 	{
-		if (SolidSegments[cur].X1 <= x1 && SolidSegments[cur].X2 >= x2) // Already fully marked
+		return IsSegmentCulled(startAngle, ANGLE_MAX) && IsSegmentCulled(0, endAngle);
+	}
+
+	for (const auto &segment : SolidSegments)
+	{
+		if (startAngle >= segment.Start && endAngle <= segment.End)
+			return true;
+		else if (endAngle < segment.Start)
+			return false;
+	}
+	return false;
+}
+
+void PolyCull::MarkSegmentCulled(angle_t startAngle, angle_t endAngle)
+{
+	if (startAngle > endAngle)
+	{
+		MarkSegmentCulled(startAngle, ANGLE_MAX);
+		MarkSegmentCulled(0, endAngle);
+		return;
+	}
+
+	int count = (int)SolidSegments.size();
+	int cur = 0;
+	while (cur < count)
+	{
+		if (SolidSegments[cur].Start <= startAngle && SolidSegments[cur].End >= endAngle) // Already fully marked
 		{
-			break;
+			return;
 		}
-		else if (SolidSegments[cur].X2 >= x1 && SolidSegments[cur].X1 <= x2) // Merge segments
+		else if (SolidSegments[cur].End >= startAngle && SolidSegments[cur].Start <= endAngle) // Merge segments
 		{
 			// Find last segment
 			int merge = cur;
-			while (merge + 1 != (int)SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
+			while (merge + 1 != count && SolidSegments[merge + 1].Start <= endAngle)
 				merge++;
 
 			// Apply new merged range
-			SolidSegments[cur].X1 = MIN(SolidSegments[cur].X1, x1);
-			SolidSegments[cur].X2 = MAX(SolidSegments[merge].X2, x2);
+			SolidSegments[cur].Start = MIN(SolidSegments[cur].Start, startAngle);
+			SolidSegments[cur].End = MAX(SolidSegments[merge].End, endAngle);
 
 			// Remove additional segments we merged with
 			if (merge > cur)
 				SolidSegments.erase(SolidSegments.begin() + (cur + 1), SolidSegments.begin() + (merge + 1));
 
-			break;
+			return;
 		}
-		else if (SolidSegments[cur].X1 > x1) // Insert new segment
+		else if (SolidSegments[cur].Start > startAngle) // Insert new segment
 		{
-			SolidSegments.insert(SolidSegments.begin() + cur, { x1, x2 });
-			break;
+			SolidSegments.insert(SolidSegments.begin() + cur, { startAngle, endAngle });
+			return;
 		}
 		cur++;
 	}
+	SolidSegments.push_back({ startAngle, endAngle });
+
+#if 0
+	count = (int)SolidSegments.size();
+	for (int i = 1; i < count; i++)
+	{
+		if (SolidSegments[i - 1].Start >= SolidSegments[i].Start ||
+			SolidSegments[i - 1].End >= SolidSegments[i].Start ||
+			SolidSegments[i - 1].End + 1 == SolidSegments[i].Start ||
+			SolidSegments[i].Start > SolidSegments[i].End)
+		{
+			I_FatalError("MarkSegmentCulled is broken!");
+		}
+	}
+#endif
 }
 
 int PolyCull::PointOnSide(const DVector2 &pos, const node_t *node)
@@ -177,6 +199,7 @@ int PolyCull::PointOnSide(const DVector2 &pos, const node_t *node)
 
 bool PolyCull::CheckBBox(float *bspcoord)
 {
+#if 0 // This doesn't work because it creates gaps in the angle based clipper segment list :(
 	// Start using a quick frustum AABB test:
 
 	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z + 1000.0f));
@@ -188,65 +211,46 @@ bool PolyCull::CheckBBox(float *bspcoord)
 
 	if (IntersectionTest::plane_aabb(PortalClipPlane, aabb) == IntersectionTest::outside)
 		return false;
+#endif
 
 	// Occlusion test using solid segments:
-
-	static const int lines[4][4] =
+	static const uint8_t checkcoord[12][4] =
 	{
-		{ BOXLEFT,  BOXBOTTOM, BOXRIGHT, BOXBOTTOM },
-		{ BOXRIGHT, BOXBOTTOM, BOXRIGHT, BOXTOP    },
-		{ BOXRIGHT, BOXTOP,    BOXLEFT,  BOXTOP    },
-		{ BOXLEFT,  BOXTOP,    BOXLEFT,  BOXBOTTOM }
+		{ 3,0,2,1 },
+		{ 3,0,2,0 },
+		{ 3,1,2,0 },
+		{ 0 },
+		{ 2,0,2,1 },
+		{ 0,0,0,0 },
+		{ 3,1,3,0 },
+		{ 0 },
+		{ 2,0,3,1 },
+		{ 2,1,3,1 },
+		{ 2,1,3,0 }
 	};
 
-	bool foundline = false;
-	int minsx1, maxsx2;
-	for (int i = 0; i < 4; i++)
-	{
-		int j = i < 3 ? i + 1 : 0;
-		float x1 = bspcoord[lines[i][0]];
-		float y1 = bspcoord[lines[i][1]];
-		float x2 = bspcoord[lines[i][2]];
-		float y2 = bspcoord[lines[i][3]];
-		int sx1, sx2;
-		LineSegmentRange result = GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2);
-		if (result == LineSegmentRange::HasSegment)
-		{
-			if (foundline)
-			{
-				minsx1 = MIN(minsx1, sx1);
-				maxsx2 = MAX(maxsx2, sx2);
-			}
-			else
-			{
-				minsx1 = sx1;
-				maxsx2 = sx2;
-				foundline = true;
-			}
-		}
-		else if (result == LineSegmentRange::AlwaysVisible)
-		{
-			return true;
-		}
-	}
-	if (!foundline)
-		return false;
-		
-	return !IsSegmentCulled(minsx1, maxsx2);
+	// Find the corners of the box that define the edges from current viewpoint.
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	int boxpos = (viewpoint.Pos.X <= bspcoord[BOXLEFT] ? 0 : viewpoint.Pos.X < bspcoord[BOXRIGHT] ? 1 : 2) +
+		(viewpoint.Pos.Y >= bspcoord[BOXTOP] ? 0 : viewpoint.Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+
+	if (boxpos == 5) return true;
+
+	const uint8_t *check = checkcoord[boxpos];
+	angle_t angle1 = PointToPseudoAngle(bspcoord[check[0]], bspcoord[check[1]]);
+	angle_t angle2 = PointToPseudoAngle(bspcoord[check[2]], bspcoord[check[3]]);
+
+	return !IsSegmentCulled(angle2, angle1);
 }
 
-LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
+bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const
 {
-	double znear = 5.0;
-	double updownnear = -400.0;
-	double sidenear = 400.0;
-
 	// Clip line to the portal clip plane
 	float distance1 = Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f));
 	float distance2 = Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f));
 	if (distance1 < 0.0f && distance2 < 0.0f)
 	{
-		return LineSegmentRange::NotVisible;
+		return false;
 	}
 	else if (distance1 < 0.0f || distance2 < 0.0f)
 	{
@@ -265,48 +269,41 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 		y2 = ny2;
 	}
 
-	// Transform to 2D view space:
+	angle2 = PointToPseudoAngle(x1, y1);
+	angle1 = PointToPseudoAngle(x2, y2);
+	return !IsSegmentCulled(angle1, angle2);
+}
+
+//-----------------------------------------------------------------------------
+//
+// ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the 
+// line from p1 to p2. The pseudoangle has the property that the ordering of 
+// points by true angle around p1 and ordering of points by pseudoangle are the 
+// same.
+//
+// For clipping exact angles are not needed. Only the ordering matters.
+// This is about as fast as the fixed point R_PointToAngle2 but without
+// the precision issues associated with that function.
+//
+//-----------------------------------------------------------------------------
+
+angle_t PolyCull::PointToPseudoAngle(double x, double y)
+{
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	x1 = x1 - viewpoint.Pos.X;
-	y1 = y1 - viewpoint.Pos.Y;
-	x2 = x2 - viewpoint.Pos.X;
-	y2 = y2 - viewpoint.Pos.Y;
-	double rx1 = x1 * viewpoint.Sin - y1 * viewpoint.Cos;
-	double rx2 = x2 * viewpoint.Sin - y2 * viewpoint.Cos;
-	double ry1 = x1 * viewpoint.Cos + y1 * viewpoint.Sin;
-	double ry2 = x2 * viewpoint.Cos + y2 * viewpoint.Sin;
+	double vecx = x - viewpoint.Pos.X;
+	double vecy = y - viewpoint.Pos.Y;
 
-	// Is it potentially visible when looking straight up or down?
-	if (!(ry1 < updownnear && ry2 < updownnear) && !(ry1 > znear && ry2 > znear) &&
-		!(rx1 < -sidenear && rx2 < -sidenear) && !(rx1 > sidenear && rx2 > sidenear))
-		return LineSegmentRange::AlwaysVisible;
-
-	// Cull if line is entirely behind view
-	if (ry1 < znear && ry2 < znear)
-		return LineSegmentRange::NotVisible;
-
-	// Clip line, if needed
-	double t1 = 0.0f, t2 = 1.0f;
-	if (ry1 < znear)
-		t1 = clamp((znear - ry1) / (ry2 - ry1), 0.0, 1.0);
-	if (ry2 < znear)
-		t2 = clamp((znear - ry2) / (ry2 - ry1), 0.0, 1.0);
-	if (t1 != 0.0 || t2 != 1.0)
+	if (vecx == 0 && vecy == 0)
 	{
-		double nx1 = rx1 * (1.0 - t1) + rx2 * t1;
-		double ny1 = ry1 * (1.0 - t1) + ry2 * t1;
-		double nx2 = rx1 * (1.0 - t2) + rx2 * t2;
-		double ny2 = ry1 * (1.0 - t2) + ry2 * t2;
-		rx1 = nx1;
-		rx2 = nx2;
-		ry1 = ny1;
-		ry2 = ny2;
+		return 0;
 	}
-
-	sx1 = (int)floor(clamp(rx1 / ry1 * (SolidCullScale / 3), (double)-SolidCullScale, (double)SolidCullScale));
-	sx2 = (int)floor(clamp(rx2 / ry2 * (SolidCullScale / 3), (double)-SolidCullScale, (double)SolidCullScale));
-
-	if (sx1 > sx2)
-		std::swap(sx1, sx2);
-	return (sx1 != sx2) ? LineSegmentRange::HasSegment : LineSegmentRange::AlwaysVisible;
+	else
+	{
+		double result = vecy / (fabs(vecx) + fabs(vecy));
+		if (vecx < 0)
+		{
+			result = 2. - result;
+		}
+		return xs_Fix<30>::ToFix(result);
+	}
 }

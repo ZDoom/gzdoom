@@ -208,10 +208,9 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 				vdist = dist;
 			}
 
-			int sx1, sx2;
-			LineSegmentRange range = cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
-			if (range == LineSegmentRange::HasSegment)
-				portalSegments.push_back({ sx1, sx2 });
+			angle_t angle1, angle2;
+			if (cull.GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
+				portalSegments.push_back({ angle1, angle2 });
 		}
 
 		if (inside)

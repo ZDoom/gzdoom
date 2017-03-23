@@ -55,7 +55,7 @@ void RenderPolyScene::SetPortalSegments(const std::vector<PolyPortalSegment> &se
 	Cull.ClearSolidSegments();
 	for (const auto &segment : segments)
 	{
-		Cull.MarkSegmentCulled(segment.X1, segment.X2);
+		Cull.MarkSegmentCulled(segment.Start, segment.End);
 	}
 	Cull.InvertSegments();
 	PortalSegmentsAdded = true;
@@ -194,13 +194,12 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 		return;
 
 	// Cull wall if not visible
-	int sx1, sx2;
-	LineSegmentRange segmentRange = Cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
-	if (segmentRange == LineSegmentRange::NotVisible || (segmentRange == LineSegmentRange::HasSegment && Cull.IsSegmentCulled(sx1, sx2)))
+	angle_t angle1, angle2;
+	if (!Cull.GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
 		return;
 
 	// Tell automap we saw this
-	if (!PolyRenderer::Instance()->DontMapLines && line->linedef && segmentRange != LineSegmentRange::AlwaysVisible)
+	if (!PolyRenderer::Instance()->DontMapLines && line->linedef)
 	{
 		line->linedef->flags |= ML_MAPPED;
 		sub->flags |= SSECF_DRAWN;
@@ -222,8 +221,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 	// Render wall, and update culling info if its an occlusion blocker
 	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
 	{
-		if (segmentRange == LineSegmentRange::HasSegment)
-			Cull.MarkSegmentCulled(sx1, sx2);
+		Cull.MarkSegmentCulled(angle1, angle2);
 	}
 }
 

@@ -276,10 +276,9 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 		PolyTriangleDrawer::draw(args);
 		Polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, args.uniforms.subsectorDepth });
 
-		int sx1, sx2;
-		LineSegmentRange range = cull.GetSegmentRangeForLine(v1.X, v1.Y, v2.X, v2.Y, sx1, sx2);
-		if (range == LineSegmentRange::HasSegment)
-			Polyportal->Segments.push_back({ sx1, sx2 });
+		angle_t angle1, angle2;
+		if (cull.GetAnglesForLine(v1.X, v1.Y, v2.X, v2.Y, angle1, angle2))
+			Polyportal->Segments.push_back({ angle1, angle2 });
 	}
 	else if (!Masked)
 	{

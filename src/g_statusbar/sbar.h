@@ -337,6 +337,32 @@ public:
 		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
+
+	enum EAlign
+	{
+		TOP = 0,
+		VCENTER = 1,
+		BOTTOM = 2,
+		VOFFSET = 3,
+		VMASK = 3,
+
+		LEFT = 0,
+		HCENTER = 4,
+		RIGHT = 8,
+		HOFFSET = 12,
+		HMASK = 12,
+
+		CENTER = VCENTER | HCENTER,
+		CENTER_BOTTOM = BOTTOM | HCENTER
+	};
+
+	enum ETextAlign
+	{
+		ALIGN_LEFT = 0,
+		ALIGN_CENTER = 1,
+		ALIGN_RIGHT = 2
+	};
+
 	DBaseStatusBar ();
 	void SetSize(int reltop = 32, int hres = 320, int vres = 200);
 	void OnDestroy() override;
@@ -375,26 +401,10 @@ public:
 	void DrawLog();
 	uint32_t GetTranslation() const;
 
-	enum EAlign
-	{
-		TOP = 0,
-		VCENTER = 1,
-		BOTTOM = 2,
-		VOFFSET = 3,
-		VMASK = 3,
-
-		LEFT = 0,
-		HCENTER = 4,
-		RIGHT = 8,
-		HOFFSET = 12,
-		HMASK = 12,
-
-		CENTER = VCENTER | HCENTER,
-		CENTER_BOTTOM = BOTTOM | HCENTER
-	};
-
-	void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha = 1., bool translatable = false, bool dim = false,
+	void DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha = 1., bool translatable = false, bool dim = false,
 		int imgAlign = TOP | LEFT, int screenalign = TOP | LEFT, bool alphamap = false, double width = -1, double height = -1);
+
+	void DrawString(FFont *font, const FString &cstring, double x, double y, double Alpha, int translation, int align, int screenalign, int spacing = 0, bool monospaced = false, int shadowX = 0, int shadowY = 0);
 
 	void GetCoords(int &x, int &y)
 	{

@@ -83,6 +83,13 @@ class BaseStatusBar native ui
 		CENTER_BOTTOM = BOTTOM|HCENTER
 	};
 	
+	enum ETextAlign
+	{
+		ALIGN_LEFT = 0,
+		ALIGN_CENTER = 1,
+		ALIGN_RIGHT = 2
+	};
+
 	enum SBGameModes
 	{
 		SINGLEPLAYER	= 0x1,
@@ -151,6 +158,7 @@ class BaseStatusBar native ui
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
 
 	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, int imgAlign, int screenalign, bool alphamap, Vector2 box);
+	native void DrawString(Font font, String string, Vector2 pos , double Alpha, int translation, int align, int screenalign, int spacing=0, bool monospaced = false, int shadowX=0, int shadowY=0, int wrapwidth = -1, int linespacing = 4);
 	
 	
 	//============================================================================

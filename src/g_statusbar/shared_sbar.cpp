@@ -1494,6 +1494,69 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawGraphic)
 
 //============================================================================
 //
+// draw stuff
+//
+//============================================================================
+
+void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, double Alpha, int translation, int align, int screenalign, int spacing, bool monospaced, int shadowX, int shadowY)
+{
+	switch (align)
+	{
+	default:
+		break;
+	case ALIGN_RIGHT:
+		if (!monospaced)
+			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len()));
+		else //monospaced, so just multiply the character size
+			x -= static_cast<int> ((spacing) * cstring.Len());
+		break;
+	case ALIGN_CENTER:
+		if (!monospaced)
+			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len())) / 2;
+		else //monospaced, so just multiply the character size
+			x -= static_cast<int> ((spacing)* cstring.Len()) / 2;
+		break;
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_POINTER(font, FFont);
+	PARAM_STRING(string);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(alpha);
+	PARAM_BOOL(trans);
+	PARAM_INT(ialign);
+	PARAM_INT(salign);
+	PARAM_INT_DEF(spacing);
+	PARAM_BOOL_DEF(monospaced);
+	PARAM_INT_DEF(shadowX);
+	PARAM_INT_DEF(shadowY);
+	PARAM_INT_DEF(wrapwidth);
+	PARAM_INT_DEF(linespacing);
+
+	if (wrapwidth > 0)
+	{
+		FBrokenLines *brk = V_BreakLines(font, wrapwidth, string, true);
+		for (int i = 0; brk[i].Width >= 0; i++)
+		{
+			self->DrawString(font, brk[i].Text, x, y, alpha, trans, ialign, salign, spacing, monospaced, shadowX, shadowY);
+			y += font->GetHeight() + linespacing;
+		}
+		V_FreeBrokenLines(brk);
+	}
+	else
+	{
+		self->DrawString(font, string, x, y, alpha, trans, ialign, salign, spacing, monospaced, shadowX, shadowY);
+	}
+	return 0;
+}
+
+
+//============================================================================
+//
 // CCMD showpop
 //
 // Asks the status bar to show a pop screen.

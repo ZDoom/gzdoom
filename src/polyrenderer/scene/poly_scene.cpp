@@ -52,13 +52,20 @@ void RenderPolyScene::SetViewpoint(const TriMatrix &worldToClip, const Vec4f &po
 
 void RenderPolyScene::SetPortalSegments(const std::vector<PolyPortalSegment> &segments)
 {
-	Cull.ClearSolidSegments();
-	for (const auto &segment : segments)
+	if (!segments.empty())
 	{
-		Cull.MarkSegmentCulled(segment.Start, segment.End);
+		Cull.ClearSolidSegments();
+		for (const auto &segment : segments)
+		{
+			Cull.MarkSegmentCulled(segment.Start, segment.End);
+		}
+		Cull.InvertSegments();
+		PortalSegmentsAdded = true;
 	}
-	Cull.InvertSegments();
-	PortalSegmentsAdded = true;
+	else
+	{
+		PortalSegmentsAdded = false;
+	}
 }
 
 void RenderPolyScene::Render(int portalDepth)

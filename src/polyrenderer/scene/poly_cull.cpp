@@ -110,7 +110,8 @@ void PolyCull::InvertSegments()
 	angle_t cur = 0;
 	for (const auto &segment : TempInvertSolidSegments)
 	{
-		MarkSegmentCulled(cur, segment.Start - 1);
+		if (segment.Start != 0 || segment.End != ANGLE_MAX)
+			MarkSegmentCulled(cur, segment.Start - 1);
 		cur = segment.End + 1;
 	}
 	if (cur != 0)

@@ -157,75 +157,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	std::vector<PolyPortalSegment> portalSegments;
-	FSectorPortal *portal = nullptr;// sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	bool foggy = false;
-	PolyDrawSectorPortal *polyportal = nullptr;
-	if (portal && (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
-		portal = nullptr;
-	if (portal)
-	{
-		for (auto &p : sectorPortals)
-		{
-			if (p->Portal == portal) // To do: what other criteria do we need to check for?
-			{
-				polyportal = p.get();
-				break;
-			}
-		}
-		if (!polyportal)
-		{
-			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
-			polyportal = sectorPortals.back().get();
-		}
-
-		// Calculate portal clipping
-
-		DVector2 v;
-		bool inside = true;
-		double vdist = 1.0e10;
-
-		portalSegments.reserve(sub->numlines);
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-
-			DVector2 pt1 = line->v1->fPos() - viewpoint.Pos;
-			DVector2 pt2 = line->v2->fPos() - viewpoint.Pos;
-			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
-				inside = false;
-
-			double dist = pt1.LengthSquared();
-			if (dist < vdist)
-			{
-				v = line->v1->fPos();
-				vdist = dist;
-			}
-			dist = pt2.LengthSquared();
-			if (dist < vdist)
-			{
-				v = line->v2->fPos();
-				vdist = dist;
-			}
-
-			angle_t angle1, angle2;
-			if (cull.GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
-				portalSegments.push_back({ angle1, angle2 });
-		}
-
-		if (inside)
-		{
-			polyportal->PortalPlane = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
-		}
-		else if(polyportal->PortalPlane == Vec4f(0.0f) || Vec4f::dot(polyportal->PortalPlane, Vec4f((float)v.X, (float)v.Y, 0.0f, 1.0f)) > 0.0f)
-		{
-			DVector2 planePos = v;
-			DVector2 planeNormal = v - viewpoint.Pos;
-			planeNormal.MakeUnit();
-			double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
-			polyportal->PortalPlane = Vec4f((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
-		}
-	}
 	
 	sector_t *fakesector = sub->sector->heightsec;
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
@@ -304,6 +236,89 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	bool isSky = picnum == skyflatnum;
 
+	std::vector<PolyPortalSegment> portalSegments;
+	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
+	PolyDrawSectorPortal *polyportal = nullptr;
+	if (portal && (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
+		portal = nullptr;
+	
+	if (portal)
+	{
+		for (auto &p : sectorPortals)
+		{
+			if (p->Portal == portal) // To do: what other criteria do we need to check for?
+			{
+				polyportal = p.get();
+				break;
+			}
+		}
+		if (!polyportal)
+		{
+			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
+			polyportal = sectorPortals.back().get();
+		}
+
+		// Calculate portal clipping
+
+		if (!isSky)
+		{
+			DVector2 v;
+			bool inside = true;
+			double vdist = 1.0e10;
+
+			portalSegments.reserve(sub->numlines);
+			for (uint32_t i = 0; i < sub->numlines; i++)
+			{
+				seg_t *line = &sub->firstline[i];
+
+				DVector2 pt1 = line->v1->fPos() - viewpoint.Pos;
+				DVector2 pt2 = line->v2->fPos() - viewpoint.Pos;
+				bool backside = pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0;
+				if (backside)
+					inside = false;
+
+				double dist = pt1.LengthSquared();
+				if (dist < vdist)
+				{
+					v = line->v1->fPos();
+					vdist = dist;
+				}
+				dist = pt2.LengthSquared();
+				if (dist < vdist)
+				{
+					v = line->v2->fPos();
+					vdist = dist;
+				}
+
+				if (!backside)
+				{
+					angle_t angle1, angle2;
+					if (cull.GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
+						portalSegments.push_back({ angle1, angle2 });
+				}
+				else
+				{
+					angle_t angle1, angle2;
+					if (cull.GetAnglesForLine(line->v2->fX(), line->v2->fY(), line->v1->fX(), line->v1->fY(), angle1, angle2))
+						portalSegments.push_back({ angle1, angle2 });
+				}
+			}
+
+			if (inside)
+			{
+				polyportal->PortalPlane = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
+			}
+			else if(polyportal->PortalPlane == Vec4f(0.0f) || Vec4f::dot(polyportal->PortalPlane, Vec4f((float)v.X, (float)v.Y, 0.0f, 1.0f)) > 0.0f)
+			{
+				DVector2 planePos = v;
+				DVector2 planeNormal = v - viewpoint.Pos;
+				planeNormal.MakeUnit();
+				double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
+				polyportal->PortalPlane = Vec4f((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
+			}
+		}
+	}
+
 	UVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
@@ -371,7 +386,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		{
 			args.stencilwritevalue = polyportal->StencilValue;
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
-			polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
 		}
 		else
 		{
@@ -453,7 +467,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 			if (portal)
 			{
 				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
-				polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
 			}
 		}
 	}

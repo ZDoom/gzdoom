@@ -190,6 +190,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	TriVertex clippedvert[max_additional_vertices];
 	int numclipvert = clipedge(vert, clippedvert);
 
+#ifdef NO_SSE
 	// Map to 2D viewport:
 	for (int j = 0; j < numclipvert; j++)
 	{
@@ -205,6 +206,39 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
 		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
 	}
+#else
+	// Map to 2D viewport:
+	__m128 mviewport_x = _mm_set1_ps((float)viewport_x);
+	__m128 mviewport_y = _mm_set1_ps((float)viewport_y);
+	__m128 mviewport_halfwidth = _mm_set1_ps(viewport_width * 0.5f);
+	__m128 mviewport_halfheight = _mm_set1_ps(viewport_height * 0.5f);
+	__m128 mone = _mm_set1_ps(1.0f);
+	int sse_length = (numclipvert + 3) / 4 * 4;
+	for (int j = 0; j < sse_length; j += 4)
+	{
+		__m128 vx = _mm_loadu_ps(&clippedvert[j].x);
+		__m128 vy = _mm_loadu_ps(&clippedvert[j + 1].x);
+		__m128 vz = _mm_loadu_ps(&clippedvert[j + 2].x);
+		__m128 vw = _mm_loadu_ps(&clippedvert[j + 3].x);
+		_MM_TRANSPOSE4_PS(vx, vy, vz, vw);
+
+		// Calculate normalized device coordinates:
+		vw = _mm_div_ps(mone, vw);
+		vx = _mm_mul_ps(vx, vw);
+		vy = _mm_mul_ps(vy, vw);
+		vz = _mm_mul_ps(vz, vw);
+
+		// Apply viewport scale to get screen coordinates:
+		vx = _mm_add_ps(mviewport_x, _mm_mul_ps(mviewport_halfwidth, _mm_add_ps(mone, vx)));
+		vy = _mm_add_ps(mviewport_y, _mm_mul_ps(mviewport_halfheight, _mm_sub_ps(mone, vy)));
+
+		_MM_TRANSPOSE4_PS(vx, vy, vz, vw);
+		_mm_storeu_ps(&clippedvert[j].x, vx);
+		_mm_storeu_ps(&clippedvert[j + 1].x, vy);
+		_mm_storeu_ps(&clippedvert[j + 2].x, vz);
+		_mm_storeu_ps(&clippedvert[j + 3].x, vw);
+	}
+#endif
 
 	// Keep varyings in -128 to 128 range if possible
 	if (numclipvert > 0)

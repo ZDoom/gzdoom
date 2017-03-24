@@ -47,8 +47,8 @@ private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
 	static void draw_arrays(const PolyDrawArgs &args, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr *drawfuncs, int num_drawfuncs);
-	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
-	static void clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert);
+
+	static int clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert);
 
 	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
 	static bool dest_bgra;

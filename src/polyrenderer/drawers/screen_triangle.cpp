@@ -58,6 +58,7 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 	
 	// 28.4 fixed-point coordinates
+#if NO_SSE
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
 	const int Y3 = (int)round(16.0f * v3.y);
@@ -65,6 +66,20 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	const int X1 = (int)round(16.0f * v1.x);
 	const int X2 = (int)round(16.0f * v2.x);
 	const int X3 = (int)round(16.0f * v3.x);
+#else
+	int tempround[4 * 3];
+	__m128 m16 = _mm_set1_ps(16.0f);
+	__m128 mhalf = _mm_set1_ps(0.5f);
+	_mm_storeu_si128((__m128i*)tempround, _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v1), m16), mhalf)));
+	_mm_storeu_si128((__m128i*)(tempround + 4), _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v2), m16), mhalf)));
+	_mm_storeu_si128((__m128i*)(tempround + 8), _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v3), m16), mhalf)));
+	const int X1 = tempround[0];
+	const int X2 = tempround[4];
+	const int X3 = tempround[8];
+	const int Y1 = tempround[1];
+	const int Y2 = tempround[5];
+	const int Y3 = tempround[9];
+#endif
 	
 	// Deltas
 	const int DX12 = X1 - X2;
@@ -304,6 +319,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 
 	// 28.4 fixed-point coordinates
+#if NO_SSE
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
 	const int Y3 = (int)round(16.0f * v3.y);
@@ -311,6 +327,20 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	const int X1 = (int)round(16.0f * v1.x);
 	const int X2 = (int)round(16.0f * v2.x);
 	const int X3 = (int)round(16.0f * v3.x);
+#else
+	int tempround[4 * 3];
+	__m128 m16 = _mm_set1_ps(16.0f);
+	__m128 mhalf = _mm_set1_ps(0.5f);
+	_mm_storeu_si128((__m128i*)tempround, _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v1), m16), mhalf)));
+	_mm_storeu_si128((__m128i*)(tempround + 4), _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v2), m16), mhalf)));
+	_mm_storeu_si128((__m128i*)(tempround + 8), _mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v3), m16), mhalf)));
+	const int X1 = tempround[0];
+	const int X2 = tempround[4];
+	const int X3 = tempround[8];
+	const int Y1 = tempround[1];
+	const int Y2 = tempround[5];
+	const int Y3 = tempround[9];
+#endif
 
 	// Deltas
 	const int DX12 = X1 - X2;

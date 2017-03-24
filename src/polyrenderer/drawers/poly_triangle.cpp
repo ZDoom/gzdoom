@@ -188,8 +188,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
-	int numclipvert;
-	clipedge(vert, clippedvert, numclipvert);
+	int numclipvert = clipedge(vert, clippedvert);
 
 	// Map to 2D viewport:
 	for (int j = 0; j < numclipvert; j++)
@@ -247,31 +246,80 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	}
 }
 
-bool PolyTriangleDrawer::cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
-{
-	if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
-		return true;
-
-	if (clipdistance1 < 0.0f)
-		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f);
-	else
-		t1 = 0.0f;
-
-	if (clipdistance2 < 0.0f)
-		t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f);
-	else
-		t2 = 1.0f;
-
-	return false;
-}
-
-void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert)
+int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert)
 {
 	// Clip and cull so that the following is true for all vertices:
 	// -v.w <= v.x <= v.w
 	// -v.w <= v.y <= v.w
 	// -v.w <= v.z <= v.w
 	
+	// halfspace clip distances
+	static const int numclipdistances = 7;
+#ifdef NO_SSE
+	float clipdistance[numclipdistances * 3];
+	bool needsclipping = false;
+	float *clipd = clipdistance;
+	for (int i = 0; i < 3; i++)
+	{
+		const auto &v = verts[i];
+		clipd[0] = v.x + v.w;
+		clipd[1] = v.w - v.x;
+		clipd[2] = v.y + v.w;
+		clipd[3] = v.w - v.y;
+		clipd[4] = v.z + v.w;
+		clipd[5] = v.w - v.z;
+		clipd[6] = v.clipDistance0;
+		needsclipping = needsclipping || clipd[0] < 0.0f || clipd[1] < 0.0f || clipd[2] < 0.0f || clipd[3] < 0.0f || clipd[4] < 0.0f || clipd[5] < 0.0f || clipd[6] < 0.0f;
+		clipd += numclipdistancespitch;
+	}
+
+	// If all halfspace clip distances are positive then the entire triangle is visible. Skip the expensive clipping step.
+	if (!needsclipping)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			memcpy(clippedvert + i, verts + i, sizeof(TriVertex));
+		}
+		return 3;
+	}
+#else
+	__m128 mx = _mm_loadu_ps(&verts[0].x);
+	__m128 my = _mm_loadu_ps(&verts[1].x);
+	__m128 mz = _mm_loadu_ps(&verts[2].x);
+	__m128 mw = _mm_setzero_ps();
+	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
+	__m128 clipd0 = _mm_add_ps(mx, mw);
+	__m128 clipd1 = _mm_sub_ps(mw, mx);
+	__m128 clipd2 = _mm_add_ps(my, mw);
+	__m128 clipd3 = _mm_sub_ps(mw, my);
+	__m128 clipd4 = _mm_add_ps(mz, mw);
+	__m128 clipd5 = _mm_sub_ps(mw, mz);
+	__m128 clipd6 = _mm_setr_ps(verts[0].clipDistance0, verts[1].clipDistance0, verts[2].clipDistance0, 0.0f);
+	__m128 mneedsclipping = _mm_cmplt_ps(clipd0, _mm_setzero_ps());
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd1, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd2, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd3, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd4, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd5, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd6, _mm_setzero_ps()));
+	if (_mm_movemask_ps(mneedsclipping) == 0)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			memcpy(clippedvert + i, verts + i, sizeof(TriVertex));
+		}
+		return 3;
+	}
+	float clipdistance[numclipdistances * 4];
+	_mm_storeu_ps(clipdistance, clipd0);
+	_mm_storeu_ps(clipdistance + 4, clipd1);
+	_mm_storeu_ps(clipdistance + 8, clipd2);
+	_mm_storeu_ps(clipdistance + 12, clipd3);
+	_mm_storeu_ps(clipdistance + 16, clipd4);
+	_mm_storeu_ps(clipdistance + 20, clipd5);
+	_mm_storeu_ps(clipdistance + 24, clipd6);
+#endif
+
 	// use barycentric weights while clipping vertices
 	float weights[max_additional_vertices * 3 * 2];
 	for (int i = 0; i < 3; i++)
@@ -281,34 +329,19 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 		weights[i * 3 + 2] = 0.0f;
 		weights[i * 3 + i] = 1.0f;
 	}
-	
-	// halfspace clip distances
-	static const int numclipdistances = 7;
-	float clipdistance[numclipdistances * 3];
-	for (int i = 0; i < 3; i++)
-	{
-		const auto &v = verts[i];
-		clipdistance[i * numclipdistances + 0] = v.x + v.w;
-		clipdistance[i * numclipdistances + 1] = v.w - v.x;
-		clipdistance[i * numclipdistances + 2] = v.y + v.w;
-		clipdistance[i * numclipdistances + 3] = v.w - v.y;
-		clipdistance[i * numclipdistances + 4] = v.z + v.w;
-		clipdistance[i * numclipdistances + 5] = v.w - v.z;
-		clipdistance[i * numclipdistances + 6] = v.clipDistance0;
-	}
-	
+
 	// Clip against each halfspace
 	float *input = weights;
 	float *output = weights + max_additional_vertices * 3;
 	int inputverts = 3;
-	int outputverts = 0;
 	for (int p = 0; p < numclipdistances; p++)
 	{
 		// Clip each edge
-		outputverts = 0;
+		int outputverts = 0;
 		for (int i = 0; i < inputverts; i++)
 		{
 			int j = (i + 1) % inputverts;
+#ifdef NO_SSE
 			float clipdistance1 =
 				clipdistance[0 * numclipdistances + p] * input[i * 3 + 0] +
 				clipdistance[1 * numclipdistances + p] * input[i * 3 + 1] +
@@ -318,10 +351,24 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 				clipdistance[0 * numclipdistances + p] * input[j * 3 + 0] +
 				clipdistance[1 * numclipdistances + p] * input[j * 3 + 1] +
 				clipdistance[2 * numclipdistances + p] * input[j * 3 + 2];
-				
-			float t1, t2;
-			if (!cullhalfspace(clipdistance1, clipdistance2, t1, t2) && outputverts + 1 < max_additional_vertices)
+#else
+			float clipdistance1 =
+				clipdistance[0 + p * 4] * input[i * 3 + 0] +
+				clipdistance[1 + p * 4] * input[i * 3 + 1] +
+				clipdistance[2 + p * 4] * input[i * 3 + 2];
+
+			float clipdistance2 =
+				clipdistance[0 + p * 4] * input[j * 3 + 0] +
+				clipdistance[1 + p * 4] * input[j * 3 + 1] +
+				clipdistance[2 + p * 4] * input[j * 3 + 2];
+#endif
+
+			// Clip halfspace
+			if ((clipdistance1 >= 0.0f || clipdistance2 >= 0.0f) && outputverts + 1 < max_additional_vertices)
 			{
+				float t1 = (clipdistance1 < 0.0f) ? MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f) : 0.0f;
+				float t2 = (clipdistance2 < 0.0f) ? MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f) : 1.0f;
+
 				// add t1 vertex
 				for (int k = 0; k < 3; k++)
 					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
@@ -337,14 +384,13 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 			}
 		}
 		std::swap(input, output);
-		std::swap(inputverts, outputverts);
+		inputverts = outputverts;
 		if (inputverts == 0)
 			break;
 	}
 	
 	// Convert barycentric weights to actual vertices
-	numclipvert = inputverts;
-	for (int i = 0; i < numclipvert; i++)
+	for (int i = 0; i < inputverts; i++)
 	{
 		auto &v = clippedvert[i];
 		memset(&v, 0, sizeof(TriVertex));
@@ -359,6 +405,7 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 				v.varying[iv] += verts[w].varying[iv] * weight;
 		}
 	}
+	return inputverts;
 }
 
 /////////////////////////////////////////////////////////////////////////////

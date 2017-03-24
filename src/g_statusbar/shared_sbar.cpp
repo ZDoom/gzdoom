@@ -1052,7 +1052,18 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 
-	DrawPowerups ();
+	if (state != HUD_AltHud)
+	{
+		auto saved = fullscreenOffsets;
+		fullscreenOffsets = true;
+		IFVIRTUAL(DBaseStatusBar, DrawPowerups)
+		{
+			VMValue params[] = { (DObject*)this };
+			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+		}
+		fullscreenOffsets = saved;
+	}
+
 	if (automapactive && !viewactive)
 	{
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
@@ -1065,46 +1076,6 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	if (noisedebug)
 	{
 		S_NoiseDebug ();
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// DrawPowerups
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawPowerups ()
-{
-	// Each icon gets a 32x32 block to draw itself in.
-	int x, y;
-	AInventory *item;
-	const int yshift = SmallFont->GetHeight();
-
-	x = -20;
-	y = 17 
-		+ (ST_IsTimeVisible()    ? yshift : 0)
-		+ (ST_IsLatencyVisible() ? yshift : 0);
-	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
-	{
-		IFVIRTUALPTR(item, AInventory, DrawPowerup)
-		{
-			VMValue params[3] = { item, x, y };
-			VMReturn ret;
-			int retv;
-
-			ret.IntAt(&retv);
-			GlobalVMStack.Call(func, params, 3, &ret, 1);
-			if (retv)
-			{
-				x -= POWERUPICONSIZE;
-				if (x < -POWERUPICONSIZE * 5)
-				{
-					x = -20;
-					y += POWERUPICONSIZE * 2;
-				}
-			}
-		}
 	}
 }
 

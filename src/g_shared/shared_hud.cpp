@@ -54,6 +54,7 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 #include <time.h>
 
@@ -1079,6 +1080,48 @@ bool ST_IsLatencyVisible()
 		&& (hud_showlag <= 2);
 }
 
+//---------------------------------------------------------------------------
+//
+// draw the overlay
+//
+//---------------------------------------------------------------------------
+
+static void DrawPowerups(player_t *CPlayer)
+{
+	// Each icon gets a 32x32 block to draw itself in.
+	int x, y;
+	AInventory *item;
+	const int yshift = SmallFont->GetHeight();
+	const int POWERUPICONSIZE = 32;
+
+	x = hudwidth -20;
+	y = POWERUPICONSIZE * 5/4
+		+ (ST_IsTimeVisible() ? yshift : 0)
+		+ (ST_IsLatencyVisible() ? yshift : 0);
+
+	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
+	{
+		IFVIRTUALPTR(item, AInventory, GetPowerupIcon)
+		{
+			VMValue param[] = { item };
+			int rv;
+			VMReturn ret(&rv);
+			GlobalVMStack.Call(func, param, 1, &ret, 1);
+			auto tex = FSetTextureID(rv);
+			if (!tex.isValid()) continue;
+			auto texture = TexMan(tex);
+
+			screen->DrawTexture(texture, x, y, DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_CenterBottomOffset, true, TAG_DONE);
+
+			x -= POWERUPICONSIZE;
+			if (x < -hudwidth / 2)
+			{
+				x = -20;
+				y += POWERUPICONSIZE * 3 / 2;
+			}
+		}
+	}
+}
 
 //---------------------------------------------------------------------------
 //
@@ -1158,6 +1201,7 @@ void DrawHUD()
 
 		DrawTime();
 		DrawLatency();
+		DrawPowerups(CPlayer);
 	}
 	else
 	{

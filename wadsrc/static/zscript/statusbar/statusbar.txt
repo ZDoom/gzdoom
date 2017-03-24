@@ -126,6 +126,7 @@ class BaseStatusBar native ui
 	
 	const XHAIRSHRINKSIZE =(1./18);
 	const XHAIRPICKUPSIZE = (2+XHAIRSHRINKSIZE);
+	const POWERUPICONSIZE = 32;
 	
 
 	native int ST_X, ST_Y;
@@ -494,6 +495,35 @@ class BaseStatusBar native ui
 	}
 
 	
+	//---------------------------------------------------------------------------
+	//
+	// DrawPowerups
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void DrawPowerups ()
+	{
+		// The AltHUD specific adjustments have been removed here, because the AltHUD uses its own variant of this function
+		// that can obey AltHUD rules - which this cannot.
+		Vector2 pos = (-20, POWERUPICONSIZE * 5 / 4);
+		double maxpos = screen.GetWidth() / 2;
+		for (let item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+		{
+			let icon = item.GetPowerupIcon();
+			if (icon.IsValid())
+			{
+				// Each icon gets a 32x32 block.
+				DrawTexture(icon, pos, true, 1.0, ALIGN_TOP|ALIGN_RIGHT, (POWERUPICONSIZE, POWERUPICONSIZE), ALIGN_CENTER_BOTTOM);
+				pos.x -= POWERUPICONSIZE;
+				if (pos.x < -maxpos)
+				{
+					pos.x = -20;
+					pos.y += POWERUPICONSIZE * 3 / 2;
+				}
+			}
+		}
+	}
+	
 	//============================================================================
 	//
 	// draw stuff
@@ -726,3 +756,4 @@ class DynamicValueInterpolator : Object
 		return mCurrentValue;
 	}
 }
+

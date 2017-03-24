@@ -74,27 +74,3 @@ void PolyStencilBuffer::Clear(int newwidth, int newheight, uint8_t stencil_value
 		m[i] = 0xffffff00 | stencil_value;
 	}
 }
-
-/////////////////////////////////////////////////////////////////////////////
-
-namespace
-{
-	int NextBufferVertex = 0;
-}
-
-TriVertex *PolyVertexBuffer::GetVertices(int count)
-{
-	enum { VertexBufferSize = 256 * 1024 };
-	static TriVertex Vertex[VertexBufferSize];
-
-	if (NextBufferVertex + count > VertexBufferSize)
-		return nullptr;
-	TriVertex *v = Vertex + NextBufferVertex;
-	NextBufferVertex += count;
-	return v;
-}
-
-void PolyVertexBuffer::Clear()
-{
-	NextBufferVertex = 0;
-}

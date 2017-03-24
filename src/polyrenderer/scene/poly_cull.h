@@ -58,6 +58,7 @@ private:
 	std::vector<SolidSegment> SolidSegments;
 	std::vector<SolidSegment> TempInvertSolidSegments;
 	const int SolidCullScale = 3000;
+	bool FirstSkyHeight = true;
 
 	FrustumPlanes frustumPlanes;
 	Vec4f PortalClipPlane;

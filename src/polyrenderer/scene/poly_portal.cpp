@@ -43,10 +43,51 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
 
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+
+	Vec4f portalPlane = Vec4f(0.0f);
+	if (Portal->mType != PORTS_SKYVIEWPOINT)
+	{
+		float minHeight;
+		float maxHeight;
+		bool first = true;
+		for (const auto &range : Shape)
+		{
+			for (int i = 0; i < range.Count; i++)
+			{
+				if (first)
+				{
+					minHeight = range.Vertices[i].z;
+					maxHeight = range.Vertices[i].z;
+					first = false;
+				}
+				else
+				{
+					minHeight = MIN(minHeight, range.Vertices[i].z);
+					maxHeight = MAX(maxHeight, range.Vertices[i].z);
+				}
+			}
+		}
+
+		if (!first && minHeight > viewpoint.Pos.Z)
+		{
+			portalPlane.x = 0.0f;
+			portalPlane.y = 0.0f;
+			portalPlane.z = 1.0f;
+			portalPlane.w = -minHeight;
+		}
+		else if (!first && maxHeight < viewpoint.Pos.Z)
+		{
+			portalPlane.x = 0.0f;
+			portalPlane.y = 0.0f;
+			portalPlane.z = -1.0f;
+			portalPlane.w = maxHeight;
+		}
+	}
+
 	SaveGlobals();
 
 	// To do: get this information from PolyRenderer instead of duplicating the code..
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
@@ -65,7 +106,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, PortalPlane, StencilValue);
+	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
 	RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
 	

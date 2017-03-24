@@ -61,10 +61,3 @@ private:
 	std::vector<uint8_t> values;
 	std::vector<uint32_t> masks;
 };
-
-class PolyVertexBuffer
-{
-public:
-	static TriVertex *GetVertices(int count);
-	static void Clear();
-};

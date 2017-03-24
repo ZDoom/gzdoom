@@ -154,7 +154,7 @@ void PolyRenderer::RenderRemainingPlayerSprites()
 
 void PolyRenderer::ClearBuffers()
 {
-	PolyVertexBuffer::Clear();
+	FrameMemory.Clear();
 	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
 	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 	NextStencilValue = 0;

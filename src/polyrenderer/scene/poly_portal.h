@@ -52,7 +52,6 @@ public:
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
 	std::vector<PolyPortalSegment> Segments;
-	Vec4f PortalPlane = Vec4f(0.0f);
 
 private:
 	void SaveGlobals();

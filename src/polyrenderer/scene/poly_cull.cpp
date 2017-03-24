@@ -35,6 +35,7 @@ void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPl
 	PortalClipPlane = portalClipPlane;
 
 	// Cull front to back
+	FirstSkyHeight = true;
 	MaxCeilingHeight = 0.0;
 	MinFloorHeight = 0.0;
 	if (level.nodes.Size() == 0)
@@ -71,8 +72,17 @@ void PolyCull::CullNode(void *node)
 void PolyCull::CullSubsector(subsector_t *sub)
 {
 	// Update sky heights for the scene
-	MaxCeilingHeight = MAX(MaxCeilingHeight, sub->sector->ceilingplane.Zat0());
-	MinFloorHeight = MIN(MinFloorHeight, sub->sector->floorplane.Zat0());
+	if (!FirstSkyHeight)
+	{
+		MaxCeilingHeight = MAX(MaxCeilingHeight, sub->sector->ceilingplane.Zat0());
+		MinFloorHeight = MIN(MinFloorHeight, sub->sector->floorplane.Zat0());
+	}
+	else
+	{
+		MaxCeilingHeight = sub->sector->ceilingplane.Zat0();
+		MinFloorHeight = sub->sector->floorplane.Zat0();
+		FirstSkyHeight = false;
+	}
 
 	// Mark that we need to render this
 	PvsSectors.push_back(sub);
@@ -246,6 +256,7 @@ bool PolyCull::CheckBBox(float *bspcoord)
 
 bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const
 {
+#if 0
 	// Clip line to the portal clip plane
 	float distance1 = Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f));
 	float distance2 = Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f));
@@ -269,6 +280,7 @@ bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angl
 		y1 = ny1;
 		y2 = ny2;
 	}
+#endif
 
 	angle2 = PointToPseudoAngle(x1, y1);
 	angle1 = PointToPseudoAngle(x2, y2);

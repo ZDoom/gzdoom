@@ -1397,7 +1397,6 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, dou
 		// Todo: Allow other scaling values, too.
 		if (Scaled)
 		{
-			y += RelTop - VerticalResolution;
 			screen->VirtualToRealCoords(x, y, width, height, HorizontalResolution, VerticalResolution, true, true);
 		}
 	}
@@ -1570,12 +1569,12 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		if (!fullscreenOffsets)
 		{
 			rx += ST_X;
-			ry += ST_Y - (Scaled ? VerticalResolution : 200) + RelTop;
+			ry += ST_Y;
+
+			// Todo: Allow other scaling values, too.
 			if (Scaled)
-				screen->VirtualToRealCoords(rx, ry, rw, rh, HorizontalResolution, VerticalResolution, true);
-			else
 			{
-				ry += (200 - VerticalResolution);
+				screen->VirtualToRealCoords(rx, ry, rw, rh, HorizontalResolution, VerticalResolution, true);
 			}
 		}
 		else

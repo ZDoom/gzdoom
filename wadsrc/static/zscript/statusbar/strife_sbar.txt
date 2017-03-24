@@ -48,7 +48,6 @@ class StrifeStatusBar : BaseStatusBar
 		imgARM1,
 		imgARM2,
 		imgNEGATIVE,
-		imgINumbers = imgFONG0,
 	};
 	
 	TextureID Images[imgNEGATIVE + 1];
@@ -79,18 +78,21 @@ class StrifeStatusBar : BaseStatusBar
 
 		if (state == HUD_StatusBar)
 		{
+			fullscreenoffsets = false;
 			DrawMainBar (TicFrac);
 		}
 		else
 		{
 			if (state == HUD_Fullscreen)
 			{
+				fullscreenoffsets = true;
 				DrawFullScreenStuff ();
 			}
 
 			// Draw pop screen (log, keys, and status)
 			if (CurrentPop != POP_None && PopHeight < 0)
 			{
+				fullscreenoffsets = false;
 				DrawPopScreen (screen.GetHeight(), TicFrac);
 			}
 		}
@@ -302,11 +304,11 @@ class StrifeStatusBar : BaseStatusBar
 			DrawPopScreen (Scaled ? (ST_Y - 8) * screen.GetHeight() / 200 : ST_Y - 8, TicFrac);
 		}
 
-		DrawImage (Images[imgINVBACK], 0, 0);
-		DrawImage (Images[imgINVTOP], 0, -8);
+		DrawTexture(Images[imgINVBACK], (0, 0), true, 1.0, itemAlign:ALIGN_OFFSETS);
+		DrawTexture(Images[imgINVTOP], (0, -8), true, 1.0, itemAlign:ALIGN_OFFSETS);
 
 		// Health
-		DrINumber (CPlayer.health, 79, -6, imgFONG0);
+		DrawString("Indexfont_Strife_Green", FormatNumber(CPlayer.health, 3, 5, 0), (86, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
 		int points;
 		if (CPlayer.cheats & CF_GODMODE)
 		{
@@ -323,8 +325,8 @@ class StrifeStatusBar : BaseStatusBar
 		item = CPlayer.mo.FindInventory('BasicArmor');
 		if (item != NULL && item.Amount > 0)
 		{
-			DrawImage (item.Icon, 2, 9);
-			DrINumber (item.Amount, 27, 23, imgFONY0);
+			DrawTexture(item.Icon, (2, 9), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (34, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
 		}
 
 		// Ammo
@@ -334,15 +336,15 @@ class StrifeStatusBar : BaseStatusBar
 		[ammo1, ammo2, ammocount1, ammocount2] = GetCurrentAmmo ();
 		if (ammo1 != NULL)
 		{
-			DrINumber (ammo1.Amount, 311, -6, imgFONG0);
-			DrawImage (ammo1.Icon, 290, 13);
+			DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 5, 0), (318, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
+			DrawTexture (ammo1.Icon, (290, 13), true, 1.0, itemAlign:ALIGN_OFFSETS);
 		}
 
 		// Sigil
 		item = CPlayer.mo.FindInventory('Sigil');
 		if (item != NULL)
 		{
-			DrawImage (item.Icon, 253, 7);
+			DrawTexture (item.Icon, (253, 7), true, 1.0, itemAlign:ALIGN_OFFSETS);
 		}
 
 		// Inventory
@@ -353,23 +355,19 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			if (item == CPlayer.mo.InvSel)
 			{
-				screen.DrawTexture (Images[CursorImage], true,
-					42 + 35*i + ST_X, 12 + ST_Y,
-					DTA_Bottom320x200, Scaled,
-					DTA_Alpha, 1. - ItemFlash);
+				DrawTexture (item.Icon, (42 + 35*i, 12), true, 1. - ItemFlash, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
 			}
 			if (item.Icon.isValid())
 			{
-				DrawDimImage (item.Icon, 48 + 35*i, 14, item.Amount <= 0);
+				DrawTexture (item.Icon, (48 + 35*i, 14), true, 1.0, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
 			}
-			DrINumber (item.Amount, 74 + 35*i, 23, imgFONY0);
+			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (81 + 35*i, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
 			i++;
 		}
 	}
 
 	protected void DrawFullScreenStuff ()
 	{
-		fullscreenoffsets = true;
 		// Draw health
 		
 		DrawString("Indexfont_Strife_Green", FormatNumber(CPlayer.health, 3, 0, 0), (4, -10), 1., (CPlayer.health < CPlayer.mo.RunHealth)? Font.CR_BRICK : Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, 7, true, 1, 1);
@@ -624,25 +622,6 @@ class StrifeStatusBar : BaseStatusBar
 		}
 	}
 
-	void DrINumber (int val, int x, int y, int imgBase) const
-	{
-		x -= 7;
-
-		if (val == 0)
-		{
-			DrawImage (Images[imgBase], x, y);
-		}
-		else
-		{
-			while (val != 0)
-			{
-				DrawImage (Images[imgBase+val%10], x, y);
-				val /= 10;
-				x -= 7;
-			}
-		}
-	}
-
 	void DrINumber2 (int val, int x, int y, int width, int imgBase) const
 	{
 		x -= width;
@@ -659,40 +638,6 @@ class StrifeStatusBar : BaseStatusBar
 				val /= 10;
 				x -= width;
 			}
-		}
-	}
-
-
-	//---------------------------------------------------------------------------
-	//
-	// PROC DrawImage
-	//
-	// Draws an image with the status bar's upper-left corner as the origin.
-	//
-	//---------------------------------------------------------------------------
-
-	void DrawImage(TextureID img, int x, int y) const
-	{
-		if (img.IsValid())
-		{
-			screen.DrawTexture(img, true, x + ST_X, y + ST_Y, DTA_Bottom320x200, Scaled);
-		}
-	}
-
-	//---------------------------------------------------------------------------
-	//
-	// PROC DrawImage
-	//
-	// Draws an optionally dimmed image with the status bar's upper-left corner
-	// as the origin.
-	//
-	//---------------------------------------------------------------------------
-
-	void DrawDimImage(TextureID img, int x, int y, bool dimmed) const
-	{
-		if (img.IsValid())
-		{
-			screen.DrawTexture(img, true, x + ST_X, y + ST_Y, DTA_ColorOverlay, dimmed ? Color(170, 0, 0, 0) : 0, DTA_Bottom320x200, Scaled);
 		}
 	}
 }

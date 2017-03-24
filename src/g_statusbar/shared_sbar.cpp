@@ -1466,7 +1466,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, dou
 		DTA_DestWidthF, width,
 		DTA_DestHeightF, height,
 		DTA_TranslationIndex, translatable ? GetTranslation() : 0,
-		DTA_ColorOverlay, dim ? PalEntry(170, 0, 0, 0) : 0,
+		DTA_ColorOverlay, dim ? MAKEARGB(170, 0, 0, 0) : 0,
 		DTA_Alpha, Alpha,
 		DTA_AlphaChannel, alphamap,
 		DTA_FillColor, alphamap ? 0 : -1);

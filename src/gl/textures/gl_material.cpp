@@ -490,7 +490,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
 	FTexture *basetex = (tx->bWarped && gl.legacyMode)? tx : tx->GetRedirect(false);
-	// allow the redirect only if the textute is not expanded or the scale matches.
+	// allow the redirect only if the texture is not expanded or the scale matches.
 	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
 	{
 		mBaseLayer = ValidateSysTexture(basetex, expanded);

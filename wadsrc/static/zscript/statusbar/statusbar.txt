@@ -46,19 +46,24 @@ class BaseStatusBar native ui
 		DI_SKIPREADY = 0x8,
 		DI_ALTICONFIRST = 0x10,
 		DI_TRANSLATABLE = 0x20,
-		DI_FORCESCALE = 0x40
+		DI_FORCESCALE = 0x40,
+		DI_DIM = 0x80,
 	};
 
 	enum IconType
 	{
-		PLAYERICON = 1000,
-		AMMO1,
-		AMMO2,
-		ARMOR,
-		WEAPONICON,
-		SIGIL,
-		WEAPONSLOT,
-		SELECTEDINVENTORYICON,
+		ITYPE_PLAYERICON = 1000,
+		ITYPE_AMMO1,
+		ITYPE_AMMO2,
+		ITYPE_ARMOR,
+		ITYPE_WEAPON,
+		ITYPE_SIGIL,
+		ITYPE_WEAPONSLOT,
+		ITYPE_SELECTEDINVENTORY,
+	}
+	
+	enum HexArmorType
+	{
 		HEXENARMOR_ARMOR,
 		HEXENARMOR_SHIELD,
 		HEXENARMOR_HELM,
@@ -67,35 +72,36 @@ class BaseStatusBar native ui
 	
 	enum EAlign
 	{
-		TOP = 0,
-		VCENTER = 1,
-		BOTTOM = 2,
-		VOFFSET = 3,
-		VMASK = 3,
+		ALIGN_TOP = 0,
+		ALIGN_VCENTER = 1,
+		ALIGN_BOTTOM = 2,
+		ALIGN_VOFFSET = 3,
+		ALIGN_VMASK = 3,
 
-		LEFT = 0,
-		HCENTER = 4,
-		RIGHT = 8,
-		HOFFSET = 12,
-		HMASK = 12,
+		ALIGN_LEFT = 0,
+		ALIGN_HCENTER = 4,
+		ALIGN_RIGHT = 8,
+		ALIGN_HOFFSET = 12,
+		ALIGN_HMASK = 12,
 
-		CENTER = VCENTER|HCENTER,
-		CENTER_BOTTOM = BOTTOM|HCENTER
+		ALIGN_CENTER = ALIGN_VCENTER|ALIGN_HCENTER,
+		ALIGN_CENTER_BOTTOM = ALIGN_BOTTOM|ALIGN_HCENTER,
+		ALIGN_OFFSETS = ALIGN_HOFFSET|ALIGN_VOFFSET
 	};
 	
 	enum ETextAlign
 	{
-		ALIGN_LEFT = 0,
-		ALIGN_CENTER = 1,
-		ALIGN_RIGHT = 2
+		TEXT_LEFT = 0,
+		TEXT_CENTER = 1,
+		TEXT_RIGHT = 2
 	};
 
 	enum SBGameModes
 	{
-		SINGLEPLAYER	= 0x1,
-		COOPERATIVE		= 0x2,
-		DEATHMATCH		= 0x4,
-		TEAMGAME		= 0x8
+		GAMEMODE_SINGLEPLAYER	= 0x1,
+		GAMEMODE_COOPERATIVE	= 0x2,
+		GAMEMODE_DEATHMATCH		= 0x4,
+		GAMEMODE_TEAMGAME		= 0x8
 	};
 
 	enum AmmoModes
@@ -110,6 +116,12 @@ class BaseStatusBar native ui
 	{
 		HUD_Normal,
 		HUD_HorizCenter
+	}
+	
+	enum ENumFlags
+	{
+		FNF_FILLZEROS,
+		FNF_WHENNOTZERO,
 	}
 	
 	const XHAIRSHRINKSIZE =(1./18);
@@ -154,11 +166,13 @@ class BaseStatusBar native ui
 	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
 	
 	native void RefreshBackground () const;
+	
+	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native Inventory ValidateInvFirst (int numVisible) const;
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
-
 	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, int imgAlign, int screenalign, bool alphamap, Vector2 box);
 	native void DrawString(Font font, String string, Vector2 pos , double Alpha, int translation, int align, int screenalign, int spacing=0, bool monospaced = false, int shadowX=0, int shadowY=0, int wrapwidth = -1, int linespacing = 4);
+	native static String FormatNumber(int number, int minsize, int maxsize, int format, String prefix = "");
 	
 	
 	//============================================================================
@@ -243,10 +257,74 @@ class BaseStatusBar native ui
 		if (w == null) return "";
 		return w.GetTag();
 	}	
-	
+
 	// These cannot be done in ZScript.
 	native String GetGlobalACSString(int index);
 	native String GetGlobalACSArrayString(int arrayno, int index);
+	native int GetGlobalACSValue(int index);
+	native int GetGlobalACSArrayValue(int arrayno, int index);
+	
+	//============================================================================
+	//
+	// Convenience functions to retrieve some numbers
+	//
+	//============================================================================
+	
+	int GetArmorAmount()
+	{
+		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		return armor? armor.Amount : 0;
+	}
+	
+	int GetMaxAmount(class<Inventory> item)
+	{
+		let it = CPlayer.mo.FindInventory(item);
+		return it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
+	}
+
+	int GetArmorSavePercent()
+	{
+		double add = 0;
+		let harmor = HexenArmor(CPlayer.mo.FindInventory("HexenArmor"));
+		if(harmor != NULL)
+		{
+			add = harmor.Slots[0] + harmor.Slots[1] + harmor.Slots[2] + harmor.Slots[3] + harmor.Slots[4];
+		}
+		//Hexen counts basic armor also so we should too.
+		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
+		if(armor != NULL)
+		{
+			add += armor.SavePercent * 100;
+		}
+		return int(add);
+	}
+	
+	// Note that this retrieves the value in tics, not seconds like the equivalent SBARINFO function.
+	// The idea is to let the caller decide what to do with it instead of destroying accuracy here.
+	int GetAirTime()
+	{
+		if(CPlayer.mo.waterlevel < 3)
+			return level.airsupply;
+		else
+			return max(CPlayer.air_finished - level.time, 0);
+	}
+	
+	int GetSelectedInventoryAmount()
+	{
+		if(CPlayer.mo.InvSel != NULL) return CPlayer.mo.InvSel.Amount;
+		return 0;
+	}
+	
+	int GetKeyCount()
+	{
+		int num = 0;
+		for(Inventory item = CPlayer.mo.Inv;item != NULL;item = item.Inv)
+		{
+			if(item is "Key") num++;
+		}
+		return num;
+	}
+	
 	//============================================================================
 	//
 	// various checker functions, based on SBARINFOs condition nodes.
@@ -261,10 +339,10 @@ class BaseStatusBar native ui
 
 	bool CheckGameMode(int ValidModes)
 	{
-		return  (!multiplayer && (ValidModes & SINGLEPLAYER)) ||
-				(deathmatch && (ValidModes & DEATHMATCH)) ||
-				(multiplayer && !deathmatch && (ValidModes & COOPERATIVE)) ||
-				(teamplay && (ValidModes & TEAMGAME));
+		return  (!multiplayer && (ValidModes & GAMEMODE_SINGLEPLAYER)) ||
+				(deathmatch && (ValidModes & GAMEMODE_DEATHMATCH)) ||
+				(multiplayer && !deathmatch && (ValidModes & GAMEMODE_COOPERATIVE)) ||
+				(teamplay && (ValidModes & GAMEMODE_TEAMGAME));
 	}
 
 	//============================================================================
@@ -436,7 +514,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawTexture(TextureID texture, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0, Vector2 scale = (1., 1.) )
+	void DrawTexture(TextureID texture, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
 	{
 		if (!texture.IsValid()) return;	// nothing to draw
 		
@@ -467,13 +545,12 @@ class BaseStatusBar native ui
 			else scale1 = min(scale1, scale2);
 			
 			boxsize = texsize * scale1;
-			screenAlign = TOP|LEFT;	// anything else makes no sense here.
 		}
 		else
 		{
 			boxsize = texsize;
 		}
-		DrawGraphic(texture, animated, pos, Alpha, !!(flags & DI_TRANSLATABLE), false, itemAlign, screenAlign, false, boxsize);
+		DrawGraphic(texture, animated, pos, Alpha, !!(flags & DI_TRANSLATABLE), !!(flags & DI_DIM), itemAlign, screenAlign, false, boxsize);
 	}
 	
 	//============================================================================
@@ -482,7 +559,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawImage(String imagename, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0, Vector2 scale = (1., 1.) )
+	void DrawImage(String imagename, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
 	{
 		let tex = TexMan.CheckForTexture(imagename, TexMan.TYPE_MiscPatch);
 		DrawTexture(tex, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, scale);
@@ -494,36 +571,36 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawIcon(int icontype, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	void DrawIcon(int icontype, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
 	{
 		TextureID texture;
 		Vector2 applyscale = (1, 1);
 		Inventory atype1, atype2;
 		switch (icontype)
 		{
-			case PLAYERICON:
+			case ITYPE_PLAYERICON:
 				texture = CPlayer.mo.ScoreIcon;
 				break;
 				
-			case AMMO1:
-			case AMMO2:
+			case ITYPE_AMMO1:
+			case ITYPE_AMMO2:
 				[atype1, atype2] = GetCurrentAmmo();
-				[texture, applyscale] = GetIcon(icontype == AMMO1? atype1 : atype2, flags, true);
+				[texture, applyscale] = GetIcon(icontype == ITYPE_AMMO1? atype1 : atype2, flags, true);
 				break;
 				
-			case ARMOR:
+			case ITYPE_ARMOR:
 				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("BasicArmor"), flags, false);
 				break;
 			
-			case WEAPONICON:
+			case ITYPE_WEAPON:
 				[texture, applyscale] = GetIcon(CPlayer.ReadyWeapon, flags, false);
 				break;
 				
-			case SIGIL:
+			case ITYPE_SIGIL:
 				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("Sigil"), flags, false);
 				break;
 				
-			case SELECTEDINVENTORYICON:
+			case ITYPE_SELECTEDINVENTORY:
 				if (CPlayer.mo.InvSel != NULL)
 					texture = CPlayer.mo.InvSel.Icon;
 				break;
@@ -537,7 +614,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
 	{
 		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
 		if (harmor != NULL)
@@ -561,12 +638,91 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawInventoryIcon(class<Inventory> item, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = TOP|LEFT, Vector2 boxsize = (-1, -1), int itemAlign = TOP|LEFT, int flags = 0)
+	void DrawInventoryIcon(class<Inventory> item, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
 	{
 		let texture = GetDefaultByType(item).Icon;
 		if (texture.IsValid())
 		{
 			DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
 		}
+	}
+}
+
+//============================================================================
+//
+// a generic value interpolator for status bar elements that can change
+// gradually to their new value.
+//
+//============================================================================
+
+class LinearValueInterpolator : Object
+{
+	int mCurrentValue;
+	int mMaxChange;
+	
+	static LinearValueInterpolator Create(int startval, int maxchange)
+	{
+		let v = new("LinearValueInterpolator");
+		v.mCurrentValue = startval;
+		v.mMaxChange = maxchange;
+		return v;
+	}
+	
+	// This must be called peroiodically in the status bar's Tick function.
+	// Do not call this in the Draw function because that may skip some frames!
+	void Update(int destvalue)
+	{
+		if (mCurrentValue > destvalue)
+		{
+			mCurrentValue = max(destvalue, mCurrentValue - mMaxChange);
+		}
+		else
+		{
+			mCurrentValue = min(destvalue, mCurrentValue + mMaxChange);
+		}
+	}
+	
+	// This must be called in the draw function to retrieve the value for output.
+	int GetValue()
+	{
+		return mCurrentValue;
+	}
+}
+
+class DynamicValueInterpolator : Object
+{
+	int mCurrentValue;
+	int mMinChange;
+	double mChangeFactor;
+	
+	
+	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange)
+	{
+		let v = new("DynamicValueInterpolator");
+		v.mCurrentValue = startval;
+		v.mMinChange = minchange;
+		v.mChangeFactor = changefactor;
+		return v;
+	}
+	
+	// This must be called peroiodically in the status bar's Tick function.
+	// Do not call this in the Draw function because that may skip some frames!
+	void Update(int destvalue)
+	{
+		int diff = int(max(abs(destvalue - mCurrentValue) * mChangeFactor, mMinChange));
+		if (mCurrentValue > destvalue)
+		{
+			mCurrentValue = max(destvalue, mCurrentValue - diff);
+		}
+		else
+		{
+			mCurrentValue = min(destvalue, mCurrentValue + diff);
+		}
+	}
+	
+	// This must be called in the draw function to retrieve the value for output.
+	int GetValue()
+	{
+		return mCurrentValue;
 	}
 }

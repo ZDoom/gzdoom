@@ -1517,7 +1517,134 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 			x -= static_cast<int> ((spacing)* cstring.Len()) / 2;
 		break;
 	}
+
+	const uint8_t* str = (const uint8_t*)cstring.GetChars();
+	const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
+	int fontcolor = translation;
+	double orgx = 0, orgy = 0;
+
+	if (fullscreenOffsets)
+	{
+		if (hud_scale)
+		{
+			shadowX *= (int)cleanScale.X;
+			shadowY *= (int)cleanScale.Y;
+		}
+
+		switch (screenalign & HMASK)
+		{
+		default: orgx = 0; break;
+		case HCENTER: orgx = screen->GetWidth() / 2; break;
+		case RIGHT:   orgx = screen->GetWidth(); break;
+		}
+
+		switch (screenalign & VMASK)
+		{
+		default: orgy = 0; break;
+		case VCENTER: orgy = screen->GetHeight() / 2; break;
+		case BOTTOM: orgy = screen->GetHeight(); break;
+		}
+
+		if (screenalign == (RIGHT | TOP) && vid_fps) orgy += 10;
+	}
+	int ch;
+	while (ch = *str++, ch != '\0')
+	{
+		if (ch == ' ')
+		{
+			x += monospaced ? spacing : font->GetSpaceWidth() + spacing;
+			continue;
+		}
+		else if (ch == TEXTCOLOR_ESCAPE)
+		{
+			EColorRange newColor = V_ParseFontColor(str, translation, boldTranslation);
+			if (newColor != CR_UNDEFINED)
+				fontcolor = newColor;
+			continue;
+		}
+
+		int width;
+		FTexture* c = font->GetChar((unsigned char)ch, &width);
+		if (c == NULL) //missing character.
+		{
+			continue;
+		}
+
+		if (!monospaced) //If we are monospaced lets use the offset
+			x += (c->LeftOffset + 1); //ignore x offsets since we adapt to character size
+
+		double rx, ry, rw, rh;
+		rx = x + drawOffset.X;
+		ry = y + drawOffset.Y;
+		rw = c->GetScaledWidthDouble();
+		rh = c->GetScaledHeightDouble();
+
+		if (monospaced)
+		{
+			// align the character in the monospaced cell according to the general alignment to ensure that it gets positioned properly
+			// (i.e. right aligned text aligns to the right edge of the character and not the empty part of the cell.)
+			switch (align)
+			{
+			default:
+				break;
+			case ALIGN_CENTER:
+				rx -= (spacing) / 2;
+				break;
+			case ALIGN_RIGHT:
+				rx -= spacing;
+				break;
+			}
+		}
+
+		if (!fullscreenOffsets)
+		{
+			rx += ST_X;
+			ry += ST_Y - (Scaled ? VerticalResolution : 200) + RelTop;
+			if (Scaled)
+				screen->VirtualToRealCoords(rx, ry, rw, rh, HorizontalResolution, VerticalResolution, true);
+			else
+			{
+				ry += (200 - VerticalResolution);
+			}
+		}
+		else
+		{
+			if (hud_scale)
+			{
+				rx *= cleanScale.X;
+				ry *= cleanScale.Y;
+				rw *= cleanScale.X;
+				rh *= cleanScale.Y;
+			}
+			rx += orgx;
+			ry += orgy;
+		}
+		// This is not really such a great way to draw shadows because they can overlap with previously drawn characters.
+		// This may have to be changed to draw the shadow text up front separately.
+		if (shadowX != 0 || shadowY != 0)
+		{
+			screen->DrawChar(font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
+				DTA_DestWidthF, rw,
+				DTA_DestHeightF, rh,
+				DTA_Alpha, (Alpha * HR_SHADOW),
+				DTA_FillColor, 0,
+				TAG_DONE);
+		}
+		screen->DrawChar(font, fontcolor, rx, ry, ch,
+			DTA_DestWidthF, rw,
+			DTA_DestHeightF, rh,
+			DTA_Alpha, Alpha,
+			TAG_DONE);
+
+		if (!monospaced)
+			x += width + spacing - (c->LeftOffset + 1);
+		else
+			x += spacing;
+	}
+
 }
+
+
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 {
@@ -1527,7 +1654,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(alpha);
-	PARAM_BOOL(trans);
+	PARAM_INT(trans);
 	PARAM_INT(ialign);
 	PARAM_INT(salign);
 	PARAM_INT_DEF(spacing);
@@ -1635,4 +1762,47 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetGlobalACSArrayString)
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
 	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalArrays[arrayno][index]));
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetGlobalACSValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_INT(ACS_GlobalVars[index]);
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetGlobalACSArrayValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(arrayno);
+	PARAM_INT(index);
+	ACTION_RETURN_INT(ACS_GlobalArrays[arrayno][index]);
+}
+
+enum ENumFlags
+{
+	FNF_FILLZEROS,
+	FNF_WHENNOTZERO,
+};
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, FormatNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(number);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING_DEF(prefix);
+	static int maxvals[] = { 1, 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999 };
+
+	if (number == 0 && (flags & FNF_WHENNOTZERO)) ACTION_RETURN_STRING("");
+	if (maxsize > 0 && maxsize < 10)
+	{
+		number = clamp(number, -maxvals[maxsize - 1], maxvals[maxsize]);
+	}
+	FString fmt;
+	if (minsize <= 1) fmt.Format("%s%d", prefix.GetChars(), number);
+	else if (flags & FNF_FILLZEROS) fmt.Format("%s%0*d", prefix.GetChars(), minsize, number);
+	else fmt.Format("%s%*d", prefix.GetChars(), minsize, number);
+	ACTION_RETURN_STRING(fmt);
 }

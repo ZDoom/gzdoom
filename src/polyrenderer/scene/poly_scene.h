@@ -97,7 +97,7 @@ private:
 	uint32_t NextSubsectorDepth = 0;
 	std::set<sector_t *> SeenSectors;
 	std::unordered_map<subsector_t *, uint32_t> SubsectorDepths;
-	std::vector<PolyTranslucentObject> TranslucentObjects;
+	std::vector<PolyTranslucentObject *> TranslucentObjects;
 
 	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;

@@ -73,6 +73,7 @@ void RenderPolyScene::Render(int portalDepth)
 	ClearBuffers();
 	if (!PortalSegmentsAdded)
 		Cull.ClearSolidSegments();
+	Cull.MarkViewFrustum();
 	Cull.CullScene(WorldToClip, PortalPlane);
 	Cull.ClearSolidSegments();
 	RenderSectors();
@@ -124,6 +125,8 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 		}
 	}
 
+	RenderMemory &memory = PolyRenderer::Instance()->FrameMemory;
+
 	bool mainBSP = ((unsigned int)(sub->Index()) < level.subsectors.Size());
 	if (mainBSP)
 	{
@@ -131,7 +134,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			particle_t *particle = Particles + i;
-			TranslucentObjects.push_back({ particle, sub, subsectorDepth });
+			TranslucentObjects.push_back(memory.NewObject<PolyTranslucentObject>(particle, sub, subsectorDepth));
 		}
 	}
 
@@ -146,7 +149,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVe
 		subsector_t *sub = &level.subsectors[0];
 		auto it = SubsectorDepths.find(sub);
 		if (it != SubsectorDepths.end())
-			TranslucentObjects.push_back({ thing, sub, it->second, sortDistance, 0.0f, 1.0f });
+			TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(thing, sub, it->second, sortDistance, 0.0f, 1.0f));
 	}
 	else
 	{
@@ -187,7 +190,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 
 	
 	auto it = SubsectorDepths.find(sub);
 	if (it != SubsectorDepths.end())
-		TranslucentObjects.push_back({ thing, sub, it->second, sortDistance, (float)t1, (float)t2 });
+		TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(thing, sub, it->second, sortDistance, (float)t1, (float)t2));
 }
 
 void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
@@ -347,29 +350,29 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		}
 	}
 
-	std::stable_sort(TranslucentObjects.begin(), TranslucentObjects.end());
+	std::stable_sort(TranslucentObjects.begin(), TranslucentObjects.end(), [](auto a, auto b) { return *a < *b; });
 
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{
-		auto &obj = *it;
-		if (obj.particle)
+		PolyTranslucentObject *obj = *it;
+		if (obj->particle)
 		{
 			RenderPolyParticle spr;
-			spr.Render(WorldToClip, PortalPlane, obj.particle, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			spr.Render(WorldToClip, PortalPlane, obj->particle, obj->sub, obj->subsectorDepth, StencilValue + 1);
 		}
-		else if (!obj.thing)
+		else if (!obj->thing)
 		{
-			obj.wall.Render(WorldToClip, PortalPlane, Cull);
+			obj->wall.Render(WorldToClip, PortalPlane, Cull);
 		}
-		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+		else if ((obj->thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			wallspr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, obj->subsectorDepth, StencilValue + 1);
 		}
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1, obj.SpriteLeft, obj.SpriteRight);
+			spr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, obj->subsectorDepth, StencilValue + 1, obj->SpriteLeft, obj->SpriteRight);
 		}
 	}
 }

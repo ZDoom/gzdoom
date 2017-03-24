@@ -38,95 +38,6 @@ class BaseStatusBar native ui
 		HUD_AltHud // Used for passing through popups to the alt hud
 	}
 	
-
-	enum EHudDraw
-	{
-		HUD_Normal,
-		HUD_HorizCenter
-	}
-	
-	const XHAIRSHRINKSIZE =(1./18);
-	const XHAIRPICKUPSIZE = (2+XHAIRSHRINKSIZE);
-	
-
-	native int ST_X, ST_Y;
-	native int RelTop;
-	native int HorizontalResolution, VerticalResolution;
-	native bool Scaled;
-	native bool Centering;
-	native bool FixedOrigin;
-	native bool CompleteBorder;
-	native double CrosshairSize;
-	native double Displacement;
-	native PlayerInfo CPlayer;
-	native bool ShowLog;
-	
-	native void SetSize(int height, int vwidth, int vheight);
-	virtual void Init() {}
-
-	native virtual void SetScaled(bool scale, bool force = false);
-	native virtual void Tick ();
-	native virtual void Draw (int state, double TicFrac);
-	native virtual void ScreenSizeChanged ();
-
-	virtual void FlashItem (class<Inventory> itemtype) {}
-	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
-	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
-	virtual void NewGame () {}
-	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
-	virtual clearscope void ReceivedWeapon (Weapon weapn) {}
-	virtual bool MustDrawLog(int state) { return true; }
-	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
-	
-	native void RefreshBackground () const;
-	native Inventory ValidateInvFirst (int numVisible) const;
-	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
-
-	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, 
-		int imgAlign, int screenalign, bool alphamap, Vector2 box, Vector2 scale, bool fso);
-	
-	
-	//============================================================================
-	//
-	// DBaseStatusBar :: GetCurrentAmmo
-	//
-	// Returns the types and amounts of ammo used by the current weapon. If the
-	// weapon only uses one type of ammo, it is always returned as ammo1.
-	//
-	//============================================================================
-
-	Inventory, Inventory, int, int GetCurrentAmmo () const
-	{
-		Ammo ammo1, ammo2;
-		if (CPlayer.ReadyWeapon != NULL)
-		{
-			ammo1 = CPlayer.ReadyWeapon.Ammo1;
-			ammo2 = CPlayer.ReadyWeapon.Ammo2;
-			if (ammo1 == NULL)
-			{
-				ammo1 = ammo2;
-				ammo2 = NULL;
-			}
-		}
-		else
-		{
-			ammo1 = ammo2 = NULL;
-		}
-		let ammocount1 = ammo1 != NULL ? ammo1.Amount : 0;
-		let ammocount2 = ammo2 != NULL ? ammo2.Amount : 0;
-		return ammo1, ammo2, ammocount1, ammocount2;
-	}
-}
-
-//============================================================================
-//
-// This is only needed to shadow the native base class because a native class
-// cannot have scripted variables added.
-//
-//============================================================================
-
-class CustomStatusBar : BaseStatusBar
-{
 	enum DI_Flags
 	{
 		DI_SKIPICON = 0x1,
@@ -188,28 +99,91 @@ class CustomStatusBar : BaseStatusBar
 		AMMO_BOTH
 	};
 	
-
-	
-	double Alpha;
-	Vector2 drawOffset;		// can be set by subclasses to offset drawing operations
-	double drawClip[4];		// defines a clipping rectangle (not used yet)
-	bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
-	
-	Vector2 cleanScale;		// factor for scaled fullscreen display.
-
-	override void Init()
+	enum EHudDraw
 	{
-		Super.Init();
-		Alpha = 1;
-		DrawOffset = (0, 0);
-		drawClip[0] = 0;
-		drawClip[1] = 0;
-		drawClip[2] = 0;
-		drawClip[3] = 0;
-		cleanScale = (CleanXfac, CleanYfac);
-		fullscreenOffsets = false;
+		HUD_Normal,
+		HUD_HorizCenter
 	}
 	
+	const XHAIRSHRINKSIZE =(1./18);
+	const XHAIRPICKUPSIZE = (2+XHAIRSHRINKSIZE);
+	
+
+	native int ST_X, ST_Y;
+	native int RelTop;
+	native int HorizontalResolution, VerticalResolution;
+	native bool Scaled;
+	native bool Centering;
+	native bool FixedOrigin;
+	native bool CompleteBorder;
+	native double CrosshairSize;
+	native double Displacement;
+	native PlayerInfo CPlayer;
+	native bool ShowLog;
+
+	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
+	native double Alpha;
+	native Vector2 drawOffset;		// can be set by subclasses to offset drawing operations
+	native double drawClip[4];		// defines a clipping rectangle (not used yet)
+	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
+	native Vector2 cleanScale;		// factor for scaled fullscreen display.
+	
+	
+	native void SetSize(int height, int vwidth, int vheight);
+	virtual void Init() {}
+
+	native virtual void SetScaled(bool scale, bool force = false);
+	native virtual void Tick ();
+	native virtual void Draw (int state, double TicFrac);
+	native virtual void ScreenSizeChanged ();
+
+	virtual void FlashItem (class<Inventory> itemtype) {}
+	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
+	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
+	virtual void NewGame () {}
+	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
+	virtual clearscope void ReceivedWeapon (Weapon weapn) {}
+	virtual bool MustDrawLog(int state) { return true; }
+	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
+	
+	native void RefreshBackground () const;
+	native Inventory ValidateInvFirst (int numVisible) const;
+	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
+
+	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, int imgAlign, int screenalign, bool alphamap, Vector2 box);
+	
+	
+	//============================================================================
+	//
+	// DBaseStatusBar :: GetCurrentAmmo
+	//
+	// Returns the types and amounts of ammo used by the current weapon. If the
+	// weapon only uses one type of ammo, it is always returned as ammo1.
+	//
+	//============================================================================
+
+	Inventory, Inventory, int, int GetCurrentAmmo () const
+	{
+		Ammo ammo1, ammo2;
+		if (CPlayer.ReadyWeapon != NULL)
+		{
+			ammo1 = CPlayer.ReadyWeapon.Ammo1;
+			ammo2 = CPlayer.ReadyWeapon.Ammo2;
+			if (ammo1 == NULL)
+			{
+				ammo1 = ammo2;
+				ammo2 = NULL;
+			}
+		}
+		else
+		{
+			ammo1 = ammo2 = NULL;
+		}
+		let ammocount1 = ammo1 != NULL ? ammo1.Amount : 0;
+		let ammocount2 = ammo2 != NULL ? ammo2.Amount : 0;
+		return ammo1, ammo2, ammocount1, ammocount2;
+	}
+
 	//============================================================================
 	//
 	// Get an icon
@@ -234,6 +208,37 @@ class CustomStatusBar : BaseStatusBar
 		return icon;
 	}
 	
+	//============================================================================
+	//
+	// Convenience functions to retrieve item tags
+	//
+	//============================================================================
+
+	String GetAmmoTag(bool secondary = false)
+	{
+		let w = CPlayer.ReadyWeapon;
+		if (w == null) return "";
+		let ammo = secondary? w.ammo2 : w.ammo1;
+		return ammo.GetTag();
+	}	
+
+	String GetWeaponTag()
+	{
+		let w = CPlayer.ReadyWeapon;
+		if (w == null) return "";
+		return w.GetTag();
+	}	
+
+	String GetSelectedInventoryTag()
+	{
+		let w = CPlayer.mo.InvSel;
+		if (w == null) return "";
+		return w.GetTag();
+	}	
+	
+	// These cannot be done in ZScript.
+	native String GetGlobalACSString(int index);
+	native String GetGlobalACSArrayString(int arrayno, int index);
 	//============================================================================
 	//
 	// various checker functions, based on SBARINFOs condition nodes.
@@ -460,7 +465,7 @@ class CustomStatusBar : BaseStatusBar
 		{
 			boxsize = texsize;
 		}
-		DrawGraphic(texture, animated, pos + drawOffset, Alpha * self.Alpha, !!(flags & DI_TRANSLATABLE), false, itemAlign, screenAlign, false, boxsize, cleanscale, fullscreenoffsets);
+		DrawGraphic(texture, animated, pos, Alpha, !!(flags & DI_TRANSLATABLE), false, itemAlign, screenAlign, false, boxsize);
 	}
 	
 	//============================================================================

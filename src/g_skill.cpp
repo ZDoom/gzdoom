@@ -488,6 +488,11 @@ const char * G_SkillName()
 	return name;
 }
 
+DEFINE_ACTION_FUNCTION(DObject, G_SkillName)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_STRING(G_SkillName());
+}
 
 //==========================================================================
 //

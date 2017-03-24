@@ -394,7 +394,7 @@ public:
 	};
 
 	void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha = 1., bool translatable = false, bool dim = false,
-		int imgAlign = TOP | LEFT, int screenalign = TOP | LEFT, bool alphamap = false, double width = -1, double height = -1, double scaleX = 1, double scaleY = 1, bool fullscreenoffsets = false);
+		int imgAlign = TOP | LEFT, int screenalign = TOP | LEFT, bool alphamap = false, double width = -1, double height = -1);
 
 	void GetCoords(int &x, int &y)
 	{
@@ -427,6 +427,12 @@ public:
 	FImageCollection Images;
 
 	player_t *CPlayer;
+
+	double Alpha = 1.;
+	DVector2 drawOffset = { 0,0 };			// can be set by subclasses to offset drawing operations
+	double drawClip[4] = { 0,0,0,0 };		// defines a clipping rectangle (not used yet)
+	bool fullscreenOffsets = false;			// current screen is displayed with fullscreen behavior.
+	DVector2 cleanScale;			// factor for scaled fullscreen display.
 
 private:
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;

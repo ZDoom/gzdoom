@@ -1,5 +1,5 @@
 
-class StrifeStatusBar : CustomStatusBar
+class StrifeStatusBar : BaseStatusBar
 {
 	
 	// Number of tics to move the popscreen up and down.

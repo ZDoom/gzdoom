@@ -57,6 +57,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "virtual.h"
+#include "p_acs.h"
 #include "r_data/r_translate.h"
 
 #include "../version.h"
@@ -80,6 +81,8 @@ EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
+EXTERN_CVAR(Bool, hud_scale)
+EXTERN_CVAR(Bool, vid_fps)
 
 int active_con_scaletext();
 
@@ -235,6 +238,8 @@ DBaseStatusBar::DBaseStatusBar ()
 	Displacement = 0;
 	CPlayer = NULL;
 	ShowLog = false;
+	cleanScale = { (double)CleanXfac, (double)CleanYfac };
+
 }
 
 void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
@@ -1242,6 +1247,10 @@ void DBaseStatusBar::ScreenSizeChanged ()
 {
 	st_scale.Callback ();
 
+	int x, y;
+	V_CalcCleanFacs(HorizontalResolution, VerticalResolution, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	cleanScale = { (double)x, (double)y };
+
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *message = Messages[i];
@@ -1381,14 +1390,17 @@ uint32_t DBaseStatusBar::GetTranslation() const
 // draw stuff
 //
 //============================================================================
-EXTERN_CVAR(Bool, hud_scale)
-EXTERN_CVAR(Bool, vid_fps)
 
 void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha, bool translatable, bool dim,
-	int imgAlign, int screenalign, bool alphamap, double width, double height, double scaleX, double scaleY, bool fullscreenoffsets)
+	int imgAlign, int screenalign, bool alphamap, double width, double height)
 {
 	if (!texture.isValid())
 		return;
+
+	Alpha *= this->Alpha;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
 
 	FTexture *tex = animate ? TexMan(texture) : TexMan[texture];
 
@@ -1406,7 +1418,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, dou
 	case VOFFSET: y -= tex->GetScaledTopOffsetDouble() * height / tex->GetScaledHeightDouble(); break;
 	}
 
-	if (!fullscreenoffsets)
+	if (!fullscreenOffsets)
 	{
 		x += ST_X;
 		y += ST_Y;
@@ -1440,10 +1452,10 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, dou
 
 		if (hud_scale)
 		{
-			x *= scaleX;
-			y *= scaleY;
-			width *= scaleX;
-			height *= scaleY;
+			x *= cleanScale.X;
+			y *= cleanScale.Y;
+			width *= cleanScale.X;
+			height *= cleanScale.Y;
 		}
 		x += orgx;
 		y += orgy;
@@ -1476,10 +1488,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawGraphic)
 	PARAM_BOOL(alphamap);
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
-	PARAM_FLOAT(sx);
-	PARAM_FLOAT(sy);
-	PARAM_BOOL(fso);
-	self->DrawGraphic(FSetTextureID(texid), animate, x, y, alpha, translatable, dim, ialign, salign, alphamap, w, h, sx, sy, fso);
+	self->DrawGraphic(FSetTextureID(texid), animate, x, y, alpha, translatable, dim, ialign, salign, alphamap, w, h);
 	return 0;
 }
 
@@ -1521,6 +1530,11 @@ DEFINE_FIELD(DBaseStatusBar, CrosshairSize);
 DEFINE_FIELD(DBaseStatusBar, Displacement);
 DEFINE_FIELD(DBaseStatusBar, CPlayer);
 DEFINE_FIELD(DBaseStatusBar, ShowLog);
+DEFINE_FIELD(DBaseStatusBar, Alpha);
+DEFINE_FIELD(DBaseStatusBar, drawOffset);
+DEFINE_FIELD(DBaseStatusBar, drawClip);
+DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
+DEFINE_FIELD(DBaseStatusBar, cleanScale);
 
 DEFINE_GLOBAL(StatusBar);
 
@@ -1544,3 +1558,18 @@ static DObject *InitObject(PClass *type, int paramnum, VM_ARGS)
 	return obj;
 }
 
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetGlobalACSString)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalVars[index]));
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetGlobalACSArrayString)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(arrayno);
+	PARAM_INT(index);
+	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalArrays[arrayno][index]));
+}

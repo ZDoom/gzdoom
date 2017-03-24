@@ -316,6 +316,7 @@ class Object native
 	native bool bDestroyed;
 
 	// These really should be global functions...
+	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
 	native static vector3, int G_PickDeathmatchStart();
@@ -514,6 +515,12 @@ struct LevelLocals native
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
+	
+	String TimeFormatted()
+	{
+		int sec = Thinker.Tics2Seconds(time); 
+		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
+	}
 }
 
 struct StringTable native

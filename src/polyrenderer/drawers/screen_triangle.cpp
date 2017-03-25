@@ -58,7 +58,7 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 	
 	// 28.4 fixed-point coordinates
-#if NO_SSE
+#ifdef NO_SSE
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
 	const int Y3 = (int)round(16.0f * v3.y);
@@ -227,7 +227,7 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 				uint32_t mask0 = 0;
 				uint32_t mask1 = 0;
 
-#if NO_SSE
+#ifdef NO_SSE
 				for (int iy = 0; iy < 4; iy++)
 				{
 					int CX1 = CY1;
@@ -399,7 +399,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 
 	// 28.4 fixed-point coordinates
-#if NO_SSE
+#ifdef NO_SSE
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
 	const int Y3 = (int)round(16.0f * v3.y);

@@ -25,6 +25,10 @@
 #include <cstdint>
 #include <vector>
 
+#if defined(__arm__) && !defined(NO_SSE)
+#define NO_SSE
+#endif
+
 class FString;
 
 struct TriFullSpan

@@ -326,26 +326,23 @@ class StrifeStatusBar : BaseStatusBar
 		item = CPlayer.mo.FindInventory('BasicArmor');
 		if (item != NULL && item.Amount > 0)
 		{
-			DrawTexture(item.Icon, (2, 9), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawInventoryIcon(item, (2, 9), true, 1.0, itemAlign:ALIGN_OFFSETS);
 			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (34, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
 		}
 
 		// Ammo
-		Inventory ammo1, ammo2;
-		int ammocount1, ammocount2;
-
-		[ammo1, ammo2, ammocount1, ammocount2] = GetCurrentAmmo ();
+		Inventory = GetCurrentAmmo ();
 		if (ammo1 != NULL)
 		{
 			DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 5, 0), (318, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
-			DrawTexture (ammo1.Icon, (290, 13), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawInventoryIcon (ammo1, (290, 13), true, 1.0, itemAlign:ALIGN_OFFSETS);
 		}
 
 		// Sigil
 		item = CPlayer.mo.FindInventory('Sigil');
 		if (item != NULL)
 		{
-			DrawTexture (item.Icon, (253, 7), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawInventoryIcon (item, (253, 7), true, 1.0, itemAlign:ALIGN_OFFSETS);
 		}
 
 		// Inventory
@@ -356,12 +353,9 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (item.Icon, (42 + 35*i, 12), true, 1. - ItemFlash, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
+				DrawTexture (Images[CursorImage], (42 + 35*i, 12), true, 1. - ItemFlash, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
 			}
-			if (item.Icon.isValid())
-			{
-				DrawTexture (item.Icon, (48 + 35*i, 14), true, 1.0, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
-			}
+			DrawInventoryIcon (item, (48 + 35*i, 14), true, 1.0, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
 			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (81 + 35*i, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
 			i++;
 		}
@@ -379,7 +373,7 @@ class StrifeStatusBar : BaseStatusBar
 		if (armor != NULL && armor.Amount != 0)
 		{
 			DrawString("Indexfont_Strife_Yellow", FormatNumber(armor.Amount, 3, 0, 0), (35, -10), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, 7, true, 1, 1);
-			DrawTexture(armor.Icon, (45, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawInventoryIcon(armor, (45, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
 		}
 
 		// Draw ammo
@@ -391,12 +385,12 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			// Draw primary ammo in the bottom-right corner
 			DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 0, 0), (-23, -10), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_RIGHT|ALIGN_BOTTOM, 7, true, 1, 1);
-			DrawTexture(ammo1.Icon, (-14, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawInventoryIcon(ammo1, (-14, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
 			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
 				DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 0, 0), (-23, -48), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_RIGHT|ALIGN_BOTTOM, 7, true, 1, 1);
-				DrawTexture(ammo1.Icon, (-14, -55), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+				DrawInventoryIcon(ammo1, (-14, -55), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
 			}
 		}
 
@@ -415,7 +409,7 @@ class StrifeStatusBar : BaseStatusBar
 					DrawTexture(Images[CursorImage], (-28, -15), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, ItemAlign:ALIGN_BOTTOM|ALIGN_RIGHT);
 				}
 				DrawString("Indexfont_Strife_Yellow", FormatNumber(CPlayer.mo.InvSel.Amount, 3, 5, 0), (-23, -10), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_BOTTOM|ALIGN_RIGHT, 7, true, 1, 1);
-				DrawTexture(CPlayer.mo.InvSel.Icon, (-42, -17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, ItemAlign:ALIGN_BOTTOM|ALIGN_HCENTER, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
+				DrawInventoryIcon(CPlayer.mo.InvSel, (-42, -17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, ItemAlign:ALIGN_BOTTOM|ALIGN_HCENTER, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
 			}
 		}
 		else
@@ -434,7 +428,7 @@ class StrifeStatusBar : BaseStatusBar
 					}
 					if (item.Icon.isValid())
 					{
-						DrawTexture(item.Icon, (-90+i*35, -5), true, 0.75, ALIGN_CENTER_BOTTOM, box, ALIGN_CENTER_BOTTOM, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
+						DrawInventoryIcon(item, (-90+i*35, -5), true, 0.75, ALIGN_CENTER_BOTTOM, box, ALIGN_CENTER_BOTTOM, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
 					}
 					DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (-65 + i*35, -8), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_CENTER_BOTTOM, 7, true, 1, 1);
 					++i;

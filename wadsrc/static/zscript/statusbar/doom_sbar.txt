@@ -105,14 +105,14 @@ class DoomStatusBar : BaseStatusBar
 		Vector2 iconbox = (40, 20);
 		// Draw health
 		let berserk = CPlayer.mo.FindInventory("PowerStrength");
-		DrawTexture(Images[berserk? imgPSTRA0 : imgMEDIA0], (20, -2), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-		DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.health, 3, 0, 0), (44, -20), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 2, 2);
+		DrawTexture(Images[berserk? imgPSTRA0 : imgMEDIA0], (20, -2), true, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
+		DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.health, 3, 0, 0), (44, -20), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
 		
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
 		if (armor != null)
 		{
-			DrawTexture(armor.Icon, (20, -22), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(armor.Amount, 3, 0, 0), (44, -40), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 2, 2);
+			DrawInventoryIcon(armor, (20, -22), true, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString("HUDFONT_DOOM", FormatNumber(armor.Amount, 3, 0, 0), (44, -40), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
 		}
 		Inventory ammotype1, ammotype2;
 		int ammoamount1, ammoamount2;
@@ -120,26 +120,53 @@ class DoomStatusBar : BaseStatusBar
 		int invY = -20;
 		if (ammotype1 != null)
 		{
-			DrawTexture(ammotype1.Icon, (-14, -4), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount1, 3, 0, 0), (-25, -20), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 2, 2);
+			DrawInventoryIcon(ammotype1, (-14, -4), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount1, 3, 0, 0), (-25, -20), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
 			invY -= 20;
 		}
 		if (ammotype2 != null && ammotype2 != ammotype1)
 		{
-			DrawTexture(ammotype2.Icon, (-14, invY + 17), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount2, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 2, 2);
+			DrawInventoryIcon(ammotype2, (-14, invY + 17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount2, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
 			invY -= 20;
 		}
 		if (CPlayer.inventorytics == 0 && CPlayer.mo.InvSel != null)
 		{
-			DrawTexture(CPlayer.mo.InvSel.Icon, (-14, invY + 17), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.mo.InvSel.Amount, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 2, 2);
+			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.mo.InvSel.Amount, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
 		}
 		if (deathmatch)
 		{
-			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.fragSum(), 3, 0, 0), (-3, -1), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_TOP, HUdFontSpacing, true, 2, 2);
+			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.fragSum(), 3, 0, 0), (-3, -1), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_TOP, HUdFontSpacing, true, 1, 1);
 		}
-		//drawkeybar 100, vertical, reverserows, auto, -10, 2, 0, 3, auto;
+		
+		// Draw the keys. This does not use a special draw function like SBARINFO because the specifics will be different for each mod 
+		// so it's easier to copy or reimplement the following piece of code instead of trying to write a complicated all-encompassing solution.
+		Vector2 keypos = (-10, 2);
+		int rowc = 0;
+		double roww = 0;
+		for(let i = CPlayer.mo.Inv; i != null; i = i.Inv)
+		{
+			if (i is "Key" && i.Icon.IsValid())
+			{
+				DrawTexture(i.Icon, keypos, true, 1., ALIGN_TOP|ALIGN_RIGHT, (-1,-1), ALIGN_TOP|ALIGN_LEFT);
+				Vector2 size = TexMan.GetScaledSize(i.Icon);
+				keypos.Y += size.Y + 2;
+				roww = max(roww, size.X);
+				if (++rowc == 3)
+				{
+					keypos.Y = 2;
+					keypos.X -= roww + 2;
+					roww = 0;
+					rowc = 0;
+				}
+			}
+		}
+		if (CPlayer.inventorytics != 0)
+		{
+			//DrawInventoryBar("A
+			//drawinventorybar Doom, translucent, 7, INDEXFONT, -106+center, -31;
+		}
 	}
 }
 
@@ -198,6 +225,5 @@ statusbar inventory // Standard bar overlay (ZDoom Addition)
 
 statusbar inventoryfullscreen, fullscreenoffsets // ZDoom HUD overlay.
 {
-	drawinventorybar Doom, translucent, 7, INDEXFONT, -106+center, -31;
 }
 */

@@ -235,7 +235,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	TextureID, Vector2 GetIcon(Inventory item, int flags, bool showdepleted = false)
+	TextureID, Vector2 GetIcon(Inventory item, int flags, bool showdepleted = true)
 	{
 		TextureID icon;
 		Vector2 scale = (1,1);
@@ -245,12 +245,12 @@ class BaseStatusBar native ui
 			bool applyscale;
 			[icon, applyscale] = GetInventoryIcon(item, flags);
 			
-			if (item.Amount == 0 && !showdepleted) return icon;
+			if (item.Amount == 0 && !showdepleted) return icon, scale;
 			
 			if (applyscale)
 				scale = item.Scale;
 		}
-		return icon;
+		return icon, scale;
 	}
 	
 	//============================================================================
@@ -623,49 +623,6 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawIcon(int icontype, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
-	{
-		TextureID texture;
-		Vector2 applyscale = (1, 1);
-		Inventory atype1, atype2;
-		switch (icontype)
-		{
-			case ITYPE_PLAYERICON:
-				texture = CPlayer.mo.ScoreIcon;
-				break;
-				
-			case ITYPE_AMMO1:
-			case ITYPE_AMMO2:
-				[atype1, atype2] = GetCurrentAmmo();
-				[texture, applyscale] = GetIcon(icontype == ITYPE_AMMO1? atype1 : atype2, flags, true);
-				break;
-				
-			case ITYPE_ARMOR:
-				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("BasicArmor"), flags, false);
-				break;
-			
-			case ITYPE_WEAPON:
-				[texture, applyscale] = GetIcon(CPlayer.ReadyWeapon, flags, false);
-				break;
-				
-			case ITYPE_SIGIL:
-				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("Sigil"), flags, false);
-				break;
-				
-			case ITYPE_SELECTEDINVENTORY:
-				if (CPlayer.mo.InvSel != NULL)
-					texture = CPlayer.mo.InvSel.Icon;
-				break;
-		}
-		DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, applyscale);
-	}
-	
-	//============================================================================
-	//
-	//
-	//
-	//============================================================================
-
 	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
 	{
 		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
@@ -690,12 +647,14 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawInventoryIcon(class<Inventory> item, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
+	void DrawInventoryIcon(Inventory item, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
 	{
-		let texture = GetDefaultByType(item).Icon;
+		TextureID texture;
+		Vector2 applyscale = (1, 1);
+		[texture, applyscale] = GetIcon(item, flags, false);
 		if (texture.IsValid())
 		{
-			DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+			DrawTexture(texture, pos, animated, alpha, screenalign, boxsize, itemAlign, flags, applyscale);
 		}
 	}
 	

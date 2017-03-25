@@ -487,4 +487,5 @@ void F2DDrawer::Clear()
 {
 	mVertices.Clear();
 	mData.Clear();
+	mLastLineCmd = -1;
 }

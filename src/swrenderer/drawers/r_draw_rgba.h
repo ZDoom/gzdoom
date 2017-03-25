@@ -30,10 +30,6 @@
 #include "swrenderer/viewport/r_walldrawer.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
 
-#ifdef __arm__
-#define NO_SSE
-#endif
-
 #ifndef NO_SSE
 #include <immintrin.h>
 #endif

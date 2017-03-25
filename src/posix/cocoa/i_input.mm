@@ -626,6 +626,11 @@ void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 
 void ProcessMouseMoveEvent(NSEvent* theEvent)
 {
+	if (!use_mouse)
+	{
+		return;
+	}
+
 	if (GUICapture)
 	{
 		ProcessMouseMoveInMenu(theEvent);
@@ -638,6 +643,11 @@ void ProcessMouseMoveEvent(NSEvent* theEvent)
 
 void ProcessMouseButtonEvent(NSEvent* theEvent)
 {
+	if (!use_mouse)
+	{
+		return;
+	}
+
 	event_t event = {};
 
 	const NSEventType cocoaEventType = [theEvent type];
@@ -690,6 +700,11 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 
 void ProcessMouseWheelEvent(NSEvent* theEvent)
 {
+	if (!use_mouse)
+	{
+		return;
+	}
+
 	const int16_t modifiers = ModifierFlagsToGUIKeyModifiers(theEvent);
 	const CGFloat delta   = (modifiers & GKM_SHIFT)
 		? [theEvent deltaX]

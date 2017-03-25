@@ -81,7 +81,6 @@ int CleanWidth, CleanHeight;
 // Above minus 1 (or 1, if they are already 1)
 int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
-CVAR (Bool, hud_scale, true, CVAR_ARCHIVE);
 
 DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
 {
@@ -210,33 +209,21 @@ bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double
 		case DTA_HUDRules:
 		case DTA_HUDRulesC:
 		{
-			// Note that this has been deprecated because it cannot intelligently decide what scale
-			// actually needs to be used in conjunction with the active status bar.
+			// Note that this has been deprecated because the HUD should be drawn by the status bar.
 			bool xright = parms->x < 0;
 			bool ybot = parms->y < 0;
+			DVector2 scale = StatusBar->GetHUDScale();
 
-			if (hud_scale)
-			{
-				parms->x *= CleanXfac;
-				if (parms->cleanmode == DTA_HUDRulesC)
-					parms->x += Width * 0.5;
-				else if (xright)
-					parms->x = Width + parms->x;
-				parms->y *= CleanYfac;
-				if (ybot)
-					parms->y = Height + parms->y;
-				parms->destwidth = parms->texwidth * CleanXfac;
-				parms->destheight = parms->texheight * CleanYfac;
-			}
-			else
-			{
-				if (parms->cleanmode == DTA_HUDRulesC)
-					parms->x += Width * 0.5;
-				else if (xright)
-					parms->x = Width + parms->x;
-				if (ybot)
-					parms->y = Height + parms->y;
-			}
+			parms->x *= scale.X;
+			if (parms->cleanmode == DTA_HUDRulesC)
+				parms->x += Width * 0.5;
+			else if (xright)
+				parms->x = Width + parms->x;
+			parms->y *= scale.Y;
+			if (ybot)
+				parms->y = Height + parms->y;
+			parms->destwidth = parms->texwidth * scale.X;
+			parms->destheight = parms->texheight * scale.Y;
 			break;
 		}
 		}

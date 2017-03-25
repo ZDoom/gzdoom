@@ -157,16 +157,20 @@ class BaseStatusBar native ui
 	native double Displacement;
 	native PlayerInfo CPlayer;
 	native bool ShowLog;
+	native Vector2 defaultScale;	// factor for fully scaled fullscreen display.
 
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;
 	native Vector2 drawOffset;		// can be set by subclasses to offset drawing operations
 	native double drawClip[4];		// defines a clipping rectangle (not used yet)
 	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
-	native Vector2 cleanScale;		// factor for scaled fullscreen display.
 	
 	
 	native void SetSize(int height, int vwidth, int vheight);
+	native Vector2 GetHUDScale();
+	native void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
+	native void BeginHUD(int resW, int resH, double Alpha, bool forcescaled = false);
+	
 	virtual void Init() {}
 
 	native virtual void SetScaled(bool scale, bool force = false);
@@ -174,6 +178,7 @@ class BaseStatusBar native ui
 	native virtual void Draw (int state, double TicFrac);
 	native virtual void ScreenSizeChanged ();
 	native virtual clearscope void ReceivedWeapon (Weapon weapn);
+	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);
 
 	virtual void FlashItem (class<Inventory> itemtype) {}
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
@@ -181,7 +186,6 @@ class BaseStatusBar native ui
 	virtual void NewGame () {}
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
-	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
 	
 	native void RefreshBackground () const;
 	native TextureID GetMugshot(PlayerInfo player, String default_face, int accuracy, int stateflags=MugShot.STANDARD);

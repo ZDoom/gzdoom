@@ -390,6 +390,7 @@ public:
 			void DrawTopStuff (EHudState state);
 	void FlashItem (const PClass *itemtype);
 	void AttachToPlayer(player_t *player);
+	DVector2 GetHUDScale() const;
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
 	void NewGame ();
@@ -406,12 +407,9 @@ public:
 
 	void DrawString(FFont *font, const FString &cstring, double x, double y, double Alpha, int translation, int align, int screenalign, int spacing = 0, bool monospaced = false, int shadowX = 0, int shadowY = 0);
 
-	void GetCoords(int &x, int &y)
-	{
-		x = ST_X;
-		y = ST_Y;
-	}
-
+	void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
+	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
+	void ForceHUDScale(bool on) { ForcedScale = on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
 
 //protected:
 	void DrawPowerups ();
@@ -423,10 +421,14 @@ public:
 	AInventory *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();
 
+	// Sizing info for ths status bar.
 	int ST_X, ST_Y;
 	int RelTop;
 	int HorizontalResolution, VerticalResolution;
-	bool Scaled;
+	bool Scaled;							// This needs to go away.
+	DVector2 defaultScale;					// factor for fully scaled fullscreen display.
+	bool ForcedScale = false;
+
 	bool Centering;
 	bool FixedOrigin;
 	bool CompleteBorder;
@@ -442,7 +444,6 @@ public:
 	DVector2 drawOffset = { 0,0 };			// can be set by subclasses to offset drawing operations
 	double drawClip[4] = { 0,0,0,0 };		// defines a clipping rectangle (not used yet)
 	bool fullscreenOffsets = false;			// current screen is displayed with fullscreen behavior.
-	DVector2 cleanScale;			// factor for scaled fullscreen display.
 	FMugShot mugshot;
 
 private:
@@ -458,7 +459,6 @@ extern DBaseStatusBar *StatusBar;
 
 // Status bar factories -----------------------------------------------------
 
-DBaseStatusBar *CreateStrifeStatusBar();
 DBaseStatusBar *CreateCustomStatusBar(int script=0);
 
 // Crosshair stuff ----------------------------------------------------------
@@ -466,6 +466,7 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 void ST_FormatMapName(FString &mapname, const char *mapnamecolor = "");
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
+void ST_CreateStatusBar(bool bTitleLevel);
 extern FTexture *CrosshairImage;
 
 FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale);

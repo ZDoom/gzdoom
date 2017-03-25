@@ -106,11 +106,9 @@ struct SBarInfo
 	int armorInterpolationSpeed;
 	int height;
 	int gameType;
-	FMugShot MugShot;
-	int resW;
-	int resH;
-	int cleanX;
-	int cleanY;
+
+	int _resW;
+	int _resH;
 
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);

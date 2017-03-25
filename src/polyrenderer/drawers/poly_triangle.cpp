@@ -304,7 +304,7 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 		clipd[5] = v.w - v.z;
 		clipd[6] = v.clipDistance0;
 		needsclipping = needsclipping || clipd[0] < 0.0f || clipd[1] < 0.0f || clipd[2] < 0.0f || clipd[3] < 0.0f || clipd[4] < 0.0f || clipd[5] < 0.0f || clipd[6] < 0.0f;
-		clipd += numclipdistancespitch;
+		clipd += numclipdistances;
 	}
 
 	// If all halfspace clip distances are positive then the entire triangle is visible. Skip the expensive clipping step.

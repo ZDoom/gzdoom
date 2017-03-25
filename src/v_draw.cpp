@@ -144,16 +144,6 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, DrawHUDTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(texid);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	screen->DrawTexture(TexMan(FSetTextureID(texid)), x, y, DTA_HUDRules, HUD_Normal, TAG_END);
-	return 0;
-}
-
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
@@ -220,6 +210,8 @@ bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double
 		case DTA_HUDRules:
 		case DTA_HUDRulesC:
 		{
+			// Note that this has been deprecated because it cannot intelligently decide what scale
+			// actually needs to be used in conjunction with the active status bar.
 			bool xright = parms->x < 0;
 			bool ybot = parms->y < 0;
 

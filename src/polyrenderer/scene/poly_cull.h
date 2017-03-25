@@ -35,6 +35,7 @@ public:
 	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
 	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
 	void InvertSegments();
+	void MarkViewFrustum();
 
 	std::vector<subsector_t *> PvsSectors;
 	double MaxCeilingHeight = 0.0;
@@ -64,4 +65,5 @@ private:
 	Vec4f PortalClipPlane;
 
 	static angle_t PointToPseudoAngle(double x, double y);
+	static angle_t AngleToPseudo(angle_t ang);
 };

@@ -820,12 +820,27 @@ class Inventory : Actor native
 	//
 	// AInventory :: DrawPowerup
 	//
-	// Gives self item a chance to draw a special status indicator on the screen.
-	// Returns false if it didn't draw anything.
+	// This has been deprecated because it is not how this should be done
+	// Use GetPowerupIcon instead!
 	//
 	//===========================================================================
 
 	virtual ui version("2.4") bool DrawPowerup(int x, int y) { return false; }
+
+	//===========================================================================
+	//
+	// AInventory :: GetPowerupIcon
+	//
+	// Returns the icon that should be drawn for an active powerup.
+	//
+	//===========================================================================
+
+	virtual clearscope version("2.5") TextureID GetPowerupIcon() const
+	{
+		TextureID id;
+		id.SetInvalid();
+		return id;
+	}
 
 	//===========================================================================
 	//

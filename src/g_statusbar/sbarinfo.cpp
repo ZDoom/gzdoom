@@ -1317,7 +1317,6 @@ public:
 
 			adjustRelCenter(x.RelCenter(), y.RelCenter(), dx, dy, rx, ry, xScale, yScale);
 
-			// We can't use DTA_HUDRules since it forces a width and height.
 			// Translation: No high res.
 			bool xright = *x < 0 && !x.RelCenter();
 			bool ybot = *y < 0 && !y.RelCenter();

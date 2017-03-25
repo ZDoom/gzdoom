@@ -287,6 +287,23 @@ bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angl
 	return !IsSegmentCulled(angle1, angle2);
 }
 
+void PolyCull::MarkViewFrustum()
+{
+	// Clips things outside the viewing frustum.
+	auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
+	double tilt = fabs(viewpoint.Angles.Pitch.Degrees);
+	if (tilt > 46.0) // If the pitch is larger than this you can look all around
+		return;
+
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*viewpoint.FieldOfView.Degrees*48.0 / AspectMultiplier(viewwindow.WidescreenRatio) / 90.0;
+	angle_t a1 = DAngle(floatangle).BAMs();
+	if (a1 < ANGLE_180)
+	{
+		MarkSegmentCulled(AngleToPseudo(viewpoint.Angles.Yaw.BAMs() + a1), AngleToPseudo(viewpoint.Angles.Yaw.BAMs() - a1));
+	}
+}
+
 //-----------------------------------------------------------------------------
 //
 // ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the 
@@ -319,4 +336,17 @@ angle_t PolyCull::PointToPseudoAngle(double x, double y)
 		}
 		return xs_Fix<30>::ToFix(result);
 	}
+}
+
+angle_t PolyCull::AngleToPseudo(angle_t ang)
+{
+	double vecx = cos(ang * M_PI / ANGLE_180);
+	double vecy = sin(ang * M_PI / ANGLE_180);
+
+	double result = vecy / (fabs(vecx) + fabs(vecy));
+	if (vecx < 0)
+	{
+		result = 2.f - result;
+	}
+	return xs_Fix<30>::ToFix(result);
 }

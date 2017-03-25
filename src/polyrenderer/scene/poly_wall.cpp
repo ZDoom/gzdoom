@@ -37,7 +37,7 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
@@ -153,7 +153,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
 			if (midtex && midtex->UseType != FTexture::TEX_Null)
-				translucentWallsOutput.push_back({ wall });
+				translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
 
 			if (polyportal)
 			{
@@ -165,7 +165,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 	return polyportal != nullptr;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);

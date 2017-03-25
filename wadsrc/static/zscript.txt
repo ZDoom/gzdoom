@@ -33,6 +33,7 @@ version "2.5"
 #include "zscript/statscreen/statscreen_coop.txt"
 
 #include "zscript/statusbar/statusbar.txt"
+#include "zscript/statusbar/doom_sbar.txt"
 #include "zscript/statusbar/strife_sbar.txt"
 #include "zscript/statusbar/sbarinfowrapper.txt"
 

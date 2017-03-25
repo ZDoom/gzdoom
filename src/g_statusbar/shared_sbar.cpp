@@ -327,6 +327,9 @@ void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
 	RelTop = reltop;
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
+	int x, y;
+	V_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	defaultScale = { (double)x, (double)y };
 
 	CallSetScaled(st_scale);
 }
@@ -1397,11 +1400,8 @@ void DBaseStatusBar::SerializeMessages(FSerializer &arc)
 
 void DBaseStatusBar::ScreenSizeChanged ()
 {
-	st_scale.Callback ();
-
-	int x, y;
-	V_CalcCleanFacs(HorizontalResolution, VerticalResolution, SCREENWIDTH, SCREENHEIGHT, &x, &y);
-	defaultScale = { (double)x, (double)y };
+	// We need to recalculate the sizing info
+	SetSize(RelTop, HorizontalResolution, VerticalResolution);
 
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{

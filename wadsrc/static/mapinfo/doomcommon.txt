@@ -26,8 +26,8 @@ gameinfo
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "Backpack"
 	armoricons = "ARM1A0", 0.5, "ARM2A0"
-	statusbar = "sbarinfo/doom.txt"
-	//statusbarclass = "DoomStatusBar"
+	//statusbar = "sbarinfo/doom.txt"
+	statusbarclass = "DoomStatusBar"
 	intermissionmusic = "$MUSIC_DM2INT"
 	intermissioncounter = true
 	weaponslot = 1, "Fist", "Chainsaw"

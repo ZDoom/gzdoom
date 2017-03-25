@@ -373,6 +373,27 @@ usercmd_t	original_cmd;
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
+	
+	clearscope int fragSum () const
+	{
+		int i;
+		int allfrags = 0;
+		int playernum = mo.PlayerNumber();
+	
+		for (i = 0; i < MAXPLAYERS; i++)
+		{
+			if (playeringame[i]
+				&& i!=playernum)
+			{
+				allfrags += frags[i];
+			}
+		}
+		
+		// JDC hack - negative frags.
+		allfrags -= frags[playernum];
+		return allfrags;
+	}
+	
 }
 
 struct PlayerClass native

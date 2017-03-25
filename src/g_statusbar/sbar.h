@@ -443,6 +443,7 @@ public:
 	double drawClip[4] = { 0,0,0,0 };		// defines a clipping rectangle (not used yet)
 	bool fullscreenOffsets = false;			// current screen is displayed with fullscreen behavior.
 	DVector2 cleanScale;			// factor for scaled fullscreen display.
+	FMugShot mugshot;
 
 private:
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;

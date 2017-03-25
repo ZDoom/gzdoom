@@ -1,4 +1,21 @@
 
+struct MugShot
+{
+	enum StateFlags
+	{
+		STANDARD = 0x0,
+
+		XDEATHFACE = 0x1,
+		ANIMATEDGODMODE = 0x2,
+		DISABLEGRIN = 0x4,
+		DISABLEOUCH = 0x8,
+		DISABLEPAIN = 0x10,
+		DISABLERAMPAGE = 0x20,
+		CUSTOM = 0x40,
+	}
+}
+
+
 class BaseStatusBar native ui
 {
 	enum EPop
@@ -156,17 +173,18 @@ class BaseStatusBar native ui
 	native virtual void Tick ();
 	native virtual void Draw (int state, double TicFrac);
 	native virtual void ScreenSizeChanged ();
+	native virtual clearscope void ReceivedWeapon (Weapon weapn);
 
 	virtual void FlashItem (class<Inventory> itemtype) {}
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
 	virtual void NewGame () {}
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
-	virtual clearscope void ReceivedWeapon (Weapon weapn) {}
 	virtual bool MustDrawLog(int state) { return true; }
 	virtual void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false) {}
 	
 	native void RefreshBackground () const;
+	native TextureID GetMugshot(PlayerInfo player, String default_face, int accuracy, int stateflags=MugShot.STANDARD);
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native Inventory ValidateInvFirst (int numVisible) const;
@@ -676,6 +694,7 @@ class BaseStatusBar native ui
 			DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
 		}
 	}
+	
 }
 
 //============================================================================

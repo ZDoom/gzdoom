@@ -431,6 +431,7 @@ void DBaseStatusBar::CallTick()
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
 	else Tick();
+	mugshot.Tick(CPlayer);
 }
 
 //---------------------------------------------------------------------------
@@ -1023,6 +1024,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 		VMValue params[] = { (DObject*)this, &statestring, waitTillDone, reset };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
+	mugshot.SetState(stateName, waitTillDone, reset);
 }
 
 //---------------------------------------------------------------------------
@@ -1196,6 +1198,7 @@ void DBaseStatusBar::NewGame ()
 		VMValue params[] = { (DObject*)this };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
+	mugshot.Reset();
 }
 
 void DBaseStatusBar::ShowPop(int pop)
@@ -1775,4 +1778,22 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, FormatNumber)
 	else if (flags & FNF_FILLZEROS) fmt.Format("%s%0*d", prefix.GetChars(), minsize, number);
 	else fmt.Format("%s%*d", prefix.GetChars(), minsize, number);
 	ACTION_RETURN_STRING(fmt);
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, ReceivedWeapon)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->mugshot.Grin();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_POINTER(player, player_t);
+	PARAM_STRING(def_face);
+	PARAM_INT(accuracy);
+	PARAM_INT_DEF(stateflags);
+	auto tex = self->mugshot.GetFace(player, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }

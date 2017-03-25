@@ -127,7 +127,8 @@ public:
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x * 8 + ix];
 						uint8_t fgcolor = Sample(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, color, translation);
-						dest[x * 8 + ix] = ShadeAndBlend(fgcolor, bgcolor, lightshade, colormaps, srcalpha, destalpha);
+						uint32_t fgshade = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
+						dest[x * 8 + ix] = ShadeAndBlend(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 						for (int j = 0; j < TriVertex::NumVarying; j++)
 							varyingPos[j] += varyingStep[j];
 						lightpos += lightstep;
@@ -191,7 +192,8 @@ public:
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
 						uint8_t fgcolor = Sample(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, color, translation);
-						dest[x] = ShadeAndBlend(fgcolor, bgcolor, lightshade, colormaps, srcalpha, destalpha);
+						uint32_t fgshade = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
+						dest[x] = ShadeAndBlend(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 					}
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
@@ -244,7 +246,8 @@ public:
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
 						uint8_t fgcolor = Sample(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, color, translation);
-						dest[x] = ShadeAndBlend(fgcolor, bgcolor, lightshade, colormaps, srcalpha, destalpha);
+						uint32_t fgshade = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
+						dest[x] = ShadeAndBlend(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 					}
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
@@ -288,7 +291,6 @@ private:
 
 		if (SamplerT::Mode == (int)Samplers::Skycap)
 		{
-			/*
 			int start_fade = 2; // How fast it should fade out
 
 			int alpha_top = clamp(v >> (16 - start_fade), 0, 256);
@@ -296,19 +298,20 @@ private:
 			int a = MIN(alpha_top, alpha_bottom);
 			int inv_a = 256 - a;
 
-			uint32_t r = RPART(texel);
-			uint32_t g = GPART(texel);
-			uint32_t b = BPART(texel);
-			uint32_t fg_a = APART(texel);
-			uint32_t bg_red = RPART(color);
-			uint32_t bg_green = GPART(color);
-			uint32_t bg_blue = BPART(color);
-			r = (r * a + bg_red * inv_a + 127) >> 8;
-			g = (g * a + bg_green * inv_a + 127) >> 8;
-			b = (b * a + bg_blue * inv_a + 127) >> 8;
-			return MAKEARGB(fg_a, r, g, b);
-			*/
-			return texel;
+			if (a == 256)
+				return texel;
+
+			uint32_t texelrgb = GPalette.BaseColors[texel].d;
+			uint32_t r = RPART(texelrgb);
+			uint32_t g = GPART(texelrgb);
+			uint32_t b = BPART(texelrgb);
+			uint32_t capcolor_red = RPART(color);
+			uint32_t capcolor_green = GPART(color);
+			uint32_t capcolor_blue = BPART(color);
+			r = (r * a + capcolor_red * inv_a + 127) >> 8;
+			g = (g * a + capcolor_green * inv_a + 127) >> 8;
+			b = (b * a + capcolor_blue * inv_a + 127) >> 8;
+			return RGB256k.All[((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2)];
 		}
 		else
 		{
@@ -316,12 +319,30 @@ private:
 		}
 	}
 
-	FORCEINLINE static uint8_t ShadeAndBlend(uint8_t fgcolor, uint8_t bgcolor, uint32_t lightshade, const uint8_t *colormaps, uint32_t srcalpha, uint32_t destalpha)
+	FORCEINLINE static unsigned int SampleShade(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight)
 	{
 		using namespace TriScreenDrawerModes;
 
-		lightshade = ((256 - lightshade) * (NUMCOLORMAPS - 1) + (NUMCOLORMAPS - 1) / 2) / 256;
-		uint8_t shadedfg = colormaps[lightshade * 256 + fgcolor];
+		if (SamplerT::Mode == (int)Samplers::Shaded)
+		{
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			unsigned int sampleshadeout = texPixels[texelX * texHeight + texelY];
+			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
+			return sampleshadeout;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	FORCEINLINE static uint8_t ShadeAndBlend(uint8_t fgcolor, uint8_t bgcolor, uint32_t fgshade, uint32_t lightshade, const uint8_t *colormaps, uint32_t srcalpha, uint32_t destalpha)
+	{
+		using namespace TriScreenDrawerModes;
+
+		lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
+		uint8_t shadedfg = colormaps[lightshade + fgcolor];
 
 		if (BlendT::Mode == (int)BlendModes::Opaque)
 		{
@@ -333,19 +354,87 @@ private:
 		}
 		else if (BlendT::Mode == (int)BlendModes::AddSrcColorOneMinusSrcColor)
 		{
+			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
+			int32_t fg_g = GPalette.BaseColors[shadedfg].g;
+			int32_t fg_b = GPalette.BaseColors[shadedfg].b;
+			int32_t bg_r = GPalette.BaseColors[bgcolor].r;
+			int32_t bg_g = GPalette.BaseColors[bgcolor].g;
+			int32_t bg_b = GPalette.BaseColors[bgcolor].b;
+			int32_t inv_fg_r = 256 - (fg_r + (fg_r >> 7));
+			int32_t inv_fg_g = 256 - (fg_g + (fg_g >> 7));
+			int32_t inv_fg_b = 256 - (fg_b + (fg_b >> 7));
+			fg_r = MIN<int32_t>(fg_r + ((bg_r * inv_fg_r + 127) >> 8), 255);
+			fg_g = MIN<int32_t>(fg_g + ((bg_g * inv_fg_g + 127) >> 8), 255);
+			fg_b = MIN<int32_t>(fg_b + ((bg_b * inv_fg_b + 127) >> 8), 255);
+
+			shadedfg = RGB256k.All[((fg_r >> 2) << 12) | ((fg_g >> 2) << 6) | (fg_b >> 2)];
 			return (fgcolor != 0) ? shadedfg : bgcolor;
+		}
+		else if (BlendT::Mode == (int)BlendModes::Shaded)
+		{
+			uint32_t alpha = fgshade;
+			uint32_t inv_alpha = 256 - fgshade;
+			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
+			int32_t fg_g = GPalette.BaseColors[shadedfg].g;
+			int32_t fg_b = GPalette.BaseColors[shadedfg].b;
+			int32_t bg_r = GPalette.BaseColors[bgcolor].r;
+			int32_t bg_g = GPalette.BaseColors[bgcolor].g;
+			int32_t bg_b = GPalette.BaseColors[bgcolor].b;
+
+			fg_r = (fg_r * alpha + bg_r * inv_alpha + 127) >> 8;
+			fg_g = (fg_g * alpha + bg_g * inv_alpha + 127) >> 8;
+			fg_b = (fg_b * alpha + bg_b * inv_alpha + 127) >> 8;
+
+			shadedfg = RGB256k.All[((fg_r >> 2) << 12) | ((fg_g >> 2) << 6) | (fg_b >> 2)];
+			return (alpha != 0) ? shadedfg : bgcolor;
+		}
+		else if (BlendT::Mode == (int)BlendModes::AddClampShaded)
+		{
+			uint32_t alpha = fgshade;
+			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
+			int32_t fg_g = GPalette.BaseColors[shadedfg].g;
+			int32_t fg_b = GPalette.BaseColors[shadedfg].b;
+			int32_t bg_r = GPalette.BaseColors[bgcolor].r;
+			int32_t bg_g = GPalette.BaseColors[bgcolor].g;
+			int32_t bg_b = GPalette.BaseColors[bgcolor].b;
+
+			fg_r = MIN<int32_t>(bg_r + ((fg_r * alpha + 127) >> 8), 255);
+			fg_g = MIN<int32_t>(bg_g + ((fg_g * alpha + 127) >> 8), 255);
+			fg_b = MIN<int32_t>(bg_b + ((fg_b * alpha + 127) >> 8), 255);
+
+			shadedfg = RGB256k.All[((fg_r >> 2) << 12) | ((fg_g >> 2) << 6) | (fg_b >> 2)];
+
+			return (alpha != 0) ? shadedfg : bgcolor;
 		}
 		else
 		{
+			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
+			int32_t fg_g = GPalette.BaseColors[shadedfg].g;
+			int32_t fg_b = GPalette.BaseColors[shadedfg].b;
+			int32_t bg_r = GPalette.BaseColors[bgcolor].r;
+			int32_t bg_g = GPalette.BaseColors[bgcolor].g;
+			int32_t bg_b = GPalette.BaseColors[bgcolor].b;
+
 			if (BlendT::Mode == (int)BlendModes::AddClamp)
 			{
+				fg_r = MIN<int32_t>((fg_r * srcalpha + bg_r * destalpha + 127) >> 8, 255);
+				fg_g = MIN<int32_t>((fg_g * srcalpha + bg_g * destalpha + 127) >> 8, 255);
+				fg_b = MIN<int32_t>((fg_b * srcalpha + bg_b * destalpha + 127) >> 8, 255);
 			}
 			else if (BlendT::Mode == (int)BlendModes::SubClamp)
 			{
+				fg_r = MAX<int32_t>((fg_r * srcalpha - bg_r * destalpha + 127) >> 8, 0);
+				fg_g = MAX<int32_t>((fg_g * srcalpha - bg_g * destalpha + 127) >> 8, 0);
+				fg_b = MAX<int32_t>((fg_b * srcalpha - bg_b * destalpha + 127) >> 8, 0);
 			}
 			else if (BlendT::Mode == (int)BlendModes::RevSubClamp)
 			{
+				fg_r = MAX<int32_t>((bg_r * srcalpha - fg_r * destalpha + 127) >> 8, 0);
+				fg_g = MAX<int32_t>((bg_g * srcalpha - fg_g * destalpha + 127) >> 8, 0);
+				fg_b = MAX<int32_t>((bg_b * srcalpha - fg_b * destalpha + 127) >> 8, 0);
 			}
+
+			shadedfg = RGB256k.All[((fg_r >> 2) << 12) | ((fg_g >> 2) << 6) | (fg_b >> 2)];
 			return (fgcolor != 0) ? shadedfg : bgcolor;
 		}
 	}

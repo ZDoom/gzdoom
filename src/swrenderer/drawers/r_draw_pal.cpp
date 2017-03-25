@@ -33,10 +33,6 @@
 **
 */
 
-#ifdef __arm__
-#define NO_SSE
-#endif
-
 #ifndef NO_SSE
 #include <xmmintrin.h>
 #endif

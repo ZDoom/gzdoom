@@ -477,8 +477,13 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
 
 	# ARM processors (Raspberry Pi, et al) - enable ARM NEON support.
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm") 
-		set( CMAKE_CXX_FLAGS "-mfpu=neon ${CMAKE_CXX_FLAGS}" )
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+		set (USE_ARMV8 0 CACHE BOOL "Use ARMv8 instructions - Raspberry Pi 3")
+		if (USE_ARMV8)
+			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53  -mfpu=neon-fp-armv8 -mtune=cortex-a53 -funsafe-math-optimizations -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
+		else ()
+			set( CMAKE_CXX_FLAGS "-mfpu=neon -DNO_SSE ${CMAKE_CXX_FLAGS}" )
+		endif ()
 	endif ()
 
 	# Use the highest C++ standard available since VS2015 compiles with C++14

@@ -24,10 +24,8 @@
 
 #include "polyrenderer/drawers/poly_triangle.h"
 
-class Vec4f;
-
 class RenderPolyWallSprite
 {
 public:
-	void Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
 };

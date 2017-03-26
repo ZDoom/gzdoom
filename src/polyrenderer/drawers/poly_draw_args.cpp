@@ -37,23 +37,23 @@
 #include "poly_draw_args.h"
 #include "swrenderer/viewport/r_viewport.h"
 
-void PolyDrawArgs::SetClipPlane(float a, float b, float c, float d)
+void PolyDrawArgs::SetClipPlane(const PolyClipPlane &plane)
 {
-	clipPlane[0] = a;
-	clipPlane[1] = b;
-	clipPlane[2] = c;
-	clipPlane[3] = d;
+	mClipPlane[0] = plane.A;
+	mClipPlane[1] = plane.B;
+	mClipPlane[2] = plane.C;
+	mClipPlane[3] = plane.D;
 }
 
 void PolyDrawArgs::SetTexture(FTexture *texture)
 {
-	textureWidth = texture->GetWidth();
-	textureHeight = texture->GetHeight();
+	mTextureWidth = texture->GetWidth();
+	mTextureHeight = texture->GetHeight();
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
-		texturePixels = (const uint8_t *)texture->GetPixelsBgra();
+		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
-		texturePixels = texture->GetPixels();
-	translation = nullptr;
+		mTexturePixels = texture->GetPixels();
+	mTranslation = nullptr;
 }
 
 void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool forcePal)
@@ -64,22 +64,22 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool fo
 		if (table != nullptr && !table->Inactive)
 		{
 			if (PolyRenderer::Instance()->RenderTarget->IsBgra())
-				translation = (uint8_t*)table->Palette;
+				mTranslation = (uint8_t*)table->Palette;
 			else
-				translation = table->Remap;
+				mTranslation = table->Remap;
 
-			textureWidth = texture->GetWidth();
-			textureHeight = texture->GetHeight();
-			texturePixels = texture->GetPixels();
+			mTextureWidth = texture->GetWidth();
+			mTextureHeight = texture->GetHeight();
+			mTexturePixels = texture->GetPixels();
 			return;
 		}
 	}
 	
 	if (forcePal)
 	{
-		textureWidth = texture->GetWidth();
-		textureHeight = texture->GetHeight();
-		texturePixels = texture->GetPixels();
+		mTextureWidth = texture->GetWidth();
+		mTextureHeight = texture->GetHeight();
+		mTexturePixels = texture->GetPixels();
 	}
 	else
 	{
@@ -87,21 +87,48 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool fo
 	}
 }
 
-void PolyDrawArgs::SetColormap(FSWColormap *base_colormap)
+void PolyDrawArgs::SetLight(FSWColormap *base_colormap, uint32_t lightlevel, double globVis, bool fixed)
 {
-	uniforms.light_red = base_colormap->Color.r * 256 / 255;
-	uniforms.light_green = base_colormap->Color.g * 256 / 255;
-	uniforms.light_blue = base_colormap->Color.b * 256 / 255;
-	uniforms.light_alpha = base_colormap->Color.a * 256 / 255;
-	uniforms.fade_red = base_colormap->Fade.r;
-	uniforms.fade_green = base_colormap->Fade.g;
-	uniforms.fade_blue = base_colormap->Fade.b;
-	uniforms.fade_alpha = base_colormap->Fade.a;
-	uniforms.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
-	bool simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
-	if (simple_shade)
-		uniforms.flags |= TriUniforms::simple_shade;
+	mGlobVis = (float)globVis;
+
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
+	{
+		lightlevel = cameraLight->FixedLightLevel() >= 0 ? cameraLight->FixedLightLevel() : 255;
+		fixed = true;
+	}
+
+	mLight = clamp<uint32_t>(lightlevel, 0, 255);
+	mFixedLight = fixed;
+	mLightRed = base_colormap->Color.r * 256 / 255;
+	mLightGreen = base_colormap->Color.g * 256 / 255;
+	mLightBlue = base_colormap->Color.b * 256 / 255;
+	mLightAlpha = base_colormap->Color.a * 256 / 255;
+	mFadeRed = base_colormap->Fade.r;
+	mFadeGreen = base_colormap->Fade.g;
+	mFadeBlue = base_colormap->Fade.b;
+	mFadeAlpha = base_colormap->Fade.a;
+	mDesaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+	mSimpleShade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
+	mColormaps = base_colormap->Maps;
+}
+
+void PolyDrawArgs::SetColor(uint32_t bgra, uint8_t palindex)
+{
+	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+	{
+		mColor = bgra;
+	}
 	else
-		uniforms.flags &= ~TriUniforms::simple_shade;
-	colormaps = base_colormap->Maps;
+	{
+		mColor = palindex;
+	}
+}
+
+void PolyDrawArgs::DrawArray(const TriVertex *vertices, int vcount, PolyDrawMode mode)
+{
+	mVertices = vertices;
+	mVertexCount = vcount;
+	mDrawMode = mode;
+	PolyRenderer::Instance()->DrawQueue->Push<DrawPolyTrianglesCommand>(*this, PolyTriangleDrawer::is_mirror());
 }

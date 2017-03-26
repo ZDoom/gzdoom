@@ -33,7 +33,7 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	RenderPolyPlane plane;
 
@@ -91,7 +91,7 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &cl
 	plane.Render(worldToClip, clipPlane, cull, sub, subsectorDepth, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
-void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
+void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
@@ -111,16 +111,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 
 	UVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
 
-	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy); // .SlopePlaneGlobVis(foggy) * 48.0f;
-	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
-	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-		args.uniforms.light = 256;
-	args.uniforms.flags = TriUniforms::nearest_filter;
-	args.uniforms.subsectorDepth = subsectorDepth;
-
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
-
 	if (ceiling)
 	{
 		for (uint32_t i = 0; i < sub->numlines; i++)
@@ -138,21 +129,20 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 		}
 	}
 
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = sub->numlines;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue + 1;
+	PolyDrawArgs args;
+	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetSubsectorDepth(subsectorDepth);
+	args.SetTransform(&worldToClip);
+	args.SetStyle(TriBlendMode::Copy);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex);
-	args.SetColormap(GetColorTable(sub->sector->Colormap));
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	args.blendmode = TriBlendMode::Copy;
-	PolyTriangleDrawer::draw(args);
+	args.SetClipPlane(clipPlane);
+	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	bool foggy = false;
@@ -291,16 +281,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	UVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
-
-	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);// ->SlopePlaneGlobVis(foggy) * 48.0f;
-	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-		args.uniforms.light = 256;
-	args.uniforms.flags = TriUniforms::nearest_filter;
-	args.uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;
-
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
 
 	if (ceiling)
@@ -320,37 +300,36 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		}
 	}
 
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = sub->numlines;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = ccw;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue + 1;
-	args.SetColormap(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]));
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	PolyDrawArgs args;
+	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]), frontsector->lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetSubsectorDepth(isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(ccw);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(true, stencilValue + 1);
+	args.SetClipPlane(clipPlane);
 
 	if (!isSky)
 	{
 		args.SetTexture(tex);
-		args.blendmode = TriBlendMode::Copy;
-		PolyTriangleDrawer::draw(args);
+		args.SetStyle(TriBlendMode::Copy);
+		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
 		if (portal)
 		{
-			args.stencilwritevalue = polyportal->StencilValue;
-			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
+			args.SetWriteStencil(true, polyportal->StencilValue);
+			polyportal->Shape.push_back({ vertices, (int)sub->numlines, ccw, subsectorDepth });
 		}
 		else
 		{
-			args.stencilwritevalue = 255;
+			args.SetWriteStencil(true, 255);
 		}
 
-		args.writeColor = false;
-		args.writeSubsector = false;
-		PolyTriangleDrawer::draw(args);
+		args.SetWriteColor(false);
+		args.SetWriteSubsectorDepth(false);
+		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -414,13 +393,11 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 				wallvert[3] = PlaneVertex(line->v1, skyHeight, transform);
 			}
 
-			args.vinput = wallvert;
-			args.vcount = 4;
-			PolyTriangleDrawer::draw(args);
+			args.DrawArray(wallvert, 4, PolyDrawMode::TriangleFan);
 			
 			if (portal)
 			{
-				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
+				polyportal->Shape.push_back({ wallvert, 4, ccw, subsectorDepth });
 			}
 		}
 	}

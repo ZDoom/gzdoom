@@ -31,7 +31,7 @@
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
 
-void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -43,7 +43,7 @@ void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f
 	}
 }
 
-void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -130,49 +130,21 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
-
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	int lightlevel = fullbrightSprite ? 255 : front->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
-	args.uniforms.flags = TriUniforms::nearest_filter;
-	args.SetColormap(GetColorTable(front->Colormap));
+	args.SetLight(GetColorTable(front->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
 	args.SetTexture(tex, decal->Translation, true);
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
-	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-	{
-		args.uniforms.light = 256;
-		args.uniforms.flags |= TriUniforms::fixed_light;
-	}
-	else
-	{
-		args.uniforms.light = (uint32_t)((front->lightlevel + actualextralight) / 255.0f * 256.0f);
-	}
-	args.uniforms.subsectorDepth = subsectorDepth;
-
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
-	{
-		args.uniforms.color = 0xff000000 | decal->AlphaColor;
-	}
-	else
-	{
-		args.uniforms.color = ((uint32_t)decal->AlphaColor) >> 24;
-	}
-	
-	args.uniforms.srcalpha = (uint32_t)(decal->Alpha * 256.0 + 0.5);
-	args.uniforms.destalpha = 256 - args.uniforms.srcalpha;
-
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = 4;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue;
-	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	args.blendmode = TriBlendMode::Shaded;
-	args.subsectorTest = true;
-	args.writeStencil = false;
-	args.writeSubsector = false;
-	PolyTriangleDrawer::draw(args);
+	args.SetSubsectorDepth(subsectorDepth);
+	args.SetColor(0xff000000 | decal->AlphaColor, decal->AlphaColor >> 24);
+	args.SetStyle(TriBlendMode::Shaded, decal->Alpha, 1.0 - decal->Alpha); // R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(true, stencilValue);
+	args.SetClipPlane(clipPlane);
+	args.SetSubsectorDepthTest(true);
+	args.SetWriteStencil(false);
+	args.SetWriteSubsectorDepth(false);
+	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

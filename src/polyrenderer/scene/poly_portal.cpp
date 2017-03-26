@@ -45,7 +45,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
-	Vec4f portalPlane = Vec4f(0.0f);
+	PolyClipPlane portalPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	if (Portal->mType != PORTS_SKYVIEWPOINT)
 	{
 		float minHeight;
@@ -71,17 +71,11 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 
 		if (!first && minHeight > viewpoint.Pos.Z)
 		{
-			portalPlane.x = 0.0f;
-			portalPlane.y = 0.0f;
-			portalPlane.z = 1.0f;
-			portalPlane.w = -minHeight;
+			portalPlane = PolyClipPlane(0.0f, 0.0f, 1.0f, -minHeight);
 		}
 		else if (!first && maxHeight < viewpoint.Pos.Z)
 		{
-			portalPlane.x = 0.0f;
-			portalPlane.y = 0.0f;
-			portalPlane.z = -1.0f;
-			portalPlane.w = maxHeight;
+			portalPlane = PolyClipPlane(0.0f, 0.0f, -1.0f, maxHeight);
 		}
 	}
 
@@ -223,7 +217,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	DVector2 planeNormal = (clipLine->v2->fPos() - clipLine->v1->fPos()).Rotated90CW();
 	planeNormal.MakeUnit();
 	double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
-	Vec4f portalPlane((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
+	PolyClipPlane portalPlane((float)planeNormal.X, (float)planeNormal.Y, (float)0.0f, (float)planeD);
 
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
 	RenderPortal.SetPortalSegments(Segments);

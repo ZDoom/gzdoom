@@ -84,6 +84,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
+double PerfToSec, PerfToMillisec;
 uint32_t LanguageIDs[4];
 	
 int (*I_GetTime) (bool saveMS);

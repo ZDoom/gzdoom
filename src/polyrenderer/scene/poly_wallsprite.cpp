@@ -29,7 +29,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 
-void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
@@ -97,35 +97,18 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	}
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	int lightlevel = fullbrightSprite ? 255 : thing->Sector->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
-	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-	{
-		args.uniforms.light = 256;
-		args.uniforms.flags = TriUniforms::fixed_light | TriUniforms::nearest_filter;
-	}
-	else
-	{
-		args.uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
-		args.uniforms.flags = TriUniforms::nearest_filter;
-	}
-	args.uniforms.subsectorDepth = subsectorDepth;
-
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = 4;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue;
+	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
 	args.SetTexture(tex);
-	args.SetColormap(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true));
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	args.subsectorTest = true;
-	args.writeSubsector = false;
-	args.writeStencil = false;
-	args.blendmode = TriBlendMode::AlphaBlend;
-	PolyTriangleDrawer::draw(args);
+	args.SetClipPlane(clipPlane);
+	args.SetSubsectorDepthTest(true);
+	args.SetWriteSubsectorDepth(false);
+	args.SetWriteStencil(false);
+	args.SetStyle(TriBlendMode::AlphaBlend);
+	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

@@ -52,7 +52,7 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	int stencilPitch = args->stencilPitch;
 	uint8_t * RESTRICT stencilValues = args->stencilValues;
 	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
-	uint8_t stencilTestValue = args->stencilTestValue;
+	uint8_t stencilTestValue = args->uniforms->StencilTestValue();
 	
 	TriFullSpan * RESTRICT span = thread->FullSpans;
 	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
@@ -389,10 +389,10 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	int stencilPitch = args->stencilPitch;
 	uint8_t * RESTRICT stencilValues = args->stencilValues;
 	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
-	uint8_t stencilTestValue = args->stencilTestValue;
+	uint8_t stencilTestValue = args->uniforms->StencilTestValue();
 
 	uint32_t * RESTRICT subsectorGBuffer = args->subsectorGBuffer;
-	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
+	uint32_t subsectorDepth = args->uniforms->SubsectorDepth();
 	int32_t pitch = args->pitch;
 
 	TriFullSpan * RESTRICT span = thread->FullSpans;
@@ -800,7 +800,7 @@ void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadD
 {
 	uint8_t * RESTRICT stencilValues = args->stencilValues;
 	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
-	uint32_t stencilWriteValue = args->stencilWriteValue;
+	uint32_t stencilWriteValue = args->uniforms->StencilWriteValue();
 	uint32_t stencilPitch = args->stencilPitch;
 
 	int numSpans = thread->NumFullSpans;
@@ -869,7 +869,7 @@ void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadD
 void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint32_t * RESTRICT subsectorGBuffer = args->subsectorGBuffer;
-	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
+	uint32_t subsectorDepth = args->uniforms->SubsectorDepth();
 	int pitch = args->pitch;
 
 	int numSpans = thread->NumFullSpans;

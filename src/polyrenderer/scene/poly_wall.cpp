@@ -37,7 +37,7 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
@@ -165,7 +165,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 	return polyportal != nullptr;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
@@ -198,7 +198,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 	this->floor2 = floor2;
 }
 
-void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull)
+void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull)
 {
 	bool foggy = false;
 	FTexture *tex = GetTexture();
@@ -248,32 +248,23 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	}
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
-	args.uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
-	args.uniforms.flags = TriUniforms::nearest_filter;
-	args.uniforms.subsectorDepth = SubsectorDepth;
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = 4;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = StencilValue;
-	args.stencilwritevalue = StencilValue + 1;
+	args.SetLight(GetColorTable(Line->frontsector->Colormap, Line->frontsector->SpecialColors[sector_t::walltop]), GetLightLevel(), PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetSubsectorDepth(SubsectorDepth);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(StencilValue);
+	args.SetWriteStencil(true, StencilValue + 1);
 	if (tex)
 		args.SetTexture(tex);
-	args.SetColormap(GetColorTable(Line->frontsector->Colormap, Line->frontsector->SpecialColors[sector_t::walltop]));
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-
-	//if (Side && Side->lighthead)
-	//	args.uniforms.light = 255; // Make walls touched by a light fullbright!
+	args.SetClipPlane(clipPlane);
 
 	if (Polyportal)
 	{
-		args.stencilwritevalue = Polyportal->StencilValue;
-		args.writeColor = false;
-		args.writeSubsector = false;
-		PolyTriangleDrawer::draw(args);
-		Polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, args.uniforms.subsectorDepth });
+		args.SetWriteStencil(true, Polyportal->StencilValue);
+		args.SetWriteColor(false);
+		args.SetWriteSubsectorDepth(false);
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+		Polyportal->Shape.push_back({ vertices, 4, true, SubsectorDepth });
 
 		angle_t angle1, angle2;
 		if (cull.GetAnglesForLine(v1.X, v1.Y, v2.X, v2.Y, angle1, angle2))
@@ -281,21 +272,16 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	}
 	else if (!Masked)
 	{
-		args.blendmode = TriBlendMode::Copy;
-		PolyTriangleDrawer::draw(args);
+		args.SetStyle(TriBlendMode::Copy);
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
-		args.uniforms.destalpha = (Line->flags & ML_ADDTRANS) ? 256 : (uint32_t)(256 - Line->alpha * 256);
-		args.uniforms.srcalpha = (uint32_t)(Line->alpha * 256);
-		args.subsectorTest = true;
-		args.writeSubsector = false;
-		args.writeStencil = false;
-		if (args.uniforms.destalpha == 0 && args.uniforms.srcalpha == 256)
-			args.blendmode = TriBlendMode::AlphaBlend;
-		else
-			args.blendmode = TriBlendMode::Add;
-		PolyTriangleDrawer::draw(args);
+		args.SetStyle((Line->flags & ML_ADDTRANS) ? TriBlendMode::Add : TriBlendMode::AlphaBlend, Line->alpha, 1.0);
+		args.SetSubsectorDepthTest(true);
+		args.SetWriteSubsectorDepth(true);
+		args.SetWriteStencil(false);
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 	}
 
 	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, SubsectorDepth, StencilValue);

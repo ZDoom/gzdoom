@@ -134,7 +134,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
-	MainPortal.SetViewpoint(WorldToClip, Vec4f(0.0f, 0.0f, 0.0f, 1.0f), GetNextStencilValue());
+	MainPortal.SetViewpoint(WorldToClip, PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f), GetNextStencilValue());
 	MainPortal.Render(0);
 	Skydome.Render(WorldToClip);
 	MainPortal.RenderTranslucent(0);

@@ -500,7 +500,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 
 		case DTA_FillColor:
 			parms->fillcolor = ListGetInt(tags);
-			if (parms->fillcolor != -1)
+			if (parms->fillcolor != ~0u)
 			{
 				fillcolorset = true;
 			}

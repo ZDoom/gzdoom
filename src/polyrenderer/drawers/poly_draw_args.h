@@ -36,10 +36,19 @@ enum class PolyDrawMode
 	TriangleStrip
 };
 
+class PolyClipPlane
+{
+public:
+	PolyClipPlane() : A(0.0f), B(0.0f), C(0.0f), D(1.0f) { }
+	PolyClipPlane(float a, float b, float c, float d) : A(a), B(b), C(c), D(d) { }
+
+	float A, B, C, D;
+};
+
 class PolyDrawArgs
 {
 public:
-	void SetClipPlane(float a, float b, float c, float d);
+	void SetClipPlane(const PolyClipPlane &plane);
 	void SetTexture(FTexture *texture);
 	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);

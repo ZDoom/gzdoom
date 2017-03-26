@@ -43,7 +43,7 @@ RenderPolyScene::~RenderPolyScene()
 {
 }
 
-void RenderPolyScene::SetViewpoint(const TriMatrix &worldToClip, const Vec4f &portalPlane, uint32_t stencilValue)
+void RenderPolyScene::SetViewpoint(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane, uint32_t stencilValue)
 {
 	WorldToClip = worldToClip;
 	StencilValue = stencilValue;
@@ -252,7 +252,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		args.SetTransform(&WorldToClip);
 		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
 		args.SetColor(0, 0);
-		args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
+		args.SetClipPlane(PortalPlane);
 		args.SetStyle(TriBlendMode::Copy);
 
 		for (auto &portal : SectorPortals)
@@ -294,7 +294,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
+			args.SetClipPlane(PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
@@ -313,7 +313,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
+			args.SetClipPlane(PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);

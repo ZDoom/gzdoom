@@ -29,7 +29,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 
-void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	DVector3 pos = particle->Pos;
 	double psize = particle->size / 8.0;
@@ -82,6 +82,6 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteSubsectorDepth(false);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

@@ -31,7 +31,7 @@
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
 
-void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -43,7 +43,7 @@ void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f
 	}
 }
 
-void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -142,7 +142,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 	args.SetSubsectorDepthTest(true);
 	args.SetWriteStencil(false);
 	args.SetWriteSubsectorDepth(false);

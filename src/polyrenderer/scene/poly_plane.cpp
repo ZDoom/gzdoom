@@ -33,7 +33,7 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	RenderPolyPlane plane;
 
@@ -91,7 +91,7 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &cl
 	plane.Render(worldToClip, clipPlane, cull, sub, subsectorDepth, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
-void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
+void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
@@ -138,11 +138,11 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	bool foggy = false;
@@ -307,7 +307,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.SetFaceCullCCW(ccw);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 
 	if (!isSky)
 	{

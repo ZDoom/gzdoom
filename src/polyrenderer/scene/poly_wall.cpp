@@ -37,7 +37,7 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
@@ -165,7 +165,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 	return polyportal != nullptr;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
@@ -198,7 +198,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 	this->floor2 = floor2;
 }
 
-void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull)
+void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull)
 {
 	bool foggy = false;
 	FTexture *tex = GetTexture();
@@ -256,7 +256,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	args.SetWriteStencil(true, StencilValue + 1);
 	if (tex)
 		args.SetTexture(tex);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 
 	if (Polyportal)
 	{

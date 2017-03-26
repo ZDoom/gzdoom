@@ -37,12 +37,12 @@
 #include "poly_draw_args.h"
 #include "swrenderer/viewport/r_viewport.h"
 
-void PolyDrawArgs::SetClipPlane(float a, float b, float c, float d)
+void PolyDrawArgs::SetClipPlane(const PolyClipPlane &plane)
 {
-	mClipPlane[0] = a;
-	mClipPlane[1] = b;
-	mClipPlane[2] = c;
-	mClipPlane[3] = d;
+	mClipPlane[0] = plane.A;
+	mClipPlane[1] = plane.B;
+	mClipPlane[2] = plane.C;
+	mClipPlane[3] = plane.D;
 }
 
 void PolyDrawArgs::SetTexture(FTexture *texture)

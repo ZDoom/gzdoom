@@ -28,10 +28,9 @@
 #include "poly_cull.h"
 #include "polyrenderer/poly_renderer.h"
 
-void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane)
+void PolyCull::CullScene(const TriMatrix &worldToClip, const PolyClipPlane &portalClipPlane)
 {
 	PvsSectors.clear();
-	frustumPlanes = FrustumPlanes(worldToClip);
 	PortalClipPlane = portalClipPlane;
 
 	// Cull front to back
@@ -210,20 +209,6 @@ int PolyCull::PointOnSide(const DVector2 &pos, const node_t *node)
 
 bool PolyCull::CheckBBox(float *bspcoord)
 {
-#if 0 // This doesn't work because it creates gaps in the angle based clipper segment list :(
-	// Start using a quick frustum AABB test:
-
-	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)PolyRenderer::Instance()->Viewpoint.Pos.Z + 1000.0f));
-	auto result = IntersectionTest::frustum_aabb(frustumPlanes, aabb);
-	if (result == IntersectionTest::outside)
-		return false;
-
-	// Skip if its in front of the portal:
-
-	if (IntersectionTest::plane_aabb(PortalClipPlane, aabb) == IntersectionTest::outside)
-		return false;
-#endif
-
 	// Occlusion test using solid segments:
 	static const uint8_t checkcoord[12][4] =
 	{

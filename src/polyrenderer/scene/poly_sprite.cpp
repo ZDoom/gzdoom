@@ -27,7 +27,6 @@
 #include "r_data/r_translate.h"
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
-#include "polyrenderer/math/poly_intersection.h"
 #include "polyrenderer/scene/poly_light.h"
 
 EXTERN_CVAR(Float, transsouls)
@@ -65,7 +64,7 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, float t1, float t2)
+void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, float t1, float t2)
 {
 	DVector2 line[2];
 	if (!GetLine(thing, line[0], line[1]))
@@ -146,7 +145,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetTexture(tex, thing->Translation);
-	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
+	args.SetClipPlane(clipPlane);
 
 	if (thing->RenderStyle == LegacyRenderStyles[STYLE_Normal] ||
 		 (r_drawfuzz == 0 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))

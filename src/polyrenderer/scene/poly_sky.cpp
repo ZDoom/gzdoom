@@ -61,7 +61,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	args.SetTransform(&objectToClip);
 	args.SetStencilTestValue(255);
 	args.SetWriteStencil(true, 1);
-	args.SetClipPlane(0.0f, 0.0f, 0.0f, 0.0f);
+	args.SetClipPlane(PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f));
 
 	RenderCapColorRow(args, frontskytex, 0, false);
 	RenderCapColorRow(args, frontskytex, rc, true);

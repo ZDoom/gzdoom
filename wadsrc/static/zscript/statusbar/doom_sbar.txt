@@ -1,53 +1,29 @@
 class DoomStatusBar : BaseStatusBar
 {
-	// it is not really needed to precache all textures but should be good practice to reduce execution time.
-	enum eImg
-	{
-		imgMEDIA0,
-		imgPSTRA0,
-		imgSTBAR,
-		imgSTTPRCNT,
-		imgSTKEYS0,
-		imgSTKEYS1,
-		imgSTKEYS2,
-		imgSTKEYS3,
-		imgSTKEYS4,
-		imgSTKEYS5,
-		imgSTKEYS6,
-		imgSTKEYS7,
-		imgSTKEYS8,
-		imgSTARMS,
-		imgSTGNUM2,
-		imgSTGNUM3,
-		imgSTGNUM4,
-		imgSTGNUM5,
-		imgSTGNUM6,
-		imgSTGNUM7,
-		imgSTYSNUM2,
-		imgSTYSNUM3,
-		imgSTYSNUM4,
-		imgSTYSNUM5,
-		imgSTYSNUM6,
-		imgSTYSNUM7,
-		imgSTFBANY,
-		
-		NUMIMG
-	}
-
-	TextureID Images[NUMIMG];
-	int HUDFontSpacing;
+	HUDFont mHUDFont;
+	//DrawInventoryBarParms diparms;
 	
 
 	override void Init()
 	{
 		Super.Init();
 		SetSize(32, 320, 200);
-		DoCommonInit();
+
+		// set up the inventory bar drawer.
+		/*
+		diparms.SetDefaults(HX_SHADOW);
+		diparms.SetTextures("SELECTBO", "ARTIBOX", "INVGEML1", "INVGEMR1");
+		diparms.SetLeftArrow("INVGEML1");
+		diparms.SetRightArrow("INVGEMR1");
+		*/
+		
+		// Create the font used for the fullscreen HUD
+		Font fnt = "HUDFONT_DOOM";
+		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
 	}
 
 	override void NewGame ()
 	{
-		DoCommonInit ();
 		if (CPlayer != NULL)
 		{
 			AttachToPlayer (CPlayer);
@@ -70,27 +46,6 @@ class DoomStatusBar : BaseStatusBar
 		}
 	}
 
-	void DoCommonInit ()
-	{
-		static const String LumpNames[] =
-		{
-			"MEDIA0", "PSTRA0",	"STBAR", "STTPRCNT", "STKEYS0", 
-			"STKEYS1", "STKEYS2", "STKEYS3", "STKEYS4", "STKEYS5", "STKEYS6", "STKEYS7", "STKEYS8",
-			"STARMS",
-			"STGNUM2", "STGNUM3", "STGNUM4", "STGNUM5", "STGNUM6", "STGNUM7",
-			"STYSNUM2", "STYSNUM3", "STYSNUM4", "STYSNUM5", "STYSNUM6", "STYSNUM7",
-			"STFBANY"
-		};
-		
-		for(int i = 0; i < NUMIMG; i++)
-		{
-			Images[i] = TexMan.CheckForTexture(LumpNames[i], TexMan.TYPE_MiscPatch);
-		}
-		
-		Font fnt = "HUDFONT_DOOM";
-		if (fnt != null) HudFontSpacing = fnt.GetCharWidth("0");
-	}
-
 	protected void DrawMainBar (double TicFrac)
 	{
 		//DrawTexture(Images[imgINVBACK], (0, 0), true, 1.0, itemAlign:ALIGN_OFFSETS);
@@ -105,39 +60,38 @@ class DoomStatusBar : BaseStatusBar
 		Vector2 iconbox = (40, 20);
 		// Draw health
 		let berserk = CPlayer.mo.FindInventory("PowerStrength");
-		DrawTexture(Images[berserk? imgPSTRA0 : imgMEDIA0], (20, -2), true, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-		DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.health, 3, 0, 0), (44, -20), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
+		DrawImage(berserk? "PSTRA0" : "MEDIA0", (20, -2));
+		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (44, -20));
 		
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
 		if (armor != null)
 		{
-			DrawInventoryIcon(armor, (20, -22), true, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(armor.Amount, 3, 0, 0), (44, -40), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
+			DrawInventoryIcon(armor, (20, -22));
+			DrawString(mHUDFont, FormatNumber(armor.Amount, 3), (44, -40));
 		}
 		Inventory ammotype1, ammotype2;
-		int ammoamount1, ammoamount2;
-		[ammotype1, ammotype2, ammoamount1, ammoamount2] = GetCurrentAmmo();
+		[ammotype1, ammotype2] = GetCurrentAmmo();
 		int invY = -20;
 		if (ammotype1 != null)
 		{
-			DrawInventoryIcon(ammotype1, (-14, -4), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount1, 3, 0, 0), (-25, -20), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
+			DrawInventoryIcon(ammotype1, (-14, -4));
+			DrawString(mHUDFont, FormatNumber(ammotype1.Amount, 3), (-30, -20), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}
 		if (ammotype2 != null && ammotype2 != ammotype1)
 		{
-			DrawInventoryIcon(ammotype2, (-14, invY + 17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(ammoamount2, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
+			DrawInventoryIcon(ammotype2, (-14, invY + 17));
+			DrawString(mHUDFont, FormatNumber(ammotype2.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}
 		if (CPlayer.inventorytics == 0 && CPlayer.mo.InvSel != null)
 		{
-			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, iconbox, ALIGN_BOTTOM|ALIGN_HCENTER);
-			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.mo.InvSel.Amount, 3, 0, 0), (-25, invY), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_BOTTOM, HUdFontSpacing, true, 1, 1);
+			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17));
+			DrawString(mHUDFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 		}
 		if (deathmatch)
 		{
-			DrawString("HUDFONT_DOOM", FormatNumber(CPlayer.fragSum(), 3, 0, 0), (-3, -1), 1., Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_RIGHT|ALIGN_TOP, HUdFontSpacing, true, 1, 1);
+			DrawString(mHUDFont, FormatNumber(CPlayer.fragSum(), 3), (-3, 1), DI_TEXT_ALIGN_RIGHT);
 		}
 		
 		// Draw the keys. This does not use a special draw function like SBARINFO because the specifics will be different for each mod 
@@ -149,7 +103,7 @@ class DoomStatusBar : BaseStatusBar
 		{
 			if (i is "Key" && i.Icon.IsValid())
 			{
-				DrawTexture(i.Icon, keypos, true, 1., ALIGN_TOP|ALIGN_RIGHT, (-1,-1), ALIGN_TOP|ALIGN_LEFT);
+				DrawTexture(i.Icon, keypos, DI_SCREEN_RIGHT_TOP|DI_ITEM_LEFT_TOP);
 				Vector2 size = TexMan.GetScaledSize(i.Icon);
 				keypos.Y += size.Y + 2;
 				roww = max(roww, size.X);
@@ -164,8 +118,7 @@ class DoomStatusBar : BaseStatusBar
 		}
 		if (CPlayer.inventorytics != 0)
 		{
-			//DrawInventoryBar("A
-			//drawinventorybar Doom, translucent, 7, INDEXFONT, -106+center, -31;
+			//DrawInventoryBar(diparms, (0, 0), 7, ALIGN_CENTER_BOTTOM, ALIGN_CENTER_BOTTOM);
 		}
 	}
 }

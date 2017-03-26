@@ -356,13 +356,6 @@ public:
 		CENTER_BOTTOM = BOTTOM | HCENTER
 	};
 
-	enum ETextAlign
-	{
-		ALIGN_LEFT = 0,
-		ALIGN_CENTER = 1,
-		ALIGN_RIGHT = 2
-	};
-
 	DBaseStatusBar ();
 	void SetSize(int reltop = 32, int hres = 320, int vres = 200);
 	void OnDestroy() override;
@@ -402,10 +395,8 @@ public:
 	void DrawLog();
 	uint32_t GetTranslation() const;
 
-	void DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha = 1., bool translatable = false, bool dim = false,
-		int imgAlign = TOP | LEFT, int screenalign = TOP | LEFT, bool alphamap = false, double width = -1, double height = -1);
-
-	void DrawString(FFont *font, const FString &cstring, double x, double y, double Alpha, int translation, int align, int screenalign, int spacing = 0, bool monospaced = false, int shadowX = 0, int shadowY = 0);
+	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
+	void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
 
 	void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
@@ -435,8 +426,6 @@ public:
 	double CrosshairSize;
 	double Displacement;
 	bool ShowLog;
-
-	FImageCollection Images;
 
 	player_t *CPlayer;
 
@@ -471,6 +460,7 @@ extern FTexture *CrosshairImage;
 
 FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale);
 
+
 enum DI_Flags
 {
 	DI_SKIPICON = 0x1,
@@ -478,11 +468,68 @@ enum DI_Flags
 	DI_SKIPSPAWN = 0x4,
 	DI_SKIPREADY = 0x8,
 	DI_ALTICONFIRST = 0x10,
-	
-	DI_DRAWINBOX = 0x20, // Set when either width or height is not zero
-	
+	DI_TRANSLATABLE = 0x20,
 	DI_FORCESCALE = 0x40,
-	DI_ALTERNATEONFAIL = 0x80
+	DI_DIM = 0x80,
+	DI_DRAWCURSORFIRST = 0x100,	// only for DrawInventoryBar.
+	DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
+	DI_DIMDEPLETED = 0x400,
+	DI_DONTANIMATE = 0x800,		// do not animate the texture
+	// These 2 flags are only used by SBARINFO
+	DI_DRAWINBOX = 0x1000, 		// Set when either width or height is not zero
+	DI_ALTERNATEONFAIL = 0x2000,
+		
+	DI_SCREEN_AUTO = 0,					// decide based on given offsets.
+	DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
+		
+	DI_SCREEN_TOP = DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VCENTER = 0x8000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_BOTTOM = 0x10000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VOFFSET = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VMASK = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+		
+	DI_SCREEN_LEFT = DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HCENTER = 0x20000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_RIGHT = 0x40000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HOFFSET = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HMASK = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+		
+	DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP|DI_SCREEN_LEFT,
+	DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP|DI_SCREEN_RIGHT,
+	DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_LEFT,
+	DI_SCREEN_RIGHT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_RIGHT,
+	DI_SCREEN_CENTER = DI_SCREEN_VCENTER|DI_SCREEN_HCENTER,
+	DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_HCENTER,
+	DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET|DI_SCREEN_VOFFSET,
+		
+	DI_ITEM_AUTO = 0,		// equivalent with bottom center, which is the default alignment.
+		
+	DI_ITEM_TOP = 0x80000,
+	DI_ITEM_VCENTER = 0x100000,
+	DI_ITEM_BOTTOM = 0,		// this is the default vertical alignment
+	DI_ITEM_VOFFSET = 0x180000,
+	DI_ITEM_VMASK = 0x180000,
+		
+	DI_ITEM_LEFT = 0x200000,
+	DI_ITEM_HCENTER = 0,	// this is the deafault horizontal alignment
+	DI_ITEM_RIGHT = 0x400000,
+	DI_ITEM_HOFFSET = 0x600000,
+	DI_ITEM_HMASK = 0x600000,
+		
+	DI_ITEM_LEFT_TOP = DI_ITEM_TOP|DI_ITEM_LEFT,
+	DI_ITEM_RIGHT_TOP = DI_ITEM_TOP|DI_ITEM_RIGHT,
+	DI_ITEM_LEFT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_LEFT,
+	DI_ITEM_RIGHT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_RIGHT,
+	DI_ITEM_CENTER = DI_ITEM_VCENTER|DI_ITEM_HCENTER,
+	DI_ITEM_CENTER_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_HCENTER,
+	DI_ITEM_OFFSETS = DI_ITEM_HOFFSET|DI_ITEM_VOFFSET,
+		
+	DI_TEXT_ALIGN_LEFT = 0,
+	DI_TEXT_ALIGN_RIGHT = 0x800000,
+	DI_TEXT_ALIGN_CENTER = 0x1000000,
+	DI_TEXT_ALIGN = 0x1800000,
+
+	DI_ALPHAMAPPED = 0x2000000,
 };
 
 #endif /* __SBAR_H__ */

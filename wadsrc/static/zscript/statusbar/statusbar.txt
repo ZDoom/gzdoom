@@ -15,6 +15,12 @@ struct MugShot
 	}
 }
 
+class HUDFont native ui
+{
+	// This is intentionally opaque to the script side.
+	native static HUDFont Create(Font fnt, int spacing = 0, bool monospaced = false, int shadowx = 0, int shadowy = 0);
+}
+
 
 class BaseStatusBar native ui
 {
@@ -65,8 +71,66 @@ class BaseStatusBar native ui
 		DI_TRANSLATABLE = 0x20,
 		DI_FORCESCALE = 0x40,
 		DI_DIM = 0x80,
-	};
+		DI_DRAWCURSORFIRST = 0x100,	// only for DrawInventoryBar.
+		DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
+		DI_DIMDEPLETED = 0x400,
+		DI_DONTANIMATE = 0x800,		// do not animate the texture
+		// These 2 flags are only used by SBARINFO
+		DI_DRAWINBOX = 0x1000, 		// Set when either width or height is not zero
+		DI_ALTERNATEONFAIL = 0x2000,
+		
+		DI_SCREEN_AUTO = 0,					// decide based on given offsets.
+		DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
+		
+		DI_SCREEN_TOP = DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VCENTER = 0x8000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_BOTTOM = 0x10000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VOFFSET = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VMASK = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+		
+		DI_SCREEN_LEFT = DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HCENTER = 0x20000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_RIGHT = 0x40000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HOFFSET = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HMASK = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+		
+		DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP|DI_SCREEN_LEFT,
+		DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP|DI_SCREEN_RIGHT,
+		DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_LEFT,
+		DI_SCREEN_RIGHT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_RIGHT,
+		DI_SCREEN_CENTER = DI_SCREEN_VCENTER|DI_SCREEN_HCENTER,
+		DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_HCENTER,
+		DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET|DI_SCREEN_VOFFSET,
+		
+		DI_ITEM_AUTO = 0,		// equivalent with bottom center, which is the default alignment.
+		
+		DI_ITEM_TOP = 0x80000,
+		DI_ITEM_VCENTER = 0x100000,
+		DI_ITEM_BOTTOM = 0,		// this is the default vertical alignment
+		DI_ITEM_VOFFSET = 0x180000,
+		DI_ITEM_VMASK = 0x180000,
+		
+		DI_ITEM_LEFT = 0x200000,
+		DI_ITEM_HCENTER = 0,	// this is the deafault horizontal alignment
+		DI_ITEM_RIGHT = 0x400000,
+		DI_ITEM_HOFFSET = 0x600000,
+		DI_ITEM_HMASK = 0x600000,
+		
+		DI_ITEM_LEFT_TOP = DI_ITEM_TOP|DI_ITEM_LEFT,
+		DI_ITEM_RIGHT_TOP = DI_ITEM_TOP|DI_ITEM_RIGHT,
+		DI_ITEM_LEFT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_LEFT,
+		DI_ITEM_RIGHT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_RIGHT,
+		DI_ITEM_CENTER = DI_ITEM_VCENTER|DI_ITEM_HCENTER,
+		DI_ITEM_CENTER_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_HCENTER,
+		DI_ITEM_OFFSETS = DI_ITEM_HOFFSET|DI_ITEM_VOFFSET,
+		
+		DI_TEXT_ALIGN_LEFT = 0,
+		DI_TEXT_ALIGN_RIGHT = 0x800000,
+		DI_TEXT_ALIGN_CENTER = 0x1000000,
 
+		DI_ALPHAMAPPED = 0x2000000,
+	};
+	
 	enum IconType
 	{
 		ITYPE_PLAYERICON = 1000,
@@ -87,32 +151,6 @@ class BaseStatusBar native ui
 		HEXENARMOR_AMULET,
 	};
 	
-	enum EAlign
-	{
-		ALIGN_TOP = 0,
-		ALIGN_VCENTER = 1,
-		ALIGN_BOTTOM = 2,
-		ALIGN_VOFFSET = 3,
-		ALIGN_VMASK = 3,
-
-		ALIGN_LEFT = 0,
-		ALIGN_HCENTER = 4,
-		ALIGN_RIGHT = 8,
-		ALIGN_HOFFSET = 12,
-		ALIGN_HMASK = 12,
-
-		ALIGN_CENTER = ALIGN_VCENTER|ALIGN_HCENTER,
-		ALIGN_CENTER_BOTTOM = ALIGN_BOTTOM|ALIGN_HCENTER,
-		ALIGN_OFFSETS = ALIGN_HOFFSET|ALIGN_VOFFSET
-	};
-	
-	enum ETextAlign
-	{
-		TEXT_LEFT = 0,
-		TEXT_CENTER = 1,
-		TEXT_RIGHT = 2
-	};
-
 	enum SBGameModes
 	{
 		GAMEMODE_SINGLEPLAYER	= 0x1,
@@ -193,9 +231,10 @@ class BaseStatusBar native ui
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native Inventory ValidateInvFirst (int numVisible) const;
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
-	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, int imgAlign, int screenalign, bool alphamap, Vector2 box);
-	native void DrawString(Font font, String string, Vector2 pos , double Alpha, int translation, int align, int screenalign, int spacing=0, bool monospaced = false, int shadowX=0, int shadowY=0, int wrapwidth = -1, int linespacing = 4);
-	native static String FormatNumber(int number, int minsize, int maxsize, int format, String prefix = "");
+	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
+	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	
 	
 	//============================================================================
@@ -535,7 +574,7 @@ class BaseStatusBar native ui
 			if (icon.IsValid())
 			{
 				// Each icon gets a 32x32 block.
-				DrawTexture(icon, pos, true, 1.0, ALIGN_TOP|ALIGN_RIGHT, (POWERUPICONSIZE, POWERUPICONSIZE), ALIGN_CENTER_BOTTOM);
+				DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
 				pos.x -= POWERUPICONSIZE;
 				if (pos.x < -maxpos)
 				{
@@ -562,68 +601,11 @@ class BaseStatusBar native ui
 	
 	//============================================================================
 	//
-	// draw stuff
-	//
-	//============================================================================
-
-	void DrawTexture(TextureID texture, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
-	{
-		if (!texture.IsValid()) return;	// nothing to draw
-		
-		alpha *= self.alpha;
-		if (alpha <= 0) return;					// invisible
-
-		Vector2 texsize = TexMan.GetScaledSize(texture);
-		texsize.X *= scale.X;
-		texsize.Y *= scale.Y;
-		if (boxsize.X > 0 || boxsize.Y > 0)
-		{
-			double scale1 = 1., scale2 = 1.;
-			
-			if (boxsize.X != -1 && (boxsize.X < texsize.X || (flags & DI_FORCESCALE)))
-			{
-				scale1 = boxsize.X / texsize.X;
-			}
-			if (boxsize.Y != -1 && (boxsize.Y < texsize.Y || (flags & DI_FORCESCALE)))
-			{
-				scale2 = boxsize.Y / texsize.Y;
-			}
-			
-			if (flags & DI_FORCESCALE)
-			{
-				if (boxsize.X == -1 || (boxsize.Y != -1 && scale2 < scale1))
-					scale1 = scale2;
-			}
-			else scale1 = min(scale1, scale2);
-			
-			boxsize = texsize * scale1;
-		}
-		else
-		{
-			boxsize = texsize;
-		}
-		DrawGraphic(texture, animated, pos, Alpha, !!(flags & DI_TRANSLATABLE), !!(flags & DI_DIM), itemAlign, screenAlign, false, boxsize);
-	}
-	
-	//============================================================================
-	//
 	//
 	//
 	//============================================================================
 
-	void DrawImage(String imagename, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
-	{
-		let tex = TexMan.CheckForTexture(imagename, TexMan.TYPE_MiscPatch);
-		DrawTexture(tex, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, scale);
-	}
-	
-	//============================================================================
-	//
-	//
-	//
-	//============================================================================
-
-	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
+	void DrawHexenArmor(int armortype, String image, Vector2 pos, int flags = 0, double alpha = 1.0, Vector2 boxsize = (-1, -1), Vector2 scale = (1.,1.))
 	{
 		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
 		if (harmor != NULL)
@@ -638,7 +620,7 @@ class BaseStatusBar native ui
 			}
 			else return;
 		}
-		DrawImage(image, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+		DrawImage(image, pos, flags, alpha, boxsize, scale);
 	}
 	
 	//============================================================================
@@ -647,14 +629,17 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawInventoryIcon(Inventory item, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
+	void DrawInventoryIcon(Inventory item, Vector2 pos, int flags = 0, double alpha = 1.0, Vector2 boxsize = (-1, -1), Vector2 scale = (1.,1.))
 	{
 		TextureID texture;
-		Vector2 applyscale = (1, 1);
+		Vector2 applyscale;
 		[texture, applyscale] = GetIcon(item, flags, false);
 		if (texture.IsValid())
 		{
-			DrawTexture(texture, pos, animated, alpha, screenalign, boxsize, itemAlign, flags, applyscale);
+			if ((flags & DI_DIMDEPLETED) && item.Amount <= 0) flags |= DI_DIM;
+			applyscale.X *= scale.X;
+			applyscale.Y *= scale.Y;
+			DrawTexture(texture, pos, flags, alpha, boxsize, applyscale);
 		}
 	}
 	

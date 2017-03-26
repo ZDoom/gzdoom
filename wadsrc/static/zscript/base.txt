@@ -169,7 +169,7 @@ struct Screen native
 	// This is a leftover of the abandoned Inventory.DrawPowerup method.
 	deprecated("2.5") static ui void DrawHUDTexture(TextureID tex, double x, double y)
 	{
-		statusBar.DrawTexture(tex, (x, y), true, 1., BaseStatusBar.ALIGN_TOP|BaseStatusBar.ALIGN_RIGHT, (32, 32), BaseStatusBar.ALIGN_CENTER_BOTTOM);
+		statusBar.DrawTexture(tex, (x, y), BaseStatusBar.DI_SCREEN_RIGHT_TOP, 1., (32, 32));
 	}
 }
 

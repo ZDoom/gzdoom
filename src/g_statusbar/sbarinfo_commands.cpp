@@ -2230,16 +2230,14 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
-					statusBar->DrawGraphic(statusBar->Images[!(gametic & 4) ?
-						statusBar->invBarOffset + imgINVLFGEM1 : statusBar->invBarOffset + imgINVLFGEM2], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgINVLFGEM1], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 				}
 				// Is there something to the right?
 				if (!noArrows && item != NULL)
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? size*31+2 : size*31) : size*35-4);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
-					statusBar->DrawGraphic(statusBar->Images[!(gametic & 4) ?
-						statusBar->invBarOffset + imgINVRTGEM1 : statusBar->invBarOffset + imgINVRTGEM2], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgINVRTGEM1], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 				}
 			}
 		}

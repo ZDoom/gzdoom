@@ -15,23 +15,10 @@ class StrifeStatusBar : BaseStatusBar
 	{
 		imgINVCURS,
 		imgCURSOR01,
-		imgINVBACK,
-		imgINVTOP,
 		imgINVPOP,
 		imgINVPOP2,
 		imgINVPBAK,
 		imgINVPBAK2,
-		imgFONG0,
-		imgFONG1,
-		imgFONG2,
-		imgFONG3,
-		imgFONG4,
-		imgFONG5,
-		imgFONG6,
-		imgFONG7,
-		imgFONG8,
-		imgFONG9,
-		imgFONG_PERCENT,
 		imgFONY0,
 		imgFONY1,
 		imgFONY2,
@@ -43,10 +30,6 @@ class StrifeStatusBar : BaseStatusBar
 		imgFONY8,
 		imgFONY9,
 		imgFONY_PERCENT,
-		imgCOMM,
-		imgMEDI,
-		imgARM1,
-		imgARM2,
 		imgNEGATIVE,
 	};
 	
@@ -55,17 +38,40 @@ class StrifeStatusBar : BaseStatusBar
 	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
 	int KeyPopPos, KeyPopScroll;
 	double ItemFlash;
+	
+	HUDFont mYelFont, mGrnFont, mBigFont;
 
 	override void Init()
 	{
+		static const Name strifeLumpNames[] =
+		{
+			"INVCURS", "CURSOR01", "INVPOP", "INVPOP2",
+			"INVPBAK", "INVPBAK2",
+			"INVFONY0", "INVFONY1", "INVFONY2", "INVFONY3", "INVFONY4",
+			"INVFONY5", "INVFONY6", "INVFONY7", "INVFONY8", "INVFONY9",
+			"INVFONY%", ""
+
+		};
+		
 		Super.Init();
 		SetSize(32, 320, 200);
-		DoCommonInit();
+		Reset();
+		
+		for(int i = 0; i <= imgNEGATIVE; i++)
+		{
+			Images[i] = TexMan.CheckForTexture(strifeLumpNames[i], TexMan.TYPE_MiscPatch);
+		}
+
+		CursorImage = Images[imgINVCURS].IsValid() ? imgINVCURS : imgCURSOR01;
+		
+		mYelFont = HUDFont.Create("Indexfont_Strife_Yellow", 7, true, 1, 1);
+		mGrnFont = HUDFont.Create("Indexfont_Strife_Green", 7, true, 1, 1);
+		mBigFont = HUDFont.Create("BigFont", 0, false, 2, 2);
 	}
 
 	override void NewGame ()
 	{
-		DoCommonInit ();
+		Reset ();
 		if (CPlayer != NULL)
 		{
 			AttachToPlayer (CPlayer);
@@ -142,29 +148,8 @@ class StrifeStatusBar : BaseStatusBar
 		return false;
 	}
 
-	void DoCommonInit ()
+	void Reset ()
 	{
-		static const String strifeLumpNames[] =
-		{
-			"INVCURS", "CURSOR01", "INVBACK", "INVTOP", "INVPOP", "INVPOP2",
-			"INVPBAK", "INVPBAK2",
-			"INVFONG0", "INVFONG1", "INVFONG2", "INVFONG3", "INVFONG4",
-			"INVFONG5", "INVFONG6", "INVFONG7", "INVFONG8", "INVFONG9",
-			"INVFONG%",
-			"INVFONY0", "INVFONY1", "INVFONY2", "INVFONY3", "INVFONY4",
-			"INVFONY5", "INVFONY6", "INVFONY7", "INVFONY8", "INVFONY9",
-			"INVFONY%",
-			"I_COMM", "I_MDKT", "I_ARM1", "I_ARM2", ""
-
-		};
-		
-		for(int i = 0; i <= imgNEGATIVE; i++)
-		{
-			Images[i] = TexMan.CheckForTexture(strifeLumpNames[i], TexMan.TYPE_MiscPatch);
-		}
-
-		CursorImage = Images[imgINVCURS].IsValid() ? imgINVCURS : imgCURSOR01;
-
 		CurrentPop = POP_None;
 		PendingPop = POP_NoChange;
 		PopHeight = 0;
@@ -305,11 +290,11 @@ class StrifeStatusBar : BaseStatusBar
 			DrawPopScreen (Scaled ? (ST_Y - 8) * screen.GetHeight() / 200 : ST_Y - 8, TicFrac);
 		}
 
-		DrawTexture(Images[imgINVBACK], (0, 0), true, 1.0, itemAlign:ALIGN_OFFSETS);
-		DrawTexture(Images[imgINVTOP], (0, -8), true, 1.0, itemAlign:ALIGN_OFFSETS);
+		DrawImage("INVBACK", (0, 0), DI_ITEM_OFFSETS);
+		DrawImage("INVTOP", (0, -8), DI_ITEM_OFFSETS);
 
 		// Health
-		DrawString("Indexfont_Strife_Green", FormatNumber(CPlayer.health, 3, 5, 0), (86, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
+		DrawString(mGrnFont, FormatNumber(CPlayer.health, 3, 5), (79, -6), DI_TEXT_ALIGN_RIGHT);
 		int points;
 		if (CPlayer.cheats & CF_GODMODE)
 		{
@@ -326,23 +311,23 @@ class StrifeStatusBar : BaseStatusBar
 		item = CPlayer.mo.FindInventory('BasicArmor');
 		if (item != NULL && item.Amount > 0)
 		{
-			DrawInventoryIcon(item, (2, 9), true, 1.0, itemAlign:ALIGN_OFFSETS);
-			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (34, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
+			DrawInventoryIcon(item, (2, 9), DI_ITEM_OFFSETS);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (27, 23), DI_TEXT_ALIGN_RIGHT);
 		}
 
 		// Ammo
-		Inventory = GetCurrentAmmo ();
+		Inventory ammo1 = GetCurrentAmmo ();
 		if (ammo1 != NULL)
 		{
-			DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 5, 0), (318, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
-			DrawInventoryIcon (ammo1, (290, 13), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3, 5), (311, -6), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon (ammo1, (290, 13), DI_ITEM_OFFSETS);
 		}
 
 		// Sigil
 		item = CPlayer.mo.FindInventory('Sigil');
 		if (item != NULL)
 		{
-			DrawInventoryIcon (item, (253, 7), true, 1.0, itemAlign:ALIGN_OFFSETS);
+			DrawInventoryIcon (item, (253, 7), DI_ITEM_OFFSETS);
 		}
 
 		// Inventory
@@ -351,29 +336,29 @@ class StrifeStatusBar : BaseStatusBar
 		i = 0;
 		for (item = CPlayer.mo.InvFirst; item != NULL && i < 6; item = item.NextInv())
 		{
+			int flags = item.Amount <= 0? DI_ITEM_OFFSETS|DI_DIM : DI_ITEM_OFFSETS;
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (Images[CursorImage], (42 + 35*i, 12), true, 1. - ItemFlash, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
+				DrawTexture (Images[CursorImage], (42 + 35*i, 12), flags, 1. - ItemFlash);
 			}
-			DrawInventoryIcon (item, (48 + 35*i, 14), true, 1.0, itemAlign:ALIGN_OFFSETS, item.Amount <= 0? DI_DIM : 0);
-			DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (81 + 35*i, 23), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
+			DrawInventoryIcon (item, (48 + 35*i, 14), flags);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + 35*i, 23), DI_TEXT_ALIGN_RIGHT);
 			i++;
 		}
 	}
 
 	protected void DrawFullScreenStuff ()
 	{
-		// Draw health
-		
-		DrawString("Indexfont_Strife_Green", FormatNumber(CPlayer.health, 3, 0, 0), (4, -10), 1., (CPlayer.health < CPlayer.mo.RunHealth)? Font.CR_BRICK : Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, 7, true, 1, 1);
-		DrawTexture(Images[imgMEDI], (14, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+		// Draw health (use red color if health is below the run health threashold.)
+		DrawString(mGrnFont, FormatNumber(CPlayer.health, 3), (4, -10), DI_TEXT_ALIGN_LEFT, (CPlayer.health < CPlayer.mo.RunHealth)? Font.CR_BRICK : Font.CR_UNTRANSLATED);
+		DrawImage("I_MDKT", (14, -17));
 
 		// Draw armor
 		let armor = CPlayer.mo.FindInventory('BasicArmor');
 		if (armor != NULL && armor.Amount != 0)
 		{
-			DrawString("Indexfont_Strife_Yellow", FormatNumber(armor.Amount, 3, 0, 0), (35, -10), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_LEFT|ALIGN_BOTTOM, 7, true, 1, 1);
-			DrawInventoryIcon(armor, (45, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_LEFT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString(mYelFont, FormatNumber(armor.Amount, 3), (35, -10));
+			DrawInventoryIcon(armor, (45, -17));
 		}
 
 		// Draw ammo
@@ -384,19 +369,19 @@ class StrifeStatusBar : BaseStatusBar
 		if (ammo1 != NULL)
 		{
 			// Draw primary ammo in the bottom-right corner
-			DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 0, 0), (-23, -10), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_RIGHT|ALIGN_BOTTOM, 7, true, 1, 1);
-			DrawInventoryIcon(ammo1, (-14, -17), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+			DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3), (-23, -10));
+			DrawInventoryIcon(ammo1, (-14, -17));
 			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
-				DrawString("Indexfont_Strife_Green", FormatNumber(ammo1.Amount, 3, 0, 0), (-23, -48), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_RIGHT|ALIGN_BOTTOM, 7, true, 1, 1);
-				DrawInventoryIcon(ammo1, (-14, -55), false, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, itemalign: ALIGN_BOTTOM|ALIGN_HCENTER);
+				DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3), (-23, -48));
+				DrawInventoryIcon(ammo1, (-14, -55));
 			}
 		}
 
 		if (deathmatch)
 		{ // Draw frags (in DM)
-			DrawString("BigFont", FormatNumber(CPlayer.FragCount, 3, 0, 0), (-44, 1), 1., Font.CR_UNTRANSLATED, TEXT_LEFT, ALIGN_RIGHT|ALIGN_TOP, 0, false, 2, 2);
+			DrawString(mBigFont, FormatNumber(CPlayer.FragCount, 3), (4, 1));
 		}
 
 		// Draw inventory
@@ -406,10 +391,10 @@ class StrifeStatusBar : BaseStatusBar
 			{
 				if (ItemFlash > 0)
 				{
-					DrawTexture(Images[CursorImage], (-28, -15), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, ItemAlign:ALIGN_BOTTOM|ALIGN_RIGHT);
+					DrawTexture(Images[CursorImage], (-42, -15));
 				}
-				DrawString("Indexfont_Strife_Yellow", FormatNumber(CPlayer.mo.InvSel.Amount, 3, 5, 0), (-23, -10), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_BOTTOM|ALIGN_RIGHT, 7, true, 1, 1);
-				DrawInventoryIcon(CPlayer.mo.InvSel, (-42, -17), true, 1.0, ALIGN_BOTTOM|ALIGN_RIGHT, ItemAlign:ALIGN_BOTTOM|ALIGN_HCENTER, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
+				DrawString(mYelFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3, 5), (-30, -10), DI_TEXT_ALIGN_RIGHT);
+				DrawInventoryIcon(CPlayer.mo.InvSel, (-42, -17), DI_DIMDEPLETED);
 			}
 		}
 		else
@@ -424,13 +409,13 @@ class StrifeStatusBar : BaseStatusBar
 				{
 					if (item == CPlayer.mo.InvSel)
 					{
-						DrawTexture(Images[CursorImage], (-90+i*35, -3), true, 0.75, ALIGN_CENTER_BOTTOM, ItemAlign:ALIGN_CENTER_BOTTOM);
+						DrawTexture(Images[CursorImage], (-90+i*35, -3), DI_SCREEN_CENTER_BOTTOM, 0.75);
 					}
 					if (item.Icon.isValid())
 					{
-						DrawInventoryIcon(item, (-90+i*35, -5), true, 0.75, ALIGN_CENTER_BOTTOM, box, ALIGN_CENTER_BOTTOM, CPlayer.mo.InvSel.Amount > 0 ? 0 : DI_DIM);
+						DrawInventoryIcon(item, (-90+i*35, -5), DI_SCREEN_CENTER_BOTTOM|DI_DIMDEPLETED, 0.75);
 					}
-					DrawString("Indexfont_Strife_Yellow", FormatNumber(item.Amount, 3, 5, 0), (-65 + i*35, -8), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, ALIGN_CENTER_BOTTOM, 7, true, 1, 1);
+					DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (-72 + i*35, -8), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM);
 					++i;
 				}
 			}

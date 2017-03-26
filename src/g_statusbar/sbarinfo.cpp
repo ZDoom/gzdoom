@@ -65,9 +65,7 @@ enum
 	imgSELECTBOX,
 	imgCURSOR,
 	imgINVLFGEM1,
-	imgINVLFGEM2,
 	imgINVRTGEM1,
-	imgINVRTGEM2,
 };
 
 EXTERN_CVAR(Int, fraglimit)
@@ -981,8 +979,7 @@ public:
 
 		static const char *InventoryBarLumps[] =
 		{
-			"ARTIBOX",	"SELECTBO", "INVCURS",	"INVGEML1",
-			"INVGEML2",	"INVGEMR1",	"INVGEMR2",
+			"ARTIBOX",	"SELECTBO", "INVCURS",	"INVGEML1", "INVGEMR1",
 			"USEARTIA", "USEARTIB", "USEARTIC", "USEARTID",
 		};
 		TArray<const char *> patchnames;

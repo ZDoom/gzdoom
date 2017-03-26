@@ -977,6 +977,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 //
 //==========================================================================
 FTexture *GetBackdropTexture();
+FTexture *CreateShaderTexture(bool, bool);
 
 void FTextureManager::Init()
 {
@@ -988,7 +989,12 @@ void FTextureManager::Init()
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
 	AddTexture (new FDummyTexture);
+	// some special textures used in the game.
 	AddTexture(GetBackdropTexture());
+	AddTexture(CreateShaderTexture(false, false));
+	AddTexture(CreateShaderTexture(false, true));
+	AddTexture(CreateShaderTexture(true, false));
+	AddTexture(CreateShaderTexture(true, true));
 
 	int wadcnt = Wads.GetNumWads();
 	for(int i = 0; i< wadcnt; i++)

@@ -2032,7 +2032,7 @@ class CommandDrawShader : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			statusBar->DrawGraphic(&shaders[(vertical<<1) + reverse], x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, true, width, height);
+			statusBar->DrawGraphic(shaders[(vertical<<1) + reverse], x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, true, width, height);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -2063,6 +2063,10 @@ class CommandDrawShader : public SBarInfoCommand
 			}
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			sc.MustGetToken(';');
+			shaders[0] = TexMan.FindTexture("BarShaderHF");
+			shaders[1] = TexMan.FindTexture("BarShaderHR");
+			shaders[2] = TexMan.FindTexture("BarShaderVF");
+			shaders[3] = TexMan.FindTexture("BarShaderVR");
 		}
 	protected:
 		bool				vertical;
@@ -2072,87 +2076,8 @@ class CommandDrawShader : public SBarInfoCommand
 		SBarInfoCoordinate	x;
 		SBarInfoCoordinate	y;
 	private:
-		class FBarShader : public FTexture
-		{
-		public:
-			FBarShader(bool vertical, bool reverse)
-			{
-				int i;
 
-				Width = vertical ? 2 : 256;
-				Height = vertical ? 256 : 2;
-				CalcBitSize();
-
-				// Fill the column/row with shading values.
-				// Vertical shaders have have minimum alpha at the top
-				// and maximum alpha at the bottom, unless flipped by
-				// setting reverse to true. Horizontal shaders are just
-				// the opposite.
-				if (vertical)
-				{
-					if (!reverse)
-					{
-						for (i = 0; i < 256; ++i)
-						{
-							Pixels[i] = i;
-							Pixels[256+i] = i;
-						}
-					}
-					else
-					{
-						for (i = 0; i < 256; ++i)
-						{
-							Pixels[i] = 255 - i;
-							Pixels[256+i] = 255 -i;
-						}
-					}
-				}
-				else
-				{
-					if (!reverse)
-					{
-						for (i = 0; i < 256; ++i)
-						{
-							Pixels[i*2] = 255 - i;
-							Pixels[i*2+1] = 255 - i;
-						}
-					}
-					else
-					{
-						for (i = 0; i < 256; ++i)
-						{
-							Pixels[i*2] = i;
-							Pixels[i*2+1] = i;
-						}
-					}
-				}
-				DummySpan[0].TopOffset = 0;
-				DummySpan[0].Length = vertical ? 256 : 2;
-				DummySpan[1].TopOffset = 0;
-				DummySpan[1].Length = 0;
-			}
-			const uint8_t *GetColumn(unsigned int column, const Span **spans_out)
-			{
-				if (spans_out != NULL)
-				{
-					*spans_out = DummySpan;
-				}
-				return Pixels + ((column & WidthMask) << HeightBits);
-			}
-			const uint8_t *GetPixels() { return Pixels; }
-			void Unload() {}
-		private:
-			uint8_t Pixels[512];
-			Span DummySpan[2];
-		};
-
-		static FBarShader	shaders[4];
-};
-
-CommandDrawShader::FBarShader CommandDrawShader::shaders[4] =
-{
-	FBarShader(false, false), FBarShader(false, true),
-	FBarShader(true, false), FBarShader(true, true)
+		FTexture			*shaders[4];
 };
 
 ////////////////////////////////////////////////////////////////////////////////

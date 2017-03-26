@@ -78,12 +78,12 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
-		args.uniforms.light = 256;
+		args.uniforms.light = 255;
 		args.uniforms.flags = TriUniforms::fixed_light | TriUniforms::nearest_filter;
 	}
 	else
 	{
-		args.uniforms.light = (uint32_t)((sub->sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		args.uniforms.light = sub->sector->lightlevel + actualextralight;
 		args.uniforms.flags = TriUniforms::nearest_filter;
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;

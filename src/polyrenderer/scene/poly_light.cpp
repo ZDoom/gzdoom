@@ -25,6 +25,7 @@
 #include "doomdef.h"
 #include "sbar.h"
 #include "poly_light.h"
+#include "polyrenderer/poly_renderer.h"
 
 fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 {
@@ -40,4 +41,9 @@ fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 		// is necessary in order to best reproduce Doom's original lighting.
 		return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
 	}
+}
+
+double PolyLightVisibility::FocalTangent()
+{
+	return PolyRenderer::Instance()->Viewwindow.FocalTangent;
 }

@@ -113,9 +113,9 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy); // .SlopePlaneGlobVis(foggy) * 48.0f;
-	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
+	args.uniforms.light = lightlevel;
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-		args.uniforms.light = 256;
+		args.uniforms.light = 255;
 	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = subsectorDepth;
 
@@ -295,9 +295,9 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);// ->SlopePlaneGlobVis(foggy) * 48.0f;
-	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
+	args.uniforms.light = frontsector->lightlevel;
 	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-		args.uniforms.light = 256;
+		args.uniforms.light = 255;
 	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;
 

@@ -253,7 +253,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		args.mode = TriangleDrawMode::Fan;
 		args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 		args.uniforms.color = 0;
-		args.uniforms.light = 256;
+		args.uniforms.light = 255;
 		args.uniforms.flags = TriUniforms::fixed_light;
 		args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 

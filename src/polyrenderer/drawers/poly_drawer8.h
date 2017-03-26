@@ -69,8 +69,9 @@ public:
 
 		// Light
 		uint32_t light = args->uniforms->light;
-		float shade = (64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f) / 32.0f;
+		float shade = 2.0f - (light + 12.0f) / 128.0f;
 		float globVis = args->uniforms->globvis * (1.0f / 32.0f);
+		light += light >> 7; // 255 -> 256
 
 		// Sampling stuff
 		uint32_t color = args->uniforms->color;

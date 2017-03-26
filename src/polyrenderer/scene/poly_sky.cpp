@@ -58,7 +58,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 
 	PolyDrawArgs args;
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
-	args.uniforms.light = 256;
+	args.uniforms.light = 255;
 	args.uniforms.flags = TriUniforms::nearest_filter;
 	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;
 	args.objectToClip = &objectToClip;

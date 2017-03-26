@@ -140,12 +140,12 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
 	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
 	{
-		args.uniforms.light = 256;
+		args.uniforms.light = 255;
 		args.uniforms.flags |= TriUniforms::fixed_light;
 	}
 	else
 	{
-		args.uniforms.light = (uint32_t)((front->lightlevel + actualextralight) / 255.0f * 256.0f);
+		args.uniforms.light = front->lightlevel + actualextralight;
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 

@@ -17,8 +17,55 @@ struct MugShot
 
 class HUDFont native ui
 {
-	// This is intentionally opaque to the script side.
+	native Font mFont;
 	native static HUDFont Create(Font fnt, int spacing = 0, bool monospaced = false, int shadowx = 0, int shadowy = 0);
+}
+
+class InventoryBarState ui
+{
+	TextureID box;
+	TextureID selector;
+	Vector2 boxsize;
+	Vector2 innersize;
+	int boxframesize;
+	
+	TextureID left;
+	TextureID right;
+	Vector2 arrowoffset;
+
+	double itemalpha;
+	
+	HUDFont amountfont;
+	int cr;
+	int flags;
+
+	// The default settings here are what SBARINFO is using.
+	static InventoryBarState Create(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
+							String boxgfx = "ARTIBOX", String selgfx = "SELECTBO", int fsize = 2,
+							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	{
+		let me = new ("InventoryBarState");
+		me.itemalpha = itemalpha;
+		me.box = TexMan.CheckForTexture(boxgfx, TexMan.TYPE_MiscPatch);
+		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
+		me.boxframesize = fsize;
+		if (me.box.IsValid() || me.selector.IsValid()) me.boxsize = TexMan.GetScaledSize(me.box.IsValid()? me.box : me.selector);
+		else me.boxsize = (32., 32.);
+		me.innersize = me.boxsize - (2.*fsize, 2.*fsize);
+		me.left = TexMan.CheckForTexture(leftgfx, TexMan.TYPE_MiscPatch);
+		me.right = TexMan.CheckForTexture(rightgfx, TexMan.TYPE_MiscPatch);
+		me.arrowoffset = arrowoffs;
+		me.arrowoffset.Y += me.boxsize.Y/2;	// default is centered to the side of the box.
+		if (indexfont == null) 
+		{
+			me.amountfont = HUDFont.Create("INDEXFONT");
+			if (cr == Font.CR_UNTRANSLATED) cr = Font.CR_GOLD;
+		}
+		else me.amountfont = indexfont;
+		me.cr = cr;
+		me.flags = flags;
+		return me;
+	}
 }
 
 
@@ -130,6 +177,7 @@ class BaseStatusBar native ui
 
 		DI_ALPHAMAPPED = 0x2000000,
 		DI_NOSHADOW = 0x4000000,
+		DI_ALWAYSSHOWCOUNTERS = 0x8000000,
 	};
 	
 	enum IconType
@@ -630,6 +678,86 @@ class BaseStatusBar native ui
 		}
 	}
 	
+	//============================================================================
+	//
+	// DrawInventoryBar
+	//
+	// This function needs too many parameters, so most have been offloaded to
+	// a struct to keep code readable and allow initialization somewhere outside
+	// the actual drawing code.
+	//
+	//============================================================================
+	
+	// Except for the placement information this gets all info from the struct that gets passed in.
+	void DrawInventoryBar(InventoryBarState parms, Vector2 position, int numfields, int flags = 0, double bgalpha = 1.)
+	{
+		double width = parms.boxsize.X * numfields;
+
+		// This must be done here, before altered coordinates get sent to the draw functions.
+		if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+		{
+			if (position.x < 0) flags |= DI_SCREEN_RIGHT;
+			else flags |= DI_SCREEN_LEFT;
+			if (position.y < 0) flags |= DI_SCREEN_BOTTOM;
+			else flags |= DI_SCREEN_TOP;
+		}
+
+		// placement by offset is not supported because the inventory bar is a composite.
+		switch (flags & DI_ITEM_HMASK)
+		{
+		case DI_ITEM_HCENTER:	position.x -= width / 2; break;
+		case DI_ITEM_RIGHT:		position.x -= width; break;
+		}
+
+		switch (flags & DI_ITEM_VMASK)
+		{
+		case DI_ITEM_VCENTER: position.y -= parms.boxsize.Y / 2; break;
+		case DI_ITEM_BOTTOM:  position.y -= parms.boxsize.Y; break;
+		}
+		
+		// clear all alignment flags so that the following code only passed on the rest
+		flags &= ~(DI_ITEM_VMASK|DI_ITEM_HMASK);
+		
+		CPlayer.mo.InvFirst = ValidateInvFirst(numfields);
+		if (CPlayer.mo.InvFirst == null) return;	// Player has no listed inventory items.
+		
+		Vector2 boxsize = parms.boxsize;
+		// First draw all the boxes
+		for(int i = 0; i < numfields; i++)
+		{
+			DrawTexture(parms.box, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, bgalpha);
+		}
+		
+		// now the items and the rest
+		
+		Vector2 itempos = position + (boxsize.X / 2, boxsize.Y - parms.boxframesize);
+		Vector2 textpos = position + boxsize - (parms.boxframesize*2, parms.boxframesize + parms.amountfont.mFont.GetHeight());
+
+		int i = 0;
+		Inventory item;
+		for(item = CPlayer.mo.InvFirst; item != NULL && i < numfields; item = item.NextInv())
+		{
+			if ((parms.flags & DI_DRAWCURSORFIRST) && item == CPlayer.mo.InvSel) DrawTexture(parms.selector, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP);
+			DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER_BOTTOM );
+			if (!(parms.flags & DI_DRAWCURSORFIRST) && item == CPlayer.mo.InvSel) DrawTexture(parms.selector, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP);
+			
+			if (parms.amountfont != null && (item.Amount > 1 || (parms.flags & DI_ALWAYSSHOWCOUNTERS)))
+			{
+				DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 5), textpos + (boxsize.X * i, 0), flags | DI_TEXT_ALIGN_RIGHT, parms.cr, parms.itemalpha);
+			}
+			i++;
+		}
+		// Is there something to the left?
+		if (CPlayer.mo.FirstInv() != CPlayer.mo.InvFirst)
+		{
+			DrawTexture(parms.left, position + (-parms.arrowoffset.X, parms.arrowoffset.Y), flags | DI_ITEM_RIGHT|DI_ITEM_VCENTER);
+		}
+		// Is there something to the right?
+		if (item != NULL)
+		{
+			DrawTexture(parms.right, position + parms.arrowoffset + (width, 0), flags | DI_ITEM_LEFT|DI_ITEM_VCENTER);
+		}
+	}
 }
 
 //============================================================================

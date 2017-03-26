@@ -2,7 +2,8 @@ class DoomStatusBar : BaseStatusBar
 {
 	HUDFont mHUDFont;
 	HUDFont mIndexFont;
-	//DrawInventoryBarParms diparms;
+	HUDFont mAmountFont;
+	InventoryBarState diparms;
 	
 
 	override void Init()
@@ -10,19 +11,13 @@ class DoomStatusBar : BaseStatusBar
 		Super.Init();
 		SetSize(32, 320, 200);
 
-		// set up the inventory bar drawer.
-		/*
-		diparms.SetDefaults(HX_SHADOW);
-		diparms.SetTextures("SELECTBO", "ARTIBOX", "INVGEML1", "INVGEMR1");
-		diparms.SetLeftArrow("INVGEML1");
-		diparms.SetRightArrow("INVGEMR1");
-		*/
-		
 		// Create the font used for the fullscreen HUD
 		Font fnt = "HUDFONT_DOOM";
 		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
 		fnt = "INDEXFONT_DOOM";
 		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true);
+		mAmountFont = HUDFont.Create("INDEXFONT");
+		diparms = InventoryBarState.Create();
 	}
 
 	override void NewGame ()
@@ -120,14 +115,23 @@ class DoomStatusBar : BaseStatusBar
 			DrawImage("STFBANY", (143, 0), DI_ITEM_OFFSETS|DI_TRANSLATABLE);
 		}
 		
-		if (CPlayer.mo.InvSel != null)
+		if (CPlayer.mo.InvSel != null && !level.NoInventoryBar)
 		{
-			//drawinventorybar Doom, 7, INDEXFONT, 50, 170;
+			DrawInventoryIcon(CPlayer.mo.InvSel, (160, 30));
+			if (CPlayer.mo.InvSel.Amount > 0)
+			{
+				DrawString(mAmountFont, FormatNumber(CPlayer.mo.InvSel.Amount), (175, 30-mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
+			}
 		}
 		else
 		{
 			DrawTexture(GetMugShot(5), (143, 0), DI_ITEM_OFFSETS);
 		}
+		if (CPlayer.inventorytics != 0 && !level.NoInventoryBar)
+		{
+			DrawInventoryBar(diparms, (48, 1), 7, DI_ITEM_LEFT_TOP);
+		}
+		
 	}
 
 	protected void DrawFullScreenStuff ()
@@ -159,14 +163,14 @@ class DoomStatusBar : BaseStatusBar
 			DrawString(mHUDFont, FormatNumber(ammotype2.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}
-		if (CPlayer.inventorytics == 0 && CPlayer.mo.InvSel != null)
+		if (CPlayer.inventorytics == 0 && CPlayer.mo.InvSel != null && !level.NoInventoryBar)
 		{
 			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17));
 			DrawString(mHUDFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 		}
 		if (deathmatch)
 		{
-			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (-3, 1), DI_TEXT_ALIGN_RIGHT);
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (-3, 1), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
 		}
 		
 		// Draw the keys. This does not use a special draw function like SBARINFO because the specifics will be different for each mod 
@@ -191,9 +195,9 @@ class DoomStatusBar : BaseStatusBar
 				}
 			}
 		}
-		if (CPlayer.inventorytics != 0)
+		if (CPlayer.inventorytics != 0 && !level.NoInventoryBar)
 		{
-			//DrawInventoryBar(diparms, (0, 0), 7, ALIGN_CENTER_BOTTOM, ALIGN_CENTER_BOTTOM);
+			DrawInventoryBar(diparms, (0, 0), 7, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
 		}
 	}
 }

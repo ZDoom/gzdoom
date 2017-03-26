@@ -1045,6 +1045,12 @@ AInventory *AActor::FirstInv ()
 	return Inventory->NextInv ();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FirstInv)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_OBJECT(self->FirstInv());
+}
+
 //============================================================================
 //
 // AActor :: UseInventory

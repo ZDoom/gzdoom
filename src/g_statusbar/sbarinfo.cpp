@@ -984,13 +984,13 @@ public:
 			"USEARTIA", "USEARTIB", "USEARTIC", "USEARTID",
 		};
 		TArray<const char *> patchnames;
-		patchnames.Resize(script->Images.Size()+10);
+		patchnames.Resize(script->Images.Size()+9);
 		unsigned int i = 0;
 		for(i = 0;i < script->Images.Size();i++)
 		{
 			patchnames[i] = script->Images[i];
 		}
-		for(i = 0;i < 10;i++)
+		for(i = 0;i < 9;i++)
 		{
 			patchnames[i+script->Images.Size()] = InventoryBarLumps[i];
 		}

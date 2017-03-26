@@ -243,16 +243,24 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		StatusBar = new DBaseStatusBar();
 		StatusBar->SetSize(0);
 	}
-	else if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile)
+	else
 	{
-		auto cls = PClass::FindClass(gameinfo.statusbarclass);
-		if (cls != nullptr)
+		// The old rule of 'what came last wins' goes here, as well.
+		// If the most recent SBARINFO definition comes before a status bar class definition it will be picked,
+		// if the class is defined later, this will be picked. If both come from the same file, the class definition will win.
+		int sbarinfolump = Wads.CheckNumForName("SBARINFO");
+		int sbarinfofile = Wads.GetLumpFile(sbarinfolump);
+		if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile && gameinfo.statusbarclassfile >= sbarinfofile)
 		{
-			StatusBar = (DBaseStatusBar *)cls->CreateNew();
-			IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+			auto cls = PClass::FindClass(gameinfo.statusbarclass);
+			if (cls != nullptr)
 			{
-				VMValue params[] = { StatusBar };
-				GlobalVMStack.Call(func, params, 1, nullptr, 0);
+				StatusBar = (DBaseStatusBar *)cls->CreateNew();
+				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+				{
+					VMValue params[] = { StatusBar };
+					GlobalVMStack.Call(func, params, 1, nullptr, 0);
+				}
 			}
 		}
 	}
@@ -283,7 +291,6 @@ void ST_CreateStatusBar(bool bTitleLevel)
 			auto cls = PClass::FindClass(defname);
 			if (cls != nullptr)
 			{
-
 				StatusBar = (DBaseStatusBar *)cls->CreateNew();
 				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
 				{
@@ -1605,8 +1612,8 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 
 	switch (flags & DI_ITEM_VMASK)
 	{
-	case DI_ITEM_VCENTER: y -= texheight / 2; break;
-	case DI_ITEM_BOTTOM:  y -= texheight; break;
+	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
+	case DI_ITEM_BOTTOM:  y -= boxheight; break;
 	case DI_ITEM_VOFFSET: y -= tex->GetScaledTopOffsetDouble() * boxheight / texheight; break;
 	}
 
@@ -1731,6 +1738,8 @@ DEFINE_ACTION_FUNCTION(DHUDFont, Create)
 	PARAM_INT_DEF(sy);
 	ACTION_RETURN_POINTER(new DHUDFont(fnt, spac, mono, sy, sy));
 }
+
+DEFINE_FIELD(DHUDFont, mFont);
 
 //============================================================================
 //
@@ -2039,3 +2048,4 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
 	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
 	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }
+

@@ -446,6 +446,7 @@ void SBarInfo::Load()
 {
 	FreeSBarInfoScript();
 	MugShotStates.Clear();
+
 	if(gameinfo.statusbar.IsNotEmpty())
 	{
 		int lump = Wads.CheckNumForFullName(gameinfo.statusbar, true);

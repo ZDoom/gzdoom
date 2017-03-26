@@ -707,6 +707,24 @@ void player_t::SendPitchLimits() const
 }
 
 
+bool player_t::HasWeaponsInSlot(int slot) const
+{
+	for (int i = 0; i < weapons.Slots[slot].Size(); i++)
+	{
+		PClassActor *weap = weapons.Slots[slot].GetWeapon(i);
+		if (weap != NULL && mo->FindInventory(weap)) return true;
+	}
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, HasWeaponsInSlot)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(slot);
+	ACTION_RETURN_BOOL(self->HasWeaponsInSlot(slot));
+}
+
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);

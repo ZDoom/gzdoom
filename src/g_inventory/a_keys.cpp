@@ -464,7 +464,7 @@ void P_DeinitKeyMessages()
 //
 //===========================================================================
 
-bool P_CheckKeys (AActor *owner, int keynum, bool remote)
+bool P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 {
 	const char *failtext = NULL;
 	FSoundID *failsound;
@@ -479,6 +479,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 
 	if (!locks[keynum]) 
 	{
+		if (quiet) return false;
 		if (keynum == 103 && (gameinfo.flags & GI_SHAREWARE))
 			failtext = "$TXT_RETAIL_ONLY";
 		else
@@ -490,6 +491,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	else
 	{
 		if (locks[keynum]->check(owner)) return true;
+		if (quiet) return false;
 		failtext = remote? locks[keynum]->RemoteMsg : locks[keynum]->Message;
 		failsound = &locks[keynum]->locksound[0];
 		numfailsounds = locks[keynum]->locksound.Size();
@@ -517,6 +519,15 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	}
 
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckKeys)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(locknum);
+	PARAM_BOOL(remote);
+	PARAM_BOOL_DEF(quiet);
+	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
 }
 
 //==========================================================================

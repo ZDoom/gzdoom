@@ -1,6 +1,7 @@
 class DoomStatusBar : BaseStatusBar
 {
 	HUDFont mHUDFont;
+	HUDFont mIndexFont;
 	//DrawInventoryBarParms diparms;
 	
 
@@ -20,6 +21,8 @@ class DoomStatusBar : BaseStatusBar
 		// Create the font used for the fullscreen HUD
 		Font fnt = "HUDFONT_DOOM";
 		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
+		fnt = "INDEXFONT_DOOM";
+		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true);
 	}
 
 	override void NewGame ()
@@ -48,11 +51,83 @@ class DoomStatusBar : BaseStatusBar
 
 	protected void DrawMainBar (double TicFrac)
 	{
-		//DrawTexture(Images[imgINVBACK], (0, 0), true, 1.0, itemAlign:ALIGN_OFFSETS);
-		//DrawTexture(Images[imgINVTOP], (0, -8), true, 1.0, itemAlign:ALIGN_OFFSETS);
+		DrawImage("STBAR", (0, 0), DI_ITEM_OFFSETS);
+		DrawImage("STTPRCNT", (90, 3), DI_ITEM_OFFSETS);
+		DrawImage("STTPRCNT", (221, 3), DI_ITEM_OFFSETS);
+		
+		Inventory a1, a2;
+		int amt1;
+		[a1, a2, amt1] = GetCurrentAmmo();
+		DrawString(mHUDFont, FormatNumber(amt1, 3), (44, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
+		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (90, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
+		DrawString(mHUDFont, FormatNumber(GetArmorAmount(), 3), (221, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
 
-		// Health
-		//DrawString("Indexfont_Strife_Green", FormatNumber(CPlayer.health, 3, 5, 0), (86, -6), 1.0, Font.CR_UNTRANSLATED, TEXT_RIGHT, 0, 7, true, 1, 1);
+		bool locks[6];
+		String image;
+		for(int i = 0; i < 6; i++) locks[i] = CPlayer.mo.CheckKeys(i + 1, false, true);
+		// key 1
+		if (locks[1] && locks[4]) image = "STKEYS6";
+		else if (locks[1]) image = "STKEYS0";
+		else if (locks[4]) image = "STKEYS3";
+		DrawImage(image, (239, 3), DI_ITEM_OFFSETS);
+		// key 2
+		if (locks[2] && locks[5]) image = "STKEYS7";
+		else if (locks[2]) image = "STKEYS1";
+		else if (locks[5]) image = "STKEYS4";
+		else image = "";
+		DrawImage(image, (239, 13), DI_ITEM_OFFSETS);
+		// key 3
+		if (locks[0] && locks[3]) image = "STKEYS8";
+		else if (locks[0]) image = "STKEYS2";
+		else if (locks[3]) image = "STKEYS5";
+		else image = "";
+		DrawImage(image, (239, 23), DI_ITEM_OFFSETS);
+		
+		int maxamt;
+		[amt1, maxamt] = GetAmount("Clip");
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 5), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 5), DI_TEXT_ALIGN_RIGHT);
+
+		[amt1, maxamt] = GetAmount("Shell");
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 11), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 11), DI_TEXT_ALIGN_RIGHT);
+
+		[amt1, maxamt] = GetAmount("RocketAmmo");
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 17), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 17), DI_TEXT_ALIGN_RIGHT);
+
+		[amt1, maxamt] = GetAmount("Cell");
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 23), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 23), DI_TEXT_ALIGN_RIGHT);
+		
+		if (deathmatch || teamplay)
+		{
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (138, 3), DI_TEXT_ALIGN_RIGHT);
+		}
+		else
+		{
+			DrawImage("STARMS", (104, 0), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(2)? "STYSNUM2" : "STGNUM2", (111, 3), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(3)? "STYSNUM3" : "STGNUM3", (123, 3), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(4)? "STYSNUM4" : "STGNUM4", (135, 3), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(5)? "STYSNUM5" : "STGNUM5", (111, 13), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(6)? "STYSNUM6" : "STGNUM6", (123, 13), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(7)? "STYSNUM7" : "STGNUM7", (135, 13), DI_ITEM_OFFSETS);
+		}
+		
+		if (multiplayer)
+		{
+			DrawImage("STFBANY", (143, 0), DI_ITEM_OFFSETS|DI_TRANSLATABLE);
+		}
+		
+		if (CPlayer.mo.InvSel != null)
+		{
+			//drawinventorybar Doom, 7, INDEXFONT, 50, 170;
+		}
+		else
+		{
+			DrawTexture(GetMugShot(5), (143, 0), DI_ITEM_OFFSETS);
+		}
 	}
 
 	protected void DrawFullScreenStuff ()
@@ -91,7 +166,7 @@ class DoomStatusBar : BaseStatusBar
 		}
 		if (deathmatch)
 		{
-			DrawString(mHUDFont, FormatNumber(CPlayer.fragSum(), 3), (-3, 1), DI_TEXT_ALIGN_RIGHT);
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (-3, 1), DI_TEXT_ALIGN_RIGHT);
 		}
 		
 		// Draw the keys. This does not use a special draw function like SBARINFO because the specifics will be different for each mod 
@@ -122,61 +197,3 @@ class DoomStatusBar : BaseStatusBar
 		}
 	}
 }
-
-/*
-statusbar normal // Standard Doom Status bar
-{
-	drawimage "STBAR", 0, 168;
-	drawimage "STTPRCNT", 90, 171;
-	drawimage "STTPRCNT", 221, 171;
-	drawnumber 3, HUDFONT_DOOM, untranslated, ammo1, 44, 171;
-	drawnumber 3, HUDFONT_DOOM, untranslated, health, 90, 171;
-	drawnumber 3, HUDFONT_DOOM, untranslated, armor, 221, 171;
-
-	//keys
-	drawswitchableimage keyslot 2 && 5, "nullimage", "STKEYS0", "STKEYS3", "STKEYS6", 239, 171;
-	drawswitchableimage keyslot 3 && 6, "nullimage", "STKEYS1", "STKEYS4", "STKEYS7", 239, 181;
-	drawswitchableimage keyslot 1 && 4, "nullimage", "STKEYS2", "STKEYS5", "STKEYS8", 239, 191;
-
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Clip), 288, 173;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Shell), 288, 179;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(RocketAmmo), 288, 185;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Cell), 288, 191;
-
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Clip), 314, 173;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Shell), 314, 179;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(RocketAmmo), 314, 185;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Cell), 314, 191;
-	gamemode deathmatch, teamgame
-	{
-		drawnumber 2, HUDFONT_DOOM, untranslated, frags, 138, 171;
-	}
-	gamemode cooperative, singleplayer
-	{
-		drawimage "STARMS", 104, 168;
-		drawswitchableimage weaponslot 2, "STGNUM2", "STYSNUM2", 111, 172; 
-		drawswitchableimage weaponslot 3, "STGNUM3", "STYSNUM3", 123, 172;
-		drawswitchableimage weaponslot 4, "STGNUM4", "STYSNUM4", 135, 172;
-		drawswitchableimage weaponslot 5, "STGNUM5", "STYSNUM5", 111, 182;
-		drawswitchableimage weaponslot 6, "STGNUM6", "STYSNUM6", 123, 182;
-		drawswitchableimage weaponslot 7, "STGNUM7", "STYSNUM7", 135, 182;
-	}
-	gamemode cooperative, deathmatch, teamgame
-	{
-		drawimage translatable "STFBANY", 143, 169;
-	}
-	drawselectedinventory alternateonempty, INDEXFONT, 143, 168
-	{
-		drawmugshot "STF", 5, 143, 168;
-	}
-}
-
-statusbar inventory // Standard bar overlay (ZDoom Addition)
-{
-	drawinventorybar Doom, 7, INDEXFONT, 50, 170;
-}
-
-statusbar inventoryfullscreen, fullscreenoffsets // ZDoom HUD overlay.
-{
-}
-*/

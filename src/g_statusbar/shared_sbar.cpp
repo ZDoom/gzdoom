@@ -1846,7 +1846,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 		// This is not really such a great way to draw shadows because they can overlap with previously drawn characters.
 		// This may have to be changed to draw the shadow text up front separately.
-		if (shadowX != 0 || shadowY != 0)
+		if ((shadowX != 0 || shadowY != 0) && !(flags & DI_NOSHADOW))
 		{
 			screen->DrawChar(font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
 				DTA_DestWidthF, rw,
@@ -2033,10 +2033,9 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, ReceivedWeapon)
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(player, player_t);
-	PARAM_STRING(def_face);
 	PARAM_INT(accuracy);
 	PARAM_INT_DEF(stateflags);
-	auto tex = self->mugshot.GetFace(player, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	PARAM_STRING_DEF(def_face);
+	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
 	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }

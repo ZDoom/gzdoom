@@ -373,6 +373,7 @@ usercmd_t	original_cmd;
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
+	native clearscope bool HasWeaponsInSlot(int slot) const;
 	
 	clearscope int fragSum () const
 	{

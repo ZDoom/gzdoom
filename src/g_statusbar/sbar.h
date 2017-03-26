@@ -530,6 +530,7 @@ enum DI_Flags
 	DI_TEXT_ALIGN = 0x1800000,
 
 	DI_ALPHAMAPPED = 0x2000000,
+	DI_NOSHADOW = 0x4000000,
 };
 
 #endif /* __SBAR_H__ */

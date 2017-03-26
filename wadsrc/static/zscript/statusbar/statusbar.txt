@@ -129,6 +129,7 @@ class BaseStatusBar native ui
 		DI_TEXT_ALIGN_CENTER = 0x1000000,
 
 		DI_ALPHAMAPPED = 0x2000000,
+		DI_NOSHADOW = 0x4000000,
 	};
 	
 	enum IconType
@@ -151,14 +152,6 @@ class BaseStatusBar native ui
 		HEXENARMOR_AMULET,
 	};
 	
-	enum SBGameModes
-	{
-		GAMEMODE_SINGLEPLAYER	= 0x1,
-		GAMEMODE_COOPERATIVE	= 0x2,
-		GAMEMODE_DEATHMATCH		= 0x4,
-		GAMEMODE_TEAMGAME		= 0x8
-	};
-
 	enum AmmoModes
 	{
 		AMMO_PRIMARY,
@@ -226,7 +219,7 @@ class BaseStatusBar native ui
 	virtual bool MustDrawLog(int state) { return true; }
 	
 	native void RefreshBackground () const;
-	native TextureID GetMugshot(PlayerInfo player, String default_face, int accuracy, int stateflags=MugShot.STANDARD);
+	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native Inventory ValidateInvFirst (int numVisible) const;
@@ -338,6 +331,14 @@ class BaseStatusBar native ui
 		return armor? armor.Amount : 0;
 	}
 	
+	int, int GetAmount(class<Inventory> item)
+	{
+		let it = CPlayer.mo.FindInventory(item);
+		int ret1 = it? it.Amount : GetDefaultByType(item).Amount;
+		int ret2 = it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
+		return ret1, ret2;
+	}
+
 	int GetMaxAmount(class<Inventory> item)
 	{
 		let it = CPlayer.mo.FindInventory(item);
@@ -392,20 +393,6 @@ class BaseStatusBar native ui
 	// various checker functions, based on SBARINFOs condition nodes.
 	//
 	//============================================================================
-
-	//============================================================================
-	//
-	// checks current game mode against a flag mask
-	//
-	//============================================================================
-
-	bool CheckGameMode(int ValidModes)
-	{
-		return  (!multiplayer && (ValidModes & GAMEMODE_SINGLEPLAYER)) ||
-				(deathmatch && (ValidModes & GAMEMODE_DEATHMATCH)) ||
-				(multiplayer && !deathmatch && (ValidModes & GAMEMODE_COOPERATIVE)) ||
-				(teamplay && (ValidModes & GAMEMODE_TEAMGAME));
-	}
 
 	//============================================================================
 	//

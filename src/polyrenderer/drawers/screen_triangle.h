@@ -26,6 +26,7 @@
 #include <vector>
 
 class FString;
+class PolyDrawArgs;
 
 struct TriFullSpan
 {
@@ -67,32 +68,6 @@ struct TriVertex
 	float varying[NumVarying];
 };
 
-struct TriUniforms
-{
-	uint32_t light;
-	uint32_t subsectorDepth;
-	uint32_t color;
-	uint32_t srcalpha;
-	uint32_t destalpha;
-	uint16_t light_alpha;
-	uint16_t light_red;
-	uint16_t light_green;
-	uint16_t light_blue;
-	uint16_t fade_alpha;
-	uint16_t fade_red;
-	uint16_t fade_green;
-	uint16_t fade_blue;
-	uint16_t desaturate;
-	float globvis;
-	uint32_t flags;
-	enum Flags
-	{
-		simple_shade = 1,
-		nearest_filter = 2,
-		fixed_light = 4
-	};
-};
-
 struct TriDrawTriangleArgs
 {
 	uint8_t *dest;
@@ -104,20 +79,11 @@ struct TriDrawTriangleArgs
 	int32_t clipright;
 	int32_t cliptop;
 	int32_t clipbottom;
-	const uint8_t *texturePixels;
-	uint32_t textureWidth;
-	uint32_t textureHeight;
-	const uint8_t *translation;
-	const TriUniforms *uniforms;
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
 	int32_t stencilPitch;
-	uint8_t stencilTestValue;
-	uint8_t stencilWriteValue;
 	uint32_t *subsectorGBuffer;
-	const uint8_t *colormaps;
-	const uint8_t *RGB256k;
-	const uint8_t *BaseColors;
+	const PolyDrawArgs *uniforms;
 };
 
 enum class TriBlendMode

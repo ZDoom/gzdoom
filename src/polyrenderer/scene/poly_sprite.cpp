@@ -136,136 +136,80 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	}
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	int lightlevel = fullbrightSprite ? 255 : thing->Sector->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
-	args.uniforms.flags = TriUniforms::nearest_filter;
-	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-	{
-		args.uniforms.light = 255;
-		args.uniforms.flags |= TriUniforms::fixed_light;
-	}
-	else
-	{
-		args.uniforms.light = thing->Sector->lightlevel + actualextralight;
-	}
-	args.uniforms.subsectorDepth = subsectorDepth;
-
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = 4;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue;
+	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
+	args.SetSubsectorDepth(subsectorDepth);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(true, stencilValue);
 	args.SetTexture(tex, thing->Translation);
-	args.SetColormap(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true));
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
-	TriBlendMode blendmode;
-	
 	if (thing->RenderStyle == LegacyRenderStyles[STYLE_Normal] ||
 		 (r_drawfuzz == 0 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		args.uniforms.destalpha = 0;
-		args.uniforms.srcalpha = 256;
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 1.0, 0.0);
 	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add] && fullbrightSprite && thing->Alpha == 1.0 && args.translation == nullptr)
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add] && fullbrightSprite && thing->Alpha == 1.0 && !args.Translation())
 	{
-		args.uniforms.destalpha = 256;
-		args.uniforms.srcalpha = 256;
-		blendmode = TriBlendMode::AddSrcColorOneMinusSrcColor;
+		args.SetStyle(TriBlendMode::AddSrcColorOneMinusSrcColor, 1.0, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add])
 	{
-		args.uniforms.destalpha = (uint32_t)(1.0 * 256);
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, thing->Alpha, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 	{
-		args.uniforms.destalpha = (uint32_t)(1.0 * 256);
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		blendmode = args.translation ? TriBlendMode::TranslateRevSub : TriBlendMode::RevSub;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateRevSub : TriBlendMode::RevSub, thing->Alpha, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
 	{
-		args.uniforms.destalpha = (uint32_t)(256 - transsouls * 256);
-		args.uniforms.srcalpha = (uint32_t)(transsouls * 256);
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, transsouls, 1.0 - transsouls);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
 		 (r_drawfuzz == 2 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
-		args.uniforms.destalpha = 160;
-		args.uniforms.srcalpha = 0;
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 0.0, 160 / 255.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shadow] ||
 		 (r_drawfuzz == 1 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		args.uniforms.destalpha = 160;
-		args.uniforms.srcalpha = 0;
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 0.0, 160 / 255.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil])
 	{
-		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		args.uniforms.color = 0xff000000 | thing->fillcolor;
-		blendmode = TriBlendMode::Stencil;
+		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
+		args.SetStyle(TriBlendMode::Stencil, thing->Alpha, 1.0 - thing->Alpha);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
 	{
-		args.uniforms.destalpha = 256;
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		args.uniforms.color = 0xff000000 | thing->fillcolor;
-		blendmode = TriBlendMode::Stencil;
+		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
+		args.SetStyle(TriBlendMode::Stencil, thing->Alpha, 1.0 - thing->Alpha);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		args.uniforms.destalpha = 256 - args.uniforms.srcalpha;
-		args.uniforms.color = 0;
-		blendmode = TriBlendMode::Shaded;
+		args.SetColor(0, 0);
+		args.SetStyle(TriBlendMode::Shaded, thing->Alpha, 1.0 - thing->Alpha);
+		args.SetTexture(tex, thing->Translation, true);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
 	{
-		args.uniforms.destalpha = 256;
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		args.uniforms.color = 0;
-		blendmode = TriBlendMode::Shaded;
+		args.SetColor(0, 0);
+		args.SetStyle(TriBlendMode::Shaded, thing->Alpha, 1.0 - thing->Alpha);
+		args.SetTexture(tex, thing->Translation, true);
 	}
 	else
 	{
-		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, thing->Alpha, 1.0 - thing->Alpha);
 	}
 	
-	if (blendmode == TriBlendMode::Shaded)
-	{
-		args.SetTexture(tex, thing->Translation, true);
-	}
-	
-	if (!PolyRenderer::Instance()->RenderTarget->IsBgra())
-	{
-		uint32_t r = (args.uniforms.color >> 16) & 0xff;
-		uint32_t g = (args.uniforms.color >> 8) & 0xff;
-		uint32_t b = args.uniforms.color & 0xff;
-		args.uniforms.color = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
-
-		if (blendmode == TriBlendMode::Sub) // Sub crashes in pal mode for some weird reason.
-			blendmode = TriBlendMode::Add;
-	}
-
-	args.subsectorTest = true;
-	args.writeSubsector = false;
-	args.writeStencil = false;
-	args.blendmode = blendmode;
-	PolyTriangleDrawer::draw(args);
+	args.SetSubsectorDepthTest(true);
+	args.SetWriteSubsectorDepth(false);
+	args.SetWriteStencil(false);
+	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)

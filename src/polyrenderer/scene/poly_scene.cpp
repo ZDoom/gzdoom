@@ -249,40 +249,33 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 	else // Fill with black
 	{
 		PolyDrawArgs args;
-		args.objectToClip = &WorldToClip;
-		args.mode = TriangleDrawMode::Fan;
-		args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.WallGlobVis(foggy);
-		args.uniforms.color = 0;
-		args.uniforms.light = 255;
-		args.uniforms.flags = TriUniforms::fixed_light;
+		args.SetTransform(&WorldToClip);
+		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
+		args.SetColor(0, 0);
 		args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
+		args.SetStyle(TriBlendMode::Copy);
 
 		for (auto &portal : SectorPortals)
 		{
-			args.stenciltestvalue = portal->StencilValue;
-			args.stencilwritevalue = portal->StencilValue + 1;
+			args.SetStencilTestValue(portal->StencilValue);
+			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
 			{
-				args.vinput = verts.Vertices;
-				args.vcount = verts.Count;
-				args.ccw = verts.Ccw;
-				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				args.blendmode = TriBlendMode::Copy;
-				PolyTriangleDrawer::draw(args);
+				args.SetFaceCullCCW(verts.Ccw);
+				args.SetSubsectorDepth(verts.SubsectorDepth);
+				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 
 		for (auto &portal : LinePortals)
 		{
-			args.stenciltestvalue = portal->StencilValue;
-			args.stencilwritevalue = portal->StencilValue + 1;
+			args.SetStencilTestValue(portal->StencilValue);
+			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
 			{
-				args.vinput = verts.Vertices;
-				args.vcount = verts.Count;
-				args.ccw = verts.Ccw;
-				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				PolyTriangleDrawer::draw(args);
+				args.SetFaceCullCCW(verts.Ccw);
+				args.SetSubsectorDepth(verts.SubsectorDepth);
+				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 	}
@@ -298,19 +291,16 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			portal->RenderTranslucent(portalDepth + 1);
 		
 			PolyDrawArgs args;
-			args.objectToClip = &WorldToClip;
-			args.mode = TriangleDrawMode::Fan;
-			args.stenciltestvalue = portal->StencilValue + 1;
-			args.stencilwritevalue = StencilValue + 1;
+			args.SetTransform(&WorldToClip);
+			args.SetStencilTestValue(portal->StencilValue + 1);
+			args.SetWriteStencil(true, StencilValue + 1);
 			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{
-				args.vinput = verts.Vertices;
-				args.vcount = verts.Count;
-				args.ccw = verts.Ccw;
-				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				args.writeColor = false;
-				PolyTriangleDrawer::draw(args);
+				args.SetFaceCullCCW(verts.Ccw);
+				args.SetSubsectorDepth(verts.SubsectorDepth);
+				args.SetWriteColor(false);
+				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 
@@ -320,19 +310,16 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			portal->RenderTranslucent(portalDepth + 1);
 		
 			PolyDrawArgs args;
-			args.objectToClip = &WorldToClip;
-			args.mode = TriangleDrawMode::Fan;
-			args.stenciltestvalue = portal->StencilValue + 1;
-			args.stencilwritevalue = StencilValue + 1;
+			args.SetTransform(&WorldToClip);
+			args.SetStencilTestValue(portal->StencilValue + 1);
+			args.SetWriteStencil(true, StencilValue + 1);
 			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{
-				args.vinput = verts.Vertices;
-				args.vcount = verts.Count;
-				args.ccw = verts.Ccw;
-				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				args.writeColor = false;
-				PolyTriangleDrawer::draw(args);
+				args.SetFaceCullCCW(verts.Ccw);
+				args.SetSubsectorDepth(verts.SubsectorDepth);
+				args.SetWriteColor(false);
+				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 	}

@@ -68,51 +68,20 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 		vertices[i].varying[1] = (float)(1.0f - offsets[i].second);
 	}
 
-	// int color = (particle->color >> 24) & 0xff; // pal index, I think
 	bool fullbrightSprite = particle->bright != 0;
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	int lightlevel = fullbrightSprite ? 255 : sub->sector->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
-
-	args.uniforms.globvis = (float)PolyRenderer::Instance()->Light.ParticleGlobVis(foggy);
-
-	if (fullbrightSprite || cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-	{
-		args.uniforms.light = 255;
-		args.uniforms.flags = TriUniforms::fixed_light | TriUniforms::nearest_filter;
-	}
-	else
-	{
-		args.uniforms.light = sub->sector->lightlevel + actualextralight;
-		args.uniforms.flags = TriUniforms::nearest_filter;
-	}
-	args.uniforms.subsectorDepth = subsectorDepth;
-
-	uint32_t alpha = (uint32_t)clamp(particle->alpha * 255.0f + 0.5f, 0.0f, 255.0f);
-
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
-	{
-		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
-	}
-	else
-	{
-		args.uniforms.color = ((uint32_t)particle->color) >> 24;
-		args.uniforms.srcalpha = alpha;
-		args.uniforms.destalpha = 255 - alpha;
-	}
-
-	args.objectToClip = &worldToClip;
-	args.vinput = vertices;
-	args.vcount = 4;
-	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
-	args.stenciltestvalue = stencilValue;
-	args.stencilwritevalue = stencilValue;
-	args.SetColormap(GetColorTable(sub->sector->Colormap));
+	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.ParticleGlobVis(foggy), fullbrightSprite);
+	args.SetSubsectorDepth(subsectorDepth);
+	args.SetSubsectorDepthTest(true);
+	args.SetColor(particle->color | 0xff000000, particle->color >> 24);
+	args.SetStyle(TriBlendMode::AlphaBlend, particle->alpha, 1.0 - particle->alpha);
+	args.SetTransform(&worldToClip);
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(false);
+	args.SetWriteSubsectorDepth(false);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	args.subsectorTest = true;
-	args.writeStencil = false;
-	args.writeSubsector = false;
-	args.blendmode = TriBlendMode::AlphaBlend;
-	PolyTriangleDrawer::draw(args);
+	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

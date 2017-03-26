@@ -27,43 +27,114 @@
 #include "screen_triangle.h"
 
 class FTexture;
-
-enum class TriangleDrawMode
-{
-	Normal,
-	Fan,
-	Strip
-};
-
-struct TriDrawTriangleArgs;
 struct TriMatrix;
+
+enum class PolyDrawMode
+{
+	Triangles,
+	TriangleFan,
+	TriangleStrip
+};
 
 class PolyDrawArgs
 {
 public:
-	TriUniforms uniforms;
-	const TriMatrix *objectToClip = nullptr;
-	const TriVertex *vinput = nullptr;
-	int vcount = 0;
-	TriangleDrawMode mode = TriangleDrawMode::Normal;
-	bool ccw = false;
-	// bool stencilTest = true; // Always true for now
-	bool subsectorTest = false;
-	bool writeStencil = true;
-	bool writeColor = true;
-	bool writeSubsector = true;
-	const uint8_t *texturePixels = nullptr;
-	int textureWidth = 0;
-	int textureHeight = 0;
-	const uint8_t *translation = nullptr;
-	uint8_t stenciltestvalue = 0;
-	uint8_t stencilwritevalue = 0;
-	const uint8_t *colormaps = nullptr;
-	float clipPlane[4];
-	TriBlendMode blendmode = TriBlendMode::Copy;
-
 	void SetClipPlane(float a, float b, float c, float d);
 	void SetTexture(FTexture *texture);
 	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
-	void SetColormap(FSWColormap *base_colormap);
+	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
+	void SetSubsectorDepth(uint32_t subsectorDepth) { mSubsectorDepth = subsectorDepth; }
+	void SetSubsectorDepthTest(bool enable) { mSubsectorTest = enable; }
+	void SetStencilTestValue(uint8_t stencilTestValue) { mStencilTestValue = stencilTestValue; }
+	void SetWriteColor(bool enable) { mWriteColor = enable; }
+	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
+	void SetWriteSubsectorDepth(bool enable) { mWriteSubsector = enable; }
+	void SetFaceCullCCW(bool counterclockwise) { mFaceCullCCW = counterclockwise; }
+	void SetStyle(TriBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
+	void SetTransform(const TriMatrix *objectToClip) { mObjectToClip = objectToClip; }
+	void SetColor(uint32_t bgra, uint8_t palindex);
+	void DrawArray(const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+
+	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
+	const float *ClipPlane() const { return mClipPlane; }
+
+	const TriVertex *Vertices() const { return mVertices; }
+	int VertexCount() const { return mVertexCount; }
+	PolyDrawMode DrawMode() const { return mDrawMode; }
+
+	bool FaceCullCCW() const { return mFaceCullCCW; }
+	bool WriteColor() const { return mWriteColor; }
+
+	const uint8_t *TexturePixels() const { return mTexturePixels; }
+	int TextureWidth() const { return mTextureWidth; }
+	int TextureHeight() const { return mTextureHeight; }
+	const uint8_t *Translation() const { return mTranslation; }
+
+	bool WriteStencil() const { return mWriteStencil; }
+	uint8_t StencilTestValue() const { return mStencilTestValue; }
+	uint8_t StencilWriteValue() const { return mStencilWriteValue; }
+
+	bool SubsectorTest() const { return mSubsectorTest; }
+	bool WriteSubsector() const { return mWriteSubsector; }
+	uint32_t SubsectorDepth() const { return mSubsectorDepth; }
+
+	TriBlendMode BlendMode() const { return mBlendMode; }
+	uint32_t Color() const { return mColor; }
+	uint32_t SrcAlpha() const { return mSrcAlpha; }
+	uint32_t DestAlpha() const { return mDestAlpha; }
+
+	float GlobVis() const { return mGlobVis; }
+	uint32_t Light() const { return mLight; }
+	const uint8_t *BaseColormap() const { return mColormaps; }
+	uint16_t ShadeLightAlpha() const { return mLightAlpha; }
+	uint16_t ShadeLightRed() const { return mLightRed; }
+	uint16_t ShadeLightGreen() const { return mLightGreen; }
+	uint16_t ShadeLightBlue() const { return mLightBlue; }
+	uint16_t ShadeFadeAlpha() const { return mFadeAlpha; }
+	uint16_t ShadeFadeRed() const { return mFadeRed; }
+	uint16_t ShadeFadeGreen() const { return mFadeGreen; }
+	uint16_t ShadeFadeBlue() const { return mFadeBlue; }
+	uint16_t ShadeDesaturate() const { return mDesaturate; }
+
+	bool SimpleShade() const { return mSimpleShade; }
+	bool NearestFilter() const { return mNearestFilter; }
+	bool FixedLight() const { return mFixedLight; }
+
+private:
+	const TriMatrix *mObjectToClip = nullptr;
+	const TriVertex *mVertices = nullptr;
+	int mVertexCount = 0;
+	PolyDrawMode mDrawMode = PolyDrawMode::Triangles;
+	bool mFaceCullCCW = false;
+	bool mSubsectorTest = false;
+	bool mWriteStencil = true;
+	bool mWriteColor = true;
+	bool mWriteSubsector = true;
+	const uint8_t *mTexturePixels = nullptr;
+	int mTextureWidth = 0;
+	int mTextureHeight = 0;
+	const uint8_t *mTranslation = nullptr;
+	uint8_t mStencilTestValue = 0;
+	uint8_t mStencilWriteValue = 0;
+	const uint8_t *mColormaps = nullptr;
+	float mClipPlane[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	TriBlendMode mBlendMode = TriBlendMode::Copy;
+	uint32_t mLight = 0;
+	uint32_t mSubsectorDepth = 0;
+	uint32_t mColor = 0;
+	uint32_t mSrcAlpha = 0;
+	uint32_t mDestAlpha = 0;
+	uint16_t mLightAlpha = 0;
+	uint16_t mLightRed = 0;
+	uint16_t mLightGreen = 0;
+	uint16_t mLightBlue = 0;
+	uint16_t mFadeAlpha = 0;
+	uint16_t mFadeRed = 0;
+	uint16_t mFadeGreen = 0;
+	uint16_t mFadeBlue = 0;
+	uint16_t mDesaturate = 0;
+	float mGlobVis = 0.0f;
+	bool mSimpleShade = true;
+	bool mNearestFilter = true;
+	bool mFixedLight = false;
 };

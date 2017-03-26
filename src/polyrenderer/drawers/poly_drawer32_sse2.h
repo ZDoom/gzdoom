@@ -32,12 +32,11 @@ public:
 	{
 		using namespace TriScreenDrawerModes;
 
-		auto flags = args->uniforms->flags;
-		bool is_simple_shade = (flags & TriUniforms::simple_shade) == TriUniforms::simple_shade;
+		bool is_simple_shade = args->uniforms->SimpleShade();
 
 		if (SamplerT::Mode == (int)Samplers::Texture)
 		{
-			bool is_nearest_filter = (flags & TriUniforms::nearest_filter) == TriUniforms::nearest_filter;
+			bool is_nearest_filter = args->uniforms->NearestFilter();
 
 			if (is_simple_shade)
 			{
@@ -79,11 +78,10 @@ public:
 		int startX = thread->StartX;
 		int startY = thread->StartY;
 
-		auto flags = args->uniforms->flags;
-		bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
+		bool is_fixed_light = args->uniforms->FixedLight();
 		uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
-		uint32_t srcalpha = args->uniforms->srcalpha;
-		uint32_t destalpha = args->uniforms->destalpha;
+		uint32_t srcalpha = args->uniforms->SrcAlpha();
+		uint32_t destalpha = args->uniforms->DestAlpha();
 
 		// Calculate gradients
 		const TriVertex &v1 = *args->v1;
@@ -107,17 +105,17 @@ public:
 		int pitch = args->pitch;
 
 		// Light
-		uint32_t light = args->uniforms->light;
+		uint32_t light = args->uniforms->Light();
 		float shade = 2.0f - (light + 12.0f) / 128.0f;
-		float globVis = args->uniforms->globvis * (1.0f / 32.0f);
+		float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
 		light += (light >> 7); // 255 -> 256
 
 		// Sampling stuff
-		uint32_t color = args->uniforms->color;
-		const uint32_t * RESTRICT translation = (const uint32_t *)args->translation;
-		const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
-		uint32_t texWidth = args->textureWidth;
-		uint32_t texHeight = args->textureHeight;
+		uint32_t color = args->uniforms->Color();
+		const uint32_t * RESTRICT translation = (const uint32_t *)args->uniforms->Translation();
+		const uint32_t * RESTRICT texPixels = (const uint32_t *)args->uniforms->TexturePixels();
+		uint32_t texWidth = args->uniforms->TextureWidth();
+		uint32_t texHeight = args->uniforms->TextureHeight();
 		uint32_t oneU, oneV;
 		if (SamplerT::Mode != (int)Samplers::Fill)
 		{
@@ -135,10 +133,10 @@ public:
 		int desaturate;
 		if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 		{
-			inv_desaturate = _mm_setr_epi16(256, 256 - args->uniforms->desaturate, 256 - args->uniforms->desaturate, 256 - args->uniforms->desaturate, 256, 256 - args->uniforms->desaturate, 256 - args->uniforms->desaturate, 256 - args->uniforms->desaturate);
-			shade_fade = _mm_set_epi16(args->uniforms->fade_alpha, args->uniforms->fade_red, args->uniforms->fade_green, args->uniforms->fade_blue, args->uniforms->fade_alpha, args->uniforms->fade_red, args->uniforms->fade_green, args->uniforms->fade_blue);
-			shade_light = _mm_set_epi16(args->uniforms->light_alpha, args->uniforms->light_red, args->uniforms->light_green, args->uniforms->light_blue, args->uniforms->light_alpha, args->uniforms->light_red, args->uniforms->light_green, args->uniforms->light_blue);
-			desaturate = args->uniforms->desaturate;
+			inv_desaturate = _mm_setr_epi16(256, 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256, 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate());
+			shade_fade = _mm_set_epi16(args->uniforms->ShadeFadeAlpha(), args->uniforms->ShadeFadeRed(), args->uniforms->ShadeFadeGreen(), args->uniforms->ShadeFadeBlue(), args->uniforms->ShadeFadeAlpha(), args->uniforms->ShadeFadeRed(), args->uniforms->ShadeFadeGreen(), args->uniforms->ShadeFadeBlue());
+			shade_light = _mm_set_epi16(args->uniforms->ShadeLightAlpha(), args->uniforms->ShadeLightRed(), args->uniforms->ShadeLightGreen(), args->uniforms->ShadeLightBlue(), args->uniforms->ShadeLightAlpha(), args->uniforms->ShadeLightRed(), args->uniforms->ShadeLightGreen(), args->uniforms->ShadeLightBlue());
+			desaturate = args->uniforms->ShadeDesaturate();
 		}
 		else
 		{

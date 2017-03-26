@@ -24,9 +24,68 @@
 
 #include "r_defs.h"
 
-class PolyScreenSprite;
 class DPSprite;
-struct FSWColormap;
+struct FDynamicColormap;
+
+class PolyColormapLight
+{
+public:
+	int ColormapNum = 0;
+	FSWColormap *BaseColormap = nullptr;
+
+	void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
+};
+
+class PolyNoAccelPlayerSprite
+{
+public:
+	short x1 = 0;
+	short x2 = 0;
+
+	double texturemid = 0.0;
+
+	fixed_t xscale = 0;
+	float yscale = 0.0f;
+
+	FTexture *pic = nullptr;
+
+	fixed_t xiscale = 0;
+	fixed_t startfrac = 0;
+
+	float Alpha = 0.0f;
+	FRenderStyle RenderStyle;
+	uint32_t Translation = 0;
+	uint32_t FillColor = 0;
+
+	PolyColormapLight Light;
+
+	short renderflags = 0;
+
+	void Render();
+};
+
+class PolyHWAccelPlayerSprite
+{
+public:
+	FTexture *pic = nullptr;
+	double texturemid = 0.0;
+	float yscale = 0.0f;
+	fixed_t xscale = 0;
+
+	float Alpha = 0.0f;
+	FRenderStyle RenderStyle;
+	uint32_t Translation = 0;
+	uint32_t FillColor = 0;
+
+	FDynamicColormap *basecolormap = nullptr;
+	int x1 = 0;
+
+	bool flip = false;
+	FSpecialColormap *special = nullptr;
+	PalEntry overlay = 0;
+	FColormapStyle colormapstyle;
+	bool usecolormapstyle = false;
+};
 
 class RenderPolyPlayerSprites
 {
@@ -35,31 +94,12 @@ public:
 	void RenderRemainingSprites();
 
 private:
-	void RenderSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac);
+	void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);
+	static fixed_t LightLevelToShade(int lightlevel, bool foggy);
 
-	const int BaseXCenter = 160;
-	const int BaseYCenter = 100;
+	enum { BASEXCENTER = 160 };
+	enum { BASEYCENTER = 100 };
 
-	std::vector<PolyScreenSprite> ScreenSprites;
-};
-
-// DScreen accelerated sprite to be rendered
-class PolyScreenSprite
-{
-public:
-	void Render();
-
-	FTexture *Pic = nullptr;
-	double X1 = 0.0;
-	double Y1 = 0.0;
-	double Width = 0.0;
-	double Height = 0.0;
-	FRemapTable *Translation = nullptr;
-	bool Flip = false;
-	float Alpha = 1;
-	FRenderStyle RenderStyle;
-	FSWColormap *BaseColormap = nullptr;
-	int ColormapNum = 0;
-	uint32_t FillColor = 0;
-	FDynamicColormap *Colormap = nullptr;
+	TArray<PolyHWAccelPlayerSprite> AcceleratedSprites;
+	sector_t tempsec;
 };

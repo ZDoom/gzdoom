@@ -71,11 +71,8 @@ class StrifeStatusBar : BaseStatusBar
 
 	override void NewGame ()
 	{
+		Super.NewGame();
 		Reset ();
-		if (CPlayer != NULL)
-		{
-			AttachToPlayer (CPlayer);
-		}
 	}
 
 	override void Draw (int state, double TicFrac)
@@ -290,11 +287,11 @@ class StrifeStatusBar : BaseStatusBar
 			DrawPopScreen (Scaled ? (ST_Y - 8) * screen.GetHeight() / 200 : ST_Y - 8, TicFrac);
 		}
 
-		DrawImage("INVBACK", (0, 0), DI_ITEM_OFFSETS);
-		DrawImage("INVTOP", (0, -8), DI_ITEM_OFFSETS);
+		DrawImage("INVBACK", (0, 168), DI_ITEM_OFFSETS);
+		DrawImage("INVTOP", (0, 160), DI_ITEM_OFFSETS);
 
 		// Health
-		DrawString(mGrnFont, FormatNumber(CPlayer.health, 3, 5), (79, -6), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mGrnFont, FormatNumber(CPlayer.health, 3, 5), (79, 162), DI_TEXT_ALIGN_RIGHT);
 		int points;
 		if (CPlayer.cheats & CF_GODMODE)
 		{
@@ -304,30 +301,30 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			points = min(CPlayer.health, 200);
 		}
-		DrawHealthBar (points, 49, 4);
-		DrawHealthBar (points, 49, 7);
+		DrawHealthBar (points, 49, 172);
+		DrawHealthBar (points, 49, 175);
 
 		// Armor
 		item = CPlayer.mo.FindInventory('BasicArmor');
 		if (item != NULL && item.Amount > 0)
 		{
-			DrawInventoryIcon(item, (2, 9), DI_ITEM_OFFSETS);
-			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (27, 23), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon(item, (2, 177), DI_ITEM_OFFSETS);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (27, 191), DI_TEXT_ALIGN_RIGHT);
 		}
 
 		// Ammo
 		Inventory ammo1 = GetCurrentAmmo ();
 		if (ammo1 != NULL)
 		{
-			DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3, 5), (311, -6), DI_TEXT_ALIGN_RIGHT);
-			DrawInventoryIcon (ammo1, (290, 13), DI_ITEM_OFFSETS);
+			DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3, 5), (311, 162), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon (ammo1, (290, 181), DI_ITEM_OFFSETS);
 		}
 
 		// Sigil
 		item = CPlayer.mo.FindInventory('Sigil');
 		if (item != NULL)
 		{
-			DrawInventoryIcon (item, (253, 7), DI_ITEM_OFFSETS);
+			DrawInventoryIcon (item, (253, 175), DI_ITEM_OFFSETS);
 		}
 
 		// Inventory
@@ -339,10 +336,10 @@ class StrifeStatusBar : BaseStatusBar
 			int flags = item.Amount <= 0? DI_ITEM_OFFSETS|DI_DIM : DI_ITEM_OFFSETS;
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (Images[CursorImage], (42 + 35*i, 12), flags, 1. - ItemFlash);
+				DrawTexture (Images[CursorImage], (42 + 35*i, 180), flags, 1. - ItemFlash);
 			}
-			DrawInventoryIcon (item, (48 + 35*i, 14), flags);
-			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + 35*i, 23), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon (item, (48 + 35*i, 182), flags);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + 35*i, 191), DI_TEXT_ALIGN_RIGHT);
 			i++;
 		}
 	}

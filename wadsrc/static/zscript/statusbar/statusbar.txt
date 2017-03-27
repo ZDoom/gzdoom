@@ -262,7 +262,7 @@ class BaseStatusBar native ui
 	virtual void FlashItem (class<Inventory> itemtype) {}
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
-	virtual void NewGame () {}
+	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
 	
@@ -805,14 +805,16 @@ class DynamicValueInterpolator : Object
 {
 	int mCurrentValue;
 	int mMinChange;
+	int mMaxChange;
 	double mChangeFactor;
 	
 	
-	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange)
+	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange, int maxchange)
 	{
 		let v = new("DynamicValueInterpolator");
 		v.mCurrentValue = startval;
 		v.mMinChange = minchange;
+		v.mMaxChange = maxchange;
 		v.mChangeFactor = changefactor;
 		return v;
 	}
@@ -821,7 +823,7 @@ class DynamicValueInterpolator : Object
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
 	{
-		int diff = int(max(abs(destvalue - mCurrentValue) * mChangeFactor, mMinChange));
+		int diff = int(clamp(abs(destvalue - mCurrentValue) * mChangeFactor, mMinChange, mMaxChange));
 		if (mCurrentValue > destvalue)
 		{
 			mCurrentValue = max(destvalue, mCurrentValue - diff);

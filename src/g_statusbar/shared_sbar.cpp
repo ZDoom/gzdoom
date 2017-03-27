@@ -1620,7 +1620,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	if (!fullscreenOffsets)
 	{
 		x += ST_X;
-		y += ST_Y;
+		//y += ST_Y;
 
 		// Todo: Allow other scaling values, too.
 		if (Scaled)
@@ -1835,7 +1835,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		if (!fullscreenOffsets)
 		{
 			rx += ST_X;
-			ry += ST_Y;
+			//ry += ST_Y;
 
 			// Todo: Allow other scaling values, too.
 			if (Scaled)

@@ -20,14 +20,6 @@ class DoomStatusBar : BaseStatusBar
 		diparms = InventoryBarState.Create();
 	}
 
-	override void NewGame ()
-	{
-		if (CPlayer != NULL)
-		{
-			AttachToPlayer (CPlayer);
-		}
-	}
-
 	override void Draw (int state, double TicFrac)
 	{
 		Super.Draw (state, TicFrac);
@@ -46,16 +38,16 @@ class DoomStatusBar : BaseStatusBar
 
 	protected void DrawMainBar (double TicFrac)
 	{
-		DrawImage("STBAR", (0, 0), DI_ITEM_OFFSETS);
-		DrawImage("STTPRCNT", (90, 3), DI_ITEM_OFFSETS);
-		DrawImage("STTPRCNT", (221, 3), DI_ITEM_OFFSETS);
+		DrawImage("STBAR", (0, 168), DI_ITEM_OFFSETS);
+		DrawImage("STTPRCNT", (90, 171), DI_ITEM_OFFSETS);
+		DrawImage("STTPRCNT", (221, 171), DI_ITEM_OFFSETS);
 		
 		Inventory a1, a2;
 		int amt1;
 		[a1, a2, amt1] = GetCurrentAmmo();
-		DrawString(mHUDFont, FormatNumber(amt1, 3), (44, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
-		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (90, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
-		DrawString(mHUDFont, FormatNumber(GetArmorAmount(), 3), (221, 3), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
+		DrawString(mHUDFont, FormatNumber(amt1, 3), (44, 171), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
+		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (90, 171), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
+		DrawString(mHUDFont, FormatNumber(GetArmorAmount(), 3), (221, 171), DI_TEXT_ALIGN_RIGHT|DI_NOSHADOW);
 
 		bool locks[6];
 		String image;
@@ -64,72 +56,72 @@ class DoomStatusBar : BaseStatusBar
 		if (locks[1] && locks[4]) image = "STKEYS6";
 		else if (locks[1]) image = "STKEYS0";
 		else if (locks[4]) image = "STKEYS3";
-		DrawImage(image, (239, 3), DI_ITEM_OFFSETS);
+		DrawImage(image, (239, 171), DI_ITEM_OFFSETS);
 		// key 2
 		if (locks[2] && locks[5]) image = "STKEYS7";
 		else if (locks[2]) image = "STKEYS1";
 		else if (locks[5]) image = "STKEYS4";
 		else image = "";
-		DrawImage(image, (239, 13), DI_ITEM_OFFSETS);
+		DrawImage(image, (239, 181), DI_ITEM_OFFSETS);
 		// key 3
 		if (locks[0] && locks[3]) image = "STKEYS8";
 		else if (locks[0]) image = "STKEYS2";
 		else if (locks[3]) image = "STKEYS5";
 		else image = "";
-		DrawImage(image, (239, 23), DI_ITEM_OFFSETS);
+		DrawImage(image, (239, 191), DI_ITEM_OFFSETS);
 		
 		int maxamt;
 		[amt1, maxamt] = GetAmount("Clip");
-		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 5), DI_TEXT_ALIGN_RIGHT);
-		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 5), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 173), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 173), DI_TEXT_ALIGN_RIGHT);
 
 		[amt1, maxamt] = GetAmount("Shell");
-		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 11), DI_TEXT_ALIGN_RIGHT);
-		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 11), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 179), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 179), DI_TEXT_ALIGN_RIGHT);
 
 		[amt1, maxamt] = GetAmount("RocketAmmo");
-		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 17), DI_TEXT_ALIGN_RIGHT);
-		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 17), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 185), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 185), DI_TEXT_ALIGN_RIGHT);
 
 		[amt1, maxamt] = GetAmount("Cell");
-		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 23), DI_TEXT_ALIGN_RIGHT);
-		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 23), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(amt1, 3), (288, 191), DI_TEXT_ALIGN_RIGHT);
+		DrawString(mIndexFont, FormatNumber(maxamt, 3), (314, 191), DI_TEXT_ALIGN_RIGHT);
 		
 		if (deathmatch || teamplay)
 		{
-			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (138, 3), DI_TEXT_ALIGN_RIGHT);
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (138, 171), DI_TEXT_ALIGN_RIGHT);
 		}
 		else
 		{
-			DrawImage("STARMS", (104, 0), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(2)? "STYSNUM2" : "STGNUM2", (111, 3), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(3)? "STYSNUM3" : "STGNUM3", (123, 3), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(4)? "STYSNUM4" : "STGNUM4", (135, 3), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(5)? "STYSNUM5" : "STGNUM5", (111, 13), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(6)? "STYSNUM6" : "STGNUM6", (123, 13), DI_ITEM_OFFSETS);
-			DrawImage(CPlayer.HasWeaponsInSlot(7)? "STYSNUM7" : "STGNUM7", (135, 13), DI_ITEM_OFFSETS);
+			DrawImage("STARMS", (104, 168), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(2)? "STYSNUM2" : "STGNUM2", (111, 171), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(3)? "STYSNUM3" : "STGNUM3", (123, 171), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(4)? "STYSNUM4" : "STGNUM4", (135, 171), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(5)? "STYSNUM5" : "STGNUM5", (111, 181), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(6)? "STYSNUM6" : "STGNUM6", (123, 181), DI_ITEM_OFFSETS);
+			DrawImage(CPlayer.HasWeaponsInSlot(7)? "STYSNUM7" : "STGNUM7", (135, 181), DI_ITEM_OFFSETS);
 		}
 		
 		if (multiplayer)
 		{
-			DrawImage("STFBANY", (143, 0), DI_ITEM_OFFSETS|DI_TRANSLATABLE);
+			DrawImage("STFBANY", (143, 168), DI_ITEM_OFFSETS|DI_TRANSLATABLE);
 		}
 		
 		if (CPlayer.mo.InvSel != null && !level.NoInventoryBar)
 		{
-			DrawInventoryIcon(CPlayer.mo.InvSel, (160, 30));
+			DrawInventoryIcon(CPlayer.mo.InvSel, (160, 198));
 			if (CPlayer.mo.InvSel.Amount > 0)
 			{
-				DrawString(mAmountFont, FormatNumber(CPlayer.mo.InvSel.Amount), (175, 30-mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
+				DrawString(mAmountFont, FormatNumber(CPlayer.mo.InvSel.Amount), (175, 198-mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
 			}
 		}
 		else
 		{
-			DrawTexture(GetMugShot(5), (143, 0), DI_ITEM_OFFSETS);
+			DrawTexture(GetMugShot(5), (143, 168), DI_ITEM_OFFSETS);
 		}
 		if (CPlayer.inventorytics != 0 && !level.NoInventoryBar)
 		{
-			DrawInventoryBar(diparms, (48, 1), 7, DI_ITEM_LEFT_TOP);
+			DrawInventoryBar(diparms, (48, 169), 7, DI_ITEM_LEFT_TOP);
 		}
 		
 	}

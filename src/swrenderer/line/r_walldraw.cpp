@@ -42,6 +42,13 @@
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/r_memory.h"
 
+#ifndef isnan
+// Fallback to C++ function if C99 isnan() macro is not undefined
+// Most likely it was undefined in C++ library header to avoid conflicts with own function
+#include <cmath>
+using std::isnan;
+#endif // !isnan
+
 namespace swrenderer
 {
 	WallSampler::WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)

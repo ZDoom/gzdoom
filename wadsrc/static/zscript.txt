@@ -34,6 +34,7 @@ version "2.5"
 
 #include "zscript/statusbar/statusbar.txt"
 #include "zscript/statusbar/doom_sbar.txt"
+#include "zscript/statusbar/heretic_sbar.txt"
 #include "zscript/statusbar/strife_sbar.txt"
 #include "zscript/statusbar/sbarinfowrapper.txt"
 

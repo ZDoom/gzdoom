@@ -1161,9 +1161,6 @@ public:
 			lastInventoryBar->Tick(NULL, this, false);
 	}
 
-	// void DSBarInfo::FlashItem(const PClass *itemtype) - Is defined with CommandDrawSelectedInventory
-	void _FlashItem(const PClass *itemtype);
-
 	void _ShowPop(int popnum)
 	{
 		if(popnum != currentPopup)
@@ -1601,14 +1598,6 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, Tick)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_Tick();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DSBarInfo, FlashItem)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
-	PARAM_CLASS(w, AInventory);
-	self->_FlashItem(w);
 	return 0;
 }
 

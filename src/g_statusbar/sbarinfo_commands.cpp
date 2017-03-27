@@ -1691,16 +1691,16 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 
 			if(statusBar->CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 			{
-				if(artiflash && artiflashTick)
+				if(artiflash && statusBar->wrapper->artiflashTick)
 				{
-					statusBar->DrawGraphic(statusBar->Images[ARTIFLASH_OFFSET+(4-artiflashTick)], imgx, imgy, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(),
+					statusBar->DrawGraphic(statusBar->Images[ARTIFLASH_OFFSET+(4- statusBar->wrapper->artiflashTick)], imgx, imgy, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(),
 						translatable, false, offset);
 				}
 				else
 				{
-					if(itemflash && itemflashFade != 0)
+					if(itemflash && statusBar->wrapper->itemflashFade != 0)
 					{
-						double flashAlpha = block->Alpha() * itemflashFade;
+						double flashAlpha = block->Alpha() * statusBar->wrapper->itemflashFade;
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgCURSOR], imgx-4, imgy+2, block->XOffset(), block->YOffset(), flashAlpha, block->FullScreenOffsets(),
 							translatable, false, offset);
 					}
@@ -1789,38 +1789,18 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			if(artiflashTick > 0)
-				artiflashTick--;
-			if(itemflashFade > 0)
-			{
-				itemflashFade -= 1./14;
-				if(itemflashFade < 0)
-					itemflashFade = 0;
-			}
-
 			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
 		}
 
-		static void	Flash() { artiflashTick = 4; itemflashFade = 0.75; }
 	protected:
 		bool	alternateOnEmpty;
 		bool	artiflash;
 		bool	alwaysShowCounter;
 		bool	itemflash;
-
-		static int		artiflashTick;
-		static double	itemflashFade;
 };
-int CommandDrawSelectedInventory::artiflashTick = 0;
-double CommandDrawSelectedInventory::itemflashFade = 0.75;
-
-void DSBarInfo::_FlashItem(const PClass *itemtype)
-{
-	CommandDrawSelectedInventory::Flash();
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 

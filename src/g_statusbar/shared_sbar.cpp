@@ -593,6 +593,19 @@ void DBaseStatusBar::Tick ()
 			}
 		}
 	}
+
+	if (artiflashTick > 0)
+		artiflashTick--;
+
+	if (itemflashFade > 0)
+	{
+		itemflashFade -= 1 / 14.;
+		if (itemflashFade < 0)
+		{
+			itemflashFade = 0;
+		}
+	}
+
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, Tick)
@@ -1562,26 +1575,29 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
-		double scale1 = 1., scale2 = 1.;
-
-		if (boxwidth > 0 && (boxwidth < texwidth || (flags & DI_FORCESCALE)))
+		if (!(flags & DI_FORCEFILL))
 		{
-			scale1 = boxwidth / texwidth;
-		}
-		if (boxheight != -1 && (boxheight < texheight || (flags & DI_FORCESCALE)))
-		{
-			scale2 = boxheight / texheight;
-		}
+			double scale1 = 1., scale2 = 1.;
 
-		if (flags & DI_FORCESCALE)
-		{
-			if (boxwidth <= 0 || (boxheight > 0 && scale2 < scale1))
-				scale1 = scale2;
-		}
-		else scale1 = MIN(scale1, scale2);
+			if (boxwidth > 0 && (boxwidth < texwidth || (flags & DI_FORCESCALE)))
+			{
+				scale1 = boxwidth / texwidth;
+			}
+			if (boxheight != -1 && (boxheight < texheight || (flags & DI_FORCESCALE)))
+			{
+				scale2 = boxheight / texheight;
+			}
 
-		boxwidth = texwidth * scale1;
-		boxheight = texheight * scale1;
+			if (flags & DI_FORCESCALE)
+			{
+				if (boxwidth <= 0 || (boxheight > 0 && scale2 < scale1))
+					scale1 = scale2;
+			}
+			else scale1 = MIN(scale1, scale2);
+
+			boxwidth = texwidth * scale1;
+			boxheight = texheight * scale1;
+		}
 	}
 	else
 	{
@@ -1962,6 +1978,8 @@ DEFINE_FIELD(DBaseStatusBar, drawOffset);
 DEFINE_FIELD(DBaseStatusBar, drawClip);
 DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
 DEFINE_FIELD(DBaseStatusBar, defaultScale);
+DEFINE_FIELD(DBaseStatusBar, artiflashTick);
+DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 
 DEFINE_GLOBAL(StatusBar);
 

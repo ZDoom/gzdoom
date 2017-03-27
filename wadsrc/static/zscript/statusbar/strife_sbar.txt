@@ -37,7 +37,6 @@ class StrifeStatusBar : BaseStatusBar
 	int CursorImage;
 	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
 	int KeyPopPos, KeyPopScroll;
-	double ItemFlash;
 	
 	HUDFont mYelFont, mGrnFont, mBigFont;
 
@@ -152,21 +151,11 @@ class StrifeStatusBar : BaseStatusBar
 		PopHeight = 0;
 		KeyPopPos = 0;
 		KeyPopScroll = 0;
-		ItemFlash = 0;
 	}
 
 	override void Tick ()
 	{
 		Super.Tick ();
-
-		if (ItemFlash > 0)
-		{
-			ItemFlash -= 1/14.;
-			if (ItemFlash < 0)
-			{
-				ItemFlash = 0;
-			}
-		}
 
 		PopHeightChange = 0;
 		if (PendingPop != POP_NoChange)
@@ -211,11 +200,6 @@ class StrifeStatusBar : BaseStatusBar
 		}
 	}
 
-	override void FlashItem (Class<Inventory> itemtype)
-	{
-		ItemFlash = 0.75;
-	}
-	
 	private void FillBar(double x, double y, double start, double stopp, Color color1, Color color2)
 	{
 		Vector2 virt = Scaled? (320., 200.) : (screen.GetWidth(), screen.GetHeight());
@@ -336,7 +320,7 @@ class StrifeStatusBar : BaseStatusBar
 			int flags = item.Amount <= 0? DI_ITEM_OFFSETS|DI_DIM : DI_ITEM_OFFSETS;
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (Images[CursorImage], (42 + 35*i, 180), flags, 1. - ItemFlash);
+				DrawTexture (Images[CursorImage], (42 + 35*i, 180), flags, 1. - itemflashFade);
 			}
 			DrawInventoryIcon (item, (48 + 35*i, 182), flags);
 			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + 35*i, 191), DI_TEXT_ALIGN_RIGHT);
@@ -386,7 +370,7 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			if (CPlayer.mo.InvSel != null)
 			{
-				if (ItemFlash > 0)
+				if (itemflashFade > 0)
 				{
 					DrawTexture(Images[CursorImage], (-42, -15));
 				}

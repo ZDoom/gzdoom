@@ -25,7 +25,8 @@ gameinfo
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "BagOfHolding"
 	armoricons = "SHLDA0", 0.75, "SHD2A0"
-	statusbar = "sbarinfo/heretic.txt"
+	//statusbar = "sbarinfo/heretic.txt"
+	statusbarclass = "HereticStatusBar"
 	intermissionmusic = "mus_intr"
 	intermissioncounter = false
 	weaponslot = 1, "Staff", "Gauntlets"

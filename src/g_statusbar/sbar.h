@@ -426,6 +426,8 @@ public:
 	double CrosshairSize;
 	double Displacement;
 	bool ShowLog;
+	int artiflashTick = 0;
+	double itemflashFade = 0.75;
 
 	player_t *CPlayer;
 
@@ -475,9 +477,6 @@ enum DI_Flags
 	DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
 	DI_DIMDEPLETED = 0x400,
 	DI_DONTANIMATE = 0x800,		// do not animate the texture
-	// These 2 flags are only used by SBARINFO
-	DI_DRAWINBOX = 0x1000, 		// Set when either width or height is not zero
-	DI_ALTERNATEONFAIL = 0x2000,
 		
 	DI_SCREEN_AUTO = 0,					// decide based on given offsets.
 	DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
@@ -531,6 +530,14 @@ enum DI_Flags
 
 	DI_ALPHAMAPPED = 0x2000000,
 	DI_NOSHADOW = 0x4000000,
+	DI_ALWAYSSHOWCOUNTERS = 0x8000000,
+	DI_ARTIFLASH = 0x10000000,
+	DI_FORCEFILL = 0x20000000,
+
+	// These 2 flags are only used by SBARINFO so these duplicate other flags not used by SBARINFO
+	DI_DRAWINBOX = DI_TEXT_ALIGN_RIGHT,
+	DI_ALTERNATEONFAIL = DI_TEXT_ALIGN_CENTER,
+
 };
 
 #endif /* __SBAR_H__ */

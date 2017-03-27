@@ -872,7 +872,6 @@ set( POLYRENDER_SOURCES
 	polyrenderer/drawers/poly_draw_args.cpp
 	polyrenderer/drawers/screen_triangle.cpp
 	polyrenderer/math/tri_matrix.cpp
-	polyrenderer/math/poly_intersection.cpp
 )
 
 # These files will be flagged as "headers" so that they appear in project files

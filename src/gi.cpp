@@ -153,6 +153,14 @@ const char* GameInfoBorders[] =
 		gameinfo.key = sc.String; \
 	}
 
+#define GAMEINFOKEY_STRING_STAMPED(key, variable, stampvar) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.key = sc.String; \
+		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
+	}
+
 #define GAMEINFOKEY_INT(key, variable) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
@@ -358,7 +366,8 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
 		GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
 		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
-		GAMEINFOKEY_STRING(statusbar, "statusbar")
+		GAMEINFOKEY_STRING_STAMPED(statusbar, "statusbar", statusbarfile)
+		GAMEINFOKEY_STRING_STAMPED(statusbarclass, "statusbarclass", statusbarclassfile)
 		GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 		GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")

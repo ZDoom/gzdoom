@@ -26,7 +26,6 @@
 
 struct event_t;
 
-extern int gST_X;
 extern int gST_Y;
 
 bool ST_Responder(event_t* ev);

@@ -28,7 +28,6 @@
 #include "poly_playersprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "d_player.h"
-#include "swrenderer/viewport/r_viewport.h"
 #include "polyrenderer/scene/poly_light.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
@@ -44,6 +43,14 @@ void RenderPolyPlayerSprites::Render()
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
+	int 		i;
+	int 		lightnum;
+	DPSprite*	psp;
+	DPSprite*	weapon;
+	sector_t*	sec = nullptr;
+	int			floorlight, ceilinglight;
+	F3DFloor *rover;
+
 	if (!r_drawplayersprites ||
 		!viewpoint.camera ||
 		!viewpoint.camera->player ||
@@ -51,282 +58,427 @@ void RenderPolyPlayerSprites::Render()
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
 
-	float bobx, boby;
-	P_BobWeapon(viewpoint.camera->player, &bobx, &boby, viewpoint.TicFrac);
-
-	// Interpolate the main weapon layer once so as to be able to add it to other layers.
-	double wx, wy;
-	DPSprite *weapon = viewpoint.camera->player->FindPSprite(PSP_WEAPON);
-	if (weapon)
+	FDynamicColormap *basecolormap;
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	if (cameraLight->FixedLightLevel() < 0 && viewpoint.sector->e && viewpoint.sector->e->XFloor.lightlist.Size())
 	{
-		if (weapon->firstTic)
+		for (i = viewpoint.sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 		{
-			wx = weapon->x;
-			wy = weapon->y;
+			if (viewpoint.Pos.Z <= viewpoint.sector->e->XFloor.lightlist[i].plane.Zat0())
+			{
+				rover = viewpoint.sector->e->XFloor.lightlist[i].caster;
+				if (rover)
+				{
+					if (rover->flags & FF_DOUBLESHADOW && viewpoint.Pos.Z <= rover->bottom.plane->Zat0())
+						break;
+					sec = rover->model;
+					if (rover->flags & FF_FADEWALLS)
+						basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+					else
+						basecolormap = GetColorTable(viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites], true);
+				}
+				break;
+			}
+		}
+		if (!sec)
+		{
+			sec = viewpoint.sector;
+			basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+		}
+		floorlight = ceilinglight = sec->lightlevel;
+	}
+	else
+	{	// This used to use camera->Sector but due to interpolation that can be incorrect
+		// when the interpolated viewpoint is in a different sector than the camera.
+		//sec = FakeFlat(viewpoint.sector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
+		// Softpoly has no FakeFlat (its FAKE! Everything is FAKE in Doom. Sigh. Might as well call it FooFlat!)
+		sec = viewpoint.camera->Sector;
+		floorlight = ceilinglight = sec->lightlevel;
+
+		// [RH] set basecolormap
+		basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+	}
+
+	// [RH] set foggy flag
+	bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
+
+	// get light level
+	lightnum = ((floorlight + ceilinglight) >> 1) + (foggy ? 0 : viewpoint.extralight << 4);
+	int spriteshade = LightLevelToShade(lightnum, foggy) - 24 * FRACUNIT;
+
+	if (viewpoint.camera->player != nullptr)
+	{
+		double wx, wy;
+		float bobx, boby;
+
+		P_BobWeapon(viewpoint.camera->player, &bobx, &boby, viewpoint.TicFrac);
+
+		// Interpolate the main weapon layer once so as to be able to add it to other layers.
+		if ((weapon = viewpoint.camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
+		{
+			if (weapon->firstTic)
+			{
+				wx = weapon->x;
+				wy = weapon->y;
+			}
+			else
+			{
+				wx = weapon->oldx + (weapon->x - weapon->oldx) * viewpoint.TicFrac;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * viewpoint.TicFrac;
+			}
 		}
 		else
 		{
-			wx = weapon->oldx + (weapon->x - weapon->oldx) * viewpoint.TicFrac;
-			wy = weapon->oldy + (weapon->y - weapon->oldy) * viewpoint.TicFrac;
+			wx = 0;
+			wy = 0;
 		}
-	}
-	else
-	{
-		wx = 0;
-		wy = 0;
-	}
 
-	for (DPSprite *sprite = viewpoint.camera->player->psprites; sprite != nullptr; sprite = sprite->GetNext())
-	{
-		// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
-		// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
-		// because it didn't tick yet (if we typed 'take all' while in the console for example).
-		// In this case let's simply not draw it to avoid crashing.
-		if ((sprite->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && sprite->GetCaller() != nullptr)
+		// add all active psprites
+		psp = viewpoint.camera->player->psprites;
+		while (psp)
 		{
-			RenderSprite(sprite, viewpoint.camera, bobx, boby, wx, wy, viewpoint.TicFrac);
+			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
+			// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
+			// because it didn't tick yet (if we typed 'take all' while in the console for example).
+			// In this case let's simply not draw it to avoid crashing.
+
+			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
+			{
+				RenderSprite(psp, viewpoint.camera, bobx, boby, wx, wy, viewpoint.TicFrac, spriteshade, basecolormap, foggy);
+			}
+
+			psp = psp->GetNext();
 		}
 	}
 }
 
 void RenderPolyPlayerSprites::RenderRemainingSprites()
 {
-	for (auto &sprite : ScreenSprites)
-		sprite.Render();
-	ScreenSprites.clear();
+	for (const PolyHWAccelPlayerSprite &sprite : AcceleratedSprites)
+	{
+		screen->DrawTexture(sprite.pic,
+			viewwindowx + sprite.x1,
+			viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
+			DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),
+			DTA_DestHeightF, sprite.pic->GetHeight() * sprite.yscale,
+			DTA_TranslationIndex, sprite.Translation,
+			DTA_FlipX, sprite.flip,
+			DTA_TopOffset, 0,
+			DTA_LeftOffset, 0,
+			DTA_ClipLeft, viewwindowx,
+			DTA_ClipTop, viewwindowy,
+			DTA_ClipRight, viewwindowx + viewwidth,
+			DTA_ClipBottom, viewwindowy + viewheight,
+			DTA_Alpha, sprite.Alpha,
+			DTA_RenderStyle, sprite.RenderStyle,
+			DTA_FillColor, sprite.FillColor,
+			DTA_SpecialColormap, sprite.special,
+			DTA_ColorOverlay, sprite.overlay.d,
+			DTA_ColormapStyle, sprite.usecolormapstyle ? &sprite.colormapstyle : nullptr,
+			TAG_DONE);
+	}
+
+	AcceleratedSprites.Clear();
 }
 
-void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
+void RenderPolyPlayerSprites::RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy)
 {
+	double 				tx;
+	int 				x1;
+	int 				x2;
+	double				sx, sy;
+	spritedef_t*		sprdef;
+	spriteframe_t*		sprframe;
+	FTextureID			picnum;
+	uint16_t				flip;
+	FTexture*			tex;
+	bool				noaccel;
+	double				alpha = owner->Alpha;
+
 	// decide which patch to use
-	if ((unsigned)sprite->GetSprite() >= (unsigned)sprites.Size())
+	if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
 	{
-		DPrintf(DMSG_ERROR, "RenderPlayerSprite: invalid sprite number %i\n", sprite->GetSprite());
+		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
+		return;
+	}
+	sprdef = &sprites[pspr->GetSprite()];
+	if (pspr->GetFrame() >= sprdef->numframes)
+	{
+		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
 		return;
 	}
 
-	spritedef_t *def = &sprites[sprite->GetSprite()];
-	if (sprite->GetFrame() >= def->numframes)
-	{
-		DPrintf(DMSG_ERROR, "RenderPlayerSprite: invalid sprite frame %i : %i\n", sprite->GetSprite(), sprite->GetFrame());
-		return;
-	}
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
+	DCanvas *renderTarget = PolyRenderer::Instance()->RenderTarget;
 
-	spriteframe_t *frame = &SpriteFrames[def->spriteframes + sprite->GetFrame()];
-	FTextureID picnum = frame->Texture[0];
-	bool flip = (frame->Flip & 1) != 0;
+	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
 
-	FTexture *tex = TexMan(picnum);
-	if (tex->UseType == FTexture::TEX_Null)
+	picnum = sprframe->Texture[0];
+	flip = sprframe->Flip & 1;
+	tex = TexMan(picnum);
+
+	if (tex->UseType == FTexture::TEX_Null || pspr->RenderStyle == STYLE_None)
 		return;
 
-	// Can't interpolate the first tic.
-	if (sprite->firstTic)
-	{
-		sprite->firstTic = false;
-		sprite->oldx = sprite->x;
-		sprite->oldy = sprite->y;
+	if (pspr->firstTic)
+	{ // Can't interpolate the first tic.
+		pspr->firstTic = false;
+		pspr->oldx = pspr->x;
+		pspr->oldy = pspr->y;
 	}
 
-	double sx = sprite->oldx + (sprite->x - sprite->oldx) * ticfrac;
-	double sy = sprite->oldy + (sprite->y - sprite->oldy) * ticfrac;
+	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
+	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac + WEAPON_FUDGE_Y;
 
-	if (sprite->Flags & PSPF_ADDBOB)
+	if (pspr->Flags & PSPF_ADDBOB)
 	{
 		sx += bobx;
 		sy += boby;
 	}
 
-	if (sprite->Flags & PSPF_ADDWEAPON && sprite->GetID() != PSP_WEAPON)
+	if (pspr->Flags & PSPF_ADDWEAPON && pspr->GetID() != PSP_WEAPON)
 	{
 		sx += wx;
 		sy += wy;
 	}
-	
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
-	double YaspectMul = 1.2f;
 
-	double pspritexscale = PolyRenderer::Instance()->Viewwindow.centerxwide / 160.0;
-	double pspriteyscale = pspritexscale * YaspectMul;
+	double yaspectMul = 1.2;// 320.0 * SCREENHEIGHT / (r_Yaspect * SCREENWIDTH);
+
+	double pspritexscale = viewwindow.centerxwide / 160.0;
+	double pspriteyscale = pspritexscale * yaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
 	// calculate edges of the shape
-	double tx = sx - BaseXCenter;
+	tx = sx - BASEXCENTER;
 
 	tx -= tex->GetScaledLeftOffset();
-	int x1 = xs_RoundToInt(renderTarget->GetWidth() * 0.5 + tx * pspritexscale);
+	x1 = xs_RoundToInt(viewwindow.centerx + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
 	tx += tex->GetScaledWidth();
-	int x2 = xs_RoundToInt(renderTarget->GetWidth() * 0.5 + tx * pspritexscale);
+	x2 = xs_RoundToInt(viewwindow.centerx + tx * pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
 		return;
 
-	double texturemid = (BaseYCenter - sy) * tex->Scale.Y + tex->TopOffset;
+	// store information in a vissprite
+	PolyNoAccelPlayerSprite vis;
 
-	// Adjust PSprite for fullscreen views
-	if (viewpoint.camera->player && (renderTarget != screen || viewheight == renderTarget->GetHeight() || (renderTarget->GetWidth() > (BaseXCenter * 2) && !st_scale)))
-	{
-		AWeapon *weapon = dyn_cast<AWeapon>(sprite->GetCaller());
+	vis.renderflags = owner->renderflags;
+
+	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
+
+	if (viewpoint.camera->player && (renderTarget != screen ||
+		viewheight == renderTarget->GetHeight() ||
+		(renderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
+	{	// Adjust PSprite for fullscreen views
+		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
 			if (renderTarget != screen || viewheight == renderTarget->GetHeight())
 			{
-				texturemid -= weapon->YAdjust;
+				vis.texturemid -= weapon->YAdjust;
 			}
 			else
 			{
-				texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
+				vis.texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
 			}
 		}
 	}
-
-	// Move the weapon down for 1280x1024.
-	if (sprite->GetID() < PSP_TARGETCENTER)
-	{
-		texturemid -= AspectPspriteOffset(PolyRenderer::Instance()->Viewwindow.WidescreenRatio);
+	if (pspr->GetID() < PSP_TARGETCENTER)
+	{ // Move the weapon down for 1280x1024.
+		vis.texturemid -= AspectPspriteOffset(viewwindow.WidescreenRatio);
 	}
+	vis.x1 = x1 < 0 ? 0 : x1;
+	vis.x2 = x2 >= viewwidth ? viewwidth : x2;
+	vis.xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
+	vis.yscale = float(pspriteyscale / tex->Scale.Y);
+	vis.pic = tex;
 
-	int clipped_x1 = MAX(x1, 0);
-	int clipped_x2 = MIN(x2, viewwidth);
-	double xscale = pspritexscale / tex->Scale.X;
-	double yscale = pspriteyscale / tex->Scale.Y;
-	uint32_t translation = 0; // [RH] Use default colors
-
-	double xiscale, startfrac;
-	if (flip)
+	// If flip is used, provided that it's not already flipped (that would just invert itself)
+	// (It's an XOR...)
+	if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 	{
-		xiscale = -pspritexiscale * tex->Scale.X;
-		startfrac = 1;
+		vis.xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
+		vis.startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
-		xiscale = pspritexiscale * tex->Scale.X;
-		startfrac = 0;
+		vis.xiscale = FLOAT2FIXED(pspritexiscale * tex->Scale.X);
+		vis.startfrac = 0;
 	}
 
-	if (clipped_x1 > x1)
-		startfrac += xiscale * (clipped_x1 - x1);
+	if (vis.x1 > x1)
+		vis.startfrac += vis.xiscale*(vis.x1 - x1);
 
-	bool noaccel = false;
-
-	FDynamicColormap *basecolormap = GetColorTable(viewpoint.sector->Colormap, viewpoint.sector->SpecialColors[sector_t::sprites], true);
-	FDynamicColormap *colormap_to_use = basecolormap;
-
-	int ColormapNum = 0;
-	FSWColormap *BaseColormap = basecolormap;
-	float Alpha = 0;
-	FRenderStyle RenderStyle;
-	RenderStyle = STYLE_Normal;
-
-	bool foggy = false;
-	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
-	int spriteshade = PolyLightVisibility::LightLevelToShade(owner->Sector->lightlevel + actualextralight, foggy);
-	double minz = double((2048 * 4) / double(1 << 20));
-	ColormapNum = GETPALOOKUP(PolyRenderer::Instance()->Light.SpriteGlobVis(foggy) / minz, spriteshade);
-
-	if (sprite->GetID() < PSP_TARGETCENTER)
+	noaccel = false;
+	FDynamicColormap *colormap_to_use = nullptr;
+	if (pspr->GetID() < PSP_TARGETCENTER)
 	{
-		Alpha = float(owner->Alpha);
-		RenderStyle = owner->RenderStyle;
+		// [MC] Set the render style 
+
+		if (pspr->Flags & PSPF_RENDERSTYLE)
+		{
+			const int rs = clamp<int>(pspr->RenderStyle, 0, STYLE_Count);
+
+			if (pspr->Flags & PSPF_FORCESTYLE)
+			{
+				vis.RenderStyle = LegacyRenderStyles[rs];
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+			{
+				vis.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+			{
+				vis.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+				vis.RenderStyle.CheckFuzz();
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+			{
+				vis.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
+			}
+			else
+			{
+				vis.RenderStyle = LegacyRenderStyles[rs];
+			}
+		}
+		else
+		{
+			vis.RenderStyle = owner->RenderStyle;
+		}
+
+		// Set the alpha based on if using the overlay's own or not. Also adjust
+		// and override the alpha if not forced.
+		if (pspr->Flags & PSPF_ALPHA)
+		{
+			if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+			{
+				alpha = owner->Alpha;
+			}
+			else if (vis.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+			{
+				FRenderStyle style = vis.RenderStyle;
+				style.CheckFuzz();
+				switch (style.BlendOp)
+				{
+				default:
+					alpha = pspr->alpha * owner->Alpha;
+					break;
+				case STYLEOP_Fuzz:
+				case STYLEOP_Sub:
+					alpha = owner->Alpha;
+					break;
+				}
+
+			}
+			else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+			{
+				alpha = owner->Alpha;
+			}
+			else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+			{
+				alpha = owner->Alpha * pspr->alpha;
+			}
+			else
+			{
+				alpha = owner->Alpha;
+			}
+		}
+
+		// Should normal renderstyle come out on top at the end and we desire alpha,
+		// switch it to translucent. Normal never applies any sort of alpha.
+		if ((pspr->Flags & PSPF_ALPHA) &&
+			vis.RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
+			vis.Alpha < 1.0)
+		{
+			vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			alpha = owner->Alpha * pspr->alpha;
+		}
+
+		// ALWAYS take priority if asked for, except fuzz. Fuzz does absolutely nothing
+		// no matter what way it's changed.
+		if (pspr->Flags & PSPF_FORCEALPHA)
+		{
+			//Due to lack of != operators...
+			if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
+				vis.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
+			{
+			}
+			else
+			{
+				alpha = pspr->alpha;
+				vis.RenderStyle.Flags |= STYLEF_ForceAlpha;
+			}
+		}
+		vis.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
+
+		// Due to how some of the effects are handled, going to 0 or less causes some
+		// weirdness to display. There's no point rendering it anyway if it's 0.
+		if (vis.Alpha <= 0.)
+			return;
+
+		//-----------------------------------------------------------------------------
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
 		// the invert overlay flag says to do.
-		INTBOOL invertcolormap = (RenderStyle.Flags & STYLEF_InvertOverlay);
+		bool invertcolormap = (vis.RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
 
-		if (RenderStyle.Flags & STYLEF_InvertSource)
+		if (vis.RenderStyle.Flags & STYLEF_InvertSource)
 		{
 			invertcolormap = !invertcolormap;
 		}
 
-		FDynamicColormap *mybasecolormap = basecolormap;
+		bool fullbright = !foggy && pspr->GetState()->GetFullbright();
+		bool fadeToBlack = (vis.RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		if (RenderStyle.Flags & STYLEF_FadeToBlack)
-		{
-			if (invertcolormap)
-			{ // Fade to white
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
-				invertcolormap = false;
-			}
-			else
-			{ // Fade to black
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
-			}
-		}
+		vis.Light.SetColormap(0, spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-		/*
-		if (realfixedcolormap != nullptr && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
-		{ // fixed color
-			BaseColormap = realfixedcolormap;
-			ColormapNum = 0;
-		}
-		else
-		{
-			if (invertcolormap)
-			{
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-			}
-			if (fixedlightlev >= 0)
-			{
-				BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
-				ColormapNum = fixedlightlev >> COLORMAPSHIFT;
-			}
-			else if (!foggy && sprite->GetState()->GetFullbright())
-			{ // full bright
-				BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
-				ColormapNum = 0;
-			}
-			else
-			{ // local light
-				BaseColormap = mybasecolormap;
-				ColormapNum = GETPALOOKUP(0, spriteshade);
-			}
-		}
-		*/
+		colormap_to_use = (FDynamicColormap*)vis.Light.BaseColormap;
 
 		if (viewpoint.camera->Inventory != nullptr)
 		{
 			visstyle_t visstyle;
-			visstyle.Alpha = Alpha;
+			visstyle.Alpha = vis.Alpha;
 			visstyle.RenderStyle = STYLE_Count;
 			visstyle.Invert = false;
 
 			viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
 
-			Alpha = visstyle.Alpha;
+			vis.Alpha = visstyle.Alpha;
 
 			if (visstyle.RenderStyle != STYLE_Count)
 			{
-				RenderStyle = visstyle.RenderStyle;
+				vis.RenderStyle = visstyle.RenderStyle;
 			}
 
 			if (visstyle.Invert)
 			{
-				BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
-				ColormapNum = 0;
-				if (BaseColormap->Maps < mybasecolormap->Maps || BaseColormap->Maps >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
-				{
-					noaccel = true;
-				}
+				vis.Light.BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
+				vis.Light.ColormapNum = 0;
+				noaccel = true;
 			}
 		}
-		
 		// If we're drawing with a special colormap, but shaders for them are disabled, do
 		// not accelerate.
-		if (!r_shadercolormaps && (BaseColormap >= &SpecialSWColormaps[0] &&
-			BaseColormap <= &SpecialSWColormaps.Last()))
+		if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
+			vis.Light.BaseColormap <= &SpecialSWColormaps.Last()))
 		{
 			noaccel = true;
 		}
 		// If drawing with a BOOM colormap, disable acceleration.
-		if (mybasecolormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
+		if (vis.Light.BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
 		{
 			noaccel = true;
 		}
@@ -334,116 +486,185 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 		// colormap, disable acceleration so that the lights can remain fixed.
 		PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 		if (!noaccel && cameraLight->ShaderColormap() == nullptr &&
-			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
-			tex->UseBasePalette())
+			NormalLightHasFixedLights && vis.Light.BaseColormap == &NormalLight &&
+			vis.pic->UseBasePalette())
 		{
 			noaccel = true;
 		}
-		// [SP] If emulating GZDoom fullbright, disable acceleration
-		if (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0)
-			mybasecolormap = &FullNormalLight;
-		if (r_fullbrightignoresectorcolor && !foggy && sprite->GetState()->GetFullbright())
-			mybasecolormap = &FullNormalLight;
-		colormap_to_use = mybasecolormap;
+	}
+	else
+	{
+		colormap_to_use = basecolormap;
+
+		vis.Light.BaseColormap = basecolormap;
+		vis.Light.ColormapNum = 0;
 	}
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
 	if (!noaccel && renderTarget == screen && (DFrameBuffer *)screen->Accel2D)
 	{
-		FRenderStyle style = RenderStyle;
+		FRenderStyle style = vis.RenderStyle;
 		style.CheckFuzz();
 		if (style.BlendOp != STYLEOP_Fuzz)
 		{
-			PolyScreenSprite screenSprite;
-			screenSprite.Pic = tex;
-			screenSprite.X1 = viewwindowx + x1;
-			screenSprite.Y1 = viewwindowy + viewheight / 2 - texturemid * yscale - 0.5;
-			screenSprite.Width = tex->GetWidth() * xscale;
-			screenSprite.Height = tex->GetHeight() * yscale;
-			screenSprite.Translation = TranslationToTable(translation);
-			//screenSprite.Translation = translation;
-			screenSprite.Flip = xiscale < 0;
-			screenSprite.Alpha = Alpha;
-			screenSprite.RenderStyle = RenderStyle;
-			screenSprite.BaseColormap = BaseColormap;
-			screenSprite.ColormapNum = ColormapNum;
-			screenSprite.Colormap = colormap_to_use;
-			ScreenSprites.push_back(screenSprite);
+			PolyHWAccelPlayerSprite accelSprite;
+
+			accelSprite.pic = vis.pic;
+			accelSprite.texturemid = vis.texturemid;
+			accelSprite.yscale = vis.yscale;
+			accelSprite.xscale = vis.xscale;
+
+			accelSprite.Alpha = vis.Alpha;
+			accelSprite.RenderStyle = vis.RenderStyle;
+			accelSprite.Translation = vis.Translation;
+			accelSprite.FillColor = vis.FillColor;
+
+			accelSprite.basecolormap = colormap_to_use;
+			accelSprite.x1 = x1;
+			accelSprite.flip = vis.xiscale < 0;
+
+			if (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
+				vis.Light.BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
+			{
+				accelSprite.special = &SpecialColormaps[vis.Light.BaseColormap - &SpecialSWColormaps[0]];
+			}
+			else if (PolyCameraLight::Instance()->ShaderColormap())
+			{
+				accelSprite.special = PolyCameraLight::Instance()->ShaderColormap();
+			}
+			else if (colormap_to_use->Color == PalEntry(255, 255, 255) &&
+				colormap_to_use->Desaturate == 0)
+			{
+				accelSprite.overlay = colormap_to_use->Fade;
+				accelSprite.overlay.a = uint8_t(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
+			}
+			else
+			{
+				accelSprite.usecolormapstyle = true;
+				accelSprite.colormapstyle.Color = colormap_to_use->Color;
+				accelSprite.colormapstyle.Fade = colormap_to_use->Fade;
+				accelSprite.colormapstyle.Desaturate = colormap_to_use->Desaturate;
+				accelSprite.colormapstyle.FadeLevel = vis.Light.ColormapNum / float(NUMCOLORMAPS);
+			}
+
+			AcceleratedSprites.Push(accelSprite);
 			return;
 		}
 	}
 
-	// To do: draw sprite same way as R_DrawVisSprite(vis) here
-
-	// Draw the fuzzy weapon:
-	FRenderStyle style = RenderStyle;
-	style.CheckFuzz();
-	if (style.BlendOp == STYLEOP_Fuzz)
-	{
-		RenderStyle = LegacyRenderStyles[STYLE_Shadow];
-
-		PolyScreenSprite screenSprite;
-		screenSprite.Pic = tex;
-		screenSprite.X1 = viewwindowx + x1;
-		screenSprite.Y1 = viewwindowy + viewheight / 2 - texturemid * yscale - 0.5;
-		screenSprite.Width = tex->GetWidth() * xscale;
-		screenSprite.Height = tex->GetHeight() * yscale;
-		screenSprite.Translation = TranslationToTable(translation);
-		screenSprite.Flip = xiscale < 0;
-		screenSprite.Alpha = Alpha;
-		screenSprite.RenderStyle = RenderStyle;
-		screenSprite.BaseColormap = BaseColormap;
-		screenSprite.ColormapNum = ColormapNum;
-		screenSprite.Colormap = colormap_to_use;
-		ScreenSprites.push_back(screenSprite);
-	}
+	vis.Render();
 }
 
-void PolyScreenSprite::Render()
+fixed_t RenderPolyPlayerSprites::LightLevelToShade(int lightlevel, bool foggy)
 {
-	FSpecialColormap *special = nullptr;
-	FColormapStyle colormapstyle;
-	PalEntry overlay = 0;
-	bool usecolormapstyle = false;
-	if (BaseColormap >= &SpecialSWColormaps[0] &&
-		BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
+	bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
+	if (nolightfade)
 	{
-		special = &SpecialColormaps[BaseColormap - &SpecialSWColormaps[0]];
-	}
-	else if (Colormap->Color == PalEntry(255, 255, 255) &&
-		Colormap->Desaturate == 0)
-	{
-		overlay = Colormap->Fade;
-		overlay.a = uint8_t(ColormapNum * 255 / NUMCOLORMAPS);
+		return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);
 	}
 	else
 	{
-		usecolormapstyle = true;
-		colormapstyle.Color = Colormap->Color;
-		colormapstyle.Fade = Colormap->Fade;
-		colormapstyle.Desaturate = Colormap->Desaturate;
-		colormapstyle.FadeLevel = ColormapNum / float(NUMCOLORMAPS);
+		// Convert a light level into an unbounded colormap index (shade). Result is
+		// fixed point. Why the +12? I wish I knew, but experimentation indicates it
+		// is necessary in order to best reproduce Doom's original lighting.
+		return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+void PolyNoAccelPlayerSprite::Render()
+{
+#if 0
+	if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
+	{ // scaled to 0; can't see
+		return;
 	}
 
-	screen->DrawTexture(Pic,
-		X1,
-		Y1,
-		DTA_DestWidthF, Width,
-		DTA_DestHeightF, Height,
-		DTA_TranslationIndex, Translation,
-		DTA_FlipX, Flip,
-		DTA_TopOffset, 0,
-		DTA_LeftOffset, 0,
-		DTA_ClipLeft, viewwindowx,
-		DTA_ClipTop, viewwindowy,
-		DTA_ClipRight, viewwindowx + viewwidth,
-		DTA_ClipBottom, viewwindowy + viewheight,
-		DTA_Alpha, Alpha,
-		DTA_RenderStyle, RenderStyle,
-		DTA_FillColor, FillColor,
-		DTA_SpecialColormap, special,
-		DTA_ColorOverlay, overlay.d,
-		DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : nullptr,
-		TAG_DONE);
+	SpriteDrawerArgs drawerargs;
+	drawerargs.SetLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
+
+	FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
+
+	bool visible = drawerargs.SetStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap, Light.ColormapNum << FRACBITS);
+	if (!visible)
+		return;
+
+	double spryscale = yscale;
+	bool sprflipvert = false;
+	fixed_t iscale = FLOAT2FIXED(1 / yscale);
+
+	double centerY = viewheight / 2;
+
+	double sprtopscreen;
+	if (renderflags & RF_YFLIP)
+	{
+		sprflipvert = true;
+		spryscale = -spryscale;
+		iscale = -iscale;
+		sprtopscreen = centerY + (texturemid - pic->GetHeight()) * spryscale;
+	}
+	else
+	{
+		sprflipvert = false;
+		sprtopscreen = centerY - texturemid * spryscale;
+	}
+
+	// clip to screen bounds
+	short *mfloorclip = screenheightarray;
+	short *mceilingclip = zeroarray;
+
+	fixed_t frac = startfrac;
+	for (int x = x1; x < x2; x++)
+	{
+		drawerargs.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+		frac += xiscale;
+	}
+#endif
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PolyColormapLight::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
+{
+	if (fadeToBlack)
+	{
+		if (invertColormap) // Fade to white
+		{
+			basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(255, 255, 255), basecolormap->Desaturate);
+			invertColormap = false;
+		}
+		else // Fade to black
+		{
+			basecolormap = GetSpecialLights(basecolormap->Color, MAKERGB(0, 0, 0), basecolormap->Desaturate);
+		}
+	}
+
+	if (invertColormap)
+	{
+		basecolormap = GetSpecialLights(basecolormap->Color, basecolormap->Fade.InverseColor(), basecolormap->Desaturate);
+	}
+
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	if (cameraLight->FixedColormap())
+	{
+		BaseColormap = cameraLight->FixedColormap();
+		ColormapNum = 0;
+	}
+	else if (cameraLight->FixedLightLevel() >= 0)
+	{
+		BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
+		ColormapNum = cameraLight->FixedLightLevel() >> COLORMAPSHIFT;
+	}
+	else if (fullbright)
+	{
+		BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
+		ColormapNum = 0;
+	}
+	else
+	{
+		BaseColormap = basecolormap;
+		ColormapNum = GETPALOOKUP(visibility, shade);
+	}
 }

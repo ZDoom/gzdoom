@@ -1616,7 +1616,7 @@ class CommandDrawMugShot : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			FTexture *face = script->MugShot.GetFace(statusBar->CPlayer, defaultFace, accuracy, stateFlags);
+			FTexture *face = statusBar->wrapper->mugshot.GetFace(statusBar->CPlayer, defaultFace, accuracy, stateFlags);
 			if (face != NULL)
 				statusBar->DrawGraphic(face, x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 		}
@@ -1661,7 +1661,6 @@ class CommandDrawMugShot : public SBarInfoCommand
 		}
 		void Reset()
 		{
-			script->MugShot.Reset();
 		}
 
 	protected:

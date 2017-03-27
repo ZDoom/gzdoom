@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -59,6 +60,7 @@
 #include "virtual.h"
 #include "p_acs.h"
 #include "r_data/r_translate.h"
+#include "sbarinfo.h"
 
 #include "../version.h"
 
@@ -81,8 +83,8 @@ EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
-EXTERN_CVAR(Bool, hud_scale)
 EXTERN_CVAR(Bool, vid_fps)
+CVAR(Int, hud_scale, -1, CVAR_ARCHIVE);
 
 int active_con_scaletext();
 
@@ -90,7 +92,7 @@ DBaseStatusBar *StatusBar;
 
 extern int setblocks;
 
-int gST_X, gST_Y;
+int gST_Y;
 
 FTexture *CrosshairImage;
 static int CrosshairNum;
@@ -224,6 +226,85 @@ void ST_Clear()
 
 //---------------------------------------------------------------------------
 //
+// create a new status bar
+//
+//---------------------------------------------------------------------------
+
+void ST_CreateStatusBar(bool bTitleLevel)
+{
+	if (StatusBar != NULL)
+	{
+		StatusBar->Destroy();
+		StatusBar = NULL;
+	}
+
+	if (bTitleLevel)
+	{
+		StatusBar = new DBaseStatusBar();
+		StatusBar->SetSize(0);
+	}
+	else if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile)
+	{
+		auto cls = PClass::FindClass(gameinfo.statusbarclass);
+		if (cls != nullptr)
+		{
+			StatusBar = (DBaseStatusBar *)cls->CreateNew();
+			IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+			{
+				VMValue params[] = { StatusBar };
+				GlobalVMStack.Call(func, params, 1, nullptr, 0);
+			}
+		}
+	}
+	if (StatusBar == nullptr && SBarInfoScript[SCRIPT_CUSTOM] != nullptr)
+	{
+		int cstype = SBarInfoScript[SCRIPT_CUSTOM]->GetGameType();
+
+		//Did the user specify a "base"
+		if (cstype == GAME_Any) //Use the default, empty or custom.
+		{
+			StatusBar = CreateCustomStatusBar(SCRIPT_CUSTOM);
+		}
+		else
+		{
+			StatusBar = CreateCustomStatusBar(SCRIPT_DEFAULT);
+		}
+	}
+	if (StatusBar == nullptr)
+	{
+		FName defname;
+
+		if (gameinfo.gametype & GAME_DoomChex) defname = "DoomStatusBar";
+		else if (gameinfo.gametype == GAME_Heretic) defname = "HereticStatusBar";
+		else if (gameinfo.gametype == GAME_Hexen) defname = "HexenStatusBar";
+		else if (gameinfo.gametype == GAME_Strife) defname = "StrifeStatusBar";
+		if (defname != NAME_None)
+		{
+			auto cls = PClass::FindClass(defname);
+			if (cls != nullptr)
+			{
+
+				StatusBar = (DBaseStatusBar *)cls->CreateNew();
+				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+				{
+					VMValue params[] = { StatusBar };
+					GlobalVMStack.Call(func, params, 1, nullptr, 0);
+				}
+			}
+		}
+	}
+	if (StatusBar == nullptr)
+	{
+		StatusBar = new DBaseStatusBar();
+		StatusBar->SetSize(0);
+	}
+
+	GC::WriteBarrier(StatusBar);
+	StatusBar->AttachToPlayer(&players[consoleplayer]);
+	StatusBar->NewGame();
+}
+//---------------------------------------------------------------------------
+//
 // Constructor
 //
 //---------------------------------------------------------------------------
@@ -238,8 +319,7 @@ DBaseStatusBar::DBaseStatusBar ()
 	Displacement = 0;
 	CPlayer = NULL;
 	ShowLog = false;
-	cleanScale = { (double)CleanXfac, (double)CleanYfac };
-
+	defaultScale = { (double)CleanXfac, (double)CleanYfac };
 }
 
 void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
@@ -327,7 +407,6 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		}
 		Displacement = 0;
 	}
-	gST_X = ST_X;
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetScaled)
@@ -347,6 +426,96 @@ void DBaseStatusBar::CallSetScaled(bool scale, bool force)
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
 	else SetScaled(scale, force);
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC GetHUDScale
+//
+//---------------------------------------------------------------------------
+
+DVector2 DBaseStatusBar::GetHUDScale() const
+{
+	int scale;
+	if (hud_scale < 0 || ForcedScale)	// a negative value is the equivalent to the old boolean hud_scale. This can yield different values for x and y for higher resolutions.
+	{
+		return defaultScale;
+	}
+	if (hud_scale > 0)		// use the scale as an absolute value, but also factor in the specified resolution of the HUD
+	{
+		scale = hud_scale;
+	}
+	else  if (uiscale == 0)
+	{
+		return defaultScale;
+	}
+	else
+	{
+		scale = MAX<int>(1, uiscale);
+	}
+
+	// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
+	// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
+	// the resulting scaling factor needs to be reduced accordingly.
+	int realscale = MAX<int>(1, (320 * scale) / HorizontalResolution);
+	return{ double(realscale), double(realscale) };
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetHUDScale)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ACTION_RETURN_VEC2(self->GetHUDScale());
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC GetHUDScale
+//
+//---------------------------------------------------------------------------
+
+void DBaseStatusBar::BeginStatusBar(int resW, int resH, int relTop, bool completeborder, bool forceScaled)
+{
+	SetSize(relTop, resW, resH);
+	SetScaled(st_scale, forceScaled);
+	CompleteBorder = completeborder;
+	fullscreenOffsets = false;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_INT(r);
+	PARAM_BOOL_DEF(cb);
+	PARAM_BOOL_DEF(fs);
+	self->BeginStatusBar(w, h, r, cb, fs);
+	return 0;
+}
+//---------------------------------------------------------------------------
+//
+// PROC GetHUDScale
+//
+//---------------------------------------------------------------------------
+
+void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
+{
+	SetSize(0, resW, resH);	// this intentionally resets the relative top to force the caller to go through BeginStatusBar and not just reset some variables.
+	this->Alpha = Alpha;
+	ForcedScale = forcescaled;
+	CompleteBorder = false;
+	fullscreenOffsets = true;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginHUD)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_FLOAT(a);
+	PARAM_BOOL_DEF(fs);
+	self->BeginHUD(w, h, a, fs);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -1016,6 +1185,16 @@ bool DBaseStatusBar::MustDrawLog(EHudState state)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetMugshotState)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_STRING(statename);
+	PARAM_BOOL(wait);
+	PARAM_BOOL(reset);
+	self->mugshot.SetState(statename, wait, reset);
+	return 0;
+}
+
 void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, bool reset)
 {
 	IFVIRTUAL(DBaseStatusBar, SetMugShotState)
@@ -1024,7 +1203,6 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 		VMValue params[] = { (DObject*)this, &statestring, waitTillDone, reset };
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
-	mugshot.SetState(stateName, waitTillDone, reset);
 }
 
 //---------------------------------------------------------------------------
@@ -1223,7 +1401,7 @@ void DBaseStatusBar::ScreenSizeChanged ()
 
 	int x, y;
 	V_CalcCleanFacs(HorizontalResolution, VerticalResolution, SCREENWIDTH, SCREENHEIGHT, &x, &y);
-	cleanScale = { (double)x, (double)y };
+	defaultScale = { (double)x, (double)y };
 
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
@@ -1423,13 +1601,12 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, dou
 
 		if (screenalign == (RIGHT | TOP) && vid_fps) y += 10;
 
-		if (hud_scale)
-		{
-			x *= cleanScale.X;
-			y *= cleanScale.Y;
-			width *= cleanScale.X;
-			height *= cleanScale.Y;
-		}
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		width *= Scale.X;
+		height *= Scale.Y;
 		x += orgx;
 		y += orgy;
 	}
@@ -1495,14 +1672,13 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 	const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
 	int fontcolor = translation;
 	double orgx = 0, orgy = 0;
+	DVector2 Scale;
 
 	if (fullscreenOffsets)
 	{
-		if (hud_scale)
-		{
-			shadowX *= (int)cleanScale.X;
-			shadowY *= (int)cleanScale.Y;
-		}
+		Scale = GetHUDScale();
+		shadowX *= (int)Scale.X;
+		shadowY *= (int)Scale.Y;
 
 		switch (screenalign & HMASK)
 		{
@@ -1519,6 +1695,10 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 
 		if (screenalign == (RIGHT | TOP) && vid_fps) orgy += 10;
+	}
+	else
+	{
+		Scale = { 1.,1. };
 	}
 	int ch;
 	while (ch = *str++, ch != '\0')
@@ -1582,13 +1762,11 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 		else
 		{
-			if (hud_scale)
-			{
-				rx *= cleanScale.X;
-				ry *= cleanScale.Y;
-				rw *= cleanScale.X;
-				rh *= cleanScale.Y;
-			}
+			rx *= Scale.X;
+			ry *= Scale.Y;
+			rw *= Scale.X;
+			rh *= Scale.Y;
+
 			rx += orgx;
 			ry += orgy;
 		}
@@ -1697,21 +1875,9 @@ DEFINE_FIELD(DBaseStatusBar, Alpha);
 DEFINE_FIELD(DBaseStatusBar, drawOffset);
 DEFINE_FIELD(DBaseStatusBar, drawClip);
 DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
-DEFINE_FIELD(DBaseStatusBar, cleanScale);
+DEFINE_FIELD(DBaseStatusBar, defaultScale);
 
 DEFINE_GLOBAL(StatusBar);
-
-
-DBaseStatusBar *CreateStrifeStatusBar()
-{
-	auto sb = (DBaseStatusBar *)PClass::FindClass("StrifeStatusBar")->CreateNew();
-	IFVIRTUALPTR(sb, DBaseStatusBar, Init)
-	{
-		VMValue params[] = { sb };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0);
-	}
-	return sb;
-}
 
 
 static DObject *InitObject(PClass *type, int paramnum, VM_ARGS)

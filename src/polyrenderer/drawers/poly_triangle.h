@@ -40,8 +40,8 @@ class PolyTriangleDrawer
 {
 public:
 	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
-	static void draw(const PolyDrawArgs &args);
 	static void toggle_mirror();
+	static bool is_mirror();
 
 private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
@@ -66,7 +66,7 @@ public:
 	DrawPolyTrianglesCommand(const PolyDrawArgs &args, bool mirror);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override;
+	FString DebugInfo() override { return "DrawPolyTriangles"; }
 
 private:
 	PolyDrawArgs args;

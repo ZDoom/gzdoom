@@ -39,12 +39,11 @@ public:
 		int startX = thread->StartX;
 		int startY = thread->StartY;
 
-		auto flags = args->uniforms->flags;
-		bool is_fixed_light = (flags & TriUniforms::fixed_light) == TriUniforms::fixed_light;
+		bool is_fixed_light = args->uniforms->FixedLight();
 		uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
-		auto colormaps = args->colormaps;
-		uint32_t srcalpha = args->uniforms->srcalpha;
-		uint32_t destalpha = args->uniforms->destalpha;
+		auto colormaps = args->uniforms->BaseColormap();
+		uint32_t srcalpha = args->uniforms->SrcAlpha();
+		uint32_t destalpha = args->uniforms->DestAlpha();
 
 		// Calculate gradients
 		const TriVertex &v1 = *args->v1;
@@ -68,16 +67,17 @@ public:
 		int pitch = args->pitch;
 
 		// Light
-		uint32_t light = args->uniforms->light;
-		float shade = (64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f) / 32.0f;
-		float globVis = args->uniforms->globvis * (1.0f / 32.0f);
+		uint32_t light = args->uniforms->Light();
+		float shade = 2.0f - (light + 12.0f) / 128.0f;
+		float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
+		light += light >> 7; // 255 -> 256
 
 		// Sampling stuff
-		uint32_t color = args->uniforms->color;
-		const uint8_t * RESTRICT translation = args->translation;
-		const uint8_t * RESTRICT texPixels = args->texturePixels;
-		uint32_t texWidth = args->textureWidth;
-		uint32_t texHeight = args->textureHeight;
+		uint32_t color = args->uniforms->Color();
+		const uint8_t * RESTRICT translation = args->uniforms->Translation();
+		const uint8_t * RESTRICT texPixels = args->uniforms->TexturePixels();
+		uint32_t texWidth = args->uniforms->TextureWidth();
+		uint32_t texHeight = args->uniforms->TextureHeight();
 
 		for (int i = 0; i < numSpans; i++)
 		{

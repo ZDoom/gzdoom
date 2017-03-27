@@ -167,7 +167,7 @@ static void BuildBlockmap()
 
 void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 {
-	if (by < 0 || by >= PortalBlockmap.dx || bx < 0 || bx >= PortalBlockmap.dy) return;
+	if (by < 0 || by >= PortalBlockmap.dy || bx < 0 || bx >= PortalBlockmap.dx) return;
 
 	FPortalBlock &block = PortalBlockmap(bx, by);
 

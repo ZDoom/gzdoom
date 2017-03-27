@@ -45,6 +45,14 @@ void PolyDrawArgs::SetClipPlane(const PolyClipPlane &plane)
 	mClipPlane[3] = plane.D;
 }
 
+void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
+{
+	mTexturePixels = texels;
+	mTextureWidth = width;
+	mTextureHeight = height;
+	mTranslation = nullptr;
+}
+
 void PolyDrawArgs::SetTexture(FTexture *texture)
 {
 	mTextureWidth = texture->GetWidth();

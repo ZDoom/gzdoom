@@ -48,6 +48,7 @@
 
 // [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
 CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+EXTERN_CVAR(Int, gl_particles_style)
 
 /*
 	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
@@ -2946,7 +2947,8 @@ namespace swrenderer
 		uint8_t *dest = thread->dest_for_thread(_dest_y, pitch, _dest);
 		pitch = pitch * thread->num_cores;
 
-		const uint32_t *source = &particle_texture[(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
+		int particle_texture_index = MIN<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
+		const uint32_t *source = &particle_texture[particle_texture_index][(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
 		uint32_t fracstep = PARTICLE_TEXTURE_SIZE * FRACUNIT / _count;

@@ -29,6 +29,8 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 
+EXTERN_CVAR(Int, gl_particles_style)
+
 void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	DVector3 pos = particle->Pos;
@@ -76,12 +78,40 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 	args.SetSubsectorDepth(subsectorDepth);
 	args.SetSubsectorDepthTest(true);
 	args.SetColor(particle->color | 0xff000000, particle->color >> 24);
-	args.SetStyle(TriBlendMode::AlphaBlend, particle->alpha, 1.0 - particle->alpha);
+	args.SetStyle(TriBlendMode::Shaded, particle->alpha, 1.0 - particle->alpha);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteSubsectorDepth(false);
 	args.SetClipPlane(clipPlane);
+	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+}
+
+uint8_t *RenderPolyParticle::GetParticleTexture()
+{
+	static uint8_t particle_texture[NumParticleTextures][ParticleTextureSize * ParticleTextureSize];
+	static bool first_call = true;
+	if (first_call)
+	{
+		double center = ParticleTextureSize * 0.5f;
+		for (int y = 0; y < ParticleTextureSize; y++)
+		{
+			for (int x = 0; x < ParticleTextureSize; x++)
+			{
+				double dx = (center - x - 0.5f) / center;
+				double dy = (center - y - 0.5f) / center;
+				double dist2 = dx * dx + dy * dy;
+				double round_alpha = clamp<double>(1.7f - dist2 * 1.7f, 0.0f, 1.0f);
+				double smooth_alpha = clamp<double>(1.1f - dist2 * 1.1f, 0.0f, 1.0f);
+
+				particle_texture[0][x + y * ParticleTextureSize] = 255;
+				particle_texture[1][x + y * ParticleTextureSize] = (int)(round_alpha * 255.0f + 0.5f);
+				particle_texture[2][x + y * ParticleTextureSize] = (int)(smooth_alpha * 255.0f + 0.5f);
+			}
+		}
+		first_call = false;
+	}
+	return particle_texture[MIN<int>(gl_particles_style, NumParticleTextures)];
 }

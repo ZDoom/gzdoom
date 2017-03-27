@@ -49,6 +49,7 @@ class PolyDrawArgs
 {
 public:
 	void SetClipPlane(const PolyClipPlane &plane);
+	void SetTexture(const uint8_t *texels, int width, int height);
 	void SetTexture(FTexture *texture);
 	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);

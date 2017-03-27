@@ -5,6 +5,7 @@ class HereticStatusBar : BaseStatusBar
 	HUDFont mIndexFont;
 	HUDFont mBigFont;
 	InventoryBarState diparms;
+	InventoryBarState diparms_sbar;
 	
 
 	override void Init()
@@ -20,6 +21,7 @@ class HereticStatusBar : BaseStatusBar
 		fnt = "BIGFONT";
 		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 2, 2);
 		diparms = InventoryBarState.Create(mIndexFont);
+		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
 	}
 	
@@ -120,12 +122,11 @@ class HereticStatusBar : BaseStatusBar
 					DrawString(mIndexFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (209, 182), DI_TEXT_ALIGN_RIGHT);
 				}
 			}
-			
 		}
 		else
 		{
 			DrawImage("INVBAR", (34, 160), DI_ITEM_OFFSETS);
-			//drawinventorybar Heretic, noartibox, 7, INDEXFONT_RAVEN, 50, 160, 77, 182, untranslated;
+			DrawInventoryBar(diparms_sbar, (49, 160), 7, DI_ITEM_LEFT_TOP, HX_SHADOW);
 		}
 	}
 

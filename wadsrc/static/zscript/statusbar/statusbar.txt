@@ -39,17 +39,9 @@ class InventoryBarState ui
 	int cr;
 	int flags;
 
-	// The default settings here are what SBARINFO is using.
-	static InventoryBarState Create(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
-							String boxgfx = "ARTIBOX", String selgfx = "SELECTBO", Vector2 innersize = (0, 0),
-							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	private static void Init(InventoryBarState me, HUDFont indexfont, int cr, double itemalpha, Vector2 innersize,	String leftgfx, String rightgfx, Vector2 arrowoffs, int flags)
 	{
-		let me = new ("InventoryBarState");
 		me.itemalpha = itemalpha;
-		me.box = TexMan.CheckForTexture(boxgfx, TexMan.TYPE_MiscPatch);
-		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
-		if (me.box.IsValid() || me.selector.IsValid()) me.boxsize = TexMan.GetScaledSize(me.box.IsValid()? me.box : me.selector);
-		else me.boxsize = (32., 32.);
 		if (innersize == (0, 0))
 		{
 			me.boxofs = (2, 2);
@@ -72,8 +64,35 @@ class InventoryBarState ui
 		else me.amountfont = indexfont;
 		me.cr = cr;
 		me.flags = flags;
+	}
+
+	// The default settings here are what SBARINFO is using.
+	static InventoryBarState Create(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
+							String boxgfx = "ARTIBOX", String selgfx = "SELECTBO", Vector2 innersize = (0, 0),
+							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	{
+		let me = new ("InventoryBarState");
+		me.box = TexMan.CheckForTexture(boxgfx, TexMan.TYPE_MiscPatch);
+		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
+		if (me.box.IsValid() || me.selector.IsValid()) me.boxsize = TexMan.GetScaledSize(me.box.IsValid()? me.box : me.selector);
+		else me.boxsize = (32., 32.);
+		Init(me, indexfont, cr, itemalpha, innersize, leftgfx, rightgfx, arrowoffs, flags);
 		return me;
 	}
+	
+	// The default settings here are what SBARINFO is using.
+	static InventoryBarState CreateNoBox(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
+							Vector2 boxsize = (32, 32), String selgfx = "SELECTBO", Vector2 innersize = (0, 0),
+							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	{
+		let me = new ("InventoryBarState");
+		me.box.SetInvalid();
+		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
+		me.boxsize = boxsize;
+		Init(me, indexfont, cr, itemalpha, innersize, leftgfx, rightgfx, arrowoffs, flags);
+		return me;
+	}
+	
 }
 
 

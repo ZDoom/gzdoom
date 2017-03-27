@@ -134,10 +134,9 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(front->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
-	args.SetTexture(tex, decal->Translation, true);
 	args.SetSubsectorDepth(subsectorDepth);
 	args.SetColor(0xff000000 | decal->AlphaColor, decal->AlphaColor >> 24);
-	args.SetStyle(TriBlendMode::Shaded, decal->Alpha, 1.0 - decal->Alpha); // R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+	args.SetStyle(decal->RenderStyle, decal->Alpha, decal->AlphaColor, decal->Translation, tex, false);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);

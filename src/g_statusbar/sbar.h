@@ -396,7 +396,7 @@ public:
 	uint32_t GetTranslation() const;
 
 	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
-	void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
+	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
 
 	void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);

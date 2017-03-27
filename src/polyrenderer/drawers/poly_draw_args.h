@@ -128,7 +128,7 @@ private:
 	uint8_t mStencilWriteValue = 0;
 	const uint8_t *mColormaps = nullptr;
 	float mClipPlane[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	TriBlendMode mBlendMode = TriBlendMode::Copy;
+	TriBlendMode mBlendMode = TriBlendMode::FillOpaque;
 	uint32_t mLight = 0;
 	uint32_t mSubsectorDepth = 0;
 	uint32_t mColor = 0;

@@ -53,7 +53,7 @@ public:
 					Loop<AdvancedShade, LinearFilter>(args, thread);
 			}
 		}
-		else // no linear filtering for translated, shaded, fill or skycap
+		else // no linear filtering for translated, shaded, stencil, fill or skycap
 		{
 			if (is_simple_shade)
 			{
@@ -453,7 +453,7 @@ private:
 		using namespace TriScreenDrawerModes;
 
 		uint32_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Fill)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill)
 		{
 			return color;
 		}
@@ -542,6 +542,14 @@ private:
 			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
 			return sampleshadeout;
 		}
+		else if (SamplerT::Mode == (int)Samplers::Stencil)
+		{
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			unsigned int sampleshadeout = APART(texPixels[texelX * texHeight + texelY]);
+			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
+			return sampleshadeout;
+		}
 		else
 		{
 			return 0;
@@ -621,6 +629,8 @@ private:
 		}
 		else if (BlendT::Mode == (int)BlendModes::AddClampShaded)
 		{
+			ifgshade0 = (ifgshade0 * srcalpha + 128) >> 8;
+			ifgshade1 = (ifgshade1 * srcalpha + 128) >> 8;
 			__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
 
 			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, alpha), 8);

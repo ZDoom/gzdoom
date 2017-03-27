@@ -99,10 +99,8 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	{
 		int bmode = (int)drawargs.BlendMode();
 
-		if (drawargs.WriteColor() && drawargs.TexturePixels())
-			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDraw32[bmode] : ScreenTriangle::TriDraw8[bmode];
-		else if (drawargs.WriteColor())
-			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriFill32[bmode] : ScreenTriangle::TriFill8[bmode];
+		if (drawargs.WriteColor())
+			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
 	}
 
 	if (drawargs.WriteStencil())

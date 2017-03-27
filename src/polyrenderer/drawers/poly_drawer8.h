@@ -272,7 +272,7 @@ private:
 		using namespace TriScreenDrawerModes;
 
 		uint8_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Fill)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill)
 		{
 			return color;
 		}
@@ -301,13 +301,14 @@ private:
 			if (a == 256)
 				return texel;
 
+			uint32_t capcolor = GPalette.BaseColors[color].d;
 			uint32_t texelrgb = GPalette.BaseColors[texel].d;
 			uint32_t r = RPART(texelrgb);
 			uint32_t g = GPART(texelrgb);
 			uint32_t b = BPART(texelrgb);
-			uint32_t capcolor_red = RPART(color);
-			uint32_t capcolor_green = GPART(color);
-			uint32_t capcolor_blue = BPART(color);
+			uint32_t capcolor_red = RPART(capcolor);
+			uint32_t capcolor_green = GPART(capcolor);
+			uint32_t capcolor_blue = BPART(capcolor);
 			r = (r * a + capcolor_red * inv_a + 127) >> 8;
 			g = (g * a + capcolor_green * inv_a + 127) >> 8;
 			b = (b * a + capcolor_blue * inv_a + 127) >> 8;
@@ -330,6 +331,12 @@ private:
 			unsigned int sampleshadeout = texPixels[texelX * texHeight + texelY];
 			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
 			return sampleshadeout;
+		}
+		else if (SamplerT::Mode == (int)Samplers::Stencil)
+		{
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			return texPixels[texelX * texHeight + texelY] != 0 ? 256 : 0;
 		}
 		else
 		{
@@ -372,6 +379,7 @@ private:
 		}
 		else if (BlendT::Mode == (int)BlendModes::Shaded)
 		{
+			fgshade = (fgshade * srcalpha + 128) >> 8;
 			uint32_t alpha = fgshade;
 			uint32_t inv_alpha = 256 - fgshade;
 			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
@@ -390,6 +398,7 @@ private:
 		}
 		else if (BlendT::Mode == (int)BlendModes::AddClampShaded)
 		{
+			fgshade = (fgshade * srcalpha + 128) >> 8;
 			uint32_t alpha = fgshade;
 			int32_t fg_r = GPalette.BaseColors[shadedfg].r;
 			int32_t fg_g = GPalette.BaseColors[shadedfg].g;
@@ -417,21 +426,21 @@ private:
 
 			if (BlendT::Mode == (int)BlendModes::AddClamp)
 			{
-				fg_r = MIN<int32_t>((fg_r * srcalpha + bg_r * destalpha + 127) >> 8, 255);
-				fg_g = MIN<int32_t>((fg_g * srcalpha + bg_g * destalpha + 127) >> 8, 255);
-				fg_b = MIN<int32_t>((fg_b * srcalpha + bg_b * destalpha + 127) >> 8, 255);
+				fg_r = MIN(int32_t(fg_r * srcalpha + bg_r * destalpha + 127) >> 8, 255);
+				fg_g = MIN(int32_t(fg_g * srcalpha + bg_g * destalpha + 127) >> 8, 255);
+				fg_b = MIN(int32_t(fg_b * srcalpha + bg_b * destalpha + 127) >> 8, 255);
 			}
 			else if (BlendT::Mode == (int)BlendModes::SubClamp)
 			{
-				fg_r = MAX<int32_t>((fg_r * srcalpha - bg_r * destalpha + 127) >> 8, 0);
-				fg_g = MAX<int32_t>((fg_g * srcalpha - bg_g * destalpha + 127) >> 8, 0);
-				fg_b = MAX<int32_t>((fg_b * srcalpha - bg_b * destalpha + 127) >> 8, 0);
+				fg_r = MAX(int32_t(fg_r * srcalpha - bg_r * destalpha + 127) >> 8, 0);
+				fg_g = MAX(int32_t(fg_g * srcalpha - bg_g * destalpha + 127) >> 8, 0);
+				fg_b = MAX(int32_t(fg_b * srcalpha - bg_b * destalpha + 127) >> 8, 0);
 			}
 			else if (BlendT::Mode == (int)BlendModes::RevSubClamp)
 			{
-				fg_r = MAX<int32_t>((bg_r * srcalpha - fg_r * destalpha + 127) >> 8, 0);
-				fg_g = MAX<int32_t>((bg_g * srcalpha - fg_g * destalpha + 127) >> 8, 0);
-				fg_b = MAX<int32_t>((bg_b * srcalpha - fg_b * destalpha + 127) >> 8, 0);
+				fg_r = MAX(int32_t(bg_r * srcalpha - fg_r * destalpha + 127) >> 8, 0);
+				fg_g = MAX(int32_t(bg_g * srcalpha - fg_g * destalpha + 127) >> 8, 0);
+				fg_b = MAX(int32_t(bg_b * srcalpha - fg_b * destalpha + 127) >> 8, 0);
 			}
 
 			shadedfg = RGB256k.All[((fg_r >> 2) << 12) | ((fg_g >> 2) << 6) | (fg_b >> 2)];

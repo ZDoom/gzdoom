@@ -272,12 +272,15 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	}
 	else if (!Masked)
 	{
-		args.SetStyle(TriBlendMode::Copy);
+		args.SetStyle(TriBlendMode::TextureOpaque);
 		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
-		args.SetStyle((Line->flags & ML_ADDTRANS) ? TriBlendMode::Add : TriBlendMode::AlphaBlend, Line->alpha, 1.0);
+		bool addtrans = !!(Line->flags & ML_ADDTRANS);
+		double srcalpha = MIN(Line->alpha, 1.0);
+		double destalpha = addtrans ? 1.0 : 1.0 - srcalpha;
+		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
 		args.SetSubsectorDepthTest(true);
 		args.SetWriteSubsectorDepth(true);
 		args.SetWriteStencil(false);

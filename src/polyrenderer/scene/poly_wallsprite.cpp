@@ -109,6 +109,6 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPl
 	args.SetSubsectorDepthTest(true);
 	args.SetWriteSubsectorDepth(false);
 	args.SetWriteStencil(false);
-	args.SetStyle(TriBlendMode::AlphaBlend);
+	args.SetStyle(TriBlendMode::TextureMasked);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

@@ -150,33 +150,33 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	if (thing->RenderStyle == LegacyRenderStyles[STYLE_Normal] ||
 		 (r_drawfuzz == 0 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 1.0, 0.0);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 1.0, 0.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add] && fullbrightSprite && thing->Alpha == 1.0 && !args.Translation())
 	{
-		args.SetStyle(TriBlendMode::AddSrcColorOneMinusSrcColor, 1.0, 1.0);
+		args.SetStyle(TriBlendMode::TextureAddSrcColor, 1.0, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add])
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, thing->Alpha, 1.0);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, thing->Alpha, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateRevSub : TriBlendMode::RevSub, thing->Alpha, 1.0);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedRevSub : TriBlendMode::TextureRevSub, thing->Alpha, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, transsouls, 1.0 - transsouls);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
 		 (r_drawfuzz == 2 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 0.0, 160 / 255.0);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shadow] ||
 		 (r_drawfuzz == 1 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, 0.0, 160 / 255.0);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil])
 	{
@@ -186,23 +186,23 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
 	{
 		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
-		args.SetStyle(TriBlendMode::Stencil, thing->Alpha, 1.0 - thing->Alpha);
+		args.SetStyle(TriBlendMode::AddStencil, thing->Alpha, 1.0);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{
-		args.SetColor(0, 0);
+		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
 		args.SetStyle(TriBlendMode::Shaded, thing->Alpha, 1.0 - thing->Alpha);
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
 	{
-		args.SetColor(0, 0);
-		args.SetStyle(TriBlendMode::Shaded, thing->Alpha, 1.0 - thing->Alpha);
+		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
+		args.SetStyle(TriBlendMode::AddShaded, thing->Alpha, 1.0);
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	else
 	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslateAdd : TriBlendMode::Add, thing->Alpha, 1.0 - thing->Alpha);
+		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, thing->Alpha, 1.0 - thing->Alpha);
 	}
 	
 	args.SetSubsectorDepthTest(true);

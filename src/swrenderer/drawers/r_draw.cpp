@@ -64,7 +64,7 @@ namespace swrenderer
 	int fuzzpos;
 	int fuzzviewheight;
 
-	uint32_t particle_texture[PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
+	uint32_t particle_texture[NUM_PARTICLE_TEXTURES][PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
 	short zeroarray[MAXWIDTH];
 	short screenheightarray[MAXWIDTH];
@@ -139,6 +139,8 @@ namespace swrenderer
 
 	void R_InitParticleTexture()
 	{
+		static_assert(NUM_PARTICLE_TEXTURES == 3, "R_InitParticleTexture must be updated if NUM_PARTICLE_TEXTURES is changed");
+
 		double center = PARTICLE_TEXTURE_SIZE * 0.5f;
 		for (int y = 0; y < PARTICLE_TEXTURE_SIZE; y++)
 		{
@@ -147,9 +149,12 @@ namespace swrenderer
 				double dx = (center - x - 0.5f) / center;
 				double dy = (center - y - 0.5f) / center;
 				double dist2 = dx * dx + dy * dy;
-				double alpha = clamp<double>(1.1f - dist2 * 1.1f, 0.0f, 1.0f);
+				double round_alpha = clamp<double>(1.7f - dist2 * 1.7f, 0.0f, 1.0f);
+				double smooth_alpha = clamp<double>(1.1f - dist2 * 1.1f, 0.0f, 1.0f);
 
-				particle_texture[x + y * PARTICLE_TEXTURE_SIZE] = (int)(alpha * 128.0f + 0.5f);
+				particle_texture[0][x + y * PARTICLE_TEXTURE_SIZE] = 128;
+				particle_texture[1][x + y * PARTICLE_TEXTURE_SIZE] = (int)(round_alpha * 128.0f + 0.5f);
+				particle_texture[2][x + y * PARTICLE_TEXTURE_SIZE] = (int)(smooth_alpha * 128.0f + 0.5f);
 			}
 		}
 	}

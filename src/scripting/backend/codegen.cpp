@@ -8816,12 +8816,15 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
-					ArgList[i]->RequestAddress(ctx, &writable);
-					if (flag & VARF_Ref) ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					if (type != ArgList[i]->ValueType)
+					{
+						ArgList[i]->RequestAddress(ctx, &writable);
+						if (flag & VARF_Ref)ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					}
 					// For a reference argument the types must match 100%.
 					if (type != ArgList[i]->ValueType)
 					{
-						ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument %s", Function->SymbolName.GetChars());
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument %s: %s != %s", Function->SymbolName.GetChars(), type->DescriptiveName(), ArgList[i]->ValueType->DescriptiveName());
 						x = nullptr;
 					}
 					else

@@ -1200,10 +1200,6 @@ public:
 		if(!fullScreenOffsets)
 		{
 			double tmp = 0;
-			int barW = wrapper->HorizontalResolution, barH = wrapper->VerticalResolution;
-
-			dx += wrapper->ST_X;
-			dy += wrapper->ST_Y - (wrapper->Scaled ? barH : 200) + script->height;
 			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
 			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
 			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble();
@@ -1211,24 +1207,17 @@ public:
 			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble();
 			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble();
 
-			if(wrapper->Scaled)
+			if(clip[0] != 0 || clip[1] != 0)
 			{
-				if(clip[0] != 0 || clip[1] != 0)
-				{
-					screen->VirtualToRealCoords(dcx, dcy, tmp, tmp, barW, barH, true);
-					if (clip[0] == 0) dcx = 0;
-					if (clip[1] == 0) dcy = 0;
-				}
-				if(clip[2] != 0 || clip[3] != 0 || clearDontDraw)
-					screen->VirtualToRealCoords(dcr, dcb, tmp, tmp, barW, barH, true);
-				screen->VirtualToRealCoords(dx, dy, w, h, barW, barH, true);
+				wrapper->StatusbarToRealCoords(dcx, dcy, tmp, tmp);
+				if (clip[0] == 0) dcx = 0;
+				if (clip[1] == 0) dcy = 0;
 			}
-			else
+			if (clip[2] != 0 || clip[3] != 0 || clearDontDraw)
 			{
-				dy += 200 - barH;
-				dcy += 200 - barH;
-				dcb += 200 - barH;
+				wrapper->StatusbarToRealCoords(dcr, dcb, tmp, tmp);
 			}
+			wrapper->StatusbarToRealCoords(dx, dy, w, h);
 
 			if(clearDontDraw)
 				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(MIN<double>(dcr,w+MAX<double>(dx, dcx))), static_cast<int>(MIN<double>(dcb,MAX<double>(dy, dcy)+h)), GPalette.BlackIndex, 0);
@@ -1424,16 +1413,7 @@ public:
 
 			if(!fullScreenOffsets)
 			{
-
-				int barW = wrapper->HorizontalResolution, barH = wrapper->VerticalResolution;
-				rx += wrapper->ST_X;
-				ry += wrapper->ST_Y - (wrapper->Scaled ? barH : 200) + script->height;
-				if(wrapper->Scaled)
-					screen->VirtualToRealCoords(rx, ry, rw, rh, barW, barH, true);
-				else
-				{
-					ry += (200 - barH);
-				}
+				wrapper->StatusbarToRealCoords(rx, ry, rw, rh);
 			}
 			else
 			{

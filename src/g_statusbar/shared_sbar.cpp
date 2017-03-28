@@ -1564,6 +1564,25 @@ uint32_t DBaseStatusBar::GetTranslation() const
 //
 //============================================================================
 
+void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, double &h) const
+{
+	if (Scaled)
+	{
+		screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
+	}
+	else
+	{
+		x += ST_X;
+		y += screen->GetHeight() - VerticalResolution;
+	}
+}
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
 void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY)
 {
 	if (!texture.isValid())
@@ -1636,14 +1655,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 
 	if (!fullscreenOffsets)
 	{
-		x += ST_X;
-		//y += ST_Y;
-
-		// Todo: Allow other scaling values, too.
-		if (Scaled)
-		{
-			screen->VirtualToRealCoords(x, y, boxwidth, boxheight, HorizontalResolution, VerticalResolution, true, true);
-		}
+		StatusbarToRealCoords(x, y, boxwidth, boxheight);
 	}
 	else
 	{
@@ -1853,14 +1865,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 
 		if (!fullscreenOffsets)
 		{
-			rx += ST_X;
-			//ry += ST_Y;
-
-			// Todo: Allow other scaling values, too.
-			if (Scaled)
-			{
-				screen->VirtualToRealCoords(rx, ry, rw, rh, HorizontalResolution, VerticalResolution, true);
-			}
+			StatusbarToRealCoords(rx, ry, rw, rh);
 		}
 		else
 		{
@@ -1963,14 +1968,7 @@ void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h
 
 	if (!fullscreenOffsets)
 	{
-		x += ST_X;
-		//y += ST_Y;
-
-		// Todo: Allow other scaling values, too.
-		if (Scaled)
-		{
-			screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
-		}
+		StatusbarToRealCoords(x, y, w, h);
 	}
 	else
 	{

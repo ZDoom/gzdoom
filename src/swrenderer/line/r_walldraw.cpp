@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <cmath>
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -41,13 +42,6 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/r_memory.h"
-
-#ifndef isnan
-// Fallback to C++ function if C99 isnan() macro is not undefined
-// Most likely it was undefined in C++ library header to avoid conflicts with own function
-#include <cmath>
-using std::isnan;
-#endif // !isnan
 
 namespace swrenderer
 {
@@ -106,7 +100,7 @@ namespace swrenderer
 			v = v - floor(v);
 			double v_step = uv_stepd / texture->GetHeight();
 
-			if (isnan(v) || isnan(v_step)) // this should never happen, but it apparently does..
+			if (std::isnan(v) || std::isnan(v_step)) // this should never happen, but it apparently does..
 			{
 				uv_stepd = 0.0;
 				v = 0.0;

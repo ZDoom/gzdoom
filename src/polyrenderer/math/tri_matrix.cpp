@@ -199,7 +199,7 @@ ShadedTriVertex TriMatrix::operator*(TriVertex v) const
 	ShadedTriVertex sv;
 	_mm_storeu_ps(&sv.x, mv);
 #endif
-	for (int i = 0; i < TriVertex::NumVarying; i++)
-		sv.varying[i] = v.varying[i];
+	sv.u = v.u;
+	sv.v = v.v;
 	return sv;
 }

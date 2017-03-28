@@ -410,8 +410,8 @@ TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height, const UVTran
 	v.y = (float)v1->fPos().Y;
 	v.z = (float)height;
 	v.w = 1.0f;
-	v.varying[0] = transform.GetU(v.x, v.y);
-	v.varying[1] = transform.GetV(v.x, v.y);
+	v.u = transform.GetU(v.x, v.y);
+	v.v = transform.GetV(v.x, v.y);
 	return v;
 }
 

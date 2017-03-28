@@ -139,8 +139,8 @@ TriVertex PolySkyDome::SetVertexXYZ(float xx, float yy, float zz, float uu, floa
 	v.y = zz;
 	v.z = yy;
 	v.w = 1.0f;
-	v.varying[0] = uu;
-	v.varying[1] = vv;
+	v.u = uu;
+	v.v = vv;
 	return v;
 }
 

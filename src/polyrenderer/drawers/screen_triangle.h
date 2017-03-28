@@ -61,11 +61,10 @@ struct WorkerThreadData
 struct TriVertex
 {
 	TriVertex() { }
-	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; }
+	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w), u(u), v(v) { }
 
-	enum { NumVarying = 2 };
 	float x, y, z, w;
-	float varying[NumVarying];
+	float u, v;
 };
 
 struct TriDrawTriangleArgs
@@ -126,8 +125,7 @@ public:
 
 struct ScreenTriangleStepVariables
 {
-	float W;
-	float Varying[TriVertex::NumVarying];
+	float W, U, V;
 };
 
 namespace TriScreenDrawerModes

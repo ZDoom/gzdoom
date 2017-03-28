@@ -132,11 +132,14 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 	override bool Activate()
 	{
 		// This needs to perform a few checks to prevent abuse  by malicious modders.
-		let m = OptionMenu(Menu.GetCurrentMenu());
-		// don't execute if no menu is active
-		if (m == null) return false;	
-		// don't execute if this item cannot be found in the current menu.
-		if (m.GetItem(mAction) != self) return false;
+		if (GetClass() != "OptionMenuItemSafeCommand")
+		{
+			let m = OptionMenu(Menu.GetCurrentMenu());
+			// don't execute if no menu is active
+			if (m == null) return false;	
+			// don't execute if this item cannot be found in the current menu.
+			if (m.GetItem(mAction) != self) return false;
+		}
 		Menu.MenuSound("menu/choose");
 		DoCommand(mAction);
 		return true;

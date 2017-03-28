@@ -84,7 +84,7 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
-CVAR(Int, hud_scale, -1, CVAR_ARCHIVE);
+CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
 int active_con_scaletext();
 

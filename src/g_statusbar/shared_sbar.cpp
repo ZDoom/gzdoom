@@ -1700,7 +1700,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawTexture)
 	PARAM_FLOAT_DEF(h);
 	PARAM_FLOAT_DEF(scaleX);
 	PARAM_FLOAT_DEF(scaleY);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
@@ -1717,7 +1717,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
 	PARAM_FLOAT_DEF(h);
 	PARAM_FLOAT_DEF(scaleX);
 	PARAM_FLOAT_DEF(scaleY);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(TexMan.CheckForTexture(texid, FTexture::TEX_Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
@@ -1910,7 +1910,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 	PARAM_INT_DEF(wrapwidth);
 	PARAM_INT_DEF(linespacing);
 
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
 	// resolve auto-alignment before making any adjustments to the position values.
 	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
@@ -2015,7 +2015,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
 	PARAM_INT_DEF(flags);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->Fill(color, x, y, w, h);
 	return 0;
 }

@@ -33,7 +33,7 @@ public:
 	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	~OpenGLSWFrameBuffer();
 
-
+	bool HasBegun2D() override { return In2D || IsLocked(); }
 	bool IsValid() override;
 	bool Lock(bool buffered) override;
 	void Unlock() override;

@@ -66,8 +66,8 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 		vertices[i].y = (float)p.Y;
 		vertices[i].z = (float)(zpos + psize * (2.0 * offsets[i].second - 1.0));
 		vertices[i].w = 1.0f;
-		vertices[i].varying[0] = (float)(offsets[i].first);
-		vertices[i].varying[1] = (float)(1.0f - offsets[i].second);
+		vertices[i].u = (float)(offsets[i].first);
+		vertices[i].v = (float)(1.0f - offsets[i].second);
 	}
 
 	bool fullbrightSprite = particle->bright != 0;

@@ -230,14 +230,14 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	if (tex)
 	{
 		PolyWallTextureCoords texcoords(tex, LineSeg, Line, Side, Texpart, TopZ, BottomZ, UnpeggedCeil);
-		vertices[0].varying[0] = (float)texcoords.u1;
-		vertices[0].varying[1] = (float)texcoords.v1;
-		vertices[1].varying[0] = (float)texcoords.u2;
-		vertices[1].varying[1] = (float)texcoords.v1;
-		vertices[2].varying[0] = (float)texcoords.u2;
-		vertices[2].varying[1] = (float)texcoords.v2;
-		vertices[3].varying[0] = (float)texcoords.u1;
-		vertices[3].varying[1] = (float)texcoords.v2;
+		vertices[0].u = (float)texcoords.u1;
+		vertices[0].v = (float)texcoords.v1;
+		vertices[1].u = (float)texcoords.u2;
+		vertices[1].v = (float)texcoords.v1;
+		vertices[2].u = (float)texcoords.u2;
+		vertices[2].v = (float)texcoords.v2;
+		vertices[3].u = (float)texcoords.u1;
+		vertices[3].v = (float)texcoords.v2;
 	}
 
 	// Masked walls clamp to the 0-1 range (no texture repeat)
@@ -294,8 +294,8 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 {
 	float top = v1.z;
 	float bottom = v2.z;
-	float texv1 = v1.varying[1];
-	float texv2 = v2.varying[1];
+	float texv1 = v1.v;
+	float texv2 = v2.v;
 	float delta = (texv2 - texv1);
 
 	float t1 = texv1 < 0.0f ? -texv1 / delta : 0.0f;
@@ -304,10 +304,10 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 	float inv_t2 = 1.0f - t2;
 
 	v1.z = top * inv_t1 + bottom * t1;
-	v1.varying[1] = texv1 * inv_t1 + texv2 * t1;
+	v1.v = texv1 * inv_t1 + texv2 * t1;
 
 	v2.z = top * inv_t2 + bottom * t2;
-	v2.varying[1] = texv1 * inv_t2 + texv2 * t2;
+	v2.v = texv1 * inv_t2 + texv2 * t2;
 }
 
 FTexture *RenderPolyWall::GetTexture()

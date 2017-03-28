@@ -92,13 +92,13 @@ public:
 		ScreenTriangleStepVariables start;
 		gradientX.W = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
 		gradientY.W = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+		gradientX.U = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.u * v1.w, v2.u * v2.w, v3.u * v3.w);
+		gradientY.U = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.u * v1.w, v2.u * v2.w, v3.u * v3.w);
+		gradientX.V = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.v * v1.w, v2.v * v2.w, v3.v * v3.w);
+		gradientY.V = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.v * v1.w, v2.v * v2.w, v3.v * v3.w);
 		start.W = v1.w + gradientX.W * (startX - v1.x) + gradientY.W * (startY - v1.y);
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			gradientX.Varying[i] = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-			gradientY.Varying[i] = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-			start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
-		}
+		start.U = v1.u * v1.w + gradientX.U * (startX - v1.x) + gradientY.U * (startY - v1.y);
+		start.V = v1.v * v1.w + gradientX.V * (startX - v1.x) + gradientY.V * (startY - v1.y);
 
 		// Output
 		uint32_t * RESTRICT destOrg = (uint32_t*)args->dest;
@@ -157,17 +157,16 @@ public:
 
 			ScreenTriangleStepVariables blockPosY;
 			blockPosY.W = start.W + gradientX.W * (span.X - startX) + gradientY.W * (span.Y - startY);
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (span.X - startX) + gradientY.Varying[j] * (span.Y - startY);
+			blockPosY.U = start.U + gradientX.U * (span.X - startX) + gradientY.U * (span.Y - startY);
+			blockPosY.V = start.V + gradientX.V * (span.X - startX) + gradientY.V * (span.Y - startY);
 
 			for (int y = 0; y < height; y++)
 			{
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 
 				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingPos[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+				int32_t posU = (int32_t)(blockPosX.U * rcpW);
+				int32_t posV = (int32_t)(blockPosX.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
@@ -175,16 +174,14 @@ public:
 				for (int x = 0; x < width; x++)
 				{
 					blockPosX.W += gradientX.W * 8;
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+					blockPosX.U += gradientX.U * 8;
+					blockPosX.V += gradientX.V * 8;
 
 					rcpW = 0x01000000 / blockPosX.W;
-					int32_t varyingStep[TriVertex::NumVarying];
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-					{
-						int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-						varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-					}
+					int32_t nextU = (int32_t)(blockPosX.U * rcpW);
+					int32_t nextV = (int32_t)(blockPosX.V * rcpW);
+					int32_t stepU = (nextU - posU) / 8;
+					int32_t stepV = (nextV - posV) / 8;
 
 					fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 					fixed_t lightstep = (lightnext - lightpos) / 8;
@@ -201,15 +198,15 @@ public:
 
 						// Sample fgcolor
 						unsigned int ifgcolor[2], ifgshade[2];
-						ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-						ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-						for (int j = 0; j < TriVertex::NumVarying; j++)
-							varyingPos[j] += varyingStep[j];
+						ifgcolor[0] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+						ifgshade[0] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+						posU += stepU;
+						posV += stepV;
 
-						ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-						ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-						for (int j = 0; j < TriVertex::NumVarying; j++)
-							varyingPos[j] += varyingStep[j];
+						ifgcolor[1] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+						ifgshade[1] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+						posU += stepU;
+						posV += stepV;
 
 						// Setup light
 						int lightpos0 = lightpos >> 8;
@@ -240,8 +237,8 @@ public:
 				}
 
 				blockPosY.W += gradientY.W;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosY.Varying[j] += gradientY.Varying[j];
+				blockPosY.U += gradientY.U;
+				blockPosY.V += gradientY.V;
 
 				dest += pitch;
 			}
@@ -253,8 +250,8 @@ public:
 
 			ScreenTriangleStepVariables blockPosY;
 			blockPosY.W = start.W + gradientX.W * (block.X - startX) + gradientY.W * (block.Y - startY);
-			for (int j = 0; j < TriVertex::NumVarying; j++)
-				blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (block.X - startX) + gradientY.Varying[j] * (block.Y - startY);
+			blockPosY.U = start.U + gradientX.U * (block.X - startX) + gradientY.U * (block.Y - startY);
+			blockPosY.V = start.V + gradientX.V * (block.X - startX) + gradientY.V * (block.Y - startY);
 
 			uint32_t *dest = destOrg + block.X + block.Y * pitch;
 			uint32_t mask0 = block.Mask0;
@@ -266,24 +263,21 @@ public:
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 
 				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingPos[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+				int32_t posU = (int32_t)(blockPosX.U * rcpW);
+				int32_t posV = (int32_t)(blockPosX.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
 				blockPosX.W += gradientX.W * 8;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+				blockPosX.U += gradientX.U * 8;
+				blockPosX.V += gradientX.V * 8;
 
 				rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingStep[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-				{
-					int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-				}
+				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
+				int32_t nextV = (int32_t)(blockPosX.V * rcpW);
+				int32_t stepU = (nextU - posU) / 8;
+				int32_t stepV = (nextV - posV) / 8;
 
 				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				fixed_t lightstep = (lightnext - lightpos) / 8;
@@ -304,15 +298,15 @@ public:
 
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] += varyingStep[j];
+					ifgcolor[0] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
-					ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] += varyingStep[j];
+					ifgcolor[1] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
 					// Setup light
 					int lightpos0 = lightpos >> 8;
@@ -346,8 +340,8 @@ public:
 				}
 
 				blockPosY.W += gradientY.W;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosY.Varying[j] += gradientY.Varying[j];
+				blockPosY.U += gradientY.U;
+				blockPosY.V += gradientY.V;
 
 				dest += pitch;
 			}
@@ -358,24 +352,21 @@ public:
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 
 				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingPos[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+				int32_t posU = (int32_t)(blockPosX.U * rcpW);
+				int32_t posV = (int32_t)(blockPosX.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
 				blockPosX.W += gradientX.W * 8;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+				blockPosX.U += gradientX.U * 8;
+				blockPosX.V += gradientX.V * 8;
 
 				rcpW = 0x01000000 / blockPosX.W;
-				int32_t varyingStep[TriVertex::NumVarying];
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-				{
-					int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
-					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
-				}
+				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
+				int32_t nextV = (int32_t)(blockPosX.V * rcpW);
+				int32_t stepU = (nextU - posU) / 8;
+				int32_t stepV = (nextV - posV) / 8;
 
 				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				fixed_t lightstep = (lightnext - lightpos) / 8;
@@ -396,15 +387,15 @@ public:
 
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] += varyingStep[j];
+					ifgcolor[0] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
-					ifgcolor[1] = Sample<FilterModeT>(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade(varyingPos[0], varyingPos[1], texPixels, texWidth, texHeight);
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] += varyingStep[j];
+					ifgcolor[1] = Sample<FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
 					// Setup light
 					int lightpos0 = lightpos >> 8;
@@ -438,8 +429,8 @@ public:
 				}
 
 				blockPosY.W += gradientY.W;
-				for (int j = 0; j < TriVertex::NumVarying; j++)
-					blockPosY.Varying[j] += gradientY.Varying[j];
+				blockPosY.U += gradientY.U;
+				blockPosY.V += gradientY.V;
 
 				dest += pitch;
 			}

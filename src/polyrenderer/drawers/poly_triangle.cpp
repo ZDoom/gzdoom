@@ -232,13 +232,12 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	// Keep varyings in -128 to 128 range if possible
 	if (numclipvert > 0)
 	{
-		for (int j = 0; j < TriVertex::NumVarying; j++)
+		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
+		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;
+		for (int i = 0; i < numclipvert; i++)
 		{
-			float newOrigin = floorf(clippedvert[0].varying[j] * 0.1f) * 10.0f;
-			for (int i = 0; i < numclipvert; i++)
-			{
-				clippedvert[i].varying[j] -= newOrigin;
-			}
+			clippedvert[i].u -= newOriginU;
+			clippedvert[i].v -= newOriginV;
 		}
 	}
 
@@ -424,8 +423,8 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 			v.y += verts[w].y * weight;
 			v.z += verts[w].z * weight;
 			v.w += verts[w].w * weight;
-			for (int iv = 0; iv < TriVertex::NumVarying; iv++)
-				v.varying[iv] += verts[w].varying[iv] * weight;
+			v.u += verts[w].u * weight;
+			v.v += verts[w].v * weight;
 		}
 	}
 	return inputverts;

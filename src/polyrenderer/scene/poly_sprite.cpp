@@ -128,10 +128,10 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 		vertices[i].y = (float)p.Y;
 		vertices[i].z = (float)(pos.Z + spriteHeight * offsets[i].second);
 		vertices[i].w = 1.0f;
-		vertices[i].varying[0] = (float)(offsets[i].first * tex->Scale.X);
-		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
+		vertices[i].u = (float)(offsets[i].first * tex->Scale.X);
+		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
 		if (flipTextureX)
-			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
+			vertices[i].u = 1.0f - vertices[i].u;
 	}
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
@@ -144,67 +144,8 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
-	args.SetTexture(tex, thing->Translation);
 	args.SetClipPlane(clipPlane);
-
-	if (thing->RenderStyle == LegacyRenderStyles[STYLE_Normal] ||
-		 (r_drawfuzz == 0 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 1.0, 0.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add] && fullbrightSprite && thing->Alpha == 1.0 && !args.Translation())
-	{
-		args.SetStyle(TriBlendMode::TextureAddSrcColor, 1.0, 1.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add])
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, thing->Alpha, 1.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedRevSub : TriBlendMode::TextureRevSub, thing->Alpha, 1.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
-		 (r_drawfuzz == 2 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
-	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shadow] ||
-		 (r_drawfuzz == 1 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil])
-	{
-		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
-		args.SetStyle(TriBlendMode::Stencil, thing->Alpha, 1.0 - thing->Alpha);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
-	{
-		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
-		args.SetStyle(TriBlendMode::AddStencil, thing->Alpha, 1.0);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
-	{
-		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
-		args.SetStyle(TriBlendMode::Shaded, thing->Alpha, 1.0 - thing->Alpha);
-		args.SetTexture(tex, thing->Translation, true);
-	}
-	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
-	{
-		args.SetColor(0xff000000 | thing->fillcolor, thing->fillcolor >> 24);
-		args.SetStyle(TriBlendMode::AddShaded, thing->Alpha, 1.0);
-		args.SetTexture(tex, thing->Translation, true);
-	}
-	else
-	{
-		args.SetStyle(args.Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, thing->Alpha, 1.0 - thing->Alpha);
-	}
-	
+	args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	args.SetSubsectorDepthTest(true);
 	args.SetWriteSubsectorDepth(false);
 	args.SetWriteStencil(false);

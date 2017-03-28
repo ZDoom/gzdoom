@@ -5345,7 +5345,7 @@ static int SwapActorTeleFog(AActor *activator, int tid)
 	return count;
 }
 
-static int ScriptCall(unsigned argc, int32_t *args)
+static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 {
 	int retval = 0;
 	if (argc >= 2)
@@ -5372,13 +5372,19 @@ static int ScriptCall(unsigned argc, int32_t *args)
 		// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 		TArray<FString> strings(argc);
 		TArray<VMValue> params;
+		int p = 1;
+		if (func->Proto->ArgumentTypes.Size() > 0 && func->Proto->ArgumentTypes[0] == NewPointer(RUNTIME_CLASS(AActor)))
+		{
+			params.Push(activator);
+			p = 0;
+		}
 		for (unsigned i = 2; i < argc; i++)
 		{
-			if (func->Proto->ArgumentTypes.Size() < i - 1)
+			if (func->Proto->ArgumentTypes.Size() < i - p)
 			{
 				I_Error("Too many parameters in call to %s.%s", clsname, funcname);
 			}
-			auto argtype = func->Proto->ArgumentTypes[i - 2];
+			auto argtype = func->Proto->ArgumentTypes[i - p - 1];
 			// The only types allowed are int, bool, double, Name, Sound, Color and String
 			if (argtype == TypeSInt32 || argtype == TypeColor)
 			{
@@ -6810,7 +6816,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			return (args[0] + 32768) & ~0xffff;
 
 		case ACSF_ScriptCall:
-			return ScriptCall(argCount, args);
+			return ScriptCall(activator, argCount, args);
 
 		case ACSF_StartSlideshow:
 			G_StartSlideshow(FName(FBehavior::StaticLookupString(args[0])));

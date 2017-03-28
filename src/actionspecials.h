@@ -262,5 +262,9 @@ DEFINE_SPECIAL(Stairs_BuildUpDoomCrush, 273, 5, 5, 5)
 DEFINE_SPECIAL(Door_AnimatedClose, 274, 4, 4, 4)
 DEFINE_SPECIAL(Floor_Stop, 275, 1, 1, 1)
 DEFINE_SPECIAL(Ceiling_Stop, 276, 1, 1, 1)
+DEFINE_SPECIAL(Sector_SetFloorGlow, 277, 5, 5, 5)
+DEFINE_SPECIAL(Sector_SetCeilingGlow, 278, 5, 5, 5)
+DEFINE_SPECIAL(Floor_MoveToValueAndCrush, 279, 4, 5, 5)
+DEFINE_SPECIAL(Ceiling_MoveToValueAndCrush, 290, 4, 5, 5)
 
 #undef DEFINE_SPECIAL

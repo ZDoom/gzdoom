@@ -510,7 +510,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
 
 void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
 {
-	SetSize(0, resW, resH);	// this intentionally resets the relative top to force the caller to go through BeginStatusBar and not just reset some variables.
+	SetSize(RelTop, resW, resH);	
 	this->Alpha = Alpha;
 	ForcedScale = forcescaled;
 	CompleteBorder = false;

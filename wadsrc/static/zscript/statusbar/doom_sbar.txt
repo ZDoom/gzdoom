@@ -119,7 +119,7 @@ class DoomStatusBar : BaseStatusBar
 		{
 			DrawTexture(GetMugShot(5), (143, 168), DI_ITEM_OFFSETS);
 		}
-		if (CPlayer.inventorytics != 0 && !level.NoInventoryBar)
+		if (isInventoryBarVisible())
 		{
 			DrawInventoryBar(diparms, (48, 169), 7, DI_ITEM_LEFT_TOP);
 		}
@@ -155,7 +155,7 @@ class DoomStatusBar : BaseStatusBar
 			DrawString(mHUDFont, FormatNumber(ammotype2.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}
-		if (CPlayer.inventorytics == 0 && CPlayer.mo.InvSel != null && !level.NoInventoryBar)
+		if (!isInventoryBarVisible() && !level.NoInventoryBar)
 		{
 			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17));
 			DrawString(mHUDFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
@@ -187,7 +187,7 @@ class DoomStatusBar : BaseStatusBar
 				}
 			}
 		}
-		if (CPlayer.inventorytics != 0 && !level.NoInventoryBar)
+		if (isInventoryBarVisible())
 		{
 			DrawInventoryBar(diparms, (0, 0), 7, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
 		}

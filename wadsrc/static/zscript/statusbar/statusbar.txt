@@ -27,6 +27,7 @@ class InventoryBarState ui
 	TextureID selector;
 	Vector2 boxsize;
 	Vector2 boxofs;
+	Vector2 selectofs;
 	Vector2 innersize;
 		
 	TextureID left;
@@ -51,6 +52,11 @@ class InventoryBarState ui
 		{
 			me.innersize = innersize;
 			me.boxofs = (me.boxsize - me.innersize) / 2;
+		}
+		if (me.selector.IsValid())
+		{
+			Vector2 sel = TexMan.GetScaledSize(me.selector);
+			me.selectofs = (me.boxsize - sel) / 2;
 		}
 		me.left = TexMan.CheckForTexture(leftgfx, TexMan.TYPE_MiscPatch);
 		me.right = TexMan.CheckForTexture(rightgfx, TexMan.TYPE_MiscPatch);
@@ -316,6 +322,7 @@ class BaseStatusBar native ui
 	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
 	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
 	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
+	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	
 	
@@ -513,7 +520,7 @@ class BaseStatusBar native ui
 	bool isInventoryBarVisible()
 	{
 		if (CPlayer == null) return false;
-		return (CPlayer.inventorytics <= 0 || level.NoInventoryBar);
+		return (CPlayer.inventorytics > 0 && !level.NoInventoryBar);
 	}
 	
 	//============================================================================
@@ -563,7 +570,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	bool CheckWeaponPiece(class<Weapon> weap, int piecenum)
+	int CheckWeaponPiece(class<Weapon> weap, int piecenum)
 	{
 		if (CPlayer == null) return false;
 		for(let inv = CPlayer.mo.Inv; inv != NULL; inv = inv.Inv)
@@ -575,6 +582,26 @@ class BaseStatusBar native ui
 			}
 		}
 		return false;
+	}
+
+	//============================================================================
+	//
+	// checks if player has the given weapon piece
+	//
+	//============================================================================
+
+	int GetWeaponPieceMask(class<Weapon> weap)
+	{
+		if (CPlayer == null) return false;
+		for(let inv = CPlayer.mo.Inv; inv != NULL; inv = inv.Inv)
+		{
+			let wh = WeaponHolder(inv);
+			if (wh != null && wh.PieceWeapon == weap)
+			{
+				return wh.PieceMask;
+			}
+		}
+		return 0;
 	}
 
 	//============================================================================
@@ -796,6 +823,54 @@ class BaseStatusBar native ui
 	
 	//============================================================================
 	//
+	// DrawBar
+	//
+	//============================================================================
+
+	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0, double alpha = 1.)
+	{
+		let ontex = TexMan.CheckForTexture(ongfx, TexMan.TYPE_MiscPatch);
+		if (!ontex.IsValid()) return;
+		let offtex = TexMan.CheckForTexture(offgfx, TexMan.TYPE_MiscPatch);
+
+		Vector2 texsize = TexMan.GetScaledSize(ontex);
+		[position, flags] = AdjustPosition(position, flags, texsize.X, texsize.Y);
+		
+		double value = clamp(curval / maxval, 0, 1);
+		if(border != 0) value = 1. - value; //invert since the new drawing method requires drawing the bg on the fg.
+		
+		
+		// {cx, cb, cr, cy}
+		double Clip[4];
+		Clip[0] = Clip[1] = Clip[2] = Clip[3] = 0;
+		
+		bool horizontal = !(vertical & SHADER_VERT);
+		bool reverse = !!(vertical & SHADER_REVERSE);
+		double sizeOfImage = (horizontal ? texsize.X - border*2 : texsize.Y - border*2);
+		Clip[(!horizontal) | ((!reverse)<<1)] = sizeOfImage - sizeOfImage *value;
+		
+		if(border != 0)
+		{
+			for(int i = 0; i < 4; i++) Clip[i] += border;
+
+			//Draw the whole foreground
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+			// SetClip
+		}
+		
+		if (offtex.IsValid() && TexMan.GetScaledSize(offtex) == texsize) DrawTexture(offtex, position, flags | DI_ITEM_LEFT_TOP);
+		else Fill(color(255,0,0,0), position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3]);
+		
+		if (border == 0) 
+		{
+			// SetClip
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+		}
+		// UnsetClip
+	}
+	
+	//============================================================================
+	//
 	// DrawInventoryBar
 	//
 	// This function needs too many parameters, so most have been offloaded to
@@ -837,7 +912,7 @@ class BaseStatusBar native ui
 					{
 						double flashAlpha = bgalpha;
 						if (flags & DI_ARTIFLASH) flashAlpha *= itemflashFade;
-						DrawTexture(parms.selector, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, flashAlpha);
+						DrawTexture(parms.selector, position + parms.selectofs + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, flashAlpha);
 					}
 				}
 				else

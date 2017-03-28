@@ -734,6 +734,8 @@ static int 	grid = 0;
 
 bool		automapactive = false;
 
+DEFINE_GLOBAL(automapactive);
+
 // location of window on screen
 static int	f_x;
 static int	f_y;

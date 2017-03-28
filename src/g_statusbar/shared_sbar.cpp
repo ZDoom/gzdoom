@@ -1937,6 +1937,86 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 
 //============================================================================
 //
+// draw stuff
+//
+//============================================================================
+
+void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h, int flags)
+{
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	double Alpha = color.a * this->Alpha / 255;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
+
+	if (!fullscreenOffsets)
+	{
+		x += ST_X;
+		//y += ST_Y;
+
+		// Todo: Allow other scaling values, too.
+		if (Scaled)
+		{
+			screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
+		}
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		w *= Scale.X;
+		h *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	screen->Dim(color, float(Alpha), int(x), int(y), int(w), int(h));
+}
+
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_COLOR(color);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT_DEF(flags);
+	self->Fill(color, x, y, w, h);
+	return 0;
+}
+
+//============================================================================
+//
 // CCMD showpop
 //
 // Asks the status bar to show a pop screen.

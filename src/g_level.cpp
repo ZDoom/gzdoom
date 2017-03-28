@@ -1028,7 +1028,10 @@ void G_DoLoadLevel (int position, bool autosave)
 			{
 				players[ii].camera = players[ii].mo;
 			}
-			E_PlayerEntered(ii, finishstate == FINISH_SameHub);
+			if (!savegamerestore)
+			{
+				E_PlayerEntered(ii, finishstate == FINISH_SameHub);
+			}
 			// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
 			if (level.FromSnapshot && !savegamerestore) FBehavior::StaticStartTypedScripts(SCRIPT_Return, players[ii].mo, true);
 		}

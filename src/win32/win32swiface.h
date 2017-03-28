@@ -132,8 +132,8 @@ public:
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
 	void DrawTextureParms (FTexture *img, DrawParms &parms);
-	void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
-	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	void DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
+	void DoDim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
 	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);

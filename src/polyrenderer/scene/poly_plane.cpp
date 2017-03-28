@@ -133,7 +133,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	args.SetSubsectorDepth(subsectorDepth);
 	args.SetTransform(&worldToClip);
-	args.SetStyle(TriBlendMode::Copy);
+	args.SetStyle(TriBlendMode::TextureOpaque);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
@@ -312,7 +312,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	if (!isSky)
 	{
 		args.SetTexture(tex);
-		args.SetStyle(TriBlendMode::Copy);
+		args.SetStyle(TriBlendMode::TextureOpaque);
 		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
@@ -410,8 +410,8 @@ TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height, const UVTran
 	v.y = (float)v1->fPos().Y;
 	v.z = (float)height;
 	v.w = 1.0f;
-	v.varying[0] = transform.GetU(v.x, v.y);
-	v.varying[1] = transform.GetV(v.x, v.y);
+	v.u = transform.GetU(v.x, v.y);
+	v.v = transform.GetV(v.x, v.y);
 	return v;
 }
 

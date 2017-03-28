@@ -243,16 +243,24 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		StatusBar = new DBaseStatusBar();
 		StatusBar->SetSize(0);
 	}
-	else if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile)
+	else
 	{
-		auto cls = PClass::FindClass(gameinfo.statusbarclass);
-		if (cls != nullptr)
+		// The old rule of 'what came last wins' goes here, as well.
+		// If the most recent SBARINFO definition comes before a status bar class definition it will be picked,
+		// if the class is defined later, this will be picked. If both come from the same file, the class definition will win.
+		int sbarinfolump = Wads.CheckNumForName("SBARINFO");
+		int sbarinfofile = Wads.GetLumpFile(sbarinfolump);
+		if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile && gameinfo.statusbarclassfile >= sbarinfofile)
 		{
-			StatusBar = (DBaseStatusBar *)cls->CreateNew();
-			IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+			auto cls = PClass::FindClass(gameinfo.statusbarclass);
+			if (cls != nullptr)
 			{
-				VMValue params[] = { StatusBar };
-				GlobalVMStack.Call(func, params, 1, nullptr, 0);
+				StatusBar = (DBaseStatusBar *)cls->CreateNew();
+				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+				{
+					VMValue params[] = { StatusBar };
+					GlobalVMStack.Call(func, params, 1, nullptr, 0);
+				}
 			}
 		}
 	}
@@ -283,7 +291,6 @@ void ST_CreateStatusBar(bool bTitleLevel)
 			auto cls = PClass::FindClass(defname);
 			if (cls != nullptr)
 			{
-
 				StatusBar = (DBaseStatusBar *)cls->CreateNew();
 				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
 				{
@@ -327,6 +334,9 @@ void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
 	RelTop = reltop;
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
+	int x, y;
+	V_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	defaultScale = { (double)x, (double)y };
 
 	CallSetScaled(st_scale);
 }
@@ -500,7 +510,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
 
 void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
 {
-	SetSize(0, resW, resH);	// this intentionally resets the relative top to force the caller to go through BeginStatusBar and not just reset some variables.
+	SetSize(RelTop, resW, resH);	
 	this->Alpha = Alpha;
 	ForcedScale = forcescaled;
 	CompleteBorder = false;
@@ -583,6 +593,19 @@ void DBaseStatusBar::Tick ()
 			}
 		}
 	}
+
+	if (artiflashTick > 0)
+		artiflashTick--;
+
+	if (itemflashFade > 0)
+	{
+		itemflashFade -= 1 / 14.;
+		if (itemflashFade < 0)
+		{
+			itemflashFade = 0;
+		}
+	}
+
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, Tick)
@@ -1112,6 +1135,7 @@ void DBaseStatusBar::CallDraw(EHudState state)
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
 	else Draw(state);
+	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 }
 
 
@@ -1397,11 +1421,8 @@ void DBaseStatusBar::SerializeMessages(FSerializer &arc)
 
 void DBaseStatusBar::ScreenSizeChanged ()
 {
-	st_scale.Callback ();
-
-	int x, y;
-	V_CalcCleanFacs(HorizontalResolution, VerticalResolution, SCREENWIDTH, SCREENHEIGHT, &x, &y);
-	defaultScale = { (double)x, (double)y };
+	// We need to recalculate the sizing info
+	SetSize(RelTop, HorizontalResolution, VerticalResolution);
 
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
@@ -1543,124 +1564,221 @@ uint32_t DBaseStatusBar::GetTranslation() const
 //
 //============================================================================
 
-void DBaseStatusBar::DrawGraphic(FTextureID texture, bool animate, double x, double y, double Alpha, bool translatable, bool dim,
-	int imgAlign, int screenalign, bool alphamap, double width, double height)
+void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY)
 {
 	if (!texture.isValid())
 		return;
+
+	FTexture *tex = (flags & DI_DONTANIMATE)?  TexMan[texture] : TexMan(texture);
+
+	double texwidth = tex->GetScaledWidthDouble() * scaleX;
+	double texheight = tex->GetScaledHeightDouble() * scaleY;
+
+	if (boxwidth > 0 || boxheight > 0)
+	{
+		if (!(flags & DI_FORCEFILL))
+		{
+			double scale1 = 1., scale2 = 1.;
+
+			if (boxwidth > 0 && (boxwidth < texwidth || (flags & DI_FORCESCALE)))
+			{
+				scale1 = boxwidth / texwidth;
+			}
+			if (boxheight != -1 && (boxheight < texheight || (flags & DI_FORCESCALE)))
+			{
+				scale2 = boxheight / texheight;
+			}
+
+			if (flags & DI_FORCESCALE)
+			{
+				if (boxwidth <= 0 || (boxheight > 0 && scale2 < scale1))
+					scale1 = scale2;
+			}
+			else scale1 = MIN(scale1, scale2);
+
+			boxwidth = texwidth * scale1;
+			boxheight = texheight * scale1;
+		}
+	}
+	else
+	{
+		boxwidth = texwidth;
+		boxheight = texheight;
+	}
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
 
 	Alpha *= this->Alpha;
 	if (Alpha <= 0) return;
 	x += drawOffset.X;
 	y += drawOffset.Y;
 
-	FTexture *tex = animate ? TexMan(texture) : TexMan[texture];
-
-	switch (imgAlign & HMASK)
+	switch (flags & DI_ITEM_HMASK)
 	{
-	case HCENTER: x -= width / 2; break;
-	case RIGHT:   x -= width; break;
-	case HOFFSET: x -= tex->GetScaledLeftOffsetDouble() * width / tex->GetScaledWidthDouble(); break;
+	case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
+	case DI_ITEM_RIGHT:		x -= boxwidth; break;
+	case DI_ITEM_HOFFSET:	x -= tex->GetScaledLeftOffsetDouble() * boxwidth / texwidth; break;
 	}
 
-	switch (imgAlign & VMASK)
+	switch (flags & DI_ITEM_VMASK)
 	{
-	case VCENTER: y -= height / 2; break;
-	case BOTTOM:  y -= height; break;
-	case VOFFSET: y -= tex->GetScaledTopOffsetDouble() * height / tex->GetScaledHeightDouble(); break;
+	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
+	case DI_ITEM_BOTTOM:  y -= boxheight; break;
+	case DI_ITEM_VOFFSET: y -= tex->GetScaledTopOffsetDouble() * boxheight / texheight; break;
 	}
 
 	if (!fullscreenOffsets)
 	{
 		x += ST_X;
-		y += ST_Y;
+		//y += ST_Y;
 
 		// Todo: Allow other scaling values, too.
 		if (Scaled)
 		{
-			screen->VirtualToRealCoords(x, y, width, height, HorizontalResolution, VerticalResolution, true, true);
+			screen->VirtualToRealCoords(x, y, boxwidth, boxheight, HorizontalResolution, VerticalResolution, true, true);
 		}
 	}
 	else
 	{
 		double orgx, orgy;
 
-		switch (screenalign & HMASK)
+		switch (flags & DI_SCREEN_HMASK)
 		{
 		default: orgx = 0; break;
-		case HCENTER: orgx = screen->GetWidth() / 2; break;
-		case RIGHT:   orgx = screen->GetWidth(); break;
+		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
 		}
 
-		switch (screenalign & VMASK)
+		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case VCENTER: orgy = screen->GetHeight() / 2; break;
-		case BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
 		}
 
-		if (screenalign == (RIGHT | TOP) && vid_fps) y += 10;
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK|DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
 
 		DVector2 Scale = GetHUDScale();
 
 		x *= Scale.X;
 		y *= Scale.Y;
-		width *= Scale.X;
-		height *= Scale.Y;
+		boxwidth *= Scale.X;
+		boxheight *= Scale.Y;
 		x += orgx;
 		y += orgy;
 	}
 	screen->DrawTexture(tex, x, y, 
 		DTA_TopOffset, 0,
 		DTA_LeftOffset, 0,
-		DTA_DestWidthF, width,
-		DTA_DestHeightF, height,
-		DTA_TranslationIndex, translatable ? GetTranslation() : 0,
-		DTA_ColorOverlay, dim ? MAKEARGB(170, 0, 0, 0) : 0,
+		DTA_DestWidthF, boxwidth,
+		DTA_DestHeightF, boxheight,
+		DTA_TranslationIndex, (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
+		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
 		DTA_Alpha, Alpha,
-		DTA_AlphaChannel, alphamap,
-		DTA_FillColor, alphamap ? 0 : -1);
+		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
+		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1);
 }
 
 
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawGraphic)
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawTexture)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(texid);
-	PARAM_BOOL(animate);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	PARAM_FLOAT(alpha);
-	PARAM_BOOL(translatable);
-	PARAM_BOOL(dim);
-	PARAM_INT(ialign);
-	PARAM_INT(salign);
-	PARAM_BOOL(alphamap);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	self->DrawGraphic(FSetTextureID(texid), animate, x, y, alpha, translatable, dim, ialign, salign, alphamap, w, h);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(alpha);
+	PARAM_FLOAT_DEF(w);
+	PARAM_FLOAT_DEF(h);
+	PARAM_FLOAT_DEF(scaleX);
+	PARAM_FLOAT_DEF(scaleY);
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_STRING(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(alpha);
+	PARAM_FLOAT_DEF(w);
+	PARAM_FLOAT_DEF(h);
+	PARAM_FLOAT_DEF(scaleX);
+	PARAM_FLOAT_DEF(scaleY);
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(TexMan.CheckForTexture(texid, FTexture::TEX_Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
 
 //============================================================================
 //
-// draw stuff
+// encapsulates all settings a HUD font may need
 //
 //============================================================================
 
-void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, double Alpha, int translation, int align, int screenalign, int spacing, bool monospaced, int shadowX, int shadowY)
+class DHUDFont : public DObject
 {
-	switch (align)
+	// this blocks CreateNew on this class which is the intent here.
+	DECLARE_ABSTRACT_CLASS(DHUDFont, DObject);
+
+public:
+	FFont *mFont;
+	int mSpacing;
+	bool mMonospaced;
+	int mShadowX;
+	int mShadowY;
+
+	DHUDFont(FFont *f, int sp, bool ms, int sx, int sy)
+		: mFont(f), mSpacing(sp), mMonospaced(ms), mShadowX(sx), mShadowY(sy)
+	{}
+};
+
+IMPLEMENT_CLASS(DHUDFont, true, false);
+
+DEFINE_ACTION_FUNCTION(DHUDFont, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_INT_DEF(spac);
+	PARAM_BOOL_DEF(mono);
+	PARAM_INT_DEF(sx);
+	PARAM_INT_DEF(sy);
+	ACTION_RETURN_POINTER(new DHUDFont(fnt, spac, mono, sy, sy));
+}
+
+DEFINE_FIELD(DHUDFont, mFont);
+
+//============================================================================
+//
+// draw a string
+//
+//============================================================================
+
+void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY)
+{
+	switch (flags & DI_TEXT_ALIGN)
 	{
 	default:
 		break;
-	case ALIGN_RIGHT:
+	case DI_TEXT_ALIGN_RIGHT:
 		if (!monospaced)
 			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len()));
 		else //monospaced, so just multiply the character size
 			x -= static_cast<int> ((spacing) * cstring.Len());
 		break;
-	case ALIGN_CENTER:
+	case DI_TEXT_ALIGN_CENTER:
 		if (!monospaced)
 			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len())) / 2;
 		else //monospaced, so just multiply the character size
@@ -1680,21 +1798,22 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		shadowX *= (int)Scale.X;
 		shadowY *= (int)Scale.Y;
 
-		switch (screenalign & HMASK)
+		switch (flags & DI_SCREEN_HMASK)
 		{
 		default: orgx = 0; break;
-		case HCENTER: orgx = screen->GetWidth() / 2; break;
-		case RIGHT:   orgx = screen->GetWidth(); break;
+		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
 		}
 
-		switch (screenalign & VMASK)
+		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case VCENTER: orgy = screen->GetHeight() / 2; break;
-		case BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
 		}
 
-		if (screenalign == (RIGHT | TOP) && vid_fps) orgy += 10;
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
 	}
 	else
 	{
@@ -1732,27 +1851,10 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		rw = c->GetScaledWidthDouble();
 		rh = c->GetScaledHeightDouble();
 
-		if (monospaced)
-		{
-			// align the character in the monospaced cell according to the general alignment to ensure that it gets positioned properly
-			// (i.e. right aligned text aligns to the right edge of the character and not the empty part of the cell.)
-			switch (align)
-			{
-			default:
-				break;
-			case ALIGN_CENTER:
-				rx -= (spacing) / 2;
-				break;
-			case ALIGN_RIGHT:
-				rx -= spacing;
-				break;
-			}
-		}
-
 		if (!fullscreenOffsets)
 		{
 			rx += ST_X;
-			ry += ST_Y;
+			//ry += ST_Y;
 
 			// Todo: Allow other scaling values, too.
 			if (Scaled)
@@ -1772,7 +1874,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 		// This is not really such a great way to draw shadows because they can overlap with previously drawn characters.
 		// This may have to be changed to draw the shadow text up front separately.
-		if (shadowX != 0 || shadowY != 0)
+		if ((shadowX != 0 || shadowY != 0) && !(flags & DI_NOSHADOW))
 		{
 			screen->DrawChar(font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
 				DTA_DestWidthF, rw,
@@ -1795,43 +1897,128 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 
 }
 
-
-
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(font, FFont);
+	PARAM_POINTER(font, DHUDFont);
 	PARAM_STRING(string);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	PARAM_FLOAT(alpha);
-	PARAM_INT(trans);
-	PARAM_INT(ialign);
-	PARAM_INT(salign);
-	PARAM_INT_DEF(spacing);
-	PARAM_BOOL_DEF(monospaced);
-	PARAM_INT_DEF(shadowX);
-	PARAM_INT_DEF(shadowY);
+	PARAM_INT_DEF(flags);
+	PARAM_INT_DEF(trans);
+	PARAM_FLOAT_DEF(alpha);
 	PARAM_INT_DEF(wrapwidth);
 	PARAM_INT_DEF(linespacing);
 
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
 	if (wrapwidth > 0)
 	{
-		FBrokenLines *brk = V_BreakLines(font, wrapwidth, string, true);
+		FBrokenLines *brk = V_BreakLines(font->mFont, wrapwidth, string, true);
 		for (int i = 0; brk[i].Width >= 0; i++)
 		{
-			self->DrawString(font, brk[i].Text, x, y, alpha, trans, ialign, salign, spacing, monospaced, shadowX, shadowY);
-			y += font->GetHeight() + linespacing;
+			self->DrawString(font->mFont, brk[i].Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
+			y += font->mFont->GetHeight() + linespacing;
 		}
 		V_FreeBrokenLines(brk);
 	}
 	else
 	{
-		self->DrawString(font, string, x, y, alpha, trans, ialign, salign, spacing, monospaced, shadowX, shadowY);
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
 	}
 	return 0;
 }
 
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h, int flags)
+{
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	double Alpha = color.a * this->Alpha / 255;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
+
+	if (!fullscreenOffsets)
+	{
+		x += ST_X;
+		//y += ST_Y;
+
+		// Todo: Allow other scaling values, too.
+		if (Scaled)
+		{
+			screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
+		}
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		w *= Scale.X;
+		h *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	screen->Dim(color, float(Alpha), int(x), int(y), int(w), int(h));
+}
+
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_COLOR(color);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT_DEF(flags);
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->Fill(color, x, y, w, h);
+	return 0;
+}
 
 //============================================================================
 //
@@ -1876,6 +2063,8 @@ DEFINE_FIELD(DBaseStatusBar, drawOffset);
 DEFINE_FIELD(DBaseStatusBar, drawClip);
 DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
 DEFINE_FIELD(DBaseStatusBar, defaultScale);
+DEFINE_FIELD(DBaseStatusBar, artiflashTick);
+DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 
 DEFINE_GLOBAL(StatusBar);
 
@@ -1928,9 +2117,9 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, FormatNumber)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(number);
-	PARAM_INT(minsize);
-	PARAM_INT(maxsize);
-	PARAM_INT(flags);
+	PARAM_INT_DEF(minsize);
+	PARAM_INT_DEF(maxsize);
+	PARAM_INT_DEF(flags);
 	PARAM_STRING_DEF(prefix);
 	static int maxvals[] = { 1, 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999 };
 
@@ -1956,10 +2145,10 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, ReceivedWeapon)
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(player, player_t);
-	PARAM_STRING(def_face);
 	PARAM_INT(accuracy);
 	PARAM_INT_DEF(stateflags);
-	auto tex = self->mugshot.GetFace(player, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	PARAM_STRING_DEF(def_face);
+	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
 	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }
+

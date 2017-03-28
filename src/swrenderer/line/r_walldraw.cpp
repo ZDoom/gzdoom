@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <cmath>
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -99,7 +100,7 @@ namespace swrenderer
 			v = v - floor(v);
 			double v_step = uv_stepd / texture->GetHeight();
 
-			if (isnan(v) || isnan(v_step)) // this should never happen, but it apparently does..
+			if (std::isnan(v) || std::isnan(v_step)) // this should never happen, but it apparently does..
 			{
 				uv_stepd = 0.0;
 				v = 0.0;

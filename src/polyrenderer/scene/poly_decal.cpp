@@ -123,10 +123,10 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		vertices[i].y = (float)p.Y;
 		vertices[i].z = (float)(zpos + spriteHeight * offsets[i].second - spriteHeight * 0.5);
 		vertices[i].w = 1.0f;
-		vertices[i].varying[0] = (float)(offsets[i].first * tex->Scale.X);
-		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
+		vertices[i].u = (float)(offsets[i].first * tex->Scale.X);
+		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
 		if (flipTextureX)
-			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
+			vertices[i].u = 1.0f - vertices[i].u;
 	}
 
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
@@ -134,10 +134,9 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(front->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
-	args.SetTexture(tex, decal->Translation, true);
 	args.SetSubsectorDepth(subsectorDepth);
 	args.SetColor(0xff000000 | decal->AlphaColor, decal->AlphaColor >> 24);
-	args.SetStyle(TriBlendMode::Shaded, decal->Alpha, 1.0 - decal->Alpha); // R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+	args.SetStyle(decal->RenderStyle, decal->Alpha, decal->AlphaColor, decal->Translation, tex, false);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);

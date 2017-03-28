@@ -99,10 +99,8 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	{
 		int bmode = (int)drawargs.BlendMode();
 
-		if (drawargs.WriteColor() && drawargs.TexturePixels())
-			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDraw32[bmode] : ScreenTriangle::TriDraw8[bmode];
-		else if (drawargs.WriteColor())
-			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriFill32[bmode] : ScreenTriangle::TriFill8[bmode];
+		if (drawargs.WriteColor())
+			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
 	}
 
 	if (drawargs.WriteStencil())
@@ -234,13 +232,12 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	// Keep varyings in -128 to 128 range if possible
 	if (numclipvert > 0)
 	{
-		for (int j = 0; j < TriVertex::NumVarying; j++)
+		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
+		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;
+		for (int i = 0; i < numclipvert; i++)
 		{
-			float newOrigin = floorf(clippedvert[0].varying[j] * 0.1f) * 10.0f;
-			for (int i = 0; i < numclipvert; i++)
-			{
-				clippedvert[i].varying[j] -= newOrigin;
-			}
+			clippedvert[i].u -= newOriginU;
+			clippedvert[i].v -= newOriginV;
 		}
 	}
 
@@ -426,8 +423,8 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 			v.y += verts[w].y * weight;
 			v.z += verts[w].z * weight;
 			v.w += verts[w].w * weight;
-			for (int iv = 0; iv < TriVertex::NumVarying; iv++)
-				v.varying[iv] += verts[w].varying[iv] * weight;
+			v.u += verts[w].u * weight;
+			v.v += verts[w].v * weight;
 		}
 	}
 	return inputverts;
@@ -451,4 +448,24 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	thread_data.PartialBlocks = thread->PartialBlocksBuffer.data();
 
 	PolyTriangleDrawer::draw_arrays(args, &thread_data);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void DrawRectCommand::Execute(DrawerThread *thread)
+{
+	WorkerThreadData thread_data;
+	thread_data.core = thread->core;
+	thread_data.num_cores = thread->num_cores;
+
+	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
+	const void *destOrg = renderTarget->GetBuffer();
+	int destWidth = renderTarget->GetWidth();
+	int destHeight = renderTarget->GetHeight();
+	int destPitch = renderTarget->GetPitch();
+	int blendmode = (int)args.BlendMode();
+	if (renderTarget->IsBgra())
+		ScreenTriangle::RectDrawers32[blendmode](destOrg, destWidth, destHeight, destPitch, &args, &thread_data);
+	else
+		ScreenTriangle::RectDrawers8[blendmode](destOrg, destWidth, destHeight, destPitch, &args, &thread_data);
 }

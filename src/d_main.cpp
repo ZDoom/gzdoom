@@ -2568,14 +2568,8 @@ void D_DoomMain (void)
 
 		P_SetupWeapons_ntohton();
 
-		//SBarInfo support.
-		// This needs special checking because there are two distinct methods of defining status bars.
-		// SBARINFO should only be picked if it is the most recently defined one, so that both
-		// methods can override each other if loaded in sequence.
-		if (gameinfo.statusbarfile > gameinfo.statusbarclassfile)
-		{
-			SBarInfo::Load();
-		}
+		//SBarInfo support. Note that the first SBARINFO lump contains the mugshot definition so it even needs to be read when a regular status bar is being used.
+		SBarInfo::Load();
 		HUD_InitHud();
 
 		if (!batchrun)

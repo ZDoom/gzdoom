@@ -15,6 +15,92 @@ struct MugShot
 	}
 }
 
+class HUDFont native ui
+{
+	native Font mFont;
+	native static HUDFont Create(Font fnt, int spacing = 0, bool monospaced = false, int shadowx = 0, int shadowy = 0);
+}
+
+class InventoryBarState ui
+{
+	TextureID box;
+	TextureID selector;
+	Vector2 boxsize;
+	Vector2 boxofs;
+	Vector2 selectofs;
+	Vector2 innersize;
+		
+	TextureID left;
+	TextureID right;
+	Vector2 arrowoffset;
+
+	double itemalpha;
+	
+	HUDFont amountfont;
+	int cr;
+	int flags;
+
+	private static void Init(InventoryBarState me, HUDFont indexfont, int cr, double itemalpha, Vector2 innersize,	String leftgfx, String rightgfx, Vector2 arrowoffs, int flags)
+	{
+		me.itemalpha = itemalpha;
+		if (innersize == (0, 0))
+		{
+			me.boxofs = (2, 2);
+			me.innersize = me.boxsize - (4, 4);	// Default is based on Heretic's and Hexens icons.
+		}
+		else
+		{
+			me.innersize = innersize;
+			me.boxofs = (me.boxsize - me.innersize) / 2;
+		}
+		if (me.selector.IsValid())
+		{
+			Vector2 sel = TexMan.GetScaledSize(me.selector);
+			me.selectofs = (me.boxsize - sel) / 2;
+		}
+		me.left = TexMan.CheckForTexture(leftgfx, TexMan.TYPE_MiscPatch);
+		me.right = TexMan.CheckForTexture(rightgfx, TexMan.TYPE_MiscPatch);
+		me.arrowoffset = arrowoffs;
+		me.arrowoffset.Y += me.boxsize.Y/2;	// default is centered to the side of the box.
+		if (indexfont == null) 
+		{
+			me.amountfont = HUDFont.Create("INDEXFONT");
+			if (cr == Font.CR_UNTRANSLATED) cr = Font.CR_GOLD;
+		}
+		else me.amountfont = indexfont;
+		me.cr = cr;
+		me.flags = flags;
+	}
+
+	// The default settings here are what SBARINFO is using.
+	static InventoryBarState Create(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
+							String boxgfx = "ARTIBOX", String selgfx = "SELECTBO", Vector2 innersize = (0, 0),
+							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	{
+		let me = new ("InventoryBarState");
+		me.box = TexMan.CheckForTexture(boxgfx, TexMan.TYPE_MiscPatch);
+		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
+		if (me.box.IsValid() || me.selector.IsValid()) me.boxsize = TexMan.GetScaledSize(me.box.IsValid()? me.box : me.selector);
+		else me.boxsize = (32., 32.);
+		Init(me, indexfont, cr, itemalpha, innersize, leftgfx, rightgfx, arrowoffs, flags);
+		return me;
+	}
+	
+	// The default settings here are what SBARINFO is using.
+	static InventoryBarState CreateNoBox(HUDFont indexfont = null, int cr = Font.CR_UNTRANSLATED, double itemalpha = 1.,
+							Vector2 boxsize = (32, 32), String selgfx = "SELECTBO", Vector2 innersize = (0, 0),
+							String leftgfx = "INVGEML1", String rightgfx = "INVGEMR1", Vector2 arrowoffs = (0, 0), int flags = 0)
+	{
+		let me = new ("InventoryBarState");
+		me.box.SetInvalid();
+		me.selector = TexMan.CheckForTexture(selgfx, TexMan.TYPE_MiscPatch);
+		me.boxsize = boxsize;
+		Init(me, indexfont, cr, itemalpha, innersize, leftgfx, rightgfx, arrowoffs, flags);
+		return me;
+	}
+	
+}
+
 
 class BaseStatusBar native ui
 {
@@ -65,8 +151,73 @@ class BaseStatusBar native ui
 		DI_TRANSLATABLE = 0x20,
 		DI_FORCESCALE = 0x40,
 		DI_DIM = 0x80,
-	};
+		DI_DRAWCURSORFIRST = 0x100,	// only for DrawInventoryBar.
+		DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
+		DI_DIMDEPLETED = 0x400,
+		DI_DONTANIMATE = 0x800,		// do not animate the texture
+			
+		DI_SCREEN_AUTO = 0,					// decide based on given offsets.
+		DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
+			
+		DI_SCREEN_TOP = DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VCENTER = 0x8000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_BOTTOM = 0x10000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VOFFSET = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_VMASK = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+			
+		DI_SCREEN_LEFT = DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HCENTER = 0x20000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_RIGHT = 0x40000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HOFFSET = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+		DI_SCREEN_HMASK = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+			
+		DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP|DI_SCREEN_LEFT,
+		DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP|DI_SCREEN_RIGHT,
+		DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_LEFT,
+		DI_SCREEN_RIGHT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_RIGHT,
+		DI_SCREEN_CENTER = DI_SCREEN_VCENTER|DI_SCREEN_HCENTER,
+		DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_HCENTER,
+		DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET|DI_SCREEN_VOFFSET,
+			
+		DI_ITEM_AUTO = 0,		// equivalent with bottom center, which is the default alignment.
+			
+		DI_ITEM_TOP = 0x80000,
+		DI_ITEM_VCENTER = 0x100000,
+		DI_ITEM_BOTTOM = 0,		// this is the default vertical alignment
+		DI_ITEM_VOFFSET = 0x180000,
+		DI_ITEM_VMASK = 0x180000,
+			
+		DI_ITEM_LEFT = 0x200000,
+		DI_ITEM_HCENTER = 0,	// this is the deafault horizontal alignment
+		DI_ITEM_RIGHT = 0x400000,
+		DI_ITEM_HOFFSET = 0x600000,
+		DI_ITEM_HMASK = 0x600000,
+			
+		DI_ITEM_LEFT_TOP = DI_ITEM_TOP|DI_ITEM_LEFT,
+		DI_ITEM_RIGHT_TOP = DI_ITEM_TOP|DI_ITEM_RIGHT,
+		DI_ITEM_LEFT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_LEFT,
+		DI_ITEM_RIGHT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_RIGHT,
+		DI_ITEM_CENTER = DI_ITEM_VCENTER|DI_ITEM_HCENTER,
+		DI_ITEM_CENTER_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_HCENTER,
+		DI_ITEM_OFFSETS = DI_ITEM_HOFFSET|DI_ITEM_VOFFSET,
+			
+		DI_TEXT_ALIGN_LEFT = 0,
+		DI_TEXT_ALIGN_RIGHT = 0x800000,
+		DI_TEXT_ALIGN_CENTER = 0x1000000,
+		DI_TEXT_ALIGN = 0x1800000,
 
+		DI_ALPHAMAPPED = 0x2000000,
+		DI_NOSHADOW = 0x4000000,
+		DI_ALWAYSSHOWCOUNTERS = 0x8000000,
+		DI_ARTIFLASH = 0x10000000,
+		DI_FORCEFILL = 0x20000000,
+
+		// These 2 flags are only used by SBARINFO so these duplicate other flags not used by SBARINFO
+		DI_DRAWINBOX = DI_TEXT_ALIGN_RIGHT,
+		DI_ALTERNATEONFAIL = DI_TEXT_ALIGN_CENTER,
+
+	};
+	
 	enum IconType
 	{
 		ITYPE_PLAYERICON = 1000,
@@ -87,40 +238,6 @@ class BaseStatusBar native ui
 		HEXENARMOR_AMULET,
 	};
 	
-	enum EAlign
-	{
-		ALIGN_TOP = 0,
-		ALIGN_VCENTER = 1,
-		ALIGN_BOTTOM = 2,
-		ALIGN_VOFFSET = 3,
-		ALIGN_VMASK = 3,
-
-		ALIGN_LEFT = 0,
-		ALIGN_HCENTER = 4,
-		ALIGN_RIGHT = 8,
-		ALIGN_HOFFSET = 12,
-		ALIGN_HMASK = 12,
-
-		ALIGN_CENTER = ALIGN_VCENTER|ALIGN_HCENTER,
-		ALIGN_CENTER_BOTTOM = ALIGN_BOTTOM|ALIGN_HCENTER,
-		ALIGN_OFFSETS = ALIGN_HOFFSET|ALIGN_VOFFSET
-	};
-	
-	enum ETextAlign
-	{
-		TEXT_LEFT = 0,
-		TEXT_CENTER = 1,
-		TEXT_RIGHT = 2
-	};
-
-	enum SBGameModes
-	{
-		GAMEMODE_SINGLEPLAYER	= 0x1,
-		GAMEMODE_COOPERATIVE	= 0x2,
-		GAMEMODE_DEATHMATCH		= 0x4,
-		GAMEMODE_TEAMGAME		= 0x8
-	};
-
 	enum AmmoModes
 	{
 		AMMO_PRIMARY,
@@ -141,6 +258,13 @@ class BaseStatusBar native ui
 		FNF_WHENNOTZERO,
 	}
 	
+	enum EShade
+	{
+		SHADER_HORZ = 0,
+		SHADER_VERT = 2,
+		SHADER_REVERSE = 1
+	}
+	
 	const XHAIRSHRINKSIZE =(1./18);
 	const XHAIRPICKUPSIZE = (2+XHAIRSHRINKSIZE);
 	const POWERUPICONSIZE = 32;
@@ -158,6 +282,8 @@ class BaseStatusBar native ui
 	native PlayerInfo CPlayer;
 	native bool ShowLog;
 	native Vector2 defaultScale;	// factor for fully scaled fullscreen display.
+	native int artiflashTick;
+	native double itemflashFade;
 
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;
@@ -180,22 +306,24 @@ class BaseStatusBar native ui
 	native virtual clearscope void ReceivedWeapon (Weapon weapn);
 	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);
 
-	virtual void FlashItem (class<Inventory> itemtype) {}
+	virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
-	virtual void NewGame () {}
+	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
 	
 	native void RefreshBackground () const;
-	native TextureID GetMugshot(PlayerInfo player, String default_face, int accuracy, int stateflags=MugShot.STANDARD);
+	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native Inventory ValidateInvFirst (int numVisible) const;
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
-	native void DrawGraphic(TextureID texture, bool animate, Vector2 pos, double Alpha,  bool translatable, bool dim, int imgAlign, int screenalign, bool alphamap, Vector2 box);
-	native void DrawString(Font font, String string, Vector2 pos , double Alpha, int translation, int align, int screenalign, int spacing=0, bool monospaced = false, int shadowX=0, int shadowY=0, int wrapwidth = -1, int linespacing = 4);
-	native static String FormatNumber(int number, int minsize, int maxsize, int format, String prefix = "");
+	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
+	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
+	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	
 	
 	//============================================================================
@@ -207,7 +335,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	Inventory, Inventory, int, int GetCurrentAmmo () const
+	Ammo, Ammo, int, int GetCurrentAmmo () const
 	{
 		Ammo ammo1, ammo2;
 		if (CPlayer.ReadyWeapon != NULL)
@@ -235,7 +363,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	TextureID, Vector2 GetIcon(Inventory item, int flags, bool showdepleted = false)
+	TextureID, Vector2 GetIcon(Inventory item, int flags, bool showdepleted = true)
 	{
 		TextureID icon;
 		Vector2 scale = (1,1);
@@ -245,12 +373,12 @@ class BaseStatusBar native ui
 			bool applyscale;
 			[icon, applyscale] = GetInventoryIcon(item, flags);
 			
-			if (item.Amount == 0 && !showdepleted) return icon;
+			if (item.Amount == 0 && !showdepleted) return icon, scale;
 			
 			if (applyscale)
 				scale = item.Scale;
 		}
-		return icon;
+		return icon, scale;
 	}
 	
 	//============================================================================
@@ -299,6 +427,14 @@ class BaseStatusBar native ui
 		return armor? armor.Amount : 0;
 	}
 	
+	int, int GetAmount(class<Inventory> item)
+	{
+		let it = CPlayer.mo.FindInventory(item);
+		int ret1 = it? it.Amount : GetDefaultByType(item).Amount;
+		int ret2 = it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
+		return ret1, ret2;
+	}
+
 	int GetMaxAmount(class<Inventory> item)
 	{
 		let it = CPlayer.mo.FindInventory(item);
@@ -356,20 +492,6 @@ class BaseStatusBar native ui
 
 	//============================================================================
 	//
-	// checks current game mode against a flag mask
-	//
-	//============================================================================
-
-	bool CheckGameMode(int ValidModes)
-	{
-		return  (!multiplayer && (ValidModes & GAMEMODE_SINGLEPLAYER)) ||
-				(deathmatch && (ValidModes & GAMEMODE_DEATHMATCH)) ||
-				(multiplayer && !deathmatch && (ValidModes & GAMEMODE_COOPERATIVE)) ||
-				(teamplay && (ValidModes & GAMEMODE_TEAMGAME));
-	}
-
-	//============================================================================
-	//
 	// checks ammo use of current weapon
 	//
 	//============================================================================
@@ -398,7 +520,7 @@ class BaseStatusBar native ui
 	bool isInventoryBarVisible()
 	{
 		if (CPlayer == null) return false;
-		return (CPlayer.inventorytics <= 0 || level.NoInventoryBar);
+		return (CPlayer.inventorytics > 0 && !level.NoInventoryBar);
 	}
 	
 	//============================================================================
@@ -448,7 +570,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	bool CheckWeaponPiece(class<Weapon> weap, int piecenum)
+	int CheckWeaponPiece(class<Weapon> weap, int piecenum)
 	{
 		if (CPlayer == null) return false;
 		for(let inv = CPlayer.mo.Inv; inv != NULL; inv = inv.Inv)
@@ -460,6 +582,26 @@ class BaseStatusBar native ui
 			}
 		}
 		return false;
+	}
+
+	//============================================================================
+	//
+	// checks if player has the given weapon piece
+	//
+	//============================================================================
+
+	int GetWeaponPieceMask(class<Weapon> weap)
+	{
+		if (CPlayer == null) return false;
+		for(let inv = CPlayer.mo.Inv; inv != NULL; inv = inv.Inv)
+		{
+			let wh = WeaponHolder(inv);
+			if (wh != null && wh.PieceWeapon == weap)
+			{
+				return wh.PieceMask;
+			}
+		}
+		return 0;
 	}
 
 	//============================================================================
@@ -535,7 +677,7 @@ class BaseStatusBar native ui
 			if (icon.IsValid())
 			{
 				// Each icon gets a 32x32 block.
-				DrawTexture(icon, pos, true, 1.0, ALIGN_TOP|ALIGN_RIGHT, (POWERUPICONSIZE, POWERUPICONSIZE), ALIGN_CENTER_BOTTOM);
+				DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
 				pos.x -= POWERUPICONSIZE;
 				if (pos.x < -maxpos)
 				{
@@ -562,111 +704,11 @@ class BaseStatusBar native ui
 	
 	//============================================================================
 	//
-	// draw stuff
-	//
-	//============================================================================
-
-	void DrawTexture(TextureID texture, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
-	{
-		if (!texture.IsValid()) return;	// nothing to draw
-		
-		alpha *= self.alpha;
-		if (alpha <= 0) return;					// invisible
-
-		Vector2 texsize = TexMan.GetScaledSize(texture);
-		texsize.X *= scale.X;
-		texsize.Y *= scale.Y;
-		if (boxsize.X > 0 || boxsize.Y > 0)
-		{
-			double scale1 = 1., scale2 = 1.;
-			
-			if (boxsize.X != -1 && (boxsize.X < texsize.X || (flags & DI_FORCESCALE)))
-			{
-				scale1 = boxsize.X / texsize.X;
-			}
-			if (boxsize.Y != -1 && (boxsize.Y < texsize.Y || (flags & DI_FORCESCALE)))
-			{
-				scale2 = boxsize.Y / texsize.Y;
-			}
-			
-			if (flags & DI_FORCESCALE)
-			{
-				if (boxsize.X == -1 || (boxsize.Y != -1 && scale2 < scale1))
-					scale1 = scale2;
-			}
-			else scale1 = min(scale1, scale2);
-			
-			boxsize = texsize * scale1;
-		}
-		else
-		{
-			boxsize = texsize;
-		}
-		DrawGraphic(texture, animated, pos, Alpha, !!(flags & DI_TRANSLATABLE), !!(flags & DI_DIM), itemAlign, screenAlign, false, boxsize);
-	}
-	
-	//============================================================================
-	//
 	//
 	//
 	//============================================================================
 
-	void DrawImage(String imagename, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0, Vector2 scale = (1., 1.) )
-	{
-		let tex = TexMan.CheckForTexture(imagename, TexMan.TYPE_MiscPatch);
-		DrawTexture(tex, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, scale);
-	}
-	
-	//============================================================================
-	//
-	//
-	//
-	//============================================================================
-
-	void DrawIcon(int icontype, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
-	{
-		TextureID texture;
-		Vector2 applyscale = (1, 1);
-		Inventory atype1, atype2;
-		switch (icontype)
-		{
-			case ITYPE_PLAYERICON:
-				texture = CPlayer.mo.ScoreIcon;
-				break;
-				
-			case ITYPE_AMMO1:
-			case ITYPE_AMMO2:
-				[atype1, atype2] = GetCurrentAmmo();
-				[texture, applyscale] = GetIcon(icontype == ITYPE_AMMO1? atype1 : atype2, flags, true);
-				break;
-				
-			case ITYPE_ARMOR:
-				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("BasicArmor"), flags, false);
-				break;
-			
-			case ITYPE_WEAPON:
-				[texture, applyscale] = GetIcon(CPlayer.ReadyWeapon, flags, false);
-				break;
-				
-			case ITYPE_SIGIL:
-				[texture, applyscale] = GetIcon(CPlayer.mo.FindInventory("Sigil"), flags, false);
-				break;
-				
-			case ITYPE_SELECTEDINVENTORY:
-				if (CPlayer.mo.InvSel != NULL)
-					texture = CPlayer.mo.InvSel.Icon;
-				break;
-		}
-		DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags, applyscale);
-	}
-	
-	//============================================================================
-	//
-	//
-	//
-	//============================================================================
-
-	void DrawHexenArmor(int armortype, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
+	void DrawHexenArmor(int armortype, String image, Vector2 pos, int flags = 0, double alpha = 1.0, Vector2 boxsize = (-1, -1), Vector2 scale = (1.,1.))
 	{
 		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
 		if (harmor != NULL)
@@ -681,7 +723,7 @@ class BaseStatusBar native ui
 			}
 			else return;
 		}
-		DrawImage(image, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+		DrawImage(image, pos, flags, alpha, boxsize, scale);
 	}
 	
 	//============================================================================
@@ -690,15 +732,212 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawInventoryIcon(class<Inventory> item, String image, Vector2 pos, bool animated = false, double alpha = 1.0, int screenalign = ALIGN_TOP|ALIGN_LEFT, Vector2 boxsize = (-1, -1), int itemAlign = ALIGN_TOP|ALIGN_LEFT, int flags = 0)
+	void DrawInventoryIcon(Inventory item, Vector2 pos, int flags = 0, double alpha = 1.0, Vector2 boxsize = (-1, -1), Vector2 scale = (1.,1.))
 	{
-		let texture = GetDefaultByType(item).Icon;
-		if (texture.IsValid())
+		static const String flashimgs[]= { "USEARTID", "USEARTIC", "USEARTIB", "USEARTIA" };
+		TextureID texture;
+		Vector2 applyscale;
+		[texture, applyscale] = GetIcon(item, flags, false);
+		
+		if((flags & DI_ARTIFLASH) && artiflashTick > 0)
 		{
-			DrawTexture(texture, pos, animated, screenalign, alpha, boxsize, itemAlign, flags);
+			DrawImage(flashimgs[artiflashTick-1], pos, flags | DI_TRANSLATABLE, alpha, boxsize);
+		}
+		else if (texture.IsValid())
+		{
+			if ((flags & DI_DIMDEPLETED) && item.Amount <= 0) flags |= DI_DIM;
+			applyscale.X *= scale.X;
+			applyscale.Y *= scale.Y;
+			DrawTexture(texture, pos, flags, alpha, boxsize, applyscale);
 		}
 	}
 	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+	
+	void DrawShader(int which, Vector2 pos, Vector2 size, int flags = 0, double alpha = 1.)
+	{
+		static const String texnames[] = {"BarShaderHF", "BarShaderHR", "BarShaderVF", "BarShaderVR" };
+		DrawImage(texnames[which], pos, DI_ITEM_LEFT_TOP|DI_ALPHAMAPPED|DI_FORCEFILL | (flags & ~(DI_ITEM_HMASK|DI_ITEM_VMASK)), alpha, size);
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+	
+	Vector2, int AdjustPosition(Vector2 position, int flags, double width, double height)
+	{
+		// This must be done here, before altered coordinates get sent to the draw functions.
+		if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+		{
+			if (position.x < 0) flags |= DI_SCREEN_RIGHT;
+			else flags |= DI_SCREEN_LEFT;
+			if (position.y < 0) flags |= DI_SCREEN_BOTTOM;
+			else flags |= DI_SCREEN_TOP;
+		}
+
+		// placement by offset is not supported because the inventory bar is a composite.
+		switch (flags & DI_ITEM_HMASK)
+		{
+		case DI_ITEM_HCENTER:	position.x -= width / 2; break;
+		case DI_ITEM_RIGHT:		position.x -= width; break;
+		}
+
+		switch (flags & DI_ITEM_VMASK)
+		{
+		case DI_ITEM_VCENTER: position.y -= height / 2; break;
+		case DI_ITEM_BOTTOM:  position.y -= height; break;
+		}
+		
+		// clear all alignment flags so that the following code only passes on the rest
+		flags &= ~(DI_ITEM_VMASK|DI_ITEM_HMASK);
+		return position, flags;
+	}	
+	
+	//============================================================================
+	//
+	// note that this does not implement chain wiggling, this is because
+	// it would severely complicate the parameter list. The calling code is 
+	// normally in a better position to do the needed calculations anyway.
+	//
+	//============================================================================
+	
+	void DrawGem(String chain, String gem, int displayvalue, int maxrange, Vector2 pos, int leftpadding, int rightpadding, int chainmod, int flags = 0)
+	{
+		TextureID chaintex = TexMan.CheckForTexture(chain, TexMan.TYPE_MiscPatch);
+		if (!chaintex.IsValid()) return;
+		Vector2 chainsize = TexMan.GetScaledSize(chaintex);
+		[pos, flags] = AdjustPosition(pos, flags, chainsize.X, chainsize.Y);
+
+		displayvalue = clamp(displayvalue, 0, maxrange);
+		int offset = int(double(chainsize.X - leftpadding - rightpadding) * displayvalue / maxrange);
+	
+		DrawTexture(chaintex, pos + (offset % chainmod, 0), flags | DI_ITEM_LEFT_TOP);
+		DrawImage(gem, pos + (offset + leftPadding, 0), flags | DI_ITEM_LEFT_TOP);
+	}
+	
+	//============================================================================
+	//
+	// DrawBar
+	//
+	//============================================================================
+
+	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0, double alpha = 1.)
+	{
+		let ontex = TexMan.CheckForTexture(ongfx, TexMan.TYPE_MiscPatch);
+		if (!ontex.IsValid()) return;
+		let offtex = TexMan.CheckForTexture(offgfx, TexMan.TYPE_MiscPatch);
+
+		Vector2 texsize = TexMan.GetScaledSize(ontex);
+		[position, flags] = AdjustPosition(position, flags, texsize.X, texsize.Y);
+		
+		double value = clamp(curval / maxval, 0, 1);
+		if(border != 0) value = 1. - value; //invert since the new drawing method requires drawing the bg on the fg.
+		
+		
+		// {cx, cb, cr, cy}
+		double Clip[4];
+		Clip[0] = Clip[1] = Clip[2] = Clip[3] = 0;
+		
+		bool horizontal = !(vertical & SHADER_VERT);
+		bool reverse = !!(vertical & SHADER_REVERSE);
+		double sizeOfImage = (horizontal ? texsize.X - border*2 : texsize.Y - border*2);
+		Clip[(!horizontal) | ((!reverse)<<1)] = sizeOfImage - sizeOfImage *value;
+		
+		if(border != 0)
+		{
+			for(int i = 0; i < 4; i++) Clip[i] += border;
+
+			//Draw the whole foreground
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+			// SetClip
+		}
+		
+		if (offtex.IsValid() && TexMan.GetScaledSize(offtex) == texsize) DrawTexture(offtex, position, flags | DI_ITEM_LEFT_TOP);
+		else Fill(color(255,0,0,0), position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3]);
+		
+		if (border == 0) 
+		{
+			// SetClip
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+		}
+		// UnsetClip
+	}
+	
+	//============================================================================
+	//
+	// DrawInventoryBar
+	//
+	// This function needs too many parameters, so most have been offloaded to
+	// a struct to keep code readable and allow initialization somewhere outside
+	// the actual drawing code.
+	//
+	//============================================================================
+	
+	// Except for the placement information this gets all info from the struct that gets passed in.
+	void DrawInventoryBar(InventoryBarState parms, Vector2 position, int numfields, int flags = 0, double bgalpha = 1.)
+	{
+		double width = parms.boxsize.X * numfields;
+		[position, flags] = AdjustPosition(position, flags, width, parms.boxsize.Y);
+		
+		CPlayer.mo.InvFirst = ValidateInvFirst(numfields);
+		if (CPlayer.mo.InvFirst == null) return;	// Player has no listed inventory items.
+		
+		Vector2 boxsize = parms.boxsize;
+		// First draw all the boxes
+		for(int i = 0; i < numfields; i++)
+		{
+			DrawTexture(parms.box, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, bgalpha);
+		}
+		
+		// now the items and the rest
+		
+		Vector2 itempos = position + boxsize / 2;
+		Vector2 textpos = position + boxsize - (1, 1 + parms.amountfont.mFont.GetHeight());
+
+		int i = 0;
+		Inventory item;
+		for(item = CPlayer.mo.InvFirst; item != NULL && i < numfields; item = item.NextInv())
+		{
+			for(int j = 0; j < 2; j++)
+			{
+				if (j ^ !!(parms.flags & DI_DRAWCURSORFIRST)) 
+				{
+					if (item == CPlayer.mo.InvSel)
+					{
+						double flashAlpha = bgalpha;
+						if (flags & DI_ARTIFLASH) flashAlpha *= itemflashFade;
+						DrawTexture(parms.selector, position + parms.selectofs + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, flashAlpha);
+					}
+				}
+				else
+				{
+					DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER );
+				}
+			}
+			
+			if (parms.amountfont != null && (item.Amount > 1 || (parms.flags & DI_ALWAYSSHOWCOUNTERS)))
+			{
+				DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 5), textpos + (boxsize.X * i, 0), flags | DI_TEXT_ALIGN_RIGHT, parms.cr, parms.itemalpha);
+			}
+			i++;
+		}
+		// Is there something to the left?
+		if (CPlayer.mo.FirstInv() != CPlayer.mo.InvFirst)
+		{
+			DrawTexture(parms.left, position + (-parms.arrowoffset.X, parms.arrowoffset.Y), flags | DI_ITEM_RIGHT|DI_ITEM_VCENTER);
+		}
+		// Is there something to the right?
+		if (item != NULL)
+		{
+			DrawTexture(parms.right, position + parms.arrowoffset + (width, 0), flags | DI_ITEM_LEFT|DI_ITEM_VCENTER);
+		}
+	}
 }
 
 //============================================================================
@@ -719,6 +958,11 @@ class LinearValueInterpolator : Object
 		v.mCurrentValue = startval;
 		v.mMaxChange = maxchange;
 		return v;
+	}
+	
+	void Reset(int value)
+	{
+		mCurrentValue = value;
 	}
 	
 	// This must be called peroiodically in the status bar's Tick function.
@@ -746,23 +990,30 @@ class DynamicValueInterpolator : Object
 {
 	int mCurrentValue;
 	int mMinChange;
+	int mMaxChange;
 	double mChangeFactor;
 	
 	
-	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange)
+	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange, int maxchange)
 	{
 		let v = new("DynamicValueInterpolator");
 		v.mCurrentValue = startval;
 		v.mMinChange = minchange;
+		v.mMaxChange = maxchange;
 		v.mChangeFactor = changefactor;
 		return v;
+	}
+	
+	void Reset(int value)
+	{
+		mCurrentValue = value;
 	}
 	
 	// This must be called peroiodically in the status bar's Tick function.
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
 	{
-		int diff = int(max(abs(destvalue - mCurrentValue) * mChangeFactor, mMinChange));
+		int diff = int(clamp(abs(destvalue - mCurrentValue) * mChangeFactor, mMinChange, mMaxChange));
 		if (mCurrentValue > destvalue)
 		{
 			mCurrentValue = max(destvalue, mCurrentValue - diff);

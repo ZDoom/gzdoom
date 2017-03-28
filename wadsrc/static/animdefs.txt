@@ -183,6 +183,14 @@ texture optional FBULB0
 // The Wings of Wrath are not included, because they stop spinning when
 // you stop flying, so they can't be a simple animation.
 
+texture optional INVGEML1
+	pic INVGEML1 tics 4
+	pic INVGEML2 tics 4
+	
+texture optional INVGEMR1
+	pic INVGEMR1 tics 4
+	pic INVGEMR2 tics 4
+	
 switch doom 1 SW1BRCOM on pic SW2BRCOM tics 0
 switch doom 1 SW1BRN1 on pic SW2BRN1 tics 0
 switch doom 1 SW1BRN2 on pic SW2BRN2 tics 0

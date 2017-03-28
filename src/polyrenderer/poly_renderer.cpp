@@ -63,7 +63,6 @@ void PolyRenderer::RenderView(player_t *player)
 
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
-	int stHeight = gST_Y;
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
 	//viewport->SetViewport(&Thread, width, height, trueratio);

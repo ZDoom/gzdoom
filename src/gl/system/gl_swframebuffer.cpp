@@ -2410,6 +2410,7 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 
 bool OpenGLSWFrameBuffer::Begin2D(bool copy3d)
 {
+	ClearClipRect();
 	if (!Accel2D)
 	{
 		return false;
@@ -2488,7 +2489,7 @@ FNativePalette *OpenGLSWFrameBuffer::CreatePalette(FRemapTable *remap)
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void OpenGLSWFrameBuffer::DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
@@ -2517,7 +2518,7 @@ void OpenGLSWFrameBuffer::Clear(int left, int top, int right, int bottom, int pa
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::Dim(PalEntry color, float amount, int x1, int y1, int w, int h)
+void OpenGLSWFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, int h)
 {
 	if (amount <= 0)
 	{

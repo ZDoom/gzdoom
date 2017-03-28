@@ -115,7 +115,7 @@ static FFont * IndexFont;					// The font for the inventory indices
 static FTexture * healthpic;				// Health icon
 static FTexture * berserkpic;				// Berserk icon (Doom only)
 static FTexture * fragpic;					// Frags icon
-static FTexture * invgems[4];				// Inventory arrows
+static FTexture * invgems[2];				// Inventory arrows
 
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
@@ -816,7 +816,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 	{
 		if(rover->PrevInv())
 		{
-			screen->DrawTexture(invgems[!!(level.time&4)], x-10, y,
+			screen->DrawTexture(invgems[0], x-10, y,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
 		}
@@ -852,7 +852,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 		}
 		if(rover)
 		{
-			screen->DrawTexture(invgems[2 + !!(level.time&4)], x-10, y,
+			screen->DrawTexture(invgems[1], x-10, y,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
 		}
@@ -1279,9 +1279,7 @@ void HUD_InitHud()
 	if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
 
 	invgems[0] = TexMan.FindTexture("INVGEML1");
-	invgems[1] = TexMan.FindTexture("INVGEML2");
-	invgems[2] = TexMan.FindTexture("INVGEMR1");
-	invgems[3] = TexMan.FindTexture("INVGEMR2");
+	invgems[1] = TexMan.FindTexture("INVGEMR1");
 
 	fragpic = TexMan.FindTexture("HU_FRAGS");	// Sadly, I don't have anything usable for this. :(
 

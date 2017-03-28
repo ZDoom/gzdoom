@@ -576,52 +576,28 @@ fixed_t RenderPolyPlayerSprites::LightLevelToShade(int lightlevel, bool foggy)
 
 void PolyNoAccelPlayerSprite::Render()
 {
-#if 0
 	if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
 	{ // scaled to 0; can't see
 		return;
 	}
 
-	SpriteDrawerArgs drawerargs;
-	drawerargs.SetLight(Light.BaseColormap, 0, Light.ColormapNum << FRACBITS);
-
-	FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(Light.BaseColormap);
-
-	bool visible = drawerargs.SetStyle(RenderStyle, Alpha, Translation, FillColor, basecolormap, Light.ColormapNum << FRACBITS);
-	if (!visible)
-		return;
-
-	double spryscale = yscale;
-	bool sprflipvert = false;
-	fixed_t iscale = FLOAT2FIXED(1 / yscale);
+	RectDrawArgs args;
+	args.SetStyle(RenderStyle, Alpha, FillColor, Translation, pic, false);
+	args.SetLight(Light.BaseColormap, 255 - (Light.ColormapNum << 3));
 
 	double centerY = viewheight / 2;
-
-	double sprtopscreen;
+	double y1, y2;
 	if (renderflags & RF_YFLIP)
 	{
-		sprflipvert = true;
-		spryscale = -spryscale;
-		iscale = -iscale;
-		sprtopscreen = centerY + (texturemid - pic->GetHeight()) * spryscale;
+		y1 = centerY + (texturemid - pic->GetHeight()) * (-yscale);
+		y2 = y1 + pic->GetHeight() * (-yscale);
 	}
 	else
 	{
-		sprflipvert = false;
-		sprtopscreen = centerY - texturemid * spryscale;
+		y1 = centerY - texturemid * yscale;
+		y2 = y1 + pic->GetHeight() * yscale;
 	}
-
-	// clip to screen bounds
-	short *mfloorclip = screenheightarray;
-	short *mceilingclip = zeroarray;
-
-	fixed_t frac = startfrac;
-	for (int x = x1; x < x2; x++)
-	{
-		drawerargs.DrawMaskedColumn(x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
-		frac += xiscale;
-	}
-#endif
+	args.Draw(x1, x2, y1, y2, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
 /////////////////////////////////////////////////////////////////////////////

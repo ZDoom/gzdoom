@@ -1153,7 +1153,7 @@ void Win32GLFrameBuffer::Unlock ()
 
 bool Win32GLFrameBuffer::IsLocked () 
 { 
-	return m_Lock>0;// true;
+	return m_Lock > 0;
 }
 
 //==========================================================================

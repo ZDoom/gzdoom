@@ -65,9 +65,7 @@ enum
 	imgSELECTBOX,
 	imgCURSOR,
 	imgINVLFGEM1,
-	imgINVLFGEM2,
 	imgINVRTGEM1,
-	imgINVRTGEM2,
 };
 
 EXTERN_CVAR(Int, fraglimit)
@@ -448,6 +446,7 @@ void SBarInfo::Load()
 {
 	FreeSBarInfoScript();
 	MugShotStates.Clear();
+
 	if(gameinfo.statusbar.IsNotEmpty())
 	{
 		int lump = Wads.CheckNumForFullName(gameinfo.statusbar, true);
@@ -981,18 +980,17 @@ public:
 
 		static const char *InventoryBarLumps[] =
 		{
-			"ARTIBOX",	"SELECTBO", "INVCURS",	"INVGEML1",
-			"INVGEML2",	"INVGEMR1",	"INVGEMR2",
+			"ARTIBOX",	"SELECTBO", "INVCURS",	"INVGEML1", "INVGEMR1",
 			"USEARTIA", "USEARTIB", "USEARTIC", "USEARTID",
 		};
 		TArray<const char *> patchnames;
-		patchnames.Resize(script->Images.Size()+10);
+		patchnames.Resize(script->Images.Size()+9);
 		unsigned int i = 0;
 		for(i = 0;i < script->Images.Size();i++)
 		{
 			patchnames[i] = script->Images[i];
 		}
-		for(i = 0;i < 10;i++)
+		for(i = 0;i < 9;i++)
 		{
 			patchnames[i+script->Images.Size()] = InventoryBarLumps[i];
 		}
@@ -1162,9 +1160,6 @@ public:
 		if(lastInventoryBar != NULL && CPlayer->inventorytics > 0)
 			lastInventoryBar->Tick(NULL, this, false);
 	}
-
-	// void DSBarInfo::FlashItem(const PClass *itemtype) - Is defined with CommandDrawSelectedInventory
-	void _FlashItem(const PClass *itemtype);
 
 	void _ShowPop(int popnum)
 	{
@@ -1603,14 +1598,6 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, Tick)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_Tick();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DSBarInfo, FlashItem)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
-	PARAM_CLASS(w, AInventory);
-	self->_FlashItem(w);
 	return 0;
 }
 

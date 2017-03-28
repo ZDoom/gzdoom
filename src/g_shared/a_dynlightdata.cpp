@@ -127,6 +127,7 @@ public:
    void SetDontLightSelf(bool add) { m_dontlightself = add; }
    void SetAttenuate(bool on) { m_attenuate = on; }
    void SetHalo(bool halo) { m_halo = halo; }
+   void SetDontLightActors(bool on) { m_dontlightactors = on; }
 
    void OrderIntensities()
    {
@@ -144,7 +145,7 @@ protected:
    DVector3 m_Pos;
    ELightType m_type;
    int8_t m_attenuate;
-   bool m_subtractive, m_additive, m_halo, m_dontlightself;
+   bool m_subtractive, m_additive, m_halo, m_dontlightself, m_dontlightactors;
    bool m_swapped = false;
 };
 
@@ -187,6 +188,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
 	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
+	if (m_dontlightactors) light->flags4 |= MF4_DONTLIGHTACTORS;
 	light->m_tickCount = 0;
 	if (m_type == PulseLight)
 	{
@@ -236,6 +238,7 @@ static const char *LightTags[]=
    "halo",
    "dontlightself",
    "attenuate",
+   "dontlightactors",
    NULL
 };
 
@@ -256,7 +259,8 @@ enum {
    LIGHTTAG_ADDITIVE,
    LIGHTTAG_HALO,
    LIGHTTAG_DONTLIGHTSELF,
-   LIGHTTAG_ATTENUATE
+   LIGHTTAG_ATTENUATE,
+   LIGHTTAG_DONTLIGHTACTORS,
 };
 
 
@@ -394,6 +398,9 @@ static void ParsePointLight(FScanner &sc)
 			case LIGHTTAG_ATTENUATE:
 				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_DONTLIGHTACTORS:
+				defaults->SetDontLightActors(ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -475,6 +482,9 @@ static void ParsePulseLight(FScanner &sc)
 				break;
 			case LIGHTTAG_ATTENUATE:
 				defaults->SetAttenuate(ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_DONTLIGHTACTORS:
+				defaults->SetDontLightActors(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -560,6 +570,9 @@ void ParseFlickerLight(FScanner &sc)
 			case LIGHTTAG_ATTENUATE:
 				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_DONTLIGHTACTORS:
+				defaults->SetDontLightActors(ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -643,6 +656,9 @@ void ParseFlickerLight2(FScanner &sc)
 			case LIGHTTAG_ATTENUATE:
 				defaults->SetAttenuate(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_DONTLIGHTACTORS:
+				defaults->SetDontLightActors(ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -722,6 +738,9 @@ static void ParseSectorLight(FScanner &sc)
 				break;
 			case LIGHTTAG_ATTENUATE:
 				defaults->SetAttenuate(ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_DONTLIGHTACTORS:
+				defaults->SetDontLightActors(ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);

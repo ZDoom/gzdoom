@@ -27,7 +27,8 @@ gameinfo
 	defaultbloodcolor = "68 00 00"
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "BagOfHolding"	// Hexen doesn't have a backpack so use Heretic's.
-	statusbar = "sbarinfo/hexen.txt"
+	//statusbar = "sbarinfo/hexen.txt"
+	statusbarclass = "HexenStatusBar"
 	intermissionmusic = "hub"
 	intermissioncounter = false
 	weaponslot = 1, "FWeapFist", "CWeapMace", "MWeapWand"

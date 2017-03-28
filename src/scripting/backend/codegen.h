@@ -508,7 +508,6 @@ public:
 
 	FxConstant(PType *type, VMValue &vmval, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
-		ValueType = value.Type = type;
 		isresolved = true;
 		switch (vmval.Type)
 		{
@@ -522,13 +521,14 @@ public:
 			break;
 
 		case REGT_STRING:
-			value = ExpVal(vmval.s());
+			new(&value) ExpVal(vmval.s());
 			break;
 
 		case REGT_POINTER:
 			value.pointer = vmval.a;
 			break;
 		}
+		ValueType = value.Type = type;
 	}
 	
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);

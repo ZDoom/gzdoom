@@ -360,6 +360,7 @@ usercmd_t	original_cmd;
 	native void SetLogText (String text);
 	native void DropWeapon();
 	native void BringUpWeapon();
+	native bool Resurrect();
 
 	native String GetUserName() const;
 	native Color GetColor() const;
@@ -373,6 +374,28 @@ usercmd_t	original_cmd;
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
+	native clearscope bool HasWeaponsInSlot(int slot) const;
+	
+	clearscope int fragSum () const
+	{
+		int i;
+		int allfrags = 0;
+		int playernum = mo.PlayerNumber();
+	
+		for (i = 0; i < MAXPLAYERS; i++)
+		{
+			if (playeringame[i]
+				&& i!=playernum)
+			{
+				allfrags += frags[i];
+			}
+		}
+		
+		// JDC hack - negative frags.
+		allfrags -= frags[playernum];
+		return allfrags;
+	}
+	
 }
 
 struct PlayerClass native

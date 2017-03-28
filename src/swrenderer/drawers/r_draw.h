@@ -44,8 +44,9 @@ namespace swrenderer
 	extern int fuzzpos;
 	extern int fuzzviewheight;
 
+	#define NUM_PARTICLE_TEXTURES 3
 	#define PARTICLE_TEXTURE_SIZE 64
-	extern uint32_t particle_texture[PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
+	extern uint32_t particle_texture[NUM_PARTICLE_TEXTURES][PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
 	class SWPixelFormatDrawers
 	{

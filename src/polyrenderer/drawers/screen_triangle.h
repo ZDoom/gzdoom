@@ -61,11 +61,10 @@ struct WorkerThreadData
 struct TriVertex
 {
 	TriVertex() { }
-	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; }
+	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w), u(u), v(v) { }
 
-	enum { NumVarying = 2 };
 	float x, y, z, w;
-	float varying[NumVarying];
+	float u, v;
 };
 
 struct TriDrawTriangleArgs
@@ -86,26 +85,33 @@ struct TriDrawTriangleArgs
 	const PolyDrawArgs *uniforms;
 };
 
+class RectDrawArgs;
+
 enum class TriBlendMode
 {
-	Copy,           // blend_copy(shade(fg))
-	AlphaBlend,     // blend_alpha_blend(shade(fg), bg)
-	AddSolid,       // blend_add(shade(fg), bg, srcalpha, destalpha)
-	Add,            // blend_add(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	Sub,            // blend_sub(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	RevSub,         // blend_revsub(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	Stencil,        // blend_stencil(shade(color), fg.a, bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	Shaded,         // blend_stencil(shade(color), fg.index, bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	TranslateCopy,  // blend_copy(shade(translate(fg)))
-	TranslateAlphaBlend, // blend_alpha_blend(shade(translate(fg)), bg)
-	TranslateAdd,   // blend_add(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	TranslateSub,   // blend_sub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	TranslateRevSub,// blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	AddSrcColorOneMinusSrcColor, // glBlendMode(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR) used by GZDoom's fullbright additive sprites
-	Skycap          // Fade to sky color when the V texture coordinate go beyond the [-1, 1] range
+	TextureOpaque,
+	TextureMasked,
+	TextureAdd,
+	TextureSub,
+	TextureRevSub,
+	TextureAddSrcColor,
+	TranslatedOpaque,
+	TranslatedMasked,
+	TranslatedAdd,
+	TranslatedSub,
+	TranslatedRevSub,
+	TranslatedAddSrcColor,
+	Shaded,
+	AddShaded,
+	Stencil,
+	AddStencil,
+	FillOpaque,
+	FillAdd,
+	FillSub,
+	FillRevSub,
+	FillAddSrcColor,
+	Skycap
 };
-
-inline int NumTriBlendModes() { return (int)TriBlendMode::Skycap + 1; }
 
 class ScreenTriangle
 {
@@ -115,16 +121,15 @@ public:
 	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw8;
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw32;
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill8;
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill32;
+	static void(*TriDrawers8[])(const TriDrawTriangleArgs *, WorkerThreadData *);
+	static void(*TriDrawers32[])(const TriDrawTriangleArgs *, WorkerThreadData *);
+	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
+	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 };
 
 struct ScreenTriangleStepVariables
 {
-	float W;
-	float Varying[TriVertex::NumVarying];
+	float W, U, V;
 };
 
 namespace TriScreenDrawerModes
@@ -147,10 +152,11 @@ namespace TriScreenDrawerModes
 	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
 	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
 
-	enum class Samplers { Texture, Fill, Shaded, Translated, Skycap };
+	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap };
 	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
 	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
 	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
+	struct StencilSampler { static const int Mode = (int)Samplers::Stencil; };
 	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
 	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
 }

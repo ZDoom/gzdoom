@@ -8,7 +8,6 @@ struct SBarInfo native ui
 	native void NewGame();
 	native bool MustDrawLog(int state);
 	native void Tick();
-	native void FlashItem(class<Inventory> itemtype);
 	native void ShowPop(int popnum);
 }
 
@@ -49,7 +48,6 @@ class SBarInfoWrapper : BaseStatusBar
 		Super.NewGame();
 		if (CPlayer != NULL)
 		{
-			AttachToPlayer(CPlayer);
 			core.NewGame();
 		}
 	}
@@ -63,11 +61,6 @@ class SBarInfoWrapper : BaseStatusBar
 	{
 		Super.Tick();
 		core.Tick();
-	}
-
-	override void FlashItem(class<Inventory> itemtype)
-	{
-		core.FlashItem(itemtype);
 	}
 
 	override void ShowPop(int popnum)

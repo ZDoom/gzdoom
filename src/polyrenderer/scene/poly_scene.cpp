@@ -253,7 +253,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
 		args.SetColor(0, 0);
 		args.SetClipPlane(PortalPlane);
-		args.SetStyle(TriBlendMode::Copy);
+		args.SetStyle(TriBlendMode::FillOpaque);
 
 		for (auto &portal : SectorPortals)
 		{

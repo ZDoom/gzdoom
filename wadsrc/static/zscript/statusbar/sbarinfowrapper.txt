@@ -1,7 +1,6 @@
 
 struct SBarInfo native ui
 {
-	native void SetScaled(bool scaled);
 	native void Destroy();
 	native void AttachToPlayer(PlayerInfo player);
 	native void Draw(int state);
@@ -23,12 +22,6 @@ class SBarInfoWrapper : BaseStatusBar
 	{
 		if (core != null) core.Destroy();	// note that the core is not a GC'd object!
 		Super.OnDestroy();
-	}
-
-	override void SetScaled(bool scale, bool force)
-	{
-		Super.SetScaled(scale, force);
-		core.SetScaled(Scaled);
 	}
 
 	override void AttachToPlayer(PlayerInfo player)

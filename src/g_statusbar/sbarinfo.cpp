@@ -1003,11 +1003,6 @@ public:
 		Images.Uninit();
 	}
 
-	void _SetScaled(bool scaled)
-	{
-		Scaled = scaled;
-	}
-
 	void _AttachToPlayer(player_t *player)
 	{
 		CPlayer = player;
@@ -1039,7 +1034,7 @@ public:
 		{
 			if(script->huds[hud]->FullScreenOffsets())
 				wrapper->ForceHUDScale(true);
-			else if(!Scaled)
+			else if(!wrapper->Scaled)
 			{
 				scalingWasForced = true;
 				wrapper->SetScaled(true, true);
@@ -1208,7 +1203,7 @@ public:
 			int barW = wrapper->HorizontalResolution, barH = wrapper->VerticalResolution;
 
 			dx += wrapper->ST_X;
-			dy += wrapper->ST_Y - (Scaled ? barH : 200) + script->height;
+			dy += wrapper->ST_Y - (wrapper->Scaled ? barH : 200) + script->height;
 			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
 			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
 			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble();
@@ -1216,7 +1211,7 @@ public:
 			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble();
 			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble();
 
-			if(Scaled)
+			if(wrapper->Scaled)
 			{
 				if(clip[0] != 0 || clip[1] != 0)
 				{
@@ -1432,8 +1427,8 @@ public:
 
 				int barW = wrapper->HorizontalResolution, barH = wrapper->VerticalResolution;
 				rx += wrapper->ST_X;
-				ry += wrapper->ST_Y - (Scaled ? barH : 200) + script->height;
-				if(Scaled)
+				ry += wrapper->ST_Y - (wrapper->Scaled ? barH : 200) + script->height;
+				if(wrapper->Scaled)
 					screen->VirtualToRealCoords(rx, ry, rw, rh, barW, barH, true);
 				else
 				{
@@ -1497,7 +1492,6 @@ public:
 	unsigned int invBarOffset;
 	player_t *CPlayer = nullptr;
 	DBaseStatusBar *wrapper;
-	bool Scaled;
 
 private:
 	SBarInfo *script;
@@ -1521,7 +1515,7 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 			rescale = true;
 			statusBar->wrapper->ForceHUDScale(true);
 		}
-		else if(!statusBar->Scaled)
+		else if(!statusBar->wrapper->Scaled)
 		{
 			rescale = true;
 			statusBar->wrapper->SetScaled(true, true);
@@ -1553,14 +1547,6 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, Destroy)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	delete self;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DSBarInfo, SetScaled)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
-	PARAM_BOOL(scale);
-	self->_SetScaled(scale);
 	return 0;
 }
 
@@ -1620,7 +1606,7 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);
-	core->_SetScaled(sbar->Scaled);
+	sbar->SetScaled(sbar->Scaled);
 	sbar->CompleteBorder = script->completeBorder;
 	return sbar;
 }

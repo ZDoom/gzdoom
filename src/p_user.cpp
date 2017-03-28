@@ -62,6 +62,8 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "r_data/r_translate.h"
+#include "p_acs.h"
+#include "events.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -722,6 +724,47 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, HasWeaponsInSlot)
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(slot);
 	ACTION_RETURN_BOOL(self->HasWeaponsInSlot(slot));
+}
+
+
+bool player_t::Resurrect()
+{
+	if (mo == nullptr || mo->IsKindOf(NAME_PlayerChunk)) return false;
+	mo->Revive();
+	playerstate = PST_LIVE;
+	health = mo->health = mo->GetDefault()->health;
+	viewheight = ((APlayerPawn *)mo->GetDefault())->ViewHeight;
+	mo->renderflags &= ~RF_INVISIBLE;
+	mo->Height = mo->GetDefault()->Height;
+	mo->radius = mo->GetDefault()->radius;
+	mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
+								// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
+	mo->SetState(mo->SpawnState);
+	if (!(mo->flags2 & MF2_DONTTRANSLATE))
+	{
+		mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(this - players));
+	}
+	if (ReadyWeapon != nullptr)
+	{
+		P_SetPsprite(this, PSP_WEAPON, ReadyWeapon->GetUpState());
+	}
+
+	if (morphTics)
+	{
+		P_UndoPlayerMorph(this, this);
+	}
+
+	// player is now alive.
+	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
+	E_PlayerRespawned(int(this - players));
+	//
+	FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, mo, true);
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->Resurrect());
 }
 
 

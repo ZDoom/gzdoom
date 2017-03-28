@@ -533,6 +533,7 @@ public:
 	// [Nash] set player FOV
 	void SetFOV(float fov);
 	bool HasWeaponsInSlot(int slot) const;
+	bool Resurrect();
 };
 
 // Bookkeeping on players - state.

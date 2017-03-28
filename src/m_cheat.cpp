@@ -339,35 +339,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			}
 			else
 			{
-				player->mo->Revive();
-				player->playerstate = PST_LIVE;
-				player->health = player->mo->health = player->mo->GetDefault()->health;
-				player->viewheight = ((APlayerPawn *)player->mo->GetDefault())->ViewHeight;
-				player->mo->renderflags &= ~RF_INVISIBLE;
-				player->mo->Height = player->mo->GetDefault()->Height;
-				player->mo->radius = player->mo->GetDefault()->radius;
-				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
-											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
-				player->mo->SetState (player->mo->SpawnState);
-				if (!(player->mo->flags2 & MF2_DONTTRANSLATE))
-				{
-					player->mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(player-players));
-				}
-				if (player->ReadyWeapon != nullptr)
-				{
-					P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetUpState());
-				}
-
-				if (player->morphTics)
-				{
-					P_UndoPlayerMorph(player, player);
-				}
-
-				// player is now alive.
-				// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-				E_PlayerRespawned(int(player - players));
-				//
-				FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, player->mo, true);
+				player->Resurrect();
 
 			}
 		}

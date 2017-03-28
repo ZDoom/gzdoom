@@ -360,6 +360,7 @@ usercmd_t	original_cmd;
 	native void SetLogText (String text);
 	native void DropWeapon();
 	native void BringUpWeapon();
+	native bool Resurrect();
 
 	native String GetUserName() const;
 	native Color GetColor() const;

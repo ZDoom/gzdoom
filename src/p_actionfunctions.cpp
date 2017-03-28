@@ -656,6 +656,36 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVar)
 
 //==========================================================================
 //
+// GetCVar
+//
+// NON-ACTION function that works like ACS's GetCVar.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetCVarString)
+{
+	if (numret > 0)
+	{
+		assert(ret != nullptr);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_STRING(cvarname);
+
+		FBaseCVar *cvar = GetCVar(self, cvarname);
+		if (cvar == nullptr)
+		{
+			ret->SetString("");
+		}
+		else
+		{
+			ret->SetString(cvar->GetGenericRep(CVAR_String).String);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // GetPlayerInput
 //
 // NON-ACTION function that works like ACS's GetPlayerInput.

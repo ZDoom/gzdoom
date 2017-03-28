@@ -279,6 +279,7 @@ void DMenu::CallDrawer()
 	{
 		VMValue params[] = { (DObject*)this };
 		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	}
 }
 

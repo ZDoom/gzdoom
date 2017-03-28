@@ -730,6 +730,7 @@ void WI_Drawer()
 		{
 			VMValue self = WI_Screen;
 			GlobalVMStack.Call(func, &self, 1, nullptr, 0);
+			screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 
 			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
 			// the screen is needed for one more draw operation so we cannot delete it right away but only here.

@@ -1135,6 +1135,7 @@ void DBaseStatusBar::CallDraw(EHudState state)
 		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 	}
 	else Draw(state);
+	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 }
 
 

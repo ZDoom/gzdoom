@@ -63,9 +63,9 @@ public:
 	void DrawTextureParms(FTexture *img, DrawParms &parms);
 	void DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color);
 	void DrawPixel(int x1, int y1, int palcolor, uint32_t color);
-	void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
+	void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	void Dim(PalEntry color=0);
-	void Dim (PalEntry color, float damount, int x1, int y1, int w, int h);
+	void DoDim (PalEntry color, float damount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
 
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,

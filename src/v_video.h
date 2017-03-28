@@ -225,7 +225,8 @@ public:
 	virtual void Dim (PalEntry color = 0);
 
 	// Dim part of the canvas
-	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) final;
+	virtual void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
 
 	// Fill an area with a texture
 	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
@@ -236,7 +237,8 @@ public:
 		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
+	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color) final;
+	virtual void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 
 	// Draws a line
 	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
@@ -259,6 +261,10 @@ public:
 	// Text drawing functions -----------------------------------------------
 
 	// 2D Texture drawing
+	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
+	void SetClipRect(int x, int y, int w, int h);
+	void GetClipRect(int *x, int *y, int *w, int *h);
+
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
 	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
@@ -266,7 +272,6 @@ public:
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
-	void VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 #ifdef DrawText
@@ -285,6 +290,7 @@ protected:
 	int Pitch;
 	int LockCount;
 	bool Bgra;
+	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 

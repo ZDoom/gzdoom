@@ -2557,6 +2557,7 @@ bool D3DPal::Update()
 
 bool D3DFB::Begin2D(bool copy3d)
 {
+	ClearClipRect();
 	if (!Accel2D)
 	{
 		return false;
@@ -2635,11 +2636,11 @@ FNativePalette *D3DFB::CreatePalette(FRemapTable *remap)
 //
 //==========================================================================
 
-void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void D3DFB::DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
-		Super::Clear(left, top, right, bottom, palcolor, color);
+		//Super::Clear(left, top, right, bottom, palcolor, color);
 		return;
 	}
 	if (!InScene)
@@ -2664,7 +2665,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 //
 //==========================================================================
 
-void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
+void D3DFB::DoDim (PalEntry color, float amount, int x1, int y1, int w, int h)
 {
 	if (amount <= 0)
 	{

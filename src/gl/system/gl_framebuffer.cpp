@@ -361,6 +361,7 @@ FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
 //==========================================================================
 bool OpenGLFrameBuffer::Begin2D(bool)
 {
+	ClearClipRect();
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
@@ -428,7 +429,7 @@ void OpenGLFrameBuffer::Dim(PalEntry)
 	Super::Dim(0);
 }
 
-void OpenGLFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
+void OpenGLFrameBuffer::DoDim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
 		GLRenderer->m2DDrawer->AddDim(color, damount, x1, y1, w, h);
@@ -451,7 +452,7 @@ void OpenGLFrameBuffer::FlatFill (int left, int top, int right, int bottom, FTex
 //
 //
 //==========================================================================
-void OpenGLFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void OpenGLFrameBuffer::DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
 		GLRenderer->m2DDrawer->AddClear(left, top, right, bottom, palcolor, color);

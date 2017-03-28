@@ -449,3 +449,23 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 
 	PolyTriangleDrawer::draw_arrays(args, &thread_data);
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+void DrawRectCommand::Execute(DrawerThread *thread)
+{
+	WorkerThreadData thread_data;
+	thread_data.core = thread->core;
+	thread_data.num_cores = thread->num_cores;
+
+	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
+	const void *destOrg = renderTarget->GetBuffer();
+	int destWidth = renderTarget->GetWidth();
+	int destHeight = renderTarget->GetHeight();
+	int destPitch = renderTarget->GetPitch();
+	int blendmode = (int)args.BlendMode();
+	if (renderTarget->IsBgra())
+		ScreenTriangle::RectDrawers32[blendmode](destOrg, destWidth, destHeight, destPitch, &args, &thread_data);
+	else
+		ScreenTriangle::RectDrawers8[blendmode](destOrg, destWidth, destHeight, destPitch, &args, &thread_data);
+}

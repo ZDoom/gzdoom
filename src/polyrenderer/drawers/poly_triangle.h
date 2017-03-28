@@ -71,3 +71,15 @@ public:
 private:
 	PolyDrawArgs args;
 };
+
+class DrawRectCommand : public DrawerCommand
+{
+public:
+	DrawRectCommand(const RectDrawArgs &args) : args(args) { }
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "DrawRect"; }
+
+private:
+	RectDrawArgs args;
+};

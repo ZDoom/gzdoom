@@ -85,6 +85,8 @@ struct TriDrawTriangleArgs
 	const PolyDrawArgs *uniforms;
 };
 
+class RectDrawArgs;
+
 enum class TriBlendMode
 {
 	TextureOpaque,
@@ -119,8 +121,10 @@ public:
 	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawers8;
-	static std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawers32;
+	static void(*TriDrawers8[])(const TriDrawTriangleArgs *, WorkerThreadData *);
+	static void(*TriDrawers32[])(const TriDrawTriangleArgs *, WorkerThreadData *);
+	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
+	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 };
 
 struct ScreenTriangleStepVariables

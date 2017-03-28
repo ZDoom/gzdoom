@@ -35,7 +35,7 @@
 
 class ListMenuItem : MenuItemBase
 {
-	void DrawSelector(double xofs, double yofs, TextureID tex)
+	virtual void DrawSelector(double xofs, double yofs, TextureID tex)
 	{
 		if (tex.isNull())
 		{

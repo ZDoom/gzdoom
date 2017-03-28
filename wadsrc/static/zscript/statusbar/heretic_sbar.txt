@@ -189,7 +189,7 @@ class HereticStatusBar : BaseStatusBar
 			y -= 40;
 		}
 
-		if (!isInventoryBarVisible() && !level.NoInventoryBar)
+		if (!isInventoryBarVisible() && !level.NoInventoryBar && CPlayer.mo.InvSel != null)
 		{
 			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
 			// Heretic's ARTIBOX is 30x30 pixels. 

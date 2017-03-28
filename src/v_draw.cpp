@@ -137,6 +137,8 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
 	FTexture *tex = animate ? TexMan(FSetTextureID(texid)) : TexMan[FSetTextureID(texid)];
 	VMVa_List args = { param + 4, 0, numparam - 4 };
 	screen->DrawTexture(tex, x, y, args);
@@ -959,6 +961,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 	PARAM_INT(y2);
 	PARAM_INT(color);
 	PARAM_INT_DEF(palcol);
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	screen->Clear(x1, y1, x2, y2, palcol, color);
 	return 0;
 }
@@ -1010,6 +1013,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 	PARAM_INT(y1);
 	PARAM_INT(w);
 	PARAM_INT(h);
+	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	screen->Dim(color, float(amount), x1, y1, w, h);
 	return 0;
 }

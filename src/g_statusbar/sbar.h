@@ -400,7 +400,7 @@ public:
 
 	void BeginStatusBar(int resW, int resH, int relTop, bool forceScaled);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
-	void ForceHUDScale(bool on) { ForcedScale = on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
+	bool ForceHUDScale(bool on) { std::swap(ForcedScale, on); return on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
 	void StatusbarToRealCoords(double &x, double &y, double &w, double &h) const;
 	int GetTopOfStatusbar() const
 	{

@@ -1030,10 +1030,7 @@ public:
 		{
 			hud = STBAR_NONE;
 		}
-		if(script->huds[hud]->ForceScaled()) //scale the statusbar
-		{
-			wrapper->ForceHUDScale(true);
-		}
+		wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
 		if (CPlayer->ReadyWeapon != NULL)
 		{
@@ -1061,8 +1058,8 @@ public:
 			{
 				script->huds[hud]->Tick(NULL, this, true);
 				// Restore scaling if need be.
-				wrapper->ForceHUDScale(false);
 			}
+			wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
 			if(currentPopup != DBaseStatusBar::POP_None && !script->huds[hud]->FullScreenOffsets())
 				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), 1.);
@@ -1083,6 +1080,8 @@ public:
 				else
 					inventoryBar->DrawAux(NULL, this, 0, 0, 1.);
 			}
+			// Reset hud scale
+			wrapper->ForceHUDScale(false);
 		}
 
 		// Handle popups
@@ -1106,8 +1105,6 @@ public:
 		else
 			lastPopup = NULL;
 
-		// Reset hud scale
-		wrapper->ForceHUDScale(false);
 	}
 
 	void _NewGame ()
@@ -1473,9 +1470,9 @@ private:
 void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 {
 	// Popups can also be forced to scale
-	if(ForceScaled()) statusBar->wrapper->ForceHUDScale(true);
+	bool old = statusBar->wrapper->ForceHUDScale(ForceScaled());
 	Draw(block, statusBar, xOffset, yOffset, alpha);
-	statusBar->wrapper->ForceHUDScale(false);
+	statusBar->wrapper->ForceHUDScale(old);
 }
 
 #include "sbarinfo_commands.cpp"

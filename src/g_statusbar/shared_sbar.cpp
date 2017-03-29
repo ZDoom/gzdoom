@@ -2000,7 +2000,12 @@ void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h
 		x += orgx;
 		y += orgy;
 	}
-	screen->Dim(color, float(Alpha), int(x), int(y), int(w), int(h));
+	int x1 = int(x);
+	int y1 = int(y);
+	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
+	int hh = int(y + h - y1); // y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
+
+	screen->Dim(color, float(Alpha), x1, y1, ww, hh);
 }
 
 

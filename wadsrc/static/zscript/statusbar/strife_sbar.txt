@@ -264,7 +264,9 @@ class StrifeStatusBar : BaseStatusBar
 		// Pop screen (log, keys, and status)
 		if (CurrentPop != POP_None && PopHeight < 0)
 		{
-			DrawPopScreen (Scaled ? (ST_Y - 8) * screen.GetHeight() / 200 : ST_Y - 8, TicFrac);
+			double tmp, h;
+			[tmp, tmp, h] = StatusbarToRealCoords(0, 0, 8);
+			DrawPopScreen (GetTopOfStatusBar() - h, TicFrac);
 		}
 
 		DrawImage("INVBACK", (0, 168), DI_ITEM_OFFSETS);

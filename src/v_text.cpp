@@ -80,7 +80,7 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, double x, double y, int ch
 		{
 			return;
 		}
-		PalEntry color;
+		PalEntry color = 0xffffffff;
 		parms.remap = font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
@@ -104,7 +104,7 @@ void DCanvas::DrawChar(FFont *font, int normalcolor, double x, double y, int cha
 		uint32_t tag = ListGetInt(args);
 		bool res = ParseDrawTextureTags(pic, x, y, tag, args, &parms, false);
 		if (!res) return;
-		PalEntry color;
+		PalEntry color = 0xffffffff;
 		parms.remap = font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
@@ -156,9 +156,9 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 	boldcolor = normalcolor ? normalcolor - 1 : NumTextColors - 1;
 
 	PalEntry colorparm = parms.color;
-	PalEntry color;
+	PalEntry color = 0xffffffff;
 	range = font->GetColorTranslation((EColorRange)normalcolor, &color);
-	parms.color = PalEntry((color.a * colorparm.a) / 255, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
+	parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 
 	kerning = font->GetDefaultKerning();
 
@@ -179,7 +179,7 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 			if (newcolor != CR_UNDEFINED)
 			{
 				range = font->GetColorTranslation(newcolor, &color);
-				parms.color = PalEntry((color.a * colorparm.a) / 255, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
+				parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 			}
 			continue;
 		}

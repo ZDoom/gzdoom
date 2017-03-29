@@ -426,10 +426,10 @@ class BaseStatusBar native ui
 	}	
 
 	// These cannot be done in ZScript.
-	native String GetGlobalACSString(int index);
-	native String GetGlobalACSArrayString(int arrayno, int index);
-	native int GetGlobalACSValue(int index);
-	native int GetGlobalACSArrayValue(int arrayno, int index);
+	native static String GetGlobalACSString(int index);
+	native static String GetGlobalACSArrayString(int arrayno, int index);
+	native static int GetGlobalACSValue(int index);
+	native static int GetGlobalACSArrayValue(int arrayno, int index);
 	
 	//============================================================================
 	//

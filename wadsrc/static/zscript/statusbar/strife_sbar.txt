@@ -85,14 +85,14 @@ class StrifeStatusBar : BaseStatusBar
 
 		if (state == HUD_StatusBar)
 		{
-			BeginStatusBar(320, 200, 32);
+			BeginStatusBar();
 			DrawMainBar (TicFrac);
 		}
 		else
 		{
 			if (state == HUD_Fullscreen)
 			{
-				BeginHUD(320, 200, 1., false);
+				BeginHUD();
 				DrawFullScreenStuff ();
 			}
 
@@ -100,7 +100,7 @@ class StrifeStatusBar : BaseStatusBar
 			if (CurrentPop != POP_None && PopHeight < 0)
 			{
 				// This uses direct low level draw commands and would otherwise require calling
-				// BeginStatusBar(320, 200, false, true);
+				// BeginStatusBar(true);
 				DrawPopScreen (screen.GetHeight(), TicFrac);
 			}
 		}

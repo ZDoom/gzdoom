@@ -32,12 +32,12 @@ class DoomStatusBar : BaseStatusBar
 
 		if (state == HUD_StatusBar)
 		{
-			BeginStatusBar(320, 200, 32);
+			BeginStatusBar();
 			DrawMainBar (TicFrac);
 		}
 		else if (state == HUD_Fullscreen)
 		{
-			BeginHUD(320, 200, 1., false);
+			BeginHUD();
 			DrawFullScreenStuff ();
 		}
 	}

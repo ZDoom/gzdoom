@@ -270,10 +270,8 @@ class BaseStatusBar native ui
 	const POWERUPICONSIZE = 32;
 	
 
-	native int ST_X, ST_Y;
 	native int RelTop;
 	native int HorizontalResolution, VerticalResolution;
-	native bool Scaled;
 	native bool Centering;
 	native bool FixedOrigin;
 	native bool CompleteBorder;
@@ -294,17 +292,16 @@ class BaseStatusBar native ui
 	private HUDFont mSmallFont;
 	
 	
-	native void SetSize(int height, int vwidth, int vheight);
+	native void SetSize(int height, int vwidth, int vheight, int hwidth = -1, int hheight = -1);
 	native Vector2 GetHUDScale();
-	native void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
-	native void BeginHUD(int resW, int resH, double Alpha, bool forcescaled = false);
+	native void BeginStatusBar(bool forceScaled = false, int resW = -1, int resH = -1, int rel = -1);
+	native void BeginHUD(double Alpha = 1., bool forcescaled = false, int resW = -1, int resH = -1);
 	
 	virtual void Init() 
 	{
 		mSmallFont = HUDFont.Create("SmallFont");
 	}
 
-	native virtual void SetScaled(bool scale, bool force = false);
 	native virtual void Tick ();
 	native virtual void Draw (int state, double TicFrac);
 	native virtual void ScreenSizeChanged ();
@@ -318,7 +315,6 @@ class BaseStatusBar native ui
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
 	
-	native void RefreshBackground () const;
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
@@ -330,7 +326,7 @@ class BaseStatusBar native ui
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
-	native double GetTopOfStatusBar();
+	native int GetTopOfStatusBar();
 	
 	//============================================================================
 	//
@@ -678,6 +674,68 @@ class BaseStatusBar native ui
 		return it != null && it.Amount >= amount;
 	}
 
+	//============================================================================
+	//
+	// mypos cheat
+	//
+	//============================================================================
+
+	virtual void DrawMyPos()
+	{
+		/*
+		int height = SmallFont->GetHeight();
+		char labels[3] = { 'X', 'Y', 'Z' };
+		int i;
+
+		int vwidth;
+		int vheight;
+		int xpos;
+		int y;
+
+		if (active_con_scaletext() == 1)
+		{
+			vwidth = SCREENWIDTH;
+			vheight = SCREENHEIGHT;
+			xpos = vwidth - 80;
+			y = SBarTop - height;
+		}
+		else if (active_con_scaletext() > 1)
+		{
+			vwidth = SCREENWIDTH / active_con_scaletext();
+			vheight = SCREENHEIGHT / active_con_scaletext();
+			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
+			y = SBarTop/4 - height;
+		}
+		else
+		{
+			vwidth = SCREENWIDTH/2;
+			vheight = SCREENHEIGHT/2;
+			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
+			y = SBarTop/2 - height;
+		}
+
+		if (gameinfo.gametype == GAME_Strife)
+		{
+			if (active_con_scaletext() == 1)
+				y -= height * 4;
+			else if (active_con_scaletext() > 3)
+				y -= height;
+			else
+				y -= height * 2;
+		}
+
+		DVector3 pos = CPlayer->mo->Pos();
+		for (i = 2; i >= 0; y -= height, --i)
+		{
+			mysnprintf (line, countof(line), "%c: %d", labels[i], int(pos[i]));
+			screen->DrawText (SmallFont, CR_GREEN, xpos, y, line, 
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
+				TAG_DONE);
+			V_SetBorderNeedRefresh();
+		}
+		*/
+	}
 	
 	//============================================================================
 	//
@@ -696,7 +754,7 @@ class BaseStatusBar native ui
 		String printtext;
 		int SCREENWIDTH = screen.GetWidth();
 
-		BeginHUD(320, 200, 1., false);
+		BeginHUD();
 		
 		// Draw timer
 		let y = textdist;

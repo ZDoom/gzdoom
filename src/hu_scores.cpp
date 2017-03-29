@@ -51,6 +51,7 @@
 #include "d_net.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
+#include "sbar.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -262,7 +263,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	lineheight = MAX(height, maxiconheight * CleanYfac);
 	ypadding = (lineheight - height + 1) / 2;
 
-	bottom = gST_Y;
+	bottom = StatusBar->GetTopOfStatusbar();
 	y = MAX(48*CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
 
 	HU_DrawTimeRemaining (bottom - height);

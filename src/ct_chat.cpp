@@ -31,6 +31,7 @@
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"
+#include "sbar.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -236,19 +237,10 @@ void CT_Drawer (void)
 			scalex = 1;
 		}
 
-		int screen_width, screen_height, st_y;
-		if (active_con_scaletext() == 0)
-		{
-			screen_width = SCREENWIDTH;
-			screen_height = SCREENHEIGHT;
-			st_y = gST_Y;
-		}
-		else
-		{
-			screen_width = SCREENWIDTH / active_con_scaletext();
-			screen_height = SCREENHEIGHT / active_con_scaletext();
-			st_y = gST_Y / active_con_scaletext();
-		}
+		int scale = active_con_scaletext();
+		int screen_width = SCREENWIDTH / scale;
+		int screen_height= SCREENHEIGHT / scale;
+		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 

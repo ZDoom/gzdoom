@@ -973,7 +973,7 @@ public:
 	DSBarInfo (DBaseStatusBar *wrapper, SBarInfo *script=NULL) :
 		ammo1(NULL), ammo2(NULL), ammocount1(0), ammocount2(0), armor(NULL),
 		pendingPopup(DBaseStatusBar::POP_None), currentPopup(DBaseStatusBar::POP_None), lastHud(-1),
-		scalingWasForced(false), lastInventoryBar(NULL), lastPopup(NULL)
+		lastInventoryBar(NULL), lastPopup(NULL)
 	{
 		this->script = script;
 		this->wrapper = wrapper;
@@ -1032,14 +1032,7 @@ public:
 		}
 		if(script->huds[hud]->ForceScaled()) //scale the statusbar
 		{
-			if(script->huds[hud]->FullScreenOffsets())
-				wrapper->ForceHUDScale(true);
-			else if(!wrapper->Scaled)
-			{
-				scalingWasForced = true;
-				wrapper->SetScaled(true, true);
-				setsizeneeded = true;
-			}
+			wrapper->ForceHUDScale(true);
 		}
 
 		if (CPlayer->ReadyWeapon != NULL)
@@ -1067,14 +1060,8 @@ public:
 			if(hud != lastHud)
 			{
 				script->huds[hud]->Tick(NULL, this, true);
-
 				// Restore scaling if need be.
-				if(scalingWasForced)
-				{
-					scalingWasForced = false;
-					wrapper->SetScaled(false);
-					setsizeneeded = true;
-				}
+				wrapper->ForceHUDScale(false);
 			}
 
 			if(currentPopup != DBaseStatusBar::POP_None && !script->huds[hud]->FullScreenOffsets())
@@ -1478,7 +1465,6 @@ private:
 	int pendingPopup;
 	int currentPopup;
 	int lastHud;
-	bool scalingWasForced;
 	SBarInfoMainBlock *lastInventoryBar;
 	SBarInfoMainBlock *lastPopup;
 };
@@ -1487,30 +1473,9 @@ private:
 void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 {
 	// Popups can also be forced to scale
-	bool rescale = false;
-	if(ForceScaled())
-	{
-		if(FullScreenOffsets())
-		{
-			rescale = true;
-			statusBar->wrapper->ForceHUDScale(true);
-		}
-		else if(!statusBar->wrapper->Scaled)
-		{
-			rescale = true;
-			statusBar->wrapper->SetScaled(true, true);
-		}
-	}
-
+	if(ForceScaled()) statusBar->wrapper->ForceHUDScale(true);
 	Draw(block, statusBar, xOffset, yOffset, alpha);
-
-	if(rescale)
-	{
-		if(FullScreenOffsets())
-			statusBar->wrapper->ForceHUDScale(false);
-		else
-			statusBar->wrapper->SetScaled(false);
-	}
+	statusBar->wrapper->ForceHUDScale(false);
 }
 
 #include "sbarinfo_commands.cpp"

@@ -490,7 +490,6 @@ bool wipe_ScreenWipe (int ticks)
 		return true;
 
 	// do a piece of wipe-in
-	V_MarkRect(0, 0, SCREENWIDTH, SCREENHEIGHT);
 	rc = (*wipes[(CurrentWipeType-1)*3+1])(ticks);
 
 	return rc;

@@ -528,8 +528,6 @@ void V_Init2 ();
 
 void V_Shutdown ();
 
-void V_MarkRect (int x, int y, int width, int height);
-
 class FScanner;
 // Returns the closest color to the one desired. String
 // should be of the form "rr gg bb".

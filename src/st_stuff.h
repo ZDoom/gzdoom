@@ -26,8 +26,6 @@
 
 struct event_t;
 
-extern int gST_Y;
-
 bool ST_Responder(event_t* ev);
 
 // [RH] Base blending values (for e.g. underwater)

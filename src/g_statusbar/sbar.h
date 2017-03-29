@@ -357,7 +357,7 @@ public:
 	};
 
 	DBaseStatusBar ();
-	void SetSize(int reltop = 32, int hres = 320, int vres = 200);
+	void SetSize(int reltop = 32, int hres = 320, int vres = 200, int hhres = -1, int hvres = -1);
 	void OnDestroy() override;
 
 	void AttachMessage (DHUDMessage *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
@@ -373,8 +373,7 @@ public:
 	// do not make this a DObject Serialize function because it's not used like one!
 	void SerializeMessages(FSerializer &arc);
 
-	virtual void SetScaled(bool scale, bool force = false);
-	void CallSetScaled(bool scale, bool force = false);
+	void SetScale();
 	virtual void Tick ();
 	void CallTick();
 	virtual void Draw (EHudState state);
@@ -399,11 +398,14 @@ public:
 	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
 	void Fill(PalEntry color, double x, double y, double w, double h, int flags = 0);
 
-	void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
+	void BeginStatusBar(int resW, int resH, int relTop, bool forceScaled);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
 	void ForceHUDScale(bool on) { ForcedScale = on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
 	void StatusbarToRealCoords(double &x, double &y, double &w, double &h) const;
-	double GetTopOfStatusbar() const;
+	int GetTopOfStatusbar() const
+	{
+		return SBarTop;
+	}
 
 //protected:
 	void DrawPowerups ();
@@ -417,7 +419,10 @@ public:
 	void DrawCrosshair ();
 
 	// Sizing info for ths status bar.
-	int ST_X, ST_Y;
+	int ST_X;
+	int ST_Y;
+	int SBarTop;
+	DVector2 SBarScale;
 	int RelTop;
 	int HorizontalResolution, VerticalResolution;
 	bool Scaled;							// This needs to go away.
@@ -446,8 +451,16 @@ private:
 	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
 	void DrawWaiting () const;
+	void SetDrawSize(int reltop, int hres, int vres);
 
 	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
+
+	int BaseRelTop;
+	int BaseSBarHorizontalResolution;
+	int BaseSBarVerticalResolution;
+	int BaseHUDHorizontalResolution;
+	int BaseHUDVerticalResolution;
+
 };
 
 extern DBaseStatusBar *StatusBar;

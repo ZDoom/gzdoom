@@ -759,6 +759,7 @@ bool player_t::Resurrect()
 	E_PlayerRespawned(int(this - players));
 	//
 	FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, mo, true);
+	return true;
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)

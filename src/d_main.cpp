@@ -160,7 +160,6 @@ EXTERN_CVAR (Bool, sv_unlimited_pickup)
 extern int testingmode;
 extern bool setmodeneeded;
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
-EXTERN_CVAR (Bool, st_scale)
 extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
@@ -790,13 +789,7 @@ void D_Display ()
 			screen->DrawBlendingRect();
 			if (automapactive)
 			{
-				int saved_ST_Y = gST_Y;
-				if (hud_althud && viewheight == SCREENHEIGHT)
-				{
-					gST_Y = viewheight;
-				}
-				AM_Drawer ();
-				gST_Y = saved_ST_Y;
+				AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
 			}
 			if (!automapactive || viewactive)
 			{

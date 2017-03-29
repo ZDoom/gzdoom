@@ -61,6 +61,7 @@
 #include "p_acs.h"
 #include "r_data/r_translate.h"
 #include "sbarinfo.h"
+#include "events.h"
 
 #include "../version.h"
 
@@ -975,7 +976,14 @@ void DBaseStatusBar::Draw (EHudState state)
 	}
 
 	if (idmypos)
-	{ // Draw current coordinates
+	{ 
+		// Draw current coordinates
+		IFVIRTUAL(DBaseStatusBar, DrawMyPos)
+		{
+			VMValue params[] = { (DObject*)this };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		}
+		V_SetBorderNeedRefresh();
 	}
 
 	if (viewactive)
@@ -1150,6 +1158,8 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	E_RenderOverlay(state);
+
 	DrawConsistancy ();
 	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();

@@ -305,7 +305,7 @@ class StaticEventHandler : Object native play version("2.4")
 
     //
     //virtual native ui void RenderFrame(RenderEvent e);
-    //virtual native ui void RenderOverlay(RenderEvent e);
+    virtual native ui void RenderOverlay(RenderEvent e);
     
     //
     virtual native void PlayerEntered(PlayerEvent e);

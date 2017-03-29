@@ -5,6 +5,7 @@
 #include "serializer.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "sbar.h"
 
 class DStaticEventHandler;
 
@@ -48,7 +49,7 @@ void E_UiTick();
 // called on each render frame once.
 void E_RenderFrame();
 // called after everything's been rendered, but before console/menus
-void E_RenderOverlay();
+void E_RenderOverlay(EHudState state);
 // this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
 void E_PlayerEntered(int num, bool fromhub);
 // this executes when a player respawns. includes resurrect cheat.
@@ -141,7 +142,7 @@ public:
 
 	//
 	void RenderFrame();
-	void RenderOverlay();
+	void RenderOverlay(EHudState state);
 
 	//
 	void PlayerEntered(int num, bool fromhub);
@@ -175,6 +176,7 @@ struct FRenderEvent
 	DAngle ViewRoll;
 	double FracTic = 0; // 0..1 value that describes where we are inside the current gametic, render-wise.
 	AActor* Camera = nullptr;
+	int HudState;
 };
 
 struct FWorldEvent

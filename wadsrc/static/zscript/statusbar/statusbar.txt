@@ -682,59 +682,30 @@ class BaseStatusBar native ui
 
 	virtual void DrawMyPos()
 	{
-		/*
-		int height = SmallFont->GetHeight();
-		char labels[3] = { 'X', 'Y', 'Z' };
+		int height = SmallFont.GetHeight();
 		int i;
 
 		int vwidth;
 		int vheight;
 		int xpos;
 		int y;
+		let scalevec = GetHUDScale();
+		int scale = int(scalevec.X);
 
-		if (active_con_scaletext() == 1)
-		{
-			vwidth = SCREENWIDTH;
-			vheight = SCREENHEIGHT;
-			xpos = vwidth - 80;
-			y = SBarTop - height;
-		}
-		else if (active_con_scaletext() > 1)
-		{
-			vwidth = SCREENWIDTH / active_con_scaletext();
-			vheight = SCREENHEIGHT / active_con_scaletext();
-			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = SBarTop/4 - height;
-		}
-		else
-		{
-			vwidth = SCREENWIDTH/2;
-			vheight = SCREENHEIGHT/2;
-			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = SBarTop/2 - height;
-		}
+		vwidth = screen.GetWidth() / scale;
+		vheight = screen.GetHeight() / scale;
+		xpos = vwidth - SmallFont.StringWidth("X: -00000")-6;
+		y = GetTopOfStatusBar() / (3*scale) - height;
 
-		if (gameinfo.gametype == GAME_Strife)
+		Vector3 pos = CPlayer.mo.Pos;
+		
+		for (i = 0; i < 3; y += height, ++i)
 		{
-			if (active_con_scaletext() == 1)
-				y -= height * 4;
-			else if (active_con_scaletext() > 3)
-				y -= height;
-			else
-				y -= height * 2;
+			double v = i == 0? pos.X : i == 1? pos.Y : pos.Z;
+			String line = String.Format("%c: %d", int("X") + i, v);
+			screen.DrawText (SmallFont, Font.CR_GREEN, xpos, y, line, DTA_KeepRatio, true,
+				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight);
 		}
-
-		DVector3 pos = CPlayer->mo->Pos();
-		for (i = 2; i >= 0; y -= height, --i)
-		{
-			mysnprintf (line, countof(line), "%c: %d", labels[i], int(pos[i]));
-			screen->DrawText (SmallFont, CR_GREEN, xpos, y, line, 
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
-				TAG_DONE);
-			V_SetBorderNeedRefresh();
-		}
-		*/
 	}
 	
 	//============================================================================

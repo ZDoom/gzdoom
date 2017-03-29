@@ -451,6 +451,13 @@ FUNC(LS_Floor_MoveToValue)
 					   arg2*(arg3?-1:1), -1, CHANGE(arg4), false);
 }
 
+FUNC(LS_Floor_MoveToValueAndCrush)
+// Floor_MoveToValueAndCrush (tag, speed, height, crush, crushmode)
+{
+	return EV_DoFloor(DFloor::floorMoveToValue, ln, arg0, SPEED(arg1),
+		arg2, CRUSH(arg3) -1, 0, CRUSHTYPE(arg4), false);
+}
+
 FUNC(LS_Floor_RaiseToLowestCeiling)
 // Floor_RaiseToLowestCeiling (tag, speed, change, crush)
 {
@@ -744,6 +751,13 @@ FUNC(LS_Ceiling_MoveToValue)
 						 arg2*((arg3) ? -1 : 1), -1, 0, CHANGE(arg4));
 }
 
+FUNC(LS_Ceiling_MoveToValueAndCrush)
+// Ceiling_MoveToValueAndCrush (tag, speed, height, crush, crushmode)
+{
+	return EV_DoCeiling (DCeiling::ceilMoveToValue, ln, arg0, SPEED(arg1), 0,
+						 arg2, CRUSH(arg3), 0, 0, CRUSHTYPE(arg4, arg1 == 8));
+}
+
 FUNC(LS_Ceiling_LowerToHighestFloor)
 // Ceiling_LowerToHighestFloor (tag, speed, change, crush, gap)
 {
@@ -855,13 +869,13 @@ FUNC(LS_Ceiling_ToFloorInstant)
 FUNC(LS_Ceiling_LowerToFloor)
 // Ceiling_LowerToFloor (tag, speed, change, crush, gap)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, arg4, CRUSH(arg3), 0, CHANGE(arg4));
+	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, arg4, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_LowerByTexture)
 // Ceiling_LowerByTexture (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerByTexture, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4));
+	return EV_DoCeiling (DCeiling::ceilLowerByTexture, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_Stop)
@@ -3702,6 +3716,8 @@ static lnSpecFunc LineSpecials[] =
 	/* 276 */ LS_Ceiling_Stop,
 	/* 277 */ LS_Sector_SetFloorGlow,
 	/* 278 */ LS_Sector_SetCeilingGlow,
+	/* 279 */ LS_Floor_MoveToValueAndCrush,
+	/* 280 */ LS_Ceiling_MoveToValueAndCrush,
 
 
 };

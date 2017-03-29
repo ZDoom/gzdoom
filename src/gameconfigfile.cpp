@@ -354,7 +354,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					SetValueForKey ("5", "use ArtiInvulnerability2");
 				}
 			}
-			if (last < 212)
+			if (last < 213)
 			{
 				FBaseCVar *var = FindCVar("hud_scale", NULL);
 				if (var != NULL)

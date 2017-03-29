@@ -410,6 +410,9 @@ public:
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
 
+	// Returns true if Begin2D has been called and 2D drawing is now active
+	virtual bool HasBegun2D() { return IsLocked(); }
+
 	// DrawTexture calls after Begin2D use native textures.
 
 	// Draws the blending rectangle over the viewwindow if in hardware-

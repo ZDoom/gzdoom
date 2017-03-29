@@ -84,7 +84,7 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
-CVAR(Int, hud_scale, -1, CVAR_ARCHIVE);
+CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
 int active_con_scaletext();
 
@@ -1564,6 +1564,25 @@ uint32_t DBaseStatusBar::GetTranslation() const
 //
 //============================================================================
 
+void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, double &h) const
+{
+	if (Scaled)
+	{
+		screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
+	}
+	else
+	{
+		x += ST_X;
+		y += screen->GetHeight() - VerticalResolution;
+	}
+}
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
 void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY)
 {
 	if (!texture.isValid())
@@ -1636,14 +1655,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 
 	if (!fullscreenOffsets)
 	{
-		x += ST_X;
-		//y += ST_Y;
-
-		// Todo: Allow other scaling values, too.
-		if (Scaled)
-		{
-			screen->VirtualToRealCoords(x, y, boxwidth, boxheight, HorizontalResolution, VerticalResolution, true, true);
-		}
+		StatusbarToRealCoords(x, y, boxwidth, boxheight);
 	}
 	else
 	{
@@ -1700,7 +1712,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawTexture)
 	PARAM_FLOAT_DEF(h);
 	PARAM_FLOAT_DEF(scaleX);
 	PARAM_FLOAT_DEF(scaleY);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
@@ -1717,7 +1729,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
 	PARAM_FLOAT_DEF(h);
 	PARAM_FLOAT_DEF(scaleX);
 	PARAM_FLOAT_DEF(scaleY);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(TexMan.CheckForTexture(texid, FTexture::TEX_Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
@@ -1853,14 +1865,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 
 		if (!fullscreenOffsets)
 		{
-			rx += ST_X;
-			//ry += ST_Y;
-
-			// Todo: Allow other scaling values, too.
-			if (Scaled)
-			{
-				screen->VirtualToRealCoords(rx, ry, rw, rh, HorizontalResolution, VerticalResolution, true);
-			}
+			StatusbarToRealCoords(rx, ry, rw, rh);
 		}
 		else
 		{
@@ -1910,7 +1915,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 	PARAM_INT_DEF(wrapwidth);
 	PARAM_INT_DEF(linespacing);
 
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
 	// resolve auto-alignment before making any adjustments to the position values.
 	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
@@ -1963,14 +1968,7 @@ void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h
 
 	if (!fullscreenOffsets)
 	{
-		x += ST_X;
-		//y += ST_Y;
-
-		// Todo: Allow other scaling values, too.
-		if (Scaled)
-		{
-			screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
-		}
+		StatusbarToRealCoords(x, y, w, h);
 	}
 	else
 	{
@@ -2002,7 +2000,12 @@ void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h
 		x += orgx;
 		y += orgy;
 	}
-	screen->Dim(color, float(Alpha), int(x), int(y), int(w), int(h));
+	int x1 = int(x);
+	int y1 = int(y);
+	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
+	int hh = int(y + h - y1); // y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
+
+	screen->Dim(color, float(Alpha), x1, y1, ww, hh);
 }
 
 
@@ -2015,7 +2018,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
 	PARAM_INT_DEF(flags);
-	if (!screen->IsLocked()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->Fill(color, x, y, w, h);
 	return 0;
 }

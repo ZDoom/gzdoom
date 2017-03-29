@@ -8816,8 +8816,16 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
-					ArgList[i]->RequestAddress(ctx, &writable);
-					if (flag & VARF_Ref) ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					if (type == ArgList[i]->ValueType && type->IsA(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(type)->IsA(RUNTIME_CLASS(PStruct)))
+					{
+						// trying to pass a struct reference as a struct refg
+					}
+					else
+					{
+						ArgList[i]->RequestAddress(ctx, &writable);
+						if (flag & VARF_Ref)ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					}
+
 					// For a reference argument the types must match 100%.
 					if (type != ArgList[i]->ValueType)
 					{

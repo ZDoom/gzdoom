@@ -402,6 +402,7 @@ public:
 	void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
 	void ForceHUDScale(bool on) { ForcedScale = on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
+	void StatusbarToRealCoords(double &x, double &y, double &w, double &h) const;
 
 //protected:
 	void DrawPowerups ();
@@ -410,6 +411,7 @@ public:
 	void RefreshBackground () const;
 
 public:
+
 	AInventory *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();
 

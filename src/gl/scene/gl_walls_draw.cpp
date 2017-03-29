@@ -371,6 +371,7 @@ void GLWall::RenderTextured(int rflags)
 				int thisll = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.FogDensity = Colormap.FogDensity;
 				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
 				mDrawer->SetColor(thisll, rel, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);

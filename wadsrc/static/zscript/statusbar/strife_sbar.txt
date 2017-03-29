@@ -202,32 +202,23 @@ class StrifeStatusBar : BaseStatusBar
 
 	private void FillBar(double x, double y, double start, double stopp, Color color1, Color color2)
 	{
-		Vector2 virt = Scaled? (320., 200.) : (screen.GetWidth(), screen.GetHeight());
-		Vector2 pos, sizev;
-		
-		start *=2;
-		stopp *=2;
-		
-		[pos, sizev] = screen.VirtualToRealCoords((ST_X + x + start, ST_Y + y), (stopp - start, 1), virt, true, Scaled); 
-		screen.Dim(color1, 1.0, pos.X + 0.5, pos.Y + 0.5, sizev.X + 0.5, sizev.Y + 0.5);
-
-		[pos, sizev] = screen.VirtualToRealCoords((ST_X + x + start, ST_Y + y + 1), (stopp - start, 1), virt, true, Scaled); 
-		screen.Dim(color2, 1.0, pos.X + 0.5, pos.Y + 0.5, sizev.X + 0.5, sizev.Y + 0.5);
+		Fill(color1, x, y, (stopp-start)*2, 1);
+		Fill(color2, x, y+1, (stopp-start)*2, 1);
 	}
 	
 	protected void DrawHealthBar(int health, int x, int y)
 	{
-		Color green1 = Color(180, 228, 128);	// light green
-		Color green2 = Color(128, 180, 80);		// dark green
+		Color green1 = Color(255, 180, 228, 128);	// light green
+		Color green2 = Color(255, 128, 180, 80);	// dark green
 
-		Color blue1 = Color(196, 204, 252);		// light blue
-		Color blue2 = Color(148, 152, 200);		// dark blue
+		Color blue1 = Color(255, 196, 204, 252);	// light blue
+		Color blue2 = Color(255, 148, 152, 200);	// dark blue
 
-		Color gold1 = Color(224, 188, 0);	// light gold
-		Color gold2 = Color(208, 128, 0);	// dark gold
+		Color gold1 = Color(255, 224, 188, 0);	// light gold
+		Color gold2 = Color(255, 208, 128, 0);	// dark gold
 
-		Color red1 = Color(216, 44,  44);	// light red
-		Color red2 = Color(172, 28,  28);	// dark red
+		Color red1 = Color(255, 216, 44,  44);	// light red
+		Color red2 = Color(255, 172, 28,  28);	// dark red
 		
 		if (health == 999)
 		{

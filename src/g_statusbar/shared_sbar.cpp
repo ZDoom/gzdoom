@@ -1025,63 +1025,50 @@ void DBaseStatusBar::Draw (EHudState state)
 		EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
 			CR_UNTRANSLATED : CR_YELLOW;
 
-		height = SmallFont->GetHeight () * CleanYfac;
+		height = SmallFont->GetHeight() * CleanYfac;
 
 		// Draw timer
 		y = 8;
 		if (am_showtime)
 		{
-			mysnprintf (line, countof(line), "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
-			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
-			y+=8*CleanYfac;
+			mysnprintf(line, countof(line), "%02d:%02d:%02d", time / 3600, (time % 3600) / 60, time % 60);	// Time
+			screen->DrawText(SmallFont, CR_GREY, SCREENWIDTH - 80 * CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
+			y += 8 * CleanYfac;
 		}
 		if (am_showtotaltime)
 		{
-			mysnprintf (line, countof(line), "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
-			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
+			mysnprintf(line, countof(line), "%02d:%02d:%02d", totaltime / 3600, (totaltime % 3600) / 60, totaltime % 60);	// Total time
+			screen->DrawText(SmallFont, CR_GREY, SCREENWIDTH - 80 * CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
 		}
+
+		FString mapname;
+		unsigned int numlines;
+		ST_FormatMapName(mapname, TEXTCOLOR_GREY);
+		int width = SmallFont->StringWidth(mapname);
+		FBrokenLines *lines = V_BreakLines(SmallFont, SCREENWIDTH / CleanXfac, mapname, true, &numlines);
+		int finalwidth = lines[numlines - 1].Width * CleanXfac;
+		double tmp = 0;
+		double hres = HorizontalResolution;
+		StatusbarToRealCoords(tmp, tmp, hres, tmp);
+		int protrusion = 0;
+
+		IFVIRTUAL(DBaseStatusBar, GetProtrusion)
+		{
+			VMValue params[] = { (DObject*)this, finalwidth / hres };
+			VMReturn ret(&protrusion);
+			GlobalVMStack.Call(func, params, 2, &ret, 1);
+		}
+		hres = protrusion;
+		StatusbarToRealCoords(tmp, tmp, tmp, hres);
 
 		// Draw map name
-		y = gST_Y - height;
-		if (gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
-		{
-			y -= 8;
-		}
-		else if (gameinfo.gametype == GAME_Hexen)
-		{
-			if (Scaled)
-			{
-				y -= Scale (11, SCREENHEIGHT, 200);
-			}
-			else
-			{
-				if (SCREENWIDTH < 640)
-				{
-					y -= 12;
-				}
-				else
-				{ // Get past the tops of the gargoyles' wings
-					y -= 28;
-				}
-			}
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			if (Scaled)
-			{
-				y -= Scale (8, SCREENHEIGHT, 200);
-			}
-			else
-			{
-				y -= 8;
-			}
-		}
-		FString mapname;
+		y = gST_Y - height * numlines - int(hres);
 
-		ST_FormatMapName(mapname, TEXTCOLOR_GREY);
-		screen->DrawText (SmallFont, highlight,
-			(SCREENWIDTH - SmallFont->StringWidth (mapname)*CleanXfac)/2, y, mapname,
-			DTA_CleanNoMove, true, TAG_DONE);
+		for(unsigned i = 0; i < numlines; i++)
+		{
+			screen->DrawText(SmallFont, highlight, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, y, lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
+			y += height;
+		}
 
 		if (!deathmatch)
 		{

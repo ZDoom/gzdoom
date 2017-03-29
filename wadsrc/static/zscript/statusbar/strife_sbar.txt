@@ -74,6 +74,11 @@ class StrifeStatusBar : BaseStatusBar
 		Reset ();
 	}
 
+	override int GetProtrusion(double scaleratio) const
+	{
+		return 8;
+	}
+
 	override void Draw (int state, double TicFrac)
 	{
 		Super.Draw (state, TicFrac);

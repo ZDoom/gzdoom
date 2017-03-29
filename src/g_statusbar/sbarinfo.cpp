@@ -1586,7 +1586,6 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);
-	sbar->SetScaled(sbar->Scaled);
 	sbar->CompleteBorder = script->completeBorder;
 	return sbar;
 }

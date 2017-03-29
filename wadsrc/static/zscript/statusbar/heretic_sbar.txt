@@ -25,6 +25,11 @@ class HereticStatusBar : BaseStatusBar
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
 	}
 	
+	override int GetProtrusion(double scaleratio) const
+	{
+		return scaleratio > 0.7? 8 : 0;
+	}
+
 	override void NewGame ()
 	{
 		Super.NewGame();

@@ -383,6 +383,20 @@ class BaseStatusBar native ui
 	
 	//============================================================================
 	//
+	// Returns how much the status bar's graphics extend into the view
+	// Used for automap text positioning
+	// The parameter specifies how much of the status bar area will be covered
+	// by the element requesting this information.
+	//
+	//============================================================================
+	
+	virtual int GetProtrusion(double scaleratio) const
+	{
+		return 0;
+	}
+
+	//============================================================================
+	//
 	// Convenience functions to retrieve item tags
 	//
 	//============================================================================

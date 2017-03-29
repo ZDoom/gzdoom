@@ -34,6 +34,11 @@ class HexenStatusBar : BaseStatusBar
 		mHealthInterpolator2.Reset (0);
 	}
 
+	override int GetProtrusion(double scaleratio) const
+	{
+		return scaleratio > 0.85? 20 : 12;	// need to get past the gargoyle's wings
+	}
+
 	override void Tick()
 	{
 		Super.Tick();

@@ -149,6 +149,16 @@ void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
 	mapname << mapnamecolor << level.LevelName;
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, FormatMapName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(cr);
+	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
+	FString rets;
+	ST_FormatMapName(rets, mapnamecolor);
+	ACTION_RETURN_STRING(rets);
+}
+
 //---------------------------------------------------------------------------
 //
 // Load crosshair definitions
@@ -1020,88 +1030,10 @@ void DBaseStatusBar::Draw (EHudState state)
 	}
 	else if (automapactive)
 	{
-		int y, time = Tics2Seconds(level.time), height;
-		int totaltime = Tics2Seconds(level.totaltime);
-		EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
-			CR_UNTRANSLATED : CR_YELLOW;
-
-		height = SmallFont->GetHeight() * CleanYfac;
-
-		// Draw timer
-		y = 8;
-		if (am_showtime)
+		IFVIRTUAL(DBaseStatusBar, DrawAutomapHUD)
 		{
-			mysnprintf(line, countof(line), "%02d:%02d:%02d", time / 3600, (time % 3600) / 60, time % 60);	// Time
-			screen->DrawText(SmallFont, CR_GREY, SCREENWIDTH - 80 * CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
-			y += 8 * CleanYfac;
-		}
-		if (am_showtotaltime)
-		{
-			mysnprintf(line, countof(line), "%02d:%02d:%02d", totaltime / 3600, (totaltime % 3600) / 60, totaltime % 60);	// Total time
-			screen->DrawText(SmallFont, CR_GREY, SCREENWIDTH - 80 * CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
-		}
-
-		FString mapname;
-		unsigned int numlines;
-		ST_FormatMapName(mapname, TEXTCOLOR_GREY);
-		int width = SmallFont->StringWidth(mapname);
-		FBrokenLines *lines = V_BreakLines(SmallFont, SCREENWIDTH / CleanXfac, mapname, true, &numlines);
-		int finalwidth = lines[numlines - 1].Width * CleanXfac;
-		double tmp = 0;
-		double hres = HorizontalResolution;
-		StatusbarToRealCoords(tmp, tmp, hres, tmp);
-		int protrusion = 0;
-
-		IFVIRTUAL(DBaseStatusBar, GetProtrusion)
-		{
-			VMValue params[] = { (DObject*)this, finalwidth / hres };
-			VMReturn ret(&protrusion);
-			GlobalVMStack.Call(func, params, 2, &ret, 1);
-		}
-		hres = protrusion;
-		StatusbarToRealCoords(tmp, tmp, tmp, hres);
-
-		// Draw map name
-		y = gST_Y - height * numlines - int(hres);
-
-		for(unsigned i = 0; i < numlines; i++)
-		{
-			screen->DrawText(SmallFont, highlight, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, y, lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
-			y += height;
-		}
-
-		if (!deathmatch)
-		{
-			int y = 8;
-
-			// Draw monster count
-			if (am_showmonsters)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_MONSTERS"), level.killed_monsters, level.total_monsters);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-				y += height;
-			}
-
-			// Draw secret count
-			if (am_showsecrets)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_SECRETS"), level.found_secrets, level.total_secrets);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-				y += height;
-			}
-
-			// Draw item count
-			if (am_showitems)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_ITEMS"), level.found_items, level.total_items);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-			}
+			VMValue params[] = { (DObject*)this, r_viewpoint.TicFrac };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 		}
 	}
 }
@@ -1562,6 +1494,33 @@ void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, doub
 		x += ST_X;
 		y += screen->GetHeight() - VerticalResolution;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, StatusbarToRealCoords)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(w);
+	PARAM_FLOAT_DEF(h);
+	self->StatusbarToRealCoords(x, y, w, h);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+
+double DBaseStatusBar::GetTopOfStatusbar() const
+{
+	return gST_Y;	// fixme: Get rid of this global later.
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetTopOfStatusbar)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ACTION_RETURN_FLOAT(self->GetTopOfStatusbar());
 }
 
 //============================================================================

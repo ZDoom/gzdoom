@@ -76,7 +76,7 @@ class StrifeStatusBar : BaseStatusBar
 
 	override int GetProtrusion(double scaleratio) const
 	{
-		return 8;
+		return 10;
 	}
 
 	override void Draw (int state, double TicFrac)

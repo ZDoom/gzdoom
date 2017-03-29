@@ -291,13 +291,18 @@ class BaseStatusBar native ui
 	native double drawClip[4];		// defines a clipping rectangle (not used yet)
 	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
 	
+	private HUDFont mSmallFont;
+	
 	
 	native void SetSize(int height, int vwidth, int vheight);
 	native Vector2 GetHUDScale();
 	native void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
 	native void BeginHUD(int resW, int resH, double Alpha, bool forcescaled = false);
 	
-	virtual void Init() {}
+	virtual void Init() 
+	{
+		mSmallFont = HUDFont.Create("SmallFont");
+	}
 
 	native virtual void SetScaled(bool scale, bool force = false);
 	native virtual void Tick ();
@@ -324,7 +329,8 @@ class BaseStatusBar native ui
 	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
-	
+	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
+	native double GetTopOfStatusBar();
 	
 	//============================================================================
 	//
@@ -672,6 +678,92 @@ class BaseStatusBar native ui
 		return it != null && it.Amount >= amount;
 	}
 
+	
+	//============================================================================
+	//
+	// automap HUD common drawer
+	// This is not called directly to give a status bar the opportunity to
+	// change the text colors. If you want to do something different,
+	// override DrawAutomap directly.
+	//
+	//============================================================================
+
+	protected void DoDrawAutomapHUD(int crdefault, int highlight)
+	{
+		let scale = GetHUDScale();
+		double textdist = 8. / scale.Y;
+		int height = SmallFont.GetHeight();
+		String printtext;
+		int SCREENWIDTH = screen.GetWidth();
+
+		BeginHUD(320, 200, 1., false);
+		
+		// Draw timer
+		let y = textdist;
+		let width = SmallFont.StringWidth("00:00:00");
+		if (am_showtime)
+		{
+			printtext = level.TimeFormatted();
+			DrawString(mSmallFont, level.TimeFormatted(), (-textdist-width, y), 0, crdefault);
+			y += height;
+		}
+		if (am_showtotaltime)
+		{
+			DrawString(mSmallFont, level.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
+		}
+
+		if (!deathmatch)
+		{
+			y = textdist;
+
+			// Draw monster count
+			if (am_showmonsters)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, level.killed_monsters, level.total_monsters), (textdist, y), 0, highlight);
+				y += height;
+			}
+
+			// Draw secret count
+			if (am_showsecrets)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, level.found_secrets, level.total_secrets), (textdist, y), 0, highlight);
+				y += height;
+			}
+
+			// Draw item count
+			if (am_showitems)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (1, y), 0, highlight);
+			}
+		}
+
+		String mapname = level.FormatMapName(crdefault);
+		BrokenLines lines = SmallFont.BreakLines(mapname, SCREENWIDTH / scale.X);
+		int numlines = lines.Count();
+		int finalwidth = SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X;
+		
+		// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
+		double tmp, hres;
+		[tmp, tmp, hres] = StatusbarToRealCoords(0, 0, HorizontalResolution);
+		int protrusion = GetProtrusion(finalwidth / hres);
+		[tmp, tmp, tmp, hres] = StatusbarToRealCoords(0, 0, 0, protrusion);
+	
+
+		// transform the top of the status bar position from screen to HUD space (a direct transformation from status bar to HUD space does not exist.)
+		y = (GetTopOfStatusBar() - hres) / scale.Y - height * numlines;
+
+		// Draw the texts centered above the status bar.
+		for(int i = 0; i < numlines; i++)
+		{
+			DrawString(mSmallFont, lines.StringAt(i), (0, y), DI_TEXT_ALIGN_CENTER|DI_SCREEN_HCENTER|DI_SCREEN_TOP, highlight);
+			y += height;
+		}
+	}
+	
+	virtual void DrawAutomapHUD(double ticFrac)
+	{
+		DoDrawAutomapHUD(Font.CR_GREY, Font.CR_YELLOW);
+	}
 	
 	//---------------------------------------------------------------------------
 	//

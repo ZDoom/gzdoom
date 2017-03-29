@@ -403,6 +403,7 @@ public:
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
 	void ForceHUDScale(bool on) { ForcedScale = on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
 	void StatusbarToRealCoords(double &x, double &y, double &w, double &h) const;
+	double GetTopOfStatusbar() const;
 
 //protected:
 	void DrawPowerups ();

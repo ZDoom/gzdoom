@@ -521,10 +521,11 @@ struct LevelLocals native
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
+	native String FormatMapName(int mapnamecolor);
 	
-	String TimeFormatted()
+	String TimeFormatted(bool totals = false)
 	{
-		int sec = Thinker.Tics2Seconds(time); 
+		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
 }

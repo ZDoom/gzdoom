@@ -3482,7 +3482,15 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 		else if (iter->LoopBumper != nullptr)
 		{
-			return new FxForLoop(nullptr, ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopBumper), ConvertNode(iter->LoopStatement), *ast);
+			FArgumentList bumper;
+			ConvertNodeList(bumper, iter->LoopBumper);
+			FxCompoundStatement *bumps = new FxCompoundStatement(*ast);
+			for (auto &ex : bumper)
+			{
+				bumps->Add(ex);
+				ex = nullptr;
+			}
+			return new FxForLoop(nullptr, ConvertNode(iter->LoopCondition), bumps, ConvertNode(iter->LoopStatement), *ast);
 		}
 		else
 		{

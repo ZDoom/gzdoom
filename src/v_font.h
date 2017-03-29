@@ -80,7 +80,7 @@ public:
 
 	virtual FTexture *GetChar (int code, int *const width) const;
 	virtual int GetCharWidth (int code) const;
-	FRemapTable *GetColorTranslation (EColorRange range) const;
+	FRemapTable *GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }

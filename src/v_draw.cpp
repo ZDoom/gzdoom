@@ -366,6 +366,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
+	parms->color = 0xffffffff;
 	//parms->shadowAlpha = 0;
 	parms->shadowColor = 0;
 	parms->virtWidth = this->GetWidth();
@@ -540,6 +541,10 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 
 		case DTA_ColorOverlay:
 			parms->colorOverlay = ListGetInt(tags);
+			break;
+
+		case DTA_Color:
+			parms->color = ListGetInt(tags);
 			break;
 
 		case DTA_FlipX:

@@ -2773,6 +2773,12 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	vert = &VertexData[VertexPos];
 
+	{
+		PalEntry color = color1;
+		color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
+		color1 = color; 
+	}
+
 	// Fill the vertex buffer.
 	vert[0].x = float(x0);
 	vert[0].y = float(y0);

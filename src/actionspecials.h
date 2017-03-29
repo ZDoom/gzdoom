@@ -265,6 +265,6 @@ DEFINE_SPECIAL(Ceiling_Stop, 276, 1, 1, 1)
 DEFINE_SPECIAL(Sector_SetFloorGlow, 277, 5, 5, 5)
 DEFINE_SPECIAL(Sector_SetCeilingGlow, 278, 5, 5, 5)
 DEFINE_SPECIAL(Floor_MoveToValueAndCrush, 279, 4, 5, 5)
-DEFINE_SPECIAL(Ceiling_MoveToValueAndCrush, 290, 4, 5, 5)
+DEFINE_SPECIAL(Ceiling_MoveToValueAndCrush, 280, 4, 5, 5)
 
 #undef DEFINE_SPECIAL

@@ -665,16 +665,45 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 	if (bmtex != NULL)
 	{
+		/* I do not think this is needed any longer
 		if (tex->bWarped != 0)
 		{
 			Printf("Cannot combine warping with brightmap on texture '%s'\n", tex->Name.GetChars());
 			return;
 		}
+		*/
 
 		bmtex->bMasked = false;
 		tex->gl_info.Brightmap = bmtex;
 	}	
 	tex->gl_info.bDisableFullbright = disable_fullbright;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void AddAutoBrightmaps()
+{
+	int num = Wads.GetNumLumps();
+	for (unsigned i = 0; i < num; i++)
+	{
+		const char *name = Wads.GetLumpFullName(i);
+		if (strstr(name, "brightmaps/auto/") == name)
+		{
+			TArray<FTextureID> list;
+			FString texname = ExtractFileBase(name, false);
+			TexMan.ListTextures(texname, list);
+			auto bmtex = TexMan.FindTexture(name, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+			for (auto texid : list)
+			{
+				bmtex->bMasked = false;
+				TexMan[texid]->gl_info.Brightmap = bmtex;
+			}
+		}
+	}
 }
 
 //==========================================================================

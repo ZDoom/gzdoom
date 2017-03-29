@@ -489,6 +489,11 @@ class Actor : Thinker native
 		return Obituary;
 	}
 	
+	virtual int OnDrain(Actor victim, int damage, Name dmgtype)
+	{
+		return damage;
+	}
+	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);

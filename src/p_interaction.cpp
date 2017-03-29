@@ -1415,6 +1415,12 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				}
 			}
 
+			IFVIRTUALPTR(source, AActor, OnDrain)
+			{
+				VMValue params[] = { source, target, draindamage, mod.GetIndex() };
+				VMReturn ret(&draindamage);
+				GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+			}
 			if ( P_GiveBody( source, int(draindamage * damage)))
 			{
 				S_Sound(source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM );

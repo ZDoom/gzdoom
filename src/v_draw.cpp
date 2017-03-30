@@ -63,7 +63,7 @@
 #include "g_levellocals.h"
 #include "textures.h"
 
-CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	if (self < 0)
 	{
@@ -82,9 +82,9 @@ int GetUIScale(int altval)
 	if (altval > 0) scaleval = altval;
 	else if (uiscale == 0)
 	{
-		// Default should try to scale to 640x480
-		int vscale = screen->GetHeight() / 640;
-		int hscale = screen->GetWidth() / 480;
+		// Default should try to scale to 640x400
+		int vscale = screen->GetHeight() / 400;
+		int hscale = screen->GetWidth() / 640;
 		scaleval = clamp(vscale, 1, hscale);
 	}
 	else scaleval = uiscale;

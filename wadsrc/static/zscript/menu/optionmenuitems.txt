@@ -666,7 +666,7 @@ class OptionMenuSliderBase : OptionMenuItem
 	//
 	//=============================================================================
 
-	private void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
+	protected void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
 	{
 		String formater = String.format("%%.%df", fracdigits);	// The format function cannot do the '%.*f' syntax.
 		String textbuf;
@@ -1209,5 +1209,58 @@ class OptionMenuItemNumberField : OptionMenuFieldBase
 	float mMinimum;
 	float mMaximum;
 	float mStep;
+}
+
+//=============================================================================
+//
+// A special slider that displays plain text for special settings related
+// to scaling.
+//
+//=============================================================================
+
+class OptionMenuItemScaleSlider : OptionMenuItemSlider
+{
+	String TextZero;
+	String TextNegOne;
+	
+	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "")
+	{
+		Super.Init(label, command, min, max, step, 0);
+		mCVar =CVar.FindCVar(command);
+		TextZero = zero;
+		TextNEgOne = negone;
+		return self;
+	}
+
+	//=============================================================================
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
+
+		int Selection = GetSliderValue();
+		if (Selection == 0 || Selection == -1) 
+		{
+			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
+			screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
+		}
+		else
+		{
+			mDrawX = indent + CursorSpace();
+			DrawSlider (mDrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent);
+		}
+		return indent;
+	}
+	
+	override bool MouseEvent(int type, int x, int y)
+	{
+		int value = GetSliderValue();
+		if (value > 0) return Super.MouseEvent(type, x, y);
+		if (type == Menu.MOUSE_Release)
+		{
+			return Menu.GetCurrentMenu().MenuEvent(Menu.MKEY_Enter, true);
+		}
+		return false;
+	}
+	
 }
 

@@ -1853,6 +1853,7 @@ HUDMNU_HEXENFLASHES				= "Hexen weapon flashes";
 HUDMNU_POISONFLASHES			= "Poison damage flashes";
 HUDMNU_ICEFLASHES				= "Ice death flashes";
 HUDMNU_HAZARDFLASHES			= "Poison Buildup flashes";
+HUDMNU_SCALEOPT					= "Scaling Options";
 
 // Scaling options
 SCALEMNU_TITLE					= "Scaling Options";
@@ -1863,6 +1864,9 @@ SCALEMNU_STATBAR				= "Status bar";
 SCALEMNU_HUD					= "Fullscreen HUD";
 SCALEMNU_ALTHUD					= "Alternative HUD";
 SCALEMNU_HUDASPECT				= "HUD preserves aspect ratio";
+SCALEMNU_USEUI					= "Use default scale";
+SCALEMNU_USEFS					= "Scale to fullscreen";
+SCALEMNU_ADAPT					= "Adapt to screen size";
 
 // AltHUD Options
 ALTHUDMNU_TITLE					= "Alternative HUD";

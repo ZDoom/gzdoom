@@ -187,7 +187,7 @@ void DCanvas::SetClipRect(int x, int y, int w, int h)
 	clipleft = clamp(x, 0, GetWidth());
 	clipwidth = clamp(w, 0, GetWidth() - x);
 	cliptop = clamp(y, 0, GetHeight());
-	clipwidth = clamp(w, 0, GetHeight() - y);
+	clipheight = clamp(h, 0, GetHeight() - y);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, SetClipRect)
@@ -222,9 +222,9 @@ DEFINE_ACTION_FUNCTION(_Screen, GetClipRect)
 	int x, y, w, h;
 	screen->GetClipRect(&x, &y, &w, &h);
 	if (numret > 0) ret[0].SetInt(x);
-	if (numret > 1) ret[1].SetInt(x);
-	if (numret > 2) ret[2].SetInt(x);
-	if (numret > 3) ret[3].SetInt(x);
+	if (numret > 1) ret[1].SetInt(y);
+	if (numret > 2) ret[2].SetInt(w);
+	if (numret > 3) ret[3].SetInt(h);
 	return MIN(numret, 4);
 }
 

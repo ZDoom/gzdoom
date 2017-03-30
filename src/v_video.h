@@ -563,7 +563,21 @@ int AspectBaseHeight(float aspect);
 double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
 bool AspectTallerThanWide(float aspect);
+int GetUIScale(int altval);
 
 EXTERN_CVAR(Int, uiscale);
+EXTERN_CVAR(Int, con_scaletext);
+EXTERN_CVAR(Int, con_scale);
+
+inline int active_con_scaletext()
+{
+	return GetUIScale(con_scaletext);
+}
+
+inline int active_con_scale()
+{
+	return GetUIScale(con_scale);
+}
+
 
 #endif // __V_VIDEO_H__

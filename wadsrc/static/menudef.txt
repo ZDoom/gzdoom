@@ -828,10 +828,9 @@ OptionValue ZDoomStrife
 OptionMenu "HUDOptions"
 {
 	Title "$HUDMNU_TITLE"
+	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptions"
 	Submenu "$HUDMNU_ALTHUD",				"AltHudOptions"
 	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
-	StaticText " "
-	Slider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, 0
 	StaticText " "
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
 	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
@@ -842,7 +841,6 @@ OptionMenu "HUDOptions"
 	StaticText " "
 	Option "$HUDMNU_NAMETAGS",				"displaynametags", "DisplayTagsTypes"
 	Option "$HUDMNU_NAMETAGCOLOR",			"nametagcolor", "TextColors", "displaynametags"
-	Option "$HUDMNU_SCALESTATBAR",			"st_scale", "OnOff"
 	Option "$HUDMNU_OLDOUCH",				"st_oldouch", "OnOff"
 	StaticText " "
 	Option "$HUDMNU_HEXENFLASHES",			"pf_hexenweaps", "ZDoomHexen"
@@ -850,7 +848,22 @@ OptionMenu "HUDOptions"
 	Option "$HUDMNU_ICEFLASHES",			"pf_ice", "ZDoomHexen"
 	Option "$HUDMNU_HAZARDFLASHES",			"pf_hazard", "ZDoomStrife"
 }
-	
+
+OptionMenu "ScalingOptions"
+{
+	Title "$SCALEMNU_TITLE"
+	Slider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, 0
+	StaticText " "
+	// These will need a new control type.
+	StaticText "$SCALEMNU_OVERRIDE", 1
+	Option "$SCALEMNU_MESSAGES", 				"con_scaletext", "OnOff"
+	Option "$SCALEMNU_CONSOLE", 				"con_scale", "OnOff"
+	Option "$SCALEMNU_STATBAR",					"st_scale", "OnOff"
+	Option "$SCALEMNU_HUD", 					"hud_scale", "OnOff"
+	Option "$SCALEMNU_ALTHUD",					"hud_althudscale", "OnOff"
+	StaticText " "
+	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
+}
 //-------------------------------------------------------------------------------------------
 //
 // Alternative HUD
@@ -861,15 +874,6 @@ OptionValue "AMCoordinates"
 {
 	0, "$OPTVAL_PLAYER"
 	1, "$OPTVAL_MAP"
-}
-
-OptionValue "AltHUDScale"
-{
-	0, "$OPTVAL_OFF"
-	4, "$OPTVAL_ON"
-	1, "$OPTVAL_SCALETO640X400"
-	2, "$OPTVAL_PIXELDOUBLE"
-	3, "$OPTVAL_PIXELQUADRUPLE"
 }
 
 OptionValue "AltHUDAmmo"
@@ -911,7 +915,6 @@ OptionMenu "AltHUDOptions"
 	Title "$ALTHUDMNU_TITLE"
 	//Indent 220
 	Option "$ALTHUDMNU_ENABLE",					"hud_althud", "OnOff"
-	Option "$ALTHUDMNU_SCALEHUD",				"hud_althudscale", "AltHUDScale"
 	Option "$ALTHUDMNU_SHOWSECRETS",			"hud_showsecrets", "OnOff"
 	Option "$ALTHUDMNU_SHOWMONSTERS",			"hud_showmonsters", "OnOff"
 	Option "$ALTHUDMNU_SHOWITEMS",				"hud_showitems", "OnOff"
@@ -1189,23 +1192,6 @@ OptionMenu ColorPickerMenu
 //-------------------------------------------------------------------------------------------
 
 
-OptionValue ScaleValues
-{
-	0, "$OPTVAL_OFF"
-	1, "$OPTVAL_ON"
-	2, "$OPTVAL_DOUBLE"
-	3, "$OPTVAL_QUADRUPLE"
-}
-
-OptionValue ConsoleScaleValues
-{
-	1, "$OPTVAL_OFF"
-	0, "$OPTVAL_ON"
-	2, "$OPTVAL_DOUBLE"
-	3, "$OPTVAL_TRIPLE"
-	4, "$OPTVAL_QUADRUPLE"
-}
-
 OptionValue MessageLevels
 {
 	0.0, "$OPTVAL_ITEMPICKUP"
@@ -1228,8 +1214,6 @@ OptionMenu MessageOptions
 	Option "$MSGMNU_SHOWMESSAGES",				"show_messages", "OnOff"
 	Option "$MSGMNU_SHOWOBITUARIES",			"show_obituaries", "OnOff"
 	Option "$MSGMNU_SHOWSECRETS",				"cl_showsecretmessage", "OnOff"
-	Option "$MSGMNU_SCALETEXT", 				"con_scaletext", "ScaleValues"
-	Option "$MSGMNU_SCALECONSOLE", 				"con_scale", "ConsoleScaleValues"
 	Option "$MSGMNU_MESSAGELEVEL", 				"msg", "MessageLevels"
 	Option "$MSGMNU_DEVELOPER", 				"developer", "DevMessageLevels"
 	Option "$MSGMNU_CENTERMESSAGES",			"con_centernotify", "OnOff"

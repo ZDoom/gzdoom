@@ -146,45 +146,14 @@ static int worklen = 0;
 
 CVAR(Float, con_notifytime, 3.f, CVAR_ARCHIVE)
 CVAR(Bool, con_centernotify, false, CVAR_ARCHIVE)
-CUSTOM_CVAR(Int, con_scaletext, 1, CVAR_ARCHIVE)		// Scale notify text at high resolutions?
+CUSTOM_CVAR(Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high resolutions?
 {
 	if (self < 0) self = 0;
-	if (self > 3) self = 3;
 }
 
 CUSTOM_CVAR(Int, con_scale, 0, CVAR_ARCHIVE)
 {
 	if (self < 0) self = 0;
-}
-
-int active_con_scale()
-{
-	int scale = con_scale;
-	if (scale <= 0)
-	{
-		scale = uiscale;
-		if (scale == 0)
-		{
-			scale = CleanXfac - 1;
-			if (scale <= 0)
-			{
-				scale = 1;
-			}
-		}
-	}
-	return scale;
-}
-
-int active_con_scaletext()
-{
-	switch (con_scaletext)
-	{
-	default:
-	case 0: return 1;
-	case 1: return uiscale;
-	case 2: return 2;
-	case 3: return 4;
-	}
 }
 
 CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
@@ -811,14 +780,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		return;
 	}
 
-	if (active_con_scaletext() == 0)
-	{
-		width = DisplayWidth / CleanXfac;
-	}
-	else
-	{
-		width = DisplayWidth / active_con_scaletext();
-	}
+	width = DisplayWidth / active_con_scaletext();
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
@@ -1061,10 +1023,6 @@ void FNotifyBuffer::Draw()
 	canskip = true;
 
 	lineadv = SmallFont->GetHeight ();
-	if (active_con_scaletext() == 0)
-	{
-		lineadv *= CleanYfac;
-	}
 
 	BorderTopRefresh = screen->GetPageCount ();
 
@@ -1088,45 +1046,21 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			if (active_con_scaletext() == 0)
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (notify.Text)*CleanXfac)/2,
-						line, notify.Text, DTA_CleanNoMove, true,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
-			else if (active_con_scaletext() == 1)
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (notify.Text))/2,
-						line, notify.Text,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
+			int scale = active_con_scaletext();
+			if (!center)
+				screen->DrawText (SmallFont, color, 0, line, notify.Text,
+					DTA_VirtualWidth, screen->GetWidth() / scale,
+					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_KeepRatio, true,
+					DTA_Alpha, alpha, TAG_DONE);
 			else
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
-						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
-						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (screen->GetWidth() -
-						SmallFont->StringWidth (notify.Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
-						line, notify.Text,
-						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
-						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
-						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
+				screen->DrawText (SmallFont, color, (screen->GetWidth() -
+					SmallFont->StringWidth (notify.Text) * scale) / 2 / scale,
+					line, notify.Text,
+					DTA_VirtualWidth, screen->GetWidth() / scale,
+					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_KeepRatio, true,
+					DTA_Alpha, alpha, TAG_DONE);
 			line += lineadv;
 			canskip = false;
 		}

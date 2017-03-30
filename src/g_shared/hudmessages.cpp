@@ -42,7 +42,6 @@
 #include "serializer.h"
 
 EXTERN_CVAR(Int, con_scaletext)
-int active_con_scaletext();
 
 IMPLEMENT_CLASS(DHUDMessage, false, true)
 
@@ -269,11 +268,7 @@ void DHUDMessage::ResetText (const char *text)
 	}
 	else
 	{
-		switch (active_con_scaletext())
-		{
-		case 0: width = SCREENWIDTH / CleanXfac; break;
-		default: width = SCREENWIDTH / active_con_scaletext(); break;
-		}
+		width = SCREENWIDTH / active_con_scaletext();
 	}
 
 	if (Lines != NULL)
@@ -338,21 +333,13 @@ void DHUDMessage::Draw (int bottom, int visibility)
 
 	int screen_width = SCREENWIDTH;
 	int screen_height = SCREENHEIGHT;
-	if (HUDWidth == 0 && active_con_scaletext() == 0)
+	xscale = yscale = 1;
+	if (HUDWidth == 0)
 	{
-		clean = true;
-		xscale = CleanXfac;
-		yscale = CleanYfac;
-	}
-	else
-	{
-		xscale = yscale = 1;
-		if (HUDWidth == 0)
-		{
-			screen_width /= active_con_scaletext();
-			screen_height /= active_con_scaletext();
-			bottom /= active_con_scaletext();
-		}
+		int scale = active_con_scaletext();
+		screen_width /= scale;
+		screen_height /= scale;
+		bottom /= scale;
 	}
 
 	if (HUDWidth == 0)
@@ -453,24 +440,14 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
 	if (hudheight == 0)
 	{
-		if (active_con_scaletext() <= 1)
-		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_CleanNoMove, clean,
-				DTA_Alpha, Alpha,
-				DTA_RenderStyle, Style,
-				TAG_DONE);
-		}
-		else
-		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
-				DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
-				DTA_Alpha, Alpha,
-				DTA_RenderStyle, Style,
-				DTA_KeepRatio, true,
-				TAG_DONE);
-		}
+		int scale = active_con_scaletext();
+		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			DTA_VirtualWidth, SCREENWIDTH / scale,
+			DTA_VirtualHeight, SCREENHEIGHT / scale,
+			DTA_Alpha, Alpha,
+			DTA_RenderStyle, Style,
+			DTA_KeepRatio, true,
+			TAG_DONE);
 	}
 	else
 	{
@@ -556,24 +533,14 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		float trans = float(Alpha * -(Tics - FadeOutTics) / FadeOutTics);
 		if (hudheight == 0)
 		{
-			if (active_con_scaletext() <= 1)
-			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_CleanNoMove, clean,
-					DTA_Alpha, trans,
-					DTA_RenderStyle, Style,
-					TAG_DONE);
-			}
-			else
-			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
-					DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
-					DTA_Alpha, trans,
-					DTA_RenderStyle, Style,
-					DTA_KeepRatio, true,
-					TAG_DONE);
-			}
+			int scale = active_con_scaletext();
+			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+				DTA_VirtualWidth, SCREENWIDTH / scale,
+				DTA_VirtualHeight, SCREENHEIGHT / scale,
+				DTA_Alpha, trans,
+				DTA_RenderStyle, Style,
+				DTA_KeepRatio, true,
+				TAG_DONE);
 		}
 		else
 		{
@@ -656,24 +623,14 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		float trans = float(Alpha * Tics / FadeInTics);
 		if (hudheight == 0)
 		{
-			if (active_con_scaletext() <= 1)
-			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_CleanNoMove, clean,
-					DTA_Alpha, trans,
-					DTA_RenderStyle, Style,
-					TAG_DONE);
-			}
-			else
-			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
-					DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
-					DTA_Alpha, trans,
-					DTA_RenderStyle, Style,
-					DTA_KeepRatio, true,
-					TAG_DONE);
-			}
+			int scale = active_con_scaletext();
+			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+				DTA_VirtualWidth, SCREENWIDTH / scale,
+				DTA_VirtualHeight, SCREENHEIGHT / scale,
+				DTA_Alpha, trans,
+				DTA_RenderStyle, Style,
+				DTA_KeepRatio, true,
+				TAG_DONE);
 		}
 		else
 		{
@@ -837,26 +794,15 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		{
 			if (hudheight == 0)
 			{
-				if (active_con_scaletext() <= 1)
-				{
-					screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-						DTA_CleanNoMove, clean,
-						DTA_TextLen, LineVisible,
-						DTA_Alpha, Alpha,
-						DTA_RenderStyle, Style,
-						TAG_DONE);
-				}
-				else
-				{
-					screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-						DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
-						DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
-						DTA_KeepRatio, true,
-						DTA_TextLen, LineVisible,
-						DTA_Alpha, Alpha,
-						DTA_RenderStyle, Style,
-						TAG_DONE);
-				}
+				int scale = active_con_scaletext();
+				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+					DTA_VirtualWidth, SCREENWIDTH / scale,
+					DTA_VirtualHeight, SCREENHEIGHT / scale,
+					DTA_KeepRatio, true,
+					DTA_TextLen, LineVisible,
+					DTA_Alpha, Alpha,
+					DTA_RenderStyle, Style,
+					TAG_DONE);
 			}
 			else
 			{

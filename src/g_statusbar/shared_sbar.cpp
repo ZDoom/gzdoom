@@ -87,7 +87,6 @@ EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
-int active_con_scaletext();
 
 DBaseStatusBar *StatusBar;
 
@@ -107,7 +106,7 @@ CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 
 // Stretch status bar to full screen width?
-CUSTOM_CVAR (Int, st_scale, -1, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
 {
 	if (self < -1)
 	{
@@ -120,7 +119,7 @@ CUSTOM_CVAR (Int, st_scale, -1, CVAR_ARCHIVE)
 		setsizeneeded = true;
 	}
 }
-CUSTOM_CVAR(Bool, st_aspectscale, false, CVAR_ARCHIVE)
+CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
 {
 	if (StatusBar)
 	{
@@ -419,7 +418,7 @@ void DBaseStatusBar::SetScale ()
 {
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
-	if (st_scale == -1)
+	if (st_scale < 0 || ForcedScale)
 	{
 		// This is the classic fullscreen scale with aspect ratio compensation.
 		int sby = VerticalResolution - RelTop;
@@ -448,10 +447,9 @@ void DBaseStatusBar::SetScale ()
 		// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 		// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 		// the resulting scaling factor needs to be reduced accordingly.
+		int realscale = clamp((320 * GetUIScale(st_scale)) / HorizontalResolution, 1, w / HorizontalResolution);
 
-		int newscale = (st_scale > 0) ? *st_scale : *uiscale;
-		int realscale = clamp((320 * st_scale) / HorizontalResolution, 1, w / HorizontalResolution);	// do not scale wider than the screen.
-		double realscaley = realscale * (st_aspectscale ? 1.2 : 1.);
+		double realscaley = realscale * (hud_aspectscale ? 1.2 : 1.);
 
 		ST_X = (w - HorizontalResolution * realscale) / 2;
 		SBarTop = int(h - RelTop * realscaley);
@@ -482,24 +480,13 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	{
 		return defaultScale;
 	}
-	if (hud_scale > 0)		// use the scale as an absolute value, but also factor in the specified resolution of the HUD
-	{
-		scale = hud_scale;
-	}
-	else  if (uiscale == 0)
-	{
-		return defaultScale;
-	}
-	else
-	{
-		scale = MAX<int>(1, uiscale);
-	}
+	scale = GetUIScale(hud_scale);
 
 	// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 	// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 	// the resulting scaling factor needs to be reduced accordingly.
 	int realscale = MAX<int>(1, (320 * scale) / HorizontalResolution);
-	return{ double(realscale), double(realscale) };
+	return{ double(realscale), double(realscale * (hud_aspectscale ? 1.2 : 1.)) };
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetHUDScale)
@@ -1032,16 +1019,9 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		if (active_con_scaletext() == 0)
-		{
-			hudwidth = SCREENWIDTH / CleanXfac;
-			hudheight = SCREENHEIGHT / CleanYfac;
-		}
-		else
-		{
-			hudwidth = SCREENWIDTH / active_con_scaletext();
-			hudheight = SCREENHEIGHT / active_con_scaletext();
-		}
+		auto scale = active_con_scaletext();
+		hudwidth = SCREENWIDTH / scale;
+		hudheight = SCREENHEIGHT / scale;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
 		FBrokenLines *lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);

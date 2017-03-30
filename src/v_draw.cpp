@@ -76,6 +76,26 @@ CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	}
 }
 
+int GetUIScale(int altval)
+{
+	int scaleval;
+	if (altval > 0) scaleval = altval;
+	else if (uiscale == 0)
+	{
+		// Default should try to scale to 640x480
+		int vscale = screen->GetHeight() / 640;
+		int hscale = screen->GetWidth() / 480;
+		scaleval = clamp(vscale, 1, hscale);
+	}
+	else scaleval = uiscale;
+
+	// block scales that result in something larger than the current screen.
+	int vmax = screen->GetHeight() / 200;
+	int hmax = screen->GetWidth() / 320;
+	int max = MAX(vmax, hmax);
+	return MIN(scaleval, max);
+}
+
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
 int CleanXfac, CleanYfac;

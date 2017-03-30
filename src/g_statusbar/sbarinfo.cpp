@@ -57,6 +57,7 @@
 #include "gstrings.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "virtual.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum
@@ -1545,10 +1546,16 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 		I_FatalError("Tried to create a status bar with no script!");
 
 	auto sbar = (DBaseStatusBar*)PClass::FindClass("SBarInfoWrapper")->CreateNew();
+	IFVIRTUALPTR(sbar, DBaseStatusBar, Init)
+	{
+		VMValue params[] = { sbar };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0);
+	}
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);
 	sbar->CompleteBorder = script->completeBorder;
+
 	return sbar;
 }
 

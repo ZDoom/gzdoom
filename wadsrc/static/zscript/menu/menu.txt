@@ -271,6 +271,7 @@ class Menu : Object native ui version("2.4")
 	virtual void ResetColor() {}
 	virtual bool MouseEvent(int type, int mx, int my) { return true; }
 	virtual void Ticker() {}
+	virtual void OnReturn() {}
 
 	//=============================================================================
 	//

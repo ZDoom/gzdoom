@@ -1859,6 +1859,7 @@ for_init(X) ::= for_bump(A).						{ X = A /*X-overwrites-A*/; }
 %type for_bump{ZCC_Statement *}
 for_bump(X) ::= .									{ X = NULL; }
 for_bump(X) ::= expression_statement(A).			{ X = A; /*X-overwrites-A*/ }
+for_bump(X) ::= for_bump(A) COMMA expression_statement(B). { X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 /*----- If Statements -----*/
 

@@ -61,6 +61,7 @@
 #include "p_acs.h"
 #include "r_data/r_translate.h"
 #include "sbarinfo.h"
+#include "events.h"
 
 #include "../version.h"
 
@@ -86,13 +87,10 @@ EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
-int active_con_scaletext();
 
 DBaseStatusBar *StatusBar;
 
 extern int setblocks;
-
-int gST_Y;
 
 FTexture *CrosshairImage;
 static int CrosshairNum;
@@ -108,11 +106,24 @@ CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 
 // Stretch status bar to full screen width?
-CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
+{
+	if (self < -1)
+	{
+		self = -1;
+		return;
+	}
+	if (StatusBar)
+	{
+		StatusBar->SetScale();
+		setsizeneeded = true;
+	}
+}
+CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
 {
 	if (StatusBar)
 	{
-		StatusBar->CallSetScaled (self);
+		StatusBar->SetScale();
 		setsizeneeded = true;
 	}
 }
@@ -147,6 +158,16 @@ void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
 		mapname << level.MapName << ": ";
 	}
 	mapname << mapnamecolor << level.LevelName;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, FormatMapName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(cr);
+	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
+	FString rets;
+	ST_FormatMapName(rets, mapnamecolor);
+	ACTION_RETURN_STRING(rets);
 }
 
 //---------------------------------------------------------------------------
@@ -329,7 +350,17 @@ DBaseStatusBar::DBaseStatusBar ()
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
 }
 
-void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
+void DBaseStatusBar::SetSize(int reltop, int hres, int vres, int hhres, int hvres)
+{
+	BaseRelTop = reltop;
+	BaseSBarHorizontalResolution = hres;
+	BaseSBarVerticalResolution = vres;
+	BaseHUDHorizontalResolution = hhres < 0? hres : hhres;
+	BaseHUDVerticalResolution = hvres < 0? vres : hvres;
+	SetDrawSize(reltop, hres, vres);
+}
+
+void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 {
 	RelTop = reltop;
 	HorizontalResolution = hres;
@@ -338,16 +369,19 @@ void DBaseStatusBar::SetSize(int reltop, int hres, int vres)
 	V_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
 	defaultScale = { (double)x, (double)y };
 
-	CallSetScaled(st_scale);
+	SetScale();	// recalculate positioning info.
 }
+
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetSize)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT_DEF(rt);
-	PARAM_INT_DEF(vw);
-	PARAM_INT_DEF(vh);
-	self->SetSize(rt, vw, vh);
+	PARAM_INT(rt);
+	PARAM_INT(vw);
+	PARAM_INT(vh);
+	PARAM_INT_DEF(hvw);
+	PARAM_INT_DEF(hvh);
+	self->SetSize(rt, vw, vh, hvw, hvh);
 	return 0;
 }
 
@@ -380,62 +414,57 @@ void DBaseStatusBar::OnDestroy ()
 //
 //---------------------------------------------------------------------------
 
-//[BL] Added force argument to have forcescaled mean forcescaled.
-// - Also, if the VerticalResolution is something other than the default (200)
-//   We should always obey the value of scale.
-void DBaseStatusBar::SetScaled (bool scale, bool force)
+void DBaseStatusBar::SetScale ()
 {
-	Scaled = (RelTop != 0 || force) && ((SCREENWIDTH != 320 || HorizontalResolution != 320) && scale);
-
-	if (!Scaled)
+	int w = SCREENWIDTH;
+	int h = SCREENHEIGHT;
+	if (st_scale < 0 || ForcedScale)
 	{
-		ST_X = (SCREENWIDTH - HorizontalResolution) / 2;
-		ST_Y = SCREENHEIGHT - RelTop;
-		gST_Y = ST_Y;
+		// This is the classic fullscreen scale with aspect ratio compensation.
+		int sby = VerticalResolution - RelTop;
+		float aspect = ActiveRatio(w, h);
+		if (!AspectTallerThanWide(aspect))
+		{ 
+			// Wider or equal than 4:3 
+			SBarTop = Scale(sby, h, VerticalResolution);
+			double width4_3 = w * 1.333 / aspect;
+			ST_X = int((w - width4_3) / 2);
+		}
+		else
+		{ // 5:4 resolution
+			ST_X = 0;
+
+			// this was far more obtuse before...
+			double height4_3 = h * aspect / 1.333;
+			SBarTop = int(h - height4_3 + sby * height4_3 / VerticalResolution);
+		}
+		Displacement = 0;
+		SBarScale.X = -1;
+		ST_Y = 0;
+	}
+	else
+	{
+		// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
+		// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
+		// the resulting scaling factor needs to be reduced accordingly.
+		int realscale = clamp((320 * GetUIScale(st_scale)) / HorizontalResolution, 1, w / HorizontalResolution);
+
+		double realscaley = realscale * (hud_aspectscale ? 1.2 : 1.);
+
+		ST_X = (w - HorizontalResolution * realscale) / 2;
+		SBarTop = int(h - RelTop * realscaley);
 		if (RelTop > 0)
 		{
-			Displacement = double((ST_Y * VerticalResolution / SCREENHEIGHT) - (VerticalResolution - RelTop))/RelTop;
+			Displacement = double((SBarTop * VerticalResolution / h) - (VerticalResolution - RelTop))/RelTop/realscaley;
 		}
 		else
 		{
 			Displacement = 0;
 		}
+		SBarScale.X = realscale;
+		SBarScale.Y = realscaley;
+		ST_Y = int(h - VerticalResolution * realscaley);
 	}
-	else
-	{
-		ST_X = 0;
-		ST_Y = VerticalResolution - RelTop;
-		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
-		if (!AspectTallerThanWide(aspect))
-		{ // Normal resolution
-			gST_Y = Scale (ST_Y, SCREENHEIGHT, VerticalResolution);
-		}
-		else
-		{ // 5:4 resolution
-			gST_Y = Scale(ST_Y - VerticalResolution/2, SCREENHEIGHT*3, Scale(VerticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
-				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
-		}
-		Displacement = 0;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetScaled)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_BOOL(scale);
-	PARAM_BOOL_DEF(force);
-	self->SetScaled(scale, force);
-	return 0;
-}
-
-void DBaseStatusBar::CallSetScaled(bool scale, bool force)
-{
-	IFVIRTUAL(DBaseStatusBar, SetScaled)
-	{
-		VMValue params[] = { (DObject*)this, scale, force };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
-	}
-	else SetScaled(scale, force);
 }
 
 //---------------------------------------------------------------------------
@@ -451,24 +480,13 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	{
 		return defaultScale;
 	}
-	if (hud_scale > 0)		// use the scale as an absolute value, but also factor in the specified resolution of the HUD
-	{
-		scale = hud_scale;
-	}
-	else  if (uiscale == 0)
-	{
-		return defaultScale;
-	}
-	else
-	{
-		scale = MAX<int>(1, uiscale);
-	}
+	scale = GetUIScale(hud_scale);
 
 	// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 	// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 	// the resulting scaling factor needs to be reduced accordingly.
 	int realscale = MAX<int>(1, (320 * scale) / HorizontalResolution);
-	return{ double(realscale), double(realscale) };
+	return{ double(realscale), double(realscale * (hud_aspectscale ? 1.2 : 1.)) };
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetHUDScale)
@@ -483,23 +501,21 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetHUDScale)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::BeginStatusBar(int resW, int resH, int relTop, bool completeborder, bool forceScaled)
+void DBaseStatusBar::BeginStatusBar(int resW, int resH, int relTop, bool forceScaled)
 {
-	SetSize(relTop, resW, resH);
-	SetScaled(st_scale, forceScaled);
-	CompleteBorder = completeborder;
+	SetDrawSize(relTop < 0? BaseRelTop : relTop, resW < 0? BaseSBarHorizontalResolution : resW, resH < 0? BaseSBarVerticalResolution : resH);
+	ForcedScale = forceScaled;
 	fullscreenOffsets = false;
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	PARAM_INT(r);
-	PARAM_BOOL_DEF(cb);
 	PARAM_BOOL_DEF(fs);
-	self->BeginStatusBar(w, h, r, cb, fs);
+	PARAM_INT_DEF(w);
+	PARAM_INT_DEF(h);
+	PARAM_INT_DEF(r);
+	self->BeginStatusBar(w, h, r, fs);
 	return 0;
 }
 //---------------------------------------------------------------------------
@@ -510,7 +526,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
 
 void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
 {
-	SetSize(RelTop, resW, resH);	
+	SetDrawSize(RelTop, resW < 0? BaseHUDHorizontalResolution : resW, resH < 0? BaseHUDVerticalResolution : resH);	
 	this->Alpha = Alpha;
 	ForcedScale = forcescaled;
 	CompleteBorder = false;
@@ -520,10 +536,10 @@ void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginHUD)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	PARAM_FLOAT(a);
+	PARAM_FLOAT_DEF(a);
 	PARAM_BOOL_DEF(fs);
+	PARAM_INT_DEF(w);
+	PARAM_INT_DEF(h);
 	self->BeginHUD(w, h, a, fs);
 	return 0;
 }
@@ -765,8 +781,8 @@ void DBaseStatusBar::RefreshBackground () const
 	int x, x2, y;
 
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
-	x = (ratio < 1.5f || !Scaled) ? ST_X : SCREENWIDTH*(48-AspectMultiplier(ratio))/(48*2);
-	y = x == ST_X && x > 0 ? ST_Y : gST_Y;
+	x = ST_X;
+	y = SBarTop;
 
 	if(!CompleteBorder)
 	{
@@ -785,8 +801,7 @@ void DBaseStatusBar::RefreshBackground () const
 	{
 		if(!CompleteBorder)
 		{
-			x2 = ratio < 1.5f || !Scaled ? ST_X+HorizontalResolution :
-				SCREENWIDTH - (SCREENWIDTH*(48-AspectMultiplier(ratio))+48*2-1)/(48*2);
+			x2 = SCREENWIDTH - ST_X;
 		}
 		else
 		{
@@ -806,13 +821,6 @@ void DBaseStatusBar::RefreshBackground () const
 			}
 		}
 	}
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, RefreshBackground)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	self->RefreshBackground();
-	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -949,66 +957,20 @@ void DBaseStatusBar::Draw (EHudState state)
 	if (state == HUD_AltHud)
 		return;
 
-	char line[64+10];
-
 	if (state == HUD_StatusBar)
 	{
 		RefreshBackground ();
 	}
 
 	if (idmypos)
-	{ // Draw current coordinates
-		int height = SmallFont->GetHeight();
-		char labels[3] = { 'X', 'Y', 'Z' };
-		int i;
-
-		int vwidth;
-		int vheight;
-		int xpos;
-		int y;
-
-		if (active_con_scaletext() == 1)
+	{ 
+		// Draw current coordinates
+		IFVIRTUAL(DBaseStatusBar, DrawMyPos)
 		{
-			vwidth = SCREENWIDTH;
-			vheight = SCREENHEIGHT;
-			xpos = vwidth - 80;
-			y = gST_Y - height;
+			VMValue params[] = { (DObject*)this };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 		}
-		else if (active_con_scaletext() > 1)
-		{
-			vwidth = SCREENWIDTH / active_con_scaletext();
-			vheight = SCREENHEIGHT / active_con_scaletext();
-			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = gST_Y/4 - height;
-		}
-		else
-		{
-			vwidth = SCREENWIDTH/2;
-			vheight = SCREENHEIGHT/2;
-			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
-			y = gST_Y/2 - height;
-		}
-
-		if (gameinfo.gametype == GAME_Strife)
-		{
-			if (active_con_scaletext() == 1)
-				y -= height * 4;
-			else if (active_con_scaletext() > 3)
-				y -= height;
-			else
-				y -= height * 2;
-		}
-
-		DVector3 pos = CPlayer->mo->Pos();
-		for (i = 2; i >= 0; y -= height, --i)
-		{
-			mysnprintf (line, countof(line), "%c: %d", labels[i], int(pos[i]));
-			screen->DrawText (SmallFont, CR_GREEN, xpos, y, line, 
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
-				TAG_DONE);
-			V_SetBorderNeedRefresh();
-		}
+		V_SetBorderNeedRefresh();
 	}
 
 	if (viewactive)
@@ -1020,101 +982,10 @@ void DBaseStatusBar::Draw (EHudState state)
 	}
 	else if (automapactive)
 	{
-		int y, time = Tics2Seconds(level.time), height;
-		int totaltime = Tics2Seconds(level.totaltime);
-		EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
-			CR_UNTRANSLATED : CR_YELLOW;
-
-		height = SmallFont->GetHeight () * CleanYfac;
-
-		// Draw timer
-		y = 8;
-		if (am_showtime)
+		IFVIRTUAL(DBaseStatusBar, DrawAutomapHUD)
 		{
-			mysnprintf (line, countof(line), "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
-			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
-			y+=8*CleanYfac;
-		}
-		if (am_showtotaltime)
-		{
-			mysnprintf (line, countof(line), "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
-			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
-		}
-
-		// Draw map name
-		y = gST_Y - height;
-		if (gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
-		{
-			y -= 8;
-		}
-		else if (gameinfo.gametype == GAME_Hexen)
-		{
-			if (Scaled)
-			{
-				y -= Scale (11, SCREENHEIGHT, 200);
-			}
-			else
-			{
-				if (SCREENWIDTH < 640)
-				{
-					y -= 12;
-				}
-				else
-				{ // Get past the tops of the gargoyles' wings
-					y -= 28;
-				}
-			}
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			if (Scaled)
-			{
-				y -= Scale (8, SCREENHEIGHT, 200);
-			}
-			else
-			{
-				y -= 8;
-			}
-		}
-		FString mapname;
-
-		ST_FormatMapName(mapname, TEXTCOLOR_GREY);
-		screen->DrawText (SmallFont, highlight,
-			(SCREENWIDTH - SmallFont->StringWidth (mapname)*CleanXfac)/2, y, mapname,
-			DTA_CleanNoMove, true, TAG_DONE);
-
-		if (!deathmatch)
-		{
-			int y = 8;
-
-			// Draw monster count
-			if (am_showmonsters)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_MONSTERS"), level.killed_monsters, level.total_monsters);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-				y += height;
-			}
-
-			// Draw secret count
-			if (am_showsecrets)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_SECRETS"), level.found_secrets, level.total_secrets);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-				y += height;
-			}
-
-			// Draw item count
-			if (am_showitems)
-			{
-				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
-					GStrings("AM_ITEMS"), level.found_items, level.total_items);
-				screen->DrawText (SmallFont, highlight, 8, y, line,
-					DTA_CleanNoMove, true, TAG_DONE);
-			}
+			VMValue params[] = { (DObject*)this, r_viewpoint.TicFrac };
+			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
 		}
 	}
 }
@@ -1136,6 +1007,7 @@ void DBaseStatusBar::CallDraw(EHudState state)
 	}
 	else Draw(state);
 	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
+	BeginStatusBar(BaseSBarHorizontalResolution, BaseSBarVerticalResolution, BaseRelTop, false);
 }
 
 
@@ -1147,16 +1019,9 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		if (active_con_scaletext() == 0)
-		{
-			hudwidth = SCREENWIDTH / CleanXfac;
-			hudheight = SCREENHEIGHT / CleanYfac;
-		}
-		else
-		{
-			hudwidth = SCREENWIDTH / active_con_scaletext();
-			hudheight = SCREENHEIGHT / active_con_scaletext();
-		}
+		auto scale = active_con_scaletext();
+		hudwidth = SCREENWIDTH / scale;
+		hudheight = SCREENHEIGHT / scale;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
 		FBrokenLines *lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
@@ -1237,7 +1102,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
-	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 }
 
 //---------------------------------------------------------------------------
@@ -1250,7 +1115,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 {
 	if (demoplayback && demover != DEMOGAMEVERSION)
 	{
-		screen->DrawText (SmallFont, CR_TAN, 0, ST_Y - 40 * CleanYfac,
+		screen->DrawText (SmallFont, CR_TAN, 0, GetTopOfStatusbar() - 40 * CleanYfac,
 			"Demo was recorded with a different version\n"
 			"of " GAMENAME ". Expect it to go out of sync.",
 			DTA_CleanNoMove, true, TAG_DONE);
@@ -1270,9 +1135,11 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 
 	if (automapactive && !viewactive)
 	{
-		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
+		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
-	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? gST_Y : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	E_RenderOverlay(state);
+
 	DrawConsistancy ();
 	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();
@@ -1566,15 +1433,39 @@ uint32_t DBaseStatusBar::GetTranslation() const
 
 void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, double &h) const
 {
-	if (Scaled)
+	if (SBarScale.X == -1 || ForcedScale)
 	{
 		screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
 	}
 	else
 	{
-		x += ST_X;
-		y += screen->GetHeight() - VerticalResolution;
+		x = ST_X + x * SBarScale.X;
+		y = ST_Y + y * SBarScale.Y;
+		w *= SBarScale.X;
+		h *= SBarScale.Y;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, StatusbarToRealCoords)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(w);
+	PARAM_FLOAT_DEF(h);
+	self->StatusbarToRealCoords(x, y, w, h);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetTopOfStatusbar)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ACTION_RETURN_INT(self->GetTopOfStatusbar());
 }
 
 //============================================================================
@@ -2048,12 +1939,9 @@ CCMD (showpop)
 	}
 }
 
-DEFINE_FIELD(DBaseStatusBar, ST_X);
-DEFINE_FIELD(DBaseStatusBar, ST_Y);
 DEFINE_FIELD(DBaseStatusBar, RelTop);
 DEFINE_FIELD(DBaseStatusBar, HorizontalResolution);
 DEFINE_FIELD(DBaseStatusBar, VerticalResolution);
-DEFINE_FIELD(DBaseStatusBar, Scaled);
 DEFINE_FIELD(DBaseStatusBar, Centering);
 DEFINE_FIELD(DBaseStatusBar, FixedOrigin);
 DEFINE_FIELD(DBaseStatusBar, CompleteBorder);

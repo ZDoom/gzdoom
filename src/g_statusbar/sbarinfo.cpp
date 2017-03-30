@@ -973,7 +973,7 @@ public:
 	DSBarInfo (DBaseStatusBar *wrapper, SBarInfo *script=NULL) :
 		ammo1(NULL), ammo2(NULL), ammocount1(0), ammocount2(0), armor(NULL),
 		pendingPopup(DBaseStatusBar::POP_None), currentPopup(DBaseStatusBar::POP_None), lastHud(-1),
-		scalingWasForced(false), lastInventoryBar(NULL), lastPopup(NULL)
+		lastInventoryBar(NULL), lastPopup(NULL)
 	{
 		this->script = script;
 		this->wrapper = wrapper;
@@ -1030,17 +1030,7 @@ public:
 		{
 			hud = STBAR_NONE;
 		}
-		if(script->huds[hud]->ForceScaled()) //scale the statusbar
-		{
-			if(script->huds[hud]->FullScreenOffsets())
-				wrapper->ForceHUDScale(true);
-			else if(!wrapper->Scaled)
-			{
-				scalingWasForced = true;
-				wrapper->SetScaled(true, true);
-				setsizeneeded = true;
-			}
-		}
+		wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
 		if (CPlayer->ReadyWeapon != NULL)
 		{
@@ -1067,15 +1057,9 @@ public:
 			if(hud != lastHud)
 			{
 				script->huds[hud]->Tick(NULL, this, true);
-
 				// Restore scaling if need be.
-				if(scalingWasForced)
-				{
-					scalingWasForced = false;
-					wrapper->SetScaled(false);
-					setsizeneeded = true;
-				}
 			}
+			wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
 			if(currentPopup != DBaseStatusBar::POP_None && !script->huds[hud]->FullScreenOffsets())
 				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), 1.);
@@ -1096,6 +1080,8 @@ public:
 				else
 					inventoryBar->DrawAux(NULL, this, 0, 0, 1.);
 			}
+			// Reset hud scale
+			wrapper->ForceHUDScale(false);
 		}
 
 		// Handle popups
@@ -1119,8 +1105,6 @@ public:
 		else
 			lastPopup = NULL;
 
-		// Reset hud scale
-		wrapper->ForceHUDScale(false);
 	}
 
 	void _NewGame ()
@@ -1478,7 +1462,6 @@ private:
 	int pendingPopup;
 	int currentPopup;
 	int lastHud;
-	bool scalingWasForced;
 	SBarInfoMainBlock *lastInventoryBar;
 	SBarInfoMainBlock *lastPopup;
 };
@@ -1487,30 +1470,9 @@ private:
 void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 {
 	// Popups can also be forced to scale
-	bool rescale = false;
-	if(ForceScaled())
-	{
-		if(FullScreenOffsets())
-		{
-			rescale = true;
-			statusBar->wrapper->ForceHUDScale(true);
-		}
-		else if(!statusBar->wrapper->Scaled)
-		{
-			rescale = true;
-			statusBar->wrapper->SetScaled(true, true);
-		}
-	}
-
+	bool old = statusBar->wrapper->ForceHUDScale(ForceScaled());
 	Draw(block, statusBar, xOffset, yOffset, alpha);
-
-	if(rescale)
-	{
-		if(FullScreenOffsets())
-			statusBar->wrapper->ForceHUDScale(false);
-		else
-			statusBar->wrapper->SetScaled(false);
-	}
+	statusBar->wrapper->ForceHUDScale(old);
 }
 
 #include "sbarinfo_commands.cpp"
@@ -1586,7 +1548,6 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);
-	sbar->SetScaled(sbar->Scaled);
 	sbar->CompleteBorder = script->completeBorder;
 	return sbar;
 }

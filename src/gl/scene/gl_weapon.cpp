@@ -52,7 +52,6 @@
 
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR(Float, transsouls)
-EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Int, gl_fuzztype)
 EXTERN_CVAR (Bool, r_deathcamera)
 
@@ -121,7 +120,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 		{
 			ftexturemid -= fYAd;
 		}
-		else if (!st_scale)
+		else 
 		{
 			ftexturemid -= StatusBar->GetDisplacement () * fYAd;
 		}

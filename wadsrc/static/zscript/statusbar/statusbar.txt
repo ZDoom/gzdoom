@@ -270,10 +270,8 @@ class BaseStatusBar native ui
 	const POWERUPICONSIZE = 32;
 	
 
-	native int ST_X, ST_Y;
 	native int RelTop;
 	native int HorizontalResolution, VerticalResolution;
-	native bool Scaled;
 	native bool Centering;
 	native bool FixedOrigin;
 	native bool CompleteBorder;
@@ -291,15 +289,19 @@ class BaseStatusBar native ui
 	native double drawClip[4];		// defines a clipping rectangle (not used yet)
 	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
 	
+	private HUDFont mSmallFont;
 	
-	native void SetSize(int height, int vwidth, int vheight);
+	
+	native void SetSize(int height, int vwidth, int vheight, int hwidth = -1, int hheight = -1);
 	native Vector2 GetHUDScale();
-	native void BeginStatusBar(int resW, int resH, int relTop, bool completeborder = false, bool forceScaled = false);
-	native void BeginHUD(int resW, int resH, double Alpha, bool forcescaled = false);
+	native void BeginStatusBar(bool forceScaled = false, int resW = -1, int resH = -1, int rel = -1);
+	native void BeginHUD(double Alpha = 1., bool forcescaled = false, int resW = -1, int resH = -1);
 	
-	virtual void Init() {}
+	virtual void Init() 
+	{
+		mSmallFont = HUDFont.Create("SmallFont");
+	}
 
-	native virtual void SetScaled(bool scale, bool force = false);
 	native virtual void Tick ();
 	native virtual void Draw (int state, double TicFrac);
 	native virtual void ScreenSizeChanged ();
@@ -313,7 +315,6 @@ class BaseStatusBar native ui
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
 	
-	native void RefreshBackground () const;
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
@@ -324,7 +325,8 @@ class BaseStatusBar native ui
 	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
-	
+	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
+	native int GetTopOfStatusBar();
 	
 	//============================================================================
 	//
@@ -383,6 +385,20 @@ class BaseStatusBar native ui
 	
 	//============================================================================
 	//
+	// Returns how much the status bar's graphics extend into the view
+	// Used for automap text positioning
+	// The parameter specifies how much of the status bar area will be covered
+	// by the element requesting this information.
+	//
+	//============================================================================
+	
+	virtual int GetProtrusion(double scaleratio) const
+	{
+		return 0;
+	}
+
+	//============================================================================
+	//
 	// Convenience functions to retrieve item tags
 	//
 	//============================================================================
@@ -410,10 +426,10 @@ class BaseStatusBar native ui
 	}	
 
 	// These cannot be done in ZScript.
-	native String GetGlobalACSString(int index);
-	native String GetGlobalACSArrayString(int arrayno, int index);
-	native int GetGlobalACSValue(int index);
-	native int GetGlobalACSArrayValue(int arrayno, int index);
+	native static String GetGlobalACSString(int index);
+	native static String GetGlobalACSArrayString(int arrayno, int index);
+	native static int GetGlobalACSValue(int index);
+	native static int GetGlobalACSArrayValue(int arrayno, int index);
 	
 	//============================================================================
 	//
@@ -658,6 +674,125 @@ class BaseStatusBar native ui
 		return it != null && it.Amount >= amount;
 	}
 
+	//============================================================================
+	//
+	// mypos cheat
+	//
+	//============================================================================
+
+	virtual void DrawMyPos()
+	{
+		int height = SmallFont.GetHeight();
+		int i;
+
+		int vwidth;
+		int vheight;
+		int xpos;
+		int y;
+		let scalevec = GetHUDScale();
+		int scale = int(scalevec.X);
+
+		vwidth = screen.GetWidth() / scale;
+		vheight = screen.GetHeight() / scale;
+		xpos = vwidth - SmallFont.StringWidth("X: -00000")-6;
+		y = GetTopOfStatusBar() / (3*scale) - height;
+
+		Vector3 pos = CPlayer.mo.Pos;
+		
+		for (i = 0; i < 3; y += height, ++i)
+		{
+			double v = i == 0? pos.X : i == 1? pos.Y : pos.Z;
+			String line = String.Format("%c: %d", int("X") + i, v);
+			screen.DrawText (SmallFont, Font.CR_GREEN, xpos, y, line, DTA_KeepRatio, true,
+				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight);
+		}
+	}
+	
+	//============================================================================
+	//
+	// automap HUD common drawer
+	// This is not called directly to give a status bar the opportunity to
+	// change the text colors. If you want to do something different,
+	// override DrawAutomap directly.
+	//
+	//============================================================================
+
+	protected void DoDrawAutomapHUD(int crdefault, int highlight)
+	{
+		let scale = GetHUDScale();
+		double textdist = 8. / scale.Y;
+		int height = SmallFont.GetHeight();
+		String printtext;
+		int SCREENWIDTH = screen.GetWidth();
+
+		BeginHUD();
+		
+		// Draw timer
+		let y = textdist;
+		let width = SmallFont.StringWidth("00:00:00");
+		if (am_showtime)
+		{
+			printtext = level.TimeFormatted();
+			DrawString(mSmallFont, level.TimeFormatted(), (-textdist-width, y), 0, crdefault);
+			y += height;
+		}
+		if (am_showtotaltime)
+		{
+			DrawString(mSmallFont, level.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
+		}
+
+		if (!deathmatch)
+		{
+			y = textdist;
+
+			// Draw monster count
+			if (am_showmonsters)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, level.killed_monsters, level.total_monsters), (textdist, y), 0, highlight);
+				y += height;
+			}
+
+			// Draw secret count
+			if (am_showsecrets)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, level.found_secrets, level.total_secrets), (textdist, y), 0, highlight);
+				y += height;
+			}
+
+			// Draw item count
+			if (am_showitems)
+			{
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (1, y), 0, highlight);
+			}
+		}
+
+		String mapname = level.FormatMapName(crdefault);
+		BrokenLines lines = SmallFont.BreakLines(mapname, SCREENWIDTH / scale.X);
+		int numlines = lines.Count();
+		int finalwidth = SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X;
+		
+		// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
+		double tmp, hres;
+		[tmp, tmp, hres] = StatusbarToRealCoords(0, 0, HorizontalResolution);
+		int protrusion = GetProtrusion(finalwidth / hres);
+		[tmp, tmp, tmp, hres] = StatusbarToRealCoords(0, 0, 0, protrusion);
+	
+
+		// transform the top of the status bar position from screen to HUD space (a direct transformation from status bar to HUD space does not exist.)
+		y = (GetTopOfStatusBar() - hres) / scale.Y - height * numlines;
+
+		// Draw the texts centered above the status bar.
+		for(int i = 0; i < numlines; i++)
+		{
+			DrawString(mSmallFont, lines.StringAt(i), (0, y), DI_TEXT_ALIGN_CENTER|DI_SCREEN_HCENTER|DI_SCREEN_TOP, highlight);
+			y += height;
+		}
+	}
+	
+	virtual void DrawAutomapHUD(double ticFrac)
+	{
+		DoDrawAutomapHUD(Font.CR_GREY, Font.CR_YELLOW);
+	}
 	
 	//---------------------------------------------------------------------------
 	//

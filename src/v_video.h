@@ -125,6 +125,9 @@ enum
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
+
+	// New additions. 
+	DTA_Color,
 };
 
 enum
@@ -161,6 +164,7 @@ struct DrawParms
 	uint32_t fillcolor;
 	FRemapTable *remap;
 	uint32_t colorOverlay;
+	PalEntry color;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
 	//float shadowAlpha;
@@ -528,8 +532,6 @@ void V_Init2 ();
 
 void V_Shutdown ();
 
-void V_MarkRect (int x, int y, int width, int height);
-
 class FScanner;
 // Returns the closest color to the one desired. String
 // should be of the form "rr gg bb".
@@ -561,7 +563,21 @@ int AspectBaseHeight(float aspect);
 double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
 bool AspectTallerThanWide(float aspect);
+int GetUIScale(int altval);
 
 EXTERN_CVAR(Int, uiscale);
+EXTERN_CVAR(Int, con_scaletext);
+EXTERN_CVAR(Int, con_scale);
+
+inline int active_con_scaletext()
+{
+	return GetUIScale(con_scaletext);
+}
+
+inline int active_con_scale()
+{
+	return GetUIScale(con_scale);
+}
+
 
 #endif // __V_VIDEO_H__

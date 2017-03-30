@@ -596,7 +596,7 @@ int strbin (char *str)
 				case '5':
 				case '6':
 				case '7':
-					c = 0;
+					c = *p - '0';
 					for (i = 0; i < 2; i++)
 					{
 						p++;
@@ -699,7 +699,7 @@ FString strbin1 (const char *start)
 				case '5':
 				case '6':
 				case '7':
-					c = 0;
+					c = *p - '0';
 					for (i = 0; i < 2; i++)
 					{
 						p++;

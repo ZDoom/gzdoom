@@ -356,12 +356,7 @@ void FGameConfigFile::DoGlobalSetup ()
 			}
 			if (last < 213)
 			{
-				FBaseCVar *var = FindCVar("hud_scale", NULL);
-				if (var != NULL)
-				{
-					var->ResetToDefault();
-				}
-				var = FindCVar("snd_channels", NULL);
+				auto var = FindCVar("snd_channels", NULL);
 				if (var != NULL)
 				{
 					// old settings were default 32, minimum 8, new settings are default 128, minimum 64.
@@ -369,6 +364,21 @@ void FGameConfigFile::DoGlobalSetup ()
 					if (v.Int < 64) var->ResetToDefault();
 				}
 			}
+			if (last < 214)
+			{
+				FBaseCVar *var = FindCVar("hud_scale", NULL);
+				if (var != NULL) var->ResetToDefault();
+				var = FindCVar("st_scale", NULL);
+				if (var != NULL) var->ResetToDefault();
+				var = FindCVar("hud_althudscale", NULL);
+				if (var != NULL) var->ResetToDefault();
+				var = FindCVar("con_scale", NULL);
+				if (var != NULL) var->ResetToDefault();
+				var = FindCVar("con_scaletext", NULL);
+				if (var != NULL) var->ResetToDefault();
+
+			}
+
 		}
 	}
 }

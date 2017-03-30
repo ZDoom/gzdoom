@@ -65,11 +65,12 @@ EXTERN_CVAR(Bool,am_follow)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR (Bool, idmypos)
 EXTERN_CVAR (Int, screenblocks)
+EXTERN_CVAR(Bool, hud_aspectscale)
 
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 
-CVAR(Int,hud_althudscale, 4, CVAR_ARCHIVE)				// Scale the hud to 640x400?
+CVAR(Int,hud_althudscale, 0, CVAR_ARCHIVE)				// Scale the hud to 640x400?
 CVAR(Bool,hud_althud, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
 
 														// These are intentionally not the same as in the automap!
@@ -121,7 +122,6 @@ static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
 DVector2 AM_GetPosition();
-int active_con_scaletext();
 
 //---------------------------------------------------------------------------
 //
@@ -897,43 +897,31 @@ static void DrawCoordinates(player_t * CPlayer)
 		pos = DVector3(apos, z);
 	}
 
-	int vwidth, vheight;
-	if (active_con_scaletext() == 0)
-	{
-		vwidth = SCREENWIDTH / 2;
-		vheight = SCREENHEIGHT / 2;
-	}
-	else
-	{
-		vwidth = SCREENWIDTH / active_con_scaletext();
-		vheight = SCREENHEIGHT / active_con_scaletext();
-	}
-
-	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
+	int xpos = hudwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
-	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.MapName), ypos, level.MapName,
+	screen->DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont->StringWidth(level.MapName), ypos, level.MapName,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
-	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.LevelName), ypos + h, level.LevelName,
+	screen->DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont->StringWidth(level.LevelName), ypos + h, level.LevelName,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "X: %d", int(pos.X));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Y: %d", int(pos.Y));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+3*h, coordstr,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Z: %d", int(pos.Z));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+4*h, coordstr,
 		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 }
 
 //---------------------------------------------------------------------------
@@ -1134,49 +1122,9 @@ void DrawHUD()
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
-	if (hud_althudscale && SCREENWIDTH>640) 
-	{
-		hudwidth=SCREENWIDTH/2;
-		if (hud_althudscale == 4)
-		{
-			if (uiscale == 0)
-			{
-				hudwidth = CleanWidth;
-				hudheight = CleanHeight;
-			}
-			else
-			{
-				hudwidth = SCREENWIDTH / uiscale;
-				hudheight = SCREENHEIGHT / uiscale;
-			}
-		}
-		else if (hud_althudscale == 3)
-		{
-			hudwidth = SCREENWIDTH / 4;
-			hudheight = SCREENHEIGHT / 4;
-		}
-		else if (hud_althudscale == 2)
-		{
-			// Optionally just double the pixels to reduce scaling artifacts.
-			hudheight=SCREENHEIGHT/2;
-		}
-		else 
-		{
-			if (AspectTallerThanWide(r_viewwindow.WidescreenRatio))
-			{
-				hudheight = hudwidth * 30 / AspectMultiplier(r_viewwindow.WidescreenRatio);	// BaseRatioSizes is inverted for this mode
-			}
-			else
-			{
-				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(r_viewwindow.WidescreenRatio));
-			}
-		}
-	}
-	else
-	{
-		hudwidth=SCREENWIDTH;
-		hudheight=SCREENHEIGHT;
-	}
+	int scale = GetUIScale(hud_althudscale);
+	hudwidth = SCREENWIDTH / scale;
+	hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
 
 	if (!automapactive)
 	{

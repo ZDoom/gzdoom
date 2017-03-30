@@ -65,10 +65,35 @@
 
 CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
+	if (self < 0)
+	{
+		self = 0;
+		return;
+	}
 	if (StatusBar != NULL)
 	{
 		StatusBar->CallScreenSizeChanged();
 	}
+}
+
+int GetUIScale(int altval)
+{
+	int scaleval;
+	if (altval > 0) scaleval = altval;
+	else if (uiscale == 0)
+	{
+		// Default should try to scale to 640x480
+		int vscale = screen->GetHeight() / 640;
+		int hscale = screen->GetWidth() / 480;
+		scaleval = clamp(vscale, 1, hscale);
+	}
+	else scaleval = uiscale;
+
+	// block scales that result in something larger than the current screen.
+	int vmax = screen->GetHeight() / 200;
+	int hmax = screen->GetWidth() / 320;
+	int max = MAX(vmax, hmax);
+	return MIN(scaleval, max);
 }
 
 // [RH] Stretch values to make a 320x200 image best fit the screen
@@ -361,6 +386,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
+	parms->color = 0xffffffff;
 	//parms->shadowAlpha = 0;
 	parms->shadowColor = 0;
 	parms->virtWidth = this->GetWidth();
@@ -535,6 +561,10 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 
 		case DTA_ColorOverlay:
 			parms->colorOverlay = ListGetInt(tags);
+			break;
+
+		case DTA_Color:
+			parms->color = ListGetInt(tags);
 			break;
 
 		case DTA_FlipX:
@@ -1257,10 +1287,9 @@ static void V_DrawViewBorder (void)
 	V_DrawBorder (0, 0, SCREENWIDTH, viewwindowy);
 	V_DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
 	V_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
-	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, gST_Y);
+	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, StatusBar->GetTopOfStatusbar());
 
 	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
-	V_MarkRect (0, 0, SCREENWIDTH, gST_Y);
 }
 
 //==========================================================================

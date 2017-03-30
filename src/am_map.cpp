@@ -790,6 +790,7 @@ static double mapystart=0; // y-value for the start of the map bitmap...used in 
 static double mapxstart=0; //x-value for the bitmap.
 
 static bool stopped = true;
+static int viewbottom;
 
 static void AM_calcMinMaxMtoF();
 
@@ -1062,7 +1063,7 @@ static void AM_findMinMaxBoundaries ()
 static void AM_calcMinMaxMtoF()
 {
 	double a = SCREENWIDTH / max_w;
-	double b = gST_Y / max_h;
+	double b = viewbottom / max_h;
 
 	min_scale_mtof = a < b ? a : b;
 	max_scale_mtof = SCREENHEIGHT / (2*PLAYERRADIUS);
@@ -1420,7 +1421,7 @@ void AM_NewResolution()
 	else if (scale_mtof > max_scale_mtof)
 		AM_maxOutWindowScale();
 	f_w = screen->GetWidth();
-	f_h = gST_Y;
+	f_h = viewbottom;
 	AM_activateNewScale();
 }
 
@@ -3160,7 +3161,7 @@ void AM_drawCrosshair (const AMColor &color)
 //
 //=============================================================================
 
-void AM_Drawer ()
+void AM_Drawer (int bottom)
 {
 	if (!automapactive)
 		return;
@@ -3168,6 +3169,7 @@ void AM_Drawer ()
 	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
 
+	viewbottom = bottom;
 	if (am_portaloverlay)
 	{
 		sector_t *sec;
@@ -3184,7 +3186,7 @@ void AM_Drawer ()
 		// and view size adjustments.
 		f_x = f_y = 0;
 		f_w = screen->GetWidth ();
-		f_h = gST_Y;
+		f_h = viewbottom;
 		f_p = screen->GetPitch ();
 
 		AM_clearFB(AMColors[AMColors.Background]);

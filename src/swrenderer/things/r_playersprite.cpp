@@ -58,7 +58,6 @@
 #include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
 
-EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_shadercolormaps)
@@ -275,7 +274,7 @@ namespace swrenderer
 
 		if (Thread->Viewport->viewpoint.camera->player && (viewport->RenderTarget != screen ||
 			viewheight == viewport->RenderTarget->GetHeight() ||
-			(viewport->RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
+			(viewport->RenderTarget->GetWidth() > (BASEXCENTER * 2))))
 		{	// Adjust PSprite for fullscreen views
 			AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 			if (weapon != nullptr && weapon->YAdjust != 0)

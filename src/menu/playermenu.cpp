@@ -91,7 +91,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 	const char *pp = s;
 	FString command("name \"");
 
-	if (self == CurrentMenu)
+	if (self == CurrentMenu || self == CurrentMenu->mParentMenu)
 	{
 		// Escape any backslashes or quotation marks before sending the name to the console.
 		for (auto p = pp; *p != '\0'; ++p)

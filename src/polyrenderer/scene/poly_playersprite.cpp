@@ -32,7 +32,6 @@
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
-EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 
@@ -275,7 +274,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *pspr, AActor *owner, float 
 
 	if (viewpoint.camera->player && (renderTarget != screen ||
 		viewheight == renderTarget->GetHeight() ||
-		(renderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
+		(renderTarget->GetWidth() > (BASEXCENTER * 2))))
 	{	// Adjust PSprite for fullscreen views
 		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)

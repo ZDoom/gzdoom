@@ -1847,7 +1847,6 @@ HUDMNU_CROSSHAIRHEALTH			= "Crosshair shows health";
 HUDMNU_CROSSHAIRSCALE			= "Scale crosshair";
 HUDMNU_NAMETAGS					= "Display nametags";
 HUDMNU_NAMETAGCOLOR				= "Nametag color";
-HUDMNU_SCALESTATBAR				= "Stretch status bar";
 HUDMNU_SCALEFULLSCREENHUD		= "Stretch Fullscreen HUD";
 HUDMNU_OLDOUCH					= "Use old ouch mug shot formula";
 HUDMNU_HEXENFLASHES				= "Hexen weapon flashes";
@@ -1855,10 +1854,19 @@ HUDMNU_POISONFLASHES			= "Poison damage flashes";
 HUDMNU_ICEFLASHES				= "Ice death flashes";
 HUDMNU_HAZARDFLASHES			= "Poison Buildup flashes";
 
+// Scaling options
+SCALEMNU_TITLE					= "Scaling Options";
+SCALEMNU_OVERRIDE				= "Overrides for above setting";
+SCALEMNU_MESSAGES 				= "Messages";
+SCALEMNU_CONSOLE				= "Console";
+SCALEMNU_STATBAR				= "Status bar";
+SCALEMNU_HUD					= "Fullscreen HUD";
+SCALEMNU_ALTHUD					= "Alternative HUD";
+SCALEMNU_HUDASPECT				= "HUD preserves aspect ratio";
+
 // AltHUD Options
 ALTHUDMNU_TITLE					= "Alternative HUD";
 ALTHUDMNU_ENABLE				= "Enable alternative HUD";
-ALTHUDMNU_SCALEHUD				= "Stretch alternative HUD";
 ALTHUDMNU_SHOWSECRETS			= "Show secret count";
 ALTHUDMNU_SHOWMONSTERS			= "Show monster count";
 ALTHUDMNU_SHOWITEMS				= "Show item count";
@@ -1977,8 +1985,6 @@ MSGMNU_TITLE				= "MESSAGES";
 MSGMNU_SHOWMESSAGES			= "Show messages";
 MSGMNU_SHOWOBITUARIES		= "Show obituaries";
 MSGMNU_SHOWSECRETS			= "Show secret notifications";
-MSGMNU_SCALETEXT			= "Scale text in high res";
-MSGMNU_SCALECONSOLE			= "Scale console";
 MSGMNU_MESSAGELEVEL			= "Minimum message level";
 MSGMNU_CENTERMESSAGES		= "Center messages";
 MSGMNU_MESSAGECOLORS		= "Message Colors";

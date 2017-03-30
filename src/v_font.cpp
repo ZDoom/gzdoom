@@ -756,9 +756,18 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 //
 //==========================================================================
 
-FRemapTable *FFont::GetColorTranslation (EColorRange range) const
+FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
-	if (ActiveColors == 0 || noTranslate)
+	if (noTranslate)
+	{
+		PalEntry retcolor = PalEntry(255, 255, 255, 255);
+		if (range >= 0 && range < NumTextColors && range != CR_UNTRANSLATED)
+		{
+			retcolor = TranslationColors[range];
+		}
+		if (color != nullptr) *color = retcolor;
+	}
+	if (ActiveColors == 0)
 		return NULL;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;

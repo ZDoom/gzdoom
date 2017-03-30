@@ -448,6 +448,12 @@ void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manu
 		handler->ConsoleProcess(player, name, arg1, arg2, arg3, manual);
 }
 
+void E_RenderOverlay(EHudState state)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->RenderOverlay(state);
+}
+
 bool E_CheckUiProcessors()
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
@@ -468,7 +474,6 @@ bool E_CheckRequireMouse()
 
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
-DEFINE_EVENT_LOOPER(RenderOverlay)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 DEFINE_EVENT_LOOPER(UiTick)
@@ -798,7 +803,7 @@ void DStaticEventHandler::RenderFrame()
 	}
 }
 
-void DStaticEventHandler::RenderOverlay()
+void DStaticEventHandler::RenderOverlay(EHudState state)
 {
 	IFVIRTUAL(DStaticEventHandler, RenderOverlay)
 	{
@@ -806,6 +811,7 @@ void DStaticEventHandler::RenderOverlay()
 		if (func == DStaticEventHandler_RenderOverlay_VMPtr)
 			return;
 		FRenderEvent e = E_SetupRenderEvent();
+		e.HudState = int(state);
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}

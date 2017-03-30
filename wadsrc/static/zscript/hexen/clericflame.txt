@@ -274,6 +274,7 @@ class CFlameMissile : FastProjectile
 	void A_CFlamePuff()
 	{
 		bInvisible = false;
+		bMissile = false;
 		Vel = (0,0,0);
 		A_PlaySound ("ClericFlameExplode", CHAN_BODY);
 	}

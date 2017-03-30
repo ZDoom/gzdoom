@@ -1222,6 +1222,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 {
 	String TextZero;
 	String TextNegOne;
+	int mClickVal;
 	
 	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "")
 	{
@@ -1229,6 +1230,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		mCVar =CVar.FindCVar(command);
 		TextZero = zero;
 		TextNEgOne = negone;
+		mClickVal = -10;
 		return self;
 	}
 
@@ -1238,7 +1240,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
 
 		int Selection = GetSliderValue();
-		if (Selection == 0 || Selection == -1) 
+		if ((Selection == 0 || Selection == -1) && mClickVal <= 0)
 		{
 			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
 			screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
@@ -1254,10 +1256,26 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	override bool MouseEvent(int type, int x, int y)
 	{
 		int value = GetSliderValue();
-		if (value > 0) return Super.MouseEvent(type, x, y);
-		if (type == Menu.MOUSE_Release)
+		switch (type)
 		{
-			return Menu.GetCurrentMenu().MenuEvent(Menu.MKEY_Enter, true);
+			case Menu.MOUSE_Click:
+				mClickVal = value;
+				if (value <= 0) return false;
+				return Super.MouseEvent(type, x, y);
+				
+			case Menu.MOUSE_Move:
+				if (mClickVal <= 0) return false;
+				return Super.MouseEvent(type, x, y);
+				
+			case Menu.MOUSE_Release:
+				if (mClickVal <= 0)
+				{
+					mClickVal = -10;
+					SetSliderValue(value + 1);
+					return true;
+				}
+				mClickVal = -10;
+				return Super.MouseEvent(type, x, y);
 		}
 		return false;
 	}

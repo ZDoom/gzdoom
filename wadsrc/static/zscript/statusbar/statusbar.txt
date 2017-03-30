@@ -327,6 +327,12 @@ class BaseStatusBar native ui
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
 	native int GetTopOfStatusBar();
+	native void SetClipRect(double x, double y, double w, double h, int flags = 0);
+	
+	void ClearClipRect()
+	{
+		screen.ClearClipRect();
+	}
 	
 	//============================================================================
 	//
@@ -984,13 +990,17 @@ class BaseStatusBar native ui
 		double sizeOfImage = (horizontal ? texsize.X - border*2 : texsize.Y - border*2);
 		Clip[(!horizontal) | ((!reverse)<<1)] = sizeOfImage - sizeOfImage *value;
 		
+		// preserve the active clipping rectangle
+		int cx, cy, cw, ch;
+		[cx, cy, cw, ch] = screen.GetClipRect();
+
 		if(border != 0)
 		{
 			for(int i = 0; i < 4; i++) Clip[i] += border;
 
 			//Draw the whole foreground
 			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
-			// SetClip
+			SetClipRect(position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3], flags);
 		}
 		
 		if (offtex.IsValid() && TexMan.GetScaledSize(offtex) == texsize) DrawTexture(offtex, position, flags | DI_ITEM_LEFT_TOP);
@@ -998,10 +1008,11 @@ class BaseStatusBar native ui
 		
 		if (border == 0) 
 		{
-			// SetClip
+			SetClipRect(position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3], flags);
 			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
 		}
-		// UnsetClip
+		// restore the previous clipping rectangle
+		screen.SetClipRect(cx, cy, cw, ch);
 	}
 	
 	//============================================================================

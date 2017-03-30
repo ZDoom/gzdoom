@@ -1910,7 +1910,82 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
 	PARAM_FLOAT(h);
 	PARAM_INT_DEF(flags);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->Fill(color, x, y, w, h);
+	self->Fill(color, x, y, w, h, flags);
+	return 0;
+}
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DBaseStatusBar::SetClipRect(double x, double y, double w, double h, int flags)
+{
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	x += drawOffset.X;
+	y += drawOffset.Y;
+
+	if (!fullscreenOffsets)
+	{
+		StatusbarToRealCoords(x, y, w, h);
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		w *= Scale.X;
+		h *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	int x1 = int(x);
+	int y1 = int(y);
+	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
+	int hh = int(y + h - y1); // y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
+
+	screen->SetClipRect(x1, y1, ww, hh);
+}
+
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetClipRect)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT_DEF(flags);
+	self->SetClipRect(x, y, w, h, flags);
 	return 0;
 }
 

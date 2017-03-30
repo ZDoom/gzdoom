@@ -397,6 +397,7 @@ public:
 	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
 	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
 	void Fill(PalEntry color, double x, double y, double w, double h, int flags = 0);
+	void SetClipRect(double x, double y, double w, double h, int flags = 0);
 
 	void BeginStatusBar(int resW, int resH, int relTop, bool forceScaled);
 	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);

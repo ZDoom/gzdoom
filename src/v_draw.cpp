@@ -190,6 +190,24 @@ void DCanvas::SetClipRect(int x, int y, int w, int h)
 	clipwidth = clamp(w, 0, GetHeight() - y);
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, SetClipRect)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	screen->SetClipRect(x, y, w, h);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ClearClipRect)
+{
+	PARAM_PROLOGUE;
+	screen->ClearClipRect();
+	return 0;
+}
+
 void DCanvas::GetClipRect(int *x, int *y, int *w, int *h)
 {
 	if (x) *x = clipleft;
@@ -197,6 +215,19 @@ void DCanvas::GetClipRect(int *x, int *y, int *w, int *h)
 	if (w) *w = clipwidth;
 	if (h) *h = clipheight;
 }
+
+DEFINE_ACTION_FUNCTION(_Screen, GetClipRect)
+{
+	PARAM_PROLOGUE;
+	int x, y, w, h;
+	screen->GetClipRect(&x, &y, &w, &h);
+	if (numret > 0) ret[0].SetInt(x);
+	if (numret > 1) ret[1].SetInt(x);
+	if (numret > 2) ret[2].SetInt(x);
+	if (numret > 3) ret[3].SetInt(x);
+	return MIN(numret, 4);
+}
+
 
 bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double yy) const
 {

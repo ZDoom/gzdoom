@@ -251,6 +251,17 @@ void ST_Clear()
 //
 //---------------------------------------------------------------------------
 
+static void CreateBaseStatusBar()
+{
+	assert(nullptr == StatusBar);
+
+	PClass* const statusBarClass = PClass::FindClass("BaseStatusBar");
+	assert(nullptr != statusBarClass);
+
+	StatusBar = static_cast<DBaseStatusBar*>(statusBarClass->CreateNew());
+	StatusBar->SetSize(0);
+}
+
 void ST_CreateStatusBar(bool bTitleLevel)
 {
 	if (StatusBar != NULL)
@@ -261,8 +272,7 @@ void ST_CreateStatusBar(bool bTitleLevel)
 
 	if (bTitleLevel)
 	{
-		StatusBar = new DBaseStatusBar();
-		StatusBar->SetSize(0);
+		CreateBaseStatusBar();
 	}
 	else
 	{
@@ -277,11 +287,6 @@ void ST_CreateStatusBar(bool bTitleLevel)
 			if (cls != nullptr)
 			{
 				StatusBar = (DBaseStatusBar *)cls->CreateNew();
-				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
-				{
-					VMValue params[] = { StatusBar };
-					GlobalVMStack.Call(func, params, 1, nullptr, 0);
-				}
 			}
 		}
 	}
@@ -313,18 +318,18 @@ void ST_CreateStatusBar(bool bTitleLevel)
 			if (cls != nullptr)
 			{
 				StatusBar = (DBaseStatusBar *)cls->CreateNew();
-				IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
-				{
-					VMValue params[] = { StatusBar };
-					GlobalVMStack.Call(func, params, 1, nullptr, 0);
-				}
 			}
 		}
 	}
 	if (StatusBar == nullptr)
 	{
-		StatusBar = new DBaseStatusBar();
-		StatusBar->SetSize(0);
+		CreateBaseStatusBar();
+	}
+
+	IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
+	{
+		VMValue params[] = { StatusBar };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0);
 	}
 
 	GC::WriteBarrier(StatusBar);

@@ -937,7 +937,7 @@ void D_Display ()
 		I_FreezeTime(false);
 		GSnd->SetSfxPaused(false, 1);
 	}
-
+	screen->End2D();
 	cycles.Unclock();
 	FrameCycles = cycles;
 }

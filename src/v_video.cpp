@@ -1122,6 +1122,7 @@ void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
 
 bool DFrameBuffer::Begin2D (bool copy3d)
 {
+	isIn2D = true;
 	ClearClipRect();
 	return false;
 }

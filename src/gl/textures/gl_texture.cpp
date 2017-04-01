@@ -688,7 +688,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 void AddAutoBrightmaps()
 {
 	int num = Wads.GetNumLumps();
-	for (unsigned i = 0; i < num; i++)
+	for (int i = 0; i < num; i++)
 	{
 		const char *name = Wads.GetLumpFullName(i);
 		if (strstr(name, "brightmaps/auto/") == name)

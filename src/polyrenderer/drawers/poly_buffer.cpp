@@ -48,7 +48,8 @@ void PolySubsectorGBuffer::Resize(int newwidth, int newheight)
 {
 	width = newwidth;
 	height = newheight;
-	values.resize(width * height);
+	int count = BlockWidth() * BlockHeight();
+	values.resize(count * 64);
 }
 
 /////////////////////////////////////////////////////////////////////////////

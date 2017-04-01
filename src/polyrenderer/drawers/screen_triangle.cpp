@@ -133,7 +133,7 @@ TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args)
 
 	subsectorGBuffer = args->subsectorGBuffer;
 	subsectorDepth = args->uniforms->SubsectorDepth();
-	subsectorPitch = args->pitch;
+	subsectorPitch = args->stencilPitch;
 
 	// 28.4 fixed-point coordinates
 #ifdef NO_SSE
@@ -288,29 +288,24 @@ void TriangleBlock::Loop(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 void TriangleBlock::SubsectorTest()
 {
-	uint32_t *subsector = subsectorGBuffer + X + Y * subsectorPitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 	uint32_t mask0 = 0;
 	uint32_t mask1 = 0;
 
-	for (int iy = 0; iy < 4; iy++)
+	for (int i = 0; i < 32; i++)
 	{
-		for (int ix = 0; ix < q; ix++)
-		{
-			bool covered = subsector[ix] >= subsectorDepth;
-			mask0 <<= 1;
-			mask0 |= (uint32_t)covered;
-		}
-		subsector += subsectorPitch;
+		bool covered = *subsector >= subsectorDepth;
+		mask0 <<= 1;
+		mask0 |= (uint32_t)covered;
+		subsector++;
 	}
-	for (int iy = 4; iy < q; iy++)
+	for (int i = 0; i < 32; i++)
 	{
-		for (int ix = 0; ix < q; ix++)
-		{
-			bool covered = subsector[ix] >= subsectorDepth;
-			mask1 <<= 1;
-			mask1 |= (uint32_t)covered;
-		}
-		subsector += subsectorPitch;
+		bool covered = *subsector >= subsectorDepth;
+		mask1 <<= 1;
+		mask1 |= (uint32_t)covered;
+		subsector++;
 	}
 
 	Mask0 = Mask0 & mask0;
@@ -321,27 +316,24 @@ void TriangleBlock::SubsectorTest()
 
 void TriangleBlock::SubsectorTest()
 {
-	uint32_t *subsector = subsectorGBuffer + X + Y * subsectorPitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 	uint32_t mask0 = 0;
 	uint32_t mask1 = 0;
 	__m128i msubsectorDepth = _mm_set1_epi32(subsectorDepth);
 	__m128i mnotxor = _mm_set1_epi32(0xffffffff);
 
-	for (int iy = 0; iy < 4; iy++)
+	for (int iy = 0; iy < 8; iy++)
 	{
 		mask0 <<= 4;
 		mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)subsector), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		mask0 <<= 4;
-		mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)(subsector + 4)), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		subsector += subsectorPitch;
+		subsector += 4;
 	}
-	for (int iy = 4; iy < q; iy++)
+	for (int iy = 0; iy < 8; iy++)
 	{
 		mask1 <<= 4;
 		mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)subsector), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		mask1 <<= 4;
-		mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)(subsector + 4)), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		subsector += subsectorPitch;
+		subsector += 4;
 	}
 
 	Mask0 = Mask0 & mask0;
@@ -805,41 +797,33 @@ void TriangleBlock::StencilWrite()
 
 void TriangleBlock::SubsectorWrite()
 {
-	auto pitch = subsectorPitch;
-	uint32_t *subsector = subsectorGBuffer + X + Y * pitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 
 	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
 	{
-		for (int y = 0; y < 8; y++)
+		for (int i = 0; i < 64; i++)
 		{
-			for (int x = 0; x < 8; x++)
-				subsector[x] = subsectorDepth;
-			subsector += pitch;
+			*(subsector++) = subsectorDepth;
 		}
 	}
 	else
 	{
 		uint32_t mask0 = Mask0;
 		uint32_t mask1 = Mask1;
-		for (int y = 0; y < 4; y++)
+		for (int i = 0; i < 32; i++)
 		{
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask0 & (1 << 31))
-					subsector[x] = subsectorDepth;
-				mask0 <<= 1;
-			}
-			subsector += pitch;
+			if (mask0 & (1 << 31))
+				*subsector = subsectorDepth;
+			mask0 <<= 1;
+			subsector++;
 		}
-		for (int y = 4; y < 8; y++)
+		for (int i = 0; i < 32; i++)
 		{
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask1 & (1 << 31))
-					subsector[x] = subsectorDepth;
-				mask1 <<= 1;
-			}
-			subsector += pitch;
+			if (mask1 & (1 << 31))
+				*subsector = subsectorDepth;
+			mask1 <<= 1;
+			subsector++;
 		}
 	}
 }
@@ -848,71 +832,54 @@ void TriangleBlock::SubsectorWrite()
 
 void TriangleBlock::SubsectorWrite()
 {
-	auto pitch = subsectorPitch;
-	uint32_t *subsector = subsectorGBuffer + X + Y * pitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 	__m128i msubsectorDepth = _mm_set1_epi32(subsectorDepth);
 
 	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
 	{
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
 		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth); subsector += pitch;
-		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
-		_mm_storeu_si128((__m128i*)(subsector + 4), msubsectorDepth);
 	}
 	else
 	{
 		__m128i mxormask = _mm_set1_epi32(0xffffffff);
 		__m128i topfour = _mm_setr_epi32(1 << 31, 1 << 30, 1 << 29, 1 << 28);
-		__m128i bottomfour = _mm_setr_epi32(1 << 27, 1 << 26, 1 << 25, 1 << 24);
 
 		__m128i mmask0 = _mm_set1_epi32(Mask0);
 		__m128i mmask1 = _mm_set1_epi32(Mask1);
 
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask0 = _mm_slli_si128(mmask0, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask0 = _mm_slli_si128(mmask0, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask0 = _mm_slli_si128(mmask0, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask0 = _mm_slli_si128(mmask0, 1);
-		subsector += pitch;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); subsector += 4;
 
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask1 = _mm_slli_si128(mmask1, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask1 = _mm_slli_si128(mmask1, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask1 = _mm_slli_si128(mmask1, 1);
-		subsector += pitch;
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector);
-		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, bottomfour), _mm_setzero_si128()), mxormask), (char*)(subsector + 4));
-		mmask1 = _mm_slli_si128(mmask1, 1);
-		subsector += pitch;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); subsector += 4;
 	}
 }
 

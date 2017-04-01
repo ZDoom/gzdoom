@@ -273,10 +273,8 @@ VMFrameStack::~VMFrameStack()
 
 VMFrame *VMFrameStack::AllocFrame(VMScriptFunction *func)
 {
-	int size = VMFrame::FrameSize(func->NumRegD, func->NumRegF, func->NumRegS, func->NumRegA,
-		func->MaxParam, func->ExtraSpace);
-	VMFrame *frame = Alloc(size);
 	frame->Func = func;
+	VMFrame *frame = Alloc(func->StackSize);
 	frame->NumRegD = func->NumRegD;
 	frame->NumRegF = func->NumRegF;
 	frame->NumRegS = func->NumRegS;

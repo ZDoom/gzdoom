@@ -716,6 +716,7 @@ public:
 	int ExtraSpace;
 	int CodeSize;			// Size of code in instructions (not bytes)
 	unsigned LineInfoCount;
+	unsigned StackSize;
 	VM_UBYTE NumRegD;
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;

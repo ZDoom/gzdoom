@@ -268,7 +268,7 @@ template<typename BlendT, typename SamplerT>
 class TriScreenDrawer32
 {
 public:
-	static void Execute(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+	static void Execute(int x, int y, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -281,43 +281,36 @@ public:
 			if (is_simple_shade)
 			{
 				if (is_nearest_filter)
-					Loop<SimpleShade, NearestFilter>(args, thread);
+					DrawBlock<SimpleShade, NearestFilter>(x, y, mask0, mask1, args);
 				else
-					Loop<SimpleShade, LinearFilter>(args, thread);
+					DrawBlock<SimpleShade, LinearFilter>(x, y, mask0, mask1, args);
 			}
 			else
 			{
 				if (is_nearest_filter)
-					Loop<AdvancedShade, NearestFilter>(args, thread);
+					DrawBlock<AdvancedShade, NearestFilter>(x, y, mask0, mask1, args);
 				else
-					Loop<AdvancedShade, LinearFilter>(args, thread);
+					DrawBlock<AdvancedShade, LinearFilter>(x, y, mask0, mask1, args);
 			}
 		}
 		else // no linear filtering for translated, shaded, stencil, fill or skycap
 		{
 			if (is_simple_shade)
 			{
-				Loop<SimpleShade, NearestFilter>(args, thread);
+				DrawBlock<SimpleShade, NearestFilter>(x, y, mask0, mask1, args);
 			}
 			else
 			{
-				Loop<AdvancedShade, NearestFilter>(args, thread);
+				DrawBlock<AdvancedShade, NearestFilter>(x, y, mask0, mask1, args);
 			}
 		}
 	}
 
 private:
 	template<typename ShadeModeT, typename FilterModeT>
-	FORCEINLINE static void VECTORCALL Loop(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+	FORCEINLINE static void VECTORCALL DrawBlock(int destX, int destY, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
 	{
 		using namespace TriScreenDrawerModes;
-
-		int numSpans = thread->NumFullSpans;
-		auto fullSpans = thread->FullSpans;
-		int numBlocks = thread->NumPartialBlocks;
-		auto partialBlocks = thread->PartialBlocks;
-		int startX = thread->StartX;
-		int startY = thread->StartY;
 
 		bool is_fixed_light = args->uniforms->FixedLight();
 		uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
@@ -326,24 +319,20 @@ private:
 
 		// Calculate gradients
 		const TriVertex &v1 = *args->v1;
-		const TriVertex &v2 = *args->v2;
-		const TriVertex &v3 = *args->v3;
-		ScreenTriangleStepVariables gradientX;
-		ScreenTriangleStepVariables gradientY;
-		ScreenTriangleStepVariables start;
-		gradientX.W = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-		gradientY.W = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-		gradientX.U = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.u * v1.w, v2.u * v2.w, v3.u * v3.w);
-		gradientY.U = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.u * v1.w, v2.u * v2.w, v3.u * v3.w);
-		gradientX.V = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.v * v1.w, v2.v * v2.w, v3.v * v3.w);
-		gradientY.V = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.v * v1.w, v2.v * v2.w, v3.v * v3.w);
-		start.W = v1.w + gradientX.W * (startX - v1.x) + gradientY.W * (startY - v1.y);
-		start.U = v1.u * v1.w + gradientX.U * (startX - v1.x) + gradientY.U * (startY - v1.y);
-		start.V = v1.v * v1.w + gradientX.V * (startX - v1.x) + gradientY.V * (startY - v1.y);
+		ScreenTriangleStepVariables gradientX = args->gradientX;
+		ScreenTriangleStepVariables gradientY = args->gradientY;
+		ScreenTriangleStepVariables blockPosY;
+		blockPosY.W = v1.w + gradientX.W * (destX - v1.x) + gradientY.W * (destY - v1.y);
+		blockPosY.U = v1.u * v1.w + gradientX.U * (destX - v1.x) + gradientY.U * (destY - v1.y);
+		blockPosY.V = v1.v * v1.w + gradientX.V * (destX - v1.x) + gradientY.V * (destY - v1.y);
+		gradientX.W *= 8.0f;
+		gradientX.U *= 8.0f;
+		gradientX.V *= 8.0f;
 
 		// Output
 		uint32_t * RESTRICT destOrg = (uint32_t*)args->dest;
 		int pitch = args->pitch;
+		uint32_t *dest = destOrg + destX + destY * pitch;
 
 		// Light
 		uint32_t light = args->uniforms->Light();
@@ -388,93 +377,78 @@ private:
 			desaturate = 0;
 		}
 
-		for (int i = 0; i < numSpans; i++)
+		if (mask0 == 0xffffffff && mask1 == 0xffffffff)
 		{
-			const auto &span = fullSpans[i];
-
-			uint32_t *dest = destOrg + span.X + span.Y * pitch;
-			int width = span.Length;
-			int height = 8;
-
-			ScreenTriangleStepVariables blockPosY;
-			blockPosY.W = start.W + gradientX.W * (span.X - startX) + gradientY.W * (span.Y - startY);
-			blockPosY.U = start.U + gradientX.U * (span.X - startX) + gradientY.U * (span.Y - startY);
-			blockPosY.V = start.V + gradientX.V * (span.X - startX) + gradientY.V * (span.Y - startY);
-
-			for (int y = 0; y < height; y++)
+			for (int y = 0; y < 8; y++)
 			{
-				ScreenTriangleStepVariables blockPosX = blockPosY;
-
-				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t posU = (int32_t)(blockPosX.U * rcpW);
-				int32_t posV = (int32_t)(blockPosX.V * rcpW);
+				float rcpW = 0x01000000 / blockPosY.W;
+				int32_t posU = (int32_t)(blockPosY.U * rcpW);
+				int32_t posV = (int32_t)(blockPosY.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
-				for (int x = 0; x < width; x++)
+				ScreenTriangleStepVariables blockPosX = blockPosY;
+				blockPosX.W += gradientX.W;
+				blockPosX.U += gradientX.U;
+				blockPosX.V += gradientX.V;
+
+				rcpW = 0x01000000 / blockPosX.W;
+				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
+				int32_t nextV = (int32_t)(blockPosX.V * rcpW);
+				int32_t stepU = (nextU - posU) / 8;
+				int32_t stepV = (nextV - posV) / 8;
+
+				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+				fixed_t lightstep = (lightnext - lightpos) / 8;
+				lightstep = lightstep & lightmask;
+
+				for (int ix = 0; ix < 4; ix++)
 				{
-					blockPosX.W += gradientX.W * 8;
-					blockPosX.U += gradientX.U * 8;
-					blockPosX.V += gradientX.V * 8;
+					// Load bgcolor
+					__m128i bgcolor;
+					if (BlendT::Mode != (int)BlendModes::Opaque)
+						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)(dest + ix * 2)), _mm_setzero_si128());
+					else
+						bgcolor = _mm_setzero_si128();
 
-					rcpW = 0x01000000 / blockPosX.W;
-					int32_t nextU = (int32_t)(blockPosX.U * rcpW);
-					int32_t nextV = (int32_t)(blockPosX.V * rcpW);
-					int32_t stepU = (nextU - posU) / 8;
-					int32_t stepV = (nextV - posV) / 8;
+					// Sample fgcolor
+					unsigned int ifgcolor[2], ifgshade[2];
+					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
-					fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-					fixed_t lightstep = (lightnext - lightpos) / 8;
-					lightstep = lightstep & lightmask;
+					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					posU += stepU;
+					posV += stepV;
 
-					for (int ix = 0; ix < 4; ix++)
+					// Setup light
+					int lightpos0 = lightpos >> 8;
+					lightpos += lightstep;
+					int lightpos1 = lightpos >> 8;
+					lightpos += lightstep;
+					__m128i mlight = _mm_set_epi16(256, lightpos1, lightpos1, lightpos1, 256, lightpos0, lightpos0, lightpos0);
+
+					__m128i shade_fade_lit;
+					if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 					{
-						// Load bgcolor
-						__m128i bgcolor;
-						if (BlendT::Mode != (int)BlendModes::Opaque)
-							bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)(dest + x * 8 + ix * 2)), _mm_setzero_si128());
-						else
-							bgcolor = _mm_setzero_si128();
-
-						// Sample fgcolor
-						unsigned int ifgcolor[2], ifgshade[2];
-						ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-						ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
-						posU += stepU;
-						posV += stepV;
-
-						ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-						ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
-						posU += stepU;
-						posV += stepV;
-
-						// Setup light
-						int lightpos0 = lightpos >> 8;
-						lightpos += lightstep;
-						int lightpos1 = lightpos >> 8;
-						lightpos += lightstep;
-						__m128i mlight = _mm_set_epi16(256, lightpos1, lightpos1, lightpos1, 256, lightpos0, lightpos0, lightpos0);
-
-						__m128i shade_fade_lit;
-						if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
-						{
-							__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
-							shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
-						}
-						else
-						{
-							shade_fade_lit = _mm_setzero_si128();
-						}
-
-						// Shade and blend
-						__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-						fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-						__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
-
-						// Store result
-						_mm_storel_epi64((__m128i*)(dest + x * 8 + ix * 2), outcolor);
+						__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
+						shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
 					}
+					else
+					{
+						shade_fade_lit = _mm_setzero_si128();
+					}
+
+					// Shade and blend
+					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
+					fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+
+					// Store result
+					_mm_storel_epi64((__m128i*)(dest + ix * 2), outcolor);
 				}
 
 				blockPosY.W += gradientY.W;
@@ -484,35 +458,22 @@ private:
 				dest += pitch;
 			}
 		}
-
-		for (int i = 0; i < numBlocks; i++)
+		else
 		{
-			const auto &block = partialBlocks[i];
-
-			ScreenTriangleStepVariables blockPosY;
-			blockPosY.W = start.W + gradientX.W * (block.X - startX) + gradientY.W * (block.Y - startY);
-			blockPosY.U = start.U + gradientX.U * (block.X - startX) + gradientY.U * (block.Y - startY);
-			blockPosY.V = start.V + gradientX.V * (block.X - startX) + gradientY.V * (block.Y - startY);
-
-			uint32_t *dest = destOrg + block.X + block.Y * pitch;
-			uint32_t mask0 = block.Mask0;
-			uint32_t mask1 = block.Mask1;
-
 			// mask0 loop:
 			for (int y = 0; y < 4; y++)
 			{
-				ScreenTriangleStepVariables blockPosX = blockPosY;
-
-				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t posU = (int32_t)(blockPosX.U * rcpW);
-				int32_t posV = (int32_t)(blockPosX.V * rcpW);
+				float rcpW = 0x01000000 / blockPosY.W;
+				int32_t posU = (int32_t)(blockPosY.U * rcpW);
+				int32_t posV = (int32_t)(blockPosY.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
-				blockPosX.W += gradientX.W * 8;
-				blockPosX.U += gradientX.U * 8;
-				blockPosX.V += gradientX.V * 8;
+				ScreenTriangleStepVariables blockPosX = blockPosY;
+				blockPosX.W += gradientX.W;
+				blockPosX.U += gradientX.U;
+				blockPosX.V += gradientX.V;
 
 				rcpW = 0x01000000 / blockPosX.W;
 				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
@@ -590,18 +551,17 @@ private:
 			// mask1 loop:
 			for (int y = 0; y < 4; y++)
 			{
-				ScreenTriangleStepVariables blockPosX = blockPosY;
-
-				float rcpW = 0x01000000 / blockPosX.W;
-				int32_t posU = (int32_t)(blockPosX.U * rcpW);
-				int32_t posV = (int32_t)(blockPosX.V * rcpW);
+				float rcpW = 0x01000000 / blockPosY.W;
+				int32_t posU = (int32_t)(blockPosY.U * rcpW);
+				int32_t posV = (int32_t)(blockPosY.V * rcpW);
 
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
-				blockPosX.W += gradientX.W * 8;
-				blockPosX.U += gradientX.U * 8;
-				blockPosX.V += gradientX.V * 8;
+				ScreenTriangleStepVariables blockPosX = blockPosY;
+				blockPosX.W += gradientX.W;
+				blockPosX.U += gradientX.U;
+				blockPosX.V += gradientX.V;
 
 				rcpW = 0x01000000 / blockPosX.W;
 				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
@@ -676,20 +636,6 @@ private:
 				dest += pitch;
 			}
 		}
-	}
-
-	static float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
-	{
-		float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
-		float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
-		return top / bottom;
-	}
-
-	static float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
-	{
-		float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
-		float bottom = (x0 - x2) * (y1 - y2) - (x1 - x2) * (y0 - y2);
-		return top / bottom;
 	}
 };
 

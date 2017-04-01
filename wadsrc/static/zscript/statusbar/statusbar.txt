@@ -452,7 +452,7 @@ class BaseStatusBar native ui
 	int, int GetAmount(class<Inventory> item)
 	{
 		let it = CPlayer.mo.FindInventory(item);
-		int ret1 = it? it.Amount : GetDefaultByType(item).Amount;
+		int ret1 = it? it.Amount : 0;
 		int ret2 = it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
 		return ret1, ret2;
 	}

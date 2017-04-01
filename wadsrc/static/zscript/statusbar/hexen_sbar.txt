@@ -104,13 +104,24 @@ class HexenStatusBar : BaseStatusBar
 	protected void DrawMainBar (double TicFrac)
 	{
 		DrawImage("H2BAR", (0, 134), DI_ITEM_OFFSETS);
+		
+		String Gem;
+		if (CPlayer.mo is "ClericPlayer") Gem = "LIFEGMC2";
+		else if (CPlayer.mo is "MagePlayer") Gem = "LIFEGMM2";
+		else Gem = "LIFEGMF2";
+
+		int inthealth =  mHealthInterpolator2.GetValue();
+		DrawGem("CHAIN", "LIFEGMF2", inthealth, CPlayer.mo.GetMaxHealth(true), (30, 193), -23, 49, 15, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
+		
+		DrawImage("LFEDGE", (0, 192), DI_ITEM_OFFSETS);
+		DrawImage("RTEDGE", (277, 192), DI_ITEM_OFFSETS);
+		
 		if (!automapactive)
 		{
 			if (isInventoryBarVisible())
 			{
 				DrawImage("INVBAR", (38, 162), DI_ITEM_OFFSETS);
 				DrawInventoryBar(diparms_sbar, (52, 163), 7, DI_ITEM_LEFT_TOP, HX_SHADOW);
-				return;
 			}
 			else
 			{
@@ -229,7 +240,6 @@ class HexenStatusBar : BaseStatusBar
 		}
 		else // automap
 		{
-			DrawImage("H2BAR", (0, 134), DI_ITEM_OFFSETS);
 			DrawImage("KEYBAR", (38, 162), DI_ITEM_OFFSETS);
 			int cnt = 0;
 			Vector2 keypos = (46, 164);
@@ -247,17 +257,6 @@ class HexenStatusBar : BaseStatusBar
 			DrawHexenArmor(HEXENARMOR_HELM, "ARMSLOT3", (212, 164), DI_ITEM_OFFSETS);
 			DrawHexenArmor(HEXENARMOR_AMULET, "ARMSLOT4", (243, 164), DI_ITEM_OFFSETS);
 		}
-	
-		String Gem;
-		if (CPlayer.mo is "ClericPlayer") Gem = "LIFEGMC2";
-		else if (CPlayer.mo is "MagePlayer") Gem = "LIFEGMM2";
-		else Gem = "LIFEGMF2";
-
-		int inthealth =  mHealthInterpolator2.GetValue();
-		DrawGem("CHAIN", "LIFEGMF2", inthealth, CPlayer.mo.GetMaxHealth(true), (30, 193), -23, 49, 15, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
-		
-		DrawImage("LFEDGE", (0, 193), DI_ITEM_OFFSETS);
-		DrawImage("RTEDGE", (277, 193), DI_ITEM_OFFSETS);
 	}
 }
 

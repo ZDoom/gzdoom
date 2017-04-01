@@ -38,8 +38,6 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 
-CVAR(Bool, r_debug_trisetup, false, 0);
-
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;
 int PolyTriangleDrawer::viewport_width;
@@ -90,33 +88,13 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	if (drawargs.VertexCount() < 3)
 		return;
 
-	PolyDrawFuncPtr drawfuncs[4];
-	int num_drawfuncs = 0;
-	
-	drawfuncs[num_drawfuncs++] = drawargs.SubsectorTest() ? &ScreenTriangle::SetupSubsector : &ScreenTriangle::SetupNormal;
-
-	if (!r_debug_trisetup) // For profiling how much time is spent in setup vs drawal
-	{
-		int bmode = (int)drawargs.BlendMode();
-
-		if (drawargs.WriteColor())
-			drawfuncs[num_drawfuncs++] = dest_bgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
-	}
-
-	if (drawargs.WriteStencil())
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
-
-	if (drawargs.WriteSubsector())
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
-
 	TriDrawTriangleArgs args;
 	args.dest = dest;
 	args.pitch = dest_pitch;
-	args.clipleft = 0;
 	args.clipright = dest_width;
-	args.cliptop = 0;
 	args.clipbottom = dest_height;
 	args.uniforms = &drawargs;
+	args.destBgra = dest_bgra;
 	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
@@ -133,7 +111,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 		{
 			for (int j = 0; j < 3; j++)
 				vert[j] = shade_vertex(*drawargs.ObjectToClip(), drawargs.ClipPlane(), *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
+			draw_shaded_triangle(vert, ccw, &args, thread);
 		}
 	}
 	else if (drawargs.DrawMode() == PolyDrawMode::TriangleFan)
@@ -143,7 +121,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.ObjectToClip(), drawargs.ClipPlane(), *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
+			draw_shaded_triangle(vert, ccw, &args, thread);
 			vert[1] = vert[2];
 		}
 	}
@@ -154,7 +132,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.ObjectToClip(), drawargs.ClipPlane(), *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
+			draw_shaded_triangle(vert, ccw, &args, thread);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
 			ccw = !ccw;
@@ -173,7 +151,7 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, 
 	return sv;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr *drawfuncs, int num_drawfuncs)
+void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -249,9 +227,9 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
-			
-			for (int j = 0; j < num_drawfuncs; j++)
-				drawfuncs[j](args, thread);
+			args->CalculateGradients();
+
+			ScreenTriangle::Draw(args, thread);
 		}
 	}
 	else
@@ -261,9 +239,9 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
+			args->CalculateGradients();
 			
-			for (int j = 0; j < num_drawfuncs; j++)
-				drawfuncs[j](args, thread);
+			ScreenTriangle::Draw(args, thread);
 		}
 	}
 }
@@ -444,8 +422,6 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	WorkerThreadData thread_data;
 	thread_data.core = thread->core;
 	thread_data.num_cores = thread->num_cores;
-	thread_data.FullSpans = thread->FullSpansBuffer.data();
-	thread_data.PartialBlocks = thread->PartialBlocksBuffer.data();
 
 	PolyTriangleDrawer::draw_arrays(args, &thread_data);
 }

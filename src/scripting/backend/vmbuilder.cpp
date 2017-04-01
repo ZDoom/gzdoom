@@ -139,6 +139,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	func->NumRegA = Registers[REGT_POINTER].MostUsed;
 	func->NumRegS = Registers[REGT_STRING].MostUsed;
 	func->MaxParam = MaxParam;
+	func->StackSize = VMFrame::FrameSize(func->NumRegD, func->NumRegF, func->NumRegS, func->NumRegA, func->MaxParam, func->ExtraSpace);
 
 	// Technically, there's no reason why we can't end the function with
 	// entries on the parameter stack, but it means the caller probably

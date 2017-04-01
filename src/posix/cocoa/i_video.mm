@@ -1146,7 +1146,7 @@ void CocoaFrameBuffer::Flip()
 
 SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
 : DFrameBuffer(width, height, bgra)
-, m_lock(-1)
+, m_lock(0)
 , m_isUpdatePending(false)
 {
 	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];

@@ -370,6 +370,12 @@ void FDecalLib::ReadAllDecals ()
 	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
 		AActor *def = (AActor*)GetDefaultByType (PClassActor::AllActorClasses[i]);
+		if (nullptr == def)
+		{
+			// This is referenced but undefined class
+			// The corresponding warning should be already reported by DECORATE parser
+			continue;
+		}
 
 		FName v = ENamedName(intptr_t(def->DecalGenerator));
 		if (v.IsValidName())

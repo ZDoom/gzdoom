@@ -413,9 +413,10 @@ public:
 	// avoid copying the software buffer to the screen.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
+	void End2D() { isIn2D = false; }
 
 	// Returns true if Begin2D has been called and 2D drawing is now active
-	virtual bool HasBegun2D() { return IsLocked(); }
+	bool HasBegun2D() { return isIn2D; }
 
 	// DrawTexture calls after Begin2D use native textures.
 
@@ -463,6 +464,7 @@ protected:
 
 private:
 	uint32_t LastMS, LastSec, FrameCount, LastCount, LastTic;
+	bool isIn2D = false;
 };
 
 

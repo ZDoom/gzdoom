@@ -43,6 +43,7 @@
 #include "virtual.h"
 
 
+static int ThinkCount;
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
 extern cycle_t ActionCycles;
@@ -462,6 +463,7 @@ void DThinker::RunThinkers ()
 {
 	int i, count;
 
+	ThinkCount = 0;
 	ThinkCycles.Reset();
 	BotSupportCycles.Reset();
 	ActionCycles.Reset();
@@ -525,6 +527,7 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 
 		if (!(node->ObjectFlags & OF_EuthanizeMe))
 		{ // Only tick thinkers not scheduled for destruction
+			ThinkCount++;
 			node->CallTick();
 			node->ObjectFlags &= ~OF_JustSpawned;
 			GC::CheckGC();
@@ -753,6 +756,6 @@ DEFINE_ACTION_FUNCTION(DThinkerIterator, Reinit)
 ADD_STAT (think)
 {
 	FString out;
-	out.Format ("Think time = %04.2f ms, Action = %04.2f ms", ThinkCycles.TimeMS(), ActionCycles.TimeMS());
+	out.Format ("Think time = %04.2f ms - %d thinkers, Action = %04.2f ms", ThinkCycles.TimeMS(), ThinkCount, ActionCycles.TimeMS());
 	return out;
 }

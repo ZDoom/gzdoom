@@ -28,34 +28,10 @@
 class FString;
 class PolyDrawArgs;
 
-struct TriFullSpan
-{
-	uint16_t X;
-	uint16_t Y;
-	uint32_t Length;
-};
-
-struct TriPartialBlock
-{
-	uint16_t X;
-	uint16_t Y;
-	uint32_t Mask0;
-	uint32_t Mask1;
-};
-
 struct WorkerThreadData
 {
 	int32_t core;
 	int32_t num_cores;
-	uint32_t *temp;
-
-	// Triangle working data:
-	TriFullSpan *FullSpans;
-	TriPartialBlock *PartialBlocks;
-	uint32_t NumFullSpans;
-	uint32_t NumPartialBlocks;
-	int32_t StartX;
-	int32_t StartY;
 };
 
 struct TriVertex
@@ -74,15 +50,14 @@ struct TriDrawTriangleArgs
 	TriVertex *v1;
 	TriVertex *v2;
 	TriVertex *v3;
-	int32_t clipleft;
 	int32_t clipright;
-	int32_t cliptop;
 	int32_t clipbottom;
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
 	int32_t stencilPitch;
 	uint32_t *subsectorGBuffer;
 	const PolyDrawArgs *uniforms;
+	bool destBgra;
 };
 
 class RectDrawArgs;
@@ -116,13 +91,10 @@ enum class TriBlendMode
 class ScreenTriangle
 {
 public:
-	static void SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	static void(*TriDrawers8[])(const TriDrawTriangleArgs *, WorkerThreadData *);
-	static void(*TriDrawers32[])(const TriDrawTriangleArgs *, WorkerThreadData *);
+	static void(*TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
+	static void(*TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 };

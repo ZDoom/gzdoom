@@ -23,7 +23,6 @@
 #pragma once
 
 #include "r_draw.h"
-#include "polyrenderer/drawers/screen_triangle.h"
 #include <vector>
 #include <memory>
 #include <thread>
@@ -37,12 +36,6 @@ EXTERN_CVAR(Bool, r_multithreaded)
 class DrawerThread
 {
 public:
-	DrawerThread()
-	{
-		FullSpansBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
-		PartialBlocksBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
-	}
-
 	std::thread thread;
 	size_t current_queue = 0;
 
@@ -54,10 +47,6 @@ public:
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
-
-	// Working buffer used by the triangler drawer
-	std::vector<TriFullSpan> FullSpansBuffer;
-	std::vector<TriPartialBlock> PartialBlocksBuffer;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)

@@ -42,6 +42,7 @@
 #include "templates.h"
 #include "sndfile_decoder.h"
 #include "mpg123_decoder.h"
+#include "m_fixed.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -50,7 +51,7 @@
 class SndFileSong : public StreamSong
 {
 public:
-	SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end);
+	SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
 	~SndFileSong();
 	bool SetSubsong(int subsong);
 	void Play(bool looping, int subsong);
@@ -87,7 +88,83 @@ protected:
 
 //==========================================================================
 //
-// GME_OpenSong
+// try to find the LOOP_START/LOOP_END tags
+//
+// This is a brute force implementation, thanks in no snall part
+// that no decent documentation of Ogg headers seems to exist and
+// all available tag libraries are horrendously bloated.
+// So if we want to do this without any new third party dependencies,
+// thanks to the lack of anything that would help to do this properly,
+// this was the only solution.
+//
+//==========================================================================
+
+void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+{
+	unsigned char testbuf[256];
+
+	fr->Seek(0, SEEK_SET);
+	long got = fr->Read(testbuf, 256);
+	auto eqp = testbuf - 1;
+	int count;
+	while(true)
+	{
+		unsigned char *c = (unsigned char *)memchr(eqp + 1, '=', 256 - (eqp + 1 - testbuf));
+		if (c == nullptr) return;	// If there is no '=' in the first 256 bytes there's also no metadata.
+
+		eqp = c;
+		while (*c >= 32 && *c < 127) c--;
+		if (*c != 0)
+		{
+			// doesn't look like a valid tag, so try again
+			continue;
+		}
+		c -= 3;
+		int len = LittleLong(*(int*)c);
+		if (len > 1000000 || len <= (eqp - c + 1))
+		{
+			// length looks fishy so retry with the next '='
+			continue;
+		}
+		c -= 4;
+		count = LittleLong(*(int*)c);
+		if (count <= 0 || count > 1000)
+		{
+			// very unlikely to have 1000 tags
+			continue;
+		}
+		c += 4;
+		fr->Seek(long(c - testbuf), SEEK_SET);
+		break;	// looks like we found something.
+	}
+	for (int i = 0; i < count; i++)
+	{
+		int length = 0;
+		fr->Read(&length, 4);
+		length = LittleLong(length);
+		if (length == 0 || length > 1000000) return;	// looks like we lost it...
+		if (length > 25)
+		{
+			// This tag is too long to be a valid time stamp so don't even bother.
+			fr->Seek(length, SEEK_CUR);
+			continue;
+		}
+		fr->Read(testbuf, length);
+		testbuf[length] = 0;
+		if (strnicmp((char*)testbuf, "LOOP_START=", 11) == 0)
+		{
+			S_ParseTimeTag((char*)testbuf + 11, startass, start);
+		}
+		else if (strnicmp((char*)testbuf, "LOOP_END=", 9) == 0)
+		{
+			S_ParseTimeTag((char*)testbuf + 9, endass, end);
+		}
+	}
+}
+
+//==========================================================================
+//
+// SndFile_OpenSong
 //
 //==========================================================================
 
@@ -98,20 +175,17 @@ MusInfo *SndFile_OpenSong(FileReader &fr)
 	fr.Seek(0, SEEK_SET);
 	fr.Read(signature, 4);
 	uint32_t loop_start = 0, loop_end = ~0u;
+	bool startass = false, endass = false;
 	
 	if (!memcmp(signature, "OggS", 4) || !memcmp(signature, "fLaC", 4))
 	{
 		// Todo: Read loop points from metadata
-		
-		
-		// ms to samples.
-		//size_t smp_offset = ms? (size_t)((double)ms_offset / 1000. * SndInfo.samplerate) : ms_offset;
-		
+		FindLoopTags(&fr, &loop_start, &startass, &loop_end, &endass);
 	}
 	fr.Seek(0, SEEK_SET);
 	auto decoder = SoundRenderer::CreateDecoder(&fr);
 	if (decoder == nullptr) return nullptr;
-	return new SndFileSong(&fr, decoder, loop_start, loop_end);
+	return new SndFileSong(&fr, decoder, loop_start, loop_end, startass, endass);
 }
 
 //==========================================================================
@@ -120,13 +194,16 @@ MusInfo *SndFile_OpenSong(FileReader &fr)
 //
 //==========================================================================
 
-SndFileSong::SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end)
+SndFileSong::SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
 {
 	ChannelConfig iChannels;
 	SampleType Type;
 	
 	decoder->getInfo(&SampleRate, &iChannels, &Type);
-	
+
+	if (!startass) loop_start = Scale(loop_start, SampleRate, 1000);
+	if (!endass) loop_end = Scale(loop_end, SampleRate, 1000);
+
 	Loop_Start = loop_start;
 	Loop_End = clamp<uint32_t>(loop_end, 0, (uint32_t)decoder->getSampleLength());
 	Reader = reader;

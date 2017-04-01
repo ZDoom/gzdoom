@@ -160,8 +160,7 @@ public:
 
 	virtual MIDIDevice* CreateMIDIDevice() const = 0;
 
-protected:
-    virtual SoundDecoder *CreateDecoder(FileReader *reader);
+    static SoundDecoder *CreateDecoder(FileReader *reader);
 };
 
 extern SoundRenderer *GSnd;

@@ -16,7 +16,7 @@ struct MPG123Decoder : public SoundDecoder
     virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type);
 
     virtual size_t read(char *buffer, size_t bytes);
-    virtual bool seek(size_t ms_offset);
+    virtual bool seek(size_t ms_offset, bool ms);
     virtual size_t getSampleOffset();
     virtual size_t getSampleLength();
 

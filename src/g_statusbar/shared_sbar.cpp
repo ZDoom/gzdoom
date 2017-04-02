@@ -1592,7 +1592,8 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
 		DTA_Alpha, Alpha,
 		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
-		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1);
+		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
+		TAG_DONE);
 }
 
 

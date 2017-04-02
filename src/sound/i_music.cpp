@@ -488,6 +488,11 @@ retry_as_sndsys:
 	{
 		info = MOD_OpenSong(*reader);
 	}
+	if (info == nullptr)
+	{
+		info = SndFile_OpenSong(*reader);
+		if (info != nullptr) reader = nullptr;
+	}
 
     if (info == NULL)
     {

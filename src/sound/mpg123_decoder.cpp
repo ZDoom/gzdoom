@@ -134,14 +134,14 @@ size_t MPG123Decoder::read(char *buffer, size_t bytes)
     return amt;
 }
 
-bool MPG123Decoder::seek(size_t ms_offset)
+bool MPG123Decoder::seek(size_t ms_offset, bool ms)
 {
     int enc, channels;
     long srate;
 
     if(mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
     {
-        size_t smp_offset = (size_t)((double)ms_offset / 1000. * srate);
+        size_t smp_offset = ms? (size_t)((double)ms_offset / 1000. * srate) : ms_offset;
         if(mpg123_seek(MPG123, (off_t)smp_offset, SEEK_SET) >= 0)
         {
             Done = false;

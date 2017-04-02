@@ -1095,7 +1095,7 @@ bool OpenGLSWFrameBuffer::IsValid()
 
 bool OpenGLSWFrameBuffer::Lock(bool buffered)
 {
-	if (LockCount++ > 0)
+	if (m_Lock++ > 0)
 	{
 		return false;
 	}
@@ -1130,16 +1130,16 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 
 void OpenGLSWFrameBuffer::Unlock()
 {
-	if (LockCount == 0)
+	if (m_Lock == 0)
 	{
 		return;
 	}
 
-	if (UpdatePending && LockCount == 1)
+	if (UpdatePending && m_Lock == 1)
 	{
 		Update();
 	}
-	else if (--LockCount == 0)
+	else if (--m_Lock == 0)
 	{
 		Buffer = nullptr;
 	}
@@ -1171,13 +1171,13 @@ void OpenGLSWFrameBuffer::Update()
 		return;
 	}
 
-	if (LockCount != 1)
+	if (m_Lock != 1)
 	{
 		I_FatalError("Framebuffer must have exactly 1 lock to be updated");
-		if (LockCount > 0)
+		if (m_Lock > 0)
 		{
 			UpdatePending = true;
-			--LockCount;
+			--m_Lock;
 		}
 		return;
 	}
@@ -1220,7 +1220,7 @@ void OpenGLSWFrameBuffer::Update()
 	BlitCycles.Clock();
 #endif
 
-	LockCount = 0;
+	m_Lock = 0;
 	Draw3DPart(In2D <= 1);
 	if (In2D == 0)
 	{
@@ -1276,7 +1276,7 @@ void OpenGLSWFrameBuffer::Flip()
 
 bool OpenGLSWFrameBuffer::PaintToWindow()
 {
-	if (LockCount != 0)
+	if (m_Lock != 0)
 	{
 		return false;
 	}
@@ -1662,7 +1662,7 @@ void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch
 
 void OpenGLSWFrameBuffer::ReleaseScreenshotBuffer()
 {
-	if (LockCount > 0)
+	if (m_Lock > 0)
 	{
 		Super::ReleaseScreenshotBuffer();
 	}
@@ -2410,7 +2410,7 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 
 bool OpenGLSWFrameBuffer::Begin2D(bool copy3d)
 {
-	ClearClipRect();
+	Super::Begin2D(copy3d);
 	if (!Accel2D)
 	{
 		return false;

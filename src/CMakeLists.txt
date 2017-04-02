@@ -1245,6 +1245,7 @@ set (PCH_SOURCES
 	sound/musicformats/music_cd.cpp
 	sound/musicformats/music_dumb.cpp
 	sound/musicformats/music_gme.cpp
+	sound/musicformats/music_libsndfile.cpp
 	sound/musicformats/music_mus_midiout.cpp
 	sound/musicformats/music_smf_midiout.cpp
 	sound/musicformats/music_hmi_midiout.cpp

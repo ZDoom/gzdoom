@@ -96,6 +96,15 @@ private:
 	__m128i mFDX12;
 	__m128i mFDX23;
 	__m128i mFDX31;
+	__m128i mC1;
+	__m128i mC2;
+	__m128i mC3;
+	__m128i mDX12;
+	__m128i mDY12;
+	__m128i mDX23;
+	__m128i mDY23;
+	__m128i mDX31;
+	__m128i mDY31;
 #endif
 
 	void CoverageTest();
@@ -124,7 +133,7 @@ TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args)
 
 	subsectorGBuffer = args->subsectorGBuffer;
 	subsectorDepth = args->uniforms->SubsectorDepth();
-	subsectorPitch = args->pitch;
+	subsectorPitch = args->stencilPitch;
 
 	// 28.4 fixed-point coordinates
 #ifdef NO_SSE
@@ -203,6 +212,15 @@ TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args)
 	mFDX12 = _mm_set1_epi32(FDX12);
 	mFDX23 = _mm_set1_epi32(FDX23);
 	mFDX31 = _mm_set1_epi32(FDX31);
+	mC1 = _mm_set1_epi32(C1);
+	mC2 = _mm_set1_epi32(C2);
+	mC3 = _mm_set1_epi32(C3);
+	mDX12 = _mm_set1_epi32(DX12);
+	mDY12 = _mm_set1_epi32(DY12);
+	mDX23 = _mm_set1_epi32(DX23);
+	mDY23 = _mm_set1_epi32(DY23);
+	mDX31 = _mm_set1_epi32(DX31);
+	mDY31 = _mm_set1_epi32(DY31);
 #endif
 }
 
@@ -270,29 +288,24 @@ void TriangleBlock::Loop(const TriDrawTriangleArgs *args, WorkerThreadData *thre
 
 void TriangleBlock::SubsectorTest()
 {
-	uint32_t *subsector = subsectorGBuffer + X + Y * subsectorPitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 	uint32_t mask0 = 0;
 	uint32_t mask1 = 0;
 
-	for (int iy = 0; iy < 4; iy++)
+	for (int i = 0; i < 32; i++)
 	{
-		for (int ix = 0; ix < q; ix++)
-		{
-			bool covered = subsector[ix] >= subsectorDepth;
-			mask0 <<= 1;
-			mask0 |= (uint32_t)covered;
-		}
-		subsector += subsectorPitch;
+		bool covered = *subsector >= subsectorDepth;
+		mask0 <<= 1;
+		mask0 |= (uint32_t)covered;
+		subsector++;
 	}
-	for (int iy = 4; iy < q; iy++)
+	for (int i = 0; i < 32; i++)
 	{
-		for (int ix = 0; ix < q; ix++)
-		{
-			bool covered = subsector[ix] >= subsectorDepth;
-			mask1 <<= 1;
-			mask1 |= (uint32_t)covered;
-		}
-		subsector += subsectorPitch;
+		bool covered = *subsector >= subsectorDepth;
+		mask1 <<= 1;
+		mask1 |= (uint32_t)covered;
+		subsector++;
 	}
 
 	Mask0 = Mask0 & mask0;
@@ -303,27 +316,24 @@ void TriangleBlock::SubsectorTest()
 
 void TriangleBlock::SubsectorTest()
 {
-	uint32_t *subsector = subsectorGBuffer + X + Y * subsectorPitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 	uint32_t mask0 = 0;
 	uint32_t mask1 = 0;
 	__m128i msubsectorDepth = _mm_set1_epi32(subsectorDepth);
 	__m128i mnotxor = _mm_set1_epi32(0xffffffff);
 
-	for (int iy = 0; iy < 4; iy++)
+	for (int iy = 0; iy < 8; iy++)
 	{
 		mask0 <<= 4;
 		mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)subsector), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		mask0 <<= 4;
-		mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)(subsector + 4)), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		subsector += subsectorPitch;
+		subsector += 4;
 	}
-	for (int iy = 4; iy < q; iy++)
+	for (int iy = 0; iy < 8; iy++)
 	{
 		mask1 <<= 4;
 		mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)subsector), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		mask1 <<= 4;
-		mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_xor_si128(_mm_cmplt_epi32(_mm_loadu_si128((const __m128i *)(subsector + 4)), msubsectorDepth), mnotxor), _MM_SHUFFLE(0, 1, 2, 3))));
-		subsector += subsectorPitch;
+		subsector += 4;
 	}
 
 	Mask0 = Mask0 & mask0;
@@ -432,30 +442,44 @@ void TriangleBlock::StencilEqualTest()
 		uint32_t mask0 = 0;
 		uint32_t mask1 = 0;
 
-		for (int iy = 0; iy < 4; iy++)
+		for (int iy = 0; iy < 2; iy++)
 		{
-			__m128i mstencilBlock = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i *)(stencilBlock + iy * 8)), _mm_setzero_si128());
-			__m128i mstencilTest = _mm_cmpeq_epi16(mstencilBlock, mstencilTestValue);
+			__m128i mstencilBlock = _mm_loadu_si128((const __m128i *)stencilBlock);
+
+			__m128i mstencilTest = _mm_cmpeq_epi16(_mm_unpacklo_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
 			__m128i mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
 			__m128i mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
+			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
 
-			mask0 <<= 4;
-			mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3))));
-			mask0 <<= 4;
-			mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3))));
+			mstencilTest = _mm_cmpeq_epi16(_mm_unpackhi_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
+			mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
+			mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
+			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
+
+			mask0 <<= 16;
+			mask0 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
+
+			stencilBlock += 16;
 		}
 
-		for (int iy = 4; iy < q; iy++)
+		for (int iy = 0; iy < 2; iy++)
 		{
-			__m128i mstencilBlock = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i *)(stencilBlock + iy * 8)), _mm_setzero_si128());
-			__m128i mstencilTest = _mm_cmpeq_epi16(mstencilBlock, mstencilTestValue);
+			__m128i mstencilBlock = _mm_loadu_si128((const __m128i *)stencilBlock);
+
+			__m128i mstencilTest = _mm_cmpeq_epi16(_mm_unpacklo_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
 			__m128i mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
 			__m128i mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
+			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
 
-			mask1 <<= 4;
-			mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3))));
-			mask1 <<= 4;
-			mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3))));
+			mstencilTest = _mm_cmpeq_epi16(_mm_unpackhi_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
+			mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
+			mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
+			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
+
+			mask1 <<= 16;
+			mask1 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
+
+			stencilBlock += 16;
 		}
 
 		Mask0 = Mask0 & mask0;
@@ -617,50 +641,46 @@ void TriangleBlock::CoverageTest()
 	int y0 = Y << 4;
 	int y1 = (Y + q - 1) << 4;
 
+	__m128i mY = _mm_set_epi32(y0, y0, y1, y1);
+	__m128i mX = _mm_set_epi32(x0, x0, x1, x1);
+
 	// Evaluate half-space functions
-	bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
-	bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
-	bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
-	bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
-	int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+	__m128i mCY1 = _mm_sub_epi32(
+		_mm_add_epi32(mC1, _mm_shuffle_epi32(_mm_mul_epu32(mDX12, mY), _MM_SHUFFLE(0, 0, 2, 2))),
+		_mm_shuffle_epi32(_mm_mul_epu32(mDY12, mX), _MM_SHUFFLE(0, 2, 0, 2)));
+	__m128i mA = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
 
-	bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
-	bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
-	bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
-	bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
-	int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+	__m128i mCY2 = _mm_sub_epi32(
+		_mm_add_epi32(mC2, _mm_shuffle_epi32(_mm_mul_epu32(mDX23, mY), _MM_SHUFFLE(0, 0, 2, 2))),
+		_mm_shuffle_epi32(_mm_mul_epu32(mDY23, mX), _MM_SHUFFLE(0, 2, 0, 2)));
+	__m128i mB = _mm_cmpgt_epi32(mCY2, _mm_setzero_si128());
 
-	bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
-	bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
-	bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
-	bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
-	int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+	__m128i mCY3 = _mm_sub_epi32(
+		_mm_add_epi32(mC3, _mm_shuffle_epi32(_mm_mul_epu32(mDX31, mY), _MM_SHUFFLE(0, 0, 2, 2))),
+		_mm_shuffle_epi32(_mm_mul_epu32(mDY31, mX), _MM_SHUFFLE(0, 2, 0, 2)));
+	__m128i mC = _mm_cmpgt_epi32(mCY3, _mm_setzero_si128());
 
-	if (a == 0 || b == 0 || c == 0) // Skip block when outside an edge
+	int abc = _mm_movemask_epi8(_mm_packs_epi16(_mm_packs_epi32(mA, mB), _mm_packs_epi32(mC, _mm_setzero_si128())));
+
+	if ((abc & 0xf) == 0 || (abc & 0xf0) == 0 || (abc & 0xf00) == 0) // Skip block when outside an edge
 	{
 		Mask0 = 0;
 		Mask1 = 0;
 	}
-	else if (a == 0xf && b == 0xf && c == 0xf) // Accept whole block when totally covered
+	else if (abc == 0xfff) // Accept whole block when totally covered
 	{
 		Mask0 = 0xffffffff;
 		Mask1 = 0xffffffff;
 	}
 	else // Partially covered block
 	{
-		x0 = X << 4;
-		x1 = (X + q - 1) << 4;
-		int CY1 = C1 + DX12 * y0 - DY12 * x0;
-		int CY2 = C2 + DX23 * y0 - DY23 * x0;
-		int CY3 = C3 + DX31 * y0 - DY31 * x0;
-
 		uint32_t mask0 = 0;
 		uint32_t mask1 = 0;
 
-		__m128i mCY1 = _mm_sub_epi32(_mm_set1_epi32(CY1), mFDY12Offset);
-		__m128i mCY2 = _mm_sub_epi32(_mm_set1_epi32(CY2), mFDY23Offset);
-		__m128i mCY3 = _mm_sub_epi32(_mm_set1_epi32(CY3), mFDY31Offset);
-		for (int iy = 0; iy < 4; iy++)
+		mCY1 = _mm_sub_epi32(_mm_shuffle_epi32(mCY1, _MM_SHUFFLE(0, 0, 0, 0)), mFDY12Offset);
+		mCY2 = _mm_sub_epi32(_mm_shuffle_epi32(mCY2, _MM_SHUFFLE(0, 0, 0, 0)), mFDY23Offset);
+		mCY3 = _mm_sub_epi32(_mm_shuffle_epi32(mCY3, _MM_SHUFFLE(0, 0, 0, 0)), mFDY31Offset);
+		for (int iy = 0; iy < 2; iy++)
 		{
 			__m128i mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
 			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
@@ -668,18 +688,27 @@ void TriangleBlock::CoverageTest()
 			__m128i mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
 			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
 			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-
 			mCY1 = _mm_add_epi32(mCY1, mFDX12);
 			mCY2 = _mm_add_epi32(mCY2, mFDX23);
 			mCY3 = _mm_add_epi32(mCY3, mFDX31);
+			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
 
-			mask0 <<= 4;
-			mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3))));
-			mask0 <<= 4;
-			mask0 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3))));
+			mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
+			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
+			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
+			mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
+			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
+			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
+			mCY1 = _mm_add_epi32(mCY1, mFDX12);
+			mCY2 = _mm_add_epi32(mCY2, mFDX23);
+			mCY3 = _mm_add_epi32(mCY3, mFDX31);
+			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
+
+			mask0 <<= 16;
+			mask0 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
 		}
 
-		for (int iy = 4; iy < q; iy++)
+		for (int iy = 0; iy < 2; iy++)
 		{
 			__m128i mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
 			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
@@ -687,15 +716,24 @@ void TriangleBlock::CoverageTest()
 			__m128i mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
 			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
 			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-
 			mCY1 = _mm_add_epi32(mCY1, mFDX12);
 			mCY2 = _mm_add_epi32(mCY2, mFDX23);
 			mCY3 = _mm_add_epi32(mCY3, mFDX31);
+			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
 
-			mask1 <<= 4;
-			mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3))));
-			mask1 <<= 4;
-			mask1 |= _mm_movemask_ps(_mm_castsi128_ps(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3))));
+			mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
+			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
+			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
+			mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
+			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
+			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
+			mCY1 = _mm_add_epi32(mCY1, mFDX12);
+			mCY2 = _mm_add_epi32(mCY2, mFDX23);
+			mCY3 = _mm_add_epi32(mCY3, mFDX31);
+			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
+
+			mask1 <<= 16;
+			mask1 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
 		}
 
 		Mask0 = mask0;
@@ -755,46 +793,97 @@ void TriangleBlock::StencilWrite()
 	}
 }
 
+#ifdef NO_SSE
+
 void TriangleBlock::SubsectorWrite()
 {
-	auto pitch = subsectorPitch;
-	uint32_t *subsector = subsectorGBuffer + X + Y * pitch;
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
 
 	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
 	{
-		for (int y = 0; y < 8; y++)
+		for (int i = 0; i < 64; i++)
 		{
-			for (int x = 0; x < 8; x++)
-				subsector[x] = subsectorDepth;
-			subsector += pitch;
+			*(subsector++) = subsectorDepth;
 		}
 	}
 	else
 	{
 		uint32_t mask0 = Mask0;
 		uint32_t mask1 = Mask1;
-		for (int y = 0; y < 4; y++)
+		for (int i = 0; i < 32; i++)
 		{
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask0 & (1 << 31))
-					subsector[x] = subsectorDepth;
-				mask0 <<= 1;
-			}
-			subsector += pitch;
+			if (mask0 & (1 << 31))
+				*subsector = subsectorDepth;
+			mask0 <<= 1;
+			subsector++;
 		}
-		for (int y = 4; y < 8; y++)
+		for (int i = 0; i < 32; i++)
 		{
-			for (int x = 0; x < 8; x++)
-			{
-				if (mask1 & (1 << 31))
-					subsector[x] = subsectorDepth;
-				mask1 <<= 1;
-			}
-			subsector += pitch;
+			if (mask1 & (1 << 31))
+				*subsector = subsectorDepth;
+			mask1 <<= 1;
+			subsector++;
 		}
 	}
 }
+
+#else
+
+void TriangleBlock::SubsectorWrite()
+{
+	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
+	uint32_t *subsector = subsectorGBuffer + block * 64;
+	__m128i msubsectorDepth = _mm_set1_epi32(subsectorDepth);
+
+	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
+	{
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth); subsector += 4;
+		_mm_storeu_si128((__m128i*)subsector, msubsectorDepth);
+	}
+	else
+	{
+		__m128i mxormask = _mm_set1_epi32(0xffffffff);
+		__m128i topfour = _mm_setr_epi32(1 << 31, 1 << 30, 1 << 29, 1 << 28);
+
+		__m128i mmask0 = _mm_set1_epi32(Mask0);
+		__m128i mmask1 = _mm_set1_epi32(Mask1);
+
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask0 = _mm_slli_epi32(mmask0, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); subsector += 4;
+
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); mmask1 = _mm_slli_epi32(mmask1, 4); subsector += 4;
+		_mm_maskmoveu_si128(msubsectorDepth, _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)subsector); subsector += 4;
+	}
+}
+
+#endif
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {

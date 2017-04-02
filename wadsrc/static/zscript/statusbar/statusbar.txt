@@ -580,7 +580,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	bool CheckDiplayName(String displayname)
+	bool CheckDisplayName(String displayname)
 	{
 		if (CPlayer == null) return false;
 		return displayname == PlayerPawn.GetPrintableDisplayName(CPlayer.mo.GetClass());

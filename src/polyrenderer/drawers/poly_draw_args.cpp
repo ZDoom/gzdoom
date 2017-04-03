@@ -166,11 +166,12 @@ void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 	{
 		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
-	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
+	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	{
+		SetColor(0xff000000, 0);
+		SetStyle(TriBlendMode::Fuzz);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
 		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
 	}
@@ -318,11 +319,12 @@ void RectDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 	{
 		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
-	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
+	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	{
+		SetColor(0xff000000, 0);
+		SetStyle(TriBlendMode::Fuzz);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
 		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
 	}

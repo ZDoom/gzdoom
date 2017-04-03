@@ -131,6 +131,8 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	if (!Viewpoint.showviewer)
 		Viewpoint.camera->renderflags |= RF_INVISIBLE;
 
+	ScreenTriangle::FuzzStart = (ScreenTriangle::FuzzStart + 14) % FUZZTABLE;
+
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();

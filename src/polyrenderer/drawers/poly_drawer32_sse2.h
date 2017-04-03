@@ -30,7 +30,7 @@ namespace TriScreenDrawerModes
 	FORCEINLINE unsigned int VECTORCALL Sample32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
 	{
 		uint32_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
 		{
 			return color;
 		}
@@ -107,7 +107,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename SamplerT>
-	FORCEINLINE unsigned int VECTORCALL SampleShade32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight)
+	FORCEINLINE unsigned int VECTORCALL SampleShade32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
 	{
 		if (SamplerT::Mode == (int)Samplers::Shaded)
 		{
@@ -126,6 +126,16 @@ namespace TriScreenDrawerModes
 			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
 			return sampleshadeout;
 		}
+		else if (SamplerT::Mode == (int)Samplers::Fuzz)
+		{
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			unsigned int sampleshadeout = APART(texPixels[texelX * texHeight + texelY]);
+			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
+			sampleshadeout = (sampleshadeout * fuzzcolormap[fuzzpos++]) >> 5;
+			if (fuzzpos >= FUZZTABLE) fuzzpos = 0;
+			return sampleshadeout;
+		}
 		else
 		{
 			return 0;
@@ -139,7 +149,7 @@ namespace TriScreenDrawerModes
 		{
 			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
 		}
-		else
+		else if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 		{
 			int blue0 = BPART(ifgcolor0);
 			int green0 = GPART(ifgcolor0);
@@ -293,6 +303,10 @@ public:
 					DrawBlock<AdvancedShade, LinearFilter>(x, y, mask0, mask1, args);
 			}
 		}
+		else if (SamplerT::Mode == (int)Samplers::Fuzz)
+		{
+			DrawBlock<NoShade, NearestFilter>(x, y, mask0, mask1, args);
+		}
 		else // no linear filtering for translated, shaded, stencil, fill or skycap
 		{
 			if (is_simple_shade)
@@ -316,6 +330,8 @@ private:
 		uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
 		uint32_t srcalpha = args->uniforms->SrcAlpha();
 		uint32_t destalpha = args->uniforms->DestAlpha();
+
+		int fuzzpos = (ScreenTriangle::FuzzStart + destX * 123 + destY) % FUZZTABLE;
 
 		// Calculate gradients
 		const TriVertex &v1 = *args->v1;
@@ -415,12 +431,12 @@ private:
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
 					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -501,12 +517,12 @@ private:
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
 					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -589,12 +605,12 @@ private:
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
 					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -736,12 +752,17 @@ private:
 		int count = x1 - x0;
 		int sseCount = count / 2;
 
+		int fuzzpos = (ScreenTriangle::FuzzStart + x0 * 123 + y0) % FUZZTABLE;
+
 		uint32_t posV = startV;
 		for (int y = y0; y < y1; y++, posV += stepV)
 		{
 			int coreBlock = y / 8;
 			if (coreBlock % thread->num_cores != thread->core)
+			{
+				fuzzpos = (fuzzpos + count) % FUZZTABLE;
 				continue;
+			}
 
 			uint32_t *dest = ((uint32_t*)destOrg) + y * destPitch + x0;
 
@@ -758,11 +779,11 @@ private:
 				// Sample fgcolor
 				unsigned int ifgcolor[2], ifgshade[2];
 				ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;
 
 				ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+				ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;
 
 				// Shade and blend
@@ -787,7 +808,7 @@ private:
 				// Sample fgcolor
 				unsigned int ifgcolor[2], ifgshade[2];
 				ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				ifgcolor[1] = 0;
 				ifgshade[1] = 0;
 				posU += stepU;

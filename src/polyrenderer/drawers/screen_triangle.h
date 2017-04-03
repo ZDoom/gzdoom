@@ -117,7 +117,8 @@ enum class TriBlendMode
 	FillSub,
 	FillRevSub,
 	FillAddSrcColor,
-	Skycap
+	Skycap,
+	Fuzz
 };
 
 class ScreenTriangle
@@ -129,6 +130,8 @@ public:
 	static void(*TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
+
+	static int FuzzStart;
 };
 
 namespace TriScreenDrawerModes
@@ -147,15 +150,26 @@ namespace TriScreenDrawerModes
 	struct NearestFilter { static const int Mode = (int)FilterModes::Nearest; };
 	struct LinearFilter { static const int Mode = (int)FilterModes::Linear; };
 
-	enum class ShadeMode { Simple, Advanced };
+	enum class ShadeMode { None, Simple, Advanced };
+	struct NoShade { static const int Mode = (int)ShadeMode::None; };
 	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
 	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
 
-	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap };
+	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap, Fuzz };
 	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
 	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
 	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
 	struct StencilSampler { static const int Mode = (int)Samplers::Stencil; };
 	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
 	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
+	struct FuzzSampler { static const int Mode = (int)Samplers::Fuzz; };
+
+	static const int fuzzcolormap[FUZZTABLE] =
+	{
+		 6, 11,  6, 11,  6,  6, 11,  6,  6, 11, 
+		 6,  6,  6, 11,  6,  6,  6, 11, 15, 18, 
+		21,  6, 11, 15,  6,  6,  6,  6, 11,  6, 
+		11,  6,  6, 11, 15,  6,  6, 11, 15, 18, 
+		21,  6,  6,  6,  6, 11,  6,  6, 11,  6, 
+	};
 }

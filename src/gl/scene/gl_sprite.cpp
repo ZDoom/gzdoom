@@ -789,7 +789,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		{
 			DAngle sprangle;
 			int rot;
-			if (!(thing->renderflags & RF_FLATSPRITE))
+			if (!(thing->renderflags & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
 			{
 				sprangle = thing->GetSpriteAngle(ang, r_viewpoint.TicFrac);
 				rot = -1;

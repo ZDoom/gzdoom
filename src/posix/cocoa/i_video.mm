@@ -339,7 +339,7 @@ private:
 	PalEntry m_flashColor;
 	int      m_flashAmount;
 
-	bool     m_isUpdatePending;
+	bool     UpdatePending;
 
 	uint8_t* m_pixelBuffer;
 	GLuint   m_texture;
@@ -881,7 +881,7 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullsc
 , m_gamma(0.0f)
 , m_needGammaUpdate(false)
 , m_flashAmount(0)
-, m_isUpdatePending(false)
+, UpdatePending(false)
 , m_pixelBuffer(new uint8_t[width * height * BYTES_PER_PIXEL])
 , m_texture(0)
 {
@@ -945,7 +945,7 @@ bool CocoaFrameBuffer::Lock(bool buffered)
 
 void CocoaFrameBuffer::Unlock()
 {
-	if (m_isUpdatePending && LockCount == 1)
+	if (UpdatePending && LockCount == 1)
 	{
 		Update();
 	}
@@ -962,7 +962,7 @@ void CocoaFrameBuffer::Update()
 	{
 		if (LockCount > 0)
 		{
-			m_isUpdatePending = true;
+			UpdatePending = true;
 			--LockCount;
 		}
 		return;
@@ -972,7 +972,7 @@ void CocoaFrameBuffer::Update()
 
 	Buffer = NULL;
 	LockCount = 0;
-	m_isUpdatePending = false;
+	UpdatePending = false;
 
 	BlitCycles.Reset();
 	FlipCycles.Reset();
@@ -1146,8 +1146,8 @@ void CocoaFrameBuffer::Flip()
 
 SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
 : DFrameBuffer(width, height, bgra)
-, m_lock(0)
-, m_isUpdatePending(false)
+, m_Lock(0)
+, UpdatePending(false)
 {
 	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
 	uint32_t actualChannelSize;
@@ -1176,7 +1176,7 @@ SDLGLFB::~SDLGLFB()
 
 bool SDLGLFB::Lock(bool buffered)
 {
-	m_lock++;
+	m_Lock++;
 
 	Buffer = MemBuffer;
 
@@ -1185,19 +1185,19 @@ bool SDLGLFB::Lock(bool buffered)
 
 void SDLGLFB::Unlock()
 {
-	if (m_isUpdatePending && 1 == m_lock)
+	if (UpdatePending && 1 == m_Lock)
 	{
 		Update();
 	}
-	else if (--m_lock <= 0)
+	else if (--m_Lock <= 0)
 	{
-		m_lock = 0;
+		m_Lock = 0;
 	}
 }
 
 bool SDLGLFB::IsLocked()
 {
-	return m_lock > 0;
+	return m_Lock > 0;
 }
 
 
@@ -1225,12 +1225,12 @@ void SDLGLFB::InitializeState()
 
 bool SDLGLFB::CanUpdate()
 {
-	if (m_lock != 1)
+	if (m_Lock != 1)
 	{
-		if (m_lock > 0)
+		if (m_Lock > 0)
 		{
-			m_isUpdatePending = true;
-			--m_lock;
+			UpdatePending = true;
+			--m_Lock;
 		}
 
 		return false;

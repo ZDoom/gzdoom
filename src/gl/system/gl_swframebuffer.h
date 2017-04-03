@@ -454,7 +454,9 @@ private:
 	int TrueHeight;
 	int PixelDoubling;
 	float Gamma;
+#ifdef _WIN32
 	bool UpdatePending;
+#endif // _WIN32
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	LTRBRect BlendingRect;

@@ -66,8 +66,8 @@ public:
 	int GetClientHeight();
 
 protected:
-	int                 m_lock;
-	bool                m_isUpdatePending;
+	int                 m_Lock;
+	bool                UpdatePending;
 
 	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
 	static const uint32_t GAMMA_CHANNEL_COUNT = 3;

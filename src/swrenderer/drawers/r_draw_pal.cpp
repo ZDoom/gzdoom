@@ -1858,14 +1858,41 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		uint8_t *map = &NormalLight.Maps[6 * 256];
-
 		int pitch = _pitch;
 		uint8_t *dest = thread->dest_for_thread(yl, pitch, yl * pitch + _x + _destorg);
 
 		pitch = pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
 		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
+
+#ifndef ORIGINAL_FUZZ
+
+		uint8_t *map = NormalLight.Maps;
+
+		while (count > 0)
+		{
+			int available = (FUZZTABLE - fuzz);
+			int next_wrap = available / fuzzstep;
+			if (available % fuzzstep != 0)
+				next_wrap++;
+
+			int cnt = MIN(count, next_wrap);
+			count -= cnt;
+			do
+			{
+				int offset = fuzzoffset[fuzz] << 8;
+
+				*dest = map[offset + *dest];
+				dest += pitch;
+				fuzz += fuzzstep;
+			} while (--cnt);
+
+			fuzz %= FUZZTABLE;
+		}
+
+#else
+
+		uint8_t *map = &NormalLight.Maps[6 * 256];
 
 		yl += thread->skipped_by_thread(yl);
 
@@ -1920,6 +1947,7 @@ namespace swrenderer
 
 			*dest = map[*srcdest];
 		}
+#endif
 	}
 
 	/////////////////////////////////////////////////////////////////////////

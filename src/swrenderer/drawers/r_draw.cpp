@@ -131,10 +131,27 @@ namespace swrenderer
 			1, 1,-1, 1, 1,-1, 1 
 		};
 
+#ifdef ORIGINAL_FUZZ
 		for (int i = 0; i < FUZZTABLE; i++)
 		{
 			fuzzoffset[i] = fuzzinit[i] * fuzzoff;
 		}
+#else
+		int8_t fuzzcount[FUZZTABLE + 1];
+		for (int i = 0; i < FUZZTABLE + 1; i++) fuzzcount[i] = 0;
+		fuzzcount[0] = 1;
+		for (int i = 1; i < FUZZTABLE; i++)
+			fuzzcount[i] = fuzzcount[i + fuzzinit[i]] + 1;
+
+		for (int i = 0; i < FUZZTABLE; i++)
+		{
+			float shade = 1.0f - 6.0f / NUMCOLORMAPS;
+			float resultshade = 1.0;
+			for (int j = 0; j < fuzzcount[i]; j++)
+				resultshade *= shade;
+			fuzzoffset[i] = clamp((int)((1.0f - resultshade) * NUMCOLORMAPS + 0.5f), 0, NUMCOLORMAPS - 1);
+		}
+#endif
 	}
 
 	void R_InitParticleTexture()

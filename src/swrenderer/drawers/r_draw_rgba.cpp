@@ -255,10 +255,40 @@ namespace swrenderer
 			return;
 
 		uint32_t *dest = thread->dest_for_thread(yl, _pitch, _pitch * yl + _x + (uint32_t*)_destorg);
-
 		int pitch = _pitch * thread->num_cores;
+
 		int fuzzstep = thread->num_cores;
 		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
+
+#ifndef ORIGINAL_FUZZ
+
+		while (count > 0)
+		{
+			int available = (FUZZTABLE - fuzz);
+			int next_wrap = available / fuzzstep;
+			if (available % fuzzstep != 0)
+				next_wrap++;
+
+			int cnt = MIN(count, next_wrap);
+			count -= cnt;
+			do
+			{
+				int alpha = 32 - fuzzoffset[fuzz];
+
+				uint32_t bg = *dest;
+				uint32_t red = (RPART(bg) * alpha) >> 5;
+				uint32_t green = (GPART(bg) * alpha) >> 5;
+				uint32_t blue = (BPART(bg) * alpha) >> 5;
+
+				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+				dest += pitch;
+				fuzz += fuzzstep;
+			} while (--cnt);
+
+			fuzz %= FUZZTABLE;
+		}
+
+#else
 
 		yl += thread->skipped_by_thread(yl);
 
@@ -331,6 +361,7 @@ namespace swrenderer
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
+#endif
 	}
 
 	FString DrawFuzzColumnRGBACommand::DebugInfo()

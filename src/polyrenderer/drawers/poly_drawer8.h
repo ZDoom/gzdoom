@@ -30,7 +30,7 @@ namespace TriScreenDrawerModes
 	FORCEINLINE unsigned int Sample8(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight, uint32_t color, const uint8_t *translation)
 	{
 		uint8_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
 		{
 			return color;
 		}
@@ -79,7 +79,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename SamplerT>
-	FORCEINLINE unsigned int SampleShade8(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight)
+	FORCEINLINE unsigned int SampleShade8(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
 	{
 		if (SamplerT::Mode == (int)Samplers::Shaded)
 		{
@@ -94,6 +94,15 @@ namespace TriScreenDrawerModes
 			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
 			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
 			return texPixels[texelX * texHeight + texelY] != 0 ? 256 : 0;
+		}
+		else if (SamplerT::Mode == (int)Samplers::Fuzz)
+		{
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			unsigned int sampleshadeout = (texPixels[texelX * texHeight + texelY] != 0) ? 256 : 0;
+			sampleshadeout = (sampleshadeout * fuzzcolormap[fuzzpos++]) >> 5;
+			if (fuzzpos >= FUZZTABLE) fuzzpos = 0;
+			return sampleshadeout;
 		}
 		else
 		{
@@ -219,6 +228,8 @@ public:
 		uint32_t srcalpha = args->uniforms->SrcAlpha();
 		uint32_t destalpha = args->uniforms->DestAlpha();
 
+		int fuzzpos = (ScreenTriangle::FuzzStart + destX * 123 + destY) % FUZZTABLE;
+
 		// Calculate gradients
 		const TriVertex &v1 = *args->v1;
 		ScreenTriangleStepVariables gradientX = args->gradientX;
@@ -280,7 +291,8 @@ public:
 					int lightshade = lightpos >> 8;
 					uint8_t bgcolor = dest[ix];
 					uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
-					uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+					uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
 					dest[ix] = ShadeAndBlend8<BlendT>(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 					posU += stepU;
 					posV += stepV;
@@ -328,7 +340,8 @@ public:
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
 						uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
-						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+						if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
 						dest[x] = ShadeAndBlend8<BlendT>(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 					}
 
@@ -378,7 +391,8 @@ public:
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
 						uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
-						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+						if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
 						dest[x] = ShadeAndBlend8<BlendT>(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 					}
 
@@ -437,15 +451,21 @@ public:
 		// Setup light
 		uint32_t lightshade = args->Light();
 		lightshade += lightshade >> 7; // 255 -> 256
+		if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
 
 		int count = x1 - x0;
+
+		int fuzzpos = (ScreenTriangle::FuzzStart + x0 * 123 + y0) % FUZZTABLE;
 
 		uint32_t posV = startV;
 		for (int y = y0; y < y1; y++, posV += stepV)
 		{
 			int coreBlock = y / 8;
 			if (coreBlock % thread->num_cores != thread->core)
+			{
+				fuzzpos = (fuzzpos + count) % FUZZTABLE;
 				continue;
+			}
 
 			uint8_t *dest = ((uint8_t*)destOrg) + y * destPitch + x0;
 
@@ -454,7 +474,7 @@ public:
 			{
 				uint8_t bgcolor = *dest;
 				uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
-				uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight);
+				uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				*dest = ShadeAndBlend8<BlendT>(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);
 
 				posU += stepU;

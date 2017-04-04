@@ -34,7 +34,13 @@
 #ifndef __D_DEHACK_H__
 #define __D_DEHACK_H__
 
-int D_LoadDehLumps();
+enum DehLumpSource
+{
+	FromIWAD,
+	FromPWADs
+};
+
+int D_LoadDehLumps(DehLumpSource source);
 bool D_LoadDehLump(int lumpnum);
 bool D_LoadDehFile(const char *filename);
 void FinishDehPatch ();

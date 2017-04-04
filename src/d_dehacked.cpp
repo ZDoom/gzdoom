@@ -2422,16 +2422,29 @@ static bool isDehFile(int lumpnum)
 		&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
 }
 
-int D_LoadDehLumps()
+int D_LoadDehLumps(DehLumpSource source)
 {
 	int lastlump = 0, lumpnum, count = 0;
 
 	while ((lumpnum = Wads.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
+		const int filenum = Wads.GetLumpFile(lumpnum);
+		
+		if (FromIWAD == source && filenum > FWadCollection::IWAD_FILENUM)
+		{
+			// No more DEHACKED lumps in IWAD
+			break;
+		}
+		else if (FromPWADs == source && filenum <= FWadCollection::IWAD_FILENUM)
+		{
+			// Skip DEHACKED lumps from IWAD
+			continue;
+		}
+
 		count += D_LoadDehLump(lumpnum);
 	}
 
-	if (0 == PatchSize && dehload > 0)
+	if (FromPWADs == source && 0 == PatchSize && dehload > 0)
 	{
 		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
 

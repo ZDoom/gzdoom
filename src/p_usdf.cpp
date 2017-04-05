@@ -72,8 +72,13 @@ class USDFParser : public UDMFParserBase
 			}
 			type = cls;
 		}
-		if (type && type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return type;
-		return nullptr;
+		return type;
+	}
+
+	PClassActor *CheckInventoryActorType(const char *key)
+	{
+		PClassActor* const type = CheckActorType(key);
+		return nullptr != type && type->IsDescendantOf(RUNTIME_CLASS(AInventory)) ? type : nullptr;
 	}
 
 	//===========================================================================
@@ -94,7 +99,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = CheckInventoryActorType(key);
 				break;
 
 			case NAME_Amount:
@@ -273,7 +278,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = CheckInventoryActorType(key);
 				break;
 
 			case NAME_Count:

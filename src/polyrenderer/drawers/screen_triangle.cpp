@@ -1019,6 +1019,6 @@ void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDr
 	&RectScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
 };
 
-int ScreenTriangle::FuzzStart = 0;
-
 #endif
+
+int ScreenTriangle::FuzzStart = 0;

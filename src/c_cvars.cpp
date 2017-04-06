@@ -1541,6 +1541,13 @@ DEFINE_ACTION_FUNCTION(_CVar, FindCVar)
 {
 	PARAM_PROLOGUE;
 	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(FindCVar(name, nullptr));
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetCVar)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
 	PARAM_POINTER_DEF(plyr, player_t);
 	ACTION_RETURN_POINTER(GetCVar(plyr ? plyr->mo : nullptr, name));
 }

@@ -286,7 +286,8 @@ struct CVar native
 		CVAR_Color,
 	};
 
-	native static CVar FindCVar(Name name, PlayerInfo player = null);
+	native static CVar FindCVar(Name name);
+	native static CVar GetCVar(Name name, PlayerInfo player = null);
 	native int GetInt();
 	native double GetFloat();
 	native String GetString();

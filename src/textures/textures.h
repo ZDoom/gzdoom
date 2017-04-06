@@ -30,7 +30,6 @@ class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
-class PClassInventory;
 
 // Texture IDs
 class FTextureManager;

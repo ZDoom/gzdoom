@@ -287,6 +287,7 @@ struct CVar native
 	};
 
 	native static CVar FindCVar(Name name);
+	native static CVar GetCVar(Name name, PlayerInfo player = null);
 	native int GetInt();
 	native double GetFloat();
 	native String GetString();

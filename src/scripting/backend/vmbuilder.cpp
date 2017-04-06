@@ -804,10 +804,12 @@ FFunctionBuildList FunctionBuildList;
 
 VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo &ver, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
 {
-	auto func = code->GetDirectFunction(ver);
+	auto func = code->GetDirectFunction(functype, ver);
 	if (func != nullptr)
 	{
 		delete code;
+
+
 		return func;
 	}
 

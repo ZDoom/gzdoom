@@ -53,7 +53,7 @@ class Inventory : Actor native
 	native void ModifyDropAmount(int dropamount);
 	native static void PrintPickupMessage (bool localview, String str);
 
-	States(Actor, Overlay, Weapon, Item)
+	States(Actor)
 	{
 	HideDoomish:
 		TNT1 A 1050;

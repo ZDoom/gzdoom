@@ -324,7 +324,7 @@ public:
 	virtual bool isConstant() const;
 	virtual bool RequestAddress(FCompileContext &ctx, bool *writable);
 	virtual PPrototype *ReturnProto();
-	virtual VMFunction *GetDirectFunction(const VersionInfo &ver);
+	virtual VMFunction *GetDirectFunction(PFunction *func, const VersionInfo &ver);
 	virtual bool CheckReturn() { return false; }
 	virtual int GetBitValue() { return -1; }
 	bool IsNumeric() const { return ValueType->isNumeric(); }
@@ -1721,7 +1721,7 @@ public:
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
-	VMFunction *GetDirectFunction(const VersionInfo &ver);
+	VMFunction *GetDirectFunction(PFunction *func, const VersionInfo &ver);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
 	TArray<PType*> &GetReturnTypes() const
@@ -1746,7 +1746,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); expr->NeedResult = false; }
-	VMFunction *GetDirectFunction(const VersionInfo &ver);
+	VMFunction *GetDirectFunction(PFunction *func, const VersionInfo &ver);
 	bool CheckReturn();
 };
 
@@ -1953,7 +1953,7 @@ public:
 	~FxReturnStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
-	VMFunction *GetDirectFunction(const VersionInfo &ver);
+	VMFunction *GetDirectFunction(PFunction *func, const VersionInfo &ver);
 	bool CheckReturn() { return true; }
 };
 

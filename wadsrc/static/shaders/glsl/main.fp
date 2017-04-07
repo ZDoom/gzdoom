@@ -90,7 +90,7 @@ vec4 getTexel(vec2 st)
 			}
 			break;
 	}
-	if (uObjectColor2.a == 0) texel *= uObjectColor;
+	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
 	else texel *= mix(uObjectColor, uObjectColor2, glowdist.z);
 
 	return desaturate(texel);

@@ -85,8 +85,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		// This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
-		if (gl.glslversion < 1.4f)
+		if (gl.es)
+		{
+			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+		}
+		else if (gl.glslversion < 1.4f) // This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
 		{
 			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
@@ -411,8 +414,15 @@ FShaderManager::FShaderManager()
 {
 	if (!gl.legacyMode)
 	{
-		for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
-			mPassShaders.Push(new FShaderCollection((EPassType)passType));
+		if (gl.es) // OpenGL ES does not support multiple fragment shader outputs. As a result, no GBUFFER passes are possible.
+		{
+			mPassShaders.Push(new FShaderCollection(NORMAL_PASS));
+		}
+		else
+		{
+			for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
+				mPassShaders.Push(new FShaderCollection((EPassType)passType));
+		}
 	}
 }
 

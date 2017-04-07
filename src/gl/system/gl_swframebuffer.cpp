@@ -360,8 +360,11 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	auto shader = std::make_unique<HWPixelShader>();
 
 	shader->Program = glCreateProgram();
+	if (shader->Program == 0) { Printf("glCreateProgram failed. Disabling OpenGL hardware acceleration.\n"); return false; }
 	shader->VertexShader = glCreateShader(GL_VERTEX_SHADER);
+	if (shader->VertexShader == 0) { Printf("glCreateShader(GL_VERTEX_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return false; }
 	shader->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	if (shader->FragmentShader == 0) { Printf("glCreateShader(GL_FRAGMENT_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return false; }
 	
 	int maxGlslVersion = 330;
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);

@@ -216,7 +216,10 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	FString patchedCode;
 
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
-	patchedCode.AppendFormat("#version %d\n", shaderVersion);
+	if (gl.es)
+		patchedCode.AppendFormat("#version %d es\n", shaderVersion);
+	else
+		patchedCode.AppendFormat("#version %d\n", shaderVersion);
 
 	// TODO: Find some way to add extension requirements to the patching
 	//

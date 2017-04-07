@@ -214,6 +214,11 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 		return;
 	}
 	gl_LoadExtensions();
+	if (gl.legacyMode)
+	{
+		Printf("Legacy OpenGL path is active. No Acceleration will be used.\n");
+		return;
+	}
 	InitializeState();
 	if (first)
 	{

@@ -419,7 +419,7 @@ bool FxExpression::isConstant() const
 //
 //==========================================================================
 
-VMFunction *FxExpression::GetDirectFunction(const VersionInfo &ver)
+VMFunction *FxExpression::GetDirectFunction(PFunction *callingfunc, const VersionInfo &ver)
 {
 	return nullptr;
 }
@@ -8625,14 +8625,14 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 //
 //==========================================================================
 
-VMFunction *FxVMFunctionCall::GetDirectFunction(const VersionInfo &ver)
+VMFunction *FxVMFunctionCall::GetDirectFunction(PFunction *callingfunc, const VersionInfo &ver)
 {
 	// If this return statement calls a non-virtual function with no arguments,
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
 
-	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && CheckAccessibility(ver))
+	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && CheckAccessibility(ver) && CheckFunctionCompatiblity(ScriptPosition, callingfunc, Function))
 	{
 		unsigned imp = Function->GetImplicitArgs();
 		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
@@ -9558,11 +9558,11 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-VMFunction *FxSequence::GetDirectFunction(const VersionInfo &ver)
+VMFunction *FxSequence::GetDirectFunction(PFunction *func, const VersionInfo &ver)
 {
 	if (Expressions.Size() == 1)
 	{
-		return Expressions[0]->GetDirectFunction(ver);
+		return Expressions[0]->GetDirectFunction(func, ver);
 	}
 	return nullptr;
 }
@@ -10544,11 +10544,11 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 	return out;
 }
 
-VMFunction *FxReturnStatement::GetDirectFunction(const VersionInfo &ver)
+VMFunction *FxReturnStatement::GetDirectFunction(PFunction *func, const VersionInfo &ver)
 {
 	if (Args.Size() == 1)
 	{
-		return Args[0]->GetDirectFunction(ver);
+		return Args[0]->GetDirectFunction(func, ver);
 	}
 	return nullptr;
 }

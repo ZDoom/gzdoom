@@ -45,7 +45,7 @@ extend class StateProvider
 	//
 	//============================================================================
 
-	void A_FireAssaultGun()
+	action void A_FireAssaultGun()
 	{
 		if (player == null)
 		{

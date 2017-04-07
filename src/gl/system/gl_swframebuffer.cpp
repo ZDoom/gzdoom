@@ -194,7 +194,11 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	static bool first = true;
 	if (first)
 	{
-		ogl_LoadFunctions();
+		if (ogl_LoadFunctions() == ogl_LOAD_FAILED)
+		{
+			Printf("OpenGL load failed. No OpenGL acceleration will be used.\n");
+			return;
+		}
 	}
 	gl_LoadExtensions();
 	InitializeState();

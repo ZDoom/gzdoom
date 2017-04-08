@@ -2385,6 +2385,7 @@ void P_DeathThink (player_t *player)
 	int dir;
 	DAngle delta;
 
+	player->Uncrouch();
 	player->TickPSprites();
 
 	player->onground = (player->mo->Z() <= player->mo->floorz);
@@ -2524,28 +2525,12 @@ void P_CrouchMove(player_t * player, int direction)
 
 //----------------------------------------------------------------------------
 //
-// PROC P_PlayerThink
+// PROC P_CheckFOV
 //
 //----------------------------------------------------------------------------
 
-void P_PlayerThink (player_t *player)
+void P_CheckFOV(player_t *player)
 {
-	ticcmd_t *cmd;
-
-	if (player->mo == NULL)
-	{
-		I_Error ("No player %td start\n", player - players + 1);
-	}
-
-	if (debugfile && !(player->cheats & CF_PREDICTING))
-	{
-		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
-			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
-			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
-			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
-	}
-
 	// [RH] Zoom the player's FOV
 	float desired = player->DesiredFOV;
 	// Adjust FOV using on the currently held weapon.
@@ -2559,7 +2544,7 @@ void P_PlayerThink (player_t *player)
 	}
 	if (player->FOV != desired)
 	{
-		if (fabsf (player->FOV - desired) < 7.f)
+		if (fabsf(player->FOV - desired) < 7.f)
 		{
 			player->FOV = desired;
 		}
@@ -2576,13 +2561,16 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 	}
-	if (player->inventorytics)
-	{
-		player->inventorytics--;
-	}
-	// Don't interpolate the view for more than one tic
-	player->cheats &= ~CF_INTERPVIEW;
+}
 
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckCheats
+//
+//----------------------------------------------------------------------------
+
+void P_CheckCheats(player_t *player)
+{
 	// No-clip cheat
 	if ((player->cheats & (CF_NOCLIP | CF_NOCLIP2)) == CF_NOCLIP2)
 	{ // No noclip2 without noclip
@@ -2604,20 +2592,18 @@ void P_PlayerThink (player_t *player)
 	{
 		player->mo->flags &= ~MF_NOGRAVITY;
 	}
-	cmd = &player->cmd;
+}
 
-	// Make unmodified copies for ACS's GetPlayerInput.
-	player->original_oldbuttons = player->original_cmd.buttons;
-	player->original_cmd = cmd->ucmd;
 
-	if (player->mo->flags & MF_JUSTATTACKED)
-	{ // Chainsaw/Gauntlets attack auto forward motion
-		cmd->ucmd.yaw = 0;
-		cmd->ucmd.forwardmove = 0xc800/2;
-		cmd->ucmd.sidemove = 0;
-		player->mo->flags &= ~MF_JUSTATTACKED;
-	}
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckFrozen
+//
+//----------------------------------------------------------------------------
 
+bool P_CheckFrozen(player_t *player)
+{
+	auto cmd = &player->cmd;
 	bool totallyfrozen = P_IsPlayerTotallyFrozen(player);
 
 	// [RH] Being totally frozen zeros out most input parameters.
@@ -2645,8 +2631,17 @@ void P_PlayerThink (player_t *player)
 		cmd->ucmd.sidemove = 0;
 		cmd->ucmd.upmove = 0;
 	}
+	return totallyfrozen;
+}
 
-	// Handle crouching
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckCrouch
+//
+//----------------------------------------------------------------------------
+
+void P_CheckCrouch(player_t *player, bool totallyfrozen)
+{
 	if (player->cmd.ucmd.buttons & BT_JUMP)
 	{
 		player->cmd.ucmd.buttons &= ~BT_CROUCH;
@@ -2656,7 +2651,7 @@ void P_PlayerThink (player_t *player)
 		if (!totallyfrozen)
 		{
 			int crouchdir = player->crouching;
-		
+
 			if (crouchdir == 0)
 			{
 				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH) ? -1 : 1;
@@ -2682,7 +2677,16 @@ void P_PlayerThink (player_t *player)
 	}
 
 	player->crouchoffset = -(player->mo->ViewHeight) * (1 - player->crouchfactor);
+}
 
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckMusicChange
+//
+//----------------------------------------------------------------------------
+
+void P_CheckMusicChange(player_t *player)
+{
 	// MUSINFO stuff
 	if (player->MUSINFOtics >= 0 && player->MUSINFOactor != NULL)
 	{
@@ -2707,26 +2711,16 @@ void P_PlayerThink (player_t *player)
 			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)(player - players), player->MUSINFOactor->args[0]);
 		}
 	}
+}
 
-	if (player->playerstate == PST_DEAD)
-	{
-		player->Uncrouch();
-		P_DeathThink (player);
-		return;
-	}
-	if (player->jumpTics != 0)
-	{
-		player->jumpTics--;
-		if (player->onground && player->jumpTics < -18)
-		{
-			player->jumpTics = 0;
-		}
-	}
-	if (player->morphTics && !(player->cheats & CF_PREDICTING))
-	{
-		player->mo->MorphPlayerThink ();
-	}
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckPitch
+//
+//----------------------------------------------------------------------------
 
+void P_CheckPitch(player_t *player)
+{
 	// [RH] Look up/down stuff
 	if (!level.IsFreelookAllowed())
 	{
@@ -2738,7 +2732,7 @@ void P_PlayerThink (player_t *player)
 		// which translates to about half a screen height up and (more than)
 		// one full screen height down from straight ahead when view panning
 		// is used.
-		int clook = cmd->ucmd.pitch;
+		int clook = player->cmd.ucmd.pitch;
 		if (clook != 0)
 		{
 			if (clook == -32768)
@@ -2768,9 +2762,260 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 	}
+}
 
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckJump
+//
+//----------------------------------------------------------------------------
+
+void P_CheckJump(player_t *player)
+{
+	// [RH] check for jump
+	if (player->cmd.ucmd.buttons & BT_JUMP)
+	{
+		if (player->crouchoffset != 0)
+		{
+			// Jumping while crouching will force an un-crouch but not jump
+			player->crouching = 1;
+		}
+		else if (player->mo->waterlevel >= 2)
+		{
+			player->mo->Vel.Z = 4 * player->mo->Speed;
+		}
+		else if (player->mo->flags & MF_NOGRAVITY)
+		{
+			player->mo->Vel.Z = 3.;
+		}
+		else if (level.IsJumpingAllowed() && player->onground && player->jumpTics == 0)
+		{
+			double jumpvelz = player->mo->JumpZ * 35 / TICRATE;
+			double jumpfac = 0;
+
+			// [BC] If the player has the high jump power, double his jump velocity.
+			// (actually, pick the best factors from all active items.)
+			for (auto p = player->mo->Inventory; p != nullptr; p = p->Inventory)
+			{
+				if (p->IsKindOf(NAME_PowerHighJump))
+				{
+					double f = p->FloatVar(NAME_Strength);
+					if (f > jumpfac) jumpfac = f;
+				}
+			}
+			if (jumpfac > 0) jumpvelz *= jumpfac;
+
+			player->mo->Vel.Z += jumpvelz;
+			player->mo->flags2 &= ~MF2_ONMOBJ;
+			player->jumpTics = -1;
+			if (!(player->cheats & CF_PREDICTING))
+				S_Sound(player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckMoveUpDown
+//
+//----------------------------------------------------------------------------
+
+void P_CheckMoveUpDown(player_t *player)
+{
+	auto cmd = &player->cmd;
+
+	if (cmd->ucmd.upmove == -32768)
+	{ // Only land if in the air
+		if ((player->mo->flags & MF_NOGRAVITY) && player->mo->waterlevel < 2)
+		{
+			//player->mo->flags2 &= ~MF2_FLY;
+			player->mo->flags &= ~MF_NOGRAVITY;
+		}
+	}
+	else if (cmd->ucmd.upmove != 0)
+	{
+		// Clamp the speed to some reasonable maximum.
+		cmd->ucmd.upmove = clamp<short>(cmd->ucmd.upmove, -0x300, 0x300);
+		if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
+		{
+			player->mo->Vel.Z = player->mo->Speed * cmd->ucmd.upmove / 128.;
+			if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
+			{
+				player->mo->flags2 |= MF2_FLY;
+				player->mo->flags |= MF_NOGRAVITY;
+				if ((player->mo->Vel.Z <= -39) && !(player->cheats & CF_PREDICTING))
+				{ // Stop falling scream
+					S_StopSound(player->mo, CHAN_VOICE);
+				}
+			}
+		}
+		else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
+		{
+			AInventory *fly = player->mo->FindInventory(NAME_ArtiFly);
+			if (fly != NULL)
+			{
+				player->mo->UseInventory(fly);
+			}
+		}
+	}
+}
+
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckEnviroment
+//
+//----------------------------------------------------------------------------
+
+void P_CheckEnvironment(player_t *player)
+{
+	P_PlayerOnSpecial3DFloor(player);
+	P_PlayerInSpecialSector(player);
+
+	if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPoint(player->mo)) ||
+		player->mo->waterlevel)
+	{
+		// Player must be touching the floor
+		P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
+	}
+	if (player->mo->Vel.Z <= -player->mo->FallingScreamMinSpeed &&
+		player->mo->Vel.Z >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
+		player->mo->waterlevel == 0)
+	{
+		int id = S_FindSkinnedSound(player->mo, "*falling");
+		if (id != 0 && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
+		{
+			S_Sound(player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckUse
+//
+//----------------------------------------------------------------------------
+
+void P_CheckUse(player_t *player)
+{
+	// check for use
+	if (player->cmd.ucmd.buttons & BT_USE)
+	{
+		if (!player->usedown)
+		{
+			player->usedown = true;
+			if (!P_TalkFacing(player->mo))
+			{
+				P_UseLines(player);
+			}
+		}
+	}
+	else
+	{
+		player->usedown = false;
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckUndoMorph
+//
+//----------------------------------------------------------------------------
+
+void P_CheckUndoMorph(player_t *player)
+{
+	// Morph counter
+	if (player->morphTics)
+	{
+		if (player->chickenPeck)
+		{ // Chicken attack counter
+			player->chickenPeck -= 3;
+		}
+		if (!--player->morphTics)
+		{ // Attempt to undo the chicken/pig
+			P_UndoPlayerMorph(player, player, MORPH_UNDOBYTIMEOUT);
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckPoison
+//
+//----------------------------------------------------------------------------
+
+void P_CheckPoison(player_t *player)
+{
+	if (player->poisoncount && !(level.time & 15))
+	{
+		player->poisoncount -= 5;
+		if (player->poisoncount < 0)
+		{
+			player->poisoncount = 0;
+		}
+		P_PoisonDamage(player, player->poisoner, 1, true);
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckDegeneration
+//
+//----------------------------------------------------------------------------
+
+void P_CheckDegeneration(player_t *player)
+{
+	// Apply degeneration.
+	if (dmflags2 & DF2_YES_DEGENERATION)
+	{
+		int maxhealth = player->mo->GetMaxHealth(true);
+		if ((level.time % TICRATE) == 0 && player->health > maxhealth)
+		{
+			if (player->health - 5 < maxhealth)
+				player->health = maxhealth;
+			else
+				player->health--;
+
+			player->mo->health = player->health;
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_CheckAirSupply
+//
+//----------------------------------------------------------------------------
+
+void P_CheckAirSupply(player_t *player)
+{
+	// Handle air supply
+	//if (level.airsupply > 0)
+	{
+		if (player->mo->waterlevel < 3 ||
+			(player->mo->flags2 & MF2_INVULNERABLE) ||
+			(player->cheats & (CF_GODMODE | CF_NOCLIP2)) ||
+			(player->cheats & CF_GODMODE2))
+		{
+			player->mo->ResetAirSupply();
+		}
+		else if (player->air_finished <= level.time && !(level.time & 31))
+		{
+			P_DamageMobj(player->mo, NULL, NULL, 2 + ((level.time - player->air_finished) / TICRATE), NAME_Drowning);
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC P_HandleMovement
+//
+//----------------------------------------------------------------------------
+
+void P_HandleMovement(player_t *player)
+{
 	// [RH] Check for fast turn around
-	if (cmd->ucmd.buttons & BT_TURN180 && !(player->oldbuttons & BT_TURN180))
+	if (player->cmd.ucmd.buttons & BT_TURN180 && !(player->oldbuttons & BT_TURN180))
 	{
 		player->turnticks = TURN180_TICKS;
 	}
@@ -2782,136 +3027,91 @@ void P_PlayerThink (player_t *player)
 	}
 	else
 	{
-		P_MovePlayer (player);
+		P_MovePlayer(player);
+		P_CheckJump(player);
+		P_CheckMoveUpDown(player);
+	}
+}
 
-		// [RH] check for jump
-		if (cmd->ucmd.buttons & BT_JUMP)
-		{
-			if (player->crouchoffset != 0)
-			{
-				// Jumping while crouching will force an un-crouch but not jump
-				player->crouching = 1;
-			}
-			else if (player->mo->waterlevel >= 2)
-			{
-				player->mo->Vel.Z = 4 * player->mo->Speed;
-			}
-			else if (player->mo->flags & MF_NOGRAVITY)
-			{
-				player->mo->Vel.Z = 3.;
-			}
-			else if (level.IsJumpingAllowed() && player->onground && player->jumpTics == 0)
-			{
-				double jumpvelz = player->mo->JumpZ * 35 / TICRATE;
-				double jumpfac = 0;
+//----------------------------------------------------------------------------
+//
+// PROC P_PlayerThink
+//
+//----------------------------------------------------------------------------
 
-				// [BC] If the player has the high jump power, double his jump velocity.
-				// (actually, pick the best factors from all active items.)
-				for (auto p = player->mo->Inventory; p != nullptr; p = p->Inventory)
-				{
-					if (p->IsKindOf(NAME_PowerHighJump))
-					{
-						double f = p->FloatVar(NAME_Strength);
-						if (f > jumpfac) jumpfac = f;
-					}
-				}
-				if (jumpfac > 0) jumpvelz *= jumpfac;
+void P_PlayerThink (player_t *player)
+{
+	ticcmd_t *cmd = &player->cmd;
 
-				player->mo->Vel.Z += jumpvelz;
-				player->mo->flags2 &= ~MF2_ONMOBJ;
-				player->jumpTics = -1;
-				if (!(player->cheats & CF_PREDICTING))
-					S_Sound(player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
-			}
-		}
-
-		if (cmd->ucmd.upmove == -32768)
-		{ // Only land if in the air
-			if ((player->mo->flags & MF_NOGRAVITY) && player->mo->waterlevel < 2)
-			{
-				//player->mo->flags2 &= ~MF2_FLY;
-				player->mo->flags &= ~MF_NOGRAVITY;
-			}
-		}
-		else if (cmd->ucmd.upmove != 0)
-		{
-			// Clamp the speed to some reasonable maximum.
-			cmd->ucmd.upmove = clamp<short>(cmd->ucmd.upmove, -0x300, 0x300);
-			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
-			{
-				player->mo->Vel.Z = player->mo->Speed * cmd->ucmd.upmove / 128.;
-				if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
-				{
-					player->mo->flags2 |= MF2_FLY;
-					player->mo->flags |= MF_NOGRAVITY;
-					if ((player->mo->Vel.Z <= -39) && !(player->cheats & CF_PREDICTING))
-					{ // Stop falling scream
-						S_StopSound (player->mo, CHAN_VOICE);
-					}
-				}
-			}
-			else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
-			{
-				AInventory *fly = player->mo->FindInventory (NAME_ArtiFly);
-				if (fly != NULL)
-				{
-					player->mo->UseInventory (fly);
-				}
-			}
-		}
+	if (player->mo == NULL)
+	{
+		I_Error ("No player %td start\n", player - players + 1);
 	}
 
+	if (debugfile && !(player->cheats & CF_PREDICTING))
+	{
+		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
+			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
+			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
+			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
+			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
+	}
+
+	// Make unmodified copies for ACS's GetPlayerInput.
+	player->original_oldbuttons = player->original_cmd.buttons;
+	player->original_cmd = cmd->ucmd;
+	// Don't interpolate the view for more than one tic
+	player->cheats &= ~CF_INTERPVIEW;
+
+	P_CheckFOV(player);
+
+	if (player->inventorytics)
+	{
+		player->inventorytics--;
+	}
+	P_CheckCheats(player);
+
+	if (player->mo->flags & MF_JUSTATTACKED)
+	{ // Chainsaw/Gauntlets attack auto forward motion
+		cmd->ucmd.yaw = 0;
+		cmd->ucmd.forwardmove = 0xc800/2;
+		cmd->ucmd.sidemove = 0;
+		player->mo->flags &= ~MF_JUSTATTACKED;
+	}
+
+	bool totallyfrozen = P_CheckFrozen(player);
+
+	// Handle crouching
+	P_CheckCrouch(player, totallyfrozen);
+	P_CheckMusicChange(player);
+
+	if (player->playerstate == PST_DEAD)
+	{
+		P_DeathThink (player);
+		return;
+	}
+	if (player->jumpTics != 0)
+	{
+		player->jumpTics--;
+		if (player->onground && player->jumpTics < -18)
+		{
+			player->jumpTics = 0;
+		}
+	}
+	if (player->morphTics && !(player->cheats & CF_PREDICTING))
+	{
+		player->mo->MorphPlayerThink ();
+	}
+
+	P_CheckPitch(player);
+	P_HandleMovement(player);
 	P_CalcHeight (player);
 
 	if (!(player->cheats & CF_PREDICTING))
 	{
-		P_PlayerOnSpecial3DFloor (player);
-		P_PlayerInSpecialSector (player);
-
-		if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPoint(player->mo)) ||
-			player->mo->waterlevel)
-		{
-			// Player must be touching the floor
-			P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
-		}
-		if (player->mo->Vel.Z <= -player->mo->FallingScreamMinSpeed &&
-			player->mo->Vel.Z >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
-			player->mo->waterlevel == 0)
-		{
-			int id = S_FindSkinnedSound (player->mo, "*falling");
-			if (id != 0 && !S_IsActorPlayingSomething (player->mo, CHAN_VOICE, id))
-			{
-				S_Sound (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
-			}
-		}
-		// check for use
-		if (cmd->ucmd.buttons & BT_USE)
-		{
-			if (!player->usedown)
-			{
-				player->usedown = true;
-				if (!P_TalkFacing(player->mo))
-				{
-					P_UseLines(player);
-				}
-			}
-		}
-		else
-		{
-			player->usedown = false;
-		}
-		// Morph counter
-		if (player->morphTics)
-		{
-			if (player->chickenPeck)
-			{ // Chicken attack counter
-				player->chickenPeck -= 3;
-			}
-			if (!--player->morphTics)
-			{ // Attempt to undo the chicken/pig
-				P_UndoPlayerMorph (player, player, MORPH_UNDOBYTIMEOUT);
-			}
-		}
+		P_CheckEnvironment(player);
+		P_CheckUse(player);
+		P_CheckUndoMorph(player);
 		// Cycle psprites
 		player->TickPSprites();
 
@@ -2929,46 +3129,9 @@ void P_PlayerThink (player_t *player)
 				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
 		}
 
-		if (player->poisoncount && !(level.time & 15))
-		{
-			player->poisoncount -= 5;
-			if (player->poisoncount < 0)
-			{
-				player->poisoncount = 0;
-			}
-			P_PoisonDamage (player, player->poisoner, 1, true);
-		}
-
-		// Apply degeneration.
-		if (dmflags2 & DF2_YES_DEGENERATION)
-		{
-			int maxhealth = player->mo->GetMaxHealth(true);
-			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
-			{
-				if (player->health - 5 < maxhealth)
-					player->health = maxhealth;
-				else
-					player->health--;
-
-				player->mo->health = player->health;
-			}
-		}
-
-		// Handle air supply
-		//if (level.airsupply > 0)
-		{
-			if (player->mo->waterlevel < 3 ||
-				(player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & (CF_GODMODE | CF_NOCLIP2)) ||
-				(player->cheats & CF_GODMODE2))
-			{
-				player->mo->ResetAirSupply ();
-			}
-			else if (player->air_finished <= level.time && !(level.time & 31))
-			{
-				P_DamageMobj (player->mo, NULL, NULL, 2 + ((level.time-player->air_finished)/TICRATE), NAME_Drowning);
-			}
-		}
+		P_CheckPoison(player);
+		P_CheckDegeneration(player);
+		P_CheckAirSupply(player);
 	}
 }
 

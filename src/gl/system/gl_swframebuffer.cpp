@@ -203,12 +203,7 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	
 	const char *glversion = (const char*)glGetString(GL_VERSION);
 	bool isGLES = (glversion && strlen(glversion) > 10 && memcmp(glversion, "OpenGL ES ", 10) == 0);
-	if (isGLES && ogl_IsVersionGEQ(2, 0) == 0)
-	{
-		Printf("OpenGL acceleration requires at least OpenGL ES 2.0. No Acceleration will be used.\n");
-		return;
-	}
-	else if (!isGLES && ogl_IsVersionGEQ(3, 0) == 0)
+	if (!isGLES && ogl_IsVersionGEQ(3, 0) == 0)
 	{
 		Printf("OpenGL acceleration requires at least OpenGL 3.0. No Acceleration will be used.\n");
 		return;

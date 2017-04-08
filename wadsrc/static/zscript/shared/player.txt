@@ -144,7 +144,7 @@ class PlayerPawn : Actor native
 			if (mod == 'Telefrag') return "$OB_MPTELEFRAG";
 
 			String message;
-			if (inflictor != NULL)
+			if (inflictor != NULL && inflictor != self)
 			{
 				message = inflictor.GetObituary(victim, inflictor, mod, playerattack);
 			}

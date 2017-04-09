@@ -130,18 +130,26 @@ class Weapon : StateProvider native
 		{
 			player.mo.PlayAttacking2 ();
 		}
+
+		Weapon weapon = player.ReadyWeapon;
+		state flashstate = null;
+
 		if (flashlabel == null)
 		{
-			if (player.ReadyWeapon.bAltFire)
+			if (weapon.bAltFire)
 			{
-				flashlabel = 'AltFlash';
+				flashstate = weapon.FindState('AltFlash');
 			}
-			if (flashlabel == null)
+			if (flashstate == null)
 			{
-				flashlabel = 'Flash';
+				flashstate = weapon.FindState('Flash');
 			}
 		}
-		player.SetPsprite(PSP_FLASH, player.ReadyWeapon.FindState(flashlabel));
+		else
+		{
+			flashstate = weapon.FindState(flashlabel);
+		}
+		player.SetPsprite(PSP_FLASH, flashstate);
 	}
 	
 	//---------------------------------------------------------------------------

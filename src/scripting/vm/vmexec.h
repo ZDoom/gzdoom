@@ -1887,7 +1887,6 @@ static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *return
 	for (i = 0, ret = returns; i < numret; ++i, ++ret, ++retval)
 	{
 		assert(retval->op == OP_RESULT);				// opcode
-		ret->TagOfs = 0;
 		ret->RegType = type = retval->b;
 		regnum = retval->c;
 		assert(!(type & REGT_KONST));
@@ -1915,7 +1914,6 @@ static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *return
 			assert(type == REGT_POINTER);
 			assert(regnum < frame->NumRegA);
 			ret->Location = &reg.a[regnum];
-			ret->TagOfs = (VM_SHALF)(&frame->GetRegATag()[regnum] - (VM_ATAG *)ret->Location);
 		}
 	}
 }

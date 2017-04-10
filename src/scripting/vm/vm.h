@@ -23,7 +23,6 @@ typedef unsigned short		VM_UHALF;
 typedef signed short		VM_SHALF;
 typedef unsigned int		VM_UWORD;
 typedef signed int			VM_SWORD;
-typedef VM_UBYTE			VM_ATAG;
 
 #define VM_EPSILON			(1/65536.0)
 
@@ -301,7 +300,6 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 struct VMReturn
 {
 	void *Location;
-	VM_SHALF TagOfs;	// for pointers: Offset from Location to ATag; set to 0 if the caller is native code and doesn't care
 	VM_UBYTE RegType;	// Same as VMParam RegType, except REGT_KONST is invalid; only used by asserts
 
 	void SetInt(int val)
@@ -361,25 +359,21 @@ struct VMReturn
 	void IntAt(int *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_INT;
 	}
 	void FloatAt(double *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_FLOAT;
 	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_STRING;
 	}
 	void PointerAt(void **loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_POINTER;
 	}
 	VMReturn() { }
@@ -397,7 +391,7 @@ struct VMValue
 	union
 	{
 		int i;
-		struct { void *a; int atag; };
+		void *a;
 		double f;
 		struct { int pad[3]; VM_UBYTE Type; };
 		struct { int foo[4]; } biggest;
@@ -575,7 +569,7 @@ struct VMFrame
 		int size = (sizeof(VMFrame) + 15) & ~15;
 		size += numparam * sizeof(VMValue);
 		size += numregf * sizeof(double);
-		size += numrega * (sizeof(void *) + sizeof(VM_UBYTE));
+		size += numrega * sizeof(void *);
 		size += numregs * sizeof(FString);
 		size += numregd * sizeof(int);
 		if (numextra != 0)
@@ -586,9 +580,10 @@ struct VMFrame
 		return size;
 	}
 
-	int *GetRegD() const
+	VMValue *GetParam() const
 	{
-		return (int *)(GetRegA() + NumRegA);
+		assert(((size_t)this & 15) == 0 && "VM frame is unaligned");
+		return (VMValue *)(((size_t)(this + 1) + 15) & ~15);
 	}
 
 	double *GetRegF() const
@@ -606,22 +601,16 @@ struct VMFrame
 		return (void **)(GetRegS() + NumRegS);
 	}
 
-	VM_ATAG *GetRegATag() const
+	int *GetRegD() const
 	{
-		return (VM_ATAG *)(GetRegD() + NumRegD);
-	}
-
-	VMValue *GetParam() const
-	{
-		assert(((size_t)this & 15) == 0 && "VM frame is unaligned");
-		return (VMValue *)(((size_t)(this + 1) + 15) & ~15);
+		return (int *)(GetRegA() + NumRegA);
 	}
 
 	void *GetExtra() const
 	{
-		VM_ATAG *ptag = GetRegATag();
-		ptrdiff_t ofs = ptag - (VM_ATAG *)this;
-		return (VM_UBYTE *)this + ((ofs + NumRegA + 15) & ~15);
+		uint8_t *pbeg = (uint8_t*)(GetRegD() + NumRegD);
+		ptrdiff_t ofs = pbeg - (uint8_t *)this;
+		return (VM_UBYTE *)this + ((ofs + 15) & ~15);
 	}
 
 	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VMValue *&param) const

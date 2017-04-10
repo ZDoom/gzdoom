@@ -60,21 +60,21 @@ namespace swrenderer
 	{
 		Scene = scene;
 		MainThread = mainThread;
-		FrameMemory = std::make_unique<RenderMemory>();
-		Viewport = std::make_unique<RenderViewport>();
-		Light = std::make_unique<LightVisibility>();
-		DrawQueue = std::make_shared<DrawerCommandQueue>(FrameMemory.get());
-		OpaquePass = std::make_unique<RenderOpaquePass>(this);
-		TranslucentPass = std::make_unique<RenderTranslucentPass>(this);
-		SpriteList = std::make_unique<VisibleSpriteList>();
-		Portal = std::make_unique<RenderPortal>(this);
-		Clip3D = std::make_unique<Clip3DFloors>(this);
-		PlayerSprites = std::make_unique<RenderPlayerSprites>(this);
-		PlaneList = std::make_unique<VisiblePlaneList>(this);
-		DrawSegments = std::make_unique<DrawSegmentList>(this);
-		ClipSegments = std::make_unique<RenderClipSegment>();
-		tc_drawers = std::make_unique<SWTruecolorDrawers>(DrawQueue);
-		pal_drawers = std::make_unique<SWPalDrawers>(DrawQueue);
+		FrameMemory.reset(new RenderMemory());
+		Viewport.reset(new RenderViewport());
+		Light.reset(new LightVisibility());
+		DrawQueue.reset(new DrawerCommandQueue(FrameMemory.get()));
+		OpaquePass.reset(new RenderOpaquePass(this));
+		TranslucentPass.reset(new RenderTranslucentPass(this));
+		SpriteList.reset(new VisibleSpriteList());
+		Portal.reset(new RenderPortal(this));
+		Clip3D.reset(new Clip3DFloors(this));
+		PlayerSprites.reset(new RenderPlayerSprites(this));
+		PlaneList.reset(new VisiblePlaneList(this));
+		DrawSegments.reset(new DrawSegmentList(this));
+		ClipSegments.reset(new RenderClipSegment());
+		tc_drawers.reset(new SWTruecolorDrawers(DrawQueue));
+		pal_drawers.reset(new SWPalDrawers(DrawQueue));
 	}
 
 	RenderThread::~RenderThread()

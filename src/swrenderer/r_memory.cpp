@@ -46,7 +46,7 @@ void *RenderMemory::AllocBytes(int size)
 		}
 		else
 		{
-			UsedBlocks.push_back(std::make_unique<MemoryBlock>());
+			UsedBlocks.push_back(std::unique_ptr<MemoryBlock>(new MemoryBlock()));
 		}
 	}
 		

@@ -44,7 +44,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 	{
 		if (PolyRenderer::Instance()->InsertSeenMirror(line->linedef))
 		{
-			linePortals.push_back(std::make_unique<PolyDrawLinePortal>(line->linedef));
+			linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(line->linedef)));
 			polyportal = linePortals.back().get();
 		}
 	}
@@ -63,7 +63,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			}
 			if (!polyportal)
 			{
-				linePortals.push_back(std::make_unique<PolyDrawLinePortal>(portal));
+				linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(portal)));
 				polyportal = linePortals.back().get();
 			}
 		}

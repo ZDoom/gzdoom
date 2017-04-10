@@ -61,7 +61,7 @@ namespace swrenderer
 	
 	RenderScene::RenderScene()
 	{
-		Threads.push_back(std::make_unique<RenderThread>(this));
+		Threads.push_back(std::unique_ptr<RenderThread>(new RenderThread(this)));
 	}
 
 	RenderScene::~RenderScene()
@@ -289,7 +289,7 @@ namespace swrenderer
 	{
 		while (Threads.size() < (size_t)numThreads)
 		{
-			auto thread = std::make_unique<RenderThread>(this, false);
+			std::unique_ptr<RenderThread> thread(new RenderThread(this, false));
 			auto renderthread = thread.get();
 			int start_run_id = run_id;
 			thread->thread = std::thread([=]()

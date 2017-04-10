@@ -320,7 +320,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		switch (code[i].op)
 		{
 		case OP_JMP:
-		case OP_TRY:
+		//case OP_TRY:
 			col = printf_wrapper(out, "%08x", (i + 1 + code[i].i24) << 2);
 			break;
 
@@ -498,7 +498,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			col = 30;
 		}
 		printf_wrapper(out, "%*c", 30 - col, ';');
-		if (!cmp && (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI))
+		if (!cmp && (code[i].op == OP_JMP || /*code[i].op == OP_TRY ||*/ code[i].op == OP_PARAMI))
 		{
 			printf_wrapper(out, "%d\n", code[i].i24);
 		}

@@ -116,7 +116,7 @@ xx(NEW,		new,	RPRPI8,		NOP,	0, 0),
 xx(NEW_K,	new,	RPKP,		NOP,	0, 0),
 //xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
 //xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
-//xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB
+xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB
 												// A == 1: Throw exception object pkB
 												// A >= 2: Throw VM exception of type BC
 //xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try

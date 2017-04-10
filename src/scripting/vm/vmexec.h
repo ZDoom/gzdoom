@@ -821,7 +821,9 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		assert(a <= try_depth);
 		try_depth -= a;
 		NEXTOP;
+#endif
 	OP(THROW):
+#if 0
 		if (a == 0)
 		{
 			ASSERTA(B);
@@ -834,10 +836,12 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			ThrowVMException((VMException *)konsta[B].o);
 		}
 		else
+#endif
 		{
 			ThrowAbortException(EVMAbortException(BC), nullptr);
 		}
 		NEXTOP;
+#if 0
 	OP(CATCH):
 		// This instruction is handled by our own catch handler and should
 		// not be executed by the normal VM code.

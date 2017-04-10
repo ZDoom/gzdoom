@@ -6534,7 +6534,7 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 	{
 		build->Emit(OP_EQA_R, 1, 0, 1);
 		build->Emit(OP_JMP, 1);
-		//build->Emit(OP_THROW, 2, X_BAD_SELF);
+		build->Emit(OP_THROW, 2, X_BAD_SELF);
 	}
 	// self is always the first pointer passed to the function
 	return ExpEmit(0, REGT_POINTER, false, true);

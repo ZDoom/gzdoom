@@ -20,7 +20,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	const double *konstf;
 	const FString *konsts;
 	const FVoidObj *konsta;
-	const VM_ATAG *konstatag;
 
 	if (f->Func != NULL && !(f->Func->VarFlags & VARF_Native))
 	{
@@ -29,7 +28,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		konstf = sfunc->KonstF;
 		konsts = sfunc->KonstS;
 		konsta = sfunc->KonstA;
-		konstatag = sfunc->KonstATags();
 	}
 	else
 	{
@@ -38,7 +36,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		konstf = NULL;
 		konsts = NULL;
 		konsta = NULL;
-		konstatag = NULL;
 	}
 
 	void *ptr;
@@ -81,7 +78,6 @@ begin:
 	OP(LKP):
 		ASSERTA(a); ASSERTKA(BC);
 		reg.a[a] = konsta[BC].v;
-		reg.atag[a] = konstatag[BC];
 		NEXTOP;
 
 	OP(LK_R) :
@@ -100,7 +96,6 @@ begin:
 		ASSERTA(a); ASSERTD(B);
 		b = reg.d[B] + C;
 		reg.a[a] = konsta[b].v;
-		reg.atag[a] = konstatag[b];
 		NEXTOP;
 
 	OP(LFP):
@@ -603,7 +598,7 @@ begin:
 					break;
 				case REGT_POINTER | REGT_KONST:
 					assert(C < sfunc->NumKonstA);
-					::new(param) VMValue(konsta[C].v, konstatag[C]);
+					::new(param) VMValue(konsta[C].v, ATAG_GENERIC);
 					break;
 				case REGT_FLOAT:
 					assert(C < f->NumRegF);

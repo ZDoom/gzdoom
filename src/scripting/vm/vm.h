@@ -692,9 +692,6 @@ public:
 	~VMScriptFunction();
 	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta, int numlinenumbers);
 
-	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
-	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
-
 	VMOP *Code;
 	FStatementInfo *LineInfo;
 	FString SourceFileName;

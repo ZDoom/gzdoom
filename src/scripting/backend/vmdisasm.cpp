@@ -243,7 +243,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 		{
 			for (j = 0, k = i; j < 4 && k < func->NumKonstA; j++, k += kk)
 			{
-				mysnprintf(tmp, countof(tmp), "%3d. %p:%d", k, func->KonstA[k].v, func->KonstATags()[k]);
+				mysnprintf(tmp, countof(tmp), "%3d. %p", k, func->KonstA[k].v);
 				printf_wrapper(out, "%-22s", tmp);
 			}
 			printf_wrapper(out, "\n");

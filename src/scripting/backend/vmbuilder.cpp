@@ -126,7 +126,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	}
 	if (AddressConstantList.Size() > 0)
 	{
-		FillAddressConstants(func->KonstA, func->KonstATags());
+		FillAddressConstants(func->KonstA);
 	}
 	if (StringConstantList.Size() > 0)
 	{
@@ -175,10 +175,9 @@ void VMFunctionBuilder::FillFloatConstants(double *konst)
 //
 //==========================================================================
 
-void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst, VM_ATAG *tags)
+void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst)
 {
 	memcpy(konst, &AddressConstantList[0], sizeof(void*) * AddressConstantList.Size());
-	memcpy(tags, &AtagConstantList[0], sizeof(VM_ATAG) * AtagConstantList.Size());
 }
 
 //==========================================================================
@@ -258,7 +257,7 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 	}
 	else
 	{
-		int loc = StringConstantList.Push(val);
+		unsigned loc = StringConstantList.Push(val);
 		StringConstantMap.Insert(val, loc);
 		return loc;
 	}
@@ -275,20 +274,16 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 
 unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 {
-	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
+	unsigned *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
-		// There should only be one tag associated with a memory location. Exceptions are made for null pointers that got allocated through constant arrays.
-		return locp->KonstNum;
+		return *locp;
 	}
 	else
 	{
-		unsigned locc = AddressConstantList.Push(ptr);
-		AtagConstantList.Push(0);
-
-		AddrKonst loc = { locc, 0 };
+		unsigned loc = AddressConstantList.Push(ptr);
 		AddressConstantMap.Insert(ptr, loc);
-		return loc.KonstNum;
+		return loc;
 	}
 }
 
@@ -325,13 +320,10 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
-	AtagConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
 	for (unsigned i = 0; i < count; i++)
 	{
-		AtagConstantList[addr + i] = 0;
-		AddrKonst loc = { addr+i, 0 };
-		AddressConstantMap.Insert(ptrs[i], loc);
+		AddressConstantMap.Insert(ptrs[i], addr+i);
 	}
 	return addr;
 }

@@ -671,7 +671,7 @@ static int CreateSpawnFunc(VMFunctionBuilder &buildit, int value1, int value2)
 		I_Error("No class found for dehackednum %d!\n", value1+1);
 		return 0;
 	}
-	int typereg = buildit.GetConstantAddress(InfoNames[value1-1], ATAG_OBJECT);
+	int typereg = buildit.GetConstantAddress(InfoNames[value1-1]);
 	int heightreg = buildit.GetConstantFloat(value2);
 
 	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, typereg);	// itemtype
@@ -813,7 +813,7 @@ void SetDehParams(FState *state, int codepointer)
 		}
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), numargs + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation), numargs + argcount, 0);
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		buildit.MakeFunction(sfunc);

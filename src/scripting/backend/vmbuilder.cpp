@@ -273,25 +273,20 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 //
 //==========================================================================
 
-unsigned VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
+unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 {
-	if (ptr == NULL)
-	{ // Make all NULL pointers generic. (Or should we allow typed NULLs?)
-		tag = ATAG_GENERIC;
-	}
 	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
 		// There should only be one tag associated with a memory location. Exceptions are made for null pointers that got allocated through constant arrays.
-		assert(ptr == nullptr || locp->Tag == tag);
 		return locp->KonstNum;
 	}
 	else
 	{
 		unsigned locc = AddressConstantList.Push(ptr);
-		AtagConstantList.Push(tag);
+		AtagConstantList.Push(0);
 
-		AddrKonst loc = { locc, tag };
+		AddrKonst loc = { locc, 0 };
 		AddressConstantMap.Insert(ptr, loc);
 		return loc.KonstNum;
 	}
@@ -327,15 +322,15 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs, VM_ATAG tag)
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
 	AtagConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
 	for (unsigned i = 0; i < count; i++)
 	{
-		AtagConstantList[addr + i] = tag;
-		AddrKonst loc = { addr+i, tag };
+		AtagConstantList[addr + i] = 0;
+		AddrKonst loc = { addr+i, 0 };
 		AddressConstantMap.Insert(ptrs[i], loc);
 	}
 	return addr;

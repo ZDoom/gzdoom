@@ -2021,12 +2021,12 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 		if (regtype & REGT_KONST)
 		{
 			assert(regnum < func->NumKonstA);
-			ret->SetPointer(func->KonstA[regnum].v, func->KonstATags()[regnum]);
+			ret->SetPointer(func->KonstA[regnum].v);
 		}
 		else
 		{
 			assert(regnum < frame->NumRegA);
-			ret->SetPointer(reg.a[regnum], reg.atag[regnum]);
+			ret->SetPointer(reg.a[regnum]);
 		}
 		break;
 	}

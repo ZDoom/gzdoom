@@ -51,12 +51,12 @@ public:
 	// Returns the constant register holding the value.
 	unsigned GetConstantInt(int val);
 	unsigned GetConstantFloat(double val);
-	unsigned GetConstantAddress(void *ptr, VM_ATAG tag = ATAG_GENERIC);
+	unsigned GetConstantAddress(void *ptr);
 	unsigned GetConstantString(FString str);
 
 	unsigned AllocConstantsInt(unsigned int count, int *values);
 	unsigned AllocConstantsFloat(unsigned int count, double *values);
-	unsigned AllocConstantsAddress(unsigned int count, void **ptrs, VM_ATAG tag);
+	unsigned AllocConstantsAddress(unsigned int count, void **ptrs);
 	unsigned AllocConstantsString(unsigned int count, FString *ptrs);
 
 

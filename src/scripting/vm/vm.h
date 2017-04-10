@@ -353,34 +353,16 @@ struct VMReturn
 		*(FString *)Location = val;
 	}
 
-	void SetPointer(void *val, int tag)
-	{
-		assert(RegType == REGT_POINTER);
-		*(void **)Location = val;
-		if (TagOfs != 0)
-		{
-			*((VM_ATAG *)Location + TagOfs) = tag;
-		}
-	}
-
 	void SetPointer(void *val)
 	{
 		assert(RegType == REGT_POINTER);
 		*(void **)Location = val;
-		if (TagOfs != 0)
-		{
-			*((VM_ATAG *)Location + TagOfs) = ATAG_GENERIC;
-		}
 	}
 
 	void SetObject(DObject *val)
 	{
 		assert(RegType == REGT_POINTER);
 		*(void **)Location = val;
-		if (TagOfs != 0)
-		{
-			*((VM_ATAG *)Location + TagOfs) = ATAG_OBJECT;
-		}
 	}
 
 	void IntAt(int *loc)

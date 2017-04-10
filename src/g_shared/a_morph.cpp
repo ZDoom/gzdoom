@@ -635,7 +635,7 @@ void InitAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(ptype))
 		{
-			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
+			IFVIRTUALPTRNAME(item, NAME_Powerup, InitEffect)
 			{
 				VMValue params[1] = { item };
 				VMFrameStack stack;

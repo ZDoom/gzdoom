@@ -11,8 +11,8 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 #include "vmops.h"
 	};
 #endif
-	const VMOP *exception_frames[MAX_TRY_DEPTH];
-	int try_depth = 0;
+	//const VMOP *exception_frames[MAX_TRY_DEPTH];
+	//int try_depth = 0;
 	VMFrame *f = stack->TopFrame();
 	VMScriptFunction *sfunc;
 	const VMRegisters reg(f);
@@ -43,7 +43,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	const double *fbp, *fcp;
 	int a, b, c;
 
-begin:
+//begin:
 	try
 	{
 #if !COMPGOTO
@@ -807,6 +807,7 @@ begin:
 		NEXTOP;
 	}
 
+#if 0
 	OP(TRY):
 		assert(try_depth < MAX_TRY_DEPTH);
 		if (try_depth >= MAX_TRY_DEPTH)
@@ -842,6 +843,7 @@ begin:
 		// not be executed by the normal VM code.
 		assert(0);
 		NEXTOP;
+#endif
 
 	OP(BOUND):
 		if (reg.d[a] >= BC)
@@ -1660,6 +1662,7 @@ begin:
 		NEXTOP;
 	}
 	}
+#if 0
 	catch(VMException *exception)
 	{
 		// Try to find a handler for the exception.
@@ -1714,6 +1717,7 @@ begin:
 		// Nothing caught it. Rethrow and let somebody else deal with it.
 		throw;
 	}
+#endif
 	catch (CVMAbortException &err)
 	{
 		err.MaybePrintMessage();

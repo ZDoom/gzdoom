@@ -101,19 +101,16 @@ begin:
 	OP(LFP):
 		ASSERTA(a); assert(sfunc != NULL); assert(sfunc->ExtraSpace > 0);
 		reg.a[a] = f->GetExtra();
-		reg.atag[a] = ATAG_GENERIC;	// using ATAG_FRAMEPOINTER will cause endless asserts.
 		NEXTOP;
 
 	OP(CLSS):
 		ASSERTA(a); ASSERTA(B);
 		reg.a[a] = ((DObject*)reg.a[B])->GetClass();	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 
 	OP(META):
 		ASSERTA(a); ASSERTA(B);
 		reg.a[a] = ((DObject*)reg.a[B])->GetClass()->Meta;	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 
 	OP(LB):
@@ -212,37 +209,31 @@ begin:
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LO_R):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LOS):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		reg.a[a] = *(DObject **)ptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LOS_R):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.a[a] = *(DObject **)ptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LP):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		reg.a[a] = *(void **)ptr;
-		reg.atag[a] = ATAG_GENERIC;
 		NEXTOP;
 	OP(LP_R):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.a[a] = *(void **)ptr;
-		reg.atag[a] = ATAG_GENERIC;
 		NEXTOP;
 	OP(LV2):
 		ASSERTF(a+1); ASSERTA(B); ASSERTKD(C);
@@ -437,7 +428,6 @@ begin:
 		ASSERTA(a); ASSERTA(B);
 		b = B;
 		reg.a[a] = reg.a[b];
-		reg.atag[a] = reg.atag[b];
 		NEXTOP;
 	}
 	OP(MOVEV2):
@@ -461,25 +451,21 @@ begin:
 		ASSERTA(a); ASSERTA(B);	ASSERTA(C);
 		b = B;
 		reg.a[a] = (reg.a[b] && ((DObject*)(reg.a[b]))->IsKindOf((PClass*)(reg.a[C]))) ? reg.a[b] : nullptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(DYNCAST_K) :
 		ASSERTA(a); ASSERTA(B);	ASSERTKA(C);
 		b = B;
 		reg.a[a] = (reg.a[b] && ((DObject*)(reg.a[b]))->IsKindOf((PClass*)(konsta[C].o))) ? reg.a[b] : nullptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(DYNCASTC_R) :
 		ASSERTA(a); ASSERTA(B);	ASSERTA(C);
 		b = B;
 		reg.a[a] = (reg.a[b] && ((PClass*)(reg.a[b]))->IsDescendantOf((PClass*)(reg.a[C]))) ? reg.a[b] : nullptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(DYNCASTC_K) :
 		ASSERTA(a); ASSERTA(B);	ASSERTKA(C);
 		b = B;
 		reg.a[a] = (reg.a[b] && ((PClass*)(reg.a[b]))->IsDescendantOf((PClass*)(konsta[C].o))) ? reg.a[b] : nullptr;
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(CAST):
 		if (C == CAST_I2F)
@@ -570,7 +556,7 @@ begin:
 					break;
 				case REGT_INT | REGT_ADDROF:
 					assert(C < f->NumRegD);
-					::new(param) VMValue(&reg.d[C], ATAG_GENERIC);
+					::new(param) VMValue(&reg.d[C]);
 					break;
 				case REGT_INT | REGT_KONST:
 					assert(C < sfunc->NumKonstD);
@@ -582,7 +568,7 @@ begin:
 					break;
 				case REGT_STRING | REGT_ADDROF:
 					assert(C < f->NumRegS);
-					::new(param) VMValue(&reg.s[C], ATAG_GENERIC);
+					::new(param) VMValue((void*)&reg.s[C]);	// Note that this may not use the FString* version of the constructor!
 					break;
 				case REGT_STRING | REGT_KONST:
 					assert(C < sfunc->NumKonstS);
@@ -590,15 +576,15 @@ begin:
 					break;
 				case REGT_POINTER:
 					assert(C < f->NumRegA);
-					::new(param) VMValue(reg.a[C], reg.atag[C]);
+					::new(param) VMValue(reg.a[C]);
 					break;
 				case REGT_POINTER | REGT_ADDROF:
 					assert(C < f->NumRegA);
-					::new(param) VMValue(&reg.a[C], ATAG_GENERIC);
+					::new(param) VMValue(&reg.a[C]);
 					break;
 				case REGT_POINTER | REGT_KONST:
 					assert(C < sfunc->NumKonstA);
-					::new(param) VMValue(konsta[C].v, ATAG_GENERIC);
+					::new(param) VMValue(konsta[C].v);
 					break;
 				case REGT_FLOAT:
 					assert(C < f->NumRegF);
@@ -621,7 +607,7 @@ begin:
 					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(C < f->NumRegF);
-					::new(param) VMValue(&reg.f[C], ATAG_GENERIC);
+					::new(param) VMValue(&reg.f[C]);
 					break;
 				case REGT_FLOAT | REGT_KONST:
 					assert(C < sfunc->NumKonstF);
@@ -818,7 +804,6 @@ begin:
 		c = C;
 		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
 		reg.a[a] = cls->CreateNew();
-		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	}
 
@@ -1651,7 +1636,6 @@ begin:
 			c = 0;
 		}
 		reg.a[a] = (VM_UBYTE *)reg.a[B] + c;
-		reg.atag[a] = c == 0 ? reg.atag[B] : (int)ATAG_GENERIC;
 		NEXTOP;
 	OP(ADDA_RK):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
@@ -1710,7 +1694,6 @@ begin:
 					// Found a handler. Store the exception in pC, skip the JMP,
 					// and begin executing its code.
 					reg.a[pc->c] = exception;
-					reg.atag[pc->c] = ATAG_OBJECT;
 					pc += 2;
 					goto begin;
 				}
@@ -1723,7 +1706,6 @@ begin:
 				// Catch any type of VMException. This terminates the chain.
 				ASSERTA(pc->c);
 				reg.a[pc->c] = exception;
-				reg.atag[pc->c] = ATAG_OBJECT;
 				pc += 1;
 				goto begin;
 			}

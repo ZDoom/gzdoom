@@ -176,13 +176,6 @@ enum
 #define RET_FINAL	(0x80)	// Used with RET and RETI in the destination slot: this is the final return value
 
 
-// Tags for address registers
-enum
-{
-	ATAG_GENERIC,			// pointer to something; we don't care what
-	ATAG_OBJECT,			// pointer to an object; will be followed by GC
-};
-
 enum EVMAbortException
 {
 	X_OTHER,
@@ -445,19 +438,11 @@ struct VMValue
 	VMValue(DObject *v)
 	{
 		a = v;
-		atag = ATAG_OBJECT;
 		Type = REGT_POINTER;
 	}
 	VMValue(void *v)
 	{
 		a = v;
-		atag = ATAG_GENERIC;
-		Type = REGT_POINTER;
-	}
-	VMValue(void *v, int tag)
-	{
-		a = v;
-		atag = tag;
 		Type = REGT_POINTER;
 	}
 	VMValue &operator=(const VMValue &o)
@@ -488,7 +473,6 @@ struct VMValue
 	VMValue &operator=(DObject *v)
 	{
 		a = v;
-		atag = ATAG_OBJECT;
 		Type = REGT_POINTER;
 		return *this;
 	}
@@ -640,7 +624,7 @@ struct VMFrame
 		return (VM_UBYTE *)this + ((ofs + NumRegA + 15) & ~15);
 	}
 
-	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VM_ATAG *&atag, VMValue *&param) const
+	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VMValue *&param) const
 	{
 		// Calling the individual functions produces suboptimal code. :(
 		param = GetParam();
@@ -648,7 +632,6 @@ struct VMFrame
 		s = (FString *)(f + NumRegF);
 		a = (void **)(s + NumRegS);
 		d = (int *)(a + NumRegA);
-		atag = (VM_ATAG *)(d + NumRegD);
 	}
 
 	void InitRegS();
@@ -658,18 +641,17 @@ struct VMRegisters
 {
 	VMRegisters(const VMFrame *frame)
 	{
-		frame->GetAllRegs(d, f, s, a, atag, param);
+		frame->GetAllRegs(d, f, s, a, param);
 	}
 
 	VMRegisters(const VMRegisters &o)
-		: d(o.d), f(o.f), s(o.s), a(o.a), atag(o.atag), param(o.param)
+		: d(o.d), f(o.f), s(o.s), a(o.a), param(o.param)
 	{ }
 
 	int *d;
 	double *f;
 	FString *s;
 	void **a;
-	VM_ATAG *atag;
 	VMValue *param;
 };
 
@@ -796,14 +778,12 @@ public:
 	void ParamObject(DObject *obj)
 	{
 		Reg.a[RegA] = obj;
-		Reg.atag[RegA] = ATAG_OBJECT;
 		RegA++;
 	}
 
-	void ParamPointer(void *ptr, VM_ATAG atag)
+	void ParamPointer(void *ptr)
 	{
 		Reg.a[RegA] = ptr;
-		Reg.atag[RegA] = atag;
 		RegA++;
 	}
 
@@ -1052,7 +1032,7 @@ class AActor;
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT(self, type);
 
-// for structs we need to check for ATAG_GENERIC instead of ATAG_OBJECT
+// for structs we cannot do a class validation
 #define PARAM_SELF_STRUCT_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
 	PARAM_POINTER(self, type);

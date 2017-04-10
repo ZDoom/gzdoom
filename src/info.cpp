@@ -76,7 +76,7 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 	{
 		ActionCycles.Clock();
 
-		VMValue params[3] = { self, stateowner, VMValue(info, ATAG_GENERIC) };
+		VMValue params[3] = { self, stateowner, VMValue(info) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-NULL, we need
 		// to set *stateret to NULL.

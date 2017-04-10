@@ -227,8 +227,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 		else
 		{
 			assert(p.Type == REGT_POINTER);
-			calleereg.a[rega] = p.a;
-			calleereg.atag[rega++] = p.atag;
+			calleereg.a[rega++] = p.a;
 		}
 	}
 }

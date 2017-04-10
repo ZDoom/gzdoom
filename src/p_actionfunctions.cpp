@@ -153,7 +153,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			VMReturn *wantret;
 			FStateParamInfo stp = { state, STATE_StateChain, PSP_WEAPON };
 
-			params[2] = VMValue(&stp, ATAG_GENERIC);
+			params[2] = VMValue(&stp);
 			retval = true;		// assume success
 			wantret = NULL;		// assume no return value wanted
 			numret = 0;

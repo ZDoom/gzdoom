@@ -2723,7 +2723,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 	PARAM_BOOL_DEF	(useammo)				
 	PARAM_BOOL_DEF	(transfer_translation);
 		
-	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetObject(nullptr);
 
 	if (missile == NULL)
 	{
@@ -2760,7 +2760,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	bool res = InitSpawnedItem(self, mo, flags);	// for an inventory item's use state
 	if (numret > 0) ret[0].SetInt(res);
-	if (numret > 1) ret[1].SetPointer(mo, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetObject(mo);
 	return MIN(numret, 2);
 
 }
@@ -2787,7 +2787,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 	PARAM_INT_DEF	(chance)	
 	PARAM_INT_DEF	(tid)		
 
-	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetObject(nullptr);
 
 	if (missile == NULL) 
 	{
@@ -2852,7 +2852,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 		mo->Angles.Yaw = angle;
 	}
 	if (numret > 0) ret[0].SetInt(res);
-	if (numret > 1) ret[1].SetPointer(mo, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetObject(mo);
 	return MIN(numret, 2);
 }
 
@@ -2872,7 +2872,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 		PARAM_FLOAT_DEF	(zvel)		
 		PARAM_BOOL_DEF	(useammo)	
 
-	if (numret > 1) ret[1].SetPointer(nullptr, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetObject(nullptr);
 
 	if (missile == NULL)
 	{
@@ -2934,7 +2934,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 		if (!P_CheckMissileSpawn(bo, self->radius)) bo = nullptr;
 
 		if (numret > 0) ret[0].SetInt(true);
-		if (numret > 1) ret[1].SetPointer(bo, ATAG_OBJECT);
+		if (numret > 1) ret[1].SetObject(bo);
 		return MIN(numret, 2);
 	} 
 	else
@@ -4363,7 +4363,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckForReload)
 
 	if (numret > 0)
 	{
-		ret->SetPointer(NULL, ATAG_STATE);
+		ret->SetPointer(NULL);
 		numret = 1;
 	}
 
@@ -4381,7 +4381,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckForReload)
 		// Go back to the refire frames, instead of continuing on to the reload frames.
 		if (numret != 0)
 		{
-			ret->SetPointer(jump, ATAG_STATE);
+			ret->SetPointer(jump);
 		}
 	}
 	else
@@ -4903,7 +4903,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 	}
 	if (numret > 0)
 	{
-		ret[0].SetPointer(NULL, ATAG_STATE);
+		ret[0].SetPointer(NULL);
 	}
 
 	if (!ref)
@@ -5039,7 +5039,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 			}
 			if (numret > 0)
 			{
-				ret[0].SetPointer(teleport_state, ATAG_STATE);
+				ret[0].SetPointer(teleport_state);
 			}
 			return numret;
 		}
@@ -5337,7 +5337,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Warp)
 	}
 	if (numret > 0)
 	{
-		ret[0].SetPointer(NULL, ATAG_STATE);
+		ret[0].SetPointer(NULL);
 	}
 
 	if ((flags & WARPF_USETID))
@@ -5363,7 +5363,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Warp)
 			// in this case, you have the statejump to help you handle all the success anyway.
 			if (numret > 0)
 			{
-				ret[0].SetPointer(success_state, ATAG_STATE);
+				ret[0].SetPointer(success_state);
 			}
 		}
 		else if (numret > 1)

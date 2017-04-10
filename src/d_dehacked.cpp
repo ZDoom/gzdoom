@@ -724,7 +724,7 @@ static int CreatePlaySoundFunc(VMFunctionBuilder &buildit, int value1, int value
 // misc1 = state, misc2 = probability
 static int CreateRandomJumpFunc(VMFunctionBuilder &buildit, int value1, int value2)
 { // A_Jump
-	int statereg = buildit.GetConstantAddress(FindState(value1), ATAG_STATE);
+	int statereg = buildit.GetConstantAddress(FindState(value1));
 
 	buildit.EmitParamInt(value2);									// maxchance
 	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, statereg);	// jumpto

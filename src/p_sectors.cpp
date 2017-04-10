@@ -112,7 +112,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindLowestFloorSurrounding)
 	vertex_t *v;
 	double h = self->FindLowestFloorSurrounding(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 	
@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorSurrounding)
 	vertex_t *v;
 	double h = self->FindHighestFloorSurrounding(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -224,7 +224,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestFloor)
 	vertex_t *v;
 	double h = self->FindNextHighestFloor(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -286,7 +286,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestFloor)
 	vertex_t *v;
 	double h = self->FindNextLowestFloor(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -348,7 +348,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestCeiling)
 	vertex_t *v;
 	double h = self->FindNextLowestCeiling(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -411,7 +411,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestCeiling)
 	vertex_t *v;
 	double h = self->FindNextHighestCeiling(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -459,7 +459,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingSurrounding)
 	vertex_t *v;
 	double h = self->FindLowestCeilingSurrounding(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -508,7 +508,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindHighestCeilingSurrounding)
 	vertex_t *v;
 	double h = self->FindHighestCeilingSurrounding(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -744,7 +744,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorPoint)
 	vertex_t *v;
 	double h = self->FindHighestFloorPoint(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -793,7 +793,7 @@ DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
 	vertex_t *v;
 	double h = self->FindLowestCeilingPoint(&v);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(v, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
@@ -1207,7 +1207,7 @@ DEFINE_ACTION_FUNCTION(_Sector, HighestCeilingAt)
 	sector_t *s;
 	double h = self->HighestCeilingAt(DVector2(x, y), &s);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(s, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
 }
 
@@ -1242,7 +1242,7 @@ DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
 	sector_t *s;
 	double h = self->LowestFloorAt(DVector2(x, y), &s);
 	if (numret > 0) ret[0].SetFloat(h);
-	if (numret > 1) ret[1].SetPointer(s, ATAG_GENERIC);
+	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
 }
 
@@ -1309,12 +1309,12 @@ DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
 
 	if (numret > 2)
 	{
-		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		ret[2].SetPointer(resultff);
 		numret = 3;
 	}
 	if (numret > 1)
 	{
-		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+		ret[1].SetPointer(resultsec);
 	}
 	if (numret > 0)
 	{
@@ -1387,12 +1387,12 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
 	if (numret > 2)
 	{
-		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		ret[2].SetPointer(resultff);
 		numret = 3;
 	}
 	if (numret > 1)
 	{
-		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+		ret[1].SetPointer(resultsec);
 	}
 	if (numret > 0)
 	{

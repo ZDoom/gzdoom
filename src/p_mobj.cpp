@@ -7247,8 +7247,8 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	AActor *missileactor;
 	if (numparam == 2) angle = self->Angles.Yaw;
 	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
-	if (numret > 0) ret[0].SetPointer(misl, ATAG_OBJECT);
-	if (numret > 1) ret[1].SetPointer(missileactor, ATAG_OBJECT), numret = 2;
+	if (numret > 0) ret[0].SetObject(misl);
+	if (numret > 1) ret[1].SetObject(missileactor), numret = 2;
 	return numret;
 }
 
@@ -7692,7 +7692,7 @@ FDropItem *AActor::GetDropItems() const
 DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_OBJECT(self->GetDropItems());
+	ACTION_RETURN_POINTER(self->GetDropItems());
 }
 
 double AActor::GetGravity() const

@@ -385,7 +385,7 @@ void FxExpression::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<siz
 		break;
 
 	case REGT_POINTER:
-		build->Emit(OP_EQA_K, !invert, op.RegNum, build->GetConstantAddress(0, ATAG_GENERIC));
+		build->Emit(OP_EQA_K, !invert, op.RegNum, build->GetConstantAddress(0));
 		break;
 
 	case REGT_STRING:
@@ -588,11 +588,7 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 	else if (regtype == REGT_POINTER)
 	{
 		VM_ATAG tag = ATAG_GENERIC;
-		if (value.Type == TypeState)
-		{
-			tag = ATAG_STATE;
-		}
-		else if (value.Type->GetLoadOp() != OP_LP)
+		if (value.Type->GetLoadOp() != OP_LP)
 		{
 			tag = ATAG_OBJECT;
 		}
@@ -2998,7 +2994,7 @@ texcheck:
 	auto * countptr = &ptr->Count;
 	ExpEmit bndp(build, REGT_POINTER);
 	ExpEmit bndc(build, REGT_INT);
-	build->Emit(OP_LKP, bndp.RegNum, build->GetConstantAddress(countptr, ATAG_GENERIC));
+	build->Emit(OP_LKP, bndp.RegNum, build->GetConstantAddress(countptr));
 	build->Emit(OP_LW, bndc.RegNum, bndp.RegNum, build->GetConstantInt(0));
 	build->Emit(OP_BOUND_R, to.RegNum, bndc.RegNum);
 	bndp.Free(build);
@@ -5536,7 +5532,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
-	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
 	if (min != nullptr && max != nullptr)
 	{
 		EmitParameter(build, min, ScriptPosition);
@@ -5657,7 +5653,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
 	build->EmitParamInt(0);
 	build->EmitParamInt(choices.Size() - 1);
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
@@ -5787,7 +5783,7 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
-	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
 	if (min != nullptr && max != nullptr)
 	{
 		EmitParameter(build, min, ScriptPosition);
@@ -5882,7 +5878,7 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
-	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
 	EmitParameter(build, mask, ScriptPosition);
 	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
 
@@ -6661,7 +6657,7 @@ ExpEmit FxGlobalVariable::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit obj(build, REGT_POINTER);
 
-	build->Emit(OP_LKP, obj.RegNum, build->GetConstantAddress((void*)(intptr_t)membervar->Offset, ATAG_GENERIC));
+	build->Emit(OP_LKP, obj.RegNum, build->GetConstantAddress((void*)(intptr_t)membervar->Offset));
 	if (AddressRequested)
 	{
 		return obj;
@@ -6744,34 +6740,34 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 	switch (CVar->GetRealType())
 	{
 	case CVAR_Int:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FIntCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FIntCVar *>(CVar)->Value));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_Color:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FColorCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FColorCVar *>(CVar)->Value));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_Float:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FFloatCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FFloatCVar *>(CVar)->Value));
 		build->Emit(OP_LSP, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_Bool:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FBoolCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FBoolCVar *>(CVar)->Value));
 		build->Emit(OP_LBU, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_String:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FStringCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FStringCVar *>(CVar)->Value));
 		build->Emit(OP_LCS, dest.RegNum, addr.RegNum, nul);
 		break;
 
 	case CVAR_DummyBool:
 	{
 		auto cv = static_cast<FFlagCVar *>(CVar);
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
 		build->Emit(OP_SRL_RI, dest.RegNum, dest.RegNum, cv->BitNum);
 		build->Emit(OP_AND_RK, dest.RegNum, dest.RegNum, build->GetConstantInt(1));
@@ -6781,7 +6777,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 	case CVAR_DummyInt:
 	{
 		auto cv = static_cast<FMaskCVar *>(CVar);
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value, ATAG_GENERIC));
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
 		build->Emit(OP_AND_RK, dest.RegNum, dest.RegNum, build->GetConstantInt(cv->BitVal));
 		build->Emit(OP_SRL_RI, dest.RegNum, dest.RegNum, cv->BitNum);
@@ -8967,7 +8963,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			{
 				// pass self as stateowner, otherwise all attempts of the subfunction to retrieve a state from a name would fail.
 				build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
-				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(nullptr, ATAG_GENERIC));
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(nullptr));
 			}
 			count += 2;
 		}
@@ -10690,9 +10686,9 @@ int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numpar
 			// Let the caller check this. Making this an error with a message is only taking away options from the user.
 			cls = nullptr;
 		}
-		ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);
+		ret->SetObject(const_cast<PClass *>(cls));
 	}
-	else ret->SetPointer(nullptr, ATAG_OBJECT);
+	else ret->SetObject(nullptr);
 	return 1;
 }
 

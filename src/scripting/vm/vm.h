@@ -181,20 +181,6 @@ enum
 {
 	ATAG_GENERIC,			// pointer to something; we don't care what
 	ATAG_OBJECT,			// pointer to an object; will be followed by GC
-
-	// The following are all for documentation during debugging and are
-	// functionally no different than ATAG_GENERIC (meaning they are useless because they trigger asserts all over the place.)
-
-	/*
-	ATAG_FRAMEPOINTER,		// pointer to extra stack frame space for this function
-	ATAG_DREGISTER,			// pointer to a data register
-	ATAG_FREGISTER,			// pointer to a float register
-	ATAG_SREGISTER,			// pointer to a string register
-	ATAG_AREGISTER,			// pointer to an address register
-	*/
-
-	ATAG_RNG,				// pointer to FRandom
-	ATAG_STATE  = ATAG_GENERIC,			// pointer to FState (cannot have its own type because there's no means to track inside the VM.)
 };
 
 enum EVMAbortException
@@ -366,6 +352,7 @@ struct VMReturn
 		assert(RegType == REGT_STRING);
 		*(FString *)Location = val;
 	}
+
 	void SetPointer(void *val, int tag)
 	{
 		assert(RegType == REGT_POINTER);
@@ -373,6 +360,26 @@ struct VMReturn
 		if (TagOfs != 0)
 		{
 			*((VM_ATAG *)Location + TagOfs) = tag;
+		}
+	}
+
+	void SetPointer(void *val)
+	{
+		assert(RegType == REGT_POINTER);
+		*(void **)Location = val;
+		if (TagOfs != 0)
+		{
+			*((VM_ATAG *)Location + TagOfs) = ATAG_GENERIC;
+		}
+	}
+
+	void SetObject(DObject *val)
+	{
+		assert(RegType == REGT_POINTER);
+		*(void **)Location = val;
+		if (TagOfs != 0)
+		{
+			*((VM_ATAG *)Location + TagOfs) = ATAG_OBJECT;
 		}
 	}
 
@@ -852,7 +859,17 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 // variable name <x> at position <p>
 void NullParam(const char *varname);
 
+#ifdef _DEBUG
+bool AssertObject(void * ob);
+#endif
+
 #define PARAM_NULLCHECK(ptr, var) (ptr == nullptr? NullParam(#var), ptr : ptr)
+
+#define ASSERTINT(p)					assert((p).Type == REGT_INT)
+#define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
+#define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
+#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && AssertObject(p.a))
+#define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER)
 
 // For required parameters.
 #define PARAM_INT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); int x = param[p].i;
@@ -868,19 +885,13 @@ void NullParam(const char *varname);
 #define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(param[p].Type == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
 #define PARAM_POINTERTYPE_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type x = (type )param[p].a;
-#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
-#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
+#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && AssertObject(param[p].a)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
+#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && AssertObject(param[p].a)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 #define PARAM_POINTER_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x);
-#define PARAM_OBJECT_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
-#define PARAM_CLASS_NOT_NULL_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
+#define PARAM_OBJECT_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (AssertObject(param[p].a))); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
+#define PARAM_CLASS_NOT_NULL_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (AssertObject(param[p].a))); base::MetaClass *x = (base::MetaClass *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 
 #define PARAM_EXISTS(p)					((p) < numparam)
-#define ASSERTINT(p)					assert((p).Type == REGT_INT)
-#define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
-#define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
-#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_OBJECT || (p).a == nullptr))
-#define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER && (p).atag == ATAG_GENERIC)
-#define ASSERTSTATE(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_GENERIC || (p).atag == ATAG_STATE))
 
 #define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
 #define PARAM_BOOL_DEF_AT(p,x)			bool x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = !!param[p].i; } else { ASSERTINT(defaultparam[p]); x = !!defaultparam[p].i; }
@@ -1030,9 +1041,9 @@ struct AFuncDesc
 
 class AActor;
 
-#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
-#define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_GENERIC); return 1; } return 0; } while(0)
-#define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_OBJECT); return 1; } return 0; } while(0)
+#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
+#define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
+#define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetObject(state); return 1; } return 0; } while(0)
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC2(v) do { DVector2 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector2(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)

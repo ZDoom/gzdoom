@@ -110,13 +110,13 @@ begin:
 		NEXTOP;
 
 	OP(CLSS):
-		ASSERTA(a); ASSERTO(B);
+		ASSERTA(a); ASSERTA(B);
 		reg.a[a] = ((DObject*)reg.a[B])->GetClass();	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 
 	OP(META):
-		ASSERTA(a); ASSERTO(B);
+		ASSERTA(a); ASSERTA(B);
 		reg.a[a] = ((DObject*)reg.a[B])->GetClass()->Meta;	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
@@ -657,7 +657,6 @@ begin:
 
 	OP(CALL_K):
 		ASSERTKA(a);
-		assert(konstatag[a] == ATAG_OBJECT);
 		ptr = konsta[a].o;
 		goto Do_CALL;
 	OP(CALL):
@@ -713,7 +712,6 @@ begin:
 		NEXTOP;
 	OP(TAIL_K):
 		ASSERTKA(a);
-		assert(konstatag[a] == ATAG_OBJECT);
 		ptr = konsta[a].o;
 		goto Do_TAILCALL;
 	OP(TAIL):
@@ -851,7 +849,7 @@ begin:
 		else if (a == 1)
 		{
 			ASSERTKA(B);
-			assert(konstatag[B] == ATAG_OBJECT);
+			assert(AssertObject(konsta[B].o));
 			ThrowVMException((VMException *)konsta[B].o);
 		}
 		else
@@ -1709,7 +1707,6 @@ begin:
 				{
 					assert(pc->a == 3);
 					ASSERTKA(b);
-					assert(konstatag[b] == ATAG_OBJECT);
 					type = (PClass *)konsta[b].o;
 				}
 				ASSERTA(pc->c);
@@ -1831,16 +1828,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 	{
 		ASSERTS(a); ASSERTA(b);
 		if (reg.a[b] == nullptr) reg.s[a] = "null";
-		else if (reg.atag[b] == ATAG_OBJECT)
-		{
-			auto op = static_cast<DObject*>(reg.a[b]);
-			if (op->IsKindOf(RUNTIME_CLASS(PClass))) reg.s[a].Format("Class<%s>", static_cast<PClass*>(op)->TypeName.GetChars());
-			else reg.s[a].Format("Object<%p>", ((DObject*)reg.a[b])->GetClass()->TypeName.GetChars());
-		}
-		else
-		{
-			reg.s[a].Format("%s<%p>", "Pointer", reg.a[b]);
-		}
+		else reg.s[a].Format("%p", reg.a[b]);
 		break; 
 	}
 

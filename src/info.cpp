@@ -591,49 +591,6 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 //==========================================================================
 //
-// PClassActor :: ReplaceClassRef
-//
-//==========================================================================
-
-size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
-{
-	auto changed = Super::PointerSubstitution(oldclass, newclass);
-	for (unsigned i = 0; i < VisibleToPlayerClass.Size(); i++)
-	{
-		if (VisibleToPlayerClass[i] == oldclass)
-		{
-			VisibleToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-
-	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
-	{
-		if (ForbiddenToPlayerClass[i] == oldclass)
-		{
-			ForbiddenToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
-	{
-		if (RestrictedToPlayerClass[i] == oldclass)
-		{
-			RestrictedToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-	AInventory *def = dyn_cast<AInventory>((AActor*)Defaults);
-	if (def != NULL)
-	{
-		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
-	}
-
-	return changed;
-}
-
-//==========================================================================
-//
 // DmgFactors :: CheckFactor
 //
 // Checks for the existance of a certain damage type. If that type does not

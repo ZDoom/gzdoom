@@ -1016,7 +1016,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 	ti = DecoDerivedClass(sc, parent, typeName);
 	ti->bDecorateClass = true;	// we only set this for 'modern' DECORATE. The original stuff  is so limited that it cannot do anything that may require flagging.
 
-	ti->DoomEdNum = -1;
+	ti->ActorInfo()->DoomEdNum = -1;
 	return ti;
 }
 
@@ -1108,7 +1108,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 	try
 	{
 		PClassActor *info = CreateNewActor(sc, typeName, parentName);
-		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
+		info->ActorInfo()->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 
 		if (!info->SetReplacement(replaceName))

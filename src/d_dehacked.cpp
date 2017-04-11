@@ -876,7 +876,7 @@ static int PatchThing (int thingy)
 			else
 			{
 				info = GetDefaultByType (type);
-				ednum = &type->DoomEdNum;
+				ednum = &type->ActorInfo()->DoomEdNum;
 			}
 		}
 	}

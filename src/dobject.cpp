@@ -98,9 +98,10 @@ CCMD (dumpactors)
 		PClassActor *acls = dyn_cast<PClassActor>(cls);
 		if (acls != NULL)
 		{
+			auto ainfo = acls->ActorInfo();
 			Printf("%s\t%i\t%i\t%s\t%s\n",
-				acls->TypeName.GetChars(), acls->DoomEdNum,
-				acls->SpawnID, filters[acls->GameFilter & 31],
+				acls->TypeName.GetChars(), ainfo->DoomEdNum,
+				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
 				acls->SourceLumpName.GetChars());
 		}
 		else if (cls != NULL)

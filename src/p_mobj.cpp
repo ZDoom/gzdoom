@@ -7822,7 +7822,7 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	damage = int(damage * DamageFactor);
 	if (damage > 0)
 	{
-		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, GetClass()->DamageFactors);
+		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, &GetClass()->DamageFactors);
 	}
 	return damage;
 }
@@ -8273,10 +8273,10 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 	PARAM_INT(damage);
 	PARAM_INT(defdamage);
 
-	DmgFactors *df = itemcls->DamageFactors;
-	if (df != nullptr && df->CountUsed() != 0)
+	DmgFactors &df = itemcls->DamageFactors;
+	if (df.Size() != 0)
 	{
-		ACTION_RETURN_INT(df->Apply(damagetype, damage));
+		ACTION_RETURN_INT(df.Apply(damagetype, damage));
 	}
 	else
 	{

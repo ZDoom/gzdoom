@@ -2889,7 +2889,7 @@ void ZCCCompiler::CompileStates()
 			}
 			else
 			{
-				flags = static_cast<PClassActor *>(c->Type())->DefaultStateUsage;
+				flags = static_cast<PClassActor *>(c->Type())->ActorInfo()->DefaultStateUsage;
 			}
 			auto st = s->Body;
 			if (st != nullptr) do

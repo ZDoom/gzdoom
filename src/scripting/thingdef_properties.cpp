@@ -391,10 +391,9 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_QUARTERGRAVITY:
 		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
-		if (info->DamageFactors)
+		for (auto &df : info->DamageFactors)
 		{
-			double *df = info->DamageFactors->CheckKey(NAME_Fire);
-			return df && (*df) == 0.5;
+			if (df.first == NAME_Fire) return df.second == 0.5;
 		}
 		return false;
 
@@ -464,33 +463,34 @@ static bool PointerCheck(PType *symtype, PType *checktype)
 DEFINE_INFO_PROPERTY(game, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
+	auto & GameFilter = info->ActorInfo()->GameFilter;
 	if (!stricmp(str, "Doom"))
 	{
-		info->GameFilter |= GAME_Doom;
+		GameFilter |= GAME_Doom;
 	}
 	else if (!stricmp(str, "Heretic"))
 	{
-		info->GameFilter |= GAME_Heretic;
+		GameFilter |= GAME_Heretic;
 	}
 	else if (!stricmp(str, "Hexen"))
 	{
-		info->GameFilter |= GAME_Hexen;
+		GameFilter |= GAME_Hexen;
 	}
 	else if (!stricmp(str, "Raven"))
 	{
-		info->GameFilter |= GAME_Raven;
+		GameFilter |= GAME_Raven;
 	}
 	else if (!stricmp(str, "Strife"))
 	{
-		info->GameFilter |= GAME_Strife;
+		GameFilter |= GAME_Strife;
 	}
 	else if (!stricmp(str, "Chex"))
 	{
-		info->GameFilter |= GAME_Chex;
+		GameFilter |= GAME_Chex;
 	}
 	else if (!stricmp(str, "Any"))
 	{
-		info->GameFilter = GAME_Any;
+		GameFilter = GAME_Any;
 	}
 	else
 	{
@@ -508,7 +508,7 @@ DEFINE_INFO_PROPERTY(spawnid, I, Actor)
 	{
 		I_Error ("SpawnID must be in the range [0,65535]");
 	}
-	else info->SpawnID=(uint16_t)id;
+	else info->ActorInfo()->SpawnID=(uint16_t)id;
 }
 
 //==========================================================================
@@ -521,7 +521,7 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 	PROP_INT_PARM(id2, 2);
 
 	if (convid <= 0 || convid > 65535) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
-	else info->ConversationID=(uint16_t)convid;
+	else info->ActorInfo()->ConversationID=(uint16_t)convid;
 }
 
 //==========================================================================
@@ -559,7 +559,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 DEFINE_PROPERTY(defaultstateusage, I, Actor)
 {
 	PROP_INT_PARM(use, 0);
-	static_cast<PClassActor*>(bag.Info)->DefaultStateUsage = use;
+	static_cast<PClassActor*>(bag.Info)->ActorInfo()->DefaultStateUsage = use;
 
 }
 //==========================================================================
@@ -740,7 +740,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 	if (type == 0)
 	{
 		PROP_INT_PARM(trans, 1);
-		int max = 6;// (gameinfo.gametype == GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6 : 2;
+		int max = 6;
 		if (trans < 0 || trans > max)
 		{
 			I_Error ("Translation must be in the range [0,%d]", max);
@@ -1133,7 +1133,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 		{
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
-			if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
+			if ((bag.Info->ActorInfo()->GameFilter == GAME_Any || bag.Info->ActorInfo()->GameFilter & gameinfo.gametype) &&
 				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,

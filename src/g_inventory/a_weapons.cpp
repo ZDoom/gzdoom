@@ -985,7 +985,8 @@ void FWeaponSlots::AddExtraWeapons()
 			continue;
 		}
 		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
-		if ((cls->GameFilter == GAME_Any || (cls->GameFilter & gameinfo.gametype)) &&
+		auto gf = cls->ActorInfo()->GameFilter;
+		if ((gf == GAME_Any || (gf & gameinfo.gametype)) &&
 			cls->ActorInfo()->Replacement == nullptr &&		// Replaced weapons don't get slotted.
 			!(weapdef->WeaponFlags & WIF_POWERED_UP) &&
 			!LocateWeapon(cls, nullptr, nullptr)		// Don't duplicate it if it's already present.
@@ -1470,8 +1471,8 @@ static int ntoh_cmp(const void *a, const void *b)
 {
 	PClassActor *c1 = *(PClassActor **)a;
 	PClassActor *c2 = *(PClassActor **)b;
-	int g1 = c1->GameFilter == GAME_Any ? 1 : (c1->GameFilter & gameinfo.gametype) ? 0 : 2;
-	int g2 = c2->GameFilter == GAME_Any ? 1 : (c2->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g1 = c1->ActorInfo()->GameFilter == GAME_Any ? 1 : (c1->ActorInfo()->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g2 = c2->ActorInfo()->GameFilter == GAME_Any ? 1 : (c2->ActorInfo()->GameFilter & gameinfo.gametype) ? 0 : 2;
 	if (g1 != g2)
 	{
 		return g1 - g2;

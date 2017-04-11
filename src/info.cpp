@@ -294,12 +294,7 @@ void PClassActor::StaticSetActorNums()
 
 PClassActor::PClassActor()
 {
-	GameFilter = GAME_Any;
-	SpawnID = 0;
-	DoomEdNum = -1;
 	StateList = NULL;
-	DamageFactors = NULL;
-	PainChances = NULL;
 
 	DropItems = NULL;
 	// Record this in the master list.
@@ -314,14 +309,6 @@ PClassActor::PClassActor()
 
 PClassActor::~PClassActor()
 {
-	if (DamageFactors != NULL)
-	{
-		delete DamageFactors;
-	}
-	if (PainChances != NULL)
-	{
-		delete PainChances;
-	}
 	if (StateList != NULL)
 	{
 		StateList->Destroy();
@@ -340,26 +327,14 @@ void PClassActor::DeriveData(PClass *newclass)
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
-	newa->DefaultStateUsage = DefaultStateUsage;
 	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;
 
 	newa->VisibleToPlayerClass = VisibleToPlayerClass;
 
-	if (DamageFactors != NULL)
-	{
-		// copy damage factors from parent
-		newa->DamageFactors = new DmgFactors;
-		*newa->DamageFactors = *DamageFactors;
-	}
-	if (PainChances != NULL)
-	{
-		// copy pain chances from parent
-		newa->PainChances = new PainChanceList;
-		*newa->PainChances = *PainChances;
-	}
-
+	newa->DamageFactors = DamageFactors;
+	newa->PainChances = PainChances;
 	newa->DisplayName = DisplayName;
 }
 
@@ -450,16 +425,18 @@ void PClassActor::RegisterIDs()
 	}
 
 	// Conversation IDs have never been filtered by game so we cannot start doing that.
+	auto ConversationID = ActorInfo()->ConversationID;
 	if (ConversationID > 0)
 	{
 		StrifeTypes[ConversationID] = cls;
 		if (cls != this) 
 		{
-			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", ConversationID, cls->TypeName.GetChars());
 		}
 	}
-	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
+	if (ActorInfo()->GameFilter == GAME_Any || (ActorInfo()->GameFilter & gameinfo.gametype))
 	{
+		auto SpawnID = ActorInfo()->SpawnID;
 		if (SpawnID > 0)
 		{
 			SpawnableThings[SpawnID] = cls;
@@ -468,6 +445,7 @@ void PClassActor::RegisterIDs()
 				Printf(TEXTCOLOR_RED"Spawn ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
 			}
 		}
+		auto DoomEdNum = ActorInfo()->DoomEdNum;
 		if (DoomEdNum != -1)
 		{
 			FDoomEdEntry *oldent = DoomEdMap.CheckKey(DoomEdNum);
@@ -602,11 +580,12 @@ DEFINE_ACTION_FUNCTION(AActor, GetReplacee)
 
 void PClassActor::SetDamageFactor(FName type, double factor)
 {
-	if (DamageFactors == NULL)
+	for (auto & p : DamageFactors)
 	{
-		DamageFactors = new DmgFactors;
+		if (p.first == type) p.second = factor;
+		return;
 	}
-	DamageFactors->Insert(type, factor);
+	DamageFactors.Push({ type, factor });
 }
 
 //==========================================================================
@@ -617,17 +596,15 @@ void PClassActor::SetDamageFactor(FName type, double factor)
 
 void PClassActor::SetPainChance(FName type, int chance)
 {
+	for (auto & p : PainChances)
+	{
+		if (p.first == type) p.second = chance;
+		return;
+	}
+
 	if (chance >= 0) 
 	{
-		if (PainChances == NULL)
-		{
-			PainChances = new PainChanceList;
-		}
-		PainChances->Insert(type, MIN(chance, 256));
-	}
-	else if (PainChances != NULL)
-	{
-		PainChances->Remove(type);
+		PainChances.Push({ type, MIN(chance, 256) });
 	}
 }
 
@@ -642,13 +619,22 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 int DmgFactors::Apply(FName type, int damage)
 {
-	auto pdf = CheckKey(type);
-	if (pdf == NULL && type != NAME_None)
+	double factor = -1.;
+	for (auto & p : *this)
 	{
-		pdf = CheckKey(NAME_None);
+		if (p.first == type)
+		{
+			factor = p.second;
+			break;
+		}
+		if (p.first == NAME_None)
+		{
+			factor = p.second;
+		}
 	}
-	if (!pdf) return damage;
-	return int(damage * *pdf);
+
+	if (factor < 0.) return damage;
+	return int(damage * factor);
 }
 
 
@@ -755,13 +741,15 @@ FString DamageTypeDefinition::GetObituary(FName type)
 
 double DamageTypeDefinition::GetMobjDamageFactor(FName type, DmgFactors const * const factors)
 {
+	double defaultfac = -1.;
 	if (factors)
 	{
 		// If the actor has named damage factors, look for a specific factor
-
-		auto pdf = factors->CheckKey(type);
-		if (pdf) return *pdf; // type specific damage type
-		
+		for (auto & p : *factors)
+		{
+			if (p.first == type) return p.second; // type specific damage type
+			if (p.first == NAME_None) defaultfac = p.second;
+		}
 		// If this was nonspecific damage, don't fall back to nonspecific search
 		if (type == NAME_None) return 1.;
 	}
@@ -779,18 +767,17 @@ double DamageTypeDefinition::GetMobjDamageFactor(FName type, DmgFactors const * 
 	}
 	
 	{
-		auto pdf  = factors->CheckKey(NAME_None);
 		DamageTypeDefinition *dtd = Get(type);
 		// Here we are looking for modifications to untyped damage
 		// If the calling actor defines untyped damage factor, that is contained in "pdf".
-		if (pdf) // normal damage available
+		if (defaultfac >= 0.) // normal damage available
 		{
 			if (dtd)
 			{
 				if (dtd->ReplaceFactor) return dtd->DefaultFactor; // use default instead of untyped factor
-				return *pdf * dtd->DefaultFactor; // use default as modification of untyped factor
+				return defaultfac * dtd->DefaultFactor; // use default as modification of untyped factor
 			}
-			return *pdf; // there was no default, so actor default is used
+			return defaultfac; // there was no default, so actor default is used
 		}
 		else if (dtd)
 		{

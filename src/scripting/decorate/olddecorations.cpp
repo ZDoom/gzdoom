@@ -124,7 +124,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	bag.ClassName = type->TypeName;
 #endif
 
-	type->GameFilter = GAME_Any;
 	sc.MustGetStringName("{");
 
 	memset (&extra, 0, sizeof(extra));
@@ -334,7 +333,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
 			}
-			bag.Info->DoomEdNum = (int16_t)sc.Number;
+			bag.Info->ActorInfo()->DoomEdNum = (int16_t)sc.Number;
 		}
 		else if (sc.Compare ("SpawnNum"))
 		{
@@ -343,7 +342,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("SpawnNum must be in the range [0,255]");
 			}
-			bag.Info->SpawnID = (uint8_t)sc.Number;
+			bag.Info->ActorInfo()->SpawnID = (uint8_t)sc.Number;
 		}
 		else if (sc.Compare ("Sprite") || (
 			(def == DEF_BreakableDecoration || def == DEF_Projectile) &&
@@ -622,7 +621,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 	char *token = strtok (sc.String, ",\t\n\r");
 
 	memset (&state, 0, sizeof(state));
-	state.UseFlags = info->DefaultStateUsage;
+	state.UseFlags = info->ActorInfo()->DefaultStateUsage;
 
 	while (token != nullptr)
 	{

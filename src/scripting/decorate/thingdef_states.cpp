@@ -142,7 +142,7 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	char lastsprite[5] = "";
 	FxExpression *ScriptCode;
 	FArgumentList *args = nullptr;
-	int flagdef = actor->DefaultStateUsage;
+	int flagdef = actor->ActorInfo()->DefaultStateUsage;
 	FScriptPosition scp;
 
 	if (sc.CheckString("("))

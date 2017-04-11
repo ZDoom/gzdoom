@@ -916,7 +916,6 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
-	PainChanceList * pc = NULL;
 	bool justhit = false;
 	bool plrDontThrust = false;
 	bool invulpain = false;
@@ -1500,14 +1499,13 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
 		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
 	{
-		pc = target->GetClass()->PainChances;
 		painchance = target->PainChance;
-		if (pc != NULL)
+		for (auto & pc : target->GetClass()->PainChances)
 		{
-			int *ppc = pc->CheckKey(mod);
-			if (ppc != NULL)
+			if (pc.first == mod)
 			{
-				painchance = *ppc;
+				painchance = pc.second;
+				break;
 			}
 		}
 

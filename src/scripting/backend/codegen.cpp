@@ -10838,16 +10838,16 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 	auto aclass = dyn_cast<PClassActor>(ctx.Class);
 
 	// This expression type can only be used from actors, for everything else it has already produced a compile error.
-	assert(aclass != nullptr && aclass->NumOwnedStates > 0);
+	assert(aclass != nullptr && aclass->ActorInfo()->NumOwnedStates > 0);
 
-	if (aclass->NumOwnedStates <= index)
+	if (aclass->ActorInfo()->NumOwnedStates <= index)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s: Attempt to jump to non existing state index %d", 
 			ctx.Class->TypeName.GetChars(), index);
 		delete this;
 		return nullptr;
 	}
-	int symlabel = StateLabels.AddPointer(aclass->OwnedStates + index);
+	int symlabel = StateLabels.AddPointer(aclass->ActorInfo()->OwnedStates + index);
 	FxExpression *x = new FxConstant(symlabel, ScriptPosition);
 	x->ValueType = TypeStateLabel;
 	delete this;
@@ -10912,8 +10912,8 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		SAFE_RESOLVE(Index, ctx);
 	}
 	auto aclass = dyn_cast<PClassActor>(ctx.Class);
-	assert(aclass != nullptr && aclass->NumOwnedStates > 0);
-	symlabel = StateLabels.AddPointer(aclass->OwnedStates + ctx.StateIndex);
+	assert(aclass != nullptr && aclass->ActorInfo()->NumOwnedStates > 0);
+	symlabel = StateLabels.AddPointer(aclass->ActorInfo()->OwnedStates + ctx.StateIndex);
 	ValueType = TypeStateLabel;
 	return this;
 }

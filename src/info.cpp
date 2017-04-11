@@ -162,15 +162,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 		catch (CVMAbortException &err)
 		{
 			err.MaybePrintMessage();
-			auto owner = FState::StaticFindStateOwner(this);
-			int offs = int(this - owner->OwnedStates);
 			const char *callinfo = "";
 			if (info != nullptr && info->mStateType == STATE_Psprite)
 			{
 				if (stateowner->IsKindOf(NAME_Weapon) && stateowner != self) callinfo = "weapon ";
 				else callinfo = "overlay ";
 			}
-			err.stacktrace.AppendFormat("Called from %sstate %s.%d in %s\n", callinfo, owner->TypeName.GetChars(), offs, stateowner->GetClass()->TypeName.GetChars());
+			err.stacktrace.AppendFormat("Called from %sstate %s in %s\n", callinfo, FState::StaticGetStateName(this), stateowner->GetClass()->TypeName.GetChars());
 			throw;
 			throw;
 		}
@@ -299,8 +297,6 @@ PClassActor::PClassActor()
 	GameFilter = GAME_Any;
 	SpawnID = 0;
 	DoomEdNum = -1;
-	OwnedStates = NULL;
-	NumOwnedStates = 0;
 	StateList = NULL;
 	DamageFactors = NULL;
 	PainChances = NULL;

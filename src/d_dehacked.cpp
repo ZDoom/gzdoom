@@ -2843,7 +2843,7 @@ static bool LoadDehSupp ()
 
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
-					if (s.State == NULL || s.State + sc.Number > actortype->OwnedStates + actortype->NumOwnedStates)
+					if (s.State == NULL || !actortype->OwnsState(s.State + sc.Number))
 					{
 						sc.ScriptError("Invalid state range in '%s'", type->TypeName.GetChars());
 					}

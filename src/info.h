@@ -242,6 +242,8 @@ struct FActorInfo
 	TArray<FInternalLightAssociation *> LightAssociations;
 	PClassActor *Replacement = nullptr;
 	PClassActor *Replacee = nullptr;
+	FState *OwnedStates = nullptr;
+	int NumOwnedStates = 0;
 
 	FActorInfo() {}
 	FActorInfo(const FActorInfo & other)
@@ -284,14 +286,13 @@ public:
 
 	bool OwnsState(const FState *state)
 	{
-		return state >= OwnedStates && state < OwnedStates + NumOwnedStates;
+		auto i = ActorInfo();
+		return state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
 	}
 
 	PClassActor *GetReplacement(bool lookskill=true);
 	PClassActor *GetReplacee(bool lookskill=true);
 
-	FState *OwnedStates;
-	int NumOwnedStates;
 	uint8_t GameFilter;
 	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.
 	uint16_t SpawnID;

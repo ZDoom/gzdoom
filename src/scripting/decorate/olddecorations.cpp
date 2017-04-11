@@ -130,8 +130,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	memset (&extra, 0, sizeof(extra));
 	ParseInsideDecoration (bag, (AActor *)(type->Defaults), extra, def, sc, StateArray, SourceLines);
 
-	bag.Info->NumOwnedStates = StateArray.Size();
-	if (bag.Info->NumOwnedStates == 0)
+	if (StateArray.Size() == 0)
 	{
 		sc.ScriptError ("%s does not define any animation frames", typeName.GetChars() );
 	}
@@ -155,14 +154,13 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		FScriptPosition icepos = SourceLines[extra.IceDeathEnd - 1];
 		StateArray.Push (icecopy);
 		SourceLines.Push(icepos);
-		type->NumOwnedStates += 1;
 	}
 
 	FState *states;
-	states = type->OwnedStates = (FState*)ClassDataAllocator.Alloc(type->NumOwnedStates * sizeof(FState));
+	states = type->ActorInfo()->OwnedStates = (FState*)ClassDataAllocator.Alloc(StateArray.Size() * sizeof(FState));
 	SaveStateSourceLines(states, SourceLines);
-	memcpy (states, &StateArray[0], type->NumOwnedStates * sizeof(states[0]));
-	if (type->NumOwnedStates == 1)
+	memcpy (states, &StateArray[0], StateArray.Size() * sizeof(states[0]));
+	if (StateArray.Size() == 1)
 	{
 		states->Tics = -1;
 		states->TicRange = 0;
@@ -171,7 +169,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	else
 	{
 		size_t i;
-	//	auto 
 
 		// Spawn states loop endlessly
 		for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
@@ -281,13 +278,13 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 				states[i].NextState = &states[i+1];
 			}
 			FState *state = &states[i];
-			state->NextState = &states[type->NumOwnedStates-1];
+			state->NextState = &states[StateArray.Size() - 1];
 			state->Tics = 5;
 			state->TicRange = 0;
 			state->Misc1 = 0;
 			state->SetAction("A_FreezeDeath");
 
-			i = type->NumOwnedStates - 1;
+			i = StateArray.Size() - 1;
 			state->NextState = &states[i];
 			state->Tics = 1;
 			state->TicRange = 0;
@@ -310,6 +307,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	}
 	bag.statedef.SetStateLabel("Spawn", &states[extra.SpawnStart]);
 	bag.statedef.InstallStates (type, ((AActor *)(type->Defaults)));
+	bag.Info->ActorInfo()->NumOwnedStates = StateArray.Size();
 }
 
 //==========================================================================

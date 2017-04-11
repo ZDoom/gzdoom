@@ -133,7 +133,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 FString FState::StaticGetStateName(const FState *state)
 {
 	auto so = FState::StaticFindStateOwner(state);
-	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->OwnedStates));
+	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->ActorInfo()->OwnedStates));
 }
 
 //==========================================================================
@@ -816,7 +816,7 @@ void FStateDefinitions::FixStatePointers (PClassActor *actor, TArray<FStateDefin
 		if (list[i].DefineFlags == SDF_INDEX)
 		{
 			size_t v = (size_t)list[i].State;
-			list[i].State = actor->OwnedStates + v - 1;
+			list[i].State = actor->ActorInfo()->OwnedStates + v - 1;
 			list[i].DefineFlags = SDF_STATE;
 		}
 		if (list[i].Children.Size() > 0)
@@ -1012,8 +1012,8 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 		int i;
 
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
-		actor->OwnedStates = realstates;
-		actor->NumOwnedStates = count;
+		actor->ActorInfo()->OwnedStates = realstates;
+		actor->ActorInfo()->NumOwnedStates = count;
 		SaveStateSourceLines(realstates, SourceLines);
 
 		// adjust the state pointers

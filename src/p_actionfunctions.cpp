@@ -3317,9 +3317,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 			{
 				mo->Translation = self->Translation;
 			}
-			if (i < mo->GetClass()->NumOwnedStates)
+			if (i < mo->GetInfo()->NumOwnedStates)
 			{
-				mo->SetState (mo->GetClass()->OwnedStates + i);
+				mo->SetState (mo->GetInfo()->OwnedStates + i);
 			}
 			mo->Vel.X = mult_h * pr_spawndebris.Random2() / 64.;
 			mo->Vel.Y = mult_h * pr_spawndebris.Random2() / 64.;

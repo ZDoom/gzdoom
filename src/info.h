@@ -177,6 +177,7 @@ public:
 	bool CallAction(AActor *self, AActor *stateowner, FStateParamInfo *stateinfo, FState **stateret);
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
+	static FString StaticGetStateName(const FState *state);
 	static FRandom pr_statetics;
 };
 

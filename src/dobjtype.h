@@ -634,6 +634,7 @@ public:
 	void BuildArrayPointers();
 	void InitMeta(); 
 	void DestroySpecials(void *addr);
+	void DestroyMeta(void *addr);
 	const PClass *NativeClass() const;
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.

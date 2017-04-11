@@ -130,8 +130,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 	{
 		if (!(state->UseFlags & SUF_ITEM))
 		{
-			auto so = FState::StaticFindStateOwner(state);
-			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in CustomInventory state chains.\n", so->TypeName.GetChars(), int(state - so->OwnedStates));
+			Printf(TEXTCOLOR_RED "State %s not flagged for use in CustomInventory state chains.\n", FState::StaticGetStateName(state));
 			return false;
 		}
 
@@ -144,8 +143,8 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(state);
-				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), int(state - owner->OwnedStates), state->ActionFunc->PrintableName.GetChars());
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %s to %s which accesses user variables. The action function has been removed from this state\n",
+					FState::StaticGetStateName(state), state->ActionFunc->PrintableName.GetChars());
 				state->ActionFunc = nullptr;
 			}
 
@@ -188,9 +187,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			catch (CVMAbortException &err)
 			{
 				err.MaybePrintMessage();
-				auto owner = FState::StaticFindStateOwner(state);
-				int offs = int(state - owner->OwnedStates);
-				err.stacktrace.AppendFormat("Called from state %s.%d in inventory state chain in %s\n", owner->TypeName.GetChars(), offs, GetClass()->TypeName.GetChars());
+				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state), GetClass()->TypeName.GetChars());
 				throw;
 			}
 

@@ -350,8 +350,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 		if (!(newstate->UseFlags & (SUF_OVERLAY|SUF_WEAPON)))	// Weapon and overlay are mostly the same, the main difference is that weapon states restrict the self pointer to class Actor.
 		{
-			auto so = FState::StaticFindStateOwner(newstate);
-			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in overlays or weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+			Printf(TEXTCOLOR_RED "State %s not flagged for use in overlays or weapons\n", FState::StaticGetStateName(newstate));
 			State = nullptr;
 			Destroy();
 			return;
@@ -360,8 +359,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		{
 			if (Caller->IsKindOf(NAME_Weapon))
 			{
-				auto so = FState::StaticFindStateOwner(newstate);
-				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", FState::StaticGetStateName(newstate));
 				State = nullptr;
 				Destroy();
 				return;
@@ -414,9 +412,8 @@ void DPSprite::SetState(FState *newstate, bool pending)
 			if (newstate->ActionFunc != nullptr && newstate->ActionFunc->Unsafe)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
-				auto owner = FState::StaticFindStateOwner(newstate);
-				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), int(newstate - owner->OwnedStates), newstate->ActionFunc->PrintableName.GetChars());
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %sd to %s which accesses user variables. The action function has been removed from this state\n", 
+					FState::StaticGetStateName(newstate), newstate->ActionFunc->PrintableName.GetChars());
 				newstate->ActionFunc = nullptr;
 			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
@@ -1512,11 +1509,11 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 		PClassActor *cls = weapon->GetClass();
 		while (cls != RUNTIME_CLASS(AWeapon))
 		{
-			if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
+			if (cls->OwnsState(flashstate))
 			{
 				// The flash state belongs to this class.
 				// Now let's check if the actually wanted state does also
-				if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
+				if (cls->OwnsState(flashstate + index))
 				{
 					// we're ok so set the state
 					P_SetPsprite(player, PSP_FLASH, flashstate + index, true);

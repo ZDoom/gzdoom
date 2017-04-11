@@ -318,10 +318,6 @@ PClassActor::PClassActor()
 
 PClassActor::~PClassActor()
 {
-	if (OwnedStates != NULL)
-	{
-		delete[] OwnedStates;
-	}
 	if (DamageFactors != NULL)
 	{
 		delete DamageFactors;

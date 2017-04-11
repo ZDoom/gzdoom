@@ -86,7 +86,7 @@ static const char *RenderStyles[] =
 	"STYLE_Translucent",
 	"STYLE_Add",
 	//"STYLE_Shaded",
-	NULL
+	nullptr
 };
 
 // CODE --------------------------------------------------------------------
@@ -158,66 +158,69 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		type->NumOwnedStates += 1;
 	}
 
-	type->OwnedStates = new FState[type->NumOwnedStates];
-	SaveStateSourceLines(type->OwnedStates, SourceLines);
-	memcpy (type->OwnedStates, &StateArray[0], type->NumOwnedStates * sizeof(type->OwnedStates[0]));
+	FState *states;
+	states = type->OwnedStates = (FState*)ClassDataAllocator.Alloc(type->NumOwnedStates * sizeof(FState));
+	SaveStateSourceLines(states, SourceLines);
+	memcpy (states, &StateArray[0], type->NumOwnedStates * sizeof(states[0]));
 	if (type->NumOwnedStates == 1)
 	{
-		type->OwnedStates->Tics = -1;
-		type->OwnedStates->TicRange = 0;
-		type->OwnedStates->Misc1 = 0;
+		states->Tics = -1;
+		states->TicRange = 0;
+		states->Misc1 = 0;
 	}
 	else
 	{
 		size_t i;
+	//	auto 
 
 		// Spawn states loop endlessly
 		for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
 		{
-			type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+			states[i].NextState = &states[i+1];
 		}
-		type->OwnedStates[i].NextState = &type->OwnedStates[extra.SpawnStart];
+		states[i].NextState = &states[extra.SpawnStart];
 
 		// Death states are one-shot and freeze on the final state
 		if (extra.DeathEnd != 0)
 		{
 			for (i = extra.DeathStart; i < extra.DeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
+			FState *state = &states[i];
 			if (extra.bDiesAway || def == DEF_Projectile)
 			{
-				type->OwnedStates[i].NextState = NULL;
+				state->NextState = nullptr;
 			}
 			else
 			{
-				type->OwnedStates[i].Tics = -1;
-				type->OwnedStates[i].TicRange = 0;
-				type->OwnedStates[i].Misc1 = 0;
+				state->Tics = -1;
+				state->TicRange = 0;
+				state->Misc1 = 0;
 			}
 
 			if (def == DEF_Projectile)
 			{
 				if (extra.bExplosive)
 				{
-					type->OwnedStates[extra.DeathStart].SetAction("A_Explode");
+					states[extra.DeathStart].SetAction("A_Explode");
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				type->OwnedStates[extra.DeathStart].SetAction("A_Scream");
+				states[extra.DeathStart].SetAction("A_Scream");
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					type->OwnedStates[extra.DeathStart+1].SetAction("A_NoBlocking");
+					states[extra.DeathStart+1].SetAction("A_NoBlocking");
 				}
 				else
 				{
-					type->OwnedStates[extra.DeathStart].SetAction("A_ScreamAndUnblock");
+					states[extra.DeathStart].SetAction("A_ScreamAndUnblock");
 				}
 
 				if (extra.DeathHeight == 0)
@@ -226,7 +229,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 				}
 				((AActor*)(type->Defaults))->FloatVar("DeathHeight") = extra.DeathHeight;
 			}
-			bag.statedef.SetStateLabel("Death", &type->OwnedStates[extra.DeathStart]);
+			bag.statedef.SetStateLabel("Death", &states[extra.DeathStart]);
 		}
 
 		// Burn states are the same as death states, except they can optionally terminate
@@ -234,38 +237,39 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		{
 			for (i = extra.FireDeathStart; i < extra.FireDeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
+			FState *state = &states[i];
 			if (extra.bBurnAway)
 			{
-				type->OwnedStates[i].NextState = NULL;
+				state->NextState = nullptr;
 			}
 			else
 			{
-				type->OwnedStates[i].Tics = -1;
-				type->OwnedStates[i].TicRange = 0;
-				type->OwnedStates[i].Misc1 = 0;
+				state->Tics = -1;
+				state->TicRange = 0;
+				state->Misc1 = 0;
 			}
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveSound");
+			states[extra.FireDeathStart].SetAction("A_ActiveSound");
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				type->OwnedStates[extra.FireDeathStart+1].SetAction("A_NoBlocking");
+				states[extra.FireDeathStart+1].SetAction("A_NoBlocking");
 			}
 			else
 			{
-				type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
+				states[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->Height;
 			((AActor*)(type->Defaults))->FloatVar("BurnHeight") = extra.BurnHeight;
 
-			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
+			bag.statedef.SetStateLabel("Burn", &states[extra.FireDeathStart]);
 		}
 
 		// Ice states are similar to burn and death, except their final frame enters
@@ -274,21 +278,22 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		{
 			for (i = extra.IceDeathStart; i < extra.IceDeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
-			type->OwnedStates[i].NextState = &type->OwnedStates[type->NumOwnedStates-1];
-			type->OwnedStates[i].Tics = 5;
-			type->OwnedStates[i].TicRange = 0;
-			type->OwnedStates[i].Misc1 = 0;
-			type->OwnedStates[i].SetAction("A_FreezeDeath");
+			FState *state = &states[i];
+			state->NextState = &states[type->NumOwnedStates-1];
+			state->Tics = 5;
+			state->TicRange = 0;
+			state->Misc1 = 0;
+			state->SetAction("A_FreezeDeath");
 
 			i = type->NumOwnedStates - 1;
-			type->OwnedStates[i].NextState = &type->OwnedStates[i];
-			type->OwnedStates[i].Tics = 1;
-			type->OwnedStates[i].TicRange = 0;
-			type->OwnedStates[i].Misc1 = 0;
-			type->OwnedStates[i].SetAction("A_FreezeDeathChunks");
-			bag.statedef.SetStateLabel("Ice", &type->OwnedStates[extra.IceDeathStart]);
+			state->NextState = &states[i];
+			state->Tics = 1;
+			state->TicRange = 0;
+			state->Misc1 = 0;
+			state->SetAction("A_FreezeDeathChunks");
+			bag.statedef.SetStateLabel("Ice", &states[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
 		{
@@ -303,7 +308,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	{
 		((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 	}
-	bag.statedef.SetStateLabel("Spawn", &type->OwnedStates[extra.SpawnStart]);
+	bag.statedef.SetStateLabel("Spawn", &states[extra.SpawnStart]);
 	bag.statedef.InstallStates (type, ((AActor *)(type->Defaults)));
 }
 
@@ -558,11 +563,11 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		}
 		else if (sc.String[0] != '*')
 		{
-			HandleActorFlag(sc, bag, sc.String, NULL, '+');
+			HandleActorFlag(sc, bag, sc.String, nullptr, '+');
 		}
 		else
 		{
-			sc.ScriptError (NULL);
+			sc.ScriptError (nullptr);
 		}
 		sc.MustGetString ();
 	}
@@ -621,7 +626,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 	memset (&state, 0, sizeof(state));
 	state.UseFlags = info->DefaultStateUsage;
 
-	while (token != NULL)
+	while (token != nullptr)
 	{
 		// Skip leading white space
 		while (*token == ' ')
@@ -631,7 +636,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 		bool firstState = true;
 		char *colon = strchr (token, ':');
 
-		if (colon != NULL)
+		if (colon != nullptr)
 		{
 			char *stop;
 
@@ -682,7 +687,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 			SourceLines.Push(sc);
 		}
 
-		token = strtok (NULL, ",\t\n\r");
+		token = strtok (nullptr, ",\t\n\r");
 	}
 }
 

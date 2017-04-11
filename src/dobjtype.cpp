@@ -2888,6 +2888,12 @@ void PClass::StaticShutdown ()
 		p.PendingWeapon = nullptr;
 	}
 
+	// This must be done before the type table is taken down.
+	for (auto cls : AllClasses)
+	{
+		Printf("Processing %s\n", cls->TypeName.GetChars());
+		cls->DestroyMeta(cls->Meta);
+	}
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	bShutdown = true;
 	TypeTable.Clear();
@@ -3162,8 +3168,6 @@ void PClass::InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffse
 
 void PClass::DestroySpecials(void *addr)
 {
-	// Once we reach a native class, we can stop going up the family tree,
-	// since native classes handle deinitialization natively.
 	if (!bRuntimeClass)
 	{
 		return;
@@ -3171,6 +3175,23 @@ void PClass::DestroySpecials(void *addr)
 	assert(ParentClass != nullptr);
 	ParentClass->DestroySpecials(addr);
 	for (auto tao : SpecialInits)
+	{
+		tao.first->DestroyValue((uint8_t *)addr + tao.second);
+	}
+}
+
+//==========================================================================
+//
+// PClass :: DestroyMeta
+//
+// Same for meta data
+//
+//==========================================================================
+
+void PClass::DestroyMeta(void *addr)
+{
+	if (ParentClass != nullptr) ParentClass->DestroyMeta(addr);
+	for (auto tao : MetaInits)
 	{
 		tao.first->DestroyValue((uint8_t *)addr + tao.second);
 	}
@@ -3265,7 +3286,6 @@ void PClass::InitializeDefaults()
 		// Copy parent values from the parent defaults.
 		assert(ParentClass != nullptr);
 		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
-		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
 		for (const PField *field : Fields)
 		{
 			if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))

@@ -282,9 +282,8 @@ static void CheckForUnsafeStates(PClassActor *obj)
 			if (state->ActionFunc && state->ActionFunc->Unsafe)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
-				auto owner = FState::StaticFindStateOwner(state);
-				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s.%d which accesses user variables, reached by %s.%s.\n",
-					owner->TypeName.GetChars(), int(state - owner->OwnedStates), obj->TypeName.GetChars(), FName(*test).GetChars());
+				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s which accesses user variables, reached by %s.%s.\n",
+					FState::StaticGetStateName(state), obj->TypeName.GetChars(), FName(*test).GetChars());
 			}
 			state = state->NextState;
 		}
@@ -308,9 +307,8 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 	{
 		if (!(state->UseFlags & useflag))
 		{
-			auto owner = FState::StaticFindStateOwner(state);
-			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "%s references state %s.%d as %s state, but this state is not flagged for use as %s.\n",
-				obj->TypeName.GetChars(), owner->TypeName.GetChars(), int(state - owner->OwnedStates), statename.GetChars(), descript);
+			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "%s references state %s as %s state, but this state is not flagged for use as %s.\n",
+				obj->TypeName.GetChars(), FState::StaticGetStateName(state), statename.GetChars(), descript);
 		}
 	}
 	if (slb->Children != nullptr)

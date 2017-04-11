@@ -96,8 +96,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state)
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
 		PClassActor *info = PClassActor::AllActorClasses[i];
-		if (state >= info->OwnedStates &&
-			state <  info->OwnedStates + info->NumOwnedStates)
+		if (info->OwnsState(state))
 		{
 			return info;
 		}
@@ -117,8 +116,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 {
 	while (info != NULL)
 	{
-		if (state >= info->OwnedStates &&
-			state <  info->OwnedStates + info->NumOwnedStates)
+		if (info->OwnsState(state))
 		{
 			return info;
 		}
@@ -127,6 +125,16 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 	return NULL;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
+FString FState::StaticGetStateName(const FState *state)
+{
+	auto so = FState::StaticFindStateOwner(state);
+	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->OwnedStates));
+}
 
 //==========================================================================
 //
@@ -1000,7 +1008,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 
 	if (count > 0)
 	{
-		FState *realstates = new FState[count];
+		FState *realstates = (FState*)ClassDataAllocator.Alloc(count * sizeof(FState));
 		int i;
 
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
@@ -1071,8 +1079,7 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s.%d\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(),
-					owner->TypeName.GetChars(), int(StateList->Labels[i].State - owner->OwnedStates));
+				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State));
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)
@@ -1124,7 +1131,7 @@ DEFINE_ACTION_FUNCTION(FState, DistanceTo)
 	{
 		// Safely calculate the distance between two states.
 		auto o1 = FState::StaticFindStateOwner(self);
-		if (other >= o1->OwnedStates && other < o1->OwnedStates + o1->NumOwnedStates) retv = int(other - self);
+		if (o1->OwnsState(other)) retv = int(other - self);
 	}
 	ACTION_RETURN_INT(retv);
 }

@@ -25,6 +25,8 @@ class Inventory : Actor native
 	native bool bInitEffectFailed;
 	meta String PickupMsg;
 	meta int GiveQuest;
+	meta array<class<Actor> > ForbiddenToPlayerClass;
+	meta array<class<Actor> > RestrictedToPlayerClass;
 	
 	property PickupMessage: PickupMsg;
 	property GiveQuest: GiveQuest;
@@ -46,7 +48,6 @@ class Inventory : Actor native
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
 	
-	native bool CanPickup(Actor toucher);
 	native bool DoRespawn();
 	native void BecomeItem();
 	native void BecomePickup();
@@ -328,6 +329,36 @@ class Inventory : Actor native
 				toucher.GiveInventoryType (type);
 			}
 		}
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: CanPickup
+	//
+	//===========================================================================
+	
+	virtual bool CanPickup(Actor toucher)
+	{
+		if (toucher == null) return false;
+
+		int rsize = RestrictedToPlayerClass.Size();
+		if (rsize > 0)
+		{
+			for (int i=0; i < rsize; i++)
+			{
+				if (toucher is RestrictedToPlayerClass[i]) return true;
+			}
+			return false;
+		}
+		rsize = ForbiddenToPlayerClass.Size();
+		if (rsize > 0)
+		{
+			for (int i=0; i < rsize; i++)
+			{
+				if (toucher is ForbiddenToPlayerClass[i]) return false;
+			}
+		}
+		return true;
 	}
 
 	//===========================================================================

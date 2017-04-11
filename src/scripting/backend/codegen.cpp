@@ -6914,13 +6914,13 @@ FxStructMember::~FxStructMember()
 
 bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 {
-	// Cannot take the address of metadata variables.
+	AddressRequested = true;
 	if (membervar->Flags & VARF_Meta)
 	{
-		return false;
+		// Meta variables are read only.
+		*writable = false;
 	}
-	AddressRequested = true;
-	if (writable != nullptr)
+	else if (writable != nullptr)
 	{
 		// [ZZ] original check.
 		bool bWritable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
@@ -7314,11 +7314,13 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 	if (SizeAddr != ~0u)
 	{
+		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
+
 		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
-		auto f = new PField(NAME_None, TypeUInt32, 0, SizeAddr);
+		auto f = new PField(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
 		static_cast<FxMemberBase *>(Array)->membervar = f;
 		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
 		Array->ValueType = TypeUInt32;

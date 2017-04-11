@@ -314,10 +314,6 @@ void PClassActor::DeriveData(PClass *newclass)
 		*newa->PainChances = *PainChances;
 	}
 
-	// Inventory stuff
-	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
-	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
-
 	newa->DisplayName = DisplayName;
 }
 

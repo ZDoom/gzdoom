@@ -1984,7 +1984,7 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->ActorInfo()->DropItems;
 		while (di != NULL)
 		{
 			if (di->Name == NAME_Clip)
@@ -3045,7 +3045,7 @@ void FinishDehPatch ()
 		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->StateList);
+			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->GetStateLabels());
 		}
 		statedef.InstallStates(subclass, defaults2);
 

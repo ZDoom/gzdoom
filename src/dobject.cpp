@@ -102,7 +102,7 @@ CCMD (dumpactors)
 			Printf("%s\t%i\t%i\t%s\t%s\n",
 				acls->TypeName.GetChars(), ainfo->DoomEdNum,
 				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
-				acls->SourceLumpName.GetChars());
+				acls->ActorInfo()->SourceLumpName.GetChars());
 		}
 		else if (cls != NULL)
 		{

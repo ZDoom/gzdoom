@@ -248,14 +248,42 @@ struct FActorInfo
 	uint16_t SpawnID = 0;
 	uint16_t ConversationID = 0;
 	int16_t DoomEdNum = 0;
+	FString SourceLumpName;
+
+	FStateLabels *StateList = nullptr;
+	DmgFactors DamageFactors;
+	PainChanceList PainChances;
+
+	TArray<PClassActor *> VisibleToPlayerClass;
+
+	FDropItem *DropItems;
+	FIntCVar *distancecheck;
+
+	// This is from PClassPlayerPawn
+	FString DisplayName;
 
 	uint8_t DefaultStateUsage = 0; // state flag defaults for blocks without a qualifier.
 
 	FActorInfo() {}
 	FActorInfo(const FActorInfo & other)
 	{
-		LightAssociations = other.LightAssociations;
+		// only copy the fields that get inherited
 		DefaultStateUsage = other.DefaultStateUsage;
+		DamageFactors = other.DamageFactors;
+		PainChances = other.PainChances;
+		VisibleToPlayerClass = other.VisibleToPlayerClass;
+		DropItems = other.DropItems;
+		distancecheck = other.distancecheck;
+		DisplayName = other.DisplayName;
+	}
+
+	~FActorInfo()
+	{
+		if (StateList != NULL)
+		{
+			StateList->Destroy();
+			M_Free(StateList);
+		}
 	}
 };
 
@@ -277,11 +305,35 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	bool SetReplacement(FName replaceName);
-	void SetDropItems(FDropItem *drops);
 
 	FActorInfo *ActorInfo() const
 	{
 		return (FActorInfo*)Meta;
+	}
+
+	void SetDropItems(FDropItem *drops)
+	{
+		ActorInfo()->DropItems = drops;
+	}
+
+	const FString &GetDisplayName() const
+	{
+		return ActorInfo()->DisplayName;
+	}
+
+	FState *GetStates() const
+	{
+		return ActorInfo()->OwnedStates;
+	}
+
+	unsigned GetStateCount() const
+	{
+		return ActorInfo()->NumOwnedStates;
+	}
+
+	FStateLabels *GetStateLabels() const
+	{
+		return ActorInfo()->StateList;
 	}
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
@@ -299,19 +351,6 @@ public:
 
 	PClassActor *GetReplacement(bool lookskill=true);
 	PClassActor *GetReplacee(bool lookskill=true);
-
-	FStateLabels *StateList;
-	DmgFactors DamageFactors;
-	PainChanceList PainChances;
-
-	TArray<PClassActor *> VisibleToPlayerClass;
-
-	FDropItem *DropItems;
-	FString SourceLumpName;
-	FIntCVar *distancecheck;
-
-	// This is from PClassPlayerPawn
-	FString DisplayName;
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

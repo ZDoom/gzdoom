@@ -841,9 +841,9 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		PClassActor *cls = pair->Key;
 		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
 
-		for (int i = 0; i < cls->ActorInfo()->NumOwnedStates; i++)
+		for (int i = 0; i < cls->GetStateCount(); i++)
 		{
-			auto &state = cls->ActorInfo()->OwnedStates[i];
+			auto &state = cls->GetStates()[i];
 			spritelist[state.sprite].Insert(gltrans, true);
 			FSpriteModelFrame * smf = gl_FindModelFrame(cls, state.sprite, state.Frame, false);
 			if (smf != NULL)

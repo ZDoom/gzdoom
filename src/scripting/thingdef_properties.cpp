@@ -391,7 +391,7 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_QUARTERGRAVITY:
 		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
-		for (auto &df : info->DamageFactors)
+		for (auto &df : info->ActorInfo()->DamageFactors)
 		{
 			if (df.first == NAME_Fire) return df.second == 0.5;
 		}
@@ -1048,12 +1048,12 @@ DEFINE_PROPERTY(visibletoteam, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 {
-	info->VisibleToPlayerClass.Clear();
+	info->ActorInfo()->VisibleToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->VisibleToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			info->ActorInfo()->VisibleToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 
@@ -1071,7 +1071,7 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 	}
 	else if (cv->GetRealType() == CVAR_Int)
 	{
-		static_cast<PClassActor*>(info)->distancecheck = static_cast<FIntCVar *>(cv);
+		static_cast<PClassActor*>(info)->ActorInfo()->distancecheck = static_cast<FIntCVar *>(cv);
 	}
 	else
 	{
@@ -1367,7 +1367,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 DEFINE_CLASS_PROPERTY_PREFIX(player, displayname, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	info->DisplayName = str;
+	info->ActorInfo()->DisplayName = str;
 }
 
 //==========================================================================

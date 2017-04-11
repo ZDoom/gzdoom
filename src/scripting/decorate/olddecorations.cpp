@@ -156,7 +156,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	}
 
 	FState *states;
-	states = type->ActorInfo()->OwnedStates = (FState*)ClassDataAllocator.Alloc(StateArray.Size() * sizeof(FState));
+	states = (FState*)ClassDataAllocator.Alloc(StateArray.Size() * sizeof(FState));
 	SaveStateSourceLines(states, SourceLines);
 	memcpy (states, &StateArray[0], StateArray.Size() * sizeof(states[0]));
 	if (StateArray.Size() == 1)
@@ -306,6 +306,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	}
 	bag.statedef.SetStateLabel("Spawn", &states[extra.SpawnStart]);
 	bag.statedef.InstallStates (type, ((AActor *)(type->Defaults)));
+	bag.Info->ActorInfo()->OwnedStates = states;
 	bag.Info->ActorInfo()->NumOwnedStates = StateArray.Size();
 }
 

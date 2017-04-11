@@ -158,7 +158,7 @@ int D_PlayerClassToInt (const char *classname)
 		{
 			auto type = PlayerClasses[i].Type;
 
-			if (type->DisplayName.IsNotEmpty() && stricmp(type->DisplayName, classname) == 0)
+			if (type->GetDisplayName().IsNotEmpty() && stricmp(type->GetDisplayName(), classname) == 0)
 			{
 				return i;
 			}
@@ -737,7 +737,7 @@ void D_WriteUserInfoStrings (int pnum, uint8_t **stream, bool compact)
 
 		case NAME_PlayerClass:
 			*stream += sprintf(*((char **)stream), "\\%s", info->GetPlayerClassNum() == -1 ? "Random" :
-				D_EscapeUserInfo(info->GetPlayerClassType()->DisplayName.GetChars()).GetChars());
+				D_EscapeUserInfo(info->GetPlayerClassType()->GetDisplayName().GetChars()).GetChars());
 			break;
 
 		case NAME_Skin:
@@ -915,7 +915,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 
 			case NAME_PlayerClass:
 				i = info.GetPlayerClassNum();
-				string = (i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName.GetChars());
+				string = (i == -1 ? "Random" : PlayerClasses[i].Type->GetDisplayName().GetChars());
 				break;
 
 			default:
@@ -1001,7 +1001,7 @@ CCMD (playerinfo)
 		Printf("%20s: %s (%d)\n", "Skin", Skins[ui->GetSkin()].Name.GetChars(), ui->GetSkin());
 		Printf("%20s: %s (%d)\n", "Gender", GenderNames[ui->GetGender()], ui->GetGender());
 		Printf("%20s: %s (%d)\n", "PlayerClass",
-			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->DisplayName.GetChars(),
+			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->GetDisplayName().GetChars(),
 			ui->GetPlayerClassNum());
 
 		// Print generic info

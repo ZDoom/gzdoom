@@ -133,7 +133,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 FString FState::StaticGetStateName(const FState *state)
 {
 	auto so = FState::StaticFindStateOwner(state);
-	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->ActorInfo()->OwnedStates));
+	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->GetStates()));
 }
 
 //==========================================================================
@@ -172,9 +172,9 @@ bool AActor::HasSpecialDeathStates () const
 {
 	const PClassActor *info = static_cast<PClassActor *>(GetClass());
 
-	if (info->StateList != NULL)
+	if (info->GetStateLabels() != NULL)
 	{
-		FStateLabel *slabel = info->StateList->FindLabel (NAME_Death);
+		FStateLabel *slabel = info->GetStateLabels()->FindLabel (NAME_Death);
 		if (slabel != NULL && slabel->Children != NULL)
 		{
 			for(int i = 0; i < slabel->Children->NumLabels; i++)
@@ -257,7 +257,7 @@ TArray<FName> &MakeStateNameList(const char * fname)
 //===========================================================================
 FState *PClassActor::FindState(int numnames, FName *names, bool exact) const
 {
-	FStateLabels *labels = StateList;
+	FStateLabels *labels = GetStateLabels();
 	FState *best = NULL;
 
 	if (labels != NULL)
@@ -581,12 +581,13 @@ void FStateDefinitions::InstallStates(PClassActor *info, AActor *defaults)
 		SetStateLabel("Spawn", GetDefault<AActor>()->SpawnState);
 	}
 
-	if (info->StateList != NULL) 
+	auto &sl = info->ActorInfo()->StateList;
+	if (sl != NULL) 
 	{
-		info->StateList->Destroy();
-		M_Free(info->StateList);
+		sl->Destroy();
+		M_Free(sl);
 	}
-	info->StateList = CreateStateLabelList(StateLabels);
+	sl = CreateStateLabelList(StateLabels);
 
 	// Cache these states as member veriables.
 	defaults->SpawnState = info->FindState(NAME_Spawn);
@@ -631,9 +632,9 @@ void FStateDefinitions::MakeStateDefines(const PClassActor *cls)
 	laststatebeforelabel = NULL;
 	lastlabel = -1;
 
-	if (cls != NULL && cls->StateList != NULL)
+	if (cls != NULL && cls->GetStateLabels() != NULL)
 	{
-		MakeStateList(cls->StateList, StateLabels);
+		MakeStateList(cls->GetStateLabels(), StateLabels);
 	}
 	else
 	{
@@ -816,7 +817,7 @@ void FStateDefinitions::FixStatePointers (PClassActor *actor, TArray<FStateDefin
 		if (list[i].DefineFlags == SDF_INDEX)
 		{
 			size_t v = (size_t)list[i].State;
-			list[i].State = actor->ActorInfo()->OwnedStates + v - 1;
+			list[i].State = actor->GetStates() + v - 1;
 			list[i].DefineFlags = SDF_STATE;
 		}
 		if (list[i].Children.Size() > 0)
@@ -1095,7 +1096,7 @@ CCMD(dumpstates)
 	{
 		PClassActor *info = PClassActor::AllActorClasses[i];
 		Printf(PRINT_LOG, "State labels for %s\n", info->TypeName.GetChars());
-		DumpStateHelper(info->StateList, "");
+		DumpStateHelper(info->GetStateLabels(), "");
 		Printf(PRINT_LOG, "----------------------------\n");
 	}
 }

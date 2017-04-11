@@ -323,7 +323,7 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 
 static void CheckStateLabels(PClassActor *obj, ENamedName *test, int useflag,  const char *descript)
 {
-	FStateLabels *labels = obj->StateList;
+	FStateLabels *labels = obj->GetStateLabels();
 
 	for (; *test != NAME_None; test++)
 	{
@@ -353,9 +353,9 @@ static void CheckStates(PClassActor *obj)
 	{
 		CheckStateLabels(obj, pickupstates, SUF_ITEM, "CustomInventory state chain");
 	}
-	for (int i = 0; i < obj->ActorInfo()->NumOwnedStates; i++)
+	for (unsigned i = 0; i < obj->GetStateCount(); i++)
 	{
-		auto state = obj->ActorInfo()->OwnedStates + i;
+		auto state = obj->GetStates() + i;
 		if (state->NextState && (state->UseFlags & state->NextState->UseFlags) != state->UseFlags)
 		{
 			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "State %s links to a state with incompatible restrictions.\n",

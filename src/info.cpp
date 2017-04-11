@@ -294,10 +294,6 @@ void PClassActor::StaticSetActorNums()
 
 PClassActor::PClassActor()
 {
-	StateList = NULL;
-
-	DropItems = NULL;
-	// Record this in the master list.
 	AllActorClasses.Push(this);
 }
 
@@ -309,11 +305,6 @@ PClassActor::PClassActor()
 
 PClassActor::~PClassActor()
 {
-	if (StateList != NULL)
-	{
-		StateList->Destroy();
-		M_Free(StateList);
-	}
 }
 
 //==========================================================================
@@ -326,16 +317,6 @@ void PClassActor::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
-
-	newa->distancecheck = distancecheck;
-
-	newa->DropItems = DropItems;
-
-	newa->VisibleToPlayerClass = VisibleToPlayerClass;
-
-	newa->DamageFactors = DamageFactors;
-	newa->PainChances = PainChances;
-	newa->DisplayName = DisplayName;
 }
 
 //==========================================================================
@@ -366,20 +347,6 @@ bool PClassActor::SetReplacement(FName replaceName)
 	}
 	return true;
 }
-
-//==========================================================================
-//
-// PClassActor :: SetDropItems
-//
-// Sets a new drop item list
-//
-//==========================================================================
-
-void PClassActor::SetDropItems(FDropItem *drops)
-{
-	DropItems = drops;
-}
-
 
 //==========================================================================
 //
@@ -580,12 +547,12 @@ DEFINE_ACTION_FUNCTION(AActor, GetReplacee)
 
 void PClassActor::SetDamageFactor(FName type, double factor)
 {
-	for (auto & p : DamageFactors)
+	for (auto & p : ActorInfo()->DamageFactors)
 	{
 		if (p.first == type) p.second = factor;
 		return;
 	}
-	DamageFactors.Push({ type, factor });
+	ActorInfo()->DamageFactors.Push({ type, factor });
 }
 
 //==========================================================================
@@ -596,7 +563,7 @@ void PClassActor::SetDamageFactor(FName type, double factor)
 
 void PClassActor::SetPainChance(FName type, int chance)
 {
-	for (auto & p : PainChances)
+	for (auto & p : ActorInfo()->PainChances)
 	{
 		if (p.first == type) p.second = chance;
 		return;
@@ -604,7 +571,7 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 	if (chance >= 0) 
 	{
-		PainChances.Push({ type, MIN(chance, 256) });
+		ActorInfo()->PainChances.Push({ type, MIN(chance, 256) });
 	}
 }
 

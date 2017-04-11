@@ -2004,7 +2004,7 @@ public:
 
 class FxStateByIndex : public FxExpression
 {
-	int index;
+	unsigned index;
 
 public:
 

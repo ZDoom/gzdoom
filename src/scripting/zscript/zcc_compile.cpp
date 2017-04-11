@@ -626,7 +626,7 @@ void ZCCCompiler::CreateClassTypes()
 					}
 					c->cls->Type = me;
 					auto ac = dyn_cast<PClassActor>(me);
-					if (ac != nullptr) ac->SourceLumpName = *c->cls->SourceName;
+					if (ac != nullptr) ac->ActorInfo()->SourceLumpName = *c->cls->SourceName;
 				}
 				else
 				{

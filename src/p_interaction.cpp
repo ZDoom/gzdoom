@@ -1500,7 +1500,7 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
 	{
 		painchance = target->PainChance;
-		for (auto & pc : target->GetClass()->PainChances)
+		for (auto & pc : target->GetInfo()->PainChances)
 		{
 			if (pc.first == mod)
 			{

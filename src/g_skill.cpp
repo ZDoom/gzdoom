@@ -476,7 +476,7 @@ const char * G_SkillName()
 	const char *name = AllSkills[gameskill].MenuName;
 
 	player_t *player = &players[consoleplayer];
-	const char *playerclass = player->mo->GetClass()->DisplayName;
+	const char *playerclass = player->mo->GetInfo()->DisplayName;
 
 	if (playerclass != NULL)
 	{

@@ -2925,7 +2925,7 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 				bool foundClass = false;
 				for(unsigned int c = 0;c < PlayerClasses.Size();c++)
 				{
-					if(stricmp(sc.String, PlayerClasses[c].Type->DisplayName) == 0)
+					if(stricmp(sc.String, PlayerClasses[c].Type->GetDisplayName()) == 0)
 					{
 						foundClass = true;
 						classes.Push(PlayerClasses[c].Type);

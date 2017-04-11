@@ -360,7 +360,7 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 		if (thing->validcount == validcount) continue;
 		thing->validcount = validcount;
 
-		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		FIntCVar *cvar = thing->GetInfo()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
 			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
@@ -378,7 +378,7 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 	for (msecnode_t *node = sec->sectorportal_thinglist; node; node = node->m_snext)
 	{
 		AActor *thing = node->m_thing;
-		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		FIntCVar *cvar = thing->GetInfo()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
 			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();

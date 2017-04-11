@@ -236,6 +236,19 @@ private:
 
 struct FDropItem;
 
+struct FActorInfo
+{
+	TArray<FInternalLightAssociation *> LightAssociations;
+	PClassActor *Replacement = nullptr;
+	PClassActor *Replacee = nullptr;
+
+	FActorInfo() {}
+	FActorInfo(const FActorInfo & other)
+	{
+		LightAssociations = other.LightAssociations;
+	}
+};
+
 class PClassActor : public PClass
 {
 	DECLARE_CLASS(PClassActor, PClass);
@@ -256,6 +269,11 @@ public:
 	bool SetReplacement(FName replaceName);
 	void SetDropItems(FDropItem *drops);
 
+	FActorInfo *ActorInfo() const
+	{
+		return (FActorInfo*)Meta;
+	}
+
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
 	FState *FindState(FName name) const
@@ -271,10 +289,7 @@ public:
 	PClassActor *GetReplacement(bool lookskill=true);
 	PClassActor *GetReplacee(bool lookskill=true);
 
-	TArray<FInternalLightAssociation *> LightAssociations;
 	FState *OwnedStates;
-	PClassActor *Replacement;
-	PClassActor *Replacee;
 	int NumOwnedStates;
 	uint8_t GameFilter;
 	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.

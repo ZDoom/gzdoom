@@ -3051,15 +3051,15 @@ void FinishDehPatch ()
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.
-		PClassActor *old_replacement = type->Replacement;
+		PClassActor *old_replacement = type->ActorInfo()->Replacement;
 
-		type->Replacement = subclass;
-		subclass->Replacee = type;
+		type->ActorInfo()->Replacement = subclass;
+		subclass->ActorInfo()->Replacee = type;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
 		if (old_replacement != NULL)
 		{
-			subclass->Replacement = old_replacement;
+			subclass->ActorInfo()->Replacement = old_replacement;
 		}
 
 		DPrintf (DMSG_NOTIFY, "%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());

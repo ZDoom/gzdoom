@@ -1112,6 +1112,7 @@ ZCC_ExprTypeRef *ZCCCompiler::NodeFromSymbolType(PSymbolType *sym, ZCC_Expressio
 // builds the internal structure of all classes and structs
 //
 //==========================================================================
+void AddActorInfo(PClass *cls);
 
 void ZCCCompiler::CompileAllFields()
 {
@@ -1156,6 +1157,7 @@ void ZCCCompiler::CompileAllFields()
 		for (unsigned i = 0; i < Classes.Size(); i++)
 		{
 			auto type = Classes[i]->Type();
+				
 			if (type->Size == TentativeClass)
 			{
 				if (type->ParentClass->Size == TentativeClass)
@@ -1169,7 +1171,12 @@ void ZCCCompiler::CompileAllFields()
 					type->Size = Classes[i]->Type()->ParentClass->Size;
 				}
 			}
-			if (Classes[i]->Type()->ParentClass)
+			if (type->TypeName == NAME_Actor)
+			{
+				assert(type->MetaSize == 0);
+				AddActorInfo(type);	// AActor needs the actor info manually added to its meta data before adding any scripted fields.
+			}
+			else if (Classes[i]->Type()->ParentClass)
 				type->MetaSize = Classes[i]->Type()->ParentClass->MetaSize;
 			else
 				type->MetaSize = 0;

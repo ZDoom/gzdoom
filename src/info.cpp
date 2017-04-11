@@ -65,6 +65,62 @@ FRandom FState::pr_statetics("StateTics");
 
 cycle_t ActionCycles;
 
+
+//==========================================================================
+//
+// special type for the native ActorInfo. This allows to let this struct
+// be handled by the generic object constructors for the VM.
+//
+//==========================================================================
+
+class PActorInfo : public PBasicType
+{
+	DECLARE_CLASS(PActorInfo, PBasicType);
+public:
+	PActorInfo()
+		:PBasicType(sizeof(FActorInfo), alignof(FActorInfo))
+	{
+	}
+
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override
+	{
+		if (base != nullptr) new((uint8_t *)base + offset) FActorInfo;
+		if (special != nullptr)
+		{
+			special->Push(std::make_pair(this, offset));
+		}
+	}
+
+	void InitializeValue(void *addr, const void *def) const override
+	{
+		if (def == nullptr)
+		{
+			new(addr) FActorInfo;
+		}
+		else
+		{
+			new(addr) FActorInfo(*(const FActorInfo*)def);
+		}
+	}
+
+	void DestroyValue(void *addr) const override
+	{
+		FActorInfo *self = (FActorInfo*)addr;
+		self->~FActorInfo();
+	}
+
+};
+
+IMPLEMENT_CLASS(PActorInfo, false, false)
+
+void AddActorInfo(PClass *cls)
+{
+	auto type = new PActorInfo;
+	TypeTable.AddType(type);
+	cls->AddField("*", type, VARF_Meta);
+}
+
+
 void FState::SetAction(const char *name)
 {
 	ActionFunc = FindVMFunction(RUNTIME_CLASS(AActor), name);
@@ -245,8 +301,6 @@ PClassActor::PClassActor()
 	DoomEdNum = -1;
 	OwnedStates = NULL;
 	NumOwnedStates = 0;
-	Replacement = NULL;
-	Replacee = NULL;
 	StateList = NULL;
 	DamageFactors = NULL;
 	PainChances = NULL;
@@ -339,8 +393,8 @@ bool PClassActor::SetReplacement(FName replaceName)
 		}
 		if (replacee != nullptr)
 		{
-			replacee->Replacement = this;
-			Replacee = replacee;
+			replacee->ActorInfo()->Replacement = this;
+			ActorInfo()->Replacee = replacee;
 		}
 	}
 	return true;
@@ -467,15 +521,15 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 			lookskill = false; skillrepname = NAME_None;
 		}
 	}
-	if (Replacement == NULL && (!lookskill || skillrepname == NAME_None))
+	auto Replacement = ActorInfo()->Replacement;
+	if (Replacement == nullptr && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;
 	}
 	// The Replacement field is temporarily NULLed to prevent
 	// potential infinite recursion.
-	PClassActor *savedrep = Replacement;
-	Replacement = NULL;
-	PClassActor *rep = savedrep;
+	ActorInfo()->Replacement = nullptr;
+	PClassActor *rep = Replacement;
 	// Handle skill-based replacement here. It has precedence on DECORATE replacement
 	// in that the skill replacement is applied first, followed by DECORATE replacement
 	// on the actor indicated by the skill replacement.
@@ -487,7 +541,7 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	// Skill replacements are not recursive, contrarily to DECORATE replacements
 	rep = rep->GetReplacement(false);
 	// Reset the temporarily NULLed field
-	Replacement = savedrep;
+	ActorInfo()->Replacement = Replacement;
 	return rep;
 }
 
@@ -523,21 +577,21 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 			lookskill = false; 
 		}
 	}
-	if (Replacee == NULL && (!lookskill || skillrepname == NAME_None))
+	PClassActor *savedrep = ActorInfo()->Replacee;
+	if (savedrep == nullptr && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;
 	}
 	// The Replacee field is temporarily NULLed to prevent
 	// potential infinite recursion.
-	PClassActor *savedrep = Replacee;
-	Replacee = NULL;
+	ActorInfo()->Replacee = nullptr;
 	PClassActor *rep = savedrep;
 	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))
 	{
 		rep = PClass::FindActor(skillrepname);
 	}
 	rep = rep->GetReplacee(false);
-	Replacee = savedrep;
+	ActorInfo()->Replacee = savedrep;
 	return rep;
 }
 

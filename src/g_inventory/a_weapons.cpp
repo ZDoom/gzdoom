@@ -986,7 +986,7 @@ void FWeaponSlots::AddExtraWeapons()
 		}
 		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
 		if ((cls->GameFilter == GAME_Any || (cls->GameFilter & gameinfo.gametype)) &&
-			cls->Replacement == nullptr &&		// Replaced weapons don't get slotted.
+			cls->ActorInfo()->Replacement == nullptr &&		// Replaced weapons don't get slotted.
 			!(weapdef->WeaponFlags & WIF_POWERED_UP) &&
 			!LocateWeapon(cls, nullptr, nullptr)		// Don't duplicate it if it's already present.
 			)

@@ -612,6 +612,12 @@ public:
 		return (AActor *)(this->GetClass()->Defaults);
 	}
 
+	FActorInfo *GetInfo() const
+	{
+		return ((PClassActor*)GetClass())->ActorInfo();
+	}
+
+
 	FDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee

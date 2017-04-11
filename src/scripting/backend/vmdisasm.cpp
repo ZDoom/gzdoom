@@ -243,7 +243,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 		{
 			for (j = 0, k = i; j < 4 && k < func->NumKonstA; j++, k += kk)
 			{
-				mysnprintf(tmp, countof(tmp), "%3d. %p:%d", k, func->KonstA[k].v, func->KonstATags()[k]);
+				mysnprintf(tmp, countof(tmp), "%3d. %p", k, func->KonstA[k].v);
 				printf_wrapper(out, "%-22s", tmp);
 			}
 			printf_wrapper(out, "\n");
@@ -320,7 +320,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		switch (code[i].op)
 		{
 		case OP_JMP:
-		case OP_TRY:
+		//case OP_TRY:
 			col = printf_wrapper(out, "%08x", (i + 1 + code[i].i24) << 2);
 			break;
 
@@ -498,7 +498,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			col = 30;
 		}
 		printf_wrapper(out, "%*c", 30 - col, ';');
-		if (!cmp && (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI))
+		if (!cmp && (code[i].op == OP_JMP || /*code[i].op == OP_TRY ||*/ code[i].op == OP_PARAMI))
 		{
 			printf_wrapper(out, "%d\n", code[i].i24);
 		}

@@ -576,7 +576,7 @@ bool M_ReadIDAT (FileReader *file, uint8_t *buffer, int width, int height, int p
 		if (stream.avail_in == 0 && chunklen > 0)
 		{
 			stream.next_in = chunkbuffer;
-			stream.avail_in = (uInt)file->Read (chunkbuffer, MIN<long>(chunklen,sizeof(chunkbuffer)));
+			stream.avail_in = (uInt)file->Read (chunkbuffer, MIN<uint32_t>(chunklen,sizeof(chunkbuffer)));
 			chunklen -= stream.avail_in;
 		}
 

@@ -200,6 +200,14 @@ protected:
 	enum { MetaClassNum = CLASSREG_PClass };
 
 	// Per-instance variables. There are four.
+#ifdef _DEBUG
+public:
+	enum
+	{
+		MAGIC_ID = 0x1337cafe
+	};
+	uint32_t MagicID = MAGIC_ID;	// only used by the VM for checking native function parameter types.
+#endif
 private:
 	PClass *Class;				// This object's type
 public:

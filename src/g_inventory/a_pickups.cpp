@@ -486,43 +486,6 @@ bool AInventory::CallTryPickup(AActor *toucher, AActor **toucher_return)
 
 //===========================================================================
 //
-// AInventory :: CanPickup
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AInventory, CanPickup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(toucher, AActor);
-
-	if (!toucher)
-		ACTION_RETURN_BOOL(false);
-
-	auto ai = self->GetClass();
-	// Is the item restricted to certain player classes?
-	if (ai->RestrictedToPlayerClass.Size() != 0)
-	{
-		for (unsigned i = 0; i < ai->RestrictedToPlayerClass.Size(); ++i)
-		{
-			if (toucher->IsKindOf(ai->RestrictedToPlayerClass[i]))
-				ACTION_RETURN_BOOL(true);
-		}
-		ACTION_RETURN_BOOL(false);
-	}
-	// Or is it forbidden to certain other classes?
-	else
-	{
-		for (unsigned i = 0; i < ai->ForbiddenToPlayerClass.Size(); ++i)
-		{
-			if (toucher->IsKindOf(ai->ForbiddenToPlayerClass[i]))
-				ACTION_RETURN_BOOL(false);
-		}
-	}
-	ACTION_RETURN_BOOL(true);
-}
-
-//===========================================================================
-//
 // CCMD printinv
 //
 // Prints the console player's current inventory.

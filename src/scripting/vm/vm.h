@@ -23,7 +23,6 @@ typedef unsigned short		VM_UHALF;
 typedef signed short		VM_SHALF;
 typedef unsigned int		VM_UWORD;
 typedef signed int			VM_SWORD;
-typedef VM_UBYTE			VM_ATAG;
 
 #define VM_EPSILON			(1/65536.0)
 
@@ -176,27 +175,6 @@ enum
 #define RET_FINAL	(0x80)	// Used with RET and RETI in the destination slot: this is the final return value
 
 
-// Tags for address registers
-enum
-{
-	ATAG_GENERIC,			// pointer to something; we don't care what
-	ATAG_OBJECT,			// pointer to an object; will be followed by GC
-
-	// The following are all for documentation during debugging and are
-	// functionally no different than ATAG_GENERIC (meaning they are useless because they trigger asserts all over the place.)
-
-	/*
-	ATAG_FRAMEPOINTER,		// pointer to extra stack frame space for this function
-	ATAG_DREGISTER,			// pointer to a data register
-	ATAG_FREGISTER,			// pointer to a float register
-	ATAG_SREGISTER,			// pointer to a string register
-	ATAG_AREGISTER,			// pointer to an address register
-	*/
-
-	ATAG_RNG,				// pointer to FRandom
-	ATAG_STATE  = ATAG_GENERIC,			// pointer to FState (cannot have its own type because there's no means to track inside the VM.)
-};
-
 enum EVMAbortException
 {
 	X_OTHER,
@@ -322,7 +300,6 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 struct VMReturn
 {
 	void *Location;
-	VM_SHALF TagOfs;	// for pointers: Offset from Location to ATag; set to 0 if the caller is native code and doesn't care
 	VM_UBYTE RegType;	// Same as VMParam RegType, except REGT_KONST is invalid; only used by asserts
 
 	void SetInt(int val)
@@ -366,38 +343,37 @@ struct VMReturn
 		assert(RegType == REGT_STRING);
 		*(FString *)Location = val;
 	}
-	void SetPointer(void *val, int tag)
+
+	void SetPointer(void *val)
 	{
 		assert(RegType == REGT_POINTER);
 		*(void **)Location = val;
-		if (TagOfs != 0)
-		{
-			*((VM_ATAG *)Location + TagOfs) = tag;
-		}
+	}
+
+	void SetObject(DObject *val)
+	{
+		assert(RegType == REGT_POINTER);
+		*(void **)Location = val;
 	}
 
 	void IntAt(int *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_INT;
 	}
 	void FloatAt(double *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_FLOAT;
 	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_STRING;
 	}
 	void PointerAt(void **loc)
 	{
 		Location = loc;
-		TagOfs = 0;
 		RegType = REGT_POINTER;
 	}
 	VMReturn() { }
@@ -415,7 +391,7 @@ struct VMValue
 	union
 	{
 		int i;
-		struct { void *a; int atag; };
+		void *a;
 		double f;
 		struct { int pad[3]; VM_UBYTE Type; };
 		struct { int foo[4]; } biggest;
@@ -456,19 +432,11 @@ struct VMValue
 	VMValue(DObject *v)
 	{
 		a = v;
-		atag = ATAG_OBJECT;
 		Type = REGT_POINTER;
 	}
 	VMValue(void *v)
 	{
 		a = v;
-		atag = ATAG_GENERIC;
-		Type = REGT_POINTER;
-	}
-	VMValue(void *v, int tag)
-	{
-		a = v;
-		atag = tag;
 		Type = REGT_POINTER;
 	}
 	VMValue &operator=(const VMValue &o)
@@ -499,7 +467,6 @@ struct VMValue
 	VMValue &operator=(DObject *v)
 	{
 		a = v;
-		atag = ATAG_OBJECT;
 		Type = REGT_POINTER;
 		return *this;
 	}
@@ -602,7 +569,7 @@ struct VMFrame
 		int size = (sizeof(VMFrame) + 15) & ~15;
 		size += numparam * sizeof(VMValue);
 		size += numregf * sizeof(double);
-		size += numrega * (sizeof(void *) + sizeof(VM_UBYTE));
+		size += numrega * sizeof(void *);
 		size += numregs * sizeof(FString);
 		size += numregd * sizeof(int);
 		if (numextra != 0)
@@ -613,9 +580,10 @@ struct VMFrame
 		return size;
 	}
 
-	int *GetRegD() const
+	VMValue *GetParam() const
 	{
-		return (int *)(GetRegA() + NumRegA);
+		assert(((size_t)this & 15) == 0 && "VM frame is unaligned");
+		return (VMValue *)(((size_t)(this + 1) + 15) & ~15);
 	}
 
 	double *GetRegF() const
@@ -633,25 +601,19 @@ struct VMFrame
 		return (void **)(GetRegS() + NumRegS);
 	}
 
-	VM_ATAG *GetRegATag() const
+	int *GetRegD() const
 	{
-		return (VM_ATAG *)(GetRegD() + NumRegD);
-	}
-
-	VMValue *GetParam() const
-	{
-		assert(((size_t)this & 15) == 0 && "VM frame is unaligned");
-		return (VMValue *)(((size_t)(this + 1) + 15) & ~15);
+		return (int *)(GetRegA() + NumRegA);
 	}
 
 	void *GetExtra() const
 	{
-		VM_ATAG *ptag = GetRegATag();
-		ptrdiff_t ofs = ptag - (VM_ATAG *)this;
-		return (VM_UBYTE *)this + ((ofs + NumRegA + 15) & ~15);
+		uint8_t *pbeg = (uint8_t*)(GetRegD() + NumRegD);
+		ptrdiff_t ofs = pbeg - (uint8_t *)this;
+		return (VM_UBYTE *)this + ((ofs + 15) & ~15);
 	}
 
-	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VM_ATAG *&atag, VMValue *&param) const
+	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VMValue *&param) const
 	{
 		// Calling the individual functions produces suboptimal code. :(
 		param = GetParam();
@@ -659,7 +621,6 @@ struct VMFrame
 		s = (FString *)(f + NumRegF);
 		a = (void **)(s + NumRegS);
 		d = (int *)(a + NumRegA);
-		atag = (VM_ATAG *)(d + NumRegD);
 	}
 
 	void InitRegS();
@@ -669,18 +630,17 @@ struct VMRegisters
 {
 	VMRegisters(const VMFrame *frame)
 	{
-		frame->GetAllRegs(d, f, s, a, atag, param);
+		frame->GetAllRegs(d, f, s, a, param);
 	}
 
 	VMRegisters(const VMRegisters &o)
-		: d(o.d), f(o.f), s(o.s), a(o.a), atag(o.atag), param(o.param)
+		: d(o.d), f(o.f), s(o.s), a(o.a), param(o.param)
 	{ }
 
 	int *d;
 	double *f;
 	FString *s;
 	void **a;
-	VM_ATAG *atag;
 	VMValue *param;
 };
 
@@ -702,9 +662,6 @@ public:
 	VMScriptFunction(FName name=NAME_None);
 	~VMScriptFunction();
 	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta, int numlinenumbers);
-
-	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
-	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
 
 	VMOP *Code;
 	FStatementInfo *LineInfo;
@@ -810,14 +767,12 @@ public:
 	void ParamObject(DObject *obj)
 	{
 		Reg.a[RegA] = obj;
-		Reg.atag[RegA] = ATAG_OBJECT;
 		RegA++;
 	}
 
-	void ParamPointer(void *ptr, VM_ATAG atag)
+	void ParamPointer(void *ptr)
 	{
 		Reg.a[RegA] = ptr;
-		Reg.atag[RegA] = atag;
 		RegA++;
 	}
 
@@ -852,7 +807,17 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 // variable name <x> at position <p>
 void NullParam(const char *varname);
 
+#ifdef _DEBUG
+bool AssertObject(void * ob);
+#endif
+
 #define PARAM_NULLCHECK(ptr, var) (ptr == nullptr? NullParam(#var), ptr : ptr)
+
+#define ASSERTINT(p)					assert((p).Type == REGT_INT)
+#define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
+#define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
+#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && AssertObject(p.a))
+#define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER)
 
 // For required parameters.
 #define PARAM_INT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); int x = param[p].i;
@@ -868,19 +833,13 @@ void NullParam(const char *varname);
 #define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(param[p].Type == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
 #define PARAM_POINTERTYPE_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type x = (type )param[p].a;
-#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
-#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
+#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && AssertObject(param[p].a)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
+#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && AssertObject(param[p].a)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 #define PARAM_POINTER_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x);
-#define PARAM_OBJECT_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
-#define PARAM_CLASS_NOT_NULL_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
+#define PARAM_OBJECT_NOT_NULL_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (AssertObject(param[p].a))); type *x = (type *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
+#define PARAM_CLASS_NOT_NULL_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (AssertObject(param[p].a))); base::MetaClass *x = (base::MetaClass *)PARAM_NULLCHECK(param[p].a, #x); assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 
 #define PARAM_EXISTS(p)					((p) < numparam)
-#define ASSERTINT(p)					assert((p).Type == REGT_INT)
-#define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
-#define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
-#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_OBJECT || (p).a == nullptr))
-#define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER && (p).atag == ATAG_GENERIC)
-#define ASSERTSTATE(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_GENERIC || (p).atag == ATAG_STATE))
 
 #define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
 #define PARAM_BOOL_DEF_AT(p,x)			bool x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = !!param[p].i; } else { ASSERTINT(defaultparam[p]); x = !!defaultparam[p].i; }
@@ -1030,9 +989,9 @@ struct AFuncDesc
 
 class AActor;
 
-#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
-#define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_GENERIC); return 1; } return 0; } while(0)
-#define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_OBJECT); return 1; } return 0; } while(0)
+#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
+#define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
+#define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetObject(state); return 1; } return 0; } while(0)
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC2(v) do { DVector2 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector2(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)
@@ -1062,7 +1021,7 @@ class AActor;
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT(self, type);
 
-// for structs we need to check for ATAG_GENERIC instead of ATAG_OBJECT
+// for structs we cannot do a class validation
 #define PARAM_SELF_STRUCT_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
 	PARAM_POINTER(self, type);

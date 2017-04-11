@@ -363,7 +363,7 @@ static PClassActor * T_GetAmmo(const svalue_t &t)
 		p=DefAmmo[ammonum];
 	}
 	auto am = PClass::FindActor(p);
-	if (am == NULL || !am->IsKindOf(PClass::FindClass(NAME_Ammo)))
+	if (am == NULL || !am->IsDescendantOf(PClass::FindClass(NAME_Ammo)))
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -2436,7 +2436,7 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 		type = "BasicArmorPickup";
 	}
 	auto info = PClass::FindActor (type);
-	if (info == NULL || !info->IsKindOf(RUNTIME_CLASS(AInventory)))
+	if (info == NULL || !info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;

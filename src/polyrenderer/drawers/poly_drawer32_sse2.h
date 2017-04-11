@@ -505,12 +505,13 @@ private:
 				{
 					// Load bgcolor
 					uint32_t desttmp[2];
-					if (mask0 & (1 << 31)) desttmp[0] = dest[x * 2];
-					if (mask0 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
-
 					__m128i bgcolor;
 					if (BlendT::Mode != (int)BlendModes::Opaque)
+					{
+						if (mask0 & (1 << 31)) desttmp[0] = dest[x * 2];
+						if (mask0 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
 						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)desttmp), _mm_setzero_si128());
+					}
 					else
 						bgcolor = _mm_setzero_si128();
 
@@ -593,12 +594,13 @@ private:
 				{
 					// Load bgcolor
 					uint32_t desttmp[2];
-					if (mask1 & (1 << 31)) desttmp[0] = dest[x * 2];
-					if (mask1 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
-
 					__m128i bgcolor;
 					if (BlendT::Mode != (int)BlendModes::Opaque)
+					{
+						if (mask1 & (1 << 31)) desttmp[0] = dest[x * 2];
+						if (mask1 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
 						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)desttmp), _mm_setzero_si128());
+					}
 					else
 						bgcolor = _mm_setzero_si128();
 

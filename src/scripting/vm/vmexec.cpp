@@ -82,7 +82,6 @@ void ThrowVMException(VMException *x);
 #define ASSERTF(x)		assert((unsigned)(x) < f->NumRegF)
 #define ASSERTA(x)		assert((unsigned)(x) < f->NumRegA)
 #define ASSERTS(x)		assert((unsigned)(x) < f->NumRegS)
-#define ASSERTO(x)		assert((unsigned)(x) < f->NumRegA && reg.atag[x] == ATAG_OBJECT)
 
 #define ASSERTKD(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstD)
 #define ASSERTKF(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstF)
@@ -228,10 +227,29 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 		else
 		{
 			assert(p.Type == REGT_POINTER);
-			calleereg.a[rega] = p.a;
-			calleereg.atag[rega++] = p.atag;
+			calleereg.a[rega++] = p.a;
 		}
 	}
 }
 
 
+#ifdef _DEBUG
+bool AssertObject(void * ob)
+{
+	auto obj = (DObject*)ob;
+	if (obj == nullptr) return true;
+#ifdef _MSC_VER
+	__try
+	{
+		return obj->MagicID == DObject::MAGIC_ID;
+	}
+	__except (1)
+	{
+		return false;
+	}
+#else
+	// No SEH on non-Microsoft compilers. :(
+	return obj->MagicID == DObject::MAGIC_ID;
+#endif
+}
+#endif

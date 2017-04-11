@@ -316,7 +316,7 @@ OpenGLSWFrameBuffer::HWPixelShader::~HWPixelShader()
 
 bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer)
 {
-	auto fb = std::make_unique<HWFrameBuffer>();
+	std::unique_ptr<HWFrameBuffer> fb(new HWFrameBuffer());
 	
 	GLint format = GL_RGBA16F;
 	if (gl.es) format = GL_RGB;
@@ -357,7 +357,7 @@ bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int 
 
 bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader)
 {
-	auto shader = std::make_unique<HWPixelShader>();
+	std::unique_ptr<HWPixelShader> shader(new HWPixelShader());
 
 	shader->Program = glCreateProgram();
 	if (shader->Program == 0) { Printf("glCreateProgram failed. Disabling OpenGL hardware acceleration.\n"); return false; }
@@ -443,7 +443,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 
 bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer)
 {
-	auto obj = std::make_unique<HWVertexBuffer>();
+	std::unique_ptr<HWVertexBuffer> obj(new HWVertexBuffer());
 
 	obj->Size = size;
 
@@ -474,7 +474,7 @@ bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVerte
 
 bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer)
 {
-	auto obj = std::make_unique<HWIndexBuffer>();
+	std::unique_ptr<HWIndexBuffer> obj(new HWIndexBuffer());
 
 	obj->Size = size;
 
@@ -494,7 +494,7 @@ bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBu
 
 bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int height, int levels, int format, HWTexture **outTexture)
 {
-	auto obj = std::make_unique<HWTexture>();
+	std::unique_ptr<HWTexture> obj(new HWTexture());
 
 	obj->Format = format;
 
@@ -532,7 +532,7 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 
 OpenGLSWFrameBuffer::HWTexture *OpenGLSWFrameBuffer::CopyCurrentScreen()
 {
-	auto obj = std::make_unique<HWTexture>();
+	std::unique_ptr<HWTexture> obj(new HWTexture());
 	obj->Format = GL_RGBA16F;
 
 	GLint oldBinding = 0;
@@ -611,7 +611,7 @@ void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const FBVERTEX *vertices)
 
 	if (!StreamVertexBuffer)
 	{
-		StreamVertexBuffer = std::make_unique<HWVertexBuffer>();
+		StreamVertexBuffer.reset(new HWVertexBuffer());
 		glGenVertexArrays(1, (GLuint*)&StreamVertexBuffer->VertexArray);
 		glGenBuffers(1, (GLuint*)&StreamVertexBuffer->Buffer);
 		glBindVertexArray(StreamVertexBuffer->VertexArray);
@@ -648,7 +648,7 @@ void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const BURNVERTEX *vertices
 
 	if (!StreamVertexBufferBurn)
 	{
-		StreamVertexBufferBurn = std::make_unique<HWVertexBuffer>();
+		StreamVertexBufferBurn.reset(new HWVertexBuffer());
 		glGenVertexArrays(1, (GLuint*)&StreamVertexBufferBurn->VertexArray);
 		glGenBuffers(1, (GLuint*)&StreamVertexBufferBurn->Buffer);
 		glBindVertexArray(StreamVertexBufferBurn->VertexArray);
@@ -679,7 +679,7 @@ void OpenGLSWFrameBuffer::DrawPoints(int count, const FBVERTEX *vertices)
 
 	if (!StreamVertexBuffer)
 	{
-		StreamVertexBuffer = std::make_unique<HWVertexBuffer>();
+		StreamVertexBuffer.reset(new HWVertexBuffer());
 		glGenVertexArrays(1, (GLuint*)&StreamVertexBuffer->VertexArray);
 		glGenBuffers(1, (GLuint*)&StreamVertexBuffer->Buffer);
 		glBindVertexArray(StreamVertexBuffer->VertexArray);

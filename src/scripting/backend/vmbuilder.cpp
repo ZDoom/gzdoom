@@ -126,7 +126,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	}
 	if (AddressConstantList.Size() > 0)
 	{
-		FillAddressConstants(func->KonstA, func->KonstATags());
+		FillAddressConstants(func->KonstA);
 	}
 	if (StringConstantList.Size() > 0)
 	{
@@ -175,10 +175,9 @@ void VMFunctionBuilder::FillFloatConstants(double *konst)
 //
 //==========================================================================
 
-void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst, VM_ATAG *tags)
+void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst)
 {
 	memcpy(konst, &AddressConstantList[0], sizeof(void*) * AddressConstantList.Size());
-	memcpy(tags, &AtagConstantList[0], sizeof(VM_ATAG) * AtagConstantList.Size());
 }
 
 //==========================================================================
@@ -258,7 +257,7 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 	}
 	else
 	{
-		int loc = StringConstantList.Push(val);
+		unsigned loc = StringConstantList.Push(val);
 		StringConstantMap.Insert(val, loc);
 		return loc;
 	}
@@ -273,27 +272,18 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 //
 //==========================================================================
 
-unsigned VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
+unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 {
-	if (ptr == NULL)
-	{ // Make all NULL pointers generic. (Or should we allow typed NULLs?)
-		tag = ATAG_GENERIC;
-	}
-	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
+	unsigned *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
-		// There should only be one tag associated with a memory location. Exceptions are made for null pointers that got allocated through constant arrays.
-		assert(ptr == nullptr || locp->Tag == tag);
-		return locp->KonstNum;
+		return *locp;
 	}
 	else
 	{
-		unsigned locc = AddressConstantList.Push(ptr);
-		AtagConstantList.Push(tag);
-
-		AddrKonst loc = { locc, tag };
+		unsigned loc = AddressConstantList.Push(ptr);
 		AddressConstantMap.Insert(ptr, loc);
-		return loc.KonstNum;
+		return loc;
 	}
 }
 
@@ -327,16 +317,13 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs, VM_ATAG tag)
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
-	AtagConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
 	for (unsigned i = 0; i < count; i++)
 	{
-		AtagConstantList[addr + i] = tag;
-		AddrKonst loc = { addr+i, tag };
-		AddressConstantMap.Insert(ptrs[i], loc);
+		AddressConstantMap.Insert(ptrs[i], addr+i);
 	}
 	return addr;
 }

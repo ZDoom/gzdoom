@@ -1090,12 +1090,14 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
-	static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Clear();
+	auto restrictarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_RestrictedToPlayerClass, nullptr);
+
+	restrictarray->Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassActor*>(info)->RestrictedToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			restrictarray->Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 
@@ -1104,12 +1106,14 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
-	static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Clear();
+	auto forbidarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_ForbiddenToPlayerClass, nullptr);
+
+	forbidarray->Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			static_cast<PClassActor*>(info)->ForbiddenToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			forbidarray->Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
 	}
 }
 

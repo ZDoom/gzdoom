@@ -97,7 +97,7 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +
 						 numkonsts * sizeof(FString) +
-						 numkonsta * (sizeof(FVoidObj) + 1) +
+						 numkonsta * sizeof(FVoidObj) +
 						 numlinenumbers * sizeof(FStatementInfo));
 	Code = (VMOP *)mem;
 	mem = (void *)((VMOP *)mem + numops);

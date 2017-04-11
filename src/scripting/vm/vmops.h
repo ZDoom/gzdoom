@@ -114,12 +114,12 @@ xx(RET,		ret,	I8BCP,		NOP,	0, 0),		// Copy value from register encoded in BC to 
 xx(RETI,	reti,	I8I16,		NOP,	0, 0),		// Copy immediate from BC to return value A, possibly returning
 xx(NEW,		new,	RPRPI8,		NOP,	0, 0),
 xx(NEW_K,	new,	RPKP,		NOP,	0, 0),
-xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
-xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
+//xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
+//xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB
 												// A == 1: Throw exception object pkB
 												// A >= 2: Throw VM exception of type BC
-xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try
+//xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try
 												// A == 1: continue execution at instruction immediately following CATCH (catches any exception)
 												// A == 2: (pB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// A == 3: (pkB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH

@@ -248,7 +248,6 @@ public:
 	PClassActor();
 	~PClassActor();
 
-	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void BuildDefaults();
 	void ApplyDefaults(uint8_t *defaults);
 	void RegisterIDs();
@@ -291,10 +290,6 @@ public:
 	FDropItem *DropItems;
 	FString SourceLumpName;
 	FIntCVar *distancecheck;
-
-	// These are only valid for inventory items.
-	TArray<PClassActor *> RestrictedToPlayerClass;
-	TArray<PClassActor *> ForbiddenToPlayerClass;
 
 	// This is from PClassPlayerPawn
 	FString DisplayName;

@@ -249,7 +249,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		}
 		if (!polyportal)
 		{
-			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
+			sectorPortals.push_back(std::unique_ptr<PolyDrawSectorPortal>(new PolyDrawSectorPortal(portal, ceiling)));
 			polyportal = sectorPortals.back().get();
 		}
 

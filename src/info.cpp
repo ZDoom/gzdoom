@@ -76,7 +76,7 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 	{
 		ActionCycles.Clock();
 
-		VMValue params[3] = { self, stateowner, VMValue(info, ATAG_GENERIC) };
+		VMValue params[3] = { self, stateowner, VMValue(info) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-NULL, we need
 		// to set *stateret to NULL.
@@ -313,10 +313,6 @@ void PClassActor::DeriveData(PClass *newclass)
 		newa->PainChances = new PainChanceList;
 		*newa->PainChances = *PainChances;
 	}
-
-	// Inventory stuff
-	newa->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
-	newa->RestrictedToPlayerClass = RestrictedToPlayerClass;
 
 	newa->DisplayName = DisplayName;
 }
@@ -587,49 +583,6 @@ void PClassActor::SetPainChance(FName type, int chance)
 	{
 		PainChances->Remove(type);
 	}
-}
-
-//==========================================================================
-//
-// PClassActor :: ReplaceClassRef
-//
-//==========================================================================
-
-size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
-{
-	auto changed = Super::PointerSubstitution(oldclass, newclass);
-	for (unsigned i = 0; i < VisibleToPlayerClass.Size(); i++)
-	{
-		if (VisibleToPlayerClass[i] == oldclass)
-		{
-			VisibleToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-
-	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
-	{
-		if (ForbiddenToPlayerClass[i] == oldclass)
-		{
-			ForbiddenToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
-	{
-		if (RestrictedToPlayerClass[i] == oldclass)
-		{
-			RestrictedToPlayerClass[i] = static_cast<PClassActor*>(newclass);
-			changed++;
-		}
-	}
-	AInventory *def = dyn_cast<AInventory>((AActor*)Defaults);
-	if (def != NULL)
-	{
-		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
-	}
-
-	return changed;
 }
 
 //==========================================================================

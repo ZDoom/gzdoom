@@ -1269,7 +1269,7 @@ CCMD (setslot)
 		Net_WriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
-			Net_WriteWeapon(dyn_cast<PClassActor>(PClass::FindClass(argv[i])));
+			Net_WriteWeapon(PClass::FindActor(argv[i]));
 		}
 	}
 }
@@ -1298,7 +1298,7 @@ CCMD (addslot)
 		return;
 	}
 
-	PClassActor *type= dyn_cast<PClassActor>(PClass::FindClass(argv[2]));
+	PClassActor *type= PClass::FindActor(argv[2]);
 	if (type == nullptr)
 	{
 		Printf("%s is not a weapon\n", argv[2]);
@@ -1374,7 +1374,7 @@ CCMD (addslotdefault)
 		return;
 	}
 
-	type = dyn_cast<PClassActor>(PClass::FindClass(argv[2]));
+	type = PClass::FindActor(argv[2]);
 	if (type == nullptr)
 	{
 		Printf ("%s is not a weapon\n", argv[2]);
@@ -1523,7 +1523,7 @@ void P_ReadDemoWeaponsChunk(uint8_t **demo)
 	for (i = 1; i < count; ++i)
 	{
 		s = ReadStringConst(demo);
-		type = dyn_cast<PClassActor>(PClass::FindClass(s));
+		type = PClass::FindActor(s);
 		// If a demo was recorded with a weapon that is no longer present,
 		// should we report it?
 		Weapons_ntoh[i] = type;

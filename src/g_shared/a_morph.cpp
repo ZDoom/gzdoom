@@ -714,14 +714,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_Morph)
 	bool res = false;
 	if (self->player)
 	{
-		if (type->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+		if (type->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
 		{
 			res = P_MorphPlayer(self->player, self->player, type, duration, flags, enter_flash, exit_flash);
 		}
 	}
 	else
 	{
-		if (type->IsKindOf(RUNTIME_CLASS(AMorphedMonster)))
+		if (type->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
 		{
 			res = P_MorphMonster(self, type, duration, flags, enter_flash, exit_flash);
 		}

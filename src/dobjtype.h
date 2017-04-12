@@ -400,7 +400,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -417,6 +416,18 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
+
+class PObjectPointer : public PPointer
+{
+	DECLARE_CLASS(PObjectPointer, PPointer);
+public:
+	PObjectPointer(PClass *pointedtype = nullptr, bool isconst = false);
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
 };
 
 

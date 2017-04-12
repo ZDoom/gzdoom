@@ -1338,7 +1338,10 @@ PPointer::PPointer()
 : PBasicType(sizeof(void *), alignof(void *)), PointedType(nullptr), IsConst(false)
 {
 	mDescriptiveName = "NullPointer";
-	SetOps();
+	loadOp = OP_LP;
+	storeOp = OP_SP;
+	moveOp = OP_MOVEA;
+	RegType = REGT_POINTER;
 }
 
 //==========================================================================
@@ -1352,20 +1355,8 @@ PPointer::PPointer(PType *pointsat, bool isconst)
 {
 	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
 	mVersion = pointsat->mVersion;
-	SetOps();
-}
-
-//==========================================================================
-//
-// PPointer :: GetStoreOp
-//
-//==========================================================================
-
-void PPointer::SetOps()
-{
-	loadOp = (PointedType && PointedType->IsKindOf(RUNTIME_CLASS(PClass))) ? OP_LO : OP_LP;
-	// Non-destroyed thinkers are always guaranteed to be linked into the thinker chain so we don't need the write barrier for them.
-	storeOp = (loadOp == OP_LO && !static_cast<PClass*>(PointedType)->IsDescendantOf(RUNTIME_CLASS(DThinker))) ? OP_SO : OP_SP;
+	loadOp = OP_LP;
+	storeOp = OP_SP;
 	moveOp = OP_MOVEA;
 	RegType = REGT_POINTER;
 }
@@ -1398,32 +1389,13 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
-// PPointer :: SetPointer
-//
-//==========================================================================
-
-void PPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
-{
-	if (PointedType != nullptr && PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		// Add to the list of pointers for this class.
-		special->Push(offset);
-	}
-}
-
-//==========================================================================
-//
 // PPointer :: WriteValue
 //
 //==========================================================================
 
 void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		ar(key, *(DObject **)addr);
-	}
-	else if (writer != nullptr)
+	if (writer != nullptr)
 	{
 		writer(ar, key, addr);
 	}
@@ -1441,17 +1413,65 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 
 bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		bool res;
-		::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
-		return res;
-	}
-	else if (reader != nullptr)
+	if (reader != nullptr)
 	{
 		return reader(ar, key, addr);
 	}
 	return false;
+}
+
+/* PObjectPointer **********************************************************/
+
+IMPLEMENT_CLASS(PObjectPointer, false, false)
+
+//==========================================================================
+//
+// PPointer :: GetStoreOp
+//
+//==========================================================================
+
+PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
+	: PPointer(cls, isconst)
+{
+	loadOp = OP_LO;
+	// Non-destroyed thinkers are always guaranteed to be linked into the thinker chain so we don't need the write barrier for them.
+	if (cls && !cls->IsDescendantOf(RUNTIME_CLASS(DThinker))) storeOp = OP_SO;
+}
+
+//==========================================================================
+//
+// PPointer :: SetPointer
+//
+//==========================================================================
+
+void PObjectPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	// Add to the list of pointers for this class.
+	special->Push(offset);
+}
+
+//==========================================================================
+//
+// PPointer :: WriteValue
+//
+//==========================================================================
+
+void PObjectPointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	ar(key, *(DObject **)addr);
+}
+
+//==========================================================================
+//
+// PPointer :: ReadValue
+//
+//==========================================================================
+
+bool PObjectPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	bool res;
+	::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
+	return res;
 }
 
 //==========================================================================
@@ -1464,14 +1484,28 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 PPointer *NewPointer(PType *type, bool isconst)
 {
-	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
-	if (ptype == nullptr)
+	if (type->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		ptype = new PPointer(type, isconst);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
+		size_t bucket;
+		PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+		if (ptype == nullptr)
+		{
+			ptype = new PObjectPointer(static_cast<PClass*>(type), isconst);
+			TypeTable.AddType(ptype, RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
+		}
+		return static_cast<PPointer *>(ptype);
 	}
-	return static_cast<PPointer *>(ptype);
+	else
+	{
+		size_t bucket;
+		PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+		if (ptype == nullptr)
+		{
+			ptype = new PPointer(type, isconst);
+			TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
+		}
+		return static_cast<PPointer *>(ptype);
+	}
 }
 
 /* PStatePointer **********************************************************/

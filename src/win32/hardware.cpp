@@ -106,7 +106,7 @@ CUSTOM_CVAR(Bool, vid_used3d, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 }
 
 // [ZDoomGL]
-CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR (Int, vid_renderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// 0: Software renderer
 	// 1: OpenGL renderer

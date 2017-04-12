@@ -1883,6 +1883,9 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		if (!(player->mo->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
 
+		if (!((actor->flags ^ player->mo->flags) & MF_FRIENDLY))
+			continue;			// same +MF_FRIENDLY, ignore
+
 		if (player->cheats & CF_NOTARGET)
 			continue;			// no target
 
@@ -1982,7 +1985,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 			targ = NULL;
 		}
 
-		if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+		if (targ && targ->player && ((targ->player->cheats & CF_NOTARGET) || !(targ->flags & MF_FRIENDLY)))
 		{
 			return 0;
 		}

@@ -7279,7 +7279,7 @@ bool AActor::IsTeammate (AActor *other)
 	}
 	else if (!deathmatch && player && other->player)
 	{
-		return true;
+		return (!((flags ^ other->flags) & MF_FRIENDLY));
 	}
 	else if (teamplay)
 	{
@@ -7360,6 +7360,9 @@ bool AActor::IsFriend (AActor *other)
 			other->FriendPlayer == 0 ||
 			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
+	// [SP] If friendly flags match, then they are on the same team.
+	/*if (!((flags ^ other->flags) & MF_FRIENDLY))
+		return true;*/
 	return false;
 }
 

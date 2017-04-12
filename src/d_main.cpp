@@ -112,6 +112,8 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "r_utility.h"
+#include "vm.h"
+#include "types.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();

@@ -53,6 +53,7 @@
 #include "r_renderer.h"
 #include "r_sky.h"
 #include "textures/textures.h"
+#include "vm.h"
 
 FTextureManager TexMan;
 

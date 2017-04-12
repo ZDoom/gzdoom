@@ -1441,7 +1441,7 @@ class CommandDrawNumber : public CommandDrawString
 					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
 					int retv;
 					VMReturn ret(&retv);
-					GlobalVMStack.Call(func, params, 2, &ret, 1);
+					VMCall(func, params, 2, &ret, 1);
 					num = retv < 0? 0 :  retv / TICRATE + 1;
 					break;
 				}
@@ -2738,7 +2738,7 @@ class CommandDrawBar : public SBarInfoCommand
 					int ival;
 					ret[0].IntAt(&ival);
 					ret[1].IntAt(&max);
-					GlobalVMStack.Call(func, params, 2, ret, 2);
+					VMCall(func, params, 2, ret, 2);
 					value = ival + 1;
 					max++;
 					break;

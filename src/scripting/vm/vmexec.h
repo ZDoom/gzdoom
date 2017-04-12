@@ -215,16 +215,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		NEXTOP;
-	OP(LOS):
-		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
-		GETADDR(PB,KC,X_READ_NIL);
-		reg.a[a] = *(DObject **)ptr;
-		NEXTOP;
-	OP(LOS_R):
-		ASSERTA(a); ASSERTA(B); ASSERTD(C);
-		GETADDR(PB,RC,X_READ_NIL);
-		reg.a[a] = *(DObject **)ptr;
-		NEXTOP;
 	OP(LP):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);

@@ -6620,7 +6620,7 @@ ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 	ob.Free(build);
 	ExpEmit meta(build, REGT_POINTER);
 	build->Emit(OP_CLSS, meta.RegNum, ob.RegNum);
-	build->Emit(OP_LOS, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LP, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return meta;
 
 }
@@ -6878,7 +6878,7 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 		if (offsetreg == -1) offsetreg = build->GetConstantInt(0);
 		auto op = membervar->Type->GetLoadOp();
 		if (op == OP_LO)
-			op = OP_LOS;
+			op = OP_LP;
 		build->Emit(op, loc.RegNum, build->FramePointer.RegNum, offsetreg);
 	}
 	else
@@ -9355,7 +9355,7 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 		op.Free(build);
 	}
 	ExpEmit to(build, REGT_POINTER);
-	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
+	build->Emit(OP_LP, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
 	return to;
 }
 
@@ -9427,7 +9427,7 @@ ExpEmit FxGetDefaultByType::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LKP, to.RegNum, op.RegNum);
 		op = to;
 	}
-	build->Emit(OP_LOS, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	build->Emit(OP_LP, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return to;
 }
 

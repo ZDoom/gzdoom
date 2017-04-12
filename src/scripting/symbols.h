@@ -274,5 +274,4 @@ struct FNamespaceManager
 };
 
 extern FNamespaceManager Namespaces;
-
-
+void RemoveUnusedSymbols();

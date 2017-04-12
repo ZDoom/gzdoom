@@ -52,11 +52,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "serializer.h"
-#include "thingdef.h"
-#include "virtual.h"
-
-
-extern FFlagDef WeaponFlagDefs[];
+#include "vm.h"
 
 IMPLEMENT_CLASS(AWeapon, false, true)
 
@@ -66,7 +62,6 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(SisterWeapon)
 IMPLEMENT_POINTERS_END
 
-DEFINE_FIELD(AWeapon, WeaponFlags)
 DEFINE_FIELD(AWeapon, AmmoType1)
 DEFINE_FIELD(AWeapon, AmmoType2)	
 DEFINE_FIELD(AWeapon, AmmoGive1)
@@ -99,6 +94,7 @@ DEFINE_FIELD(AWeapon, Crosshair)
 DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
 DEFINE_FIELD(AWeapon, bAltFire)
 DEFINE_FIELD(AWeapon, SlotNumber)
+DEFINE_FIELD(AWeapon, WeaponFlags)
 DEFINE_FIELD_BIT(AWeapon, WeaponFlags, bDehAmmo, WIF_DEHAMMO)
 
 //===========================================================================
@@ -404,7 +400,7 @@ FState *AWeapon::GetUpState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -424,7 +420,7 @@ FState *AWeapon::GetDownState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -444,7 +440,7 @@ FState *AWeapon::GetReadyState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -464,7 +460,7 @@ FState *AWeapon::GetAtkState (bool hold)
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -484,7 +480,7 @@ FState *AWeapon::GetAltAtkState (bool hold)
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return retval;
 	}
 	return nullptr;

@@ -58,7 +58,7 @@
 #include "p_blockmap.h"
 #include "a_morph.h"
 #include "p_spec.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "r_data/r_translate.h"
@@ -1505,7 +1505,7 @@ void APlayerPawn::PlayIdle ()
 	IFVIRTUAL(APlayerPawn, PlayIdle)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1514,7 +1514,7 @@ void APlayerPawn::PlayRunning ()
 	IFVIRTUAL(APlayerPawn, PlayRunning)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1523,7 +1523,7 @@ void APlayerPawn::PlayAttacking ()
 	IFVIRTUAL(APlayerPawn, PlayAttacking)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1532,7 +1532,7 @@ void APlayerPawn::PlayAttacking2 ()
 	IFVIRTUAL(APlayerPawn, PlayAttacking2)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1630,7 +1630,7 @@ void APlayerPawn::MorphPlayerThink ()
 	IFVIRTUAL(APlayerPawn, MorphPlayerThink)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 

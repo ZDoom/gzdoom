@@ -41,6 +41,7 @@
 #include "v_text.h"
 #include "thingdef.h"
 #include "r_state.h"
+#include "vm.h"
 
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.

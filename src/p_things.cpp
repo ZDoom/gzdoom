@@ -53,6 +53,7 @@
 #include "actorptrselect.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "vm.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 FClassMap SpawnableThings;

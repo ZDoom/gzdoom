@@ -47,7 +47,7 @@
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
-#include "virtual.h"
+#include "vm.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -154,7 +154,7 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
-		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		VMCall(func, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
 	std::swap(params[0].a, params[1].a);
@@ -165,7 +165,7 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
-		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		VMCall(func, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
 	return true;
@@ -5302,7 +5302,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 				VMValue params[] = { mobj, usething };
 				int ret;
 				VMReturn vret(&ret);
-				GlobalVMStack.Call(func, params, 2, &vret, 1);
+				VMCall(func, params, 2, &vret, 1);
 				if (ret) return true;
 			}
 			continue;

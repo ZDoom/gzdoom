@@ -44,6 +44,7 @@
 #include "m_fixed.h"
 #include "gstrings.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 TArray<FSkillInfo> AllSkills;
 int DefaultSkill = -1;

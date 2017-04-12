@@ -61,6 +61,8 @@
 #include "serializer.h"
 #include "wi_stuff.h"
 #include "a_dynlight.h"
+#include "vm.h"
+#include "types.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;

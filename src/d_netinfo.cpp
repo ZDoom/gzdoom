@@ -57,6 +57,7 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "serializer.h"
+#include "vm.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 

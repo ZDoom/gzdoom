@@ -3,6 +3,7 @@
 
 #include "memarena.h"
 #include "sc_man.h"
+#include "types.h"
 
 struct ZCCToken
 {
@@ -193,7 +194,7 @@ struct ZCC_NamedNode : ZCC_TreeNode
 
 struct ZCC_Struct : ZCC_NamedNode
 {
-	VM_UWORD Flags;
+	uint32_t Flags;
 	ZCC_TreeNode *Body;
 	PContainerType *Type;
 	VersionInfo Version;

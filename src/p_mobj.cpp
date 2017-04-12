@@ -68,7 +68,7 @@
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
@@ -152,9 +152,6 @@ AActor::~AActor ()
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
 }
-
-extern FFlagDef InternalActorFlagDefs[];
-extern FFlagDef ActorFlagDefs[];
 
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
@@ -841,7 +838,7 @@ void AActor::RemoveInventory(AInventory *item)
 				IFVIRTUALPTR(item, AInventory, DetachFromOwner)
 				{
 					VMValue params[1] = { item };
-					GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+					VMCall(func, params, 1, nullptr, 0);
 				}
 
 				item->Owner = NULL;
@@ -1109,7 +1106,7 @@ AInventory *AActor::DropInventory (AInventory *item, int amt)
 	{
 		VMValue params[] = { (DObject*)item, amt };
 		VMReturn ret((void**)&drop);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		VMCall(func, params, countof(params), &ret, 1);
 	}
 	if (drop == nullptr) return NULL;
 	drop->SetOrigin(PosPlusZ(10.), false);
@@ -1681,7 +1678,7 @@ void AActor::CallTouch(AActor *toucher)
 	IFVIRTUAL(AActor, Touch)
 	{
 		VMValue params[2] = { (DObject*)this, toucher };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Touch(toucher);
 }
@@ -3573,7 +3570,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 	result.IntAt(&amount);
 
-	if (GlobalVMStack.Call(DamageFunc, &param, 1, &result, 1) < 1)
+	if (VMCall(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}
@@ -3638,7 +3635,7 @@ bool AActor::CallSlam(AActor *thing)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return !!retval;
 
 	}
@@ -3656,7 +3653,7 @@ int AActor::SpecialMissileHit (AActor *victim)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return retval;
 	}
 	else return -1;
@@ -3716,7 +3713,7 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 		IFVIRTUALPTR(item, AInventory, AbsorbDamage)
 		{
 			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
-			GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
+			VMCall(func, params, 4, nullptr, 0);
 		}
 	}
 	return damage;
@@ -3736,7 +3733,7 @@ void AActor::AlterWeaponSprite(visstyle_t *vis)
 		IFVIRTUALPTR(items[i], AInventory, AlterWeaponSprite)
 		{
 			VMValue params[3] = { items[i], vis, &changed };
-			GlobalVMStack.Call(func, params, 3, nullptr, 0, nullptr);
+			VMCall(func, params, 3, nullptr, 0);
 		}
 	}
 }
@@ -3891,7 +3888,7 @@ PClassActor *AActor::GetBloodType(int type) const
 		VMValue params[] = { (DObject*)this, type };
 		PClassActor *res;
 		VMReturn ret((void**)&res);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+		VMCall(func, params, countof(params), &ret, 1);
 		return res;
 	}
 	return nullptr;
@@ -4051,7 +4048,7 @@ void AActor::Tick ()
 			IFVIRTUALPTR(item, AInventory, DoEffect)
 			{
 				VMValue params[1] = { item };
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 			item = item->Inventory;
 		}
@@ -5139,7 +5136,7 @@ void AActor::CallBeginPlay()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 	else BeginPlay();
 }
@@ -5230,7 +5227,7 @@ void AActor::CallActivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Activate(activator);
 }
@@ -5276,7 +5273,7 @@ void AActor::CallDeactivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Deactivate(activator);
 }
@@ -5582,7 +5579,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
 		{
 			VMValue param = p->mo;
-			GlobalVMStack.Call(func, &param, 1, nullptr, 0);
+			VMCall(func, &param, 1, nullptr, 0);
 		}
 	}
 
@@ -7455,7 +7452,7 @@ int AActor::CallDoSpecialDamage(AActor *target, int damage, FName damagetype)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
+		VMCall(func, params, 4, &ret, 1);
 		return retval;
 	}
 	else return DoSpecialDamage(target, damage, damagetype);
@@ -7520,7 +7517,7 @@ int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage,
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 5, &ret, 1, nullptr);
+		VMCall(func, params, 5, &ret, 1);
 		return retval;
 	}
 	else return TakeSpecialDamage(inflictor, source, damage, damagetype);
@@ -7664,7 +7661,7 @@ int AActor::GetGibHealth() const
 		VMValue params[] = { (DObject*)this };
 		int h;
 		VMReturn ret(&h);
-		GlobalVMStack.Call(func, params, 1, &ret, 1);
+		VMCall(func, params, 1, &ret, 1);
 		return h;
 	}
 	return -SpawnHealth();
@@ -7800,7 +7797,7 @@ int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 		IFVIRTUALPTR(inv, AInventory, ModifyDamage)
 		{
 			VMValue params[5] = { (DObject*)inv, damage, int(damagetype), &damage, passive };
-			GlobalVMStack.Call(func, params, 5, nullptr, 0, nullptr);
+			VMCall(func, params, 5, nullptr, 0);
 		}
 		inv = inv->Inventory;
 	}

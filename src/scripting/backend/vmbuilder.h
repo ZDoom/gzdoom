@@ -2,6 +2,7 @@
 #define VMUTIL_H
 
 #include "dobject.h"
+#include "vmintern.h"
 
 class VMFunctionBuilder;
 class FxExpression;

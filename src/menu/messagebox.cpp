@@ -45,6 +45,7 @@
 #include "st_start.h"
 #include "c_dispatch.h"
 #include "g_game.h"
+#include "vm.h"
 
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 
@@ -71,7 +72,7 @@ DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode,
 	VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex(), reinterpret_cast<void*>(handler) };
 
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
-	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenu*)p;
 }
 

@@ -54,7 +54,7 @@
 #include "d_player.h"
 #include "r_state.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -487,7 +487,7 @@ void S_PrecacheLevel ()
 			{
 				// Without the type cast this picks the 'void *' assignment...
 				VMValue params[1] = { actor };
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 			else
 			{

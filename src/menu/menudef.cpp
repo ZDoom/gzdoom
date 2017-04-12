@@ -51,6 +51,8 @@
 #include "gi.h"
 #include "i_sound.h"
 #include "cmdlib.h"
+#include "vm.h"
+#include "types.h"
 
 
 
@@ -480,7 +482,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					}
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					if (cls->IsDescendantOf("ListMenuItemSelectable"))
@@ -837,7 +839,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					success = true;

@@ -50,6 +50,7 @@
 #include "p_terrain.h"
 #include "g_levellocals.h"
 #include "info.h"
+#include "vm.h"
 
 //===========================================================================
 //

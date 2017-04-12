@@ -59,7 +59,7 @@
 #include "a_weapons.h"
 #include "p_conversation.h"
 #include "v_text.h"
-#include "thingdef.h"
+//#include "thingdef.h"
 #include "backend/codegen.h"
 #include "a_sharedglobal.h"
 #include "backend/vmbuilder.h"

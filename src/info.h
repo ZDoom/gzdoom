@@ -286,15 +286,15 @@ struct FActorInfo
 	}
 };
 
+// This is now merely a wrapper that adds actor-specific functionality to PClass.
+// No objects of this type will be created ever - its only use is to static_casr
+// PClass to it.
 class PClassActor : public PClass
 {
 protected:
 public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
-
-	PClassActor();
-	~PClassActor();
 
 	void BuildDefaults();
 	void ApplyDefaults(uint8_t *defaults);

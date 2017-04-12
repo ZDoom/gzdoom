@@ -39,6 +39,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 #define FUDGEFACTOR		10
 

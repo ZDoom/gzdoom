@@ -15,7 +15,8 @@
 #include "d_player.h"
 #include "r_data/sprites.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
+#include "vm.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -612,8 +613,7 @@ void EndAllPowerupEffects(AInventory *item)
 			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
 			{
 				VMValue params[1] = { item };
-				VMFrameStack stack;
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 		}
 		item = item->Inventory;
@@ -638,8 +638,7 @@ void InitAllPowerupEffects(AInventory *item)
 			IFVIRTUALPTRNAME(item, NAME_Powerup, InitEffect)
 			{
 				VMValue params[1] = { item };
-				VMFrameStack stack;
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 		}
 		item = item->Inventory;

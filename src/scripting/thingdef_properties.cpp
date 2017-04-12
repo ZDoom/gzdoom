@@ -70,6 +70,7 @@
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "d_player.h"
+#include "types.h"
 
 //==========================================================================
 //

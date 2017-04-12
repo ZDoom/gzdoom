@@ -31,6 +31,7 @@
 #include "statnums.h"
 #include "serializer.h"
 #include "doomstat.h"
+#include "vm.h"
 
 IMPLEMENT_CLASS(DSectorEffect, false, false)
 

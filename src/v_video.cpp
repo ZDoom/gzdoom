@@ -65,6 +65,7 @@
 #include "r_renderer.h"
 #include "menu/menu.h"
 #include "r_data/voxels.h"
+#include "vm.h"
 
 EXTERN_CVAR(Bool, r_blendmethod)
 

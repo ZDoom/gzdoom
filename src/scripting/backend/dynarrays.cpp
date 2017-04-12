@@ -39,7 +39,9 @@
 
 #include "tarray.h"
 #include "dobject.h"
-#include "thingdef.h"
+#include "vm.h"
+#include "types.h"
+
 // We need one specific type for each of the 7 integral VM types and instantiate the needed functions for each of them.
 // Dynamic arrays cannot hold structs because for every type there'd need to be an internal implementation which is impossible.
 

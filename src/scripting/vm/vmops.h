@@ -45,8 +45,6 @@ xx(LS,		ls,		RSRPKI,		LS_R,	4, REGT_INT),	// load string
 xx(LS_R,	ls,		RSRPRI,		NOP,	0, 0),
 xx(LO,		lo,		RPRPKI,		LO_R,	4, REGT_INT),	// load object
 xx(LO_R,	lo,		RPRPRI,		NOP,	0, 0),
-xx(LOS,		los,	RPRPKI,		LOS_R,	4, REGT_INT),	// load object (stack version without read barrier)
-xx(LOS_R,	lo,		RPRPRI,		NOP,	0, 0),
 xx(LP,		lp,		RPRPKI,		LP_R,	4, REGT_INT),	// load pointer
 xx(LP_R,	lp,		RPRPRI,		NOP,	0, 0),
 xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT),	// load vector2

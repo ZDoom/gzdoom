@@ -79,6 +79,7 @@
 #include "edata.h"
 #endif
 #include "events.h"
+#include "types.h"
 
 #include "fragglescript/t_fs.h"
 

@@ -85,6 +85,7 @@
 #include "serializer.h"
 #include "w_zip.h"
 #include "resourcefiles/resourcefile.h"
+#include "vm.h"
 
 #include <zlib.h>
 
@@ -3010,3 +3011,5 @@ DEFINE_GLOBAL(skyflatnum)
 DEFINE_GLOBAL_NAMED(bglobal.freeze, globalfreeze)
 DEFINE_GLOBAL(gametic)
 DEFINE_GLOBAL(demoplayback)
+DEFINE_GLOBAL(automapactive);
+DEFINE_GLOBAL(Net_Arbitrator);

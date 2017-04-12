@@ -61,7 +61,7 @@
 #include "p_local.h"
 #include "menu/menu.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "actorinlines.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -867,7 +867,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		{
 			VMValue params[] = { cmenu, CurNode, pc->player, StaticLastReply };
 			VMReturn ret(&ConversationMenuY);
-			GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+			VMCall(func, params, countof(params), &ret, 1);
 		}
 
 		if (CurNode != PrevNode)

@@ -48,8 +48,9 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "serializer.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
+#include "types.h"
 
 //==========================================================================
 //
@@ -372,7 +373,7 @@ void DObject:: Destroy ()
 		IFVIRTUAL(DObject, OnDestroy)
 		{
 			VMValue params[1] = { (DObject*)this };
-			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+			VMCall(func, params, 1, nullptr, 0);
 		}
 	}
 	OnDestroy();

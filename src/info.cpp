@@ -55,6 +55,8 @@
 #include "d_player.h"
 #include "doomerrors.h"
 #include "events.h"
+#include "types.h"
+#include "vm.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -128,35 +130,35 @@ void FState::SetAction(const char *name)
 
 bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info, FState **stateret)
 {
-	if (ActionFunc != NULL)
+	if (ActionFunc != nullptr)
 	{
 		ActionCycles.Clock();
 
 		VMValue params[3] = { self, stateowner, VMValue(info) };
 		// If the function returns a state, store it at *stateret.
-		// If it doesn't return a state but stateret is non-NULL, we need
-		// to set *stateret to NULL.
-		if (stateret != NULL)
+		// If it doesn't return a state but stateret is non-nullptr, we need
+		// to set *stateret to nullptr.
+		if (stateret != nullptr)
 		{
-			*stateret = NULL;
-			if (ActionFunc->Proto == NULL ||
+			*stateret = nullptr;
+			if (ActionFunc->Proto == nullptr ||
 				ActionFunc->Proto->ReturnTypes.Size() == 0 ||
 				ActionFunc->Proto->ReturnTypes[0] != TypeState)
 			{
-				stateret = NULL;
+				stateret = nullptr;
 			}
 		}
 		try
 		{
-			if (stateret == NULL)
+			if (stateret == nullptr)
 			{
-				GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
+				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);
 			}
 			else
 			{
 				VMReturn ret;
 				ret.PointerAt((void **)stateret);
-				GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
+				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1);
 			}
 		}
 		catch (CVMAbortException &err)
@@ -331,11 +333,11 @@ void AActor::Finalize(FStateDefinitions &statedef)
 	}
 	catch (CRecoverableError &)
 	{
-		statedef.MakeStateDefines(NULL);
+		statedef.MakeStateDefines(nullptr);
 		throw;
 	}
 	statedef.InstallStates(GetClass(), defaults);
-	statedef.MakeStateDefines(NULL);
+	statedef.MakeStateDefines(nullptr);
 }
 
 //==========================================================================
@@ -350,7 +352,7 @@ void PClassActor::RegisterIDs()
 {
 	PClassActor *cls = PClass::FindActor(TypeName);
 
-	if (cls == NULL)
+	if (cls == nullptr)
 	{
 		Printf(TEXTCOLOR_RED"The actor '%s' has been hidden by a non-actor of the same name\n", TypeName.GetChars());
 		return;
@@ -381,7 +383,7 @@ void PClassActor::RegisterIDs()
 		if (DoomEdNum != -1)
 		{
 			FDoomEdEntry *oldent = DoomEdMap.CheckKey(DoomEdNum);
-			if (oldent != NULL && oldent->Special == -2)
+			if (oldent != nullptr && oldent->Special == -2)
 			{
 				Printf(TEXTCOLOR_RED"Editor number %d defined twice for classes '%s' and '%s'\n", DoomEdNum, cls->TypeName.GetChars(), oldent->Type->TypeName.GetChars());
 			}
@@ -411,7 +413,7 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
 		skillrepname = AllSkills[gameskill].GetReplacement(TypeName);
-		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == nullptr)
 		{
 			Printf("Warning: incorrect actor name in definition of skill %s: \n"
 				   "class %s is replaced by non-existent class %s\n"
@@ -467,7 +469,7 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
 		skillrepname = AllSkills[gameskill].GetReplacedBy(TypeName);
-		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == nullptr)
 		{
 			Printf("Warning: incorrect actor name in definition of skill %s: \n"
 				   "non-existent class %s is replaced by class %s\n"
@@ -488,7 +490,7 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 	// potential infinite recursion.
 	ActorInfo()->Replacee = nullptr;
 	PClassActor *rep = savedrep;
-	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))
+	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != nullptr))
 	{
 		rep = PClass::FindActor(skillrepname);
 	}
@@ -578,7 +580,7 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 	if (argv.argc() > 1)
 	{
 		PClassActor *type = PClass::FindActor(argv[1]);
-		if (type == NULL)
+		if (type == nullptr)
 		{
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;

@@ -1,5 +1,7 @@
 #include "dobject.h"
 #include "scopebarrier.h"
+#include "types.h"
+#include "vmintern.h"
 
 
 // Note: the same object can't be both UI and Play. This is checked explicitly in the field construction and will cause esoteric errors here if found.

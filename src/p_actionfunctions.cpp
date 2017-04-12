@@ -82,6 +82,8 @@
 #include "r_utility.h"
 #include "sbar.h"
 #include "actorinlines.h"
+#include "vm.h"
+#include "types.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -182,7 +184,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			}
 			try
 			{
-				GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+				VMCall(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 			}
 			catch (CVMAbortException &err)
 			{

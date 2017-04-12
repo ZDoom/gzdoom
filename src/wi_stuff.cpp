@@ -62,7 +62,7 @@
 #include "gstrings.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 
 CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
@@ -710,7 +710,7 @@ void WI_Ticker()
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
 		{
 			VMValue self = WI_Screen;
-			GlobalVMStack.Call(func, &self, 1, nullptr, 0);
+			VMCall(func, &self, 1, nullptr, 0);
 		}
 	}
 }
@@ -729,7 +729,7 @@ void WI_Drawer()
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
 			VMValue self = WI_Screen;
-			GlobalVMStack.Call(func, &self, 1, nullptr, 0);
+			VMCall(func, &self, 1, nullptr, 0);
 			screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 
 			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
@@ -780,7 +780,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };
-		GlobalVMStack.Call(func, val, 2, nullptr, 0);
+		VMCall(func, val, 2, nullptr, 0);
 	}
 	GC::AddSoftRoot(WI_Screen);
 }

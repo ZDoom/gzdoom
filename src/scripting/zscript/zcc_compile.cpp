@@ -49,6 +49,7 @@
 #include "i_system.h"
 #include "gdtoa.h"
 #include "backend/vmbuilder.h"
+#include "types.h"
 
 FSharedStringArena VMStringConstants;
 bool isActor(PContainerType *type);

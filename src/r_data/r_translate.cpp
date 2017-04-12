@@ -50,6 +50,7 @@
 #include "d_player.h"
 #include "r_data/sprites.h"
 #include "r_state.h"
+#include "vm.h"
 
 #include "gi.h"
 #include "stats.h"

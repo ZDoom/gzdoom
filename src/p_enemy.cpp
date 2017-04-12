@@ -52,7 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "actorinlines.h"
 
 #include "gi.h"
@@ -3329,7 +3329,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 					VMValue params[2] = { inv, source };
 					int retval;
 					VMReturn ret(&retval);
-					GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+					VMCall(func, params, 2, &ret, 1);
 					if (retval)
 					{
 						// The special action indicates that the item should not spawn

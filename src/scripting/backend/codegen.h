@@ -46,6 +46,8 @@
 #include "actor.h"
 #include "vmbuilder.h"
 #include "scopebarrier.h"
+#include "types.h"
+#include "vmintern.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;

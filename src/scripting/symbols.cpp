@@ -38,6 +38,8 @@
 #include "i_system.h"
 #include "templates.h"
 #include "serializer.h"
+#include "types.h"
+#include "vm.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -126,6 +128,80 @@ int PFunction::GetImplicitArgs()
 	if (Variants[0].Flags & VARF_Action) return 3;
 	else if (Variants[0].Flags & VARF_Method) return 1;
 	return 0;
+}
+
+/* PField *****************************************************************/
+
+IMPLEMENT_CLASS(PField, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PField::PField()
+: PSymbol(NAME_None), Offset(0), Type(nullptr), Flags(0)
+{
+}
+
+
+PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitvalue)
+	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
+{
+	if (bitvalue != 0)
+	{
+		BitValue = 0;
+		unsigned val = bitvalue;
+		while ((val >>= 1)) BitValue++;
+
+		if (type->IsA(RUNTIME_CLASS(PInt)) && unsigned(BitValue) < 8u * type->Size)
+		{
+			// map to the single bytes in the actual variable. The internal bit instructions operate on 8 bit values.
+#ifndef __BIG_ENDIAN__
+			Offset += BitValue / 8;
+#else
+			Offset += type->Size - 1 - BitValue / 8;
+#endif
+			BitValue &= 7;
+			Type = TypeBool;
+		}
+		else
+		{
+			// Just abort. Bit fields should only be defined internally.
+			I_Error("Trying to create an invalid bit field element: %s", name.GetChars());
+		}
+	}
+	else BitValue = -1;
+}
+
+VersionInfo PField::GetVersion()
+{
+	VersionInfo Highest = { 0,0,0 };
+	if (!(Flags & VARF_Deprecated)) Highest = mVersion;
+	if (Type->mVersion > Highest) Highest = Type->mVersion;
+	return Highest;
+}
+
+/* PProperty *****************************************************************/
+
+IMPLEMENT_CLASS(PProperty, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PProperty::PProperty()
+	: PSymbol(NAME_None)
+{
+}
+
+PProperty::PProperty(FName name, TArray<PField *> &fields)
+	: PSymbol(name)
+{
+	Variables = std::move(fields);
 }
 
 //==========================================================================

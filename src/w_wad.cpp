@@ -57,6 +57,7 @@
 #include "resourcefiles/resourcefile.h"
 #include "md5.h"
 #include "doomstat.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -31,6 +31,7 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 
 // MACROS ------------------------------------------------------------------

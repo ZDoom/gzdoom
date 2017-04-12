@@ -33,6 +33,7 @@
 #include "c_dispatch.h"
 #include "r_state.h"
 #include "actor.h"
+#include "cmdlib.h"
 #ifdef _WIN32
 #include "win32gliface.h"
 #endif

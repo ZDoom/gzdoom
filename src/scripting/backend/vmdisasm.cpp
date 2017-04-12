@@ -34,6 +34,7 @@
 #include "dobject.h"
 #include "c_console.h"
 #include "templates.h"
+#include "vmintern.h"
 
 #define NOP		MODE_AUNUSED | MODE_BUNUSED | MODE_CUNUSED
 

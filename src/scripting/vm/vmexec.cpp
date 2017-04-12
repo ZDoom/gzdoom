@@ -40,12 +40,16 @@
 #include "textures/textures.h"
 #include "math/cmath.h"
 #include "stats.h"
+#include "vmintern.h"
+#include "types.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
 
 // intentionally implemented in a different source file to prevent inlining.
+#if 0
 void ThrowVMException(VMException *x);
+#endif
 
 #define IMPLEMENT_VMEXEC
 

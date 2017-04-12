@@ -367,7 +367,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpea
 	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
-	node->DropType = dyn_cast<PClassActor>(GetStrifeType(speech.DropType));
+	node->DropType = GetStrifeType(speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
@@ -447,7 +447,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpea
 	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
-	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
+	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
@@ -512,7 +512,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->LogString = "";
 
 		// The item to receive when this reply is used.
-		reply->GiveType = dyn_cast<PClassActor>(GetStrifeType (rsp->GiveType));
+		reply->GiveType = GetStrifeType (rsp->GiveType);
 		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?

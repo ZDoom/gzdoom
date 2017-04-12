@@ -1385,7 +1385,7 @@ void ZCCCompiler::CompileAllProperties()
 
 bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix)
 {
-	if (!type->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	if (!type->IsDescendantOf(RUNTIME_CLASS(AActor)))
 	{
 		Error(Properties[0], "Properties can only be defined for actors");
 		return false;
@@ -2850,7 +2850,7 @@ void ZCCCompiler::CompileStates()
 
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
-		statedef.MakeStateDefines(dyn_cast<PClassActor>(c->Type()->ParentClass));
+		statedef.MakeStateDefines(ValidateActor(c->Type()->ParentClass));
 		int numframes = 0;
 
 		for (auto s : c->States)

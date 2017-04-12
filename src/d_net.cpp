@@ -2592,7 +2592,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		char *classname = ReadString(stream);
 		int removecount = 0;
 		PClassActor *cls = PClass::FindActor(classname);
-		if (cls != NULL && cls->IsKindOf(RUNTIME_CLASS(PClassActor)))
+		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			removecount = RemoveClass(cls);
 			const PClass *cls_rep = cls->GetReplacement();

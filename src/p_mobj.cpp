@@ -5041,7 +5041,7 @@ PClassActor *ClassForSpawn(FName classname)
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
-	if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	if (!cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 	{
 		I_Error("Attempt to spawn non-actor of type '%s'\n", classname.GetChars());
 	}
@@ -5863,7 +5863,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			Printf ("%s at (%.1f, %.1f) has no frames\n",
 					i->TypeName.GetChars(), mthing->pos.X, mthing->pos.Y);
 			i = PClass::FindActor("Unknown");
-			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
+			assert(i->IsDescendantOf(RUNTIME_CLASS(AActor)));
 		}
 
 	const AActor *info = GetDefaultByType (i);

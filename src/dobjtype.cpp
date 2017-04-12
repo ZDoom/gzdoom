@@ -3229,7 +3229,7 @@ void PClass::Derive(PClass *newclass, FName name)
 
 void PClass::InitializeDefaults()
 {
-	if (IsKindOf(RUNTIME_CLASS(PClassActor)))
+	if (IsDescendantOf(RUNTIME_CLASS(AActor)))
 	{
 		assert(Defaults == nullptr);
 		Defaults = (uint8_t *)M_Malloc(Size);

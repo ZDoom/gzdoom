@@ -1572,6 +1572,17 @@ template<class T> inline T *Spawn()	// for inventory items we do not need coordi
 	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
 }
 
+inline PClassActor *PClass::FindActor(FName name)
+{
+	auto cls = FindClass(name);
+	return cls && cls->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor*>(cls) : nullptr;
+}
+
+inline PClassActor *ValidateActor(PClass *cls)
+{
+	return cls && cls->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor*>(cls) : nullptr;
+}
+
 void PrintMiscActorInfo(AActor * query);
 AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, uint32_t wallMask);
 

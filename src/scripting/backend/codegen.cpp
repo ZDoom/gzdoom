@@ -10982,7 +10982,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	else if (names[0] == NAME_Super)
 	{
-		scope = dyn_cast<PClassActor>(clstype->ParentClass);
+		scope = ValidateActor(clstype->ParentClass);
 	}
 	else
 	{

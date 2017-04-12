@@ -2827,7 +2827,7 @@ static bool LoadDehSupp ()
 					{
 						sc.ScriptError ("Can't find type %s", sc.String);
 					}
-					else if (!type->IsKindOf(RUNTIME_CLASS(PClassActor)))
+					else if (!type->IsDescendantOf(RUNTIME_CLASS(AActor)))
 					{
 						sc.ScriptError ("%s is not an actor", sc.String);
 					}

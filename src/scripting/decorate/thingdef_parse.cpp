@@ -582,7 +582,7 @@ static FState *CheckState(FScanner &sc, PClass *type)
 			FState *state = NULL;
 			sc.MustGetString();
 
-			PClassActor *info = dyn_cast<PClassActor>(type->ParentClass);
+			PClassActor *info = ValidateActor(type->ParentClass);
 
 			if (info != NULL)
 			{
@@ -999,7 +999,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
 				break;
 			}
-			p = dyn_cast<PClassActor>(p->ParentClass);
+			p = ValidateActor(p->ParentClass);
 		}
 
 		if (parent == NULL)

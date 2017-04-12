@@ -95,7 +95,7 @@ CCMD (dumpactors)
 	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
 	{
 		PClass *cls = PClass::AllClasses[i];
-		PClassActor *acls = dyn_cast<PClassActor>(cls);
+		PClassActor *acls = ValidateActor(cls);
 		if (acls != NULL)
 		{
 			auto ainfo = acls->ActorInfo();

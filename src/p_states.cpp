@@ -120,7 +120,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 		{
 			return info;
 		}
-		info = dyn_cast<PClassActor>(info->ParentClass);
+		info = ValidateActor(info->ParentClass);
 	}
 	return NULL;
 }
@@ -739,7 +739,7 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 		// superclass, or it may be the name of any class that this one derives from.
 		if (stricmp (classname, "Super") == 0)
 		{
-			type = dyn_cast<PClassActor>(type->ParentClass);
+			type = ValidateActor(type->ParentClass);
 			actor = GetDefaultByType(type);
 		}
 		else

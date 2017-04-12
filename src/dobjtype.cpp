@@ -1625,10 +1625,7 @@ void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *spec
 
 bool PClassPointer::IsMatch(intptr_t id1, intptr_t id2) const
 {
-	const PType *pointat = (const PType *)id1;
 	const PClass *classat = (const PClass *)id2;
-
-	assert(pointat->IsKindOf(RUNTIME_CLASS(PClass)));
 	return classat == ClassRestriction;
 }
 
@@ -1640,8 +1637,7 @@ bool PClassPointer::IsMatch(intptr_t id1, intptr_t id2) const
 
 void PClassPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
-	assert(PointedType == RUNTIME_CLASS(PClass));
-	id1 = (intptr_t)PointedType;
+	id1 = 0;
 	id2 = (intptr_t)ClassRestriction;
 }
 
@@ -1656,11 +1652,11 @@ void PClassPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 PClassPointer *NewClassPointer(PClass *restrict)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, &bucket);
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassPointer), 0, (intptr_t)restrict, &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PClassPointer(restrict);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, bucket);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassPointer), 0, (intptr_t)restrict, bucket);
 	}
 	return static_cast<PClassPointer *>(ptype);
 }

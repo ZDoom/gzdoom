@@ -2842,11 +2842,10 @@ void PClass::StaticShutdown ()
 		p.PendingWeapon = nullptr;
 	}
 
-	// This must be done before the type table is taken down.
-	for (auto cls : AllClasses)
-	{
-		cls->DestroyMeta(cls->Meta);
-	}
+	// This must be done in two steps because the native classes are not ordered by inheritance,
+	// so all meta data must be gone before deleting the actual class objects.
+	for (auto cls : AllClasses)	cls->DestroyMeta(cls->Meta);
+	for (auto cls : AllClasses)	delete cls;
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	bShutdown = true;
 	TypeTable.Clear();

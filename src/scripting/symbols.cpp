@@ -267,9 +267,33 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 
 //==========================================================================
 //
+// PClass :: WriteFields
+//
+//==========================================================================
+
+void PSymbolTable::WriteFields(FSerializer &ar, const void *addr, const void *def) const
+{
+	auto it = MapType::ConstIterator(Symbols);
+	MapType::ConstPair *pair;
+
+	while (it.NextPair(pair))
+	{
+		const PField *field = dyn_cast<PField>(pair->Value);
+		// Skip fields without or with native serialization
+		if (field && !(field->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			// todo: handle defaults in WriteValue
+			//auto defp = def == nullptr ? nullptr : (const uint8_t *)def + field->Offset;
+			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
+		}
+	}
+}
+
+
+//==========================================================================
+//
 // PClass :: ReadFields
 //
-// This will need some changes later.
 //==========================================================================
 
 bool PSymbolTable::ReadFields(FSerializer &ar, void *addr, const char *TypeName) const

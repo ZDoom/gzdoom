@@ -217,6 +217,7 @@ struct PSymbolTable
 	PSymbol *AddSymbol (PSymbol *sym);
 	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr);
 	bool ReadFields(FSerializer &ar, void *addr, const char *TypeName) const;
+	void WriteFields(FSerializer &ar, const void *addr, const void *def = nullptr) const;
 
 	// Similar to AddSymbol but always succeeds. Returns the symbol that used
 	// to be in the table with this name, if any.

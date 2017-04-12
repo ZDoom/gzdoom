@@ -2282,25 +2282,6 @@ IMPLEMENT_CLASS(PStruct, false, false)
 
 //==========================================================================
 //
-// WriteFields
-//
-//==========================================================================
-
-static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields)
-{
-	for (unsigned i = 0; i < fields.Size(); ++i)
-	{
-		const PField *field = fields[i];
-		// Skip fields without or with native serialization
-		if (!(field->Flags & (VARF_Transient | VARF_Meta)))
-		{
-			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
-		}
-	}
-}
-
-//==========================================================================
-//
 // PStruct - Default Constructor
 //
 //==========================================================================
@@ -2369,7 +2350,7 @@ void PStruct::WriteValue(FSerializer &ar, const char *key,const void *addr) cons
 {
 	if (ar.BeginObject(key))
 	{
-		WriteFields(ar, addr, Fields);
+		Symbols.WriteFields(ar, addr);
 		ar.EndObject();
 	}
 }
@@ -2642,7 +2623,7 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 				key.Format("class:%s", type->TypeName.GetChars());
 				if (ar.BeginObject(key.GetChars()))
 				{
-					WriteFields(ar, addr, type->Fields);
+					type->Symbols.WriteFields(ar, addr);
 					ar.EndObject();
 				}
 				break;

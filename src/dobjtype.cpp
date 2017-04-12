@@ -2314,9 +2314,12 @@ PStruct::PStruct(FName name, PTypeBase *outer, bool isnative)
 
 void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
-	for (const PField *field : Fields)
+	auto it = Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	while (it.NextPair(pair))
 	{
-		if (!(field->Flags & VARF_Transient))
+		auto field = dyn_cast<PField>(pair->Value);
+		if (field && !(field->Flags & VARF_Transient))
 		{
 			field->Type->SetDefaultValue(base, unsigned(offset + field->Offset), special);
 		}
@@ -2331,9 +2334,12 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 
 void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
-	for (const PField *field : Fields)
+	auto it = Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	while (it.NextPair(pair))
 	{
-		if (!(field->Flags & VARF_Transient))
+		auto field = dyn_cast<PField>(pair->Value);
+		if (field && !(field->Flags & VARF_Transient))
 		{
 			field->Type->SetPointer(base, unsigned(offset + field->Offset), special);
 		}
@@ -2383,9 +2389,7 @@ bool PStruct::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 {
-	auto field = Symbols.AddField(name, type, flags, Size, &Align);
-	if (field != nullptr) Fields.Push(field);
-	return field;
+	return Symbols.AddField(name, type, flags, Size, &Align);
 }
 
 //==========================================================================
@@ -2399,15 +2403,7 @@ PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 
 PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags|VARF_Native|VARF_Transient, address, bitvalue);
-
-	if (Symbols.AddSymbol(field) == nullptr)
-	{ // name is already in use
-		field->Destroy();
-		return nullptr;
-	}
-	Fields.Push(field);
-	return field;
+	return Symbols.AddNativeField(name, type, address, flags, bitvalue);
 }
 
 //==========================================================================
@@ -3305,20 +3301,12 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 //
 // PClass :: AddNativeField
 //
-// This looks the same as the struct version but that will change later.
-//
 //==========================================================================
 
 PField *PClass::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
-
-	if (Symbols.AddSymbol(field) == nullptr)
-	{ // name is already in use
-		field->Destroy();
-		return nullptr;
-	}
-	Fields.Push(field);
+	auto field = Symbols.AddNativeField(name, type, address, flags, bitvalue);
+	if (field != nullptr) Fields.Push(field);
 	return field;
 }
 

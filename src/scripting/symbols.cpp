@@ -267,6 +267,27 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 
 //==========================================================================
 //
+// PStruct :: AddField
+//
+// Appends a new native field to the struct. Returns either the new field
+// or nullptr if a symbol by that name already exists.
+//
+//==========================================================================
+
+PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
+{
+	PField *field = new PField(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+
+	if (AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	return field;
+}
+
+//==========================================================================
+//
 // PClass :: WriteFields
 //
 //==========================================================================

@@ -546,7 +546,6 @@ class PStruct : public PContainerType
 public:
 	PStruct(FName name, PTypeBase *outer, bool isnative = false);
 
-	TArray<PField *> Fields;
 	bool isNative;
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;

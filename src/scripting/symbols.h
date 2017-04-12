@@ -216,6 +216,7 @@ struct PSymbolTable
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
 	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr);
+	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue);
 	bool ReadFields(FSerializer &ar, void *addr, const char *TypeName) const;
 	void WriteFields(FSerializer &ar, const void *addr, const void *def = nullptr) const;
 

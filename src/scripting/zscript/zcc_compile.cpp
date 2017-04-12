@@ -75,7 +75,7 @@ const char * ZCCCompiler::GetStringConst(FxExpression *ex, FCompileContext &ctx)
 	return AST.Strings.Alloc(static_cast<FxConstant*>(ex)->GetValue().GetString())->GetChars();
 }
 
-int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls)
 {
 	FCompileContext ctx(OutNamespace, cls, false);
 	FxExpression *ex = new FxIntCast(ConvertNode(node), false);
@@ -89,7 +89,7 @@ int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PStruct *cls)
 	return static_cast<FxConstant*>(ex)->GetValue().GetInt();
 }
 
-FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PStruct *cls)
+FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls)
 {
 	FCompileContext ctx(OutNamespace, cls, false);
 	FxExpression *ex = new FxStringCast(ConvertNode(node));
@@ -641,7 +641,7 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
 						}
-						else DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->Type()->ParentClass->TypeName.GetChars());
+						else DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
 					}
 					catch (CRecoverableError &err)
 					{
@@ -689,7 +689,7 @@ void ZCCCompiler::CreateClassTypes()
 					c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::Side_Play);
 				}
 
-				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
+				c->ClassType()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 				Classes.Push(c);
@@ -746,7 +746,7 @@ void ZCCCompiler::CreateClassTypes()
 		// Link the tree node tables. We only can do this after we know the class relations.
 		for (auto cc : Classes)
 		{
-			if (cc->Type() == cd->Type()->ParentClass)
+			if (cc->ClassType() == cd->ClassType()->ParentClass)
 			{
 				cd->TreeNodes.SetParentTable(&cc->TreeNodes);
 				break;
@@ -769,7 +769,7 @@ void ZCCCompiler::CreateClassTypes()
 //
 //==========================================================================
 
-void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot)
+void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PContainerType *cls, PSymbolTable *ot)
 {
 	for (auto c : Constants)
 	{
@@ -1155,7 +1155,7 @@ void ZCCCompiler::CompileAllFields()
 		}
 		for (unsigned i = 0; i < Classes.Size(); i++)
 		{
-			auto type = Classes[i]->Type();
+			auto type = Classes[i]->ClassType();
 				
 			if (type->Size == TentativeClass)
 			{
@@ -1167,7 +1167,7 @@ void ZCCCompiler::CompileAllFields()
 				else
 				{
 					// Inherit the size of the parent class
-					type->Size = Classes[i]->Type()->ParentClass->Size;
+					type->Size = Classes[i]->ClassType()->ParentClass->Size;
 				}
 			}
 			if (type->TypeName == NAME_Actor)
@@ -1175,8 +1175,8 @@ void ZCCCompiler::CompileAllFields()
 				assert(type->MetaSize == 0);
 				AddActorInfo(type);	// AActor needs the actor info manually added to its meta data before adding any scripted fields.
 			}
-			else if (Classes[i]->Type()->ParentClass)
-				type->MetaSize = Classes[i]->Type()->ParentClass->MetaSize;
+			else if (Classes[i]->ClassType()->ParentClass)
+				type->MetaSize = Classes[i]->ClassType()->ParentClass->MetaSize;
 			else
 				type->MetaSize = 0;
 
@@ -1207,7 +1207,7 @@ void ZCCCompiler::CompileAllFields()
 //
 //==========================================================================
 
-bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren)
+bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren)
 {
 	while (Fields.Size() > 0)
 	{
@@ -1372,7 +1372,7 @@ void ZCCCompiler::CompileAllProperties()
 	for (auto c : Classes)
 	{
 		if (c->Properties.Size() > 0)
-			CompileProperties(c->Type(), c->Properties, c->Type()->TypeName);
+			CompileProperties(c->ClassType(), c->Properties, c->Type()->TypeName);
 	}
 }
 
@@ -1727,7 +1727,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 //
 //==========================================================================
 
-PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls)
+PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls)
 {
 	TArray<ZCC_Expression *> indices;
 
@@ -2189,28 +2189,26 @@ void ZCCCompiler::InitDefaults()
 	for (auto c : Classes)
 	{
 		// This may be removed if the conditions change, but right now only subclasses of Actor can define a Default block.
-		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		if (!c->ClassType()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->Type()->TypeName.GetChars());
-			if (c->Type()->ParentClass)
+			if (c->ClassType()->ParentClass)
 			{
-				auto ti = static_cast<PClassActor *>(c->Type());
-				FString mename = ti->TypeName.GetChars();
-
+				auto ti = static_cast<PClassActor *>(c->ClassType());
 				ti->InitializeDefaults();
 			}
 		}
 		else
 		{
 			// This should never happen.
-			if (c->Type()->Defaults != nullptr)
+			if (c->ClassType()->Defaults != nullptr)
 			{
 				Error(c->cls, "%s already has defaults", c->Type()->TypeName.GetChars());
 			}
 			// This can only occur if a native parent is not initialized. In all other cases the sorting of the class list should prevent this from ever happening.
-			else if (c->Type()->ParentClass->Defaults == nullptr && c->Type() != RUNTIME_CLASS(AActor))
+			else if (c->ClassType()->ParentClass->Defaults == nullptr && c->ClassType() != RUNTIME_CLASS(AActor))
 			{
-				Error(c->cls, "Parent class %s of %s is not initialized", c->Type()->ParentClass->TypeName.GetChars(), c->Type()->TypeName.GetChars());
+				Error(c->cls, "Parent class %s of %s is not initialized", c->ClassType()->ParentClass->TypeName.GetChars(), c->ClassType()->TypeName.GetChars());
 			}
 			else
 			{
@@ -2295,7 +2293,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-				if (type->IsKindOf(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
+				if (type->IsKindOf(RUNTIME_CLASS(PContainerType)) && type != TypeVector2 && type != TypeVector3)
 				{
 					// structs and classes only get passed by pointer.
 					type = NewPointer(type);
@@ -2749,9 +2747,9 @@ void ZCCCompiler::InitFunctions()
 	for (auto c : Classes)
 	{
 		// cannot be done earlier because it requires the parent class to be processed by this code, too.
-		if (c->Type()->ParentClass != nullptr)
+		if (c->ClassType()->ParentClass != nullptr)
 		{
-			c->Type()->Virtuals = c->Type()->ParentClass->Virtuals;
+			c->ClassType()->Virtuals = c->ClassType()->ParentClass->Virtuals;
 		}
 		for (auto f : c->Functions)
 		{
@@ -2847,7 +2845,7 @@ void ZCCCompiler::CompileStates()
 	for (auto c : Classes)
 	{
 		
-		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		if (!c->ClassType()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			if (c->States.Size()) Error(c->cls, "%s: States can only be defined for actors.", c->Type()->TypeName.GetChars());
 			continue;
@@ -2855,7 +2853,7 @@ void ZCCCompiler::CompileStates()
 
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
-		statedef.MakeStateDefines(ValidateActor(c->Type()->ParentClass));
+		statedef.MakeStateDefines(ValidateActor(c->ClassType()->ParentClass));
 		int numframes = 0;
 
 		for (auto s : c->States)
@@ -3050,7 +3048,7 @@ void ZCCCompiler::CompileStates()
 		}
 		try
 		{
-			GetDefaultByType(c->Type())->Finalize(statedef);
+			GetDefaultByType(c->ClassType())->Finalize(statedef);
 		}
 		catch (CRecoverableError &err)
 		{
@@ -3065,7 +3063,7 @@ void ZCCCompiler::CompileStates()
 //
 //==========================================================================
 
-FxExpression *ZCCCompiler::ConvertAST(PStruct *cls, ZCC_TreeNode *ast)
+FxExpression *ZCCCompiler::ConvertAST(PContainerType *cls, ZCC_TreeNode *ast)
 {
 	ConvertClass = cls;
 	// there are two possibilities here: either a single function call or a compound statement. For a compound statement we also need to check if the last thing added was a return.

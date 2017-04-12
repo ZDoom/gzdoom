@@ -36,6 +36,8 @@
 #include <float.h>
 #include "dobject.h"
 #include "i_system.h"
+#include "templates.h"
+#include "serializer.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -102,7 +104,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TA
 		assert(proto->ArgumentTypes.Size() > 0);
 		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
 		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PStruct>(selftypeptr->PointedType);
+		variant.SelfClass = dyn_cast<PContainerType>(selftypeptr->PointedType);
 		assert(variant.SelfClass != nullptr);
 	}
 	else
@@ -230,6 +232,78 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 	Symbols.Insert(sym->SymbolName, sym);
 	sym->Release();	// no more GC, please!
 	return sym;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align)
+{
+	PField *field = new PField(name, type, flags);
+
+	// The new field is added to the end of this struct, alignment permitting.
+	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
+
+	// Enlarge this struct to enclose the new field.
+	Size = unsigned(field->Offset + type->Size);
+
+	// This struct's alignment is the same as the largest alignment of any of
+	// its fields.
+	if (Align != nullptr)
+	{
+		*Align = MAX(*Align, type->Align);
+	}
+
+	if (AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	return field;
+}
+
+//==========================================================================
+//
+// PClass :: ReadFields
+//
+// This will need some changes later.
+//==========================================================================
+
+bool PSymbolTable::ReadFields(FSerializer &ar, void *addr, const char *TypeName) const
+{
+	bool readsomething = false;
+	bool foundsomething = false;
+	const char *label;
+	while ((label = ar.GetKey()))
+	{
+		foundsomething = true;
+
+		const PSymbol *sym = FindSymbol(FName(label, true), false);
+		if (sym == nullptr)
+		{
+			DPrintf(DMSG_ERROR, "Cannot find field %s in %s\n",
+				label, TypeName);
+		}
+		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
+				label, TypeName);
+		}
+		else if ((static_cast<const PField *>(sym)->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a serializable field\n",
+				label, TypeName);
+		}
+		else
+		{
+			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
+				(uint8_t *)addr + static_cast<const PField *>(sym)->Offset);
+		}
+	}
+	return readsomething || !foundsomething;
 }
 
 //==========================================================================
@@ -387,7 +461,7 @@ void RemoveUnusedSymbols()
 	{
 		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr; ty = ty->HashNext)
 		{
-			if (ty->IsKindOf(RUNTIME_CLASS(PStruct)))
+			if (ty->IsKindOf(RUNTIME_CLASS(PContainerType)))
 			{
 				auto it = ty->Symbols.GetIterator();
 				PSymbolTable::MapType::Pair *pair;

@@ -10,7 +10,7 @@ class VMFunction;
 class PType;
 class PPrototype;
 struct ZCC_TreeNode;
-class PStruct;
+class PContainerType;
 
 // Symbol information -------------------------------------------------------
 
@@ -175,15 +175,15 @@ public:
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
 		uint32_t Flags;
 		int UseFlags;
-		PStruct *SelfClass;
+		PContainerType *SelfClass;
 	};
 	TArray<Variant> Variants;
-	PStruct *OwningClass = nullptr;
+	PContainerType *OwningClass = nullptr;
 
 	unsigned AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags);
 	int GetImplicitArgs();
 
-	PFunction(PStruct *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
+	PFunction(PContainerType *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
 };
 
 // A symbol table -----------------------------------------------------------
@@ -215,6 +215,8 @@ struct PSymbolTable
 	// a symbol with the same name is already in the table. This symbol is
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
+	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr);
+	bool ReadFields(FSerializer &ar, void *addr, const char *TypeName) const;
 
 	// Similar to AddSymbol but always succeeds. Returns the symbol that used
 	// to be in the table with this name, if any.

@@ -216,22 +216,24 @@ class PCompoundType : public PType
 	DECLARE_ABSTRACT_CLASS(PCompoundType, PType);
 };
 
-class PNamedType : public PCompoundType
+class PContainerType : public PCompoundType
 {
-	DECLARE_ABSTRACT_CLASS(PNamedType, PCompoundType);
+	DECLARE_ABSTRACT_CLASS(PContainerType, PCompoundType);
 public:
 	PTypeBase		*Outer;			// object this type is contained within
 	FName			TypeName;		// this type's name
 
-	PNamedType() : Outer(NULL) {
+	PContainerType() : Outer(NULL) {
 		mDescriptiveName = "NamedType";
 	}
-	PNamedType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) {
+	PContainerType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) {
 		mDescriptiveName = name.GetChars();
 	}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+	virtual PField *AddField(FName name, PType *type, uint32_t flags = 0) = 0;
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) = 0;
 };
 
 // Basic types --------------------------------------------------------------
@@ -537,9 +539,9 @@ protected:
 	PMap();
 };
 
-class PStruct : public PNamedType
+class PStruct : public PContainerType
 {
-	DECLARE_CLASS(PStruct, PNamedType);
+	DECLARE_CLASS(PStruct, PContainerType);
 
 public:
 	PStruct(FName name, PTypeBase *outer, bool isnative = false);
@@ -558,8 +560,6 @@ public:
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
 
-	static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields);
-	bool ReadFields(FSerializer &ar, void *addr) const;
 protected:
 	PStruct();
 };
@@ -588,20 +588,17 @@ enum
 	TentativeClass = UINT_MAX,
 };
 
-class PClass : public PStruct
+class PClass : public PContainerType
 {
-	DECLARE_CLASS(PClass, PStruct);
+	DECLARE_CLASS(PClass, PContainerType);
 	// We unravel _WITH_META here just as we did for PType.
 protected:
 	TArray<FTypeAndOffset> MetaInits;
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
-	PField *AddMetaField(FName name, PType *type, uint32_t flags);
 public:
-	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
-	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
 	void InitializeDefaults();
 	int FindVirtualIndex(FName name, PPrototype *proto);
@@ -625,6 +622,7 @@ public:
 	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
 	TArray<VMFunction*>	 Virtuals;	// virtual function table
 	FName				SourceLumpName;
+	TArray<PField *> Fields;
 
 	void (*ConstructNative)(void *);
 
@@ -635,6 +633,8 @@ public:
 	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
 	PField *AddField(FName name, PType *type, uint32_t flags=0) override;
+	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
+
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();

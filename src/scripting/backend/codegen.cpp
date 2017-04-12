@@ -114,7 +114,7 @@ FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PNamespace *cg, PStruct *cls, bool fromdecorate) 
+FCompileContext::FCompileContext(PNamespace *cg, PContainerType *cls, bool fromdecorate) 
 	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg)
 {
 }
@@ -200,14 +200,14 @@ FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
 	}
 }
 
-static PStruct *FindStructType(FName name, FCompileContext &ctx)
+static PContainerType *FindContainerType(FName name, FCompileContext &ctx)
 {
 	auto sym = ctx.Class->Symbols.FindSymbol(name, true);
 	if (sym == nullptr) sym = ctx.CurGlobals->Symbols.FindSymbol(name, true);
 	if (sym && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
 		auto type = static_cast<PSymbolType*>(sym);
-		return dyn_cast<PStruct>(type->Type);
+		return dyn_cast<PContainerType>(type->Type);
 	}
 	return nullptr;
 }
@@ -224,7 +224,7 @@ static PClass *FindClassType(FName name, FCompileContext &ctx)
 	return nullptr;
 }
 
-bool isActor(PStruct *type)
+bool isActor(PContainerType *type)
 {
 	auto cls = dyn_cast<PClass>(type);
 	return cls ? cls->IsDescendantOf(RUNTIME_CLASS(AActor)) : false;
@@ -6121,7 +6121,7 @@ foundit:
 //
 //==========================================================================
 
-FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classctx, FxExpression *&object, PStruct *objtype)
+FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *classctx, FxExpression *&object, PContainerType *objtype)
 {
 	PSymbol *sym;
 	PSymbolTable *symtbl;
@@ -6269,7 +6269,7 @@ FxMemberIdentifier::~FxMemberIdentifier()
 
 FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 {
-	PStruct *ccls = nullptr;
+	PContainerType *ccls = nullptr;
 	CHECKRESOLVED();
 
 	if (Object->ExprType == EFX_Identifier)
@@ -6277,7 +6277,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 		auto id = static_cast<FxIdentifier *>(Object)->Identifier;
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		ccls = FindStructType(id, ctx);
+		ccls = FindContainerType(id, ctx);
 		if (ccls != nullptr)
 		{
 			static_cast<FxIdentifier *>(Object)->noglobal = true;
@@ -6398,9 +6398,9 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
-		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PContainerType)))
 		{
-			auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PStruct *>(ptype));
+			auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PContainerType *>(ptype));
 			delete this;
 			return ret;
 		}
@@ -7023,7 +7023,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
-		if (ptrtype == nullptr || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PStruct)))
+		if (ptrtype == nullptr || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PContainerType)))
 		{
 			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct or class object");
 			delete this;
@@ -7925,12 +7925,12 @@ FxMemberFunctionCall::~FxMemberFunctionCall()
 
 FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 {
-	PStruct *cls;
+	PContainerType *cls = nullptr;
 	bool staticonly = false;
 	bool novirtual = false;
 	bool isreadonly = false;
 
-	PStruct *ccls = nullptr;
+	PContainerType *ccls = nullptr;
 
 	if (ctx.Class == nullptr)
 	{
@@ -7957,7 +7957,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
 		// [ZZ] substitute ccls for String internal type.
 		if (id == NAME_String) ccls = TypeStringStruct;
-		else ccls = FindStructType(id, ctx);
+		else ccls = FindContainerType(id, ctx);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Self)->noglobal = true;
 	}
 
@@ -8228,7 +8228,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
-		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PContainerType)))
 		{
 			if (ptype->IsKindOf(RUNTIME_CLASS(PClass)) && MethodName == NAME_GetClass)
 			{
@@ -8243,7 +8243,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			}
 
 
-			cls = static_cast<PStruct *>(ptype);
+			cls = static_cast<PContainerType *>(ptype);
 		}
 		else
 		{
@@ -8825,9 +8825,9 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
-					if (type == ArgList[i]->ValueType && type->IsA(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(type)->IsA(RUNTIME_CLASS(PStruct)))
+					if (type == ArgList[i]->ValueType && type->IsA(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(type)->PointedType->IsA(RUNTIME_CLASS(PStruct)))
 					{
-						// trying to pass a struct reference as a struct refg
+						// trying to pass a struct reference as a struct reference. This must preserve the type.
 					}
 					else
 					{

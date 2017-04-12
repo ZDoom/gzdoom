@@ -195,7 +195,7 @@ struct ZCC_Struct : ZCC_NamedNode
 {
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
-	PStruct *Type;
+	PContainerType *Type;
 	VersionInfo Version;
 };
 

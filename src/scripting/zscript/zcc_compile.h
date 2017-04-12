@@ -41,7 +41,7 @@ struct ZCC_StructWork
 		return strct->NodeName;
 	}
 
-	PStruct *Type()
+	PContainerType *Type()
 	{
 		return strct->Type;
 	}
@@ -64,7 +64,7 @@ struct ZCC_ClassWork : public ZCC_StructWork
 		Outer = nullptr;
 	}
 
-	PClass *Type()
+	PClass *ClassType()
 	{
 		return static_cast<PClass *>(strct->Type);
 	}
@@ -79,7 +79,7 @@ struct ZCC_PropertyWork
 struct ZCC_ConstantWork
 {
 	ZCC_ConstantDef *node;
-	PStruct *cls;
+	PContainerType *cls;
 	PSymbolTable *Outputtable;
 	ExpVal constval;
 };
@@ -94,25 +94,25 @@ public:
 private:
 	const char * GetStringConst(FxExpression *ex, FCompileContext &ctx);
 
-	int IntConstFromNode(ZCC_TreeNode *node, PStruct *cls);
-	FString StringConstFromNode(ZCC_TreeNode *node, PStruct *cls);
+	int IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
+	FString StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
 	void CreateClassTypes();
-	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PStruct *cls, PSymbolTable *ot);
+	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PContainerType *cls, PSymbolTable *ot);
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
 	bool CompileConstant(ZCC_ConstantWork *def);
 	void CompileArrays(ZCC_StructWork *work);
 
 	void CompileAllFields();
-	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
+	bool CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
 	void CompileAllProperties();
 	bool CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
-	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PStruct *cls);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym, bool nativetype);
 
 	void InitDefaults();
@@ -143,12 +143,12 @@ private:
 	void Error(ZCC_TreeNode *node, const char *msg, ...) GCCPRINTF(3,4);
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
-	FxExpression *ConvertAST(PStruct *cclass, ZCC_TreeNode *ast);
+	FxExpression *ConvertAST(PContainerType *cclass, ZCC_TreeNode *ast);
 	FxExpression *ConvertNode(ZCC_TreeNode *node);
 	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 
 	DObject *Outer;
-	PStruct *ConvertClass;	// class type to be used when resoving symbols while converting an AST
+	PContainerType *ConvertClass;	// class type to be used when resoving symbols while converting an AST
 	PSymbolTable *GlobalTreeNodes;
 	PNamespace *OutNamespace;
 	ZCC_AST &AST;

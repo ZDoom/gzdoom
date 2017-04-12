@@ -148,8 +148,8 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PStruct *cls, const char * string);
-FieldDesc *FindField(PStruct *cls, const char * string);
+AFuncDesc *FindFunction(PContainerType *cls, const char * string);
+FieldDesc *FindField(PContainerType *cls, const char * string);
 
 
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, PNamespace *resolvenspc = nullptr);
@@ -159,9 +159,9 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
-void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PStruct *cls, uint32_t funcflags, int useflags);
-PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
-PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
+void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags);
+PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags);
+PFunction *FindClassMemberFunction(PContainerType *cls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error);
 void CreateDamageFunction(PNamespace *ns, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
 
 //==========================================================================

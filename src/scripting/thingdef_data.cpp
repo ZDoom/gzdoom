@@ -667,7 +667,7 @@ static int CompareClassNames(const Desc& a, const Desc& b)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PStruct *cls, const char * string)
+AFuncDesc *FindFunction(PContainerType *cls, const char * string)
 {
 	int min = 0, max = AFTable.Size() - 1;
 
@@ -698,7 +698,7 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 //
 //==========================================================================
 
-FieldDesc *FindField(PStruct *cls, const char * string)
+FieldDesc *FindField(PContainerType *cls, const char * string)
 {
 	int min = 0, max = FieldTable.Size() - 1;
 	const char * cname = cls ? cls->TypeName.GetChars() : "";

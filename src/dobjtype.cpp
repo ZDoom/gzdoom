@@ -438,17 +438,17 @@ PBasicType::PBasicType(unsigned int size, unsigned int align)
 
 IMPLEMENT_CLASS(PCompoundType, true, false)
 
-/* PNamedType *************************************************************/
+/* PContainerType *************************************************************/
 
-IMPLEMENT_CLASS(PNamedType, true, false)
+IMPLEMENT_CLASS(PContainerType, true, false)
 
 //==========================================================================
 //
-// PNamedType :: IsMatch
+// PContainerType :: IsMatch
 //
 //==========================================================================
 
-bool PNamedType::IsMatch(intptr_t id1, intptr_t id2) const
+bool PContainerType::IsMatch(intptr_t id1, intptr_t id2) const
 {
 	const DObject *outer = (const DObject *)id1;
 	FName name = (ENamedName)(intptr_t)id2;
@@ -458,11 +458,11 @@ bool PNamedType::IsMatch(intptr_t id1, intptr_t id2) const
 
 //==========================================================================
 //
-// PNamedType :: GetTypeIDs
+// PContainerType :: GetTypeIDs
 //
 //==========================================================================
 
-void PNamedType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
+void PContainerType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)Outer;
 	id2 = TypeName;
@@ -2282,6 +2282,25 @@ IMPLEMENT_CLASS(PStruct, false, false)
 
 //==========================================================================
 //
+// WriteFields
+//
+//==========================================================================
+
+static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields)
+{
+	for (unsigned i = 0; i < fields.Size(); ++i)
+	{
+		const PField *field = fields[i];
+		// Skip fields without or with native serialization
+		if (!(field->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
+		}
+	}
+}
+
+//==========================================================================
+//
 // PStruct - Default Constructor
 //
 //==========================================================================
@@ -2299,7 +2318,7 @@ PStruct::PStruct()
 //==========================================================================
 
 PStruct::PStruct(FName name, PTypeBase *outer, bool isnative)
-: PNamedType(name, outer)
+: PContainerType(name, outer)
 {
 	mDescriptiveName.Format("%sStruct<%s>", isnative? "Native" : "", name.GetChars());
 	Size = 0;
@@ -2365,70 +2384,11 @@ bool PStruct::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	if (ar.BeginObject(key))
 	{
-		bool ret = ReadFields(ar, addr);
+		bool ret = Symbols.ReadFields(ar, addr, DescriptiveName());
 		ar.EndObject();
 		return ret;
 	}
 	return false;
-}
-
-//==========================================================================
-//
-// PStruct :: WriteFields											STATIC
-//
-//==========================================================================
-
-void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields)
-{
-	for (unsigned i = 0; i < fields.Size(); ++i)
-	{
-		const PField *field = fields[i];
-		// Skip fields without or with native serialization
-		if (!(field->Flags & (VARF_Transient|VARF_Meta)))
-		{
-			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
-		}
-	}
-}
-
-//==========================================================================
-//
-// PStruct :: ReadFields
-//
-//==========================================================================
-
-bool PStruct::ReadFields(FSerializer &ar, void *addr) const
-{
-	bool readsomething = false;
-	bool foundsomething = false;
-	const char *label;
-	while ((label = ar.GetKey()))
-	{
-		foundsomething = true;
-
-		const PSymbol *sym = Symbols.FindSymbol(FName(label, true), true);
-		if (sym == nullptr)
-		{
-			DPrintf(DMSG_ERROR, "Cannot find field %s in %s\n",
-				label, TypeName.GetChars());
-		}
-		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
-		{
-			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
-				label, TypeName.GetChars());
-		}
-		else if ((static_cast<const PField *>(sym)->Flags & (VARF_Transient | VARF_Meta)))
-		{
-			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a serializable field\n",
-				label, TypeName.GetChars());
-		}
-		else
-		{
-			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
-				(uint8_t *)addr + static_cast<const PField *>(sym)->Offset);
-		}
-	}
-	return readsomething || !foundsomething;
 }
 
 //==========================================================================
@@ -2442,25 +2402,8 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 
 PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 {
-	PField *field = new PField(name, type, flags);
-
-	// The new field is added to the end of this struct, alignment permitting.
-	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
-
-	// Enlarge this struct to enclose the new field.
-	Size = unsigned(field->Offset + type->Size);
-
-	// This struct's alignment is the same as the largest alignment of any of
-	// its fields.
-	Align = MAX(Align, type->Align);
-
-	if (Symbols.AddSymbol(field) == nullptr)
-	{ // name is already in use
-		field->Destroy();
-		return nullptr;
-	}
-	Fields.Push(field);
-
+	auto field = Symbols.AddField(name, type, flags, Size, &Align);
+	if (field != nullptr) Fields.Push(field);
 	return field;
 }
 
@@ -2699,21 +2642,12 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 				key.Format("class:%s", type->TypeName.GetChars());
 				if (ar.BeginObject(key.GetChars()))
 				{
-					PStruct::WriteFields(ar, addr, type->Fields);
+					WriteFields(ar, addr, type->Fields);
 					ar.EndObject();
 				}
 				break;
 			}
 		}
-	}
-}
-
-void PClass::WriteValue(FSerializer &ar, const char *key,const void *addr) const
-{
-	if (ar.BeginObject(key))
-	{
-		RecurseWriteFields(this, ar, addr);
-		ar.EndObject();
 	}
 }
 
@@ -2726,20 +2660,9 @@ void PClass::WriteAllFields(FSerializer &ar, const void *addr) const
 
 //==========================================================================
 //
-// PClass :: ReadValue
+// PClass :: ReadAllFields
 //
 //==========================================================================
-
-bool PClass::ReadValue(FSerializer &ar, const char *key, void *addr) const
-{
-	if (ar.BeginObject(key))
-	{
-		bool ret = ReadAllFields(ar, addr);
-		ar.EndObject();
-		return ret;
-	}
-	return true;
-}
 
 bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 {
@@ -2778,7 +2701,7 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 			{
 				if (ar.BeginObject(nullptr))
 				{
-					readsomething |= type->ReadFields(ar, addr);
+					readsomething |= type->Symbols.ReadFields(ar, addr, DescriptiveName());
 					ar.EndObject();
 				}
 			}
@@ -3360,49 +3283,17 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 //==========================================================================
 //
-// PStruct :: AddField
-//
-// Appends a new metadata field to the end of a struct. Returns either the new field
-// or nullptr if a symbol by that name already exists.
-//
-//==========================================================================
-
-PField *PClass::AddMetaField(FName name, PType *type, uint32_t flags)
-{
-	PField *field = new PField(name, type, flags);
-
-	// The new field is added to the end of this struct, alignment permitting.
-	field->Offset = (MetaSize + (type->Align - 1)) & ~(type->Align - 1);
-
-	// Enlarge this struct to enclose the new field.
-	MetaSize = unsigned(field->Offset + type->Size);
-
-	// This struct's alignment is the same as the largest alignment of any of
-	// its fields.
-	Align = MAX(Align, type->Align);
-
-	if (Symbols.AddSymbol(field) == nullptr)
-	{ // name is already in use
-		field->Destroy();
-		return nullptr;
-	}
-	Fields.Push(field);
-
-	return field;
-}
-
-//==========================================================================
-//
 // PClass :: AddField
 //
 //==========================================================================
 
 PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 {
+	PField *field;
 	if (!(flags & VARF_Meta))
 	{
 		unsigned oldsize = Size;
-		PField *field = Super::AddField(name, type, flags);
+		field = Symbols.AddField(name, type, flags, Size);
 
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
@@ -3412,23 +3303,42 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 			Defaults = (uint8_t *)M_Realloc(Defaults, Size);
 			memset(Defaults + oldsize, 0, Size - oldsize);
 		}
-		return field;
 	}
 	else
 	{
+		// Same as above, but a different data storage.
 		unsigned oldsize = MetaSize;
-		PField *field = AddMetaField(name, type, flags);
+		field = Symbols.AddField(name, type, flags, MetaSize);
 
-		// Only initialize the defaults if they have already been created.
-		// For ZScript this is not the case, it will first define all fields before
-		// setting up any defaults for any class.
 		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
 			Meta = (uint8_t *)M_Realloc(Meta, MetaSize);
 			memset(Meta + oldsize, 0, MetaSize - oldsize);
 		}
-		return field;
 	}
+	if (field != nullptr) Fields.Push(field);
+	return field;
+}
+
+//==========================================================================
+//
+// PClass :: AddNativeField
+//
+// This looks the same as the struct version but that will change later.
+//
+//==========================================================================
+
+PField *PClass::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
+{
+	PField *field = new PField(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+
+	if (Symbols.AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	Fields.Push(field);
+	return field;
 }
 
 //==========================================================================

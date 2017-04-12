@@ -1421,16 +1421,7 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 {
 	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		auto pt = static_cast<PClass*>(PointedType);
-
-		if (pt->IsDescendantOf(RUNTIME_CLASS(PClass)))
-		{
-			ar(key, *(PClass **)addr);
-		}
-		else
-		{
-			ar(key, *(DObject **)addr);
-		}
+		ar(key, *(DObject **)addr);
 	}
 	else if (writer != nullptr)
 	{
@@ -1452,17 +1443,8 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		auto pt = static_cast<PClass*>(PointedType);
-		bool res = true;
-
-		if (pt->IsDescendantOf(RUNTIME_CLASS(PClass)))
-		{
-			::Serialize(ar, key, *(PClass **)addr, (PClass**)nullptr);
-		}
-		else
-		{
-			::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
-		}
+		bool res;
+		::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
 		return res;
 	}
 	else if (reader != nullptr)
@@ -1550,11 +1532,32 @@ PClassPointer::PClassPointer(PClass *restrict)
 {
 	if (restrict) mDescriptiveName.Format("ClassPointer<%s>", restrict->TypeName.GetChars());
 	else mDescriptiveName = "ClassPointer";
-	// class pointers do not need write barriers because all classes are stored in the global type table and won't get collected.
-	// This means we can use the cheapoer non-barriered opcodes here.
-	loadOp = OP_LOS;
+	loadOp = OP_LP;
 	storeOp = OP_SP;
 	mVersion = restrict->mVersion;
+}
+
+//==========================================================================
+//
+// PPointer :: WriteValue
+//
+//==========================================================================
+
+void PClassPointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	ar(key, *(PClass **)addr);
+}
+
+//==========================================================================
+//
+// PPointer :: ReadValue
+//
+//==========================================================================
+
+bool PClassPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	::Serialize(ar, key, *(PClass **)addr, (PClass**)nullptr);
+	return false;
 }
 
 //==========================================================================
@@ -3306,18 +3309,6 @@ void PClass::InitializeDefaults()
 
 //==========================================================================
 //
-// PClass :: DeriveData
-//
-// Copies inheritable data to the child class.
-//
-//==========================================================================
-
-void PClass::DeriveData(PClass *newclass)
-{
-}
-
-//==========================================================================
-//
 // PClass :: CreateDerivedClass
 //
 // Create a new class based on an existing class
@@ -3365,7 +3356,6 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	{
 		type->InitializeDefaults();
 		type->Virtuals = Virtuals;
-		DeriveData(type);
 	}
 	else
 		type->ObjectFlags &= OF_Transient;

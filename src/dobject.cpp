@@ -91,7 +91,7 @@ CCMD (dumpactors)
 		"25:DoomStrifeChex", "26:HereticStrifeChex", "27:NotHexen",	"28:HexenStrifeChex", "29:NotHeretic",
 		"30:NotDoom", "31:All",
 	};
-	Printf("%i object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
+	Printf("%u object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
 	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
 	{
 		PClass *cls = PClass::AllClasses[i];
@@ -102,11 +102,11 @@ CCMD (dumpactors)
 			Printf("%s\t%i\t%i\t%s\t%s\n",
 				acls->TypeName.GetChars(), ainfo->DoomEdNum,
 				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
-				acls->ActorInfo()->SourceLumpName.GetChars());
+				acls->SourceLumpName.GetChars());
 		}
 		else if (cls != NULL)
 		{
-			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\n", cls->TypeName.GetChars());
+			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\tSource: %s\n", cls->TypeName.GetChars(), cls->SourceLumpName.GetChars());
 		}
 		else
 		{

@@ -1605,11 +1605,14 @@ bool AActor::IsVisibleToPlayer() const
 		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam() )
 		return false;
 
+	auto &vis = GetInfo()->VisibleToPlayerClass;
+	if (vis.Size() == 0) return true;	// early out for the most common case.
+
 	const player_t* pPlayer = players[consoleplayer].camera->player;
 
 	if (pPlayer)
 	{
-		for(auto cls : GetInfo()->VisibleToPlayerClass)
+		for(auto cls : vis)
 		{
 			if (cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
 			{

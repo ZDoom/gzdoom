@@ -247,8 +247,7 @@ struct FActorInfo
 	uint8_t GameFilter = GAME_Any;
 	uint16_t SpawnID = 0;
 	uint16_t ConversationID = 0;
-	int16_t DoomEdNum = 0;
-	FString SourceLumpName;
+	int16_t DoomEdNum = -1;
 
 	FStateLabels *StateList = nullptr;
 	DmgFactors DamageFactors;
@@ -294,7 +293,6 @@ protected:
 public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
-	virtual void DeriveData(PClass *newclass);
 
 	PClassActor();
 	~PClassActor();

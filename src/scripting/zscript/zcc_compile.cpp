@@ -625,8 +625,7 @@ void ZCCCompiler::CreateClassTypes()
 						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
 					}
 					c->cls->Type = me;
-					auto ac = dyn_cast<PClassActor>(me);
-					if (ac != nullptr) ac->ActorInfo()->SourceLumpName = *c->cls->SourceName;
+					me->SourceLumpName = *c->cls->SourceName;
 				}
 				else
 				{
@@ -2194,7 +2193,6 @@ void ZCCCompiler::InitDefaults()
 				FString mename = ti->TypeName.GetChars();
 
 				ti->InitializeDefaults();
-				ti->ParentClass->DeriveData(ti);
 			}
 		}
 		else
@@ -2215,7 +2213,6 @@ void ZCCCompiler::InitDefaults()
 				auto ti = static_cast<PClassActor *>(c->Type());
 
 				ti->InitializeDefaults();
-				ti->ParentClass->DeriveData(ti);
 
 				// We need special treatment for this one field in AActor's defaults which cannot be made visible to DECORATE as a property.
 				// It's better to do this here under controlled conditions than deeper down in the class type classes.

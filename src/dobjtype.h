@@ -429,6 +429,8 @@ public:
 	class PClass *ClassRestriction;
 
 	bool isCompatible(PType *type);
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
 
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
@@ -600,7 +602,6 @@ public:
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
 	void InitializeDefaults();
 	int FindVirtualIndex(FName name, PPrototype *proto);
-	virtual void DeriveData(PClass *newclass);
 
 	static void StaticInit();
 	static void StaticShutdown();
@@ -619,6 +620,7 @@ public:
 	bool				 bExported;		// This type has been declared in a script
 	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
 	TArray<VMFunction*>	 Virtuals;	// virtual function table
+	FName				SourceLumpName;
 
 	void (*ConstructNative)(void *);
 

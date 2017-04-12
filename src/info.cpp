@@ -309,18 +309,6 @@ PClassActor::~PClassActor()
 
 //==========================================================================
 //
-// PClassActor :: Derive
-//
-//==========================================================================
-
-void PClassActor::DeriveData(PClass *newclass)
-{
-	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	PClassActor *newa = static_cast<PClassActor *>(newclass);
-}
-
-//==========================================================================
-//
 // PClassActor :: SetReplacement
 //
 // Sets as a replacement class for another class.

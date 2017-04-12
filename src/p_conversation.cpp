@@ -639,7 +639,7 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 		return;
 
 	// Don't take the sigil.
-	if (itemtype->GetClass()->TypeName == NAME_Sigil)
+	if (itemtype->TypeName == NAME_Sigil)
 		return;
 
 	player->mo->TakeInventory(itemtype, amount);

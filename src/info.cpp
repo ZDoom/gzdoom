@@ -231,8 +231,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
 	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
 }
 
-IMPLEMENT_CLASS(PClassActor, false, false)
-
 //==========================================================================
 //
 // PClassActor :: StaticInit										STATIC
@@ -284,27 +282,6 @@ void PClassActor::StaticSetActorNums()
 	{
 		PClassActor::AllActorClasses[i]->RegisterIDs();
 	}
-}
-
-//==========================================================================
-//
-// PClassActor Constructor
-//
-//==========================================================================
-
-PClassActor::PClassActor()
-{
-	AllActorClasses.Push(this);
-}
-
-//==========================================================================
-//
-// PClassActor Destructor
-//
-//==========================================================================
-
-PClassActor::~PClassActor()
-{
 }
 
 //==========================================================================

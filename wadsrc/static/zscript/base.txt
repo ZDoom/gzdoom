@@ -41,6 +41,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native ui float BackbuttonAlpha;
 	native readonly int Net_Arbitrator;
 	native ui BaseStatusBar StatusBar;
+	native readonly Weapon WP_NOCHANGE;
 	
 }
 
@@ -650,7 +651,21 @@ struct StringStruct native
 	native String Filter();
 }
 
-class Floor : Thinker native
+class SectorEffect : Thinker native
+{
+	native protected Sector m_Sector;
+}
+
+class Mover : SectorEffect native
+{}
+
+class MovingFloor : Mover native
+{}
+
+class MovingCeiling : Mover native
+{}
+
+class Floor : MovingFloor native
 {
 	// only here so that some constants and functions can be added. Not directly usable yet.
 	enum EFloor
@@ -695,7 +710,7 @@ class Floor : Thinker native
 	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
 }
 
-class Ceiling : Thinker native
+class Ceiling : MovingCeiling native
 {
 	enum ECeiling
 	{
@@ -748,11 +763,6 @@ struct LookExParams
 	int flags;
 	State seestate;
 };
-
-class SectorEffect : Thinker native
-{
-	native protected Sector m_Sector;
-}
 
 class Lighting : SectorEffect native
 {

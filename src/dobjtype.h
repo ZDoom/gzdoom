@@ -587,12 +587,24 @@ enum
 	TentativeClass = UINT_MAX,
 };
 
-class PClass : public PContainerType
+class PClassType : public PContainerType
 {
-	DECLARE_CLASS(PClass, PContainerType);
-	// We unravel _WITH_META here just as we did for PType.
+	DECLARE_CLASS(PClassType, PContainerType);
+
+private:
+
+public:
+	PClass *Descriptor;
+	PClassType *ParentType;
+
+	PClassType(PClass *cls = nullptr);
+	PField *AddField(FName name, PType *type, uint32_t flags = 0) override;
+	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
+};
+
+class PClass
+{
 protected:
-	TArray<FTypeAndOffset> MetaInits;
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
@@ -602,26 +614,32 @@ public:
 	void InitializeDefaults();
 	int FindVirtualIndex(FName name, PPrototype *proto);
 	PSymbol *FindSymbol(FName symname, bool searchparents) const;
+	PField *AddField(FName name, PType *type, uint32_t flags);
 
 	static void StaticInit();
 	static void StaticShutdown();
 	static void StaticBootstrap();
 
 	// Per-class information -------------------------------------
-	TArray<FTypeAndOffset> SpecialInits;
-	PClass				*ParentClass;	// the class this class derives from
-	const size_t		*Pointers;		// object pointers defined by this class *only*
-	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
-	const size_t		*ArrayPointers;	// dynamic arrays containing object pointers.
-	uint8_t				*Defaults;
-	uint8_t				*Meta;			// Per-class static script data
-	unsigned			 MetaSize;
-	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
-	bool				 bExported;		// This type has been declared in a script
-	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
+	PClass				*ParentClass = nullptr;	// the class this class derives from
+	const size_t		*Pointers = nullptr;		// object pointers defined by this class *only*
+	const size_t		*FlatPointers = nullptr;	// object pointers defined by this class and all its superclasses; not initialized by default
+	const size_t		*ArrayPointers = nullptr;	// dynamic arrays containing object pointers.
+	uint8_t				*Defaults = nullptr;
+	uint8_t				*Meta = nullptr;			// Per-class static script data
+	unsigned			 Size = sizeof(DObject);
+	unsigned			 MetaSize = 0;
+	FName				 TypeName;
+	FName				 SourceLumpName;
+	bool				 bRuntimeClass = false;	// class was defined at run-time, not compile-time
+	bool				 bDecorateClass = false;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
+	bool				 bAbstract = false;
+	bool				 bOptional = false;
 	TArray<VMFunction*>	 Virtuals;	// virtual function table
-	FName				SourceLumpName;
+	TArray<FTypeAndOffset> MetaInits;
+	TArray<FTypeAndOffset> SpecialInits;
 	TArray<PField *> Fields;
+	PClassType			*VMType = nullptr;
 
 	void (*ConstructNative)(void *);
 
@@ -631,13 +649,10 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	PField *AddField(FName name, PType *type, uint32_t flags=0) override;
-	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
 
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();
-	void InitMeta(); 
 	void DestroySpecials(void *addr);
 	void DestroyMeta(void *addr);
 	const PClass *NativeClass() const;
@@ -687,6 +702,7 @@ public:
 	static void FindFunction(VMFunction **pptr, FName cls, FName func);
 	PClass *FindClassTentative(FName name);
 
+	static TMap<FName, PClass*> ClassMap;
 	static TArray<PClass *> AllClasses;
 	static TArray<VMFunction**> FunctionPtrList;
 
@@ -719,10 +735,12 @@ PArray *NewArray(PType *type, unsigned int count);
 PStaticArray *NewStaticArray(PType *type);
 PDynArray *NewDynArray(PType *type);
 PPointer *NewPointer(PType *type, bool isconst = false);
+PPointer *NewPointer(PClass *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
 PStruct *NewStruct(FName name, PTypeBase *outer, bool native = false);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
+PClassType *NewClassType(PClass *cls);
 
 // Built-in types -----------------------------------------------------------
 

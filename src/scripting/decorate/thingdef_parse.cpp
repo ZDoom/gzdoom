@@ -69,9 +69,9 @@ EXTERN_CVAR(Bool, strictdecorate);
 
 PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
 {
-	if (parent->mVersion > MakeVersion(2, 0))
+	if (parent->VMType->mVersion > MakeVersion(2, 0))
 	{
-		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->GetClass()->TypeName.GetChars(), typeName.GetChars());
+		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->TypeName.GetChars(), typeName.GetChars());
 	}
 	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
 	if (type == nullptr)
@@ -101,7 +101,8 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	if (type != nullptr)
 	{
 		// [ZZ] DECORATE classes are always play
-		type->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(type->ObjectFlags, FScopeBarrier::Side_Play);
+		auto vmtype = type->VMType;
+		vmtype->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ObjectFlags, FScopeBarrier::Side_Play);
 	}
 
 	return type;
@@ -1151,15 +1152,15 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 		switch (sc.TokenType)
 		{
 		case TK_Const:
-			ParseConstant (sc, &info->Symbols, info, ns);
+			ParseConstant (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &info->Symbols, info, ns);
+			ParseEnum (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Var:
-			ParseUserVariable (sc, &info->Symbols, info, ns);
+			ParseUserVariable (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Identifier:

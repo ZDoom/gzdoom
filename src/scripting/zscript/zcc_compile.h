@@ -66,7 +66,7 @@ struct ZCC_ClassWork : public ZCC_StructWork
 
 	PClass *ClassType()
 	{
-		return static_cast<PClass *>(strct->Type);
+		return static_cast<PClassType *>(strct->Type)->Descriptor;
 	}
 };
 

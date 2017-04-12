@@ -88,7 +88,7 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, PNamespace *spc)
 
 	if (spc)
 	{
-		FCompileContext ctx(spc, cls, true);
+		FCompileContext ctx(spc, cls->VMType, true);
 		data = data->Resolve(ctx);
 	}
 

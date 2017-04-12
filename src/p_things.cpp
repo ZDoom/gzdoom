@@ -526,7 +526,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpawnableType)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(num);
-	ACTION_RETURN_OBJECT(P_GetSpawnableType(num));
+	ACTION_RETURN_POINTER(P_GetSpawnableType(num));
 }
 
 struct MapinfoSpawnItem

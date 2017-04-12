@@ -791,7 +791,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		{
 			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
 		}
-		if (cls->ObjectFlags & OF_Abstract)
+		if (cls->bAbstract)
 		{
 			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
 		}

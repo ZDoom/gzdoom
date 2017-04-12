@@ -51,6 +51,8 @@
 #include "backend/vmbuilder.h"
 
 FSharedStringArena VMStringConstants;
+bool isActor(PContainerType *type);
+
 
 static int GetIntConst(FxExpression *ex, FCompileContext &ctx)
 {
@@ -496,8 +498,8 @@ void ZCCCompiler::CreateStructTypes()
 		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->CType();
 		if (s->Outer)
 		{
-			outer = s->Outer;
-			syms = &s->Outer->Symbols;
+			outer = s->Outer->VMType;
+			syms = &s->Outer->VMType->Symbols;
 		}
 		else
 		{
@@ -603,7 +605,7 @@ void ZCCCompiler::CreateClassTypes()
 				parent = RUNTIME_CLASS(DObject);
 			}
 
-			if (parent != nullptr)
+			if (parent != nullptr && (parent->VMType != nullptr || c->NodeName() == NAME_Object))
 			{
 				// The parent exists, we may create a type for this class
 				if (c->cls->Flags & ZCC_Native)
@@ -624,7 +626,7 @@ void ZCCCompiler::CreateClassTypes()
 					{
 						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
 					}
-					c->cls->Type = me;
+					c->cls->Type = NewClassType(me);
 					me->SourceLumpName = *c->cls->SourceName;
 				}
 				else
@@ -632,25 +634,33 @@ void ZCCCompiler::CreateClassTypes()
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
 					try
 					{
-						if (parent->mVersion > mVersion)
+						if (parent->VMType->mVersion > mVersion)
 						{
 							Error(c->cls, "Parent class %s of %s not accessible to ZScript version %d.%d.%d", parent->TypeName.GetChars(), c->NodeName().GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 						}
-						c->cls->Type = parent->CreateDerivedClass(c->NodeName(), TentativeClass);
-						if (c->Type() == nullptr)
+						auto newclass = parent->CreateDerivedClass(c->NodeName(), TentativeClass);
+						if (newclass == nullptr)
 						{
 							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
 						}
-						else DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
+						else
+						{
+							c->cls->Type = NewClassType(newclass);
+							DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
+						}
 					}
 					catch (CRecoverableError &err)
 					{
 						Error(c->cls, "%s", err.GetMessage());
-						// create a placeholder so that the compiler can continue looking for errors.
 						c->cls->Type = nullptr;
 					}
 				}
-				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
+				if (c->Type() == nullptr)
+				{
+					// create a placeholder so that the compiler can continue looking for errors.
+					c->cls->Type = NewClassType(parent->FindClassTentative(c->NodeName()));
+				}
+
 				if (c->cls->Flags & ZCC_Abstract)
 					c->Type()->ObjectFlags |= OF_Abstract;
 
@@ -675,13 +685,13 @@ void ZCCCompiler::CreateClassTypes()
 						c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_Play) | OF_UI;
 					if (c->cls->Flags & ZCC_Play)
 						c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
-					if (parent->ObjectFlags & (OF_UI | OF_Play)) // parent is either ui or play
+					if (parent->VMType->ObjectFlags & (OF_UI | OF_Play)) // parent is either ui or play
 					{
 						if (c->cls->Flags & (ZCC_UIFlag | ZCC_Play))
 						{
 							Error(c->cls, "Can't change class scope in class %s", c->NodeName().GetChars());
 						}
-						c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(parent->ObjectFlags));
+						c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(parent->VMType->ObjectFlags));
 					}
 				}
 				else
@@ -689,14 +699,13 @@ void ZCCCompiler::CreateClassTypes()
 					c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::Side_Play);
 				}
 
-				c->ClassType()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 				Classes.Push(c);
 				OrigClasses.Delete(i--);
 				donesomething = true;
 			}
-			else
+			else if (c->cls->ParentName != nullptr)
 			{
 				// No base class found. Now check if something in the unprocessed classes matches.
 				// If not, print an error. If something is found let's retry again in the next iteration.
@@ -713,7 +722,7 @@ void ZCCCompiler::CreateClassTypes()
 				{
 					Error(c->cls, "Class %s has unknown base class %s", c->NodeName().GetChars(), FName(c->cls->ParentName->Id).GetChars());
 					// create a placeholder so that the compiler can continue looking for errors.
-					c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
+					c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
 					c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 					OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 					Classes.Push(c);
@@ -729,7 +738,7 @@ void ZCCCompiler::CreateClassTypes()
 	for (auto c : OrigClasses)
 	{
 		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
-		c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
+		c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
 		c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 		OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);
@@ -753,7 +762,7 @@ void ZCCCompiler::CreateClassTypes()
 			}
 		}
 
-		if (cd->cls->Replaces != nullptr && !static_cast<PClassActor *>(cd->Type())->SetReplacement(cd->cls->Replaces->Id))
+		if (cd->cls->Replaces != nullptr && !static_cast<PClassActor *>(cd->ClassType())->SetReplacement(cd->cls->Replaces->Id))
 		{
 			Warn(cd->cls, "Replaced type '%s' not found for %s", FName(cd->cls->Replaces->Id).GetChars(), cd->Type()->TypeName.GetChars());
 		}
@@ -1131,7 +1140,7 @@ void ZCCCompiler::CompileAllFields()
 			// We need to search the global class table here because not all children may have a scripted definition attached.
 			for (auto ac : PClass::AllClasses)
 			{
-				if (ac->ParentClass == c->Type() && ac->Size != TentativeClass)
+				if (ac->ParentClass != nullptr && ac->ParentClass->VMType == c->Type() && ac->Size != TentativeClass)
 				{
 					// Only set a marker here, so that we can print a better message when the actual fields get added.
 					HasNativeChildren.Insert(ac, true);
@@ -1180,7 +1189,7 @@ void ZCCCompiler::CompileAllFields()
 			else
 				type->MetaSize = 0;
 
-			if (CompileFields(type, Classes[i]->Fields, nullptr, &Classes[i]->TreeNodes, false, !!HasNativeChildren.CheckKey(type)))
+			if (CompileFields(type->VMType, Classes[i]->Fields, nullptr, &Classes[i]->TreeNodes, false, !!HasNativeChildren.CheckKey(type)))
 			{
 				// Remove from the list if all fields got compiled.
 				Classes.Delete(i--);
@@ -1423,7 +1432,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
 
 		fields.ShrinkToFit();
-		if (!type->Symbols.AddSymbol(new PProperty(qualifiedname, fields)))
+		if (!type->VMType->Symbols.AddSymbol(new PProperty(qualifiedname, fields)))
 		{
 			Error(id, "Unable to add property %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
 		}
@@ -1648,7 +1657,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				return TypeError;
 			}
 			auto typesym = dyn_cast<PSymbolType>(sym);
-			if (typesym == nullptr || !typesym->Type->IsKindOf(RUNTIME_CLASS(PClass)))
+			if (typesym == nullptr || !typesym->Type->IsKindOf(RUNTIME_CLASS(PClassType)))
 			{
 				Error(field, "%s does not represent a class type", FName(ctype->Restriction->Id).GetChars());
 				return TypeError;
@@ -1658,7 +1667,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				Error(field, "Class %s not accessible to ZScript version %d.%d.%d", FName(ctype->Restriction->Id).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 				return TypeError;
 			}
-			retval = NewClassPointer(static_cast<PClass *>(typesym->Type));
+			retval = NewClassPointer(static_cast<PClassType *>(typesym->Type)->Descriptor);
 		}
 		break;
 	}
@@ -1703,7 +1712,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 		{
 			if (!nativetype) return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
-		else if (ptype->IsKindOf(RUNTIME_CLASS(PClass))) // classes cannot be instantiated at all, they always get used as references.
+		else if (ptype->IsKindOf(RUNTIME_CLASS(PClassType))) // classes cannot be instantiated at all, they always get used as references.
 		{
 			return NewPointer(ptype, type->isconst);
 		}
@@ -1789,7 +1798,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 		const char * p = prop->params;
 		auto exp = property->Values;
 
-		FCompileContext ctx(OutNamespace, bag.Info, false);
+		FCompileContext ctx(OutNamespace, bag.Info->VMType, false);
 		while (true)
 		{
 			FPropParam conv;
@@ -1971,7 +1980,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 	}
 
 	auto exp = property->Values;
-	FCompileContext ctx(OutNamespace, bag.Info, false);
+	FCompileContext ctx(OutNamespace, bag.Info->VMType, false);
 	for (auto f : prop->Variables)
 	{
 		void *addr;
@@ -2200,20 +2209,21 @@ void ZCCCompiler::InitDefaults()
 		}
 		else
 		{
+			auto cls = c->ClassType();
 			// This should never happen.
-			if (c->ClassType()->Defaults != nullptr)
+			if (cls->Defaults != nullptr)
 			{
-				Error(c->cls, "%s already has defaults", c->Type()->TypeName.GetChars());
+				Error(c->cls, "%s already has defaults", cls->TypeName.GetChars());
 			}
 			// This can only occur if a native parent is not initialized. In all other cases the sorting of the class list should prevent this from ever happening.
-			else if (c->ClassType()->ParentClass->Defaults == nullptr && c->ClassType() != RUNTIME_CLASS(AActor))
+			else if (cls->ParentClass->Defaults == nullptr && cls != RUNTIME_CLASS(AActor))
 			{
-				Error(c->cls, "Parent class %s of %s is not initialized", c->ClassType()->ParentClass->TypeName.GetChars(), c->ClassType()->TypeName.GetChars());
+				Error(c->cls, "Parent class %s of %s is not initialized", cls->ParentClass->TypeName.GetChars(), cls->TypeName.GetChars());
 			}
 			else
 			{
 				// Copy the parent's defaults and meta data.
-				auto ti = static_cast<PClassActor *>(c->Type());
+				auto ti = static_cast<PClassActor *>(cls);
 
 				ti->InitializeDefaults();
 
@@ -2226,7 +2236,7 @@ void ZCCCompiler::InitDefaults()
 
 				Baggage bag;
 			#ifdef _DEBUG
-				bag.ClassName = c->Type()->TypeName;
+				bag.ClassName = cls->TypeName;
 			#endif
 				bag.Version = mVersion;
 				bag.Namespace = OutNamespace;
@@ -2390,7 +2400,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				Error(f, "Action functions cannot be declared UI");
 			}
 			// Non-Actors cannot have action functions.
-			if (!c->Type()->IsKindOf(RUNTIME_CLASS(PClassActor)))
+			if (!isActor(c->Type()))
 			{
 				Error(f, "'Action' can only be used in child classes of Actor");
 			}
@@ -2598,9 +2608,10 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr ? nullptr : *(afd->VMPointer), varflags, useflags);
 		c->Type()->Symbols.ReplaceSymbol(sym);
 
-		auto cls = dyn_cast<PClass>(c->Type());
+		auto vcls = dyn_cast<PClassType>(c->Type());
+		auto cls = vcls ? vcls->Descriptor : nullptr;
 		PFunction *virtsym = nullptr;
-		if (cls != nullptr && cls->ParentClass != nullptr) virtsym = dyn_cast<PFunction>(cls->ParentClass->Symbols.FindSymbol(FName(f->Name), true));
+		if (cls != nullptr && cls->ParentClass != nullptr) virtsym = dyn_cast<PFunction>(cls->ParentClass->VMType->Symbols.FindSymbol(FName(f->Name), true));
 		unsigned vindex = ~0u;
 		if (virtsym != nullptr)
 		{
@@ -2644,7 +2655,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 		}
 
-		PClass *clstype = static_cast<PClass *>(c->Type());
+		PClass *clstype = static_cast<PClassType *>(c->Type())->Descriptor;
 		if (varflags & VARF_Virtual)
 		{
 			if (sym->Variants[0].Implementation == nullptr)
@@ -2666,7 +2677,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					else
 					{
 						auto oldfunc = clstype->Virtuals[vindex];
-						auto parentfunc = dyn_cast<PFunction>(clstype->ParentClass->Symbols.FindSymbol(sym->SymbolName, true));
+						auto parentfunc = dyn_cast<PFunction>(clstype->ParentClass->VMType->Symbols.FindSymbol(sym->SymbolName, true));
 						if (parentfunc && parentfunc->mVersion > mVersion)
 						{
 							Error(f, "Attempt to override function %s which is incompatible with version %d.%d.%d", FName(f->Name).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
@@ -2798,15 +2809,14 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af, in
 		// The actual action function is still needed by DECORATE:
 		if (id->Identifier != NAME_ACS_NamedExecuteWithResult)
 		{
-			PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
+			PFunction *afd = dyn_cast<PFunction>(cls->VMType->Symbols.FindSymbol(id->Identifier, true));
 			if (afd != nullptr)
 			{
 				if (fc->Parameters == nullptr && !(afd->Variants[0].Flags & VARF_Virtual))
 				{
 					FArgumentList argumentlist;
 					// We can use this function directly without wrapping it in a caller.
-					auto selfclass = dyn_cast<PClass>(afd->Variants[0].SelfClass);
-					assert(selfclass != nullptr);	// non classes are not supposed to get here.
+					assert(dyn_cast<PClassType>(afd->Variants[0].SelfClass) != nullptr);	// non classes are not supposed to get here.
 
 					int comboflags = afd->Variants[0].UseFlags & StateFlags;
 					if (comboflags == StateFlags)	// the function must satisfy all the flags the state requires
@@ -2831,7 +2841,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af, in
 			}
 		}
 	}
-	return ConvertAST(cls, af);
+	return ConvertAST(cls->VMType, af);
 }
 
 //==========================================================================
@@ -2889,7 +2899,7 @@ void ZCCCompiler::CompileStates()
 			}
 			else
 			{
-				flags = static_cast<PClassActor *>(c->Type())->ActorInfo()->DefaultStateUsage;
+				flags = static_cast<PClassActor *>(c->ClassType())->ActorInfo()->DefaultStateUsage;
 			}
 			auto st = s->Body;
 			if (st != nullptr) do
@@ -2966,7 +2976,7 @@ void ZCCCompiler::CompileStates()
 
 					if (sl->Action != nullptr)
 					{
-						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action, state.UseFlags);
+						auto code = SetupActionFunction(static_cast<PClassActor *>(c->ClassType()), sl->Action, state.UseFlags);
 						if (code != nullptr)
 						{
 							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, state.UseFlags);
@@ -3176,7 +3186,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			return new FxNop(*ast);	// return something so that the compiler can continue.
 		}
 		auto cls = PClass::FindClass(cc->ClassName);
-		if (cls == nullptr)
+		if (cls == nullptr || cls->VMType == nullptr)
 		{
 			Error(cc, "Unknown class %s", FName(cc->ClassName).GetChars());
 			return new FxNop(*ast);	// return something so that the compiler can continue.

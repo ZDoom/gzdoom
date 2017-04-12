@@ -3034,7 +3034,8 @@ void FinishDehPatch ()
 			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size));
 		} 
 		while (subclass == nullptr);
-		
+		NewClassType(subclass);	// This needs a VM type to work as intended.
+
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
@@ -3152,7 +3153,7 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[self->sprite].name, 4);
 		if (lex == 0)
 		{
-			ACTION_RETURN_OBJECT(PClass::FindActor(DehSpriteMappings[mid].ClassName));
+			ACTION_RETURN_POINTER(PClass::FindActor(DehSpriteMappings[mid].ClassName));
 		}
 		else if (lex < 0)
 		{
@@ -3163,6 +3164,6 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 			max = mid - 1;
 		}
 	}
-	ACTION_RETURN_OBJECT(nullptr);
+	ACTION_RETURN_POINTER(nullptr);
 }
 

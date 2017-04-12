@@ -195,8 +195,8 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 
 	if (symbol != nullptr)
 	{
-		PClass* cls_ctx = dyn_cast<PClass>(funccls);
-		PClass* cls_target = funcsym?dyn_cast<PClass>(funcsym->OwningClass):nullptr;
+		auto cls_ctx = dyn_cast<PClassType>(funccls);
+		auto cls_target = funcsym ? dyn_cast<PClassType>(funcsym->OwningClass) : nullptr;
 		if (funcsym == nullptr)
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
@@ -206,7 +206,7 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->Descriptor->IsDescendantOf(cls_target->Descriptor)))
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
 		}
@@ -236,7 +236,7 @@ void CreateDamageFunction(PNamespace *OutNamespace, const VersionInfo &ver, PCla
 	else
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
-		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, 0);
+		auto funcsym = CreateAnonymousFunction(info->VMType, TypeSInt32, 0);
 		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, ver, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
 	}
 }
@@ -373,6 +373,7 @@ static void CheckStates(PClassActor *obj)
 //==========================================================================
 void ParseScripts();
 void ParseAllDecorate();
+void SynthesizeFlagFields();
 
 void LoadActors()
 {
@@ -387,6 +388,7 @@ void LoadActors()
 
 	FScriptPosition::StrictErrors = false;
 	ParseAllDecorate();
+	SynthesizeFlagFields();
 
 	FunctionBuildList.Build();
 
@@ -401,7 +403,7 @@ void LoadActors()
 		auto ti = PClassActor::AllActorClasses[i];
 		if (ti->Size == TentativeClass)
 		{
-			if (ti->ObjectFlags & OF_Transient)
+			if (ti->bOptional)
 			{
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;

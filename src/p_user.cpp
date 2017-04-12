@@ -1242,7 +1242,7 @@ void APlayerPawn::CheckWeaponSwitch(PClassActor *ammotype)
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponSwitch)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_OBJECT(ammotype, PClassActor);
+	PARAM_POINTER(ammotype, PClassActor);
 	self->CheckWeaponSwitch(ammotype);
 	return 0;
 }

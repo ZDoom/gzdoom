@@ -68,6 +68,7 @@ FMemArena ClassDataAllocator(32768);	// use this for all static class data that 
 
 FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
+TMap<FName, PClass*> PClass::ClassMap;
 TArray<VMFunction**> PClass::FunctionPtrList;
 bool PClass::bShutdown;
 bool PClass::bVMOperational;
@@ -95,6 +96,7 @@ PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
 PPointer *TypeVoidPtr;
+
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1353,8 +1355,16 @@ PPointer::PPointer()
 PPointer::PPointer(PType *pointsat, bool isconst)
 : PBasicType(sizeof(void *), alignof(void *)), PointedType(pointsat), IsConst(isconst)
 {
-	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
-	mVersion = pointsat->mVersion;
+	if (pointsat != nullptr)
+	{
+		mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst ? "readonly " : "");
+		mVersion = pointsat->mVersion;
+	}
+	else
+	{
+		mDescriptiveName = "Pointer";
+		mVersion = 0;
+	}
 	loadOp = OP_LP;
 	storeOp = OP_SP;
 	moveOp = OP_MOVEA;
@@ -1431,7 +1441,7 @@ IMPLEMENT_CLASS(PObjectPointer, false, false)
 //==========================================================================
 
 PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
-	: PPointer(cls, isconst)
+	: PPointer(cls->VMType, isconst)
 {
 	loadOp = OP_LO;
 	// Non-destroyed thinkers are always guaranteed to be linked into the thinker chain so we don't need the write barrier for them.
@@ -1484,28 +1494,32 @@ bool PObjectPointer::ReadValue(FSerializer &ar, const char *key, void *addr) con
 
 PPointer *NewPointer(PType *type, bool isconst)
 {
-	if (type->IsKindOf(RUNTIME_CLASS(PClass)))
+	auto cp = dyn_cast<PClassType>(type);
+	if (cp) return NewPointer(cp->Descriptor, isconst);
+
+	size_t bucket;
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+	if (ptype == nullptr)
 	{
-		size_t bucket;
-		PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
-		if (ptype == nullptr)
-		{
-			ptype = new PObjectPointer(static_cast<PClass*>(type), isconst);
-			TypeTable.AddType(ptype, RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
-		}
-		return static_cast<PPointer *>(ptype);
+		ptype = new PPointer(type, isconst);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
-	else
+	return static_cast<PPointer *>(ptype);
+}
+
+PPointer *NewPointer(PClass *cls, bool isconst)
+{
+	assert(cls->VMType != nullptr);
+
+	auto type = cls->VMType;
+	size_t bucket;
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+	if (ptype == nullptr)
 	{
-		size_t bucket;
-		PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
-		if (ptype == nullptr)
-		{
-			ptype = new PPointer(type, isconst);
-			TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
-		}
-		return static_cast<PPointer *>(ptype);
+		ptype = new PObjectPointer(cls, isconst);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
+	return static_cast<PPointer *>(ptype);
 }
 
 /* PStatePointer **********************************************************/
@@ -1562,13 +1576,13 @@ IMPLEMENT_CLASS(PClassPointer,false, false)
 //==========================================================================
 
 PClassPointer::PClassPointer(PClass *restrict)
-: PPointer(RUNTIME_CLASS(PClass)), ClassRestriction(restrict)
+: PPointer(restrict->VMType), ClassRestriction(restrict)
 {
 	if (restrict) mDescriptiveName.Format("ClassPointer<%s>", restrict->TypeName.GetChars());
 	else mDescriptiveName = "ClassPointer";
 	loadOp = OP_LP;
 	storeOp = OP_SP;
-	mVersion = restrict->mVersion;
+	mVersion = restrict->VMType->mVersion;
 }
 
 //==========================================================================
@@ -1614,7 +1628,6 @@ bool PClassPointer::isCompatible(PType *type)
 
 void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
-	// Class pointers do not get added to FlatPointers because they are released from the GC.
 }
 
 //==========================================================================
@@ -2590,7 +2603,71 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 /* PClass *****************************************************************/
 
-IMPLEMENT_CLASS(PClass, false, false)
+IMPLEMENT_CLASS(PClassType, false, false)
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PClassType::PClassType(PClass *cls)
+{
+	assert(cls->VMType == nullptr);
+	Descriptor = cls;
+	TypeName = cls->TypeName;
+	if (cls->ParentClass != nullptr)
+	{
+		ParentType = cls->ParentClass->VMType;
+		assert(ParentType != nullptr);
+		Symbols.SetParentTable(&ParentType->Symbols);
+	}
+	cls->VMType = this;
+	mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
+}
+
+//==========================================================================
+//
+// PClass :: AddField
+//
+//==========================================================================
+
+PField *PClassType::AddField(FName name, PType *type, uint32_t flags)
+{
+	return Descriptor->AddField(name, type, flags);
+}
+
+//==========================================================================
+//
+// PClass :: AddNativeField
+//
+//==========================================================================
+
+PField *PClassType::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
+{
+	auto field = Symbols.AddNativeField(name, type, address, flags, bitvalue);
+	if (field != nullptr) Descriptor->Fields.Push(field);
+	return field;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PClassType *NewClassType(PClass *cls)
+{
+	size_t bucket;
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassType), 0, (intptr_t)cls->TypeName, &bucket);
+	if (ptype == nullptr)
+	{
+		ptype = new PClassType(cls);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassType), 0, (intptr_t)cls->TypeName, bucket);
+	}
+	return static_cast<PClassType *>(ptype);
+}
+
 
 //==========================================================================
 //
@@ -2619,7 +2696,7 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 				key.Format("class:%s", type->TypeName.GetChars());
 				if (ar.BeginObject(key.GetChars()))
 				{
-					type->Symbols.WriteFields(ar, addr);
+					type->VMType->Symbols.WriteFields(ar, addr);
 					ar.EndObject();
 				}
 				break;
@@ -2666,19 +2743,11 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 		if (type != nullptr)
 		{
 			// Only read it if the type is related to this one.
-			const PClass *parent;
-			for (parent = this; parent != nullptr; parent = parent->ParentClass)
-			{
-				if (parent == type)
-				{
-					break;
-				}
-			}
-			if (parent != nullptr)
+			if (IsDescendantOf(type))
 			{
 				if (ar.BeginObject(nullptr))
 				{
-					readsomething |= type->Symbols.ReadFields(ar, addr, DescriptiveName());
+					readsomething |= type->VMType->Symbols.ReadFields(ar, addr, type->TypeName.GetChars());
 					ar.EndObject();
 				}
 			}
@@ -2738,15 +2807,6 @@ void PClass::StaticInit ()
 	// I'm not sure if this is really necessary to maintain any sort of sync.
 	qsort(&AllClasses[0], AllClasses.Size(), sizeof(AllClasses[0]), cregcmp);
 
-	// Set all symbol table relations here so that they are valid right from the start.
-	for (auto c : AllClasses)
-	{
-		if (c->ParentClass != nullptr)
-		{
-			c->Symbols.SetParentTable(&c->ParentClass->Symbols);
-		}
-	}
-
 }
 
 //==========================================================================
@@ -2785,7 +2845,6 @@ void PClass::StaticShutdown ()
 	// This must be done before the type table is taken down.
 	for (auto cls : AllClasses)
 	{
-		Printf("Processing %s\n", cls->TypeName.GetChars());
 		cls->DestroyMeta(cls->Meta);
 	}
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
@@ -2814,16 +2873,6 @@ void PClass::StaticShutdown ()
 
 void PClass::StaticBootstrap()
 {
-	PClass *cls = new PClass;
-	PClass::RegistrationInfo.SetupClass(cls);
-
-	// The PClassClass constructor initialized these to nullptr, because the
-	// PClass metadata had not been created yet. Now it has, so we know what
-	// they should be and can insert them into the type table successfully.
-	cls->InsertIntoHash();
-
-	// Create parent objects before we go so that these definitions are complete.
-	cls->ParentClass = PClass::RegistrationInfo.ParentType->RegisterClass();
 }
 
 //==========================================================================
@@ -2834,20 +2883,6 @@ void PClass::StaticBootstrap()
 
 PClass::PClass()
 {
-	Size = sizeof(DObject);
-	ParentClass = nullptr;
-	Pointers = nullptr;
-	FlatPointers = nullptr;
-	ArrayPointers = nullptr;
-	HashNext = nullptr;
-	Defaults = nullptr;
-	bRuntimeClass = false;
-	bExported = false;
-	bDecorateClass = false;
-	ConstructNative = nullptr;
-	Meta = nullptr;
-	mDescriptiveName = "Class";
-
 	PClass::AllClasses.Push(this);
 }
 
@@ -2882,12 +2917,6 @@ PClass::~PClass()
 
 PClass *ClassReg::RegisterClass()
 {
-	static ClassReg *const metaclasses[] =
-	{
-		&PClass::RegistrationInfo,
-		&PClassActor::RegistrationInfo,
-	};
-
 	// Skip classes that have already been registered
 	if (MyClass != nullptr)
 	{
@@ -2895,18 +2924,7 @@ PClass *ClassReg::RegisterClass()
 	}
 
 	// Add type to list
-	PClass *cls;
-
-	if (MetaClassNum >= countof(metaclasses))
-	{
-		assert(0 && "Class registry has an invalid meta class identifier");
-	}
-
-	if (metaclasses[MetaClassNum]->MyClass == nullptr)
-	{ // Make sure the meta class is already registered before registering this one
-		metaclasses[MetaClassNum]->RegisterClass();
-	}
-	cls = static_cast<PClass *>(metaclasses[MetaClassNum]->MyClass->CreateNew());
+	PClass *cls = new PClass;
 
 	SetupClass(cls);
 	cls->InsertIntoHash();
@@ -2934,7 +2952,7 @@ void ClassReg::SetupClass(PClass *cls)
 	cls->Size = SizeOf;
 	cls->Pointers = Pointers;
 	cls->ConstructNative = ConstructNative;
-	cls->mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
+	//cls->mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
 }
 
 //==========================================================================
@@ -2947,17 +2965,18 @@ void ClassReg::SetupClass(PClass *cls)
 
 void PClass::InsertIntoHash ()
 {
-	size_t bucket;
-	PType *found;
-
-	found = TypeTable.FindType(RUNTIME_CLASS(PClass), 0, TypeName, &bucket);
-	if (found != nullptr)
+	auto k = ClassMap.CheckKey(TypeName);
+	if (k != nullptr)
 	{ // This type has already been inserted
 		I_Error("Tried to register class '%s' more than once.\n", TypeName.GetChars());
 	}
 	else
 	{
-		TypeTable.AddType(this, RUNTIME_CLASS(PClass), 0, TypeName, bucket);
+		ClassMap[TypeName] = this;
+	}
+	if (IsDescendantOf(RUNTIME_CLASS(AActor)))
+	{
+		PClassActor::AllActorClasses.Push(static_cast<PClassActor*>(this));
 	}
 }
 
@@ -2995,7 +3014,8 @@ PClass *PClass::FindClass (FName zaname)
 	{
 		return nullptr;
 	}
-	return static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass), 0, zaname, nullptr));
+	auto k = ClassMap.CheckKey(zaname);
+	return k ? *k : nullptr;
 }
 
 //==========================================================================
@@ -3104,10 +3124,7 @@ void PClass::Derive(PClass *newclass, FName name)
 	newclass->bRuntimeClass = true;
 	newclass->ParentClass = this;
 	newclass->ConstructNative = ConstructNative;
-	newclass->Symbols.SetParentTable(&this->Symbols);
 	newclass->TypeName = name;
-	newclass->mDescriptiveName.Format("Class<%s>", name.GetChars());
-	newclass->mVersion = mVersion;
 	newclass->MetaSize = MetaSize;
 
 }
@@ -3175,26 +3192,33 @@ void PClass::InitializeDefaults()
 		}
 	}
 
-	if (bRuntimeClass)
+	if (VMType != nullptr)	// purely internal classes have no symbol table
 	{
-		// Copy parent values from the parent defaults.
-		assert(ParentClass != nullptr);
-		if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
+		if (bRuntimeClass)
+		{
+			// Copy parent values from the parent defaults.
+			assert(ParentClass != nullptr);
+			if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
+			for (const PField *field : Fields)
+			{
+				if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
+				{
+					field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+				}
+			}
+		}
+		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
 		for (const PField *field : Fields)
 		{
-			if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
+			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
 			{
-				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
 			}
 		}
 	}
-	if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
-	for (const PField *field : Fields)
+	else
 	{
-		if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
-		{
-			field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
-		}
+		Printf("VM-less class %s\n", TypeName.GetChars());
 	}
 }
 
@@ -3235,7 +3259,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	}
 	else
 	{
-		type = static_cast<PClass *>(GetClass()->CreateNew());
+		type = new PClass;
 		notnew = false;
 	}
 
@@ -3245,11 +3269,12 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->Size = size;
 	if (size != TentativeClass)
 	{
+		NewClassType(type);
 		type->InitializeDefaults();
 		type->Virtuals = Virtuals;
 	}
 	else
-		type->ObjectFlags &= OF_Transient;
+		type->bOptional = false;
 
 	if (!notnew)
 	{
@@ -3270,7 +3295,7 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 	if (!(flags & VARF_Meta))
 	{
 		unsigned oldsize = Size;
-		field = Symbols.AddField(name, type, flags, Size);
+		field = VMType->Symbols.AddField(name, type, flags, Size);
 
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
@@ -3285,7 +3310,7 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 	{
 		// Same as above, but a different data storage.
 		unsigned oldsize = MetaSize;
-		field = Symbols.AddField(name, type, flags, MetaSize);
+		field = VMType->Symbols.AddField(name, type, flags, MetaSize);
 
 		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
@@ -3293,19 +3318,6 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 			memset(Meta + oldsize, 0, MetaSize - oldsize);
 		}
 	}
-	if (field != nullptr) Fields.Push(field);
-	return field;
-}
-
-//==========================================================================
-//
-// PClass :: AddNativeField
-//
-//==========================================================================
-
-PField *PClass::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
-{
-	auto field = Symbols.AddNativeField(name, type, address, flags, bitvalue);
 	if (field != nullptr) Fields.Push(field);
 	return field;
 }
@@ -3325,21 +3337,17 @@ PClass *PClass::FindClassTentative(FName name)
 	{
 		return nullptr;
 	}
-	size_t bucket;
 
-	PType *found = TypeTable.FindType(RUNTIME_CLASS(PClass),
-		/*FIXME:Outer*/0, name, &bucket);
+	PClass *found = FindClass(name);
+	if (found != nullptr) return found;
 
-	if (found != nullptr)
-	{
-		return static_cast<PClass *>(found);
-	}
-	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
+	PClass *type = new PClass;
 	DPrintf(DMSG_SPAMMY, "Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	Derive(type, name);
 	type->Size = TentativeClass;
-	TypeTable.AddType(type, RUNTIME_CLASS(PClass), 0, name, bucket);
+
+	InsertIntoHash();
 	return type;
 }
 
@@ -3392,7 +3400,8 @@ int PClass::FindVirtualIndex(FName name, PPrototype *proto)
 
 PSymbol *PClass::FindSymbol(FName symname, bool searchparents) const
 {
-	return Symbols.FindSymbol(symname, searchparents);
+	if (VMType == nullptr) return nullptr;
+	return VMType->Symbols.FindSymbol(symname, searchparents);
 }
 
 //==========================================================================

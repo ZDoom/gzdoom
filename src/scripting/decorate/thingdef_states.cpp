@@ -339,7 +339,7 @@ do_stop:
 endofstate:
 			if (ScriptCode != nullptr)
 			{
-				auto funcsym = CreateAnonymousFunction(actor, nullptr, state.UseFlags);
+				auto funcsym = CreateAnonymousFunction(actor->VMType, nullptr, state.UseFlags);
 				state.ActionFunc = FunctionBuildList.AddFunction(bag.Namespace, bag.Version, funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true, bag.statedef.GetStateCount(), int(statestring.Len()), sc.LumpNum);
 			}
 			int count = bag.statedef.AddStates(&state, statestring, scp);

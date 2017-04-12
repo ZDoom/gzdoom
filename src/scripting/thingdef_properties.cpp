@@ -92,7 +92,7 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool 
 	}
 	if (cls->Size == TentativeClass && optional)
 	{
-		cls->ObjectFlags |= OF_Transient;	// since this flag has no meaning in class types, let's use it for marking the type optional.
+		cls->bOptional = true;
 	}
 	return static_cast<PClassActor *>(cls);
 }

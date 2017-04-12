@@ -67,7 +67,14 @@ static TArray<AFuncDesc> AFTable;
 static TArray<FieldDesc> FieldTable;
 extern int				BackbuttonTime;
 extern float			BackbuttonAlpha;
-static AWeapon *wpnochg;
+
+// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but is used everywhere as a special flag.
+// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
+// is to create a static variable from it that points to an otherwise unused object and reference that in the script. Yuck!!!
+// This must point to a valid DObject derived object so that the garbage collector can deal with it.
+// The global VM types are the most convenient options here because they get created before the compiler is started and they
+// are not exposed in other ways to scripts - and they do not change unless the engine is shut down.
+DEFINE_GLOBAL_NAMED(TypeSInt32, wp_nochange);
 
 //==========================================================================
 //
@@ -505,6 +512,7 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -890,29 +898,6 @@ void InitThingdef()
 	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
-	
-
-	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
-	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
-	// is to create a static variable from it and reference that in the script. Yuck!!!
-	wpnochg = WP_NOCHANGE;
-	PField *fieldptr = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
-	for (auto &fl : FlagLists)
-	{
-		if (fl.Use & 2)
-		{
-			for(int i=0;i<fl.NumDefs;i++)
-			{
-				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
-				{
-					const_cast<PClass*>(*fl.Type)->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
-				}
-			}
-		}
-	}
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
@@ -980,9 +965,37 @@ void InitThingdef()
 		FieldTable.ShrinkToFit();
 		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
 	}
-
 }
 
+void SynthesizeFlagFields()
+{
+	// These are needed for inserting the flag symbols
+	/*
+	NewClassType(RUNTIME_CLASS(DObject));
+	NewClassType(RUNTIME_CLASS(DThinker));
+	NewClassType(RUNTIME_CLASS(AActor));
+	NewClassType(RUNTIME_CLASS(AInventory));
+	NewClassType(RUNTIME_CLASS(AStateProvider));
+	NewClassType(RUNTIME_CLASS(AWeapon));
+	NewClassType(RUNTIME_CLASS(APlayerPawn));
+	NewClassType(RUNTIME_CLASS(ADynamicLight));
+	*/
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (auto &fl : FlagLists)
+	{
+		auto cls = const_cast<PClass*>(*fl.Type);
+		if (fl.Use & 2)
+		{
+			for (int i = 0; i < fl.NumDefs; i++)
+			{
+				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
+				{
+					cls->VMType->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
+				}
+			}
+		}
+	}
+}
 DEFINE_ACTION_FUNCTION(DObject, GameType)
 {
 	PARAM_PROLOGUE;

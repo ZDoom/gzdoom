@@ -209,7 +209,7 @@ struct ZCC_Class : ZCC_Struct
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
 
-	PClass *CType() { return static_cast<PClass *>(Type); }
+	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
 };
 
 struct ZCC_Enum : ZCC_NamedNode

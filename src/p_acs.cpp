@@ -5012,7 +5012,7 @@ int DLevelScript::LineFromID(int id)
 
 bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 	PArray *arraytype;
 
 	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
@@ -5362,7 +5362,7 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 		{
 			I_Error("ACS call to unknown class in script function %s.%s", clsname, funcname);
 		}
-		auto funcsym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+		auto funcsym = dyn_cast<PFunction>(cls->FindSymbol(funcname, true));
 		if (funcsym == nullptr)
 		{
 			I_Error("ACS call to unknown script function %s.%s", clsname, funcname);

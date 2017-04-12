@@ -4749,7 +4749,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeVelocity)
 
 static PField *GetVar(DObject *self, FName varname)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 	{
@@ -4798,7 +4798,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserVarFloat)
 
 static PField *GetArrayVar(DObject *self, FName varname, int pos)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) ||
 		!var->Type->IsKindOf(RUNTIME_CLASS(PArray)) ||

@@ -33,7 +33,6 @@
 // States are tied to finite states are tied to animation frames.
 #include "info.h"
 
-#include <forward_list>
 #include "doomdef.h"
 #include "textures/textures.h"
 #include "r_data/renderstyle.h"

@@ -1,7 +1,7 @@
 inline unsigned GetVirtualIndex(PClass *cls, const char *funcname)
 {
 	// Look up the virtual function index in the defining class because this may have gotten overloaded in subclasses with something different than a virtual override.
-	auto sym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, false));
+	auto sym = dyn_cast<PFunction>(cls->FindSymbol(funcname, false));
 	assert(sym != nullptr);
 	auto VIndex = sym->Variants[0].Implementation->VirtualIndex;
 	return VIndex;

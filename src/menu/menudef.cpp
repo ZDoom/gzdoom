@@ -371,7 +371,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
@@ -746,7 +746,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;

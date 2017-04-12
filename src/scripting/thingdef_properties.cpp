@@ -342,7 +342,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		FName name(propname, true);
 		if (name != NAME_None)
 		{
-			auto propp = dyn_cast<PProperty>(info->Symbols.FindSymbol(name, true));
+			auto propp = dyn_cast<PProperty>(info->FindSymbol(name, true));
 			if (propp != nullptr)
 			{
 				*((char*)defaults + propp->Variables[0]->Offset) = set ? 1 : 0;

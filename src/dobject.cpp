@@ -625,7 +625,7 @@ DEFINE_ACTION_FUNCTION(DObject, MSTime)
 void *DObject::ScriptVar(FName field, PType *type)
 {
 	auto cls = GetClass();
-	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
+	auto sym = dyn_cast<PField>(cls->FindSymbol(field, true));
 	if (sym && (sym->Type == type || type == nullptr))
 	{
 		if (!(sym->Flags & VARF_Meta))

@@ -97,7 +97,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-		auto f = dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol("A_CallSpecial", false));
+		auto f = dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->FindSymbol("A_CallSpecial", false));
 		assert(f != nullptr);
 		return new FxVMFunctionCall(new FxSelf(sc), f, args, sc, false);
 	}
@@ -583,7 +583,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 
 	FName symname = FName(sc.String, true);
 	symname = CheckCastKludges(symname);
-	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(symname, true));
+	PFunction *afd = dyn_cast<PFunction>(bag.Info->FindSymbol(symname, true));
 	if (afd != NULL)
 	{
 		FArgumentList args;

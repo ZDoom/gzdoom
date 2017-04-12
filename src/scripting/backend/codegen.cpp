@@ -224,6 +224,12 @@ static PClass *FindClassType(FName name, FCompileContext &ctx)
 	return nullptr;
 }
 
+bool isActor(PStruct *type)
+{
+	auto cls = dyn_cast<PClass>(type);
+	return cls ? cls->IsDescendantOf(RUNTIME_CLASS(AActor)) : false;
+}
+
 //==========================================================================
 //
 // ExpEmit
@@ -5963,7 +5969,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		if (!ctx.Function->Variants[0].SelfClass->IsKindOf(RUNTIME_CLASS(PClassActor)))
+		if (!isActor(ctx.Function->Variants[0].SelfClass))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
 			delete this;
@@ -6123,7 +6129,7 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 
 	if (Identifier == NAME_Default)
 	{
-		if (!objtype->IsKindOf(RUNTIME_CLASS(PClassActor)))
+		if (!isActor(objtype))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
 			delete object;
@@ -7689,7 +7695,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		FxExpression *self = (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_Method) && ctx.Class->IsKindOf(RUNTIME_CLASS(PClassActor))) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
+		FxExpression *self = (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_Method) && isActor(ctx.Class)) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
 		delete this;
 		return x->Resolve(ctx);
@@ -10693,9 +10699,9 @@ int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numpar
 			// Let the caller check this. Making this an error with a message is only taking away options from the user.
 			cls = nullptr;
 		}
-		ret->SetObject(const_cast<PClass *>(cls));
+		ret->SetPointer(const_cast<PClass *>(cls));
 	}
-	else ret->SetObject(nullptr);
+	else ret->SetPointer(nullptr);
 	return 1;
 }
 
@@ -10810,7 +10816,7 @@ int BuiltinClassCast(VMValue *param, TArray<VMValue> &defaultparam, int numparam
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);
 	PARAM_CLASS(to, DObject);
-	ACTION_RETURN_OBJECT(from && to && from->IsDescendantOf(to) ? from : nullptr);
+	ACTION_RETURN_POINTER(from && to && from->IsDescendantOf(to) ? from : nullptr);
 }
 
 ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)

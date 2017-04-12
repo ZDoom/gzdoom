@@ -2088,7 +2088,7 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 
 void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) const
 {
-	if (ElementType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ElementType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && static_cast<PPointer*>(ElementType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (ElementType->IsKindOf(RUNTIME_CLASS(PObjectPointer)))
 	{
 		// Add to the list of pointer arrays for this class.
 		special->Push(offset);
@@ -3554,6 +3554,11 @@ int PClass::FindVirtualIndex(FName name, PPrototype *proto)
 	return -1;
 }
 
+PSymbol *PClass::FindSymbol(FName symname, bool searchparents) const
+{
+	return Symbols.FindSymbol(symname, searchparents);
+}
+
 //==========================================================================
 //
 // PClass :: BuildFlatPointers
@@ -3722,7 +3727,7 @@ VMFunction *PClass::FindFunction(FName clsname, FName funcname)
 {
 	auto cls = PClass::FindClass(clsname);
 	if (!cls) return nullptr;
-	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+	auto func = dyn_cast<PFunction>(cls->FindSymbol(funcname, true));
 	if (!func) return nullptr;
 	return func->Variants[0].Implementation;
 }
@@ -3731,7 +3736,7 @@ void PClass::FindFunction(VMFunction **pptr, FName clsname, FName funcname)
 {
 	auto cls = PClass::FindClass(clsname);
 	if (!cls) return;
-	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+	auto func = dyn_cast<PFunction>(cls->FindSymbol(funcname, true));
 	if (!func) return;
 	*pptr = func->Variants[0].Implementation;
 	FunctionPtrList.Push(pptr);

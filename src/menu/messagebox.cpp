@@ -70,7 +70,7 @@ DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode,
 	FString namestr = message;
 	VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex(), reinterpret_cast<void*>(handler) };
 
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenu*)p;
 }

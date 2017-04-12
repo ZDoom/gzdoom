@@ -614,6 +614,7 @@ public:
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
 	void InitializeDefaults();
 	int FindVirtualIndex(FName name, PPrototype *proto);
+	PSymbol *FindSymbol(FName symname, bool searchparents) const;
 
 	static void StaticInit();
 	static void StaticShutdown();

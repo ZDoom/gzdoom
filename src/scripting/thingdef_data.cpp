@@ -733,7 +733,7 @@ FieldDesc *FindField(PStruct *cls, const char * string)
 
 VMFunction *FindVMFunction(PClass *cls, const char *name)
 {
-	auto f = dyn_cast<PFunction>(cls->Symbols.FindSymbol(name, true));
+	auto f = dyn_cast<PFunction>(cls->FindSymbol(name, true));
 	return f == nullptr ? nullptr : f->Variants[0].Implementation;
 }
 

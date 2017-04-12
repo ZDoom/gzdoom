@@ -964,7 +964,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		FName name(propname, true);
 		if (name != NAME_None)
 		{
-			auto propp = dyn_cast<PProperty>(bag.Info->Symbols.FindSymbol(name, true));
+			auto propp = dyn_cast<PProperty>(bag.Info->FindSymbol(name, true));
 			if (propp != nullptr)
 			{
 				DispatchScriptProperty(sc, propp, (AActor *)bag.Info->Defaults, bag);

@@ -1127,7 +1127,7 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
 	auto p = c->CreateNew();
 	FString namestr = name;
 	VMValue params[] = { p, &namestr, v };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }
@@ -1138,7 +1138,7 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 	auto p = c->CreateNew();
 	FString namestr = label;
 	VMValue params[] = { p, &namestr, joy };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }
@@ -1149,7 +1149,7 @@ DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int ce
 	auto p = c->CreateNew();
 	FString namestr = label;
 	VMValue params[] = { p, &namestr, cmd.GetIndex(), center };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }
@@ -1160,7 +1160,7 @@ DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBi
 	auto p = c->CreateNew();
 	FString namestr = label;
 	VMValue params[] = { p, &namestr, cmd.GetIndex(), bindings };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("Init", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }
@@ -1171,7 +1171,7 @@ DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotk
 	auto p = c->CreateNew();
 	FString keystr = FString(char(hotkey));
 	VMValue params[] = { p, x, y, height, tex.GetIndex(), &keystr, command.GetIndex(), param };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }
@@ -1183,7 +1183,7 @@ DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotke
 	FString keystr = FString(char(hotkey));
 	FString textstr = text;
 	VMValue params[] = { p, x, y, height, &keystr, &textstr, font, int(color1.d), int(color2.d), command.GetIndex(), param };
-	auto f = dyn_cast<PFunction>(c->Symbols.FindSymbol("InitDirect", false));
+	auto f = dyn_cast<PFunction>(c->FindSymbol("InitDirect", false));
 	GlobalVMStack.Call(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
 }

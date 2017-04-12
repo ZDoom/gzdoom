@@ -1404,7 +1404,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		{
 			do
 			{
-				auto f = dyn_cast<PField>(type->Symbols.FindSymbol(id->Id, true));
+				auto f = dyn_cast<PField>(type->FindSymbol(id->Id, true));
 				if (f == nullptr)
 				{
 					Error(id, "Variable %s not found in %s", FName(id->Id).GetChars(), type->TypeName.GetChars());
@@ -2113,7 +2113,7 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 		FName name(propname, true);
 		if (name != NAME_None)
 		{
-			auto propp = dyn_cast<PProperty>(cls->Symbols.FindSymbol(name, true));
+			auto propp = dyn_cast<PProperty>(cls->FindSymbol(name, true));
 			if (propp != nullptr)
 			{
 				DispatchScriptProperty(propp, prop, (AActor *)bag.Info->Defaults, bag);

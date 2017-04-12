@@ -1616,7 +1616,7 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		FName varname = MapThingsUserData[udi].Property;
 		int value = MapThingsUserData[udi].Value;
-		PField *var = dyn_cast<PField>(actor->GetClass()->Symbols.FindSymbol(varname, true));
+		PField *var = dyn_cast<PField>(actor->GetClass()->FindSymbol(varname, true));
 
 		udi++;
 

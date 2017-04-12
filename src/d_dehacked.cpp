@@ -791,7 +791,7 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
@@ -2118,7 +2118,7 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
@@ -2744,7 +2744,7 @@ static bool LoadDehSupp ()
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
@@ -3116,7 +3116,7 @@ void FinishDehPatch ()
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
-						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(AmmoPerAttacks[j].func, true));
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
 					}
 					if (state->ActionFunc == AmmoPerAttacks[j].ptr)

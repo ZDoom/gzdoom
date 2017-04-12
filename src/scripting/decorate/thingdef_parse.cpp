@@ -1116,7 +1116,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->TypeName.GetChars());
 		}
 
-		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
+		ResetBaggage (bag, ValidateActor(info->ParentClass));
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 #ifdef _DEBUG

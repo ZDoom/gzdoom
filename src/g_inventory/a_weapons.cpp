@@ -514,7 +514,7 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 bool FWeaponSlot::AddWeapon(const char *type)
 {
-	return AddWeapon(static_cast<PClassActor *>(PClass::FindClass(type)));
+	return AddWeapon(PClass::FindActor(type));
 }
 
 bool FWeaponSlot::AddWeapon(PClassActor *type)
@@ -1443,7 +1443,7 @@ void P_SetupWeapons_ntohton()
 
 		if (cls->IsDescendantOf(NAME_Weapon))
 		{
-			Weapons_ntoh.Push(static_cast<PClassActor *>(cls));
+			Weapons_ntoh.Push(cls);
 		}
 	}
 	qsort(&Weapons_ntoh[1], Weapons_ntoh.Size() - 1, sizeof(Weapons_ntoh[0]), ntoh_cmp);

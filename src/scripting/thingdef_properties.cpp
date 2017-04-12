@@ -1071,7 +1071,7 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 	}
 	else if (cv->GetRealType() == CVAR_Int)
 	{
-		static_cast<PClassActor*>(info)->ActorInfo()->distancecheck = static_cast<FIntCVar *>(cv);
+		info->ActorInfo()->distancecheck = static_cast<FIntCVar *>(cv);
 	}
 	else
 	{

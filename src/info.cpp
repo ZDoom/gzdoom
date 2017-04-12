@@ -282,7 +282,7 @@ void PClassActor::StaticSetActorNums()
 {
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		static_cast<PClassActor *>(PClassActor::AllActorClasses[i])->RegisterIDs();
+		PClassActor::AllActorClasses[i]->RegisterIDs();
 	}
 }
 

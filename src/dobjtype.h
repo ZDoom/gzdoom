@@ -123,8 +123,8 @@ public:
 	// and destruction (e.g. strings) can add their offsets to it for special
 	// initialization when the object is created and destruction when the
 	// object is destroyed.
-	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
-	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
+	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL);
+	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL);
 	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
 
 	// Initialize the value, if needed (e.g. strings)
@@ -312,7 +312,7 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
-	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) override;
 	void InitializeValue(void *addr, const void *def) const override;
 	void DestroyValue(void *addr) const override;
 };
@@ -427,7 +427,7 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
-	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) override;
 	PClass *PointedClass() const;
 };
 
@@ -444,7 +444,7 @@ public:
 	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
 
-	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) override;
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 };
@@ -479,8 +479,8 @@ public:
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 
-	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override;
-	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) override;
 
 protected:
 	PArray();
@@ -513,7 +513,7 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
-	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void InitializeValue(void *addr, const void *def) const override;
 	void DestroyValue(void *addr) const override;
 	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
@@ -546,7 +546,7 @@ public:
 
 	TArray<PField *> Fields;
 	bool HasNativeFields;
-	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use thes two functions for it.
+	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
 
@@ -555,8 +555,8 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
-	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
-	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
 
 	static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields);
 	bool ReadFields(FSerializer &ar, void *addr) const;
@@ -565,7 +565,6 @@ protected:
 };
 
 // a native struct will always be abstract and cannot be instantiated. All variables are references.
-// In addition, native structs can have methods (but no virtual ones.)
 class PNativeStruct : public PStruct
 {
 	DECLARE_CLASS(PNativeStruct, PStruct);

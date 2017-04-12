@@ -82,7 +82,7 @@ public:
 	{
 	}
 
-	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) override
 	{
 		if (base != nullptr) new((uint8_t *)base + offset) FActorInfo;
 		if (special != nullptr)

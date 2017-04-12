@@ -209,7 +209,7 @@ bool PType::ReadValue(FSerializer &ar, const char *key, void *addr) const
 //
 //==========================================================================
 
-void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *stroffs) const
+void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *stroffs)
 {
 }
 
@@ -219,7 +219,7 @@ void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> 
 //
 //==========================================================================
 
-void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs) const
+void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs)
 {
 }
 
@@ -1068,7 +1068,7 @@ bool PString::ReadValue(FSerializer &ar, const char *key, void *addr) const
 //
 //==========================================================================
 
-void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
 	if (base != nullptr) new((uint8_t *)base + offset) FString;
 	if (special != nullptr)
@@ -1444,7 +1444,7 @@ PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
 //
 //==========================================================================
 
-void PObjectPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+void PObjectPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
 	// Add to the list of pointers for this class.
 	special->Push(offset);
@@ -1612,7 +1612,7 @@ bool PClassPointer::isCompatible(PType *type)
 //
 //==========================================================================
 
-void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
 	// Class pointers do not get added to FlatPointers because they are released from the GC.
 }
@@ -1829,7 +1829,7 @@ bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 //
 //==========================================================================
 
-void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
 	for (unsigned i = 0; i < ElementCount; ++i)
 	{
@@ -1843,7 +1843,7 @@ void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset>
 //
 //==========================================================================
 
-void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
 	for (unsigned i = 0; i < ElementCount; ++i)
 	{
@@ -2067,7 +2067,7 @@ void PDynArray::DestroyValue(void *addr) const
 //
 //==========================================================================
 
-void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
 	if (base != nullptr) memset((char*)base + offset, 0, sizeof(FArray));	// same as constructing an empty array.
 	if (special != nullptr)
@@ -2312,7 +2312,7 @@ PStruct::PStruct(FName name, PTypeBase *outer)
 //
 //==========================================================================
 
-void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
 	for (const PField *field : Fields)
 	{
@@ -2329,7 +2329,7 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 //
 //==========================================================================
 
-void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 {
 	for (const PField *field : Fields)
 	{

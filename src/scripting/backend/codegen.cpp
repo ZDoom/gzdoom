@@ -56,6 +56,8 @@
 #include "w_wad.h"
 #include "math/cmath.h"
 
+inline PClass *PObjectPointer::PointedClass() const { return static_cast<PClass*>(PointedType); }
+
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
 int utf8_decode(const char *src, int *size);
@@ -294,10 +296,18 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompar
 		// A type is always compatible to itself.
 		if (fromtype == totype) return true;
 		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
-		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+		if (source->IsA(RUNTIME_CLASS(PObjectPointer)) && dest->IsA(RUNTIME_CLASS(PObjectPointer)))
 		{
-			auto fromcls = static_cast<PClass *>(fromtype->PointedType);
-			auto tocls = static_cast<PClass *>(totype->PointedType);
+			auto fromcls = static_cast<PObjectPointer*>(source)->PointedClass();
+			auto tocls = static_cast<PObjectPointer*>(dest)->PointedClass();
+			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
+			return (fromcls->IsDescendantOf(tocls));
+		}
+		// The same rules apply to class pointers. A child type can be assigned to a variable of a parent type.
+		if (source->IsA(RUNTIME_CLASS(PClassPointer)) && dest->IsA(RUNTIME_CLASS(PClassPointer)))
+		{
+			auto fromcls = static_cast<PClassPointer*>(source)->ClassRestriction;
+			auto tocls = static_cast<PClassPointer*>(dest)->ClassRestriction;
 			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
 			return (fromcls->IsDescendantOf(tocls));
 		}
@@ -6958,8 +6968,8 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 
 	if (membervar->SymbolName == NAME_Default)
 	{
-		if (!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))
-			|| !static_cast<PPointer *>(classx->ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(AActor)))
+		if (!classx->ValueType->IsKindOf(RUNTIME_CLASS(PObjectPointer))
+			|| !static_cast<PObjectPointer *>(classx->ValueType)->PointedClass()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type");
 			delete this;

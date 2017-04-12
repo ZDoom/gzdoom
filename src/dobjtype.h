@@ -428,6 +428,7 @@ public:
 	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
+	PClass *PointedClass() const;
 };
 
 

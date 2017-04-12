@@ -337,6 +337,7 @@ public:
 	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
 	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PDynArray))); }
+	bool IsNativeStruct() const { return (ValueType->IsA(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ValueType)->isNative); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 	void EmitStatement(VMFunctionBuilder *build);

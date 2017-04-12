@@ -384,7 +384,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						params.Push(desc);
 						start = 2;
 					}
-					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());
@@ -753,7 +753,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 					TArray<VMValue> params;
 
 					params.Push(0);
-					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());

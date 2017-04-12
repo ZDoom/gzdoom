@@ -777,11 +777,11 @@ static int fieldcmp(const void * a, const void * b)
 void InitThingdef()
 {
 	// Some native types need size and serialization information added before the scripts get compiled.
-	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
+	auto secplanestruct = NewStruct("Secplane", nullptr, true);
 	secplanestruct->Size = sizeof(secplane_t);
 	secplanestruct->Align = alignof(secplane_t);
 
-	auto sectorstruct = NewNativeStruct("Sector", nullptr);
+	auto sectorstruct = NewStruct("Sector", nullptr, true);
 	sectorstruct->Size = sizeof(sector_t);
 	sectorstruct->Align = alignof(sector_t);
 	NewPointer(sectorstruct, false)->InstallHandlers(
@@ -796,7 +796,7 @@ void InitThingdef()
 		}
 	);
 
-	auto linestruct = NewNativeStruct("Line", nullptr);
+	auto linestruct = NewStruct("Line", nullptr, true);
 	linestruct->Size = sizeof(line_t);
 	linestruct->Align = alignof(line_t);
 	NewPointer(linestruct, false)->InstallHandlers(
@@ -811,7 +811,7 @@ void InitThingdef()
 		}
 	);
 
-	auto sidestruct = NewNativeStruct("Side", nullptr);
+	auto sidestruct = NewStruct("Side", nullptr, true);
 	sidestruct->Size = sizeof(side_t);
 	sidestruct->Align = alignof(side_t);
 	NewPointer(sidestruct, false)->InstallHandlers(
@@ -826,7 +826,7 @@ void InitThingdef()
 		}
 	);
 
-	auto vertstruct = NewNativeStruct("Vertex", nullptr);
+	auto vertstruct = NewStruct("Vertex", nullptr, true);
 	vertstruct->Size = sizeof(vertex_t);
 	vertstruct->Align = alignof(vertex_t);
 	NewPointer(vertstruct, false)->InstallHandlers(
@@ -841,23 +841,23 @@ void InitThingdef()
 		}
 	);
 
-	auto sectorportalstruct = NewNativeStruct("SectorPortal", nullptr);
+	auto sectorportalstruct = NewStruct("SectorPortal", nullptr, true);
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
-	auto playerclassstruct = NewNativeStruct("PlayerClass", nullptr);
+	auto playerclassstruct = NewStruct("PlayerClass", nullptr, true);
 	playerclassstruct->Size = sizeof(FPlayerClass);
 	playerclassstruct->Align = alignof(FPlayerClass);
 
-	auto playerskinstruct = NewNativeStruct("PlayerSkin", nullptr);
+	auto playerskinstruct = NewStruct("PlayerSkin", nullptr, true);
 	playerskinstruct->Size = sizeof(FPlayerSkin);
 	playerskinstruct->Align = alignof(FPlayerSkin);
 
-	auto teamstruct = NewNativeStruct("Team", nullptr);
+	auto teamstruct = NewStruct("Team", nullptr, true);
 	teamstruct->Size = sizeof(FTeam);
 	teamstruct->Align = alignof(FTeam);
 
-	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
+	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);
 	NewPointer(pstruct, false)->InstallHandlers(
@@ -872,7 +872,7 @@ void InitThingdef()
 		}
 	);
 
-	auto fontstruct = NewNativeStruct("FFont", nullptr);
+	auto fontstruct = NewStruct("FFont", nullptr, true);
 	fontstruct->Size = sizeof(FFont);
 	fontstruct->Align = alignof(FFont);
 	NewPointer(fontstruct, false)->InstallHandlers(
@@ -887,7 +887,7 @@ void InitThingdef()
 		}
 	);
 
-	auto wbplayerstruct = NewNativeStruct("WBPlayerStruct", nullptr);
+	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
 	

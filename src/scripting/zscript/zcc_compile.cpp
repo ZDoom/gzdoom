@@ -513,7 +513,7 @@ void ZCCCompiler::CreateStructTypes()
 		}
 		else if (s->strct->Flags & ZCC_Native)
 		{
-			s->strct->Type = NewNativeStruct(s->NodeName(), outer);
+			s->strct->Type = NewStruct(s->NodeName(), outer, true);
 		}
 		else
 		{
@@ -1315,7 +1315,8 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 							Error(field, "The member variable '%s.%s' has not been exported from the executable.", type == nullptr? "" : type->TypeName.GetChars(), FName(name->Name).GetChars());
 						}
 						// For native structs a size check cannot be done because they normally have no size. But for a native reference they are still fine.
-						else if (thisfieldtype->Size != ~0u && fd->FieldSize != ~0u && thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0 && !thisfieldtype->IsA(RUNTIME_CLASS(PNativeStruct)))
+						else if (thisfieldtype->Size != ~0u && fd->FieldSize != ~0u && thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0 && 
+							(!thisfieldtype->IsA(RUNTIME_CLASS(PStruct)) || !static_cast<PStruct*>(thisfieldtype)->isNative))
 						{
 							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type == nullptr ? "" : type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
 						}
@@ -1702,10 +1703,14 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 		{
 			if (!nativetype) return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
-		if (ptype->IsKindOf(RUNTIME_CLASS(PNativeStruct)))	// native structs and classes cannot be instantiated, they always get used as reference.
+		else if (ptype->IsKindOf(RUNTIME_CLASS(PClass))) // classes cannot be instantiated at all, they always get used as references.
+		{
+			return NewPointer(ptype, type->isconst);
+		}
+		else if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ptype)->isNative)	// native structs and classes cannot be instantiated, they always get used as reference.
 		{
 			if (!nativetype) return NewPointer(ptype, type->isconst);
-			if (!ptype->IsKindOf(RUNTIME_CLASS(PClass))) return ptype;	// instantiation of native structs. Only for internal use.
+			return ptype;	// instantiation of native structs. Only for internal use.
 		}
 		if (!nativetype) return ptype;
 	}

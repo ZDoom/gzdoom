@@ -1772,7 +1772,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			if (fromtype->IsDescendantOf(totype)) goto basereturn;
 		}
 	}
-	else if (basex->ValueType->IsA(RUNTIME_CLASS(PNativeStruct)) && ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType == basex->ValueType)
+	else if (basex->IsNativeStruct() && ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType == basex->ValueType)
 	{
 		bool writable;
 		basex->RequestAddress(ctx, &writable);
@@ -2493,7 +2493,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		}
 		// Both types are the same so this is ok.
 	}
-	else if (Right->ValueType->IsA(RUNTIME_CLASS(PNativeStruct)) && Base->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(Base->ValueType)->PointedType == Right->ValueType)
+	else if (Right->IsNativeStruct() && Base->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(Base->ValueType)->PointedType == Right->ValueType)
 	{
 		// allow conversion of native structs to pointers of the same type. This is necessary to assign elements from global arrays like players, sectors, etc. to local pointers.
 		// For all other types this is not needed. Structs are not assignable and classes can only exist as references.

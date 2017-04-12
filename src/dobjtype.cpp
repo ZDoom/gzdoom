@@ -348,8 +348,8 @@ void PType::StaticInit()
 
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
-	TypeStringStruct = NewNativeStruct("Stringstruct", nullptr);
-	TypeFont = NewPointer(NewNativeStruct("Font", nullptr));
+	TypeStringStruct = NewStruct("Stringstruct", nullptr, true);
+	TypeFont = NewPointer(NewStruct("Font", nullptr, true));
 #ifdef __BIG_ENDIAN__
 	TypeColorStruct->AddField(NAME_a, TypeUInt8);
 	TypeColorStruct->AddField(NAME_r, TypeUInt8);
@@ -1521,7 +1521,7 @@ IMPLEMENT_CLASS(PStatePointer, false, false)
 PStatePointer::PStatePointer()
 {
 	mDescriptiveName = "Pointer<State>";
-	PointedType = NewNativeStruct(NAME_State, nullptr);
+	PointedType = NewStruct(NAME_State, nullptr, true);
 	IsConst = true;
 }
 
@@ -2190,7 +2190,7 @@ PDynArray *NewDynArray(PType *type)
 			break;
 		}
 
-		auto backing = NewNativeStruct(backingname, nullptr);
+		auto backing = NewStruct(backingname, nullptr, true);
 		atype = new PDynArray(type, backing);
 		TypeTable.AddType(atype, RUNTIME_CLASS(PDynArray), (intptr_t)type, 0, bucket);
 	}
@@ -2298,12 +2298,12 @@ PStruct::PStruct()
 //
 //==========================================================================
 
-PStruct::PStruct(FName name, PTypeBase *outer)
+PStruct::PStruct(FName name, PTypeBase *outer, bool isnative)
 : PNamedType(name, outer)
 {
-	mDescriptiveName.Format("Struct<%s>", name.GetChars());
+	mDescriptiveName.Format("%sStruct<%s>", isnative? "Native" : "", name.GetChars());
 	Size = 0;
-	HasNativeFields = false;
+	isNative = isnative;
 }
 
 //==========================================================================
@@ -2483,7 +2483,6 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_
 		return nullptr;
 	}
 	Fields.Push(field);
-	HasNativeFields = true;
 	return field;
 }
 
@@ -2495,57 +2494,19 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_
 //
 //==========================================================================
 
-PStruct *NewStruct(FName name, PTypeBase *outer)
+PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
 	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, &bucket);
 	if (stype == nullptr)
 	{
-		stype = new PStruct(name, outer);
+		stype = new PStruct(name, outer, native);
 		TypeTable.AddType(stype, RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, bucket);
 	}
 	return static_cast<PStruct *>(stype);
 }
 
-/* PNativeStruct ****************************************************************/
-
-IMPLEMENT_CLASS(PNativeStruct, false, false)
-
-//==========================================================================
-//
-// PNativeStruct - Parameterized Constructor
-//
-//==========================================================================
-
-PNativeStruct::PNativeStruct(FName name, PTypeBase *outer)
-	: PStruct(name, outer)
-{
-	mDescriptiveName.Format("NativeStruct<%s>", name.GetChars());
-	Size = 0;
-	HasNativeFields = true;
-}
-
-//==========================================================================
-//
-// NewNativeStruct
-// Returns a PNativeStruct for the given name and container, making sure not to
-// create duplicates.
-//
-//==========================================================================
-
-PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer)
-{
-	size_t bucket;
-	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
-	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, &bucket);
-	if (stype == nullptr)
-	{
-		stype = new PNativeStruct(name, outer);
-		TypeTable.AddType(stype, RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, bucket);
-	}
-	return static_cast<PNativeStruct *>(stype);
-}
 
 /* PField *****************************************************************/
 

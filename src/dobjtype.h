@@ -542,10 +542,10 @@ class PStruct : public PNamedType
 	DECLARE_CLASS(PStruct, PNamedType);
 
 public:
-	PStruct(FName name, PTypeBase *outer);
+	PStruct(FName name, PTypeBase *outer, bool isnative = false);
 
 	TArray<PField *> Fields;
-	bool HasNativeFields;
+	bool isNative;
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
@@ -562,14 +562,6 @@ public:
 	bool ReadFields(FSerializer &ar, void *addr) const;
 protected:
 	PStruct();
-};
-
-// a native struct will always be abstract and cannot be instantiated. All variables are references.
-class PNativeStruct : public PStruct
-{
-	DECLARE_CLASS(PNativeStruct, PStruct);
-public:
-	PNativeStruct(FName name = NAME_None, PTypeBase *outer = nullptr);
 };
 
 class PPrototype : public PCompoundType
@@ -596,9 +588,9 @@ enum
 	TentativeClass = UINT_MAX,
 };
 
-class PClass : public PNativeStruct
+class PClass : public PStruct
 {
-	DECLARE_CLASS(PClass, PNativeStruct);
+	DECLARE_CLASS(PClass, PStruct);
 	// We unravel _WITH_META here just as we did for PType.
 protected:
 	TArray<FTypeAndOffset> MetaInits;
@@ -730,8 +722,7 @@ PDynArray *NewDynArray(PType *type);
 PPointer *NewPointer(PType *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
-PStruct *NewStruct(FName name, PTypeBase *outer);
-PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer);
+PStruct *NewStruct(FName name, PTypeBase *outer, bool native = false);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
 
 // Built-in types -----------------------------------------------------------

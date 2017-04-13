@@ -283,7 +283,7 @@ static void CheckForUnsafeStates(PClassActor *obj)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s which accesses user variables, reached by %s.%s.\n",
-					FState::StaticGetStateName(state), obj->TypeName.GetChars(), FName(*test).GetChars());
+					FState::StaticGetStateName(state).GetChars(), obj->TypeName.GetChars(), FName(*test).GetChars());
 			}
 			state = state->NextState;
 		}
@@ -308,7 +308,7 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 		if (!(state->UseFlags & useflag))
 		{
 			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "%s references state %s as %s state, but this state is not flagged for use as %s.\n",
-				obj->TypeName.GetChars(), FState::StaticGetStateName(state), statename.GetChars(), descript);
+				obj->TypeName.GetChars(), FState::StaticGetStateName(state).GetChars(), statename.GetChars(), descript);
 		}
 	}
 	if (slb->Children != nullptr)
@@ -359,7 +359,7 @@ static void CheckStates(PClassActor *obj)
 		if (state->NextState && (state->UseFlags & state->NextState->UseFlags) != state->UseFlags)
 		{
 			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "State %s links to a state with incompatible restrictions.\n",
-				FState::StaticGetStateName(state));
+				FState::StaticGetStateName(state).GetChars());
 		}
 	}
 }

@@ -34,6 +34,7 @@
 */
 
 #include "info.h"
+#include "actor.h"
 #include "p_lnspec.h"
 #include "m_fixed.h"
 #include "c_dispatch.h"

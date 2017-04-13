@@ -745,7 +745,7 @@ void ZCCCompiler::CreateClassTypes()
 		Classes.Push(c);
 	}
 
-	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums and link the treenode symbol tables and set up replacements
+	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums and link the treenode symbol tables.
 	for (auto cd : Classes)
 	{
 		for (auto e : cd->Enums)
@@ -762,12 +762,6 @@ void ZCCCompiler::CreateClassTypes()
 				break;
 			}
 		}
-
-		if (cd->cls->Replaces != nullptr && !static_cast<PClassActor *>(cd->ClassType())->SetReplacement(cd->cls->Replaces->Id))
-		{
-			Warn(cd->cls, "Replaced type '%s' not found for %s", FName(cd->cls->Replaces->Id).GetChars(), cd->Type()->TypeName.GetChars());
-		}
-
 	}
 }
 
@@ -2201,7 +2195,7 @@ void ZCCCompiler::InitDefaults()
 		// This may be removed if the conditions change, but right now only subclasses of Actor can define a Default block.
 		if (!c->ClassType()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->Type()->TypeName.GetChars());
+			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->ClassType()->TypeName.GetChars());
 			if (c->ClassType()->ParentClass)
 			{
 				auto ti = static_cast<PClassActor *>(c->ClassType());
@@ -2227,6 +2221,12 @@ void ZCCCompiler::InitDefaults()
 				auto ti = static_cast<PClassActor *>(cls);
 
 				ti->InitializeDefaults();
+
+				// Replacements require that the meta data has been allocated by InitializeDefaults.
+				if (c->cls->Replaces != nullptr && !ti->SetReplacement(c->cls->Replaces->Id))
+				{
+					Warn(c->cls, "Replaced type '%s' not found for %s", FName(c->cls->Replaces->Id).GetChars(), ti->TypeName.GetChars());
+				}
 
 				// We need special treatment for this one field in AActor's defaults which cannot be made visible to DECORATE as a property.
 				// It's better to do this here under controlled conditions than deeper down in the class type classes.

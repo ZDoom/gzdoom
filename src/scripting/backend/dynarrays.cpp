@@ -99,7 +99,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I8, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -202,7 +202,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I16, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -305,7 +305,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -408,7 +408,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -511,7 +511,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F64, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -614,7 +614,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -718,7 +718,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_String, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }

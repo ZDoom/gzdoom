@@ -387,7 +387,7 @@ class LoadSaveMenu : ListMenu
 	{
 		if (ev.Type == UIEvent.Type_KeyDown)
 		{
-			if (Selected < manager.SavegameCount())
+			if (Selected != -1 && Selected < manager.SavegameCount())
 			{
 				switch (ev.KeyChar)
 				{

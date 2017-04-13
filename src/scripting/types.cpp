@@ -379,16 +379,6 @@ IMPLEMENT_CLASS(PBasicType, true, false)
 
 //==========================================================================
 //
-// PBasicType Default Constructor
-//
-//==========================================================================
-
-PBasicType::PBasicType()
-{
-}
-
-//==========================================================================
-//
 // PBasicType Parameterized Constructor
 //
 //==========================================================================
@@ -397,11 +387,24 @@ PBasicType::PBasicType(unsigned int size, unsigned int align)
 : PType(size, align)
 {
 	mDescriptiveName = "BasicType";
+	Flags |= TYPE_Scalar;
 }
 
 /* PCompoundType **********************************************************/
 
 IMPLEMENT_CLASS(PCompoundType, true, false)
+
+//==========================================================================
+//
+// PBasicType Parameterized Constructor
+//
+//==========================================================================
+
+PCompoundType::PCompoundType(unsigned int size, unsigned int align)
+	: PType(size, align)
+{
+	mDescriptiveName = "CompoundType";
+}
 
 /* PContainerType *************************************************************/
 
@@ -462,6 +465,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 : PBasicType(size, size), Unsigned(unsign), IntCompatible(compatible)
 {
 	mDescriptiveName.Format("%cInt%d", unsign? 'U':'S', size);
+	Flags |= TYPE_Int;
 
 	MemberOnly = (size < 4);
 	if (!unsign)
@@ -713,25 +717,12 @@ PBool::PBool()
 {
 	mDescriptiveName = "Bool";
 	MemberOnly = false;
+	Flags |= TYPE_IntNotInt;
 }
 
 /* PFloat *****************************************************************/
 
 IMPLEMENT_CLASS(PFloat, false, false)
-
-//==========================================================================
-//
-// PFloat Default Constructor
-//
-//==========================================================================
-
-PFloat::PFloat()
-: PBasicType(8, 8)
-{
-	mDescriptiveName = "Float";
-	SetDoubleSymbols();
-	SetOps();
-}
 
 //==========================================================================
 //
@@ -743,6 +734,7 @@ PFloat::PFloat(unsigned int size)
 : PBasicType(size, size)
 {
 	mDescriptiveName.Format("Float%d", size);
+	Flags |= TYPE_Float;
 	if (size == 8)
 	{
 #ifdef __i386__
@@ -1085,6 +1077,7 @@ PName::PName()
 : PInt(sizeof(FName), true, false)
 {
 	mDescriptiveName = "Name";
+	Flags |= TYPE_IntNotInt;
 	assert(sizeof(FName) == alignof(FName));
 }
 
@@ -1134,6 +1127,7 @@ IMPLEMENT_CLASS(PSpriteID, false, false)
 PSpriteID::PSpriteID()
 	: PInt(sizeof(int), true, true)
 {
+	Flags |= TYPE_IntNotInt;
 	mDescriptiveName = "SpriteID";
 }
 
@@ -1177,6 +1171,7 @@ PTextureID::PTextureID()
 	: PInt(sizeof(FTextureID), true, false)
 {
 	mDescriptiveName = "TextureID";
+	Flags |= TYPE_IntNotInt;
 	assert(sizeof(FTextureID) == alignof(FTextureID));
 }
 
@@ -1220,6 +1215,7 @@ PSound::PSound()
 : PInt(sizeof(FSoundID), true)
 {
 	mDescriptiveName = "Sound";
+	Flags |= TYPE_IntNotInt;
 	assert(sizeof(FSoundID) == alignof(FSoundID));
 }
 
@@ -1270,6 +1266,7 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	mDescriptiveName = "Color";
+	Flags |= TYPE_IntNotInt;
 	assert(sizeof(PalEntry) == alignof(PalEntry));
 }
 
@@ -1286,6 +1283,7 @@ IMPLEMENT_CLASS(PStateLabel, false, false)
 PStateLabel::PStateLabel()
 	: PInt(sizeof(int), false, false)
 {
+	Flags |= TYPE_IntNotInt;
 	mDescriptiveName = "StateLabel";
 }
 
@@ -1307,6 +1305,7 @@ PPointer::PPointer()
 	storeOp = OP_SP;
 	moveOp = OP_MOVEA;
 	RegType = REGT_POINTER;
+	Flags |= TYPE_Pointer;
 }
 
 //==========================================================================
@@ -1332,6 +1331,7 @@ PPointer::PPointer(PType *pointsat, bool isconst)
 	storeOp = OP_SP;
 	moveOp = OP_MOVEA;
 	RegType = REGT_POINTER;
+	Flags |= TYPE_Pointer;
 }
 
 //==========================================================================

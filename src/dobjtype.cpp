@@ -205,7 +205,6 @@ void PClass::StaticInit ()
 {
 	atterm (StaticShutdown);
 
-	StaticBootstrap();
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
@@ -265,6 +264,7 @@ void PClass::StaticShutdown ()
 	ClassDataAllocator.FreeAllBlocks();
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();
+	ClassMap.Clear();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
@@ -274,16 +274,6 @@ void PClass::StaticShutdown ()
 		cr->MyClass = nullptr;
 	}
 	
-}
-
-//==========================================================================
-//
-// PClass :: StaticBootstrap										STATIC
-//
-//==========================================================================
-
-void PClass::StaticBootstrap()
-{
 }
 
 //==========================================================================
@@ -363,7 +353,6 @@ void ClassReg::SetupClass(PClass *cls)
 	cls->Size = SizeOf;
 	cls->Pointers = Pointers;
 	cls->ConstructNative = ConstructNative;
-	//cls->mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
 }
 
 //==========================================================================

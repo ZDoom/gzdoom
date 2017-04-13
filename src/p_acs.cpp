@@ -5040,12 +5040,11 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 		return false;
 	}
 	addr = baddr;
-	// We don't want Int subclasses like Name or Color to be accessible,
-	// but we do want to support Float subclasses like Fixed.
-	if (!type->IsA(RUNTIME_CLASS(PInt)) && !type->IsKindOf(RUNTIME_CLASS(PFloat)))
+	// We don't want Int subclasses like Name or Color to be accessible here.
+	if (!type->isInt() && !type->isFloat())
 	{
 		// For reading, we also support Name and String types.
-		if (readonly && (type->IsA(RUNTIME_CLASS(PName)) || type->IsA(RUNTIME_CLASS(PString))))
+		if (readonly && (type == TypeName || type == TypeString))
 		{
 			return true;
 		}
@@ -5061,7 +5060,7 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 
 	if (GetVarAddrType(self, varname, index, addr, type, false))
 	{
-		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		if (!type->isFloat())
 		{
 			type->SetValue(addr, value);
 		}
@@ -5079,15 +5078,15 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 
 	if (GetVarAddrType(self, varname, index, addr, type, true))
 	{
-		if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		if (type->isFloat())
 		{
 			return DoubleToACS(type->GetValueFloat(addr));
 		}
-		else if (type->IsA(RUNTIME_CLASS(PName)))
+		else if (type == TypeName)
 		{
 			return GlobalACSStrings.AddString(FName(ENamedName(type->GetValueInt(addr))).GetChars());
 		}
-		else if (type->IsA(RUNTIME_CLASS(PString)))
+		else if (type == TypeString)
 		{
 			return GlobalACSStrings.AddString(*(FString *)addr);
 		}

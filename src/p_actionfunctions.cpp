@@ -4753,7 +4753,7 @@ static PField *GetVar(DObject *self, FName varname)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
-	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
+	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) || !var->Type->isScalar())
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
@@ -4803,8 +4803,7 @@ static PField *GetArrayVar(DObject *self, FName varname, int pos)
 	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) ||
-		!var->Type->IsKindOf(RUNTIME_CLASS(PArray)) ||
-		!static_cast<PArray *>(var->Type)->ElementType->IsKindOf(RUNTIME_CLASS(PBasicType)))
+		!var->Type->IsKindOf(RUNTIME_CLASS(PArray)) || !static_cast<PArray *>(var->Type)->ElementType->isScalar())
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());

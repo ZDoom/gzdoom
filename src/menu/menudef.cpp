@@ -424,7 +424,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 							}
 							params.Push(f.GetIndex());
 						}
-						else if (args[i]->IsKindOf(RUNTIME_CLASS(PInt)))
+						else if (args[i]->isIntCompatible())
 						{
 							char *endp;
 							int v = (int)strtoll(sc.String, &endp, 0);
@@ -441,7 +441,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 							if (args[i] == TypeBool) v = !!v;
 							params.Push(v);
 						}
-						else if (args[i]->IsKindOf(RUNTIME_CLASS(PFloat)))
+						else if (args[i]->isFloat())
 						{
 							char *endp;
 							double v = strtod(sc.String, &endp);
@@ -775,7 +775,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 						{
 							params.Push(V_GetColor(nullptr, sc));
 						}
-						else if (args[i]->IsKindOf(RUNTIME_CLASS(PInt)))
+						else if (args[i]->isIntCompatible())
 						{
 							char *endp;
 							int v = (int)strtoll(sc.String, &endp, 0);
@@ -794,7 +794,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 							if (args[i] == TypeBool) v = !!v;
 							params.Push(v);
 						}
-						else if (args[i]->IsKindOf(RUNTIME_CLASS(PFloat)))
+						else if (args[i]->isFloat())
 						{
 							char *endp;
 							double v = strtod(sc.String, &endp);

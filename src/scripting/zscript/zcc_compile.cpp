@@ -873,13 +873,13 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 		{
 			def->Symbol = new PSymbolConstString(def->NodeName, *(cval->StringVal));
 		}
-		else if (cval->Type->IsA(RUNTIME_CLASS(PInt)))
+		else if (cval->Type->isInt())
 		{
 			// How do we get an Enum type in here without screwing everything up???
 			//auto type = def->Type != nullptr ? def->Type : cval->Type;
 			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
 		}
-		else if (cval->Type->IsA(RUNTIME_CLASS(PFloat)))
+		else if (cval->Type->isFloat())
 		{
 			if (def->Type != nullptr)
 			{
@@ -899,13 +899,13 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 		{
 			def->Symbol = new PSymbolConstString(def->NodeName, c.GetString());
 		}
-		else if (c.Type->IsA(RUNTIME_CLASS(PInt)))
+		else if (c.Type->isInt())
 		{
 			// How do we get an Enum type in here without screwing everything up???
 			//auto type = def->Type != nullptr ? def->Type : cval->Type;
 			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetInt());
 		}
-		else if (c.Type->IsA(RUNTIME_CLASS(PFloat)))
+		else if (c.Type->isFloat())
 		{
 			if (def->Type != nullptr)
 			{
@@ -974,7 +974,7 @@ void ZCCCompiler::CompileArrays(ZCC_StructWork *work)
 		FArgumentList values;
 
 		// Don't use narrow typea for casting.
-		if (ctype->IsA(RUNTIME_CLASS(PInt))) ctype = static_cast<PInt*>(ztype)->Unsigned ? TypeUInt32 : TypeSInt32;
+		if (ctype->isInt()) ctype = static_cast<PInt*>(ztype)->Unsigned ? TypeUInt32 : TypeSInt32;
 		else if (ctype == TypeFloat32) ctype = TypeFloat64;
 
 		ConvertNodeList(values, sas->Values);
@@ -1077,13 +1077,13 @@ ZCC_ExprConstant *ZCCCompiler::NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expres
 		if (val->Type != TypeError)
 		{
 			assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
-			if (sym->ValueType->IsKindOf(RUNTIME_CLASS(PInt)))
+			if (sym->ValueType->isIntCompatible())
 			{
 				val->IntVal = static_cast<PSymbolConstNumeric *>(sym)->Value;
 			}
 			else
 			{
-				assert(sym->ValueType->IsKindOf(RUNTIME_CLASS(PFloat)));
+				assert(sym->ValueType->isFloat());
 				val->DoubleVal = static_cast<PSymbolConstNumeric *>(sym)->Float;
 			}
 		}
@@ -1752,7 +1752,7 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		ex = ex->Resolve(ctx);
 
 		if (ex == nullptr) return TypeError;
-		if (!ex->isConstant() || !ex->ValueType->IsA(RUNTIME_CLASS(PInt)))
+		if (!ex->isConstant() || !ex->ValueType->isInt())
 		{
 			Error(arraysize, "Array index must be an integer constant");
 			return TypeError;
@@ -2023,15 +2023,15 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		{
 			*(PalEntry*)addr = V_GetColor(nullptr, GetStringConst(ex, ctx), &ex->ScriptPosition);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		else if (f->Type->isIntCompatible())
 		{
 			static_cast<PInt*>(f->Type)->SetValue(addr, GetIntConst(ex, ctx));
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		else if (f->Type->isFloat())
 		{
 			static_cast<PFloat*>(f->Type)->SetValue(addr, GetFloatConst(ex, ctx));
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		else if (f->Type == TypeString)
 		{
 			*(FString*)addr = GetStringConst(ex, ctx);
 		}
@@ -2304,7 +2304,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-				if (type->IsKindOf(RUNTIME_CLASS(PContainerType)) && type != TypeVector2 && type != TypeVector3)
+				if (type->isContainer() && type != TypeVector2 && type != TypeVector3)
 				{
 					// structs and classes only get passed by pointer.
 					type = NewPointer(type);
@@ -3228,23 +3228,23 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ExprConstant:
 	{
 		auto cnst = static_cast<ZCC_ExprConstant *>(ast);
-		if (cnst->Type->IsA(RUNTIME_CLASS(PName)))
+		if (cnst->Type == TypeName)
 		{
 			return new FxConstant(FName(ENamedName(cnst->IntVal)), *ast);
 		}
-		else if (cnst->Type->IsA(RUNTIME_CLASS(PInt)))
+		else if (cnst->Type->isInt())
 		{
 			return new FxConstant(cnst->IntVal, *ast);
 		}
-		else if (cnst->Type->IsA(RUNTIME_CLASS(PBool)))
+		else if (cnst->Type == TypeBool)
 		{
 			return new FxConstant(!!cnst->IntVal, *ast);
 		}
-		else if (cnst->Type->IsA(RUNTIME_CLASS(PFloat)))
+		else if (cnst->Type->isFloat())
 		{
 			return new FxConstant(cnst->DoubleVal, *ast);
 		}
-		else if (cnst->Type->IsA(RUNTIME_CLASS(PString)))
+		else if (cnst->Type == TypeString)
 		{
 			return new FxConstant(*cnst->StringVal, *ast);
 		}

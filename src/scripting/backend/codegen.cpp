@@ -207,7 +207,7 @@ static PContainerType *FindContainerType(FName name, FCompileContext &ctx)
 	if (sym && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
 		auto type = static_cast<PSymbolType*>(sym);
-		return dyn_cast<PContainerType>(type->Type);
+		return type->Type->toContainer();
 	}
 	return nullptr;
 }
@@ -292,10 +292,10 @@ static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCall
 
 static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare = false)
 {
-	if (dest->IsKindOf(RUNTIME_CLASS(PPointer)) && source->IsKindOf(RUNTIME_CLASS(PPointer)))
+	if (dest->isPointer() && source->isPointer())
 	{
-		auto fromtype = static_cast<PPointer *>(source);
-		auto totype = static_cast<PPointer *>(dest);
+		auto fromtype = source->toPointer();
+		auto totype = dest->toPointer();
 		// null pointers can be assigned to everything, everything can be assigned to void pointers.
 		if (fromtype == nullptr || totype == TypeVoidPtr) return true;
 		// when comparing const-ness does not matter.
@@ -557,11 +557,11 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 	PSymbolConstNumeric *csym = dyn_cast<PSymbolConstNumeric>(sym);
 	if (csym != nullptr)
 	{
-		if (csym->ValueType->IsA(RUNTIME_CLASS(PInt)))
+		if (csym->ValueType->isInt())
 		{
 			x = new FxConstant(csym->Value, pos);
 		}
-		else if (csym->ValueType->IsA(RUNTIME_CLASS(PFloat)))
+		else if (csym->ValueType->isFloat())
 		{
 			x = new FxConstant(csym->Float, pos);
 		}
@@ -1356,7 +1356,7 @@ FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->ValueType == TypeColor || basex->ValueType->GetClass() == RUNTIME_CLASS(PInt))
+	if (basex->ValueType == TypeColor || basex->ValueType->isInt())
 	{
 		FxExpression *x = basex;
 		x->ValueType = TypeColor;
@@ -1445,7 +1445,7 @@ FxExpression *FxSoundCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->ValueType == TypeSound || basex->ValueType->GetClass() == RUNTIME_CLASS(PInt))
+	if (basex->ValueType == TypeSound || basex->ValueType->isInt())
 	{
 		FxExpression *x = basex;
 		x->ValueType = TypeSound;
@@ -1617,7 +1617,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		// don't go through the entire list if the types are the same.
 		goto basereturn;
 	}
-	else if (basex->ValueType == TypeNullPtr && (ValueType == TypeState || ValueType->IsKindOf(RUNTIME_CLASS(PPointer))))
+	else if (basex->ValueType == TypeNullPtr && ValueType->isPointer())
 	{
 		goto basereturn;
 	}
@@ -1629,7 +1629,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
-	else if (ValueType->IsA(RUNTIME_CLASS(PInt)))
+	else if (ValueType->isInt())
 	{
 		// This is only for casting to actual ints. Subtypes representing an int will be handled elsewhere.
 		FxExpression *x = new FxIntCast(basex, NoWarn, Explicit);
@@ -1773,7 +1773,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			if (fromtype->IsDescendantOf(totype)) goto basereturn;
 		}
 	}
-	else if (basex->IsNativeStruct() && ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType == basex->ValueType)
+	else if (basex->IsNativeStruct() && ValueType->isRealPointer() && ValueType->toPointer()->PointedType == basex->ValueType)
 	{
 		bool writable;
 		basex->RequestAddress(ctx, &writable);
@@ -2494,7 +2494,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		}
 		// Both types are the same so this is ok.
 	}
-	else if (Right->IsNativeStruct() && Base->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(Base->ValueType)->PointedType == Right->ValueType)
+	else if (Right->IsNativeStruct() && Base->ValueType->isRealPointer() && Base->ValueType->toPointer()->PointedType == Right->ValueType)
 	{
 		// allow conversion of native structs to pointers of the same type. This is necessary to assign elements from global arrays like players, sectors, etc. to local pointers.
 		// For all other types this is not needed. Structs are not assignable and classes can only exist as references.
@@ -3649,12 +3649,12 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 				goto error;
 			}
 		}
-		else if (left->IsPointer() && static_cast<PPointer*>(left->ValueType)->PointedType == right->ValueType)
+		else if (left->IsPointer() && left->ValueType->toPointer()->PointedType == right->ValueType)
 		{
 			bool writable;
 			if (!right->RequestAddress(ctx, &writable)) goto error;
 		}
-		else if (right->IsPointer() && static_cast<PPointer*>(right->ValueType)->PointedType == left->ValueType)
+		else if (right->IsPointer() && right->ValueType->toPointer()->PointedType == left->ValueType)
 		{
 			bool writable;
 			if (!left->RequestAddress(ctx, &writable)) goto error;
@@ -4684,7 +4684,7 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(expr, ctx);
-	bool constflag = expr->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer *>(expr->ValueType)->IsConst;
+	bool constflag = expr->ValueType->isPointer() && expr->ValueType->toPointer()->IsConst;
 	if (constflag)
 	{
 		// readonly pointers are normally only used for class defaults which lack type information to be cast properly, so we have to error out here.
@@ -6342,7 +6342,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					auto sn = static_cast<PSymbolConstNumeric*>(sym);
 
 					VMValue vmv;
-					if (sn->ValueType->IsKindOf(RUNTIME_CLASS(PInt))) vmv = sn->Value;
+					if (sn->ValueType->isIntCompatible()) vmv = sn->Value;
 					else vmv = sn->Float;
 					auto x = new FxConstant(sn->ValueType, vmv, ScriptPosition);
 					delete this;
@@ -6393,10 +6393,10 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	{
 		Object->ValueType = TypeColorStruct;
 	}
-	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	if (Object->ValueType->isRealPointer())
 	{
-		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
-		if (ptype->IsKindOf(RUNTIME_CLASS(PContainerType)))
+		auto ptype = Object->ValueType->toPointer()->PointedType;
+		if (ptype->isContainer())
 		{
 			auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PContainerType *>(ptype));
 			delete this;
@@ -6603,8 +6603,8 @@ FxExpression *FxClassDefaults::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(obj, ctx);
-	assert(obj->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)));
-	ValueType = NewPointer(static_cast<PPointer*>(obj->ValueType)->PointedType, true);
+	assert(obj->ValueType->isRealPointer());
+	ValueType = NewPointer(obj->ValueType->toPointer()->PointedType, true);
 	return this;
 }
 
@@ -6938,7 +6938,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 	{
 		// [ZZ] original check.
 		bool bWritable = (AddressWritable && !ctx.CheckWritable(membervar->Flags) &&
-			(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
+			(!classx->ValueType->isPointer() || !classx->ValueType->toPointer()->IsConst));
 		// [ZZ] implement write barrier between different scopes
 		if (bWritable)
 		{
@@ -7018,10 +7018,10 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		return x->Resolve(ctx);
 	}
 
-	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	if (classx->ValueType->isPointer())
 	{
-		PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
-		if (ptrtype == nullptr || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PContainerType)))
+		PPointer *ptrtype = classx->ValueType->toPointer();
+		if (ptrtype == nullptr || !ptrtype->PointedType->isContainer())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct or class object");
 			delete this;
@@ -7241,7 +7241,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		if (arraytype == nullptr)
 		{
 			// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
-			PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
+			PPointer *ptype = Array->ValueType->toPointer();
 			if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
 			{
 				ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
@@ -7316,7 +7316,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	
 	if (arrayispointer)
 	{
-		arraytype = static_cast<PArray*>(static_cast<PPointer*>(Array->ValueType)->PointedType);
+		arraytype = static_cast<PArray*>(Array->ValueType->toPointer()->PointedType);
 	}
 	else
 	{
@@ -8150,7 +8150,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 						member->membervar = newfield;
 					}
 				}
-				else if (a->IsPointer() && Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+				else if (a->IsPointer() && Self->ValueType->isPointer())
 				{
 					// the only case which must be checked up front is for pointer arrays receiving a new element.
 					// Since there is only one native backing class it uses a neutral void pointer as its argument,
@@ -8178,7 +8178,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			if (!Self->IsResizableArray())
 			{
 				auto atype = Self->ValueType;
-				if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))) atype = static_cast<PPointer*>(ValueType)->PointedType;
+				if (Self->ValueType->isPointer()) atype = ValueType->toPointer()->PointedType;
 				auto size = static_cast<PArray*>(atype)->ElementCount;
 				auto x = new FxConstant(size, ScriptPosition);
 				delete this;
@@ -8222,10 +8222,11 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
-	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	if (Self->ValueType->isRealPointer())
 	{
-		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
-		if (ptype->IsKindOf(RUNTIME_CLASS(PContainerType)))
+		auto ptype = Self->ValueType->toPointer()->PointedType;
+		cls = ptype->toContainer();
+		if (cls != nullptr)
 		{
 			if (ptype->IsKindOf(RUNTIME_CLASS(PClassType)) && MethodName == NAME_GetClass)
 			{
@@ -8238,9 +8239,6 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				auto x = new FxGetClass(Self);
 				return x->Resolve(ctx);
 			}
-
-
-			cls = static_cast<PContainerType *>(ptype);
 		}
 		else
 		{
@@ -8759,7 +8757,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 							// If this is a reference argument, the pointer type must be undone because the code below expects the pointed type as value type.
 							if (argflags[i + k + implicit] & VARF_Ref)
 							{
-								assert(ntype->IsKindOf(RUNTIME_CLASS(PPointer)));
+								assert(ntype->isPointer());
 								ntype = TypeNullPtr; // the default of a reference type can only be a null pointer
 							}
 							if (ntype->GetRegCount() == 1)
@@ -8822,7 +8820,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
-					if (type == ArgList[i]->ValueType && type->IsA(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(type)->PointedType->IsA(RUNTIME_CLASS(PStruct)))
+					if (type == ArgList[i]->ValueType && type->isRealPointer() && type->toPointer()->PointedType->IsA(RUNTIME_CLASS(PStruct)))
 					{
 						// trying to pass a struct reference as a struct reference. This must preserve the type.
 					}
@@ -8937,7 +8935,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 
 		if (innerside == FScopeBarrier::Side_Virtual)
 		{
-			auto selfside = FScopeBarrier::SideFromObjectFlags(static_cast<PPointer*>(Self->ValueType)->PointedType->ObjectFlags);
+			auto selfside = FScopeBarrier::SideFromObjectFlags(Self->ValueType->toPointer()->PointedType->ObjectFlags);
 
 			int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 			if (outerside == FScopeBarrier::Side_Virtual)
@@ -9300,7 +9298,7 @@ FxExpression *FxGetClass::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	ValueType = NewClassPointer(static_cast<PClassType*>(static_cast<PPointer*>(Self->ValueType)->PointedType)->Descriptor);
+	ValueType = NewClassPointer(static_cast<PClassType*>(Self->ValueType->toPointer()->PointedType)->Descriptor);
 	return this;
 }
 

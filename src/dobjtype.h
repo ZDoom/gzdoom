@@ -52,7 +52,6 @@ public:
 
 	static void StaticInit();
 	static void StaticShutdown();
-	static void StaticBootstrap();
 
 	// Per-class information -------------------------------------
 	PClass				*ParentClass = nullptr;	// the class this class derives from

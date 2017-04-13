@@ -75,12 +75,12 @@ cycle_t ActionCycles;
 //
 //==========================================================================
 
-class PActorInfo : public PBasicType
+class PActorInfo : public PCompoundType
 {
-	DECLARE_CLASS(PActorInfo, PBasicType);
+	DECLARE_CLASS(PActorInfo, PCompoundType);
 public:
 	PActorInfo()
-		:PBasicType(sizeof(FActorInfo), alignof(FActorInfo))
+		:PCompoundType(sizeof(FActorInfo), alignof(FActorInfo))
 	{
 	}
 

@@ -330,14 +330,14 @@ public:
 	virtual bool CheckReturn() { return false; }
 	virtual int GetBitValue() { return -1; }
 	bool IsNumeric() const { return ValueType->isNumeric(); }
-	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
-	bool IsInteger() const { return ValueType->isNumeric() && (ValueType->GetRegType() == REGT_INT); }
-	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
+	bool IsFloat() const { return ValueType->isFloat(); }
+	bool IsInteger() const { return ValueType->isNumeric() && ValueType->isIntCompatible(); }
+	bool IsPointer() const { return ValueType->isPointer(); }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
-	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
+	bool IsBoolCompat() const { return ValueType->isScalar(); }
 	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PObjectPointer)); }
-	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
-	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
+	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->isPointer() && ValueType->toPointer()->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
+	bool IsResizableArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PDynArray))); }
 	bool IsNativeStruct() const { return (ValueType->IsA(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ValueType)->isNative); }
 

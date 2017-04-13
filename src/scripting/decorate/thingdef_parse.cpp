@@ -866,17 +866,17 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			if (sc.CheckNumber()) *(int*)addr = sc.Number;
 			else *(PalEntry*)addr = V_GetColor(nullptr, sc);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		else if (f->Type->isIntCompatible())
 		{
 			sc.MustGetNumber();
 			static_cast<PInt*>(f->Type)->SetValue(addr, sc.Number);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		else if (f->Type->isFloat())
 		{
 			sc.MustGetFloat();
 			static_cast<PFloat*>(f->Type)->SetValue(addr, sc.Float);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		else if (f->Type == TypeString)
 		{
 			sc.MustGetString();
 			*(FString*)addr = strbin1(sc.String);

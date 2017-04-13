@@ -842,7 +842,7 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		PClassActor *cls = pair->Key;
 		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
 
-		for (int i = 0; i < cls->GetStateCount(); i++)
+		for (unsigned i = 0; i < cls->GetStateCount(); i++)
 		{
 			auto &state = cls->GetStates()[i];
 			spritelist[state.sprite].Insert(gltrans, true);

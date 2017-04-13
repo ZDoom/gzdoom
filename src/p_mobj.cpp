@@ -629,7 +629,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		}
 		if (!(newstate->UseFlags & SUF_ACTOR))
 		{
-			Printf(TEXTCOLOR_RED "State %s in %s not flagged for use as an actor sprite\n", FState::StaticGetStateName(newstate), GetClass()->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED "State %s in %s not flagged for use as an actor sprite\n", FState::StaticGetStateName(newstate).GetChars(), GetClass()->TypeName.GetChars());
 			state = nullptr;
 			Destroy();
 			return false;

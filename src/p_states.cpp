@@ -1081,7 +1081,7 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State));
+				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State).GetChars());
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)

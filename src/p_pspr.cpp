@@ -360,7 +360,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		{
 			if (Caller->IsKindOf(NAME_Weapon))
 			{
-				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", FState::StaticGetStateName(newstate).GetChars());
+				Printf(TEXTCOLOR_RED "State %s not flagged for use in weapons\n", FState::StaticGetStateName(newstate).GetChars());
 				State = nullptr;
 				Destroy();
 				return;
